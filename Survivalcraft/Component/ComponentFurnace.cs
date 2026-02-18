@@ -95,6 +95,8 @@ namespace Game {
             m_subsystemParticles.RemoveParticleSystem(m_fireParticleSystem);
         }
 
+        private bool isRun;
+
         public virtual void Update(float dt) {
             m_fuelEndTime = (float)(m_subsystemGameInfo.TotalElapsedGameTime + m_fireTimeRemaining);
             if (m_heatLevel > 0f) {
@@ -122,6 +124,7 @@ namespace Game {
             }
             if (m_smeltingRecipe != null) {
                 m_smeltingProgress = MathUtils.Min(m_smeltingProgress + SmeltSpeed * dt, 1f);
+                isRun = true;
                 if (m_smeltingProgress >= 1f) {
                     for (int i = 0; i < m_furnaceSize; i++) {
                         if (m_slots[i].Count > 0) {
@@ -153,6 +156,14 @@ namespace Game {
                 if (Terrain.ExtractContents(cellValue) == LitFurnaceBlock.Index) {
                     m_subsystemParticles.RemoveParticleSystem(m_fireParticleSystem);
                     m_componentBlockEntity.BlockValue = Terrain.ReplaceContents(cellValue, FurnaceBlock.Index);
+                }
+            }
+
+            // 添加网络同步逻辑
+            if (isRun && NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+                if (m_smeltingRecipe == null && m_fireTimeRemaining == 0) {
+                    isRun = false;
+                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentFurnacePackage(Entity.EntityId, m_fireTimeRemaining, m_smeltingProgress, m_heatLevel));
                 }
             }
         }

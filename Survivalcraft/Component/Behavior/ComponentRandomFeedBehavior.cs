@@ -1,6 +1,8 @@
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class ComponentRandomFeedBehavior : ComponentBehavior, IUpdateable {
@@ -26,6 +28,21 @@ namespace Game {
 
         public bool m_autoFeed;
 
+        private bool m_isFeed;
+
+        public bool IsFeed
+        {
+            get { return m_isFeed; }
+            set
+            {
+                if (m_isFeed != value)
+                {
+                    m_isFeed = value;
+                    if (CommonLib.WorkType == WorkType.Server) CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
+                }
+            }
+        }
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override float ImportanceLevel => m_importanceLevel;
@@ -36,7 +53,12 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            m_stateMachine.Update();
+            if (CommonLib.WorkType == WorkType.Client) {
+                m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
+            }
+            else {
+                m_stateMachine.Update();
+            }
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
@@ -141,6 +163,7 @@ namespace Game {
                     m_feedTime -= m_subsystemTime.GameTimeDelta;
                     if (m_componentCreature.ComponentBody.StandingOnValue.HasValue) {
                         m_componentCreature.ComponentCreatureModel.FeedOrder = true;
+                        IsFeed = true;
                         if (m_random.Float(0f, 1f) < 0.1f * m_subsystemTime.GameTimeDelta) {
                             m_componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
                         }
@@ -169,7 +192,7 @@ namespace Game {
                         m_stateMachine.TransitionTo("Inactive");
                     }
                 },
-                null
+                () => { IsFeed = false; }
             );
             m_stateMachine.TransitionTo("Inactive");
         }

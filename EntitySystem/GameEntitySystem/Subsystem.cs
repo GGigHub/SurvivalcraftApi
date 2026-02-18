@@ -19,6 +19,10 @@ namespace GameEntitySystem {
 
         public virtual void Save(ValuesDictionary valuesDictionary) { }
 
+        public virtual void SaveForClient(ValuesDictionary valuesDictionary) {
+            Save(valuesDictionary);
+        }
+
         public virtual void Dispose() { }
 
         internal void DisposeInternal() {

@@ -13,6 +13,15 @@ namespace Game {
 
         public bool SplashGenerated = true;
 
+        // 联机增加参数
+        public ushort Id = 0;
+        public Vector3? LastPosition;
+        public byte? GetPickPlayer;
+        public Vector3 PostionFix;
+        public bool PlaySound;
+        public float distance;
+        public bool Net_ToRemove;
+
         protected double m_timeWaitToAutoPick = 0.5;
 
         protected float m_distanceToPick = 1f;

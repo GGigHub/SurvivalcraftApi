@@ -1,6 +1,8 @@
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 
 namespace Game {
@@ -435,7 +437,7 @@ namespace Game {
         public virtual void DragDrop(Widget dragWidget, object data) {
             if (m_inventory != null
                 && data is InventoryDragData inventoryDragData) {
-                HandleDragDrop(inventoryDragData.Inventory, inventoryDragData.SlotIndex, inventoryDragData.DragMode, m_inventory, m_slotIndex);
+                HandleDragDrop(inventoryDragData.Inventory, inventoryDragData.SlotIndex, inventoryDragData.DragMode, m_inventory, m_slotIndex, ProcessingOnly, m_componentPlayer);
             }
         }
 
@@ -549,6 +551,17 @@ namespace Game {
             int slotValue2 = targetInventory.GetSlotValue(targetSlotIndex);
             int slotCount = sourceInventory.GetSlotCount(sourceSlotIndex);
             int slotCount2 = targetInventory.GetSlotCount(targetSlotIndex);
+
+            if (CommonLib.WorkType == WorkType.Client) {
+                InventorySlot sourceInventorySlot = new() { inventoryId = sourceInventory.Id, slotIndex = sourceSlotIndex };
+                InventorySlot targetInventorySlot = new() {
+                    inventoryId = targetInventory.Id,
+                    slotIndex = targetSlotIndex,
+                    count = count
+                };
+                IPackage package = new ComponentInventoryPackage(sourceInventorySlot, targetInventorySlot, ComponentInventoryPackage.EventType.HandleMoveItem);
+                CommonLib.Net.QueuePackage(package);
+            }
             if (slotCount2 == 0
                 || slotValue == slotValue2) {
                 int num = MathUtils.Min(targetInventory.GetSlotCapacity(targetSlotIndex, slotValue) - slotCount2, slotCount, count);
@@ -565,7 +578,9 @@ namespace Game {
             int sourceSlotIndex,
             DragMode dragMode,
             IInventory targetInventory,
-            int targetSlotIndex) {
+            int targetSlotIndex,
+            bool processingOnly = false,
+            ComponentPlayer componentPlayer = null) {
             int sourceSlotValue = sourceInventory.GetSlotValue(sourceSlotIndex);
             int targetSlotValue = targetInventory.GetSlotValue(targetSlotIndex);
             int dragCount = sourceInventory.GetSlotCount(sourceSlotIndex);
@@ -574,6 +589,16 @@ namespace Game {
             int targetSlotProcessCapacity = targetInventory.GetSlotProcessCapacity(targetSlotIndex, sourceSlotValue);
 
             dragCount = CalculateSplitCount(dragCount, dragMode);
+
+            if (CommonLib.WorkType == WorkType.Client) {
+                InventorySlot sourceInventorySlot = new() { inventoryId = sourceInventory.Id, slotIndex = sourceSlotIndex };
+                InventorySlot targetInventorySlot = new() { inventoryId = targetInventory.Id, slotIndex = targetSlotIndex };
+                ComponentInventoryPackage package = new(sourceInventorySlot, targetInventorySlot, ComponentInventoryPackage.EventType.HandleDragDrop) {
+                    m_dragMode = dragMode,
+                    m_processingOnly = processingOnly
+                };
+                CommonLib.Net.QueuePackage(package);
+            }
 
             bool flag = false;
             //先进行Process操作
@@ -610,7 +635,7 @@ namespace Game {
                 }
                 flag = true;
             }
-            else if (!ProcessingOnly) {
+            else if (!processingOnly) {
                 bool movedByMods = false;
                 ModsManager.HookAction(
                     "HandleInventoryDragMove",
@@ -651,7 +676,9 @@ namespace Game {
                 }
             }
             if (flag) {
-                AudioManager.PlaySound("Audio/UI/ItemMoved", 1f, 0f, 0f);
+                if (componentPlayer == null || componentPlayer.PlayerData.IsMainPlayer) {
+                    AudioManager.PlaySound("Audio/UI/ItemMoved", 1f, 0f, 0f);
+                }
             }
             return flag;
         }

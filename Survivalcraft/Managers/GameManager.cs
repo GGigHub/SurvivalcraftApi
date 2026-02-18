@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 using Engine;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 using XmlUtilities;
@@ -29,7 +30,25 @@ namespace Game {
             VersionsManager.UpgradeWorld(worldInfo.DirectoryName);
         }
 
-        public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget) {
+        public static void LoadProject(byte[] messagePackData, ContainerWidget gamesWidget, bool useNetProj = true) {
+            DisposeProject();
+            var valuesDictionary = new ValuesDictionary();
+            var valuesDictionary2 = new ValuesDictionary();
+            valuesDictionary.SetValue("GameInfo", valuesDictionary2);
+            valuesDictionary2.SetValue("WorldDirectoryName", "NetWorld");
+            var valuesDictionary3 = new ValuesDictionary();
+            valuesDictionary.SetValue("Views", valuesDictionary3);
+            valuesDictionary3.SetValue("GamesWidget", gamesWidget);
+            var projectData = new ProjectData(DatabaseManager.GameDatabase, messagePackData, valuesDictionary, ignoreInvalidEntities: true);
+            if (useNetProj) m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
+            else m_project = new Project(DatabaseManager.GameDatabase, projectData);
+            m_subsystemUpdate = m_project.FindSubsystem<SubsystemUpdate>(throwOnError: true);
+            m_worldInfo = new WorldInfo();
+            Log.Information("加载NetProject");
+            GC.Collect();
+        }
+
+        public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, bool useNetProj = true) {
             DisposeProject();
             WorldsManager.RepairWorldIfNeeded(worldInfo.DirectoryName);
             VersionsManager.UpgradeWorld(worldInfo.DirectoryName);
@@ -99,7 +118,8 @@ namespace Game {
                     );
                 };
                 ProjectData projectData = new(DatabaseManager.GameDatabase, projectNode, valuesDictionary, true);
-                m_project = new Project(DatabaseManager.GameDatabase, projectData);
+                if (useNetProj) m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
+                else m_project = new Project(DatabaseManager.GameDatabase, projectData);
                 m_subsystemUpdate = m_project.FindSubsystem<SubsystemUpdate>(true);
             }
             m_worldInfo = worldInfo;
@@ -115,7 +135,7 @@ namespace Game {
         }
 
         public static void SaveProject(bool waitForCompletion, bool showErrorDialog) {
-            if (m_project != null) {
+            if (m_project != null && CommonLib.WorkType == WorkType.Server) {
                 double realTime = Time.RealTime;
                 ProjectData projectData = m_project.Save();
                 m_saveCompleted.WaitOne();

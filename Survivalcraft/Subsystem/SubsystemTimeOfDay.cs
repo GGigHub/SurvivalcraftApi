@@ -70,6 +70,10 @@ namespace Game {
             return (float)(num - Math.Floor(num));
         }
 
+        public float CalculateTimeOfDay() {
+            return CalculateTimeOfDay(m_subsystemGameInfo.TotalElapsedGameTime);
+        }
+
         public override void Load(ValuesDictionary valuesDictionary) {
             m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
             m_subsystemSeasons = Project.FindSubsystem<SubsystemSeasons>(true);

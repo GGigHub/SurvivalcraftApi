@@ -4,6 +4,7 @@ using System.Reflection;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
+using Game.NetWork;
 #if ANDROID
 using Android.App;
 #elif WINDOWS

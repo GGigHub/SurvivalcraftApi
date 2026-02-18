@@ -74,11 +74,16 @@ namespace Game {
             }
             if (m_sleepButton.IsClicked
                 && m_componentPlayer != null) {
-                if (!m_componentPlayer.ComponentSleep.CanSleep(out string reason)) {
-                    m_componentPlayer.ComponentGui.DisplaySmallMessage(reason, Color.White, false, false);
+                if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) {
+                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentSleepPackage(m_componentPlayer.ComponentSleep, NetWork.Packages.ComponentSleepPackage.EventType.SleepRequest, true));
                 }
                 else {
-                    m_componentPlayer.ComponentSleep.Sleep(true);
+                    if (!m_componentPlayer.ComponentSleep.CanSleep(out string reason)) {
+                        m_componentPlayer.ComponentGui.DisplaySmallMessage(reason, Color.White, false, false);
+                    }
+                    else {
+                        m_componentPlayer.ComponentSleep.Sleep(true);
+                    }
                 }
             }
         }

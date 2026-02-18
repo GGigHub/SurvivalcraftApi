@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Engine;
 
 namespace Game {
@@ -19,6 +21,24 @@ namespace Game {
         public static List<Dialog> m_toRemove = [];
 
         public static ReadOnlyList<Dialog> Dialogs => new(m_dialogs);
+
+        public static void Confirm(string msg, Action<MessageDialogButton> clickEvent, ContainerWidget parentWidget = null) {
+            MessageDialog dialog = null;
+            dialog = new MessageDialog("提示", msg, LanguageControl.Yes, LanguageControl.No, e => {
+                HideDialog(dialog);
+                clickEvent(e);
+            });
+            ShowDialog(parentWidget, dialog);
+        }
+
+        public static void Alert(string title, string message, ContainerWidget parentWidget = null) {
+            MessageDialog dialog = new MessageDialog(title, message, LanguageControl.Ok, null, null);
+            ShowDialog(parentWidget, dialog);
+        }
+
+        public static void Alert(string message, ContainerWidget parentWidget = null) {
+            Alert(string.Empty, message, parentWidget);
+        }
 
         public static bool HasDialogs(Widget parentWidget) {
             if (parentWidget == null) {

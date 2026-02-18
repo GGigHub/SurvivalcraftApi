@@ -1,4 +1,5 @@
 using Engine;
+using Engine.Graphics;
 
 namespace Game {
     public class TerrainChunk : IDisposable {
@@ -75,6 +76,11 @@ namespace Game {
         public int[] SliceContentsHashes = new int[SlicesCount];
 
         public int[] GeneratedSliceContentsHashes = new int[SlicesCount];
+
+        public bool IsRequested { get; set; }
+        public int LightPropagationMask { get; set; }
+
+        public Dictionary<Texture2D, TerrainGeometry> Draws = [];
 
         public TerrainChunk(Terrain terrain, int x, int z) {
             Terrain = terrain;

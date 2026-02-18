@@ -23,6 +23,8 @@ namespace Game {
 
         public const string fName = "MainMenuScreen";
 
+        private ButtonWidget? _connectServerButton;
+
         public MainMenuScreen() {
             XElement node = ContentManager.Get<XElement>("Screens/MainMenuScreen");
             LoadContents(this, node);
@@ -49,6 +51,50 @@ namespace Game {
                     return false;
                 }
             );
+
+            if (_connectServerButton != null) {
+                return;
+            }
+
+            StackPanelWidget? centerButtons = Children.Find<StackPanelWidget>("CenterButtons", false);
+            if (centerButtons == null) {
+                return;
+            }
+
+            BevelledButtonWidget? playButton = Children.Find<BevelledButtonWidget>("Play", false);
+
+            BevelledButtonWidget button = new() {
+                Size = new Vector2(310f, 60f),
+                Text = "联机",
+                HorizontalAlignment = WidgetAlignment.Center,
+                VerticalAlignment = WidgetAlignment.Center
+            };
+
+            if (playButton != null) {
+                button.BevelSize = playButton.BevelSize;
+                button.Color = playButton.Color;
+                button.BevelColor = playButton.BevelColor;
+                button.CenterColor = playButton.CenterColor;
+                button.AmbientLight = playButton.AmbientLight;
+                button.DirectionalLight = playButton.DirectionalLight;
+                button.Font = playButton.Font;
+                button.FontScale = playButton.FontScale;
+                button.Margin = playButton.Margin;
+            }
+
+            _connectServerButton = button;
+
+            Widget? buyButton = Children.Find<Widget>("Buy", false);
+            int insertIndex = -1;
+            if (buyButton != null) {
+                insertIndex = centerButtons.Children.IndexOf(buyButton);
+            }
+            if (insertIndex >= 0) {
+                centerButtons.Children.Insert(insertIndex, button);
+            }
+            else {
+                centerButtons.Children.Add(button);
+            }
         }
 
         public override void Enter(object[] parameters) {
@@ -193,6 +239,10 @@ namespace Game {
             /*if (!string.IsNullOrEmpty(ExternalContentManager.openFilePath)) {
                 ScreensManager.SwitchScreen("ExternalContent");
             }*/
+            if (_connectServerButton != null
+                && _connectServerButton.IsClicked) {
+                DialogsManager.ShowDialog(null, new ConnectServerDialog());
+            }
         }
     }
 }

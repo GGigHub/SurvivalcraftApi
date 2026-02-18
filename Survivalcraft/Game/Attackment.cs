@@ -1,5 +1,7 @@
 using System.Globalization;
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -122,8 +124,10 @@ namespace Game {
             if (attackerBody != null) {
                 hitValueParticleVelocity = attackerBody.Velocity;
             }
+            Vector3 particlePosition = HitPoint + 0.75f * HitDirection;
+            Vector3 particleVelocity = 1f * HitDirection + hitValueParticleVelocity;
             Color color = attackerComponentPlayer != null && damage > 0f && attackedComponentHealth != null ? Color.White : Color.Transparent;
-            HitValueParticleSystem particleSystem = new(HitPoint + 0.75f * HitDirection, 1f * HitDirection + hitValueParticleVelocity, color, text2);
+            HitValueParticleSystem particleSystem = new(particlePosition, particleVelocity, color, text2);
             ModsManager.HookAction(
                 "SetHitValueParticleSystem",
                 modLoader => {
@@ -131,6 +135,9 @@ namespace Game {
                     return false;
                 }
             );
+            if (CommonLib.WorkType != WorkType.Client) {
+                CommonLib.Net.QueuePackage(new ComponentHealthPackage(particlePosition, particleVelocity, color, text2));
+            }
             Target?.Project.FindSubsystem<SubsystemParticles>()?.AddParticleSystem(particleSystem);
         }
 

@@ -30,7 +30,20 @@ namespace Game {
 
         public int PageIndex { get; set; }
 
+        public int Id { get; private set; }
+
         Project IInventory.Project => Project;
+
+        public virtual void SetSlotValue(int slotIndex, object obj) {
+            ComponentInventoryBase.Slot slot = (ComponentInventoryBase.Slot)obj;
+            if (slotIndex >= 0 && slotIndex < m_slots.Count) {
+                m_slots[slotIndex] = slot.Value;
+            }
+        }
+
+        public virtual void OnSlotChange(int slotIndex) {
+            SubsystemInventories.pushSyncItem(this, slotIndex);
+        }
 
         public int ActiveSlotIndex {
             get => m_activeSlotIndex;
@@ -64,6 +77,14 @@ namespace Game {
             OpenSlotsCount = valuesDictionary.GetValue<int>("OpenSlotsCount");
             CategoryIndex = valuesDictionary.GetValue<int>("CategoryIndex");
             PageIndex = valuesDictionary.GetValue<int>("PageIndex");
+            Id = valuesDictionary.GetValue("Id", -1);
+            SubsystemInventories subsystemInventories = Project.FindSubsystem<SubsystemInventories>();
+            if (Id == -1) {
+                Id = subsystemInventories.ProduceInventoryId(this);
+            }
+            else {
+                Id = subsystemInventories.RegisterInventory(this);
+            }
             for (int i = 0; i < OpenSlotsCount; i++) {
                 m_slots.Add(0);
             }
@@ -93,6 +114,7 @@ namespace Game {
             valuesDictionary.SetValue("ActiveSlotIndex", m_activeSlotIndex);
             valuesDictionary.SetValue("CategoryIndex", CategoryIndex);
             valuesDictionary.SetValue("PageIndex", PageIndex);
+            valuesDictionary.SetValue("Id", Id);
             ValuesDictionary valuesDictionary2 = new();
             valuesDictionary.SetValue("Slots", valuesDictionary2);
             for (int i = 0; i < OpenSlotsCount; i++) {
@@ -164,6 +186,36 @@ namespace Game {
                 && slotIndex < OpenSlotsCount) {
                 m_slots[slotIndex] = value;
             }
+        }
+
+        public virtual bool AddNetSlotItems(int slotIndex, int value, int count) {
+            if (slotIndex >= 0 && slotIndex < OpenSlotsCount) {
+                if (m_slots[slotIndex] != value) {
+                    m_slots[slotIndex] = value;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public virtual int RemoveNetSlotItems(int slotIndex, int count) {
+            if (slotIndex >= 0 && slotIndex < OpenSlotsCount) {
+                int num = Terrain.ExtractContents(m_slots[slotIndex]);
+                if (BlocksManager.Blocks[num].IsNonDuplicable_(m_slots[slotIndex])) {
+                    m_slots[slotIndex] = 0;
+                }
+                if (count >= m_largeNumber) {
+                    m_slots[slotIndex] = 0;
+                }
+            }
+            return 1;
+        }
+
+        public virtual void DropSlotItems(int slotIndex, Vector3 position, Vector3 velocity) {
+        }
+
+        public virtual void ProcessSlotItems(IInventory sourceInventory, int sourceSlotIndex, int slotIndex, int value, int count, int processCount, out int processedValue, out int processedCount) {
+            ProcessSlotItems(slotIndex, value, count, processCount, out processedValue, out processedCount);
         }
 
         public virtual void ProcessSlotItems(int slotIndex, int value, int count, int processCount, out int processedValue, out int processedCount) {

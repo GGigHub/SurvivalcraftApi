@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Xml.Linq;
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class VitalStatsWidget : CanvasWidget {
@@ -194,7 +196,22 @@ namespace Game {
                 );
             }
             if (m_chokeButton.IsClicked) {
-                m_componentPlayer.ComponentHealth.Injure(new SuicideInjury(0.1f));
+                if (CommonLib.WorkType == WorkType.Client) {
+                    CommonLib.Net.QueuePackage(
+                        new ComponentHealthPackage(
+                            m_componentPlayer.ComponentHealth,
+                            null,
+                            0.1f,
+                            LanguageControl.GetContentWidgets(fName, "Choked"),
+                            true,
+                            true,
+                            ComponentHealthPackage.RequestInjureType.Choke
+                        )
+                    );
+                }
+                else {
+                    m_componentPlayer.ComponentHealth.Injure(new SuicideInjury(0.1f));
+                }
             }
         }
     }

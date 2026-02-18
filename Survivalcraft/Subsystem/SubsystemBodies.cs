@@ -1,5 +1,7 @@
 using Engine;
+using Game.NetWork;
 using GameEntitySystem;
+using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemBodies : Subsystem, IUpdateable {
@@ -115,10 +117,71 @@ namespace Game {
             }
         }
 
+
+        private Dictionary<Client, List<ComponentBody>> _toSendList = [];
+
+        public SubsystemPlayers m_subsystemPlayers;
+
+        public SubsystemTerrain m_subsystemTerrain;
+
         public virtual void Update(float dt) {
-            foreach (ComponentBody body in Bodies) {
-                UpdateBody(body);
+            if (CommonLib.WorkType != WorkType.Client) {
+                bool flag = Time.PeriodicEvent(0.1, 0.0);
+                _toSendList.Clear();
+                foreach (ComponentBody body in Bodies) {
+                    UpdateBody(body);
+                    if (flag) {
+                        foreach (var playerData in m_subsystemPlayers.PlayersData) {
+                            if (playerData.IsMainPlayer) continue;
+                            if (playerData.Client != null && playerData.ComponentPlayer != null && m_subsystemTerrain.TerrainUpdater.UpdateLocations.ContainsKey(playerData.PlayerIndex) && IsBodyInRange(body.Position.XZ, m_subsystemTerrain.TerrainUpdater.UpdateLocations[playerData.PlayerIndex])) {
+                                if (!_toSendList.TryGetValue(playerData.Client, out var list)) { list = new List<ComponentBody>(); _toSendList.Add(playerData.Client, list); }
+                                if (body.Player == null && body.ChildBodies.Count == 0 && flag) {
+                                    list.Add(body);
+                                }
+                            }
+                        }
+                    }
+                }
+                if (_toSendList.Count > 0) {
+                    foreach (var item in _toSendList) {
+                        if (item.Value.Count > 0) {
+                            CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemBodyPackage(item.Value) { To = item.Key });
+                        }
+                    }
+                    //在这里重置标志
+                    foreach (var item in _toSendList) {
+                        foreach (var body in item.Value) {
+                            body.SendPosition = null;
+                            body.SendRotation = null;
+                            body.SendVelocity = null;
+                            if (body.Locomotion != null) {
+                                body.Locomotion.SendLookAngles = null;
+                                body.Locomotion.FlyOrderChange = false;
+                            }
+                        }
+                    }
+                }
             }
+            else {
+                foreach (ComponentBody body in Bodies) {
+                    UpdateBody(body);
+                }
+            }
+        }
+
+        public override void Load(ValuesDictionary valuesDictionary) {
+            base.Load(valuesDictionary);
+            m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>();
+            m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>();
+        }
+
+        public static bool IsBodyInRange(Vector2 position, TerrainUpdater.UpdateLocation location) {
+            float distance = Vector2.DistanceSquared(location.Center, position);
+            float content = MathUtils.Sqr(SettingsManager.VisibilityRange);
+            if (distance <= content) {
+                return true;
+            }
+            return false;
         }
 
         public void AddBody(ComponentBody componentBody) {
@@ -157,6 +220,25 @@ namespace Game {
 
         public void ComponentBody_PositionChanged(ComponentFrame componentFrame) {
             UpdateBody((ComponentBody)componentFrame);
+        }
+
+        public void FindBodyByCreatureID(ushort CreatureId, Action<ComponentBody> action, Action fail = null)
+        {
+            if (Project is not Game.NetWork.ProjectNet projectNet) {
+                fail?.Invoke();
+                return;
+            }
+            if (!projectNet.FindEntityById(CreatureId, e => {
+                ComponentBody body = e.FindComponent<ComponentBody>();
+                if (body != null) {
+                    action?.Invoke(body);
+                }
+                else {
+                    fail?.Invoke();
+                }
+            })) {
+                fail?.Invoke();
+            }
         }
     }
 }

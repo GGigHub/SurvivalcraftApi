@@ -1,6 +1,8 @@
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class ComponentRandomPeckBehavior : ComponentBehavior, IUpdateable {
@@ -24,23 +26,43 @@ namespace Game {
 
         public Random m_random = new();
 
+        private bool m_isFeed;
+
+        public bool IsFeed
+        {
+            get { return m_isFeed; }
+            set
+            {
+                if (m_isFeed != value)
+                {
+                    m_isFeed = value;
+                    if (CommonLib.WorkType == WorkType.Server) CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
+                }
+            }
+        }
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (string.IsNullOrEmpty(m_stateMachine.CurrentState)) {
-                m_stateMachine.TransitionTo("Move");
-            }
-            if (m_random.Float(0f, 1f) < 0.033f * dt) {
-                m_importanceLevel = m_random.Float(1f, 2.5f);
-            }
-            m_dt = dt;
-            if (IsActive) {
-                m_stateMachine.Update();
+            if (CommonLib.WorkType == WorkType.Client) {
+                m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {
-                m_stateMachine.TransitionTo("Inactive");
+                if (string.IsNullOrEmpty(m_stateMachine.CurrentState)) {
+                    m_stateMachine.TransitionTo("Move");
+                }
+                if (m_random.Float(0f, 1f) < 0.033f * dt) {
+                    m_importanceLevel = m_random.Float(1f, 2.5f);
+                }
+                m_dt = dt;
+                if (IsActive) {
+                    m_stateMachine.Update();
+                }
+                else {
+                    m_stateMachine.TransitionTo("Inactive");
+                }
             }
         }
 
@@ -119,6 +141,10 @@ namespace Game {
                     m_peckTime -= m_dt;
                     if (m_componentCreature.ComponentBody.StandingOnValue.HasValue) {
                         m_componentBirdModel.FeedOrder = true;
+                        IsFeed = true;
+                    }
+                    else {
+                        IsFeed = false;
                     }
                     if (m_peckTime <= 0f) {
                         if (m_random.Float(0f, 1f) < 0.25f) {
@@ -129,7 +155,7 @@ namespace Game {
                         }
                     }
                 },
-                null
+                () => { IsFeed = false; }
             );
         }
     }

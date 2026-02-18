@@ -1,5 +1,9 @@
 using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -41,6 +45,30 @@ namespace Game {
         public float m_progress;
         public int PlayerIndex { get; set; }
 
+        // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
+        // 客户端自己的PlayerGuid，以及服务端上所有玩家的PlayerGuid都未经混淆
+        // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
+        public Guid PlayerGUID { get; set; } = CommonLib.Net.Self.PlayerGuid;
+
+        public Client Client => CommonLib.Net.GetClientByGUID(PlayerGUID);
+
+        public byte? ClientId => Client?.ID;
+
+        public bool ServerManager { get; set; }
+
+        public Vector3? ClientCachePosition;
+
+        public bool isSetStatus = false;
+
+        public bool IsDead;
+
+        public GameMode PlayerGameMode {
+            get;
+            set;
+        }
+
+        public bool IsMainPlayer { get; set; }
+
         public SubsystemGameWidgets SubsystemGameWidgets { get; set; }
 
         public SubsystemPlayers SubsystemPlayers { get; set; }
@@ -50,20 +78,7 @@ namespace Game {
         public Entity LastDeadPlayer { get; set; }
 
         public GameWidget GameWidget {
-            get {
-                if (m_gameWidget == null) {
-                    foreach (GameWidget gameWidget in SubsystemGameWidgets.GameWidgets) {
-                        if (gameWidget.PlayerData == this) {
-                            m_gameWidget = gameWidget;
-                            break;
-                        }
-                    }
-                    if (m_gameWidget == null) {
-                        throw new InvalidOperationException(LanguageControl.Get(fName, 11));
-                    }
-                }
-                return m_gameWidget;
-            }
+            get; set;
         }
 
         public Vector3 SpawnPosition { get; set; }
@@ -97,6 +112,7 @@ namespace Game {
         }
 
         public float Level { get; set; }
+        public bool readyToRestart;
         public bool ReduceLevelUponDeath = true;
         public string CharacterSkinName { get; set; }
 
@@ -125,220 +141,227 @@ namespace Game {
 
         public PlayerData(Project project) {
             m_project = project;
-            SubsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true);
-            SubsystemGameWidgets = project.FindSubsystem<SubsystemGameWidgets>(true);
-            m_subsystemTerrain = project.FindSubsystem<SubsystemTerrain>(true);
-            m_subsystemGameInfo = project.FindSubsystem<SubsystemGameInfo>(true);
-            m_subsystemSky = project.FindSubsystem<SubsystemSky>(true);
+            SubsystemPlayers = project.FindSubsystem<SubsystemPlayers>(throwOnError: true);
+            SubsystemGameWidgets = project.FindSubsystem<SubsystemGameWidgets>(throwOnError: true);
+            m_subsystemTerrain = project.FindSubsystem<SubsystemTerrain>(throwOnError: true);
+            m_subsystemGameInfo = project.FindSubsystem<SubsystemGameInfo>(throwOnError: true);
+            m_subsystemSky = project.FindSubsystem<SubsystemSky>(throwOnError: true);
             m_playerClass = PlayerClass.Male;
+            PlayerGameMode = GameMode.Follow;
             Level = 1f;
             FirstSpawnTime = -1.0;
             LastSpawnTime = -1.0;
             RandomizeCharacterSkin();
             ResetName();
             InputDevice = WidgetInputDevice.None;
-            m_stateMachine.AddState(
-                "FirstUpdate",
-                null,
-                delegate {
-                    if (ComponentPlayer != null) {
-                        UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathF.Floor(Level)), null, 0f, true);
-                        m_stateMachine.TransitionTo("WaitForTerrain");
-                    }
-                    else {
-                        m_stateMachine.TransitionTo("PrepareSpawn");
-                    }
-                    ModsManager.HookAction(
-                        "PlayerDataFirstUpdate",
-                        loader => {
-                            loader.PlayerDataFirstUpdate(this);
-                            return false;
-                        }
-                    );
-                },
-                null
-            );
-            m_stateMachine.AddState(
-                "PrepareSpawn",
-                delegate {
-                    if (SpawnPosition == Vector3.Zero) {
-                        if (SubsystemPlayers.GlobalSpawnPosition == Vector3.Zero) {
-                            PlayerData playerData = SubsystemPlayers.PlayersData.FirstOrDefault(pd => pd.SpawnPosition != Vector3.Zero);
-                            if (playerData != null) {
-                                if (playerData.ComponentPlayer != null) {
-                                    SpawnPosition = playerData.ComponentPlayer.ComponentBody.Position;
-                                    m_spawnMode = SpawnMode.InitialNoIntro;
-                                }
-                                else {
-                                    SpawnPosition = playerData.SpawnPosition;
-                                    m_spawnMode = SpawnMode.InitialNoIntro;
-                                }
-                            }
-                            else {
-                                SpawnPosition = m_subsystemTerrain.TerrainContentsGenerator.FindCoarseSpawnPosition();
-                                m_spawnMode = SpawnMode.InitialIntro;
-                            }
-                            SubsystemPlayers.GlobalSpawnPosition = SpawnPosition;
-                        }
-                        else {
-                            SpawnPosition = SubsystemPlayers.GlobalSpawnPosition;
+            m_stateMachine.AddState("FirstUpdate", null, delegate
+            {
+                //说明：没有在线的玩家让其离线
+                if ((CommonLib.WorkType != WorkType.Local && CommonLib.Net.GetClientByGUID(PlayerGUID) == null) || (CommonLib.WorkType == WorkType.Local && !IsMainPlayer)) {
+                    m_stateMachine.TransitionTo("MakePlayerOffline");
+                }
+                else if (ComponentPlayer != null) {
+                    UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathUtils.Floor(Level)), null, 0f, resetProgress: true);
+                    m_stateMachine.TransitionTo("WaitForTerrain");
+                }
+                else {
+#if DEBUG
+                    Log.Debug($"准备生成玩家 ID: {PlayerGUID}");
+#endif
+                    m_stateMachine.TransitionTo("PrepareSpawn");
+                }
+            }, null);
+            m_stateMachine.AddState("MakePlayerOffline", delegate { AsyncDispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(PlayerGUID, false)); }, null, null);
+            m_stateMachine.AddState("PrepareSpawn", delegate
+            {
+                if (SpawnPosition == Vector3.Zero) {
+                    if (CommonLib.WorkType != WorkType.Local && m_subsystemGameInfo.WorldSettings.RandomSpawnPosition) SubsystemPlayers.GlobalSpawnPosition = Vector3.Zero;
+                    if (SubsystemPlayers.GlobalSpawnPosition == Vector3.Zero) {
+                        PlayerData playerData = SubsystemPlayers.PlayersData.FirstOrDefault((PlayerData pd) => pd.SpawnPosition != Vector3.Zero);
+                        if (playerData != null && CommonLib.WorkType == WorkType.Local) {
+                            SpawnPosition = playerData.SpawnPosition;
                             m_spawnMode = SpawnMode.InitialNoIntro;
                         }
-                    }
-                    else {
-                        m_spawnMode = SpawnMode.Respawn;
-                    }
-                    if (m_spawnMode == SpawnMode.Respawn) {
-                        UpdateSpawnDialog(
-                            string.Format(LanguageControl.Get(fName, 2), Name, MathF.Floor(Level)),
-                            LanguageControl.Get(fName, 3),
-                            0f,
-                            true
-                        );
-                    }
-                    else {
-                        UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathF.Floor(Level)), null, 0f, true);
-                    }
-                    m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, 0f, 64f);
-                    m_terrainWaitStartTime = Time.FrameStartTime;
-                },
-                delegate {
-                    if (Time.PeriodicEvent(0.1, 0.0)) {
-                        float updateProgress2 = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, 0f, 64f);
-                        UpdateSpawnDialog(null, null, 0.5f * updateProgress2, false);
-                        if (!(updateProgress2 < 1f)
-                            || !(Time.FrameStartTime - m_terrainWaitStartTime < TerrainMaxWaitTime)) {
-                            switch (m_spawnMode) {
-                                case SpawnMode.InitialIntro: SpawnPosition = FindIntroSpawnPosition(SpawnPosition.XZ); break;
-                                case SpawnMode.InitialNoIntro: SpawnPosition = FindNoIntroSpawnPosition(SpawnPosition, false); break;
-                                case SpawnMode.Respawn: SpawnPosition = FindNoIntroSpawnPosition(SpawnPosition, true); break;
-                                default: throw new InvalidOperationException(LanguageControl.Get(fName, 5));
-                            }
-                            m_stateMachine.TransitionTo("WaitForTerrain");
+                        else {
+                            SpawnPosition = m_subsystemTerrain.TerrainContentsGenerator.FindCoarseSpawnPosition();
+#if DEBUG
+                            Log.Information($"生成出生点{SpawnPosition}");
+#endif
+                            m_spawnMode = CommonLib.WorkType == WorkType.Server ? SpawnMode.InitialNoIntro : SpawnMode.InitialIntro;
                         }
+                        SubsystemPlayers.GlobalSpawnPosition = SpawnPosition;
                     }
-                },
-                null
-            );
-            m_stateMachine.AddState(
-                "WaitForTerrain",
-                delegate {
-                    m_terrainWaitStartTime = Time.FrameStartTime;
-                    Vector2 center = ComponentPlayer != null ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
-                    m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(m_subsystemSky.VisibilityRange, 64f), 0f);
-                },
-                delegate {
-                    if (Time.PeriodicEvent(0.1, 0.0)) {
-                        float updateProgress = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(
-                            PlayerIndex,
-                            MathUtils.Min(m_subsystemSky.VisibilityRange, 64f),
-                            0f
-                        );
-                        UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, false);
-                        if ((updateProgress >= 1f && IsTimeReadyToSpawn)
-                            || Time.FrameStartTime - m_terrainWaitStartTime >= 15.0) {
-                            if (ComponentPlayer == null) {
-                                try {
-                                    SpawnPlayer(SpawnPosition, m_spawnMode);
-                                    SubsystemPlayers.PlayerStartedPlaying = true;
-                                }
-                                catch (Exception ex) {
-                                    Log.Error("Spawning Player Error!");
-                                    Log.Error(ex);
-                                    ScreensManager.SwitchScreen(ScreensManager.FindScreen<PlayScreen>("Play"));
-                                    ViewGameLogDialog dialog = new();
-                                    dialog.SetErrorHead(12, 10);
-                                    DialogsManager.ShowDialog(null, dialog);
-                                    GameManager.DisposeProject();
-                                }
-                            }
-                            if (m_playerDeathTime.HasValue
-                                || ComponentPlayer?.ComponentHealth.Health <= 0f) {
-                                m_playerDeathTime = Time.RealTime;
-                                m_stateMachine.TransitionTo("PlayerDead");
+                    else {
+                        SpawnPosition = SubsystemPlayers.GlobalSpawnPosition;
+                        m_spawnMode = SpawnMode.InitialNoIntro;
+                    }
+                }
+                else {
+                    m_spawnMode = SpawnMode.Respawn;
+                }
+                if (m_spawnMode == SpawnMode.Respawn) {
+                    if (CommonLib.WorkType != WorkType.Client) UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 2), Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
+                    else UpdateSpawnDialog(string.Format("连接{0}的世界中 (等级 {1})", Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
+                }
+                else {
+                    UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathUtils.Floor(Level)), null, 0f, resetProgress: true);
+                }
+                //说明，客户端非主玩家不执行updateLocation
+                if (!(CommonLib.WorkType == WorkType.Client && !IsMainPlayer)) {
+                    m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, 0f, 64f);
+                }
+                m_terrainWaitStartTime = Time.FrameStartTime;
+            }, delegate
+            {
+                if (Time.PeriodicEvent(0.1, 0.0)) {
+                    float updateProgress2 = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, 0f, 64f);
+                    UpdateSpawnDialog(null, null, 0.5f * updateProgress2, resetProgress: false);
+                    if (!(updateProgress2 < 1f) || !(Time.FrameStartTime - m_terrainWaitStartTime < 15.0)) {
+                        switch (m_spawnMode) {
+                            case SpawnMode.InitialIntro:
+                                SpawnPosition = FindIntroSpawnPosition(SpawnPosition.XZ);
+                                break;
+                            case SpawnMode.InitialNoIntro:
+                                SpawnPosition = FindNoIntroSpawnPosition(SpawnPosition, respawn: false);
+                                break;
+                            case SpawnMode.Respawn:
+                                SpawnPosition = FindNoIntroSpawnPosition(SpawnPosition, respawn: true);
+                                break;
+                            default:
+                                throw new InvalidOperationException(LanguageControl.Get(fName, 5));
+                        }
+                        m_stateMachine.TransitionTo("WaitForTerrain");
+                    }
+                }
+            }, null);
+            m_stateMachine.AddState("WaitForTerrain", delegate
+            {
+                m_terrainWaitStartTime = Time.FrameStartTime;
+                Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
+                if (ClientCachePosition.HasValue) {
+                    center = ClientCachePosition.Value.XZ;
+                    ClientCachePosition = null;
+                }
+                //说明，客户端非主玩家不执行UpdateLocation
+                if (!(CommonLib.WorkType == WorkType.Client && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
+            }, delegate
+            {
+                if (Time.PeriodicEvent(0.1, 0.0)) {
+                    float updateProgress = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, MathUtils.Min(SettingsManager.VisibilityRange, 64f), 0f);
+                    UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
+                    if ((updateProgress >= 1f && Time.FrameStartTime - m_terrainWaitStartTime > 2.0) || Time.FrameStartTime - m_terrainWaitStartTime >= 15.0) {
+                        if (ComponentPlayer == null || ComponentPlayer.PlayerData.PlayerGUID == Guid.Empty) {
+                            if (CommonLib.WorkType != WorkType.Client) {
+                                SpawnPlayer(SpawnPosition, m_spawnMode);
                             }
                             else {
-                                m_stateMachine.TransitionTo("Playing");
+                                m_stateMachine.TransitionTo("WaitForPlayerEntity");
+                                return;
                             }
                         }
+                        m_stateMachine.TransitionTo("Playing");
                     }
-                },
-                null
-            );
-            m_stateMachine.AddState(
-                "Playing",
-                HideSpawnDialog,
-                delegate {
-                    if (ComponentPlayer == null) {
-                        m_stateMachine.TransitionTo("PrepareSpawn");
+                }
+            }, null);
+            //等待服务器返回玩家数据
+            m_stateMachine.AddState("WaitForPlayerEntity", null, delegate
+            {
+                UpdateSpawnDialog("等待服务器响应玩家实体", null, 0f, false);
+                if (Time.PeriodicEvent(0.1, 0.0)) {
+                    if (ComponentPlayer != null) {
+                        m_stateMachine.TransitionTo("Playing");
                     }
-                    else if (m_playerDeathTime.HasValue) {
-                        m_stateMachine.TransitionTo("PlayerDead");
-                    }
-                    else {
-                        lock (ComponentPlayer.ComponentHealth) {
-                            if (ComponentPlayer.ComponentHealth.Health <= 0f) {
-                                m_playerDeathTime = Time.RealTime;
-                            }
-                        }
-                    }
-                },
-                null
-            );
-            m_stateMachine.AddState(
-                "PlayerDead",
-                delegate {
-                    HideSpawnDialog();
-                    ModsManager.HookAction(
-                        "OnPlayerDead",
-                        modLoader => {
-                            modLoader.OnPlayerDead(this);
-                            return false;
-                        }
-                    );
-                    if (ReduceLevelUponDeath && m_stateMachine.PreviousState == "Playing") {
-                        Level = MathUtils.Max(MathF.Floor(Level / 2f), 1f);
-                    }
-                },
-                delegate {
-                    if (ComponentPlayer == null) {
-                        m_stateMachine.TransitionTo("PrepareSpawn");
-                        return;
-                    }
-                    bool respawn = false;
-                    bool disableVanillaTapToRespawnAction = false;
-                    ModsManager.HookAction(
-                        "UpdateDeathCameraWidget",
-                        loader => {
-                            // ReSharper disable AccessToModifiedClosure
-                            loader.UpdateDeathCameraWidget(this, ref disableVanillaTapToRespawnAction, ref respawn);
-                            // ReSharper restore AccessToModifiedClosure
-                            return false;
-                        }
-                    );
-                    if (!disableVanillaTapToRespawnAction
-                        && Time.RealTime - (m_playerDeathTime ?? 0) > 1.5
-                        && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget)
-                        && ComponentPlayer.GameWidget.Input.Any) {
-                        if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel) {
-                            DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new GameMenuDialog(ComponentPlayer));
-                        }
-                        else if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure
-                            && !m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
-                            ScreensManager.SwitchScreen("GameLoading", GameManager.WorldInfo, "AdventureRestart");
+                }
+            }, null);
+            m_stateMachine.AddState("Playing", delegate
+            {
+                HideSpawnDialog();
+                if (CommonLib.WorkType == WorkType.Client) {
+                    CommonLib.Net.QueuePackage(new ClientPackage(CommonLib.Net.Self.ID, ClientState.Playing));
+                }
+            }, delegate
+            {
+                if (ComponentPlayer == null) {
+                    m_stateMachine.TransitionTo("PrepareSpawn");
+                }
+                else if (m_playerDeathTime.HasValue) {
+                    m_stateMachine.TransitionTo("PlayerDead");
+                }
+                else if (ComponentPlayer.ComponentHealth.Health <= 0f) {
+                    m_playerDeathTime = Time.RealTime;
+                }
+                //服务器更新客户端玩家的区域
+                if (!IsMainPlayer && CommonLib.WorkType != WorkType.Client) {
+                    if (!isSetStatus) {
+                        if (Client != null && Client.State != ClientState.Playing) {
+                            ComponentPlayer.ComponentHealth.IsInvulnerable = true;
                         }
                         else {
-                            respawn = true;
+                            isSetStatus = true;
+                            if (m_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) ComponentPlayer.ComponentHealth.IsInvulnerable = false;
                         }
                     }
-                    if (respawn) {
-                        LastDeadPlayer = ComponentPlayer.Entity;
-                        ComponentPlayer = null;
+                }
+            }, null);
+            m_stateMachine.AddState("PlayerDead", delegate
+            {
+                isSetStatus = false;
+                ModsManager.HookAction("OnPlayerDead", modLoader =>
+                {
+                    modLoader.OnPlayerDead(this);
+                    return false;
+                });
+            }, delegate
+            {
+                //死掉后也继续更新
+                if (CommonLib.WorkType != WorkType.Client && !IsMainPlayer) {
+                    Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
+                }
+                if (CommonLib.WorkType == WorkType.Client && !IsMainPlayer) {
+                    NetRestart();
+                    m_stateMachine.TransitionTo("PrepareSpawn");
+                }
+                else if (ComponentPlayer == null) {
+                    if (IsDead && readyToRestart) {
+                        IsDead = false;
+                        readyToRestart = false;
+                        m_stateMachine.TransitionTo("PrepareSpawn");
                     }
-                },
-                null
-            );
-            m_stateMachine.TransitionTo("FirstUpdate");
+                }
+                else if (IsMainPlayer && Time.RealTime - m_playerDeathTime.Value > 1.5 && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any || readyToRestart) {
+                    if (CommonLib.WorkType == WorkType.Client && IsMainPlayer) {
+                        CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(this, NetWork.Packages.ComponentPlayerPackage.PlayerAction.Restart));
+                    }
+                    IsDead = true;
+                    readyToRestart = true;
+                    NetRestart();
+                }
+            }, null);
+        }
+
+        public void NetRestart() {
+            if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel) {
+                //禁用更新，防止一直出现dialog
+                m_stateMachine.TransitionTo(null);
+                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("提示", "你已在残酷模式死亡，不可复活！", LanguageControl.Yes, LanguageControl.No, btn =>
+                {
+                    CommonLib.Net.StopImmediate();
+                }));
+            }
+            else if (!m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
+                //禁用更新，防止一直出现dialog
+                m_stateMachine.TransitionTo(null);
+                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("提示", "服务器禁止了玩家重生！", LanguageControl.Yes, LanguageControl.No, btn =>
+                {
+                    CommonLib.Net.StopImmediate();
+                }));
+            }
+            else if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure && !m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
+                ScreensManager.SwitchScreen("GameLoading", GameManager.WorldInfo, "AdventureRestart");
+            }
+            else {
+                m_project.RemoveEntity(ComponentPlayer.Entity, disposeEntity: true);
+            }
         }
 
         public void Dispose() {
@@ -373,10 +396,13 @@ namespace Game {
             LastSpawnTime = valuesDictionary.GetValue("LastSpawnTime", 0.0);
             SpawnsCount = valuesDictionary.GetValue("SpawnsCount", 0);
             Name = valuesDictionary.GetValue("Name", "Walter");
+            PlayerGUID = valuesDictionary.GetValue("PlayerGUID", CommonLib.Net.Self.PlayerGuid);
             PlayerClass = valuesDictionary.GetValue("PlayerClass", PlayerClass.Male);
             Level = valuesDictionary.GetValue("Level", 1f);
             CharacterSkinName = valuesDictionary.GetValue("CharacterSkinName", CharacterSkinsManager.CharacterSkinsNames[0]);
             InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
+            IsMainPlayer = PlayerGUID == CommonLib.Net.Self.PlayerGuid;
+            PlayerGameMode = valuesDictionary.GetValue("PlayerGameMode", GameMode.Follow);
         }
 
         public void Save(ValuesDictionary valuesDictionary) {
@@ -385,16 +411,23 @@ namespace Game {
             valuesDictionary.SetValue("LastSpawnTime", LastSpawnTime);
             valuesDictionary.SetValue("SpawnsCount", SpawnsCount);
             valuesDictionary.SetValue("Name", Name);
+            valuesDictionary.SetValue("PlayerGUID", PlayerGUID);
             valuesDictionary.SetValue("PlayerClass", PlayerClass);
             valuesDictionary.SetValue("Level", Level);
             valuesDictionary.SetValue("CharacterSkinName", CharacterSkinName);
             valuesDictionary.SetValue("InputDevice", InputDevice);
+            if (PlayerGameMode != GameMode.Follow) {
+                valuesDictionary.SetValue("PlayerGameMode", PlayerGameMode);
+            }
+        }
+
+        public void WaitEntityAdded() {
+            m_stateMachine.TransitionTo("WaitForPlayerEntity");
         }
 
         public void OnEntityAdded(Entity entity) {
             ComponentPlayer componentPlayer = entity.FindComponent<ComponentPlayer>();
-            if (componentPlayer != null
-                && componentPlayer.PlayerData == this) {
+            if (componentPlayer != null && componentPlayer.PlayerData == this) {
                 //多维世界mod会提前为PlayerData.ComponentPlayer赋值，原版行为会在SubsystemPlayers.OnEntityAdded再次赋值
                 //为阻止再次赋值时引发异常所以加了条ComponentPlayer != componentPlayer判断
                 if (ComponentPlayer != null && ComponentPlayer != componentPlayer) {
@@ -624,7 +657,7 @@ namespace Game {
                 value5 = m_subsystemGameInfo.WorldSettings.GameMode <= GameMode.Survival ? 1 : 0;
             }
             ValuesDictionary overrides = new() {
-                { "Player", new ValuesDictionary { { "PlayerIndex", PlayerIndex } } },
+                { "Player",new ValuesDictionary { { "PlayerIndex", PlayerIndex }, { "PlayerGuid", PlayerGUID  } } },
                 { "Intro", new ValuesDictionary { { "PlayIntro", spawnMode == SpawnMode.InitialIntro } } }, {
                     "Clothing",
                     new ValuesDictionary {
@@ -694,5 +727,38 @@ namespace Game {
         public static string MakeClothingValue(int index, int color) => Terrain
             .MakeBlockValue(203, 0, ClothingBlock.SetClothingIndex(ClothingBlock.SetClothingColor(0, color), index))
             .ToString(CultureInfo.InvariantCulture);
+
+        private static readonly Regex ValidNameRegex = new Regex(@"^[\u4E00-\u9FA5A-Za-z0-9_-]+$", RegexOptions.Compiled);
+
+        public static string SanitizeName(string input) {
+            if (string.IsNullOrEmpty(input)) return input;
+
+            // 删除所有非法字符
+            var sanitized = new StringBuilder();
+            foreach (char c in input) {
+                if (ValidNameRegex.IsMatch(c.ToString())) {
+                    sanitized.Append(c);
+                }
+            }
+
+            // 处理空值情况
+            return sanitized.Length > 0 ? sanitized.ToString() : string.Empty;
+        }
+
+        public static string EnsureGuidSuffix(string baseName, Guid guid) {
+            if (string.IsNullOrEmpty(baseName)) return baseName;
+            string g = guid.ToString("N");
+            string last4 = g.Substring(g.Length - 4).ToUpperInvariant();
+            var m = Regex.Match(baseName, @"_[A-Fa-f0-9]{4}$");
+            if (m.Success) {
+                return Regex.Replace(baseName, @"_[A-Fa-f0-9]{4}$", "_" + last4);
+            }
+            return baseName + "_" + last4;
+        }
+
+        public static bool IsDuplicateName(string name) {
+            SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>(throwOnError: true);
+            return subsystemPlayers.PlayersData.Any(playerData => playerData.Name == name);
+        }
     }
 }

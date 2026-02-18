@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Xml.Linq;
 using Engine;
+using Game.NetWork;
 using TemplatesDatabase;
 
 namespace Game {
@@ -282,7 +283,16 @@ namespace Game {
                     return false;
                 }
             );
-            if (item != null) {
+            var modInfos = new List<ModInfo>();
+            if (SettingsManager.AllowLanConnection) {
+                if (CommonLib.StartServer()) {
+                    ScreensManager.SwitchScreen("GameLoading", item, null);
+                }
+                else {
+                    DialogsManager.ShowDialog(this, new MessageDialog("提示", "创建服务器失败：端口被占用", "确定", null, (txt) => { CommonLib.Net.StopImmediate(); DialogsManager.HideAllDialogs(); }));
+                }
+            }
+            else {
                 ScreensManager.SwitchScreen("GameLoading", item, null);
             }
             m_worldsListWidget.SelectedItem = null;

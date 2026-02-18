@@ -19,5 +19,10 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="$(MSBuildThisFileDirectory)**\*.cs" Exclude="$(MSBuildThisFileDirectory)obj\**\*.cs"/>
+        <Compile Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Windows\NetWork\**\*.cs" Exclude="$(MSBuildThisFileDirectory)..\Survivalcraft.Windows\obj\**\*.cs" />
+        <Compile Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Windows\Server\**\*.cs" Exclude="$(MSBuildThisFileDirectory)..\Survivalcraft.Windows\obj\**\*.cs" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="LiteNetLib" Version="2.0.1" />
     </ItemGroup>
 </Project>

@@ -1,5 +1,7 @@
 using Engine;
 using Engine.Serialization;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using TemplatesDatabase;
 
 namespace Game {
@@ -68,6 +70,10 @@ namespace Game {
                 int num = FindFreeItemId();
                 m_itemsData.Add(num, (T)blockData.Copy());
                 dropValue.Value = Terrain.ReplaceData(dropValue.Value, num);
+                if (CommonLib.WorkType != WorkType.Client) {
+                    if (blockData is MemoryBankData memory) CommonLib.Net.QueuePackage(new EditableBlockPackage(num, memory));
+                    if (blockData is TruthTableData truthTableData) CommonLib.Net.QueuePackage(new EditableBlockPackage(num, truthTableData));
+                }
             }
         }
 

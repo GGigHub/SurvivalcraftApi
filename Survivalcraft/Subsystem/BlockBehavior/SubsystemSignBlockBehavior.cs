@@ -2,6 +2,8 @@ using System.Globalization;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using TemplatesDatabase;
 
 namespace Game {
@@ -157,7 +159,14 @@ namespace Game {
                 }
             }
             else if (componentMiner.ComponentPlayer != null) {
-                DialogsManager.ShowDialog(componentMiner.ComponentPlayer.GuiWidget, new EditSignDialog(this, point));
+                if (CommonLib.WorkType == WorkType.Client && componentMiner.ComponentPlayer == CommonLib.MainPlayer) {
+                    IPackage package = new BlockEditPackage(point, BlockEditPackage.EventType.EditSign);
+                    CommonLib.Net.QueuePackage(package);
+                    return true;
+                }
+                if (componentMiner.ComponentPlayer.PlayerData.IsMainPlayer) {
+                    DialogsManager.ShowDialog(componentMiner.ComponentPlayer.GuiWidget, new EditSignDialog(this, point));
+                }
             }
             return true;
         }

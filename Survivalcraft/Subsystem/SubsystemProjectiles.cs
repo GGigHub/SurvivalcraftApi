@@ -2,6 +2,8 @@ using System.Globalization;
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -86,7 +88,7 @@ namespace Game {
         }
 
         public virtual Projectile AddProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) =>
-            AddProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
+            AddProjectileWithSync(value, position, velocity, angularVelocity, owner);
 
         public virtual Projectile CreateProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) =>
             CreateProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
@@ -125,7 +127,7 @@ namespace Game {
         }
 
         public virtual Projectile FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) =>
-            FireProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
+            FireProjectileWithSync(value, position, velocity, angularVelocity, owner);
 
         public virtual bool CanFireProjectile(int value, Vector3 position, Vector3 velocity, ComponentCreature owner, out Vector3 firePosition) {
             int num = Terrain.ExtractContents(value);
@@ -176,6 +178,16 @@ namespace Game {
             for (int i = 0; i < blockBehaviors.Length; i++) {
                 blockBehaviors[i].OnFiredAsProjectile(projectile);
             }
+        }
+
+        public Projectile AddProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner)
+        {
+            return AddProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
+        }
+
+        public Projectile FireProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner)
+        {
+            return FireProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
         }
 
         public virtual void AddTrail(Projectile projectile, Vector3 offset, ITrailParticleSystem particleSystem) {
@@ -344,6 +356,29 @@ namespace Game {
             matrix.Right = Vector3.Normalize(Vector3.Cross(matrix.Up, Vector3.UnitY));
             matrix.Forward = Vector3.Normalize(Vector3.Cross(matrix.Up, matrix.Right));
             matrix.Translation = position;
+        }
+
+        Projectile AddProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
+            if (CommonLib.WorkType == WorkType.Client) {
+                return null;
+            }
+            Projectile projectile = AddProjectileNet(value, position, velocity, angularVelocity, owner);
+            if (projectile != null) {
+                CommonLib.Net.QueuePackage(new ProjectilePackage(projectile));
+            }
+            return projectile;
+        }
+
+        Projectile FireProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
+            if (CommonLib.WorkType == WorkType.Client) {
+                return null;
+            }
+            Projectile projectile = FireProjectileNet(value, position, velocity, angularVelocity, owner);
+            if (projectile != null) {
+                projectile.IsFireProjectile = true;
+                CommonLib.Net.QueuePackage(new ProjectilePackage(projectile));
+            }
+            return projectile;
         }
     }
 }

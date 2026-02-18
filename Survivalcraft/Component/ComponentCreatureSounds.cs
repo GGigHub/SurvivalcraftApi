@@ -1,5 +1,7 @@
 using GameEntitySystem;
 using TemplatesDatabase;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class ComponentCreatureSounds : Component {
@@ -48,107 +50,107 @@ namespace Game {
         public double m_lastPukeSoundTime = -1000.0;
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (!string.IsNullOrEmpty(m_idleSound)
-                && m_subsystemTime.GameTime > m_lastSoundTime + (skipIfRecentlyPlayed ? 12f : 1f)) {
+            if (CommonLib.WorkType == WorkType.Client) return;
+            PlayIdleSoundLogic(skipIfRecentlyPlayed);
+        }
+        
+        public void PlayIdleSoundLogic(bool skipIfRecentlyPlayed)
+        {
+            if (!string.IsNullOrEmpty(m_idleSound) && m_subsystemTime.GameTime > m_lastSoundTime + (skipIfRecentlyPlayed ? 12f : 1f))
+            {
                 m_lastSoundTime = m_subsystemTime.GameTime;
-                m_subsystemAudio.PlayRandomSound(
-                    m_idleSound,
-                    1f,
-                    m_random.Float(-0.1f, 0.1f),
-                    m_componentCreature.ComponentBody.Position,
-                    m_idleSoundMinDistance,
-                    false
-                );
+                m_subsystemAudio.PlayRandomSound(m_idleSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_idleSoundMinDistance, autoDelay: false);
+                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
             }
         }
 
         public virtual void PlayPainSound() {
-            if (!string.IsNullOrEmpty(m_painSound)
-                && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
+            if (CommonLib.WorkType == WorkType.Client) return;
+            PlayPainSoundLogic();
+        }
+
+        public void PlayPainSoundLogic()
+        {
+            if (!string.IsNullOrEmpty(m_painSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0)
+            {
                 m_lastSoundTime = m_subsystemTime.GameTime;
-                m_subsystemAudio.PlayRandomSound(
-                    m_painSound,
-                    1f,
-                    m_random.Float(-0.1f, 0.1f),
-                    m_componentCreature.ComponentBody.Position,
-                    m_painSoundMinDistance,
-                    false
-                );
+                m_subsystemAudio.PlayRandomSound(m_painSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_painSoundMinDistance, autoDelay: false);
+                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 1));
             }
         }
 
         public virtual void PlayMoanSound() {
-            if (!string.IsNullOrEmpty(m_moanSound)
-                && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
+            if (CommonLib.WorkType == WorkType.Client) return;
+            PlayMoanSoundLogic();
+        }
+
+        public void PlayMoanSoundLogic()
+        {
+            if (!string.IsNullOrEmpty(m_moanSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0)
+            {
                 m_lastSoundTime = m_subsystemTime.GameTime;
-                m_subsystemAudio.PlayRandomSound(
-                    m_moanSound,
-                    1f,
-                    m_random.Float(-0.1f, 0.1f),
-                    m_componentCreature.ComponentBody.Position,
-                    m_moanSoundMinDistance,
-                    false
-                );
+                m_subsystemAudio.PlayRandomSound(m_moanSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_moanSoundMinDistance, autoDelay: false);
+                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 2));
             }
         }
 
         public virtual void PlaySneezeSound() {
-            if (!string.IsNullOrEmpty(m_sneezeSound)
-                && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
+            if (CommonLib.WorkType == WorkType.Client) return;
+            PlaySneezeSoundLogic();
+        }
+
+        public void PlaySneezeSoundLogic()
+        {
+            if (!string.IsNullOrEmpty(m_sneezeSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0)
+            {
                 m_lastSoundTime = m_subsystemTime.GameTime;
-                m_subsystemAudio.PlayRandomSound(
-                    m_sneezeSound,
-                    1f,
-                    m_random.Float(-0.1f, 0.1f),
-                    m_componentCreature.ComponentBody.Position,
-                    m_sneezeSoundMinDistance,
-                    false
-                );
+                m_subsystemAudio.PlayRandomSound(m_sneezeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_sneezeSoundMinDistance, autoDelay: false);
+                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 3));
             }
         }
 
         public void PlayCoughSound() {
-            if (!string.IsNullOrEmpty(m_coughSound)
-                && m_subsystemTime.GameTime > m_lastCoughingSoundTime + 1.0) {
+            if (CommonLib.WorkType == WorkType.Client) return;
+            PlayCoughSoundLogic();
+        }
+
+        public void PlayCoughSoundLogic()
+        {
+            if (!string.IsNullOrEmpty(m_coughSound) && m_subsystemTime.GameTime > m_lastCoughingSoundTime + 1.0)
+            {
                 m_lastCoughingSoundTime = m_subsystemTime.GameTime;
-                m_subsystemAudio.PlayRandomSound(
-                    m_coughSound,
-                    1f,
-                    m_random.Float(-0.1f, 0.1f),
-                    m_componentCreature.ComponentBody.Position,
-                    m_coughSoundMinDistance,
-                    false
-                );
+                m_subsystemAudio.PlayRandomSound(m_coughSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_coughSoundMinDistance, autoDelay: false);
+                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 4));
             }
         }
 
         public virtual void PlayPukeSound() {
-            if (!string.IsNullOrEmpty(m_pukeSound)
-                && m_subsystemTime.GameTime > m_lastPukeSoundTime + 1.0) {
+            if (CommonLib.WorkType == WorkType.Client) return;
+            PlayPukeSoundLogic();
+        }
+
+        public void PlayPukeSoundLogic()
+        {
+            if (!string.IsNullOrEmpty(m_pukeSound) && m_subsystemTime.GameTime > m_lastPukeSoundTime + 1.0)
+            {
                 m_lastPukeSoundTime = m_subsystemTime.GameTime;
-                m_subsystemAudio.PlayRandomSound(
-                    m_pukeSound,
-                    1f,
-                    m_random.Float(-0.1f, 0.1f),
-                    m_componentCreature.ComponentBody.Position,
-                    m_pukeSoundMinDistance,
-                    false
-                );
+                m_subsystemAudio.PlayRandomSound(m_pukeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_pukeSoundMinDistance, autoDelay: false);
+                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 5));
             }
         }
 
         public virtual void PlayAttackSound() {
-            if (!string.IsNullOrEmpty(m_attackSound)
-                && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
+            if (CommonLib.WorkType == WorkType.Client) return;
+            PlayAttackSoundLogic();
+        }
+
+        public void PlayAttackSoundLogic()
+        {
+            if (!string.IsNullOrEmpty(m_attackSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0)
+            {
                 m_lastSoundTime = m_subsystemTime.GameTime;
-                m_subsystemAudio.PlayRandomSound(
-                    m_attackSound,
-                    1f,
-                    m_random.Float(-0.1f, 0.1f),
-                    m_componentCreature.ComponentBody.Position,
-                    m_attackSoundMinDistance,
-                    false
-                );
+                m_subsystemAudio.PlayRandomSound(m_attackSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_attackSoundMinDistance, autoDelay: false);
+                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 6));
             }
         }
 

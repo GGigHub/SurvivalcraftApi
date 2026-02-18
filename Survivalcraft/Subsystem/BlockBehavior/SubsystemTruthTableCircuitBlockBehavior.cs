@@ -1,4 +1,6 @@
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class SubsystemTruthTableCircuitBlockBehavior : SubsystemEditableItemBehavior<TruthTableData> {
@@ -20,10 +22,11 @@ namespace Game {
                 new EditTruthTableDialog(
                     truthTableData,
                     delegate {
-                        int data = StoreItemDataAtUniqueId(truthTableData);
-                        int value2 = Terrain.ReplaceData(value, data);
-                        inventory.RemoveSlotItems(slotIndex, count);
-                        inventory.AddSlotItems(slotIndex, value2, count);
+                        var p = new EditableBlockPackage(default, true, inventory.Id, slotIndex, truthTableData);
+                        CommonLib.Net.QueuePackage(p);
+                        if (CommonLib.WorkType != WorkType.Client) {
+                            p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                        }
                     }
                 )
             );
@@ -37,12 +40,12 @@ namespace Game {
                 new EditTruthTableDialog(
                     truthTableData,
                     delegate {
-                        SetBlockData(new Point3(x, y, z), truthTableData);
                         int face = ((TruthTableCircuitBlock)BlocksManager.Blocks[188]).GetFace(value);
-                        SubsystemElectricity subsystemElectricity = SubsystemTerrain.Project.FindSubsystem<SubsystemElectricity>(true);
-                        ElectricElement electricElement = subsystemElectricity.GetElectricElement(x, y, z, face);
-                        if (electricElement != null) {
-                            subsystemElectricity.QueueElectricElementForSimulation(electricElement, subsystemElectricity.CircuitStep + 1);
+                        var cell = new CellFace(x, y, z, face);
+                        var p = new EditableBlockPackage(cell, false, default, default, truthTableData);
+                        CommonLib.Net.QueuePackage(p);
+                        if (CommonLib.WorkType != WorkType.Client) {
+                            p.Handle(ProjectNet.Project, CommonLib.Net, false);
                         }
                     }
                 )

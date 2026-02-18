@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 using Engine;
 using Game;
+using Game.NetWork;
 using GameEntitySystem;
 
 public class GameWidget : CanvasWidget {
@@ -156,37 +157,24 @@ public class GameWidget : CanvasWidget {
     }
 
     public WidgetInputDevice DetermineInputDevices() {
-        bool flag = false;
-        foreach (PlayerData playersDatum in PlayerData.SubsystemPlayers.PlayersData) {
-            if ((playersDatum.InputDevice & WidgetInputDevice.MultiMice) != 0) {
-                flag = true;
-            }
-        }
-        WidgetInputDevice widgetInputDevice = WidgetInputDevice.None;
-        foreach (WidgetInputDevice allInputDevice in PlayerScreen.AllInputDevices) {
-            if (!flag
-                || allInputDevice != (WidgetInputDevice.Keyboard | WidgetInputDevice.Mouse)) {
-                widgetInputDevice |= allInputDevice;
-            }
-        }
-        if (PlayerData.SubsystemPlayers.PlayersData.Count > 0
-            && PlayerData == PlayerData.SubsystemPlayers.PlayersData[0]) {
-            WidgetInputDevice widgetInputDevice2 = WidgetInputDevice.None;
-            foreach (PlayerData playersDatum2 in PlayerData.SubsystemPlayers.PlayersData) {
-                if (playersDatum2 != PlayerData) {
-                    widgetInputDevice2 |= playersDatum2.InputDevice;
+        if (PlayerData.SubsystemPlayers.PlayersData.Count > 0 && PlayerData.IsMainPlayer ||
+            CommonLib.WorkType == WorkType.Local && PlayerData == PlayerData.SubsystemPlayers.PlayersData[0]) {
+            WidgetInputDevice widgetInputDevice = WidgetInputDevice.None;
+            foreach (PlayerData playersDatum in PlayerData.SubsystemPlayers.PlayersData) {
+                if (playersDatum != PlayerData) {
+                    widgetInputDevice |= playersDatum.InputDevice;
                 }
             }
-            return (widgetInputDevice & ~widgetInputDevice2) | WidgetInputDevice.Touch | PlayerData.InputDevice;
+            return (WidgetInputDevice.All & ~widgetInputDevice) | WidgetInputDevice.Touch | PlayerData.InputDevice;
         }
-        WidgetInputDevice widgetInputDevice3 = WidgetInputDevice.None;
-        foreach (PlayerData playersDatum3 in PlayerData.SubsystemPlayers.PlayersData) {
-            if (playersDatum3 == PlayerData) {
+        WidgetInputDevice widgetInputDevice2 = WidgetInputDevice.None;
+        foreach (PlayerData playersDatum2 in PlayerData.SubsystemPlayers.PlayersData) {
+            if (playersDatum2 == PlayerData) {
                 break;
             }
-            widgetInputDevice3 |= playersDatum3.InputDevice;
+            widgetInputDevice2 |= playersDatum2.InputDevice;
         }
-        return (PlayerData.InputDevice & ~widgetInputDevice3) | WidgetInputDevice.Touch;
+        return (PlayerData.InputDevice & ~widgetInputDevice2) | WidgetInputDevice.Touch;
     }
 
     public bool IsCameraAllowed(Camera camera) {
@@ -194,5 +182,12 @@ public class GameWidget : CanvasWidget {
             return false;
         }
         return true;
+    }
+
+    public override void MeasureOverride(Vector2 parentAvailableSize) {
+        if (CommonLib.WorkType != WorkType.Local) {
+            IsVisible = PlayerData.IsMainPlayer;
+        }
+        base.MeasureOverride(parentAvailableSize);
     }
 }

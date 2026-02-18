@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using Game.NetWork;
 
 namespace Game {
     public class NewWorldScreen : Screen {
@@ -111,7 +112,19 @@ namespace Game {
                     m_worldSettings.ResetOptionsForNonCreativeMode(null);
                 }
                 WorldInfo worldInfo = WorldsManager.CreateWorld(m_worldSettings);
-                ScreensManager.SwitchScreen("GameLoading", worldInfo, null);
+                if (SettingsManager.AllowLanConnection) {
+                    if (CommonLib.StartServer()) {
+                        ScreensManager.SwitchScreen("GameLoading", worldInfo, null);
+                    }
+                    else {
+                        DialogsManager.ShowDialog(this, new MessageDialog("提示", "创建服务器失败，端口已被占用", "确定", null, (txt) => {
+                            CommonLib.Net.StopImmediate(); DialogsManager.HideAllDialogs();
+                        }));
+                    }
+                }
+                else {
+                    ScreensManager.SwitchScreen("GameLoading", worldInfo, null);
+                }
             }
             if (Input.Back
                 || Input.Cancel

@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
+using Game.NetWork;
 
 namespace Game {
     public class FurnitureSetItemWidget : CanvasWidget, IDragTargetWidget {
@@ -26,6 +27,7 @@ namespace Game {
             if (furnitureDesign != null) {
                 m_furnitureInventoryPanel.SubsystemFurnitureBlockBehavior.AddToFurnitureSet(furnitureDesign, m_furnitureSet);
                 m_furnitureInventoryPanel.Invalidate();
+                CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureDesign, m_furnitureSet));
             }
         }
 

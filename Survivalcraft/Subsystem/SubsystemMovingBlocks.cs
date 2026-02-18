@@ -3,6 +3,7 @@ using System.Text;
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -195,10 +196,15 @@ namespace Game {
                 GenerateGeometry(movingBlockSet);
             }
             m_movingBlockSets.Add(movingBlockSet);
+            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+                m_movingBlockSets.Add(movingBlockSet);
+                NetWork.CommonLib.Net.QueuePackage(new MovingBlockPackage(movingBlockSet));
+            }
             return movingBlockSet;
         }
 
         public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet) {
+            if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) return;
             MovingBlockSet movingBlockSet2 = (MovingBlockSet)movingBlockSet;
             if (m_movingBlockSets.Remove(movingBlockSet2)) {
                 m_removing.Add(movingBlockSet2);
@@ -210,7 +216,48 @@ namespace Game {
                     }
                 );
                 movingBlockSet2.RemainCounter = 4;
+                NetWork.CommonLib.Net.QueuePackage(new MovingBlockPackage(movingBlockSet, false));
             }
+        }
+
+        public void RemoveMovingBlockSetLogic(IMovingBlockSet movingBlockSet) {
+            RemoveMovingBlockSet(movingBlockSet);
+        }
+
+        public void DoStop(MovingBlockSet item) {
+            item.Stop = true;
+        }
+
+        public IMovingBlockSet LoadAndAddMovingItem(ValuesDictionary value9) {
+            return AddMovingBlockSet(
+                value9.GetValue<Vector3>("Position"),
+                value9.GetValue<Vector3>("TargetPosition"),
+                value9.GetValue<float>("Speed"),
+                value9.GetValue<float>("Acceleration"),
+                value9.GetValue<float>("Drag"),
+                value9.GetValue<Vector2>("Smoothness"),
+                value9.GetValue<DynamicArray<MovingBlock>>("Blocks").Array,
+                value9.GetValue<string>("Id"),
+                null,
+                false
+            );
+        }
+
+        public static ValuesDictionary SaveMovingItem(MovingBlockSet movingBlockSet) {
+            ValuesDictionary values = new();
+            values.SetValue("Position", movingBlockSet.Position);
+            values.SetValue("TargetPosition", movingBlockSet.TargetPosition);
+            values.SetValue("Speed", movingBlockSet.Speed);
+            values.SetValue("Acceleration", movingBlockSet.Acceleration);
+            values.SetValue("Drag", movingBlockSet.Drag);
+            values.SetValue("Smoothness", movingBlockSet.Smoothness);
+            values.SetValue("Id", movingBlockSet.Id);
+            DynamicArray<MovingBlock> blocks = new();
+            foreach (var block in movingBlockSet.Blocks) {
+                blocks.Add(block);
+            }
+            values.SetValue("Blocks", blocks);
+            return values;
         }
 
         public void FindMovingBlocks(BoundingBox boundingBox, bool extendToFillCells, DynamicArray<IMovingBlockSet> result) {
@@ -372,6 +419,12 @@ namespace Game {
             }
             foreach (MovingBlockSet item in m_stopped) {
                 Stopped?.Invoke(item);
+            }
+            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+                foreach (MovingBlockSet item in m_stopped) {
+                    DoStop(item);
+                    NetWork.CommonLib.Net.QueuePackage(new MovingBlockPackage(item, true));
+                }
             }
             m_stopped.Clear();
         }

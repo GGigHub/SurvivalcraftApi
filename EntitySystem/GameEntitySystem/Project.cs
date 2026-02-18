@@ -24,6 +24,8 @@ namespace GameEntitySystem {
 
         public virtual Dictionary<Entity, bool>.KeyCollection Entities => m_entities.Keys;
 
+        public event EventHandler<EntityAddRemoveEventArgs> BeforeEntityAdded;
+
         public static event EventHandler<EntityAddRemoveEventArgs> EntityAdded;
 
         public static event EventHandler<EntityAddRemoveEventArgs> EntityRemoved;
@@ -183,6 +185,7 @@ namespace GameEntitySystem {
                 throw new Exception("Entity does not belong to this project.");
             }
             if (!entity.IsAddedToProject) {
+                BeforeEntityAdded?.Invoke(this, new EntityAddRemoveEventArgs(entity));
                 m_entities.Add(entity, true);
                 if (entity.Id == 0) {
                     entity.Id = NextEntityID;

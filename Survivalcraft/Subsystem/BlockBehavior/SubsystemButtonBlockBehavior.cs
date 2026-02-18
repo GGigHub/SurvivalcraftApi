@@ -1,3 +1,6 @@
+using Game.NetWork;
+using Game.NetWork.Packages;
+
 namespace Game {
     public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior {
         public override int[] HandledBlocks => [142];
@@ -18,8 +21,11 @@ namespace Game {
                         int data2 = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
                         int num = Terrain.ReplaceData(value, data2);
                         if (num != value) {
-                            inventory.RemoveSlotItems(slotIndex, count);
-                            inventory.AddSlotItems(slotIndex, num, count);
+                            var p = new EditableBlockPackage(EditableItemType.Button, default, true, inventory.Id, slotIndex, newVoltageLevel);
+                            CommonLib.Net.QueuePackage(p);
+                            if (CommonLib.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                            }
                         }
                     }
                 )
@@ -37,8 +43,13 @@ namespace Game {
                     delegate(int newVoltageLevel) {
                         int num = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
                         if (num != data) {
-                            int value2 = Terrain.ReplaceData(value, num);
-                            SubsystemTerrain.ChangeCell(x, y, z, value2);
+                            int face = 4;
+                            var cell = new CellFace(x, y, z, face);
+                            var p = new EditableBlockPackage(EditableItemType.Button, cell, false, default, default, newVoltageLevel);
+                            CommonLib.Net.QueuePackage(p);
+                            if (CommonLib.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                            }
                         }
                     }
                 )

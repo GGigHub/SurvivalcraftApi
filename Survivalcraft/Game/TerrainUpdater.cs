@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class TerrainUpdater {
@@ -218,6 +220,8 @@ namespace Game {
 
         public event Action<TerrainChunk> ChunkInitialized;
 
+        public Dictionary<int, UpdateLocation> UpdateLocations => m_updateParameters.Locations;
+
         public TerrainUpdater() {}
 
         public TerrainUpdater(SubsystemTerrain subsystemTerrain) {
@@ -253,18 +257,26 @@ namespace Game {
             m_synchronousUpdateFrame = Time.FrameIndex;
         }
 
-        public virtual void SetUpdateLocation(int locationIndex, Vector2 center, float visibilityDistance, float contentDistance) {
+        public void SetLastChunksUpdateCenter(int locationIndex, Vector2? v) {
+            if (m_updateParameters.Locations.TryGetValue(locationIndex, out UpdateLocation value)) {
+                value.LastChunksUpdateCenter = v;
+                m_pendingLocations[locationIndex] = value;
+            }
+        }
+
+        public void SetUpdateLocation(int locationIndex, Vector2 center, float visibilityDistance, float contentDistance) {
             contentDistance = MathUtils.Max(contentDistance, visibilityDistance);
             m_updateParameters.Locations.TryGetValue(locationIndex, out UpdateLocation value);
-            if (contentDistance != value.ContentDistance
-                || visibilityDistance != value.VisibilityDistance
-                || !value.LastChunksUpdateCenter.HasValue
-                || Vector2.DistanceSquared(center, value.LastChunksUpdateCenter.Value) > 64f) {
+            //如果这里一直执行会阻塞地形更新
+            if (contentDistance != value.ContentDistance || visibilityDistance != value.VisibilityDistance || !value.LastChunksUpdateCenter.HasValue || Vector2.DistanceSquared(center, value.LastChunksUpdateCenter.Value) > 64f) {
                 value.Center = center;
                 value.VisibilityDistance = visibilityDistance;
                 value.ContentDistance = contentDistance;
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
+                if (CommonLib.WorkType == WorkType.Client) {
+                    CommonLib.Net.QueuePackage(new PlayerDataPackage(value));
+                }
             }
         }
 
@@ -314,6 +326,8 @@ namespace Game {
             }
             return 0f;
         }
+
+        private List<Point2> RequestSyncChunkList = new List<Point2>();
 
         public virtual void Update() {
             if (m_subsystemSky.SkyLightValue != m_lastSkylightValue) {
@@ -379,14 +393,73 @@ namespace Game {
                     Monitor.Exit(m_updateParametersLock);
                 }
             }
-            TerrainChunk[] allocatedChunks = m_terrain.AllocatedChunks;
-            foreach (TerrainChunk terrainChunk in allocatedChunks) {
-                if (terrainChunk.State >= TerrainChunkState.InvalidVertices1
-                    && !terrainChunk.AreBehaviorsNotified) {
+            foreach (TerrainChunk terrainChunk in m_terrain.AllocatedChunks) {
+                if (CommonLib.WorkType == WorkType.Client) {
+                    if (terrainChunk.ThreadState == TerrainChunkState.NotLoaded) {
+                        if (!terrainChunk.IsRequested) {
+                            terrainChunk.IsRequested = true;
+                            lock (RequestSyncChunkList) {
+                                RequestSyncChunkList.Add(terrainChunk.Coords);
+                            }
+                        }
+                    }
+                }
+
+                if (terrainChunk.State >= TerrainChunkState.InvalidVertices1 && !terrainChunk.AreBehaviorsNotified) {
                     terrainChunk.AreBehaviorsNotified = true;
                     NotifyBlockBehaviors(terrainChunk);
                 }
             }
+            lock (RequestSyncChunkList) {
+                if (RequestSyncChunkList.Count > 0 && Time.PeriodicEvent(0.5, 0.0)) {
+                    CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(RequestSyncChunkList));
+                    RequestSyncChunkList.Clear();
+                }
+            }
+            foreach (var item in waitChunkList) {
+                List<Point2> toRemove = new List<Point2>();
+                List<Point2> toDeal = new List<Point2>();
+                List<Point2> result = new List<Point2>();
+                if (Time.PeriodicEvent(1, 0.6)) {
+                    List<TerrainChunk> toSendList = new List<TerrainChunk>();
+                    int sc = Math.Min(item.Value.Count, 100);
+                    for (int i = 0; i < sc; i++) {
+                        var coord = item.Value[i];
+                        TerrainChunk chunk = m_subsystemTerrain.Terrain.GetChunkAtCoords(coord.X, coord.Y);
+                        if (chunk != null) {
+                            if (chunk.ThreadState > TerrainChunkState.InvalidContents4) {
+                                toSendList.Add(chunk);
+                                toRemove.Add(coord);
+                            }
+                            else {
+                                //回复客户端加载失败，让客户端重新请求
+                                result.Add(new Point2(coord.X, coord.Y));
+                                toRemove.Add(coord);
+                            }
+                        }
+                        else {
+                            //回复客户端加载失败，让客户端重新请求
+                            result.Add(new Point2(coord.X, coord.Y));
+                            toRemove.Add(coord);
+                        }
+
+                    }
+                    if (toSendList.Count > 0) {
+                        CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(toSendList) { To = item.Key });
+                    }
+                    if (result.Count > 0) {
+                        CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(result, 0) { To = item.Key });
+                    }
+                }
+                foreach (var item2 in toRemove) {
+                    item.Value.Remove(item2);
+                }
+                if (item.Value.Count == 0) waitChunkList_toRemove.Add(item.Key);
+            }
+            foreach (var item in waitChunkList_toRemove) {
+                waitChunkList.Remove(item);
+            }
+            waitChunkList_toRemove.Clear();
         }
 
         public virtual void PrepareForDrawing(Camera camera) {
@@ -627,17 +700,18 @@ namespace Game {
         public virtual List<TerrainChunk> DetermineSynchronousUpdateChunks(Vector3 viewPosition, Vector3 viewDirection) {
             Vector3 vector = Vector3.Normalize(Vector3.Cross(viewDirection, Vector3.UnitY));
             Vector3 v = Vector3.Normalize(Vector3.Cross(viewDirection, vector));
-            Vector3[] obj = [
+            Vector3[] obj = new Vector3[6] {
                 viewPosition,
                 viewPosition + 6f * viewDirection,
                 viewPosition + 6f * viewDirection - 6f * vector,
                 viewPosition + 6f * viewDirection + 6f * vector,
                 viewPosition + 6f * viewDirection - 2f * v,
                 viewPosition + 6f * viewDirection + 2f * v
-            ];
-            List<TerrainChunk> list = [];
+            };
+            List<TerrainChunk> list = new List<TerrainChunk>();
             Vector3[] array = obj;
-            foreach (Vector3 vector2 in array) {
+            for (int i = 0; i < array.Length; i++) {
+                Vector3 vector2 = array[i];
                 TerrainChunk chunkAtCell = m_terrain.GetChunkAtCell(Terrain.ToCell(vector2.X), Terrain.ToCell(vector2.Z));
                 if (chunkAtCell != null
                     && chunkAtCell.State < TerrainChunkState.Valid
@@ -648,10 +722,14 @@ namespace Game {
             return list;
         }
 
+        public Dictionary<Client, List<Point2>> waitChunkList = new Dictionary<Client, List<Point2>>();
+        public List<Client> waitChunkList_toRemove = new List<Client>();
+
         public virtual void UpdateChunkSingleStep(TerrainChunk chunk, int skylightValue) {
             switch (chunk.ThreadState) {
                 case TerrainChunkState.NotLoaded: {
                     double realTime19 = Time.RealTime;
+
                     if (m_subsystemTerrain.TerrainSerializer.LoadChunk(chunk)) {
                         chunk.ThreadState = TerrainChunkState.InvalidLight;
                         chunk.WasUpgraded = true;

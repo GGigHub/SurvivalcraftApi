@@ -12,6 +12,10 @@ namespace Game {
 
         public SubsystemBlockBehavior[] GetBlockBehaviors(int contents) => m_blockBehaviorsByContents[contents];
 
+        public SubsystemBlockBehavior[] GetBlockBehaviors(int contents, ComponentMiner miner, Point3? point) {
+            return m_blockBehaviorsByContents[contents];
+        }
+
         public override void Load(ValuesDictionary valuesDictionary) {
             m_blockBehaviorsByContents = new SubsystemBlockBehavior[BlocksManager.Blocks.Length][];
             Dictionary<int, HashSet<SubsystemBlockBehavior>> dictionary = [];

@@ -9,14 +9,14 @@
         <AndroidStoreUncompressedFileExtensions>.dll</AndroidStoreUncompressedFileExtensions>
         <AndroidPackageFormat>apk</AndroidPackageFormat>
         <AndroidUseDesignerAssembly>true</AndroidUseDesignerAssembly>
-        <!--签名-->
+        <!--绛惧悕-->
         <AndroidKeyStore>true</AndroidKeyStore>
         <AndroidSigningKeyAlias>androiddebugkey</AndroidSigningKeyAlias>
         <AndroidSigningKeyStore>Signing.keystore</AndroidSigningKeyStore>
         <AndroidSigningStorePass>android</AndroidSigningStorePass>
         <AndroidSigningKeyPass>android</AndroidSigningKeyPass>
-        <!--优化-->
-        <PublishTrimmed>false</PublishTrimmed><!--切记不要修改，如果修改会导致运行时不完整-->
+        <!--浼樺寲-->
+        <PublishTrimmed>false</PublishTrimmed><!--鍒囪涓嶈淇敼锛屽鏋滀慨鏀逛細瀵艰嚧杩愯鏃朵笉瀹屾暣-->
         <TrimMode>partial</TrimMode>
         <AndroidDexTool>d8</AndroidDexTool>
         <AndroidEnableSGenConcurrent>false</AndroidEnableSGenConcurrent>
@@ -32,6 +32,7 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="MonoMod.Core" Version="1.3.3-daily.26.3.1.2.1" /><!--Source: https://github.com/XiaofengdiZhu/MonoMod.Android/ -->
+        <PackageReference Include="LiteNetLib" Version="2.0.1" />
     </ItemGroup>
     <ItemGroup>
         <AndroidAsset Include="..\Survivalcraft\Content.zip">

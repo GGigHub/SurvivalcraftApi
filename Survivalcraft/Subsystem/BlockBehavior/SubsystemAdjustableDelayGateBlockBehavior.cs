@@ -1,3 +1,6 @@
+using Game.NetWork;
+using Game.NetWork.Packages;
+
 namespace Game {
     public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior {
         public override int[] HandledBlocks => [224];
@@ -14,9 +17,10 @@ namespace Game {
                     delegate(int newDelay) {
                         int data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                         int num = Terrain.ReplaceData(value, data2);
-                        if (num != value) {
-                            inventory.RemoveSlotItems(slotIndex, count);
-                            inventory.AddSlotItems(slotIndex, num, count);
+                        var p = new EditableBlockPackage(EditableItemType.AdjustableDelayGate, default, true, inventory.Id, slotIndex, newDelay);
+                        CommonLib.Net.QueuePackage(p);
+                        if (CommonLib.WorkType != WorkType.Client) {
+                            p.Handle(ProjectNet.Project, CommonLib.Net, false);
                         }
                     }
                 )
@@ -34,13 +38,12 @@ namespace Game {
                     delegate(int newDelay) {
                         int num = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                         if (num != data) {
-                            int value2 = Terrain.ReplaceData(value, num);
-                            SubsystemTerrain.ChangeCell(x, y, z, value2);
-                            int face = ((AdjustableDelayGateBlock)BlocksManager.Blocks[224]).GetFace(value);
-                            SubsystemElectricity subsystemElectricity = Project.FindSubsystem<SubsystemElectricity>(true);
-                            ElectricElement electricElement = subsystemElectricity.GetElectricElement(x, y, z, face);
-                            if (electricElement != null) {
-                                subsystemElectricity.QueueElectricElementForSimulation(electricElement, subsystemElectricity.CircuitStep + 1);
+                            int face = ((AdjustableDelayGateBlock)BlocksManager.Blocks[AdjustableDelayGateBlock.Index]).GetFace(value);
+                            var cell = new CellFace(x, y, z, face);
+                            var p = new EditableBlockPackage(EditableItemType.AdjustableDelayGate, cell, false, default, default, newDelay);
+                            CommonLib.Net.QueuePackage(p);
+                            if (CommonLib.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
                             }
                         }
                     }

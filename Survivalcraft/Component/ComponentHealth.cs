@@ -1,4 +1,6 @@
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -158,7 +160,15 @@ namespace Game {
             injury.ComponentHealth ??= this;
             if (Health > 0f) {
                 lock (this) {
+                    float healthBefore = Health;
                     injury.Process();
+                    float injuryAmount = MathUtils.Max(healthBefore - Health, 0f);
+                    if (CommonLib.WorkType != WorkType.Client
+                        && injuryAmount > 0f) {
+                        CommonLib.Net.QueuePackage(
+                            new ComponentHealthPackage(this, injury.Attacker, injuryAmount, injury.Cause, injury.IgnoreInvulnerability)
+                        );
+                    }
                     if (Health <= 0f) {
                         ModsManager.HookAction(
                             "OnCreatureDying",
@@ -175,6 +185,10 @@ namespace Game {
             }
         }
 
+        public void NetInjure(float amount, ComponentCreature attacker, string cause) {
+            Injure(amount, attacker, false, cause);
+        }
+
         public virtual void Die(Injury injury) {
             Health = 0f;
             ComponentCreature attacker = injury?.Attacker;
@@ -188,6 +202,11 @@ namespace Game {
                 }
             );
             CauseOfDeath = injury?.Cause;
+            if (CommonLib.WorkType != WorkType.Client) {
+                ComponentHealthPackage componentHealthPackage = new(this);
+                componentHealthPackage.m_cuase = CauseOfDeath;
+                CommonLib.Net.QueuePackage(componentHealthPackage);
+            }
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
                 m_componentCreature.PlayerStats.AddDeathRecord(
                     new PlayerStats.DeathRecord {
@@ -253,6 +272,10 @@ namespace Game {
                 if (m_regenerateLifeEnabled
                     && Health > 0f
                     && Health < 1f) {
+                    if (CommonLib.WorkType != WorkType.Client
+                        && Time.PeriodicEvent(2.0, 0.0)) {
+                        CommonLib.Net.QueuePackage(new ComponentHealthPackage(this));
+                    }
                     float num = 0f;
                     if (m_componentPlayer != null) {
                         if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless) {
@@ -310,7 +333,26 @@ namespace Game {
                     }
                 );
                 if (fallDamage > 0f) {
-                    Injure(fallDamage, null, false, LanguageControl.Get(fName, 2));
+                    string cause = LanguageControl.Get(fName, 2);
+                    ComponentPlayer riderPlayer = m_componentCreature.ComponentBody.ChildBodies.Count > 0
+                        ? m_componentCreature.ComponentBody.ChildBodies[0].Entity?.FindComponent<ComponentPlayer>()
+                        : null;
+                    bool flagMainRider = riderPlayer != null && riderPlayer.PlayerData.IsMainPlayer;
+                    bool flagMainPlayer = m_componentPlayer != null && m_componentPlayer.PlayerData.IsMainPlayer;
+                    bool flagNoRider = m_componentCreature.ComponentBody.ChildBodies.Count == 0;
+                    if (CommonLib.WorkType == WorkType.Local) {
+                        Injure(fallDamage, null, false, cause);
+                    }
+                    else if (CommonLib.WorkType == WorkType.Server) {
+                        if (flagMainPlayer || flagMainRider || flagNoRider) {
+                            Injure(fallDamage, null, false, cause);
+                        }
+                    }
+                    else if (flagMainPlayer || flagMainRider) {
+                        CommonLib.Net.QueuePackage(
+                            new ComponentHealthPackage(this, null, fallDamage, cause, false, true, ComponentHealthPackage.RequestInjureType.Fall)
+                        );
+                    }
                 }
                 m_wasStanding = m_componentCreature.ComponentBody.StandingOnValue.HasValue
                     || m_componentCreature.ComponentBody.StandingOnBody != null;

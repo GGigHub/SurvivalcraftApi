@@ -1,6 +1,8 @@
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -43,6 +45,24 @@ namespace Game {
 
         public static int[] m_drawOrders = [10];
 
+        public List<ushort> useMaps = [];
+
+        public bool PickableAction(ushort id, Action<Pickable> action, bool requestSync = true)
+        {
+            lock (m_lock) {
+                Pickable pickable = m_pickables.FirstOrDefault(p => p.Id == id);
+                if (pickable != null) {
+                    action?.Invoke(pickable);
+                    return true;
+                }
+            }
+            if (requestSync
+                && CommonLib.WorkType == WorkType.Client) {
+                CommonLib.Net.QueuePackage(new PickablePackage(new Pickable { Id = id }, PickablePackage.PickType.RequestSync));
+            }
+            return false;
+        }
+
         public ReadOnlyList<Pickable> Pickables {
             get {
                 lock (m_lock) {
@@ -63,6 +83,12 @@ namespace Game {
             if (pickable == null) {
                 return null;
             }
+            if (pickable.Id == 0) {
+                pickable.Id = FindAvailableId();
+            }
+            else if (!useMaps.Contains(pickable.Id)) {
+                useMaps.Add(pickable.Id);
+            }
             //如果掉落物创建时间没有初始化，就初始化一下
             if (pickable.CreationTime == 0) {
                 pickable.CreationTime = m_subsystemGameInfo.TotalElapsedGameTime;
@@ -78,19 +104,33 @@ namespace Game {
                 m_pickables.Add(pickable);
             }
             PickableAdded?.Invoke(pickable);
+            if (CommonLib.WorkType == WorkType.Server) {
+                CommonLib.Net.QueuePackage(new PickablePackage(pickable, PickablePackage.PickType.Create));
+            }
             return pickable;
         }
 
         public virtual Pickable AddPickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix) =>
             AddPickable(value, count, position, velocity, stuckMatrix, null);
 
-        public virtual Pickable AddPickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) =>
-            AddPickable<Pickable>(value, count, position, velocity, stuckMatrix, owner);
+        public virtual Pickable AddPickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) {
+            if (CommonLib.WorkType == WorkType.Client) {
+                return null;
+            }
+            return AddPickable<Pickable>(value, count, position, velocity, stuckMatrix, owner);
+        }
 
         public virtual Pickable CreatePickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) =>
             CreatePickable<Pickable>(value, count, position, velocity, stuckMatrix, owner);
 
+        public virtual Pickable CreatePickable(ushort? id, int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) =>
+            CreatePickable<Pickable>(id, value, count, position, velocity, stuckMatrix, owner);
+
         public virtual T CreatePickable<T>(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner)
+            where T : Pickable, new() =>
+            CreatePickable<T>(null, value, count, position, velocity, stuckMatrix, owner);
+
+        public virtual T CreatePickable<T>(ushort? id, int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner)
             where T : Pickable, new() {
             try {
                 T pickable = new();
@@ -102,6 +142,12 @@ namespace Game {
                     () => m_primitivesRenderer
                 );
                 pickable.Initialize(value, count, position, velocity, stuckMatrix, owner);
+                pickable.Id = id.HasValue
+                    ? id.Value
+                    : FindAvailableId();
+                if (!useMaps.Contains(pickable.Id)) {
+                    useMaps.Add(pickable.Id);
+                }
                 pickable.CreationTime = m_subsystemGameInfo.TotalElapsedGameTime;
                 return pickable;
             }
@@ -164,7 +210,11 @@ namespace Game {
                 }
                 foreach (Pickable item in m_pickablesToRemove) {
                     m_pickables.Remove(item);
+                    useMaps.Remove(item.Id);
                     PickableRemoved?.Invoke(item);
+                    if (CommonLib.WorkType == WorkType.Server) {
+                        CommonLib.Net.QueuePackage(new PickablePackage(item, PickablePackage.PickType.Delete));
+                    }
                 }
                 m_pickablesToRemove.Clear();
             }
@@ -198,6 +248,12 @@ namespace Game {
                             () => m_primitivesRenderer
                         );
                         pickable.Load(item);
+                        if (pickable.Id == 0) {
+                            pickable.Id = FindAvailableId();
+                        }
+                        else if (!useMaps.Contains(pickable.Id)) {
+                            useMaps.Add(pickable.Id);
+                        }
                         ModsManager.HookAction(
                             "OnPickableAdded",
                             loader => {
@@ -205,7 +261,7 @@ namespace Game {
                                 return false;
                             }
                         );
-                        lock (m_pickables) {
+                        lock (m_lock) {
                             m_pickables.Add(pickable);
                         }
                     }
@@ -238,6 +294,21 @@ namespace Game {
             }
         }
 
+        public void PlayPickableCollectedSound(Pickable pickable)
+        {
+            m_subsystemAudio.PlaySound("Audio/PickableCollected", 0.7f, -0.4f, pickable.Position, 2f, false);
+        }
+
         public float DefaultCalcVisibilityRange() => Math.Min(m_subsystemSky.VisibilityRange, 30);
+
+        public virtual ushort FindAvailableId() {
+            for (ushort i = 1; i < ushort.MaxValue; i++) {
+                if (!useMaps.Contains(i)) {
+                    useMaps.Add(i);
+                    return i;
+                }
+            }
+            return 0;
+        }
     }
 }

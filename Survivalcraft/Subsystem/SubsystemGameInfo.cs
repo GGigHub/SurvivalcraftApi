@@ -8,6 +8,9 @@ namespace Game {
         public SubsystemTime m_subsystemTime;
 
         public SubsystemTimeOfDay m_subsystemTimeOfDay;
+        
+        public SubsystemTimeOfDay TimeOfDay => m_subsystemTimeOfDay;
+        
         public WorldSettings WorldSettings { get; set; }
 
         public string DirectoryName { get; set; }
@@ -112,6 +115,10 @@ namespace Game {
                         delegate { }
                     );
                 }
+            }
+            //客户端禁用时间计算
+            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+                if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset));
             }
         }
     }

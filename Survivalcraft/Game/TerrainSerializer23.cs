@@ -573,7 +573,7 @@ namespace Game {
 
         object m_lock = new();
 
-        IStorage m_storage;
+        public IStorage m_storage;
 
         byte[] m_storageBuffer = new byte[WorstCaseChunkDataSize];
 

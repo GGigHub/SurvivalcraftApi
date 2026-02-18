@@ -1,6 +1,8 @@
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable {
@@ -36,13 +38,38 @@ namespace Game {
 
         public ComponentBody m_collidedWithBody;
 
+        private bool m_isDigIn;
+
+        public bool IsDigIn
+        {
+            get { return m_isDigIn; }
+            set
+            {
+                if (m_isDigIn != value)
+                {
+                    m_isDigIn = value;
+                    if (CommonLib.WorkType == WorkType.Server) CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isDigIn));
+                }
+            }
+        }
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            m_stateMachine.Update();
-            m_collidedWithBody = null;
+            if (CommonLib.WorkType == WorkType.Client) {
+                if (IsDigIn) {
+                    m_componentFishModel.DigInOrder = m_maxDigInDepth;
+                }
+                else {
+                    m_componentFishModel.DigInOrder = 0f;
+                }
+            }
+            else {
+                m_stateMachine.Update();
+                m_collidedWithBody = null;
+            }
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
@@ -104,6 +131,7 @@ namespace Game {
                 delegate {
                     m_digInTime = m_subsystemTime.GameTime;
                     m_digOutTime = m_digInTime + m_random.Float(30f, 60f);
+                    IsDigIn = true;
                 },
                 delegate {
                     m_componentFishModel.DigInOrder = m_maxDigInDepth;
@@ -126,7 +154,7 @@ namespace Game {
                         m_stateMachine.TransitionTo("Inactive");
                     }
                 },
-                null
+                () => { IsDigIn = false; }
             );
             m_stateMachine.TransitionTo("Inactive");
         }

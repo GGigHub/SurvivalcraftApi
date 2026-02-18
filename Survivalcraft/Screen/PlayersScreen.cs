@@ -66,7 +66,7 @@ namespace Game {
                         null,
                         new MessageDialog(
                             LanguageControl.Unavailable,
-                            string.Format(LanguageControl.GetContentWidgets(fName, 5), SubsystemPlayers.MaxPlayers),
+                            string.Format(LanguageControl.GetContentWidgets(fName, 5), 4),
                             LanguageControl.Ok,
                             null,
                             null

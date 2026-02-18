@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Xml.Linq;
 using Engine.Serialization;
+using MessagePack;
+using MessagePack.Resolvers;
 using XmlUtilities;
 
 namespace TemplatesDatabase {
@@ -185,5 +187,91 @@ namespace TemplatesDatabase {
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => m_dictionary.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => m_dictionary.GetEnumerator();
+
+        public void ApplyOverridesUseMessagePack(byte[] messagePackData) {
+            var dynamicModel = MessagePackSerializer.Deserialize<IDictionary<object, object>>(messagePackData, ContractlessStandardResolver.Options);
+            try {
+                ApplyOverridesUseDictionary(dynamicModel);
+            }
+            catch (Exception ex) {
+                throw new Exception("IDictionary to ValuesDictionary  error :" + ex.Message);
+            }
+        }
+
+        private void ApplyOverridesUseDictionary(IDictionary<object, object> dictionary) {
+            foreach (var keyValue in dictionary) {
+                if (keyValue.Value is object[] objs) {
+                    string keyName = keyValue.Key.ToString();
+                    string keyType = objs[0].ToString();
+                    Type type;
+                    if (keyType == null) {
+                        object value = GetValue<object>(keyName, null);
+                        if (value == null) {
+                            throw new InvalidOperationException($"Type of override \"{keyName}\" cannot be determined.");
+                        }
+                        type = value.GetType();
+                    }
+                    else {
+                        type = TypeCache.FindType(keyType, skipSystemAssemblies: false, throwIfNotFound: true);
+                    }
+                    if (type == typeof(bool) || type.IsPrimitive || type == typeof(string)) {
+                        object value = Convert.ChangeType(objs[1], type);
+
+                        SetValue(keyName, value);
+                    }
+                    else {
+                        string theData = objs[1].ToString();
+                        object theValue = HumanReadableConverter.ConvertFromString(type, theData);
+                        SetValue(keyName, theValue);
+                    }
+                }
+                else if (keyValue.Value is IDictionary<object, object> subDic) {
+                    string value2 = keyValue.Key.ToString();
+                    ValuesDictionary valuesDictionary = GetValue<object>(value2, null) as ValuesDictionary;
+                    if (valuesDictionary == null) {
+                        valuesDictionary = new ValuesDictionary();
+                        SetValue(value2, valuesDictionary);
+                    }
+                    valuesDictionary.ApplyOverridesUseDictionary(subDic);
+                }
+            }
+        }
+
+        public byte[] ToMessagePack() {
+            Dictionary<object, object> dic = new Dictionary<object, object>();
+            SaveToDictionary(dic);
+
+            return MessagePackSerializer.Serialize(dic);
+        }
+
+        public string ToJsonText() {
+            var jsonText = MessagePackSerializer.ConvertToJson(ToMessagePack());
+            return jsonText;
+        }
+
+        public void ApplyOverridesUseJson(string jsonText, out byte[] data) {
+            jsonText = jsonText.Replace("Infinity", "999999999");
+            data = MessagePackSerializer.ConvertFromJson(jsonText);
+            ApplyOverridesUseMessagePack(data);
+        }
+
+        public void SaveToDictionary(IDictionary<object, object> dictionary) {
+            foreach (KeyValuePair<string, object> item in m_dictionary) {
+                ValuesDictionary valuesDictionary = item.Value as ValuesDictionary;
+                if (valuesDictionary != null) {
+                    Dictionary<object, object> subDic = new Dictionary<object, object>();
+                    dictionary[item.Key] = subDic;
+                    valuesDictionary.SaveToDictionary(subDic);
+                }
+                else {
+                    if (item.Value.GetType() == typeof(bool) || item.Value.GetType().IsPrimitive || item.Value.GetType() == typeof(string)) {
+                        dictionary[item.Key] = new object[2] { TypeCache.GetShortTypeName(item.Value.GetType().FullName), item.Value };
+                    }
+                    else {
+                        dictionary[item.Key] = new object[2] { TypeCache.GetShortTypeName(item.Value.GetType().FullName), HumanReadableConverter.ConvertToString(item.Value) };
+                    }
+                }
+            }
+        }
     }
 }

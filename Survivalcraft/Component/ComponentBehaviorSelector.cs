@@ -9,9 +9,13 @@ namespace Game {
 
         public static bool ShowAIBehavior;
 
+        public bool IsDisableBehavior;
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Update(float dt) {
+            if (IsDisableBehavior) return;
+            
             ComponentBehavior componentBehavior = null;
             if (m_componentCreature.ComponentHealth.Health > 0f
                 && !m_componentCreature.ComponentBody.IsEmbeddedInIce) {
@@ -38,6 +42,9 @@ namespace Game {
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
             m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
+            if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) {
+                IsDisableBehavior = true;
+            }
             foreach (ComponentBehavior item in Entity.FindComponents<ComponentBehavior>()) {
                 m_behaviors.Add(item);
             }

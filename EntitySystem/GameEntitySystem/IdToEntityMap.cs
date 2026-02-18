@@ -5,7 +5,7 @@ namespace GameEntitySystem {
     public class IdToEntityMap {
         Dictionary<int, Entity> m_map;
 
-        internal IdToEntityMap(Dictionary<int, Entity> map) => m_map = map;
+        public IdToEntityMap(Dictionary<int, Entity> map) => m_map = map;
 
         [Obsolete("Use Project.FindEntity instead.", true)]
         public Entity FindEntity(int id) {

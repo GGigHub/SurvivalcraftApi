@@ -1,6 +1,7 @@
 using System.Globalization;
 using Engine;
 using Engine.Serialization;
+using Game.NetWork;
 using TemplatesDatabase;
 
 namespace Game {
@@ -296,6 +297,10 @@ namespace Game {
                                     componentMiner.ComponentCreature.PlayerStats.FurnitureItemsMade += num3;
                                 }
                             }
+                            if (CommonLib.WorkType != WorkType.Client) {
+                                CreateDesign(componentMiner, design, valuesDictionary, start, startValue);
+                            }
+                            CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(design, valuesDictionary, start, startValue, CommonLib.WorkType == WorkType.Client));
                         }
                     }
                 }
@@ -364,6 +369,7 @@ namespace Game {
             }
             FurnitureSet furnitureSet = new() { Name = name, ImportedFrom = importedFrom };
             m_furnitureSets.Add(furnitureSet);
+            CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(name));
             return furnitureSet;
         }
 
@@ -372,6 +378,7 @@ namespace Game {
                 furnitureSetDesign.FurnitureSet = null;
             }
             m_furnitureSets.Remove(furnitureSet);
+            CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureSet.Name));
         }
 
         public void MoveFurnitureSet(FurnitureSet furnitureSet, int move) {
@@ -386,6 +393,44 @@ namespace Game {
             foreach (FurnitureDesign item in design.ListChain()) {
                 item.FurnitureSet = furnitureSet;
             }
+        }
+
+        public FurnitureDesign CreateDesign(ComponentMiner componentMiner, FurnitureDesign design, Dictionary<Point3, int> valuesDictionary, CellFace start, int startValue, bool tryAdd = true)
+        {
+            if (tryAdd)
+            {
+                FurnitureDesign existingDesign = TryAddDesignChain(design, true);
+                if (existingDesign == design)
+                {
+                    foreach (FurnitureDesign item in design.ListChain())
+                    {
+                        m_furnitureDesigns[item.Index] = item;
+                    }
+                }
+                else if (existingDesign != null)
+                {
+                    design = existingDesign;
+                }
+                else
+                {
+                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("无法创建家具设计：存储空间不足", Color.White, true, false);
+                    return null;
+                }
+            }
+
+            // 应用设计到地形
+            foreach (KeyValuePair<Point3, int> pair in valuesDictionary)
+            {
+                int value = pair.Value;
+                int contents = Terrain.ExtractContents(value);
+                if (contents == 227) // FurnitureBlock
+                {
+                    int newData = Terrain.ReplaceData(value, FurnitureBlock.SetDesignIndex(Terrain.ExtractData(value), design.Index, 0, true));
+                    SubsystemTerrain.ChangeCell(pair.Key.X, pair.Key.Y, pair.Key.Z, newData);
+                }
+            }
+
+            return design;
         }
 
         public IEnumerable<FurnitureDesign> GetFurnitureSetDesigns(FurnitureSet furnitureSet) {
@@ -550,6 +595,7 @@ namespace Game {
         }
 
         public void GarbageCollectDesigns(ReadOnlyList<ScannedItemData> allExistingItems) {
+            if (CommonLib.WorkType == WorkType.Client) return;
             for (int i = 0; i < m_furnitureDesigns.Length; i++) {
                 if (m_furnitureDesigns[i] != null) {
                     m_furnitureDesigns[i].m_gcUsed = m_furnitureDesigns[i].m_terrainUseCount > 0;
@@ -575,13 +621,18 @@ namespace Game {
                     }
                 }
             }
+            List<int> list = new List<int>();
             for (int k = 0; k < m_furnitureDesigns.Length; k++) {
                 if (m_furnitureDesigns[k] != null
                     && !m_furnitureDesigns[k].m_gcUsed
                     && m_furnitureDesigns[k].FurnitureSet == null) {
                     m_furnitureDesigns[k].Index = -1;
                     m_furnitureDesigns[k] = null;
+                    list.Add(m_furnitureDesigns[k].Index);
                 }
+            }
+            if (CommonLib.WorkType == WorkType.Server) {
+                CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(list));
             }
         }
 

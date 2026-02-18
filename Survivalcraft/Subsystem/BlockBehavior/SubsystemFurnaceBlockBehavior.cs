@@ -1,11 +1,17 @@
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
+using GameEntitySystem;
+using System.Collections.Generic;
 using TemplatesDatabase;
 
 namespace Game {
-    public class SubsystemFurnaceBlockBehavior : SubsystemEntityBlockBehavior {
+    public class SubsystemFurnaceBlockBehavior : SubsystemEntityBlockBehavior, IUpdateable {
         public SubsystemParticles m_subsystemParticles;
-
+        public SubsystemBlockEntities m_subsystemBlockEntities;
         public Dictionary<Point3, FireParticleSystem> m_particleSystemsByCell = [];
+
+        public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override int[] HandledBlocks => [64, 65];
 
@@ -61,9 +67,19 @@ namespace Game {
             return false;
         }
 
+        public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner) {
+            if (CommonLib.WorkType == WorkType.Client && CommonLib.MainPlayer == componentMiner.ComponentPlayer) {
+                IPackage package = new BlockEditPackage(new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z), BlockEditPackage.EventType.OpenInventoryByPoint);
+                CommonLib.Net.QueuePackage(package);
+                return true;
+            }
+            return base.OnInteract(raycastResult, componentMiner);
+        }
+
         public override void Load(ValuesDictionary valuesDictionary) {
             base.Load(valuesDictionary);
             m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
+            m_subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>();
             m_databaseObject = Project.GameDatabase.Database.FindDatabaseObject("Furnace", Project.GameDatabase.EntityTemplateType, true);
         }
 
@@ -84,6 +100,27 @@ namespace Game {
             m_subsystemParticles.RemoveParticleSystem(particleSystem);
             m_particleSystemsByCell.Remove(key);
             */
+        }
+
+        public void Update(float dt)
+        {
+            if (Time.PeriodicEvent(5.0, 0.0) && CommonLib.WorkType == WorkType.Server)
+            {
+                List<ComponentFurnace> componentFurnaces = new List<ComponentFurnace>();
+                SubsystemBlockEntities subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>();
+                foreach (var pair in subsystemBlockEntities.m_blockEntities)
+                {
+                    var furnace = pair.Value.Entity.FindComponent<ComponentFurnace>();
+                    if (furnace != null)
+                    {
+                        componentFurnaces.Add(furnace);
+                    }
+                }
+                if (componentFurnaces.Count > 0)
+                {
+                    CommonLib.Net.QueuePackage(new ComponentFurnacePackage(componentFurnaces));
+                }
+            }
         }
     }
 }

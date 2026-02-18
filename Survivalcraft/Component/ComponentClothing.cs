@@ -1,6 +1,7 @@
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -57,6 +58,8 @@ namespace Game {
 
         public static string fName = "ComponentClothing";
 
+        public int Id { get; private set; }
+
         public List<int> m_clothesList = [];
 
         public Dictionary<ClothingSlot, List<int>> m_clothes = [];
@@ -95,6 +98,35 @@ namespace Game {
         public int ActiveSlotIndex {
             get => -1;
             set { }
+        }
+
+        public virtual void OnSlotChange(int slotIndex) {
+            SubsystemInventories.pushSyncItem(this, slotIndex);
+        }
+
+        public virtual void SetSlotValue(int slotIndex, object obj) {
+            List<int> list = (List<int>)obj;
+            ClothingSlot slot = (ClothingSlot)slotIndex;
+            SetClothes(slot, list);
+        }
+
+        public virtual bool AddNetSlotItems(int slotIndex, int value, int count) {
+            return false;
+        }
+
+        public virtual int RemoveNetSlotItems(int slotIndex, int count) {
+            if (count == 1) {
+                List<int> list = new(GetClothes(slotIndex));
+                if (list.Count > 0) {
+                    list.RemoveAt(list.Count - 1);
+                    SetClothes(slotIndex, list);
+                    return 1;
+                }
+            }
+            return 0;
+        }
+
+        public virtual void DropSlotItems(int slotIndex, Vector3 position, Vector3 velocity) {
         }
 
         public virtual ReadOnlyList<int> GetClothes(ClothingSlot slot) => new(m_clothes[slot]);
@@ -246,11 +278,6 @@ namespace Game {
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
-            m_innerSlotsOrderList.Clear();
-            m_innerSlotsOrderList.AddRange(ClothingSlot.ClothingSlots.Values);
-            m_innerSlotsOrderList.Reverse(2, 2); //让Legs显示在feet之前
-            m_outerSlotsOrderList.Clear();
-            m_outerSlotsOrderList.AddRange(ClothingSlot.ClothingSlots.Values);
             m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
             m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
             m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
@@ -264,44 +291,84 @@ namespace Game {
             m_componentVitalStats = Entity.FindComponent<ComponentVitalStats>(true);
             m_componentLocomotion = Entity.FindComponent<ComponentLocomotion>(true);
             m_componentPlayer = Entity.FindComponent<ComponentPlayer>(true);
-            EnableDressLimit = m_subsystemGameInfo.WorldSettings.GameMode != 0
-                && m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled;
+
+            if (ClothingSlot.ClothingSlots.Count == 0) {
+                ClothingSlot.Initialize();
+            }
+
             SteedMovementSpeedFactor = 1f;
             Insulation = 0f;
-            LeastInsulatedSlot = ClothingSlot.Feet;
-            foreach (ClothingSlot clothingSlot in m_innerSlotsOrder) {
-                m_clothes[clothingSlot] = [];
+            LeastInsulatedSlot = ClothingSlot.ClothingSlotsByInt.TryGetValue(3, out ClothingSlot feetSlot)
+                ? feetSlot
+                : ClothingSlot.ClothingSlots.Values.FirstOrDefault();
+
+            m_clothes.Clear();
+            InsulationBySlots.Clear();
+            foreach (ClothingSlot slot in ClothingSlot.ClothingSlots.Values) {
+                m_clothes[slot] = [];
+                InsulationBySlots[slot] = slot.BasicInsulation;
             }
-            ValuesDictionary value = valuesDictionary.GetValue<ValuesDictionary>("Clothes");
-            foreach (string key in ClothingSlot.ClothingSlots.Keys) {
-                SetClothes(ClothingSlot.ClothingSlots[key], HumanReadableConverter.ValuesListFromString<int>(';', value.GetValue<string>(key)));
+
+            m_innerSlotsOrderList.Clear();
+            m_outerSlotsOrderList.Clear();
+            if (ClothingSlot.ClothingSlots.TryGetValue("Head", out ClothingSlot head)) {
+                m_innerSlotsOrderList.Add(head);
+                m_outerSlotsOrderList.Add(head);
+            }
+            if (ClothingSlot.ClothingSlots.TryGetValue("Torso", out ClothingSlot torso)) {
+                m_innerSlotsOrderList.Add(torso);
+                m_outerSlotsOrderList.Add(torso);
+            }
+            if (ClothingSlot.ClothingSlots.TryGetValue("Feet", out ClothingSlot feet)) {
+                m_innerSlotsOrderList.Add(feet);
+            }
+            if (ClothingSlot.ClothingSlots.TryGetValue("Legs", out ClothingSlot legs)) {
+                m_innerSlotsOrderList.Add(legs);
+                m_outerSlotsOrderList.Add(legs);
+            }
+            if (ClothingSlot.ClothingSlots.TryGetValue("Feet", out ClothingSlot feetOuter)) {
+                m_outerSlotsOrderList.Add(feetOuter);
+            }
+            foreach (ClothingSlot slot in ClothingSlot.ClothingSlots.Values) {
+                if (!m_innerSlotsOrderList.Contains(slot)) {
+                    m_innerSlotsOrderList.Add(slot);
+                }
+                if (!m_outerSlotsOrderList.Contains(slot)) {
+                    m_outerSlotsOrderList.Add(slot);
+                }
+            }
+
+            ValuesDictionary clothesValues = valuesDictionary.GetValue("Clothes", new ValuesDictionary());
+            foreach (ClothingSlot slot in ClothingSlot.ClothingSlots.Values) {
+                string raw = clothesValues.GetValue<string>(slot.Name, string.Empty);
+                SetClothes(slot, HumanReadableConverter.ValuesListFromString<int>(';', raw));
+            }
+
+            Id = valuesDictionary.GetValue("Id", -1);
+            SubsystemInventories subInventory = Project.FindSubsystem<SubsystemInventories>();
+            if (Id == -1) {
+                Id = subInventory.ProduceInventoryId(this);
+            }
+            else {
+                Id = subInventory.RegisterInventory(this);
             }
             Display.DeviceReset += Display_DeviceReset;
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
-            ValuesDictionary valuesDictionary2 = new();
-            valuesDictionary.SetValue("Clothes", valuesDictionary2);
-            foreach (string key in ClothingSlot.ClothingSlots.Keys) {
-                valuesDictionary2.SetValue(key, HumanReadableConverter.ValuesListToString(';', m_clothes[ClothingSlot.ClothingSlots[key]].ToArray()));
+            ValuesDictionary clothesValues = [];
+            valuesDictionary.SetValue("Clothes", clothesValues);
+            foreach (ClothingSlot slot in ClothingSlot.ClothingSlots.Values.OrderBy(s => s.StableId)) {
+                clothesValues.SetValue(slot.Name, HumanReadableConverter.ValuesListToString(';', m_clothes[slot].ToArray()));
             }
+            valuesDictionary.SetValue("Id", Id);
         }
 
         public override void Dispose() {
             base.Dispose();
-            if (m_skinTexture != null
-                && !ContentManager.IsContent(m_skinTexture)) {
-                m_skinTexture.Dispose();
-                m_skinTexture = null;
-            }
-            if (m_innerClothedTexture != null) {
-                m_innerClothedTexture.Dispose();
-                m_innerClothedTexture = null;
-            }
-            if (m_outerClothedTexture != null) {
-                m_outerClothedTexture.Dispose();
-                m_outerClothedTexture = null;
-            }
+            Utilities.Dispose(ref m_skinTexture);
+            Utilities.Dispose(ref m_innerClothedTexture);
+            Utilities.Dispose(ref m_outerClothedTexture);
             Display.DeviceReset -= Display_DeviceReset;
         }
 
@@ -516,20 +583,14 @@ namespace Game {
             }
         }
 
+        public virtual void ProcessSlotItems(IInventory sourceInventory, int sourceSlotIndex, int slotIndex, int value, int count, int processCount, out int processedValue, out int processedCount) {
+            ProcessSlotItems(slotIndex, value, count, processCount, out processedValue, out processedCount);
+        }
+
         public virtual int RemoveSlotItems(int slotIndex, int count) {
-            if (count == 1) {
-                List<int> list = new(GetClothes(slotIndex));
-                if (list.Count > 0) {
-                    int value = list[^1];
-                    Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
-                    ClothingData clothingData = block.GetClothingData(value);
-                    clothingData?.Dismount?.Invoke(value, this);
-                    list.RemoveAt(list.Count - 1);
-                    SetClothes(slotIndex, list);
-                    return 1;
-                }
-            }
-            return 0;
+            count = RemoveNetSlotItems(slotIndex, count);
+            OnSlotChange(slotIndex);
+            return count;
         }
 
         public virtual void DropAllItems(Vector3 position) {
@@ -573,10 +634,33 @@ namespace Game {
         public virtual void UpdateRenderTargets() {
             if (m_skinTexture == null
                 || m_componentPlayer.PlayerData.CharacterSkinName != m_skinTextureName) {
-                m_skinTexture = CharacterSkinsManager.LoadTexture(m_componentPlayer.PlayerData.CharacterSkinName);
-                m_skinTextureName = m_componentPlayer.PlayerData.CharacterSkinName;
-                Utilities.Dispose(ref m_innerClothedTexture);
-                Utilities.Dispose(ref m_outerClothedTexture);
+                if (CharacterSkinsManager.HasSkinRes(m_componentPlayer.PlayerData.CharacterSkinName)) {
+                    m_skinTexture = CharacterSkinsManager.LoadTexture(m_componentPlayer.PlayerData.CharacterSkinName);
+                    m_skinTextureName = m_componentPlayer.PlayerData.CharacterSkinName;
+                    Utilities.Dispose(ref m_innerClothedTexture);
+                    Utilities.Dispose(ref m_outerClothedTexture);
+                }
+                else if (Time.PeriodicEvent(1.0, 0.0)) {
+                    if (CommonLib.WorkType == WorkType.Client) {
+                        CommonLib.Net.QueuePackage(
+                            new NetWork.Packages.ComponentClothingPackage(
+                                m_componentPlayer.PlayerData.CharacterSkinName,
+                                NetWork.Packages.ComponentClothingPackage.DataType.RequestSkin
+                            )
+                        );
+                    }
+                    else if (CommonLib.WorkType == WorkType.Server) {
+                        CommonLib.Net.QueuePackage(
+                            new NetWork.Packages.ComponentClothingPackage(
+                                m_componentPlayer.PlayerData.CharacterSkinName,
+                                NetWork.Packages.ComponentClothingPackage.DataType.WhoHas
+                            )
+                        );
+                    }
+                }
+            }
+            if (m_skinTexture == null) {
+                m_skinTexture = CharacterSkinsManager.LoadTexture("$Male1");
             }
             if (m_innerClothedTexture == null
                 || m_innerClothedTexture.Width != m_skinTexture.Width

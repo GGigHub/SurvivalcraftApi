@@ -1,6 +1,8 @@
 using Engine;
 using GameEntitySystem;
+using System.Linq;
 using TemplatesDatabase;
+using Game.NetWork;
 
 namespace Game {
     public class ComponentRider : Component, IUpdateable {
@@ -61,56 +63,40 @@ namespace Game {
 
         public virtual void StartMounting(ComponentMount componentMount) {
             if (!m_isAnimating
-                && Mount == null) {
-                m_isAnimating = true;
-                m_animationTime = 0f;
-                m_isDismounting = false;
-                ComponentCreature.ComponentBody.ParentBody = componentMount.ComponentBody;
-                ComponentCreature.ComponentBody.ParentBodyPositionOffset = Vector3.Transform(
-                    ComponentCreature.ComponentBody.Position - componentMount.ComponentBody.Position,
-                    Quaternion.Conjugate(componentMount.ComponentBody.Rotation)
-                );
-                ComponentCreature.ComponentBody.ParentBodyRotationOffset = Quaternion.Conjugate(componentMount.ComponentBody.Rotation)
-                    * ComponentCreature.ComponentBody.Rotation;
-                m_targetPositionOffset = componentMount.MountOffset + m_riderOffset;
-                m_targetRotationOffset = Quaternion.Identity;
-                ComponentCreature.ComponentLocomotion.IsCreativeFlyEnabled = false;
+                && Mount == null ) {
+                if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client)
+                {
+                    StartNetMounting(componentMount);
+                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, componentMount));
+                }
+                else
+                {
+                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, componentMount, true));
+                }
             }
         }
 
         public virtual void StartDismounting() {
             if (!m_isAnimating
                 && Mount != null) {
-                float x = 0f;
-                if (Mount.DismountOffset.X > 0f) {
-                    float s = Mount.DismountOffset.X + 0.5f;
-                    Vector3 vector = 0.5f * (ComponentCreature.ComponentBody.BoundingBox.Min + ComponentCreature.ComponentBody.BoundingBox.Max);
-                    TerrainRaycastResult? terrainRaycastResult = m_subsystemTerrain.Raycast(
-                        vector,
-                        vector - s * ComponentCreature.ComponentBody.Matrix.Right,
-                        false,
-                        true,
-                        null
-                    );
-                    TerrainRaycastResult? terrainRaycastResult2 = m_subsystemTerrain.Raycast(
-                        vector,
-                        vector + s * ComponentCreature.ComponentBody.Matrix.Right,
-                        false,
-                        true,
-                        null
-                    );
-                    x = !terrainRaycastResult.HasValue ? 0f - Mount.DismountOffset.X :
-                        !terrainRaycastResult2.HasValue ? Mount.DismountOffset.X :
-                            !(terrainRaycastResult.Value.Distance > terrainRaycastResult2.Value.Distance) ?
-                                MathUtils.Min(terrainRaycastResult2.Value.Distance, Mount.DismountOffset.X) :
-                                0f - MathUtils.Min(terrainRaycastResult.Value.Distance, Mount.DismountOffset.X);
+                if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client)
+                {
+                    StartNetDismounting();
+                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this));
                 }
-                m_isAnimating = true;
-                m_animationTime = 0f;
-                m_isDismounting = true;
-                m_targetPositionOffset = Mount.MountOffset + m_riderOffset + new Vector3(x, Mount.DismountOffset.Y, Mount.DismountOffset.Z);
-                m_targetRotationOffset = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.Sign(x) * MathUtils.DegToRad(60f));
+                else
+                {
+                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, true));
+                }
             }
+        }
+
+        public void StartNetMounting(ComponentMount componentMount) {
+            StartMounting(componentMount);
+        }
+
+        public void StartNetDismounting() {
+            StartDismounting();
         }
 
         public virtual void Update(float dt) {
@@ -155,9 +141,22 @@ namespace Game {
                 if (m_outOfMountTime > 0.1f
                     || (componentHealth != null && componentHealth.Health <= 0f)
                     || ComponentCreature.ComponentHealth.Health <= 0f) {
-                    StartDismounting();
+                    //服务器和客户端都由自己控制下�?
+                    if (NetWork.CommonLib.WorkType != NetWork.WorkType.Local && ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer)
+                    {
+
+                    }
+                    else
+                    {
+                        StartDismounting();
+                    }
                 }
-                ComponentCreature.ComponentBody.ParentBodyPositionOffset = mount.MountOffset + m_riderOffset;
+                Vector3 positionOffset = mount.MountOffset + m_riderOffset;
+                if (ComponentCreature.ComponentBody.IsSneaking)
+                {
+                    positionOffset += new Vector3(0f, 0.5f, 0.1f);
+                }
+                ComponentCreature.ComponentBody.ParentBodyPositionOffset = positionOffset;
                 ComponentCreature.ComponentBody.ParentBodyRotationOffset = Quaternion.Identity;
             }
         }
@@ -207,3 +206,6 @@ namespace Game {
         }
     }
 }
+
+
+

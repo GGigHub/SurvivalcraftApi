@@ -1,5 +1,6 @@
 using Engine;
 using Engine.Graphics;
+using Game.NetWork;
 
 namespace Game {
     public class GamesWidget : ContainerWidget {
@@ -18,7 +19,18 @@ namespace Game {
                 marginLeft = Window.DisplayCutoutInsets.X * ScreensManager.FinalUiScale;
                 marginRight = Window.DisplayCutoutInsets.Z * ScreensManager.FinalUiScale;
             }
-            if (Children.Count == 1) {
+            if (CommonLib.WorkType != WorkType.Local && Children.Count > 0) {
+                for (int i = 0; i < Children.Count; i++) {
+                    var gameWidget = (GameWidget)Children[i];
+                    gameWidget.IsVisible = gameWidget.PlayerData.IsMainPlayer;
+                    if (gameWidget.IsVisible) {
+                        ArrangeChildWidgetInCell(Vector2.Zero, ActualSize, Children[i]);
+                        gameWidget.LayoutTransform = Matrix.Identity;
+                    }
+                }
+                return;
+            }
+            else if (Children.Count == 1) {
                 ArrangeChildWidgetInCell(Vector2.Zero, ActualSize, Children[0]);
                 if (SettingsManager.ScreenLayout1 == ScreenLayout.Single
                     && Children[0] is GameWidget gameWidget0) {
@@ -537,7 +549,7 @@ namespace Game {
                     }
                 }
             }
-            else if (Children.Count > SubsystemPlayers.MaxPlayers) {
+            else if (Children.Count > 4) {
                 throw new InvalidOperationException("Too many GameWidgets.");
             }
         }

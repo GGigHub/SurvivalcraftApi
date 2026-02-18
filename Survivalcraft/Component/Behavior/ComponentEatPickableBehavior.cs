@@ -1,6 +1,8 @@
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable {
@@ -38,6 +40,21 @@ namespace Game {
 
         public const float m_range = 16f;
 
+        private bool m_isFeed;
+
+        public bool IsFeed
+        {
+            get { return m_isFeed; }
+            set
+            {
+                if (m_isFeed != value)
+                {
+                    m_isFeed = value;
+                    if (CommonLib.WorkType == WorkType.Server) CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
+                }
+            }
+        }
+
         public float Satiation => m_satiation;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -45,10 +62,15 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (m_satiation > 0f) {
-                m_satiation = MathUtils.Max(m_satiation - 0.01f * m_subsystemTime.GameTimeDelta, 0f);
+            if (CommonLib.WorkType == WorkType.Client) {
+                m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
-            m_stateMachine.Update();
+            else {
+                if (m_satiation > 0f) {
+                    m_satiation = MathUtils.Max(m_satiation - 0.01f * m_subsystemTime.GameTimeDelta, 0f);
+                }
+                m_stateMachine.Update();
+            }
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
@@ -168,6 +190,7 @@ namespace Game {
             m_stateMachine.AddState(
                 "Eat",
                 delegate {
+                    IsFeed = true;
                     m_eatTime = m_random.Float(4f, 5f);
                     m_blockedTime = 0f;
                 },
@@ -245,7 +268,7 @@ namespace Game {
                         m_componentCreature.ComponentCreatureSounds.PlayFootstepSound(2f);
                     }
                 },
-                null
+                () => { IsFeed = false; }
             );
             m_stateMachine.TransitionTo("Inactive");
         }

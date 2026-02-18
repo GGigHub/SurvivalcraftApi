@@ -1,4 +1,5 @@
 using Engine;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -11,6 +12,8 @@ namespace Game {
         public const int m_largeNumber = 0x1fffffff;
 
         public int PageIndex { get; set; }
+
+        public int Id { get; private set; }
 
         public FurnitureSet FurnitureSet { get; set; }
 
@@ -26,6 +29,13 @@ namespace Game {
         public int VisibleSlotsCount {
             get => SlotsCount;
             set { }
+        }
+
+        public virtual void OnSlotChange(int slotIndex) {
+            SubsystemInventories.pushSyncItem(this, slotIndex);
+        }
+
+        public virtual void SetSlotValue(int slotIndex, object obj) {
         }
 
         public virtual void FillSlots() {
@@ -49,6 +59,14 @@ namespace Game {
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
+            Id = valuesDictionary.GetValue("Id", -1);
+            SubsystemInventories subsystemInventories = Project.FindSubsystem<SubsystemInventories>();
+            if (Id == -1) {
+                Id = subsystemInventories.ProduceInventoryId(this);
+            }
+            else {
+                Id = subsystemInventories.RegisterInventory(this);
+            }
             m_subsystemFurnitureBlockBehavior = Project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true);
             string furnitureSetName = valuesDictionary.GetValue<string>("FurnitureSet");
             FurnitureSet = m_subsystemFurnitureBlockBehavior.FurnitureSets.FirstOrDefault(f => f.Name == furnitureSetName);
@@ -56,6 +74,7 @@ namespace Game {
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
             valuesDictionary.SetValue("FurnitureSet", FurnitureSet != null ? FurnitureSet.Name : string.Empty);
+            valuesDictionary.SetValue("Id", Id);
         }
 
         public virtual int GetSlotValue(int slotIndex) {
@@ -125,7 +144,22 @@ namespace Game {
             processedCount = 0;
         }
 
+        public virtual void ProcessSlotItems(IInventory sourceInventory, int sourceSlotIndex, int slotIndex, int value, int count, int processCount, out int processedValue, out int processedCount) {
+            ProcessSlotItems(slotIndex, value, count, processCount, out processedValue, out processedCount);
+        }
+
         public virtual int RemoveSlotItems(int slotIndex, int count) => 1;
+
+        public virtual bool AddNetSlotItems(int slotIndex, int value, int count) {
+            return false;
+        }
+
+        public virtual int RemoveNetSlotItems(int slotIndex, int count) {
+            return 0;
+        }
+
+        public virtual void DropSlotItems(int slotIndex, Vector3 position, Vector3 velocity) {
+        }
 
         public virtual void DropAllItems(Vector3 position) { }
     }

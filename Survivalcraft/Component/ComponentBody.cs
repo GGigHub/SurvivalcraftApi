@@ -1,5 +1,6 @@
 using Engine;
 using GameEntitySystem;
+using Game.NetWork;
 using TemplatesDatabase;
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 
@@ -58,7 +59,22 @@ namespace Game {
 
         public List<ComponentBody> m_childBodies = [];
 
+        public ComponentLocomotion Locomotion => Entity.FindComponent<ComponentLocomotion>();
+        public ComponentPlayer Player => Entity.FindComponent<ComponentPlayer>();
+
         public Vector3 m_velocity;
+
+        public NetPosition netPosition;
+
+        public NetRotation netRotation;
+
+        public NetPosition netVelocity;
+
+        public Vector3? SendPosition;
+
+        public Quaternion? SendRotation;
+
+        public Vector3? SendVelocity;
 
         public float m_crouchFactor;
 
@@ -142,11 +158,12 @@ namespace Game {
         public virtual Vector3 Velocity {
             get => m_velocity;
             set {
-                if (value.LengthSquared() > MaxSpeed * MaxSpeed) {
-                    m_velocity = MaxSpeed * Vector3.Normalize(value);
-                }
-                else {
-                    m_velocity = value;
+                Vector3 newVelocity = value.LengthSquared() > MaxSpeed * MaxSpeed
+                    ? MaxSpeed * Vector3.Normalize(value)
+                    : value;
+                if (newVelocity != m_velocity) {
+                    m_velocity = newVelocity;
+                    SendVelocity = m_velocity;
                 }
             }
         }
@@ -354,6 +371,16 @@ namespace Game {
             IsGravityEnabled = true;
             IsGroundDragEnabled = true;
             IsWaterDragEnabled = true;
+
+            netPosition ??= new NetPosition(Position);
+            netRotation ??= new NetRotation(Rotation);
+            netVelocity ??= new NetPosition(Velocity);
+            RotationChanged += (obj) => {
+                SendRotation = obj.Rotation;
+            };
+            PositionChanged += (obj) => {
+                SendPosition = obj.Position;
+            };
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
@@ -390,6 +417,40 @@ namespace Game {
             );
             if (skipVanilla_) {
                 return;
+            }
+            if (CommonLib.WorkType == WorkType.Client || CommonLib.WorkType == WorkType.Server) {
+                ComponentPlayer componentPlayer = Entity.FindComponent<ComponentPlayer>();
+                bool isMainPlayer = componentPlayer?.PlayerData?.IsMainPlayer == true;
+                bool hasChildPlayer = false;
+                bool hasNonMainChildPlayer = false;
+                for (int i = 0; i < m_childBodies.Count; i++) {
+                    ComponentPlayer childPlayer = m_childBodies[i].Entity.FindComponent<ComponentPlayer>();
+                    if (childPlayer != null) {
+                        hasChildPlayer = true;
+                        if (childPlayer.PlayerData?.IsMainPlayer != true) {
+                            hasNonMainChildPlayer = true;
+                            break;
+                        }
+                    }
+                }
+
+                bool shouldApplyNetworkState = CommonLib.WorkType == WorkType.Client
+                    ? (componentPlayer != null && !isMainPlayer && componentPlayer.ComponentBody.ParentBody == null)
+                        || (componentPlayer == null && !hasChildPlayer)
+                        || hasNonMainChildPlayer
+                    : (componentPlayer != null && !isMainPlayer && componentPlayer.ComponentBody.ParentBody == null)
+                        || (componentPlayer == null && hasNonMainChildPlayer);
+
+                if (shouldApplyNetworkState) {
+                    Position = netPosition.Get(dt);
+                    Rotation = netRotation.Get(dt);
+                    Velocity = netVelocity.Get(dt);
+                }
+                else {
+                    netPosition.SetNext(Position);
+                    netRotation.SetNext(Rotation);
+                    netVelocity.SetNext(Velocity);
+                }
             }
             CollisionVelocityChange = Vector3.Zero;
             if (m_shakingStrength > 1f) {
@@ -430,9 +491,7 @@ namespace Game {
             TerrainChunk chunkAtCell = m_subsystemTerrain.Terrain.GetChunkAtCell(Terrain.ToCell(position.X), Terrain.ToCell(position.Z));
             if (chunkAtCell == null
                 || chunkAtCell.State <= TerrainChunkState.InvalidContents4) {
-                if (m_subsystemPlayers.PlayerStartedPlaying) {
-                    Velocity = Vector3.Zero;
-                }
+                Velocity = Vector3.Zero;
                 return;
             }
             if (CanEmbedInIce) {
@@ -512,6 +571,7 @@ namespace Game {
             if (m_parentBody != null) {
                 Vector3 vector4 = Vector3.Transform(ParentBodyPositionOffset, m_parentBody.Rotation) + m_parentBody.Position - position;
                 m_velocity = dt > 0f ? vector4 / dt : Vector3.Zero;
+                SendVelocity = m_velocity;
                 Rotation = ParentBodyRotationOffset * m_parentBody.Rotation;
             }
             StandingOnValue = null;
@@ -539,6 +599,7 @@ namespace Game {
             }
             if (IsGroundDragEnabled && StandingOnValue.HasValue) {
                 m_velocity = Vector3.Lerp(m_velocity, StandingOnVelocity, 6f * dt);
+                SendVelocity = m_velocity;
             }
             UpdateImmersionData();
             if (ImmersionFluidBlock is WaterBlock

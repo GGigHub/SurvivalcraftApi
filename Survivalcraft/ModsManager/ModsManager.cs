@@ -1,6 +1,7 @@
 // Game.ModsManager
 
 using System.Collections.Frozen;
+using System.IO.Compression;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -89,6 +90,7 @@ public static class ModsManager {
 
     static bool AllowContinue = true;
     public static Dictionary<string, string> Configs = [];
+    public static List<NetPlayScreen.Connect> SaveConnects = [];
     /// <summary>
     /// 所有模组，含禁用的
     /// </summary>
@@ -1157,4 +1159,83 @@ public static class ModsManager {
         fileStream.Dispose();
         return true;
     }
+#if DEBUG
+    public static Stream BytesToStream(byte[] bytes) => new MemoryStream(bytes);
+
+    public static void StreamToFile(Stream stream, string fileName) {
+        byte[] bytes = new byte[stream.Length];
+        stream.Seek(0, SeekOrigin.Begin);
+        stream.ReadExactly(bytes);
+        FileStream fs = new(fileName, FileMode.Create);
+        BinaryWriter bw = new(fs);
+        bw.Write(bytes);
+        bw.Close();
+        fs.Close();
+    }
+
+    public static Stream FileToStream(string fileName) {
+        FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
+        byte[] bytes = new byte[fileStream.Length];
+        fileStream.ReadExactly(bytes);
+        fileStream.Close();
+        Stream stream = new MemoryStream(bytes);
+        return stream;
+    }
+
+    public static void StreamCompress(Stream input, MemoryStream data) {
+        byte[] dat = data.ToArray();
+        using GZipStream stream = new(input, CompressionMode.Compress);
+        stream.Write(dat, 0, dat.Length);
+    }
+
+    public static Stream StreamDecompress(Stream input) {
+        MemoryStream outStream = new();
+        using GZipStream zipStream = new(input, CompressionMode.Decompress);
+        zipStream.CopyTo(outStream);
+        zipStream.Close();
+        outStream.Seek(0, SeekOrigin.Begin);
+        return outStream;
+    }
+
+    public enum SourceType {
+        positions,
+        normals,
+        map,
+        vertices,
+        TEXCOORD,
+        VERTEX,
+        NORMAL
+    }
+
+    public static string ObjectsToStr<T>(T[] arr) {
+        if (arr == null) {
+            return string.Empty;
+        }
+        StringBuilder stringBuilder = new();
+        for (int i = 0; i < arr.Length; i++) {
+            stringBuilder.Append(arr[i] + " ");
+        }
+        string res = stringBuilder.ToString();
+        return res.Substring(0, res.Length - 1);
+    }
+
+    public static Vector3 Cal_Normal_3D(Vector3 v1, Vector3 v2, Vector3 v3) {
+        float na = (v2.Y - v1.Y) * (v3.Z - v1.Z) - (v2.Z - v1.Z) * (v3.Y - v1.Y);
+        float nb = (v2.Z - v1.Z) * (v3.X - v1.X) - (v2.X - v1.Z) * (v3.Z - v1.Z);
+        float nc = (v2.X - v1.X) * (v3.Y - v1.Y) - (v2.Y - v1.Y) * (v3.X - v1.X);
+        return new Vector3(na, nb, nc);
+    }
+
+    public static string GetNetmodDecipheredMd5(string netmodPath) {
+        using FileStream fs = new(netmodPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using BufferedStream bs = new(fs);
+        using SHA256Managed sha256 = new();
+        byte[] hash = sha256.ComputeHash(bs);
+        StringBuilder result = new();
+        for (int i = 0; i < hash.Length; i++) {
+            result.Append(hash[i].ToString("x2"));
+        }
+        return result.ToString();
+    }
+#endif
 }

@@ -11,6 +11,8 @@ namespace Game {
 
         public static Dictionary<PlayerClass, Model> m_outerClothingModels = [];
 
+        public static List<string> waitReplyList = [];
+
         public static ReadOnlyList<string> CharacterSkinsNames => new(m_characterSkinNames);
 
         public static string CharacterSkinsDirectoryName => ModsManager.CharacterSkinsDirectoryName;
@@ -193,6 +195,23 @@ namespace Game {
             if (!MathUtils.IsPowerOf2(image.Width)
                 || !MathUtils.IsPowerOf2(image.Height)) {
                 throw new InvalidOperationException($"Character skin does not have power-of-two size (size={image.Width}x{image.Height})");
+            }
+        }
+
+        public static bool HasSkinRes(string name)
+        {
+            return m_characterSkinNames.Contains(name);
+        }
+
+        public static void SaveSkinToFile(string name, byte[] data)
+        {
+            string fileName = GetFileName(name);
+            if (!string.IsNullOrEmpty(fileName))
+            {
+                using (Stream stream = Storage.OpenFile(fileName, OpenFileMode.Create))
+                {
+                    stream.Write(data, 0, data.Length);
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="..\Survivalcraft\Survivalcraft.props" />
     <Import Project="..\build\Windows.props" />
     <PropertyGroup>
@@ -14,6 +14,7 @@
         <ProjectReference Include="..\EntitySystem.Windows\EntitySystem.Windows.csproj" />
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="LiteNetLib" Version="2.0.1" />
         <PackageReference Include="TextCopy" Version="6.2.1" />
         <PackageReference Include="ImeSharp.ImmOnly" Version="1.0.0" />
     </ItemGroup>

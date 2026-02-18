@@ -2,6 +2,7 @@ using System.Globalization;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using Game.NetWork;
 
 namespace Game {
     public abstract class ComponentInventoryBase : Component, IInventory {
@@ -16,6 +17,8 @@ namespace Game {
         public Random m_random = new();
 
         Project IInventory.Project => Project;
+
+        public int Id { get; private set; }
 
         public virtual int SlotsCount => m_slots.Count;
 
@@ -85,7 +88,19 @@ namespace Game {
             }
         }
 
+        public virtual void DropSlotItems(int slotIndex, Vector3 position, Vector3 velocity) {
+            DropSlotItems(this, slotIndex, position, velocity);
+        }
+
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
+            Id = valuesDictionary.GetValue("Id", -1);
+            SubsystemInventories subsystemInventories = Project.FindSubsystem<SubsystemInventories>();
+            if (Id == -1) {
+                Id = subsystemInventories.ProduceInventoryId(this);
+            }
+            else {
+                Id = subsystemInventories.RegisterInventory(this);
+            }
             int value = valuesDictionary.GetValue<int>("SlotsCount");
             for (int i = 0; i < value; i++) {
                 m_slots.Add(new Slot());
@@ -104,6 +119,7 @@ namespace Game {
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
             ValuesDictionary valuesDictionary2 = new();
             valuesDictionary.SetValue("Slots", valuesDictionary2);
+            valuesDictionary.SetValue("Id", Id);
             for (int i = 0; i < m_slots.Count; i++) {
                 Slot slot = m_slots[i];
                 if (slot.Count > 0) {
@@ -160,6 +176,11 @@ namespace Game {
         }
 
         public virtual void AddSlotItems(int slotIndex, int value, int count) {
+            AddNetSlotItems(slotIndex, value, count);
+            OnSlotChange(slotIndex);
+        }
+
+        public virtual bool AddNetSlotItems(int slotIndex, int value, int count) {
             if (count > 0
                 && slotIndex >= 0
                 && slotIndex < m_slots.Count) {
@@ -169,18 +190,20 @@ namespace Game {
                 int slotCapacity = GetSlotCapacity(slotIndex, value);
                 if (slotCount != 0
                     && slotValue != value) {
-                    throw new InvalidOperationException(
-                        $"Cannot add slot items because items are different. Slot {slotIndex} Contains BlockValue {slotValue} with count {slotCount}. The value to add is {value} with count {count}. Slot capacity is {slotCapacity}"
-                    );
+                    return false;
                 }
-                if (GetSlotCount(slotIndex) + count > slotCapacity) {
-                    throw new InvalidOperationException(
-                        $"Cannot add slot items because it exceeded capacity. Slot {slotIndex} Contains BlockValue {slotValue} with count {slotCount}. The value to add is {value} with count {count}. Slot capacity is {slotCapacity}"
-                    );
+                if (slotCount + count > slotCapacity) {
+                    return false;
                 }
                 slot.Value = value;
                 slot.Count += count;
+                return true;
             }
+            return false;
+        }
+
+        public virtual void ProcessSlotItems(IInventory sourceInventory, int sourceSlotIndex, int slotIndex, int value, int count, int processCount, out int processedValue, out int processedCount) {
+            ProcessSlotItems(slotIndex, value, count, processCount, out processedValue, out processedCount);
         }
 
         public virtual void ProcessSlotItems(int slotIndex, int value, int count, int processCount, out int processedValue, out int processedCount) {
@@ -211,14 +234,36 @@ namespace Game {
         }
 
         public virtual int RemoveSlotItems(int slotIndex, int count) {
+            count = RemoveNetSlotItems(slotIndex, count);
+            OnSlotChange(slotIndex);
+            return count;
+        }
+
+        public virtual int RemoveNetSlotItems(int slotIndex, int count) {
             if (slotIndex >= 0
                 && slotIndex < m_slots.Count) {
                 Slot slot = m_slots[slotIndex];
                 count = MathUtils.Min(count, GetSlotCount(slotIndex));
                 slot.Count -= count;
+                if (slot.Count == 0) {
+                    slot.Value = 0;
+                }
                 return count;
             }
             return 0;
+        }
+
+        public virtual void SetSlotValue(int slotIndex, object obj) {
+            Slot slot = (Slot)obj;
+            m_slots[slotIndex].Count = slot.Count;
+            m_slots[slotIndex].Value = slot.Value;
+            OnSlotChange(slotIndex);
+        }
+
+        public virtual void OnSlotChange(int slotIndex) {
+            if (CommonLib.WorkType == WorkType.Server) {
+                SubsystemInventories.pushSyncItem(this, slotIndex);
+            }
         }
 
         public virtual void DropAllItems(Vector3 position) {

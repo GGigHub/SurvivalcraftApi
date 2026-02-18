@@ -1,5 +1,6 @@
 using Engine;
 using Engine.Graphics;
+using Game.NetWork;
 
 namespace Game {
     public class ViewWidget : TouchInputWidget, IDragTargetWidget {
@@ -47,6 +48,26 @@ namespace Game {
             Utilities.Dispose(ref m_scalingRenderTarget);
         }
 
+        public virtual void NetDragDrop(Vector3 hitPosition, InventoryDragData inventoryDragData, int count) {
+            if (inventoryDragData != null
+                && GameManager.Project != null) {
+                SubsystemPickables subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>(true);
+                ComponentPlayer componentPlayer = GameWidget.PlayerData.ComponentPlayer;
+                if (componentPlayer == null) {
+                    return;
+                }
+                IInventory inventory = inventoryDragData.Inventory;
+                int slotIndex = inventoryDragData.SlotIndex;
+                int slotValue = inventory.GetSlotValue(slotIndex);
+                int removeCount = MathUtils.Min(inventory.GetSlotCount(slotIndex), count);
+                int num = inventory.RemoveSlotItems(slotIndex, removeCount);
+                if (num > 0) {
+                    Vector3 velocity = Vector3.Normalize(hitPosition - GameWidget.ActiveCamera.ViewPosition) * 12f;
+                    subsystemPickables.AddPickable(slotValue, num, GameWidget.ActiveCamera.ViewPosition, velocity, null, componentPlayer.Entity);
+                }
+            }
+        }
+
         public virtual void DragOver(Widget dragWidget, object data) { }
 
         public virtual void DragDrop(Widget dragWidget, object data) {
@@ -60,15 +81,16 @@ namespace Game {
                     && componentPlayer.ComponentInput.SplitSourceSlotIndex == inventoryDragData.SlotIndex ? 1 :
                     inventoryDragData.DragMode != DragMode.SingleItem ? inventoryDragData.Inventory.GetSlotCount(inventoryDragData.SlotIndex) :
                     MathUtils.Min(inventoryDragData.Inventory.GetSlotCount(inventoryDragData.SlotIndex), 1);
-                int num = inventoryDragData.Inventory.RemoveSlotItems(inventoryDragData.SlotIndex, count);
-                if (num > 0) {
-                    Vector2 vector = dragWidget.WidgetToScreen(dragWidget.ActualSize / 2f);
-                    Vector3 value = Vector3.Normalize(
-                            GameWidget.ActiveCamera.ScreenToWorld(new Vector3(vector.X, vector.Y, 1f), Matrix.Identity)
-                            - GameWidget.ActiveCamera.ViewPosition
-                        )
-                        * 12f;
-                    subsystemPickables.AddPickable(slotValue, num, GameWidget.ActiveCamera.ViewPosition, value, null, componentPlayer.Entity);
+
+                Vector2 screenPos = dragWidget.WidgetToScreen(dragWidget.ActualSize / 2f);
+                Vector3 worldPos = Vector3.Normalize(GameWidget.ActiveCamera.ScreenToWorld(new Vector3(screenPos.X, screenPos.Y, 1f), Matrix.Identity));
+                if (inventoryDragData != null && GameManager.Project != null) {
+                    if (CommonLib.WorkType == WorkType.Client) {
+                        CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count));
+                    }
+                    else {
+                        NetDragDrop(worldPos, inventoryDragData, count);
+                    }
                 }
             }
         }

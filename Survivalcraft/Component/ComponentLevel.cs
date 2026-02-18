@@ -1,5 +1,6 @@
 using System.Globalization;
 using Engine;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -47,7 +48,7 @@ namespace Game {
         public const float FemaleSpeedFactor = 1.03f;
         public const float FemaleHungerFactor = 0.7f;
 
-        public virtual void AddExperience(int count, bool playSound) {
+        public void NetAddExperience(int count, bool playSound) {
             if (playSound) {
                 m_subsystemAudio.PlaySound("Audio/ExperienceCollected", 0.2f, m_random.Float(-0.1f, 0.4f), 0f, 0f);
             }
@@ -84,6 +85,13 @@ namespace Game {
                     );
                 }
                 m_componentPlayer.PlayerData.Level += num;
+            }
+        }
+
+        public virtual void AddExperience(int count, bool playSound) {
+            if (CommonLib.WorkType != WorkType.Client) {
+                NetAddExperience(count, playSound);
+                CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(m_componentPlayer.PlayerData, count, playSound, m_componentPlayer.PlayerData.Level));
             }
         }
 

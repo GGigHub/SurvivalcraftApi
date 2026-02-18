@@ -29,6 +29,8 @@ namespace Game {
 
         public bool IsIncendiary;
 
+        public bool IsFireProjectile;
+
         public Action OnRemove;
 
         public float Damping = -1f;

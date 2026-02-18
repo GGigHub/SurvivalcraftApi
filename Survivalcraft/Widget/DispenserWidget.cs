@@ -1,5 +1,8 @@
 using System.Xml.Linq;
 using Engine;
+using Engine.Media;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class DispenserWidget : CanvasWidget {
@@ -53,22 +56,34 @@ namespace Game {
         public override void Update() {
             int value = m_componentBlockEntity.BlockValue;
             int data = Terrain.ExtractData(value);
+            bool flag = false;
             if (m_dispenseButton.IsClicked) {
                 data = DispenserBlock.SetMode(data, DispenserBlock.Mode.Dispense);
                 value = Terrain.ReplaceData(value, data);
                 m_componentBlockEntity.BlockValue = value;
+                flag = true;
             }
             if (m_shootButton.IsClicked) {
                 data = DispenserBlock.SetMode(data, DispenserBlock.Mode.Shoot);
                 value = Terrain.ReplaceData(value, data);
                 m_componentBlockEntity.BlockValue = value;
+                flag = true;
             }
             if (m_acceptsDropsBox.IsClicked) {
                 data = DispenserBlock.SetAcceptsDrops(data, !DispenserBlock.GetAcceptsDrops(data));
                 value = Terrain.ReplaceData(value, data);
                 m_componentBlockEntity.BlockValue = value;
+                flag = true;
             }
             DispenserBlock.Mode mode = DispenserBlock.GetMode(data);
+            if (flag && CommonLib.WorkType == WorkType.Client) {
+                byte tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) | (DispenserBlock.GetAcceptsDrops(data) ? (1 << 1) : 0));
+                var p = new DispenserPackage(m_componentBlockEntity.Coordinates, tmp);
+                CommonLib.Net.QueuePackage(p);
+                if (CommonLib.WorkType != WorkType.Client) {
+                    p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                }
+            }
             m_dispenseButton.IsChecked = mode == DispenserBlock.Mode.Dispense;
             m_shootButton.IsChecked = mode == DispenserBlock.Mode.Shoot;
             m_acceptsDropsBox.IsChecked = DispenserBlock.GetAcceptsDrops(data);

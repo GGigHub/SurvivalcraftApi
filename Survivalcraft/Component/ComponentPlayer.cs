@@ -1,9 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
 namespace Game {
     public class ComponentPlayer : ComponentCreature, IUpdateable {
+
         public SubsystemGameInfo m_subsystemGameInfo;
 
         public SubsystemTime m_subsystemTime;
@@ -45,6 +52,68 @@ namespace Game {
 
         public PlayerData PlayerData { get; set; }
 
+        public enum InteractEvent {
+            None,
+            Start,
+            Place
+        }
+
+        public enum AimEvent {
+            None,
+            InProgress,
+            Cancel,
+            Complete
+        }
+
+        public enum DigEvent {
+            None,
+            Start,
+            Cancel,
+            End
+        }
+
+        public struct DigEventItem {
+            public DigEvent digEvent;
+            public Ray3? NetDigRay;
+            public TerrainRaycastResult? NetDigRaycast;
+        }
+
+        public struct AimEventItem {
+            public AimEvent aimEvent;
+            public Ray3? NetAim;
+        }
+
+        public struct InteractEventItem {
+            public InteractEvent interactEvent;
+            public Ray3 NetInteractRay;
+            public TerrainRaycastResult? NetPlaceRaycast;
+        }
+
+        public InteractEventItem interactEvent;
+        public AimEventItem aimEvent;
+        public DigEventItem digEvent;
+
+        public InteractEventItem last_interactEvent;
+        public AimEventItem last_aimEvent;
+        public DigEventItem last_digEvent;
+
+        public List<AimEventItem> aimEvents = new List<AimEventItem>();
+        public List<DigEventItem> digEvents = new List<DigEventItem>();
+        public List<InteractEventItem> interactEvents = new List<InteractEventItem>();
+        public byte LastActiveSlot;
+
+        public void AddDigEvent(DigEvent digEvent, Ray3? digRay, TerrainRaycastResult? raycastResult) {
+            digEvents.Add(new DigEventItem { digEvent = digEvent, NetDigRay = digRay, NetDigRaycast = raycastResult });
+        }
+
+        public void AddAimEvent(AimEvent aimEvent, Ray3? aimRay) {
+            aimEvents.Add(new AimEventItem { aimEvent = aimEvent, NetAim = aimRay });
+        }
+
+        public void AddInteractEvent(InteractEvent interactEvent, Ray3 digRay, TerrainRaycastResult? raycastResult) {
+            interactEvents.Add(new InteractEventItem { interactEvent = interactEvent, NetInteractRay = digRay, NetPlaceRaycast = raycastResult });
+        }
+
         public GameWidget GameWidget => PlayerData.GameWidget;
 
         public ContainerWidget GuiWidget => PlayerData.GameWidget.GuiWidget;
@@ -84,7 +153,28 @@ namespace Game {
             set;
         }
 
+        public void DoDrop() {
+            if (ComponentMiner?.Inventory == null) {
+                return;
+            }
+            IInventory inventory = ComponentMiner.Inventory;
+            int slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
+            int num3 = inventory.RemoveSlotItems(inventory.ActiveSlotIndex, inventory.GetSlotCount(inventory.ActiveSlotIndex));
+            if (slotValue != 0 && num3 != 0) {
+                Vector3 position = ComponentBody.Position
+                    + new Vector3(0f, ComponentBody.StanceBoxSize.Y * 0.66f, 0f)
+                    + 0.25f * ComponentBody.Matrix.Forward;
+                Vector3 velocity = 8f * Matrix.CreateFromQuaternion(ComponentCreatureModel.EyeRotation).Forward;
+                m_subsystemPickables.AddPickable(slotValue, num3, position, velocity, null, Entity);
+            }
+        }
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
+
+        // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
+        // 客户端自己的PlayerGuid，以及服务端上所有玩家的PlayerGuid都未经混淆
+        // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
+        public Guid PlayerGuid { get; set; }
 
         public DragHostWidget m_dragHostWidget;
 
@@ -151,6 +241,10 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            if (PlayerData.IsMainPlayer && ComponentMiner?.Inventory != null && LastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex) {
+                LastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
+                CommonLib.Net.QueuePackage(new ComponentInventoryPackage(ComponentMiner.Inventory, ComponentMiner.Inventory.ActiveSlotIndex));
+            }
             PlayerInput playerInput = ComponentInput.PlayerInput;
             if (ComponentInput.IsControlledByTouch
                 && m_aim.HasValue
@@ -273,6 +367,112 @@ namespace Game {
             }
             int num = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);
             Block block = BlocksManager.Blocks[num];
+
+            if (Time.PeriodicEvent(0.1f, 0.0)) {
+                if (CommonLib.WorkType != WorkType.Client) {
+                    //鏈嶅姟鍣ㄥ箍鎾帺瀹舵暟鎹?
+                    CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate) { Except = PlayerData.Client });
+                }
+                else if (PlayerData.IsMainPlayer) {
+                    //瀹㈡埛绔箍鎾嚜宸辩殑鏁版嵁
+                    CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate));
+                }
+            }
+
+            // Handle replicated Interact/Aim/Dig events on server and remote clients.
+            if (CommonLib.WorkType != WorkType.Local && !PlayerData.IsMainPlayer) {
+                if (digEvents.Count > 0) {
+                    digEvent = digEvents[0];
+                    digEvents.RemoveAt(0);
+                }
+                if (digEvent.digEvent == DigEvent.Start) {
+                    if (digEvent.NetDigRay.HasValue) {
+                        TerrainRaycastResult? serverRaycast = ComponentMiner.Raycast<TerrainRaycastResult>(digEvent.NetDigRay.Value, RaycastMode.Digging);
+                        if (serverRaycast.HasValue) {
+                            ComponentMiner.Dig(serverRaycast.Value);
+                        }
+                    }
+                }
+                else if (digEvent.digEvent == DigEvent.Cancel) {
+                    digEvent = default;
+                    digEvent.NetDigRaycast = null;
+                    digEvent.NetDigRay = null;
+                    ComponentMiner.DigCellFace = null;
+                    ComponentMiner.m_digProgress = 0f;
+                }
+                else if (digEvent.digEvent == DigEvent.End) {
+                    if (digEvent.NetDigRay.HasValue) {
+                        ComponentMiner.m_digProgress = 1f;
+                        TerrainRaycastResult? serverRaycast = ComponentMiner.Raycast<TerrainRaycastResult>(digEvent.NetDigRay.Value, RaycastMode.Digging);
+                        if (serverRaycast.HasValue) {
+                            ComponentMiner.Dig(serverRaycast.Value);
+                        }
+                    }
+                    digEvent = default;
+                    digEvent.NetDigRaycast = null;
+                    digEvent.NetDigRay = null;
+                    ComponentMiner.DigCellFace = null;
+                }
+
+                if (aimEvents.Count > 0) {
+                    aimEvent = aimEvents[0];
+                    aimEvents.RemoveAt(0);
+                }
+                if (aimEvent.aimEvent == AimEvent.InProgress) {
+                    if (aimEvent.NetAim.HasValue) {
+                        ComponentMiner.Aim(aimEvent.NetAim.Value, AimState.InProgress);
+                    }
+                }
+                else if (aimEvent.aimEvent == AimEvent.Cancel) {
+                    if (aimEvent.NetAim.HasValue) {
+                        ComponentMiner.Aim(aimEvent.NetAim.Value, AimState.Cancelled);
+                    }
+                    aimEvent.NetAim = null;
+                    aimEvent = default;
+                }
+                else if (aimEvent.aimEvent == AimEvent.Complete) {
+                    if (aimEvent.NetAim.HasValue) {
+                        ComponentMiner.Aim(aimEvent.NetAim.Value, AimState.Completed);
+                    }
+                    m_isAimBlocked = false;
+                    aimEvent.NetAim = null;
+                    aimEvent = default;
+                }
+
+                if (interactEvents.Count > 0) {
+                    interactEvent = interactEvents[0];
+                    interactEvents.RemoveAt(0);
+                }
+                if (interactEvent.interactEvent == InteractEvent.Start) {
+                    if (!ComponentMiner.Use(interactEvent.NetInteractRay)) {
+                        TerrainRaycastResult? serverRaycast = ComponentMiner.Raycast<TerrainRaycastResult>(interactEvent.NetInteractRay, RaycastMode.Interaction);
+                        if (serverRaycast.HasValue && !ComponentMiner.Interact(serverRaycast.Value)) {
+                            ComponentMiner.Place(serverRaycast.Value);
+                        }
+                    }
+                    interactEvent = default;
+                }
+                else if (interactEvent.interactEvent == InteractEvent.Place) {
+                    Ray3 placeRay = interactEvent.NetInteractRay;
+                    if (placeRay.Direction == Vector3.Zero) {
+                        placeRay = new Ray3(ComponentCreatureModel.EyePosition, ComponentBody.Matrix.Forward);
+                    }
+                    TerrainRaycastResult? serverRaycast = ComponentMiner.Raycast<TerrainRaycastResult>(placeRay, RaycastMode.Interaction);
+                    if (serverRaycast.HasValue) {
+                        ComponentMiner.Place(serverRaycast.Value);
+                    }
+                    interactEvent = default;
+                }
+            }
+
+            bool shouldSyncPlayerEvents = CommonLib.WorkType == WorkType.Local
+                || (CommonLib.WorkType != WorkType.Local && PlayerData.IsMainPlayer);
+            if (shouldSyncPlayerEvents) {
+                digEvent = default;
+                interactEvent = default;
+                aimEvent = default;
+            }
+
             bool flag = false;
             if (playerInput.Interact.HasValue) {
                 double timeIntervalLastActionTime = 0.33;
@@ -317,6 +517,11 @@ namespace Game {
                 );
                 if (!flag
                     && m_subsystemTime.GameTime - m_lastActionTime > timeIntervalLastActionTime) {
+                    if (shouldSyncPlayerEvents) {
+                        interactEvent.interactEvent = InteractEvent.Start;
+                        interactEvent.NetInteractRay = playerInput.Interact.Value;
+                        interactEvent.NetPlaceRaycast = terrainRaycastResult;
+                    }
                     //处理三者的关系，优先级最高的优先执行
                     DealWithPlayerInteract(
                         priorityUse,
@@ -327,6 +532,12 @@ namespace Game {
                         movingBlocksRaycastResult,
                         out flag
                     );
+                    if (shouldSyncPlayerEvents
+                        && terrainRaycastResult.HasValue
+                        && priorityPlace >= priorityUse
+                        && priorityPlace >= priorityInteract) {
+                        interactEvent.interactEvent = InteractEvent.Place;
+                    }
                     m_lastActionTime = timeIntervalLastActionTime;
                 }
             }
@@ -353,8 +564,15 @@ namespace Game {
                             && vector.Y >= size.Y * 0.02f
                             && vector.Y < size.Y * 0.98f) {
                             m_aim = value;
+                            if (shouldSyncPlayerEvents) {
+                                aimEvent.aimEvent = AimEvent.InProgress;
+                                aimEvent.NetAim = value;
+                            }
                             m_aimStartTime ??= m_subsystemTime.GameTime;
                             if (ComponentMiner.Aim(value, AimState.InProgress)) {
+                                if (shouldSyncPlayerEvents) {
+                                    aimEvent.aimEvent = AimEvent.Cancel;
+                                }
                                 ComponentMiner.Aim(m_aim.Value, AimState.Cancelled);
                                 m_aim = null;
                                 m_aimStartTime = null;
@@ -376,6 +594,10 @@ namespace Game {
                             }
                         }
                         else if (m_aim.HasValue) {
+                            if (shouldSyncPlayerEvents) {
+                                aimEvent.NetAim = m_aim;
+                                aimEvent.aimEvent = AimEvent.Cancel;
+                            }
                             ComponentMiner.Aim(m_aim.Value, AimState.Cancelled);
                             m_aim = null;
                             m_aimStartTime = null;
@@ -397,6 +619,10 @@ namespace Game {
                 );
                 if (!skipVanilla_h
                     && m_aim.HasValue) {
+                    if (shouldSyncPlayerEvents) {
+                        aimEvent.NetAim = m_aim;
+                        aimEvent.aimEvent = AimEvent.Complete;
+                    }
                     ComponentMiner.Aim(m_aim.Value, AimState.Completed);
                     m_aim = null;
                     m_aimStartTime = null;
@@ -435,6 +661,9 @@ namespace Game {
                                 bodyRaycastResult.Value.HitPoint(),
                                 playerInput.Hit.Value.Direction
                             );
+                            if (CommonLib.WorkType == WorkType.Client) {
+                                CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
+                            }
                         }
                     }
                 }
@@ -461,8 +690,16 @@ namespace Game {
                         playerInput.Dig.Value,
                         RaycastMode.Digging
                     );
+                    if (shouldSyncPlayerEvents) {
+                        digEvent.digEvent = DigEvent.Start;
+                        digEvent.NetDigRay = playerInput.Dig;
+                        digEvent.NetDigRaycast = terrainRaycastResult2;
+                    }
                     if (terrainRaycastResult2.HasValue
                         && ComponentMiner.Dig(terrainRaycastResult2.Value)) {
+                        if (shouldSyncPlayerEvents) {
+                            digEvent.digEvent = DigEvent.End;
+                        }
                         m_lastActionTime = m_subsystemTime.GameTime;
                         m_subsystemTerrain.TerrainUpdater.RequestSynchronousUpdate();
                     }
@@ -479,6 +716,23 @@ namespace Game {
                         return false;
                     }
                 );
+            }
+            if (shouldSyncPlayerEvents && last_digEvent.digEvent == DigEvent.Start && digEvent.digEvent == DigEvent.None) {
+                digEvent.digEvent = DigEvent.Cancel;
+            }
+            if (shouldSyncPlayerEvents) {
+                if (last_digEvent.digEvent != digEvent.digEvent) {
+                    last_digEvent = digEvent;
+                    CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.DigEvent));
+                }
+                if (last_interactEvent.interactEvent != interactEvent.interactEvent) {
+                    last_interactEvent = interactEvent;
+                    CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.InteractEvent));
+                }
+                if (last_aimEvent.aimEvent != aimEvent.aimEvent) {
+                    last_aimEvent = aimEvent;
+                    CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.AimEvent));
+                }
             }
             if (playerInput.Drop
                 && ComponentMiner.Inventory != null) {
@@ -599,13 +853,50 @@ namespace Game {
             ComponentOuterClothingModel = Entity.FindComponent<ComponentOuterClothingModel>(true);
             int playerIndex = valuesDictionary.GetValue<int>("PlayerIndex");
             SubsystemPlayers subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
-            if(PlayerData == null)
-                PlayerData = subsystemPlayers.m_playersData.First(d => d.PlayerIndex == playerIndex);
+
+            PlayerGuid = valuesDictionary.GetValue("PlayerGuid", CommonLib.Net.Self.PlayerGuid);
+            PlayerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.PlayerGUID == PlayerGuid);
+            if (PlayerData == null) {
+                throw new Exception($"Player data not found for guid {PlayerGuid}");
+            }
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
             base.Save(valuesDictionary, entityToIdMap);
+            valuesDictionary.SetValue("PlayerGuid", PlayerData.PlayerGUID);
             valuesDictionary.SetValue("PlayerIndex", PlayerData.PlayerIndex);
+        }
+
+        private static readonly object _saveLock = new();
+
+        public virtual void SavePlayerEntity() {
+            if (CommonLib.WorkType != WorkType.Client) {
+                lock (_saveLock) {
+                    try {
+                        var list = Project.SaveEntities([Entity]);
+                        var dict = new ValuesDictionary();
+                        var vdict = new ValuesDictionary();
+                        var pdict = new ValuesDictionary();
+                        list.EntitiesData[0].Save(vdict);
+                        PlayerData.Save(pdict);
+                        var entityFileDir = Storage.CombinePaths(m_subsystemGameInfo.DirectoryName, "PlayerEntities/");
+                        if (!Storage.DirectoryExists(entityFileDir)) {
+                            Storage.CreateDirectory(entityFileDir);
+                        }
+                        dict.SetValue("Entity", vdict);
+                        dict.SetValue("Data", pdict);
+                        using (Stream stream = Storage.OpenFile(Storage.CombinePaths(entityFileDir, $"{PlayerData.PlayerGUID}.json"), OpenFileMode.Create)) {
+                            StreamWriter streamWriter = new(stream);
+                            streamWriter.Write(dict.ToJsonText());
+                            streamWriter.Flush();
+                            streamWriter.Dispose();
+                        }
+                    }
+                    catch (Exception e) {
+                        Log.Warning("Persist player on death failed: " + e.Message);
+                    }
+                }
+            }
         }
     }
 }

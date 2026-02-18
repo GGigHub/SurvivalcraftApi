@@ -1,4 +1,5 @@
 using Engine;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -143,6 +144,8 @@ namespace Game {
         public LabelWidget LevelLabelWidget { get; set; }
 
         public virtual bool ShowTouchWidget => m_componentPlayer.ComponentInput.IsControlledByTouch;
+
+        public int CloseTime;
 
         public Widget ModalPanelWidget {
             get {
@@ -626,6 +629,7 @@ namespace Game {
                         DisplaySmallMessage(LanguageControl.Get(fName, 8), Color.White, false, false);
                     }
                 }
+                CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(m_componentPlayer, NetWork.Packages.ComponentPlayerPackage.PlayerAction.CreativeFlyChange));
             }
             if (m_cameraButtonWidget.IsClicked
                 || playerInput.SwitchCameraMode) {
@@ -647,17 +651,24 @@ namespace Game {
             if (m_lightningButtonWidget.IsVisible
                 && (m_lightningButtonWidget.IsClicked || playerInput.Lighting)) {
                 Matrix matrix = Matrix.CreateFromQuaternion(m_componentPlayer.ComponentCreatureModel.EyeRotation);
-                m_subsystemWeather.ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
+                if (CommonLib.WorkType != WorkType.Client) {
+                    Project.FindSubsystem<SubsystemWeather>(throwOnError: true).ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
+                    m_subsystemWeather.ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
+                }
+                else CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemSkyPackage(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward));
             }
+            int? type = null;
             if (m_precipitationButtonWidget.IsVisible
                 && (m_precipitationButtonWidget.IsClicked || playerInput.Precipitation)) {
                 if (m_subsystemWeather.IsPrecipitationStarted) {
                     m_subsystemWeather.ManualPrecipitationEnd();
                     DisplaySmallMessage(LanguageControl.Get(fName, 20), Color.White, false, false);
+                    type = 1;
                 }
                 else {
                     m_subsystemWeather.ManualPrecipitationStart();
                     DisplaySmallMessage(LanguageControl.Get(fName, 21), Color.White, false, false);
+                    type = 2;
                 }
             }
             if (m_fogButtonWidget.IsVisible
@@ -665,11 +676,16 @@ namespace Game {
                 if (m_subsystemWeather.IsFogStarted) {
                     m_subsystemWeather.ManualFogEnd();
                     DisplaySmallMessage(LanguageControl.Get(fName, 22), Color.White, false, false);
+                    type = 3;
                 }
                 else {
                     m_subsystemWeather.ManualFogStart();
                     DisplaySmallMessage(LanguageControl.Get(fName, 23), Color.White, false, false);
+                    type = 4;
                 }
+            }
+            if (type.HasValue) {
+                CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemWeatherPackage((int)type));
             }
             if (m_timeOfDayButtonWidget.IsVisible
                 && (m_timeOfDayButtonWidget.IsClicked || playerInput.TimeOfDay)) {
@@ -678,21 +694,29 @@ namespace Game {
                 float num4 = IntervalUtils.Interval(m_subsystemTimeOfDay.TimeOfDay, m_subsystemTimeOfDay.Middusk);
                 float num5 = IntervalUtils.Interval(m_subsystemTimeOfDay.TimeOfDay, m_subsystemTimeOfDay.Midnight);
                 float num6 = MathUtils.Min(num2, num3, num4, num5);
+                byte? type1 = null;
                 if (num2 == num6) {
                     m_subsystemTimeOfDay.TimeOfDayOffset += num2;
                     DisplaySmallMessage(LanguageControl.Get(fName, 15), Color.White, false, false);
+                    type1 = 0;
                 }
                 else if (num3 == num6) {
                     m_subsystemTimeOfDay.TimeOfDayOffset += num3;
                     DisplaySmallMessage(LanguageControl.Get(fName, 16), Color.White, false, false);
+                    type1 = 1;
                 }
                 else if (num4 == num6) {
                     m_subsystemTimeOfDay.TimeOfDayOffset += num4;
                     DisplaySmallMessage(LanguageControl.Get(fName, 17), Color.White, false, false);
+                    type1 = 2;
                 }
                 else if (num5 == num6) {
                     m_subsystemTimeOfDay.TimeOfDayOffset += num5;
                     DisplaySmallMessage(LanguageControl.Get(fName, 18), Color.White, false, false);
+                    type1 = 3;
+                }
+                if (type1.HasValue) {
+                    CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemTimePackage(m_subsystemTimeOfDay.m_subsystemGameInfo.TotalElapsedGameTime, m_subsystemTimeOfDay.TimeOfDayOffset));
                 }
             }
             if (ModalPanelWidget != null) {

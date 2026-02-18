@@ -27,6 +27,10 @@ namespace Game {
 
         ModLoader ModLoader_;
 
+        public string ResourcesMd5 = string.Empty;
+
+        public virtual bool IsSystemMod => false;
+
         public ModEntity() { }
 
         public ModEntity(ZipArchive zipArchive) {

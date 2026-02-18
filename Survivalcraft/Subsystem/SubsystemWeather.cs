@@ -222,6 +222,9 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            //客户端禁用天气生成
+            if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) return;
+
             UpdatePrecipitation(dt);
             UpdateLightning(dt);
             UpdateFog(dt);
@@ -260,12 +263,12 @@ namespace Game {
                     m_rainVolumeFactor += m_subsystemAudio.CalculateVolume(distance, 1f);
                 }
             }
-            m_subsystemBlocksScanner.ScanningChunkCompleted += delegate(TerrainChunk chunk) {
+            m_subsystemBlocksScanner.ScanningChunkCompleted += delegate (TerrainChunk chunk) {
                 if (m_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode == EnvironmentBehaviorMode.Living) {
                     FreezeThawAndDepositSnow(chunk, 0.66f, 0.66f, false);
                 }
             };
-            SubsystemTerrain.TerrainUpdater.ChunkInitialized += delegate(TerrainChunk chunk) {
+            SubsystemTerrain.TerrainUpdater.ChunkInitialized += delegate (TerrainChunk chunk) {
                 if (m_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode == EnvironmentBehaviorMode.Living) {
                     FreezeThawAndDepositSnow(chunk, 1f, 1f, m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled);
                     FreezeThawAndDepositSnow(chunk, 0.66f, 0.66f, m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled);
@@ -329,6 +332,7 @@ namespace Game {
                 }
                 m_precipitationEndTime = m_precipitationStartTime + 60f * m_random.Float(3f, 6f);
                 m_precipitationRampTime = m_random.Float(10f, 30f);
+                NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemWeatherPackage(m_precipitationStartTime, m_precipitationEndTime, m_lightningIntensity));
             }
             if (m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled) {
                 if (IsPrecipitationStarted) {
@@ -427,6 +431,7 @@ namespace Game {
                 m_fogEndTime = m_fogStartTime + 60f * m_random.Float(4f, 7f) * num;
                 m_fogRampTime = m_random.Float(20f, 40f);
                 FogProgress = 0f;
+                NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemWeatherPackage(m_fogStartTime, m_fogRampTime, m_fogEndTime));
             }
             FogSeed = MathUtils.Hash((int)MathUtils.Remainder(m_fogStartTime, 1000000.0));
             if (m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled) {

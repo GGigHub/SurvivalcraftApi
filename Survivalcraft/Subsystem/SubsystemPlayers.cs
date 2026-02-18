@@ -1,6 +1,11 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using Engine;
 using GameEntitySystem;
+using Game.NetWork;
 using TemplatesDatabase;
 
 namespace Game {
@@ -13,21 +18,46 @@ namespace Game {
 
         public int m_nextPlayerIndex;
 
-        public static int MaxPlayers = 4;
-
-        public bool PlayerStartedPlaying = false;
-
         public ReadOnlyList<PlayerData> PlayersData => new(m_playersData);
 
         public ReadOnlyList<ComponentPlayer> ComponentPlayers => new(m_componentPlayers);
+
+        public bool ShouldEnterCreate;
 
         public Vector3 GlobalSpawnPosition { get; set; }
 
         public UpdateOrder UpdateOrder => UpdateOrder.SubsystemPlayers;
 
-        public virtual Action<PlayerData> PlayerAdded { get; set; }
+        public event Action<PlayerData> PlayerAdded;
 
-        public virtual Action<PlayerData> PlayerRemoved { get; set; }
+        public event Action<PlayerData> PlayerRemoved;
+
+        private PlayerData m_mainPlayer;
+
+        private Dictionary<int, PlayerData> usedIndies = new Dictionary<int, PlayerData>();
+
+        public Dictionary<string, string> BlackPlayerGuidList = new Dictionary<string, string>();
+
+        public List<string> NoMsgPlayerGuidList = new List<string>();
+
+        private Dictionary<Guid, EntityData> m_offlinePlayerEntities = new Dictionary<Guid, EntityData>();
+
+        public PlayerData MainPlayerData {
+            get {
+                if (m_mainPlayer == null) {
+                    m_mainPlayer = PlayersData.FirstOrDefault(p => p.IsMainPlayer);
+                }
+                return m_mainPlayer;
+            }
+        }
+
+        public SubsystemTerrain m_subsystemTerrain;
+
+        public SubsystemGameInfo m_subsystemGameInfo;
+
+        public ComponentPlayer MainPlayer => MainPlayerData?.ComponentPlayer;
+
+        public string PlayerEntitiesDir = string.Empty;
 
         public bool IsPlayer(Entity entity) {
             foreach (ComponentPlayer componentPlayer in m_componentPlayers) {
@@ -51,37 +81,72 @@ namespace Game {
             return result;
         }
 
-        public void AddPlayerData(PlayerData playerData) {
-            if (m_playersData.Count >= MaxPlayers) {
-                throw new InvalidOperationException("Too many players.");
+        public void FindUnusedIndex(PlayerData playerData) {
+            for (int i = 0; i < int.MaxValue; i++) {
+                if (!usedIndies.ContainsKey(i)) {
+                    usedIndies.Add(i, playerData);
+                    playerData.PlayerIndex = i;
+                    return;
+                }
             }
-            if (m_playersData.Contains(playerData)) {
-                throw new InvalidOperationException("Player already added.");
-            }
-            m_playersData.Add(playerData);
-            playerData.PlayerIndex = ++m_nextPlayerIndex;
-            PlayerAdded?.Invoke(playerData);
         }
 
-        public void RemovePlayerData(PlayerData playerData) {
+        public void AddPlayerData(PlayerData playerData) {
+            if (m_playersData.Contains(playerData) || m_playersData.Any(pd => pd.PlayerGUID == playerData.PlayerGUID)) {
+                throw new InvalidOperationException("Player already added.");
+            }
+
+            m_playersData.Add(playerData);
+
+            FindUnusedIndex(playerData);
+
+            PlayerAdded?.Invoke(playerData);
+
+            if (playerData.m_stateMachine.CurrentState == null) {
+                playerData.m_stateMachine.TransitionTo("FirstUpdate");
+            }
+
+            m_subsystemTerrain?.TerrainUpdater?.SetLastChunksUpdateCenter(-1, null);
+        }
+
+        public void RemovePlayerData(PlayerData playerData, bool disposeEntity = true) {
             if (!m_playersData.Contains(playerData)) {
                 throw new InvalidOperationException("Player does not exist.");
             }
             m_playersData.Remove(playerData);
+            if (usedIndies.ContainsKey(playerData.PlayerIndex)) {
+                usedIndies.Remove(playerData.PlayerIndex);
+            }
             if (playerData.ComponentPlayer != null) {
-                Project.RemoveEntity(playerData.ComponentPlayer.Entity, true);
+                try {
+                    Project.RemoveEntity(playerData.ComponentPlayer.Entity, disposeEntity);
+                }
+                catch {
+                }
             }
             PlayerRemoved?.Invoke(playerData);
             playerData.Dispose();
+            m_subsystemTerrain?.TerrainUpdater?.SetLastChunksUpdateCenter(-1, null);
         }
 
+        List<PlayerData> toRemove = new List<PlayerData>();
+
         public virtual void Update(float dt) {
-            if (m_playersData.Count == 0) {
+            if (m_playersData.Count == 0 || m_playersData.All(p => !p.IsMainPlayer)) {
                 ScreensManager.SwitchScreen("Player", PlayerScreen.Mode.Initial, Project);
             }
             foreach (PlayerData playersDatum in m_playersData) {
-                playersDatum.Update();
+                if (CommonLib.WorkType == WorkType.Server && playersDatum.Client == null) {
+                    toRemove.Add(playersDatum);
+                }
+                else {
+                    playersDatum.Update();
+                }
             }
+            foreach (PlayerData playerData in toRemove) {
+                MakePlayerOffline(playerData.PlayerGUID);
+            }
+            toRemove.Clear();
         }
 
         public override void Dispose() {
@@ -91,27 +156,55 @@ namespace Game {
         }
 
         public override void Load(ValuesDictionary valuesDictionary) {
+            m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>();
+            m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>();
             m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
             m_nextPlayerIndex = valuesDictionary.GetValue<int>("NextPlayerIndex");
             GlobalSpawnPosition = valuesDictionary.GetValue<Vector3>("GlobalSpawnPosition");
-            foreach (KeyValuePair<string, object> item in valuesDictionary.GetValue<ValuesDictionary>("Players")) {
-                PlayerData playerData = new(Project);
-                playerData.Load((ValuesDictionary)item.Value);
-                playerData.PlayerIndex = int.Parse(item.Key, CultureInfo.InvariantCulture);
-                m_playersData.Add(playerData);
+            var blackPlayers = valuesDictionary.GetValue("BlackPlayerGuidList", new ValuesDictionary());
+            foreach (var item in blackPlayers) {
+                BlackPlayerGuidList[item.Key] = (string)item.Value;
+            }
+            var noMsgPlayers = valuesDictionary.GetValue("NoMsgPlayerGuidList", new ValuesDictionary());
+            foreach (string item in noMsgPlayers.Values) {
+                NoMsgPlayerGuidList.Add(item);
+            }
+            foreach (ValuesDictionary item in valuesDictionary.GetValue("Players", new ValuesDictionary()).Values) {
+                var playerData = new PlayerData(Project);
+                playerData.Load(item);
+                AddPlayerData(playerData);
+            }
+
+            foreach (KeyValuePair<string, object> item in valuesDictionary.GetValue("OfflinePlayerEntities", new ValuesDictionary())) {
+                if (Guid.TryParseExact(item.Key, "N", out Guid res)) {
+                    var entityData = new EntityData(Project.GameDatabase, (ValuesDictionary)item.Value);
+                    m_offlinePlayerEntities.Add(res, entityData);
+                }
             }
         }
 
         public override void Save(ValuesDictionary valuesDictionary) {
-            valuesDictionary.SetValue("NextPlayerIndex", m_nextPlayerIndex);
-            valuesDictionary.SetValue("GlobalSpawnPosition", GlobalSpawnPosition);
-            ValuesDictionary valuesDictionary2 = new();
-            valuesDictionary.SetValue("Players", valuesDictionary2);
+            var OnlinePlayersListVD = new ValuesDictionary();
+            int num = 0;
             foreach (PlayerData playersDatum in m_playersData) {
-                ValuesDictionary valuesDictionary3 = new();
-                valuesDictionary2.SetValue(playersDatum.PlayerIndex.ToString(CultureInfo.InvariantCulture), valuesDictionary3);
+                var valuesDictionary3 = new ValuesDictionary();
                 playersDatum.Save(valuesDictionary3);
+                OnlinePlayersListVD.SetValue(num++.ToString(), valuesDictionary3);
             }
+            var blackPlayers = new ValuesDictionary();
+            foreach (var bpgl in BlackPlayerGuidList) {
+                blackPlayers.SetValue(bpgl.Key, bpgl.Value);
+            }
+            valuesDictionary.SetValue("BlackPlayerGuidList", blackPlayers);
+            var noMsgPlayers = new ValuesDictionary();
+            for (int i = 0; i < NoMsgPlayerGuidList.Count; i++) {
+                noMsgPlayers.SetValue(i.ToString(), NoMsgPlayerGuidList[i]);
+            }
+            valuesDictionary.SetValue("NoMsgPlayerGuidList", noMsgPlayers);
+            valuesDictionary.SetValue("GlobalSpawnPosition", GlobalSpawnPosition);
+            valuesDictionary.SetValue("Players", OnlinePlayersListVD);
+            var offlines = new ValuesDictionary();
+            valuesDictionary.SetValue("OfflinePlayerEntities", offlines);
         }
 
         public override void OnEntityAdded(Entity entity) {
@@ -128,13 +221,105 @@ namespace Game {
             UpdateComponentPlayers();
         }
 
-        public virtual void UpdateComponentPlayers() {
+        public void UpdateComponentPlayers() {
             m_componentPlayers.Clear();
             foreach (PlayerData playersDatum in m_playersData) {
                 if (playersDatum.ComponentPlayer != null) {
                     m_componentPlayers.Add(playersDatum.ComponentPlayer);
                 }
             }
+        }
+
+        public void MakePlayerOffline(Guid playerGuid, bool showMsg = true) {
+            var pd = m_playersData.Find(p => p.PlayerGUID == playerGuid);
+            if (pd != null) {
+                var updater = m_subsystemTerrain.TerrainUpdater;
+                if (pd.Client != null && updater != null && updater.waitChunkList != null && updater.waitChunkList.ContainsKey(pd.Client)) {
+                    updater.waitChunkList.Remove(pd.Client);
+                }
+                var componentPlayer = pd.ComponentPlayer;
+                if (componentPlayer == null && m_offlinePlayerEntities.TryGetValue(playerGuid, out var entityDataPlayer)) {
+                    var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
+                    list.EntitiesData.Add(entityDataPlayer);
+                    m_offlinePlayerEntities.Remove(playerGuid);
+                    var e = ProjectNet.Project.LoadEntities(list)[0];
+                    componentPlayer = e.FindComponent<ComponentPlayer>();
+                }
+                if (componentPlayer != null) {
+                    Project.RemoveEntity(componentPlayer.Entity, true);
+                    if (showMsg && CommonLib.WorkType == WorkType.Server) {
+                        Project.FindSubsystem<SubsystemGameWidgets>().AddMessage(pd.Name + " 退出游戏");
+                    }
+                    if (CommonLib.WorkType == WorkType.Server) {
+                        componentPlayer.SavePlayerEntity();
+                    }
+                }
+                m_subsystemTerrain.TerrainUpdater.RemoveUpdateLocation(pd.PlayerIndex);
+                RemovePlayerData(pd, true);
+            }
+        }
+
+        public bool CheckPlayerDataExists(Guid playerGuid, out string entityFilePath) {
+            var entityFileDir = Storage.CombinePaths(m_subsystemGameInfo.DirectoryName, $"PlayerEntities/");
+            entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.json");
+            if (!Storage.FileExists(entityFilePath)) {
+                entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.dat");
+            }
+            return Storage.FileExists(entityFilePath);
+        }
+
+        public bool MakePlayerOnline(Guid playerGuid, out PlayerData playerData, out Entity entity) {
+            if (CheckPlayerDataExists(playerGuid, out string entityFilePath) && CommonLib.WorkType == WorkType.Server) {
+                playerData = new PlayerData(Project);
+                ValuesDictionary dict = new ValuesDictionary();
+                using (Stream s = Storage.OpenFile(entityFilePath, OpenFileMode.Read)) {
+                    if (entityFilePath.EndsWith(".json")) {
+                        StreamReader reader = new StreamReader(s);
+                        string jsonText = reader.ReadToEnd();
+                        reader.Dispose();
+                        dict.ApplyOverridesUseJson(jsonText, out byte[] data);
+                    }
+                    else if (entityFilePath.EndsWith(".dat")) {
+                        byte[] d = new byte[s.Length];
+                        s.Read(d, 0, d.Length);
+                        dict.ApplyOverridesUseMessagePack(d);
+                        Storage.DeleteFile(entityFilePath);
+                    }
+                }
+                var entityData = new EntityData(Project.GameDatabase, dict.GetValue<ValuesDictionary>("Entity"));
+                playerData.Load(dict.GetValue<ValuesDictionary>("Data"));
+                AddPlayerData(playerData);
+                playerData.WaitEntityAdded();
+                var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
+                list.EntitiesData.Add(entityData);
+                var elist = ProjectNet.Project.LoadEntities(list);
+                if (elist.Count > 0) {
+                    entity = elist[0];
+                    entity.EntityId = 0;
+                }
+                else {
+                    entity = null;
+                }
+                return true;
+            }
+
+            playerData = null;
+            entity = null;
+            return false;
+        }
+
+        public void FindPlayerByClientId(byte id, Action<ComponentPlayer> action) {
+            ComponentPlayer player = m_componentPlayers.FirstOrDefault(p => p.PlayerData.ClientId.HasValue && p.PlayerData.ClientId.Value == id);
+            action?.Invoke(player);
+        }
+
+        public PlayerData FindPlayerData(Func<PlayerData, bool> f) {
+            return m_playersData.FirstOrDefault(f);
+        }
+
+        public static bool IsMainPlayer(Entity e) {
+            var player = e.FindComponent<ComponentPlayer>();
+            return player != null && player.PlayerData.IsMainPlayer;
         }
     }
 }

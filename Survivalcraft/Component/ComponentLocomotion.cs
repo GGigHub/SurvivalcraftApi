@@ -1,5 +1,6 @@
 using Engine;
 using GameEntitySystem;
+using Game.NetWork;
 using TemplatesDatabase;
 
 namespace Game {
@@ -23,6 +24,7 @@ namespace Game {
         public Vector2 m_turnOrder;
         public Vector2 m_lookOrder;
         public float m_jumpOrder;
+        public bool FlyOrderChange;
         public bool m_lookAutoLevelX;
         public bool m_lookAutoLevelY;
         public double m_shoesWarningTime;
@@ -31,6 +33,8 @@ namespace Game {
         public double m_ladderActivationTime;
         public float m_swimBurstRemaining;
         public Vector2 m_lookAngles;
+        public NetVector2 NetLookAngles;
+        public Vector2? SendLookAngles;
         public Vector3? m_lastPosition;
         public bool m_walking;
         public bool m_falling;
@@ -91,6 +95,9 @@ namespace Game {
         public Vector3? FlyOrder {
             get => m_flyOrder;
             set {
+                if (m_flyOrder != value) {
+                    FlyOrderChange = true;
+                }
                 m_flyOrder = value;
                 if (m_flyOrder.HasValue) {
                     float num = m_flyOrder.Value.LengthSquared();
@@ -153,6 +160,8 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Locomotion;
 
+        public ComponentPlayer componentPlayer;
+
         public virtual void Update(float dt) {
             SlipSpeed = null;
             /* 禁用创造模式飞行的操作只在开始的时候执行一次
@@ -160,6 +169,40 @@ namespace Game {
             {
                 IsCreativeFlyEnabled = false;
             }*/
+            if (CommonLib.WorkType == WorkType.Client) {
+                //非玩家
+                if (componentPlayer == null) {
+                    //没有被骑乘
+                    if (m_componentCreature.ComponentBody.ChildBodies.Count == 0) { LookAngles = NetLookAngles.Get(dt); return; }
+                    //被骑乘
+                    else {
+                        var pb = m_componentCreature.ComponentBody.ChildBodies[0];
+                        //骑乘者不是主玩家
+                        if (pb.Player != null && !pb.Player.PlayerData.IsMainPlayer) {
+                            LookAngles = NetLookAngles.Get(dt);
+                            return;
+                        }
+                    }
+                }
+                if (componentPlayer != null && !componentPlayer.PlayerData.IsMainPlayer) { LookAngles = NetLookAngles.Get(dt); NormalMovement(dt); return; }
+            }
+            else if (CommonLib.WorkType == WorkType.Server) {
+                //非玩家
+                if (componentPlayer == null) {
+                    //被骑乘
+                    if (m_componentCreature.ComponentBody.ChildBodies.Count > 0) {
+                        var pb = m_componentCreature.ComponentBody.ChildBodies[0];
+                        //骑乘者不是主玩家
+                        if (pb.Player != null && !pb.Player.PlayerData.IsMainPlayer) {
+                            LookAngles = NetLookAngles.Get(dt);
+                            return;
+                        }
+                    }
+                }
+                //玩家且不是主玩家
+                if (componentPlayer != null && !componentPlayer.PlayerData.IsMainPlayer) { LookAngles = NetLookAngles.Get(dt); NormalMovement(dt); return; }
+
+            }
             StunTime = MathUtils.Max(StunTime - dt, 0f);
             if (m_componentCreature.ComponentHealth.Health > 0f
                 && StunTime <= 0f) {
@@ -335,11 +378,12 @@ namespace Game {
             if (m_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative && disableCreativeFlyInSurvivalMode) {
                 IsCreativeFlyEnabled = false;
             }
-            if (Entity.FindComponent<ComponentPlayer>() == null) {
-                WalkSpeed *= mobWalkSpeedFactor;
-                FlySpeed *= mobFlySpeedFactor;
-                SwimSpeed *= mobSwimSpeedFactor;
+            if ((componentPlayer = Entity.FindComponent<ComponentPlayer>()) == null) {
+                WalkSpeed *= m_random.Float(0.85f, 1f);
+                FlySpeed *= m_random.Float(0.85f, 1f);
+                SwimSpeed *= m_random.Float(0.85f, 1f);
             }
+            NetLookAngles = new NetVector2(LookAngles);
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {

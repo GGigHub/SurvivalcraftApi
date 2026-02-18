@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 using Engine;
+using Game.NetWork;
 
 namespace Game {
     public class FurnitureInventoryPanel : CanvasWidget {
@@ -267,6 +268,7 @@ namespace Game {
                             if (s != null) {
                                 furnitureSet.Name = s;
                                 Invalidate();
+                                CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureSet.Name, s));
                             }
                         }
                     )
@@ -278,6 +280,7 @@ namespace Game {
             if (m_furnitureSetList.SelectedItem is FurnitureSet furnitureSet) {
                 SubsystemFurnitureBlockBehavior.MoveFurnitureSet(furnitureSet, move);
                 Invalidate();
+                CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureSet, move));
             }
         }
 
@@ -324,8 +327,14 @@ namespace Game {
                                         FurniturePacksManager.GetDisplayName(text),
                                         text
                                     );
+                                    if (CommonLib.WorkType == WorkType.Server) {
+                                        CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureSet));
+                                    }
                                     foreach (FurnitureDesign item2 in list2) {
                                         SubsystemFurnitureBlockBehavior.AddToFurnitureSet(item2, furnitureSet);
+                                        if (CommonLib.WorkType == WorkType.Server) {
+                                            CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(item2, furnitureSet));
+                                        }
                                     }
                                     ComponentFurnitureInventory.FurnitureSet = furnitureSet;
                                 }
@@ -403,6 +412,13 @@ namespace Game {
                     new MessageDialog(LanguageControl.Get(fName, 23), ex.Message, LanguageControl.Ok, null, null)
                 );
             }
+        }
+
+        public void NewFurnitueSetLogic(string s, string from = null)
+        {
+            FurnitureSet furnitureSet = SubsystemFurnitureBlockBehavior.NewFurnitureSet(s, from);
+            ComponentFurnitureInventory.FurnitureSet = furnitureSet;
+            Invalidate();
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
+using Game.NetWork;
 using GameEntitySystem;
 
 namespace Game {
@@ -23,7 +24,8 @@ namespace Game {
             LoadContents(this, node);
             m_statsPanel = Children.Find<StackPanelWidget>("StatsPanel");
             m_componentPlayer = componentPlayer;
-            m_adventureRestartExists = WorldsManager.SnapshotExists(GameManager.WorldInfo.DirectoryName, "AdventureRestart");
+            if (CommonLib.WorkType != WorkType.Client && GameManager.WorldInfo != null)
+                m_adventureRestartExists = WorldsManager.SnapshotExists(GameManager.WorldInfo.DirectoryName, "AdventureRestart");
             if (!m_increaseDetailDialogShown
                 && PerformanceManager.LongTermAverageFrameTime.HasValue
                 && PerformanceManager.LongTermAverageFrameTime.Value * 1000f < 25f

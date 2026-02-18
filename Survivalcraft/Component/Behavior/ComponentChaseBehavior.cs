@@ -1,6 +1,8 @@
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class ComponentChaseBehavior : ComponentBehavior, IUpdateable {
@@ -151,6 +153,10 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            if (CommonLib.WorkType == WorkType.Client) {
+                m_componentCreatureModel.AttackOrder = IsAttack;
+                return;
+            }
             if (Suppressed) {
                 StopAttack();
             }
@@ -160,6 +166,10 @@ namespace Game {
                 m_componentCreature.ComponentCreatureModel.LookAtOrder = m_target.ComponentCreatureModel.EyePosition;
                 if (IsTargetInAttackRange(m_target.ComponentBody)) {
                     m_componentCreatureModel.AttackOrder = true;
+                    IsAttack = true;
+                }
+                else {
+                    IsAttack = false;
                 }
                 if (m_componentCreatureModel.IsAttackHitMoment) {
                     ComponentBody hitBody = GetHitBody(m_target.ComponentBody, out Vector3 hitPoint);
@@ -547,6 +557,21 @@ namespace Game {
                 return true;
             }
             return false;
+        }
+
+        private bool m_isAttack;
+
+        public bool IsAttack
+        {
+            get { return m_isAttack; }
+            set
+            {
+                if (m_isAttack != value)
+                {
+                    m_isAttack = value;
+                    if (CommonLib.WorkType != WorkType.Client) CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, value));
+                }
+            }
         }
 
         public virtual ComponentBody GetHitBody(ComponentBody target, out Vector3 hitPoint) {

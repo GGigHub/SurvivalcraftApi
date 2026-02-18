@@ -1,6 +1,7 @@
 using System.Globalization;
 using Engine;
 using Engine.Audio;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -193,6 +194,11 @@ namespace Game {
                 UpdateSleep();
                 UpdateTemperature();
                 UpdateWetness();
+                if (CommonLib.WorkType == WorkType.Server) {
+                    if (Time.PeriodicEvent(1.0, 0.5)) {
+                        CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentVitalStatPackage(this));
+                    }
+                }
             }
             else {
                 m_pantingSound.Stop();
@@ -522,7 +528,7 @@ namespace Game {
             }
             string arg;
             ClothingSlot leastInsulatedSlot = m_componentPlayer.ComponentClothing.LeastInsulatedSlot;
-            arg = leastInsulatedSlot.MessageWhenLeastInsulated;
+            arg = leastInsulatedSlot?.MessageWhenLeastInsulated ?? string.Empty;
             if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 1.0 * (GetHashCode() % 1000 / 1000.0))) {
                 int x = Terrain.ToCell(m_componentPlayer.ComponentBody.Position.X);
                 int y = Terrain.ToCell(m_componentPlayer.ComponentBody.Position.Y + 0.1f);

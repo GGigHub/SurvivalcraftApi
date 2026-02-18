@@ -12,6 +12,36 @@ namespace GameEntitySystem {
         public int NextEntityID = 1;
         public ProjectData() { }
 
+        public ProjectData(GameDatabase gameDatabase, byte[] msgPack, ValuesDictionary overrides, bool ignoreInvalidEntities) {
+            ValuesDictionary rootNode = new ValuesDictionary();
+            rootNode.ApplyOverridesUseMessagePack(msgPack);
+            Guid attributeValue = rootNode.GetValue("Guid", Guid.Empty);
+            string attributeValue2 = rootNode.GetValue("Name", string.Empty);
+            DatabaseObject databaseObject;
+            if (attributeValue != Guid.Empty) {
+                databaseObject = gameDatabase.Database.FindDatabaseObject(attributeValue, gameDatabase.ProjectTemplateType, throwIfNotFound: true);
+            }
+            else {
+                if (string.IsNullOrEmpty(attributeValue2)) {
+                    throw new InvalidOperationException("Project template guid or name must be specified.");
+                }
+                databaseObject = gameDatabase.Database.FindDatabaseObject(attributeValue2, gameDatabase.ProjectTemplateType, throwIfNotFound: true);
+            }
+            ValuesDictionary = new ValuesDictionary();
+            ValuesDictionary.PopulateFromDatabaseObject(databaseObject);
+            ValuesDictionary Subsystems = rootNode.GetValue<ValuesDictionary>("Subsystems", new ValuesDictionary());
+            if (Subsystems.Count > 0) {
+                ValuesDictionary.ApplyOverrides(Subsystems);
+            }
+            if (overrides != null) {
+                ValuesDictionary.ApplyOverrides(overrides);
+            }
+            ValuesDictionary Entities = rootNode.GetValue<ValuesDictionary>("Entities", new ValuesDictionary());
+            if (Entities.Count > 0) {
+                EntityDataList = new EntityDataList(gameDatabase, Entities, ignoreInvalidEntities);
+            }
+        }
+
         // ReSharper disable UnusedParameter.Local
         public ProjectData(GameDatabase gameDatabase, DatabaseObject projectTemplate, ValuesDictionary overrides)
             // ReSharper restore UnusedParameter.Local
@@ -61,6 +91,17 @@ namespace GameEntitySystem {
             if (EntityDataList != null) {
                 XElement entitiesNode = XmlUtils.AddElement(projectNode, "Entities");
                 EntityDataList.Save(entitiesNode, NextEntityID);
+            }
+        }
+
+        public void Save(ValuesDictionary rootNode) {
+            ValuesDictionary entityList = new ValuesDictionary();
+            rootNode.SetValue("Guid", ValuesDictionary.DatabaseObject.Guid);
+            rootNode.SetValue("Name", ValuesDictionary.DatabaseObject.Name);
+            rootNode.SetValue("Subsystems", ValuesDictionary);
+            rootNode.SetValue("Entities", entityList);
+            if (EntityDataList != null) {
+                EntityDataList.Save(entityList);
             }
         }
     }

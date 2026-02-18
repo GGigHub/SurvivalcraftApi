@@ -41,6 +41,8 @@ namespace Game {
 
         public LabelWidget PageLabel => m_pageLabel;
 
+        public FurnitureInventoryPanel furnitureInventoryPanel;
+
         public CreativeInventoryWidget(Entity entity) {
             m_componentCreativeInventory = entity.FindComponent<ComponentCreativeInventory>(true);
             XElement node = ContentManager.Get<XElement>("Widgets/CreativeInventoryWidget");
@@ -54,8 +56,8 @@ namespace Game {
             m_panelContainer = Children.Find<ContainerWidget>("PanelContainer");
             CreativeInventoryPanel creativeInventoryPanel = new(this) { IsVisible = false };
             m_panelContainer.Children.Add(creativeInventoryPanel);
-            FurnitureInventoryPanel furnitureInventoryPanel = new(this) { IsVisible = false };
-            m_panelContainer.Children.Add(furnitureInventoryPanel);
+            this.furnitureInventoryPanel = new(this) { IsVisible = false };
+            m_panelContainer.Children.Add(this.furnitureInventoryPanel);
             foreach (string category in BlocksManager.Categories) {
                 m_categories.Add(new Category { Name = category, Panel = creativeInventoryPanel });
             }

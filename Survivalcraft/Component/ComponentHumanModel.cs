@@ -1,5 +1,7 @@
 using Engine;
 using Engine.Graphics;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -75,6 +77,8 @@ namespace Game {
         public Vector2 m_legAngles1;
 
         public Vector2 m_legAngles2;
+
+        public bool hasData = false;
 
         public override float AttackPhase {
             get => m_punchPhase;
@@ -172,13 +176,19 @@ namespace Game {
                     }
                 }
             }
-            m_rowLeft = RowLeftOrder;
-            m_rowRight = RowRightOrder;
+            if (!hasData) {
+                m_rowLeft = RowLeftOrder;
+                m_rowRight = RowRightOrder;
+            }
+            else if (Time.PeriodicEvent(1.0, 0.9)) {
+                hasData = false;
+            }
             if ((m_rowLeft || m_rowRight)
                 && componentMount != null
                 && componentMount.ComponentBody.ImmersionFactor > 0f
                 && Math.Floor(1.1000000238418579 * m_subsystemTime.GameTime)
                 != Math.Floor(1.1000000238418579 * (m_subsystemTime.GameTime - m_subsystemTime.GameTimeDelta))) {
+                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this));
                 m_subsystemAudio.PlayRandomSound(
                     "Audio/Rowing",
                     m_random.Float(0.4f, 0.6f),

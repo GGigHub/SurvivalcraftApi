@@ -1,6 +1,7 @@
 using System.Globalization;
 using Engine;
 using Engine.Graphics;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -187,6 +188,13 @@ namespace Game {
         public static bool DrawGalaxyEnabled = true;
 
         public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual) {
+            if (CommonLib.WorkType != WorkType.Client) {
+                NetMakeLightningStrike(targetPosition, manual);
+                CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemSkyPackage(targetPosition));
+            }
+        }
+
+        public virtual void NetMakeLightningStrike(Vector3 targetPosition, bool manual) {
             float explosionPressure = m_random.Float(0f, 1f) < 0.2f ? 39 : 19;
             bool strike = m_subsystemTime.GameTime - m_lastLightningStrikeTime > 1.0;
             bool setBodyOnFire = true;

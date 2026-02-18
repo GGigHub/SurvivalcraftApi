@@ -1,4 +1,6 @@
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -210,6 +212,8 @@ namespace Game {
             }
         }
 
+        private Dictionary<Point2, List<(Point3, float)>> m_explosionCells = new Dictionary<Point2, List<(Point3, float)>>();
+
         public virtual void Update(float dt) {
             if (m_queuedExplosions.Count <= 0) {
                 return;
@@ -290,6 +294,11 @@ namespace Game {
             if (!ShowExplosionPressure) {
                 m_pressureByPoint = null;
                 m_surroundingPressureByPoint = null;
+            }
+            if (CommonLib.WorkType != WorkType.Client) {
+                CommonLib.Net.QueuePackage(new ExplosionsPackage(m_explosionCells));
+                //清空爆炸点
+                m_explosionCells.Clear();
             }
         }
 
@@ -748,6 +757,13 @@ namespace Game {
                 float num4 = 0.001f * MathF.Pow(pressure, 0.5f);
                 float num5 = MathUtils.Saturate(item.Value / 15f - num4) * m_random.Float(0.2f, 1f);
                 if (num5 > 0.1f) {
+                    if (CommonLib.WorkType == WorkType.Server) {
+                        var chunk = new Point2(item.Key.X >> 4, item.Key.Z >> 4);
+                        if (!m_explosionCells.ContainsKey(chunk)) {
+                            m_explosionCells.Add(chunk, new List<(Point3, float)>());
+                        }
+                        m_explosionCells[chunk].Add((item.Key, num5));
+                    }
                     m_explosionParticleSystem.SetExplosionCell(item.Key, num5);
                 }
             }
@@ -805,6 +821,12 @@ namespace Game {
             }
             Vector3 position = new(point.X, point.Y, point.Z);
             float delay = m_subsystemAudio.CalculateDelay(num);
+            if (CommonLib.WorkType != WorkType.Client) {
+                PlayExplosionSound(position, pressure, delay, playExplosionSound);
+                if (playExplosionSound) {
+                    CommonLib.Net.QueuePackage(new ExplosionsPackage(position, pressure, delay));
+                }
+            }
             if (pressure > 2000000f) {
                 if (playExplosionSound) {
                     m_subsystemAudio.PlaySound("Audio/Explosion7", 1f, m_random.Float(-0.1f, 0.1f), position, 53f, delay);
@@ -846,6 +868,14 @@ namespace Game {
                     m_subsystemAudio.PlaySound("Audio/Explosion1", 1f, m_random.Float(-0.1f, 0.1f), position, 20f, delay);
                 }
                 m_subsystemNoise.MakeNoise(position, 1f, 30f);
+            }
+        }
+
+        public virtual void PlayExplosionSound(Vector3 position, float level, float delay, bool playExplosionSound)
+        {
+            if (playExplosionSound)
+            {
+                m_subsystemAudio.PlaySound("Audio/Explosion1", 1f, m_random.Float(-0.1f, 0.1f), position, level, delay);
             }
         }
 

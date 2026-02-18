@@ -1,4 +1,6 @@
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class SubsystemMemoryBankBlockBehavior : SubsystemEditableItemBehavior<MemoryBankData> {
@@ -22,10 +24,11 @@ namespace Game {
                     new EditMemoryBankDialog(
                         memoryBankData,
                         () => {
-                            int data = StoreItemDataAtUniqueId(memoryBankData);
-                            int value2 = Terrain.ReplaceData(value, data);
-                            inventory.RemoveSlotItems(slotIndex, count);
-                            inventory.AddSlotItems(slotIndex, value2, count);
+                            var p = new EditableBlockPackage(default, true, inventory.Id, slotIndex, memoryBankData);
+                            CommonLib.Net.QueuePackage(p);
+                            if (CommonLib.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                            }
                         }
                     )
                 );
@@ -55,12 +58,12 @@ namespace Game {
                     new EditMemoryBankDialog(
                         memoryBankData,
                         () => {
-                            SetBlockData(new Point3(x, y, z), memoryBankData);
                             int face = ((MemoryBankBlock)BlocksManager.Blocks[186]).GetFace(value);
-                            SubsystemElectricity subsystemElectricity = SubsystemTerrain.Project.FindSubsystem<SubsystemElectricity>(true);
-                            ElectricElement electricElement = subsystemElectricity.GetElectricElement(x, y, z, face);
-                            if (electricElement != null) {
-                                subsystemElectricity.QueueElectricElementForSimulation(electricElement, subsystemElectricity.CircuitStep + 1);
+                            var cell = new CellFace(x, y, z, face);
+                            var p = new EditableBlockPackage(cell, false, default, default, memoryBankData);
+                            CommonLib.Net.QueuePackage(p);
+                            if (CommonLib.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
                             }
                         }
                     )

@@ -21,6 +21,8 @@ namespace Game {
 
         public float TimeOfYear = SubsystemSeasons.MidSummer;
 
+        public ushort MaxOnlinePlayerCount = 20;
+
         public StartingPositionMode StartingPositionMode;
 
         public bool AreWeatherEffectsEnabled = true;
@@ -53,9 +55,23 @@ namespace Game {
 
         public int SeaLevelOffset;
 
+        public string Password = string.Empty;
+
         public string BlocksTextureName = string.Empty;
 
+        public bool RunServer = false;
+
         public WorldPalette Palette = new();
+
+        public float DaySpeed = 1.0f;
+
+        public float RecoverFator = 1.0f;
+
+        public string DisableBlocks = string.Empty;
+
+        public string KeywordBlocking = string.Empty;
+
+        public bool RandomSpawnPosition;
 
         public bool CustomWorldSeed;
 
@@ -111,6 +127,7 @@ namespace Game {
             YearDays = valuesDictionary.GetValue("YearDays", 24f);
             TimeOfYear = valuesDictionary.GetValue("TimeOfYear", SubsystemSeasons.MidSummer);
             StartingPositionMode = valuesDictionary.GetValue("StartingPositionMode", StartingPositionMode.Easy);
+            MaxOnlinePlayerCount = valuesDictionary.GetValue("MaxOnlinePlayerCount", MaxOnlinePlayerCount);
             AreWeatherEffectsEnabled = valuesDictionary.GetValue("AreWeatherEffectsEnabled", true);
             IsAdventureRespawnAllowed = valuesDictionary.GetValue("IsAdventureRespawnAllowed", true);
             AreAdventureSurvivalMechanicsEnabled = valuesDictionary.GetValue("AreAdventureSurvivalMechanicsEnabled", true);
@@ -126,8 +143,15 @@ namespace Game {
             HumidityOffset = valuesDictionary.GetValue("HumidityOffset", 0f);
             SeaLevelOffset = valuesDictionary.GetValue("SeaLevelOffset", 0);
             BiomeSize = valuesDictionary.GetValue("BiomeSize", 1f);
+            Password = valuesDictionary.GetValue("Password", string.Empty);
             BlocksTextureName = valuesDictionary.GetValue("BlockTextureName", string.Empty);
             Palette = new WorldPalette(valuesDictionary.GetValue("Palette", new ValuesDictionary()));
+            RunServer = valuesDictionary.GetValue("RunServer", false);
+            DaySpeed = valuesDictionary.GetValue("DaySpeed", 1.0f);
+            RecoverFator = valuesDictionary.GetValue("RecoverFator", 1.0f);
+            DisableBlocks = valuesDictionary.GetValue("DisableBlocks", string.Empty);
+            KeywordBlocking = valuesDictionary.GetValue("KeywordBlocking", string.Empty);
+            RandomSpawnPosition = valuesDictionary.GetValue("RandomSpawnPosition", false);
             WorldSeed = valuesDictionary.GetValue("WorldSeed", 0);
         }
 
@@ -140,11 +164,19 @@ namespace Game {
             valuesDictionary.SetValue("AreSeasonsChanging", AreSeasonsChanging);
             valuesDictionary.SetValue("YearDays", YearDays);
             valuesDictionary.SetValue("TimeOfYear", TimeOfYear);
+            valuesDictionary.SetValue("MaxOnlinePlayerCount", MaxOnlinePlayerCount);
             valuesDictionary.SetValue("AreWeatherEffectsEnabled", AreWeatherEffectsEnabled);
             valuesDictionary.SetValue("IsAdventureRespawnAllowed", IsAdventureRespawnAllowed);
             valuesDictionary.SetValue("AreAdventureSurvivalMechanicsEnabled", AreAdventureSurvivalMechanicsEnabled);
             valuesDictionary.SetValue("AreSupernaturalCreaturesEnabled", AreSupernaturalCreaturesEnabled);
             valuesDictionary.SetValue("IsFriendlyFireEnabled", IsFriendlyFireEnabled);
+            valuesDictionary.SetValue("Password", Password);
+            valuesDictionary.SetValue("RunServer", RunServer);
+            valuesDictionary.SetValue("DaySpeed", DaySpeed);
+            valuesDictionary.SetValue("RecoverFator", RecoverFator);
+            valuesDictionary.SetValue("DisableBlocks", DisableBlocks);
+            valuesDictionary.SetValue("KeywordBlocking", KeywordBlocking);
+            valuesDictionary.SetValue("RandomSpawnPosition", RandomSpawnPosition);
             if (!liveModifiableParametersOnly) {
                 valuesDictionary.SetValue("WorldSeedString", Seed);
                 valuesDictionary.SetValue("TerrainGenerationMode", TerrainGenerationMode);

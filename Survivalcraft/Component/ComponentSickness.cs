@@ -1,6 +1,7 @@
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using Game.NetWork;
 
 namespace Game {
     public class ComponentSickness : Component, IUpdateable {
@@ -26,10 +27,23 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void StartSickness() {
+            if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) return;
+            StartSicknessNet();
+        }
+
+        public virtual void StartSicknessNet() {
             if (m_sicknessDuration == 0f) {
                 m_componentPlayer.PlayerStats.TimesWasSick++;
             }
             m_sicknessDuration = 900f;
+        }
+
+        public virtual void EndSickness() {
+            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client)
+            {
+                NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentSicknessPackage(this));
+                m_sicknessDuration = 0f;
+            }
         }
 
         public virtual void NauseaEffect() {
@@ -74,12 +88,14 @@ namespace Game {
                 return;
             }
             if (m_sicknessDuration > 0f) {
+                //开服后，睡觉疾病恢复速度x5
+                if (m_componentPlayer.ComponentSleep.IsSleeping && m_componentPlayer.ComponentSleep.m_subsystemUpdate.UpdatesPerFrame == 1 && NetWork.CommonLib.WorkType == NetWork.WorkType.Server) dt *= m_subsystemGameInfo.WorldSettings.RecoverFator;
                 m_sicknessDuration = MathUtils.Max(m_sicknessDuration - dt, 0f);
-                if (m_componentPlayer.ComponentHealth.Health > 0f
-                    && !m_componentPlayer.ComponentSleep.IsSleeping
-                    && m_subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821)
-                    && (!m_lastNauseaTime.HasValue || m_subsystemTime.GameTime - m_lastNauseaTime > 15.0)) {
-                    NauseaEffect();
+                if (m_componentPlayer.ComponentHealth.Health > 0f && !m_componentPlayer.ComponentSleep.IsSleeping && m_subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) && (!m_lastNauseaTime.HasValue || m_subsystemTime.GameTime - m_lastNauseaTime > 15.0)) {
+                    if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+                        NauseaEffect();
+                        NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentSicknessPackage(this));
+                    }
                 }
             }
             if (m_pukeParticleSystem != null) {

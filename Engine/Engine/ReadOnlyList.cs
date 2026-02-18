@@ -71,5 +71,19 @@ namespace Engine {
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => new Enumerator(m_list);
 
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(m_list);
+
+        public T Find(Predicate<T> match) {
+            if (match == null) {
+                throw new Exception("Invalid Predicate");
+            }
+
+            for (int i = 0; i < Count; i++) {
+                if (match(m_list[i])) {
+                    return m_list[i];
+                }
+            }
+            return default;
+        }
+
     }
 }

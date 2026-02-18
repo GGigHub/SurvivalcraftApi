@@ -39,6 +39,14 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void SetOnFire(ComponentCreature attacker, float duration) {
+            if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) {
+                return;
+            }
+            NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentOnFirePackage(this, attacker, duration));
+            SetOnFireNet(attacker, duration);
+        }
+
+        public void SetOnFireNet(ComponentCreature attacker, float duration) {
             if (!IsOnFire) {
                 Attacker = attacker;
             }

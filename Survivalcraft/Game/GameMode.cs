@@ -5,6 +5,7 @@ namespace Game {
         Survival,
         Challenging,
         Cruel,
-        Adventure
+        Adventure,
+        Follow
     }
 }

@@ -360,6 +360,13 @@ namespace Game {
         }
 
         public void AddFire(int x, int y, int z, float expandability) {
+            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+                NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentOnFirePackage(x, y, z, expandability));
+                AddFireNet(x, y, z, expandability);
+            }
+        }
+
+        public void AddFireNet(int x, int y, int z, float expandability) {
             Point3 point = new(x, y, z);
             if (!m_fireData.ContainsKey(point)) {
                 FireData fireData = new() { Point = point, FireExpandability = expandability };
@@ -369,6 +376,13 @@ namespace Game {
         }
 
         public void RemoveFire(int x, int y, int z) {
+            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+                NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentOnFirePackage(x, y, z));
+                RemoveFireNet(x, y, z);
+            }
+        }
+
+        public void RemoveFireNet(int x, int y, int z) {
             Point3 key = new(x, y, z);
             m_fireData.Remove(key);
         }

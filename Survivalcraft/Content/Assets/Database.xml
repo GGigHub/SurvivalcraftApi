@@ -3635,6 +3635,10 @@
         <SubsystemTemplate Name="Names" Description="[DescriptionAttribute:19]" Guid="1678591a-ffc1-4138-b2ee-d6729286d356" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
           <Parameter Name="Class" Guid="6c7bbb07-0e6c-4b08-9200-652985616bc6" Value="Game.SubsystemNames" Type="string" />
         </SubsystemTemplate>
+        <SubsystemTemplate Name="Inventories" Description="Allows searching of inventories by id" Guid="2858bdf6-d885-4d97-b760-d9a74283371f" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="54942f65-6bbd-4feb-97b1-35d7aa61fbe5" Value="Game.SubsystemInventories" Type="string" />
+          <Parameter Name="NextInventoryIndex" Description="Next inventory index to use when adding a new inventory" Guid="34af3737-38fb-4343-9060-0711dbe77b9d" Value="0" Type="int" />
+        </SubsystemTemplate>
         <SubsystemTemplate Name="Palette" Description="[DescriptionAttribute:20]" Guid="1a7137b3-6528-4aa8-8b64-e3ad329bf7f9" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
           <Parameter Name="Class" Guid="2cc28e1a-8ee8-4373-b21f-42929bba1c37" Value="Game.SubsystemPalette" Type="string" />
           <Parameter Name="Dependencies" Guid="3efcb2f8-31d0-4818-9772-06492753a27d" Value="GameInfo" Type="string" />

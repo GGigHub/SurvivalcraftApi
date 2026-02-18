@@ -1,4 +1,6 @@
 using Engine;
+using Game.NetWork;
+using Game.NetWork.Packages;
 using TemplatesDatabase;
 
 namespace Game {
@@ -70,8 +72,11 @@ namespace Game {
                     delegate(int newData) {
                         int num = Terrain.ReplaceData(value, newData);
                         if (num != value) {
-                            inventory.RemoveSlotItems(slotIndex, count);
-                            inventory.AddSlotItems(slotIndex, num, count);
+                            var p = new EditableBlockPackage(EditableItemType.Piston, default, true, inventory.Id, slotIndex, newData);
+                            CommonLib.Net.QueuePackage(p);
+                            if (CommonLib.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                            }
                         }
                     }
                 )
@@ -89,12 +94,11 @@ namespace Game {
                     delegate(int newData) {
                         if (newData != data
                             && SubsystemTerrain.Terrain.GetCellContents(x, y, z) == contents) {
-                            int value2 = Terrain.ReplaceData(value, newData);
-                            SubsystemTerrain.ChangeCell(x, y, z, value2);
-                            SubsystemElectricity subsystemElectricity = Project.FindSubsystem<SubsystemElectricity>(true);
-                            ElectricElement electricElement = subsystemElectricity.GetElectricElement(x, y, z, 0);
-                            if (electricElement != null) {
-                                subsystemElectricity.QueueElectricElementForSimulation(electricElement, subsystemElectricity.CircuitStep + 1);
+                            var cell = new CellFace(x, y, z, 0);
+                            var p = new EditableBlockPackage(EditableItemType.Piston, cell, false, default, default, newData);
+                            CommonLib.Net.QueuePackage(p);
+                            if (CommonLib.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
                             }
                         }
                     }
@@ -230,7 +234,7 @@ namespace Game {
                         for (int j = -1; j <= 1; j++) {
                             TerrainChunk chunkAtCell = m_subsystemTerrain.Terrain.GetChunkAtCell(key2.X + i * 16, key2.Z + j * 16);
                             if (chunkAtCell == null
-                                || (chunkAtCell.State <= TerrainChunkState.InvalidContents4 && m_subsystemPlayers.PlayerStartedPlaying)) {
+                                || chunkAtCell.State <= TerrainChunkState.InvalidContents4) {
                                 flag = false;
                             }
                         }

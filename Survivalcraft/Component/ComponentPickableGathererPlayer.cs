@@ -43,6 +43,7 @@ namespace Game {
                 pickable.Count = ComponentInventoryBase.AcquireItems(m_inventory, pickable.Value, pickable.Count);
                 if (pickable.Count == 0) {
                     pickable.ToRemove = true;
+                    pickable.PlaySound = true;
                     m_subsystemAudio.PlaySound("Audio/PickableCollected", 0.7f, -0.4f, Position, 2f, false);
                 }
             }

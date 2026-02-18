@@ -42,7 +42,7 @@ namespace Game {
         double m_lastToolHintTime;
 
         /// <summary>
-        ///     伤害间隔(原版为0.66f)
+        ///     伤害间隔(原版�?.66f)
         /// </summary>
         public virtual double HitInterval {
             get => m_basicHitInterval / ComponentFactors.GetOtherFactorResult("AttackSpeed");
@@ -76,7 +76,7 @@ namespace Game {
         public float StrengthFactor => ComponentFactors?.StrengthFactor ?? 1;
 
         /// <summary>
-        ///     挖掘速度是否受玩家力量属性加成
+        ///     挖掘速度是否受玩家力量属性加�?
         /// </summary>
         public bool m_digSpeedBasedOnStrengthFactor = true;
 
@@ -357,7 +357,7 @@ namespace Game {
                         }
                         if (!flag) {
                             SubsystemBlockBehavior[] blockBehaviors =
-                                m_subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(placementData.Value));
+                                m_subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(placementData.Value), this, new Point3(num2, num3, num4));
                             for (int i = 0; i < blockBehaviors.Length; i++) {
                                 blockBehaviors[i].OnItemPlaced(num2, num3, num4, ref placementData, value);
                             }
@@ -418,7 +418,11 @@ namespace Game {
         }
 
         public bool Interact(TerrainRaycastResult raycastResult) {
-            SubsystemBlockBehavior[] blockBehaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(raycastResult.Value));
+            SubsystemBlockBehavior[] blockBehaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(
+                Terrain.ExtractContents(raycastResult.Value),
+                this,
+                new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z)
+            );
             for (int i = 0; i < blockBehaviors.Length; i++) {
                 if (blockBehaviors[i].OnInteract(raycastResult, this)) {
                     if (ComponentCreature.PlayerStats != null) {
@@ -479,8 +483,8 @@ namespace Game {
                 return;
             }
             float num; //伤害
-            float num2; //玩家命中率
-            float num3 = 1f; //生物命中率
+            float num2; //玩家命中�?
+            float num3 = 1f; //生物命中�?
             if (ActiveBlockValue != 0) {
                 num = block.GetMeleePower(ActiveBlockValue) * AttackPower * m_random.Float(0.8f, 1.2f);
                 num2 = block.GetMeleeHitProbability(ActiveBlockValue);
@@ -584,14 +588,14 @@ namespace Game {
         }
 
         /// <summary>
-        ///     发出射线检测，检测玩家点击到的目标
+        ///     发出射线检测，检测玩家点击到的目�?
         /// </summary>
         /// <param name="ray"></param>
-        /// <param name="mode">发出射线的意图</param>
+        /// <param name="mode">发出射线的意�?/param>
         /// <param name="raycastTerrain">该射线是否和地形交互，为false时则忽略地形</param>
         /// <param name="raycastBodies">该射线是否和生物等实体交互，为false时则忽略实体</param>
         /// <param name="raycastMovingBlocks">该射线是否和移动方块交互，为false时则忽略移动方块</param>
-        /// <param name="Reach">进行Raycast的距离</param>
+        /// <param name="Reach">进行Raycast的距�?/param>
         /// <returns></returns>
         public virtual object Raycast(Ray3 ray,
             RaycastMode mode,
@@ -946,3 +950,7 @@ namespace Game {
         }
     }
 }
+
+
+
+

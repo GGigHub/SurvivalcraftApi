@@ -1,6 +1,8 @@
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using Game.NetWork;
+using Game.NetWork.Packages;
 
 namespace Game {
     public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable {
@@ -22,12 +24,43 @@ namespace Game {
 
         public Random m_random = new();
 
+        private bool m_isBend;
+
+        public bool IsBend
+        {
+            get { return m_isBend; }
+            set
+            {
+                if (m_isBend != value)
+                {
+                    m_isBend = value;
+                    if (CommonLib.WorkType == WorkType.Server) CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isBend));
+                }
+            }
+        }
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            m_stateMachine.Update();
+            if (CommonLib.WorkType == WorkType.Client) {
+                if (IsBend) {
+                    m_componentFishModel.BendOrder = 2f * (2f * MathUtils.Saturate(SimplexNoise.OctavedNoise(
+                        (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0),
+                        1.2f * m_componentCreature.ComponentLocomotion.TurnSpeed,
+                        1,
+                        1f,
+                        1f
+                    )) - 1f);
+                }
+                else {
+                    m_componentFishModel.BendOrder = null;
+                }
+            }
+            else {
+                m_stateMachine.Update();
+            }
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
@@ -56,7 +89,7 @@ namespace Game {
             );
             m_stateMachine.AddState(
                 "Jump",
-                null,
+                () => { IsBend = true; },
                 delegate {
                     m_componentFishModel.BendOrder = 2f
                         * (2f
@@ -85,7 +118,7 @@ namespace Game {
                         m_componentCreature.ComponentLocomotion.WalkOrder = m_direction;
                     }
                 },
-                null
+                () => { IsBend = false; }
             );
             m_stateMachine.TransitionTo("Inactive");
         }

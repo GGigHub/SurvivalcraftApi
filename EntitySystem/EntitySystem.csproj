@@ -6,4 +6,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Engine\Engine.csproj" />
     </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="MessagePack" Version="2.6.101" />
+    </ItemGroup>
 </Project>
