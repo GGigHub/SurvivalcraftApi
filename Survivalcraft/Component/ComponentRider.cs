@@ -141,7 +141,7 @@ namespace Game {
                 if (m_outOfMountTime > 0.1f
                     || (componentHealth != null && componentHealth.Health <= 0f)
                     || ComponentCreature.ComponentHealth.Health <= 0f) {
-                    //服务器和客户端都由自己控制下�?
+                    //服务器和客户端都由自己控制下马
                     if (NetWork.CommonLib.WorkType != NetWork.WorkType.Local && ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer)
                     {
 

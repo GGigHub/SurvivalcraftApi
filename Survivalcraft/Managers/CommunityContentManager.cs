@@ -424,7 +424,7 @@ namespace Game {
                 {
                     //if (result != null)
                     //{
-                    //    using (FileStream fileStream = new FileStream(Storage.GetSystemPath(ModsManager.ModCachePath) + "/123����.txt", FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
+                    //    using (FileStream fileStream = new FileStream(Storage.GetSystemPath(ModsManager.ModCachePath) + "/123测试.txt", FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
                     //    {
                     //        fileStream.Write(result, 0, result.Length);
                     //        fileStream.Flush();

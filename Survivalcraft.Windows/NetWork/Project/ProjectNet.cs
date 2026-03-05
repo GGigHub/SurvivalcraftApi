@@ -237,7 +237,7 @@ public class ProjectNet : Project
         return false;
     }
     /// <summary>
-    /// 客户端连接状态变�?
+    /// 客户端连接状态变更
     /// </summary>
     /// <param name="c"></param>
     public void OnClientStateChanged(Client c)
@@ -297,7 +297,7 @@ public class ProjectNet : Project
                     }
                 case ClientState.LoadTerrain:
                     GC.Collect();
-                    //进入无敌状�?
+                    //进入无敌状态
                     if (c.PlayerData != null && c.PlayerData.ComponentPlayer != null)
                     {
                         if (FindSubsystem<SubsystemGameInfo>().WorldSettings.GameMode != GameMode.Creative)
@@ -313,17 +313,15 @@ public class ProjectNet : Project
                     }
                     else
                     {
-                        //解除无敌状�?
-                        if (c.PlayerData.ComponentPlayer != null)
-                        {
-                            if (FindSubsystem<SubsystemGameInfo>().WorldSettings.GameMode != GameMode.Creative)
-                            {
+                        //解除无敌状态
+                        if (c.PlayerData.ComponentPlayer != null) {
+                            if (FindSubsystem<SubsystemGameInfo>().WorldSettings.GameMode != GameMode.Creative) {
                                 c.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = false;
                             }
                         }
-                        /* 隐身检测原理：A和B同进服务器，假设有隐身问�?则A客户端无法看到玩家B,但是B可以看到A,服务端A和B都在�?
-                         * 通过比较客户端人数和服务端人数，可检测到隐身现象�?
-                         * 客户端玩家进入游玩状态并通知服务端，服务端接收到后向客户端发送玩家人数，再由客户端进行比较�?
+                        /* 隐身检测原理：A和B同进服务器，假设有隐身问题,则A客户端无法看到玩家B,但是B可以看到A,服务端A和B都在。
+                         * 通过比较客户端人数和服务端人数，可检测到隐身现象。
+                         * 客户端玩家进入游玩状态并通知服务端，服务端接收到后向客户端发送玩家人数，再由客户端进行比较。
                         Time.QueueTimeDelayedExecution(Time.RealTime + 5f, delegate 
                         {
                             if (CommonLib.WorkType == WorkType.Server)
@@ -350,15 +348,12 @@ public class ProjectNet : Project
 
     }
     /// <summary>
-    /// 验证客户�?
+    /// 验证客户端
     /// </summary>
     /// <param name="client"></param>
-    public void GrantClient(Client client)
-    {
-        if (client.State == ClientState.Playing)
-        {
-            if (subsystemPlayers.BlackPlayerGuidList.ContainsKey(client.PlayerGuid.ToString()))
-            {
+    public void GrantClient(Client client) {
+        if (client.State == ClientState.Playing) {
+            if (subsystemPlayers.BlackPlayerGuidList.ContainsKey(client.PlayerGuid.ToString())) {
                 CommonLib.Net.RemoveClientImmediate(client, "你被禁止加入该服务器");
             }
         }

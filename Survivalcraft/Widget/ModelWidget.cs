@@ -60,8 +60,8 @@ namespace Game {
         public Action<ModelWidget, Shader, Model, ModelMesh> OnSetupShaderParameters;
 
         /// <summary>
-        ///     �Զ�����ɫ������������ʹ��Ĭ����ɫ��������Ⱦ��
-        ///     ��Ҫʹ�ã�������ͨ�� <see cref="OnSetupShaderParameters" /> ���ò��������������Ч
+        ///     自定义颜色着色器，如果不使用默认颜色着色器渲染
+        ///     如要使用，请通过 <see cref="OnSetupShaderParameters" /> 设置参数，否则无效
         /// </summary>
         public TransformedShader CustomShader { get; set; }
 

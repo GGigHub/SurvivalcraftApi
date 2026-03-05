@@ -8,7 +8,7 @@ public class MessagePackage : IPackage
     public byte ID => (byte)PackageType.Message;
     public enum MessageMode : byte
     {
-        BaseMessage,                        // 普通消�?
+        BaseMessage,                        // 普通消息
         LargeMessage                        // 大字消息，也就是开局显示的那几条消息
     }
 
@@ -40,7 +40,7 @@ public class MessagePackage : IPackage
         if (toClients != null) m_toClients.AddRange(toClients);
     }
 
-    // 发送大字消息，可以做服务器公告�?
+    // 发送大字消息，可以做服务器公告用
     public MessagePackage(string largeText, string smallText, float duration, float delay)
     {
         m_messageMode = MessageMode.LargeMessage;
@@ -62,7 +62,7 @@ public class MessagePackage : IPackage
                     writer.Write(m_toClients[i]);
                 }
                 writer.Write(m_message);
-                if (m_playerName == null) writer.Write(false);          // 这里不要布尔判断，而是直接写入string.Empty可能会好一�?
+                if (m_playerName == null) writer.Write(false);          // 这里不要布尔判断，而是直接写入string.Empty可能会好一点
                 else
                 {
                     writer.Write(true);
