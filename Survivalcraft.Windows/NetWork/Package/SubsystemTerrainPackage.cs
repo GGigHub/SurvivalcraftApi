@@ -40,9 +40,9 @@ public class SubsystemTerrainPackage : IPackage
     public int m_Z;
     public int m_value;
 
-    public List<Point3> m_modifyCells = new List<Point3>();
-    public List<int> m_modifyValues = new List<int>();
-    public List<CellChange> cellChanges = new List<CellChange>();
+    public List<Point3> m_modifyCells = [];
+    public List<int> m_modifyValues = [];
+    public List<CellChange> cellChanges = [];
 
     public byte m_result;
 
@@ -52,21 +52,18 @@ public class SubsystemTerrainPackage : IPackage
     public SubsystemTerrainPackage(List<Point2> points)
     {
         m_type = DataType.RequestSyncChunks;
-        RelateChunks = new List<Point2>();
-        RelateChunks.AddRange(points);
+        RelateChunks = [.. points];
     }
     public SubsystemTerrainPackage(List<Point2> resultPoints, byte r)
     {
         m_type = DataType.ReplyResult;
-        RelateChunks = new List<Point2>();
-        RelateChunks.AddRange(resultPoints);
+        RelateChunks = [.. resultPoints];
     }
 
     public SubsystemTerrainPackage(List<TerrainChunk> chunks)
     {
         m_type = DataType.SyncTerrainChunkList;
-        Chunks = new List<TerrainChunk>();
-        Chunks.AddRange(chunks);
+        Chunks = [.. chunks];
     }
 
     public SubsystemTerrainPackage(List<CellChange> changeList)
@@ -134,7 +131,7 @@ public class SubsystemTerrainPackage : IPackage
         switch (m_type)
         {
             case DataType.RequestSyncChunks:
-                RelateChunks = new List<Point2>();
+                RelateChunks = [];
                 int count = reader.ReadInt32();
                 while (count-- > 0) RelateChunks.Add(reader.ReadPoint2());
                 break;
@@ -154,7 +151,7 @@ public class SubsystemTerrainPackage : IPackage
                 m_value = reader.ReadInt32();
                 break;
             case DataType.ReplyResult:
-                RelateChunks = new List<Point2>();
+                RelateChunks = [];
                 ushort mc = reader.ReadUInt16();
                 while (mc-- > 0)
                 {
@@ -178,7 +175,6 @@ public class SubsystemTerrainPackage : IPackage
     }
     public void WriteOneChunk(PackageStreamWriter writer, TerrainChunk chunk)
     {
-
         writer.Write(chunk.Coords);
         for (int i = 0; i < chunk.Cells.Length; i++)
         {
@@ -232,12 +228,10 @@ public class SubsystemTerrainPackage : IPackage
             var subsystemTerrain = projectNet.FindSubsystem<SubsystemTerrain>();
             switch (m_type)
             {
-                case DataType.RequestSyncChunks:
-
-
+            case DataType.RequestSyncChunks:
                 if (!subsystemTerrain.TerrainUpdater.waitChunkList.TryGetValue(From, out var list))
                 {
-                    list = new List<Point2>();
+                    list = [];
                     subsystemTerrain.TerrainUpdater.waitChunkList.Add(From, list);
                 }
                 list.AddRange(RelateChunks);

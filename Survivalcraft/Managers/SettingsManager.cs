@@ -28,6 +28,13 @@ namespace Game {
         public static bool AllowInitialIntro { get; set; }
         public static bool DeleteWorldNeedToText { get; set; }
 
+        public static int ServerPort { get; set; }
+        public static int NetworkChunkSize { get; set; }
+
+        public static string OnlineAccessToken { get; set; }
+
+        public static bool AllowLanConnection { get; set; }
+
         public static bool CreativeDragMaxStacking { get; set; }
 
         public static float Touchoffset { get; set; }
@@ -528,6 +535,9 @@ namespace Game {
                 DisplayLog = false;
                 DragHalfInSplit = true;
                 ShortInventoryLooping = false;
+                ServerPort = 3041;
+                NetworkChunkSize = 4096;
+                AllowLanConnection = true;
                 m_resolutionMode = ResolutionMode.High;
                 VisibilityRange = 128;
                 ViewAngle = 1f;

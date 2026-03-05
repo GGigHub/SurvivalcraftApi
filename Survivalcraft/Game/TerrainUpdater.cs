@@ -729,19 +729,23 @@ namespace Game {
             switch (chunk.ThreadState) {
                 case TerrainChunkState.NotLoaded: {
                     double realTime19 = Time.RealTime;
-
-                    if (m_subsystemTerrain.TerrainSerializer.LoadChunk(chunk)) {
-                        chunk.ThreadState = TerrainChunkState.InvalidLight;
-                        chunk.WasUpgraded = true;
-                        double realTime20 = Time.RealTime;
-                        chunk.IsLoaded = true;
-                        m_statistics.LoadingCount++;
-                        m_statistics.LoadingTime += realTime20 - realTime19;
-                    }
-                    else {
-                        chunk.ThreadState = TerrainChunkState.InvalidContents1;
-                        chunk.WasUpgraded = true;
-                    }
+                        if (CommonLib.WorkType == WorkType.Client) {
+                            chunk.WasUpgraded = true;
+                        }
+                        else {
+                            if (m_subsystemTerrain.TerrainSerializer.LoadChunk(chunk)) {
+                                chunk.ThreadState = TerrainChunkState.InvalidLight;
+                                chunk.WasUpgraded = true;
+                                double realTime20 = Time.RealTime;
+                                chunk.IsLoaded = true;
+                                m_statistics.LoadingCount++;
+                                m_statistics.LoadingTime += realTime20 - realTime19;
+                            }
+                            else {
+                                chunk.ThreadState = TerrainChunkState.InvalidContents1;
+                                chunk.WasUpgraded = true;
+                            }
+                        }
                     break;
                 }
                 case TerrainChunkState.InvalidContents1: {
