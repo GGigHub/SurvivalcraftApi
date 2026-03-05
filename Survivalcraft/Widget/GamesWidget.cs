@@ -9,7 +9,7 @@ namespace Game {
 
         public override void MeasureOverride(Vector2 parentAvailableSize) {
             base.MeasureOverride(parentAvailableSize);
-            IsOverdrawRequired = Children.Count > 1;
+            IsOverdrawRequired = CommonLib.WorkType == WorkType.Local && Children.Count > 1;
         }
 
         public override void ArrangeOverride() {
