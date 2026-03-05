@@ -442,7 +442,12 @@ namespace Game {
             }
         }
 
-        public void OnEntityRemoved(Entity entity) { }
+        public void OnEntityRemoved(Entity entity) {
+            if (ComponentPlayer != null && entity == ComponentPlayer.Entity) {
+                ComponentPlayer = null;
+                m_playerDeathTime = null;
+            }
+        }
 
         public Vector3 FindIntroSpawnPosition(Vector2 desiredSpawnPosition) {
             Vector2 vector = Vector2.Zero;
