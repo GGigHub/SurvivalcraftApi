@@ -495,6 +495,7 @@ namespace Game {
                 GameManager.SaveProject(true, true);
                 GameManager.DisposeProject();
                 ScreensManager.SwitchScreen("MainMenu");
+                CommonLib.Net.Stop();
             }
         }
 
