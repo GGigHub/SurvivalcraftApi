@@ -366,7 +366,10 @@ namespace Game {
 
         public override void Dispose() {
             base.Dispose();
-            Utilities.Dispose(ref m_skinTexture);
+            if (m_skinTexture != null && !ContentManager.IsContent(m_skinTexture)) {
+                m_skinTexture.Dispose();
+                m_skinTexture = null;
+            }
             Utilities.Dispose(ref m_innerClothedTexture);
             Utilities.Dispose(ref m_outerClothedTexture);
             Display.DeviceReset -= Display_DeviceReset;
