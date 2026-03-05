@@ -222,12 +222,16 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            //客户端禁用天气生成
-            if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) return;
-
-            UpdatePrecipitation(dt);
-            UpdateLightning(dt);
-            UpdateFog(dt);
+            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+                UpdatePrecipitation(dt);
+                UpdateLightning(dt);
+                UpdateFog(dt);
+            }
+            else {
+                // 客户端不生成天气，但需要根据服务端同步的时间参数更新强度
+                UpdatePrecipitationIntensity(dt);
+                UpdateFogIntensity(dt);
+            }
         }
 
         public override void Load(ValuesDictionary valuesDictionary) {
@@ -415,6 +419,76 @@ namespace Game {
                     SubsystemSky.MakeLightningStrike(vector.Value, false);
                     break;
                 }
+            }
+        }
+
+        public virtual void UpdatePrecipitationIntensity(float dt) {
+            if (m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled) {
+                if (IsPrecipitationStarted) {
+                    PrecipitationIntensity = MathUtils.Saturate(PrecipitationIntensity + dt / m_precipitationRampTime);
+                }
+                else {
+                    PrecipitationIntensity = MathUtils.Saturate(PrecipitationIntensity - dt / m_precipitationRampTime);
+                }
+            }
+            else {
+                PrecipitationIntensity = 0f;
+            }
+            if (Time.PeriodicEvent(0.33000001311302185, 0.0)) {
+                float num3 = 0f;
+                if (PrecipitationIntensity > 0f) {
+                    float num4 = 0f;
+                    Vector3 vector = default;
+                    foreach (Vector3 listenerPosition in m_subsystemAudio.ListenerPositions) {
+                        int num5 = Terrain.ToCell(listenerPosition.X) - 7;
+                        int num6 = Terrain.ToCell(listenerPosition.Z) - 7;
+                        int num7 = Terrain.ToCell(listenerPosition.X) + 7;
+                        int num8 = Terrain.ToCell(listenerPosition.Z) + 7;
+                        for (int i = num5; i <= num7; i++) {
+                            for (int j = num6; j <= num8; j++) {
+                                PrecipitationShaftInfo precipitationShaftInfo = GetPrecipitationShaftInfo(i, j);
+                                if (precipitationShaftInfo.Type == PrecipitationType.Rain
+                                    && precipitationShaftInfo.Intensity > 0f) {
+                                    vector.X = i + 0.5f;
+                                    vector.Y = MathUtils.Max(precipitationShaftInfo.YLimit, listenerPosition.Y);
+                                    vector.Z = j + 0.5f;
+                                    float num9 = vector.X - listenerPosition.X;
+                                    float num10 = 8f * (vector.Y - listenerPosition.Y);
+                                    float num11 = vector.Z - listenerPosition.Z;
+                                    float distance = MathF.Sqrt(num9 * num9 + num10 * num10 + num11 * num11);
+                                    num4 += m_subsystemAudio.CalculateVolume(distance, 1f) * precipitationShaftInfo.Intensity;
+                                }
+                            }
+                        }
+                    }
+                    num3 = MathUtils.Max(num3, num4);
+                }
+                m_targetRainSoundVolume = MathUtils.Saturate(2f * num3 / m_rainVolumeFactor);
+            }
+            m_rainSound.Volume = MathUtils.Saturate(
+                MathUtils.Lerp(m_rainSound.Volume, SettingsManager.SoundsVolume * m_targetRainSoundVolume, 5f * dt)
+            );
+            if (m_rainSound.Volume > AudioManager.MinAudibleVolume) {
+                m_rainSound.Play();
+            }
+            else {
+                m_rainSound.Pause();
+            }
+        }
+
+        public virtual void UpdateFogIntensity(float dt) {
+            FogSeed = MathUtils.Hash((int)MathUtils.Remainder(m_fogStartTime, 1000000.0));
+            if (m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled) {
+                if (IsFogStarted) {
+                    FogIntensity = MathUtils.Saturate(FogIntensity + dt / m_fogRampTime);
+                    FogProgress += dt / (float)(m_fogEndTime - m_fogStartTime);
+                }
+                else {
+                    FogIntensity = MathUtils.Saturate(FogIntensity - dt / m_fogRampTime);
+                }
+            }
+            else {
+                FogIntensity = 0f;
             }
         }
 
