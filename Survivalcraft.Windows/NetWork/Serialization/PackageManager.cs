@@ -132,7 +132,7 @@ public class PackageManager
         }
         catch
         {
-            Log.Information("鎺ユ敹鍒颁笉瑙勮寖鐨勬暟鎹寘:" + packageID);
+            Log.Information("接收到不规范的数据包:" + packageID);
             return packages;
         }
     }
@@ -153,7 +153,7 @@ public class PackageManager
         }
         catch
         {
-            Log.Information("鎺ユ敹鍒颁笉瑙勮寖鐨勬暟鎹寘:" + packageID);
+            Log.Information("接收到不规范的数据包:" + packageID);
             return packages;
         }
     }
@@ -202,7 +202,7 @@ public class PackageManager
             }
             else
             {
-                Log.Information(string.Format($"涓嶅瓨鍦ㄧ殑鍖匢D:{ID}"));
+                Log.Information(string.Format($"不存在的包ID:{ID}"));
                 break;
             }
         }

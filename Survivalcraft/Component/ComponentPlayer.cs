@@ -370,11 +370,11 @@ namespace Game {
 
             if (Time.PeriodicEvent(0.1f, 0.0)) {
                 if (CommonLib.WorkType != WorkType.Client) {
-                    //鏈嶅姟鍣ㄥ箍鎾帺瀹舵暟鎹?
+                    //服务器广播玩家数据
                     CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate) { Except = PlayerData.Client });
                 }
                 else if (PlayerData.IsMainPlayer) {
-                    //瀹㈡埛绔箍鎾嚜宸辩殑鏁版嵁
+                    //客户端广播自身的数据
                     CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate));
                 }
             }

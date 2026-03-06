@@ -61,27 +61,17 @@ public class NetNode
     public Dictionary<int, Client> Clients = new Dictionary<int, Client>();
 
     public NetPeer pendingPeer = null;
-    // 鍙湁杩欎簺瀹㈡埛绔悓鎰忎互鍚庢柊瀹㈡埛绔墠鑳藉姞鍏?
+
     public HashSet<byte> agreeOnPendingPeer = new HashSet<byte>();
 
     private Client pendingClient => (Client)pendingPeer?.Tag;
 
     public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
 
-    // 鎺у埗鏂板鎴风鍔犲叆鐨勭瓑寰呯獥鍙ｏ紝闃叉鏃у鎴风 DeliveryEvent 涓㈠け瀵艰嚧涓€鐩村崱鍦?pending 鐘舵€?
     private DateTime? pendingStartUtc;
-    private const double PendingJoinTimeoutSeconds = 2.0; // 瓒呮椂鑷姩瀹屾垚鍔犲叆锛屽崟浣嶇
-
-    /// <summary>
-    /// 鍖呭彂閫侀槦鍒?
-    /// </summary>
+    private const double PendingJoinTimeoutSeconds = 2.0;
     private List<IPackage> PendingPackages = new List<IPackage>();
-    /// <summary>
-    /// 鍖呭鐞嗛槦鍒?
-    /// </summary>
     private List<IPackage> PendingHanldePackages = new List<IPackage>();
-
-    // 褰撲竴涓鎴风鏀跺埌涓€涓秷鎭?
     public event Action<NetNode, IEnumerable<IPackage>> OnRecieve;
     public Action<Client> OnClientStateChanged;
     public Guid TokenId;
@@ -329,12 +319,10 @@ public class NetNode
         }
     }
 
-    //娣诲姞鍒伴槦鍒?
     public void QueuePackage(IPackage package)
     {
         lock (PendingPackages)
         {
-
             PendingPackages.Add(package);
         }
     }
@@ -349,13 +337,11 @@ public class NetNode
     }
 
 
-    // 鍒涘缓瀹㈡埛
     public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname)
     {
         if (!IsServer) throw new InvalidOperationException("creating client as non-server");
         foreach (var p in Peers)
         {
-            //涓嬩竴甯хЩ闄わ紝鍚﹀垯浼氭姤閿欓泦鍚堜互鏇存敼
             if (p.PlayerGuid == guid) RemoveClient(p, "Duplicate account login.");
         }
         var c = new Client(peer, FindUnusedIndex(), tokenId, guid, dataId, nickname);
@@ -365,39 +351,7 @@ public class NetNode
 
     public void AddClient(Client c)
     {
-#if SERVER
-        // 浼穿鏈嶇殑瑙﹀彂鍘熷洜鏄鎴风鍙戠幇Clients瀛楀吀涓湁鍜岃嚜宸辩浉鍚岀殑Guid鍜孋lientID
-        // 浣嗘槸瀹㈡埛绔苟涓嶉渶瑕佽礋璐ｇ帺瀹剁殑寮傚父閫€鍑洪儴鍒?
-        if (WorkType != WorkType.Server)
-        {
-            Clients[c.ID] = c;
-        }
-        else
-        {
-            var toRemove = new List<int>();
-            foreach (var pair in Clients)
-            {
-                if (pair.Value.PlayerGuid == c.PlayerGuid)
-                {
-                    toRemove.Add(pair.Key);
-                }
-            }
-            foreach (int k in toRemove)
-            {
-                RemoveClient(Clients[k], "Player logged in from another location.");
-            }
-            if (Clients.ContainsKey(c.ID))
-            {
-                RemoveClient(Clients[c.ID], "妫€娴嬪埌閲嶅鐨凜lientID锛岃閲嶆柊杩炴帴");
-            }
-            else
-            {
-                Clients[c.ID] = c;
-            }
-        }
-#else
         Clients[c.ID] = c;
-#endif
     }
     public void RemoveClient(Client c, string reason = null)
     {
@@ -412,12 +366,11 @@ public class NetNode
         }
     }
 
-    // 鍒犻櫎瀹㈡埛
     public void RemoveClientImmediate(Client c, string reason = null)
     {
         if (c == Self)
         {
-            // 濡傛灉鏄嚜宸憋紝鍋滄鏈嶅姟鍣?
+            // 如果是自己，停止服务器
             Stop();
             return;
         }
@@ -446,7 +399,7 @@ public class NetNode
         }
     }
     /// <summary>
-    /// 鏈嶅姟鍣ㄥ叧闂紝涓嶆墽琛孫nClientStateChanged锛岄槻姝㈠娆ispose
+    /// 服务器关闭，不执行OnClientStateChanged，防止多次Dispose
     /// </summary>
     /// <param name="reason"></param>
     public void RemoveAllClients(string reason = null)
@@ -493,13 +446,13 @@ public class NetNode
     }
 
     /// <summary>
-    /// 杩炴帴鏂紑浜嬩欢 鏈嶅姟绔?
+    /// 连接断开事件 服务端
     /// </summary>
     /// <param name="peer"></param>
     /// <param name="disconnectInfo"></param>
     private void PeerDisconnectedEvent(NetPeer peer, DisconnectInfo disconnectInfo)
     {
-        Log.Information($"{peer.Address}杩炴帴鍏抽棴: " + disconnectInfo.Reason);
+        Log.Information($"{peer.Address}退出游戏: " + disconnectInfo.Reason);
         if (disconnectInfo.AdditionalData != null && disconnectInfo.AdditionalData.TryGetString(out string str))
         {
             Log.Information("----Additional message----");
@@ -520,7 +473,7 @@ public class NetNode
                 client.State = ClientState.NotConnected;
                 RemoveClientImmediate(client);
                 OnClientStateChanged?.Invoke(client);
-                //鍚屾Client鍒楄〃
+                //同步Client列表
                 if (peer == pendingPeer)
                 {
                     pendingPeer = null;
@@ -536,7 +489,7 @@ public class NetNode
         }
     }
     /// <summary>
-    /// 杩炴帴鏂紑浜嬩欢 瀹㈡埛绔?
+    /// 连接断开事件 客户端
     /// </summary>
     /// <param name="remoteEndPoint"></param>
     /// <param name="reader"></param>
@@ -592,12 +545,12 @@ public class NetNode
     public void AddPendingHanldePackage(IPackage package)
     {
 #if DEBUG
-        Log.Information("[鎺掗槦]娣诲姞鍒板鐞嗛槦鍒楋細" + package.ID);
+        Log.Information("[[排队]添加到处理队列：" + package.ID);
 #endif
         PendingHanldePackages.Add(package);
     }
     /// <summary>
-    /// 鏁版嵁鎺ユ敹浜嬩欢
+    /// 数据接收事件
     /// </summary>
     /// <param name="peer"></param>
     /// <param name="reader"></param>
@@ -631,7 +584,7 @@ public class NetNode
             if (OnRecieve == null)
             {
 #if DEBUG
-                Log.Information("妫€娴嬪埌鏈夋湭澶勭悊鐨勫寘:" + list.Count);
+                Log.Information("检测到有未处理的包:" + list.Count);
 #endif
                 PendingHanldePackages.AddRange(list);
             }
@@ -647,11 +600,10 @@ public class NetNode
         }
         finally
         {
-            // 娉ㄦ剰锛歂etDataReader涓嶉渶瑕丷ecycle()鏂规硶
         }
     }
     /// <summary>
-    /// 杩炴帴琚嫆缁濅簨浠?
+    /// 连接被拒绝事件
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="reader"></param>
@@ -668,45 +620,37 @@ public class NetNode
         }
     }
     /// <summary>
-    /// 鏂板鎴风杩炴帴浜嬩欢
+    /// 新客户端连接事件
     /// </summary>
     /// <param name="request"></param>
-    private void ConnectionRequestEvent(ConnectionRequest request)
-    {
+    private void ConnectionRequestEvent(ConnectionRequest request) {
         //long now = CommonLib.GetMicroSeconds();
         //if (now - m_lastConnectTime < 10000)
         //{
-        //    SendWriterFromPackage(new ConnectionRejectPackage("褰撳墠杩炴帴杈冨锛岃绛夊緟1绉掑姞鍏?), request, true);
+        //    SendWriterFromPackage(new ConnectionRejectPackage("当前连接较多，请等待1秒加入"), request, true);
         //    return;
         //}
         //else
         //{
         //    m_lastConnectTime = CommonLib.GetMicroSeconds();
         //}
-        Log.Information("鎺ユ敹鍒拌繛鎺ヨ姹?" + request.RemoteEndPoint);
+        Log.Information("接收到连接请求 " + request.RemoteEndPoint);
 
-
-
-        if (ProjectNet.Project == null)
-        {
-            SendWriterFromPackage(new ConnectionRejectPackage("Please wait for server startup to complete."), request, true);
+        if (ProjectNet.Project == null) {
+            SendWriterFromPackage(new ConnectionRejectPackage("请等待服务器启动完成后加入"), request, true);
         }
-        else if (pendingClient != null)
-        {
+        else if (pendingClient != null) {
             Log.Information($"Too Many Request And Reject Current Request:{request.RemoteEndPoint}");
             Log.Information($"Current Pending Client:{pendingClient}");
-            SendWriterFromPackage(new ConnectionRejectPackage($"褰撳墠鏈嶅姟鍣ㄨ繛鎺ヨ姹傚お澶氾紝璇风◢鍊欏啀璇曪紝绛夊緟瀹㈡埛绔洖搴旀暟{agreeOnPendingPeer.Count}"), request, true);
+            SendWriterFromPackage(new ConnectionRejectPackage($"当前服务器连接请求太多，请稍候再试，等待客户端回应数{agreeOnPendingPeer.Count}"), request, true);
         }
-        else
-        {
-            try
-            {
+        else {
+            try {
                 ConnectionRequestPackage requestPackage = PackageManager.DecodePackage<ConnectionRequestPackage>(this, request.Data, null, request);
                 requestPackage.Handle(ProjectNet.Project, this, true);
             }
-            catch (Exception e)
-            {
-                SendWriterFromPackage(new ConnectionRejectPackage($"閿欒鐨勮繛鎺ヨ姹傛暟鎹寘:{e.Message}"), request, true);
+            catch (Exception e) {
+                SendWriterFromPackage(new ConnectionRejectPackage($"错误的连接请求数据包:{e.Message}"), request, true);
                 Log.Information("ConnectionRequestEvent Error:" + e.StackTrace);
             }
         }
@@ -720,7 +664,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 寮€鍚湇鍔″櫒
+    /// 开启服务器
     /// </summary>
     /// <param name="port"></param>
     /// <returns></returns>
@@ -737,7 +681,7 @@ public class NetNode
             StartLocal();
             if (netManager.Start(port))
             {
-                Log.Information($"寮€鍚湇鍔″櫒鎴愬姛锛岀鍙?{netManager.LocalPort}");
+                Log.Information($"开启服务器成功，端口 {netManager.LocalPort}");
                 Window.Frame += Update;
                 Window.Closed += StopImmediate;
                 listener.ConnectionRequestEvent += ConnectionRequestEvent;
@@ -762,7 +706,7 @@ public class NetNode
         return CurrentStage == Stage.Connected;
     }
     /// <summary>
-    /// 杩炴帴鏈嶅姟鍣?
+    /// 连接服务器
     /// </summary>
     /// <param name="ep"></param>
     /// <param name="passwd"></param>
@@ -785,7 +729,7 @@ public class NetNode
             listener.PeerDisconnectedEvent += PeerDisconnectedEvent;
             listener.NetworkErrorEvent += (obj, arg) =>
             {
-                Log.Information("杩炴帴閿欒" + arg);
+                Log.Information("连接错误" + arg);
                 Stop(arg.ToString());
             };
             CurrentStage = Stage.WaitForClientList;
@@ -799,7 +743,7 @@ public class NetNode
         }
     }
     /// <summary>
-    /// 鍙戦€佸洖璋冧簨浠?
+    /// 发送回调事件
     /// </summary>
     /// <param name="peer"></param>
     /// <param name="userData"></param>
@@ -809,7 +753,7 @@ public class NetNode
         {
             agreeOnPendingPeer.Remove(client.ID);
 #if DEBUG
-            Log.Information($"Client[{client.ID}]宸叉敹鍒癈lient[{pendingClient.ID}]鍔犲叆閫氱煡");
+            Log.Information($"Client[{client.ID}]已收到Client[{pendingClient.ID}]加入通知");
 #endif
         }
         if (agreeOnPendingPeer.Count == 0 && pendingClient != null)
@@ -817,7 +761,7 @@ public class NetNode
             AddClient(pendingClient);
             QueuePackage(new ClientPackage(Clients.Values) { To = pendingClient });
 #if DEBUG
-            Log.Information($"Client[{pendingClient.ID}] join completed.");
+            Log.Information($"Client[{pendingClient.ID}]已完成加入过程");
 #endif
             pendingPeer = null;
             pendingStartUtc = null;
@@ -837,7 +781,7 @@ public class NetNode
             agreeOnPendingPeer.Clear();
             pendingStartUtc = null;
             PendingPackages.Clear();
-            // 鍏堝彂閫佹彁绀猴紝鐒跺悗鍐嶅叧闂湇鍔″櫒
+            // 先发送提示，然后再关闭服务器
             if (WorkType == WorkType.Server)
             {
                 RemoveAllClients("Server is shutting down.");
@@ -875,7 +819,7 @@ public class NetNode
         }
     }
     /// <summary>
-    /// 寮€鍚寘澶勭悊
+    /// 开启包处理
     /// </summary>
     public void TurnOnPackageHanlde(ProjectNet projectNet)
     {
@@ -905,24 +849,24 @@ public class NetNode
         SendWriterFromPackages(new IPackage[] { package }, netPeer, null, null, useDeliveryEvent);
     }
     /// <summary>
-    /// 鍙戦€佷竴涓暟鎹寘鍒拌繕鏈繛鎺ョ殑杩滅▼
+    /// 发送一个数据包到还未连接的远程
     /// </summary>
-    /// <param name="package">鏁版嵁鍖?/param>
-    /// <param name="request">杩滅▼杩炴帴璇锋眰</param>
-    /// <param name="reject">鍙戦€佸悗鏄惁鎷掔粷杩炴帴 true鎷掔粷 false涓嶆嫆缁?/param>
+    /// <param name="package">数据包</param>
+    /// <param name="request">远程连接请求</param>
+    /// <param name="reject">发送后是否拒绝连接 true拒绝 false不拒绝</param>
     public void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject)
     {
         if (reject) request.Reject();
         SendWriterFromPackages(new IPackage[] { package }, null, request, null);
     }
     /// <summary>
-    /// 鍙戦€佸涓暟鎹寘
+    /// 发送多个数据包
     /// </summary>
     /// <param name="packages"></param>
     /// <param name="netPeer"></param>
     /// <param name="request"></param>
     /// <param name="iPEndPoint"></param>
-    /// <param name="useDeliveryEvent">true 浣跨敤delivery浜嬩欢鍥炶皟 true 鍙戦€佹秷鎭?false 鍙戦€佽繛鎺ユ秷鎭?/param>
+    /// <param name="useDeliveryEvent">true 使用delivery事件回调 true 发送消息 false 发送连接消息</param>
     public void SendWriterFromPackages(IEnumerable<IPackage> packages, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false)
     {
         PackageStreamWriter writer = new PackageStreamWriter();
@@ -988,14 +932,14 @@ public class NetNode
     public void Update()
     {
         CleanupChunkStates();
-        //鍏堝鐞哢I鎿嶄綔锛孖nventory搴忓彿澧炲姞鍚庡啀澶勭悊瀹㈡埛绔繃鏉ョ殑鍖?
-        //鍙戦€佺墿鍝佸悓姝ユ暟鎹?
+        //先处理UI操作，Inventory序号增加后再处理客户端过来的包
+        //发送物品同步数据
         SubsystemInventories.flushSyncItems();
 
-        // 澶勭悊 pendingClient 绛夊緟绐楀彛锛氭竻鐞嗘棤鏁堝鎴风骞跺湪瓒呮椂鍚庡己鍒跺畬鎴愬姞鍏?
+        // 处理 pendingClient 等待窗口：清理无效客户端并在超时后强制完成加入
         if (pendingPeer != null)
         {
-            // 绉婚櫎宸叉柇寮€鎴栦笉瀛樺湪鐨勫鎴风 ID锛岄伩鍏嶆案涔呯瓑寰?
+            // 移除已断开或不存在的客户端 ID，避免永久等待
             var toRemoveIds = new List<byte>();
             foreach (var id in agreeOnPendingPeer)
             {
@@ -1009,15 +953,15 @@ public class NetNode
                 agreeOnPendingPeer.Remove(id);
             }
 
-            // 瓒呮椂澶勭悊锛氬鏋滆秴鏃朵粛鏈夋湭纭鐨勫鎴风锛岀洿鎺ュ畬鎴愬姞鍏ワ紝閬垮厤闃诲鍚庣画杩炴帴
+            // 超时处理：如果超时仍有未确认的客户端，直接完成加入，避免阻塞后续连接
             if (!pendingStartUtc.HasValue)
             {
                 pendingStartUtc = DateTime.UtcNow;
             }
             else if ((DateTime.UtcNow - pendingStartUtc.Value).TotalSeconds > PendingJoinTimeoutSeconds)
             {
-                Log.Information($"绛夊緟瀹㈡埛绔洖搴旇秴鏃讹紝寮哄埗瀹屾垚 Client[{pendingClient?.ID}] 鍔犲叆銆傚墿浣欑瓑寰呮暟閲? {agreeOnPendingPeer.Count}");
-                // 鐩存帴瀹屾垚鍔犲叆娴佺▼
+                Log.Information($"等待客户端回应超时，强制完成 Client[{pendingClient?.ID}]  加入。剩余等待数量: {agreeOnPendingPeer.Count}");
+                // 直接完成加入流程
                 if (pendingClient != null)
                 {
                     AddClient(pendingClient);
@@ -1029,7 +973,7 @@ public class NetNode
             }
             else if (agreeOnPendingPeer.Count == 0 && pendingClient != null)
             {
-                // 娌℃湁闇€瑕佺瓑寰呯殑瀹㈡埛绔紝琛ュ厖涓€娆″畬鎴愰€昏緫锛堜笌 DeliveryEvent 淇濇寔涓€鑷达級
+                // 没有需要等待的客户端，补充一次完成逻辑（与 DeliveryEvent 保持一致）
                 AddClient(pendingClient);
                 QueuePackage(new ClientPackage(Clients.Values) { To = pendingClient });
                 pendingPeer = null;
@@ -1042,7 +986,7 @@ public class NetNode
             RemoveClientImmediate(pair.Key, pair.Value);
         }
         ClientsToRemove.Clear();
-        //鎵瑰鐞嗗彂閫佸寘闃熷垪锛?.05s鍙戦€佷竴娆?
+        //批处理发送包队列，0.05s发送一次
         if (PendingPackages.Count > 0 && Time.PeriodicEvent(0.05, 0.0))
         {
             lock (PendingPackages)
@@ -1103,7 +1047,7 @@ public class NetNode
                                 SendPayload(payload, c.Peer);
                                 sec_length += payload.Length;
 #if DEBUG
-                                //Log.Information($"鏈鍙戦€佸寘{count}涓紝{size}瀛楄妭");
+                                //Log.Information($"本次发送包{count}个，{size}字节");
 #endif
                             }
                         }
@@ -1120,7 +1064,7 @@ public class NetNode
                     float f = (sec_length / 1024f);
                     float f2 = (sec_length_total / 1024f);
                     sec_length = 0;
-                    Log.Information($"1s鍐呯疮璁″彂閫佸寘闀垮害锛歿f:0.000}kb /// {sec_total}s鍐呯疮璁″彂閫佸寘闀垮害锛歿f2:0.000}kb");
+                    Log.Information($"1s内累计发送包长度：{f:0.000}kb /// {sec_total}s内累计发送包长度：{f2:0.000}kb");
                 }
 #endif
 
