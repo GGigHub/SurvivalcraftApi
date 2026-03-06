@@ -62,6 +62,22 @@ namespace Game {
             m_statsPanel.Children.Add(stackPanelWidget);
             stackPanelWidget.Children.Add(
                 new LabelWidget {
+                    Text = LanguageControl.Get(fName, "ServerInfo"),
+                    Font = font,
+                    HorizontalAlignment = WidgetAlignment.Center,
+                    Margin = new Vector2(0f, 10f),
+                    Color = white
+                }
+            );
+            if (CommonLib.WorkType != WorkType.Local) {
+                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerIP"), CommonLib.GetInnerIp());
+                string serverMode = SettingsManager.IsPublicServer
+                    ? LanguageControl.Get(fName, "ServerModeWAN")
+                    : LanguageControl.Get(fName, "ServerModeLAN");
+                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerMode"), serverMode);
+            }
+            stackPanelWidget.Children.Add(
+                new LabelWidget {
                     Text = LanguageControl.Get(fName, 5),
                     Font = font,
                     HorizontalAlignment = WidgetAlignment.Center,

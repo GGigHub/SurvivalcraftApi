@@ -647,7 +647,12 @@
     "102": "Terrain {0}, Season {1}, Final {2}",
     "103": "Spawn Location",
     "104": "Toggle Fullscreen",
-    "105": "Highest Mod Impact Level"
+    "105": "Highest Mod Impact Level",
+    "ServerInfo": "Server Information",
+    "ServerIP": "Server IP",
+    "ServerMode": "Server Mode",
+    "ServerModeLAN": "LAN",
+    "ServerModeWAN": "WAN"
   },
   "ModDetailsDialog": {
     "1": "Disable Reason: ",

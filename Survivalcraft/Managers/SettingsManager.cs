@@ -35,6 +35,8 @@ namespace Game {
 
         public static bool AllowLanConnection { get; set; }
 
+        public static bool IsPublicServer { get; set; }
+
         public static bool CreativeDragMaxStacking { get; set; }
 
         public static float Touchoffset { get; set; }

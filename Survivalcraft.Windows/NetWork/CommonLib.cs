@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Reflection.PortableExecutable;
 using System.Xml.Linq;
 using Engine;
@@ -121,15 +122,42 @@ public static class CommonLib
 
     public static string GetInnerIp()
     {
-        var ipHost = Dns.GetHostAddresses(Dns.GetHostName());
-        foreach (var ip in ipHost)
-        {
-            if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        try {
+            var validTypes = new List<NetworkInterfaceType>
             {
-                return ip.ToString();
+                    NetworkInterfaceType.Ethernet,
+                    NetworkInterfaceType.Ethernet3Megabit,
+                    NetworkInterfaceType.FastEthernetFx,
+                    NetworkInterfaceType.FastEthernetT,
+                    NetworkInterfaceType.GigabitEthernet,
+                    NetworkInterfaceType.Wireless80211
+                };
+
+            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces()) {
+                if (ni.OperationalStatus != OperationalStatus.Up) continue;
+                if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
+
+                // 物理网卡类型检测
+                if (validTypes.Contains(ni.NetworkInterfaceType)) {
+                    foreach (var ip in ni.GetIPProperties().UnicastAddresses) {
+                        if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
+                            return ip.Address.ToString();
+                        }
+                    }
+                }
             }
+
+            // 备用方案：获取首个非虚拟IPv4地址
+            return NetworkInterface.GetAllNetworkInterfaces()
+                .Where(n => n.OperationalStatus == OperationalStatus.Up)
+                .SelectMany(n => n.GetIPProperties().UnicastAddresses)
+                .Where(ip => ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                .Select(ip => ip.Address.ToString())
+                .FirstOrDefault() ?? "127.0.0.1";
         }
-        return ipHost[0].ToString();
+        catch {
+            return "127.0.0.1";
+        }
     }
 
     public static bool Resolve(string ip, out IPEndPoint ep)
