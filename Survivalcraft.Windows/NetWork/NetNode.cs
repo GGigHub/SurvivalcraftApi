@@ -40,7 +40,7 @@ public class NetNode
 
     private const byte verifyByte = 0x88;
     private const uint chunkMagic = 0x4E46434B; // "NFCK"
-    private const byte chunkVersion = 1;
+    private const byte chunkVersion = 2;
     private const int minChunkSize = 256;
     private const int maxChunkSize = 60 * 1024;
     private const int chunkHeaderBytes = 19;
@@ -135,7 +135,7 @@ public class NetNode
         writer.Put(totalLength);
         writer.Put(offset);
         writer.Put((ushort)length);
-        writer.Put(chunk);
+        writer.PutBytesWithLength(chunk);
         return writer;
     }
 
@@ -172,20 +172,27 @@ public class NetNode
         byte version = probe.GetByte();
         if (version != chunkVersion)
         {
-            return true;
+            throw new InvalidOperationException($"Invalid chunk frame version: {version}, expected {chunkVersion}.");
         }
 
         messageId = probe.GetInt();
         totalLength = probe.GetInt();
         offset = probe.GetInt();
         int length = probe.GetUShort();
-        if (length <= 0 || totalLength <= 0 || offset < 0 || offset + length > totalLength || probe.AvailableBytes < length)
+        if (length <= 0 || totalLength <= 0 || offset < 0 || offset + length > totalLength)
         {
-            return true;
+            throw new InvalidOperationException(
+                $"Invalid chunk frame payload. totalLength={totalLength}, offset={offset}, length={length}, available={probe.AvailableBytes}."
+            );
         }
-
-        chunkData = new byte[length];
-        probe.GetBytes(chunkData, length);
+        byte[] body = probe.GetBytesWithLength();
+        if (body == null || body.Length != length)
+        {
+            throw new InvalidOperationException(
+                $"Invalid chunk frame body length. declared={length}, actual={(body == null ? -1 : body.Length)}, available={probe.AvailableBytes}."
+            );
+        }
+        chunkData = body;
         return true;
     }
 
@@ -194,20 +201,20 @@ public class NetNode
         payload = null;
         if (chunkData == null || chunkData.Length == 0)
         {
-            return false;
+            throw new InvalidOperationException("Chunk frame has empty chunkData.");
         }
 
         int chunkSize = GetConfiguredChunkSize();
         int totalChunks = (totalLength + chunkSize - 1) / chunkSize;
         if (totalChunks <= 0)
         {
-            return false;
+            throw new InvalidOperationException($"Invalid totalChunks computed from totalLength={totalLength}, chunkSize={chunkSize}.");
         }
 
         int index = offset / chunkSize;
         if (index < 0 || index >= totalChunks)
         {
-            return false;
+            throw new InvalidOperationException($"Invalid chunk index={index}, totalChunks={totalChunks}, offset={offset}, chunkSize={chunkSize}.");
         }
 
         string key = BuildChunkStateKey(sourceKey, messageId);
@@ -228,7 +235,10 @@ public class NetNode
         else if (state.TotalLength != totalLength || state.ChunkSize != chunkSize || state.TotalChunks != totalChunks)
         {
             m_chunkStates.Remove(key);
-            return false;
+            throw new InvalidOperationException(
+                $"Chunk state mismatch for key={key}. state(total={state.TotalLength},size={state.ChunkSize},chunks={state.TotalChunks}) " +
+                $"incoming(total={totalLength},size={chunkSize},chunks={totalChunks})."
+            );
         }
 
         if (!state.Received[index])
@@ -921,7 +931,7 @@ public class NetNode
                     chunkWriter.Put(payload.Length);
                     chunkWriter.Put(offset);
                     chunkWriter.Put((ushort)length);
-                    chunkWriter.Put(chunk);
+                    chunkWriter.PutBytesWithLength(chunk);
                     netManager.SendUnconnectedMessage(chunkWriter, endPoint);
                 }
             }
@@ -1078,7 +1088,12 @@ public class NetNode
         }
         else
         {
-            netManager.PollEvents();
+            try {
+                netManager.PollEvents();
+            }
+            catch (Exception ex) {
+                Log.Error(ex);
+            }
         }
     }
 
