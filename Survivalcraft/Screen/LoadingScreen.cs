@@ -502,13 +502,15 @@ namespace Game {
             AddLoadAction(KeyCompatibleGroupsManager.Initialize); //初始化按键兼容组
             AddLoadAction(
                 delegate {
-                    if (Program.StartupParameters.TryGetValue("play", out string worldDirectory)) {
+                    if (Program.StartupParameters.TryGetValue("p", out string worldDirectory)
+                        || Program.StartupParameters.TryGetValue("play", out worldDirectory)) {
                         ScreensManager.SwitchScreen("Play", worldDirectory);
                     }
                     else {
                         ScreensManager.SwitchScreen("MainMenu");
                     }
-                });
+                }
+            );
             AddLoadAction(PackageManager.Initialize);
         }
 
@@ -660,4 +662,5 @@ namespace Game {
         }
     }
 }
+
 

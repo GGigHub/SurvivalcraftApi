@@ -45,7 +45,7 @@ namespace Game {
 #if !ANDROID
         // ReSharper disable UnusedMember.Local
 #if BROWSER
-        //浏览器运行最小测试
+        //浏览器运行最小测�?
         public static async Task Main2(string[] args) {
             Display.Initialize();
             BrowserInterop.Initialize(InputBridge.Initialize());
@@ -120,11 +120,12 @@ namespace Game {
                         break;
                     default:
                         string key = null;
-                        string value = null;
+                        List<string> value = [];
                         foreach (string arg in args) {
                             if (arg.StartsWith('-')) {
                                 if (key != null) {
-                                    StartupParameters.TryAdd(key, value ?? string.Empty);
+                                    StartupParameters.TryAdd(key, string.Join(' ', value));
+                                    value.Clear();
                                 }
                                 key = arg.TrimStart('-');
                                 if (key.Length == 0) {
@@ -132,11 +133,11 @@ namespace Game {
                                 }
                             }
                             else if (key != null) {
-                                value = arg;
+                                value.Add(arg);
                             }
                         }
                         if (key != null) {
-                            StartupParameters.TryAdd(key, value ?? string.Empty);
+                            StartupParameters.TryAdd(key, string.Join(' ', value));
                         }
                         break;
                 }
@@ -150,7 +151,7 @@ namespace Game {
             if (!m_mutexHandled) {
 
                 string str =
-                    "This game is already running! If you cannot find the window, please stop it from the Task Manager, and check the log file in Bugs directory.\n游戏已经在运行！如果找不到游戏窗口，请从任务管理器终止它，并检查 Bugs 目录中的日志文件。";
+                    "This game is already running! If you cannot find the window, please stop it from the Task Manager, and check the log file in Bugs directory.\n游戏已经在运行！如果找不到游戏窗口，请从任务管理器终止它，并检�?Bugs 目录中的日志文件�?;
                 Window.MessageBox(IntPtr.Zero, str, null, 0x10u);
                 return;
             }
@@ -198,7 +199,7 @@ namespace Game {
             if (string.IsNullOrEmpty(SystemLanguage)) {
                 SystemLanguage = RegionInfo.CurrentRegion.DisplayName != "United States" ? "zh-CN" : "en-US";
             }
-            //预加载
+            //预加�?
             Storage.Initialize();
             VersionsManager.Initialize();
             Window.HandleUri += HandleUriHandler;
@@ -364,3 +365,4 @@ namespace Game {
         }
     }
 }
+
