@@ -616,7 +616,7 @@ namespace Game {
                 //MoveWidgetSize = 1f;
                 MoveWidgetMarginX = 0f;
                 MoveWidgetMarginY = 0f;
-				OnlineAccessToken = new Guid().ToString();
+				OnlineAccessToken = Guid.NewGuid().ToString();
 #if BROWSER
                 AnimatedTextureRefreshLimit = 2;
 #else
