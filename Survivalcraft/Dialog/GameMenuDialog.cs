@@ -69,8 +69,8 @@ namespace Game {
                     Color = white
                 }
             );
-            if (CommonLib.WorkType != WorkType.Local) {
-                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerIP"), CommonLib.GetInnerIp());
+            if (CommonLib.WorkType == WorkType.Server) {
+                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerIP"), CommonLib.GetInnerIp() + ":" + SettingsManager.ServerPort);
                 string serverMode = SettingsManager.IsPublicServer
                     ? LanguageControl.Get(fName, "ServerModeWAN")
                     : LanguageControl.Get(fName, "ServerModeLAN");

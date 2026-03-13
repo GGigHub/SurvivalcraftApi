@@ -161,7 +161,7 @@ namespace Game {
                 }
             );
             AddLoadAction(
-                delegate { //检查所有Mod依赖项
+                delegate { //检查所有Mod依赖�?
                     //根据加载顺序排序后的结果
                     ModsManager.ModList.Clear();
                     foreach (ModEntity item in ModsManager.ModListAll) {
@@ -202,8 +202,8 @@ namespace Game {
                             }
                         }
                     );
-                    //加载 mod 程序集(.dll)文件
-                    //但不进行处理操作(如添加block等)
+                    //加载 mod 程序�?.dll)文件
+                    //但不进行处理操作(如添加block�?
                     ModsManager.ModHooks.Clear();
                     ModsManager.m_tempModHooks.Clear();
                     ModsManager.ModListAllDo(modEntity => {
@@ -217,7 +217,7 @@ namespace Game {
                                 }
                                 catch (Exception e) {
                                     exception = e;
-                                    string separator = new('-', 10); //生成10个 '-' 连一起的字符串
+                                    string separator = new('-', 10); //生成10�?'-' 连一起的字符�?
                                     Log.Error($"{separator}Handle assembly failed{separator}");
                                     Log.Error(
                                         $"Loaded assembly:\n{string.Join("\n", AppDomain.CurrentDomain.GetAssemblies().Select(x => x.FullName ?? x.GetName().FullName))}"
@@ -242,22 +242,22 @@ namespace Game {
                         ScreensManager.SwitchScreen(
                             new LoadingFailedScreen(
                                 "Loading failed 加载失败",
-                                ["Exceptions: 异常信息：", ..exception?.ToString().Split('\n') ?? []],
+                                ["Exceptions: 异常信息�?, ..exception?.ToString().Split('\n') ?? []],
                                 [
                                     $"Check the API version required by mod is equal to the current API version ({ModsManager.APIVersionString}). Check and add missing mods. If not solved, please contact the developer of the mods or API with Game.log in the path below.",
-                                    $"检查模组是否缺失，并添加所缺失的模组。查看模组所需插件版版本与当前插件版版本（{ModsManager.APIVersionString}）是否一致。若以上方式都无法解决，请联系模组、插件版开发者，并发送下面路径中的 Game.log",
+                                    $"检查模组是否缺失，并添加所缺失的模组。查看模组所需插件版版本与当前插件版版本（{ModsManager.APIVersionString}）是否一致。若以上方式都无法解决，请联系模组、插件版开发者，并发送下面路径中�?Game.log",
                                     Storage.GetSystemPath(ModsManager.LogPath),
                                     "And you can enable Safe Mode to stop loading any mod.",
-                                    "你还可以启用安全模式，停止加载任何模组。"
+                                    "你还可以启用安全模式，停止加载任何模组�?
                                 ]
                             )
                         );
                     }
-                    //处理程序集
+                    //处理程序�?
                 }
             );
             AddLoadAction(
-                delegate { //初始化所有ModEntity的语言包
+                delegate { //初始化所有ModEntity的语言�?
                     //>>>初始化语言列表
                     LanguageControl.LanguageTypes.Clear();
                     foreach (ContentInfo contentInfo in ContentManager.List("Lang")) {
@@ -508,8 +508,8 @@ namespace Game {
                     else {
                         ScreensManager.SwitchScreen("MainMenu");
                     }
-                }
-            );
+                });
+            AddLoadAction(PackageManager.Initialize);
         }
 
         void InitScreens() {
@@ -640,9 +640,9 @@ namespace Game {
                 return;
             }
             Window.Activity.RunOnUiThread(() => {
-                    new AlertDialog.Builder(Window.Activity).SetMessage("Exit 退出?")
-                        ?.SetPositiveButton("Yes 是", (_, _) => { Window.Close(); })
-                        ?.SetNegativeButton("No 否", (_, _) => { })
+                    new AlertDialog.Builder(Window.Activity).SetMessage("Exit 退�?")
+                        ?.SetPositiveButton("Yes �?, (_, _) => { Window.Close(); })
+                        ?.SetNegativeButton("No �?, (_, _) => { })
                         ?.Show();
                 }
             );
@@ -651,7 +651,7 @@ namespace Game {
             /*
             Task.Run(() =>
             {
-                if(MessageBox.Show("Exit 退出?","", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                if(MessageBox.Show("Exit 退�?","", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     Window.Close();
                 }
@@ -660,3 +660,4 @@ namespace Game {
         }
     }
 }
+

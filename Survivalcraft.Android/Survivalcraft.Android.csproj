@@ -22,9 +22,9 @@
         <AndroidEnableSGenConcurrent>false</AndroidEnableSGenConcurrent>
         <AndroidLinkMode>None</AndroidLinkMode>
         <AndroidLintEnabled>false</AndroidLintEnabled>
-        <AndroidStripILAfterAOT>true</AndroidStripILAfterAOT>
+        <AndroidStripILAfterAOT>false</AndroidStripILAfterAOT>
         <AndroidUseInterpreter>false</AndroidUseInterpreter>
-        <EnableLLVM>true</EnableLLVM>
+        <EnableLLVM>false</EnableLLVM>
         <RunAOTCompilation>false</RunAOTCompilation>
     </PropertyGroup>
     <ItemGroup>
