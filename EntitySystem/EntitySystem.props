@@ -9,4 +9,7 @@
     <ItemGroup>
         <Compile Include="$(MSBuildThisFileDirectory)**\*.cs" Exclude="$(MSBuildThisFileDirectory)obj\**\*.cs"/>
     </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="MessagePack" Version="3.0.3" />
+    </ItemGroup>
 </Project>

@@ -118,27 +118,6 @@ public class ModsManifestPackage : IPackage
             if (localMods.TryGetValue(fileName, out var localMod) && IsExpected(localMod.ResourcesMd5 ?? string.Empty, expectedMd5))
                 continue;
 
-            // 2) If ModsCache has same-named file and md5 matches, restore.
-            string cachePath = Storage.CombinePaths(cacheDir, fileName);
-            if (Storage.FileExists(cachePath))
-            {
-                try
-                {
-                    string cacheMd5 = ModsManager.GetNetmodDecipheredMd5(cachePath);
-                    if (IsExpected(cacheMd5, expectedMd5))
-                    {
-                        string finalPath = Storage.CombinePaths(modsDir, fileName);
-                        if (Storage.FileExists(finalPath))
-                            Storage.DeleteFile(finalPath);
-                        Storage.CopyFile(cachePath, finalPath);
-                        continue;
-                    }
-                }
-                catch
-                {
-                }
-            }
-
             need.Add(fileName);
         }
 

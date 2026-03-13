@@ -49,6 +49,7 @@ public static class ModsManager {
     public static string WorldsDirectoryName = $"{ExternalPath}/Worlds";
 #endif
     public static string ProcessModListPath = $"{ExternalPath}/ProcessModLists";
+    public static string ModCachePath = $"{ExternalPath}/ModsCache";
 
     public static string ScreenCapturePath { get; } = $"{ExternalPath}/ScreenCapture";
 

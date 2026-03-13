@@ -29,7 +29,7 @@ namespace Game {
             m_cancelButtonWidget = Children.Find<ButtonWidget>("ConnectServerDialog.CancelButton");
 
             // 设置默认IP地址
-            m_ipTextBoxWidget.Text = "127.0.0.1:3041";
+            m_ipTextBoxWidget.Text = "127.0.0.1:28887";
             m_ipTextBoxWidget.HasFocus = true;
             m_ipTextBoxWidget.Enter += delegate {
                 ConnectToServer();
@@ -67,7 +67,7 @@ namespace Game {
             // 解析IP和端口
             string[] parts = ipAddress.Split(':');
             string ip = parts[0];
-            int port = 3041; // 默认端口
+            int port = 28887; // 默认端口
 
             if (parts.Length > 1) {
                 if (!(int.TryParse(parts[1], out port) && NetNode.IsValidPort(port))) {

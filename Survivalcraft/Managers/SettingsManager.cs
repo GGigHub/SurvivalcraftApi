@@ -37,6 +37,10 @@ namespace Game {
 
         public static bool IsPublicServer { get; set; }
 
+        public static string WillEnterServer { get; set; }
+
+        public static string WillEnterServerPwd { get; set; }
+
         public static bool CreativeDragMaxStacking { get; set; }
 
         public static float Touchoffset { get; set; }
@@ -136,13 +140,13 @@ namespace Game {
                 m_screenshotSizeCustomWidthIndex = MathUtils.Clamp(value, 0, ScreenshotSizeCustomWidths.Length - 1);
                 int widthMax = Math.Min(Display.MaxTextureSize, 16384);
                 if (widthMax <= ScreenshotSizeCustomWidths[m_screenshotSizeCustomWidthIndex]) {
-                    value = ScreenshotSizeCustomWidths.GetLastIndexOfAnyInRange(0,widthMax);
+                    value = ScreenshotSizeCustomWidths.GetLastIndexOfAnyInRange(0, widthMax);
                 }
                 m_screenshotSizeCustomWidthIndex = value;
             }
         }
 
-        private static int GetLastIndexOfAnyInRange(this int[] array,int minValue,int maxValue) {
+        private static int GetLastIndexOfAnyInRange(this int[] array, int minValue, int maxValue) {
             for (int i = array.Length - 1; i >= 0; i--) {
                 if (array[i] >= minValue && array[i] <= maxValue)
                     return i;
@@ -177,7 +181,7 @@ namespace Game {
         ];
         private static int m_screenshotSizeCustomAspectRatioIndex;
         public static int ScreenshotSizeCustomAspectRatioIndex {
-            get {  return m_screenshotSizeCustomAspectRatioIndex; }
+            get { return m_screenshotSizeCustomAspectRatioIndex; }
             set {
                 m_screenshotSizeCustomAspectRatioIndex = MathUtils.Clamp(value, 0, ScreenshotSizeCustomAspectRatios.Length - 1);
             }
@@ -251,7 +255,7 @@ namespace Game {
         public static float GamepadCursorSpeed { get; set; }
 
         /// <summary>
-        ///     手柄扳机触发阈值，范围0~1，默认0.5。扳机的按压幅度只有超过这个数时才会被视为“按下”状态，越小则越容易触发。
+        ///     手柄扳机触发阈值，范围0~1，默�?.5。扳机的按压幅度只有超过这个数时才会被视为“按下”状态，越小则越容易触发�?
         /// </summary>
         public static float GamepadTriggerThreshold { get; set; }
 
@@ -537,7 +541,7 @@ namespace Game {
                 DisplayLog = false;
                 DragHalfInSplit = true;
                 ShortInventoryLooping = false;
-                ServerPort = 3041;
+                ServerPort = 28887;
                 NetworkChunkSize = 4096;
                 AllowLanConnection = true;
                 m_resolutionMode = ResolutionMode.High;
@@ -589,6 +593,8 @@ namespace Game {
                 MotdLastDownloadedData = string.Empty;
                 UserId = string.Empty;
                 LastLaunchedVersion = string.Empty;
+                WillEnterServer = string.Empty;
+                WillEnterServerPwd = string.Empty;
                 CommunityContentMode = CommunityContentMode.Normal;
                 OriginalCommunityContentMode = CommunityContentMode.Normal;
                 MultithreadedTerrainUpdate = true;
@@ -610,6 +616,7 @@ namespace Game {
                 //MoveWidgetSize = 1f;
                 MoveWidgetMarginX = 0f;
                 MoveWidgetMarginY = 0f;
+				OnlineAccessToken = new Guid().ToString();
 #if BROWSER
                 AnimatedTextureRefreshLimit = 2;
 #else
@@ -729,7 +736,7 @@ namespace Game {
         }
 
         /// <summary>
-        ///     仅用于修改现有键盘鼠标键位，添加键位请使用<see cref="ModLoader.GetKeyboardMappings" />
+        ///     仅用于修改现有键盘鼠标键位，添加键位请使�?see cref="ModLoader.GetKeyboardMappings" />
         /// </summary>
         /// <param name="keyName"></param>
         /// <param name="value"></param>
@@ -748,7 +755,7 @@ namespace Game {
         }
 
         /// <summary>
-        ///     仅用于修改现有手柄键位，添加键位请使用<see cref="ModLoader.GetGamepadMappings" />
+        ///     仅用于修改现有手柄键位，添加键位请使�?see cref="ModLoader.GetGamepadMappings" />
         /// </summary>
         /// <param name="keyName"></param>
         /// <param name="value"></param>
@@ -767,7 +774,7 @@ namespace Game {
         }
 
         /// <summary>
-        ///     仅用于修改现有相机配置，添加相机配置请使用<see cref="ModLoader.GetCameraList" />
+        ///     仅用于修改现有相机配置，添加相机配置请使�?see cref="ModLoader.GetCameraList" />
         /// </summary>
         /// <param name="keyName"></param>
         /// <param name="value"></param>
@@ -805,8 +812,8 @@ namespace Game {
                             foreach (string name in valuesDictionary.Keys) {
                                 try {
                                     PropertyInfo propertyInfo = (from pi in typeof(SettingsManager).GetRuntimeProperties()
-                                        where pi.Name == name && pi.GetMethod != null && pi.GetMethod.IsStatic && pi.GetMethod.IsPublic && pi.SetMethod != null && pi.SetMethod.IsPublic
-                                        select pi).FirstOrDefault();
+                                                                 where pi.Name == name && pi.GetMethod != null && pi.GetMethod.IsStatic && pi.GetMethod.IsPublic && pi.SetMethod != null && pi.SetMethod.IsPublic
+                                                                 select pi).FirstOrDefault();
                                     if (propertyInfo is not null) {
                                         object value = valuesDictionary.GetValue<object>(name);
                                         if (propertyInfo.PropertyType == typeof(ValuesDictionary)
@@ -861,8 +868,8 @@ namespace Game {
                 //原生设置
                 XElement xElement = new("Settings");
                 foreach (PropertyInfo item in from pi in typeof(SettingsManager).GetRuntimeProperties()
-                    where pi.GetMethod.IsStatic && pi.GetMethod.IsPublic && pi.SetMethod.IsPublic
-                    select pi) {
+                                              where pi.GetMethod.IsStatic && pi.GetMethod.IsPublic && pi.SetMethod.IsPublic
+                                              select pi) {
                     try {
                         object value = item.GetValue(null, null);
                         settingsValuesDictionary.SetValue(item.Name, value);
@@ -899,3 +906,4 @@ namespace Game {
         }
     }
 }
+

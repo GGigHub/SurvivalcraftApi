@@ -5,7 +5,6 @@
         <ProjectReference Include="..\EntitySystem.Linux\EntitySystem.Linux.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="LiteNetLib" Version="2.0.1" />
         <PackageReference Include="TextCopy" Version="6.2.1" />
     </ItemGroup>
     <ItemGroup>

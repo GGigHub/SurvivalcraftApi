@@ -7,6 +7,12 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemElectricity : Subsystem, IUpdateable {
+        public class NetSimulate {
+            public int StartStep;
+
+            public Dictionary<Point3, float> SaveData = [];
+        }
+
         public static ElectricConnectionPath[] m_connectionPathsTable = [
             new(0, 1, -1, 4, 4, 0),
             new(0, 1, 0, 0, 4, 5),
@@ -206,6 +212,8 @@ namespace Game {
 
         public Dictionary<Point3, float> m_persistentElementsVoltages = [];
 
+        public List<NetSimulate> list = [];
+
         public Dictionary<ElectricElement, bool> m_electricElements = [];
 
         public Dictionary<CellFace, ElectricElement> m_electricElementsByCellFace = [];
@@ -393,9 +401,56 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) {
+                m_remainingSimulationTime = MathUtils.Min(m_remainingSimulationTime + dt, 0.1f);
+                FrameStartCircuitStep = CircuitStep;
+                while (m_remainingSimulationTime >= 0.01f) {
+                    UpdateElectricElements();
+                    m_nextStepSimulateList = null;
+                    if (list.Count > 0 && CircuitStep <= list[0].StartStep) {
+                        if (list[0].StartStep == CircuitStep) {
+                            foreach (KeyValuePair<Point3, float> entry in list[0].SaveData) {
+                                m_persistentElementsVoltages[entry.Key] = entry.Value;
+                            }
+                            list.RemoveAt(0);
+                            m_remainingSimulationTime -= 0.01f;
+                        }
+                        if (m_futureSimulateLists.Remove(CircuitStep, out Dictionary<ElectricElement, bool> value)) {
+                            SimulatedElectricElements += value.Count;
+                            foreach (ElectricElement key in value.Keys) {
+                                if (m_electricElements.ContainsKey(key)) {
+                                    SimulateElectricElement(key);
+                                }
+                            }
+                            ReturnListToCache(value);
+                        }
+                        ++CircuitStep;
+                    }
+                    else {
+                        m_remainingSimulationTime -= 0.01f;
+                    }
+                }
+                list.Clear();
+                if (DebugDrawElectrics) {
+                    DebugDraw();
+                }
+                return;
+            }
+
             FrameStartCircuitStep = CircuitStep;
             SimulatedElectricElements = 0;
             m_remainingSimulationTime = MathUtils.Min(m_remainingSimulationTime + dt, 0.1f);
+            bool sendFlag = Time.PeriodicEvent(0.05, 0.0);
+            if (sendFlag) {
+                NetSimulate netSimulate = new();
+                netSimulate.StartStep = CircuitStep;
+                foreach (KeyValuePair<Point3, float> entry in m_persistentElementsVoltages) {
+                    netSimulate.SaveData.Add(entry.Key, entry.Value);
+                }
+                list.Add(netSimulate);
+                NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemElectricityPackage(list));
+                list.Clear();
+            }
             while (m_remainingSimulationTime >= 0.01f) {
                 UpdateElectricElements();
                 ++CircuitStep;

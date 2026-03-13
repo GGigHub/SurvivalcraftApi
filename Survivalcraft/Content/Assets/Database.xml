@@ -1,4 +1,4 @@
-﻿<Database xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="Database.xsd">
+<Database xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="Database.xsd">
   <DatabaseObjectTypes>
     <DatabaseObjectType Name="Root" DefaultInstanceName="Root" IconName="" Order="0" SupportsValue="False" MustInherit="False" NameLengthLimit="256" SaveStandalone="False" AllowedNestingParents="" AllowedInheritanceParents="" NestedValueType="" />
     <DatabaseObjectType Name="Folder" DefaultInstanceName="Folder" IconName="Folder" Order="1" SupportsValue="False" MustInherit="False" NameLengthLimit="256" SaveStandalone="False" AllowedNestingParents="Root,Folder" AllowedInheritanceParents="" NestedValueType="" />
@@ -4392,6 +4392,7 @@
         <MemberSubsystemTemplate Name="SwitchBlockBehavior" Guid="8a33158d-1fcd-4432-91f6-97772d51445d" InheritanceParent="8717b547-e3eb-4465-946a-e4fb0b2fedb4" />
         <MemberSubsystemTemplate Name="GraveBlockBehavior" Guid="8c3f5107-195a-4af1-83f1-cbfb4de5a76a" InheritanceParent="4d1886bf-8d73-4f73-8f25-3187c066c9d3" />
         <MemberSubsystemTemplate Name="SpikesBehavior" Guid="91a3d2eb-1fa3-4d48-bc97-66a01f7c1d49" InheritanceParent="85671085-6307-4836-b6d8-b307b25c1449" />
+        <MemberSubsystemTemplate Name="Inventories" Guid="5d909fdc-592d-4ca3-af37-476ef11b82cc" InheritanceParent="2858bdf6-d885-4d97-b760-d9a74283371f" />
         <MemberSubsystemTemplate Name="Projectiles" Guid="92b52942-9839-4bf3-9763-1730c6e8453f" InheritanceParent="ce0db76f-3990-43be-b3ec-3a71bbe1d4e1" />
         <MemberSubsystemTemplate Name="FenceGateBlockBehavior" Guid="936f434a-bcb1-4646-8e77-64c737b83ea9" InheritanceParent="b5641f1c-7b30-4675-9891-40189f4ce801" />
         <MemberSubsystemTemplate Name="Noise" Guid="96ab0397-b53d-4a4e-83f3-21a846117faa" InheritanceParent="93d8dc8f-a3cb-4825-a66a-d5ad3b9195dc" />

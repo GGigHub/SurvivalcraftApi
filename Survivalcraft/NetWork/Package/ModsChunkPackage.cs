@@ -126,24 +126,6 @@ public class ModsChunkPackage : IPackage
             s_openStreams.Remove(FileName);
             s_written.Remove(FileName);
 
-            string md5;
-            try
-            {
-                md5 = ModsManager.GetNetmodDecipheredMd5(partPath);
-            }
-            catch (Exception e)
-            {
-                Fail($"计算模组MD5失败:{FileName}:{e.Message}");
-                return;
-            }
-            if (CommonLib.ModTransferState.ExpectedMd5.TryGetValue(FileName, out var expected)
-                && !string.IsNullOrEmpty(expected)
-                && !string.Equals(md5, expected, StringComparison.OrdinalIgnoreCase))
-            {
-                Fail($"模组校验失败:{FileName}");
-                return;
-            }
-
             try
             {
                 if (Storage.FileExists(finalPath))
