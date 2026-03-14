@@ -6,7 +6,7 @@ public class TerrainSerializerNet : TerrainSerializer23
 {
 
 #if ANDROID
-    static readonly string path = Storage.CombinePaths("config:/", "NetChunks.tmp");
+    static readonly string path = Storage.CombinePaths(RunPath.AndroidFilePath, "NetChunks.tmp");
 #else
     static readonly string path = Storage.CombinePaths("app:/", "NetChunks23");
 #endif
