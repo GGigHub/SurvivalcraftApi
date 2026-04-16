@@ -40,7 +40,6 @@ public enum PackageType : byte
     Entity,
     Projectile,
     ReservedTerritoriy,
-    Furniture,
     Explosion,
     MovingBlockSet,
     BlockEdit,
@@ -50,14 +49,8 @@ public enum PackageType : byte
     EditableBlock,
     ReservedGroupManage,
     SubsystemSeason,
-    GameBalancer,
     SmallMessage,
     Popup,
-
-    ModsManifest = 250,
-    ModsNeed = 251,
-    ModsChunk = 252,
-    ModsDone = 253,
 
     ModPackage = 255
 

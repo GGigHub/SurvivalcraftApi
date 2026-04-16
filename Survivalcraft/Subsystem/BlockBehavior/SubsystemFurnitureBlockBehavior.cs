@@ -228,7 +228,7 @@ namespace Game {
             BuildFurnitureDialog dialog = new(
                 design,
                 furnitureDesign,
-                delegate(bool result) {
+                delegate (bool result) {
                     if (result) {
                         design = TryAddDesign(design);
                         if (design == null) {
@@ -300,7 +300,6 @@ namespace Game {
                             if (CommonLib.WorkType != WorkType.Client) {
                                 CreateDesign(componentMiner, design, valuesDictionary, start, startValue);
                             }
-                            CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(design, valuesDictionary, start, startValue, CommonLib.WorkType == WorkType.Client));
                         }
                     }
                 }
@@ -369,7 +368,6 @@ namespace Game {
             }
             FurnitureSet furnitureSet = new() { Name = name, ImportedFrom = importedFrom };
             m_furnitureSets.Add(furnitureSet);
-            CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(name));
             return furnitureSet;
         }
 
@@ -378,7 +376,6 @@ namespace Game {
                 furnitureSetDesign.FurnitureSet = null;
             }
             m_furnitureSets.Remove(furnitureSet);
-            CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureSet.Name));
         }
 
         public void MoveFurnitureSet(FurnitureSet furnitureSet, int move) {
@@ -395,32 +392,25 @@ namespace Game {
             }
         }
 
-        public FurnitureDesign CreateDesign(ComponentMiner componentMiner, FurnitureDesign design, Dictionary<Point3, int> valuesDictionary, CellFace start, int startValue, bool tryAdd = true)
-        {
-            if (tryAdd)
-            {
+        public FurnitureDesign CreateDesign(ComponentMiner componentMiner, FurnitureDesign design, Dictionary<Point3, int> valuesDictionary, CellFace start, int startValue, bool tryAdd = true) {
+            if (tryAdd) {
                 FurnitureDesign existingDesign = TryAddDesignChain(design, true);
-                if (existingDesign == design)
-                {
-                    foreach (FurnitureDesign item in design.ListChain())
-                    {
+                if (existingDesign == design) {
+                    foreach (FurnitureDesign item in design.ListChain()) {
                         m_furnitureDesigns[item.Index] = item;
                     }
                 }
-                else if (existingDesign != null)
-                {
+                else if (existingDesign != null) {
                     design = existingDesign;
                 }
-                else
-                {
+                else {
                     componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("无法创建家具设计：存储空间不足", Color.White, true, false);
                     return null;
                 }
             }
 
             // 应用设计到地形
-            foreach (KeyValuePair<Point3, int> pair in valuesDictionary)
-            {
+            foreach (KeyValuePair<Point3, int> pair in valuesDictionary) {
                 int value = pair.Value;
                 int contents = Terrain.ExtractContents(value);
                 if (contents == 227) // FurnitureBlock
@@ -630,9 +620,6 @@ namespace Game {
                     m_furnitureDesigns[k] = null;
                     list.Add(m_furnitureDesigns[k].Index);
                 }
-            }
-            if (CommonLib.WorkType == WorkType.Server) {
-                CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(list));
             }
         }
 

@@ -293,7 +293,6 @@ namespace Game {
                 FurnitureDesign furnitureDesign = terrain.SubsystemFurnitureBlockBehavior.TryAddDesignChain(list[0], true);
                 if (furnitureDesign != null) {
                     int data2 = SetDesignIndex(data, furnitureDesign.Index, furnitureDesign.ShadowStrengthFactor, furnitureDesign.IsLightEmitter);
-                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(list[0], true));
                     return Terrain.ReplaceData(value, data2);
                 }
                 DisplayError();
@@ -345,7 +344,6 @@ namespace Game {
                     DisplayError();
                     return null;
                 }
-                NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureDesign2, true));
                 return new CraftingRecipe {
                     ResultValue = Terrain.MakeBlockValue(
                         227,
@@ -371,7 +369,6 @@ namespace Game {
                     DisplayError();
                     return null;
                 }
-                NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureDesign3, true));
                 return new CraftingRecipe {
                     ResultValue = Terrain.MakeBlockValue(
                         227,
@@ -397,7 +394,6 @@ namespace Game {
                     DisplayError();
                     return null;
                 }
-                NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureDesign4, true));
                 return new CraftingRecipe {
                     ResultValue = Terrain.MakeBlockValue(
                         227,

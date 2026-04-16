@@ -23,17 +23,10 @@ public static class CommonLib
 
     public static NetNode Net = new();
 
-    public static ModTransferState ModTransferState = new();
-
     public static Texture2D BlockTexture;
 
     public static bool IsOfflineMode;
     public static WorkType WorkType => Net.WorkType;
-
-    public static bool IsWorkTypeValid()
-    {
-        return WorkType == GetCurrentWorkType();
-    }
 
     public static WorkType GetCurrentWorkType()
     {
@@ -93,32 +86,9 @@ public static class CommonLib
         w.Put((ushort)(Net.ClientCount));
         w.Put(ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount);
         w.Put((byte)ProjectNet.subsystemGameInfo.WorldSettings.GameMode);
-
-
-
-
         w.Put(false);
         w.Put(ProjectNet.subsystemTimeOfDay.CalculateTimeOfDay());
     }
-
-    public static void ReadServerInfo(NetPlayScreen.Connect c, NetDataReader r, System.Diagnostics.Stopwatch s, IPEndPoint ip, bool isLocal = false)
-    {
-        c.version = r.GetString();
-        c.playerCount = r.GetUShort();
-        c.maxCount = r.GetUShort();
-        c.gameMode = (GameMode)r.GetByte();
-        c.HasPassword = r.GetBool();
-        r.GetBool();
-        c.TimeOfDay = r.GetFloat();
-        c.state = NetPlayScreen.ConnectState.Avaliable;
-        c.usedTime = s.ElapsedMilliseconds;
-        if (isLocal)
-        {
-            c.name = "[本地] " + c.name;
-            c.ip = ip.Address.ToString() + ":" + ip.Port;
-        }
-    }
-
 
     public static string GetInnerIp()
     {
@@ -216,7 +186,7 @@ public static class CommonLib
         foreach (GameEntitySystem.Subsystem subsystem in GameManager.Project.m_subsystems)
         {
             ValuesDictionary valuesDictionary = new ValuesDictionary();
-            subsystem.SaveForClient(valuesDictionary);
+            subsystem.Save(valuesDictionary);
             if (valuesDictionary.Count > 0)
             {
                 projectData.ValuesDictionary.SetValue(subsystem.ValuesDictionary.DatabaseObject.Name, valuesDictionary);
@@ -344,15 +314,4 @@ public static class CommonLib
         dict.ApplyOverrides(elem);
         return dict;
     }
-
-
-    /// <summary>
-    /// 获取时间戳，单位0.1ms
-    /// </summary>
-    /// <returns></returns>
-    public static long GetMicroSeconds() => DateTime.Now.Ticks / 10000;
-
-#if CHUNK_TIMER
-    static System.Diagnostics.Stopwatch chunkStopwatch = new System.Diagnostics.Stopwatch();
-#endif
 }

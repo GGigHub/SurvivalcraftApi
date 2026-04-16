@@ -27,7 +27,6 @@ namespace Game {
             if (furnitureDesign != null) {
                 m_furnitureInventoryPanel.SubsystemFurnitureBlockBehavior.AddToFurnitureSet(furnitureDesign, m_furnitureSet);
                 m_furnitureInventoryPanel.Invalidate();
-                CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureDesign, m_furnitureSet));
             }
         }
 

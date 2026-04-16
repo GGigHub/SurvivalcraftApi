@@ -56,40 +56,10 @@ public class GameLoadingScreen : Screen {
         m_stateMachine.AddState("WaitServerReply", delegate {
             timer = Stopwatch.StartNew();
         }, delegate {
-            if (!string.IsNullOrEmpty(CommonLib.ModTransferState.Error)) {
-                SetSpwanDialogMessage($"模组下载失败: {CommonLib.ModTransferState.Error}", 0.25f);
-                CommonLib.Net.Stop(CommonLib.ModTransferState.Error);
-            }
-            if (CommonLib.ModTransferState.InProgress) {
-                string msg = $"等待模组 {CommonLib.ModTransferState.Done}/{CommonLib.ModTransferState.Total}";
-                if (!string.IsNullOrEmpty(CommonLib.ModTransferState.CurrentMod)) {
-                    msg += $" [{CommonLib.ModTransferState.CurrentMod}]";
-                    if (CommonLib.ModTransferState.CurrentFileTotalBytes > 0) {
-                        msg += $" {CommonLib.ModTransferState.CurrentFileReceivedBytes / 1024}/{CommonLib.ModTransferState.CurrentFileTotalBytes / 1024}KB";
-                    }
-                }
-
-                float p = 0.25f;
-                if (CommonLib.ModTransferState.Total > 0) {
-                    float cur = 0f;
-                    if (CommonLib.ModTransferState.CurrentFileTotalBytes > 0) {
-                        cur = CommonLib.ModTransferState.CurrentFileReceivedBytes / (float)CommonLib.ModTransferState.CurrentFileTotalBytes;
-                        if (cur < 0f) cur = 0f;
-                        if (cur > 1f) cur = 1f;
-                    }
-                    p = (CommonLib.ModTransferState.Done + cur) / (float)CommonLib.ModTransferState.Total;
-                    if (p < 0.05f) p = 0.05f;
-                    if (p > 0.95f) p = 0.95f;
-                }
-
-                SetSpwanDialogMessage(msg, p);
-            }
-            else {
-                SetSpwanDialogMessage("等待服务器响应", 0.25f);
-            }
+            SetSpwanDialogMessage("等待服务器响应", 0.25f);
             //Fix me::客户端中断连接口再次连接会卡住
             if (CommonLib.Net.CurrentStage == Stage.WaitForClientList) {
-                if (!CommonLib.ModTransferState.InProgress && timer.ElapsedMilliseconds >= CommonLib.DISCONNECT_TIMEOUT) {
+                if (timer.ElapsedMilliseconds >= CommonLib.DISCONNECT_TIMEOUT) {
                     CommonLib.Net.Stop("连接超时");
                 }
             }
@@ -148,7 +118,7 @@ public class GameLoadingScreen : Screen {
 
     public void Handle(NetNode node, IEnumerable<IPackage> packages) {
         foreach (var p in packages) {
-            if (p is ClientPackage || p is ProjectPackage || p is ModsManifestPackage || p is ModsNeedPackage || p is ModsChunkPackage || p is ModsDonePackage) {
+            if (p is ClientPackage || p is ProjectPackage) {
                 try {
                     p.Handle(null, node, false);
                 }
@@ -231,9 +201,6 @@ public class GameLoadingScreen : Screen {
             m_worldSnapshotName = null;
             m_serverEndPoint = (IPEndPoint)parameters[2];
             if (parameters.Length == 4) m_password = (string)parameters[3];
-
-            CommonLib.ModTransferState.TargetServer = m_serverEndPoint?.ToString() ?? string.Empty;
-            CommonLib.ModTransferState.TargetPassword = m_password ?? string.Empty;
         }
         m_stateMachine.TransitionTo("WaitingForFadeIn");
         ProgressManager.UpdateProgress("Loading World", 0f);

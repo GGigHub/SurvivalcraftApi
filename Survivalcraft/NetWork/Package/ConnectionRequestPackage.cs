@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Engine;
-using Game.Server.Event;
 using LiteNetLib;
 using TemplatesDatabase;
 
@@ -178,13 +177,6 @@ public class ConnectionRequestPackage : IPackage
             }
             else if (!string.IsNullOrEmpty(pwd2))
             {
-                if (PasswordValidationEventManager.ValidatePassword(m_password, pwd2, useExternalPassword, nickname, communityAccountId, From.Request.RemoteEndPoint.Address.ToString(), netNode, From, out var customErrorMessage))
-                {
-                    if (!string.IsNullOrEmpty(customErrorMessage))
-                    {
-                        ConnectionError.AppendLine(customErrorMessage);
-                    }
-                }
                 if (!useExternalPassword && m_password != pwd2)
                 {
                     ConnectionError.AppendLine("房间密码验证错误");
@@ -234,29 +226,6 @@ public class ConnectionRequestPackage : IPackage
                             return;
                         }
 
-                        var manifestItems = new List<ModsManifestPackage.ManifestItem>();
-                        foreach (var m in serverMods)
-                        {
-                            string fileName = GetFileName(m.ModFilePath);
-                            var it = new ModsManifestPackage.ManifestItem
-                            {
-                                PackageName = m.modInfo?.PackageName ?? string.Empty,
-                                Version = m.modInfo?.Version ?? string.Empty,
-                                Md5 = m.ResourcesMd5 ?? string.Empty,
-                                FileName = fileName,
-                                Size = 0L
-                            };
-                            try
-                            {
-                                if (!string.IsNullOrEmpty(m.ModFilePath))
-                                    it.Size = Storage.GetFileSize(m.ModFilePath);
-                            }
-                            catch { }
-                            manifestItems.Add(it);
-                        }
-
-                        netNode.SendWriterFromPackage(new ModsManifestPackage(manifestItems), (NetPeer)acceptedLiteNetPeer, false);
-                        Log.Information($"Client {From?.IPPoint} mods mismatch, start transfer. NeedCount={manifestItems.Count}");
                     }
                     catch (Exception e)
                     {

@@ -268,7 +268,6 @@ namespace Game {
                             if (s != null) {
                                 furnitureSet.Name = s;
                                 Invalidate();
-                                CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureSet.Name, s));
                             }
                         }
                     )
@@ -280,7 +279,6 @@ namespace Game {
             if (m_furnitureSetList.SelectedItem is FurnitureSet furnitureSet) {
                 SubsystemFurnitureBlockBehavior.MoveFurnitureSet(furnitureSet, move);
                 Invalidate();
-                CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureSet, move));
             }
         }
 
@@ -327,14 +325,8 @@ namespace Game {
                                         FurniturePacksManager.GetDisplayName(text),
                                         text
                                     );
-                                    if (CommonLib.WorkType == WorkType.Server) {
-                                        CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(furnitureSet));
-                                    }
                                     foreach (FurnitureDesign item2 in list2) {
                                         SubsystemFurnitureBlockBehavior.AddToFurnitureSet(item2, furnitureSet);
-                                        if (CommonLib.WorkType == WorkType.Server) {
-                                            CommonLib.Net.QueuePackage(new NetWork.Packages.FurniturePackage(item2, furnitureSet));
-                                        }
                                     }
                                     ComponentFurnitureInventory.FurnitureSet = furnitureSet;
                                 }
