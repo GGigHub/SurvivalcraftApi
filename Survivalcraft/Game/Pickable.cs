@@ -14,7 +14,6 @@ namespace Game {
         public bool SplashGenerated = true;
 
         // 联机增加参数
-        private ushort id = 0;
         public Vector3? LastPosition;
         public byte? GetPickPlayer;
         public Vector3 PostionFix;
@@ -105,12 +104,12 @@ namespace Game {
             }
         }
 
-        public ushort Id { get => id; set => id = value; }
+        public int Id { get; set; }
 
         #endregion
 
         public override void Load(ValuesDictionary valuesDictionary) {
-            Id = valuesDictionary.GetValue<ushort>("Id");
+            Id = valuesDictionary.GetValue<int>("Id");
             Value = valuesDictionary.GetValue<int>("Value");
             Count = valuesDictionary.GetValue<int>("Count");
             Position = valuesDictionary.GetValue<Vector3>("Position");

@@ -247,9 +247,6 @@ namespace Game {
                 }
                 if (componentPlayer != null) {
                     Project.RemoveEntity(componentPlayer.Entity, true);
-                    if (showMsg && CommonLib.WorkType == WorkType.Server) {
-                        Project.FindSubsystem<SubsystemGameWidgets>().AddMessage(pd.Name + " 退出游戏");
-                    }
                     if (CommonLib.WorkType == WorkType.Server) {
                         componentPlayer.SavePlayerEntity();
                     }

@@ -36,7 +36,6 @@ public enum PackageType : byte
     ComponentSleep,
     ComponentFurnace,
     PlayerData,
-    Message,
     Entity,
     Projectile,
     ReservedTerritoriy,

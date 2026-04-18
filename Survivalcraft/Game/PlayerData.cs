@@ -147,7 +147,6 @@ namespace Game {
             m_subsystemGameInfo = project.FindSubsystem<SubsystemGameInfo>(throwOnError: true);
             m_subsystemSky = project.FindSubsystem<SubsystemSky>(throwOnError: true);
             m_playerClass = PlayerClass.Male;
-            PlayerGameMode = GameMode.Follow;
             Level = 1f;
             FirstSpawnTime = -1.0;
             LastSpawnTime = -1.0;
@@ -402,7 +401,6 @@ namespace Game {
             CharacterSkinName = valuesDictionary.GetValue("CharacterSkinName", CharacterSkinsManager.CharacterSkinsNames[0]);
             InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
             IsMainPlayer = PlayerGUID == CommonLib.Net.Self.PlayerGuid;
-            PlayerGameMode = valuesDictionary.GetValue("PlayerGameMode", GameMode.Follow);
         }
 
         public void Save(ValuesDictionary valuesDictionary) {
@@ -416,9 +414,6 @@ namespace Game {
             valuesDictionary.SetValue("Level", Level);
             valuesDictionary.SetValue("CharacterSkinName", CharacterSkinName);
             valuesDictionary.SetValue("InputDevice", InputDevice);
-            if (PlayerGameMode != GameMode.Follow) {
-                valuesDictionary.SetValue("PlayerGameMode", PlayerGameMode);
-            }
         }
 
         public void WaitEntityAdded() {
@@ -732,38 +727,5 @@ namespace Game {
         public static string MakeClothingValue(int index, int color) => Terrain
             .MakeBlockValue(203, 0, ClothingBlock.SetClothingIndex(ClothingBlock.SetClothingColor(0, color), index))
             .ToString(CultureInfo.InvariantCulture);
-
-        private static readonly Regex ValidNameRegex = new Regex(@"^[\u4E00-\u9FA5A-Za-z0-9_-]+$", RegexOptions.Compiled);
-
-        public static string SanitizeName(string input) {
-            if (string.IsNullOrEmpty(input)) return input;
-
-            // 删除所有非法字符
-            var sanitized = new StringBuilder();
-            foreach (char c in input) {
-                if (ValidNameRegex.IsMatch(c.ToString())) {
-                    sanitized.Append(c);
-                }
-            }
-
-            // 处理空值情况
-            return sanitized.Length > 0 ? sanitized.ToString() : string.Empty;
-        }
-
-        public static string EnsureGuidSuffix(string baseName, Guid guid) {
-            if (string.IsNullOrEmpty(baseName)) return baseName;
-            string g = guid.ToString("N");
-            string last4 = g.Substring(g.Length - 4).ToUpperInvariant();
-            var m = Regex.Match(baseName, @"_[A-Fa-f0-9]{4}$");
-            if (m.Success) {
-                return Regex.Replace(baseName, @"_[A-Fa-f0-9]{4}$", "_" + last4);
-            }
-            return baseName + "_" + last4;
-        }
-
-        public static bool IsDuplicateName(string name) {
-            SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>(throwOnError: true);
-            return subsystemPlayers.PlayersData.Any(playerData => playerData.Name == name);
-        }
     }
 }

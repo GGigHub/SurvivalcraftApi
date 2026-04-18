@@ -41,9 +41,7 @@ public static class CommonLib
     public static GameMode GetEffectiveGameMode(PlayerData pd)
     {
         if (pd == null) return ProjectNet.subsystemGameInfo?.WorldSettings?.GameMode ?? GameMode.Survival;
-        return pd.PlayerGameMode == GameMode.Follow
-            ? (ProjectNet.subsystemGameInfo?.WorldSettings?.GameMode ?? GameMode.Survival)
-            : pd.PlayerGameMode;
+        return ProjectNet.subsystemGameInfo?.WorldSettings?.GameMode ?? GameMode.Survival;
     }
 
     public static ComponentPlayer MainPlayer
@@ -200,7 +198,7 @@ public static class CommonLib
         try
         {
             PlayerData playerData = FindPlayerDataForClient(client);
-            if (playerData == null || playerData?.PlayerGameMode == GameMode.Follow) return;
+            if (playerData == null) return;
 
             var gameInfo = rootNode?
                 .GetValue("Subsystems", new ValuesDictionary())

@@ -375,7 +375,6 @@ namespace Game {
             }
             Projectile projectile = FireProjectileNet(value, position, velocity, angularVelocity, owner);
             if (projectile != null) {
-                projectile.IsFireProjectile = true;
                 CommonLib.Net.QueuePackage(new ProjectilePackage(projectile));
             }
             return projectile;

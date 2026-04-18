@@ -45,9 +45,9 @@ namespace Game {
 
         public static int[] m_drawOrders = [10];
 
-        public List<ushort> useMaps = [];
+        public List<int> useMaps = [];
 
-        public bool PickableAction(ushort id, Action<Pickable> action, bool requestSync = true)
+        public bool PickableAction(int id, Action<Pickable> action, bool requestSync = true)
         {
             lock (m_lock) {
                 Pickable pickable = m_pickables.FirstOrDefault(p => p.Id == id);
@@ -123,14 +123,14 @@ namespace Game {
         public virtual Pickable CreatePickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) =>
             CreatePickable<Pickable>(value, count, position, velocity, stuckMatrix, owner);
 
-        public virtual Pickable CreatePickable(ushort? id, int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) =>
+        public virtual Pickable CreatePickable(int? id, int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) =>
             CreatePickable<Pickable>(id, value, count, position, velocity, stuckMatrix, owner);
 
         public virtual T CreatePickable<T>(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner)
             where T : Pickable, new() =>
             CreatePickable<T>(null, value, count, position, velocity, stuckMatrix, owner);
 
-        public virtual T CreatePickable<T>(ushort? id, int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner)
+        public virtual T CreatePickable<T>(int? id, int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner)
             where T : Pickable, new() {
             try {
                 T pickable = new();

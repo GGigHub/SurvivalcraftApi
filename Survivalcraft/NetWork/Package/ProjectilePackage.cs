@@ -35,7 +35,6 @@ public class ProjectilePackage : IPackage
         m_trailOfffset = projectile.TrailOffset;
         m_angularVelocity = projectile.AngularVelocity;
         m_ownerId = projectile.Owner == null ? (ushort)0 : projectile.Owner.Entity.EntityId;
-        m_isFireProjectile = projectile.IsFireProjectile;
     }
     public void WriteData(PackageStreamWriter writer)
     {
@@ -45,7 +44,6 @@ public class ProjectilePackage : IPackage
         writer.Write(m_trailOfffset);
         writer.Write(m_angularVelocity);
         writer.Write(m_ownerId);
-        writer.Write(m_isFireProjectile);
     }
     public void ReadData(PackageStreamReader reader)
     {
@@ -55,7 +53,6 @@ public class ProjectilePackage : IPackage
         m_trailOfffset = reader.ReadVector3();
         m_angularVelocity = reader.ReadVector3();
         m_ownerId = reader.ReadUInt16();
-        m_isFireProjectile = reader.ReadBoolean();
     }
 
     public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)

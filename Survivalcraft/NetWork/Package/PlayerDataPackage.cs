@@ -192,8 +192,6 @@ public class PlayerDataPackage : IPackage
             case DataType.Create:
                 playerData = new PlayerData(projectNet);
                 playerData.Load(m_vd);
-                // Server-authoritative: never trust client-sent PlayerGameMode. Default to Follow.
-                playerData.PlayerGameMode = GameMode.Follow;
                 subsystemPlayers.AddPlayerData(playerData);
                 //服务器广播给所有客户端，添加玩家
                 foreach (var client in CommonLib.Net.Clients)
@@ -214,12 +212,6 @@ public class PlayerDataPackage : IPackage
                 if (playerData2 != null)
                 {
                     Client client = From;
-                    var name = PlayerData.SanitizeName(m_playerName);
-                    if (string.IsNullOrEmpty(name))
-                    {
-                        // 名称为空或清洗后为空，拒绝改名
-                        Log.Information($"拒绝空名称改名请求，玩家[{playerData2.PlayerGUID}] 原名[{playerData2.Name}] 提交名[{m_playerName}]");
-                    }
 
                     playerData2.CharacterSkinName = m_skinName;
                     playerData2.m_playerClass = m_playerClass;

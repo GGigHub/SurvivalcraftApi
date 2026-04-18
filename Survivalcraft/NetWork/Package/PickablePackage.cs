@@ -25,7 +25,7 @@ public class PickablePackage : IPackage
 
     public PickType m_type;
 
-    public ushort m_id;
+    public int m_id;
     public int m_value;
     public byte m_count;
     public Vector3 m_position;
@@ -60,7 +60,7 @@ public class PickablePackage : IPackage
         PlaySound = pickable.PlaySound;
     }
 
-    public PickablePackage(ushort pickId)
+    public PickablePackage(int pickId)
     {
         m_id = pickId;
         m_type = PickType.Delete;
@@ -142,7 +142,7 @@ public class PickablePackage : IPackage
         switch (m_type)
         {
             case PickType.Create:
-                m_id = reader.ReadUInt16();
+                m_id = reader.ReadInt32();
                 m_count = reader.ReadByte();
                 m_value = reader.ReadInt32();
                 m_position = reader.ReadVector3();

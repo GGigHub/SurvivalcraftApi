@@ -357,7 +357,7 @@ namespace Game {
                         }
                         if (!flag) {
                             SubsystemBlockBehavior[] blockBehaviors =
-                                m_subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(placementData.Value), this, new Point3(num2, num3, num4));
+                                m_subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(placementData.Value));
                             for (int i = 0; i < blockBehaviors.Length; i++) {
                                 blockBehaviors[i].OnItemPlaced(num2, num3, num4, ref placementData, value);
                             }
@@ -419,10 +419,7 @@ namespace Game {
 
         public bool Interact(TerrainRaycastResult raycastResult) {
             SubsystemBlockBehavior[] blockBehaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(
-                Terrain.ExtractContents(raycastResult.Value),
-                this,
-                new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z)
-            );
+                Terrain.ExtractContents(raycastResult.Value));
             for (int i = 0; i < blockBehaviors.Length; i++) {
                 if (blockBehaviors[i].OnInteract(raycastResult, this)) {
                     if (ComponentCreature.PlayerStats != null) {

@@ -40,58 +40,7 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 
     public UpdateOrder UpdateOrder => UpdateOrder.Views;
 
-    private Queue<string> m_playerMessages = new Queue<string>();
-
-    public List<string> PlayerMessages => new List<string>(m_playerMessages);
-
-    public event Action<string> OnMessageRecieved;
-
     public PlayerData MainPlayerData = null;
-
-    public void AddMessage(string msg, string playerName = null, byte type = 0, List<byte> toClients = null)
-    {
-        var arr = Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.KeywordBlocking.Split(new char[] { ';' }, StringSplitOptions.None);
-        foreach (var block in arr)
-        {
-            if (!string.IsNullOrEmpty(block))
-            {
-                msg = msg.Replace(block, "*");
-            }
-        }
-        CommonLib.Net.QueuePackage(new NetWork.Packages.MessagePackage(playerName, msg, type, toClients));
-        if (toClients != null && CommonLib.MainPlayer != null && CommonLib.MainPlayer.PlayerData.ClientId.HasValue) toClients.Add(CommonLib.MainPlayer.PlayerData.ClientId.Value);
-        AddNetMessage(msg, playerName, type, toClients);
-    }
-
-    public void AddNetMessage(string msg, string playerName = null, byte type = 0, List<byte> toClients = null, bool external = false)
-    {
-        string typeStr = "";
-        switch (type)
-        {
-            case 1: typeStr = "<c=blue>[队]</c>"; break;
-            case 2: typeStr = "<c=Violet>[私]</c>"; break;
-        }
-        string message = string.Format("{0}{1}{2}", typeStr, playerName == null ? "<c=red>[系统]</c>" : ("[" + playerName + "]"), msg);
-        if (toClients != null && toClients.Count > 0 && toClients.Contains(CommonLib.Net.Self.ID))
-        {
-            insert(message, type, external);
-        }
-        else if (type == 0) insert(message, 0, external);
-    }
-
-    public void insert(string msg, byte type = 0, bool external = false)
-    {
-        if (type == 0)
-        {
-            while (m_playerMessages.Count >= MaxMassageCount) m_playerMessages.Dequeue();
-            m_playerMessages.Enqueue(msg);
-        }
-        if (!external)
-        {
-            Log.Information(msg);
-        }
-        OnMessageRecieved?.Invoke(msg);
-    }
 
     public float CalculateSquaredDistanceFromNearestView(Vector3 p)
     {
