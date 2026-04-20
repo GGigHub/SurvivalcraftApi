@@ -359,23 +359,23 @@ namespace Game {
         }
 
         Projectile AddProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            if (CommonLib.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 return null;
             }
             Projectile projectile = AddProjectileNet(value, position, velocity, angularVelocity, owner);
             if (projectile != null) {
-                CommonLib.Net.QueuePackage(new ProjectilePackage(projectile));
+                NetworkManager.Net.QueuePackage(new ProjectilePackage(projectile));
             }
             return projectile;
         }
 
         Projectile FireProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            if (CommonLib.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 return null;
             }
             Projectile projectile = FireProjectileNet(value, position, velocity, angularVelocity, owner);
             if (projectile != null) {
-                CommonLib.Net.QueuePackage(new ProjectilePackage(projectile));
+                NetworkManager.Net.QueuePackage(new ProjectilePackage(projectile));
             }
             return projectile;
         }

@@ -39,21 +39,21 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Damage(float amount) {
-            if (CommonLib.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 return;
             }
             if (amount > 0f
                 && Hitpoints > 0f) {
                 Hitpoints = MathUtils.Max(Hitpoints - amount, 0f);
             }
-            CommonLib.Net.QueuePackage(new ComponentHealthPackage(this));
+            NetworkManager.Net.QueuePackage(new ComponentHealthPackage(this));
         }
 
         public virtual void Update(float dt) {
             Vector3 position = m_componentBody.Position;
             if (Hitpoints <= 0f) {
-                if (CommonLib.WorkType != WorkType.Client) {
-                    CommonLib.Net.QueuePackage(new ComponentHealthPackage(this));
+                if (NetworkManager.WorkType != WorkType.Client) {
+                    NetworkManager.Net.QueuePackage(new ComponentHealthPackage(this));
                 }
                 m_subsystemParticles.AddParticleSystem(
                     new BlockDebrisParticleSystem(

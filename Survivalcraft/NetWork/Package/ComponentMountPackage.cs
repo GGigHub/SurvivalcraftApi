@@ -50,7 +50,7 @@ public class ComponentMountPackage : IPackage
         m_targetId = reader.ReadUInt16();
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         if (isServer && (m_type != EventType.MountRequest && m_type != EventType.DismountRequest))
         {

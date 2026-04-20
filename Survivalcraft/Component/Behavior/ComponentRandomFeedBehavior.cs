@@ -38,7 +38,7 @@ namespace Game {
                 if (m_isFeed != value)
                 {
                     m_isFeed = value;
-                    if (CommonLib.WorkType == WorkType.Server) CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
+                    if (NetworkManager.WorkType == WorkType.Server) NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
                 }
             }
         }
@@ -53,7 +53,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (CommonLib.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {

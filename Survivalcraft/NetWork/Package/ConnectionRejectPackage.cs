@@ -14,9 +14,9 @@ public class ConnectionRejectPackage : IPackage
 
     public ConnectionRejectPackage(string r) { reason = r; }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer) 
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer) 
     {
-        netNode.Stop($"[连接拒绝]{reason}");
+        networkBase.Stop($"[连接拒绝]{reason}");
     }
 
     public void ReadData(PackageStreamReader reader)

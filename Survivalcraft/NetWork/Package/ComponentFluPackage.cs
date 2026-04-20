@@ -62,7 +62,7 @@ public class ComponentFluPackage : IPackage
         m_sneezeDuration = reader.ReadSingle();
     }
 
-        public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+        public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
         {
             if (isServer)
             {

@@ -74,8 +74,8 @@ namespace Game {
             }
             if (m_sleepButton.IsClicked
                 && m_componentPlayer != null) {
-                if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) {
-                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentSleepPackage(m_componentPlayer.ComponentSleep, NetWork.Packages.ComponentSleepPackage.EventType.SleepRequest, true));
+                if (NetWork.NetworkManager.WorkType == NetWork.WorkType.Client) {
+                    NetWork.NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentSleepPackage(m_componentPlayer.ComponentSleep, NetWork.Packages.ComponentSleepPackage.EventType.SleepRequest, true));
                 }
                 else {
                     if (!m_componentPlayer.ComponentSleep.CanSleep(out string reason)) {

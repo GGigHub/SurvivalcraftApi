@@ -34,7 +34,7 @@ namespace Game {
                 if (m_isBend != value)
                 {
                     m_isBend = value;
-                    if (CommonLib.WorkType == WorkType.Server) CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isBend));
+                    if (NetworkManager.WorkType == WorkType.Server) NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isBend));
                 }
             }
         }
@@ -44,7 +44,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (CommonLib.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 if (IsBend) {
                     m_componentFishModel.BendOrder = 2f * (2f * MathUtils.Saturate(SimplexNoise.OctavedNoise(
                         (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0),

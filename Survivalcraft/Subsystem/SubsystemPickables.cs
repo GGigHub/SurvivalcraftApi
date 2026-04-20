@@ -57,8 +57,8 @@ namespace Game {
                 }
             }
             if (requestSync
-                && CommonLib.WorkType == WorkType.Client) {
-                CommonLib.Net.QueuePackage(new PickablePackage(new Pickable { Id = id }, PickablePackage.PickType.RequestSync));
+                && NetworkManager.WorkType == WorkType.Client) {
+                NetworkManager.Net.QueuePackage(new PickablePackage(new Pickable { Id = id }, PickablePackage.PickType.RequestSync));
             }
             return false;
         }
@@ -104,8 +104,8 @@ namespace Game {
                 m_pickables.Add(pickable);
             }
             PickableAdded?.Invoke(pickable);
-            if (CommonLib.WorkType == WorkType.Server) {
-                CommonLib.Net.QueuePackage(new PickablePackage(pickable, PickablePackage.PickType.Create));
+            if (NetworkManager.WorkType == WorkType.Server) {
+                NetworkManager.Net.QueuePackage(new PickablePackage(pickable, PickablePackage.PickType.Create));
             }
             return pickable;
         }
@@ -114,7 +114,7 @@ namespace Game {
             AddPickable(value, count, position, velocity, stuckMatrix, null);
 
         public virtual Pickable AddPickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) {
-            if (CommonLib.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 return null;
             }
             return AddPickable<Pickable>(value, count, position, velocity, stuckMatrix, owner);
@@ -212,8 +212,8 @@ namespace Game {
                     m_pickables.Remove(item);
                     useMaps.Remove(item.Id);
                     PickableRemoved?.Invoke(item);
-                    if (CommonLib.WorkType == WorkType.Server) {
-                        CommonLib.Net.QueuePackage(new PickablePackage(item, PickablePackage.PickType.Delete));
+                    if (NetworkManager.WorkType == WorkType.Server) {
+                        NetworkManager.Net.QueuePackage(new PickablePackage(item, PickablePackage.PickType.Delete));
                     }
                 }
                 m_pickablesToRemove.Clear();

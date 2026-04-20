@@ -64,14 +64,14 @@ namespace Game {
         public virtual void StartMounting(ComponentMount componentMount) {
             if (!m_isAnimating
                 && Mount == null ) {
-                if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client)
+                if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client)
                 {
                     StartNetMounting(componentMount);
-                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, componentMount));
+                    NetWork.NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, componentMount));
                 }
                 else
                 {
-                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, componentMount, true));
+                    NetWork.NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, componentMount, true));
                 }
             }
         }
@@ -79,14 +79,14 @@ namespace Game {
         public virtual void StartDismounting() {
             if (!m_isAnimating
                 && Mount != null) {
-                if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client)
+                if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client)
                 {
                     StartNetDismounting();
-                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this));
+                    NetWork.NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this));
                 }
                 else
                 {
-                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, true));
+                    NetWork.NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, true));
                 }
             }
         }
@@ -142,7 +142,7 @@ namespace Game {
                     || (componentHealth != null && componentHealth.Health <= 0f)
                     || ComponentCreature.ComponentHealth.Health <= 0f) {
                     //服务器和客户端都由自己控制下马
-                    if (NetWork.CommonLib.WorkType != NetWork.WorkType.Local && ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer)
+                    if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Local && ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer)
                     {
 
                     }

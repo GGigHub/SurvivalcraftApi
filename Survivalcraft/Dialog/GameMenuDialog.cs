@@ -24,7 +24,7 @@ namespace Game {
             LoadContents(this, node);
             m_statsPanel = Children.Find<StackPanelWidget>("StatsPanel");
             m_componentPlayer = componentPlayer;
-            if (CommonLib.WorkType != WorkType.Client && GameManager.WorldInfo != null)
+            if (NetworkManager.WorkType != WorkType.Client && GameManager.WorldInfo != null)
                 m_adventureRestartExists = WorldsManager.SnapshotExists(GameManager.WorldInfo.DirectoryName, "AdventureRestart");
             if (!m_increaseDetailDialogShown
                 && PerformanceManager.LongTermAverageFrameTime.HasValue
@@ -69,8 +69,8 @@ namespace Game {
                     Color = white
                 }
             );
-            if (CommonLib.WorkType == WorkType.Server) {
-                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerIP"), CommonLib.GetInnerIp() + ":" + SettingsManager.ServerPort);
+            if (NetworkManager.WorkType == WorkType.Server) {
+                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerIP"), NetworkManager.GetInnerIp() + ":" + SettingsManager.ServerPort);
                 string serverMode = SettingsManager.IsPublicServer
                     ? LanguageControl.Get(fName, "ServerModeWAN")
                     : LanguageControl.Get(fName, "ServerModeLAN");
@@ -511,7 +511,7 @@ namespace Game {
                 GameManager.SaveProject(true, true);
                 GameManager.DisposeProject();
                 ScreensManager.SwitchScreen("MainMenu");
-                CommonLib.Net.Stop();
+                NetworkManager.Net.Stop();
             }
         }
 

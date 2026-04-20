@@ -40,7 +40,7 @@ public class ServerInfoPackage : IPackage
         if (!m_requestInfo)
         {
             m_version = ProjectNet.Server_Version;
-            m_clientCount = (ushort)CommonLib.Net.ClientCount;
+            m_clientCount = (ushort)NetworkManager.Net.ClientCount;
             m_maxPlayerCount = ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount;
             m_gameMode = ProjectNet.subsystemGameInfo.WorldSettings.GameMode;
             m_needPasswd = (string.IsNullOrEmpty(ProjectNet.subsystemGameInfo.WorldSettings.Password) == false);
@@ -50,11 +50,11 @@ public class ServerInfoPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         if (m_requestInfo)
         {
-            netNode.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
+            networkBase.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
         }
         else
         {

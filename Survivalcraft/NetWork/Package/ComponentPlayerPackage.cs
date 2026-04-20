@@ -410,7 +410,7 @@ public class ComponentPlayerPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         m_playerData = projectNet.FindSubsystem<SubsystemPlayers>().FindPlayerData((playerData) => { return playerData.ClientId.HasValue && playerData.ClientId.Value == m_fromPlayerId; });
         if (NeedHandleMainPlayer == false && m_playerData.IsMainPlayer && m_type != PlayerAction.AddExperience)
@@ -429,9 +429,9 @@ public class ComponentPlayerPackage : IPackage
         {
             return;
         }
-        if (isServer && m_type == PlayerAction.CreativeFlyChange && CommonLib.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
+        if (isServer && m_type == PlayerAction.CreativeFlyChange && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
         {
-            CommonLib.Net.RemoveClient(From, "行为异常");
+            NetworkManager.Net.RemoveClient(From, "行为异常");
             return;
         }
         switch (m_type)
@@ -505,7 +505,7 @@ public class ComponentPlayerPackage : IPackage
                     if (isServer)
                     {
                         Except = From;
-                        netNode.QueuePackage(this);
+                        networkBase.QueuePackage(this);
                     }
                 });
                 break;
@@ -516,7 +516,7 @@ public class ComponentPlayerPackage : IPackage
                     if (isServer)
                     {
                         Except = From;
-                        netNode.QueuePackage(this);
+                        networkBase.QueuePackage(this);
                     }
                 });
                 break;
@@ -527,7 +527,7 @@ public class ComponentPlayerPackage : IPackage
                     if (isServer)
                     {
                         Except = From;
-                        netNode.QueuePackage(this);
+                        networkBase.QueuePackage(this);
                     }
                 });
                 break;
@@ -538,7 +538,7 @@ public class ComponentPlayerPackage : IPackage
                     if (isServer)
                     {
                         Except = From;
-                        netNode.QueuePackage(this);
+                        networkBase.QueuePackage(this);
                     }
                 });
                 break;
@@ -579,7 +579,7 @@ public class ComponentPlayerPackage : IPackage
                                 if (isServer)
                                 {
                                     Except = From;
-                                    netNode.QueuePackage(this);
+                                    networkBase.QueuePackage(this);
                                 }
                             });
                         }
@@ -624,9 +624,9 @@ public class ComponentPlayerPackage : IPackage
                         {
                             return;
                         }
-                        if (inventory is ComponentCreativeInventory && CommonLib.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
+                        if (inventory is ComponentCreativeInventory && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
                         {
-                            CommonLib.Net.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
+                            NetworkManager.Net.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
                             return;
                         }
 

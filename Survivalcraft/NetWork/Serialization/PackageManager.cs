@@ -102,15 +102,15 @@ public class PackageManager
         }
     }
 
-    public static T DecodePackage<T>(NetNode netNode, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : class
+    public static T DecodePackage<T>(NetworkBase networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : class
     {
-        var obj = DecodePackages(netNode, reader, netPeer, request, iPEndPoint)[0];
+        var obj = DecodePackages(networkBase, reader, netPeer, request, iPEndPoint)[0];
         return (T)obj;
     }
 
-    public static List<IPackage> DecodePackagesFromPayload(NetNode netNode, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null)
+    public static List<IPackage> DecodePackagesFromPayload(NetworkBase networkBase, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null)
     {
-        Client from = ResolveFrom(netNode, netPeer, request, iPEndPoint);
+        Client from = ResolveFrom(networkBase, netPeer, request, iPEndPoint);
         List<IPackage> packages = new List<IPackage>();
         byte packageID = 99;
         if (payload == null || payload.Length == 0)
@@ -129,9 +129,9 @@ public class PackageManager
         }
     }
 
-    public static List<IPackage> DecodePackages(NetNode netNode, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null)
+    public static List<IPackage> DecodePackages(NetworkBase networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null)
     {
-        Client from = ResolveFrom(netNode, netPeer, request, iPEndPoint);
+        Client from = ResolveFrom(networkBase, netPeer, request, iPEndPoint);
         List<IPackage> packages = new List<IPackage>();
         byte packageID = 99;
         if (reader.AvailableBytes == 0)
@@ -140,7 +140,7 @@ public class PackageManager
         }
         try
         {
-            var preader = CommonLib.GetReader(reader);
+            var preader = NetworkManager.GetReader(reader);
             return DecodePackagesFromReader(preader, from, ref packageID);
         }
         catch
@@ -150,12 +150,12 @@ public class PackageManager
         }
     }
 
-    private static Client ResolveFrom(NetNode netNode, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null)
+    private static Client ResolveFrom(NetworkBase networkBase, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null)
     {
         Client from = null;
-        if (netNode != null)
+        if (networkBase != null)
         {
-            from = netNode.Clients.Values.Where(client =>
+            from = networkBase.Clients.Values.Where(client =>
                 (client.Peer != null && client.Peer == netPeer) ||
                 (client.Request != null && client.Request == request) ||
                 (client.IPPoint != null && client.IPPoint == iPEndPoint)).FirstOrDefault();

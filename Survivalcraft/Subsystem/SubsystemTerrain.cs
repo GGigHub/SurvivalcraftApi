@@ -368,9 +368,9 @@ namespace Game {
             if (pass) {
                 return;
             }
-            if (CommonLib.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == WorkType.Client) return;
             ChangeCellNet(x, y, z, value, updateModificationCounter, movingBlock);
-            CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemTerrainPackage(x, y, z, value));
+            NetworkManager.Net.QueuePackage(new NetWork.Packages.SubsystemTerrainPackage(x, y, z, value));
         }
 
         public void ChangeCellNet(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null)
@@ -513,7 +513,7 @@ namespace Game {
             Terrain = new Terrain();
             TerrainRenderer = new TerrainRenderer(this);
             TerrainUpdater = new TerrainUpdater(this);
-            if (CommonLib.WorkType != WorkType.Client) {
+            if (NetworkManager.WorkType != WorkType.Client) {
                 TerrainSerializer = new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             else {

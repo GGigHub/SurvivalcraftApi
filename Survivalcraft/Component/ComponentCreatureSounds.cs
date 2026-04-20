@@ -50,7 +50,7 @@ namespace Game {
         public double m_lastPukeSoundTime = -1000.0;
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (CommonLib.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == WorkType.Client) return;
             PlayIdleSoundLogic(skipIfRecentlyPlayed);
         }
         
@@ -60,12 +60,12 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_idleSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_idleSoundMinDistance, autoDelay: false);
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
+                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
             }
         }
 
         public virtual void PlayPainSound() {
-            if (CommonLib.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == WorkType.Client) return;
             PlayPainSoundLogic();
         }
 
@@ -75,12 +75,12 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_painSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_painSoundMinDistance, autoDelay: false);
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 1));
+                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 1));
             }
         }
 
         public virtual void PlayMoanSound() {
-            if (CommonLib.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == WorkType.Client) return;
             PlayMoanSoundLogic();
         }
 
@@ -90,12 +90,12 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_moanSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_moanSoundMinDistance, autoDelay: false);
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 2));
+                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 2));
             }
         }
 
         public virtual void PlaySneezeSound() {
-            if (CommonLib.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == WorkType.Client) return;
             PlaySneezeSoundLogic();
         }
 
@@ -105,12 +105,12 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_sneezeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_sneezeSoundMinDistance, autoDelay: false);
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 3));
+                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 3));
             }
         }
 
         public void PlayCoughSound() {
-            if (CommonLib.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == WorkType.Client) return;
             PlayCoughSoundLogic();
         }
 
@@ -120,12 +120,12 @@ namespace Game {
             {
                 m_lastCoughingSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_coughSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_coughSoundMinDistance, autoDelay: false);
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 4));
+                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 4));
             }
         }
 
         public virtual void PlayPukeSound() {
-            if (CommonLib.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == WorkType.Client) return;
             PlayPukeSoundLogic();
         }
 
@@ -135,12 +135,12 @@ namespace Game {
             {
                 m_lastPukeSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_pukeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_pukeSoundMinDistance, autoDelay: false);
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 5));
+                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 5));
             }
         }
 
         public virtual void PlayAttackSound() {
-            if (CommonLib.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == WorkType.Client) return;
             PlayAttackSoundLogic();
         }
 
@@ -150,7 +150,7 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_attackSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_attackSoundMinDistance, autoDelay: false);
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 6));
+                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 6));
             }
         }
 

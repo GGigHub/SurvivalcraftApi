@@ -50,7 +50,7 @@ public class SubsystemElectricityPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         m_subsystem = projectNet.FindSubsystem<SubsystemElectricity>();
         m_subsystem.list.AddRange(NetSimulates);

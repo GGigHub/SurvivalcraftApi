@@ -73,9 +73,9 @@ namespace Game {
                         int num = Terrain.ReplaceData(value, newData);
                         if (num != value) {
                             var p = new EditableBlockPackage(EditableItemType.Piston, default, true, inventory.Id, slotIndex, newData);
-                            CommonLib.Net.QueuePackage(p);
-                            if (CommonLib.WorkType != WorkType.Client) {
-                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                            NetworkManager.Net.QueuePackage(p);
+                            if (NetworkManager.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, NetworkManager.Net, false);
                             }
                         }
                     }
@@ -96,9 +96,9 @@ namespace Game {
                             && SubsystemTerrain.Terrain.GetCellContents(x, y, z) == contents) {
                             var cell = new CellFace(x, y, z, 0);
                             var p = new EditableBlockPackage(EditableItemType.Piston, cell, false, default, default, newData);
-                            CommonLib.Net.QueuePackage(p);
-                            if (CommonLib.WorkType != WorkType.Client) {
-                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                            NetworkManager.Net.QueuePackage(p);
+                            if (NetworkManager.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, NetworkManager.Net, false);
                             }
                         }
                     }

@@ -107,14 +107,14 @@ public static class SerializationManager
     {
         w.PutBytesWithLength(values.DatabaseObject.Guid.ToByteArray());
         w.Put(values.DatabaseObject.Name);
-        w.Put(CommonLib.SerializeVDict(values));
+        w.Put(NetworkManager.SerializeVDict(values));
     }
     public static TemplatesDatabase.ValuesDictionary GetValuesDictionary(this NetDataReader r)
     {
         TemplatesDatabase.DatabaseObjectType type = DatabaseManager.GameDatabase.Database.FindDatabaseObjectType(r.GetString(), true);
         byte[] guid = r.GetBytesWithLength();
         TemplatesDatabase.DatabaseObject databaseObject = DatabaseManager.GameDatabase.Database.FindDatabaseObject(new Guid(guid),type,true);
-        TemplatesDatabase.ValuesDictionary values = CommonLib.ReadVDict(r.GetString());
+        TemplatesDatabase.ValuesDictionary values = NetworkManager.ReadVDict(r.GetString());
         values.DatabaseObject = databaseObject;
         return values;
     }

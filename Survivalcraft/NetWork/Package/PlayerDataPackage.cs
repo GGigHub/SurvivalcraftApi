@@ -175,7 +175,7 @@ public class PlayerDataPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         if (isServer &&
             m_type != DataType.Create &&
@@ -194,16 +194,16 @@ public class PlayerDataPackage : IPackage
                 playerData.Load(m_vd);
                 subsystemPlayers.AddPlayerData(playerData);
                 //服务器广播给所有客户端，添加玩家
-                foreach (var client in CommonLib.Net.Clients)
+                foreach (var client in NetworkManager.Net.Clients)
                 {
-                    if (client.Value == CommonLib.Net.Self) continue;
+                    if (client.Value == NetworkManager.Net.Self) continue;
                     if (client.Value != playerData.Client)
                     {
-                        CommonLib.Net.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
+                        NetworkManager.Net.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
                     }
                     else
                     {
-                        CommonLib.Net.QueuePackage(new PlayerDataPackage(playerData, false) { To = client.Value });
+                        NetworkManager.Net.QueuePackage(new PlayerDataPackage(playerData, false) { To = client.Value });
                     }
                 }
                 break;
@@ -217,19 +217,19 @@ public class PlayerDataPackage : IPackage
                     playerData2.m_playerClass = m_playerClass;
                     if (isServer)
                     {
-                        netNode.QueuePackage(this);
+                        networkBase.QueuePackage(this);
                     }
                 }
                 break;
             case DataType.Delete:
-                netNode.RemoveClient(From);
+                networkBase.RemoveClient(From);
                 break;
             case DataType.AddPlayer:
                 //客户端接收到添加玩家广播
                 playerData = new PlayerData(projectNet);
                 playerData.Load(m_vd);
                 subsystemPlayers.AddPlayerData(playerData);
-                netNode.QueuePackage(new PlayerDataPackage(playerData, DataType.ClientKnownPlayer));
+                networkBase.QueuePackage(new PlayerDataPackage(playerData, DataType.ClientKnownPlayer));
                 break;
             case DataType.SetUpdateLocation:
                 var player = subsystemPlayers.PlayersData.Find(x => x.Client == From);
@@ -278,7 +278,7 @@ public class PlayerDataPackage : IPackage
                     {
                         ScreensManager.SwitchScreen("NetPlay");
                         GameManager.DisposeProject();
-                        CommonLib.Net.Stop();
+                        NetworkManager.Net.Stop();
                         DialogsManager.ShowDialog(null, new MessageDialog("连接异常", "检测到玩家人数异常，请重新连接服务器", LanguageControl.Ok, null, btn =>
                         {
                         }));

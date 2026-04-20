@@ -6,4 +6,7 @@
     <ItemGroup>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="NetWork\Others\" />
+    </ItemGroup>
 </Project>

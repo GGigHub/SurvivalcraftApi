@@ -135,8 +135,8 @@ namespace Game {
                     return false;
                 }
             );
-            if (CommonLib.WorkType != WorkType.Client) {
-                CommonLib.Net.QueuePackage(new ComponentHealthPackage(particlePosition, particleVelocity, color, text2));
+            if (NetworkManager.WorkType != WorkType.Client) {
+                NetworkManager.Net.QueuePackage(new ComponentHealthPackage(particlePosition, particleVelocity, color, text2));
             }
             Target?.Project.FindSubsystem<SubsystemParticles>()?.AddParticleSystem(particleSystem);
         }

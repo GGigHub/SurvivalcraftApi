@@ -159,10 +159,10 @@ public class ComponentHealthPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         // 前置过滤：服务器只处理 RequestInjure，客户端只处理其他事件
-        if (CommonLib.WorkType == WorkType.Server && m_type != EventType.RequestInjure)
+        if (NetworkManager.WorkType == WorkType.Server && m_type != EventType.RequestInjure)
         {
             return; // 服务器忽略非请求事件
         }

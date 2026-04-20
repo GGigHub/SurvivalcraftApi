@@ -1,27 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Reflection.PortableExecutable;
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
-using Game;
-using Game.NetWork.Packages;
 using GameEntitySystem;
 using LiteNetLib.Utils;
 using TemplatesDatabase;
 
 namespace Game.NetWork;
 
-public static class CommonLib
+public static class NetworkManager
 {
     public const int DISCONNECT_TIMEOUT = 10000;
 
-    public static NetNode Net = new();
+    public static NetworkBase Net = new();
 
     public static Texture2D BlockTexture;
 
@@ -31,7 +24,7 @@ public static class CommonLib
     public static WorkType GetCurrentWorkType()
     {
         if (Net.IsServer) return WorkType.Server;
-        if (Net.CurrentStage == NetNode.Stage.Connected) return WorkType.Client;
+        if (Net.CurrentStage == NetworkBase.Stage.Connected) return WorkType.Client;
         return WorkType.Local;
     }
 
@@ -57,7 +50,34 @@ public static class CommonLib
     }
     public static bool StartServer()
     {
-        return Net.StartServer(SettingsManager.ServerPort);
+        var net = new NetworkServer();
+        ResetNet(net);
+        return net.StartServer(SettingsManager.ServerPort);
+    }
+
+    public static void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null)
+    {
+        var net = new NetworkClient();
+        ResetNet(net);
+        net.ConnectServer(ep, passwd, onlineAccessToken);
+    }
+
+    public static void StartLocal()
+    {
+        if (Net.GetType() != typeof(NetworkBase))
+        {
+            ResetNet(new NetworkBase());
+        }
+        Net.StartLocal();
+    }
+
+    private static void ResetNet(NetworkBase networkBase)
+    {
+        if (Net != null)
+        {
+            Net.StopImmediate();
+        }
+        Net = networkBase;
     }
 
     public static NetDataWriter GetWriter(PackageStreamWriter writer, out int size)

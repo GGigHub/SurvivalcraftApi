@@ -53,7 +53,7 @@ public class ComponentSleepPackage : IPackage
         reason = reader.ReadString();
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         projectNet.FindEntityById(m_entityId, (e) =>
         {
@@ -74,7 +74,7 @@ public class ComponentSleepPackage : IPackage
                     }
                     else
                     {
-                        netNode.QueuePackage(new ComponentSleepPackage(sleep, EventType.Sleep, allowManualWakeup, false, reason2) { To = From });
+                        networkBase.QueuePackage(new ComponentSleepPackage(sleep, EventType.Sleep, allowManualWakeup, false, reason2) { To = From });
                     }
                     break;
                 case EventType.Sleep:

@@ -69,8 +69,8 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (CommonLib.WorkType != WorkType.Client && Time.PeriodicEvent(1.0, 0.5)) {
-                CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.SyncStat));
+            if (NetworkManager.WorkType != WorkType.Client && Time.PeriodicEvent(1.0, 0.5)) {
+                NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.SyncStat));
             }
             if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
                 || !m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled) {
@@ -95,9 +95,9 @@ namespace Game {
                     && !m_componentPlayer.ComponentSleep.IsSleeping
                     && m_subsystemTime.PeriodicGameTimeEvent(5.0, -0.0099999997764825821)
                     && m_subsystemTime.GameTime - m_lastEffectTime > 13.0) {
-                    if (CommonLib.WorkType != WorkType.Client) {
+                    if (NetworkManager.WorkType != WorkType.Client) {
                         FluEffect();
-                        CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.FluEffect));
+                        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.FluEffect));
                     }
                 }
             }
@@ -108,9 +108,9 @@ namespace Game {
                     num2 = 9f;
                     if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)
                         && m_random.Bool(0.025f)) {
-                        if (CommonLib.WorkType != WorkType.Client) {
+                        if (NetworkManager.WorkType != WorkType.Client) {
                             StartFlu();
-                            CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.StartFlu));
+                            NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.StartFlu));
                         }
                     }
                     if (m_subsystemTime.GameTime - m_lastMessageTime > 60.0) {
@@ -121,9 +121,9 @@ namespace Game {
                 if (m_fluOnset > 60f
                     && m_subsystemTime.PeriodicGameTimeEvent(num2, -0.0099999997764825821)
                     && m_random.Bool(0.75f)) {
-                    if (CommonLib.WorkType != WorkType.Client) {
+                    if (NetworkManager.WorkType != WorkType.Client) {
                         Sneeze();
-                        CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.Sneeze));
+                        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.Sneeze));
                     }
                 }
             }
@@ -142,7 +142,7 @@ namespace Game {
                     m_componentPlayer.ComponentLocomotion.LookOrder.X,
                     Math.Clamp(num3 - m_componentPlayer.ComponentLocomotion.LookAngles.Y, -3f, 3f)
                 );
-                if (m_random.Bool(2f * dt) && CommonLib.WorkType != WorkType.Client) {
+                if (m_random.Bool(2f * dt) && NetworkManager.WorkType != WorkType.Client) {
                     m_componentPlayer.ComponentBody.ApplyImpulse(-1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector());
                 }
             }

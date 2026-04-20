@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -160,10 +160,10 @@ namespace Game {
             }
 
             // 添加网络同步逻辑
-            if (isRun && NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+            if (isRun && NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 if (m_smeltingRecipe == null && m_fireTimeRemaining == 0) {
                     isRun = false;
-                    NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentFurnacePackage(Entity.EntityId, m_fireTimeRemaining, m_smeltingProgress, m_heatLevel));
+                    NetWork.NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentFurnacePackage(Entity.EntityId, m_fireTimeRemaining, m_smeltingProgress, m_heatLevel));
                 }
             }
         }

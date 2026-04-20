@@ -285,11 +285,11 @@ namespace Game {
             );
             var modInfos = new List<ModInfo>();
             if (SettingsManager.AllowLanConnection) {
-                if (CommonLib.StartServer()) {
+                if (NetworkManager.StartServer()) {
                     ScreensManager.SwitchScreen("GameLoading", item, null);
                 }
                 else {
-                    DialogsManager.ShowDialog(this, new MessageDialog("提示", "创建服务器失败：端口被占用", "确定", null, (txt) => { CommonLib.Net.StopImmediate(); DialogsManager.HideAllDialogs(); }));
+                    DialogsManager.ShowDialog(this, new MessageDialog("提示", "创建服务器失败：端口被占用", "确定", null, (txt) => { NetworkManager.Net.StopImmediate(); DialogsManager.HideAllDialogs(); }));
                 }
             }
             else {

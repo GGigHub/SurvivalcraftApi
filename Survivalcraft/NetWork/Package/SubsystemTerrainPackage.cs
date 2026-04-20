@@ -219,7 +219,7 @@ public class SubsystemTerrainPackage : IPackage
                 chunk2.WasUpgraded = true;
             }
         }
-        public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+        public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
         {
             if (isServer && m_type != DataType.RequestSyncChunks)
             {

@@ -261,7 +261,7 @@ namespace Game {
         }
 
         public virtual void OnSlotChange(int slotIndex) {
-            if (CommonLib.WorkType == WorkType.Server) {
+            if (NetworkManager.WorkType == WorkType.Server) {
                 SubsystemInventories.pushSyncItem(this, slotIndex);
             }
         }

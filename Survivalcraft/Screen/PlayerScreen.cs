@@ -117,8 +117,8 @@ public class PlayerScreen : Screen {
             m_playButton.IsVisible = false;
             m_addAnotherButton.IsVisible = false;
         }
-        m_addAnotherButton.IsVisible &= CommonLib.WorkType == WorkType.Local;
-        m_deleteButton.IsVisible &= CommonLib.WorkType != WorkType.Client;
+        m_addAnotherButton.IsVisible &= NetworkManager.WorkType == WorkType.Local;
+        m_deleteButton.IsVisible &= NetworkManager.WorkType != WorkType.Client;
     }
 
     public override void Leave() {
@@ -130,9 +130,9 @@ public class PlayerScreen : Screen {
         if (m_mode == Mode.Edit && GameManager.Project != null) {
             GameManager.UpdateProject();
         }
-        if (Engine.Time.RealTime - EnterTime > 120 && CommonLib.WorkType == WorkType.Client && CommonLib.Net.netManager.IsRunning) {
+        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.WorkType == WorkType.Client && NetworkManager.Net.netManager.IsRunning) {
             //客户端卡在新增玩家界面两分钟自动中断连接
-            CommonLib.Net.Stop("客户端主动关闭连接");
+            NetworkManager.Net.Stop("客户端主动关闭连接");
         }
 
         if (DialogsManager.Dialogs.Contains(m_fetchingPlayerDialog)) {
@@ -203,7 +203,7 @@ public class PlayerScreen : Screen {
             }));
         }
         if (m_addButton.IsClicked && VerifyName()) {
-            if (CommonLib.WorkType > 0) {
+            if (NetworkManager.WorkType > 0) {
                 DialogsManager.Alert("不可进行操作");
             }
             else {
@@ -212,14 +212,14 @@ public class PlayerScreen : Screen {
             }
         }
         if (m_deleteButton.IsClicked) {
-            if (CommonLib.WorkType == WorkType.Server) {
+            if (NetworkManager.WorkType == WorkType.Server) {
                 DialogsManager.Confirm("你确定要踢出这个玩家吗", btn => {
-                    var client = CommonLib.Net.GetClientByGUID(m_playerData.PlayerGUID);
-                    if (btn == MessageDialogButton.Button1) CommonLib.Net.RemoveClient(client);
+                    var client = NetworkManager.Net.GetClientByGUID(m_playerData.PlayerGUID);
+                    if (btn == MessageDialogButton.Button1) NetworkManager.Net.RemoveClient(client);
                     else DialogsManager.HideAllDialogs();
                 });
             }
-            else if (CommonLib.WorkType == WorkType.Client) {
+            else if (NetworkManager.WorkType == WorkType.Client) {
                 DialogsManager.Alert("不可进行操作");
             }
             else {
@@ -233,8 +233,8 @@ public class PlayerScreen : Screen {
         }
         if (m_playButton.IsClicked && VerifyName()) {
             if (m_mode == Mode.Initial) {
-                if (CommonLib.WorkType == WorkType.Client) {
-                    CommonLib.Net.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Create));
+                if (NetworkManager.WorkType == WorkType.Client) {
+                    NetworkManager.Net.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Create));
                     DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
                 }
                 else {
@@ -252,14 +252,14 @@ public class PlayerScreen : Screen {
             if (m_mode == Mode.Initial) {
                 GameManager.SaveProject(waitForCompletion: true, showErrorDialog: true);
                 GameManager.DisposeProject();
-                CommonLib.Net.Stop();
+                NetworkManager.Net.Stop();
                 ScreensManager.SwitchScreen("MainMenu");
             }
             else if (m_mode == Mode.Add || m_mode == Mode.Edit) {
                 ScreensManager.SwitchScreen("Players", m_playerData.SubsystemPlayers);
             }
             if (m_mode == Mode.Edit) {
-                CommonLib.Net.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Modify));
+                NetworkManager.Net.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Modify));
             }
         }
         m_nameWasInvalid = false;

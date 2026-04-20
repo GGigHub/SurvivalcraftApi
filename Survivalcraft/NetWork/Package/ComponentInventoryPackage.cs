@@ -276,7 +276,7 @@ public class ComponentInventoryPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         var subsystemInventories = projectNet.FindSubsystem<SubsystemInventories>();
 
@@ -296,7 +296,7 @@ public class ComponentInventoryPackage : IPackage
                         {
                             m_inventory.ActiveSlotIndex = m_activeSlot;
                             Except = From;
-                            netNode.QueuePackage(this);
+                            networkBase.QueuePackage(this);
                         }
 
                     }
@@ -363,9 +363,9 @@ public class ComponentInventoryPackage : IPackage
                         if (!IsSlotIndexValid(sourceInventoryObject, m_sourceInventorySlot.slotIndex)) reject = true;
                         if (!IsSlotIndexValid(targetInventoryObject, m_targetInventorySlot.slotIndex)) reject = true;
                         if (m_targetInventorySlot.count < 0) reject = true;
-                        if (sourceInventoryObject is ComponentCreativeInventory && CommonLib.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
+                        if (sourceInventoryObject is ComponentCreativeInventory && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
                         {
-                            CommonLib.Net.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
+                            NetworkManager.Net.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
                             reject = true;
                         }
                     }
@@ -383,8 +383,8 @@ public class ComponentInventoryPackage : IPackage
                             package.To = From;
                             ComponentInventoryPackage package2 = new ComponentInventoryPackage(m_targetInventorySlot);
                             package2.To = From;
-                            CommonLib.Net.QueuePackage(package);
-                            CommonLib.Net.QueuePackage(package2);
+                            NetworkManager.Net.QueuePackage(package);
+                            NetworkManager.Net.QueuePackage(package2);
                         }
                         return;
                     }
@@ -409,9 +409,9 @@ public class ComponentInventoryPackage : IPackage
                         if (IsOwnedByOtherPlayer(targetInventoryObject, From, out var dstOwner2)) reject = true;
                         if (!IsSlotIndexValid(sourceInventoryObject, m_sourceInventorySlot.slotIndex)) reject = true;
                         if (!IsSlotIndexValid(targetInventoryObject, m_targetInventorySlot.slotIndex)) reject = true;
-                        if (sourceInventoryObject is ComponentCreativeInventory && CommonLib.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
+                        if (sourceInventoryObject is ComponentCreativeInventory && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
                         {
-                            CommonLib.Net.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
+                            NetworkManager.Net.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
                             reject = true;
                         }
                     }
@@ -429,8 +429,8 @@ public class ComponentInventoryPackage : IPackage
                             package.To = From;
                             ComponentInventoryPackage package2 = new ComponentInventoryPackage(m_targetInventorySlot);
                             package2.To = From;
-                            CommonLib.Net.QueuePackage(package);
-                            CommonLib.Net.QueuePackage(package2);
+                            NetworkManager.Net.QueuePackage(package);
+                            NetworkManager.Net.QueuePackage(package2);
                         }
                         return;
                     }

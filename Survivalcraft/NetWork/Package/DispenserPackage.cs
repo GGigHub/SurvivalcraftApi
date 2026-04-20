@@ -24,7 +24,7 @@ public class DispenserPackage : IPackage
         m_flag = flag;
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         var sut = projectNet.FindSubsystem<SubsystemTerrain>();
         var value = sut.Terrain.GetCellValue(m_point.X, m_point.Y, m_point.Z);
@@ -35,7 +35,7 @@ public class DispenserPackage : IPackage
             data = DispenserBlock.SetAcceptsDrops(data, (m_flag & (1 << 1)) != 0);
             sut.ChangeCell(m_point.X, m_point.Y, m_point.Z, Terrain.ReplaceData(value, data));
         }
-        if (isServer) netNode.QueuePackage(this);
+        if (isServer) networkBase.QueuePackage(this);
     }
 
     public void ReadData(PackageStreamReader reader)

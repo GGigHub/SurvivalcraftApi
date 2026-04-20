@@ -113,12 +113,12 @@ namespace Game {
                 }
                 WorldInfo worldInfo = WorldsManager.CreateWorld(m_worldSettings);
                 if (SettingsManager.AllowLanConnection) {
-                    if (CommonLib.StartServer()) {
+                    if (NetworkManager.StartServer()) {
                         ScreensManager.SwitchScreen("GameLoading", worldInfo, null);
                     }
                     else {
                         DialogsManager.ShowDialog(this, new MessageDialog("提示", "创建服务器失败，端口已被占用", "确定", null, (txt) => {
-                            CommonLib.Net.StopImmediate(); DialogsManager.HideAllDialogs();
+                            NetworkManager.Net.StopImmediate(); DialogsManager.HideAllDialogs();
                         }));
                     }
                 }

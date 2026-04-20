@@ -70,9 +70,9 @@ namespace Game {
                 int num = FindFreeItemId();
                 m_itemsData.Add(num, (T)blockData.Copy());
                 dropValue.Value = Terrain.ReplaceData(dropValue.Value, num);
-                if (CommonLib.WorkType != WorkType.Client) {
-                    if (blockData is MemoryBankData memory) CommonLib.Net.QueuePackage(new EditableBlockPackage(num, memory));
-                    if (blockData is TruthTableData truthTableData) CommonLib.Net.QueuePackage(new EditableBlockPackage(num, truthTableData));
+                if (NetworkManager.WorkType != WorkType.Client) {
+                    if (blockData is MemoryBankData memory) NetworkManager.Net.QueuePackage(new EditableBlockPackage(num, memory));
+                    if (blockData is TruthTableData truthTableData) NetworkManager.Net.QueuePackage(new EditableBlockPackage(num, truthTableData));
                 }
             }
         }

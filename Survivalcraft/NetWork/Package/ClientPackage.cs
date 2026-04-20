@@ -52,7 +52,7 @@ public class ClientPackage : IPackage
         eventType = EventType.SyncList;
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         if (isServer && eventType != EventType.StateChange)
         {
@@ -61,7 +61,7 @@ public class ClientPackage : IPackage
         switch (eventType)
         {
             case EventType.Add:
-                netNode.AddClient(new Client(From.Peer, m_client.ID, m_client.TokenId, m_client.PlayerGuid, m_client.CommunityAccountId, m_client.Nickname));
+                networkBase.AddClient(new Client(From.Peer, m_client.ID, m_client.TokenId, m_client.PlayerGuid, m_client.CommunityAccountId, m_client.Nickname));
 #if DEBUG
                 Log.Information("AddClient:" + m_client.ID);
 #endif
@@ -70,12 +70,12 @@ public class ClientPackage : IPackage
 #if DEBUG
                 Log.Information("RemoveClient:" + m_client.ID);
 #endif
-                if (netNode.Clients.ContainsKey(m_client.ID))
+                if (networkBase.Clients.ContainsKey(m_client.ID))
                 {
-                    var client = netNode.Clients[m_client.ID];
+                    var client = networkBase.Clients[m_client.ID];
                     client.State = ClientState.NotConnected;
-                    netNode.OnClientStateChanged.Invoke(client);
-                    netNode.Clients.Remove(m_client.ID);
+                    networkBase.OnClientStateChanged.Invoke(client);
+                    networkBase.Clients.Remove(m_client.ID);
                 }
                 break;
             case EventType.SyncList:
@@ -85,28 +85,28 @@ public class ClientPackage : IPackage
                     {
                         c.Peer = From.Peer;
                         c.Peer.Tag = c;
-                        netNode.Server = From;
+                        networkBase.Server = From;
                     }
                     else
                     {
-                        if (c.TokenId == netNode.TokenId) netNode.Self = c;
+                        if (c.TokenId == networkBase.TokenId) networkBase.Self = c;
                     }
-                    netNode.AddClient(c);
+                    networkBase.AddClient(c);
                 }
 #if DEBUG
                 Log.Information("SyncList End:" + m_list.Count);
 #endif
-                if (netNode.Self == null) throw new Exception("Cannot find Self In Client List");
-                netNode.CurrentStage = NetNode.Stage.Connected;
+                if (networkBase.Self == null) throw new Exception("Cannot find Self In Client List");
+                networkBase.CurrentStage = NetworkBase.Stage.Connected;
                 break;
             case EventType.StateChange:
-                if (netNode.Clients.ContainsKey(m_client.ID))
+                if (networkBase.Clients.ContainsKey(m_client.ID))
                 {
-                    From = netNode.Clients[m_client.ID];
+                    From = networkBase.Clients[m_client.ID];
                     if (From.State != m_client.State)
                     {
                         From.State = m_client.State;
-                        netNode.OnClientStateChanged?.Invoke(From);
+                        networkBase.OnClientStateChanged?.Invoke(From);
                     }
                 }
                 break;

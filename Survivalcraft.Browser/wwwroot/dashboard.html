@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
@@ -519,7 +519,7 @@
     </div>
 </footer>
 
-<!-- OPFS Manager Modal -->
+<!-- OPFS CommonLib Modal -->
 <div id="opfsModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -604,7 +604,7 @@
         document.querySelectorAll('.status-label-wrap').forEach(w => w.classList.remove('active'));
     });
 
-    // State for File Manager
+    // State for File CommonLib
     let currentDirHandle = null;
     let pathStack = []; // Array of {name, handle}
     let pendingReplaceHandle = null; // Store handle when waiting for file picker

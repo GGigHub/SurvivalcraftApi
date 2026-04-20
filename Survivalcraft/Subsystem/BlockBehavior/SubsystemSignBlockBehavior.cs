@@ -159,9 +159,9 @@ namespace Game {
                 }
             }
             else if (componentMiner.ComponentPlayer != null) {
-                if (CommonLib.WorkType == WorkType.Client && componentMiner.ComponentPlayer == CommonLib.MainPlayer) {
+                if (NetworkManager.WorkType == WorkType.Client && componentMiner.ComponentPlayer == NetworkManager.MainPlayer) {
                     IPackage package = new BlockEditPackage(point, BlockEditPackage.EventType.EditSign);
-                    CommonLib.Net.QueuePackage(package);
+                    NetworkManager.Net.QueuePackage(package);
                     return true;
                 }
                 if (componentMiner.ComponentPlayer.PlayerData.IsMainPlayer) {

@@ -117,8 +117,8 @@ namespace Game {
                 }
             }
             //客户端禁用时间计算
-            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
-                if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) NetWork.CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset));
+            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
+                if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) NetWork.NetworkManager.Net.QueuePackage(new NetWork.Packages.SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset));
             }
         }
     }

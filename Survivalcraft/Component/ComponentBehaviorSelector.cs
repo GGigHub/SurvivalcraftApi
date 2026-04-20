@@ -1,3 +1,4 @@
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -42,7 +43,7 @@ namespace Game {
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
             m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
-            if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 IsDisableBehavior = true;
             }
             foreach (ComponentBehavior item in Entity.FindComponents<ComponentBehavior>()) {

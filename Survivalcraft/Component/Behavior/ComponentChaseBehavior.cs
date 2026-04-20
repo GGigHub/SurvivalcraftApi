@@ -153,7 +153,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (CommonLib.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 m_componentCreatureModel.AttackOrder = IsAttack;
                 return;
             }
@@ -569,7 +569,7 @@ namespace Game {
                 if (m_isAttack != value)
                 {
                     m_isAttack = value;
-                    if (CommonLib.WorkType != WorkType.Client) CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, value));
+                    if (NetworkManager.WorkType != WorkType.Client) NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, value));
                 }
             }
         }

@@ -82,20 +82,20 @@ public class ComponentClothingPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         switch (m_type)
         {
             case DataType.RequestSkin:
                 if (CharacterSkinsManager.HasSkinRes(SkinName))
                 {
-                    netNode.QueuePackage(new ComponentClothingPackage(SkinName, DataType.ReplySkin));
+                    networkBase.QueuePackage(new ComponentClothingPackage(SkinName, DataType.ReplySkin));
                 }
                 else
                 {
                     if (!CharacterSkinsManager.waitReplyList.Contains(SkinName))
                     {
-                        netNode.QueuePackage(new ComponentClothingPackage(SkinName, DataType.WhoHas));
+                        networkBase.QueuePackage(new ComponentClothingPackage(SkinName, DataType.WhoHas));
                         CharacterSkinsManager.waitReplyList.Add(SkinName);
                     }
                 }
@@ -110,7 +110,7 @@ public class ComponentClothingPackage : IPackage
             case DataType.WhoHas:
                 if (CharacterSkinsManager.HasSkinRes(SkinName))
                 {
-                    netNode.QueuePackage(new ComponentClothingPackage(SkinName, DataType.WhoHasReply));
+                    networkBase.QueuePackage(new ComponentClothingPackage(SkinName, DataType.WhoHasReply));
                 }
                 break;
         }

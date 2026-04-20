@@ -9,7 +9,7 @@ namespace Game {
 
         public override void MeasureOverride(Vector2 parentAvailableSize) {
             base.MeasureOverride(parentAvailableSize);
-            IsOverdrawRequired = CommonLib.WorkType == WorkType.Local && Children.Count > 1;
+            IsOverdrawRequired = NetworkManager.WorkType == WorkType.Local && Children.Count > 1;
         }
 
         public override void ArrangeOverride() {
@@ -19,7 +19,7 @@ namespace Game {
                 marginLeft = Window.DisplayCutoutInsets.X * ScreensManager.FinalUiScale;
                 marginRight = Window.DisplayCutoutInsets.Z * ScreensManager.FinalUiScale;
             }
-            if (CommonLib.WorkType != WorkType.Local && Children.Count > 0) {
+            if (NetworkManager.WorkType != WorkType.Local && Children.Count > 0) {
                 for (int i = 0; i < Children.Count; i++) {
                     var gameWidget = (GameWidget)Children[i];
                     gameWidget.IsVisible = gameWidget.PlayerData.IsMainPlayer;

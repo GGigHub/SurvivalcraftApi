@@ -48,9 +48,9 @@ namespace Game {
         // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
         // 客户端自己的PlayerGuid，以及服务端上所有玩家的PlayerGuid都未经混淆
         // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
-        public Guid PlayerGUID { get; set; } = CommonLib.Net.Self.PlayerGuid;
+        public Guid PlayerGUID { get; set; } = NetworkManager.Net.Self.PlayerGuid;
 
-        public Client Client => CommonLib.Net.GetClientByGUID(PlayerGUID);
+        public Client Client => NetworkManager.Net.GetClientByGUID(PlayerGUID);
 
         public byte? ClientId => Client?.ID;
 
@@ -156,7 +156,7 @@ namespace Game {
             m_stateMachine.AddState("FirstUpdate", null, delegate
             {
                 //说明：没有在线的玩家让其离线
-                if ((CommonLib.WorkType != WorkType.Local && CommonLib.Net.GetClientByGUID(PlayerGUID) == null) || (CommonLib.WorkType == WorkType.Local && !IsMainPlayer)) {
+                if ((NetworkManager.WorkType != WorkType.Local && NetworkManager.Net.GetClientByGUID(PlayerGUID) == null) || (NetworkManager.WorkType == WorkType.Local && !IsMainPlayer)) {
                     m_stateMachine.TransitionTo("MakePlayerOffline");
                 }
                 else if (ComponentPlayer != null) {
@@ -174,10 +174,10 @@ namespace Game {
             m_stateMachine.AddState("PrepareSpawn", delegate
             {
                 if (SpawnPosition == Vector3.Zero) {
-                    if (CommonLib.WorkType != WorkType.Local && m_subsystemGameInfo.WorldSettings.RandomSpawnPosition) SubsystemPlayers.GlobalSpawnPosition = Vector3.Zero;
+                    if (NetworkManager.WorkType != WorkType.Local && m_subsystemGameInfo.WorldSettings.RandomSpawnPosition) SubsystemPlayers.GlobalSpawnPosition = Vector3.Zero;
                     if (SubsystemPlayers.GlobalSpawnPosition == Vector3.Zero) {
                         PlayerData playerData = SubsystemPlayers.PlayersData.FirstOrDefault((PlayerData pd) => pd.SpawnPosition != Vector3.Zero);
-                        if (playerData != null && CommonLib.WorkType == WorkType.Local) {
+                        if (playerData != null && NetworkManager.WorkType == WorkType.Local) {
                             SpawnPosition = playerData.SpawnPosition;
                             m_spawnMode = SpawnMode.InitialNoIntro;
                         }
@@ -186,7 +186,7 @@ namespace Game {
 #if DEBUG
                             Log.Information($"生成出生点{SpawnPosition}");
 #endif
-                            m_spawnMode = CommonLib.WorkType == WorkType.Server ? SpawnMode.InitialNoIntro : SpawnMode.InitialIntro;
+                            m_spawnMode = NetworkManager.WorkType == WorkType.Server ? SpawnMode.InitialNoIntro : SpawnMode.InitialIntro;
                         }
                         SubsystemPlayers.GlobalSpawnPosition = SpawnPosition;
                     }
@@ -199,14 +199,14 @@ namespace Game {
                     m_spawnMode = SpawnMode.Respawn;
                 }
                 if (m_spawnMode == SpawnMode.Respawn) {
-                    if (CommonLib.WorkType != WorkType.Client) UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 2), Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
+                    if (NetworkManager.WorkType != WorkType.Client) UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 2), Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
                     else UpdateSpawnDialog(string.Format("连接{0}的世界中 (等级 {1})", Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
                 }
                 else {
                     UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathUtils.Floor(Level)), null, 0f, resetProgress: true);
                 }
                 //说明，客户端非主玩家不执行updateLocation
-                if (!(CommonLib.WorkType == WorkType.Client && !IsMainPlayer)) {
+                if (!(NetworkManager.WorkType == WorkType.Client && !IsMainPlayer)) {
                     m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, 0f, 64f);
                 }
                 m_terrainWaitStartTime = Time.FrameStartTime;
@@ -242,7 +242,7 @@ namespace Game {
                     ClientCachePosition = null;
                 }
                 //说明，客户端非主玩家不执行UpdateLocation
-                if (!(CommonLib.WorkType == WorkType.Client && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
+                if (!(NetworkManager.WorkType == WorkType.Client && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
             }, delegate
             {
                 if (Time.PeriodicEvent(0.1, 0.0)) {
@@ -250,7 +250,7 @@ namespace Game {
                     UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
                     if ((updateProgress >= 1f && Time.FrameStartTime - m_terrainWaitStartTime > 2.0) || Time.FrameStartTime - m_terrainWaitStartTime >= 15.0) {
                         if (ComponentPlayer == null || ComponentPlayer.PlayerData.PlayerGUID == Guid.Empty) {
-                            if (CommonLib.WorkType != WorkType.Client) {
+                            if (NetworkManager.WorkType != WorkType.Client) {
                                 SpawnPlayer(SpawnPosition, m_spawnMode);
                             }
                             else {
@@ -275,8 +275,8 @@ namespace Game {
             m_stateMachine.AddState("Playing", delegate
             {
                 HideSpawnDialog();
-                if (CommonLib.WorkType == WorkType.Client) {
-                    CommonLib.Net.QueuePackage(new ClientPackage(CommonLib.Net.Self.ID, ClientState.Playing));
+                if (NetworkManager.WorkType == WorkType.Client) {
+                    NetworkManager.Net.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.Playing));
                 }
             }, delegate
             {
@@ -290,7 +290,7 @@ namespace Game {
                     m_playerDeathTime = Time.RealTime;
                 }
                 //服务器更新客户端玩家的区域
-                if (!IsMainPlayer && CommonLib.WorkType != WorkType.Client) {
+                if (!IsMainPlayer && NetworkManager.WorkType != WorkType.Client) {
                     if (!isSetStatus) {
                         if (Client != null && Client.State != ClientState.Playing) {
                             ComponentPlayer.ComponentHealth.IsInvulnerable = true;
@@ -313,10 +313,10 @@ namespace Game {
             }, delegate
             {
                 //死掉后也继续更新
-                if (CommonLib.WorkType != WorkType.Client && !IsMainPlayer) {
+                if (NetworkManager.WorkType != WorkType.Client && !IsMainPlayer) {
                     Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 }
-                if (CommonLib.WorkType == WorkType.Client && !IsMainPlayer) {
+                if (NetworkManager.WorkType == WorkType.Client && !IsMainPlayer) {
                     NetRestart();
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
@@ -328,8 +328,8 @@ namespace Game {
                     }
                 }
                 else if (IsMainPlayer && Time.RealTime - m_playerDeathTime.Value > 1.5 && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any || readyToRestart) {
-                    if (CommonLib.WorkType == WorkType.Client && IsMainPlayer) {
-                        CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(this, NetWork.Packages.ComponentPlayerPackage.PlayerAction.Restart));
+                    if (NetworkManager.WorkType == WorkType.Client && IsMainPlayer) {
+                        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(this, NetWork.Packages.ComponentPlayerPackage.PlayerAction.Restart));
                     }
                     IsDead = true;
                     readyToRestart = true;
@@ -344,7 +344,7 @@ namespace Game {
                 m_stateMachine.TransitionTo(null);
                 DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("提示", "你已在残酷模式死亡，不可复活！", LanguageControl.Yes, LanguageControl.No, btn =>
                 {
-                    CommonLib.Net.StopImmediate();
+                    NetworkManager.Net.StopImmediate();
                 }));
             }
             else if (!m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
@@ -352,7 +352,7 @@ namespace Game {
                 m_stateMachine.TransitionTo(null);
                 DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("提示", "服务器禁止了玩家重生！", LanguageControl.Yes, LanguageControl.No, btn =>
                 {
-                    CommonLib.Net.StopImmediate();
+                    NetworkManager.Net.StopImmediate();
                 }));
             }
             else if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure && !m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
@@ -395,12 +395,12 @@ namespace Game {
             LastSpawnTime = valuesDictionary.GetValue("LastSpawnTime", 0.0);
             SpawnsCount = valuesDictionary.GetValue("SpawnsCount", 0);
             Name = valuesDictionary.GetValue("Name", "Walter");
-            PlayerGUID = valuesDictionary.GetValue("PlayerGUID", CommonLib.Net.Self.PlayerGuid);
+            PlayerGUID = valuesDictionary.GetValue("PlayerGUID", NetworkManager.Net.Self.PlayerGuid);
             PlayerClass = valuesDictionary.GetValue("PlayerClass", PlayerClass.Male);
             Level = valuesDictionary.GetValue("Level", 1f);
             CharacterSkinName = valuesDictionary.GetValue("CharacterSkinName", CharacterSkinsManager.CharacterSkinsNames[0]);
             InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
-            IsMainPlayer = PlayerGUID == CommonLib.Net.Self.PlayerGuid;
+            IsMainPlayer = PlayerGUID == NetworkManager.Net.Self.PlayerGuid;
         }
 
         public void Save(ValuesDictionary valuesDictionary) {

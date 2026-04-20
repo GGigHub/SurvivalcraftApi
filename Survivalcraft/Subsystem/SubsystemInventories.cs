@@ -34,7 +34,7 @@ public class SubsystemInventories : Subsystem
         }
         else
         {
-            if (CommonLib.WorkType == WorkType.Client)
+            if (NetworkManager.WorkType == WorkType.Client)
             {
                 inventories[inventory.Id] = inventory;
                 return inventory.Id;
@@ -55,7 +55,7 @@ public class SubsystemInventories : Subsystem
             return true;
         }
 #if DEBUG
-        CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(id, NetWork.Packages.ComponentInventoryPackage.EventType.QueryErrorInventoryInfo));
+        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(id, NetWork.Packages.ComponentInventoryPackage.EventType.QueryErrorInventoryInfo));
 #endif
         return false;
     }
@@ -82,9 +82,9 @@ public class SubsystemInventories : Subsystem
     {
         if (syncItems.Count > 0)
         {
-            if(CommonLib.WorkType == WorkType.Server)
+            if(NetworkManager.WorkType == WorkType.Server)
             {
-                CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(syncItems));
+                NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(syncItems));
             }
             syncItems.Clear();
         }

@@ -68,9 +68,9 @@ namespace Game {
         }
 
         public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner) {
-            if (CommonLib.WorkType == WorkType.Client && CommonLib.MainPlayer == componentMiner.ComponentPlayer) {
+            if (NetworkManager.WorkType == WorkType.Client && NetworkManager.MainPlayer == componentMiner.ComponentPlayer) {
                 IPackage package = new BlockEditPackage(new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z), BlockEditPackage.EventType.OpenInventoryByPoint);
-                CommonLib.Net.QueuePackage(package);
+                NetworkManager.Net.QueuePackage(package);
                 return true;
             }
             return base.OnInteract(raycastResult, componentMiner);
@@ -104,7 +104,7 @@ namespace Game {
 
         public void Update(float dt)
         {
-            if (Time.PeriodicEvent(5.0, 0.0) && CommonLib.WorkType == WorkType.Server)
+            if (Time.PeriodicEvent(5.0, 0.0) && NetworkManager.WorkType == WorkType.Server)
             {
                 List<ComponentFurnace> componentFurnaces = new List<ComponentFurnace>();
                 SubsystemBlockEntities subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>();
@@ -118,7 +118,7 @@ namespace Game {
                 }
                 if (componentFurnaces.Count > 0)
                 {
-                    CommonLib.Net.QueuePackage(new ComponentFurnacePackage(componentFurnaces));
+                    NetworkManager.Net.QueuePackage(new ComponentFurnacePackage(componentFurnaces));
                 }
             }
         }

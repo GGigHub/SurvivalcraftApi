@@ -84,9 +84,9 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
                 RemoveGameWidget(playerData.GameWidget);
             }
         };
-        if (CommonLib.MainPlayer != null)
+        if (NetworkManager.MainPlayer != null)
         {
-            MainPlayerData = CommonLib.MainPlayer.PlayerData;
+            MainPlayerData = NetworkManager.MainPlayer.PlayerData;
         }
         GamesWidget = valuesDictionary.GetValue<GamesWidget>("GamesWidget");
         foreach (PlayerData playersDatum in m_subsystemPlayers.PlayersData)

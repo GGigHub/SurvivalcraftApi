@@ -125,7 +125,7 @@ namespace Game {
         public SubsystemTerrain m_subsystemTerrain;
 
         public virtual void Update(float dt) {
-            if (CommonLib.WorkType != WorkType.Client) {
+            if (NetworkManager.WorkType != WorkType.Client) {
                 bool flag = Time.PeriodicEvent(0.1, 0.0);
                 _toSendList.Clear();
                 foreach (ComponentBody body in Bodies) {
@@ -145,7 +145,7 @@ namespace Game {
                 if (_toSendList.Count > 0) {
                     foreach (var item in _toSendList) {
                         if (item.Value.Count > 0) {
-                            CommonLib.Net.QueuePackage(new NetWork.Packages.SubsystemBodyPackage(item.Value) { To = item.Key });
+                            NetworkManager.Net.QueuePackage(new NetWork.Packages.SubsystemBodyPackage(item.Value) { To = item.Key });
                         }
                     }
                     //在这里重置标志

@@ -10,7 +10,7 @@ using Engine.Graphics;
 using Engine.Media;
 using Game.NetWork;
 using Game.NetWork.Packages;
-using static Game.NetWork.NetNode;
+using static Game.NetWork.NetworkBase;
 
 namespace Game;
 
@@ -37,11 +37,11 @@ public class GameLoadingScreen : Screen {
                 if (string.IsNullOrEmpty(m_worldSnapshotName)) {
                     SetSpwanDialogMessage("连接服务器", 0.2f);
                     if (m_serverEndPoint != null) {
-                        CommonLib.Net.ConnectServer(m_serverEndPoint, m_password);
+                        NetworkManager.ConnectServer(m_serverEndPoint, m_password);
                         DialogsManager.ShowDialog(this, spawnDialog);
                         m_stateMachine.TransitionTo("WaitServerReply");
                         //客户端开启包处理
-                        CommonLib.Net.OnRecieve += Handle;
+                        NetworkManager.Net.OnRecieve += Handle;
                     }
                     else {
                         m_stateMachine.TransitionTo("Loading");
@@ -58,20 +58,20 @@ public class GameLoadingScreen : Screen {
         }, delegate {
             SetSpwanDialogMessage("等待服务器响应", 0.25f);
             //Fix me::客户端中断连接口再次连接会卡住
-            if (CommonLib.Net.CurrentStage == Stage.WaitForClientList) {
-                if (timer.ElapsedMilliseconds >= CommonLib.DISCONNECT_TIMEOUT) {
-                    CommonLib.Net.Stop("连接超时");
+            if (NetworkManager.Net.CurrentStage == Stage.WaitForClientList) {
+                if (timer.ElapsedMilliseconds >= NetworkManager.DISCONNECT_TIMEOUT) {
+                    NetworkManager.Net.Stop("连接超时");
                 }
             }
-            else if (CommonLib.Net.CurrentStage == Stage.Connected) {
+            else if (NetworkManager.Net.CurrentStage == Stage.Connected) {
                 m_stateMachine.TransitionTo("Loading");
             }
             else {
-                CommonLib.Net.Stop("连接断开");
+                NetworkManager.Net.Stop("连接断开");
             }
         }, delegate {
-            if (CommonLib.Net.CurrentStage == Stage.Connected) {
-                CommonLib.Net.QueuePackage(new ClientPackage(CommonLib.Net.Self.ID, ClientState.Connected));
+            if (NetworkManager.Net.CurrentStage == Stage.Connected) {
+                NetworkManager.Net.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.Connected));
             }
         });
         m_stateMachine.AddState("Loading", null,
@@ -81,15 +81,15 @@ public class GameLoadingScreen : Screen {
                 if (IsServerReply) {
                     m_stateMachine.TransitionTo("LoadServerReply");
                 }
-                if (!CommonLib.Net.IsConnected) {
-                    CommonLib.Net.Stop("与服务器连接断开");
+                if (NetworkManager.Net.CurrentStage != Stage.Connected) {
+                    NetworkManager.Net.Stop("与服务器连接断开");
                 }
             }
             else {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
-                if (IsAdventureRestart && CommonLib.WorkType == WorkType.Client) {
-                    CommonLib.Net.QueuePackage(new ComponentPlayerPackage(CommonLib.MainPlayer, ComponentPlayerPackage.PlayerAction.IntoPlaying));
+                if (IsAdventureRestart && NetworkManager.WorkType == WorkType.Client) {
+                    NetworkManager.Net.QueuePackage(new ComponentPlayerPackage(NetworkManager.MainPlayer, ComponentPlayerPackage.PlayerAction.IntoPlaying));
                 }
                 ScreensManager.SwitchScreen("Game");
             }
@@ -98,7 +98,7 @@ public class GameLoadingScreen : Screen {
         });
         m_stateMachine.AddState("LoadServerReply", null, delegate {
             SetSpwanDialogMessage("加载服务器Project", 0.6f);
-            if (CommonLib.Net.CurrentStage == Stage.Connected) {
+            if (NetworkManager.Net.CurrentStage == Stage.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
                 ScreensManager.SwitchScreen("Game");
                 m_projectXmlData = null;
@@ -116,7 +116,7 @@ public class GameLoadingScreen : Screen {
         }, null);
     }
 
-    public void Handle(NetNode node, IEnumerable<IPackage> packages) {
+    public void Handle(NetworkBase node, IEnumerable<IPackage> packages) {
         foreach (var p in packages) {
             if (p is ClientPackage || p is ProjectPackage) {
                 try {
@@ -128,7 +128,7 @@ public class GameLoadingScreen : Screen {
             }
             else {
                 //无法处理的包在Project加载后进行处理
-                CommonLib.Net.AddPendingHanldePackage(p);
+                NetworkManager.Net.AddPendingHanldePackage(p);
             }
             OriginalCommunityContentScreen originalCommunityContentScreen = ScreensManager.FindScreen<OriginalCommunityContentScreen>("OriginalCommunityContent");
             if (originalCommunityContentScreen != null) {
@@ -140,11 +140,11 @@ public class GameLoadingScreen : Screen {
     }
 
     public void ReplyCall(bool hasTexure, byte[] textureData, byte[] projectData) {
-        CommonLib.Net.OnRecieve -= Handle;
+        NetworkManager.Net.OnRecieve -= Handle;
         IsServerReply = true;
         if (hasTexure) {
-            if (CommonLib.BlockTexture != null) CommonLib.BlockTexture.Dispose();
-            CommonLib.BlockTexture = Texture2D.Load(Image.Load(new MemoryStream(textureData)));
+            if (NetworkManager.BlockTexture != null) NetworkManager.BlockTexture.Dispose();
+            NetworkManager.BlockTexture = Texture2D.Load(Image.Load(new MemoryStream(textureData)));
         }
         m_projectXmlData = projectData;
     }
@@ -188,8 +188,8 @@ public class GameLoadingScreen : Screen {
     }
 
     public override void Enter(object[] parameters) {
-        if (CommonLib.WorkType == WorkType.Local) {
-            CommonLib.Net.StartLocal();
+        if (NetworkManager.WorkType == WorkType.Local) {
+            NetworkManager.StartLocal();
         }
         if (parameters.Length < 3) {
             m_worldInfo = (WorldInfo)parameters[0];

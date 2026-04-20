@@ -22,9 +22,9 @@ namespace Game {
                         int num = Terrain.ReplaceData(value, data2);
                         if (num != value) {
                             var p = new EditableBlockPackage(EditableItemType.Button, default, true, inventory.Id, slotIndex, newVoltageLevel);
-                            CommonLib.Net.QueuePackage(p);
-                            if (CommonLib.WorkType != WorkType.Client) {
-                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                            NetworkManager.Net.QueuePackage(p);
+                            if (NetworkManager.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, NetworkManager.Net, false);
                             }
                         }
                     }
@@ -46,9 +46,9 @@ namespace Game {
                             int face = 4;
                             var cell = new CellFace(x, y, z, face);
                             var p = new EditableBlockPackage(EditableItemType.Button, cell, false, default, default, newVoltageLevel);
-                            CommonLib.Net.QueuePackage(p);
-                            if (CommonLib.WorkType != WorkType.Client) {
-                                p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                            NetworkManager.Net.QueuePackage(p);
+                            if (NetworkManager.WorkType != WorkType.Client) {
+                                p.Handle(ProjectNet.Project, NetworkManager.Net, false);
                             }
                         }
                     }

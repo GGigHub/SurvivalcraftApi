@@ -77,7 +77,7 @@ namespace Game {
                 Canvas.AddChildren(LogList);
                 AddChildren(Canvas);
             }
-            Info($"Initializing Mods Manager. Api Version: {ModsManager.APIVersionString}");
+            Info($"Initializing Mods CommonLib. Api Version: {ModsManager.APIVersionString}");
         }
 
         public void ContentLoaded() {

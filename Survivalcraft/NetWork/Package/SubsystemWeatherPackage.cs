@@ -80,9 +80,9 @@ public class SubsystemWeatherPackage : IPackage
             m_fogEndTime = reader.ReadDouble();
         }
 
-        public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+        public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
         {
-            if (isServer && (From.PlayerData == null || CommonLib.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative))
+            if (isServer && (From.PlayerData == null || NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative))
             {
                 return;
             }

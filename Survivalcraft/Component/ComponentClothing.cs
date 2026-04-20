@@ -644,16 +644,16 @@ namespace Game {
                     Utilities.Dispose(ref m_outerClothedTexture);
                 }
                 else if (Time.PeriodicEvent(1.0, 0.0)) {
-                    if (CommonLib.WorkType == WorkType.Client) {
-                        CommonLib.Net.QueuePackage(
+                    if (NetworkManager.WorkType == WorkType.Client) {
+                        NetworkManager.Net.QueuePackage(
                             new NetWork.Packages.ComponentClothingPackage(
                                 m_componentPlayer.PlayerData.CharacterSkinName,
                                 NetWork.Packages.ComponentClothingPackage.DataType.RequestSkin
                             )
                         );
                     }
-                    else if (CommonLib.WorkType == WorkType.Server) {
-                        CommonLib.Net.QueuePackage(
+                    else if (NetworkManager.WorkType == WorkType.Server) {
+                        NetworkManager.Net.QueuePackage(
                             new NetWork.Packages.ComponentClothingPackage(
                                 m_componentPlayer.PlayerData.CharacterSkinName,
                                 NetWork.Packages.ComponentClothingPackage.DataType.WhoHas

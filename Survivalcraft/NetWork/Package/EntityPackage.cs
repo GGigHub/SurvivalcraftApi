@@ -86,7 +86,7 @@ namespace Game.NetWork.Packages
             }
         }
 
-        public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+        public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
         {
             if (isServer)
             {
@@ -125,7 +125,7 @@ namespace Game.NetWork.Packages
                             el.Add(entity);
                         });
                     }
-                    netNode.QueuePackage(new EntityPackage(el) { To = From });
+                    networkBase.QueuePackage(new EntityPackage(el) { To = From });
                     break;
             }
         }

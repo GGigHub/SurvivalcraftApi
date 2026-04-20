@@ -15,7 +15,7 @@ public class PackageStreamReader : BinaryReader
 
     public PackageStreamReader(byte[] CompressedData) : base(new MemoryStream())
     {
-        byte[] data = CommonLib.Decompress(CompressedData);
+        byte[] data = NetworkManager.Decompress(CompressedData);
         BaseStream.Write(data, 0, data.Length);
         BaseStream.Position = 0L;
     }

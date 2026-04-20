@@ -196,15 +196,15 @@ namespace Game {
                 GenerateGeometry(movingBlockSet);
             }
             m_movingBlockSets.Add(movingBlockSet);
-            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 m_movingBlockSets.Add(movingBlockSet);
-                NetWork.CommonLib.Net.QueuePackage(new MovingBlockPackage(movingBlockSet));
+                NetWork.NetworkManager.Net.QueuePackage(new MovingBlockPackage(movingBlockSet));
             }
             return movingBlockSet;
         }
 
         public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet) {
-            if (NetWork.CommonLib.WorkType == NetWork.WorkType.Client) return;
+            if (NetWork.NetworkManager.WorkType == NetWork.WorkType.Client) return;
             MovingBlockSet movingBlockSet2 = (MovingBlockSet)movingBlockSet;
             if (m_movingBlockSets.Remove(movingBlockSet2)) {
                 m_removing.Add(movingBlockSet2);
@@ -216,7 +216,7 @@ namespace Game {
                     }
                 );
                 movingBlockSet2.RemainCounter = 4;
-                NetWork.CommonLib.Net.QueuePackage(new MovingBlockPackage(movingBlockSet, false));
+                NetWork.NetworkManager.Net.QueuePackage(new MovingBlockPackage(movingBlockSet, false));
             }
         }
 
@@ -420,10 +420,10 @@ namespace Game {
             foreach (MovingBlockSet item in m_stopped) {
                 Stopped?.Invoke(item);
             }
-            if (NetWork.CommonLib.WorkType != NetWork.WorkType.Client) {
+            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 foreach (MovingBlockSet item in m_stopped) {
                     DoStop(item);
-                    NetWork.CommonLib.Net.QueuePackage(new MovingBlockPackage(item, true));
+                    NetWork.NetworkManager.Net.QueuePackage(new MovingBlockPackage(item, true));
                 }
             }
             m_stopped.Clear();

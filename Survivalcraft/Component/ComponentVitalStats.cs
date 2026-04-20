@@ -194,9 +194,9 @@ namespace Game {
                 UpdateSleep();
                 UpdateTemperature();
                 UpdateWetness();
-                if (CommonLib.WorkType == WorkType.Server) {
+                if (NetworkManager.WorkType == WorkType.Server) {
                     if (Time.PeriodicEvent(1.0, 0.5)) {
-                        CommonLib.Net.QueuePackage(new NetWork.Packages.ComponentVitalStatPackage(this));
+                        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentVitalStatPackage(this));
                     }
                 }
             }

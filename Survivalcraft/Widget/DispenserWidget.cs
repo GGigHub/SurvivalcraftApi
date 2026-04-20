@@ -76,12 +76,12 @@ namespace Game {
                 flag = true;
             }
             DispenserBlock.Mode mode = DispenserBlock.GetMode(data);
-            if (flag && CommonLib.WorkType == WorkType.Client) {
+            if (flag && NetworkManager.WorkType == WorkType.Client) {
                 byte tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) | (DispenserBlock.GetAcceptsDrops(data) ? (1 << 1) : 0));
                 var p = new DispenserPackage(m_componentBlockEntity.Coordinates, tmp);
-                CommonLib.Net.QueuePackage(p);
-                if (CommonLib.WorkType != WorkType.Client) {
-                    p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                NetworkManager.Net.QueuePackage(p);
+                if (NetworkManager.WorkType != WorkType.Client) {
+                    p.Handle(ProjectNet.Project, NetworkManager.Net, false);
                 }
             }
             m_dispenseButton.IsChecked = mode == DispenserBlock.Mode.Dispense;

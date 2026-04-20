@@ -102,7 +102,7 @@ public class ProjectNet : Project
             subsystemAnimatedTextures = FindSubsystem<SubsystemAnimatedTextures>();
             subsystemProjectiles = FindSubsystem<SubsystemProjectiles>();
             inventories = FindSubsystem<SubsystemInventories>();
-            if (CommonLib.WorkType == WorkType.Client)
+            if (NetworkManager.WorkType == WorkType.Client)
             {
                 BeforeEntityAdded += (obj, arg) =>
                 {
@@ -112,7 +112,7 @@ public class ProjectNet : Project
                 {
                     EntityMaps.Remove(arg.Entity.EntityId);
                 };
-                CommonLib.Net.OnClientStateChanged += (c) =>
+                NetworkManager.Net.OnClientStateChanged += (c) =>
                 {
                     switch (c.State)
                     {
@@ -144,33 +144,33 @@ public class ProjectNet : Project
                 {
                     EntityMaps.Remove(arg.Entity.EntityId);
                 };
-                if (CommonLib.WorkType == WorkType.Server)
+                if (NetworkManager.WorkType == WorkType.Server)
                 {
                     EntityAdded += (obj, arg) =>
                     {
-                        foreach (var client in CommonLib.Net.Clients)
+                        foreach (var client in NetworkManager.Net.Clients)
                         {
-                            if (client.Value == CommonLib.Net.Self) continue;
-                            CommonLib.Net.QueuePackage(new EntityPackage(arg.Entity) { To = client.Value });
+                            if (client.Value == NetworkManager.Net.Self) continue;
+                            NetworkManager.Net.QueuePackage(new EntityPackage(arg.Entity) { To = client.Value });
                         }
                     };
                     EntityRemoved += (obj, arg) =>
                     {
-                        CommonLib.Net.QueuePackage(new EntityPackage(arg.Entity.EntityId));
+                        NetworkManager.Net.QueuePackage(new EntityPackage(arg.Entity.EntityId));
                     };
-                    CommonLib.Net.OnClientStateChanged += GrantClient;
-                    CommonLib.Net.OnClientStateChanged += OnClientStateChanged;
+                    NetworkManager.Net.OnClientStateChanged += GrantClient;
+                    NetworkManager.Net.OnClientStateChanged += OnClientStateChanged;
                 }
             }
 
             Load(dictionary, projectData);
 
-            if (CommonLib.WorkType == WorkType.Client)
+            if (NetworkManager.WorkType == WorkType.Client)
             {
-                CommonLib.Net.QueuePackage(new ClientPackage(CommonLib.Net.Self.ID, ClientState.ProjectLoaded));
+                NetworkManager.Net.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.ProjectLoaded));
             }
             //开启包处理
-            CommonLib.Net.TurnOnPackageHanlde(this);
+            NetworkManager.Net.TurnOnPackageHanlde(this);
         }
         catch
         {
@@ -185,7 +185,7 @@ public class ProjectNet : Project
             }
             finally
             {
-                if (CommonLib.WorkType == WorkType.Server) CommonLib.Net.Stop();
+                if (NetworkManager.WorkType == WorkType.Server) NetworkManager.Net.Stop();
             }
 
             throw;
@@ -196,14 +196,14 @@ public class ProjectNet : Project
     public override void AddEntity(Entity entity)
     {
 #if DEBUG
-        if (CommonLib.WorkType == WorkType.Client) Log.Information($"添加实体{entity.EntityId}");
+        if (NetworkManager.WorkType == WorkType.Client) Log.Information($"添加实体{entity.EntityId}");
 #endif
         base.AddEntity(entity);
     }
     public override void RemoveEntity(Entity entity, bool disposeEntity)
     {
 #if DEBUG
-        if (CommonLib.WorkType == WorkType.Client) Log.Information($"移出实体{entity.EntityId}");
+        if (NetworkManager.WorkType == WorkType.Client) Log.Information($"移出实体{entity.EntityId}");
 #endif
         base.RemoveEntity(entity, disposeEntity);
     }
@@ -246,9 +246,9 @@ public class ProjectNet : Project
         Log.Information($"Client {c.ID} State is {c.State}");
 
 #endif
-        if (CommonLib.WorkType == WorkType.Server)
+        if (NetworkManager.WorkType == WorkType.Server)
         {
-            CommonLib.Net.QueuePackage(new ClientPackage(c.ID, c.State) { Except = c });
+            NetworkManager.Net.QueuePackage(new ClientPackage(c.ID, c.State) { Except = c });
             switch (c.State)
             {
                 case ClientState.Connected:
@@ -257,11 +257,11 @@ public class ProjectNet : Project
                         if (subsystemPlayers.MakePlayerOnline(c.PlayerGuid, out PlayerData playerData, out Entity entity))
                         {
                             c.CachePlayerEntity = entity;
-                            foreach (var client in CommonLib.Net.Clients)
+                            foreach (var client in NetworkManager.Net.Clients)
                             {
-                                if (client.Value != CommonLib.Net.Self && client.Value != c)
+                                if (client.Value != NetworkManager.Net.Self && client.Value != c)
                                 {
-                                    CommonLib.Net.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
+                                    NetworkManager.Net.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
                                 }
                             }
                         }
@@ -272,8 +272,8 @@ public class ProjectNet : Project
                                 textureData = ModsManager.StreamToBytes(s);
                             }
                         }
-                        byte[] data = CommonLib.GetNowProject(this, c);
-                        CommonLib.Net.QueuePackage(new ProjectPackage(textureData, data) { To = c });
+                        byte[] data = NetworkManager.GetNowProject(this, c);
+                        NetworkManager.Net.QueuePackage(new ProjectPackage(textureData, data) { To = c });
                         break;
                     }
                 case ClientState.NotConnected:
@@ -286,7 +286,7 @@ public class ProjectNet : Project
                     {
                         List<Entity> sendList = [.. m_entities.Keys];
                         //向客户端广播实体列表
-                        CommonLib.Net.QueuePackage(new EntityPackage(sendList) { To = c });
+                        NetworkManager.Net.QueuePackage(new EntityPackage(sendList) { To = c });
                         //如果有实体，添加到Project中并广播给其它客户端
                         if (c.CachePlayerEntity != null)
                         {
@@ -309,7 +309,7 @@ public class ProjectNet : Project
                 case ClientState.Playing:
                     if (c.PlayerData == null)
                     {
-                        CommonLib.Net.RemoveClient(c, "未知错误！该Client没有对应PlayerData");
+                        NetworkManager.Net.RemoveClient(c, "未知错误！该Client没有对应PlayerData");
                     }
                     else
                     {
@@ -324,12 +324,12 @@ public class ProjectNet : Project
                          * 客户端玩家进入游玩状态并通知服务端，服务端接收到后向客户端发送玩家人数，再由客户端进行比较。
                         Time.QueueTimeDelayedExecution(Time.RealTime + 5f, delegate 
                         {
-                            if (CommonLib.WorkType == WorkType.Server)
+                            if (NetworkManager.WorkType == WorkType.Server)
                             {
                                 PlayerDataPackage package = new PlayerDataPackage();
                                 package.m_type = PlayerDataPackage.DataType.Count;
                                 package.m_playerCount = this.FindSubsystem<SubsystemPlayers>().PlayersData.Count;
-                                CommonLib.Net.QueuePackage(package);
+                                NetworkManager.Net.QueuePackage(package);
                             }
                         });*/
                     }
@@ -354,7 +354,7 @@ public class ProjectNet : Project
     public void GrantClient(Client client) {
         if (client.State == ClientState.Playing) {
             if (subsystemPlayers.BlackPlayerGuidList.ContainsKey(client.PlayerGuid.ToString())) {
-                CommonLib.Net.RemoveClientImmediate(client, "你被禁止加入该服务器");
+                NetworkManager.Net.RemoveClientImmediate(client, "你被禁止加入该服务器");
             }
         }
     }
@@ -373,7 +373,7 @@ public class ProjectNet : Project
 
     public void PlayerAction(byte cid, Action<ComponentPlayer> action)
     {
-        var guid = CommonLib.Net.GetClientByID(cid)?.PlayerGuid;
+        var guid = NetworkManager.Net.GetClientByID(cid)?.PlayerGuid;
         if (guid != null) PlayerAction(guid, action);
     }
 
@@ -483,7 +483,7 @@ public class ProjectNet : Project
                     var palyerValue = entitiesDatum.ValuesDictionary.GetValue<ValuesDictionary>("Player");
                     if (palyerValue.ContainsKey("PlayerGuid"))
                     {
-                        Guid playerGuid = palyerValue.GetValue<Guid>("PlayerGuid", CommonLib.Net.Self.PlayerGuid);
+                        Guid playerGuid = palyerValue.GetValue<Guid>("PlayerGuid", NetworkManager.Net.Self.PlayerGuid);
                         PlayerData playerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.PlayerGUID == playerGuid);
                         if (playerData == null)
                         {
@@ -550,7 +550,7 @@ public class ProjectNet : Project
         {
             LoadSubsystem(value3, dictionary, loadedSubsystems, 0);
         }
-        if (projectData.EntityDataList != null && CommonLib.WorkType != WorkType.Client)
+        if (projectData.EntityDataList != null && NetworkManager.WorkType != WorkType.Client)
         {
             List<Entity> entities = LoadEntities(projectData.EntityDataList);
             AddEntities(entities);

@@ -22,7 +22,7 @@ public class PackageStreamWriter : BinaryWriter
     public byte[] Data()
     {
         BaseStream.Seek(0, SeekOrigin.Begin);
-        return CommonLib.Compress(BaseStream);
+        return NetworkManager.Compress(BaseStream);
     }
 
     public void WriteSmallFloat(float f)

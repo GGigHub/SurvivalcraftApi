@@ -163,9 +163,9 @@ namespace Game {
                     float healthBefore = Health;
                     injury.Process();
                     float injuryAmount = MathUtils.Max(healthBefore - Health, 0f);
-                    if (CommonLib.WorkType != WorkType.Client
+                    if (NetworkManager.WorkType != WorkType.Client
                         && injuryAmount > 0f) {
-                        CommonLib.Net.QueuePackage(
+                        NetworkManager.Net.QueuePackage(
                             new ComponentHealthPackage(this, injury.Attacker, injuryAmount, injury.Cause, injury.IgnoreInvulnerability)
                         );
                     }
@@ -202,10 +202,10 @@ namespace Game {
                 }
             );
             CauseOfDeath = injury?.Cause;
-            if (CommonLib.WorkType != WorkType.Client) {
+            if (NetworkManager.WorkType != WorkType.Client) {
                 ComponentHealthPackage componentHealthPackage = new(this);
                 componentHealthPackage.m_cuase = CauseOfDeath;
-                CommonLib.Net.QueuePackage(componentHealthPackage);
+                NetworkManager.Net.QueuePackage(componentHealthPackage);
             }
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
                 m_componentCreature.PlayerStats.AddDeathRecord(
@@ -272,9 +272,9 @@ namespace Game {
                 if (m_regenerateLifeEnabled
                     && Health > 0f
                     && Health < 1f) {
-                    if (CommonLib.WorkType != WorkType.Client
+                    if (NetworkManager.WorkType != WorkType.Client
                         && Time.PeriodicEvent(2.0, 0.0)) {
-                        CommonLib.Net.QueuePackage(new ComponentHealthPackage(this));
+                        NetworkManager.Net.QueuePackage(new ComponentHealthPackage(this));
                     }
                     float num = 0f;
                     if (m_componentPlayer != null) {
@@ -340,16 +340,16 @@ namespace Game {
                     bool flagMainRider = riderPlayer != null && riderPlayer.PlayerData.IsMainPlayer;
                     bool flagMainPlayer = m_componentPlayer != null && m_componentPlayer.PlayerData.IsMainPlayer;
                     bool flagNoRider = m_componentCreature.ComponentBody.ChildBodies.Count == 0;
-                    if (CommonLib.WorkType == WorkType.Local) {
+                    if (NetworkManager.WorkType == WorkType.Local) {
                         Injure(fallDamage, null, false, cause);
                     }
-                    else if (CommonLib.WorkType == WorkType.Server) {
+                    else if (NetworkManager.WorkType == WorkType.Server) {
                         if (flagMainPlayer || flagMainRider || flagNoRider) {
                             Injure(fallDamage, null, false, cause);
                         }
                     }
                     else if (flagMainPlayer || flagMainRider) {
-                        CommonLib.Net.QueuePackage(
+                        NetworkManager.Net.QueuePackage(
                             new ComponentHealthPackage(this, null, fallDamage, cause, false, true, ComponentHealthPackage.RequestInjureType.Fall)
                         );
                     }

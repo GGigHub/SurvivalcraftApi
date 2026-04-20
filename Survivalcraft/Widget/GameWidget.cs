@@ -158,7 +158,7 @@ public class GameWidget : CanvasWidget {
 
     public WidgetInputDevice DetermineInputDevices() {
         if (PlayerData.SubsystemPlayers.PlayersData.Count > 0 && PlayerData.IsMainPlayer ||
-            CommonLib.WorkType == WorkType.Local && PlayerData == PlayerData.SubsystemPlayers.PlayersData[0]) {
+            NetworkManager.WorkType == WorkType.Local && PlayerData == PlayerData.SubsystemPlayers.PlayersData[0]) {
             WidgetInputDevice widgetInputDevice = WidgetInputDevice.None;
             foreach (PlayerData playersDatum in PlayerData.SubsystemPlayers.PlayersData) {
                 if (playersDatum != PlayerData) {
@@ -185,7 +185,7 @@ public class GameWidget : CanvasWidget {
     }
 
     public override void MeasureOverride(Vector2 parentAvailableSize) {
-        if (CommonLib.WorkType != WorkType.Local) {
+        if (NetworkManager.WorkType != WorkType.Local) {
             IsVisible = PlayerData.IsMainPlayer;
         }
         base.MeasureOverride(parentAvailableSize);

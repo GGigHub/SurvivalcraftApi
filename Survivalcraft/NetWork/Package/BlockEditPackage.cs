@@ -91,7 +91,7 @@ public class BlockEditPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetNode netNode, bool isServer)
+    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
     {
         if(From == null) // 会出现空么？？？？？
         {
@@ -110,7 +110,7 @@ public class BlockEditPackage : IPackage
 
                         IPackage package = new BlockEditPackage(inventory);
                         package.To = From;
-                        CommonLib.Net.QueuePackage(package);
+                        NetworkManager.Net.QueuePackage(package);
                     }
                 }
                 else
@@ -118,7 +118,7 @@ public class BlockEditPackage : IPackage
                     IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
                     if(inventory != null)
                     {
-                        var player = CommonLib.MainPlayer;
+                        var player = NetworkManager.MainPlayer;
                         // 箱子
                         if (inventory is ComponentChest componentChest)
                         {
@@ -160,7 +160,7 @@ public class BlockEditPackage : IPackage
 
                             IPackage package = new BlockEditPackage(inventory);
                             package.To = From;
-                            CommonLib.Net.QueuePackage(package);
+                            NetworkManager.Net.QueuePackage(package);
                         }
                     }
                 }
@@ -185,11 +185,11 @@ public class BlockEditPackage : IPackage
                 {
 
                     To = From;
-                    CommonLib.Net.QueuePackage(this);
+                    NetworkManager.Net.QueuePackage(this);
                 }
                 else
                 {
-                    DialogsManager.ShowDialog(CommonLib.MainPlayer.GuiWidget, new EditSignDialog(projectNet.FindSubsystem<SubsystemSignBlockBehavior>(), m_point3));
+                    DialogsManager.ShowDialog(NetworkManager.MainPlayer.GuiWidget, new EditSignDialog(projectNet.FindSubsystem<SubsystemSignBlockBehavior>(), m_point3));
                 }
                 break;
         }

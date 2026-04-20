@@ -9,5 +9,5 @@ public interface IPackage
     ClientState MinNeedState { get; }
     void WriteData(PackageStreamWriter writer);
     void ReadData(PackageStreamReader reader);
-    void Handle(ProjectNet projectNet, NetNode netNode,bool isServer);
+    void Handle(ProjectNet projectNet, NetworkBase networkBase,bool isServer);
 }

@@ -169,7 +169,7 @@ namespace Game {
             {
                 IsCreativeFlyEnabled = false;
             }*/
-            if (CommonLib.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 //非玩家
                 if (componentPlayer == null) {
                     //没有被骑乘
@@ -186,7 +186,7 @@ namespace Game {
                 }
                 if (componentPlayer != null && !componentPlayer.PlayerData.IsMainPlayer) { LookAngles = NetLookAngles.Get(dt); NormalMovement(dt); return; }
             }
-            else if (CommonLib.WorkType == WorkType.Server) {
+            else if (NetworkManager.WorkType == WorkType.Server) {
                 //非玩家
                 if (componentPlayer == null) {
                     //被骑乘

@@ -418,7 +418,7 @@ namespace Game {
             if (skipVanilla_) {
                 return;
             }
-            if (CommonLib.WorkType == WorkType.Client || CommonLib.WorkType == WorkType.Server) {
+            if (NetworkManager.WorkType == WorkType.Client || NetworkManager.WorkType == WorkType.Server) {
                 ComponentPlayer componentPlayer = Entity.FindComponent<ComponentPlayer>();
                 bool isMainPlayer = componentPlayer?.PlayerData?.IsMainPlayer == true;
                 bool hasChildPlayer = false;
@@ -434,7 +434,7 @@ namespace Game {
                     }
                 }
 
-                bool shouldApplyNetworkState = CommonLib.WorkType == WorkType.Client
+                bool shouldApplyNetworkState = NetworkManager.WorkType == WorkType.Client
                     ? (componentPlayer != null && !isMainPlayer && componentPlayer.ComponentBody.ParentBody == null)
                         || (componentPlayer == null && !hasChildPlayer)
                         || hasNonMainChildPlayer
