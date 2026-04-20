@@ -55,7 +55,7 @@ public class ProjectilePackage : IPackage
         m_ownerId = reader.ReadUInt16();
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         if (isServer)
         {

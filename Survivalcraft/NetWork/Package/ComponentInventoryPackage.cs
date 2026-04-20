@@ -276,7 +276,7 @@ public class ComponentInventoryPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         var subsystemInventories = projectNet.FindSubsystem<SubsystemInventories>();
 
@@ -296,7 +296,7 @@ public class ComponentInventoryPackage : IPackage
                         {
                             m_inventory.ActiveSlotIndex = m_activeSlot;
                             Except = From;
-                            networkBase.QueuePackage(this);
+                            NetworkManager.QueuePackage(this);
                         }
 
                     }
@@ -383,8 +383,8 @@ public class ComponentInventoryPackage : IPackage
                             package.To = From;
                             ComponentInventoryPackage package2 = new ComponentInventoryPackage(m_targetInventorySlot);
                             package2.To = From;
-                            NetworkManager.Net.QueuePackage(package);
-                            NetworkManager.Net.QueuePackage(package2);
+                            NetworkManager.QueuePackage(package);
+                            NetworkManager.QueuePackage(package2);
                         }
                         return;
                     }
@@ -429,8 +429,8 @@ public class ComponentInventoryPackage : IPackage
                             package.To = From;
                             ComponentInventoryPackage package2 = new ComponentInventoryPackage(m_targetInventorySlot);
                             package2.To = From;
-                            NetworkManager.Net.QueuePackage(package);
-                            NetworkManager.Net.QueuePackage(package2);
+                            NetworkManager.QueuePackage(package);
+                            NetworkManager.QueuePackage(package2);
                         }
                         return;
                     }

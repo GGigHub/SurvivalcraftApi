@@ -188,7 +188,7 @@ namespace Game {
                 && componentMount.ComponentBody.ImmersionFactor > 0f
                 && Math.Floor(1.1000000238418579 * m_subsystemTime.GameTime)
                 != Math.Floor(1.1000000238418579 * (m_subsystemTime.GameTime - m_subsystemTime.GameTimeDelta))) {
-                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this));
+                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this));
                 m_subsystemAudio.PlayRandomSound(
                     "Audio/Rowing",
                     m_random.Float(0.4f, 0.6f),

@@ -50,11 +50,11 @@ public class ServerInfoPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         if (m_requestInfo)
         {
-            networkBase.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
+            NetworkManager.Net.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
         }
         else
         {

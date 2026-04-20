@@ -79,9 +79,9 @@ namespace Game {
             if (flag && NetworkManager.WorkType == WorkType.Client) {
                 byte tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) | (DispenserBlock.GetAcceptsDrops(data) ? (1 << 1) : 0));
                 var p = new DispenserPackage(m_componentBlockEntity.Coordinates, tmp);
-                NetworkManager.Net.QueuePackage(p);
+                NetworkManager.QueuePackage(p);
                 if (NetworkManager.WorkType != WorkType.Client) {
-                    p.Handle(ProjectNet.Project, NetworkManager.Net, false);
+                    p.Handle(ProjectNet.Project, false);
                 }
             }
             m_dispenseButton.IsChecked = mode == DispenserBlock.Mode.Dispense;

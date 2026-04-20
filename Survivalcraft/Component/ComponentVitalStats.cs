@@ -196,7 +196,7 @@ namespace Game {
                 UpdateWetness();
                 if (NetworkManager.WorkType == WorkType.Server) {
                     if (Time.PeriodicEvent(1.0, 0.5)) {
-                        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentVitalStatPackage(this));
+                        NetworkManager.QueuePackage(new NetWork.Packages.ComponentVitalStatPackage(this));
                     }
                 }
             }

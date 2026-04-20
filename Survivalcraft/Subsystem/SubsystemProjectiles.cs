@@ -364,7 +364,7 @@ namespace Game {
             }
             Projectile projectile = AddProjectileNet(value, position, velocity, angularVelocity, owner);
             if (projectile != null) {
-                NetworkManager.Net.QueuePackage(new ProjectilePackage(projectile));
+                NetworkManager.QueuePackage(new ProjectilePackage(projectile));
             }
             return projectile;
         }
@@ -375,7 +375,7 @@ namespace Game {
             }
             Projectile projectile = FireProjectileNet(value, position, velocity, angularVelocity, owner);
             if (projectile != null) {
-                NetworkManager.Net.QueuePackage(new ProjectilePackage(projectile));
+                NetworkManager.QueuePackage(new ProjectilePackage(projectile));
             }
             return projectile;
         }

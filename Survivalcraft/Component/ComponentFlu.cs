@@ -70,7 +70,7 @@ namespace Game {
 
         public virtual void Update(float dt) {
             if (NetworkManager.WorkType != WorkType.Client && Time.PeriodicEvent(1.0, 0.5)) {
-                NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.SyncStat));
+                NetworkManager.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.SyncStat));
             }
             if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
                 || !m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled) {
@@ -97,7 +97,7 @@ namespace Game {
                     && m_subsystemTime.GameTime - m_lastEffectTime > 13.0) {
                     if (NetworkManager.WorkType != WorkType.Client) {
                         FluEffect();
-                        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.FluEffect));
+                        NetworkManager.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.FluEffect));
                     }
                 }
             }
@@ -110,7 +110,7 @@ namespace Game {
                         && m_random.Bool(0.025f)) {
                         if (NetworkManager.WorkType != WorkType.Client) {
                             StartFlu();
-                            NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.StartFlu));
+                            NetworkManager.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.StartFlu));
                         }
                     }
                     if (m_subsystemTime.GameTime - m_lastMessageTime > 60.0) {
@@ -123,7 +123,7 @@ namespace Game {
                     && m_random.Bool(0.75f)) {
                     if (NetworkManager.WorkType != WorkType.Client) {
                         Sneeze();
-                        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.Sneeze));
+                        NetworkManager.QueuePackage(new NetWork.Packages.ComponentFluPackage(this, NetWork.Packages.ComponentFluPackage.EventType.Sneeze));
                     }
                 }
             }

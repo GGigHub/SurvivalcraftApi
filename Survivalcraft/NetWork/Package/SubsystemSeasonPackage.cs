@@ -41,7 +41,7 @@ public class SubsystemSeasonPackage : IPackage
         TimeOfSeasonNet = reader.ReadSingle(); // 直接读取 float 类型
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         if (isServer)
         {

@@ -560,7 +560,7 @@ namespace Game {
                     count = count
                 };
                 IPackage package = new ComponentInventoryPackage(sourceInventorySlot, targetInventorySlot, ComponentInventoryPackage.EventType.HandleMoveItem);
-                NetworkManager.Net.QueuePackage(package);
+                NetworkManager.QueuePackage(package);
             }
             if (slotCount2 == 0
                 || slotValue == slotValue2) {
@@ -597,7 +597,7 @@ namespace Game {
                     m_dragMode = dragMode,
                     m_processingOnly = processingOnly
                 };
-                NetworkManager.Net.QueuePackage(package);
+                NetworkManager.QueuePackage(package);
             }
 
             bool flag = false;

@@ -47,7 +47,7 @@ public class SmallMessagePackage : IPackage
         PlayNotificationSound = reader.ReadBoolean();
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         if (!isServer)
         {

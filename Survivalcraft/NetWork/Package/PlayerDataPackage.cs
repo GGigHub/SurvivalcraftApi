@@ -175,7 +175,7 @@ public class PlayerDataPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         if (isServer &&
             m_type != DataType.Create &&
@@ -199,11 +199,11 @@ public class PlayerDataPackage : IPackage
                     if (client.Value == NetworkManager.Net.Self) continue;
                     if (client.Value != playerData.Client)
                     {
-                        NetworkManager.Net.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
+                        NetworkManager.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
                     }
                     else
                     {
-                        NetworkManager.Net.QueuePackage(new PlayerDataPackage(playerData, false) { To = client.Value });
+                        NetworkManager.QueuePackage(new PlayerDataPackage(playerData, false) { To = client.Value });
                     }
                 }
                 break;
@@ -217,19 +217,19 @@ public class PlayerDataPackage : IPackage
                     playerData2.m_playerClass = m_playerClass;
                     if (isServer)
                     {
-                        networkBase.QueuePackage(this);
+                        NetworkManager.QueuePackage(this);
                     }
                 }
                 break;
             case DataType.Delete:
-                networkBase.RemoveClient(From);
+                NetworkManager.Net.RemoveClient(From);
                 break;
             case DataType.AddPlayer:
                 //客户端接收到添加玩家广播
                 playerData = new PlayerData(projectNet);
                 playerData.Load(m_vd);
                 subsystemPlayers.AddPlayerData(playerData);
-                networkBase.QueuePackage(new PlayerDataPackage(playerData, DataType.ClientKnownPlayer));
+                NetworkManager.QueuePackage(new PlayerDataPackage(playerData, DataType.ClientKnownPlayer));
                 break;
             case DataType.SetUpdateLocation:
                 var player = subsystemPlayers.PlayersData.Find(x => x.Client == From);

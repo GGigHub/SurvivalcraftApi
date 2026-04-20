@@ -61,12 +61,11 @@ public class Client {
     /// <param name="guid">客户端Guid</param>
     /// <param name="dataId">社区账号ID</param>
     /// <param name="nickName">社区昵称</param>
-    public Client(NetPeer netPeer, byte id, Guid tokenId, Guid guid, string dataId, string nickName) {
+    public Client(NetPeer netPeer, byte id, Guid tokenId, Guid guid, string nickName) {
         ID = id;
         PlayerGuid = guid;
         TokenId = tokenId;
         Nickname = nickName;
-        CommunityAccountId = dataId;
         Peer = netPeer;
         IsAddedToNetNode = true;
     }
@@ -101,20 +100,15 @@ public class Client {
 }
 
 
-public class NetworkServer : NetworkBase
-{
-    public override bool StartServer(int port)
-    {
-        if (netManager.IsRunning)
-        {
+public class NetworkServer : NetworkBase {
+    public bool StartServer(int port) {
+        if (netManager.IsRunning) {
             StopImmediate();
         }
-        try
-        {
+        try {
             isStopping = false;
             StartLocal();
-            if (netManager.Start(port))
-            {
+            if (netManager.Start(port)) {
                 Log.Information($"Server started successfully on port {netManager.LocalPort}");
                 Window.Frame += Update;
                 Window.Closed += StopImmediate;
@@ -127,32 +121,27 @@ public class NetworkServer : NetworkBase
                 Server = Self;
                 WorkType = WorkType.Server;
             }
-            else
-            {
+            else {
                 CurrentStage = Stage.NotConnected;
                 Stop();
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Log.Error(e.Message);
         }
         return CurrentStage == Stage.Connected;
     }
 
-    public override void DeliveryEvent(NetPeer peer, object userData)
-    {
-        if (userData is NetPeer netPeer && netPeer.Tag is Client client)
-        {
+    public void DeliveryEvent(NetPeer peer, object userData) {
+        if (userData is NetPeer netPeer && netPeer.Tag is Client client) {
             agreeOnPendingPeer.Remove(client.ID);
 #if DEBUG
             Log.Information($"Client[{client.ID}] acknowledged pending client [{PendingClient.ID}]");
 #endif
         }
-        if (agreeOnPendingPeer.Count == 0 && PendingClient != null)
-        {
+        if (agreeOnPendingPeer.Count == 0 && PendingClient != null) {
             AddClient(PendingClient);
-            QueuePackage(new ClientPackage(Clients.Values) { To = PendingClient });
+            NetworkManager.QueuePackage(new ClientPackage(Clients.Values) { To = PendingClient });
 #if DEBUG
             Log.Information($"Client[{PendingClient.ID}] join flow completed.");
 #endif
@@ -161,29 +150,23 @@ public class NetworkServer : NetworkBase
         }
     }
 
-    protected override void ConnectionRequestEvent(ConnectionRequest request)
-    {
+    public void ConnectionRequestEvent(ConnectionRequest request) {
         Log.Information("Received connection request " + request.RemoteEndPoint);
 
-        if (ProjectNet.Project == null)
-        {
+        if (ProjectNet.Project == null) {
             SendWriterFromPackage(new ConnectionRejectPackage("Please wait until server startup is complete before joining."), request, true);
         }
-        else if (PendingClient != null)
-        {
+        else if (PendingClient != null) {
             Log.Information($"Too Many Request And Reject Current Request:{request.RemoteEndPoint}");
             Log.Information($"Current Pending Client:{PendingClient}");
             SendWriterFromPackage(new ConnectionRejectPackage($"Server is handling another pending join. Waiting client confirmations: {agreeOnPendingPeer.Count}"), request, true);
         }
-        else
-        {
-            try
-            {
+        else {
+            try {
                 ConnectionRequestPackage requestPackage = PackageManager.DecodePackage<ConnectionRequestPackage>(this, request.Data, null, request);
-                requestPackage.Handle(ProjectNet.Project, this, true);
+                requestPackage.Handle(ProjectNet.Project, true);
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 SendWriterFromPackage(new ConnectionRejectPackage($"Invalid connection request packet: {e.Message}"), request, true);
                 Log.Information("ConnectionRequestEvent Error:" + e.StackTrace);
             }

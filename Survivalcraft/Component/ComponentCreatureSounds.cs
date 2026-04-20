@@ -60,7 +60,7 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_idleSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_idleSoundMinDistance, autoDelay: false);
-                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
+                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
             }
         }
 
@@ -75,7 +75,7 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_painSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_painSoundMinDistance, autoDelay: false);
-                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 1));
+                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 1));
             }
         }
 
@@ -90,7 +90,7 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_moanSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_moanSoundMinDistance, autoDelay: false);
-                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 2));
+                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 2));
             }
         }
 
@@ -105,7 +105,7 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_sneezeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_sneezeSoundMinDistance, autoDelay: false);
-                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 3));
+                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 3));
             }
         }
 
@@ -120,7 +120,7 @@ namespace Game {
             {
                 m_lastCoughingSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_coughSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_coughSoundMinDistance, autoDelay: false);
-                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 4));
+                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 4));
             }
         }
 
@@ -135,7 +135,7 @@ namespace Game {
             {
                 m_lastPukeSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_pukeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_pukeSoundMinDistance, autoDelay: false);
-                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 5));
+                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 5));
             }
         }
 
@@ -150,7 +150,7 @@ namespace Game {
             {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_attackSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_attackSoundMinDistance, autoDelay: false);
-                NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, 6));
+                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 6));
             }
         }
 

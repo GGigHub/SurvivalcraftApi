@@ -86,7 +86,7 @@ namespace Game {
                 Vector3 worldPos = Vector3.Normalize(GameWidget.ActiveCamera.ScreenToWorld(new Vector3(screenPos.X, screenPos.Y, 1f), Matrix.Identity));
                 if (inventoryDragData != null && GameManager.Project != null) {
                     if (NetworkManager.WorkType == WorkType.Client) {
-                        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count));
+                        NetworkManager.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count));
                     }
                     else {
                         NetDragDrop(worldPos, inventoryDragData, count);

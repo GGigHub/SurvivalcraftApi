@@ -206,7 +206,7 @@ public class SubsystemBodyPackage : IPackage
     }
 
 
-        public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+        public void Handle(ProjectNet projectNet, bool isServer)
         {
             if (isServer && m_eventType == EventType.BodyUpdate)
             {
@@ -260,7 +260,7 @@ public class SubsystemBodyPackage : IPackage
                     }
                     if (ml.Count > 0)
                     {
-                        networkBase.QueuePackage(new EntityPackage(ml));
+                        NetworkManager.QueuePackage(new EntityPackage(ml));
 #if DEBUG
                     Log.Information($"客户端向服务器请求同步动物数:{ml.Count}");
 #endif

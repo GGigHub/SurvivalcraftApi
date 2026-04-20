@@ -93,7 +93,7 @@ public class ExplosionsPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         if (isServer)
         {

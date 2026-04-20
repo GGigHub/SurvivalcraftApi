@@ -151,12 +151,12 @@ public class ProjectNet : Project
                         foreach (var client in NetworkManager.Net.Clients)
                         {
                             if (client.Value == NetworkManager.Net.Self) continue;
-                            NetworkManager.Net.QueuePackage(new EntityPackage(arg.Entity) { To = client.Value });
+                            NetworkManager.QueuePackage(new EntityPackage(arg.Entity) { To = client.Value });
                         }
                     };
                     EntityRemoved += (obj, arg) =>
                     {
-                        NetworkManager.Net.QueuePackage(new EntityPackage(arg.Entity.EntityId));
+                        NetworkManager.QueuePackage(new EntityPackage(arg.Entity.EntityId));
                     };
                     NetworkManager.Net.OnClientStateChanged += GrantClient;
                     NetworkManager.Net.OnClientStateChanged += OnClientStateChanged;
@@ -167,7 +167,7 @@ public class ProjectNet : Project
 
             if (NetworkManager.WorkType == WorkType.Client)
             {
-                NetworkManager.Net.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.ProjectLoaded));
+                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.ProjectLoaded));
             }
             //开启包处理
             NetworkManager.Net.TurnOnPackageHanlde(this);
@@ -248,7 +248,7 @@ public class ProjectNet : Project
 #endif
         if (NetworkManager.WorkType == WorkType.Server)
         {
-            NetworkManager.Net.QueuePackage(new ClientPackage(c.ID, c.State) { Except = c });
+            NetworkManager.QueuePackage(new ClientPackage(c.ID, c.State) { Except = c });
             switch (c.State)
             {
                 case ClientState.Connected:
@@ -261,7 +261,7 @@ public class ProjectNet : Project
                             {
                                 if (client.Value != NetworkManager.Net.Self && client.Value != c)
                                 {
-                                    NetworkManager.Net.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
+                                    NetworkManager.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
                                 }
                             }
                         }
@@ -273,7 +273,7 @@ public class ProjectNet : Project
                             }
                         }
                         byte[] data = NetworkManager.GetNowProject(this, c);
-                        NetworkManager.Net.QueuePackage(new ProjectPackage(textureData, data) { To = c });
+                        NetworkManager.QueuePackage(new ProjectPackage(textureData, data) { To = c });
                         break;
                     }
                 case ClientState.NotConnected:
@@ -286,7 +286,7 @@ public class ProjectNet : Project
                     {
                         List<Entity> sendList = [.. m_entities.Keys];
                         //向客户端广播实体列表
-                        NetworkManager.Net.QueuePackage(new EntityPackage(sendList) { To = c });
+                        NetworkManager.QueuePackage(new EntityPackage(sendList) { To = c });
                         //如果有实体，添加到Project中并广播给其它客户端
                         if (c.CachePlayerEntity != null)
                         {
@@ -329,7 +329,7 @@ public class ProjectNet : Project
                                 PlayerDataPackage package = new PlayerDataPackage();
                                 package.m_type = PlayerDataPackage.DataType.Count;
                                 package.m_playerCount = this.FindSubsystem<SubsystemPlayers>().PlayersData.Count;
-                                NetworkManager.Net.QueuePackage(package);
+                                NetworkManager.QueuePackage(package);
                             }
                         });*/
                     }

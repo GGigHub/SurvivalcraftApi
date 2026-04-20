@@ -234,7 +234,7 @@ public class PlayerScreen : Screen {
         if (m_playButton.IsClicked && VerifyName()) {
             if (m_mode == Mode.Initial) {
                 if (NetworkManager.WorkType == WorkType.Client) {
-                    NetworkManager.Net.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Create));
+                    NetworkManager.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Create));
                     DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
                 }
                 else {
@@ -259,7 +259,7 @@ public class PlayerScreen : Screen {
                 ScreensManager.SwitchScreen("Players", m_playerData.SubsystemPlayers);
             }
             if (m_mode == Mode.Edit) {
-                NetworkManager.Net.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Modify));
+                NetworkManager.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Modify));
             }
         }
         m_nameWasInvalid = false;

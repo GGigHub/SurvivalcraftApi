@@ -7,11 +7,11 @@ using Engine.Graphics;
 using GameEntitySystem;
 using LiteNetLib.Utils;
 using TemplatesDatabase;
+#pragma warning disable CA1416
 
 namespace Game.NetWork;
 
-public static class NetworkManager
-{
+public static class NetworkManager {
     public const int DISCONNECT_TIMEOUT = 10000;
 
     public static NetworkBase Net = new();
@@ -21,95 +21,65 @@ public static class NetworkManager
     public static bool IsOfflineMode;
     public static WorkType WorkType => Net.WorkType;
 
-    public static WorkType GetCurrentWorkType()
-    {
+    public static WorkType GetCurrentWorkType() {
         if (Net.IsServer) return WorkType.Server;
         if (Net.CurrentStage == NetworkBase.Stage.Connected) return WorkType.Client;
         return WorkType.Local;
     }
 
     /// <summary>
-    /// 获取玩家的有效模式：当玩家设置为 Follow 时，返回世界模式；否则返回玩家自身设置的模式。
+    /// 获取玩家的有效模式
     /// </summary>
-    public static GameMode GetEffectiveGameMode(PlayerData pd)
-    {
-        if (pd == null) return ProjectNet.subsystemGameInfo?.WorldSettings?.GameMode ?? GameMode.Survival;
+    public static GameMode GetEffectiveGameMode(PlayerData pd) {
         return ProjectNet.subsystemGameInfo?.WorldSettings?.GameMode ?? GameMode.Survival;
     }
 
-    public static ComponentPlayer MainPlayer
-    {
-        get
-        {
-            if (GameManager.Project != null && Net.Self != null)
-            {
+    public static ComponentPlayer MainPlayer {
+        get {
+            if (GameManager.Project != null && Net.Self != null) {
                 return GameManager.Project.FindSubsystem<SubsystemPlayers>().ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerGUID == Net.Self.PlayerGuid);
             }
             return null;
         }
     }
-    public static bool StartServer()
-    {
+
+    public static bool StartServer() {
         var net = new NetworkServer();
         ResetNet(net);
         return net.StartServer(SettingsManager.ServerPort);
     }
 
-    public static void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null)
-    {
+    public static void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
         var net = new NetworkClient();
         ResetNet(net);
         net.ConnectServer(ep, passwd, onlineAccessToken);
     }
 
-    public static void StartLocal()
-    {
-        if (Net.GetType() != typeof(NetworkBase))
-        {
+    public static void StartLocal() {
+        if (Net.GetType() != typeof(NetworkBase)) {
             ResetNet(new NetworkBase());
         }
         Net.StartLocal();
     }
 
-    private static void ResetNet(NetworkBase networkBase)
-    {
-        if (Net != null)
-        {
+    public static void QueuePackage(IPackage package) {
+        lock (Net.PendingPackages) {
+            Net.PendingPackages.Add(package);
+        }
+    }
+
+    private static void ResetNet(NetworkBase networkBase) {
+        if (Net != null) {
             Net.StopImmediate();
         }
         Net = networkBase;
     }
 
-    public static NetDataWriter GetWriter(PackageStreamWriter writer, out int size)
-    {
-        byte[] data = writer.Data();
-        NetDataWriter tmp = new NetDataWriter();
-        tmp.PutBytesWithLength(data);
-        size = data.Length;
-        return tmp;
-    }
-
-    public static PackageStreamReader GetReader(NetDataReader reader)
-    {
+    public static PackageStreamReader GetReader(NetDataReader reader) {
         return new PackageStreamReader(reader.GetBytesWithLength());
     }
 
-    /// <summary>
-    /// 写入服务器信息
-    /// </summary>
-    /// <param name="w"></param>
-    public static void WriteServerInfo(NetDataWriter w)
-    {
-        w.Put(ProjectNet.Server_Version);
-        w.Put((ushort)(Net.ClientCount));
-        w.Put(ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount);
-        w.Put((byte)ProjectNet.subsystemGameInfo.WorldSettings.GameMode);
-        w.Put(false);
-        w.Put(ProjectNet.subsystemTimeOfDay.CalculateTimeOfDay());
-    }
-
-    public static string GetInnerIp()
-    {
+    public static string GetInnerIp() {
         try {
             var validTypes = new List<NetworkInterfaceType>
             {
@@ -148,104 +118,45 @@ public static class NetworkManager
         }
     }
 
-    public static bool Resolve(string ip, out IPEndPoint ep)
-    {
-        if (Uri.TryCreate("http://" + ip, UriKind.Absolute, out Uri uri))
-        {
-            int port = uri.IsDefaultPort ? SettingsManager.ServerPort : uri.Port;
-            if (IPAddress.TryParse(uri.Host, out IPAddress addr))
-            {
-                ep = new IPEndPoint(addr, port);
-                return true;
-            }
-            var entry = Dns.GetHostEntry(uri.Host);
-            if (entry.AddressList.Length > 0)
-            {
-                ep = new IPEndPoint(entry.AddressList[0], port);
-                return true;
-            }
-        }
-        ep = null;
-        return false;
-    }
-
-    public static byte[] GetNowProject(Project project, Client client)
-    {
+    public static byte[] GetNowProject(Project project, Client client) {
         if (project is not ProjectNet net) return null;
 
         net.SendToClientMode = true;
-        try
-        {
+        try {
             ValuesDictionary rootNode = CreateProjectRootNode(project);
-            OverrideGameModeForClient(rootNode, client);
             ReplacePlayerGUIDsWithTokenIds(rootNode, client);
             return rootNode.ToMessagePack();
         }
-        finally
-        {
+        finally {
             net.SendToClientMode = false;
         }
     }
 
-    private static ValuesDictionary CreateProjectRootNode(Project project)
-    {
+    private static ValuesDictionary CreateProjectRootNode(Project project) {
         var projData = Save(project);
-
         ValuesDictionary rootNode = [];
         projData.Save(rootNode);
         return rootNode;
     }
 
-    private static ProjectData Save(Project project)
-    {
-        ProjectData projectData = new ProjectData();
-        projectData.ValuesDictionary = new ValuesDictionary();
-        projectData.ValuesDictionary.DatabaseObject = project.m_projectTemplate;
-        foreach (GameEntitySystem.Subsystem subsystem in GameManager.Project.m_subsystems)
-        {
+    private static ProjectData Save(Project project) {
+        ProjectData projectData = new() {
+            ValuesDictionary = new ValuesDictionary {
+                DatabaseObject = project.m_projectTemplate
+            }
+        };
+        foreach (Subsystem subsystem in GameManager.Project.m_subsystems) {
             ValuesDictionary valuesDictionary = new ValuesDictionary();
             subsystem.Save(valuesDictionary);
-            if (valuesDictionary.Count > 0)
-            {
+            if (valuesDictionary.Count > 0) {
                 projectData.ValuesDictionary.SetValue(subsystem.ValuesDictionary.DatabaseObject.Name, valuesDictionary);
             }
         }
         return projectData;
     }
 
-    private static void OverrideGameModeForClient(ValuesDictionary rootNode, Client client)
-    {
-        try
-        {
-            PlayerData playerData = FindPlayerDataForClient(client);
-            if (playerData == null) return;
-
-            var gameInfo = rootNode?
-                .GetValue("Subsystems", new ValuesDictionary())
-                .GetValue("GameInfo", null as ValuesDictionary);
-
-            gameInfo?.SetValue("GameMode", playerData?.PlayerGameMode);
-        }
-        catch (Exception e)
-        {
-            Log.Information($"OverrideGameModeForClient error: {e.Message}");
-        }
-    }
-
-    private static PlayerData FindPlayerDataForClient(Client client)
-    {
-        if (client.PlayerData != null)
-            return client.PlayerData;
-
-        return ProjectNet.subsystemPlayers?
-            .PlayersData
-            .FirstOrDefault(pd => pd.PlayerGUID == client.PlayerGuid);
-    }
-
-    private static void ReplacePlayerGUIDsWithTokenIds(ValuesDictionary rootNode, Client client)
-    {
-        try
-        {
+    private static void ReplacePlayerGUIDsWithTokenIds(ValuesDictionary rootNode, Client client) {
+        try {
             var playersSubsystem = rootNode?
                 .GetValue("Subsystems", new ValuesDictionary())
                 .GetValue("Players", null as ValuesDictionary);
@@ -254,49 +165,39 @@ public static class NetworkManager
 
             var playersList = playersSubsystem.GetValue("Players", null as ValuesDictionary);
 
-            if (playersList != null)
-            {
-                foreach (var playerVD in playersList.Values.OfType<ValuesDictionary>())
-                {
+            if (playersList != null) {
+                foreach (var playerVD in playersList.Values.OfType<ValuesDictionary>()) {
                     Guid originalGuid = playerVD.GetValue("PlayerGUID", Guid.Empty);
-                    if (originalGuid != Guid.Empty)
-                    {
+                    if (originalGuid != Guid.Empty) {
                         ReplaceGUIDIfNeeded(playerVD, client, originalGuid);
                     }
                 }
             }
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Log.Information($"ReplacePlayerGUIDsWithTokenIds error: {e.Message}");
         }
     }
 
-    private static void ReplaceGUIDIfNeeded(ValuesDictionary playerVD, Client currentClient, Guid originalGuid)
-    {
+    private static void ReplaceGUIDIfNeeded(ValuesDictionary playerVD, Client currentClient, Guid originalGuid) {
         var targetClient = Net.GetClientByGUID(originalGuid);
 
-        if (targetClient != null && targetClient.PlayerGuid != currentClient.PlayerGuid)
-        {
+        if (targetClient != null && targetClient.PlayerGuid != currentClient.PlayerGuid) {
             playerVD.SetValue("PlayerGUID", targetClient.TokenId);
         }
     }
 
-    public static byte[] Compress(Stream stream)
-    {
+    public static byte[] Compress(Stream stream) {
         stream.Position = 0L;
         byte[] data = new byte[stream.Length];
         stream.Read(data, 0, (int)stream.Length);
         return Compress(data);
     }
 
-    public static byte[] Compress(byte[] datas)
-    {
+    public static byte[] Compress(byte[] datas) {
         byte[] data = null;
-        using (var outStream = new MemoryStream())
-        {
-            using (var zipStream = new DeflateStream(outStream, CompressionMode.Compress))
-            {
+        using (var outStream = new MemoryStream()) {
+            using (var zipStream = new DeflateStream(outStream, CompressionMode.Compress)) {
                 zipStream.Write(datas, 0, datas.Length);
             }
             data = outStream.ToArray();
@@ -304,13 +205,10 @@ public static class NetworkManager
         return data;
     }
 
-    public static byte[] Decompress(byte[] inputBytes)
-    {
+    public static byte[] Decompress(byte[] inputBytes) {
         var outStream = new MemoryStream();
-        using (var inputStream = new MemoryStream(inputBytes))
-        {
-            using (var zipStream = new DeflateStream(inputStream, CompressionMode.Decompress))
-            {
+        using (var inputStream = new MemoryStream(inputBytes)) {
+            using (var zipStream = new DeflateStream(inputStream, CompressionMode.Decompress)) {
                 zipStream.CopyTo(outStream);
                 zipStream.Close();
             }
@@ -318,15 +216,13 @@ public static class NetworkManager
         return outStream.ToArray();
     }
 
-    public static string SerializeVDict(ValuesDictionary dict)
-    {
+    public static string SerializeVDict(ValuesDictionary dict) {
         var elem = new XElement("Values");
         dict.Save(elem);
         return XmlUtilities.XmlUtils.SaveXmlToString(elem, true);
     }
 
-    public static ValuesDictionary ReadVDict(string str)
-    {
+    public static ValuesDictionary ReadVDict(string str) {
         var dict = new ValuesDictionary();
         var elem = XmlUtilities.XmlUtils.LoadXmlFromString(str, true);
         dict.ApplyOverrides(elem);

@@ -71,7 +71,7 @@ public class GameLoadingScreen : Screen {
             }
         }, delegate {
             if (NetworkManager.Net.CurrentStage == Stage.Connected) {
-                NetworkManager.Net.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.Connected));
+                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.Connected));
             }
         });
         m_stateMachine.AddState("Loading", null,
@@ -89,7 +89,7 @@ public class GameLoadingScreen : Screen {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
                 if (IsAdventureRestart && NetworkManager.WorkType == WorkType.Client) {
-                    NetworkManager.Net.QueuePackage(new ComponentPlayerPackage(NetworkManager.MainPlayer, ComponentPlayerPackage.PlayerAction.IntoPlaying));
+                    NetworkManager.QueuePackage(new ComponentPlayerPackage(NetworkManager.MainPlayer, ComponentPlayerPackage.PlayerAction.IntoPlaying));
                 }
                 ScreensManager.SwitchScreen("Game");
             }
@@ -116,11 +116,11 @@ public class GameLoadingScreen : Screen {
         }, null);
     }
 
-    public void Handle(NetworkBase node, IEnumerable<IPackage> packages) {
+    public void Handle(IEnumerable<IPackage> packages) {
         foreach (var p in packages) {
             if (p is ClientPackage || p is ProjectPackage) {
                 try {
-                    p.Handle(null, node, false);
+                    p.Handle(null, false);
                 }
                 catch (Exception e) {
                     Log.Error(string.Format("[{0}]{1}", p.GetType().Name, e.Message));
@@ -128,7 +128,7 @@ public class GameLoadingScreen : Screen {
             }
             else {
                 //无法处理的包在Project加载后进行处理
-                NetworkManager.Net.AddPendingHanldePackage(p);
+                NetworkManager.Net.AddPendingHandlePackage(p);
             }
             OriginalCommunityContentScreen originalCommunityContentScreen = ScreensManager.FindScreen<OriginalCommunityContentScreen>("OriginalCommunityContent");
             if (originalCommunityContentScreen != null) {

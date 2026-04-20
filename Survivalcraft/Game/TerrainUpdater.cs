@@ -275,7 +275,7 @@ namespace Game {
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
                 if (NetworkManager.WorkType == WorkType.Client) {
-                    NetworkManager.Net.QueuePackage(new PlayerDataPackage(value));
+                    NetworkManager.QueuePackage(new PlayerDataPackage(value));
                 }
             }
         }
@@ -412,7 +412,7 @@ namespace Game {
             }
             lock (RequestSyncChunkList) {
                 if (RequestSyncChunkList.Count > 0 && Time.PeriodicEvent(0.5, 0.0)) {
-                    NetworkManager.Net.QueuePackage(new SubsystemTerrainPackage(RequestSyncChunkList));
+                    NetworkManager.QueuePackage(new SubsystemTerrainPackage(RequestSyncChunkList));
                     RequestSyncChunkList.Clear();
                 }
             }
@@ -445,10 +445,10 @@ namespace Game {
 
                     }
                     if (toSendList.Count > 0) {
-                        NetworkManager.Net.QueuePackage(new SubsystemTerrainPackage(toSendList) { To = item.Key });
+                        NetworkManager.QueuePackage(new SubsystemTerrainPackage(toSendList) { To = item.Key });
                     }
                     if (result.Count > 0) {
-                        NetworkManager.Net.QueuePackage(new SubsystemTerrainPackage(result, 0) { To = item.Key });
+                        NetworkManager.QueuePackage(new SubsystemTerrainPackage(result, 0) { To = item.Key });
                     }
                 }
                 foreach (var item2 in toRemove) {

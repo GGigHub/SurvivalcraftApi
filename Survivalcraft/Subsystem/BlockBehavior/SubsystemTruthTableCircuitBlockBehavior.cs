@@ -23,9 +23,9 @@ namespace Game {
                     truthTableData,
                     delegate {
                         var p = new EditableBlockPackage(default, true, inventory.Id, slotIndex, truthTableData);
-                        NetworkManager.Net.QueuePackage(p);
+                        NetworkManager.QueuePackage(p);
                         if (NetworkManager.WorkType != WorkType.Client) {
-                            p.Handle(ProjectNet.Project, NetworkManager.Net, false);
+                            p.Handle(ProjectNet.Project, false);
                         }
                     }
                 )
@@ -43,9 +43,9 @@ namespace Game {
                         int face = ((TruthTableCircuitBlock)BlocksManager.Blocks[188]).GetFace(value);
                         var cell = new CellFace(x, y, z, face);
                         var p = new EditableBlockPackage(cell, false, default, default, truthTableData);
-                        NetworkManager.Net.QueuePackage(p);
+                        NetworkManager.QueuePackage(p);
                         if (NetworkManager.WorkType != WorkType.Client) {
-                            p.Handle(ProjectNet.Project, NetworkManager.Net, false);
+                            p.Handle(ProjectNet.Project, false);
                         }
                     }
                 )

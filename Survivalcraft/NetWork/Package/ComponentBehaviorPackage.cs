@@ -135,7 +135,7 @@ public class ComponentBehaviorPackage : IPackage
         }
     }
 
-        public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+        public void Handle(ProjectNet projectNet, bool isServer)
         {
             if (isServer && eventType != EventType.CreatureSound)
             {
@@ -218,7 +218,7 @@ public class ComponentBehaviorPackage : IPackage
                         if (isServer)
                         {
                             Except = From;
-                            networkBase.QueuePackage(this);
+                            NetworkManager.QueuePackage(this);
                         }
                     }
                     break;

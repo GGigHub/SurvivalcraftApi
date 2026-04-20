@@ -45,7 +45,7 @@ public class ComponentFurnacePackage : IPackage
 
             furnaceDataList.Add(furnaceData);
         }
-        public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+        public void Handle(ProjectNet projectNet, bool isServer)
         {
             if (isServer)
             {

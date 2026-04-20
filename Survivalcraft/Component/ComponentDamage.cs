@@ -46,14 +46,14 @@ namespace Game {
                 && Hitpoints > 0f) {
                 Hitpoints = MathUtils.Max(Hitpoints - amount, 0f);
             }
-            NetworkManager.Net.QueuePackage(new ComponentHealthPackage(this));
+            NetworkManager.QueuePackage(new ComponentHealthPackage(this));
         }
 
         public virtual void Update(float dt) {
             Vector3 position = m_componentBody.Position;
             if (Hitpoints <= 0f) {
                 if (NetworkManager.WorkType != WorkType.Client) {
-                    NetworkManager.Net.QueuePackage(new ComponentHealthPackage(this));
+                    NetworkManager.QueuePackage(new ComponentHealthPackage(this));
                 }
                 m_subsystemParticles.AddParticleSystem(
                     new BlockDebrisParticleSystem(

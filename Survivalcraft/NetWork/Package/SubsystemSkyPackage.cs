@@ -39,7 +39,7 @@ public class SubsystemSkyPackage : IPackage {
         m_direction = reader.ReadVector3();
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer) {
+    public void Handle(ProjectNet projectNet, bool isServer) {
         if (!isServer || (From?.PlayerData != null && NetworkManager.GetEffectiveGameMode(From.PlayerData) == GameMode.Creative)) {
             SubsystemSky sky = projectNet.FindSubsystem<SubsystemSky>();
             if (isRequest) {

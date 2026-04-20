@@ -190,7 +190,7 @@ namespace Game {
         public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual) {
             if (NetworkManager.WorkType != WorkType.Client) {
                 NetMakeLightningStrike(targetPosition, manual);
-                NetworkManager.Net.QueuePackage(new NetWork.Packages.SubsystemSkyPackage(targetPosition));
+                NetworkManager.QueuePackage(new NetWork.Packages.SubsystemSkyPackage(targetPosition));
             }
         }
 

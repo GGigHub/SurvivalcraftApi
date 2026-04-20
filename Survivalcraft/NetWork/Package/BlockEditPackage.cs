@@ -91,7 +91,7 @@ public class BlockEditPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         if(From == null) // 会出现空么？？？？？
         {
@@ -110,7 +110,7 @@ public class BlockEditPackage : IPackage
 
                         IPackage package = new BlockEditPackage(inventory);
                         package.To = From;
-                        NetworkManager.Net.QueuePackage(package);
+                        NetworkManager.QueuePackage(package);
                     }
                 }
                 else
@@ -160,7 +160,7 @@ public class BlockEditPackage : IPackage
 
                             IPackage package = new BlockEditPackage(inventory);
                             package.To = From;
-                            NetworkManager.Net.QueuePackage(package);
+                            NetworkManager.QueuePackage(package);
                         }
                     }
                 }
@@ -185,7 +185,7 @@ public class BlockEditPackage : IPackage
                 {
 
                     To = From;
-                    NetworkManager.Net.QueuePackage(this);
+                    NetworkManager.QueuePackage(this);
                 }
                 else
                 {

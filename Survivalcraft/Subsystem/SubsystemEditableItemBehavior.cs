@@ -71,8 +71,8 @@ namespace Game {
                 m_itemsData.Add(num, (T)blockData.Copy());
                 dropValue.Value = Terrain.ReplaceData(dropValue.Value, num);
                 if (NetworkManager.WorkType != WorkType.Client) {
-                    if (blockData is MemoryBankData memory) NetworkManager.Net.QueuePackage(new EditableBlockPackage(num, memory));
-                    if (blockData is TruthTableData truthTableData) NetworkManager.Net.QueuePackage(new EditableBlockPackage(num, truthTableData));
+                    if (blockData is MemoryBankData memory) NetworkManager.QueuePackage(new EditableBlockPackage(num, memory));
+                    if (blockData is TruthTableData truthTableData) NetworkManager.QueuePackage(new EditableBlockPackage(num, truthTableData));
                 }
             }
         }

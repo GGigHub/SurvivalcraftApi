@@ -50,11 +50,11 @@ public class SubsystemPlayersPackage : IPackage
             }
         }
     }
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         foreach (var package in componentPlayerPackageList)
         {
-            package.Handle(projectNet, networkBase, isServer);
+            package.Handle(projectNet, isServer);
         }
     }
 }

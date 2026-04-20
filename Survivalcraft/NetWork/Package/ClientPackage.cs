@@ -27,21 +27,21 @@ public class ClientPackage : IPackage
 
     public ClientPackage() { }
 
-    public ClientPackage(byte id, Guid tokenId, Guid guid, string communityId, string nickname)
+    public ClientPackage(byte id, Guid tokenId, Guid guid, string nickname)
     {
         eventType = EventType.Add;
-        m_client = new Client(null, id, tokenId, guid, communityId, nickname);
+        m_client = new Client(null, id, tokenId, guid, nickname);
     }
 
     public ClientPackage(byte id)
     {
         eventType = EventType.Remove;
-        m_client = new Client(null, id, Guid.Empty, Guid.Empty, null, null);
+        m_client = new Client(null, id, Guid.Empty, Guid.Empty, null);
     }
     public ClientPackage(byte id, ClientState clientState)
     {
         eventType = EventType.StateChange;
-        m_client = new Client(null, id, Guid.Empty, Guid.Empty, null, null)
+        m_client = new Client(null, id, Guid.Empty, Guid.Empty, null)
         {
             State = clientState
         };
@@ -52,7 +52,7 @@ public class ClientPackage : IPackage
         eventType = EventType.SyncList;
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         if (isServer && eventType != EventType.StateChange)
         {
@@ -61,7 +61,7 @@ public class ClientPackage : IPackage
         switch (eventType)
         {
             case EventType.Add:
-                networkBase.AddClient(new Client(From.Peer, m_client.ID, m_client.TokenId, m_client.PlayerGuid, m_client.CommunityAccountId, m_client.Nickname));
+                NetworkManager.Net.AddClient(new Client(From.Peer, m_client.ID, m_client.TokenId, m_client.PlayerGuid, m_client.Nickname));
 #if DEBUG
                 Log.Information("AddClient:" + m_client.ID);
 #endif
@@ -70,12 +70,12 @@ public class ClientPackage : IPackage
 #if DEBUG
                 Log.Information("RemoveClient:" + m_client.ID);
 #endif
-                if (networkBase.Clients.ContainsKey(m_client.ID))
+                if (NetworkManager.Net.Clients.ContainsKey(m_client.ID))
                 {
-                    var client = networkBase.Clients[m_client.ID];
+                    var client = NetworkManager.Net.Clients[m_client.ID];
                     client.State = ClientState.NotConnected;
-                    networkBase.OnClientStateChanged.Invoke(client);
-                    networkBase.Clients.Remove(m_client.ID);
+                    NetworkManager.Net.OnClientStateChanged.Invoke(client);
+                    NetworkManager.Net.Clients.Remove(m_client.ID);
                 }
                 break;
             case EventType.SyncList:
@@ -85,28 +85,28 @@ public class ClientPackage : IPackage
                     {
                         c.Peer = From.Peer;
                         c.Peer.Tag = c;
-                        networkBase.Server = From;
+                        NetworkManager.Net.Server = From;
                     }
                     else
                     {
-                        if (c.TokenId == networkBase.TokenId) networkBase.Self = c;
+                        if (c.TokenId == NetworkManager.Net.TokenId) NetworkManager.Net.Self = c;
                     }
-                    networkBase.AddClient(c);
+                    NetworkManager.Net.AddClient(c);
                 }
 #if DEBUG
                 Log.Information("SyncList End:" + m_list.Count);
 #endif
-                if (networkBase.Self == null) throw new Exception("Cannot find Self In Client List");
-                networkBase.CurrentStage = NetworkBase.Stage.Connected;
+                if (NetworkManager.Net.Self == null) throw new Exception("Cannot find Self In Client List");
+                NetworkManager.Net.CurrentStage = NetworkBase.Stage.Connected;
                 break;
             case EventType.StateChange:
-                if (networkBase.Clients.ContainsKey(m_client.ID))
+                if (NetworkManager.Net.Clients.ContainsKey(m_client.ID))
                 {
-                    From = networkBase.Clients[m_client.ID];
+                    From = NetworkManager.Net.Clients[m_client.ID];
                     if (From.State != m_client.State)
                     {
                         From.State = m_client.State;
-                        networkBase.OnClientStateChanged?.Invoke(From);
+                        NetworkManager.Net.OnClientStateChanged?.Invoke(From);
                     }
                 }
                 break;
@@ -122,7 +122,7 @@ public class ClientPackage : IPackage
                 m_client = ReadItem(reader);
                 break;
             case EventType.Remove:
-                m_client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null, null);
+                m_client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null);
                 break;
             case EventType.SyncList:
                 m_list = [];
@@ -133,7 +133,7 @@ public class ClientPackage : IPackage
                 }
                 break;
             case EventType.StateChange:
-                m_client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null, null)
+                m_client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null)
                 {
                     State = reader.ReadEnum<ClientState>()
                 };
@@ -174,11 +174,10 @@ public class ClientPackage : IPackage
         else
             writer.Write(client.PlayerGuid);
 
-        writer.Write(client.CommunityAccountId ?? string.Empty);
         writer.Write(client.Nickname ?? string.Empty);
     }
     private Client ReadItem(PackageStreamReader reader)
     {
-        return new Client(null, reader.ReadByte(), reader.ReadGuid(), reader.ReadGuid(), reader.ReadString(), reader.ReadString());
+        return new Client(null, reader.ReadByte(), reader.ReadGuid(), reader.ReadGuid(), reader.ReadString());
     }
 }

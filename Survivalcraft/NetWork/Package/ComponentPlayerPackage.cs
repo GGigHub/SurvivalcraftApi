@@ -410,7 +410,7 @@ public class ComponentPlayerPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         m_playerData = projectNet.FindSubsystem<SubsystemPlayers>().FindPlayerData((playerData) => { return playerData.ClientId.HasValue && playerData.ClientId.Value == m_fromPlayerId; });
         if (NeedHandleMainPlayer == false && m_playerData.IsMainPlayer && m_type != PlayerAction.AddExperience)
@@ -505,7 +505,7 @@ public class ComponentPlayerPackage : IPackage
                     if (isServer)
                     {
                         Except = From;
-                        networkBase.QueuePackage(this);
+                        NetworkManager.QueuePackage(this);
                     }
                 });
                 break;
@@ -516,7 +516,7 @@ public class ComponentPlayerPackage : IPackage
                     if (isServer)
                     {
                         Except = From;
-                        networkBase.QueuePackage(this);
+                        NetworkManager.QueuePackage(this);
                     }
                 });
                 break;
@@ -527,7 +527,7 @@ public class ComponentPlayerPackage : IPackage
                     if (isServer)
                     {
                         Except = From;
-                        networkBase.QueuePackage(this);
+                        NetworkManager.QueuePackage(this);
                     }
                 });
                 break;
@@ -538,7 +538,7 @@ public class ComponentPlayerPackage : IPackage
                     if (isServer)
                     {
                         Except = From;
-                        networkBase.QueuePackage(this);
+                        NetworkManager.QueuePackage(this);
                     }
                 });
                 break;
@@ -579,7 +579,7 @@ public class ComponentPlayerPackage : IPackage
                                 if (isServer)
                                 {
                                     Except = From;
-                                    networkBase.QueuePackage(this);
+                                    NetworkManager.QueuePackage(this);
                                 }
                             });
                         }

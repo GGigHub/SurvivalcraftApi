@@ -569,7 +569,7 @@ namespace Game {
                 if (m_isAttack != value)
                 {
                     m_isAttack = value;
-                    if (NetworkManager.WorkType != WorkType.Client) NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, value));
+                    if (NetworkManager.WorkType != WorkType.Client) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, value));
                 }
             }
         }

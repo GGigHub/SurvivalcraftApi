@@ -112,7 +112,7 @@ namespace Game {
                 Color[] colors = [m_colorButton1.Color, m_colorButton2.Color, m_colorButton3.Color, m_colorButton4.Color];
                 m_subsystemSignBlockBehavior.SetSignData(m_signPoint, lines, colors, m_urlTextBox.Text);
                 if (NetworkManager.WorkType != WorkType.Local) {
-                    NetworkManager.Net.QueuePackage(new SignBlockPackage(m_signPoint, lines, colors, m_urlTextBox.Text));
+                    NetworkManager.QueuePackage(new SignBlockPackage(m_signPoint, lines, colors, m_urlTextBox.Text));
                 }
                 Dismiss();
             }

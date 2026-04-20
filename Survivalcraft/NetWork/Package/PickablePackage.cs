@@ -218,7 +218,7 @@ public class PickablePackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         if (isServer && m_type != PickType.RequestSync)
         {
@@ -268,11 +268,11 @@ public class PickablePackage : IPackage
             case PickType.RequestSync:
                 flag = subsystemPickable.PickableAction(m_id, (pick) =>
                 {
-                    networkBase.QueuePackage(new PickablePackage(pick, PickType.Create) { To = From });
+                    NetworkManager.QueuePackage(new PickablePackage(pick, PickType.Create) { To = From });
                 });
                 if (!flag)
                 {
-                    networkBase.QueuePackage(new PickablePackage(m_id) { To = From });
+                    NetworkManager.QueuePackage(new PickablePackage(m_id) { To = From });
                 }
                 break;
             case PickType.SetFlyToPosition:

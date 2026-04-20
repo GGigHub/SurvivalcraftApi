@@ -28,7 +28,7 @@ namespace Game.NetWork.Packages
             m_projectData = projectData;
         }
 
-        public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+        public void Handle(ProjectNet projectNet, bool isServer)
         {
             if (isServer)
             {

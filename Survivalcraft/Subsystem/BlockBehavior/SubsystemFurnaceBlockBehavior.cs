@@ -70,7 +70,7 @@ namespace Game {
         public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner) {
             if (NetworkManager.WorkType == WorkType.Client && NetworkManager.MainPlayer == componentMiner.ComponentPlayer) {
                 IPackage package = new BlockEditPackage(new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z), BlockEditPackage.EventType.OpenInventoryByPoint);
-                NetworkManager.Net.QueuePackage(package);
+                NetworkManager.QueuePackage(package);
                 return true;
             }
             return base.OnInteract(raycastResult, componentMiner);
@@ -118,7 +118,7 @@ namespace Game {
                 }
                 if (componentFurnaces.Count > 0)
                 {
-                    NetworkManager.Net.QueuePackage(new ComponentFurnacePackage(componentFurnaces));
+                    NetworkManager.QueuePackage(new ComponentFurnacePackage(componentFurnaces));
                 }
             }
         }

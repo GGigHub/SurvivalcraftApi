@@ -645,7 +645,7 @@ namespace Game {
                 }
                 else if (Time.PeriodicEvent(1.0, 0.0)) {
                     if (NetworkManager.WorkType == WorkType.Client) {
-                        NetworkManager.Net.QueuePackage(
+                        NetworkManager.QueuePackage(
                             new NetWork.Packages.ComponentClothingPackage(
                                 m_componentPlayer.PlayerData.CharacterSkinName,
                                 NetWork.Packages.ComponentClothingPackage.DataType.RequestSkin
@@ -653,7 +653,7 @@ namespace Game {
                         );
                     }
                     else if (NetworkManager.WorkType == WorkType.Server) {
-                        NetworkManager.Net.QueuePackage(
+                        NetworkManager.QueuePackage(
                             new NetWork.Packages.ComponentClothingPackage(
                                 m_componentPlayer.PlayerData.CharacterSkinName,
                                 NetWork.Packages.ComponentClothingPackage.DataType.WhoHas

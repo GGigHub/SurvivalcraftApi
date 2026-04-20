@@ -42,7 +42,7 @@ namespace Game {
             if (NetWork.NetworkManager.WorkType == NetWork.WorkType.Client) {
                 return;
             }
-            NetWork.NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentOnFirePackage(this, attacker, duration));
+            NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentOnFirePackage(this, attacker, duration));
             SetOnFireNet(attacker, duration);
         }
 

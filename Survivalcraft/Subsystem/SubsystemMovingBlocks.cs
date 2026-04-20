@@ -198,7 +198,7 @@ namespace Game {
             m_movingBlockSets.Add(movingBlockSet);
             if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 m_movingBlockSets.Add(movingBlockSet);
-                NetWork.NetworkManager.Net.QueuePackage(new MovingBlockPackage(movingBlockSet));
+                NetWork.NetworkManager.QueuePackage(new MovingBlockPackage(movingBlockSet));
             }
             return movingBlockSet;
         }
@@ -216,7 +216,7 @@ namespace Game {
                     }
                 );
                 movingBlockSet2.RemainCounter = 4;
-                NetWork.NetworkManager.Net.QueuePackage(new MovingBlockPackage(movingBlockSet, false));
+                NetWork.NetworkManager.QueuePackage(new MovingBlockPackage(movingBlockSet, false));
             }
         }
 
@@ -423,7 +423,7 @@ namespace Game {
             if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 foreach (MovingBlockSet item in m_stopped) {
                     DoStop(item);
-                    NetWork.NetworkManager.Net.QueuePackage(new MovingBlockPackage(item, true));
+                    NetWork.NetworkManager.QueuePackage(new MovingBlockPackage(item, true));
                 }
             }
             m_stopped.Clear();

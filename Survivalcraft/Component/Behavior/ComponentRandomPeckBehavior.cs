@@ -36,7 +36,7 @@ namespace Game {
                 if (m_isFeed != value)
                 {
                     m_isFeed = value;
-                    if (NetworkManager.WorkType == WorkType.Server) NetworkManager.Net.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
+                    if (NetworkManager.WorkType == WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
                 }
             }
         }

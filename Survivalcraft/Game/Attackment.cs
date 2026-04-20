@@ -136,7 +136,7 @@ namespace Game {
                 }
             );
             if (NetworkManager.WorkType != WorkType.Client) {
-                NetworkManager.Net.QueuePackage(new ComponentHealthPackage(particlePosition, particleVelocity, color, text2));
+                NetworkManager.QueuePackage(new ComponentHealthPackage(particlePosition, particleVelocity, color, text2));
             }
             Target?.Project.FindSubsystem<SubsystemParticles>()?.AddParticleSystem(particleSystem);
         }

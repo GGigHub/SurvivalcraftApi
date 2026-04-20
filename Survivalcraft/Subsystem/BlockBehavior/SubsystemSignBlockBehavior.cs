@@ -161,7 +161,7 @@ namespace Game {
             else if (componentMiner.ComponentPlayer != null) {
                 if (NetworkManager.WorkType == WorkType.Client && componentMiner.ComponentPlayer == NetworkManager.MainPlayer) {
                     IPackage package = new BlockEditPackage(point, BlockEditPackage.EventType.EditSign);
-                    NetworkManager.Net.QueuePackage(package);
+                    NetworkManager.QueuePackage(package);
                     return true;
                 }
                 if (componentMiner.ComponentPlayer.PlayerData.IsMainPlayer) {

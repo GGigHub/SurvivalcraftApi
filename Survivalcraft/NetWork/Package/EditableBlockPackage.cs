@@ -72,7 +72,7 @@ public class EditableBlockPackage : IPackage
         m_slotIndex = id;
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         var subInventory = projectNet.FindSubsystem<SubsystemInventories>();
         switch (m_itemType)
@@ -220,7 +220,7 @@ public class EditableBlockPackage : IPackage
         }
         if (isServer)
         {
-            networkBase.QueuePackage(this);
+            NetworkManager.QueuePackage(this);
         }
     }
     public int ReplaceDataAtSlot(IInventory inventory, int slotIndex, Func<int, int> newData)

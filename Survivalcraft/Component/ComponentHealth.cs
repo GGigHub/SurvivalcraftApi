@@ -165,7 +165,7 @@ namespace Game {
                     float injuryAmount = MathUtils.Max(healthBefore - Health, 0f);
                     if (NetworkManager.WorkType != WorkType.Client
                         && injuryAmount > 0f) {
-                        NetworkManager.Net.QueuePackage(
+                        NetworkManager.QueuePackage(
                             new ComponentHealthPackage(this, injury.Attacker, injuryAmount, injury.Cause, injury.IgnoreInvulnerability)
                         );
                     }
@@ -205,7 +205,7 @@ namespace Game {
             if (NetworkManager.WorkType != WorkType.Client) {
                 ComponentHealthPackage componentHealthPackage = new(this);
                 componentHealthPackage.m_cuase = CauseOfDeath;
-                NetworkManager.Net.QueuePackage(componentHealthPackage);
+                NetworkManager.QueuePackage(componentHealthPackage);
             }
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
                 m_componentCreature.PlayerStats.AddDeathRecord(
@@ -274,7 +274,7 @@ namespace Game {
                     && Health < 1f) {
                     if (NetworkManager.WorkType != WorkType.Client
                         && Time.PeriodicEvent(2.0, 0.0)) {
-                        NetworkManager.Net.QueuePackage(new ComponentHealthPackage(this));
+                        NetworkManager.QueuePackage(new ComponentHealthPackage(this));
                     }
                     float num = 0f;
                     if (m_componentPlayer != null) {
@@ -349,7 +349,7 @@ namespace Game {
                         }
                     }
                     else if (flagMainPlayer || flagMainRider) {
-                        NetworkManager.Net.QueuePackage(
+                        NetworkManager.QueuePackage(
                             new ComponentHealthPackage(this, null, fallDamage, cause, false, true, ComponentHealthPackage.RequestInjureType.Fall)
                         );
                     }

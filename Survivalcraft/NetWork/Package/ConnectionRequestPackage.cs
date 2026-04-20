@@ -49,16 +49,16 @@ public class ConnectionRequestPackage : IPackage
         modInfos = [.. modEntities];
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         StringBuilder ConnectionError = new StringBuilder();
         if (string.IsNullOrEmpty(m_token))
         {
-            networkBase.SendWriterFromPackage(new ConnectionRejectPackage("身份信息为空，验证失败"), From.Request, true);
+            NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage("身份信息为空，验证失败"), From.Request, true);
             return;
         }
         nickname = FindPlayerNameByGUID(m_token);
-        AcceptAclient(m_token, networkBase, ConnectionError);
+        AcceptAclient(m_token, ConnectionError);
     }
 
     private string FindPlayerNameByGUID(string m_token)
@@ -131,7 +131,7 @@ public class ConnectionRequestPackage : IPackage
         return "";
     }
 
-    public void AcceptAclient(string token, NetworkBase networkBase, StringBuilder ConnectionError, bool useExternalPassword = false, string saveKey = "")
+    public void AcceptAclient(string token, StringBuilder ConnectionError, bool useExternalPassword = false, string saveKey = "")
     {
         Guid guid = Guid.Empty;
         if (!string.IsNullOrEmpty(token))
@@ -159,7 +159,7 @@ public class ConnectionRequestPackage : IPackage
             {
                 ConnectionError.AppendLine("客户端和服务器token相同");
             }
-            else if (networkBase.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null)
+            else if (NetworkManager.Net.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null)
             {
                 ConnectionError.AppendLine("你的ID与服务器中某个在线玩家的ID相同");
             }
@@ -171,7 +171,7 @@ public class ConnectionRequestPackage : IPackage
             {
                 ConnectionError.AppendLine("你已被禁止加入服务器");
             }
-            else if (networkBase.ClientCount >= ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount)
+            else if (NetworkManager.Net.ClientCount >= ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount)
             {
                 ConnectionError.AppendLine("在线人数达到最大，拒绝加入");
             }
@@ -192,7 +192,7 @@ public class ConnectionRequestPackage : IPackage
                 {
                     ModsManager.Configs.Remove(saveKey);
                 }
-                networkBase.SendWriterFromPackage(new ConnectionRejectPackage(ConnectionError.ToString()), From.Request, true);
+                NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage(ConnectionError.ToString()), From.Request, true);
                 Log.Information("Received connection request from " + From.IPPoint + ", rejected -- " + ConnectionError.ToString());
             }
             else
@@ -201,7 +201,7 @@ public class ConnectionRequestPackage : IPackage
                 {
                     if (!m_supportsModTransfer)
                     {
-                        networkBase.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致，且客户端不支持自动下载模组，请更新客户端或手动安装模组后再加入"), From?.Request, true);
+                        NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致，且客户端不支持自动下载模组，请更新客户端或手动安装模组后再加入"), From?.Request, true);
                         return;
                     }
 
@@ -222,38 +222,37 @@ public class ConnectionRequestPackage : IPackage
                         var acceptedLiteNetPeer = From?.Request?.Accept();
                         if (acceptedLiteNetPeer == null)
                         {
-                            networkBase.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致且无法建立连接"), From?.Request, true);
+                            NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致且无法建立连接"), From?.Request, true);
                             return;
                         }
 
                     }
                     catch (Exception e)
                     {
-                        networkBase.SendWriterFromPackage(new ConnectionRejectPackage($"模组传输初始化失败:{e.Message}"), From?.Request, true);
+                        NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage($"模组传输初始化失败:{e.Message}"), From?.Request, true);
                     }
                     return;
                 }
 
                 var acceptedPeer = From.Request.Accept();
-                networkBase.pendingPeer = (NetPeer)(object)acceptedPeer;  // 强制转换
-                Client AddClient = networkBase.CreateClient(networkBase.pendingPeer, m_tmp_token, guid, communityAccountId, nickname);
-                var clientPackage = new ClientPackage(AddClient.ID, AddClient.TokenId, AddClient.PlayerGuid, AddClient.CommunityAccountId, AddClient.Nickname);
-                foreach (var c in networkBase.Peers)
+                NetworkManager.Net.pendingPeer = (NetPeer)(object)acceptedPeer;
+                Client AddClient = NetworkManager.Net.CreateClient(NetworkManager.Net.pendingPeer, m_tmp_token, guid, communityAccountId, nickname);
+                var clientPackage = new ClientPackage(AddClient.ID, AddClient.TokenId, AddClient.PlayerGuid, AddClient.Nickname);
+                foreach (var c in NetworkManager.Net.Peers)
                 {
 #if DEBUG
                     Log.Information($"通知Client[{c.ID}]新加入客户端{AddClient.ID}");
 #endif
-                    networkBase.agreeOnPendingPeer.Add(c.ID);
-                    networkBase.SendWriterFromPackage(clientPackage, c.Peer, true);
+                    NetworkManager.Net.agreeOnPendingPeer.Add(c.ID);
+                    NetworkManager.Net.SendWriterFromPackage(clientPackage, c.Peer, true);
                 }
                 Log.Information("Received connection request from " + From.IPPoint + ", accepted");
-                //同步Client列表
-                networkBase.DeliveryEvent(null, null);
+                ((NetworkServer)NetworkManager.Net).DeliveryEvent(null, null);
             }
         }
         else
         {
-            networkBase.SendWriterFromPackage(new ConnectionRejectPackage("无法识别的数据包头"), From.Request, true);
+            NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage("无法识别的数据包头"), From.Request, true);
             Log.Information("无法识别的数据包头");
         }
 

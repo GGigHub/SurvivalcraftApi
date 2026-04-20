@@ -145,7 +145,7 @@ namespace Game {
                 if (_toSendList.Count > 0) {
                     foreach (var item in _toSendList) {
                         if (item.Value.Count > 0) {
-                            NetworkManager.Net.QueuePackage(new NetWork.Packages.SubsystemBodyPackage(item.Value) { To = item.Key });
+                            NetworkManager.QueuePackage(new NetWork.Packages.SubsystemBodyPackage(item.Value) { To = item.Key });
                         }
                     }
                     //在这里重置标志

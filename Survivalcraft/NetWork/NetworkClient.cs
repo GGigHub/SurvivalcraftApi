@@ -8,12 +8,9 @@ using LiteNetLib.Utils;
 
 namespace Game.NetWork;
 
-public class NetworkClient : NetworkBase
-{
-    public override void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null)
-    {
-        try
-        {
+public class NetworkClient : NetworkBase {
+    public void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
+        try {
             isStopping = false;
             Log.Information($"connecting to server at {ep.Address}");
             Clients.Clear();
@@ -30,26 +27,12 @@ public class NetworkClient : NetworkBase
             Window.Frame += Update;
             Window.Closed += StopImmediate;
         }
-        catch
-        {
+        catch {
             CurrentStage = Stage.NotConnected;
         }
     }
 
-    public override void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type)
-    {
-        try
-        {
-            ConnectionRejectPackage rejectPackage = PackageManager.DecodePackage<ConnectionRejectPackage>(this, reader, null, null, sender);
-            rejectPackage.Handle(null, this, IsServer);
-        }
-        catch
-        {
-        }
-    }
-
-    private void HandleNetworkError(byte[] _, IPEndPoint endPoint)
-    {
+    private void HandleNetworkError(byte[] _, IPEndPoint endPoint) {
         Log.Information("Connection error " + endPoint);
         Stop(endPoint?.ToString());
     }

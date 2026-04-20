@@ -18,9 +18,9 @@ namespace Game {
                         int data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                         int num = Terrain.ReplaceData(value, data2);
                         var p = new EditableBlockPackage(EditableItemType.AdjustableDelayGate, default, true, inventory.Id, slotIndex, newDelay);
-                        NetworkManager.Net.QueuePackage(p);
+                        NetworkManager.QueuePackage(p);
                         if (NetworkManager.WorkType != WorkType.Client) {
-                            p.Handle(ProjectNet.Project, NetworkManager.Net, false);
+                            p.Handle(ProjectNet.Project, false);
                         }
                     }
                 )
@@ -41,9 +41,9 @@ namespace Game {
                             int face = ((AdjustableDelayGateBlock)BlocksManager.Blocks[AdjustableDelayGateBlock.Index]).GetFace(value);
                             var cell = new CellFace(x, y, z, face);
                             var p = new EditableBlockPackage(EditableItemType.AdjustableDelayGate, cell, false, default, default, newDelay);
-                            NetworkManager.Net.QueuePackage(p);
+                            NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != WorkType.Client) {
-                                p.Handle(ProjectNet.Project, NetworkManager.Net, false);
+                                p.Handle(ProjectNet.Project, false);
                             }
                         }
                     }

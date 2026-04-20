@@ -55,7 +55,7 @@ public class SubsystemInventories : Subsystem
             return true;
         }
 #if DEBUG
-        NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(id, NetWork.Packages.ComponentInventoryPackage.EventType.QueryErrorInventoryInfo));
+        NetworkManager.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(id, NetWork.Packages.ComponentInventoryPackage.EventType.QueryErrorInventoryInfo));
 #endif
         return false;
     }
@@ -84,7 +84,7 @@ public class SubsystemInventories : Subsystem
         {
             if(NetworkManager.WorkType == WorkType.Server)
             {
-                NetworkManager.Net.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(syncItems));
+                NetworkManager.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(syncItems));
             }
             syncItems.Clear();
         }

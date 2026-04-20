@@ -33,7 +33,7 @@ public class SubsystemTimePackage : IPackage
         m_timeOfDayOffset = reader.ReadDouble();
     }
 
-    public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+    public void Handle(ProjectNet projectNet, bool isServer)
     {
         var m_info = projectNet.FindSubsystem<SubsystemGameInfo>();
         if (!isServer || (From?.PlayerData != null && NetworkManager.GetEffectiveGameMode(From.PlayerData) == GameMode.Creative))

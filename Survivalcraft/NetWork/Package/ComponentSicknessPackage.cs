@@ -44,7 +44,7 @@ namespace Game.NetWork.Packages
         m_sicknessDuration = reader.ReadSingle();
     }
 
-        public void Handle(ProjectNet projectNet, NetworkBase networkBase, bool isServer)
+        public void Handle(ProjectNet projectNet, bool isServer)
         {
             if (isServer)
             {
