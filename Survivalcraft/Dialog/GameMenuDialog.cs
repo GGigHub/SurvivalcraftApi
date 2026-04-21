@@ -511,7 +511,7 @@ namespace Game {
                 GameManager.SaveProject(true, true);
                 GameManager.DisposeProject();
                 ScreensManager.SwitchScreen("MainMenu");
-                NetworkManager.Net.Stop();
+                NetworkManager.Stop();
             }
         }
 

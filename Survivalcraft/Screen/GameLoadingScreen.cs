@@ -40,8 +40,8 @@ public class GameLoadingScreen : Screen {
                         NetworkManager.ConnectServer(m_serverEndPoint, m_password);
                         DialogsManager.ShowDialog(this, spawnDialog);
                         m_stateMachine.TransitionTo("WaitServerReply");
-                        //客户端开启包处理
-                        NetworkManager.Net.OnRecieve += Handle;
+                        //瀹㈡埛绔紑鍚寘澶勭悊
+                        NetworkManager.OnRecieve += Handle;
                     }
                     else {
                         m_stateMachine.TransitionTo("Loading");
@@ -57,21 +57,21 @@ public class GameLoadingScreen : Screen {
             timer = Stopwatch.StartNew();
         }, delegate {
             SetSpwanDialogMessage("等待服务器响应", 0.25f);
-            //Fix me::客户端中断连接口再次连接会卡住
-            if (NetworkManager.Net.CurrentStage == Stage.WaitForClientList) {
+            //Fix me::瀹㈡埛绔腑鏂繛鎺ュ彛鍐嶆杩炴帴浼氬崱浣?
+            if (NetworkManager.CurrentStage == Stage.WaitForClientList) {
                 if (timer.ElapsedMilliseconds >= NetworkManager.DISCONNECT_TIMEOUT) {
-                    NetworkManager.Net.Stop("连接超时");
+                    NetworkManager.Stop("连接超时");
                 }
             }
-            else if (NetworkManager.Net.CurrentStage == Stage.Connected) {
+            else if (NetworkManager.CurrentStage == Stage.Connected) {
                 m_stateMachine.TransitionTo("Loading");
             }
             else {
-                NetworkManager.Net.Stop("连接断开");
+                NetworkManager.Stop("连接断开");
             }
         }, delegate {
-            if (NetworkManager.Net.CurrentStage == Stage.Connected) {
-                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.Connected));
+            if (NetworkManager.CurrentStage == Stage.Connected) {
+                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Self.ID, ClientStage.Connected));
             }
         });
         m_stateMachine.AddState("Loading", null,
@@ -81,8 +81,8 @@ public class GameLoadingScreen : Screen {
                 if (IsServerReply) {
                     m_stateMachine.TransitionTo("LoadServerReply");
                 }
-                if (NetworkManager.Net.CurrentStage != Stage.Connected) {
-                    NetworkManager.Net.Stop("与服务器连接断开");
+                if (NetworkManager.CurrentStage != Stage.Connected) {
+                    NetworkManager.Stop("与服务器连接断开");
                 }
             }
             else {
@@ -97,8 +97,8 @@ public class GameLoadingScreen : Screen {
             IsServerReply = false;
         });
         m_stateMachine.AddState("LoadServerReply", null, delegate {
-            SetSpwanDialogMessage("加载服务器Project", 0.6f);
-            if (NetworkManager.Net.CurrentStage == Stage.Connected) {
+            SetSpwanDialogMessage("鍔犺浇鏈嶅姟鍣≒roject", 0.6f);
+            if (NetworkManager.CurrentStage == Stage.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
                 ScreensManager.SwitchScreen("Game");
                 m_projectXmlData = null;
@@ -127,8 +127,8 @@ public class GameLoadingScreen : Screen {
                 }
             }
             else {
-                //无法处理的包在Project加载后进行处理
-                NetworkManager.Net.AddPendingHandlePackage(p);
+                //鏃犳硶澶勭悊鐨勫寘鍦≒roject鍔犺浇鍚庤繘琛屽鐞?
+                NetworkManager.AddPendingHandlePackage(p);
             }
             OriginalCommunityContentScreen originalCommunityContentScreen = ScreensManager.FindScreen<OriginalCommunityContentScreen>("OriginalCommunityContent");
             if (originalCommunityContentScreen != null) {
@@ -140,7 +140,7 @@ public class GameLoadingScreen : Screen {
     }
 
     public void ReplyCall(bool hasTexure, byte[] textureData, byte[] projectData) {
-        NetworkManager.Net.OnRecieve -= Handle;
+        NetworkManager.OnRecieve -= Handle;
         IsServerReply = true;
         if (hasTexure) {
             if (NetworkManager.BlockTexture != null) NetworkManager.BlockTexture.Dispose();
@@ -188,9 +188,6 @@ public class GameLoadingScreen : Screen {
     }
 
     public override void Enter(object[] parameters) {
-        if (NetworkManager.WorkType == WorkType.Local) {
-            NetworkManager.StartLocal();
-        }
         if (parameters.Length < 3) {
             m_worldInfo = (WorldInfo)parameters[0];
             m_worldSnapshotName = (string)parameters[1];

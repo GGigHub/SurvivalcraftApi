@@ -13,7 +13,7 @@ public class SubsystemWeatherPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public double m_precipitationStartTime;
     public double m_precipitationEndTime;
     public float m_lightningIntensity;

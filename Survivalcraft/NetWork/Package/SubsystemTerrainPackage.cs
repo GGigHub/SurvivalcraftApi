@@ -22,13 +22,13 @@ public class SubsystemTerrainPackage : IPackage
         ReplyResult,
         ChangeCell,
         RequestChangeCell,
-        ChangeCellList          // 有这个的话，后面创世神，命令方块处理方块就不用一个包一个包的发了
+        ChangeCellList          // 有这个的话，后面创世神，命令方块处理方块就不用一个包一个包的发�?
     }
 
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public DataType m_type;
     public List<Point2> RelateChunks;
     public List<TerrainChunk> Chunks;

@@ -854,7 +854,7 @@ namespace Game {
             int playerIndex = valuesDictionary.GetValue<int>("PlayerIndex");
             SubsystemPlayers subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 
-            PlayerGuid = valuesDictionary.GetValue("PlayerGuid", NetworkManager.Net.Self.PlayerGuid);
+            PlayerGuid = valuesDictionary.GetValue("PlayerGuid", NetworkManager.Self.PlayerGuid);
             PlayerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.PlayerGUID == PlayerGuid);
             if (PlayerData == null) {
                 throw new Exception($"Player data not found for guid {PlayerGuid}");

@@ -45,7 +45,7 @@ public class ComponentPlayerPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public PlayerData m_playerData;
     public PlayerAction m_type;
@@ -431,7 +431,7 @@ public class ComponentPlayerPackage : IPackage
         }
         if (isServer && m_type == PlayerAction.CreativeFlyChange && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
         {
-            NetworkManager.Net.RemoveClient(From, "行为异常");
+            NetworkManager.Server.RemoveClient(From, "琛屼负寮傚父");
             return;
         }
         switch (m_type)
@@ -614,19 +614,19 @@ public class ComponentPlayerPackage : IPackage
                 });
                 break;
             case PlayerAction.DragDrop:
-                // 我去，别这样搞啊，回调地狱可是会很头疼的！！！！！
+                // 鎴戝幓锛屽埆杩欐牱鎼炲晩锛屽洖璋冨湴鐙卞彲鏄細寰堝ご鐤肩殑锛侊紒锛侊紒锛?
                 PlayerEvent((player) =>
                 {
                     projectNet.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventory_id, (inventory) =>
                     {
-                        // 丢弃背包内的物品，不是活动栏的
+                        // 涓㈠純鑳屽寘鍐呯殑鐗╁搧锛屼笉鏄椿鍔ㄦ爮鐨?
                         if (inventory == null || ComponentInventoryPackage.IsOwnedByOtherPlayer(inventory, From, out _))
                         {
                             return;
                         }
                         if (inventory is ComponentCreativeInventory && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
                         {
-                            NetworkManager.Net.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
+                            NetworkManager.Server.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
                             return;
                         }
 

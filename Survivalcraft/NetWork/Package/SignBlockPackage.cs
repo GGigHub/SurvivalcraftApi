@@ -3,7 +3,7 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 /// <summary>
-/// 基础包模板复制
+/// 基础包模板复�?
 /// </summary>
 public class SignBlockPackage : IPackage
 {
@@ -12,7 +12,7 @@ public class SignBlockPackage : IPackage
     public Client Except { get; set; }
     public Client From { get; set; }
 
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public Point3 m_point;
     public SignData m_signData;

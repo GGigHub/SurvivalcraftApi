@@ -6,7 +6,7 @@ public class ConnectionRejectPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.NotConnected;
+    public ClientStage MinNeedState => ClientStage.NotConnected;
 
     public string reason;
 
@@ -16,7 +16,7 @@ public class ConnectionRejectPackage : IPackage
 
     public void Handle(ProjectNet projectNet, bool isServer) 
     {
-        NetworkManager.Net.Stop($"[连接拒绝]{reason}");
+        NetworkManager.Stop($"[连接拒绝]{reason}");
     }
 
     public void ReadData(PackageStreamReader reader)

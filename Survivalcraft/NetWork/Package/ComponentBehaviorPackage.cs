@@ -9,7 +9,7 @@ public class ComponentBehaviorPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.Playing;
+    public ClientStage MinNeedState => ClientStage.Playing;
 
     public ushort m_entityId;
 

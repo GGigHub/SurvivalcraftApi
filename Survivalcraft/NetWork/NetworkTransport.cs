@@ -59,18 +59,18 @@ internal sealed class NetPacketTransport {
             return;
         }
 
-        client.State = ClientState.NotConnected;
+        client.State = ClientStage.NotConnected;
         m_node.RemoveClientImmediate(client);
         m_node.OnClientStateChanged?.Invoke(client);
-        if (peer == m_node.pendingPeer) {
-            m_node.pendingPeer = null;
-            m_node.agreeOnPendingPeer.Clear();
-            m_node.pendingStartUtc = null;
-            return;
-        }
-
-        m_node.agreeOnPendingPeer.Remove(client.ID);
         if (m_node is NetworkServer server) {
+            if (peer == server.pendingPeer) {
+                server.pendingPeer = null;
+                server.agreeOnPendingPeer.Clear();
+                server.pendingStartUtc = null;
+                return;
+            }
+
+            server.agreeOnPendingPeer.Remove(client.ID);
             server.DeliveryEvent(null, null);
         }
     }
@@ -98,12 +98,14 @@ internal sealed class NetPacketTransport {
         }
         catch (Exception e) {
             Log.Error(e);
-            m_node.RemoveClient(fromClient, "Error On RecieveEvent:\n" + e);
+            if (m_node is NetworkServer server) {
+                server.RemoveClient(fromClient, "Error On RecieveEvent:\n" + e);
+            }
         }
     }
 
     public void TurnOnPackageHandle(ProjectNet projectNet) {
-        NetworkManager.Net.OnRecieve += list => {
+        NetworkManager.OnRecieve += list => {
             foreach (var package in list) {
                 try {
                     package.Handle(projectNet, m_node.IsServer);

@@ -14,7 +14,7 @@ public class ComponentOnFirePackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public ushort m_entityId;
     public ushort m_attackerEntityId;
     public float m_duration;

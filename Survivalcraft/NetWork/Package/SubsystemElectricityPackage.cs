@@ -11,7 +11,7 @@ public class SubsystemElectricityPackage : IPackage
     public Client From { get; set; }
     public SubsystemElectricity m_subsystem;
     public List<SubsystemElectricity.NetSimulate> NetSimulates = new List<SubsystemElectricity.NetSimulate>();
-    public ClientState MinNeedState => ClientState.Playing;
+    public ClientStage MinNeedState => ClientStage.Playing;
     public SubsystemElectricityPackage()
     {
     }

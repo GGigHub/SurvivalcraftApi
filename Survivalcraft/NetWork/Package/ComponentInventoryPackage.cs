@@ -14,18 +14,18 @@ public class ComponentInventoryPackage : IPackage
 
     public enum EventType
     {
-        ActiveSlotChange,                           // 活动插槽更改，拿物品的那几个主界面槽位
-        InventorySync,                                // 同步背包
+        ActiveSlotChange,                           // 娲诲姩鎻掓Ы鏇存敼锛屾嬁鐗╁搧鐨勯偅鍑犱釜涓荤晫闈㈡Ы浣?
+        InventorySync,                                // 鍚屾鑳屽寘
 
-        // 下面2个可以考虑去掉，但是暂时搁置并保留
+        // 涓嬮潰2涓彲浠ヨ€冭檻鍘绘帀锛屼絾鏄殏鏃舵悂缃苟淇濈暀
         QueryErrorInventoryInfo,
         FurnaceSync,
         // =============================
 
-        SetSlotsItem,                                   // 设置背包内的物品
-        SetInventory,                                   // 设置整个背包
-        HandleMoveItem,                             // InventorySlotWidget 中的处理函数同名
-        HandleDragDrop,                              // InventorySlotWidget 中的处理函数同名
+        SetSlotsItem,                                   // 璁剧疆鑳屽寘鍐呯殑鐗╁搧
+        SetInventory,                                   // 璁剧疆鏁翠釜鑳屽寘
+        HandleMoveItem,                             // InventorySlotWidget 涓殑澶勭悊鍑芥暟鍚屽悕
+        HandleDragDrop,                              // InventorySlotWidget 涓殑澶勭悊鍑芥暟鍚屽悕
     }
     public class Slot
     {
@@ -39,7 +39,7 @@ public class ComponentInventoryPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public EventType m_eventType;
 
     public int m_inventory_id;
@@ -85,9 +85,9 @@ public class ComponentInventoryPackage : IPackage
         m_eventType = EventType.SetSlotsItem;
     }
 
-    //客户端/服务器发送包后相关的Inventory的Generation就+1
-    //服务器接收到包，判断Inventory的Generation是否为本地+1，为通过验证，不为就驳回并强制同步成服务器的数据
-    // isLostSync 如果为true，则返回所有格子的数据??
+    //瀹㈡埛绔?鏈嶅姟鍣ㄥ彂閫佸寘鍚庣浉鍏崇殑Inventory鐨凣eneration灏?1
+    //鏈嶅姟鍣ㄦ帴鏀跺埌鍖咃紝鍒ゆ柇Inventory鐨凣eneration鏄惁涓烘湰鍦?1锛屼负閫氳繃楠岃瘉锛屼笉涓哄氨椹冲洖骞跺己鍒跺悓姝ユ垚鏈嶅姟鍣ㄧ殑鏁版嵁
+    // isLostSync 濡傛灉涓簍rue锛屽垯杩斿洖鎵€鏈夋牸瀛愮殑鏁版嵁??
     public ComponentInventoryPackage(Dictionary<IInventory, List<int>> syncItems)
     {
         m_slots = new Dictionary<int, List<Slot>>();
@@ -309,11 +309,11 @@ public class ComponentInventoryPackage : IPackage
             case EventType.InventorySync:
                 if (isServer)
                 {
-                    // 服务器不接受来自客户端的同步！敢发可以直接踢出服务器
+                    // 鏈嶅姟鍣ㄤ笉鎺ュ彈鏉ヨ嚜瀹㈡埛绔殑鍚屾锛佹暍鍙戝彲浠ョ洿鎺ヨ涪鍑烘湇鍔″櫒
                 }
                 else
                 {
-                    //客户端接受服务器的包
+                    //瀹㈡埛绔帴鍙楁湇鍔″櫒鐨勫寘
                     foreach (var item in m_slots)
                     {
                         subsystemInventories.FindInventoryById(item.Key, (inventory) =>
@@ -345,7 +345,7 @@ public class ComponentInventoryPackage : IPackage
                         {
                             extra = t.Entity.ValuesDictionary.DatabaseObject.Name;
                         }
-                        Log.Information($"请求错误的箱子ID[{m_inventory_id}]来自[{m_inventory.GetType().Name}][{extra}]");
+                        Log.Information($"璇锋眰閿欒鐨勭瀛怚D[{m_inventory_id}]鏉ヨ嚜[{m_inventory.GetType().Name}][{extra}]");
                     });
                 }
                 break;
@@ -365,11 +365,11 @@ public class ComponentInventoryPackage : IPackage
                         if (m_targetInventorySlot.count < 0) reject = true;
                         if (sourceInventoryObject is ComponentCreativeInventory && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
                         {
-                            NetworkManager.Net.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
+                            NetworkManager.Server.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
                             reject = true;
                         }
                     }
-                    // 数据捕捉
+                    // 鏁版嵁鎹曟崏
 
                     if (isServer && reject)
                     {
@@ -393,7 +393,7 @@ public class ComponentInventoryPackage : IPackage
                 }
                 else
                 {
-                    // 服务器找不到背包？怀疑是来打服的！！！
+                    // 鏈嶅姟鍣ㄦ壘涓嶅埌鑳屽寘锛熸€€鐤戞槸鏉ユ墦鏈嶇殑锛侊紒锛?
 
                 }
                 break;
@@ -411,11 +411,11 @@ public class ComponentInventoryPackage : IPackage
                         if (!IsSlotIndexValid(targetInventoryObject, m_targetInventorySlot.slotIndex)) reject = true;
                         if (sourceInventoryObject is ComponentCreativeInventory && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)
                         {
-                            NetworkManager.Net.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
+                            NetworkManager.Server.RemoveClient(From.PlayerData.Client, "非法操作: 生存模式使用创造物品");
                             reject = true;
                         }
                     }
-                    // 数据捕捉
+                    // 鏁版嵁鎹曟崏
 
                     if (isServer && reject)
                     {
@@ -439,14 +439,14 @@ public class ComponentInventoryPackage : IPackage
                 }
                 else
                 {
-                    // 服务器找不到背包？怀疑是来打服的！！！
+                    // 鏈嶅姟鍣ㄦ壘涓嶅埌鑳屽寘锛熸€€鐤戞槸鏉ユ墦鏈嶇殑锛侊紒锛?
 
                 }
                 break;
             case EventType.SetSlotsItem:
                 if (isServer)
                 {
-                    // 客户端要求服务器端改背包？？这简直是造反！！！
+                    // 瀹㈡埛绔姹傛湇鍔″櫒绔敼鑳屽寘锛燂紵杩欑畝鐩存槸閫犲弽锛侊紒锛?
 
                 }
                 else

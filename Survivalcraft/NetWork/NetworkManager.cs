@@ -14,16 +14,41 @@ namespace Game.NetWork;
 public static class NetworkManager {
     public const int DISCONNECT_TIMEOUT = 10000;
 
-    public static NetworkBase Net = new();
+    public static NetworkServer Server { get; private set; }
+    public static NetworkClient Client { get; private set; }
+    private static NetworkBase Current => (NetworkBase)Server ?? Client;
 
     public static Texture2D BlockTexture;
 
     public static bool IsOfflineMode;
-    public static WorkType WorkType => Net.WorkType;
+    public static WorkType WorkType => Current.WorkType;
+    public static Client Self => Current.Self;
+    public static Dictionary<int, Client> Clients => Current.Clients;
+    public static IEnumerable<Client> Peers => Current.Peers;
+    public static int ClientCount => Current.ClientCount;
+    public static NetworkBase.Stage CurrentStage => Current.CurrentStage;
+    public static bool IsNetRunning => Current.netManager.IsRunning;
+    public static LiteNetLib.NetPeer PendingPeer {
+        get => Server?.pendingPeer;
+        set {
+            if (Server != null) {
+                Server.pendingPeer = value;
+            }
+        }
+    }
+    public static HashSet<byte> AgreeOnPendingPeer => Server?.agreeOnPendingPeer;
+    public static event Action<IEnumerable<IPackage>> OnRecieve {
+        add => Current.OnRecieve += value;
+        remove => Current.OnRecieve -= value;
+    }
+    public static Action<Client> OnClientStateChanged {
+        get => Current.OnClientStateChanged;
+        set => Current.OnClientStateChanged = value;
+    }
 
     public static WorkType GetCurrentWorkType() {
-        if (Net.IsServer) return WorkType.Server;
-        if (Net.CurrentStage == NetworkBase.Stage.Connected) return WorkType.Client;
+        if (Server?.IsServer == true) return WorkType.Server;
+        if (Client?.CurrentStage == NetworkBase.Stage.Connected) return WorkType.Client;
         return WorkType.Local;
     }
 
@@ -36,8 +61,8 @@ public static class NetworkManager {
 
     public static ComponentPlayer MainPlayer {
         get {
-            if (GameManager.Project != null && Net.Self != null) {
-                return GameManager.Project.FindSubsystem<SubsystemPlayers>().ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerGUID == Net.Self.PlayerGuid);
+            if (GameManager.Project != null && Self != null) {
+                return GameManager.Project.FindSubsystem<SubsystemPlayers>().ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerGUID == Self.PlayerGuid);
             }
             return null;
         }
@@ -55,24 +80,18 @@ public static class NetworkManager {
         net.ConnectServer(ep, passwd, onlineAccessToken);
     }
 
-    public static void StartLocal() {
-        if (Net.GetType() != typeof(NetworkBase)) {
-            ResetNet(new NetworkBase());
-        }
-        Net.StartLocal();
-    }
-
     public static void QueuePackage(IPackage package) {
-        lock (Net.PendingPackages) {
-            Net.PendingPackages.Add(package);
+        lock (Current.PendingPackages) {
+            Current.PendingPackages.Add(package);
         }
     }
 
     private static void ResetNet(NetworkBase networkBase) {
-        if (Net != null) {
-            Net.StopImmediate();
+        if (!ReferenceEquals(Current, networkBase)) {
+            Current.StopImmediate();
         }
-        Net = networkBase;
+        Client = networkBase as NetworkClient;
+        Server = networkBase as NetworkServer;
     }
 
     public static PackageStreamReader GetReader(NetDataReader reader) {
@@ -180,7 +199,7 @@ public static class NetworkManager {
     }
 
     private static void ReplaceGUIDIfNeeded(ValuesDictionary playerVD, Client currentClient, Guid originalGuid) {
-        var targetClient = Net.GetClientByGUID(originalGuid);
+        var targetClient = GetClientByGUID(originalGuid);
 
         if (targetClient != null && targetClient.PlayerGuid != currentClient.PlayerGuid) {
             playerVD.SetValue("PlayerGUID", targetClient.TokenId);
@@ -228,4 +247,21 @@ public static class NetworkManager {
         dict.ApplyOverrides(elem);
         return dict;
     }
+
+    public static Client GetClientByID(byte id) => Current.GetClientByID(id);
+
+    public static Client GetClientByGUID(Guid? guid) => Current.GetClientByGUID(guid);
+
+    public static void AddClient(Client client) => Current.AddClient(client);
+
+    public static Client CreateClient(LiteNetLib.NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname) =>
+        Server.CreateClient(peer, tokenId, guid, dataId, nickname);
+
+    public static void AddPendingHandlePackage(IPackage package) => Current.AddPendingHandlePackage(package);
+
+    public static void TurnOnPackageHanlde(ProjectNet projectNet) => Current.TurnOnPackageHanlde(projectNet);
+
+    public static void Stop(string error = null) => Current.Stop(error);
+
+    public static void StopImmediate() => Current.StopImmediate();
 }

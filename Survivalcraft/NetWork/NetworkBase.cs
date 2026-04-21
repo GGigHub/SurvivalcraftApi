@@ -36,22 +36,13 @@ public class NetworkBase {
 
     public Dictionary<int, Client> Clients = new Dictionary<int, Client>();
 
-    public NetPeer pendingPeer = null;
-
-    public HashSet<byte> agreeOnPendingPeer = new HashSet<byte>();
-
-    internal Client PendingClient => (Client)pendingPeer?.Tag;
-
     public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
 
-    internal DateTime? pendingStartUtc;
-    internal const double PendingJoinTimeoutSeconds = 2.0;
     internal readonly List<IPackage> PendingPackages = new List<IPackage>();
     internal readonly List<IPackage> PendingHandlePackages = new List<IPackage>();
     public event Action<IEnumerable<IPackage>> OnRecieve;
     public Action<Client> OnClientStateChanged;
     public Guid TokenId;
-    internal readonly Dictionary<Client, string> ClientsToRemove = new Dictionary<Client, string>();
     internal bool isStopping;
     internal long sec_length;
     internal long sec_length_total;
@@ -73,30 +64,8 @@ public class NetworkBase {
         m_runtimeController = new NetRuntimeController(this, m_chunkTransport, m_packetTransport);
     }
 
-    public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname) {
-        if (!IsServer) throw new InvalidOperationException("creating client as non-server");
-        foreach (var p in Peers) {
-            if (p.PlayerGuid == guid) RemoveClient(p, "Duplicate account login.");
-        }
-        var c = new Client(peer, FindUnusedIndex(), tokenId, guid, nickname) {
-            CommunityAccountId = dataId
-        };
-        peer.Tag = c;
-        return c;
-    }
-
     public void AddClient(Client c) {
         Clients[c.ID] = c;
-    }
-
-    public void RemoveClient(Client c, string reason = null) {
-        if (ClientsToRemove.ContainsKey(c)) {
-            if (string.IsNullOrEmpty(reason))
-                ClientsToRemove[c] += '\n' + reason;
-        }
-        else {
-            ClientsToRemove[c] = reason ?? string.Empty;
-        }
     }
 
     public void RemoveClientImmediate(Client c, string reason = null) {
@@ -119,22 +88,9 @@ public class NetworkBase {
             if (IsServer) {
                 NetworkManager.QueuePackage(new ClientPackage(c.ID));
             }
-            c.State = ClientState.NotConnected;
+            c.State = ClientStage.NotConnected;
             OnClientStateChanged?.Invoke(c);
             Clients.Remove(c.ID);
-        }
-    }
-
-    public void RemoveAllClients(string reason = null) {
-        var cs = new List<Client>(Clients.Values);
-        foreach (var c in cs) {
-            if (c == Self) continue;
-            if (c.Peer != null && c.Peer.ConnectionState != ConnectionState.Disconnected) {
-                if (reason != null) c.Peer.Disconnect(NetDataWriter.FromString(reason));
-                else c.Peer.Disconnect();
-            }
-            Clients.Remove(c.ID);
-            c.State = ClientState.NotConnected;
         }
     }
 
@@ -259,13 +215,6 @@ public class NetworkBase {
 
     internal bool TryDecodePackages(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<IPackage> packages) {
         return m_packetTransport.TryDecodePackages(reader, peer, request, endPoint, out packages);
-    }
-
-    private byte FindUnusedIndex() {
-        for (byte i = 0; i < 255; i++) {
-            if (!Clients.ContainsKey(i)) return i;
-        }
-        throw new Exception("Server is full.");
     }
 
     public static bool IsValidIPAddress(string ip) {

@@ -4,6 +4,13 @@
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
+      <Compile Remove="C:\Users\tk34\Desktop\NF2\SurvivalcraftApi\Survivalcraft\NetWork\NetworkPeerBase.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Include="NetWork\Enums\ClientStage.cs" />
+      <Compile Include="NetWork\Enums\EditableType.cs" />
+    </ItemGroup>
+    <ItemGroup>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />
     </ItemGroup>
     <ItemGroup>

@@ -1,6 +1,6 @@
 namespace Game.NetWork;
 
-public enum ClientState
+public enum ClientStage
 {
     NotConnected,
     Connected,

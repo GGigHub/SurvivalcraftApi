@@ -20,12 +20,14 @@ internal sealed class NetRuntimeController {
 
     public void StopImmediate() {
         try {
-            m_node.pendingPeer = null;
-            m_node.agreeOnPendingPeer.Clear();
-            m_node.pendingStartUtc = null;
+            if (m_node is NetworkServer server) {
+                server.pendingPeer = null;
+                server.agreeOnPendingPeer.Clear();
+                server.pendingStartUtc = null;
+            }
             m_node.PendingPackages.Clear();
             if (m_node.WorkType == WorkType.Server) {
-                m_node.RemoveAllClients("Server is shutting down.");
+                ((NetworkServer)m_node).RemoveAllClients("Server is shutting down.");
             }
             if (m_node.netManager.IsRunning) {
                 m_node.netManager.Stop(true);
@@ -60,50 +62,53 @@ internal sealed class NetRuntimeController {
     }
 
     private void UpdatePendingJoinState() {
-        if (m_node.pendingPeer == null) {
+        if (m_node is not NetworkServer server || server.pendingPeer == null) {
             return;
         }
 
         var toRemoveIds = new List<byte>();
-        foreach (byte id in m_node.agreeOnPendingPeer) {
+        foreach (byte id in server.agreeOnPendingPeer) {
             if (!m_node.Clients.ContainsKey(id) || !m_node.Clients[id].IsConnected) {
                 toRemoveIds.Add(id);
             }
         }
         foreach (byte id in toRemoveIds) {
-            m_node.agreeOnPendingPeer.Remove(id);
+            server.agreeOnPendingPeer.Remove(id);
         }
 
-        if (!m_node.pendingStartUtc.HasValue) {
-            m_node.pendingStartUtc = DateTime.UtcNow;
+        if (!server.pendingStartUtc.HasValue) {
+            server.pendingStartUtc = DateTime.UtcNow;
             return;
         }
 
-        if ((DateTime.UtcNow - m_node.pendingStartUtc.Value).TotalSeconds > NetworkBase.PendingJoinTimeoutSeconds) {
-            CompletePendingJoin();
-            m_node.agreeOnPendingPeer.Clear();
+        if ((DateTime.UtcNow - server.pendingStartUtc.Value).TotalSeconds > NetworkServer.PendingJoinTimeoutSeconds) {
+            CompletePendingJoin(server);
+            server.agreeOnPendingPeer.Clear();
             return;
         }
 
-        if (m_node.agreeOnPendingPeer.Count == 0 && m_node.PendingClient != null) {
-            CompletePendingJoin();
+        if (server.agreeOnPendingPeer.Count == 0 && server.PendingClient != null) {
+            CompletePendingJoin(server);
         }
     }
 
-    private void CompletePendingJoin() {
-        if (m_node.PendingClient != null) {
-            m_node.AddClient(m_node.PendingClient);
-            NetworkManager.QueuePackage(new ClientPackage(m_node.Clients.Values) { To = m_node.PendingClient });
+    private void CompletePendingJoin(NetworkServer server) {
+        if (server.PendingClient != null) {
+            server.AddClient(server.PendingClient);
+            NetworkManager.QueuePackage(new ClientPackage(server.Clients.Values) { To = server.PendingClient });
         }
-        m_node.pendingPeer = null;
-        m_node.pendingStartUtc = null;
+        server.pendingPeer = null;
+        server.pendingStartUtc = null;
     }
 
     private void FlushClientsToRemove() {
-        foreach (var pair in m_node.ClientsToRemove) {
-            m_node.RemoveClientImmediate(pair.Key, pair.Value);
+        if (m_node is not NetworkServer server) {
+            return;
         }
-        m_node.ClientsToRemove.Clear();
+        foreach (var pair in server.ClientsToRemove) {
+            server.RemoveClientImmediate(pair.Key, pair.Value);
+        }
+        server.ClientsToRemove.Clear();
     }
 
     private void FlushPendingPackages() {

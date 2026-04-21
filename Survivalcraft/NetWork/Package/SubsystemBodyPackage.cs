@@ -9,7 +9,7 @@ public class SubsystemBodyPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.Playing;
+    public ClientStage MinNeedState => ClientStage.Playing;
     public enum EventType
     {
         BodyUpdate,
@@ -246,7 +246,7 @@ public class SubsystemBodyPackage : IPackage
                                 }
                             }
                         }, () => {
-                            //本地没有这个动物，向服务器请求
+                            //本地没有这个动物，向服务器请�?
                             ml.Add(item.CreatureId);
                         });
                     }
@@ -270,7 +270,7 @@ public class SubsystemBodyPackage : IPackage
                     foreach (var b in rl)
                     {
 #if DEBUG
-                        Log.Information($"客户端移除不同步的实体:{b.Entity.EntityId}");
+                        Log.Information($"客户端移除不同步的实�?{b.Entity.EntityId}");
 #endif
                             projectNet.RemoveEntity(b.Entity, true);
                         }

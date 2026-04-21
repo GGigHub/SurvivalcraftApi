@@ -13,7 +13,7 @@ public class SubsystemSeasonPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public Season SeasonNet { get; set; }
     public int SeasonIndexNet;
     public float TimeOfSeasonNet { get; set; }

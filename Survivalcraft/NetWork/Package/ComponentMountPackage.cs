@@ -8,7 +8,7 @@ public class ComponentMountPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public ushort m_targetId;
     public ushort m_fromId;
 
@@ -62,11 +62,11 @@ public class ComponentMountPackage : IPackage
                 projectNet.FindEntityById(m_fromId, (entity) =>
                 {
                     var rider = entity.FindComponent<ComponentRider>();
-                    //rider是骑乘者
+                    //rider是骑乘�?
                     rider?.StartNetDismounting();
                     if (!isServer && rider.Mount != null)
                     {
-                        //禁用骑乘生物的组件行为
+                        //禁用骑乘生物的组件行�?
                         var select = rider.Mount.Entity.FindComponent<ComponentBehaviorSelector>();
                         if (select != null) select.IsDisableBehavior = true;
                     }
@@ -91,7 +91,7 @@ public class ComponentMountPackage : IPackage
                             rider.StartNetMounting(mount);
                             if (!isServer)
                             {
-                                //启动骑乘生物的组件行为
+                                //启动骑乘生物的组件行�?
                                 var select = rider.Mount.Entity.FindComponent<ComponentBehaviorSelector>();
                                 if (select != null) select.IsDisableBehavior = false;
                             }

@@ -11,7 +11,7 @@ public class SubsystemSkyPackage : IPackage {
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.Playing;
+    public ClientStage MinNeedState => ClientStage.Playing;
     public Vector3 LightningStrikePosition;
     public Vector3 m_direction;
     public bool isRequest;

@@ -130,9 +130,9 @@ public class PlayerScreen : Screen {
         if (m_mode == Mode.Edit && GameManager.Project != null) {
             GameManager.UpdateProject();
         }
-        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.WorkType == WorkType.Client && NetworkManager.Net.netManager.IsRunning) {
+        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.WorkType == WorkType.Client && NetworkManager.IsNetRunning) {
             //客户端卡在新增玩家界面两分钟自动中断连接
-            NetworkManager.Net.Stop("客户端主动关闭连接");
+            NetworkManager.Stop("客户端主动关闭连接");
         }
 
         if (DialogsManager.Dialogs.Contains(m_fetchingPlayerDialog)) {
@@ -214,8 +214,8 @@ public class PlayerScreen : Screen {
         if (m_deleteButton.IsClicked) {
             if (NetworkManager.WorkType == WorkType.Server) {
                 DialogsManager.Confirm("你确定要踢出这个玩家吗", btn => {
-                    var client = NetworkManager.Net.GetClientByGUID(m_playerData.PlayerGUID);
-                    if (btn == MessageDialogButton.Button1) NetworkManager.Net.RemoveClient(client);
+                    var client = NetworkManager.GetClientByGUID(m_playerData.PlayerGUID);
+                    if (btn == MessageDialogButton.Button1) NetworkManager.Server.RemoveClient(client);
                     else DialogsManager.HideAllDialogs();
                 });
             }
@@ -252,7 +252,7 @@ public class PlayerScreen : Screen {
             if (m_mode == Mode.Initial) {
                 GameManager.SaveProject(waitForCompletion: true, showErrorDialog: true);
                 GameManager.DisposeProject();
-                NetworkManager.Net.Stop();
+                NetworkManager.Stop();
                 ScreensManager.SwitchScreen("MainMenu");
             }
             else if (m_mode == Mode.Add || m_mode == Mode.Edit) {

@@ -9,7 +9,7 @@ public class PopupPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;

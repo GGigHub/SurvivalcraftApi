@@ -4,6 +4,7 @@ using Engine;
 using Game.NetWork.Packages;
 using GameEntitySystem;
 using LiteNetLib;
+using LiteNetLib.Utils;
 
 namespace Game.NetWork;
 
@@ -15,7 +16,7 @@ public class Client {
     public byte ID { get; internal set; }
 
     // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
-    // 客户端自己的PlayerGuid，以及服务端上所有玩家的PlayerGuid都未经混淆
+    // 客户端自己的PlayerGuid，以及服务端上所有玩家的PlayerGuid都未经混�?
     // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
     public Guid PlayerGuid { get; internal set; }
 
@@ -33,21 +34,21 @@ public class Client {
 
     public string CommunityAccountId { get; set; } = "-1";
 
-    public ClientState State { get; set; }
+    public ClientStage State { get; set; }
 
     public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID); } }
 
     public Entity CachePlayerEntity { get; set; }
 
     /// <summary>
-    /// 是否在连接成功列表
+    /// 是否在连接成功列�?
     /// </summary>
     public bool IsAddedToNetNode { get; private set; }
 
-    //服务器本身构造
+    //服务器本身构�?
     public Client(Guid guid) {
         PlayerGuid = guid;
-        State = ClientState.Connected;
+        State = ClientStage.Connected;
         TokenId = Guid.NewGuid();
         ID = 0;
     }
@@ -72,16 +73,16 @@ public class Client {
 
     public Client(IPEndPoint iPEndPoint) {
         IPPoint = iPEndPoint;
-        State = ClientState.NotConnected;
+        State = ClientStage.NotConnected;
     }
     public Client(ConnectionRequest request) {
         Request = request;
         IPPoint = request.RemoteEndPoint;
-        State = ClientState.NotConnected;
+        State = ClientStage.NotConnected;
     }
     public Client(NetPeer peer) {
         Peer = peer;
-        State = ClientState.NotConnected;
+        State = ClientStage.NotConnected;
         TokenId = Guid.NewGuid();
     }
 
@@ -101,6 +102,13 @@ public class Client {
 
 
 public class NetworkServer : NetworkBase {
+    public NetPeer pendingPeer = null;
+    public HashSet<byte> agreeOnPendingPeer = new HashSet<byte>();
+    internal Client PendingClient => (Client)pendingPeer?.Tag;
+    internal DateTime? pendingStartUtc;
+    internal const double PendingJoinTimeoutSeconds = 2.0;
+    internal readonly Dictionary<Client, string> ClientsToRemove = new Dictionary<Client, string>();
+
     public bool StartServer(int port) {
         if (netManager.IsRunning) {
             StopImmediate();
@@ -171,5 +179,47 @@ public class NetworkServer : NetworkBase {
                 Log.Information("ConnectionRequestEvent Error:" + e.StackTrace);
             }
         }
+    }
+
+    public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname) {
+        if (!IsServer) throw new InvalidOperationException("creating client as non-server");
+        foreach (var p in Peers) {
+            if (p.PlayerGuid == guid) RemoveClient(p, "Duplicate account login.");
+        }
+        var c = new Client(peer, FindUnusedIndex(), tokenId, guid, nickname) {
+            CommunityAccountId = dataId
+        };
+        peer.Tag = c;
+        return c;
+    }
+
+    public void RemoveClient(Client c, string reason = null) {
+        if (ClientsToRemove.ContainsKey(c)) {
+            if (string.IsNullOrEmpty(reason))
+                ClientsToRemove[c] += '\n' + reason;
+        }
+        else {
+            ClientsToRemove[c] = reason ?? string.Empty;
+        }
+    }
+
+    public void RemoveAllClients(string reason = null) {
+        var cs = new List<Client>(Clients.Values);
+        foreach (var c in cs) {
+            if (c == Self) continue;
+            if (c.Peer != null && c.Peer.ConnectionState != ConnectionState.Disconnected) {
+                if (reason != null) c.Peer.Disconnect(NetDataWriter.FromString(reason));
+                else c.Peer.Disconnect();
+            }
+            Clients.Remove(c.ID);
+            c.State = ClientStage.NotConnected;
+        }
+    }
+
+    private byte FindUnusedIndex() {
+        for (byte i = 0; i < 255; i++) {
+            if (!Clients.ContainsKey(i)) return i;
+        }
+        throw new Exception("Server is full.");
     }
 }

@@ -45,12 +45,12 @@ namespace Game {
         public float m_progress;
         public int PlayerIndex { get; set; }
 
-        // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
-        // 客户端自己的PlayerGuid，以及服务端上所有玩家的PlayerGuid都未经混淆
-        // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
-        public Guid PlayerGUID { get; set; } = NetworkManager.Net.Self.PlayerGuid;
+        // 闁诲骸绠嶉崹娲春濞戞氨鍗氭い鏍ㄧ箓缁狀垶鏌涘▎鎰ⅹ闁糕晛鐭傚畷妤呭嫉閻㈢敻鎼ㄩ梺缁樺閺呮盯顢欏澶嬪剭闁告垹婀媋yerGuid闂佸搫瀚烽崹顖滃垝椤掍胶顩锋い鎺嗗亾闁诡喖娲幊娑㈩敂閸℃鏆燭okenID闂佹寧绋戦惌渚€锝為敃鈧彁闂佸灝顑囬埞瀣级閳轰焦鐭楃紒?
+        // 闁诲骸绠嶉崹娲春濞戞氨鍗氭い鏍ㄧ箓濞堟壆鈧鐡曟禍顒€鈻撻幈鐎昦yerGuid闂佹寧绋戞總鏃€绂嶉幒妤€鐭楀┑鐘插暞缁犳盯鏌涢弮鎾剁？妞ゅ浚鍓氱粙澶嬬節閸愵煈鏆￠梺鍝勭墕椤﹁京鏁搹鍏夊亾閻熸澘顣虫繛鍫熷幖layerGuid闂備緡鍠涙慨銈咃耿椤撶姷纾奸煫鍥ㄦ缁屾寧绻?
+        // 婵炲濮伴崕鎵箔閸岀偞鍎嶉柛鎴犳箣ayerGuid闂佸湱顭堝ú銊モ枔閹达箑鍙婇柣銈咁唸mponentPlayer,PlayerData,Client婵炴垶鎼╅崢鎯р枔閹辩€昦yerGuid
+        public Guid PlayerGUID { get; set; } = NetworkManager.Self.PlayerGuid;
 
-        public Client Client => NetworkManager.Net.GetClientByGUID(PlayerGUID);
+        public Client Client => NetworkManager.GetClientByGUID(PlayerGUID);
 
         public byte? ClientId => Client?.ID;
 
@@ -155,8 +155,8 @@ namespace Game {
             InputDevice = WidgetInputDevice.None;
             m_stateMachine.AddState("FirstUpdate", null, delegate
             {
-                //说明：没有在线的玩家让其离线
-                if ((NetworkManager.WorkType != WorkType.Local && NetworkManager.Net.GetClientByGUID(PlayerGUID) == null) || (NetworkManager.WorkType == WorkType.Local && !IsMainPlayer)) {
+                //闁荤姴娲ら悺銊ノｉ幋锔芥櫖婵﹩鍘惧楣冩煛閸繍妲告繝鈧鍡欐／閻犳亽鍔嶉悾閬嶆煟濠х偓娅呮い鏂跨Ф閹峰鍩℃担绋跨翻缂備礁鍊藉畷鐢稿吹?
+                if ((NetworkManager.WorkType != WorkType.Local && NetworkManager.GetClientByGUID(PlayerGUID) == null) || (NetworkManager.WorkType == WorkType.Local && !IsMainPlayer)) {
                     m_stateMachine.TransitionTo("MakePlayerOffline");
                 }
                 else if (ComponentPlayer != null) {
@@ -165,7 +165,7 @@ namespace Game {
                 }
                 else {
 #if DEBUG
-                    Log.Debug($"准备生成玩家 ID: {PlayerGUID}");
+                    Log.Debug($"闂佸憡鍨靛Λ妤吽囬鍕仺闁绘梻顭堥悘鍥煟濠х偓娅呮い?ID: {PlayerGUID}");
 #endif
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
@@ -184,7 +184,7 @@ namespace Game {
                         else {
                             SpawnPosition = m_subsystemTerrain.TerrainContentsGenerator.FindCoarseSpawnPosition();
 #if DEBUG
-                            Log.Information($"生成出生点{SpawnPosition}");
+                            Log.Information("SpawnPosition: " + SpawnPosition);
 #endif
                             m_spawnMode = NetworkManager.WorkType == WorkType.Server ? SpawnMode.InitialNoIntro : SpawnMode.InitialIntro;
                         }
@@ -200,12 +200,12 @@ namespace Game {
                 }
                 if (m_spawnMode == SpawnMode.Respawn) {
                     if (NetworkManager.WorkType != WorkType.Client) UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 2), Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
-                    else UpdateSpawnDialog(string.Format("连接{0}的世界中 (等级 {1})", Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
+                    else UpdateSpawnDialog(string.Format("闁哄鏅濋崑鐐垫暜绾?}闂佹眹鍔岀€氼亞绮鈧幃鍓т沪閼规澘骞€ (缂備焦绋戦ˇ杈殽?{1})", Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
                 }
                 else {
                     UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathUtils.Floor(Level)), null, 0f, resetProgress: true);
                 }
-                //说明，客户端非主玩家不执行updateLocation
+                //闁荤姴娲ら悺銊ノｉ幋锔芥櫖閻忕偟鐡旈崥鍌炴煙閹绢噮妫戞い蹇ｅ墴濡啴鎮欓弶璺ㄦВ闂佺粯澹曢弲娑㈩敊瀹ュ棛鈻旂€广儱妫楅埛鏃堟偠濞戞妲噋dateLocation
                 if (!(NetworkManager.WorkType == WorkType.Client && !IsMainPlayer)) {
                     m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, 0f, 64f);
                 }
@@ -241,7 +241,7 @@ namespace Game {
                     center = ClientCachePosition.Value.XZ;
                     ClientCachePosition = null;
                 }
-                //说明，客户端非主玩家不执行UpdateLocation
+                //闁荤姴娲ら悺銊ノｉ幋锔芥櫖閻忕偟鐡旈崥鍌炴煙閹绢噮妫戞い蹇ｅ墴濡啴鎮欓弶璺ㄦВ闂佺粯澹曢弲娑㈩敊瀹ュ棛鈻旂€广儱妫楅埛鏃堟偠濞戞﹩鍔榩dateLocation
                 if (!(NetworkManager.WorkType == WorkType.Client && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
             }, delegate
             {
@@ -262,10 +262,10 @@ namespace Game {
                     }
                 }
             }, null);
-            //等待服务器返回玩家数据
+            //缂備焦绋戦ˇ顖滄閻旂厧瀚夌€广儱鎳庨～銈夋煕閿濆啫濮€缂佺粯鍨垮畷鍫曟倷闂堟稖绀嬮柣搴ｎ攰閸╂牠寮抽悢鐓庣?
             m_stateMachine.AddState("WaitForPlayerEntity", null, delegate
             {
-                UpdateSpawnDialog("等待服务器响应玩家实体", null, 0f, false);
+                UpdateSpawnDialog("Waiting for player entity from server", null, 0f, false);
                 if (Time.PeriodicEvent(0.1, 0.0)) {
                     if (ComponentPlayer != null) {
                         m_stateMachine.TransitionTo("Playing");
@@ -276,7 +276,7 @@ namespace Game {
             {
                 HideSpawnDialog();
                 if (NetworkManager.WorkType == WorkType.Client) {
-                    NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.Playing));
+                    NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Self.ID, ClientStage.Playing));
                 }
             }, delegate
             {
@@ -289,10 +289,10 @@ namespace Game {
                 else if (ComponentPlayer.ComponentHealth.Health <= 0f) {
                     m_playerDeathTime = Time.RealTime;
                 }
-                //服务器更新客户端玩家的区域
+                //闂佸搫鐗嗙粔瀛樻叏閻旂厧闂柕濠忛檮缁绢垶鏌￠崒娑欑凡妞ゆ挸缍婇獮瀣槹鎼搭喕绱撻梺缁樺閺呮盯顢欏澶嬪剭闁告洦鍋勯梾姗€鏌?
                 if (!IsMainPlayer && NetworkManager.WorkType != WorkType.Client) {
                     if (!isSetStatus) {
-                        if (Client != null && Client.State != ClientState.Playing) {
+                        if (Client != null && Client.State != ClientStage.Playing) {
                             ComponentPlayer.ComponentHealth.IsInvulnerable = true;
                         }
                         else {
@@ -312,7 +312,7 @@ namespace Game {
                 });
             }, delegate
             {
-                //死掉后也继续更新
+                //濠殿喗绻勭划顖滄暜閳ь剟鏌涘顒傚嚬缂佲€冲暟缁辨帟顦撮柣銏狀煼瀵鈧稒蓱閻撯偓
                 if (NetworkManager.WorkType != WorkType.Client && !IsMainPlayer) {
                     Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 }
@@ -340,19 +340,19 @@ namespace Game {
 
         public void NetRestart() {
             if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel) {
-                //禁用更新，防止一直出现dialog
+                //缂備礁鍊烽懗鍫曞极閵堝鍗抽悗娑櫳戦悡鈧梺鎸庣☉閻倸危鐠囧樊娼版い顐幘椤忛亶鏌ｉ埡鍌涚稇闁搞値鍙冮幃鎶芥儌閻瓫log
                 m_stateMachine.TransitionTo(null);
-                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("提示", "你已在残酷模式死亡，不可复活！", LanguageControl.Yes, LanguageControl.No, btn =>
+                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("Notice", "You died in cruel mode and cannot respawn.", LanguageControl.Yes, LanguageControl.No, btn =>
                 {
-                    NetworkManager.Net.StopImmediate();
+                    NetworkManager.StopImmediate();
                 }));
             }
             else if (!m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
-                //禁用更新，防止一直出现dialog
+                //缂備礁鍊烽懗鍫曞极閵堝鍗抽悗娑櫳戦悡鈧梺鎸庣☉閻倸危鐠囧樊娼版い顐幘椤忛亶鏌ｉ埡鍌涚稇闁搞値鍙冮幃鎶芥儌閻瓫log
                 m_stateMachine.TransitionTo(null);
-                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("提示", "服务器禁止了玩家重生！", LanguageControl.Yes, LanguageControl.No, btn =>
+                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("Notice", "The server has disabled player respawn.", LanguageControl.Yes, LanguageControl.No, btn =>
                 {
-                    NetworkManager.Net.StopImmediate();
+                    NetworkManager.StopImmediate();
                 }));
             }
             else if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure && !m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
@@ -395,12 +395,12 @@ namespace Game {
             LastSpawnTime = valuesDictionary.GetValue("LastSpawnTime", 0.0);
             SpawnsCount = valuesDictionary.GetValue("SpawnsCount", 0);
             Name = valuesDictionary.GetValue("Name", "Walter");
-            PlayerGUID = valuesDictionary.GetValue("PlayerGUID", NetworkManager.Net.Self.PlayerGuid);
+            PlayerGUID = valuesDictionary.GetValue("PlayerGUID", NetworkManager.Self.PlayerGuid);
             PlayerClass = valuesDictionary.GetValue("PlayerClass", PlayerClass.Male);
             Level = valuesDictionary.GetValue("Level", 1f);
             CharacterSkinName = valuesDictionary.GetValue("CharacterSkinName", CharacterSkinsManager.CharacterSkinsNames[0]);
             InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
-            IsMainPlayer = PlayerGUID == NetworkManager.Net.Self.PlayerGuid;
+            IsMainPlayer = PlayerGUID == NetworkManager.Self.PlayerGuid;
         }
 
         public void Save(ValuesDictionary valuesDictionary) {
@@ -423,8 +423,8 @@ namespace Game {
         public void OnEntityAdded(Entity entity) {
             ComponentPlayer componentPlayer = entity.FindComponent<ComponentPlayer>();
             if (componentPlayer != null && componentPlayer.PlayerData == this) {
-                //多维世界mod会提前为PlayerData.ComponentPlayer赋值，原版行为会在SubsystemPlayers.OnEntityAdded再次赋值
-                //为阻止再次赋值时引发异常所以加了条ComponentPlayer != componentPlayer判断
+                //婵犮垼鍩栧銊デ庨鐣屸枖闁哄稁鍋呭▍鏄簅d婵炴潙鍚嬬喊宥堛亹娓氣偓瀹曟粌顓奸崟顔绢槹PlayerData.ComponentPlayer闁荤姍鍐惧剰闁逞屽墰閵嗗妲愬┑瀣偍闁绘柨鎼。濂告偠濞戞ê顨欓悹鎰枑鐎电厧顫濋浣藉惈SubsystemPlayers.OnEntityAdded闂佸憡鍔曠粔鐢割敃閼测晜灏庨悗锝庝簴閸?
+                //婵炴垶鎸诲钘壩熼崱妤婃桨闁靛繒濮撮弲娆愮箾閸犅板€楅妶鎾煕婵犲倸鎮戞俊鐐插€搁锝夊即閻愯尙宀涢悗娈垮枛閸婃悂鎮ラ崼鏇炵闁逞屽墯缁傛帡濡烽妷銉奖婵炲瓨绮屽Λ娆忣焽閻ゅmponentPlayer != componentPlayer闂佸憡甯囬崐鏍蓟?
                 if (ComponentPlayer != null && ComponentPlayer != componentPlayer) {
                     throw new InvalidOperationException(string.Format(LanguageControl.Get(fName, 10), PlayerIndex));
                 }

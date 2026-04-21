@@ -6,7 +6,7 @@ public interface IPackage
     Client To { get; set; }
     Client Except { get; set; }
     Client From { get; set; }
-    ClientState MinNeedState { get; }
+    ClientStage MinNeedState { get; }
     void WriteData(PackageStreamWriter writer);
     void ReadData(PackageStreamReader reader);
     void Handle(ProjectNet projectNet, bool isServer);

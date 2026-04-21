@@ -23,7 +23,7 @@ public class ComponentClothingPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public string SkinName;
     public byte[] m_skinData;
@@ -100,7 +100,7 @@ public class ComponentClothingPackage : IPackage
                     }
                 }
                 break;
-            //储存回复的资源
+            //储存回复的资�?
             case DataType.WhoHasReply:
             case DataType.ReplySkin:
                 if (CharacterSkinsManager.waitReplyList.Contains(SkinName)) CharacterSkinsManager.waitReplyList.Remove(SkinName);

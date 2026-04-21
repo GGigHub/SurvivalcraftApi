@@ -15,7 +15,7 @@ public class ServerInfoPackage : IPackage
     public Client Except { get; set; }
     public Client From { get; set; }
 
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public string m_version;
     ushort m_clientCount;
@@ -40,7 +40,7 @@ public class ServerInfoPackage : IPackage
         if (!m_requestInfo)
         {
             m_version = ProjectNet.Server_Version;
-            m_clientCount = (ushort)NetworkManager.Net.ClientCount;
+            m_clientCount = (ushort)NetworkManager.ClientCount;
             m_maxPlayerCount = ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount;
             m_gameMode = ProjectNet.subsystemGameInfo.WorldSettings.GameMode;
             m_needPasswd = (string.IsNullOrEmpty(ProjectNet.subsystemGameInfo.WorldSettings.Password) == false);
@@ -54,7 +54,7 @@ public class ServerInfoPackage : IPackage
     {
         if (m_requestInfo)
         {
-            NetworkManager.Net.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
+            NetworkManager.Server.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
         }
         else
         {

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Game.NetWork.Packages;
 
 /// <summary>
-/// 基础包模板复制
+/// 基础包模板复�?
 /// </summary>
 public class ClientPackage : IPackage
 {
@@ -13,7 +13,7 @@ public class ClientPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.NotConnected;
+    public ClientStage MinNeedState => ClientStage.NotConnected;
     public enum EventType
     {
         Add,
@@ -38,12 +38,12 @@ public class ClientPackage : IPackage
         eventType = EventType.Remove;
         m_client = new Client(null, id, Guid.Empty, Guid.Empty, null);
     }
-    public ClientPackage(byte id, ClientState clientState)
+    public ClientPackage(byte id, ClientStage ClientStage)
     {
         eventType = EventType.StateChange;
         m_client = new Client(null, id, Guid.Empty, Guid.Empty, null)
         {
-            State = clientState
+            State = ClientStage
         };
     }
     public ClientPackage(IEnumerable<Client> clients)
@@ -61,7 +61,7 @@ public class ClientPackage : IPackage
         switch (eventType)
         {
             case EventType.Add:
-                NetworkManager.Net.AddClient(new Client(From.Peer, m_client.ID, m_client.TokenId, m_client.PlayerGuid, m_client.Nickname));
+                NetworkManager.AddClient(new Client(From.Peer, m_client.ID, m_client.TokenId, m_client.PlayerGuid, m_client.Nickname));
 #if DEBUG
                 Log.Information("AddClient:" + m_client.ID);
 #endif
@@ -70,12 +70,12 @@ public class ClientPackage : IPackage
 #if DEBUG
                 Log.Information("RemoveClient:" + m_client.ID);
 #endif
-                if (NetworkManager.Net.Clients.ContainsKey(m_client.ID))
+                if (NetworkManager.Clients.ContainsKey(m_client.ID))
                 {
-                    var client = NetworkManager.Net.Clients[m_client.ID];
-                    client.State = ClientState.NotConnected;
-                    NetworkManager.Net.OnClientStateChanged.Invoke(client);
-                    NetworkManager.Net.Clients.Remove(m_client.ID);
+                    var client = NetworkManager.Clients[m_client.ID];
+                    client.State = ClientStage.NotConnected;
+                    NetworkManager.OnClientStateChanged?.Invoke(client);
+                    NetworkManager.Clients.Remove(m_client.ID);
                 }
                 break;
             case EventType.SyncList:
@@ -85,28 +85,28 @@ public class ClientPackage : IPackage
                     {
                         c.Peer = From.Peer;
                         c.Peer.Tag = c;
-                        NetworkManager.Net.Server = From;
+                        NetworkManager.Client.Server = From;
                     }
                     else
                     {
-                        if (c.TokenId == NetworkManager.Net.TokenId) NetworkManager.Net.Self = c;
+                        if (c.TokenId == NetworkManager.Client.TokenId) NetworkManager.Client.Self = c;
                     }
-                    NetworkManager.Net.AddClient(c);
+                    NetworkManager.AddClient(c);
                 }
 #if DEBUG
                 Log.Information("SyncList End:" + m_list.Count);
 #endif
-                if (NetworkManager.Net.Self == null) throw new Exception("Cannot find Self In Client List");
-                NetworkManager.Net.CurrentStage = NetworkBase.Stage.Connected;
+                if (NetworkManager.Self == null) throw new Exception("Cannot find Self In Client List");
+                NetworkManager.Client.CurrentStage = NetworkBase.Stage.Connected;
                 break;
             case EventType.StateChange:
-                if (NetworkManager.Net.Clients.ContainsKey(m_client.ID))
+                if (NetworkManager.Clients.ContainsKey(m_client.ID))
                 {
-                    From = NetworkManager.Net.Clients[m_client.ID];
+                    From = NetworkManager.Clients[m_client.ID];
                     if (From.State != m_client.State)
                     {
                         From.State = m_client.State;
-                        NetworkManager.Net.OnClientStateChanged?.Invoke(From);
+                        NetworkManager.OnClientStateChanged?.Invoke(From);
                     }
                 }
                 break;
@@ -135,7 +135,7 @@ public class ClientPackage : IPackage
             case EventType.StateChange:
                 m_client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null)
                 {
-                    State = reader.ReadEnum<ClientState>()
+                    State = reader.ReadEnum<ClientStage>()
                 };
                 break;
         }

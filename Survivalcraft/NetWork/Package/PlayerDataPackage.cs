@@ -27,7 +27,7 @@ public class PlayerDataPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.Connected;
+    public ClientStage MinNeedState => ClientStage.Connected;
     public int m_visibility;
     public ValuesDictionary m_vd;
     public Guid m_playerGuid;
@@ -38,9 +38,9 @@ public class PlayerDataPackage : IPackage
     public EntityDataList m_entity;
     public TerrainUpdater.UpdateLocation m_updateLocation;
 
-    public string m_bugleTitle; //小喇叭标题
-    public string m_bugleContent; //小喇叭内容
-    public int m_playerCount; //玩家人数
+    public string m_bugleTitle; //灏忓枃鍙爣棰?
+    public string m_bugleContent; //灏忓枃鍙唴瀹?
+    public int m_playerCount; //鐜╁浜烘暟
 
     public PlayerDataPackage()
     {
@@ -193,10 +193,10 @@ public class PlayerDataPackage : IPackage
                 playerData = new PlayerData(projectNet);
                 playerData.Load(m_vd);
                 subsystemPlayers.AddPlayerData(playerData);
-                //服务器广播给所有客户端，添加玩家
-                foreach (var client in NetworkManager.Net.Clients)
+                //鏈嶅姟鍣ㄥ箍鎾粰鎵€鏈夊鎴风锛屾坊鍔犵帺瀹?
+                foreach (var client in NetworkManager.Clients)
                 {
-                    if (client.Value == NetworkManager.Net.Self) continue;
+                    if (client.Value == NetworkManager.Self) continue;
                     if (client.Value != playerData.Client)
                     {
                         NetworkManager.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
@@ -222,10 +222,10 @@ public class PlayerDataPackage : IPackage
                 }
                 break;
             case DataType.Delete:
-                NetworkManager.Net.RemoveClient(From);
+                NetworkManager.Server.RemoveClient(From);
                 break;
             case DataType.AddPlayer:
-                //客户端接收到添加玩家广播
+                //瀹㈡埛绔帴鏀跺埌娣诲姞鐜╁骞挎挱
                 playerData = new PlayerData(projectNet);
                 playerData.Load(m_vd);
                 subsystemPlayers.AddPlayerData(playerData);
@@ -278,7 +278,7 @@ public class PlayerDataPackage : IPackage
                     {
                         ScreensManager.SwitchScreen("NetPlay");
                         GameManager.DisposeProject();
-                        NetworkManager.Net.Stop();
+                        NetworkManager.Stop();
                         DialogsManager.ShowDialog(null, new MessageDialog("连接异常", "检测到玩家人数异常，请重新连接服务器", LanguageControl.Ok, null, btn =>
                         {
                         }));

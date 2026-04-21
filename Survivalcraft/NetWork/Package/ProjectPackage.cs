@@ -17,7 +17,7 @@ namespace Game.NetWork.Packages
         public byte[] m_textureData;
         public byte[] m_projectData;
 
-        public ClientState MinNeedState => ClientState.NotConnected;
+        public ClientStage MinNeedState => ClientStage.NotConnected;
 
         public ProjectPackage() { }
 

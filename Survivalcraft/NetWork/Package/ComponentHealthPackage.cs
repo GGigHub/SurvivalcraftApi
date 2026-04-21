@@ -8,7 +8,7 @@ public class ComponentHealthPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public float m_amount;
     public ushort m_attackerId;
     public string m_cuase;
@@ -28,16 +28,16 @@ public class ComponentHealthPackage : IPackage
         Injure,
         RequestInjure,
         SyncHealth,
-        Damage //船被破坏
+        Damage //鑸硅鐮村潖
     }
 
     public enum RequestInjureType
     {
-        Unkonw,     // 未知
-        Choke,      // 自杀
-        Cactus,     // 仙人掌刺伤
-        Fall,       // 摔伤
-        Fire        // 着火
+        Unkonw,     // 鏈煡
+        Choke,      // 鑷潃
+        Cactus,     // 浠欎汉鎺屽埡浼?
+        Fall,       // 鎽斾激
+        Fire        // 鐫€鐏?
     }
 
     public EventType m_type;
@@ -161,10 +161,10 @@ public class ComponentHealthPackage : IPackage
 
     public void Handle(ProjectNet projectNet, bool isServer)
     {
-        // 前置过滤：服务器只处理 RequestInjure，客户端只处理其他事件
+        // 鍓嶇疆杩囨护锛氭湇鍔″櫒鍙鐞?RequestInjure锛屽鎴风鍙鐞嗗叾浠栦簨浠?
         if (NetworkManager.WorkType == WorkType.Server && m_type != EventType.RequestInjure)
         {
-            return; // 服务器忽略非请求事件
+            return; // 鏈嶅姟鍣ㄥ拷鐣ラ潪璇锋眰浜嬩欢
         }
 
         switch (m_type)
@@ -172,7 +172,7 @@ public class ComponentHealthPackage : IPackage
             case EventType.RequestInjure:
                 projectNet.FindEntityById(m_targetId, (entity) =>
                 {
-                    // 仅接受客户端发起的自杀以及摔落请求，其它环境伤害交由服务器权威逻辑结算
+                    // 浠呮帴鍙楀鎴风鍙戣捣鐨勮嚜鏉€浠ュ強鎽旇惤璇锋眰锛屽叾瀹冪幆澧冧激瀹充氦鐢辨湇鍔″櫒鏉冨▉閫昏緫缁撶畻
                     if (m_requestInjureType != RequestInjureType.Choke && m_requestInjureType != RequestInjureType.Fall)
                     {
                         return;

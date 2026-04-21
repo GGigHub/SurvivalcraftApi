@@ -14,7 +14,7 @@ public class SubsystemPlayersPackage : IPackage
     public Client Except { get; set; }
     public Client From { get; set; }
 
-    public ClientState MinNeedState => ClientState.Playing;
+    public ClientStage MinNeedState => ClientStage.Playing;
 
     public List<ComponentPlayerPackage> componentPlayerPackageList = new List<ComponentPlayerPackage>();
 

@@ -15,8 +15,8 @@ public class ConnectionRequestPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.NotConnected;
-    const int verrifyMagic = 9421523;//校验码
+    public ClientStage MinNeedState => ClientStage.NotConnected;
+    const int verrifyMagic = 9421523;//鏍￠獙鐮?
     int m_magic;
     string m_version;
     string m_password;
@@ -54,7 +54,7 @@ public class ConnectionRequestPackage : IPackage
         StringBuilder ConnectionError = new StringBuilder();
         if (string.IsNullOrEmpty(m_token))
         {
-            NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage("身份信息为空，验证失败"), From.Request, true);
+            NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("身份信息为空，验证失败"), From.Request, true);
             return;
         }
         nickname = FindPlayerNameByGUID(m_token);
@@ -87,7 +87,7 @@ public class ConnectionRequestPackage : IPackage
         }
         catch (Exception ex)
         {
-            Log.Warning("查找玩家名称时发生错误: " + ex.Message);
+            Log.Warning("鏌ユ壘鐜╁鍚嶇О鏃跺彂鐢熼敊璇? " + ex.Message);
         }
         return "";
     }
@@ -126,7 +126,7 @@ public class ConnectionRequestPackage : IPackage
         }
         catch (Exception ex)
         {
-            Log.Warning("从文件 " + filePath + " 加载玩家名称时发生错误: " + ex.Message);
+            Log.Warning("浠庢枃浠?" + filePath + " 鍔犺浇鐜╁鍚嶇О鏃跺彂鐢熼敊璇? " + ex.Message);
         }
         return "";
     }
@@ -155,13 +155,13 @@ public class ConnectionRequestPackage : IPackage
 
         if (m_magic == verrifyMagic)
         {
-            if (NetworkManager.Net.Self.PlayerGuid == guid)
+            if (NetworkManager.Self.PlayerGuid == guid)
             {
-                ConnectionError.AppendLine("客户端和服务器token相同");
+                ConnectionError.AppendLine("瀹㈡埛绔拰鏈嶅姟鍣╰oken鐩稿悓");
             }
-            else if (NetworkManager.Net.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null)
+            else if (NetworkManager.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null)
             {
-                ConnectionError.AppendLine("你的ID与服务器中某个在线玩家的ID相同");
+                ConnectionError.AppendLine("浣犵殑ID涓庢湇鍔″櫒涓煇涓湪绾跨帺瀹剁殑ID鐩稿悓");
             }
             else if (m_version != ProjectNet.Server_Version)
             {
@@ -169,30 +169,30 @@ public class ConnectionRequestPackage : IPackage
             }
             else if (ProjectNet.subsystemPlayers.BlackPlayerGuidList.ContainsKey(token.ToString()))
             {
-                ConnectionError.AppendLine("你已被禁止加入服务器");
+                ConnectionError.AppendLine("浣犲凡琚姝㈠姞鍏ユ湇鍔″櫒");
             }
-            else if (NetworkManager.Net.ClientCount >= ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount)
+            else if (NetworkManager.ClientCount >= ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount)
             {
-                ConnectionError.AppendLine("在线人数达到最大，拒绝加入");
+                ConnectionError.AppendLine("鍦ㄧ嚎浜烘暟杈惧埌鏈€澶э紝鎷掔粷鍔犲叆");
             }
             else if (!string.IsNullOrEmpty(pwd2))
             {
                 if (!useExternalPassword && m_password != pwd2)
                 {
-                    ConnectionError.AppendLine("房间密码验证错误");
+                    ConnectionError.AppendLine("鎴块棿瀵嗙爜楠岃瘉閿欒");
                 }
             }
             else if (string.IsNullOrEmpty(token))
             {
-                ConnectionError.AppendLine("身份信息验证错误");
+                ConnectionError.AppendLine("韬唤淇℃伅楠岃瘉閿欒");
             }
             if (ConnectionError.Length > 0)
             {
-                if (ModsManager.Configs.ContainsKey(saveKey)) //如果验证失败应该清理登录信息
+                if (ModsManager.Configs.ContainsKey(saveKey)) //濡傛灉楠岃瘉澶辫触搴旇娓呯悊鐧诲綍淇℃伅
                 {
                     ModsManager.Configs.Remove(saveKey);
                 }
-                NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage(ConnectionError.ToString()), From.Request, true);
+                NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage(ConnectionError.ToString()), From.Request, true);
                 Log.Information("Received connection request from " + From.IPPoint + ", rejected -- " + ConnectionError.ToString());
             }
             else
@@ -201,7 +201,7 @@ public class ConnectionRequestPackage : IPackage
                 {
                     if (!m_supportsModTransfer)
                     {
-                        NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致，且客户端不支持自动下载模组，请更新客户端或手动安装模组后再加入"), From?.Request, true);
+                        NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致，且客户端不支持自动下载模组，请更新客户端或手动安装模组后再加入"), From?.Request, true);
                         return;
                     }
 
@@ -222,37 +222,37 @@ public class ConnectionRequestPackage : IPackage
                         var acceptedLiteNetPeer = From?.Request?.Accept();
                         if (acceptedLiteNetPeer == null)
                         {
-                            NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致且无法建立连接"), From?.Request, true);
+                            NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("妯＄粍涓嶄竴鑷翠笖鏃犳硶寤虹珛杩炴帴"), From?.Request, true);
                             return;
                         }
 
                     }
                     catch (Exception e)
                     {
-                        NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage($"模组传输初始化失败:{e.Message}"), From?.Request, true);
+                        NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage($"妯＄粍浼犺緭鍒濆鍖栧け璐?{e.Message}"), From?.Request, true);
                     }
                     return;
                 }
 
                 var acceptedPeer = From.Request.Accept();
-                NetworkManager.Net.pendingPeer = (NetPeer)(object)acceptedPeer;
-                Client AddClient = NetworkManager.Net.CreateClient(NetworkManager.Net.pendingPeer, m_tmp_token, guid, communityAccountId, nickname);
+                NetworkManager.PendingPeer = (NetPeer)(object)acceptedPeer;
+                Client AddClient = NetworkManager.CreateClient(NetworkManager.PendingPeer, m_tmp_token, guid, communityAccountId, nickname);
                 var clientPackage = new ClientPackage(AddClient.ID, AddClient.TokenId, AddClient.PlayerGuid, AddClient.Nickname);
-                foreach (var c in NetworkManager.Net.Peers)
+                foreach (var c in NetworkManager.Peers)
                 {
 #if DEBUG
-                    Log.Information($"通知Client[{c.ID}]新加入客户端{AddClient.ID}");
+                    Log.Information($"閫氱煡Client[{c.ID}]鏂板姞鍏ュ鎴风{AddClient.ID}");
 #endif
-                    NetworkManager.Net.agreeOnPendingPeer.Add(c.ID);
-                    NetworkManager.Net.SendWriterFromPackage(clientPackage, c.Peer, true);
+                    NetworkManager.AgreeOnPendingPeer.Add(c.ID);
+                    NetworkManager.Server.SendWriterFromPackage(clientPackage, c.Peer, true);
                 }
                 Log.Information("Received connection request from " + From.IPPoint + ", accepted");
-                ((NetworkServer)NetworkManager.Net).DeliveryEvent(null, null);
+                NetworkManager.Server.DeliveryEvent(null, null);
             }
         }
         else
         {
-            NetworkManager.Net.SendWriterFromPackage(new ConnectionRejectPackage("无法识别的数据包头"), From.Request, true);
+            NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("无法识别的数据包头"), From.Request, true);
             Log.Information("无法识别的数据包头");
         }
 

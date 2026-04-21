@@ -4,7 +4,7 @@ using System.Linq;
 namespace Game.NetWork.Packages;
 
 /// <summary>
-/// 基础包模板复制
+/// 基础包模板复�?
 /// </summary>
 public class EditableBlockPackage : IPackage
 {
@@ -13,7 +13,7 @@ public class EditableBlockPackage : IPackage
     public Client Except { get; set; }
     public Client From { get; set; }
 
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     private EditableItemType m_itemType;
     private bool m_editAsItem;

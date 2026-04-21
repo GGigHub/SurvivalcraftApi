@@ -112,11 +112,11 @@ public class ProjectNet : Project
                 {
                     EntityMaps.Remove(arg.Entity.EntityId);
                 };
-                NetworkManager.Net.OnClientStateChanged += (c) =>
+                NetworkManager.OnClientStateChanged += (c) =>
                 {
                     switch (c.State)
                     {
-                        case ClientState.NotConnected:
+                        case ClientStage.NotConnected:
                             {
                                 var playerData = subsystemPlayers.PlayersData.Find(pd => pd.PlayerGUID == c.PlayerGuid);
                                 if (playerData != null && !playerData.IsMainPlayer)
@@ -148,9 +148,9 @@ public class ProjectNet : Project
                 {
                     EntityAdded += (obj, arg) =>
                     {
-                        foreach (var client in NetworkManager.Net.Clients)
+                        foreach (var client in NetworkManager.Clients)
                         {
-                            if (client.Value == NetworkManager.Net.Self) continue;
+                            if (client.Value == NetworkManager.Self) continue;
                             NetworkManager.QueuePackage(new EntityPackage(arg.Entity) { To = client.Value });
                         }
                     };
@@ -158,8 +158,8 @@ public class ProjectNet : Project
                     {
                         NetworkManager.QueuePackage(new EntityPackage(arg.Entity.EntityId));
                     };
-                    NetworkManager.Net.OnClientStateChanged += GrantClient;
-                    NetworkManager.Net.OnClientStateChanged += OnClientStateChanged;
+                    NetworkManager.OnClientStateChanged += GrantClient;
+                    NetworkManager.OnClientStateChanged += OnClientStateChanged;
                 }
             }
 
@@ -167,10 +167,10 @@ public class ProjectNet : Project
 
             if (NetworkManager.WorkType == WorkType.Client)
             {
-                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Net.Self.ID, ClientState.ProjectLoaded));
+                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Self.ID, ClientStage.ProjectLoaded));
             }
             //开启包处理
-            NetworkManager.Net.TurnOnPackageHanlde(this);
+            NetworkManager.TurnOnPackageHanlde(this);
         }
         catch
         {
@@ -185,7 +185,7 @@ public class ProjectNet : Project
             }
             finally
             {
-                if (NetworkManager.WorkType == WorkType.Server) NetworkManager.Net.Stop();
+                if (NetworkManager.WorkType == WorkType.Server) NetworkManager.Stop();
             }
 
             throw;
@@ -251,15 +251,15 @@ public class ProjectNet : Project
             NetworkManager.QueuePackage(new ClientPackage(c.ID, c.State) { Except = c });
             switch (c.State)
             {
-                case ClientState.Connected:
+                case ClientStage.Connected:
                     {
                         byte[] textureData = null;
                         if (subsystemPlayers.MakePlayerOnline(c.PlayerGuid, out PlayerData playerData, out Entity entity))
                         {
                             c.CachePlayerEntity = entity;
-                            foreach (var client in NetworkManager.Net.Clients)
+                            foreach (var client in NetworkManager.Clients)
                             {
-                                if (client.Value != NetworkManager.Net.Self && client.Value != c)
+                                if (client.Value != NetworkManager.Self && client.Value != c)
                                 {
                                     NetworkManager.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
                                 }
@@ -276,13 +276,13 @@ public class ProjectNet : Project
                         NetworkManager.QueuePackage(new ProjectPackage(textureData, data) { To = c });
                         break;
                     }
-                case ClientState.NotConnected:
+                case ClientStage.NotConnected:
                     {
                         subsystemPlayers.MakePlayerOffline(c.PlayerGuid);
                         GC.Collect();
                         break;
                     }
-                case ClientState.ProjectLoaded:
+                case ClientStage.ProjectLoaded:
                     {
                         List<Entity> sendList = [.. m_entities.Keys];
                         //向客户端广播实体列表
@@ -295,7 +295,7 @@ public class ProjectNet : Project
                         }
                         break;
                     }
-                case ClientState.LoadTerrain:
+                case ClientStage.LoadTerrain:
                     GC.Collect();
                     //进入无敌状态
                     if (c.PlayerData != null && c.PlayerData.ComponentPlayer != null)
@@ -306,10 +306,10 @@ public class ProjectNet : Project
                         }
                     }
                     break;
-                case ClientState.Playing:
+                case ClientStage.Playing:
                     if (c.PlayerData == null)
                     {
-                        NetworkManager.Net.RemoveClient(c, "未知错误！该Client没有对应PlayerData");
+                        NetworkManager.Server.RemoveClient(c, "未知错误！该Client没有对应PlayerData");
                     }
                     else
                     {
@@ -319,19 +319,6 @@ public class ProjectNet : Project
                                 c.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = false;
                             }
                         }
-                        /* 隐身检测原理：A和B同进服务器，假设有隐身问题,则A客户端无法看到玩家B,但是B可以看到A,服务端A和B都在。
-                         * 通过比较客户端人数和服务端人数，可检测到隐身现象。
-                         * 客户端玩家进入游玩状态并通知服务端，服务端接收到后向客户端发送玩家人数，再由客户端进行比较。
-                        Time.QueueTimeDelayedExecution(Time.RealTime + 5f, delegate 
-                        {
-                            if (NetworkManager.WorkType == WorkType.Server)
-                            {
-                                PlayerDataPackage package = new PlayerDataPackage();
-                                package.m_type = PlayerDataPackage.DataType.Count;
-                                package.m_playerCount = this.FindSubsystem<SubsystemPlayers>().PlayersData.Count;
-                                NetworkManager.QueuePackage(package);
-                            }
-                        });*/
                     }
                     break;
             }
@@ -340,7 +327,7 @@ public class ProjectNet : Project
         {
             switch (c.State)
             {
-                case ClientState.NotConnected:
+                case ClientStage.NotConnected:
                     subsystemPlayers.MakePlayerOffline(c.PlayerGuid);
                     break;
             }
@@ -352,29 +339,11 @@ public class ProjectNet : Project
     /// </summary>
     /// <param name="client"></param>
     public void GrantClient(Client client) {
-        if (client.State == ClientState.Playing) {
+        if (client.State == ClientStage.Playing) {
             if (subsystemPlayers.BlackPlayerGuidList.ContainsKey(client.PlayerGuid.ToString())) {
-                NetworkManager.Net.RemoveClientImmediate(client, "你被禁止加入该服务器");
+                NetworkManager.Server.RemoveClientImmediate(client, "你被禁止加入该服务器");
             }
         }
-    }
-
-    public FurnitureInventoryPanel FindFurnitureInventorPanel(Client client)
-    {
-        var player = subsystemPlayers.PlayersData.Find(x => x.Client == client);
-        if (player != null && player.ComponentPlayer != null)
-        {
-            var creativeWidget = new CreativeInventoryWidget(player.ComponentPlayer.Entity);
-            return creativeWidget.furnitureInventoryPanel;
-
-        }
-        return null;
-    }
-
-    public void PlayerAction(byte cid, Action<ComponentPlayer> action)
-    {
-        var guid = NetworkManager.Net.GetClientByID(cid)?.PlayerGuid;
-        if (guid != null) PlayerAction(guid, action);
     }
 
     public void PlayerAction(Guid? guid, Action<ComponentPlayer> action)
@@ -483,7 +452,7 @@ public class ProjectNet : Project
                     var palyerValue = entitiesDatum.ValuesDictionary.GetValue<ValuesDictionary>("Player");
                     if (palyerValue.ContainsKey("PlayerGuid"))
                     {
-                        Guid playerGuid = palyerValue.GetValue<Guid>("PlayerGuid", NetworkManager.Net.Self.PlayerGuid);
+                        Guid playerGuid = palyerValue.GetValue<Guid>("PlayerGuid", NetworkManager.Self.PlayerGuid);
                         PlayerData playerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.PlayerGUID == playerGuid);
                         if (playerData == null)
                         {

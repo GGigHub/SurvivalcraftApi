@@ -1,7 +1,7 @@
 
 namespace Game.NetWork;
 
-public enum EditableItemType : byte
+public enum EditableType : byte
 {
     MemoryBank = 0,
     TruthTable = 1,

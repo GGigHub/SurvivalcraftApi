@@ -13,7 +13,7 @@ public class ComponentVitalStatPackage : IPackage
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public ClientState MinNeedState => ClientState.Playing;
+    public ClientStage MinNeedState => ClientStage.Playing;
     public enum EventType
     {
         SyncStat,

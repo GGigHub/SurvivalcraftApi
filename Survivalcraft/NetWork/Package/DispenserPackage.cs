@@ -3,7 +3,7 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 /// <summary>
-/// 发射器
+/// 发射�?
 /// </summary>
 public class DispenserPackage : IPackage
 {
@@ -13,7 +13,7 @@ public class DispenserPackage : IPackage
     public Client Except { get; set; }
     public Client From { get; set; }
 
-    public ClientState MinNeedState => ClientState.ProjectLoaded;
+    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     private Point3 m_point;
     private byte m_flag;
