@@ -21,7 +21,7 @@ namespace Game {
                         int data2 = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
                         int num = Terrain.ReplaceData(value, data2);
                         if (num != value) {
-                            var p = new EditableBlockPackage(EditableItemType.Button, default, true, inventory.Id, slotIndex, newVoltageLevel);
+                            var p = new EditableBlockPackage(EditableType.Button, default, true, inventory.Id, slotIndex, newVoltageLevel);
                             NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != WorkType.Client) {
                                 p.Handle(ProjectNet.Project, false);
@@ -45,7 +45,7 @@ namespace Game {
                         if (num != data) {
                             int face = 4;
                             var cell = new CellFace(x, y, z, face);
-                            var p = new EditableBlockPackage(EditableItemType.Button, cell, false, default, default, newVoltageLevel);
+                            var p = new EditableBlockPackage(EditableType.Button, cell, false, default, default, newVoltageLevel);
                             NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != WorkType.Client) {
                                 p.Handle(ProjectNet.Project, false);
@@ -58,3 +58,4 @@ namespace Game {
         }
     }
 }
+

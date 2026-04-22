@@ -241,14 +241,14 @@ namespace Game {
                         ModLoadingActoins.Clear();
                         ScreensManager.SwitchScreen(
                             new LoadingFailedScreen(
-                                "Loading failed 加载失败",
-                                ["Exceptions: 异常信息�?, ..exception?.ToString().Split('\n') ?? []],
+                                "Loading failed ����ʧ��",
+                                ["Exceptions: �쳣��Ϣ��", ..exception?.ToString().Split('\n') ?? []],
                                 [
                                     $"Check the API version required by mod is equal to the current API version ({ModsManager.APIVersionString}). Check and add missing mods. If not solved, please contact the developer of the mods or API with Game.log in the path below.",
-                                    $"检查模组是否缺失，并添加所缺失的模组。查看模组所需插件版版本与当前插件版版本（{ModsManager.APIVersionString}）是否一致。若以上方式都无法解决，请联系模组、插件版开发者，并发送下面路径中�?Game.log",
+                                    $"���ģ���Ƿ�ȱʧ����������ȱʧ��ģ�顣�鿴ģ����������汾�뵱ǰ�����汾��{ModsManager.APIVersionString}���Ƿ�һ�¡������Ϸ�ʽ���޷����������ϵģ�顢����濪���ߣ�����������·���е� Game.log",
                                     Storage.GetSystemPath(ModsManager.LogPath),
                                     "And you can enable Safe Mode to stop loading any mod.",
-                                    "你还可以启用安全模式，停止加载任何模组�?
+                                    "�㻹�������ð�ȫģʽ��ֹͣ�����κ�ģ�顣"
                                 ]
                             )
                         );
@@ -641,9 +641,9 @@ namespace Game {
                 return;
             }
             Window.Activity.RunOnUiThread(() => {
-                    new AlertDialog.Builder(Window.Activity).SetMessage("Exit 退�?")
-                        ?.SetPositiveButton("Yes �?, (_, _) => { Window.Close(); })
-                        ?.SetNegativeButton("No �?, (_, _) => { })
+                    new AlertDialog.Builder(Window.Activity).SetMessage("Exit �˳�?")
+                        ?.SetPositiveButton("Yes ��", (_, _) => { Window.Close(); })
+                        ?.SetNegativeButton("No ��", (_, _) => { })
                         ?.Show();
                 }
             );

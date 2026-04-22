@@ -15,7 +15,7 @@ public class EditableBlockPackage : IPackage
 
     public ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
-    private EditableItemType m_itemType;
+    private EditableType m_itemType;
     private bool m_editAsItem;
     private int m_slotIndex;
     private int m_inventoryId;
@@ -27,7 +27,7 @@ public class EditableBlockPackage : IPackage
 
     public EditableBlockPackage() { }
 
-    public EditableBlockPackage(EditableItemType itemType, CellFace cell, bool eidtAsItem, int indentoryId, int slotIndex, int delay)
+    public EditableBlockPackage(EditableType itemType, CellFace cell, bool eidtAsItem, int indentoryId, int slotIndex, int delay)
     {
         m_itemType = itemType;
         m_inventoryId = indentoryId;
@@ -39,7 +39,7 @@ public class EditableBlockPackage : IPackage
 
     public EditableBlockPackage(CellFace cell, bool eidtAsItem, int indentoryId, int slotIndex, TruthTableData truthTableData)
     {
-        m_itemType = EditableItemType.TruthTable;
+        m_itemType = EditableType.TruthTable;
         m_cellFace = cell;
         m_editAsItem = eidtAsItem;
         m_inventoryId = indentoryId;
@@ -49,7 +49,7 @@ public class EditableBlockPackage : IPackage
 
     public EditableBlockPackage(CellFace cell, bool eidtAsItem, int indentoryId, int slotIndex, MemoryBankData memoryBankData)
     {
-        m_itemType = EditableItemType.MemoryBank;
+        m_itemType = EditableType.MemoryBank;
         m_cellFace = cell;
         m_editAsItem = eidtAsItem;
         m_inventoryId = indentoryId;
@@ -59,14 +59,14 @@ public class EditableBlockPackage : IPackage
 
     public EditableBlockPackage(int id, TruthTableData truthTableData)
     {
-        m_itemType = EditableItemType.TruthTable;
+        m_itemType = EditableType.TruthTable;
         m_Data = truthTableData.Data.ToArray();
         m_slotIndex = id;
         syncItem = true;
     }
     public EditableBlockPackage(int id, MemoryBankData memoryBankData)
     {
-        m_itemType = EditableItemType.MemoryBank;
+        m_itemType = EditableType.MemoryBank;
         m_Data = memoryBankData.Data.ToArray();
         syncItem = true;
         m_slotIndex = id;
@@ -77,7 +77,7 @@ public class EditableBlockPackage : IPackage
         var subInventory = projectNet.FindSubsystem<SubsystemInventories>();
         switch (m_itemType)
         {
-            case EditableItemType.MemoryBank:
+            case EditableType.MemoryBank:
                 var behavior = projectNet.FindSubsystem<SubsystemMemoryBankBlockBehavior>();
                 var data = new MemoryBankData();
                 foreach (var item in m_Data)
@@ -110,7 +110,7 @@ public class EditableBlockPackage : IPackage
                     }
                 }
                 break;
-            case EditableItemType.TruthTable:
+            case EditableType.TruthTable:
                 var truthBehavior = projectNet.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>();
                 var truthData = new TruthTableData();
                 truthData.Data = m_Data;
@@ -141,7 +141,7 @@ public class EditableBlockPackage : IPackage
 
                 }
                 break;
-            case EditableItemType.AdjustableDelayGate:
+            case EditableType.AdjustableDelayGate:
                 if (m_editAsItem)
                 {
                     subInventory.FindInventoryById(m_inventoryId, inventory => {
@@ -156,7 +156,7 @@ public class EditableBlockPackage : IPackage
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
                 }
                 break;
-            case EditableItemType.Battery:
+            case EditableType.Battery:
                 if (m_editAsItem)
                 {
                     subInventory.FindInventoryById(m_inventoryId, inventory => {
@@ -171,7 +171,7 @@ public class EditableBlockPackage : IPackage
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
                 }
                 break;
-            case EditableItemType.Switch:
+            case EditableType.Switch:
                 if (m_editAsItem)
                 {
                     subInventory.FindInventoryById(m_inventoryId, inventory => {
@@ -186,7 +186,7 @@ public class EditableBlockPackage : IPackage
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
                 }
                 break;
-            case EditableItemType.Button:
+            case EditableType.Button:
                 if (m_editAsItem)
                 {
                     subInventory.FindInventoryById(m_inventoryId, inventory => {
@@ -201,7 +201,7 @@ public class EditableBlockPackage : IPackage
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
                 }
                 break;
-            case EditableItemType.Piston:
+            case EditableType.Piston:
                 if (m_editAsItem)
                 {
                     subInventory.FindInventoryById(m_inventoryId, inventory => {
@@ -234,7 +234,7 @@ public class EditableBlockPackage : IPackage
     }
     public void ReadData(PackageStreamReader reader)
     {
-        m_itemType = reader.ReadEnum<EditableItemType>();
+        m_itemType = reader.ReadEnum<EditableType>();
         syncItem = reader.ReadBoolean();
         if (syncItem)
         {
@@ -255,8 +255,8 @@ public class EditableBlockPackage : IPackage
         }
         switch (m_itemType)
         {
-            case EditableItemType.TruthTable:
-            case EditableItemType.MemoryBank:
+            case EditableType.TruthTable:
+            case EditableType.MemoryBank:
                 if (reader.ReadBoolean()) m_id = reader.ReadInt32();
                 ushort count = reader.ReadUInt16();
                 m_Data = new byte[count];
@@ -292,8 +292,8 @@ public class EditableBlockPackage : IPackage
         }
         switch (m_itemType)
         {
-            case EditableItemType.TruthTable:
-            case EditableItemType.MemoryBank:
+            case EditableType.TruthTable:
+            case EditableType.MemoryBank:
                 writer.Write(m_id.HasValue);
                 if (m_id.HasValue) writer.Write(m_id.Value);
                 writer.Write((ushort)m_Data.Length);
@@ -306,3 +306,4 @@ public class EditableBlockPackage : IPackage
     }
 
 }
+

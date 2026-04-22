@@ -151,7 +151,7 @@ namespace Game {
             if (!m_mutexHandled) {
 
                 string str =
-                    "This game is already running! If you cannot find the window, please stop it from the Task Manager, and check the log file in Bugs directory.\n娓告垙宸茬粡鍦ㄨ繍琛岋紒濡傛灉鎵句笉鍒版父鎴忕獥鍙ｏ紝璇蜂粠浠诲姟绠＄悊鍣ㄧ粓姝㈠畠锛屽苟妫�鏌?Bugs 鐩綍涓殑鏃ュ織鏂囦欢銆?;
+                    "This game is already running! If you cannot find the window, please stop it from the Task Manager, and check the log file in Bugs directory.\n游戏已经在运行！如果找不到游戏窗口，请从任务管理器终止它，并检查 Bugs 目录中的日志文件。";
                 Window.MessageBox(IntPtr.Zero, str, null, 0x10u);
                 return;
             }
