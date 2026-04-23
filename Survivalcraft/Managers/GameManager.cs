@@ -40,7 +40,10 @@ namespace Game {
             valuesDictionary.SetValue("Views", valuesDictionary3);
             valuesDictionary3.SetValue("GamesWidget", gamesWidget);
             var projectData = new ProjectData(DatabaseManager.GameDatabase, messagePackData, valuesDictionary, ignoreInvalidEntities: true);
-            if (useNetProj) m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
+            if (useNetProj) {
+                m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
+                ((ProjectNet)m_project).Initialize();
+            }
             else m_project = new Project(DatabaseManager.GameDatabase, projectData);
             m_subsystemUpdate = m_project.FindSubsystem<SubsystemUpdate>(throwOnError: true);
             m_worldInfo = new WorldInfo();
@@ -118,7 +121,10 @@ namespace Game {
                     );
                 };
                 ProjectData projectData = new(DatabaseManager.GameDatabase, projectNode, valuesDictionary, true);
-                if (useNetProj) m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
+                if (useNetProj) {
+                    m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
+                    ((ProjectNet)m_project).Initialize();
+                }
                 else m_project = new Project(DatabaseManager.GameDatabase, projectData);
                 m_subsystemUpdate = m_project.FindSubsystem<SubsystemUpdate>(true);
             }

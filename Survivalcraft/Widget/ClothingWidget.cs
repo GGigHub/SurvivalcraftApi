@@ -74,7 +74,7 @@ namespace Game {
             }
             if (m_sleepButton.IsClicked
                 && m_componentPlayer != null) {
-                if (NetWork.NetworkManager.WorkType == NetWork.WorkType.Client) {
+                if (NetWork.NetworkManager.WorkType == WorkType.Client) {
                     NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentSleepPackage(m_componentPlayer.ComponentSleep, NetWork.Packages.ComponentSleepPackage.EventType.SleepRequest, true));
                 }
                 else {

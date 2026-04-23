@@ -33,12 +33,12 @@ public class ServerInfoPackage : IPackage {
     public ServerInfoPackage(bool requestInfo) {
         m_requestInfo = requestInfo;
         if (!m_requestInfo) {
-            m_version = ProjectNet.Server_Version;
+
             m_clientCount = (ushort)NetworkManager.ClientCount;
-            m_maxPlayerCount = ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount;
-            m_gameMode = ProjectNet.subsystemGameInfo.WorldSettings.GameMode;
-            m_needPasswd = (string.IsNullOrEmpty(ProjectNet.subsystemGameInfo.WorldSettings.Password) == false);
-            m_timeOfDay = ProjectNet.subsystemTimeOfDay.CalculateTimeOfDay();
+            m_maxPlayerCount = GameManager.Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.MaxOnlinePlayerCount;
+            m_gameMode = GameManager.Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.GameMode;
+            m_needPasswd = (string.IsNullOrEmpty(GameManager.Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.Password) == false);
+            m_timeOfDay = GameManager.Project.FindSubsystem<SubsystemTimeOfDay>().CalculateTimeOfDay();
             Season = GameManager.Project.FindSubsystem<SubsystemSeasons>()?.Season ?? (Season)(-1); // 获取当前季节
             TimeOfSeason = GameManager.Project.FindSubsystem<SubsystemSeasons>()?.TimeOfSeason ?? -1f; // 获取当前季节进度
         }

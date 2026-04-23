@@ -13,7 +13,7 @@ public class NetworkClient : NetworkBase {
             netManager.Start();
             TokenId = Guid.NewGuid();
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
-            SendWriterFromPackage(new ConnectionRequestPackage(TokenId, ProjectNet.Server_Version, string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
+            SendWriterFromPackage(new ConnectionRequestPackage(TokenId, "ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
             listener.NetworkReceiveEvent += NetworkReceiveEvent;
             listener.NetworkReceiveUnconnectedEvent += HanldeUnconnectedEvent;
             listener.PeerDisconnectedEvent += PeerDisconnectedEvent;

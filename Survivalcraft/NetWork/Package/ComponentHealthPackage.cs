@@ -24,14 +24,15 @@ public class ComponentHealthPackage : IPackage {
     public enum EventType {
         HitResult,
         Injure,
-        Damage // 船只被破坏
+        RequestInjure,
         SyncHealth,
-        Damage //鑸硅鐮村潖
+        Damage //船被破坏
     }
 
     public enum RequestInjureType {
         Unkonw,     // 未知
-        Choke,      // 自杀
+        Choke,      // 窒息
+        Suicide,    // 自杀 ← 新加
         Cactus,     // 仙人掌刺伤
         Fall,       // 摔伤
         Fire        // 着火

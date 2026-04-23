@@ -111,7 +111,7 @@ public class ConnectionRequestPackage : IPackage {
         if (!string.IsNullOrEmpty(token)) {
             guid = new Guid(token);
         }
-        var pwd2 = ProjectNet.subsystemGameInfo.WorldSettings.Password;
+        var pwd2 = GameManager.Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.Password;
         var mList = ModsManager.ModList;
         var serverMods = mList.Where(m => m.modInfo.PackageName != "survivalcraft" && m.modInfo.PackageName != "com.fastdebug").ToList();
         var clientMods = modInfos.Where(m => m.modInfo.PackageName != "survivalcraft" && m.modInfo.PackageName != "com.fastdebug").ToList();
@@ -132,15 +132,6 @@ public class ConnectionRequestPackage : IPackage {
             }
             else if (NetworkManager.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null) {
                 ConnectionError.AppendLine("你的 ID 与服务器中某个在线玩家的 ID 相同");
-            }
-            else if (m_version != ProjectNet.Server_Version) {
-                ConnectionError.AppendLine("客户端和服务器版本不一致");
-            }
-            else if (ProjectNet.subsystemPlayers.BlackPlayerGuidList.ContainsKey(token.ToString())) {
-                ConnectionError.AppendLine("你已被禁止加入服务器");
-            }
-            else if (NetworkManager.ClientCount >= ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount) {
-                ConnectionError.AppendLine("在线人数达到上限，拒绝加入");
             }
             else if (!string.IsNullOrEmpty(pwd2)) {
                 if (!useExternalPassword && m_password != pwd2) {

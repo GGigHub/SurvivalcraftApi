@@ -9,157 +9,71 @@ using TemplatesDatabase;
 namespace Game.NetWork;
 
 public class ProjectNet : Project {
-    Dictionary<string, Subsystem> dictionary = new Dictionary<string, Subsystem>();
-    public static SubsystemPlayers subsystemPlayers;
-    public static SubsystemTerrain subsystemTerrain;
-    public static SubsystemPlantBlockBehavior subsystemPlantBlockBehavior;
-    public static SubsystemGrassBlockBehavior subsystemGrassBlockBehavior;
-    public static SubsystemPickables subsystemPickables;
-    public static SubsystemTimeOfDay subsystemTimeOfDay;
-    public static SubsystemBlockEntities subsystemBlockEntities;
-    public static SubsystemSky subsystemSky;
-    public static SubsystemAudio subsystemAudio;
-    public static SubsystemCreatureSpawn subsystemCreatureSpawn;
-    public static SubsystemSpawn subsystemSpawn;
-    public static SubsystemGameInfo subsystemGameInfo;
-    public static SubsystemBodies subsystemBodies;
-    public static SubsystemTime subsystemTime;
-    public static SubsystemElectricity subsystemElectricity;
-    public static SubsystemBlockBehaviors subsystemBlockBehaviors;
-    public static SubsystemParticles subsystemParticles;
-    public static SubsystemAnimatedTextures subsystemAnimatedTextures;
-    public static SubsystemExplosions subsystemExplosions;
-    public static SubsystemProjectiles subsystemProjectiles;
-    public static SubsystemInventories inventories;
-    public static SubsystemSeasons subsystemSeasons;
+    private SubsystemPlayers subsystemPlayers;
+    private SubsystemGameInfo subsystemGameInfo;
 
     public static ProjectNet Project { get; set; }
 
     public bool SendToClientMode = false;
 
-    public const string Server_Version = "x26.1.10";
-
-    public const bool IsReleaseVersion = true;
-
     public Dictionary<int, Entity> EntityMaps = new Dictionary<int, Entity>();
 
-    public ProjectNet(GameDatabase gameDatabase, ProjectData projectData) {
-        try {
-            dictionary.Clear();
-            m_gameDatabase = gameDatabase;
-            m_projectTemplate = projectData.ValuesDictionary.DatabaseObject;
-            foreach (ValuesDictionary item in from x in projectData.ValuesDictionary.Values select x as ValuesDictionary into x where x != null && x.DatabaseObject != null && x.DatabaseObject.Type == gameDatabase.MemberSubsystemTemplateType select x) {
-                bool value = item.GetValue<bool>("IsOptional");
-                string value2 = item.GetValue<string>("Class");
-                Type type = TypeCache.FindType(value2, skipSystemAssemblies: false, !value);
-                if (type != null) {
-                    object obj;
-                    try {
-                        obj = Activator.CreateInstance(type);
-                    }
-                    catch (TargetInvocationException ex) {
-                        throw ex.InnerException;
-                    }
-                    var subsystem = obj as Subsystem;
-                    if (subsystem == null) {
-                        throw new InvalidOperationException($"Type \"{value2}\" cannot be used as a subsystem because it does not inherit from Subsystem class.");
-                    }
-                    subsystem.Initialize(this, item);
-                    dictionary.Add(item.DatabaseObject.Name, subsystem);
-                    m_subsystems.Add(subsystem);
-                }
-            }
+    public ProjectNet(GameDatabase gameDatabase, ProjectData projectData) : base(gameDatabase, projectData) { }
 
-            subsystemPlayers = FindSubsystem<SubsystemPlayers>();
-            subsystemTerrain = FindSubsystem<SubsystemTerrain>();
-            subsystemPlantBlockBehavior = FindSubsystem<SubsystemPlantBlockBehavior>();
-            subsystemGrassBlockBehavior = FindSubsystem<SubsystemGrassBlockBehavior>();
-            subsystemPickables = FindSubsystem<SubsystemPickables>();
-            subsystemTimeOfDay = FindSubsystem<SubsystemTimeOfDay>();
-            subsystemSky = FindSubsystem<SubsystemSky>();
-            subsystemAudio = FindSubsystem<SubsystemAudio>();
-            subsystemCreatureSpawn = FindSubsystem<SubsystemCreatureSpawn>();
-            subsystemSpawn = FindSubsystem<SubsystemSpawn>();
-            subsystemGameInfo = FindSubsystem<SubsystemGameInfo>();
-            subsystemBodies = FindSubsystem<SubsystemBodies>();
-            subsystemTime = FindSubsystem<SubsystemTime>();
-            subsystemBlockEntities = FindSubsystem<SubsystemBlockEntities>();
-            subsystemElectricity = FindSubsystem<SubsystemElectricity>();
-            subsystemBlockBehaviors = FindSubsystem<SubsystemBlockBehaviors>();
-            subsystemParticles = FindSubsystem<SubsystemParticles>();
-            subsystemExplosions = FindSubsystem<SubsystemExplosions>();
-            subsystemAnimatedTextures = FindSubsystem<SubsystemAnimatedTextures>();
-            subsystemProjectiles = FindSubsystem<SubsystemProjectiles>();
-            inventories = FindSubsystem<SubsystemInventories>();
-            if (NetworkManager.WorkType == WorkType.Client) {
-                BeforeEntityAdded += (obj, arg) => {
-                    EntityMaps[arg.Entity.EntityId] = arg.Entity;
-                };
-                EntityRemoved += (obj, arg) => {
-                    EntityMaps.Remove(arg.Entity.EntityId);
-                };
-                NetworkManager.OnClientStateChanged += (c) => {
-                    switch (c.State) {
-                        case ClientStage.NotConnected: {
-                                var playerData = subsystemPlayers.PlayersData.Find(pd => pd.PlayerGUID == c.PlayerGuid);
-                                if (playerData != null && !playerData.IsMainPlayer) {
-                                    subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
-                                }
-                                break;
+    public void Initialize() {
+        subsystemPlayers = FindSubsystem<SubsystemPlayers>();
+        subsystemGameInfo = FindSubsystem<SubsystemGameInfo>();
+
+        if (NetworkManager.WorkType == WorkType.Client) {
+            BeforeEntityAdded += (obj, arg) => {
+                EntityMaps[arg.Entity.EntityId] = arg.Entity;
+            };
+            EntityRemoved += (obj, arg) => {
+                EntityMaps.Remove(arg.Entity.EntityId);
+            };
+            NetworkManager.OnClientStateChanged += (c) => {
+                switch (c.State) {
+                    case ClientStage.NotConnected: {
+                            var playerData = subsystemPlayers.PlayersData.Find(pd => pd.PlayerGUID == c.PlayerGuid);
+                            if (playerData != null && !playerData.IsMainPlayer) {
+                                subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
                             }
-                    }
-                };
-                SettingsManager.VisibilityRange = Math.Min(256, SettingsManager.VisibilityRange);
-            }
-            else {
-                //非客户端生成EntityID序号
-                BeforeEntityAdded += (obj, arg) => {
-                    if (arg.Entity.EntityId == 0 || EntityMaps.ContainsKey(arg.Entity.EntityId)) GenerateEntityId(arg.Entity);
-                    else {
-                        EntityMaps.Add(arg.Entity.EntityId, arg.Entity);
+                            break;
+                        }
+                }
+            };
+            SettingsManager.VisibilityRange = Math.Min(256, SettingsManager.VisibilityRange);
+        }
+        else {
+            //非客户端生成EntityID序号
+            BeforeEntityAdded += (obj, arg) => {
+                if (arg.Entity.EntityId == 0 || EntityMaps.ContainsKey(arg.Entity.EntityId)) GenerateEntityId(arg.Entity);
+                else {
+                    EntityMaps.Add(arg.Entity.EntityId, arg.Entity);
+                }
+            };
+            EntityRemoved += (obj, arg) => {
+                EntityMaps.Remove(arg.Entity.EntityId);
+            };
+            if (NetworkManager.WorkType == WorkType.Server) {
+                EntityAdded += (obj, arg) => {
+                    foreach (var client in NetworkManager.Clients) {
+                        if (client.Value == NetworkManager.Self) continue;
+                        NetworkManager.QueuePackage(new EntityPackage(arg.Entity) { To = client.Value });
                     }
                 };
                 EntityRemoved += (obj, arg) => {
-                    EntityMaps.Remove(arg.Entity.EntityId);
+                    NetworkManager.QueuePackage(new EntityPackage(arg.Entity.EntityId));
                 };
-                if (NetworkManager.WorkType == WorkType.Server) {
-                    EntityAdded += (obj, arg) => {
-                        foreach (var client in NetworkManager.Clients) {
-                            if (client.Value == NetworkManager.Self) continue;
-                            NetworkManager.QueuePackage(new EntityPackage(arg.Entity) { To = client.Value });
-                        }
-                    };
-                    EntityRemoved += (obj, arg) => {
-                        NetworkManager.QueuePackage(new EntityPackage(arg.Entity.EntityId));
-                    };
-                    NetworkManager.OnClientStateChanged += GrantClient;
-                    NetworkManager.OnClientStateChanged += OnClientStateChanged;
-                }
+                NetworkManager.OnClientStateChanged += OnClientStateChanged;
             }
-
-            Load(dictionary, projectData);
-
-            if (NetworkManager.WorkType == WorkType.Client) {
-                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Self.ID, ClientStage.ProjectLoaded));
-            }
-            //开启包处理
-            NetworkManager.TurnOnPackageHanlde(this);
         }
-        catch {
 
-            try {
-                Dispose();
-            }
-            catch (Exception e) {
-                Log.Error(e);
-            }
-            finally {
-                if (NetworkManager.WorkType == WorkType.Server) NetworkManager.Stop();
-            }
-
-            throw;
+        if (NetworkManager.WorkType == WorkType.Client) {
+            NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Self.ID, ClientStage.ProjectLoaded));
         }
-        Project = this;
+        //开启包处理
+        NetworkManager.TurnOnPackageHanlde(this);
     }
 
     public override void AddEntity(Entity entity) {
@@ -202,12 +116,9 @@ public class ProjectNet : Project {
     /// </summary>
     /// <param name="c"></param>
     public void OnClientStateChanged(Client c) {
-#if DEBUG
-        Log.Information($"Client {c.ID} State is {c.State}");
-
-#endif
         if (NetworkManager.WorkType == WorkType.Server) {
             NetworkManager.QueuePackage(new ClientPackage(c.ID, c.State) { Except = c });
+
             switch (c.State) {
                 case ClientStage.Connected: {
                         byte[] textureData = null;
@@ -276,22 +187,6 @@ public class ProjectNet : Project {
             }
         }
 
-    }
-    /// <summary>
-    /// 验证客户端
-    /// </summary>
-    /// <param name="client"></param>
-    public void GrantClient(Client client) {
-        if (client.State == ClientStage.Playing) {
-            if (subsystemPlayers.BlackPlayerGuidList.ContainsKey(client.PlayerGuid.ToString())) {
-                NetworkManager.Server.RemoveClientImmediate(client, "你被禁止加入该服务器");
-            }
-        }
-    }
-
-    public void PlayerAction(Guid? guid, Action<ComponentPlayer> action) {
-        var pl = subsystemPlayers.ComponentPlayers.FirstOrDefault(pll => pll.PlayerData.PlayerGUID == guid);
-        if (pl != null) action(pl);
     }
 
     public List<Entity> LoadEntities(EntityDataList entityDataList) {
@@ -417,7 +312,7 @@ public class ProjectNet : Project {
             dictionary2.Add(key, key.EntityId);
         }
         EntityDataList entityDataList = new EntityDataList();
-        entityDataList.EntitiesData = new List<EntityData>(dictionary.Keys.Count);
+        entityDataList.EntitiesData = new List<EntityData>();
         foreach (Entity key2 in entities) {
             EntityData entityData = new EntityData();
             entityData.Id = key2.EntityId;

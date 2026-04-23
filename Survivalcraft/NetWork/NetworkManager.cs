@@ -56,7 +56,7 @@ public static class NetworkManager {
     /// 获取玩家的有效模式
     /// </summary>
     public static GameMode GetEffectiveGameMode(PlayerData pd) {
-        return ProjectNet.subsystemGameInfo?.WorldSettings?.GameMode ?? GameMode.Survival;
+        return GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode ?? GameMode.Survival;
     }
 
     public static ComponentPlayer MainPlayer {
