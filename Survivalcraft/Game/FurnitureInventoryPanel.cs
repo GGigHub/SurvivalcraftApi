@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 using Engine;
-using Game.NetWork;
 
 namespace Game {
     public class FurnitureInventoryPanel : CanvasWidget {
@@ -118,7 +117,7 @@ namespace Game {
                         list,
                         64f,
                         t => ((Tuple<string, Action>)t).Item1,
-                        delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
+                        delegate (object t) { ((Tuple<string, Action>)t).Item2(); }
                     )
                 );
             }
@@ -161,7 +160,7 @@ namespace Game {
                         list2,
                         64f,
                         t => ((Tuple<string, Action>)t).Item1,
-                        delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
+                        delegate (object t) { ((Tuple<string, Action>)t).Item2(); }
                     )
                 );
             }
@@ -233,7 +232,7 @@ namespace Game {
                     LanguageControl.Get(fName, 15),
                     LanguageControl.Get(fName, 16),
                     30,
-                    delegate(string s) {
+                    delegate (string s) {
                         if (s != null) {
                             FurnitureSet furnitureSet = SubsystemFurnitureBlockBehavior.NewFurnitureSet(s, null);
                             ComponentFurnitureInventory.FurnitureSet = furnitureSet;
@@ -264,7 +263,7 @@ namespace Game {
                         LanguageControl.Get(fName, 15),
                         LanguageControl.Get(fName, 16),
                         30,
-                        delegate(string s) {
+                        delegate (string s) {
                             if (s != null) {
                                 furnitureSet.Name = s;
                                 Invalidate();
@@ -298,7 +297,7 @@ namespace Game {
                         FurniturePacksManager.FurniturePackNames,
                         64f,
                         s => FurniturePacksManager.GetDisplayName((string)s),
-                        delegate(object s) {
+                        delegate (object s) {
                             try {
                                 int num = 0;
                                 int num2 = 0;
@@ -406,8 +405,7 @@ namespace Game {
             }
         }
 
-        public void NewFurnitueSetLogic(string s, string from = null)
-        {
+        public void NewFurnitueSetLogic(string s, string from = null) {
             FurnitureSet furnitureSet = SubsystemFurnitureBlockBehavior.NewFurnitureSet(s, from);
             ComponentFurnitureInventory.FurnitureSet = furnitureSet;
             Invalidate();

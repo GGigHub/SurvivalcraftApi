@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using TemplatesDatabase;
 
 namespace Game {
@@ -31,7 +31,7 @@ namespace Game {
         readonly bool m_ignoreShaftValue;
         readonly bool m_ignoreShoreDistance;
 
-        public StandardCreatureSpawnRule(SubsystemCreatureSpawn subsystem, ValuesDictionary valuesDictionary): base(subsystem, valuesDictionary) {
+        public StandardCreatureSpawnRule(SubsystemCreatureSpawn subsystem, ValuesDictionary valuesDictionary) : base(subsystem, valuesDictionary) {
             m_subsystem = subsystem;
             Name = valuesDictionary.GetValue<string>("Name");
             SpawnLocationType = valuesDictionary.GetValue("SpawnLocationType", SpawnLocationType.Surface);

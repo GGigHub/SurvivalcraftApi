@@ -15,7 +15,7 @@ namespace Game {
             new(255, 120, 0),
             new(255, 0, 255)
         ];
-        
+
         public BlockMesh[] m_standaloneBlockMeshesByColor = new BlockMesh[8];
         public BlockMesh[] m_blockMeshesByData = new BlockMesh[64];
         public BoundingBox[][] m_collisionBoxesByData = new BoundingBox[64][];

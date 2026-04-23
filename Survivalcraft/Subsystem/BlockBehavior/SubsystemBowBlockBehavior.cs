@@ -61,92 +61,92 @@ namespace Game {
                         aim.Direction = Vector3.Normalize(aim.Direction + v);
                         switch (state) {
                             case AimState.InProgress: {
-                                if (num2 >= 9f) {
-                                    componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
-                                    return true;
+                                    if (num2 >= 9f) {
+                                        componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
+                                        return true;
+                                    }
+                                    ComponentFirstPersonModel
+                                        componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
+                                    if (componentFirstPersonModel != null) {
+                                        componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
+                                        componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.1f, 0.15f, 0f);
+                                        componentFirstPersonModel.ItemRotationOrder = new Vector3(0f, -0.7f, 0f);
+                                    }
+                                    componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.2f;
+                                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(0f, 0f, 0f);
+                                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(0f, -0.2f, 0f);
+                                    if (m_subsystemTime.PeriodicGameTimeEvent(0.10000000149011612, 0.0)) {
+                                        int draw2 = MathUtils.Min(BowBlock.GetDraw(data) + 1, 15);
+                                        inventory.RemoveSlotItems(activeSlotIndex, 1);
+                                        inventory.AddSlotItems(activeSlotIndex, Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, draw2)), 1);
+                                    }
+                                    break;
                                 }
-                                ComponentFirstPersonModel
-                                    componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
-                                if (componentFirstPersonModel != null) {
-                                    componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
-                                    componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.1f, 0.15f, 0f);
-                                    componentFirstPersonModel.ItemRotationOrder = new Vector3(0f, -0.7f, 0f);
-                                }
-                                componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.2f;
-                                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(0f, 0f, 0f);
-                                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(0f, -0.2f, 0f);
-                                if (m_subsystemTime.PeriodicGameTimeEvent(0.10000000149011612, 0.0)) {
-                                    int draw2 = MathUtils.Min(BowBlock.GetDraw(data) + 1, 15);
-                                    inventory.RemoveSlotItems(activeSlotIndex, 1);
-                                    inventory.AddSlotItems(activeSlotIndex, Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, draw2)), 1);
-                                }
-                                break;
-                            }
                             case AimState.Cancelled:
                                 inventory.RemoveSlotItems(activeSlotIndex, 1);
                                 inventory.AddSlotItems(activeSlotIndex, Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, 0)), 1);
                                 m_aimStartTimes.Remove(componentMiner);
                                 break;
                             case AimState.Completed: {
-                                int draw = BowBlock.GetDraw(data);
-                                ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
-                                if (arrowType.HasValue) {
-                                    Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
-                                        + componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
-                                        - componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
-                                    Vector3 vector2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
-                                    float num4 = MathUtils.Lerp(0f, 28f, MathF.Pow(draw / 15f, 0.75f));
-                                    if (componentMiner.ComponentPlayer != null) {
-                                        num4 *= 0.5f * (componentMiner.ComponentPlayer.ComponentLevel.StrengthFactor - 1f) + 1f;
+                                    int draw = BowBlock.GetDraw(data);
+                                    ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
+                                    if (arrowType.HasValue) {
+                                        Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
+                                            + componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
+                                            - componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
+                                        Vector3 vector2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
+                                        float num4 = MathUtils.Lerp(0f, 28f, MathF.Pow(draw / 15f, 0.75f));
+                                        if (componentMiner.ComponentPlayer != null) {
+                                            num4 *= 0.5f * (componentMiner.ComponentPlayer.ComponentLevel.StrengthFactor - 1f) + 1f;
+                                        }
+                                        Vector3 vector3 = Vector3.Zero;
+                                        if (arrowType == ArrowBlock.ArrowType.WoodenArrow) {
+                                            vector3 = new Vector3(0.025f, 0.025f, 0.025f);
+                                        }
+                                        if (arrowType == ArrowBlock.ArrowType.StoneArrow) {
+                                            vector3 = new Vector3(0.01f, 0.01f, 0.01f);
+                                        }
+                                        int value2 = Terrain.MakeBlockValue(m_arrowBlockIndex, 0, ArrowBlock.SetArrowType(0, arrowType.Value));
+                                        Vector3 vector4 = Vector3.Normalize(Vector3.Cross(vector2, Vector3.UnitY));
+                                        Vector3 v2 = Vector3.Normalize(Vector3.Cross(vector2, vector4));
+                                        Vector3 v3 = m_random.Float(0f - vector3.X, vector3.X) * vector4
+                                            + m_random.Float(0f - vector3.Y, vector3.Y) * v2
+                                            + m_random.Float(0f - vector3.Z, vector3.Z) * vector2;
+                                        Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + (vector2 + v3) * num4;
+                                        if (m_subsystemProjectiles.FireProjectile(
+                                                value2,
+                                                vector,
+                                                velocity,
+                                                Vector3.Zero,
+                                                componentMiner.ComponentCreature
+                                            )
+                                            != null) {
+                                            data = BowBlock.SetArrowType(data, null);
+                                            m_subsystemAudio.PlaySound("Audio/Bow", 1f, m_random.Float(-0.1f, 0.1f), vector, 3f, true);
+                                        }
                                     }
-                                    Vector3 vector3 = Vector3.Zero;
-                                    if (arrowType == ArrowBlock.ArrowType.WoodenArrow) {
-                                        vector3 = new Vector3(0.025f, 0.025f, 0.025f);
+                                    else {
+                                        componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                                            LanguageControl.Get(fName, 0),
+                                            Color.White,
+                                            true,
+                                            false
+                                        );
                                     }
-                                    if (arrowType == ArrowBlock.ArrowType.StoneArrow) {
-                                        vector3 = new Vector3(0.01f, 0.01f, 0.01f);
+                                    inventory.RemoveSlotItems(activeSlotIndex, 1);
+                                    int value3 = Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, 0));
+                                    inventory.AddSlotItems(activeSlotIndex, value3, 1);
+                                    int damageCount = 0;
+                                    if (draw >= 15) {
+                                        damageCount = 2;
                                     }
-                                    int value2 = Terrain.MakeBlockValue(m_arrowBlockIndex, 0, ArrowBlock.SetArrowType(0, arrowType.Value));
-                                    Vector3 vector4 = Vector3.Normalize(Vector3.Cross(vector2, Vector3.UnitY));
-                                    Vector3 v2 = Vector3.Normalize(Vector3.Cross(vector2, vector4));
-                                    Vector3 v3 = m_random.Float(0f - vector3.X, vector3.X) * vector4
-                                        + m_random.Float(0f - vector3.Y, vector3.Y) * v2
-                                        + m_random.Float(0f - vector3.Z, vector3.Z) * vector2;
-                                    Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + (vector2 + v3) * num4;
-                                    if (m_subsystemProjectiles.FireProjectile(
-                                            value2,
-                                            vector,
-                                            velocity,
-                                            Vector3.Zero,
-                                            componentMiner.ComponentCreature
-                                        )
-                                        != null) {
-                                        data = BowBlock.SetArrowType(data, null);
-                                        m_subsystemAudio.PlaySound("Audio/Bow", 1f, m_random.Float(-0.1f, 0.1f), vector, 3f, true);
+                                    else if (draw >= 4) {
+                                        damageCount = 1;
                                     }
+                                    componentMiner.DamageActiveTool(damageCount);
+                                    m_aimStartTimes.Remove(componentMiner);
+                                    break;
                                 }
-                                else {
-                                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                        LanguageControl.Get(fName, 0),
-                                        Color.White,
-                                        true,
-                                        false
-                                    );
-                                }
-                                inventory.RemoveSlotItems(activeSlotIndex, 1);
-                                int value3 = Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, 0));
-                                inventory.AddSlotItems(activeSlotIndex, value3, 1);
-                                int damageCount = 0;
-                                if (draw >= 15) {
-                                    damageCount = 2;
-                                }
-                                else if (draw >= 4) {
-                                    damageCount = 1;
-                                }
-                                componentMiner.DamageActiveTool(damageCount);
-                                m_aimStartTimes.Remove(componentMiner);
-                                break;
-                            }
                         }
                     }
                 }

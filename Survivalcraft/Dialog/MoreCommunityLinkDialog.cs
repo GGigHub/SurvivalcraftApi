@@ -48,7 +48,7 @@ namespace Game {
                         UserManager.GetUsers(),
                         60f,
                         item => ((UserInfo)item).DisplayName,
-                        delegate(object item) { UserManager.ActiveUser = (UserInfo)item; }
+                        delegate (object item) { UserManager.ActiveUser = (UserInfo)item; }
                     )
                 );
             }

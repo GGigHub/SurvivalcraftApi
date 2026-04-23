@@ -51,88 +51,88 @@ public class ManageContentScreen : Screen {
         m_uploadButton = Children.Find<ButtonWidget>("UploadButton");
         m_changeFilterButton = Children.Find<ButtonWidget>("ChangeFilter");
         m_filterLabel = Children.Find<LabelWidget>("Filter");
-        m_contentList.ItemWidgetFactory = delegate(object obj) {
+        m_contentList.ItemWidgetFactory = delegate (object obj) {
             ListItem listItem = (ListItem)obj;
             ContainerWidget containerWidget;
             switch (listItem.Type) {
                 case ExternalContentType.BlocksTexture: {
-                    XElement node2 = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
-                    containerWidget = (ContainerWidget)LoadWidget(this, node2, null);
-                    RectangleWidget rectangleWidget = containerWidget.Children.Find<RectangleWidget>("BlocksTextureItem.Icon");
-                    LabelWidget labelWidget = containerWidget.Children.Find<LabelWidget>("BlocksTextureItem.Text");
-                    LabelWidget labelWidget2 = containerWidget.Children.Find<LabelWidget>("BlocksTextureItem.Details");
-                    Texture2D texture = m_blocksTexturesCache.GetTexture(listItem.Name);
-                    BlocksTexturesManager.GetCreationDate(listItem.Name);
-                    rectangleWidget.Subtexture = new Subtexture(texture, Vector2.Zero, Vector2.One);
-                    labelWidget.Text = listItem.DisplayName;
-                    labelWidget2.Text = string.Format(LanguageControl.Get(fName, 1), texture.Width, texture.Height);
-                    if (!listItem.IsBuiltIn) {
-                        labelWidget2.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
-                        if (listItem.UseCount > 0) {
-                            labelWidget2.Text += string.Format(LanguageControl.Get(fName, 2), listItem.UseCount);
+                        XElement node2 = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
+                        containerWidget = (ContainerWidget)LoadWidget(this, node2, null);
+                        RectangleWidget rectangleWidget = containerWidget.Children.Find<RectangleWidget>("BlocksTextureItem.Icon");
+                        LabelWidget labelWidget = containerWidget.Children.Find<LabelWidget>("BlocksTextureItem.Text");
+                        LabelWidget labelWidget2 = containerWidget.Children.Find<LabelWidget>("BlocksTextureItem.Details");
+                        Texture2D texture = m_blocksTexturesCache.GetTexture(listItem.Name);
+                        BlocksTexturesManager.GetCreationDate(listItem.Name);
+                        rectangleWidget.Subtexture = new Subtexture(texture, Vector2.Zero, Vector2.One);
+                        labelWidget.Text = listItem.DisplayName;
+                        labelWidget2.Text = string.Format(LanguageControl.Get(fName, 1), texture.Width, texture.Height);
+                        if (!listItem.IsBuiltIn) {
+                            labelWidget2.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
+                            if (listItem.UseCount > 0) {
+                                labelWidget2.Text += string.Format(LanguageControl.Get(fName, 2), listItem.UseCount);
+                            }
                         }
+                        break;
                     }
-                    break;
-                }
                 case ExternalContentType.FurniturePack: {
-                    XElement node3 = ContentManager.Get<XElement>("Widgets/FurniturePackItem");
-                    containerWidget = (ContainerWidget)LoadWidget(this, node3, null);
-                    LabelWidget labelWidget3 = containerWidget.Children.Find<LabelWidget>("FurniturePackItem.Text");
-                    LabelWidget labelWidget4 = containerWidget.Children.Find<LabelWidget>("FurniturePackItem.Details");
-                    labelWidget3.Text = listItem.DisplayName;
-                    try {
-                        List<FurnitureDesign> designs = FurniturePacksManager.LoadFurniturePack(null, listItem.Name);
-                        labelWidget4.Text = string.Format(LanguageControl.Get(fName, 3), FurnitureDesign.ListChains(designs).Count);
-                        if (string.IsNullOrEmpty(listItem.Name)) {
+                        XElement node3 = ContentManager.Get<XElement>("Widgets/FurniturePackItem");
+                        containerWidget = (ContainerWidget)LoadWidget(this, node3, null);
+                        LabelWidget labelWidget3 = containerWidget.Children.Find<LabelWidget>("FurniturePackItem.Text");
+                        LabelWidget labelWidget4 = containerWidget.Children.Find<LabelWidget>("FurniturePackItem.Details");
+                        labelWidget3.Text = listItem.DisplayName;
+                        try {
+                            List<FurnitureDesign> designs = FurniturePacksManager.LoadFurniturePack(null, listItem.Name);
+                            labelWidget4.Text = string.Format(LanguageControl.Get(fName, 3), FurnitureDesign.ListChains(designs).Count);
+                            if (string.IsNullOrEmpty(listItem.Name)) {
+                                return containerWidget;
+                            }
+                            labelWidget4.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
                             return containerWidget;
                         }
-                        labelWidget4.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
-                        return containerWidget;
+                        catch (Exception ex) {
+                            labelWidget4.Text = labelWidget4.Text + LanguageControl.Error + ex.Message;
+                            return containerWidget;
+                        }
                     }
-                    catch (Exception ex) {
-                        labelWidget4.Text = labelWidget4.Text + LanguageControl.Error + ex.Message;
-                        return containerWidget;
-                    }
-                }
                 case ExternalContentType.CharacterSkin: {
-                    XElement node4 = ContentManager.Get<XElement>("Widgets/CharacterSkinItem");
-                    containerWidget = (ContainerWidget)LoadWidget(this, node4, null);
-                    PlayerModelWidget playerModelWidget = containerWidget.Children.Find<PlayerModelWidget>("CharacterSkinItem.Model");
-                    LabelWidget labelWidget5 = containerWidget.Children.Find<LabelWidget>("CharacterSkinItem.Text");
-                    LabelWidget labelWidget6 = containerWidget.Children.Find<LabelWidget>("CharacterSkinItem.Details");
-                    Texture2D texture2 = m_characterSkinsCache.GetTexture(listItem.Name);
-                    playerModelWidget.PlayerClass = PlayerClass.Male;
-                    playerModelWidget.CharacterSkinTexture = texture2;
-                    labelWidget5.Text = listItem.DisplayName;
-                    labelWidget6.Text = string.Format(LanguageControl.Get(fName, 4), texture2.Width, texture2.Height);
-                    if (!listItem.IsBuiltIn) {
-                        labelWidget6.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
-                        if (listItem.UseCount > 0) {
-                            labelWidget6.Text += string.Format(LanguageControl.Get(fName, 2), listItem.UseCount);
+                        XElement node4 = ContentManager.Get<XElement>("Widgets/CharacterSkinItem");
+                        containerWidget = (ContainerWidget)LoadWidget(this, node4, null);
+                        PlayerModelWidget playerModelWidget = containerWidget.Children.Find<PlayerModelWidget>("CharacterSkinItem.Model");
+                        LabelWidget labelWidget5 = containerWidget.Children.Find<LabelWidget>("CharacterSkinItem.Text");
+                        LabelWidget labelWidget6 = containerWidget.Children.Find<LabelWidget>("CharacterSkinItem.Details");
+                        Texture2D texture2 = m_characterSkinsCache.GetTexture(listItem.Name);
+                        playerModelWidget.PlayerClass = PlayerClass.Male;
+                        playerModelWidget.CharacterSkinTexture = texture2;
+                        labelWidget5.Text = listItem.DisplayName;
+                        labelWidget6.Text = string.Format(LanguageControl.Get(fName, 4), texture2.Width, texture2.Height);
+                        if (!listItem.IsBuiltIn) {
+                            labelWidget6.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
+                            if (listItem.UseCount > 0) {
+                                labelWidget6.Text += string.Format(LanguageControl.Get(fName, 2), listItem.UseCount);
+                            }
                         }
+                        break;
                     }
-                    break;
-                }
                 case ExternalContentType.Mod: {
-                    XElement node2 = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
-                    containerWidget = (ContainerWidget)LoadWidget(this, node2, null);
-                    RectangleWidget rectangleWidget = containerWidget.Children.Find<RectangleWidget>("BlocksTextureItem.Icon");
-                    LabelWidget labelWidget = containerWidget.Children.Find<LabelWidget>("BlocksTextureItem.Text");
-                    LabelWidget labelWidget2 = containerWidget.Children.Find<LabelWidget>("BlocksTextureItem.Details");
-                    rectangleWidget.Subtexture = listItem.Texture == null
-                        ? ContentManager.Get<Subtexture>("Textures/Atlas/WorldIcon")
-                        : new Subtexture(listItem.Texture, Vector2.Zero, Vector2.One);
-                    rectangleWidget.TextureLinearFilter = true;
-                    labelWidget.Text = listItem.DisplayName;
-                    labelWidget2.Text = listItem.Name;
-                    if (!listItem.IsBuiltIn) {
-                        labelWidget2.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
-                        if (listItem.UseCount > 0) {
-                            labelWidget2.Text += string.Format(LanguageControl.Get(fName, 2), listItem.UseCount);
+                        XElement node2 = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
+                        containerWidget = (ContainerWidget)LoadWidget(this, node2, null);
+                        RectangleWidget rectangleWidget = containerWidget.Children.Find<RectangleWidget>("BlocksTextureItem.Icon");
+                        LabelWidget labelWidget = containerWidget.Children.Find<LabelWidget>("BlocksTextureItem.Text");
+                        LabelWidget labelWidget2 = containerWidget.Children.Find<LabelWidget>("BlocksTextureItem.Details");
+                        rectangleWidget.Subtexture = listItem.Texture == null
+                            ? ContentManager.Get<Subtexture>("Textures/Atlas/WorldIcon")
+                            : new Subtexture(listItem.Texture, Vector2.Zero, Vector2.One);
+                        rectangleWidget.TextureLinearFilter = true;
+                        labelWidget.Text = listItem.DisplayName;
+                        labelWidget2.Text = listItem.Name;
+                        if (!listItem.IsBuiltIn) {
+                            labelWidget2.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
+                            if (listItem.UseCount > 0) {
+                                labelWidget2.Text += string.Format(LanguageControl.Get(fName, 2), listItem.UseCount);
+                            }
                         }
+                        break;
                     }
-                    break;
-                }
                 default: throw new InvalidOperationException(LanguageControl.Get(fName, 10));
             }
             return containerWidget;
@@ -201,7 +201,7 @@ public class ManageContentScreen : Screen {
                         smallMessage,
                         LanguageControl.Yes,
                         LanguageControl.No,
-                        delegate(MessageDialogButton button) {
+                        delegate (MessageDialogButton button) {
                             if (button == MessageDialogButton.Button1) {
                                 ExternalContentManager.DeleteExternalContent(selectedItem.Type, selectedItem.Name);
                                 //if (selectedItem.Type == ExternalContentType.Mod)
@@ -243,7 +243,7 @@ public class ManageContentScreen : Screen {
                     list,
                     60f,
                     item => GetFilterDisplayName((ExternalContentType)item),
-                    delegate(object item) {
+                    delegate (object item) {
                         if ((ExternalContentType)item != m_filter) {
                             m_filter = (ExternalContentType)item;
                             UpdateList();
@@ -349,7 +349,7 @@ public class ManageContentScreen : Screen {
             }
         }*/
         list.Sort(
-            delegate(ListItem o1, ListItem o2) {
+            delegate (ListItem o1, ListItem o2) {
                 if (o1.IsBuiltIn
                     && !o2.IsBuiltIn) {
                     return -1;

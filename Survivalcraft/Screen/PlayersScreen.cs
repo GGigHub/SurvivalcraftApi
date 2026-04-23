@@ -98,7 +98,7 @@ namespace Game {
                             LanguageControl.GetContentWidgets(fName, 6),
                             array,
                             80f,
-                            delegate(object o) {
+                            delegate (object o) {
                                 string str = o.ToString();
                                 string name = $"Textures/Atlas/ScreenLayout{str}";
                                 return new StackPanelWidget {
@@ -126,7 +126,7 @@ namespace Game {
                                     }
                                 };
                             },
-                            delegate(object o) {
+                            delegate (object o) {
                                 if (o != null) {
                                     if (m_subsystemPlayers.PlayersData.Count == 1) {
                                         SettingsManager.ScreenLayout1 = (ScreenLayout)o;

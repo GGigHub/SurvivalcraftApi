@@ -67,7 +67,7 @@ namespace Game {
             m_downloadButton = Children.Find<ButtonWidget>("Download");
             m_deleteButton = Children.Find<ButtonWidget>("Delete");
             m_moreOptionsButton = Children.Find<ButtonWidget>("MoreOptions");
-            m_listPanel.ItemWidgetFactory = delegate(object item) {
+            m_listPanel.ItemWidgetFactory = delegate (object item) {
                 if (item is OriginalCommunityContentEntry communityContentEntry) {
                     XElement node2 = ContentManager.Get<XElement>("Widgets/CommunityContentItem");
                     ContainerWidget containerWidget = (ContainerWidget)LoadWidget(this, node2, null);
@@ -137,7 +137,7 @@ namespace Game {
                         items,
                         60f,
                         item => GetOrderDisplayName((Order)item),
-                        delegate(object item) {
+                        delegate (object item) {
                             m_order = (Order)item;
                             PopulateList(null);
                         }
@@ -148,8 +148,8 @@ namespace Game {
                 List<object> list = [string.Empty];
                 foreach (OriginalExternalContentType item in from OriginalExternalContentType t in EnumUtils
                         .GetEnumValues<OriginalExternalContentType>()
-                    where IsEntryTypeDownloadSupported(t)
-                    select t) {
+                                                             where IsEntryTypeDownloadSupported(t)
+                                                             select t) {
                     list.Add(item);
                 }
                 if (UserManager.ActiveUser != null) {
@@ -165,7 +165,7 @@ namespace Game {
                         list,
                         60f,
                         item => GetFilterDisplayName(item),
-                        delegate(object item) {
+                        delegate (object item) {
                             m_filter = item;
                             PopulateList(null);
                         }
@@ -246,7 +246,7 @@ namespace Game {
                 m_search,
                 text6,
                 m_busyDialog.Progress,
-                delegate(List<OriginalCommunityContentEntry> list, string nextCursor) {
+                delegate (List<OriginalCommunityContentEntry> list, string nextCursor) {
                     m_populatingListCount--;
                     m_listPanel.ClearItems();
                     m_listPanel.AddItems(prefixItems);
@@ -261,7 +261,7 @@ namespace Game {
                     m_itemsCache[cacheKey] = new List<object>(m_listPanel.Items);
                     m_itemsCacheExpiryTime = Time.RealTime + 120.0;
                 },
-                delegate(Exception error) {
+                delegate (Exception error) {
                     m_populatingListCount--;
                     DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok, null, null));
                 }
@@ -279,7 +279,7 @@ namespace Game {
                 userId,
                 busyDialog.Progress,
                 delegate { DialogsManager.HideDialog(busyDialog); },
-                delegate(Exception error) {
+                delegate (Exception error) {
                     DialogsManager.HideDialog(busyDialog);
                     DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok, null, null));
                 }
@@ -297,7 +297,7 @@ namespace Game {
                     LanguageControl.Get(fName1, "5"),
                     LanguageControl.Yes,
                     LanguageControl.No,
-                    delegate(MessageDialogButton button) {
+                    delegate (MessageDialogButton button) {
                         if (button == MessageDialogButton.Button1) {
                             CancellableBusyDialog busyDialog = new(string.Format(LanguageControl.Get(fName1, "3"), entry.Name), false);
                             DialogsManager.ShowDialog(null, busyDialog);
@@ -318,7 +318,7 @@ namespace Game {
                                         )
                                     );
                                 },
-                                delegate(Exception error) {
+                                delegate (Exception error) {
                                     DialogsManager.HideDialog(busyDialog);
                                     DialogsManager.ShowDialog(
                                         null,

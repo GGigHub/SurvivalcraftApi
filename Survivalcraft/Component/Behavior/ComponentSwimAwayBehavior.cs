@@ -45,7 +45,7 @@ namespace Game {
             m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
             m_componentHerdBehavior = Entity.FindComponent<ComponentHerdBehavior>();
             LowHealthToEscape = valuesDictionary.GetValue<float>("LowHealthToEscape");
-            m_componentCreature.ComponentHealth.Injured += delegate(Injury injury) {
+            m_componentCreature.ComponentHealth.Injured += delegate (Injury injury) {
                 ComponentCreature attacker = injury.Attacker;
                 SwimAwayFrom(attacker?.ComponentBody);
             };
@@ -116,7 +116,7 @@ namespace Game {
                     vector3,
                     false,
                     false,
-                    delegate(int value, float _) {
+                    delegate (int value, float _) {
                         int num3 = Terrain.ExtractContents(value);
                         return !(BlocksManager.Blocks[num3] is WaterBlock);
                     }

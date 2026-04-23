@@ -17,11 +17,11 @@ namespace Game {
 
             public Func<CreatureType, Point3, int> SpawnFunction;
 
-            public CreatureType() {}
+            public CreatureType() { }
 
             // ReSharper disable UnusedParameter.Local
             // 要实现类似 StandardCreatureSpawnRule 的从 XML 读取生成规则的类，需要具体实现此方法
-            public CreatureType(SubsystemCreatureSpawn subsystem, ValuesDictionary valuesDictionary) {}
+            public CreatureType(SubsystemCreatureSpawn subsystem, ValuesDictionary valuesDictionary) { }
             // ReSharper restore UnusedParameter.Local
 
             public CreatureType(string name, SpawnLocationType spawnLocationType, bool randomSpawn, bool constantSpawn) {
@@ -100,7 +100,7 @@ namespace Game {
             m_subsystemViews = Project.FindSubsystem<SubsystemGameWidgets>(true);
             InitializeCreatureTypesFromDatabase(valuesDictionary.GetValue<ValuesDictionary>("CreatureSpawnRules", null));
             InitializeCreatureTypes();
-            m_subsystemSpawn.SpawningChunk += delegate(SpawnChunk chunk) {
+            m_subsystemSpawn.SpawningChunk += delegate (SpawnChunk chunk) {
                 m_spawnChunks.Add(chunk);
                 if (!chunk.IsSpawned) {
                     m_newSpawnChunks.Add(chunk);
@@ -123,7 +123,7 @@ namespace Game {
         public virtual void InitializeCreatureTypes() {
             m_creatureTypes.Add(
                 new CreatureType("Duck", SpawnLocationType.Surface, true, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float shoreDistance = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int humidity = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int temperature = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -142,7 +142,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Raven", SpawnLocationType.Surface, true, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num95 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature37 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity25 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -160,7 +160,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Seagull", SpawnLocationType.Surface, true, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num93 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int num94 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         int topHeight = m_subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
@@ -173,7 +173,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Wildboar", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num91 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int humidity24 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int num92 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -184,14 +184,14 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Brown Cattle", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num89 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int humidity23 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int temperature36 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num90 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         return num89 > 20f && humidity23 > 4 && temperature36 >= 8 && point.Y < 70 && (num90 == 8 || num90 == 2) ? 0.05f : 0f;
                     },
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         int num87 = m_random.Int(3, 5);
                         int num88 = MathUtils.Min(m_random.Int(1, 3), num87);
                         int count2 = num87 - num88;
@@ -203,14 +203,14 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Black Cattle", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num85 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int humidity22 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int temperature35 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num86 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         return num85 > 20f && humidity22 > 4 && temperature35 < 8 && point.Y < 70 && (num86 == 8 || num86 == 2) ? 0.05f : 0f;
                     },
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         int num83 = m_random.Int(3, 5);
                         int num84 = MathUtils.Min(m_random.Int(1, 3), num83);
                         int count = num83 - num84;
@@ -222,7 +222,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("White Bull", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num81 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int humidity21 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int temperature34 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -234,7 +234,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Gray Wolves", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num79 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int humidity20 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int num80 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -245,7 +245,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Coyotes", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num77 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int humidity19 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int temperature33 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -257,7 +257,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Brown Bears", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num75 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature32 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity18 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -271,7 +271,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Black Bears", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num73 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature31 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity17 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -285,7 +285,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Polar Bears", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num71 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature30 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num72 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -296,7 +296,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Horses", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num69 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature29 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity16 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -305,7 +305,7 @@ namespace Game {
                             ? 0.05f
                             : 0f;
                     },
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         int temperature28 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num68 = 0;
                         if (m_random.Float(0f, 1f) < 0.35f) {
@@ -331,7 +331,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Camels", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num66 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature27 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity15 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -343,7 +343,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Donkeys", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num64 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature26 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num65 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -356,7 +356,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Giraffes", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num62 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature25 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity14 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -370,7 +370,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Rhinos", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num60 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature24 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity13 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -384,7 +384,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Tigers", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num58 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int humidity12 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int num59 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -395,7 +395,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("White Tigers", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num56 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature23 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -412,7 +412,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Lions", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num54 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature22 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num55 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -425,7 +425,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Jaguars", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num52 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature21 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity11 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -443,7 +443,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Leopards", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num50 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature20 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -460,7 +460,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Zebras", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num48 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature19 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity10 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -474,7 +474,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Gnus", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num46 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature18 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num47 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -485,7 +485,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Reindeers", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         int temperature17 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num45 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         return temperature17 < 3 && point.Y < 90 && (num45 == 8 || num45 == 2 || num45 == 3 || num45 == 62) ? 0.05f : 0f;
@@ -495,7 +495,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Mooses", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         int temperature16 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num44 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         return temperature16 < 7 && point.Y < 90 && (num44 == 8 || num44 == 2 || num44 == 3 || num44 == 62) ? 0.1f : 0f;
@@ -505,7 +505,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Bisons", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         int temperature15 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity9 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int num43 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -518,7 +518,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Ostriches", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num41 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature14 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity8 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -532,7 +532,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Cassowaries", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num39 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature13 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity7 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -546,7 +546,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Hyenas", SpawnLocationType.Surface, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num37 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature12 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num38 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -557,11 +557,11 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Cave Bears", SpawnLocationType.Cave, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         int num36 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         return num36 == 3 || num36 == 67 || num36 == 4 || num36 == 66 || num36 == 2 || num36 == 7 ? 1f : 0f;
                     },
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName11 = m_random.Int(0, 1) == 0 ? "Bear_Black" : "Bear_Brown";
                         return SpawnCreatures(creatureType, templateName11, point, 1).Count;
                     }
@@ -569,7 +569,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Cave Tigers", SpawnLocationType.Cave, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         int num35 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         return num35 == 3 || num35 == 67 || num35 == 4 || num35 == 66 || num35 == 2 || num35 == 7 ? 0.25f : 0f;
                     },
@@ -578,7 +578,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Cave Lions", SpawnLocationType.Cave, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         int temperature11 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int humidity6 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int num34 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
@@ -593,7 +593,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Cave Jaguars", SpawnLocationType.Cave, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         int num33 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         return num33 == 3 || num33 == 67 || num33 == 4 || num33 == 66 || num33 == 2 || num33 == 7 ? 0.5f : 0f;
                     },
@@ -602,7 +602,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Cave Leopards", SpawnLocationType.Cave, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         int num32 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         return num32 == 3 || num32 == 67 || num32 == 4 || num32 == 66 || num32 == 2 || num32 == 7 ? 0.25f : 0f;
                     },
@@ -611,7 +611,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Cave Hyenas", SpawnLocationType.Cave, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         int temperature10 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         int num31 = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                         return (num31 == 3 || num31 == 67 || num31 == 4 || num31 == 66 || num31 == 2 || num31 == 7) && temperature10 > 8 ? 1f : 0f;
@@ -623,7 +623,7 @@ namespace Game {
                 new CreatureType("Bull Sharks", SpawnLocationType.Water, false, false) {
                     SpawnSuitabilityFunction =
                         (_, point) => !(m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -2f) ? 0f : 0.4f,
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName10 = "Shark_Bull";
                         return SpawnCreatures(creatureType, templateName10, point, 1).Count;
                     }
@@ -633,7 +633,7 @@ namespace Game {
                 new CreatureType("Tiger Sharks", SpawnLocationType.Water, false, false) {
                     SpawnSuitabilityFunction =
                         (_, point) => !(m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -5f) ? 0f : 0.3f,
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName9 = "Shark_Tiger";
                         return SpawnCreatures(creatureType, templateName9, point, 1).Count;
                     }
@@ -643,7 +643,7 @@ namespace Game {
                 new CreatureType("Great White Sharks", SpawnLocationType.Water, false, false) {
                     SpawnSuitabilityFunction =
                         (_, point) => !(m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -20f) ? 0f : 0.2f,
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName8 = "Shark_GreatWhite";
                         return SpawnCreatures(creatureType, templateName8, point, 1).Count;
                     }
@@ -653,7 +653,7 @@ namespace Game {
                 new CreatureType("Barracudas", SpawnLocationType.Water, false, false) {
                     SpawnSuitabilityFunction =
                         (_, point) => !(m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -2f) ? 0f : 0.5f,
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName7 = "Barracuda";
                         return SpawnCreatures(creatureType, templateName7, point, 1).Count;
                     }
@@ -663,7 +663,7 @@ namespace Game {
                 new CreatureType("Bass_Sea", SpawnLocationType.Water, false, false) {
                     SpawnSuitabilityFunction =
                         (_, point) => !(m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < -2f) ? 0f : 1f,
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName6 = "Bass_Sea";
                         return SpawnCreatures(creatureType, templateName6, point, 1).Count;
                     }
@@ -671,12 +671,12 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Bass_Freshwater", SpawnLocationType.Water, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num30 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature9 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         return num30 > 10f && temperature9 >= 4 ? 1f : 0f;
                     },
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName5 = "Bass_Freshwater";
                         return SpawnCreatures(creatureType, templateName5, point, m_random.Int(1, 2)).Count;
                     }
@@ -686,7 +686,7 @@ namespace Game {
                 new CreatureType("Rays", SpawnLocationType.Water, false, false) {
                     SpawnSuitabilityFunction =
                         (_, point) => !(m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z) < 10f) ? 1f : 0.5f,
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         int num27 = 0;
                         int num28 = 0;
                         for (int i = point.X - 2; i <= point.X + 2; i++) {
@@ -710,13 +710,13 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Piranhas", SpawnLocationType.Water, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num26 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int humidity5 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
                         int temperature8 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         return num26 > 10f && humidity5 >= 4 && temperature8 >= 7 ? 1f : 0f;
                     },
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName3 = "Piranha";
                         return SpawnCreatures(creatureType, templateName3, point, m_random.Int(2, 4)).Count;
                     }
@@ -724,14 +724,14 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Orcas", SpawnLocationType.Water, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num25 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         if (num25 < -100f) {
                             return 0.05f;
                         }
                         return num25 < -20f ? 0.01f : 0f;
                     },
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName2 = "Orca";
                         return SpawnCreatures(creatureType, templateName2, point, 1).Count;
                     }
@@ -739,14 +739,14 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Belugas", SpawnLocationType.Water, false, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num24 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         if (num24 < -100f) {
                             return 0.05f;
                         }
                         return num24 < -20f ? 0.01f : 0f;
                     },
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         string templateName = "Beluga";
                         return SpawnCreatures(creatureType, templateName, point, 1).Count;
                     }
@@ -754,7 +754,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Gray Wolves", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num21 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             int humidity4 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -773,7 +773,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Coyotes", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num17 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             float num18 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -796,7 +796,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Brown Bears", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num15 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             int temperature7 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -819,7 +819,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Black Bears", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num13 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             int temperature6 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -841,7 +841,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Polar Bears", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num11 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             int temperature5 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -862,7 +862,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Tigers", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num9 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             int humidity2 = m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -883,7 +883,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Lions", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num7 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             int temperature4 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -904,7 +904,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Jaguars", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num5 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             int temperature3 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -927,7 +927,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Leopards", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num3 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             int temperature2 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -948,7 +948,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Constant Hyenas", SpawnLocationType.Surface, false, true) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         if (m_subsystemSky.SkyLightIntensity < 0.1f) {
                             float num = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                             int temperature = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
@@ -969,7 +969,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Pigeon", SpawnLocationType.Surface, true, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num95 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature38 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -987,7 +987,7 @@ namespace Game {
             );
             m_creatureTypes.Add(
                 new CreatureType("Sparrow", SpawnLocationType.Surface, true, false) {
-                    SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point) {
+                    SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point) {
                         float num93 = m_subsystemTerrain.TerrainContentsGenerator.CalculateOceanShoreDistance(point.X, point.Z);
                         int temperature37 = m_subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                         m_subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
@@ -1000,7 +1000,7 @@ namespace Game {
                                 ? 1.5f
                                 : 0f;
                     },
-                    SpawnFunction = delegate(CreatureType creatureType, Point3 point) {
+                    SpawnFunction = delegate (CreatureType creatureType, Point3 point) {
                         int count3 = m_random.Int(1, 2);
                         return SpawnCreatures(creatureType, "Sparrow", point, count3).Count;
                     }
@@ -1206,56 +1206,56 @@ namespace Game {
             }
             switch (spawnLocationType) {
                 case SpawnLocationType.Surface: {
-                    int cellLightFast2 = m_subsystemTerrain.Terrain.GetCellLightFast(x, y, z);
-                    if (m_subsystemSky.SkyLightValue - cellLightFast2 > 3) {
+                        int cellLightFast2 = m_subsystemTerrain.Terrain.GetCellLightFast(x, y, z);
+                        if (m_subsystemSky.SkyLightValue - cellLightFast2 > 3) {
+                            return false;
+                        }
+                        int cellValueFast7 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y - 1, z);
+                        int cellValueFast8 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y, z);
+                        int cellValueFast9 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z);
+                        Block block6 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast7)];
+                        Block block7 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast8)];
+                        Block block8 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast9)];
+                        if ((block6.IsCollidable_(cellValueFast7) || block6 is WaterBlock)
+                            && !block7.IsCollidable_(cellValueFast8)
+                            && !(block7 is WaterBlock)
+                            && !block8.IsCollidable_(cellValueFast9)) {
+                            return !(block8 is WaterBlock);
+                        }
                         return false;
                     }
-                    int cellValueFast7 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y - 1, z);
-                    int cellValueFast8 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y, z);
-                    int cellValueFast9 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z);
-                    Block block6 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast7)];
-                    Block block7 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast8)];
-                    Block block8 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast9)];
-                    if ((block6.IsCollidable_(cellValueFast7) || block6 is WaterBlock)
-                        && !block7.IsCollidable_(cellValueFast8)
-                        && !(block7 is WaterBlock)
-                        && !block8.IsCollidable_(cellValueFast9)) {
-                        return !(block8 is WaterBlock);
-                    }
-                    return false;
-                }
                 case SpawnLocationType.Cave: {
-                    int cellLightFast = m_subsystemTerrain.Terrain.GetCellLightFast(x, y, z);
-                    if (m_subsystemSky.SkyLightValue - cellLightFast < 5) {
+                        int cellLightFast = m_subsystemTerrain.Terrain.GetCellLightFast(x, y, z);
+                        if (m_subsystemSky.SkyLightValue - cellLightFast < 5) {
+                            return false;
+                        }
+                        int cellValueFast4 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y - 1, z);
+                        int cellValueFast5 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y, z);
+                        int cellValueFast6 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z);
+                        Block block3 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast4)];
+                        Block block4 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast5)];
+                        Block block5 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast6)];
+                        if ((block3.IsCollidable_(cellValueFast4) || block3 is WaterBlock)
+                            && !block4.IsCollidable_(cellValueFast5)
+                            && !(block4 is WaterBlock)
+                            && !block5.IsCollidable_(cellValueFast6)) {
+                            return !(block5 is WaterBlock);
+                        }
                         return false;
                     }
-                    int cellValueFast4 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y - 1, z);
-                    int cellValueFast5 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y, z);
-                    int cellValueFast6 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z);
-                    Block block3 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast4)];
-                    Block block4 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast5)];
-                    Block block5 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast6)];
-                    if ((block3.IsCollidable_(cellValueFast4) || block3 is WaterBlock)
-                        && !block4.IsCollidable_(cellValueFast5)
-                        && !(block4 is WaterBlock)
-                        && !block5.IsCollidable_(cellValueFast6)) {
-                        return !(block5 is WaterBlock);
-                    }
-                    return false;
-                }
                 case SpawnLocationType.Water: {
-                    int cellContentsFast = m_subsystemTerrain.Terrain.GetCellContentsFast(x, y, z);
-                    int cellValueFast2 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z);
-                    int cellValueFast3 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y + 2, z);
-                    Block obj = BlocksManager.Blocks[Terrain.ExtractContents(cellContentsFast)];
-                    Block block = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast2)];
-                    Block block2 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast3)];
-                    if (obj is WaterBlock
-                        && !block.IsCollidable_(cellValueFast2)) {
-                        return !block2.IsCollidable_(cellValueFast3);
+                        int cellContentsFast = m_subsystemTerrain.Terrain.GetCellContentsFast(x, y, z);
+                        int cellValueFast2 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y + 1, z);
+                        int cellValueFast3 = m_subsystemTerrain.Terrain.GetCellValueFast(x, y + 2, z);
+                        Block obj = BlocksManager.Blocks[Terrain.ExtractContents(cellContentsFast)];
+                        Block block = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast2)];
+                        Block block2 = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFast3)];
+                        if (obj is WaterBlock
+                            && !block.IsCollidable_(cellValueFast2)) {
+                            return !block2.IsCollidable_(cellValueFast3);
+                        }
+                        return false;
                     }
-                    return false;
-                }
                 default: throw new InvalidOperationException("Unknown spawn location type.");
             }
         }

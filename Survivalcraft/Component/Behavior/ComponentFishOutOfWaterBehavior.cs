@@ -1,8 +1,8 @@
 using Engine;
-using GameEntitySystem;
-using TemplatesDatabase;
 using Game.NetWork;
 using Game.NetWork.Packages;
+using GameEntitySystem;
+using TemplatesDatabase;
 
 namespace Game {
     public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable {
@@ -26,13 +26,10 @@ namespace Game {
 
         private bool m_isBend;
 
-        public bool IsBend
-        {
+        public bool IsBend {
             get { return m_isBend; }
-            set
-            {
-                if (m_isBend != value)
-                {
+            set {
+                if (m_isBend != value) {
                     m_isBend = value;
                     if (NetworkManager.WorkType == WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isBend));
                 }
@@ -136,7 +133,7 @@ namespace Game {
                     vector2,
                     false,
                     false,
-                    delegate(int value, float _) {
+                    delegate (int value, float _) {
                         int num = Terrain.ExtractContents(value);
                         return !(BlocksManager.Blocks[num] is WaterBlock);
                     }

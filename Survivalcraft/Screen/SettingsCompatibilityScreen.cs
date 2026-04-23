@@ -81,13 +81,13 @@ namespace Game {
                 string path = Storage.CombinePaths(ModsManager.LogPath, "Game.log");
                 if (Storage.FileExists(path)) {
                     Task.Run(async () => {
-                            try {
-                                await Storage.ShareFile(path, LanguageControl.GetContentWidgets("SettingsCompatibilityScreen", "15"), "text/plain");
-                            }
-                            catch (Exception e) {
-                                Dispatcher.Dispatch(() => DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok, null, null)));
-                            }
+                        try {
+                            await Storage.ShareFile(path, LanguageControl.GetContentWidgets("SettingsCompatibilityScreen", "15"), "text/plain");
                         }
+                        catch (Exception e) {
+                            Dispatcher.Dispatch(() => DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok, null, null)));
+                        }
+                    }
                     );
                 }
             }

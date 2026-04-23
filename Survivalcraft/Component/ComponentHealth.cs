@@ -210,7 +210,9 @@ namespace Game {
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
                 m_componentCreature.PlayerStats.AddDeathRecord(
                     new PlayerStats.DeathRecord {
-                        Day = m_subsystemTimeOfDay.Day, Location = m_componentCreature.ComponentBody.Position, Cause = CauseOfDeath
+                        Day = m_subsystemTimeOfDay.Day,
+                        Location = m_componentCreature.ComponentBody.Position,
+                        Cause = CauseOfDeath
                     }
                 );
             }

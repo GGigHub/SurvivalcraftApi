@@ -259,10 +259,10 @@ namespace Game {
                     }
                 }
                 listAfterProtection.Sort((a, b) => {
-                        ClothingData clothingDataA = BlocksManager.Blocks[Terrain.ExtractContents(a)].GetClothingData(a);
-                        ClothingData clothingDataB = BlocksManager.Blocks[Terrain.ExtractContents(b)].GetClothingData(b);
-                        return (clothingDataA?.Layer ?? 0) - (clothingDataB?.Layer ?? 0);
-                    }
+                    ClothingData clothingDataA = BlocksManager.Blocks[Terrain.ExtractContents(a)].GetClothingData(a);
+                    ClothingData clothingDataB = BlocksManager.Blocks[Terrain.ExtractContents(b)].GetClothingData(b);
+                    return (clothingDataA?.Layer ?? 0) - (clothingDataB?.Layer ?? 0);
+                }
                 );
                 ModsManager.HookAction(
                     "ApplyProtectionAfterClothes",
@@ -581,7 +581,7 @@ namespace Game {
                     return;
                 }
                 clothingData.Mount?.Invoke(value, this);
-                List<int> list = [..GetClothes(clothingData.Slot), value];
+                List<int> list = [.. GetClothes(clothingData.Slot), value];
                 SetClothes(clothingData.Slot, list);
             }
         }

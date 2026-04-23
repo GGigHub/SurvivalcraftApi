@@ -18,7 +18,7 @@ namespace Game {
             if (Loaded) {
                 return;
             }
-            SettingsManager.SettingChanged += delegate(string name) {
+            SettingsManager.SettingChanged += delegate (string name) {
                 if (name == "Brightness") {
                     CalculateLightingTables();
                 }

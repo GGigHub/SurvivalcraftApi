@@ -222,8 +222,7 @@ namespace Game {
             UpdateBody((ComponentBody)componentFrame);
         }
 
-        public void FindBodyByCreatureID(ushort CreatureId, Action<ComponentBody> action, Action fail = null)
-        {
+        public void FindBodyByCreatureID(ushort CreatureId, Action<ComponentBody> action, Action fail = null) {
             if (Project is not Game.NetWork.ProjectNet projectNet) {
                 fail?.Invoke();
                 return;

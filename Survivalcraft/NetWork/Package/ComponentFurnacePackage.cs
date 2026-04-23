@@ -1,19 +1,13 @@
-
-using Engine;
-using System.Collections.Generic;
-
 namespace Game.NetWork.Packages;
 
-public class ComponentFurnacePackage : IPackage
-{
+public class ComponentFurnacePackage : IPackage {
     public byte ID => (byte)PackageType.ComponentFurnace;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
-    struct FurnacePackageData
-    {
+    struct FurnacePackageData {
         public float fireTimeRemaining;
         public float smeltingProgress;
         public float heatLevel;
@@ -23,10 +17,8 @@ public class ComponentFurnacePackage : IPackage
     List<FurnacePackageData> furnaceDataList = new List<FurnacePackageData>();
 
     public ComponentFurnacePackage() { }
-    public ComponentFurnacePackage(List<ComponentFurnace> componentFurnaces)
-    {
-        foreach (var componentFurnace in componentFurnaces)
-        {
+    public ComponentFurnacePackage(List<ComponentFurnace> componentFurnaces) {
+        foreach (var componentFurnace in componentFurnaces) {
             FurnacePackageData furnaceData = new FurnacePackageData();
             furnaceData.entityID = componentFurnace.Entity.EntityId;
             furnaceData.fireTimeRemaining = componentFurnace.m_fireTimeRemaining;
@@ -35,39 +27,32 @@ public class ComponentFurnacePackage : IPackage
             furnaceDataList.Add(furnaceData);
         }
     }
-    public ComponentFurnacePackage(ushort entityId, float fireTimeRemaining, float smeltingProgress, float heatLevel)
-    {
+    public ComponentFurnacePackage(ushort entityId, float fireTimeRemaining, float smeltingProgress, float heatLevel) {
         FurnacePackageData furnaceData = new FurnacePackageData();
         furnaceData.entityID = entityId;
         furnaceData.fireTimeRemaining = fireTimeRemaining;
         furnaceData.smeltingProgress = smeltingProgress;
         furnaceData.heatLevel = heatLevel;
 
-            furnaceDataList.Add(furnaceData);
+        furnaceDataList.Add(furnaceData);
+    }
+    public void Handle(ProjectNet projectNet, bool isServer) {
+        if (isServer) {
+            return;
         }
-        public void Handle(ProjectNet projectNet, bool isServer)
-        {
-            if (isServer)
-            {
-                return;
-            }
-            foreach (var furnaceData in furnaceDataList)
-            {
-                projectNet.FindEntityById(furnaceData.entityID, e =>
-                {
-                    var furnace = e.FindComponent<ComponentFurnace>();
-                    furnace.m_smeltingProgress = furnaceData.smeltingProgress;
-                    furnace.m_fireTimeRemaining = furnaceData.fireTimeRemaining;
-                    furnace.m_heatLevel = furnaceData.heatLevel;
-                });
-            }
+        foreach (var furnaceData in furnaceDataList) {
+            projectNet.FindEntityById(furnaceData.entityID, e => {
+                var furnace = e.FindComponent<ComponentFurnace>();
+                furnace.m_smeltingProgress = furnaceData.smeltingProgress;
+                furnace.m_fireTimeRemaining = furnaceData.fireTimeRemaining;
+                furnace.m_heatLevel = furnaceData.heatLevel;
+            });
         }
+    }
 
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         int count = reader.ReadInt32();
-        for (int i = 0; i < count; i++)
-        {
+        for (int i = 0; i < count; i++) {
             FurnacePackageData furnaceData = new FurnacePackageData();
             furnaceData.entityID = reader.ReadUInt16();
             furnaceData.fireTimeRemaining = reader.ReadSingle();
@@ -77,11 +62,9 @@ public class ComponentFurnacePackage : IPackage
         }
     }
 
-    public void WriteData(PackageStreamWriter writer)
-    {
+    public void WriteData(PackageStreamWriter writer) {
         writer.Write(furnaceDataList.Count);
-        foreach (var furnace in furnaceDataList)
-        {
+        foreach (var furnace in furnaceDataList) {
             writer.Write(furnace.entityID);
             writer.Write(furnace.fireTimeRemaining);
             writer.Write(furnace.smeltingProgress);

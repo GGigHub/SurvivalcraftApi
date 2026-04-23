@@ -2,7 +2,6 @@ using Engine;
 using Game.NetWork;
 using Game.NetWork.Packages;
 using GameEntitySystem;
-using System.Collections.Generic;
 using TemplatesDatabase;
 
 namespace Game {
@@ -102,22 +101,17 @@ namespace Game {
             */
         }
 
-        public void Update(float dt)
-        {
-            if (Time.PeriodicEvent(5.0, 0.0) && NetworkManager.WorkType == WorkType.Server)
-            {
+        public void Update(float dt) {
+            if (Time.PeriodicEvent(5.0, 0.0) && NetworkManager.WorkType == WorkType.Server) {
                 List<ComponentFurnace> componentFurnaces = new List<ComponentFurnace>();
                 SubsystemBlockEntities subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>();
-                foreach (var pair in subsystemBlockEntities.m_blockEntities)
-                {
+                foreach (var pair in subsystemBlockEntities.m_blockEntities) {
                     var furnace = pair.Value.Entity.FindComponent<ComponentFurnace>();
-                    if (furnace != null)
-                    {
+                    if (furnace != null) {
                         componentFurnaces.Add(furnace);
                     }
                 }
-                if (componentFurnaces.Count > 0)
-                {
+                if (componentFurnaces.Count > 0) {
                     NetworkManager.QueuePackage(new ComponentFurnacePackage(componentFurnaces));
                 }
             }

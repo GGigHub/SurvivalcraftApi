@@ -103,7 +103,7 @@ namespace Game {
                     dictionary,
                     data,
                     progress,
-                    delegate(byte[] result) {
+                    delegate (byte[] result) {
                         try {
                             success(JsonElementToEntry(JsonDocument.Parse(result, JsonDocumentReader.DefaultJsonOptions).RootElement));
                         }
@@ -111,7 +111,7 @@ namespace Game {
                             failure(obj2);
                         }
                     },
-                    delegate(Exception error) { failure(error); }
+                    delegate (Exception error) { failure(error); }
                 );
             }
             catch (Exception obj) {
@@ -131,8 +131,8 @@ namespace Game {
                     null,
                     dictionary,
                     progress,
-                    delegate(byte[] result) { success(new MemoryStream(result)); },
-                    delegate(Exception error) { failure(error); }
+                    delegate (byte[] result) { success(new MemoryStream(result)); },
+                    delegate (Exception error) { failure(error); }
                 );
             }
             catch (Exception obj) {
@@ -156,7 +156,7 @@ namespace Game {
                     stream,
                     progress,
                     delegate { success(null); },
-                    delegate(Exception error) { failure(error); }
+                    delegate (Exception error) { failure(error); }
                 );
             }
             catch (Exception obj) {
@@ -178,7 +178,7 @@ namespace Game {
                     dictionary,
                     data,
                     progress,
-                    delegate(byte[] result) {
+                    delegate (byte[] result) {
                         try {
                             success(JsonElementToLinkAddress(JsonDocument.Parse(result, JsonDocumentReader.DefaultJsonOptions).RootElement));
                         }
@@ -186,7 +186,7 @@ namespace Game {
                             failure(obj2);
                         }
                     },
-                    delegate(Exception error) { failure(error); }
+                    delegate (Exception error) { failure(error); }
                 );
             }
             catch (Exception obj) {
@@ -218,7 +218,7 @@ namespace Game {
                     LanguageControl.Get(fName, "5"),
                     "",
                     256,
-                    delegate(string s) {
+                    delegate (string s) {
                         if (s != null) {
                             try {
                                 WebManager.Post(
@@ -232,13 +232,13 @@ namespace Game {
                                     null,
                                     new MemoryStream(),
                                     loginProcessData.Progress,
-                                    delegate(byte[] result) {
+                                    delegate (byte[] result) {
                                         SettingsManager.DropboxAccessToken = JsonDocument.Parse(result, JsonDocumentReader.DefaultJsonOptions)
                                             .RootElement.GetProperty("access_token")
                                             .GetString();
                                         loginProcessData.Succeed(this);
                                     },
-                                    delegate(Exception error) { loginProcessData.Fail(this, error); }
+                                    delegate (Exception error) { loginProcessData.Fail(this, error); }
                                 );
                             }
                             catch (Exception error2) {
@@ -276,9 +276,9 @@ namespace Game {
                     SettingsManager.DropboxAccessToken = dictionary["access_token"];
                     loginProcessData.Succeed(this);
                     goto end_IL_0038;
-                    标签:
+                标签:
                     throw new Exception(LanguageControl.Get(fName, "6"));
-                    end_IL_0038: ;
+                end_IL_0038:;
                 }
                 catch (Exception error) {
                     loginProcessData.Fail(this, error);

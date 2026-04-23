@@ -101,7 +101,9 @@ namespace Game {
 
         public ExternalContentEntry GetDirectoryEntry(string internalPath, bool scanContents) {
             ExternalContentEntry externalContentEntry = new() {
-                Type = ExternalContentType.Directory, Path = internalPath, Time = new DateTime(1970, 1, 1)
+                Type = ExternalContentType.Directory,
+                Path = internalPath,
+                Time = new DateTime(1970, 1, 1)
             };
             if (scanContents) {
                 if (internalPath.Length == 2

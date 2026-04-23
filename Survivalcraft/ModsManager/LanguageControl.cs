@@ -173,56 +173,56 @@ namespace Game {
             }
             switch (newNode.GetValueKind()) {
                 case JsonValueKind.Object: {
-                    if (oldNode.GetValueKind() == JsonValueKind.Object) {
-                        JsonObject oldObject = oldNode.AsObject();
-                        JsonObject newObject = newNode.AsObject();
-                        foreach (KeyValuePair<string, JsonNode> newChild in newObject) {
-                            if (newChild.Value == null) {
-                                continue;
-                            }
-                            if (oldObject.TryGetPropertyValue(newChild.Key, out JsonNode oldChild)) {
-                                MergeJsonNode(oldChild, newChild.Value);
-                            }
-                            else {
-                                oldObject.Add(newChild.Key, newChild.Value.DeepClone());
-                            }
-                        }
-                    }
-                    else {
-                        ReplaceJsonNode(oldNode, newNode.DeepClone());
-                    }
-                    break;
-                }
-                case JsonValueKind.Array: {
-                    if (oldNode.GetValueKind() == JsonValueKind.Array) {
-                        JsonArray oldArray = oldNode.AsArray();
-                        JsonArray newArray = newNode.AsArray();
-                        if (newArray.Count > oldArray.Count) {
-                            for (int i = 0; i < oldArray.Count; i++) {
-                                MergeJsonNode(oldArray[i], newArray[i]);
-                            }
-                            for (int i = oldArray.Count; i < newArray.Count; i++) {
-                                oldArray.Add(newArray[i]?.DeepClone());
+                        if (oldNode.GetValueKind() == JsonValueKind.Object) {
+                            JsonObject oldObject = oldNode.AsObject();
+                            JsonObject newObject = newNode.AsObject();
+                            foreach (KeyValuePair<string, JsonNode> newChild in newObject) {
+                                if (newChild.Value == null) {
+                                    continue;
+                                }
+                                if (oldObject.TryGetPropertyValue(newChild.Key, out JsonNode oldChild)) {
+                                    MergeJsonNode(oldChild, newChild.Value);
+                                }
+                                else {
+                                    oldObject.Add(newChild.Key, newChild.Value.DeepClone());
+                                }
                             }
                         }
                         else {
-                            for (int i = 0; i < newArray.Count; i++) {
-                                MergeJsonNode(oldArray[i], newArray[i]);
+                            ReplaceJsonNode(oldNode, newNode.DeepClone());
+                        }
+                        break;
+                    }
+                case JsonValueKind.Array: {
+                        if (oldNode.GetValueKind() == JsonValueKind.Array) {
+                            JsonArray oldArray = oldNode.AsArray();
+                            JsonArray newArray = newNode.AsArray();
+                            if (newArray.Count > oldArray.Count) {
+                                for (int i = 0; i < oldArray.Count; i++) {
+                                    MergeJsonNode(oldArray[i], newArray[i]);
+                                }
+                                for (int i = oldArray.Count; i < newArray.Count; i++) {
+                                    oldArray.Add(newArray[i]?.DeepClone());
+                                }
+                            }
+                            else {
+                                for (int i = 0; i < newArray.Count; i++) {
+                                    MergeJsonNode(oldArray[i], newArray[i]);
+                                }
                             }
                         }
+                        else {
+                            ReplaceJsonNode(oldNode, newNode.DeepClone());
+                        }
+                        break;
                     }
-                    else {
-                        ReplaceJsonNode(oldNode, newNode.DeepClone());
-                    }
-                    break;
-                }
                 case JsonValueKind.String:
                 case JsonValueKind.Number:
                 case JsonValueKind.True:
                 case JsonValueKind.False: {
-                    ReplaceJsonNode(oldNode, newNode.DeepClone());
-                    break;
-                }
+                        ReplaceJsonNode(oldNode, newNode.DeepClone());
+                        break;
+                    }
             }
         }
 
@@ -435,11 +435,11 @@ namespace Game {
 #endif
             }
             IOrderedEnumerable<KeyValuePair<string, string>> sorted = CachedLanguageFullNames.OrderBy(item => item.Key switch {
-                    "en-US" => 0,
-                    "zh-CN" => 1,
-                    "zh-CN-old" => 1000,
-                    _ => 2
-                }
+                "en-US" => 0,
+                "zh-CN" => 1,
+                "zh-CN-old" => 1000,
+                _ => 2
+            }
             );
             DialogsManager.ShowDialog(
                 null,

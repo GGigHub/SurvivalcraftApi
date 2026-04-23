@@ -172,7 +172,9 @@ namespace Game {
         public override void OnEntityAdded(Entity entity) {
             foreach (ComponentModel item in entity.FindComponents<ComponentModel>()) {
                 ModelData value = new() {
-                    ComponentModel = item, ComponentBody = item.Entity.FindComponent<ComponentBody>(), Light = m_subsystemSky.SkyLightIntensity
+                    ComponentModel = item,
+                    ComponentBody = item.Entity.FindComponent<ComponentBody>(),
+                    Light = m_subsystemSky.SkyLightIntensity
                 };
                 m_componentModels.Add(item, value);
             }

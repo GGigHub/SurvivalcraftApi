@@ -1,8 +1,7 @@
 namespace Game.NetWork;
 
-public interface IPackage
-{
-    byte ID { get;  }
+public interface IPackage {
+    byte ID { get; }
     Client To { get; set; }
     Client Except { get; set; }
     Client From { get; set; }

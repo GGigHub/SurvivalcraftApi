@@ -424,7 +424,7 @@ namespace Game {
                 bool loop,
                 bool flatShading,
                 float depth)
-            // ReSharper restore UnusedParameter.Local
+        // ReSharper restore UnusedParameter.Local
         {
             int num = loop ? normals.Count : normals.Count - 1;
             for (int i = 0; i < num; i++) {
@@ -524,7 +524,7 @@ namespace Game {
                 bool flatShading,
                 float lengthOffset,
                 float depth)
-            // ReSharper restore UnusedParameter.Local
+        // ReSharper restore UnusedParameter.Local
         {
             float num = lengthOffset;
             int num2 = loop ? normals.Count : normals.Count - 1;

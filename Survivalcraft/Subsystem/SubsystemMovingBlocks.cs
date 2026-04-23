@@ -135,7 +135,7 @@ namespace Game {
 
         public static int[] m_drawOrders = [10];
 
-        public List<IMovingBlockSet> MovingBlockSets => [..m_movingBlockSets];
+        public List<IMovingBlockSet> MovingBlockSets => [.. m_movingBlockSets];
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

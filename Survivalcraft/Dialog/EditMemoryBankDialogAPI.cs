@@ -24,12 +24,16 @@ namespace Game {
             Data.Clear();
             Data.AddRange(memory.Data);
             CanvasWidget canvasWidget = new() {
-                Size = new Vector2(600f, 500f), HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Center
+                Size = new Vector2(600f, 500f),
+                HorizontalAlignment = WidgetAlignment.Center,
+                VerticalAlignment = WidgetAlignment.Center
             };
             BevelledRectangleWidget rectangleWidget = new() { Style = ContentManager.Get<XElement>("Styles/DialogArea") };
             StackPanelWidget stackPanel = new() { Direction = LayoutDirection.Vertical };
             LabelWidget labelWidget = new() {
-                Text = LanguageControl.GetContentWidgets(fName, 0), HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(0, 10)
+                Text = LanguageControl.GetContentWidgets(fName, 0),
+                HorizontalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(0, 10)
             };
             StackPanelWidget stackPanelWidget = new() {
                 Direction = LayoutDirection.Horizontal,
@@ -163,7 +167,7 @@ namespace Game {
 
         // ReSharper disable UnusedMember.Local
         void ChangeNumber(char pp)
-            // ReSharper restore UnusedMember.Local
+        // ReSharper restore UnusedMember.Local
         {
             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
             Write(clickpos, (byte)pp); //写入数据
@@ -306,7 +310,7 @@ namespace Game {
             stack.Children.Add(labelWidget);
             stack.Children.Add(
                 makeTextBox(
-                    delegate(TextBoxWidget textBoxWidget) {
+                    delegate (TextBoxWidget textBoxWidget) {
                         LoadString(textBoxWidget.Text);
                         isclick = true;
                     },

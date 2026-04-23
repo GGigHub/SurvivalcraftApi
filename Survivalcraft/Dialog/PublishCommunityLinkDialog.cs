@@ -52,7 +52,7 @@ namespace Game {
             if (m_changeTypeButtonWidget.IsClicked) {
                 DialogsManager.ShowDialog(
                     ParentWidget,
-                    new SelectExternalContentTypeDialog("Select Content Type", delegate(ExternalContentType item) { m_type = item; })
+                    new SelectExternalContentTypeDialog("Select Content Type", delegate (ExternalContentType item) { m_type = item; })
                 );
             }
             else if (Input.Cancel
@@ -81,7 +81,7 @@ namespace Game {
                             )
                         );
                     },
-                    delegate(Exception error) {
+                    delegate (Exception error) {
                         DialogsManager.HideDialog(busyDialog);
                         DialogsManager.ShowDialog(ParentWidget, new MessageDialog("Error", error.Message, "OK", null, null));
                     }

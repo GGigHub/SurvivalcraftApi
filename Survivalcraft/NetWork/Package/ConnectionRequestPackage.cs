@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 using Engine;
 using LiteNetLib;
@@ -9,8 +5,7 @@ using TemplatesDatabase;
 
 namespace Game.NetWork.Packages;
 
-public class ConnectionRequestPackage : IPackage
-{
+public class ConnectionRequestPackage : IPackage {
     public byte ID => (byte)PackageType.ConnectionRequest;
     public Client To { get; set; }
     public Client Except { get; set; }
@@ -30,13 +25,11 @@ public class ConnectionRequestPackage : IPackage
     string nickname = string.Empty;
     string communityAccountId = string.Empty;
 
-    public ConnectionRequestPackage()
-    {
+    public ConnectionRequestPackage() {
 
     }
 
-    public ConnectionRequestPackage(Guid tmp_token, string serverVersion, string user, string token, string passwd, List<ModEntity> modEntities)
-    {
+    public ConnectionRequestPackage(Guid tmp_token, string serverVersion, string user, string token, string passwd, List<ModEntity> modEntities) {
         if (passwd == null) passwd = string.Empty;
         if (serverVersion == null) serverVersion = string.Empty;
         m_magic = verrifyMagic;
@@ -49,11 +42,9 @@ public class ConnectionRequestPackage : IPackage
         modInfos = [.. modEntities];
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer)
-    {
+    public void Handle(ProjectNet projectNet, bool isServer) {
         StringBuilder ConnectionError = new StringBuilder();
-        if (string.IsNullOrEmpty(m_token))
-        {
+        if (string.IsNullOrEmpty(m_token)) {
             NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("身份信息为空，验证失败"), From.Request, true);
             return;
         }
@@ -61,81 +52,63 @@ public class ConnectionRequestPackage : IPackage
         AcceptAclient(m_token, ConnectionError);
     }
 
-    private string FindPlayerNameByGUID(string m_token)
-    {
-        try
-        {
-            if (!Guid.TryParse(m_token, out var playerGuid))
-            {
+    private string FindPlayerNameByGUID(string m_token) {
+        try {
+            if (!Guid.TryParse(m_token, out var playerGuid)) {
                 return "";
             }
             SubsystemGameInfo subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
-            if (subsystemGameInfo != null)
-            {
+            if (subsystemGameInfo != null) {
                 string entityFileDir = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "PlayerEntities/");
                 string entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.json");
-                if (Storage.FileExists(entityFilePath))
-                {
+                if (Storage.FileExists(entityFilePath)) {
                     return LoadPlayerNameFromFile(entityFilePath, isJson: true);
                 }
                 entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.dat");
-                if (Storage.FileExists(entityFilePath))
-                {
+                if (Storage.FileExists(entityFilePath)) {
                     return LoadPlayerNameFromFile(entityFilePath, isJson: false);
                 }
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Log.Warning("查找玩家名称时发生错误: " + ex.Message);
         }
         return "";
     }
 
-    private string LoadPlayerNameFromFile(string filePath, bool isJson)
-    {
-        try
-        {
-            using (Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read))
-            {
+    private string LoadPlayerNameFromFile(string filePath, bool isJson) {
+        try {
+            using (Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read)) {
                 ValuesDictionary dict = new ValuesDictionary();
-                if (isJson)
-                {
-                    using (StreamReader reader = new StreamReader(stream))
-                    {
+                if (isJson) {
+                    using (StreamReader reader = new StreamReader(stream)) {
                         string jsonText = reader.ReadToEnd();
                         dict.ApplyOverridesUseJson(jsonText, out var _);
                     }
                 }
-                else
-                {
+                else {
                     byte[] data2 = new byte[stream.Length];
                     stream.Read(data2, 0, data2.Length);
                     dict.ApplyOverridesUseMessagePack(data2);
                 }
                 ValuesDictionary playerDataDict = dict.GetValue<ValuesDictionary>("Data");
-                if (playerDataDict != null)
-                {
+                if (playerDataDict != null) {
                     string playerName = playerDataDict.GetValue("Name", "");
-                    if (!string.IsNullOrEmpty(playerName))
-                    {
+                    if (!string.IsNullOrEmpty(playerName)) {
                         return playerName;
                     }
                 }
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             Log.Warning("从文件 " + filePath + " 加载玩家名称时发生错误: " + ex.Message);
         }
         return "";
     }
 
-    public void AcceptAclient(string token, StringBuilder ConnectionError, bool useExternalPassword = false, string saveKey = "")
-    {
+    public void AcceptAclient(string token, StringBuilder ConnectionError, bool useExternalPassword = false, string saveKey = "") {
         Guid guid = Guid.Empty;
-        if (!string.IsNullOrEmpty(token))
-        {
+        if (!string.IsNullOrEmpty(token)) {
             guid = new Guid(token);
         }
         var pwd2 = ProjectNet.subsystemGameInfo.WorldSettings.Password;
@@ -153,41 +126,31 @@ public class ConnectionRequestPackage : IPackage
 
         bool modsMismatch = serverMd5s.Count != clientMd5s.Count || !serverMd5s.SequenceEqual(clientMd5s, StringComparer.OrdinalIgnoreCase);
 
-        if (m_magic == verrifyMagic)
-        {
-            if (NetworkManager.Self.PlayerGuid == guid)
-            {
+        if (m_magic == verrifyMagic) {
+            if (NetworkManager.Self.PlayerGuid == guid) {
                 ConnectionError.AppendLine("客户端和服务器 token 相同");
             }
-            else if (NetworkManager.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null)
-            {
+            else if (NetworkManager.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null) {
                 ConnectionError.AppendLine("你的 ID 与服务器中某个在线玩家的 ID 相同");
             }
-            else if (m_version != ProjectNet.Server_Version)
-            {
+            else if (m_version != ProjectNet.Server_Version) {
                 ConnectionError.AppendLine("客户端和服务器版本不一致");
             }
-            else if (ProjectNet.subsystemPlayers.BlackPlayerGuidList.ContainsKey(token.ToString()))
-            {
+            else if (ProjectNet.subsystemPlayers.BlackPlayerGuidList.ContainsKey(token.ToString())) {
                 ConnectionError.AppendLine("你已被禁止加入服务器");
             }
-            else if (NetworkManager.ClientCount >= ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount)
-            {
+            else if (NetworkManager.ClientCount >= ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount) {
                 ConnectionError.AppendLine("在线人数达到上限，拒绝加入");
             }
-            else if (!string.IsNullOrEmpty(pwd2))
-            {
-                if (!useExternalPassword && m_password != pwd2)
-                {
+            else if (!string.IsNullOrEmpty(pwd2)) {
+                if (!useExternalPassword && m_password != pwd2) {
                     ConnectionError.AppendLine("房间密码验证错误");
                 }
             }
-            else if (string.IsNullOrEmpty(token))
-            {
+            else if (string.IsNullOrEmpty(token)) {
                 ConnectionError.AppendLine("身份信息验证错误");
             }
-            if (ConnectionError.Length > 0)
-            {
+            if (ConnectionError.Length > 0) {
                 if (ModsManager.Configs.ContainsKey(saveKey)) // 如果验证失败，应该清理登录信息
                 {
                     ModsManager.Configs.Remove(saveKey);
@@ -195,22 +158,17 @@ public class ConnectionRequestPackage : IPackage
                 NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage(ConnectionError.ToString()), From.Request, true);
                 Log.Information("Received connection request from " + From.IPPoint + ", rejected -- " + ConnectionError.ToString());
             }
-            else
-            {
-                if (modsMismatch)
-                {
-                    if (!m_supportsModTransfer)
-                    {
+            else {
+                if (modsMismatch) {
+                    if (!m_supportsModTransfer) {
                         NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致，且客户端不支持自动下载模组，请更新客户端或手动安装模组后再加入"), From?.Request, true);
                         return;
                     }
 
                     // Accept connection but do not proceed with normal join.
                     // We'll push server mod manifest and stream required .netmod files, then client reboots.
-                    try
-                    {
-                        static string GetFileName(string path)
-                        {
+                    try {
+                        static string GetFileName(string path) {
                             if (string.IsNullOrEmpty(path))
                                 return string.Empty;
                             int slash = path.LastIndexOf('/');
@@ -220,15 +178,13 @@ public class ConnectionRequestPackage : IPackage
                         }
 
                         var acceptedLiteNetPeer = From?.Request?.Accept();
-                        if (acceptedLiteNetPeer == null)
-                        {
+                        if (acceptedLiteNetPeer == null) {
                             NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致且无法建立连接"), From?.Request, true);
                             return;
                         }
 
                     }
-                    catch (Exception e)
-                    {
+                    catch (Exception e) {
                         NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage($"模组传输初始化失败: {e.Message}"), From?.Request, true);
                     }
                     return;
@@ -238,8 +194,7 @@ public class ConnectionRequestPackage : IPackage
                 NetworkManager.PendingPeer = (NetPeer)(object)acceptedPeer;
                 Client AddClient = NetworkManager.CreateClient(NetworkManager.PendingPeer, m_tmp_token, guid, communityAccountId, nickname);
                 var clientPackage = new ClientPackage(AddClient.ID, AddClient.TokenId, AddClient.PlayerGuid, AddClient.Nickname);
-                foreach (var c in NetworkManager.Peers)
-                {
+                foreach (var c in NetworkManager.Peers) {
 #if DEBUG
                     Log.Information($"通知 Client[{c.ID}] 新加入客户端 {AddClient.ID}");
 #endif
@@ -250,16 +205,14 @@ public class ConnectionRequestPackage : IPackage
                 NetworkManager.Server.DeliveryEvent(null, null);
             }
         }
-        else
-        {
+        else {
             NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("无法识别的数据包头"), From.Request, true);
             Log.Information("无法识别的数据包头");
         }
 
     }
 
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         m_magic = reader.ReadInt32();
         m_version = reader.ReadString();
         m_password = reader.ReadString();
@@ -268,18 +221,15 @@ public class ConnectionRequestPackage : IPackage
         m_token = reader.ReadString();
         // Capability flag was added later; keep backward compatibility.
         m_supportsModTransfer = false;
-        try
-        {
+        try {
             m_supportsModTransfer = reader.ReadBoolean();
         }
-        catch
-        {
+        catch {
             m_supportsModTransfer = false;
         }
         byte count = reader.ReadByte();
         modInfos = new List<ModEntity>();
-        for (int i = 0; i < count; i++)
-        {
+        for (int i = 0; i < count; i++) {
             ModEntity modEntity = new ModEntity();
             modEntity.ResourcesMd5 = reader.ReadString();
             modEntity.modInfo = new ModInfo();
@@ -290,8 +240,7 @@ public class ConnectionRequestPackage : IPackage
         }
     }
 
-    public void WriteData(PackageStreamWriter writer)
-    {
+    public void WriteData(PackageStreamWriter writer) {
         writer.Write(m_magic);
         writer.Write(m_version);
         writer.Write(m_password);
@@ -300,8 +249,7 @@ public class ConnectionRequestPackage : IPackage
         writer.Write(m_token);
         writer.Write(m_supportsModTransfer);
         writer.Write((byte)modInfos.Count);
-        foreach (var m in modInfos)
-        {
+        foreach (var m in modInfos) {
             writer.Write(m.ResourcesMd5);
             writer.Write(m.modInfo.Name);
             writer.Write(m.modInfo.PackageName);
@@ -309,34 +257,28 @@ public class ConnectionRequestPackage : IPackage
         }
     }
 
-    private static List<string> NormalizeMd5List(IEnumerable<string> md5s)
-    {
+    private static List<string> NormalizeMd5List(IEnumerable<string> md5s) {
         var sb = new StringBuilder();
-        foreach (var s in md5s)
-        {
+        foreach (var s in md5s) {
             if (string.IsNullOrEmpty(s))
                 continue;
             sb.Append(s.Trim());
         }
         var concat = sb.ToString();
         var result = new List<string>();
-        for (int i = 0; i + 32 <= concat.Length; i += 32)
-        {
+        for (int i = 0; i + 32 <= concat.Length; i += 32) {
             var chunk = concat.Substring(i, 32).ToLowerInvariant();
-            if (IsHex32(chunk))
-            {
+            if (IsHex32(chunk)) {
                 result.Add(chunk);
             }
         }
         return result;
     }
 
-    private static bool IsHex32(string s)
-    {
+    private static bool IsHex32(string s) {
         if (s == null || s.Length != 32)
             return false;
-        for (int i = 0; i < s.Length; i++)
-        {
+        for (int i = 0; i < s.Length; i++) {
             char c = s[i];
             bool isHex = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
             if (!isHex) return false;

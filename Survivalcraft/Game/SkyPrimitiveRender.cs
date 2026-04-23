@@ -37,7 +37,7 @@ namespace Game {
             if (primitiveRend.m_sortNeeded) {
                 primitiveRend.m_sortNeeded = false;
                 primitiveRend.m_allBatches.Sort(
-                    delegate(BaseBatch b1, BaseBatch b2) {
+                    delegate (BaseBatch b1, BaseBatch b2) {
                         if (b1.Layer < b2.Layer) {
                             return -1;
                         }

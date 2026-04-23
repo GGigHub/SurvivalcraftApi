@@ -91,7 +91,9 @@ namespace Game {
                 if (!string.IsNullOrEmpty(entity.ModFilePath)) {
                     m_contentPanel.Children.Add(
                         new LabelWidget {
-                            Text = $"{LanguageControl.Get(fName, "8")}{Storage.GetFileName(entity.ModFilePath)}", WordWrap = true, Margin = margin
+                            Text = $"{LanguageControl.Get(fName, "8")}{Storage.GetFileName(entity.ModFilePath)}",
+                            WordWrap = true,
+                            Margin = margin
                         }
                     );
                 }

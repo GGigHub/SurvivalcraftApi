@@ -183,14 +183,14 @@ namespace Game {
                             valuesDictionary.ApplyOverrides(gameInfoNode);
                             worldInfo.WorldSettings.Load(valuesDictionary);
                             foreach (XElement item2 in (from e in GetPlayersNode(xElement).Elements()
-                                    where XmlUtils.GetAttributeValue<string>(e, "Name") == "Players"
-                                    select e).First()
+                                                        where XmlUtils.GetAttributeValue<string>(e, "Name") == "Players"
+                                                        select e).First()
                                 .Elements()) {
                                 PlayerInfo playerInfo = new();
                                 worldInfo.PlayerInfos.Add(playerInfo);
                                 XElement xElement2 = (from e in item2.Elements()
-                                    where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CharacterSkinName"
-                                    select e).FirstOrDefault();
+                                                      where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CharacterSkinName"
+                                                      select e).FirstOrDefault();
                                 if (xElement2 != null) {
                                     playerInfo.CharacterSkinName = XmlUtils.GetAttributeValue(xElement2, "Value", string.Empty);
                                 }
@@ -335,8 +335,8 @@ namespace Game {
 
         public static XElement GetGameInfoNode(XElement projectNode) {
             XElement xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
-                where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "GameInfo"
-                select n).FirstOrDefault();
+                                 where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "GameInfo"
+                                 select n).FirstOrDefault();
             if (xElement != null) {
                 return xElement;
             }
@@ -350,8 +350,8 @@ namespace Game {
         /// </summary>
         public static XElement GetSubsystemNode(XElement projectNode, string subsystemName, bool throwOnError) {
             XElement xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
-                where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == subsystemName
-                select n).FirstOrDefault();
+                                 where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == subsystemName
+                                 select n).FirstOrDefault();
             if (xElement != null) {
                 return xElement;
             }
@@ -363,8 +363,8 @@ namespace Game {
 
         public static XElement GetPlayersNode(XElement projectNode) {
             XElement xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
-                where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "Players"
-                select n).FirstOrDefault();
+                                 where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "Players"
+                                 select n).FirstOrDefault();
             if (xElement != null) {
                 return xElement;
             }

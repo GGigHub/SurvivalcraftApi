@@ -272,7 +272,7 @@ namespace Game {
         /// <param name="xElement"></param>
         // ReSharper disable UnusedParameter.Global
         public virtual void LoadClo(ClothingBlock block, ref XElement xElement)
-            // ReSharper restore UnusedParameter.Global
+        // ReSharper restore UnusedParameter.Global
         {
             bool flag = true;
             XElement element = xElement;

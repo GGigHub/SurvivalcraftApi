@@ -1,5 +1,4 @@
 using Engine;
-using Engine.Graphics;
 
 namespace Game {
     public class LoadingFailedScreen : Screen {
@@ -8,11 +7,14 @@ namespace Game {
             Children.Clear();
             Children.Add(
                 new RectangleWidget {
-                    Size = new Vector2(float.PositiveInfinity), FillColor = Color.Black, OutlineColor = Color.Black, OutlineThickness = 0
+                    Size = new Vector2(float.PositiveInfinity),
+                    FillColor = Color.Black,
+                    OutlineColor = Color.Black,
+                    OutlineThickness = 0
                 }
             );
             ScrollPanelWidget scrollPanelWidget = new() { HorizontalAlignment = WidgetAlignment.Center, Direction = LayoutDirection.Vertical };
-            StackPanelWidget widget = new() { Direction = LayoutDirection.Vertical, HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(20f)};
+            StackPanelWidget widget = new() { Direction = LayoutDirection.Vertical, HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(20f) };
             scrollPanelWidget.Children.Add(widget);
             {
                 widget.Children.Add(
@@ -32,9 +34,9 @@ namespace Game {
                     }
                 );
                 foreach (string method in solveMethods) {
-                    widget.Children.Add(new LabelWidget { Text = method, WordWrap = true, Margin = new Vector2(0f, 4f)});
+                    widget.Children.Add(new LabelWidget { Text = method, WordWrap = true, Margin = new Vector2(0f, 4f) });
                 }
-                m_enableSafeModeButton = new BevelledButtonWidget { Text = "Safe Mode 安全模式", Size = new Vector2(310f, 60f), HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(0f, 10f)};
+                m_enableSafeModeButton = new BevelledButtonWidget { Text = "Safe Mode 安全模式", Size = new Vector2(310f, 60f), HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(0f, 10f) };
                 widget.Children.Add(m_enableSafeModeButton);
             }
             Children.Add(scrollPanelWidget);

@@ -54,7 +54,7 @@ namespace Game {
                         "Reporting offensive content is a serious matter. Please make sure you checked the right box. Do not report content which is not offensive.",
                         "Proceed",
                         "Cancel",
-                        delegate(MessageDialogButton b) {
+                        delegate (MessageDialogButton b) {
                             if (b == MessageDialogButton.Button1) {
                                 string report = string.Empty;
                                 foreach (CheckboxWidget reasonWidgets in m_reasonWidgetsList) {

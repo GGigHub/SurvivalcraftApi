@@ -78,7 +78,7 @@ namespace Game {
                             Description,
                             Text,
                             false,
-                            delegate(string text) {
+                            delegate (string text) {
                                 Text = text;
                                 HasFocus = false;
                             },

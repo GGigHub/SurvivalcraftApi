@@ -32,9 +32,9 @@ namespace Game {
         public ValueBarWidget m_experienceValueBar;
         public LinkWidget m_insulationLink;
         public LabelWidget m_insulationLabel;
-        
+
         public ComponentPlayer m_componentPlayer;
-        public const string fName = "VitalStatsWidget"; 
+        public const string fName = "VitalStatsWidget";
 
         public VitalStatsWidget(ComponentPlayer componentPlayer) {
             m_componentPlayer = componentPlayer;

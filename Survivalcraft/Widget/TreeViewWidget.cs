@@ -1,7 +1,7 @@
 using System.Xml.Linq;
 using Engine;
-using Engine.Media;
 using Engine.Graphics;
+using Engine.Media;
 
 namespace Game {
     public class TreeViewWidget : ScrollPanelWidget {
@@ -123,13 +123,13 @@ namespace Game {
 
         public void Clear(bool dispose = true) {
             Nodes.ForEach(x => {
-                    if (dispose) {
-                        x.Dispose();
-                    }
-                    else {
-                        x.ParentTree = null;
-                    }
+                if (dispose) {
+                    x.Dispose();
                 }
+                else {
+                    x.ParentTree = null;
+                }
+            }
             );
             Nodes.Clear();
             m_widgetsDirty = true;
@@ -319,14 +319,14 @@ namespace Game {
 
         public void ClearChildren(bool dispose = true) {
             m_nodes.ForEach(x => {
-                    if (dispose) {
-                        x.Dispose();
-                    }
-                    else {
-                        x.ParentTree = null;
-                        x.ParentNode = null;
-                    }
+                if (dispose) {
+                    x.Dispose();
                 }
+                else {
+                    x.ParentTree = null;
+                    x.ParentNode = null;
+                }
+            }
             );
             m_nodes.Clear();
         }

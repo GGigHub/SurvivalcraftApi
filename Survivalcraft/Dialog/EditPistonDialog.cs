@@ -9,7 +9,7 @@ namespace Game {
         public SliderWidget m_slider3;
         public ButtonWidget m_okButton;
         public ButtonWidget m_cancelButton;
-        
+
         public Action<int> m_handler;
         public int m_data;
         public PistonMode m_mode;

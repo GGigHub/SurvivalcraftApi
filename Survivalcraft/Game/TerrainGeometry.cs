@@ -79,20 +79,16 @@ namespace Game {
             Utilities.Dispose(ref SubsetOpaque);
             Utilities.Dispose(ref SubsetAlphaTest);
             Utilities.Dispose(ref SubsetTransparent);
-            for (int i = 0; i < OpaqueSubsetsByFace.Length; i++)
-            {
+            for (int i = 0; i < OpaqueSubsetsByFace.Length; i++) {
                 Utilities.Dispose(ref OpaqueSubsetsByFace[i]);
             }
-            for (int j = 0; j < AlphaTestSubsetsByFace.Length; j++)
-            {
+            for (int j = 0; j < AlphaTestSubsetsByFace.Length; j++) {
                 Utilities.Dispose(ref AlphaTestSubsetsByFace[j]);
             }
-            for (int k = 0; k < TransparentSubsetsByFace.Length; k++)
-            {
+            for (int k = 0; k < TransparentSubsetsByFace.Length; k++) {
                 Utilities.Dispose(ref TransparentSubsetsByFace[k]);
             }
-            for (int l = 0; l < Subsets.Length; l++)
-            {
+            for (int l = 0; l < Subsets.Length; l++) {
                 Utilities.Dispose(ref Subsets[l]);
             }
             foreach (TerrainGeometry terrainGeometry in Draws.Values) {

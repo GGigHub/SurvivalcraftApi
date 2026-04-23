@@ -14,7 +14,7 @@ namespace Game {
         public LabelWidget m_propertyNames2Widget;
         public LabelWidget m_propertyValues2Widget;
         public ContainerWidget m_dropsPanel;
-        
+
         public int m_index;
         public IList<BestiaryCreatureInfo> m_infoList;
         public const string fName = "BestiaryDescriptionScreen";

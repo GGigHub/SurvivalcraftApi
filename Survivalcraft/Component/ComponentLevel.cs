@@ -341,7 +341,9 @@ namespace Game {
                 && precipitationShaftInfo.Type == PrecipitationType.Rain) {
                 wetness.Add(
                     new Factor {
-                        Name = "Precipitation", FactorAdditionType = FactorAdditionType.Add, Value = 0.05f * precipitationShaftInfo.Intensity
+                        Name = "Precipitation",
+                        FactorAdditionType = FactorAdditionType.Add,
+                        Value = 0.05f * precipitationShaftInfo.Intensity
                     }
                 );
             }
@@ -407,7 +409,9 @@ namespace Game {
                 && clothingData.MovementSpeedFactor != 1f) {
                 m_speedFactors.Add(
                     new Factor {
-                        Name = $"Clothing {clothingValue}", Value = clothingData.MovementSpeedFactor, Description = clothingData.DisplayName
+                        Name = $"Clothing {clothingValue}",
+                        Value = clothingData.MovementSpeedFactor,
+                        Description = clothingData.DisplayName
                     }
                 );
             }

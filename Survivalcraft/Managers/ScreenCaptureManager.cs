@@ -22,13 +22,13 @@ namespace Game {
                     int height;
                     switch (SettingsManager.ScreenshotSize) {
                         case ScreenshotSize.ScreenSize: {
-                            width = Math.Max(Window.ScreenSize.X, Window.ScreenSize.Y);
-                            height = Math.Min(Window.ScreenSize.X, Window.ScreenSize.Y);
-                            float num2 = width / (float)height;
-                            width = Math.Min(width, 2048);
-                            height = (int)MathF.Round(width / num2);
-                            break;
-                        }
+                                width = Math.Max(Window.ScreenSize.X, Window.ScreenSize.Y);
+                                height = Math.Min(Window.ScreenSize.X, Window.ScreenSize.Y);
+                                float num2 = width / (float)height;
+                                width = Math.Min(width, 2048);
+                                height = (int)MathF.Round(width / num2);
+                                break;
+                            }
                         case ScreenshotSize.FullHD:
                             if (Display.MaxTextureSize < 3840) {
                                 width = Display.MaxTextureSize;

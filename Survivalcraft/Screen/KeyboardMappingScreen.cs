@@ -83,7 +83,7 @@ namespace Game {
                     LanguageControl.Get("ContentWidgets", fName, "ResetText"),
                     LanguageControl.Yes,
                     LanguageControl.No,
-                    delegate(MessageDialogButton button) {
+                    delegate (MessageDialogButton button) {
                         if (button == MessageDialogButton.Button1) { //重设所有按键
                             ResetAll();
                         }

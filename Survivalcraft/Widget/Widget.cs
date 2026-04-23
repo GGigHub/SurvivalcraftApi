@@ -25,7 +25,7 @@ namespace Game {
             /// <param name="rootWidget"></param>
             // ReSharper disable MemberHidesStaticFromOuterClass
             public virtual void DrawWidgetsHierarchy(Widget rootWidget)
-                // ReSharper restore MemberHidesStaticFromOuterClass
+            // ReSharper restore MemberHidesStaticFromOuterClass
             {
                 m_drawItems.Clear();
                 CollateDrawItems(rootWidget, Display.ScissorRectangle);
@@ -407,7 +407,7 @@ namespace Game {
 
         public virtual Vector2 Margin {
             [Obsolete("Use MarginLeft, MarginTop, MarginRight and MarginBottom instead.")]
-            get => new (MarginLeft, MarginTop);
+            get => new(MarginLeft, MarginTop);
             set {
                 MarginLeft = value.X;
                 MarginRight = value.X;

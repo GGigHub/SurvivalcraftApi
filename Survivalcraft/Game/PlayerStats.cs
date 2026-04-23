@@ -135,8 +135,8 @@ namespace Game {
         public IEnumerable<FieldInfo> Stats {
             get {
                 foreach (FieldInfo item in from f in typeof(PlayerStats).GetRuntimeFields()
-                    where f.GetCustomAttribute<StatAttribute>() != null
-                    select f) {
+                                           where f.GetCustomAttribute<StatAttribute>() != null
+                                           select f) {
                     yield return item;
                 }
             }

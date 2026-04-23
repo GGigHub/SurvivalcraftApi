@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using Engine;
 using LiteNetLib;
@@ -8,8 +5,7 @@ using LiteNetLib.Utils;
 
 namespace Game.NetWork;
 
-public enum PackageType : byte
-{
+public enum PackageType : byte {
     ServerInfo,
     ConnectionRequest,
     ConnectionReject,
@@ -54,114 +50,92 @@ public enum PackageType : byte
     ModPackage = 255
 
 }
-public class PackageManager
-{
+public class PackageManager {
     public const byte VerifyByte = 0x88;
 
     private static IPackage[] basePackages = new IPackage[byte.MaxValue];
 
-    public static void Initialize()
-    {
+    public static void Initialize() {
         basePackages = new IPackage[byte.MaxValue];
 
         var list = typeof(PackageManager).Assembly.GetTypes();
         Type type = typeof(IPackage);
         List<Type> RegList = new List<Type>();
-        foreach (var item in list)
-        {
-            if (type.IsAssignableFrom(item) && !item.IsInterface && !item.IsAbstract)
-            {
+        foreach (var item in list) {
+            if (type.IsAssignableFrom(item) && !item.IsInterface && !item.IsAbstract) {
                 RegList.Add(item);
             }
         }
-        foreach (var item in RegList)
-        {
+        foreach (var item in RegList) {
             var obj = Activator.CreateInstance(item);
             RegisterPackage(obj as IPackage);
         }
     }
 
-    public static void RegisterPackage(IPackage package)
-    {
+    public static void RegisterPackage(IPackage package) {
         byte theID = package.ID;
-        if (basePackages[theID] == null)
-        {
+        if (basePackages[theID] == null) {
             basePackages[theID] = package;
         }
-        else
-        {
+        else {
             throw new Exception("Duplicate package ID.");
         }
     }
 
-    public static void UnRegisterPackage(IPackage package)
-    {
-        if (basePackages[package.ID] != null)
-        {
+    public static void UnRegisterPackage(IPackage package) {
+        if (basePackages[package.ID] != null) {
             basePackages[package.ID] = null;
         }
     }
 
-    public static T DecodePackage<T>(NetworkBase networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : class
-    {
+    public static T DecodePackage<T>(NetworkBase networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : class {
         var obj = DecodePackages(networkBase, reader, netPeer, request, iPEndPoint)[0];
         return (T)obj;
     }
 
-    public static List<IPackage> DecodePackagesFromPayload(NetworkBase networkBase, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null)
-    {
+    public static List<IPackage> DecodePackagesFromPayload(NetworkBase networkBase, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         Client from = ResolveFrom(networkBase, netPeer, request, iPEndPoint);
         List<IPackage> packages = new List<IPackage>();
         byte packageID = 99;
-        if (payload == null || payload.Length == 0)
-        {
+        if (payload == null || payload.Length == 0) {
             return packages;
         }
-        try
-        {
+        try {
             var preader = new PackageStreamReader(payload);
             return DecodePackagesFromReader(preader, from, ref packageID);
         }
-        catch
-        {
+        catch {
             Log.Information("接收到不规范的数据包:" + packageID);
             return packages;
         }
     }
 
-    public static List<IPackage> DecodePackages(NetworkBase networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null)
-    {
+    public static List<IPackage> DecodePackages(NetworkBase networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         Client from = ResolveFrom(networkBase, netPeer, request, iPEndPoint);
         List<IPackage> packages = new List<IPackage>();
         byte packageID = 99;
-        if (reader.AvailableBytes == 0)
-        {
+        if (reader.AvailableBytes == 0) {
             return packages;
         }
-        try
-        {
+        try {
             var preader = NetworkManager.GetReader(reader);
             return DecodePackagesFromReader(preader, from, ref packageID);
         }
-        catch
-        {
+        catch {
             Log.Information("接收到不规范的数据包:" + packageID);
             return packages;
         }
     }
 
-    private static Client ResolveFrom(NetworkBase networkBase, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null)
-    {
+    private static Client ResolveFrom(NetworkBase networkBase, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         Client from = null;
-        if (networkBase != null)
-        {
+        if (networkBase != null) {
             from = networkBase.Clients.Values.Where(client =>
                 (client.Peer != null && client.Peer == netPeer) ||
                 (client.Request != null && client.Request == request) ||
                 (client.IPPoint != null && client.IPPoint == iPEndPoint)).FirstOrDefault();
         }
-        if (from == null)
-        {
+        if (from == null) {
             if (netPeer != null) from = new Client(netPeer);
             if (request != null) from = new Client(request);
             if (iPEndPoint != null) from = new Client(iPEndPoint);
@@ -169,22 +143,18 @@ public class PackageManager
         return from;
     }
 
-    private static List<IPackage> DecodePackagesFromReader(PackageStreamReader preader, Client from, ref byte packageID)
-    {
+    private static List<IPackage> DecodePackagesFromReader(PackageStreamReader preader, Client from, ref byte packageID) {
         List<IPackage> packages = new List<IPackage>();
         IPackage last = null;
-        while (preader.BaseStream.Position < preader.BaseStream.Length)
-        {
+        while (preader.BaseStream.Position < preader.BaseStream.Length) {
             byte check = preader.ReadByte();
-            if (check != VerifyByte)
-            {
+            if (check != VerifyByte) {
                 Log.Information("Packet verify failed, last packet: " + (last == null ? "null" : last.GetType().Name));
                 break;
             }
             byte ID = preader.ReadByte();
             packageID = ID;
-            if (basePackages[ID] != null)
-            {
+            if (basePackages[ID] != null) {
                 object obj = Activator.CreateInstance(basePackages[ID].GetType());
                 IPackage package = (IPackage)obj;
                 last = package;
@@ -192,8 +162,7 @@ public class PackageManager
                 package.ReadData(preader);
                 packages.Add(package);
             }
-            else
-            {
+            else {
                 Log.Information(string.Format($"不存在的包ID:{ID}"));
                 break;
             }

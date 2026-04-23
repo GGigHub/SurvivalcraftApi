@@ -1,127 +1,100 @@
-using System.IO;
-using Engine;
-using System;
 using System.Xml.Linq;
-using GameEntitySystem;
-using System.Collections.Generic;
+using Engine;
 using Engine.Graphics;
 using Engine.Media;
+using GameEntitySystem;
 using TemplatesDatabase;
 
 namespace Game.NetWork;
 
-public class PackageStreamReader : BinaryReader
-{
+public class PackageStreamReader : BinaryReader {
 
-    public PackageStreamReader(byte[] CompressedData) : base(new MemoryStream())
-    {
+    public PackageStreamReader(byte[] CompressedData) : base(new MemoryStream()) {
         byte[] data = NetworkManager.Decompress(CompressedData);
         BaseStream.Write(data, 0, data.Length);
         BaseStream.Position = 0L;
     }
 
-    public float ReadSmallFloat()
-    {
+    public float ReadSmallFloat() {
         byte[] d = ReadBytes(2);
         return HalfFloat.HalfToFloat(d);
     }
-    public float? ReadSingleNullable()
-    {
+    public float? ReadSingleNullable() {
         if (ReadBoolean()) return ReadSingle();
         else return null;
     }
-    public int? ReadIntNullable()
-    {
+    public int? ReadIntNullable() {
         if (ReadBoolean()) return ReadInt32();
         else return null;
     }
-    public Vector4 ReadVector4()
-    {
+    public Vector4 ReadVector4() {
         return new Vector4(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
     }
-    public Vector4? ReadVector4Nullable()
-    {
+    public Vector4? ReadVector4Nullable() {
         if (ReadBoolean()) return new Vector4(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
         else return null;
     }
 
-    public Vector3 ReadVector3()
-    {
+    public Vector3 ReadVector3() {
         return new Vector3(ReadSingle(), ReadSingle(), ReadSingle());
     }
-    public Vector3 ReadSmallVec3()
-    {
+    public Vector3 ReadSmallVec3() {
         return new Vector3(ReadSmallFloat(), ReadSmallFloat(), ReadSmallFloat());
     }
 
-    public Vector3? ReadVector3Nullable()
-    {
+    public Vector3? ReadVector3Nullable() {
         if (ReadBoolean()) return new Vector3(ReadSingle(), ReadSingle(), ReadSingle());
         else return null;
     }
-    public Vector3? ReadSmallVector3Nullable()
-    {
+    public Vector3? ReadSmallVector3Nullable() {
         if (ReadBoolean()) return new Vector3(ReadSmallFloat(), ReadSmallFloat(), ReadSmallFloat());
         else return null;
     }
 
-    public Vector2 ReadVector2()
-    {
+    public Vector2 ReadVector2() {
         return new Vector2(ReadSingle(), ReadSingle());
     }
 
-    public Vector2 ReadSmallVec2()
-    {
+    public Vector2 ReadSmallVec2() {
         return new Vector2(ReadSmallFloat(), ReadSmallFloat());
     }
-    public Vector2? ReadVector2Nullable()
-    {
+    public Vector2? ReadVector2Nullable() {
         if (ReadBoolean()) return new Vector2(ReadSingle(), ReadSingle());
         else return null;
     }
 
-    public virtual Guid ReadGuid()
-    {
+    public virtual Guid ReadGuid() {
         byte len = ReadByte();
         return new Guid(ReadBytes(len));
     }
-    public Point3 ReadPoint3()
-    {
+    public Point3 ReadPoint3() {
         return new Point3(ReadInt32(), ReadInt32(), ReadInt32());
     }
-    public Point2 ReadPoint2()
-    {
+    public Point2 ReadPoint2() {
         return new Point2(ReadInt32(), ReadInt32());
     }
-    public Quaternion ReadQuaternion()
-    {
+    public Quaternion ReadQuaternion() {
         return new Quaternion(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
     }
-    public Quaternion ReadSmallQuaternion()
-    {
+    public Quaternion ReadSmallQuaternion() {
         return new Quaternion(ReadSmallFloat(), ReadSmallFloat(), ReadSmallFloat(), ReadSmallFloat());
     }
 
-    public Ray3 ReadRay3()
-    {
+    public Ray3 ReadRay3() {
         return new Ray3(ReadVector3(), ReadVector3());
     }
-    public Ray3? ReadRay3Nullable()
-    {
+    public Ray3? ReadRay3Nullable() {
         if (ReadBoolean()) return ReadRay3();
         else return null;
     }
-    public Point3 ReadBlockPoint()
-    {
+    public Point3 ReadBlockPoint() {
         return new Point3(ReadInt32(), ReadByte(), ReadInt32());
     }
-    public CellFace ReadCellFace()
-    {
+    public CellFace ReadCellFace() {
         Point3 point = ReadBlockPoint();
         return new CellFace(point.X, point.Y, point.Z, ReadByte());
     }
-    public TerrainRaycastResult ReadTerrainRaycastResult()
-    {
+    public TerrainRaycastResult ReadTerrainRaycastResult() {
         var raycast = new TerrainRaycastResult();
         raycast.Ray = ReadRay3();
         raycast.Value = ReadInt32();
@@ -130,46 +103,38 @@ public class PackageStreamReader : BinaryReader
         raycast.CellFace = ReadCellFace();
         return raycast;
     }
-    public TerrainRaycastResult? ReadTerrainRaycastResultNullable()
-    {
+    public TerrainRaycastResult? ReadTerrainRaycastResultNullable() {
         if (ReadBoolean()) return ReadTerrainRaycastResult();
         else return null;
     }
-    public ValuesDictionary ReadValuesDictionary()
-    {
+    public ValuesDictionary ReadValuesDictionary() {
         byte[] data = ReadBytes(ReadInt32());
         var dict = new ValuesDictionary();
         dict.ApplyOverridesUseMessagePack(data);
         return dict;
     }
 
-    public byte[] ReadBuff()
-    {
+    public byte[] ReadBuff() {
         int buffSize = ReadInt32();
         var buff = new byte[buffSize];
         Read(buff, 0, buffSize);
         return buff;
     }
-    public virtual Color ReadColor()
-    {
+    public virtual Color ReadColor() {
         return new Color(ReadByte(), ReadByte(), ReadByte(), ReadByte());
     }
-    public ValuesDictionary ReadPlayerData()
-    {
+    public ValuesDictionary ReadPlayerData() {
         return ReadValuesDictionary();
     }
-    public virtual T ReadEnum<T>() where T : struct
-    {
+    public virtual T ReadEnum<T>() where T : struct {
         return (T)Enum.ToObject(typeof(T), (int)ReadByte());
     }
-    public XElement ReadXElement()
-    {
+    public XElement ReadXElement() {
         string str = ReadString();
         return XmlUtilities.XmlUtils.LoadXmlFromString(str, true);
     }
 
-    public List<Entity> ReadEntityLoadList()
-    {
+    public List<Entity> ReadEntityLoadList() {
         byte[] messagePack = ReadBuff();
         ValuesDictionary vd = new ValuesDictionary();
         vd.ApplyOverridesUseMessagePack(messagePack);
@@ -177,19 +142,16 @@ public class PackageStreamReader : BinaryReader
         return ((ProjectNet)GameManager.Project).LoadEntitiesAll(entityDataList);
     }
 
-    public Texture2D ReadTexture2D()
-    {
+    public Texture2D ReadTexture2D() {
         int width = ReadInt32();
         int height = ReadInt32();
         Image image = new Image(width, height);
-        for (int i = 0; i < width; i++)
-        {
+        for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) image.SetPixel(i, j, ReadColor());
         }
         return Texture2D.Load(image);
     }
-    public Matrix ReadMatrix()
-    {
+    public Matrix ReadMatrix() {
         /*            byte count = ReadByte();
                     byte[] data = ReadBytes(count);
                     return Utilities.ArrayToStructure<Matrix>(data);*/
@@ -218,8 +180,7 @@ public class PackageStreamReader : BinaryReader
 
         return matrix;
     }
-    public Matrix? ReadMatrixNullable()
-    {
+    public Matrix? ReadMatrixNullable() {
         bool f = ReadBoolean();
         if (f) return ReadMatrix();
         else return null;

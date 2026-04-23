@@ -11,7 +11,7 @@ namespace Game {
         public LabelWidget m_label;
         public ButtonWidget m_okButton;
         public ButtonWidget m_cancelButton;
-        
+
         public Action<Color?> m_handler;
         public Color m_color;
         public const string fName = "EditColorDialog";
@@ -50,7 +50,12 @@ namespace Game {
             };
             WidgetsList children6 = obj5.Children;
             SliderWidget obj6 = new() {
-                Size = new Vector2(300f, 50f), IsLabelVisible = false, MinValue = 0f, MaxValue = 255f, Granularity = 1f, SoundName = ""
+                Size = new Vector2(300f, 50f),
+                IsLabelVisible = false,
+                MinValue = 0f,
+                MaxValue = 255f,
+                Granularity = 1f,
+                SoundName = ""
             };
             SliderWidget widget = obj6;
             m_sliderR = obj6;
@@ -68,7 +73,12 @@ namespace Game {
             };
             WidgetsList children8 = obj7.Children;
             SliderWidget obj8 = new() {
-                Size = new Vector2(300f, 50f), IsLabelVisible = false, MinValue = 0f, MaxValue = 255f, Granularity = 1f, SoundName = ""
+                Size = new Vector2(300f, 50f),
+                IsLabelVisible = false,
+                MinValue = 0f,
+                MaxValue = 255f,
+                Granularity = 1f,
+                SoundName = ""
             };
             widget = obj8;
             m_sliderG = obj8;
@@ -86,7 +96,12 @@ namespace Game {
             };
             WidgetsList children10 = obj9.Children;
             SliderWidget obj10 = new() {
-                Size = new Vector2(300f, 50f), IsLabelVisible = false, MinValue = 0f, MaxValue = 255f, Granularity = 1f, SoundName = ""
+                Size = new Vector2(300f, 50f),
+                IsLabelVisible = false,
+                MinValue = 0f,
+                MaxValue = 255f,
+                Granularity = 1f,
+                SoundName = ""
             };
             widget = obj10;
             m_sliderB = obj10;
@@ -143,7 +158,7 @@ namespace Game {
                         LanguageControl.Get(fName, 5),
                         GetColorString(),
                         20,
-                        delegate(string s) {
+                        delegate (string s) {
                             if (s != null) {
                                 try {
                                     m_color.RGB = HumanReadableConverter.ConvertFromString<Color>(s);

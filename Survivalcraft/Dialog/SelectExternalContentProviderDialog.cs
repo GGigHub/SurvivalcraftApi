@@ -8,7 +8,7 @@ namespace Game {
                 title,
                 ExternalContentManager.Providers.Where(p => !listingSupportRequired || p.SupportsListing),
                 100f,
-                delegate(object item) {
+                delegate (object item) {
                     IExternalContentProvider externalContentProvider = (IExternalContentProvider)item;
                     XElement node = ContentManager.Get<XElement>("Widgets/SelectExternalContentProviderItem");
                     ContainerWidget obj = (ContainerWidget)LoadWidget(null, node, null);
@@ -16,7 +16,7 @@ namespace Game {
                     obj.Children.Find<LabelWidget>("SelectExternalContentProvider.Details").Text = externalContentProvider.Description;
                     return obj;
                 },
-                delegate(object item) { selectionHandler((IExternalContentProvider)item); }
+                delegate (object item) { selectionHandler((IExternalContentProvider)item); }
             ) => ContentSize = new Vector2(700f, ContentSize.Y);
     }
 }

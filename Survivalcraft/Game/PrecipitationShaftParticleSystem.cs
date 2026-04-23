@@ -297,41 +297,41 @@ namespace Game {
             m_lastSkylightIntensity = -3.40282347E+38f;
             switch (m_precipitationType) {
                 case PrecipitationType.Rain: {
-                    float num4 = 8f;
-                    float num5 = 12f;
-                    m_averageSpeed = (num4 + num5) / 2f;
-                    m_size = new Vector2(0.02f, 0.15f);
-                    m_texture = ContentManager.Get<Texture2D>("Textures/RainParticle");
-                    for (int j = 0; j < m_particles.Length; j++) {
-                        Particle obj = m_particles[j];
-                        obj.IsActive = false;
-                        obj.TexCoord1 = new Vector2(0f, 1f);
-                        obj.TexCoord2 = new Vector2(1f, 1f);
-                        obj.TexCoord3 = new Vector2(0.5f, 0f);
-                        obj.Speed = m_random.Float(num4, num5);
+                        float num4 = 8f;
+                        float num5 = 12f;
+                        m_averageSpeed = (num4 + num5) / 2f;
+                        m_size = new Vector2(0.02f, 0.15f);
+                        m_texture = ContentManager.Get<Texture2D>("Textures/RainParticle");
+                        for (int j = 0; j < m_particles.Length; j++) {
+                            Particle obj = m_particles[j];
+                            obj.IsActive = false;
+                            obj.TexCoord1 = new Vector2(0f, 1f);
+                            obj.TexCoord2 = new Vector2(1f, 1f);
+                            obj.TexCoord3 = new Vector2(0.5f, 0f);
+                            obj.Speed = m_random.Float(num4, num5);
+                        }
+                        break;
                     }
-                    break;
-                }
                 case PrecipitationType.Snow: {
-                    float num = 0.25f;
-                    float num2 = 0.5f;
-                    float num3 = 3f;
-                    m_averageSpeed = (num2 + num3) / 2f;
-                    m_size = new Vector2(0.07f, 0.07f);
-                    m_texture = ContentManager.Get<Texture2D>("Textures/SnowParticle");
-                    for (int i = 0; i < m_particles.Length; i++) {
-                        Particle particle = m_particles[i];
-                        particle.IsActive = false;
-                        particle.TextureSlot = (byte)m_random.Int(0, 15);
-                        Vector2 v = new Vector2(particle.TextureSlot % 4, particle.TextureSlot / 4) * num;
-                        particle.TexCoord1 = v + new Vector2(0f, 0f);
-                        particle.TexCoord2 = v + new Vector2(num, 0f);
-                        particle.TexCoord3 = v + new Vector2(num, num);
-                        particle.TexCoord4 = v + new Vector2(0f, num);
-                        particle.Speed = m_random.Float(num2, num3);
+                        float num = 0.25f;
+                        float num2 = 0.5f;
+                        float num3 = 3f;
+                        m_averageSpeed = (num2 + num3) / 2f;
+                        m_size = new Vector2(0.07f, 0.07f);
+                        m_texture = ContentManager.Get<Texture2D>("Textures/SnowParticle");
+                        for (int i = 0; i < m_particles.Length; i++) {
+                            Particle particle = m_particles[i];
+                            particle.IsActive = false;
+                            particle.TextureSlot = (byte)m_random.Int(0, 15);
+                            Vector2 v = new Vector2(particle.TextureSlot % 4, particle.TextureSlot / 4) * num;
+                            particle.TexCoord1 = v + new Vector2(0f, 0f);
+                            particle.TexCoord2 = v + new Vector2(num, 0f);
+                            particle.TexCoord3 = v + new Vector2(num, num);
+                            particle.TexCoord4 = v + new Vector2(0f, num);
+                            particle.Speed = m_random.Float(num2, num3);
+                        }
+                        break;
                     }
-                    break;
-                }
                 default: throw new InvalidOperationException("Unknown precipitation type.");
             }
         }

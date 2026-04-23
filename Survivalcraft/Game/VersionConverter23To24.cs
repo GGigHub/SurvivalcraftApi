@@ -11,8 +11,8 @@ namespace Game {
         public override void ConvertProjectXml(XElement projectNode) {
             XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
             foreach (XElement item in from e in projectNode.Element("Subsystems").Elements()
-                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
-                select e) {
+                                      where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
+                                      select e) {
                 XElement xElement = XmlUtils.AddElement(item, "Value");
                 xElement.SetAttributeValue("Name", "AreSeasonsChanging");
                 xElement.SetAttributeValue("Type", "bool");

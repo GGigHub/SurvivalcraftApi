@@ -1,14 +1,6 @@
-using Game.NetWork.Packages;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Game.NetWork.Packages;
 
-public class SubsystemPlayersPackage : IPackage
-{
+public class SubsystemPlayersPackage : IPackage {
     public byte ID => (byte)PackageType.SubsystemPlayers;
     public Client To { get; set; }
     public Client Except { get; set; }
@@ -18,20 +10,16 @@ public class SubsystemPlayersPackage : IPackage
 
     public List<ComponentPlayerPackage> componentPlayerPackageList = new List<ComponentPlayerPackage>();
 
-    public void AddPackage(ComponentPlayerPackage componentPlayerPackage)
-    {
-        lock(componentPlayerPackageList)
-        {
+    public void AddPackage(ComponentPlayerPackage componentPlayerPackage) {
+        lock (componentPlayerPackageList) {
             componentPlayerPackageList.Add(componentPlayerPackage);
         }
     }
 
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         componentPlayerPackageList.Clear();
         int count = reader.ReadInt32();
-        for(int index = 0; index < count; index++)
-        {
+        for (int index = 0; index < count; index++) {
             ComponentPlayerPackage componentPlayerPackage = new ComponentPlayerPackage();
             componentPlayerPackage.ReadData(reader);
             componentPlayerPackage.NeedHandleMainPlayer = false;
@@ -39,21 +27,16 @@ public class SubsystemPlayersPackage : IPackage
         }
     }
 
-    public void WriteData(PackageStreamWriter writer)
-    {
-        lock(componentPlayerPackageList)
-        {
+    public void WriteData(PackageStreamWriter writer) {
+        lock (componentPlayerPackageList) {
             writer.Write(componentPlayerPackageList.Count);
-            foreach (var package in componentPlayerPackageList)
-            {
+            foreach (var package in componentPlayerPackageList) {
                 package.WriteData(writer);
             }
         }
     }
-    public void Handle(ProjectNet projectNet, bool isServer)
-    {
-        foreach (var package in componentPlayerPackageList)
-        {
+    public void Handle(ProjectNet projectNet, bool isServer) {
+        foreach (var package in componentPlayerPackageList) {
             package.Handle(projectNet, isServer);
         }
     }

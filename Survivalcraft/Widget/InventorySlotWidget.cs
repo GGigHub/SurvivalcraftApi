@@ -112,12 +112,17 @@ namespace Game {
             list.Add(m_highlightWidget);
             //方块图标
             m_blockIconWidget = new BlockIconWidget {
-                HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Center, Margin = new Vector2(2f, 2f)
+                HorizontalAlignment = WidgetAlignment.Center,
+                VerticalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(2f, 2f)
             };
             list.Add(m_blockIconWidget);
             //方块数量标志
             m_countWidget = new LabelWidget {
-                FontScale = 1f, HorizontalAlignment = WidgetAlignment.Far, VerticalAlignment = WidgetAlignment.Far, Margin = new Vector2(6f, 2f)
+                FontScale = 1f,
+                HorizontalAlignment = WidgetAlignment.Far,
+                VerticalAlignment = WidgetAlignment.Far,
+                Margin = new Vector2(6f, 2f)
             };
             list.Add(m_countWidget);
             //耐久条
@@ -136,7 +141,9 @@ namespace Game {
             list.Add(m_healthBarWidget);
             //右上角显示物品的编辑、交互、腐烂信息的面板
             StackPanelWidget stackPanelWidget = new() {
-                Direction = LayoutDirection.Horizontal, HorizontalAlignment = WidgetAlignment.Far, Margin = new Vector2(3f, 3f)
+                Direction = LayoutDirection.Horizontal,
+                HorizontalAlignment = WidgetAlignment.Far,
+                Margin = new Vector2(3f, 3f)
             };
             //标记可交互方块的手标记
             m_interactiveOverlayWidget = new RectangleWidget {
@@ -250,7 +257,7 @@ namespace Game {
                         flag = true;
                     }
                     else if (splitSourceInventory != null) {
-                       
+
                         int totalCount = splitSourceInventory.GetSlotCount(splitSourceSlotIndex);
                         int splitCount = CalculateSplitCount(totalCount, DragMode.SingleItem);
 
@@ -501,7 +508,7 @@ namespace Game {
                     splitCount = totalCount;
                     break;
                 case DragMode.SingleItem://单个
-                    splitCount = MathUtils.Min(totalCount, 1); 
+                    splitCount = MathUtils.Min(totalCount, 1);
                     break;
                 case DragMode.HalfItems://均分
                     splitCount = (totalCount + 1) / 2;

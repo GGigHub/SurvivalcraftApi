@@ -1596,17 +1596,17 @@ namespace Game {
                     for (int num6 = 251; num6 >= 0; num6--) {
                         switch (Terrain.ExtractContents(chunk.GetCellValueFast(num4, num6, num5))) {
                             case 7: {
-                                for (int k = num6 + 1;
-                                    k <= num6 + 3
-                                    && chunk.GetCellContentsFast(num4 + 1, k, num5) == 0
-                                    && chunk.GetCellContentsFast(num4 - 1, k, num5) == 0
-                                    && chunk.GetCellContentsFast(num4, k, num5 + 1) == 0
-                                    && chunk.GetCellContentsFast(num4, k, num5 - 1) == 0;
-                                    k++) {
-                                    chunk.SetCellValueFast(num4, k, num5, Terrain.MakeBlockValue(127));
+                                    for (int k = num6 + 1;
+                                        k <= num6 + 3
+                                        && chunk.GetCellContentsFast(num4 + 1, k, num5) == 0
+                                        && chunk.GetCellContentsFast(num4 - 1, k, num5) == 0
+                                        && chunk.GetCellContentsFast(num4, k, num5 + 1) == 0
+                                        && chunk.GetCellContentsFast(num4, k, num5 - 1) == 0;
+                                        k++) {
+                                        chunk.SetCellValueFast(num4, k, num5, Terrain.MakeBlockValue(127));
+                                    }
+                                    break;
                                 }
-                                break;
-                            }
                             case 0: continue;
                         }
                         break;
@@ -1795,36 +1795,36 @@ namespace Game {
                         case 12:
                         case 66:
                         case 67: {
-                            int num8 = random.UniformInt(0, 3);
-                            for (int k = 0; k < 4; k++) {
-                                int face = (k + num8) % 4;
-                                Point3 point = CellFace.FaceToPoint3(face);
-                                if (chunk.GetCellContentsFast(num5 + point.X, num6, num7 + point.Z) != 0) {
-                                    continue;
-                                }
-                                int num9 = num6 - 1;
-                                while (num9 >= 1
-                                    && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0
-                                    && chunk.GetCellContentsFast(num5, num9, num7) != 0) {
-                                    num9--;
-                                }
-                                if (chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) != 0) {
-                                    break;
-                                }
-                                num9++;
-                                int value = Terrain.MakeBlockValue(197, 0, IvyBlock.SetFace(0, CellFace.OppositeFace(face)));
-                                while (num9 >= 1
-                                    && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0) {
-                                    chunk.SetCellValueFast(num5 + point.X, num9, num7 + point.Z, value);
-                                    if (IvyBlock.IsGrowthStopCell(num5 + point.X, num9, num7 + point.Z)) {
+                                int num8 = random.UniformInt(0, 3);
+                                for (int k = 0; k < 4; k++) {
+                                    int face = (k + num8) % 4;
+                                    Point3 point = CellFace.FaceToPoint3(face);
+                                    if (chunk.GetCellContentsFast(num5 + point.X, num6, num7 + point.Z) != 0) {
+                                        continue;
+                                    }
+                                    int num9 = num6 - 1;
+                                    while (num9 >= 1
+                                        && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0
+                                        && chunk.GetCellContentsFast(num5, num9, num7) != 0) {
+                                        num9--;
+                                    }
+                                    if (chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) != 0) {
                                         break;
                                     }
-                                    num9--;
+                                    num9++;
+                                    int value = Terrain.MakeBlockValue(197, 0, IvyBlock.SetFace(0, CellFace.OppositeFace(face)));
+                                    while (num9 >= 1
+                                        && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0) {
+                                        chunk.SetCellValueFast(num5 + point.X, num9, num7 + point.Z, value);
+                                        if (IvyBlock.IsGrowthStopCell(num5 + point.X, num9, num7 + point.Z)) {
+                                            break;
+                                        }
+                                        num9--;
+                                    }
+                                    break;
                                 }
                                 break;
                             }
-                            break;
-                        }
                     }
                 }
             }
@@ -1890,7 +1890,7 @@ namespace Game {
                         }
                     }
                     break;
-                    end_IL_019b:
+                end_IL_019b:
                     break;
                 }
             }
@@ -2075,7 +2075,7 @@ namespace Game {
                             }
                         }
                         break;
-                        IL_06ac: ;
+                    IL_06ac:;
                     }
                 }
             }

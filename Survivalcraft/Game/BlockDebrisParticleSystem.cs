@@ -79,7 +79,7 @@ namespace Game {
                         vector,
                         false,
                         true,
-                        delegate(int value, float _) {
+                        delegate (int value, float _) {
                             Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
                             return block.IsCollidable && !(block is LeavesBlock);
                         }

@@ -38,7 +38,10 @@ namespace Game {
         }
 
         public static ZipArchive Create(Stream stream, bool keepStreamOpen = false) => new() {
-            Comment = string.Empty, ZipFileStream = stream, ReadOnly = false, KeepStreamOpen = keepStreamOpen
+            Comment = string.Empty,
+            ZipFileStream = stream,
+            ReadOnly = false,
+            KeepStreamOpen = keepStreamOpen
         };
 
         public static ZipArchive Open(Stream stream, bool keepStreamOpen = false) {

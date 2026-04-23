@@ -69,7 +69,7 @@ namespace Game {
                 componentPlayer.GuiWidget,
                 new EditPistonDialog(
                     data,
-                    delegate(int newData) {
+                    delegate (int newData) {
                         int num = Terrain.ReplaceData(value, newData);
                         if (num != value) {
                             var p = new EditableBlockPackage(EditableType.Piston, default, true, inventory.Id, slotIndex, newData);
@@ -91,7 +91,7 @@ namespace Game {
                 componentPlayer.GuiWidget,
                 new EditPistonDialog(
                     data,
-                    delegate(int newData) {
+                    delegate (int newData) {
                         if (newData != data
                             && SubsystemTerrain.Terrain.GetCellContents(x, y, z) == contents) {
                             var cell = new CellFace(x, y, z, 0);
@@ -112,26 +112,26 @@ namespace Game {
             int data = Terrain.ExtractData(value);
             switch (num) {
                 case 237: {
-                    StopPiston(new Point3(x, y, z));
-                    int face2 = PistonBlock.GetFace(data);
-                    Point3 point2 = CellFace.FaceToPoint3(face2);
-                    int cellValue3 = m_subsystemTerrain.Terrain.GetCellValue(x + point2.X, y + point2.Y, z + point2.Z);
-                    int num4 = Terrain.ExtractContents(cellValue3);
-                    int data4 = Terrain.ExtractData(cellValue3);
-                    if (num4 == 238
-                        && PistonHeadBlock.GetFace(data4) == face2) {
-                        m_subsystemTerrain.DestroyCell(
-                            0,
-                            x + point2.X,
-                            y + point2.Y,
-                            z + point2.Z,
-                            0,
-                            false,
-                            false
-                        );
+                        StopPiston(new Point3(x, y, z));
+                        int face2 = PistonBlock.GetFace(data);
+                        Point3 point2 = CellFace.FaceToPoint3(face2);
+                        int cellValue3 = m_subsystemTerrain.Terrain.GetCellValue(x + point2.X, y + point2.Y, z + point2.Z);
+                        int num4 = Terrain.ExtractContents(cellValue3);
+                        int data4 = Terrain.ExtractData(cellValue3);
+                        if (num4 == 238
+                            && PistonHeadBlock.GetFace(data4) == face2) {
+                            m_subsystemTerrain.DestroyCell(
+                                0,
+                                x + point2.X,
+                                y + point2.Y,
+                                z + point2.Z,
+                                0,
+                                false,
+                                false
+                            );
+                        }
+                        break;
                     }
-                    break;
-                }
                 case 238:
                     if (!m_allowPistonHeadRemove) {
                         int face = PistonHeadBlock.GetFace(data);

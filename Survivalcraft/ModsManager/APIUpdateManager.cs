@@ -184,7 +184,6 @@ namespace Game {
     [JsonSerializable(typeof(Author))]
     [JsonSerializable(typeof(List<Asset>))]
     [JsonSerializable(typeof(Asset))]
-    public partial class GiteeReleaseInfoJsonContext : JsonSerializerContext
-    {
+    public partial class GiteeReleaseInfoJsonContext : JsonSerializerContext {
     }
 }

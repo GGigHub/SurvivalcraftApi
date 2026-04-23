@@ -61,27 +61,27 @@ namespace Game {
                         aim.Direction = Vector3.Normalize(aim.Direction + v);
                         switch (state) {
                             case AimState.InProgress: {
-                                if (num4 >= 10f) {
-                                    componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
-                                    return true;
+                                    if (num4 >= 10f) {
+                                        componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
+                                        return true;
+                                    }
+                                    if (num4 > 0.5f
+                                        && !MusketBlock.GetHammerState(Terrain.ExtractData(num2))) {
+                                        num2 = Terrain.MakeBlockValue(num, 0, MusketBlock.SetHammerState(Terrain.ExtractData(num2), true));
+                                        m_subsystemAudio.PlaySound("Audio/HammerCock", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+                                    }
+                                    ComponentFirstPersonModel
+                                        componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
+                                    if (componentFirstPersonModel != null) {
+                                        componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
+                                        componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.21f, 0.15f, 0.08f);
+                                        componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
+                                    }
+                                    componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.4f;
+                                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
+                                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
+                                    break;
                                 }
-                                if (num4 > 0.5f
-                                    && !MusketBlock.GetHammerState(Terrain.ExtractData(num2))) {
-                                    num2 = Terrain.MakeBlockValue(num, 0, MusketBlock.SetHammerState(Terrain.ExtractData(num2), true));
-                                    m_subsystemAudio.PlaySound("Audio/HammerCock", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
-                                }
-                                ComponentFirstPersonModel
-                                    componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
-                                if (componentFirstPersonModel != null) {
-                                    componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
-                                    componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.21f, 0.15f, 0.08f);
-                                    componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
-                                }
-                                componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.4f;
-                                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
-                                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
-                                break;
-                            }
                             case AimState.Cancelled:
                                 if (MusketBlock.GetHammerState(Terrain.ExtractData(num2))) {
                                     num2 = Terrain.MakeBlockValue(num, 0, MusketBlock.SetHammerState(Terrain.ExtractData(num2), false));
@@ -90,132 +90,132 @@ namespace Game {
                                 m_aimStartTimes.Remove(componentMiner);
                                 break;
                             case AimState.Completed: {
-                                bool flag = false;
-                                int value2 = 0;
-                                int num6 = 0;
-                                float s = 0f;
-                                Vector3 vector = Vector3.Zero;
-                                MusketBlock.LoadState loadState = MusketBlock.GetLoadState(data);
-                                BulletBlock.BulletType? bulletType = MusketBlock.GetBulletType(data);
-                                if (MusketBlock.GetHammerState(Terrain.ExtractData(num2))) {
-                                    switch (loadState) {
-                                        case MusketBlock.LoadState.Empty:
-                                            componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                                LanguageControl.Get(fName, 0),
-                                                Color.White,
-                                                true,
-                                                false
-                                            ); break;
-                                        case MusketBlock.LoadState.Gunpowder:
-                                        case MusketBlock.LoadState.Wad:
-                                            flag = true;
-                                            componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                                LanguageControl.Get(fName, 1),
-                                                Color.White,
-                                                true,
-                                                false
-                                            );
-                                            break;
-                                        case MusketBlock.LoadState.Loaded:
-                                            flag = true;
-                                            if (bulletType == BulletBlock.BulletType.Buckshot) {
-                                                value2 = Terrain.MakeBlockValue(
-                                                    m_BulletBlockIndex,
-                                                    0,
-                                                    BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall)
+                                    bool flag = false;
+                                    int value2 = 0;
+                                    int num6 = 0;
+                                    float s = 0f;
+                                    Vector3 vector = Vector3.Zero;
+                                    MusketBlock.LoadState loadState = MusketBlock.GetLoadState(data);
+                                    BulletBlock.BulletType? bulletType = MusketBlock.GetBulletType(data);
+                                    if (MusketBlock.GetHammerState(Terrain.ExtractData(num2))) {
+                                        switch (loadState) {
+                                            case MusketBlock.LoadState.Empty:
+                                                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                                                    LanguageControl.Get(fName, 0),
+                                                    Color.White,
+                                                    true,
+                                                    false
+                                                ); break;
+                                            case MusketBlock.LoadState.Gunpowder:
+                                            case MusketBlock.LoadState.Wad:
+                                                flag = true;
+                                                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                                                    LanguageControl.Get(fName, 1),
+                                                    Color.White,
+                                                    true,
+                                                    false
                                                 );
-                                                num6 = 8;
-                                                vector = new Vector3(0.04f, 0.04f, 0.25f);
-                                                s = 80f;
-                                            }
-                                            else if (bulletType == BulletBlock.BulletType.BuckshotBall) {
-                                                value2 = Terrain.MakeBlockValue(
-                                                    m_BulletBlockIndex,
-                                                    0,
-                                                    BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall)
-                                                );
-                                                num6 = 1;
-                                                vector = new Vector3(0.06f, 0.06f, 0f);
-                                                s = 60f;
-                                            }
-                                            else if (bulletType.HasValue) {
-                                                value2 = Terrain.MakeBlockValue(
-                                                    m_BulletBlockIndex,
-                                                    0,
-                                                    BulletBlock.SetBulletType(0, bulletType.Value)
-                                                );
-                                                num6 = 1;
-                                                s = 120f;
-                                            }
-                                            break;
-                                    }
-                                }
-                                if (flag) {
-                                    if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor > 0.4f) {
-                                        m_subsystemAudio.PlaySound(
-                                            "Audio/MusketMisfire",
-                                            1f,
-                                            m_random.Float(-0.1f, 0.1f),
-                                            componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition,
-                                            3f,
-                                            true
-                                        );
-                                    }
-                                    else {
-                                        Vector3 vector2 = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
-                                            + componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
-                                            - componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
-                                        Vector3 vector3 = Vector3.Normalize(vector2 + aim.Direction * 10f - vector2);
-                                        Vector3 vector4 = Vector3.Normalize(Vector3.Cross(vector3, Vector3.UnitY));
-                                        Vector3 v2 = Vector3.Normalize(Vector3.Cross(vector3, vector4));
-                                        for (int i = 0; i < num6; i++) {
-                                            Vector3 v3 = m_random.Float(0f - vector.X, vector.X) * vector4
-                                                + m_random.Float(0f - vector.Y, vector.Y) * v2
-                                                + m_random.Float(0f - vector.Z, vector.Z) * vector3;
-                                            Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + s * (vector3 + v3);
-                                            Projectile projectile = m_subsystemProjectiles.FireProjectile(
-                                                value2,
-                                                vector2,
-                                                velocity,
-                                                Vector3.Zero,
-                                                componentMiner.ComponentCreature
-                                            );
-                                            if (projectile != null) {
-                                                projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-                                            }
+                                                break;
+                                            case MusketBlock.LoadState.Loaded:
+                                                flag = true;
+                                                if (bulletType == BulletBlock.BulletType.Buckshot) {
+                                                    value2 = Terrain.MakeBlockValue(
+                                                        m_BulletBlockIndex,
+                                                        0,
+                                                        BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall)
+                                                    );
+                                                    num6 = 8;
+                                                    vector = new Vector3(0.04f, 0.04f, 0.25f);
+                                                    s = 80f;
+                                                }
+                                                else if (bulletType == BulletBlock.BulletType.BuckshotBall) {
+                                                    value2 = Terrain.MakeBlockValue(
+                                                        m_BulletBlockIndex,
+                                                        0,
+                                                        BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall)
+                                                    );
+                                                    num6 = 1;
+                                                    vector = new Vector3(0.06f, 0.06f, 0f);
+                                                    s = 60f;
+                                                }
+                                                else if (bulletType.HasValue) {
+                                                    value2 = Terrain.MakeBlockValue(
+                                                        m_BulletBlockIndex,
+                                                        0,
+                                                        BulletBlock.SetBulletType(0, bulletType.Value)
+                                                    );
+                                                    num6 = 1;
+                                                    s = 120f;
+                                                }
+                                                break;
                                         }
-                                        m_subsystemAudio.PlaySound(
-                                            "Audio/MusketFire",
-                                            1f,
-                                            m_random.Float(-0.1f, 0.1f),
-                                            componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition,
-                                            10f,
-                                            true
-                                        );
-                                        m_subsystemParticles.AddParticleSystem(
-                                            new GunSmokeParticleSystem(m_subsystemTerrain, vector2 + 0.3f * vector3, vector3)
-                                        );
-                                        m_subsystemNoise.MakeNoise(vector2, 1f, 40f);
-                                        componentMiner.ComponentCreature.ComponentBody.ApplyImpulse(-4f * vector3);
                                     }
-                                    num2 = Terrain.MakeBlockValue(
-                                        Terrain.ExtractContents(num2),
-                                        0,
-                                        MusketBlock.SetLoadState(Terrain.ExtractData(num2), MusketBlock.LoadState.Empty)
-                                    );
-                                    num3 = 1;
+                                    if (flag) {
+                                        if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor > 0.4f) {
+                                            m_subsystemAudio.PlaySound(
+                                                "Audio/MusketMisfire",
+                                                1f,
+                                                m_random.Float(-0.1f, 0.1f),
+                                                componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition,
+                                                3f,
+                                                true
+                                            );
+                                        }
+                                        else {
+                                            Vector3 vector2 = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
+                                                + componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
+                                                - componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
+                                            Vector3 vector3 = Vector3.Normalize(vector2 + aim.Direction * 10f - vector2);
+                                            Vector3 vector4 = Vector3.Normalize(Vector3.Cross(vector3, Vector3.UnitY));
+                                            Vector3 v2 = Vector3.Normalize(Vector3.Cross(vector3, vector4));
+                                            for (int i = 0; i < num6; i++) {
+                                                Vector3 v3 = m_random.Float(0f - vector.X, vector.X) * vector4
+                                                    + m_random.Float(0f - vector.Y, vector.Y) * v2
+                                                    + m_random.Float(0f - vector.Z, vector.Z) * vector3;
+                                                Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + s * (vector3 + v3);
+                                                Projectile projectile = m_subsystemProjectiles.FireProjectile(
+                                                    value2,
+                                                    vector2,
+                                                    velocity,
+                                                    Vector3.Zero,
+                                                    componentMiner.ComponentCreature
+                                                );
+                                                if (projectile != null) {
+                                                    projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+                                                }
+                                            }
+                                            m_subsystemAudio.PlaySound(
+                                                "Audio/MusketFire",
+                                                1f,
+                                                m_random.Float(-0.1f, 0.1f),
+                                                componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition,
+                                                10f,
+                                                true
+                                            );
+                                            m_subsystemParticles.AddParticleSystem(
+                                                new GunSmokeParticleSystem(m_subsystemTerrain, vector2 + 0.3f * vector3, vector3)
+                                            );
+                                            m_subsystemNoise.MakeNoise(vector2, 1f, 40f);
+                                            componentMiner.ComponentCreature.ComponentBody.ApplyImpulse(-4f * vector3);
+                                        }
+                                        num2 = Terrain.MakeBlockValue(
+                                            Terrain.ExtractContents(num2),
+                                            0,
+                                            MusketBlock.SetLoadState(Terrain.ExtractData(num2), MusketBlock.LoadState.Empty)
+                                        );
+                                        num3 = 1;
+                                    }
+                                    if (MusketBlock.GetHammerState(Terrain.ExtractData(num2))) {
+                                        num2 = Terrain.MakeBlockValue(
+                                            Terrain.ExtractContents(num2),
+                                            0,
+                                            MusketBlock.SetHammerState(Terrain.ExtractData(num2), false)
+                                        );
+                                        m_subsystemAudio.PlaySound("Audio/HammerRelease", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+                                    }
+                                    m_aimStartTimes.Remove(componentMiner);
+                                    break;
                                 }
-                                if (MusketBlock.GetHammerState(Terrain.ExtractData(num2))) {
-                                    num2 = Terrain.MakeBlockValue(
-                                        Terrain.ExtractContents(num2),
-                                        0,
-                                        MusketBlock.SetHammerState(Terrain.ExtractData(num2), false)
-                                    );
-                                    m_subsystemAudio.PlaySound("Audio/HammerRelease", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
-                                }
-                                m_aimStartTimes.Remove(componentMiner);
-                                break;
-                            }
                         }
                     }
                     if (num2 != slotValue) {
@@ -271,11 +271,11 @@ namespace Game {
                         bulletType = null;
                         break;
                     case MusketBlock.LoadState.Wad: {
-                        loadState = MusketBlock.LoadState.Loaded;
-                        int data2 = Terrain.ExtractData(value);
-                        bulletType = BulletBlock.GetBulletType(data2);
-                        break;
-                    }
+                            loadState = MusketBlock.LoadState.Loaded;
+                            int data2 = Terrain.ExtractData(value);
+                            bulletType = BulletBlock.GetBulletType(data2);
+                            break;
+                        }
                 }
                 processedValue = 0;
                 processedCount = 0;

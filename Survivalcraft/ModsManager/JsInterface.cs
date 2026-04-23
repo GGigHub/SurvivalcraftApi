@@ -27,11 +27,11 @@ namespace Game {
         public const string fName = "JsInterface";
 
         public static void Initiate()
-            //修改前:先检查是否有外置 init.js 是安卓就直接加载内置,否则释放文件,释放成功就加载外置,否则报错
-            //修改后:先检查是安卓就加载内置,否则释放并检查外部有 init.js 文件则加载外置否则加载内置(如果外置出现问题可以直接加载内置)
+        //修改前:先检查是否有外置 init.js 是安卓就直接加载内置,否则释放文件,释放成功就加载外置,否则报错
+        //修改后:先检查是安卓就加载内置,否则释放并检查外部有 init.js 文件则加载外置否则加载内置(如果外置出现问题可以直接加载内置)
         {
             engine = new JsEngine(
-                delegate(Options cfg) {
+                delegate (Options cfg) {
                     cfg.AllowClr(AppDomain.CurrentDomain.GetAssemblies());
                     cfg.DebugMode();
                 }
@@ -71,7 +71,7 @@ namespace Game {
             List<Function> keyDownHandlers = GetHandlers("keyDownHandlers");
             if (keyDownHandlers != null
                 && keyDownHandlers.Count > 0) {
-                Keyboard.KeyDown += delegate(Key key) {
+                Keyboard.KeyDown += delegate (Key key) {
                     string keyString = key.ToString();
                     keyDownHandlers.ForEach(function => { Invoke(function, keyString); });
                 };
@@ -79,7 +79,7 @@ namespace Game {
             List<Function> keyUpHandlers = GetHandlers("keyUpHandlers");
             if (keyUpHandlers != null
                 && keyUpHandlers.Count > 0) {
-                Keyboard.KeyUp += delegate(Key key) {
+                Keyboard.KeyUp += delegate (Key key) {
                     string keyString = key.ToString();
                     keyUpHandlers.ForEach(function => { Invoke(function, keyString); });
                 };
@@ -242,7 +242,9 @@ namespace Game {
                 stopwatch.Stop();
                 httpResponse.SetResult(
                     new HttpResponse {
-                        success = !result.StartsWith("Jint.Runtime.JavaScriptException"), result = result, timeCosted = stopwatch.Elapsed
+                        success = !result.StartsWith("Jint.Runtime.JavaScriptException"),
+                        result = result,
+                        timeCosted = stopwatch.Elapsed
                     }
                 );
             }

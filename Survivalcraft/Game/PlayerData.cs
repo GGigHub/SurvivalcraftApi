@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Text;
-using System.Text.RegularExpressions;
 using Engine;
 using Game.NetWork;
 using Game.NetWork.Packages;
@@ -153,8 +151,7 @@ namespace Game {
             RandomizeCharacterSkin();
             ResetName();
             InputDevice = WidgetInputDevice.None;
-            m_stateMachine.AddState("FirstUpdate", null, delegate
-            {
+            m_stateMachine.AddState("FirstUpdate", null, delegate {
                 // 非本地主玩家且缺少对应网络客户端时，转为离线状态。
                 if ((NetworkManager.WorkType != WorkType.Local && NetworkManager.GetClientByGUID(PlayerGUID) == null) || (NetworkManager.WorkType == WorkType.Local && !IsMainPlayer)) {
                     m_stateMachine.TransitionTo("MakePlayerOffline");
@@ -171,8 +168,7 @@ namespace Game {
                 }
             }, null);
             m_stateMachine.AddState("MakePlayerOffline", delegate { AsyncDispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(PlayerGUID, false)); }, null, null);
-            m_stateMachine.AddState("PrepareSpawn", delegate
-            {
+            m_stateMachine.AddState("PrepareSpawn", delegate {
                 if (SpawnPosition == Vector3.Zero) {
                     if (NetworkManager.WorkType != WorkType.Local && m_subsystemGameInfo.WorldSettings.RandomSpawnPosition) SubsystemPlayers.GlobalSpawnPosition = Vector3.Zero;
                     if (SubsystemPlayers.GlobalSpawnPosition == Vector3.Zero) {
@@ -210,8 +206,7 @@ namespace Game {
                     m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, 0f, 64f);
                 }
                 m_terrainWaitStartTime = Time.FrameStartTime;
-            }, delegate
-            {
+            }, delegate {
                 if (Time.PeriodicEvent(0.1, 0.0)) {
                     float updateProgress2 = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, 0f, 64f);
                     UpdateSpawnDialog(null, null, 0.5f * updateProgress2, resetProgress: false);
@@ -233,8 +228,7 @@ namespace Game {
                     }
                 }
             }, null);
-            m_stateMachine.AddState("WaitForTerrain", delegate
-            {
+            m_stateMachine.AddState("WaitForTerrain", delegate {
                 m_terrainWaitStartTime = Time.FrameStartTime;
                 Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 if (ClientCachePosition.HasValue) {
@@ -243,8 +237,7 @@ namespace Game {
                 }
                 // 根据当前中心点刷新地形可见范围，客户端的非主玩家不需要提交 updateLocation。
                 if (!(NetworkManager.WorkType == WorkType.Client && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
-            }, delegate
-            {
+            }, delegate {
                 if (Time.PeriodicEvent(0.1, 0.0)) {
                     float updateProgress = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, MathUtils.Min(SettingsManager.VisibilityRange, 64f), 0f);
                     UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
@@ -263,8 +256,7 @@ namespace Game {
                 }
             }, null);
             // 客户端等待服务端同步玩家实体，收到后再进入 Playing。
-            m_stateMachine.AddState("WaitForPlayerEntity", null, delegate
-            {
+            m_stateMachine.AddState("WaitForPlayerEntity", null, delegate {
                 UpdateSpawnDialog("Waiting for player entity from server", null, 0f, false);
                 if (Time.PeriodicEvent(0.1, 0.0)) {
                     if (ComponentPlayer != null) {
@@ -272,14 +264,12 @@ namespace Game {
                     }
                 }
             }, null);
-            m_stateMachine.AddState("Playing", delegate
-            {
+            m_stateMachine.AddState("Playing", delegate {
                 HideSpawnDialog();
                 if (NetworkManager.WorkType == WorkType.Client) {
                     NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Self.ID, ClientStage.Playing));
                 }
-            }, delegate
-            {
+            }, delegate {
                 if (ComponentPlayer == null) {
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
@@ -302,16 +292,13 @@ namespace Game {
                     }
                 }
             }, null);
-            m_stateMachine.AddState("PlayerDead", delegate
-            {
+            m_stateMachine.AddState("PlayerDead", delegate {
                 isSetStatus = false;
-                ModsManager.HookAction("OnPlayerDead", modLoader =>
-                {
+                ModsManager.HookAction("OnPlayerDead", modLoader => {
                     modLoader.OnPlayerDead(this);
                     return false;
                 });
-            }, delegate
-            {
+            }, delegate {
                 // 联机下非主玩家的死亡重生流程由网络同步驱动。
                 if (NetworkManager.WorkType != WorkType.Client && !IsMainPlayer) {
                     Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
@@ -342,16 +329,14 @@ namespace Game {
             if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel) {
                 // 残酷模式禁止重生，直接提示并断开当前联机会话。
                 m_stateMachine.TransitionTo(null);
-                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("Notice", "You died in cruel mode and cannot respawn.", LanguageControl.Yes, LanguageControl.No, btn =>
-                {
+                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("Notice", "You died in cruel mode and cannot respawn.", LanguageControl.Yes, LanguageControl.No, btn => {
                     NetworkManager.StopImmediate();
                 }));
             }
             else if (!m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
                 // 当前世界禁用了重生，直接提示并断开当前联机会话。
                 m_stateMachine.TransitionTo(null);
-                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("Notice", "The server has disabled player respawn.", LanguageControl.Yes, LanguageControl.No, btn =>
-                {
+                DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("Notice", "The server has disabled player respawn.", LanguageControl.Yes, LanguageControl.No, btn => {
                     NetworkManager.StopImmediate();
                 }));
             }

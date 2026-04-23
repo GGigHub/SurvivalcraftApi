@@ -885,7 +885,7 @@ namespace Game {
                         }
                     }
                     return;
-                    end_IL_0263:
+                end_IL_0263:
                     break;
                 }
                 list2.RemoveAt(num);

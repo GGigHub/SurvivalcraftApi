@@ -66,7 +66,7 @@ namespace Game {
                     ParentWidget,
                     new SelectExternalContentTypeDialog(
                         "Select Content Type",
-                        delegate(ExternalContentType item) {
+                        delegate (ExternalContentType item) {
                             m_type = item;
                             m_updateContentName = true;
                         }
@@ -85,7 +85,7 @@ namespace Game {
                     null,
                     null,
                     busyDialog.Progress,
-                    delegate(byte[] data) {
+                    delegate (byte[] data) {
                         ExternalContentManager.ImportExternalContent(
                             new MemoryStream(data),
                             m_type,
@@ -94,13 +94,13 @@ namespace Game {
                                 DialogsManager.HideDialog(busyDialog);
                                 DialogsManager.HideDialog(this);
                             },
-                            delegate(Exception error) {
+                            delegate (Exception error) {
                                 DialogsManager.HideDialog(busyDialog);
                                 DialogsManager.ShowDialog(ParentWidget, new MessageDialog("Error", error.Message, "OK", null, null));
                             }
                         );
                     },
-                    delegate(Exception error) {
+                    delegate (Exception error) {
                         DialogsManager.HideDialog(busyDialog);
                         DialogsManager.ShowDialog(ParentWidget, new MessageDialog("Error", error.Message, "OK", null, null));
                     }

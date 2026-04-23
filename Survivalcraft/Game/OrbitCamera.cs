@@ -56,7 +56,7 @@ namespace Game {
                         end,
                         false,
                         true,
-                        delegate(int value, float _) {
+                        delegate (int value, float _) {
                             Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
                             for (int k = 0; k < 6; k++) {
                                 if (!block.IsFaceTransparent(subsystemTerrain, k, value)) {

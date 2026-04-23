@@ -871,10 +871,8 @@ namespace Game {
             }
         }
 
-        public virtual void PlayExplosionSound(Vector3 position, float level, float delay, bool playExplosionSound)
-        {
-            if (playExplosionSound)
-            {
+        public virtual void PlayExplosionSound(Vector3 position, float level, float delay, bool playExplosionSound) {
+            if (playExplosionSound) {
                 m_subsystemAudio.PlaySound("Audio/Explosion1", 1f, m_random.Float(-0.1f, 0.1f), position, level, delay);
             }
         }

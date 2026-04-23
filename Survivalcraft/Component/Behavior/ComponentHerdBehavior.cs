@@ -117,7 +117,7 @@ namespace Game {
             HerdName = valuesDictionary.GetValue<string>("HerdName");
             m_herdingRange = valuesDictionary.GetValue<float>("HerdingRange");
             m_autoNearbyCreaturesHelp = valuesDictionary.GetValue<bool>("AutoNearbyCreaturesHelp");
-            m_componentCreature.ComponentHealth.Injured += delegate(Injury injury) {
+            m_componentCreature.ComponentHealth.Injured += delegate (Injury injury) {
                 ComponentCreature attacker = injury.Attacker;
                 CallNearbyCreaturesHelp(attacker, 20f, 30f, false);
             };

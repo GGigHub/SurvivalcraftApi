@@ -60,7 +60,7 @@ namespace Game {
             m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
             m_componentHerdBehavior = Entity.FindComponent<ComponentHerdBehavior>();
             LowHealthToEscape = valuesDictionary.GetValue<float>("LowHealthToEscape");
-            m_componentCreature.ComponentHealth.Injured += delegate(Injury injury) {
+            m_componentCreature.ComponentHealth.Injured += delegate (Injury injury) {
                 ComponentCreature attacker = injury.Attacker;
                 RunAwayFrom(attacker?.ComponentBody);
             };

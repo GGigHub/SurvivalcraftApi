@@ -1,16 +1,12 @@
-using Engine;
-
 namespace Game.NetWork.Packages;
 
-public class ComponentFluPackage : IPackage
-{
+public class ComponentFluPackage : IPackage {
     public byte ID => (byte)PackageType.ComponentFlu;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.ProjectLoaded;
-    public enum EventType
-    {
+    public enum EventType {
         SyncStat,
         FluEffect,
         StartFlu,
@@ -27,13 +23,11 @@ public class ComponentFluPackage : IPackage
 
     public ushort entityId;
 
-    public ComponentFluPackage()
-    {
+    public ComponentFluPackage() {
 
     }
 
-    public ComponentFluPackage(ComponentFlu flu, EventType eventType)
-    {
+    public ComponentFluPackage(ComponentFlu flu, EventType eventType) {
         entityId = flu.Entity.EntityId;
         m_eventType = eventType;
         m_fluOnset = flu.m_fluOnset;
@@ -42,8 +36,7 @@ public class ComponentFluPackage : IPackage
         m_sneezeDuration = flu.m_sneezeDuration;
     }
 
-    public void WriteData(PackageStreamWriter writer)
-    {
+    public void WriteData(PackageStreamWriter writer) {
         writer.Write(entityId);
         writer.WriteEnum(m_eventType);
         writer.Write(m_fluOnset);
@@ -52,8 +45,7 @@ public class ComponentFluPackage : IPackage
         writer.Write(m_sneezeDuration);
     }
 
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         entityId = reader.ReadUInt16();
         m_eventType = reader.ReadEnum<EventType>();
         m_fluOnset = reader.ReadSingle();
@@ -62,65 +54,58 @@ public class ComponentFluPackage : IPackage
         m_sneezeDuration = reader.ReadSingle();
     }
 
-        public void Handle(ProjectNet projectNet, bool isServer)
-        {
-            if (isServer)
-            {
-                return;
-            }
-            switch (m_eventType)
-            {
-                case EventType.SyncStat:
-                    projectNet.FindEntityById(entityId, (entity) => {
-                        var flu = entity.FindComponent<ComponentFlu>();
-                        if (flu != null)
-                        {
-                            flu.m_fluOnset = m_fluOnset;
-                            flu.m_sneezeDuration = m_sneezeDuration;
-                            flu.m_coughDuration = m_coughDuration;
-                            flu.m_fluDuration = m_fluDuration;
-                        }
-                    });
-                    break;
-                case EventType.FluEffect:
-                    projectNet.FindEntityById(entityId, (entity) => {
-                        var flu = entity.FindComponent<ComponentFlu>();
-                        if (flu != null)
-                        {
-                            flu.m_fluOnset = m_fluOnset;
-                            flu.m_sneezeDuration = m_sneezeDuration;
-                            flu.m_coughDuration = m_coughDuration;
-                            flu.m_fluDuration = m_fluDuration;
-                            flu.FluEffect();
-                        }
-                    });
-                    break;
-                case EventType.StartFlu:
-                    projectNet.FindEntityById(entityId, (entity) => {
-                        var flu = entity.FindComponent<ComponentFlu>();
-                        if (flu != null)
-                        {
-                            flu.m_fluOnset = m_fluOnset;
-                            flu.m_sneezeDuration = m_sneezeDuration;
-                            flu.m_coughDuration = m_coughDuration;
-                            flu.m_fluDuration = m_fluDuration;
-                            flu.StartFlu();
-                        }
-                    });
-                    break;
-                case EventType.Sneeze:
-                    projectNet.FindEntityById(entityId, (entity) => {
-                        var flu = entity.FindComponent<ComponentFlu>();
-                        if (flu != null)
-                        {
-                            flu.m_fluOnset = m_fluOnset;
-                            flu.m_sneezeDuration = m_sneezeDuration;
-                            flu.m_coughDuration = m_coughDuration;
-                            flu.m_fluDuration = m_fluDuration;
-                            flu.Sneeze();
-                        }
-                    });
-                    break;
+    public void Handle(ProjectNet projectNet, bool isServer) {
+        if (isServer) {
+            return;
+        }
+        switch (m_eventType) {
+            case EventType.SyncStat:
+                projectNet.FindEntityById(entityId, (entity) => {
+                    var flu = entity.FindComponent<ComponentFlu>();
+                    if (flu != null) {
+                        flu.m_fluOnset = m_fluOnset;
+                        flu.m_sneezeDuration = m_sneezeDuration;
+                        flu.m_coughDuration = m_coughDuration;
+                        flu.m_fluDuration = m_fluDuration;
+                    }
+                });
+                break;
+            case EventType.FluEffect:
+                projectNet.FindEntityById(entityId, (entity) => {
+                    var flu = entity.FindComponent<ComponentFlu>();
+                    if (flu != null) {
+                        flu.m_fluOnset = m_fluOnset;
+                        flu.m_sneezeDuration = m_sneezeDuration;
+                        flu.m_coughDuration = m_coughDuration;
+                        flu.m_fluDuration = m_fluDuration;
+                        flu.FluEffect();
+                    }
+                });
+                break;
+            case EventType.StartFlu:
+                projectNet.FindEntityById(entityId, (entity) => {
+                    var flu = entity.FindComponent<ComponentFlu>();
+                    if (flu != null) {
+                        flu.m_fluOnset = m_fluOnset;
+                        flu.m_sneezeDuration = m_sneezeDuration;
+                        flu.m_coughDuration = m_coughDuration;
+                        flu.m_fluDuration = m_fluDuration;
+                        flu.StartFlu();
+                    }
+                });
+                break;
+            case EventType.Sneeze:
+                projectNet.FindEntityById(entityId, (entity) => {
+                    var flu = entity.FindComponent<ComponentFlu>();
+                    if (flu != null) {
+                        flu.m_fluOnset = m_fluOnset;
+                        flu.m_sneezeDuration = m_sneezeDuration;
+                        flu.m_coughDuration = m_coughDuration;
+                        flu.m_fluDuration = m_fluDuration;
+                        flu.Sneeze();
+                    }
+                });
+                break;
 
         }
     }

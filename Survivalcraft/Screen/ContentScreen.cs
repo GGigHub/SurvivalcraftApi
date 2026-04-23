@@ -72,7 +72,7 @@ namespace Game {
             }
             if (m_deviceButton.IsClicked) {
                 Task.Run(async () => {
-                        try {
+                    try {
 #if WINDOWS
                             KeyValuePair<string, string[]>[] filters = [
                                 new(LanguageControl.Get(fName, "ExtensionName", ".scworld"), ["*.scworld"]),
@@ -83,64 +83,64 @@ namespace Game {
                             ];
                             (Stream stream, string fileName) = await Storage.ChooseFile(LanguageControl.Get(fName, "3"), filters);
 #else
-                            KeyValuePair<string, string[]>[] filters = [
-                                new(LanguageControl.Get(fName, "ExtensionName", ".scworld"), [".scworld"]),
+                        KeyValuePair<string, string[]>[] filters = [
+                            new(LanguageControl.Get(fName, "ExtensionName", ".scworld"), [".scworld"]),
                                 new(LanguageControl.Get(fName, "ExtensionName", ".scbtex"), [".scbtex", ".png", ".webp", ".astc", ".astcsrgb"]),
                                 new(LanguageControl.Get(fName, "ExtensionName", ".scskin"), [".scskin"]),
                                 new(LanguageControl.Get(fName, "ExtensionName", ".scfpack"), [".scfpack"]),
                                 new(LanguageControl.Get(fName, "ExtensionName", ".scmod"), [".scmod"])
-                            ];
-                            (Stream stream, string fileName) = await Storage.ChooseFile(LanguageControl.Get(fName, "3"), filters);
+                        ];
+                        (Stream stream, string fileName) = await Storage.ChooseFile(LanguageControl.Get(fName, "3"), filters);
 #endif
-                            if (stream == null) {
-                                if (!string.IsNullOrEmpty(fileName)) {
-                                    Dispatcher.Dispatch(() => {
-                                            DialogsManager.ShowDialog(
-                                                null,
-                                                new MessageDialog(
-                                                    LanguageControl.Error,
-                                                    string.Format(LanguageControl.Get(fName, "6"), fileName),
-                                                    LanguageControl.Ok,
-                                                    null,
-                                                    null
-                                                )
-                                            );
-                                        }
-                                    );
-                                }
-                                return;
-                            }
-                            await using (stream) {
-                                if (fileName != null) {
-                                    ExternalContentType type = ExternalContentManager.ExtensionToType(Storage.GetExtension(fileName));
-                                    ExternalContentManager.ImportExternalContentSync(stream, type, fileName);
-                                    Dispatcher.Dispatch(() => {
-                                            DialogsManager.ShowDialog(
-                                                null,
-                                                new MessageDialog(
-                                                    LanguageControl.Success,
-                                                    string.Format(LanguageControl.Get(fName, "4"), fileName),
-                                                    LanguageControl.Ok,
-                                                    null,
-                                                    null
-                                                )
-                                            );
-                                        }
-                                    );
-                                }
-                            }
-                        }
-                        catch (Exception e) {
-                            Log.Error(e);
-                            Dispatcher.Dispatch(() => {
+                        if (stream == null) {
+                            if (!string.IsNullOrEmpty(fileName)) {
+                                Dispatcher.Dispatch(() => {
                                     DialogsManager.ShowDialog(
                                         null,
-                                        new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok, null, null)
+                                        new MessageDialog(
+                                            LanguageControl.Error,
+                                            string.Format(LanguageControl.Get(fName, "6"), fileName),
+                                            LanguageControl.Ok,
+                                            null,
+                                            null
+                                        )
                                     );
                                 }
-                            );
+                                );
+                            }
+                            return;
+                        }
+                        await using (stream) {
+                            if (fileName != null) {
+                                ExternalContentType type = ExternalContentManager.ExtensionToType(Storage.GetExtension(fileName));
+                                ExternalContentManager.ImportExternalContentSync(stream, type, fileName);
+                                Dispatcher.Dispatch(() => {
+                                    DialogsManager.ShowDialog(
+                                        null,
+                                        new MessageDialog(
+                                            LanguageControl.Success,
+                                            string.Format(LanguageControl.Get(fName, "4"), fileName),
+                                            LanguageControl.Ok,
+                                            null,
+                                            null
+                                        )
+                                    );
+                                }
+                                );
+                            }
                         }
                     }
+                    catch (Exception e) {
+                        Log.Error(e);
+                        Dispatcher.Dispatch(() => {
+                            DialogsManager.ShowDialog(
+                                null,
+                                new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok, null, null)
+                            );
+                        }
+                        );
+                    }
+                }
                 );
             }
             if (m_communityContentButton.IsClicked) {

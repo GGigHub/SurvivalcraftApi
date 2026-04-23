@@ -1,6 +1,6 @@
 using Engine;
-using GameEntitySystem;
 using Game.NetWork;
+using GameEntitySystem;
 using TemplatesDatabase;
 
 namespace Game {

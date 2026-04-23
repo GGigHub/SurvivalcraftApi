@@ -198,18 +198,14 @@ namespace Game {
             }
         }
 
-        public static bool HasSkinRes(string name)
-        {
+        public static bool HasSkinRes(string name) {
             return m_characterSkinNames.Contains(name);
         }
 
-        public static void SaveSkinToFile(string name, byte[] data)
-        {
+        public static void SaveSkinToFile(string name, byte[] data) {
             string fileName = GetFileName(name);
-            if (!string.IsNullOrEmpty(fileName))
-            {
-                using (Stream stream = Storage.OpenFile(fileName, OpenFileMode.Create))
-                {
+            if (!string.IsNullOrEmpty(fileName)) {
+                using (Stream stream = Storage.OpenFile(fileName, OpenFileMode.Create)) {
                     stream.Write(data, 0, data.Length);
                 }
             }

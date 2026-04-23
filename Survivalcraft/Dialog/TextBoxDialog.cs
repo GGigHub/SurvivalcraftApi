@@ -49,7 +49,7 @@ namespace Game {
             m_textBoxWidget.HasFocus = true;
             m_textBoxWidget.Enter += delegate { Dismiss(m_textBoxWidget.Text); };
             if (m_handler2 != null) {
-                m_textBoxWidget.TextChanged += delegate(TextBoxWidget textBox) { m_handler2.Invoke(textBox); };
+                m_textBoxWidget.TextChanged += delegate (TextBoxWidget textBox) { m_handler2.Invoke(textBox); };
             }
             AutoHide = true;
         }

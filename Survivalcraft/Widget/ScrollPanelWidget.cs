@@ -166,7 +166,7 @@ namespace Game {
             bool found = false;
             HitTestGlobal(
                 position,
-                delegate(Widget widget) {
+                delegate (Widget widget) {
                     found = widget.IsChildWidgetOf(this) || widget == this;
                     return true;
                 }

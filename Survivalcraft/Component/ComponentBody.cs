@@ -1,6 +1,6 @@
 using Engine;
-using GameEntitySystem;
 using Game.NetWork;
+using GameEntitySystem;
 using TemplatesDatabase;
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 
@@ -1078,14 +1078,16 @@ namespace Game {
                     if ((isCollidable && !isCollidable2)
                         || (!isCollidable && !isCollidable2 && isCollidable3)) {
                         item = new CollisionBox {
-                            Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y), new Vector3(num + 1, num2 + 1, num3 + 1)), BlockValue = 0
+                            Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y), new Vector3(num + 1, num2 + 1, num3 + 1)),
+                            BlockValue = 0
                         };
                         result.Add(item);
                     }
                     if ((!isCollidable && isCollidable2)
                         || (!isCollidable && !isCollidable2 && isCollidable3)) {
                         item = new CollisionBox {
-                            Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1)), BlockValue = 0
+                            Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1)),
+                            BlockValue = 0
                         };
                         result.Add(item);
                     }
@@ -1107,14 +1109,16 @@ namespace Game {
                     if ((isCollidable4 && !isCollidable5)
                         || (!isCollidable4 && !isCollidable5 && isCollidable6)) {
                         item = new CollisionBox {
-                            Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)), BlockValue = 0
+                            Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)),
+                            BlockValue = 0
                         };
                         result.Add(item);
                     }
                     if ((!isCollidable4 && isCollidable5)
                         || (!isCollidable4 && !isCollidable5 && isCollidable6)) {
                         item = new CollisionBox {
-                            Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1)), BlockValue = 0
+                            Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1)),
+                            BlockValue = 0
                         };
                         result.Add(item);
                     }
@@ -1137,14 +1141,16 @@ namespace Game {
                 if ((isCollidable7 && !isCollidable8)
                     || (!isCollidable7 && !isCollidable8 && isCollidable9)) {
                     item = new CollisionBox {
-                        Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y), new Vector3(num + 1, num2 + 1, num3 + 1)), BlockValue = 0
+                        Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y), new Vector3(num + 1, num2 + 1, num3 + 1)),
+                        BlockValue = 0
                     };
                     result.Add(item);
                 }
                 if ((!isCollidable7 && isCollidable8)
                     || (!isCollidable7 && !isCollidable8 && isCollidable9)) {
                     item = new CollisionBox {
-                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)), BlockValue = 0
+                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)),
+                        BlockValue = 0
                     };
                     result.Add(item);
                 }
@@ -1166,14 +1172,16 @@ namespace Game {
                 if ((isCollidable10 && !isCollidable11)
                     || (!isCollidable10 && !isCollidable11 && isCollidable12)) {
                     item = new CollisionBox {
-                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)), BlockValue = 0
+                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)),
+                        BlockValue = 0
                     };
                     result.Add(item);
                 }
                 if ((!isCollidable10 && isCollidable11)
                     || (!isCollidable10 && !isCollidable11 && isCollidable12)) {
                     item = new CollisionBox {
-                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)), BlockValue = 0
+                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)),
+                        BlockValue = 0
                     };
                     result.Add(item);
                 }
@@ -1253,32 +1261,32 @@ namespace Game {
             }
             switch (axis) {
                 case 0: {
-                    float num13 = b1.Min.X + b1.Max.X;
-                    float num14 = b2.Min.X + b2.Max.X;
-                    float num15 = b1.Max.X - b1.Min.X;
-                    float num16 = b2.Max.X - b2.Min.X;
-                    float num17 = num14 - num13;
-                    float num18 = num15 + num16;
-                    return 0.5f * (num17 > 0f ? num17 - num18 : num17 + num18);
-                }
+                        float num13 = b1.Min.X + b1.Max.X;
+                        float num14 = b2.Min.X + b2.Max.X;
+                        float num15 = b1.Max.X - b1.Min.X;
+                        float num16 = b2.Max.X - b2.Min.X;
+                        float num17 = num14 - num13;
+                        float num18 = num15 + num16;
+                        return 0.5f * (num17 > 0f ? num17 - num18 : num17 + num18);
+                    }
                 case 1: {
-                    float num7 = b1.Min.Y + b1.Max.Y;
-                    float num8 = b2.Min.Y + b2.Max.Y;
-                    float num9 = b1.Max.Y - b1.Min.Y;
-                    float num10 = b2.Max.Y - b2.Min.Y;
-                    float num11 = num8 - num7;
-                    float num12 = num9 + num10;
-                    return 0.5f * (num11 > 0f ? num11 - num12 : num11 + num12);
-                }
+                        float num7 = b1.Min.Y + b1.Max.Y;
+                        float num8 = b2.Min.Y + b2.Max.Y;
+                        float num9 = b1.Max.Y - b1.Min.Y;
+                        float num10 = b2.Max.Y - b2.Min.Y;
+                        float num11 = num8 - num7;
+                        float num12 = num9 + num10;
+                        return 0.5f * (num11 > 0f ? num11 - num12 : num11 + num12);
+                    }
                 default: {
-                    float num = b1.Min.Z + b1.Max.Z;
-                    float num2 = b2.Min.Z + b2.Max.Z;
-                    float num3 = b1.Max.Z - b1.Min.Z;
-                    float num4 = b2.Max.Z - b2.Min.Z;
-                    float num5 = num2 - num;
-                    float num6 = num3 + num4;
-                    return 0.5f * (num5 > 0f ? num5 - num6 : num5 + num6);
-                }
+                        float num = b1.Min.Z + b1.Max.Z;
+                        float num2 = b2.Min.Z + b2.Max.Z;
+                        float num3 = b1.Max.Z - b1.Min.Z;
+                        float num4 = b2.Max.Z - b2.Min.Z;
+                        float num5 = num2 - num;
+                        float num6 = num3 + num4;
+                        return 0.5f * (num5 > 0f ? num5 - num6 : num5 + num6);
+                    }
             }
         }
 
@@ -1415,14 +1423,16 @@ namespace Game {
                     if ((isCollidable && !isCollidable2)
                         || (!isCollidable && !isCollidable2) & isCollidable3) {
                         item = new CollisionBox {
-                            Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y), new Vector3(num + 1, num2 + 1, num3 + 1)), BlockValue = 0
+                            Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y), new Vector3(num + 1, num2 + 1, num3 + 1)),
+                            BlockValue = 0
                         };
                         result.Add(item);
                     }
                     if ((!isCollidable && isCollidable2)
                         || (!isCollidable && !isCollidable2) & isCollidable3) {
                         item = new CollisionBox {
-                            Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1)), BlockValue = 0
+                            Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1)),
+                            BlockValue = 0
                         };
                         result.Add(item);
                     }
@@ -1444,14 +1454,16 @@ namespace Game {
                     if ((isCollidable4 && !isCollidable5)
                         || (!isCollidable4 && !isCollidable5) & isCollidable6) {
                         item = new CollisionBox {
-                            Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)), BlockValue = 0
+                            Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)),
+                            BlockValue = 0
                         };
                         result.Add(item);
                     }
                     if ((!isCollidable4 && isCollidable5)
                         || (!isCollidable4 && !isCollidable5) & isCollidable6) {
                         item = new CollisionBox {
-                            Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1)), BlockValue = 0
+                            Box = new BoundingBox(new Vector3(num + overhang.X, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1)),
+                            BlockValue = 0
                         };
                         result.Add(item);
                     }
@@ -1474,14 +1486,16 @@ namespace Game {
                 if ((isCollidable7 && !isCollidable8)
                     || (!isCollidable7 && !isCollidable8) & isCollidable9) {
                     item = new CollisionBox {
-                        Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y), new Vector3(num + 1, num2 + 1, num3 + 1)), BlockValue = 0
+                        Box = new BoundingBox(new Vector3(num, num2, num3 + overhang.Y), new Vector3(num + 1, num2 + 1, num3 + 1)),
+                        BlockValue = 0
                     };
                     result.Add(item);
                 }
                 if ((!isCollidable7 && isCollidable8)
                     || (!isCollidable7 && !isCollidable8) & isCollidable9) {
                     item = new CollisionBox {
-                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)), BlockValue = 0
+                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)),
+                        BlockValue = 0
                     };
                     result.Add(item);
                 }
@@ -1503,14 +1517,16 @@ namespace Game {
                 if ((isCollidable10 && !isCollidable11)
                     || (!isCollidable10 && !isCollidable11) & isCollidable12) {
                     item = new CollisionBox {
-                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)), BlockValue = 0
+                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)),
+                        BlockValue = 0
                     };
                     result.Add(item);
                 }
                 if ((!isCollidable10 && isCollidable11)
                     || (!isCollidable10 && !isCollidable11) & isCollidable12) {
                     item = new CollisionBox {
-                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)), BlockValue = 0
+                        Box = new BoundingBox(new Vector3(num, num2, num3), new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)),
+                        BlockValue = 0
                     };
                     result.Add(item);
                 }

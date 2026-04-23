@@ -8,9 +8,9 @@ namespace Game {
         public SubsystemTime m_subsystemTime;
 
         public SubsystemTimeOfDay m_subsystemTimeOfDay;
-        
+
         public SubsystemTimeOfDay TimeOfDay => m_subsystemTimeOfDay;
-        
+
         public WorldSettings WorldSettings { get; set; }
 
         public string DirectoryName { get; set; }
@@ -27,7 +27,9 @@ namespace Game {
             string downloadedContentAddress = CommunityContentManager.GetDownloadedContentAddress(ExternalContentType.World, DirectoryName);
             if (!string.IsNullOrEmpty(downloadedContentAddress)) {
                 yield return new ActiveExternalContentInfo {
-                    Address = downloadedContentAddress, DisplayName = WorldSettings.Name, Type = ExternalContentType.World
+                    Address = downloadedContentAddress,
+                    DisplayName = WorldSettings.Name,
+                    Type = ExternalContentType.World
                 };
             }
             if (!BlocksTexturesManager.IsBuiltIn(WorldSettings.BlocksTextureName)) {

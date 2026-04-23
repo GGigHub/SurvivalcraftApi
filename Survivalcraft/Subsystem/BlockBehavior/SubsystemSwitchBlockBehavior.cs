@@ -17,7 +17,7 @@ namespace Game {
                 componentPlayer.GuiWidget,
                 new EditVoltageLevelDialog(
                     voltageLevel,
-                    delegate(int newVoltageLevel) {
+                    delegate (int newVoltageLevel) {
                         int data2 = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
                         int num = Terrain.ReplaceData(value, data2);
                         if (num != value) {
@@ -40,7 +40,7 @@ namespace Game {
                 componentPlayer.GuiWidget,
                 new EditVoltageLevelDialog(
                     voltageLevel,
-                    delegate(int newVoltageLevel) {
+                    delegate (int newVoltageLevel) {
                         int num = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
                         if (num != data) {
                             int face = 4;

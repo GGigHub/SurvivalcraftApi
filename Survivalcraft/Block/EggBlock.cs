@@ -39,8 +39,8 @@ namespace Game {
             DatabaseObjectType parameterSetType = DatabaseManager.GameDatabase.ParameterSetType;
             Guid eggParameterSetGuid = new("300ff557-775f-4c7c-a88a-26655369f00b");
             foreach (DatabaseObject item in from o in DatabaseManager.GameDatabase.Database.Root.GetExplicitNestingChildren(parameterSetType, false)
-                where o.EffectiveInheritanceRoot.Guid == eggParameterSetGuid
-                select o) {
+                                            where o.EffectiveInheritanceRoot.Guid == eggParameterSetGuid
+                                            select o) {
                 int nestedValue = item.GetNestedValue<int>("EggTypeIndex");
                 if (nestedValue >= 0) {
                     nestedValue &= 0xFFF;

@@ -12,15 +12,15 @@ namespace Game {
         public override void ConvertProjectXml(XElement projectNode) {
             XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
             foreach (XElement item in from e in projectNode.Element("Subsystems").Elements()
-                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
-                select e) {
+                                      where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
+                                      select e) {
                 foreach (XElement item2 in from e in item.Elements("Values")
-                    where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
-                    select e) {
+                                           where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
+                                           select e) {
                     foreach (XElement item3 in item2.Elements("Values")) {
                         foreach (XElement item4 in from e in item3.Elements("Value")
-                            where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                            select e) {
+                                                   where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                                                   select e) {
                             int num = ConvertValue(XmlUtils.GetAttributeValue<int>(item4, "Value"));
                             XmlUtils.SetAttributeValue(item4, "Value", num);
                         }
@@ -28,15 +28,15 @@ namespace Game {
                 }
             }
             foreach (XElement item5 in from e in projectNode.Element("Subsystems").Elements()
-                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
-                select e) {
+                                       where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
+                                       select e) {
                 foreach (XElement item6 in from e in item5.Elements("Values")
-                    where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
-                    select e) {
+                                           where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
+                                           select e) {
                     foreach (XElement item7 in item6.Elements("Values")) {
                         foreach (XElement item8 in from e in item7.Elements("Value")
-                            where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                            select e) {
+                                                   where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                                                   select e) {
                             int num2 = ConvertValue(XmlUtils.GetAttributeValue<int>(item8, "Value"));
                             XmlUtils.SetAttributeValue(item8, "Value", num2);
                         }
@@ -44,15 +44,15 @@ namespace Game {
                 }
             }
             foreach (XElement item9 in from e in projectNode.Element("Subsystems").Elements()
-                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlockBehavior"
-                select e) {
+                                       where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlockBehavior"
+                                       select e) {
                 foreach (XElement item10 in from e in item9.Elements("Values")
-                    where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlocks"
-                    select e) {
+                                            where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlocks"
+                                            select e) {
                     foreach (XElement item11 in item10.Elements("Values")) {
                         foreach (XElement item12 in from e in item11.Elements("Value")
-                            where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                            select e) {
+                                                    where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                                                    select e) {
                             int num3 = ConvertValue(XmlUtils.GetAttributeValue<int>(item12, "Value"));
                             XmlUtils.SetAttributeValue(item12, "Value", num3);
                         }
@@ -61,11 +61,11 @@ namespace Game {
             }
             foreach (XElement item13 in projectNode.Element("Entities").Elements()) {
                 foreach (XElement item14 in from e in item13.Elements("Values")
-                    where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothing"
-                    select e) {
+                                            where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothing"
+                                            select e) {
                     foreach (XElement item15 in from e in item14.Elements("Values")
-                        where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothes"
-                        select e) {
+                                                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothes"
+                                                select e) {
                         foreach (XElement item16 in item15.Elements()) {
                             string attributeValue = XmlUtils.GetAttributeValue<string>(item16, "Value");
                             int[] array = HumanReadableConverter.ValuesListFromString<int>(';', attributeValue);
@@ -81,15 +81,15 @@ namespace Game {
             string[] inventoryNames = ["Inventory", "CreativeInventory", "CraftingTable", "Chest", "Furnace", "Dispenser"];
             foreach (XElement item17 in projectNode.Element("Entities").Elements()) {
                 foreach (XElement item18 in from e in item17.Elements("Values")
-                    where inventoryNames.Contains(XmlUtils.GetAttributeValue(e, "Name", string.Empty))
-                    select e) {
+                                            where inventoryNames.Contains(XmlUtils.GetAttributeValue(e, "Name", string.Empty))
+                                            select e) {
                     foreach (XElement item19 in from e in item18.Elements("Values")
-                        where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Slots"
-                        select e) {
+                                                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Slots"
+                                                select e) {
                         foreach (XElement item20 in item19.Elements()) {
                             foreach (XElement item21 in from e in item20.Elements("Value")
-                                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Contents"
-                                select e) {
+                                                        where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Contents"
+                                                        select e) {
                                 int num4 = ConvertValue(XmlUtils.GetAttributeValue<int>(item21, "Value"));
                                 XmlUtils.SetAttributeValue(item21, "Value", num4);
                             }

@@ -46,19 +46,23 @@ namespace Game {
             DynamicArray<BlockMeshVertex> vertices = blockMesh.Vertices;
             DynamicArray<int> indices = blockMesh.Indices;
             BlockMeshVertex item = new() {
-                Position = new Vector3(bounds.Left, bounds.Top, -1f), TextureCoordinates = new Vector2(bounds.Left, bounds.Top)
+                Position = new Vector3(bounds.Left, bounds.Top, -1f),
+                TextureCoordinates = new Vector2(bounds.Left, bounds.Top)
             };
             vertices.Add(item);
             item = new BlockMeshVertex {
-                Position = new Vector3(bounds.Right, bounds.Top, -1f), TextureCoordinates = new Vector2(bounds.Right, bounds.Top)
+                Position = new Vector3(bounds.Right, bounds.Top, -1f),
+                TextureCoordinates = new Vector2(bounds.Right, bounds.Top)
             };
             vertices.Add(item);
             item = new BlockMeshVertex {
-                Position = new Vector3(bounds.Left, bounds.Bottom, -1f), TextureCoordinates = new Vector2(bounds.Left, bounds.Bottom)
+                Position = new Vector3(bounds.Left, bounds.Bottom, -1f),
+                TextureCoordinates = new Vector2(bounds.Left, bounds.Bottom)
             };
             vertices.Add(item);
             item = new BlockMeshVertex {
-                Position = new Vector3(bounds.Right, bounds.Bottom, -1f), TextureCoordinates = new Vector2(bounds.Right, bounds.Bottom)
+                Position = new Vector3(bounds.Right, bounds.Bottom, -1f),
+                TextureCoordinates = new Vector2(bounds.Right, bounds.Bottom)
             };
             vertices.Add(item);
             indices.Add(vertices.Count - 4);
@@ -68,19 +72,23 @@ namespace Game {
             indices.Add(vertices.Count - 4);
             indices.Add(vertices.Count - 2);
             item = new BlockMeshVertex {
-                Position = new Vector3(bounds.Left, bounds.Top, 1f), TextureCoordinates = new Vector2(bounds.Left, bounds.Top)
+                Position = new Vector3(bounds.Left, bounds.Top, 1f),
+                TextureCoordinates = new Vector2(bounds.Left, bounds.Top)
             };
             vertices.Add(item);
             item = new BlockMeshVertex {
-                Position = new Vector3(bounds.Right, bounds.Top, 1f), TextureCoordinates = new Vector2(bounds.Right, bounds.Top)
+                Position = new Vector3(bounds.Right, bounds.Top, 1f),
+                TextureCoordinates = new Vector2(bounds.Right, bounds.Top)
             };
             vertices.Add(item);
             item = new BlockMeshVertex {
-                Position = new Vector3(bounds.Left, bounds.Bottom, 1f), TextureCoordinates = new Vector2(bounds.Left, bounds.Bottom)
+                Position = new Vector3(bounds.Left, bounds.Bottom, 1f),
+                TextureCoordinates = new Vector2(bounds.Left, bounds.Bottom)
             };
             vertices.Add(item);
             item = new BlockMeshVertex {
-                Position = new Vector3(bounds.Right, bounds.Bottom, 1f), TextureCoordinates = new Vector2(bounds.Right, bounds.Bottom)
+                Position = new Vector3(bounds.Right, bounds.Bottom, 1f),
+                TextureCoordinates = new Vector2(bounds.Right, bounds.Bottom)
             };
             vertices.Add(item);
             indices.Add(vertices.Count - 4);
@@ -101,19 +109,23 @@ namespace Game {
                     }
                     else if (num >= 0) {
                         item = new BlockMeshVertex {
-                            Position = new Vector3(i - 0.01f, num - 0.01f, -1.01f), TextureCoordinates = new Vector2(i - 1 + 0.01f, num + 0.01f)
+                            Position = new Vector3(i - 0.01f, num - 0.01f, -1.01f),
+                            TextureCoordinates = new Vector2(i - 1 + 0.01f, num + 0.01f)
                         };
                         vertices.Add(item);
                         item = new BlockMeshVertex {
-                            Position = new Vector3(i - 0.01f, num - 0.01f, 1.01f), TextureCoordinates = new Vector2(i - 0.01f, num + 0.01f)
+                            Position = new Vector3(i - 0.01f, num - 0.01f, 1.01f),
+                            TextureCoordinates = new Vector2(i - 0.01f, num + 0.01f)
                         };
                         vertices.Add(item);
                         item = new BlockMeshVertex {
-                            Position = new Vector3(i - 0.01f, j + 0.01f, -1.01f), TextureCoordinates = new Vector2(i - 1 + 0.01f, j - 0.01f)
+                            Position = new Vector3(i - 0.01f, j + 0.01f, -1.01f),
+                            TextureCoordinates = new Vector2(i - 1 + 0.01f, j - 0.01f)
                         };
                         vertices.Add(item);
                         item = new BlockMeshVertex {
-                            Position = new Vector3(i - 0.01f, j + 0.01f, 1.01f), TextureCoordinates = new Vector2(i - 0.01f, j - 0.01f)
+                            Position = new Vector3(i - 0.01f, j + 0.01f, 1.01f),
+                            TextureCoordinates = new Vector2(i - 0.01f, j - 0.01f)
                         };
                         vertices.Add(item);
                         indices.Add(vertices.Count - 4);
@@ -138,19 +150,23 @@ namespace Game {
                     }
                     else if (num3 >= 0) {
                         item = new BlockMeshVertex {
-                            Position = new Vector3(k + 1 + 0.01f, num3 - 0.01f, -1.01f), TextureCoordinates = new Vector2(k + 1 + 0.01f, num3 + 0.01f)
+                            Position = new Vector3(k + 1 + 0.01f, num3 - 0.01f, -1.01f),
+                            TextureCoordinates = new Vector2(k + 1 + 0.01f, num3 + 0.01f)
                         };
                         vertices.Add(item);
                         item = new BlockMeshVertex {
-                            Position = new Vector3(k + 1 + 0.01f, num3 - 0.01f, 1.01f), TextureCoordinates = new Vector2(k + 2 - 0.01f, num3 + 0.01f)
+                            Position = new Vector3(k + 1 + 0.01f, num3 - 0.01f, 1.01f),
+                            TextureCoordinates = new Vector2(k + 2 - 0.01f, num3 + 0.01f)
                         };
                         vertices.Add(item);
                         item = new BlockMeshVertex {
-                            Position = new Vector3(k + 1 + 0.01f, l + 0.01f, -1.01f), TextureCoordinates = new Vector2(k + 1 + 0.01f, l - 0.01f)
+                            Position = new Vector3(k + 1 + 0.01f, l + 0.01f, -1.01f),
+                            TextureCoordinates = new Vector2(k + 1 + 0.01f, l - 0.01f)
                         };
                         vertices.Add(item);
                         item = new BlockMeshVertex {
-                            Position = new Vector3(k + 1 + 0.01f, l + 0.01f, 1.01f), TextureCoordinates = new Vector2(k + 2 - 0.01f, l - 0.01f)
+                            Position = new Vector3(k + 1 + 0.01f, l + 0.01f, 1.01f),
+                            TextureCoordinates = new Vector2(k + 2 - 0.01f, l - 0.01f)
                         };
                         vertices.Add(item);
                         indices.Add(vertices.Count - 4);
@@ -175,19 +191,23 @@ namespace Game {
                     }
                     else if (num5 >= 0) {
                         item = new BlockMeshVertex {
-                            Position = new Vector3(num5 - 0.01f, m - 0.01f, -1.01f), TextureCoordinates = new Vector2(num5 + 0.01f, m - 1 + 0.01f)
+                            Position = new Vector3(num5 - 0.01f, m - 0.01f, -1.01f),
+                            TextureCoordinates = new Vector2(num5 + 0.01f, m - 1 + 0.01f)
                         };
                         vertices.Add(item);
                         item = new BlockMeshVertex {
-                            Position = new Vector3(num5 - 0.01f, m - 0.01f, 1.01f), TextureCoordinates = new Vector2(num5 + 0.01f, m - 0.01f)
+                            Position = new Vector3(num5 - 0.01f, m - 0.01f, 1.01f),
+                            TextureCoordinates = new Vector2(num5 + 0.01f, m - 0.01f)
                         };
                         vertices.Add(item);
                         item = new BlockMeshVertex {
-                            Position = new Vector3(n + 0.01f, m - 0.01f, -1.01f), TextureCoordinates = new Vector2(n - 0.01f, m - 1 + 0.01f)
+                            Position = new Vector3(n + 0.01f, m - 0.01f, -1.01f),
+                            TextureCoordinates = new Vector2(n - 0.01f, m - 1 + 0.01f)
                         };
                         vertices.Add(item);
                         item = new BlockMeshVertex {
-                            Position = new Vector3(n + 0.01f, m - 0.01f, 1.01f), TextureCoordinates = new Vector2(n - 0.01f, m - 0.01f)
+                            Position = new Vector3(n + 0.01f, m - 0.01f, 1.01f),
+                            TextureCoordinates = new Vector2(n - 0.01f, m - 0.01f)
                         };
                         vertices.Add(item);
                         indices.Add(vertices.Count - 4);

@@ -53,7 +53,10 @@ namespace Game {
                 int num;
                 for (int rot = 0; rot <= 1; rot = num) {
                     CraftingRecipe craftingRecipe = new() {
-                        ResultCount = 1, ResultValue = 251, RequiredHeatLevel = 1f, Description = LanguageControl.Get(fName, "1")
+                        ResultCount = 1,
+                        ResultValue = 251,
+                        RequiredHeatLevel = 1f,
+                        Description = LanguageControl.Get(fName, "1")
                     };
                     int data = BasePumpkinBlock.SetIsDead(BasePumpkinBlock.SetSize(0, 7), isDead != 0);
                     int value = SetDamage(Terrain.MakeBlockValue(131, 0, data), rot);

@@ -58,85 +58,85 @@ namespace Game {
                         aim.Direction = Vector3.Normalize(aim.Direction + v);
                         switch (state) {
                             case AimState.InProgress: {
-                                if (num2 >= 10f) {
-                                    componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
-                                    return true;
+                                    if (num2 >= 10f) {
+                                        componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
+                                        return true;
+                                    }
+                                    ComponentFirstPersonModel
+                                        componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
+                                    if (componentFirstPersonModel != null) {
+                                        componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
+                                        componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.22f, 0.15f, 0.1f);
+                                        componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
+                                    }
+                                    componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.3f;
+                                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.1f, 0.07f);
+                                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.55f, 0f, 0f);
+                                    break;
                                 }
-                                ComponentFirstPersonModel
-                                    componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
-                                if (componentFirstPersonModel != null) {
-                                    componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
-                                    componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.22f, 0.15f, 0.1f);
-                                    componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
-                                }
-                                componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.3f;
-                                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.1f, 0.07f);
-                                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.55f, 0f, 0f);
-                                break;
-                            }
                             case AimState.Cancelled: m_aimStartTimes.Remove(componentMiner); break;
                             case AimState.Completed: {
-                                ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
-                                if (draw != 15) {
-                                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                        LanguageControl.Get(fName, 0),
-                                        Color.White,
-                                        true,
-                                        false
-                                    );
-                                }
-                                else if (!arrowType.HasValue) {
-                                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                        LanguageControl.Get(fName, 1),
-                                        Color.White,
-                                        true,
-                                        false
-                                    );
-                                }
-                                else {
-                                    Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
-                                        + componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
-                                        - componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
-                                    Vector3 v2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
-                                    int value2 = Terrain.MakeBlockValue(m_ArrowBlockIndex, 0, ArrowBlock.SetArrowType(0, arrowType.Value));
-                                    float s = 38f;
-                                    Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + s * v2;
-                                    if (m_subsystemProjectiles.FireProjectile(
-                                            value2,
-                                            vector,
-                                            velocity,
-                                            Vector3.Zero,
-                                            componentMiner.ComponentCreature
-                                        )
-                                        != null) {
-                                        data = CrossbowBlock.SetArrowType(data, null);
+                                    ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
+                                    if (draw != 15) {
+                                        componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                                            LanguageControl.Get(fName, 0),
+                                            Color.White,
+                                            true,
+                                            false
+                                        );
+                                    }
+                                    else if (!arrowType.HasValue) {
+                                        componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                                            LanguageControl.Get(fName, 1),
+                                            Color.White,
+                                            true,
+                                            false
+                                        );
+                                    }
+                                    else {
+                                        Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
+                                            + componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
+                                            - componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
+                                        Vector3 v2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
+                                        int value2 = Terrain.MakeBlockValue(m_ArrowBlockIndex, 0, ArrowBlock.SetArrowType(0, arrowType.Value));
+                                        float s = 38f;
+                                        Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + s * v2;
+                                        if (m_subsystemProjectiles.FireProjectile(
+                                                value2,
+                                                vector,
+                                                velocity,
+                                                Vector3.Zero,
+                                                componentMiner.ComponentCreature
+                                            )
+                                            != null) {
+                                            data = CrossbowBlock.SetArrowType(data, null);
+                                            m_subsystemAudio.PlaySound(
+                                                "Audio/Bow",
+                                                1f,
+                                                m_random.Float(-0.1f, 0.1f),
+                                                componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition,
+                                                3f,
+                                                0.05f
+                                            );
+                                        }
+                                    }
+                                    inventory.RemoveSlotItems(activeSlotIndex, 1);
+                                    int value3 = Terrain.MakeBlockValue(num, 0, CrossbowBlock.SetDraw(data, 0));
+                                    inventory.AddSlotItems(activeSlotIndex, value3, 1);
+                                    if (draw > 0) {
+                                        componentMiner.DamageActiveTool(1);
                                         m_subsystemAudio.PlaySound(
-                                            "Audio/Bow",
+                                            "Audio/CrossbowBoing",
                                             1f,
                                             m_random.Float(-0.1f, 0.1f),
                                             componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition,
                                             3f,
-                                            0.05f
+                                            0f
                                         );
                                     }
+                                    m_aimStartTimes.Remove(componentMiner);
+                                    break;
                                 }
-                                inventory.RemoveSlotItems(activeSlotIndex, 1);
-                                int value3 = Terrain.MakeBlockValue(num, 0, CrossbowBlock.SetDraw(data, 0));
-                                inventory.AddSlotItems(activeSlotIndex, value3, 1);
-                                if (draw > 0) {
-                                    componentMiner.DamageActiveTool(1);
-                                    m_subsystemAudio.PlaySound(
-                                        "Audio/CrossbowBoing",
-                                        1f,
-                                        m_random.Float(-0.1f, 0.1f),
-                                        componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition,
-                                        3f,
-                                        0f
-                                    );
-                                }
-                                m_aimStartTimes.Remove(componentMiner);
-                                break;
-                            }
                         }
                     }
                 }

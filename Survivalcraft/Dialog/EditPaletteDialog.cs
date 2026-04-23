@@ -9,7 +9,7 @@ namespace Game {
         public LinkWidget[] m_labels = new LinkWidget[16];
         public BevelledButtonWidget[] m_rectangles = new BevelledButtonWidget[16];
         public ButtonWidget[] m_resetButtons = new ButtonWidget[16];
-        
+
         public WorldPalette m_palette;
         public WorldPalette m_tmpPalette;
         public const string fName = "EditPaletteDialog";
@@ -52,7 +52,9 @@ namespace Game {
                 obj.Children.Add(new CanvasWidget { Size = new Vector2(10f, 0f) });
                 obj.Children.Add(
                     m_resetButtons[i] = new BevelledButtonWidget {
-                        Size = new Vector2(160f, 60f), VerticalAlignment = WidgetAlignment.Center, Text = LanguageControl.Get(fName, 1)
+                        Size = new Vector2(160f, 60f),
+                        VerticalAlignment = WidgetAlignment.Center,
+                        Text = LanguageControl.Get(fName, 1)
                     }
                 );
                 obj.Children.Add(new CanvasWidget { Size = new Vector2(10f, 0f) });
@@ -80,7 +82,7 @@ namespace Game {
                             LanguageControl.Get(fName, 2),
                             m_labels[k].Text,
                             16,
-                            delegate(string s) {
+                            delegate (string s) {
                                 if (s != null) {
                                     if (WorldPalette.VerifyColorName(s)) {
                                         m_tmpPalette.Names[i] = s;
@@ -101,7 +103,7 @@ namespace Game {
                         this,
                         new EditColorDialog(
                             m_tmpPalette.Colors[k],
-                            delegate(Color? color) {
+                            delegate (Color? color) {
                                 if (color.HasValue) {
                                     m_tmpPalette.Colors[i] = color.Value;
                                 }

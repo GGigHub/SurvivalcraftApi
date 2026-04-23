@@ -1,7 +1,6 @@
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
-using Game.NetWork;
 
 namespace Game {
     public class ComponentSickness : Component, IUpdateable {
@@ -39,8 +38,7 @@ namespace Game {
         }
 
         public virtual void EndSickness() {
-            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client)
-            {
+            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentSicknessPackage(this));
                 m_sicknessDuration = 0f;
             }

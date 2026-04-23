@@ -65,7 +65,10 @@ namespace Game {
                 EndAnimation();
             }
             m_animationData = new AnimationData {
-                NewScreen = screen, OldScreen = CurrentScreen, Parameters = parameters, Speed = CurrentScreen == null ? float.MaxValue : 4f
+                NewScreen = screen,
+                OldScreen = CurrentScreen,
+                Parameters = parameters,
+                Speed = CurrentScreen == null ? float.MaxValue : 4f
             };
             if (CurrentScreen != null) {
                 RootWidget.IsUpdateEnabled = false;

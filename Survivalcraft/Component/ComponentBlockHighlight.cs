@@ -336,7 +336,7 @@ namespace Game {
                 for (int l = 0; l < Subsets.Length; l++) {
                     Utilities.Dispose(ref Subsets[l]);
                 }
-                TerrainGeometrySubset terrainGeometrySubset = new ();
+                TerrainGeometrySubset terrainGeometrySubset = new();
                 TerrainGeometrySubset[] array = new[] {
                     terrainGeometrySubset,
                     terrainGeometrySubset,

@@ -421,7 +421,7 @@ namespace Game {
                                         LanguageControl.Get(fName, 84),
                                         LanguageControl.Yes,
                                         LanguageControl.No,
-                                        delegate(MessageDialogButton result) {
+                                        delegate (MessageDialogButton result) {
                                             if (result == MessageDialogButton.Button1) {
                                                 ScreensManager.SwitchScreen("GameLoading", GameManager.WorldInfo, "AdventureRestart");
                                             }
@@ -445,7 +445,7 @@ namespace Game {
                                         GetRateableItems(),
                                         60f,
                                         o => ((ActiveExternalContentInfo)o).DisplayName,
-                                        delegate(object o) {
+                                        delegate (object o) {
                                             ActiveExternalContentInfo activeExternalContentInfo = (ActiveExternalContentInfo)o;
                                             DialogsManager.ShowDialog(
                                                 ParentWidget,
@@ -497,7 +497,7 @@ namespace Game {
                     list,
                     60f,
                     t => ((Tuple<string, Action>)t).Item1,
-                    delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
+                    delegate (object t) { ((Tuple<string, Action>)t).Item2(); }
                 );
                 DialogsManager.ShowDialog(ParentWidget, dialog);
             }

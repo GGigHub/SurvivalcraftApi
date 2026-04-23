@@ -180,13 +180,11 @@ namespace Game {
             }
         }
 
-        public Projectile AddProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner)
-        {
+        public Projectile AddProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
             return AddProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
         }
 
-        public Projectile FireProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner)
-        {
+        public Projectile FireProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
             return FireProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
         }
 

@@ -12,16 +12,16 @@ namespace Game {
                     string[] spl = line.Split([(char)0x09, (char)0x20], StringSplitOptions.None);
                     switch (spl[0]) {
                         case "newmtl": {
-                            Tkey = spl[1];
-                            break;
-                        }
-                        case "map_Kd": {
-                            if (string.IsNullOrEmpty(Tkey)) {
-                                throw new Exception("请先newmtl");
+                                Tkey = spl[1];
+                                break;
                             }
-                            mtllibStruct.TexturePaths.Add(Tkey, spl[1]);
-                            break;
-                        }
+                        case "map_Kd": {
+                                if (string.IsNullOrEmpty(Tkey)) {
+                                    throw new Exception("请先newmtl");
+                                }
+                                mtllibStruct.TexturePaths.Add(Tkey, spl[1]);
+                                break;
+                            }
                     }
                 }
             }

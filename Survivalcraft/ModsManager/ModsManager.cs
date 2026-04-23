@@ -441,11 +441,11 @@ public static class ModsManager {
                 for (int i = 0; i < array.Length; i += 2) {
                     string packageName1 = array[i];
                     ModEntity modEntity1 = ModListAll.Find(x => {
-                            if (x.modInfo == null) {
-                                return false;
-                            }
-                            return x.modInfo.PackageName == packageName1;
+                        if (x.modInfo == null) {
+                            return false;
                         }
+                        return x.modInfo.PackageName == packageName1;
+                    }
                     );
                     if (modEntity1 == null) {
                         continue;
@@ -779,7 +779,7 @@ public static class ModsManager {
         }
     }
 
-    public class ClassSubstitute: IEquatable<ClassSubstitute> {
+    public class ClassSubstitute : IEquatable<ClassSubstitute> {
         public string PackageName;
         public string ClassName;
 
@@ -987,60 +987,60 @@ public static class ModsManager {
         char firstChar = value[0];
         switch (firstChar) {
             case '=': {
-                if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
-                    versionRange = new VersionRange(nuGetVersion, true, nuGetVersion, true);
-                    return true;
+                    if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
+                        versionRange = new VersionRange(nuGetVersion, true, nuGetVersion, true);
+                        return true;
+                    }
+                    break;
                 }
-                break;
-            }
             case '>': {
-                if (value.Length > 1) {
-                    if (value[1] == '=') {
-                        if (NuGetVersion.TryParse(value.Substring(2), out NuGetVersion nuGetVersion)) {
-                            versionRange = new VersionRange(nuGetVersion, true);
-                            return true;
+                    if (value.Length > 1) {
+                        if (value[1] == '=') {
+                            if (NuGetVersion.TryParse(value.Substring(2), out NuGetVersion nuGetVersion)) {
+                                versionRange = new VersionRange(nuGetVersion, true);
+                                return true;
+                            }
+                        }
+                        else {
+                            if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
+                                versionRange = new VersionRange(nuGetVersion, false);
+                                return true;
+                            }
                         }
                     }
-                    else {
-                        if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
-                            versionRange = new VersionRange(nuGetVersion, false);
-                            return true;
-                        }
-                    }
+                    break;
                 }
-                break;
-            }
             case '<': {
-                if (value.Length > 1) {
-                    if (value[1] == '=') {
-                        if (NuGetVersion.TryParse(value.Substring(2), out NuGetVersion nuGetVersion)) {
-                            versionRange = new VersionRange(null, false, nuGetVersion, true);
-                            return true;
+                    if (value.Length > 1) {
+                        if (value[1] == '=') {
+                            if (NuGetVersion.TryParse(value.Substring(2), out NuGetVersion nuGetVersion)) {
+                                versionRange = new VersionRange(null, false, nuGetVersion, true);
+                                return true;
+                            }
+                        }
+                        else {
+                            if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
+                                versionRange = new VersionRange(null, false, nuGetVersion);
+                                return true;
+                            }
                         }
                     }
-                    else {
-                        if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
-                            versionRange = new VersionRange(null, false, nuGetVersion);
-                            return true;
-                        }
-                    }
+                    break;
                 }
-                break;
-            }
             case '^': {
-                if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
-                    versionRange = new VersionRange(nuGetVersion, true, new NuGetVersion(nuGetVersion.Major + 1, 0, 0, 0));
-                    return true;
+                    if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
+                        versionRange = new VersionRange(nuGetVersion, true, new NuGetVersion(nuGetVersion.Major + 1, 0, 0, 0));
+                        return true;
+                    }
+                    break;
                 }
-                break;
-            }
             case '~': {
-                if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
-                    versionRange = new VersionRange(nuGetVersion, true, new NuGetVersion(nuGetVersion.Major, nuGetVersion.Minor + 1, 0, 0));
-                    return true;
+                    if (NuGetVersion.TryParse(value.Substring(1), out NuGetVersion nuGetVersion)) {
+                        versionRange = new VersionRange(nuGetVersion, true, new NuGetVersion(nuGetVersion.Major, nuGetVersion.Minor + 1, 0, 0));
+                        return true;
+                    }
+                    break;
                 }
-                break;
-            }
             default:
                 if (VersionRange.TryParse(value, out versionRange)) {
                     return true;

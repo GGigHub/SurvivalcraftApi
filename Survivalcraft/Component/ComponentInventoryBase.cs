@@ -1,8 +1,8 @@
 using System.Globalization;
 using Engine;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
-using Game.NetWork;
 
 namespace Game {
     public abstract class ComponentInventoryBase : Component, IInventory {

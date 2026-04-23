@@ -108,8 +108,8 @@ namespace Game {
             m_pollableBehaviorsByContents = new SubsystemPollableBlockBehavior[BlocksManager.Blocks.Length][];
             for (int i = 0; i < m_pollableBehaviorsByContents.Length; i++) {
                 m_pollableBehaviorsByContents[i] = (from s in m_subsystemBlockBehaviors.GetBlockBehaviors(i)
-                    where s is SubsystemPollableBlockBehavior
-                    select (SubsystemPollableBlockBehavior)s).ToArray();
+                                                    where s is SubsystemPollableBlockBehavior
+                                                    select (SubsystemPollableBlockBehavior)s).ToArray();
             }
         }
 

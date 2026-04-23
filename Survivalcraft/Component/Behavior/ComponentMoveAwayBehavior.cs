@@ -29,7 +29,7 @@ namespace Game {
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
             m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
             m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
-            m_componentCreature.ComponentBody.CollidedWithBody += delegate(ComponentBody body) {
+            m_componentCreature.ComponentBody.CollidedWithBody += delegate (ComponentBody body) {
                 m_target = body;
                 m_isFast = MathUtils.Max(body.Velocity.Length(), m_componentCreature.ComponentBody.Velocity.Length()) > 3f;
             };

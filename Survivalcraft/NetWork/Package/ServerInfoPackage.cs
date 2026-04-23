@@ -1,6 +1,3 @@
-using Engine;
-using System;
-using System.Net;
 using static Game.NetPlayScreen;
 
 namespace Game.NetWork.Packages;
@@ -8,8 +5,7 @@ namespace Game.NetWork.Packages;
 /// <summary>
 /// 基础包模板复制
 /// </summary>
-public class ServerInfoPackage : IPackage
-{
+public class ServerInfoPackage : IPackage {
     public byte ID => (byte)PackageType.ServerInfo;
     public Client To { get; set; }
     public Client Except { get; set; }
@@ -34,11 +30,9 @@ public class ServerInfoPackage : IPackage
     public ServerInfoPackage() { }
 
 
-    public ServerInfoPackage(bool requestInfo)
-    {
+    public ServerInfoPackage(bool requestInfo) {
         m_requestInfo = requestInfo;
-        if (!m_requestInfo)
-        {
+        if (!m_requestInfo) {
             m_version = ProjectNet.Server_Version;
             m_clientCount = (ushort)NetworkManager.ClientCount;
             m_maxPlayerCount = ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount;
@@ -50,14 +44,11 @@ public class ServerInfoPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer)
-    {
-        if (m_requestInfo)
-        {
+    public void Handle(ProjectNet projectNet, bool isServer) {
+        if (m_requestInfo) {
             NetworkManager.Server.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
         }
-        else
-        {
+        else {
             var p = ScreensManager.FindScreen<NetPlayScreen>("NetPlay");
             var c = new Connect();
             c.state = ConnectState.Avaliable;
@@ -77,16 +68,13 @@ public class ServerInfoPackage : IPackage
             c.season = Season; // 设置季节
             c.timeOfSeason = TimeOfSeason; // 设置季节进度
             c.isLegacyVersion = IsLegacyVersion;
-            if (IpToDNS.TryGetValue(c.ip, out string dns))
-            {
+            if (IpToDNS.TryGetValue(c.ip, out string dns)) {
                 c.ip = dns;
             }
-            if (DNSToName.TryGetValue(c.ip, out string name))
-            {
+            if (DNSToName.TryGetValue(c.ip, out string name)) {
                 c.name = name;
             }
-            if (p.CheckConnectExists(c, out var found))
-            {
+            if (p.CheckConnectExists(c, out var found)) {
                 found.state = c.state;
                 found.ip = string.IsNullOrEmpty(dns) ? found.ip : c.ip;
                 found.name = string.IsNullOrEmpty(name) ? found.name : c.name;
@@ -103,12 +91,10 @@ public class ServerInfoPackage : IPackage
                 found.timeOfSeason = TimeOfSeason; // 更新季节进度
                 found.isLegacyVersion = IsLegacyVersion;
             }
-            else
-            {
+            else {
                 if (From.IsLocalRemote) //局域网
                 {
-                    if (p.CheckSaveConnectExists(c, out Connect f))
-                    {
+                    if (p.CheckSaveConnectExists(c, out Connect f)) {
                         ModsManager.SaveConnects.Remove(f);
                     }
                     ModsManager.SaveConnects.Add(c);
@@ -118,11 +104,9 @@ public class ServerInfoPackage : IPackage
         }
     }
 
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         m_requestInfo = reader.ReadBoolean();
-        if (!m_requestInfo)
-        {
+        if (!m_requestInfo) {
             m_version = reader.ReadString();
             m_clientCount = reader.ReadUInt16();
             m_maxPlayerCount = reader.ReadUInt16();
@@ -130,23 +114,19 @@ public class ServerInfoPackage : IPackage
             reader.ReadBoolean();
             m_needPasswd = reader.ReadBoolean();
             m_timeOfDay = reader.ReadSingle();
-            try
-            {
+            try {
                 Season = (Season)reader.ReadInt32(); // 读取季节
                 TimeOfSeason = reader.ReadSingle(); // 读取季节进度
             }
-            catch
-            {
+            catch {
                 // 兼容旧版本
                 IsLegacyVersion = true;
             }
         }
     }
-    public void WriteData(PackageStreamWriter writer)
-    {
+    public void WriteData(PackageStreamWriter writer) {
         writer.Write(m_requestInfo);
-        if (!m_requestInfo)
-        {
+        if (!m_requestInfo) {
             writer.Write(m_version);
             writer.Write(m_clientCount);
             writer.Write(m_maxPlayerCount);

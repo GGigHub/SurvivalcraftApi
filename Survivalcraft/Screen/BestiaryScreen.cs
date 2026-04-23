@@ -18,7 +18,7 @@ namespace Game {
             XElement node = ContentManager.Get<XElement>("Screens/BestiaryScreen");
             LoadContents(this, node);
             m_creaturesList = Children.Find<ListPanelWidget>("CreaturesList");
-            m_creaturesList.ItemWidgetFactory = delegate(object item) {
+            m_creaturesList.ItemWidgetFactory = delegate (object item) {
                 BestiaryCreatureInfo bestiaryCreatureInfo2 = (BestiaryCreatureInfo)item;
                 XElement node2 = ContentManager.Get<XElement>("Widgets/BestiaryItem");
                 ContainerWidget obj = (ContainerWidget)LoadWidget(this, node2, null);

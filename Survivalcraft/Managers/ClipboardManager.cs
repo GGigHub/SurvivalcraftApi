@@ -29,13 +29,12 @@ namespace Game {
             set => ClipboardService.SetText(value ?? "");
         }
 #else
-		public static string ClipboardString
-		{
-			get => "";
-			// ReSharper disable ValueParameterNotUsed
-			set {}
-			// ReSharper restore ValueParameterNotUsed
-		}
+        public static string ClipboardString {
+            get => "";
+            // ReSharper disable ValueParameterNotUsed
+            set { }
+            // ReSharper restore ValueParameterNotUsed
+        }
 #endif
     }
 }

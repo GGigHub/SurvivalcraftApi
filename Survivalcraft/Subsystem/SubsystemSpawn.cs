@@ -284,8 +284,8 @@ namespace Game {
         [Obsolete]
         public virtual void LoadSpawnsData(ValuesDictionary loadData, List<SpawnEntityData> creaturesData) {
             foreach ((ValuesDictionary item, SpawnEntityData data) in from ValuesDictionary item in loadData.Values
-                let data = new SpawnEntityData()
-                select (item, data)) {
+                                                                      let data = new SpawnEntityData()
+                                                                      select (item, data)) {
                 data.ConstantSpawn = item.GetValue<bool>("c");
                 data.Position = item.GetValue<Vector3>("p");
                 data.TemplateName = item.GetValue<string>("n");

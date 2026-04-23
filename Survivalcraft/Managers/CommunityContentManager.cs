@@ -1,10 +1,8 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using System.Xml.Linq;
 using Engine;
-using Game.IContentReader;
 using XmlUtilities;
 
 namespace Game {
@@ -17,14 +15,14 @@ namespace Game {
 
         public static void Initialize() {
             Load();
-            WorldsManager.WorldDeleted += delegate(string path) { m_idToAddressMap.Remove(MakeContentIdString(ExternalContentType.World, path)); };
-            BlocksTexturesManager.BlocksTextureDeleted += delegate(string path) {
+            WorldsManager.WorldDeleted += delegate (string path) { m_idToAddressMap.Remove(MakeContentIdString(ExternalContentType.World, path)); };
+            BlocksTexturesManager.BlocksTextureDeleted += delegate (string path) {
                 m_idToAddressMap.Remove(MakeContentIdString(ExternalContentType.BlocksTexture, path));
             };
-            CharacterSkinsManager.CharacterSkinDeleted += delegate(string path) {
+            CharacterSkinsManager.CharacterSkinDeleted += delegate (string path) {
                 m_idToAddressMap.Remove(MakeContentIdString(ExternalContentType.CharacterSkin, path));
             };
-            FurniturePacksManager.FurniturePackDeleted += delegate(string path) {
+            FurniturePacksManager.FurniturePackDeleted += delegate (string path) {
                 m_idToAddressMap.Remove(MakeContentIdString(ExternalContentType.FurniturePack, path));
             };
             Window.Deactivated += Save;
@@ -74,7 +72,7 @@ namespace Game {
                 Header,
                 WebManager.UrlParametersToStream(dictionary),
                 progress,
-                delegate(byte[] result) {
+                delegate (byte[] result) {
                     try {
                         string data = Encoding.UTF8.GetString(result, 0, result.Length);
                         XElement xElement = XmlUtils.LoadXmlFromString(data, true);
@@ -133,13 +131,13 @@ namespace Game {
                     null,
                     null,
                     progress,
-                    delegate(byte[] data) {
+                    delegate (byte[] data) {
                         string hash = CalculateContentHashString(data);
                         ExternalContentManager.ImportExternalContent(
                             new MemoryStream(data),
                             type,
                             name,
-                            delegate(string downloadedName) {
+                            delegate (string downloadedName) {
                                 m_idToAddressMap[MakeContentIdString(type, downloadedName)] = address;
                                 Feedback(
                                     address,
@@ -154,7 +152,7 @@ namespace Game {
                                 );
                                 success();
                             },
-                            delegate(Exception error) {
+                            delegate (Exception error) {
                                 Feedback(
                                     address,
                                     "ImportFailure",
@@ -170,7 +168,7 @@ namespace Game {
                             }
                         );
                     },
-                    delegate(Exception error) {
+                    delegate (Exception error) {
                         Feedback(
                             address,
                             "DownloadFailure",
@@ -208,7 +206,7 @@ namespace Game {
                     name,
                     type,
                     progress,
-                    delegate(byte[] data) {
+                    delegate (byte[] data) {
                         string value = CalculateContentHashString(data);
                         WebManager.Post(
                             $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/list",
@@ -326,12 +324,12 @@ namespace Game {
                 null,
                 null,
                 progress,
-                delegate(byte[] data) {
+                delegate (byte[] data) {
                     ExternalContentManager.ImportExternalContent(
                         new MemoryStream(data),
                         type,
                         "__Temp",
-                        delegate(string downloadedName) {
+                        delegate (string downloadedName) {
                             ExternalContentManager.DeleteExternalContent(type, downloadedName);
                             success(data);
                         },
@@ -395,95 +393,95 @@ namespace Game {
             );
         }
 
-/*
-        public static void UserList(string cursor, string searchKey, string searchType, string filter, int order, CancellableProgress progress, Action<List<ComUserInfo>, string> success, Action<Exception> failure)
-        {
-            progress ??= new CancellableProgress();
-            if (!WebManager.IsInternetConnectionAvailable())
-            {
-                failure(new InvalidOperationException(LanguageControl.Get(fName, "1")));
-                return;
-            }
-            var Header = new Dictionary<string, string>
-            {
-                { "Content-Type", "application/x-www-form-urlencoded" }
-            };
-            var dictionary = new Dictionary<string, string>
-            {
-                { "Cursor", cursor ?? string.Empty },
-                { "Action", "GetUserList" },
-                { "Operater", SettingsManager.ScpboxAccessToken },
-                { "SearchKey", searchKey },
-                { "SearchType", searchType },
-                { "Filter", filter },
-                { "Order", order.ToString() }
-            };
-            WebManager.Post($"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/userList", null, Header, WebManager.UrlParametersToStream(dictionary), progress, delegate (byte[] result)
-            {
-                try
+        /*
+                public static void UserList(string cursor, string searchKey, string searchType, string filter, int order, CancellableProgress progress, Action<List<ComUserInfo>, string> success, Action<Exception> failure)
                 {
-                    //if (result != null)
-                    //{
-                    //    using (FileStream fileStream = new FileStream(Storage.GetSystemPath(ModsManager.ModCachePath) + "/123测试.txt", FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
-                    //    {
-                    //        fileStream.Write(result, 0, result.Length);
-                    //        fileStream.Flush();
-                    //    }
-                    //}
-                    //var json = (JsonObject)WebManager.JsonFromBytes(result);
-                    XElement xElement = XmlUtils.LoadXmlFromString(Encoding.UTF8.GetString(result, 0, result.Length), throwOnError: true);
-                    string attributeValue = XmlUtils.GetAttributeValue<string>(xElement, "NextCursor");
-                    var list = new List<ComUserInfo>();
-                    foreach (XElement item in xElement.Elements())
+                    progress ??= new CancellableProgress();
+                    if (!WebManager.IsInternetConnectionAvailable())
+                    {
+                        failure(new InvalidOperationException(LanguageControl.Get(fName, "1")));
+                        return;
+                    }
+                    var Header = new Dictionary<string, string>
+                    {
+                        { "Content-Type", "application/x-www-form-urlencoded" }
+                    };
+                    var dictionary = new Dictionary<string, string>
+                    {
+                        { "Cursor", cursor ?? string.Empty },
+                        { "Action", "GetUserList" },
+                        { "Operater", SettingsManager.ScpboxAccessToken },
+                        { "SearchKey", searchKey },
+                        { "SearchType", searchType },
+                        { "Filter", filter },
+                        { "Order", order.ToString() }
+                    };
+                    WebManager.Post($"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/userList", null, Header, WebManager.UrlParametersToStream(dictionary), progress, delegate (byte[] result)
                     {
                         try
                         {
-                            list.Add(new ComUserInfo
+                            //if (result != null)
+                            //{
+                            //    using (FileStream fileStream = new FileStream(Storage.GetSystemPath(ModsManager.ModCachePath) + "/123测试.txt", FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
+                            //    {
+                            //        fileStream.Write(result, 0, result.Length);
+                            //        fileStream.Flush();
+                            //    }
+                            //}
+                            //var json = (JsonObject)WebManager.JsonFromBytes(result);
+                            XElement xElement = XmlUtils.LoadXmlFromString(Encoding.UTF8.GetString(result, 0, result.Length), throwOnError: true);
+                            string attributeValue = XmlUtils.GetAttributeValue<string>(xElement, "NextCursor");
+                            var list = new List<ComUserInfo>();
+                            foreach (XElement item in xElement.Elements())
                             {
-                                Id = XmlUtils.GetAttributeValue<int>(item, "Id"),
-                                UserNo = XmlUtils.GetAttributeValue<string>(item, "User"),
-                                Name = XmlUtils.GetAttributeValue<string>(item, "Nickname"),
-                                Token = XmlUtils.GetAttributeValue<string>(item, "Token"),
-                                LastLoginTime = XmlUtils.GetAttributeValue<string>(item, "LastLoginTime"),
-                                ErrCount = XmlUtils.GetAttributeValue<int>(item, "ErrorTimes", 0),
-                                IsLock = XmlUtils.GetAttributeValue<int>(item, "IsLock", 0),
-                                LockTime = XmlUtils.GetAttributeValue<string>(item, "LockTime"),
-                                UnlockTime = XmlUtils.GetAttributeValue<string>(item, "UnlockTime"),
-                                LockDuration = XmlUtils.GetAttributeValue<int>(item, "LockDuration", 0),
-                                Money = XmlUtils.GetAttributeValue<int>(item, "Money", 0),
-                                Authority = XmlUtils.GetAttributeValue<string>(item, "Authority"),
-                                HeadImg = XmlUtils.GetAttributeValue<string>(item, "HeadImg"),
-                                IsAdmin = XmlUtils.GetAttributeValue<int>(item, "IsAdmin", 0),
-                                RegTime = XmlUtils.GetAttributeValue<string>(item, "RegTime"),
-                                LoginIP = XmlUtils.GetAttributeValue<string>(item, "LoginIP"),
-                                MGroup = XmlUtils.GetAttributeValue<string>(item, "MGroup"),
-                                PawToken = XmlUtils.GetAttributeValue<string>(item, "PassToken"),
-                                Email = XmlUtils.GetAttributeValue<string>(item, "Email"),
-                                Status = XmlUtils.GetAttributeValue<int>(item, "Status", 1),
-                                LockReason = XmlUtils.GetAttributeValue<string>(item, "LockReason"),
-                                EmailCount = XmlUtils.GetAttributeValue<int>(item, "EmailCount", 0),
-                                EmailTime = XmlUtils.GetAttributeValue<string>(item, "EmailTime"),
-                                Die = XmlUtils.GetAttributeValue<int>(item, "Die", 0),
-                                Moblie = XmlUtils.GetAttributeValue<string>(item, "Moblie"),
-                                AreaCode = XmlUtils.GetAttributeValue<string>(item, "AreaCode")
-                            });
+                                try
+                                {
+                                    list.Add(new ComUserInfo
+                                    {
+                                        Id = XmlUtils.GetAttributeValue<int>(item, "Id"),
+                                        UserNo = XmlUtils.GetAttributeValue<string>(item, "User"),
+                                        Name = XmlUtils.GetAttributeValue<string>(item, "Nickname"),
+                                        Token = XmlUtils.GetAttributeValue<string>(item, "Token"),
+                                        LastLoginTime = XmlUtils.GetAttributeValue<string>(item, "LastLoginTime"),
+                                        ErrCount = XmlUtils.GetAttributeValue<int>(item, "ErrorTimes", 0),
+                                        IsLock = XmlUtils.GetAttributeValue<int>(item, "IsLock", 0),
+                                        LockTime = XmlUtils.GetAttributeValue<string>(item, "LockTime"),
+                                        UnlockTime = XmlUtils.GetAttributeValue<string>(item, "UnlockTime"),
+                                        LockDuration = XmlUtils.GetAttributeValue<int>(item, "LockDuration", 0),
+                                        Money = XmlUtils.GetAttributeValue<int>(item, "Money", 0),
+                                        Authority = XmlUtils.GetAttributeValue<string>(item, "Authority"),
+                                        HeadImg = XmlUtils.GetAttributeValue<string>(item, "HeadImg"),
+                                        IsAdmin = XmlUtils.GetAttributeValue<int>(item, "IsAdmin", 0),
+                                        RegTime = XmlUtils.GetAttributeValue<string>(item, "RegTime"),
+                                        LoginIP = XmlUtils.GetAttributeValue<string>(item, "LoginIP"),
+                                        MGroup = XmlUtils.GetAttributeValue<string>(item, "MGroup"),
+                                        PawToken = XmlUtils.GetAttributeValue<string>(item, "PassToken"),
+                                        Email = XmlUtils.GetAttributeValue<string>(item, "Email"),
+                                        Status = XmlUtils.GetAttributeValue<int>(item, "Status", 1),
+                                        LockReason = XmlUtils.GetAttributeValue<string>(item, "LockReason"),
+                                        EmailCount = XmlUtils.GetAttributeValue<int>(item, "EmailCount", 0),
+                                        EmailTime = XmlUtils.GetAttributeValue<string>(item, "EmailTime"),
+                                        Die = XmlUtils.GetAttributeValue<int>(item, "Die", 0),
+                                        Moblie = XmlUtils.GetAttributeValue<string>(item, "Moblie"),
+                                        AreaCode = XmlUtils.GetAttributeValue<string>(item, "AreaCode")
+                                    });
+                                }
+                                catch (Exception)
+                                {
+                                }
+                            }
+                            success(list, attributeValue);
                         }
-                        catch (Exception)
+                        catch (Exception obj)
                         {
+                            failure(obj);
                         }
-                    }
-                    success(list, attributeValue);
+                    }, delegate (Exception error)
+                    {
+                        failure(error);
+                    });
                 }
-                catch (Exception obj)
-                {
-                    failure(obj);
-                }
-            }, delegate (Exception error)
-            {
-                failure(error);
-            });
-        }
-*/
+        */
         public static void UpdateLockState(int id,
             int lockState,
             string reason,

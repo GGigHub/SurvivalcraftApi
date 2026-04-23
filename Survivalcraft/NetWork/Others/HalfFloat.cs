@@ -1,14 +1,10 @@
-using System;
-
 namespace Game.NetWork;
 
-public class HalfFloat
-{
+public class HalfFloat {
     private static int expSize = 6;//指数的位数
     private static int mSize = 15 - expSize;//尾数的位数
 
-    public static byte[] FloatToHalf(float f)
-    {
+    public static byte[] FloatToHalf(float f) {
         byte[] bytes = BitConverter.GetBytes(f);
         byte sign = 0x80;
         sbyte exp;
@@ -46,8 +42,7 @@ public class HalfFloat
     }
 
 
-    public static float HalfToFloat(byte[] myByte)
-    {
+    public static float HalfToFloat(byte[] myByte) {
         ushort h = myByte[1];
         h = (ushort)(h << 8);
         h += myByte[0];
@@ -62,8 +57,7 @@ public class HalfFloat
         exp = (exp >> (mSize));//提取指数位
         exp -= ((1 << (expSize - 1)) - 1);
         m = (uint)(h << (expSize + 1)) >> (expSize + 1);
-        for (int i = 0; i < mSize; i++)
-        {
+        for (int i = 0; i < mSize; i++) {
             if ((m & 1) == 1)
                 temp += Math.Pow(2, i - mSize);
             m = m >> 1;

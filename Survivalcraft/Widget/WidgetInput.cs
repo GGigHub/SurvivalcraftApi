@@ -440,7 +440,7 @@ namespace Game {
                 string.Empty,
                 text,
                 false,
-                delegate(string s) {
+                delegate (string s) {
                     if (s.Length > maxLength) {
                         s = s.Substring(0, maxLength);
                     }

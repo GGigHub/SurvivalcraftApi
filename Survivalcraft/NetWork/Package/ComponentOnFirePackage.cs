@@ -1,15 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GameEntitySystem;
-using Engine;
-
 namespace Game.NetWork.Packages;
 
-public class ComponentOnFirePackage : IPackage
-{
+public class ComponentOnFirePackage : IPackage {
     public byte ID => (byte)PackageType.ComponentOnFire;
     public Client To { get; set; }
     public Client Except { get; set; }
@@ -20,45 +11,38 @@ public class ComponentOnFirePackage : IPackage
     public float m_duration;
     public int x, y, z;
 
-    public enum EventType
-    {
+    public enum EventType {
         ComponentOnFire,
         BlockOnFireAdd,
         BlockOnFireRemove
     }
     public EventType m_type;
 
-    public ComponentOnFirePackage()
-    {
+    public ComponentOnFirePackage() {
     }
-    public ComponentOnFirePackage(ComponentOnFire target, ComponentCreature attacker, float duration)
-    {
+    public ComponentOnFirePackage(ComponentOnFire target, ComponentCreature attacker, float duration) {
         m_type = EventType.ComponentOnFire;
         m_duration = duration;
         if (attacker != null) m_attackerEntityId = attacker.Entity.EntityId;
         m_entityId = target.Entity.EntityId;
     }
-    public ComponentOnFirePackage(int x, int y, int z, float expandability)
-    {
+    public ComponentOnFirePackage(int x, int y, int z, float expandability) {
         m_type = EventType.BlockOnFireAdd;
         this.x = x;
         this.y = y;
         this.z = z;
         m_duration = expandability;
     }
-    public ComponentOnFirePackage(int x, int y, int z)
-    {
+    public ComponentOnFirePackage(int x, int y, int z) {
         m_type = EventType.BlockOnFireRemove;
         this.x = x;
         this.y = y;
         this.z = z;
     }
 
-    public void WriteData(PackageStreamWriter writer)
-    {
+    public void WriteData(PackageStreamWriter writer) {
         writer.WriteEnum(m_type);
-        switch (m_type)
-        {
+        switch (m_type) {
             case EventType.ComponentOnFire:
                 writer.Write(m_entityId);
                 writer.Write(m_attackerEntityId);
@@ -77,11 +61,9 @@ public class ComponentOnFirePackage : IPackage
                 break;
         }
     }
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         m_type = reader.ReadEnum<EventType>();
-        switch (m_type)
-        {
+        switch (m_type) {
             case EventType.ComponentOnFire:
                 m_entityId = reader.ReadUInt16();
                 m_attackerEntityId = reader.ReadUInt16();
@@ -101,14 +83,11 @@ public class ComponentOnFirePackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer)
-    {
-        if (isServer)
-        {
+    public void Handle(ProjectNet projectNet, bool isServer) {
+        if (isServer) {
             return;
         }
-        switch (m_type)
-        {
+        switch (m_type) {
             case EventType.BlockOnFireAdd:
                 projectNet.FindSubsystem<SubsystemFireBlockBehavior>().AddFireNet(x, y, z, m_duration);
                 break;
@@ -116,16 +95,12 @@ public class ComponentOnFirePackage : IPackage
                 projectNet.FindSubsystem<SubsystemFireBlockBehavior>().RemoveFireNet(x, y, z);
                 break;
             case EventType.ComponentOnFire:
-                projectNet.FindEntityById(m_entityId, (e) =>
-                {
+                projectNet.FindEntityById(m_entityId, (e) => {
                     ComponentOnFire onFire = e.FindComponent<ComponentOnFire>();
-                    if (onFire != null)
-                    {
+                    if (onFire != null) {
                         if (m_attackerEntityId == 0) onFire.SetOnFireNet(null, m_duration);
-                        else
-                        {
-                            projectNet.FindEntityById(m_attackerEntityId, (e2) =>
-                            {
+                        else {
+                            projectNet.FindEntityById(m_attackerEntityId, (e2) => {
                                 ComponentCreature creature = e2.FindComponent<ComponentCreature>();
                                 onFire.SetOnFireNet(creature, m_duration);
                             });

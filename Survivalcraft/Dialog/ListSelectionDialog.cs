@@ -65,7 +65,9 @@ namespace Game {
             items,
             itemSize,
             item => new LabelWidget {
-                Text = itemToStringConverter(item), HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Center
+                Text = itemToStringConverter(item),
+                HorizontalAlignment = WidgetAlignment.Center,
+                VerticalAlignment = WidgetAlignment.Center
             },
             selectionHandler
         ) { }

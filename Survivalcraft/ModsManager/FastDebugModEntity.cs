@@ -1,5 +1,3 @@
-using System.Reflection;
-using System.Xml.Linq;
 using Engine;
 using NuGet.Versioning;
 
@@ -28,7 +26,7 @@ namespace Game {
                 )) {
                 modInfo = GenerateDefaultModInfo();
             }
-            if(!GetFile("icon.webp", LoadIcon)) {
+            if (!GetFile("icon.webp", LoadIcon)) {
                 GetFile("icon.png", LoadIcon);
             }
         }

@@ -1,8 +1,8 @@
 using Engine;
-using GameEntitySystem;
-using TemplatesDatabase;
 using Game.NetWork;
 using Game.NetWork.Packages;
+using GameEntitySystem;
+using TemplatesDatabase;
 
 namespace Game {
     public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable {
@@ -42,13 +42,10 @@ namespace Game {
 
         private bool m_isFeed;
 
-        public bool IsFeed
-        {
+        public bool IsFeed {
             get { return m_isFeed; }
-            set
-            {
-                if (m_isFeed != value)
-                {
+            set {
+                if (m_isFeed != value) {
                     m_isFeed = value;
                     if (NetworkManager.WorkType == WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
                 }

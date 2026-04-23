@@ -36,7 +36,7 @@ namespace Game {
             );
             if (sort) {
                 m_recipes.Sort(
-                    delegate(CraftingRecipe r1, CraftingRecipe r2) {
+                    delegate (CraftingRecipe r1, CraftingRecipe r2) {
                         int result = Comparer<int>.Default.Compare(r1.DisplayOrder, r2.DisplayOrder);
                         if (result == 0) {
                             int y = r1.Ingredients.Count(s => !string.IsNullOrEmpty(s));
@@ -105,8 +105,8 @@ namespace Game {
             craftingRecipe.DisplayOrder = XmlUtils.GetAttributeValue(item, "DisplayOrder", 0);
             Dictionary<char, string> dictionary = new();
             foreach (XAttribute item2 in from a in item.Attributes()
-                where a.Name.LocalName.Length == 1 && char.IsLower(a.Name.LocalName[0])
-                select a) {
+                                         where a.Name.LocalName.Length == 1 && char.IsLower(a.Name.LocalName[0])
+                                         select a) {
                 DecodeIngredient(item2.Value, out string craftingId, out int? data);
                 if (BlocksManager.FindBlocksByCraftingId(craftingId).Length == 0) {
                     throw new InvalidOperationException($"Block with craftingId \"{item2.Value}\" not found.");

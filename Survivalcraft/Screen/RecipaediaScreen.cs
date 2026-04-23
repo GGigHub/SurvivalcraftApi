@@ -54,7 +54,7 @@ namespace Game {
             m_recipesButton = Children.Find<ButtonWidget>("RecipesButton");
             m_categories.Add(null);
             m_categories.AddRange(BlocksManager.Categories);
-            m_blocksList.ItemWidgetFactory = delegate(object item) {
+            m_blocksList.ItemWidgetFactory = delegate (object item) {
                 int value = (int)item;
                 int num = Terrain.ExtractContents(value);
                 Block block = BlocksManager.Blocks[num];

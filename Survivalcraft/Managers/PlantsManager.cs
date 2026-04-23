@@ -49,7 +49,7 @@ namespace Game {
                     height4,
                     branchesCount,
                     3,
-                    delegate(int y, int _) {
+                    delegate (int y, int _) {
                         float num7 = 0.4f;
                         if (y < 0.2f * height4) {
                             num7 = 0f;
@@ -60,7 +60,7 @@ namespace Game {
                         }
                         return num7;
                     },
-                    delegate(int y) {
+                    delegate (int y) {
                         if (y < height4 * 0.3f
                             || y > height4 * 0.9f) {
                             return 0f;
@@ -100,7 +100,7 @@ namespace Game {
                     height3,
                     branchesCount2,
                     3,
-                    delegate(int y, int _) {
+                    delegate (int y, int _) {
                         float num5 = 0.66f;
                         if (y < height3 / 2 - 1) {
                             num5 = 0f;
@@ -144,7 +144,7 @@ namespace Game {
                     height2,
                     branchesCount3,
                     3,
-                    delegate(int y, int _) {
+                    delegate (int y, int _) {
                         float num4 = MathUtils.Lerp(1.4f, 0.3f, y / (float)height2);
                         if (y < 3) {
                             num4 = 0f;
@@ -154,7 +154,7 @@ namespace Game {
                         }
                         return num4;
                     },
-                    delegate(int y) {
+                    delegate (int y) {
                         if (y < 3
                             || y > height2 * 0.8f) {
                             return 0f;
@@ -196,7 +196,7 @@ namespace Game {
                     height,
                     branchesCount4,
                     3,
-                    delegate(int y, int _) {
+                    delegate (int y, int _) {
                         float num2 = MathUtils.Saturate(y / (float)height);
                         float num3 = MathUtils.Lerp(1.5f, 0f, MathUtils.Saturate((num2 - 0.6f) / 0.4f));
                         if (y < startHeight) {
@@ -208,7 +208,7 @@ namespace Game {
                         }
                         return num3;
                     },
-                    delegate(int y) {
+                    delegate (int y) {
                         float num = MathUtils.Saturate(y / (float)height);
                         if (y % 3 != 0) {
                             return 0f;
@@ -254,7 +254,7 @@ namespace Game {
                     height5,
                     branchesCount5,
                     2,
-                    delegate(int y, int round) {
+                    delegate (int y, int round) {
                         int num8 = height5 < 14 ? 1 : 2;
                         if (y < num8) {
                             return 0f;

@@ -183,7 +183,7 @@ public class ModsManageContentScreen : Screen {
                         LanguageControl.Get(fName, 38),
                         LanguageControl.Get(fName, 39),
                         LanguageControl.Get(fName, 31),
-                        delegate(MessageDialogButton result) {
+                        delegate (MessageDialogButton result) {
                             SettingsManager.SaveSettings();
                             if (result == MessageDialogButton.Button1) {
                                 Window.Restart();

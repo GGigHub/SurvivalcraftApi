@@ -1,18 +1,14 @@
 using Engine;
-using System.Collections.Generic;
-using static Game.NetWork.Packages.PickablePackage;
 
 namespace Game.NetWork.Packages;
 
-public class MovingBlockPackage : IPackage
-{
+public class MovingBlockPackage : IPackage {
     public byte ID => (byte)PackageType.MovingBlockSet;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.ProjectLoaded;
-    public enum EventType
-    {
+    public enum EventType {
         Add = 1,
         Remove = 2,
         HagTag = 4,
@@ -41,16 +37,14 @@ public class MovingBlockPackage : IPackage
 
     public Point3 m_position;
 
-    public struct MovingBlockData
-    {
+    public struct MovingBlockData {
         public Point3 Offset;
         public int Value;
     }
 
     public MovingBlockPackage() { }
 
-    public MovingBlockPackage(SubsystemMovingBlocks.MovingBlockSet movingSet)
-    {
+    public MovingBlockPackage(SubsystemMovingBlocks.MovingBlockSet movingSet) {
         m_type = EventType.Add;
         m_addPosition = movingSet.Position;
         m_addTargetPosition = movingSet.TargetPosition;
@@ -59,33 +53,27 @@ public class MovingBlockPackage : IPackage
         m_addDrag = movingSet.Drag;
         m_addSmoothness = movingSet.Smoothness;
         m_addId = movingSet.Id;
-        foreach (MovingBlock block in movingSet.Blocks)
-        {
-            m_addBlocks.Add(new MovingBlockData
-            {
+        foreach (MovingBlock block in movingSet.Blocks) {
+            m_addBlocks.Add(new MovingBlockData {
                 Offset = block.Offset,
                 Value = block.Value
             });
         }
     }
 
-    public MovingBlockPackage(IMovingBlockSet movingSet, bool stop)
-    {
+    public MovingBlockPackage(IMovingBlockSet movingSet, bool stop) {
         m_type = EventType.Remove;
         movingBlockId = movingSet.Id;
         if (stop) m_type |= EventType.Stopped;
-        if (movingSet.Tag != null)
-        {
+        if (movingSet.Tag != null) {
             m_type |= EventType.HagTag;
             m_position = (movingSet.Tag as Point3?).Value;
         }
     }
 
-    public void WriteData(PackageStreamWriter writer)
-    {
+    public void WriteData(PackageStreamWriter writer) {
         writer.WriteEnum(m_type);
-        switch (m_type)
-        {
+        switch (m_type) {
             case EventType.Add:
                 writer.Write(m_addPosition);
                 writer.Write(m_addTargetPosition);
@@ -95,26 +83,22 @@ public class MovingBlockPackage : IPackage
                 writer.Write(m_addSmoothness);
                 writer.Write(m_addId);
                 writer.Write(m_addBlocks.Count);
-                foreach (MovingBlockData block in m_addBlocks)
-                {
+                foreach (MovingBlockData block in m_addBlocks) {
                     writer.Write(block.Offset);
                     writer.Write(block.Value);
                 }
                 break;
             default:
                 writer.Write(movingBlockId);
-                if (m_type.HasFlag(EventType.HagTag))
-                {
+                if (m_type.HasFlag(EventType.HagTag)) {
                     writer.Write(m_position);
                 }
                 break;
         }
     }
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         m_type = reader.ReadEnum<EventType>();
-        switch (m_type)
-        {
+        switch (m_type) {
             case EventType.Add:
                 m_addPosition = reader.ReadVector3();
                 m_addTargetPosition = reader.ReadVector3();
@@ -125,14 +109,11 @@ public class MovingBlockPackage : IPackage
                 m_addId = reader.ReadString();
                 m_addBlocks.Clear();
                 int count = reader.ReadInt32();
-                if (count < 0)
-                {
+                if (count < 0) {
                     throw new InvalidDataException($"MovingBlockPackage contains invalid block count: {count}");
                 }
-                for (int i = 0; i < count; i++)
-                {
-                    m_addBlocks.Add(new MovingBlockData
-                    {
+                for (int i = 0; i < count; i++) {
+                    m_addBlocks.Add(new MovingBlockData {
                         Offset = reader.ReadPoint3(),
                         Value = reader.ReadInt32()
                     });
@@ -140,29 +121,23 @@ public class MovingBlockPackage : IPackage
                 break;
             default:
                 movingBlockId = reader.ReadString();
-                if (m_type.HasFlag(EventType.HagTag))
-                {
+                if (m_type.HasFlag(EventType.HagTag)) {
                     m_position = reader.ReadPoint3();
                 }
                 break;
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer)
-    {
-        if (isServer)
-        {
+    public void Handle(ProjectNet projectNet, bool isServer) {
+        if (isServer) {
             return;
         }
         var obj = projectNet.FindSubsystem<SubsystemMovingBlocks>();
-        switch (m_type)
-        {
+        switch (m_type) {
             case EventType.Add:
                 List<MovingBlock> blocks = new(m_addBlocks.Count);
-                foreach (MovingBlockData block in m_addBlocks)
-                {
-                    blocks.Add(new MovingBlock
-                    {
+                foreach (MovingBlockData block in m_addBlocks) {
+                    blocks.Add(new MovingBlock {
                         Offset = block.Offset,
                         Value = block.Value
                     });
@@ -180,8 +155,7 @@ public class MovingBlockPackage : IPackage
                     false
                 ) as SubsystemMovingBlocks.MovingBlockSet;
                 var m_subsystemAudio = projectNet.FindSubsystem<SubsystemAudio>();
-                if (m != null && m.Id == SubsystemPistonBlockBehavior.IdString)
-                {
+                if (m != null && m.Id == SubsystemPistonBlockBehavior.IdString) {
                     m_subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, m.Position, 2f, autoDelay: true);
                 }
                 break;
@@ -189,14 +163,11 @@ public class MovingBlockPackage : IPackage
                 IMovingBlockSet mm;
                 if (m_type.HasFlag(EventType.HagTag)) mm = obj.FindMovingBlocks(movingBlockId, m_position);
                 else mm = obj.FindMovingBlocks(movingBlockId, null);
-                if (mm != null)
-                {
-                    if (m_type.HasFlag(EventType.Stopped))
-                    {
+                if (mm != null) {
+                    if (m_type.HasFlag(EventType.Stopped)) {
                         obj.DoStop(mm as SubsystemMovingBlocks.MovingBlockSet);
                     }
-                    else
-                    {
+                    else {
                         obj.RemoveMovingBlockSetLogic(mm);
                     }
                 }

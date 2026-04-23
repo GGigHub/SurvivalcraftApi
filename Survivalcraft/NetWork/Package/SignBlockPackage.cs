@@ -3,10 +3,9 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 /// <summary>
-/// 基础包模板复�?
+/// 鍩虹鍖呮ā鏉垮鍒?
 /// </summary>
-public class SignBlockPackage : IPackage
-{
+public class SignBlockPackage : IPackage {
     public byte ID => (byte)PackageType.SignBlock;
     public Client To { get; set; }
     public Client Except { get; set; }
@@ -17,8 +16,7 @@ public class SignBlockPackage : IPackage
     public Point3 m_point;
     public SignData m_signData;
     public SignBlockPackage() { }
-    public SignBlockPackage(Point3 point, string[] lines, Color[] colors, string url)
-    {
+    public SignBlockPackage(Point3 point, string[] lines, Color[] colors, string url) {
         m_point = point;
         m_signData = new SignData();
         m_signData.Lines = lines;
@@ -26,24 +24,19 @@ public class SignBlockPackage : IPackage
         m_signData.Url = url;
     }
 
-        public void Handle(ProjectNet projectNet, bool isServer)
-        {
-            if (isServer)
-            {
-                if (From.PlayerData != null)
-                {
-                    projectNet.FindSubsystem<SubsystemSignBlockBehavior>().SetSignData(m_point, m_signData.Lines, m_signData.Colors, m_signData.Url);
-                    NetworkManager.QueuePackage(this);
-                }
-            }
-            else
-            {
+    public void Handle(ProjectNet projectNet, bool isServer) {
+        if (isServer) {
+            if (From.PlayerData != null) {
                 projectNet.FindSubsystem<SubsystemSignBlockBehavior>().SetSignData(m_point, m_signData.Lines, m_signData.Colors, m_signData.Url);
+                NetworkManager.QueuePackage(this);
             }
         }
+        else {
+            projectNet.FindSubsystem<SubsystemSignBlockBehavior>().SetSignData(m_point, m_signData.Lines, m_signData.Colors, m_signData.Url);
+        }
+    }
 
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         m_point = reader.ReadPoint3();
         m_signData = new SignData();
         m_signData.Url = reader.ReadString();
@@ -54,8 +47,7 @@ public class SignBlockPackage : IPackage
 
     }
 
-    public void WriteData(PackageStreamWriter writer)
-    {
+    public void WriteData(PackageStreamWriter writer) {
         writer.Write(m_point);
         writer.Write(m_signData.Url);
         writer.Write((byte)m_signData.Colors.Length);

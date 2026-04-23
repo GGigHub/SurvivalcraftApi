@@ -114,7 +114,7 @@ namespace Game {
                     dictionary,
                     data,
                     progress,
-                    delegate(byte[] result) {
+                    delegate (byte[] result) {
                         try {
                             success(JsonElementToEntry(JsonDocument.Parse(result, JsonDocumentReader.DefaultJsonOptions).RootElement));
                         }
@@ -142,7 +142,7 @@ namespace Game {
                     null,
                     dictionary,
                     progress,
-                    delegate(byte[] result) { success(new MemoryStream(result)); },
+                    delegate (byte[] result) { success(new MemoryStream(result)); },
                     failure
                 );
             }
@@ -189,7 +189,7 @@ namespace Game {
                     dictionary,
                     data,
                     progress,
-                    delegate(byte[] result) {
+                    delegate (byte[] result) {
                         try {
                             success(JsonElementToLinkAddress(JsonDocument.Parse(result, JsonDocumentReader.DefaultJsonOptions).RootElement));
                         }
@@ -208,7 +208,7 @@ namespace Game {
         public void LoginLaunchBrowser() {
             try {
                 LoginDialog login = new();
-                login.succ = delegate(byte[] a) {
+                login.succ = delegate (byte[] a) {
                     StreamReader streamReader = new(new MemoryStream(a));
                     JsonElement json = JsonDocument.Parse(streamReader.ReadToEnd(), JsonDocumentReader.DefaultJsonOptions).RootElement;
                     if (json.GetProperty("code").GetInt32() == 200) {
@@ -261,7 +261,7 @@ namespace Game {
                         );
                     }
                 };
-                login.fail = delegate(Exception e) {
+                login.fail = delegate (Exception e) {
                     login.tip.Text = e.ToString();
                     DialogsManager.ShowDialog(
                         null,

@@ -1,19 +1,13 @@
-using System.Collections.Generic;
-using Engine;
-
 namespace Game;
 
-public class NetPlayScreen : Screen
-{
-    public enum ConnectState
-    {
+public class NetPlayScreen : Screen {
+    public enum ConnectState {
         Unavaliable,
         Checking,
         Avaliable
     }
 
-    public class Connect
-    {
+    public class Connect {
         public string name;
         public string ip;
         public string version;
@@ -40,19 +34,16 @@ public class NetPlayScreen : Screen
     public static Dictionary<string, string> IpToDNS = new();
     public static Dictionary<string, string> DNSToName = new();
 
-    public bool CheckConnectExists(Connect connect, out Connect found)
-    {
+    public bool CheckConnectExists(Connect connect, out Connect found) {
         found = null;
         return false;
     }
 
-    public bool CheckSaveConnectExists(Connect connect, out Connect found)
-    {
+    public bool CheckSaveConnectExists(Connect connect, out Connect found) {
         found = null;
         return false;
     }
 
-    public void UpdateList()
-    {
+    public void UpdateList() {
     }
 }

@@ -137,8 +137,8 @@ namespace Game {
             m_isCNLanguageType = languageType == "zh-CN";
             CommunityContentManager.IsAdmin(
                 new CancellableProgress(),
-                delegate(bool isAdmin) { m_isAdmin = isAdmin; },
-                delegate(Exception e) {
+                delegate (bool isAdmin) { m_isAdmin = isAdmin; },
+                delegate (Exception e) {
                     DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok, null, null));
                 }
             );
@@ -193,7 +193,7 @@ namespace Game {
                         items,
                         60f,
                         item => GetOrderDisplayName((Order)item),
-                        delegate(object item) {
+                        delegate (object item) {
                             m_order = (Order)item;
                             PopulateList(null, true);
                         }
@@ -206,8 +206,8 @@ namespace Game {
             if (m_changeFilterButton.IsClicked) {
                 List<object> list = [string.Empty];
                 foreach (ExternalContentType item in from ExternalContentType t in EnumUtils.GetEnumValues<ExternalContentType>()
-                    where ExternalContentManager.IsEntryTypeDownloadSupported(t)
-                    select t) {
+                                                     where ExternalContentManager.IsEntryTypeDownloadSupported(t)
+                                                     select t) {
                     list.Add(item);
                 }
                 if (!string.IsNullOrEmpty(SettingsManager.ScpboxAccessToken)) {
@@ -220,7 +220,7 @@ namespace Game {
                         list,
                         60f,
                         GetFilterDisplayName,
-                        delegate(object item) {
+                        delegate (object item) {
                             m_filter = item;
                             m_isOwn = item is string str && !string.IsNullOrEmpty(str);
                             PopulateList(null, true);
@@ -246,14 +246,14 @@ namespace Game {
                             communityContentEntry.Name,
                             LanguageControl.Ok,
                             LanguageControl.Cancel,
-                            delegate(MessageDialogButton button) {
+                            delegate (MessageDialogButton button) {
                                 if (button == MessageDialogButton.Button1) {
                                     CancellableBusyDialog busyDialog = new(LanguageControl.Get(fName, 2), false);
                                     DialogsManager.ShowDialog(null, busyDialog);
                                     CommunityContentManager.DeleteFile(
                                         communityContentEntry.Index,
                                         busyDialog.Progress,
-                                        delegate(byte[] data) {
+                                        delegate (byte[] data) {
                                             DialogsManager.HideDialog(busyDialog);
                                             m_treePanel.RemoveAtTag(communityContentEntry);
                                             JsonElement result = JsonDocument.Parse(data, JsonDocumentReader.DefaultJsonOptions).RootElement;
@@ -265,7 +265,7 @@ namespace Game {
                                                 new MessageDialog(LanguageControl.Get(fName, 20), msg, LanguageControl.Ok, null, null)
                                             );
                                         },
-                                        delegate(Exception e) {
+                                        delegate (Exception e) {
                                             DialogsManager.HideDialog(busyDialog);
                                             DialogsManager.ShowDialog(
                                                 null,
@@ -286,7 +286,7 @@ namespace Game {
                                 LanguageControl.Get(fName, 18),
                                 "5",
                                 4,
-                                delegate(string s) {
+                                delegate (string s) {
                                     if (!string.IsNullOrEmpty(s)) {
                                         int boutique = 5;
                                         try {
@@ -302,7 +302,7 @@ namespace Game {
                                             communityContentEntry.Index,
                                             boutique,
                                             busyDialog.Progress,
-                                            delegate(byte[] data) {
+                                            delegate (byte[] data) {
                                                 DialogsManager.HideDialog(busyDialog);
                                                 m_order = Order.ByBoutique;
                                                 PopulateList(null, true);
@@ -315,7 +315,7 @@ namespace Game {
                                                     new MessageDialog(LanguageControl.Get(fName, 20), msg, LanguageControl.Ok, null, null)
                                                 );
                                             },
-                                            delegate(Exception e) {
+                                            delegate (Exception e) {
                                                 DialogsManager.HideDialog(busyDialog);
                                                 DialogsManager.ShowDialog(
                                                     null,
@@ -336,7 +336,7 @@ namespace Game {
                                 communityContentEntry.Name,
                                 LanguageControl.Ok,
                                 LanguageControl.Cancel,
-                                delegate(MessageDialogButton button) {
+                                delegate (MessageDialogButton button) {
                                     if (button == MessageDialogButton.Button1) {
                                         CancellableBusyDialog busyDialog = new(LanguageControl.Get(fName, 2), false);
                                         DialogsManager.ShowDialog(null, busyDialog);
@@ -345,7 +345,7 @@ namespace Game {
                                             communityContentEntry.Index,
                                             0,
                                             busyDialog.Progress,
-                                            delegate(byte[] data) {
+                                            delegate (byte[] data) {
                                                 DialogsManager.HideDialog(busyDialog);
                                                 PopulateList(null, true);
                                                 JsonElement result = JsonDocument.Parse(data, JsonDocumentReader.DefaultJsonOptions).RootElement;
@@ -357,7 +357,7 @@ namespace Game {
                                                     new MessageDialog(LanguageControl.Get(fName, 20), msg, LanguageControl.Ok, null, null)
                                                 );
                                             },
-                                            delegate(Exception e) {
+                                            delegate (Exception e) {
                                                 DialogsManager.HideDialog(busyDialog);
                                                 DialogsManager.ShowDialog(
                                                     null,
@@ -382,7 +382,7 @@ namespace Game {
                     communityContentEntry.Index,
                     isShow,
                     busyDialog.Progress,
-                    delegate(byte[] data) {
+                    delegate (byte[] data) {
                         DialogsManager.HideDialog(busyDialog);
                         if (!m_isOwn) {
                             m_treePanel.RemoveAtTag(communityContentEntry);
@@ -397,7 +397,7 @@ namespace Game {
                             new MessageDialog(LanguageControl.Get(fName, 20), msg, LanguageControl.Ok, null, null)
                         );
                     },
-                    delegate(Exception e) {
+                    delegate (Exception e) {
                         DialogsManager.HideDialog(busyDialog);
                         DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok, null, null));
                     }
@@ -441,7 +441,7 @@ namespace Game {
                             info,
                             LanguageControl.Yes,
                             LanguageControl.No,
-                            delegate(MessageDialogButton button) {
+                            delegate (MessageDialogButton button) {
                                 if (button == MessageDialogButton.Button1) {
                                     m_provider.Logout();
                                 }
@@ -508,7 +508,7 @@ namespace Game {
                 m_inputKey.Text,
                 m_searchType.ToString(),
                 busyDialog.Progress,
-                delegate(List<CommunityContentEntry> list, string nextCursor) {
+                delegate (List<CommunityContentEntry> list, string nextCursor) {
                     DialogsManager.HideDialog(busyDialog);
                     m_contentExpiryTime = Time.RealTime + 300.0;
                     while (m_treePanel.Nodes.Count > 0
@@ -531,7 +531,7 @@ namespace Game {
                                 null,
                                 null,
                                 new CancellableProgress(),
-                                delegate(byte[] data) {
+                                delegate (byte[] data) {
                                     Dispatcher.Dispatch(
                                         delegate {
                                             if (data.Length > 0) {
@@ -592,7 +592,7 @@ namespace Game {
                     }
                     m_itemsCache[cacheKey] = new List<object>(m_treePanel.Nodes);
                 },
-                delegate(Exception error) {
+                delegate (Exception error) {
                     DialogsManager.HideDialog(busyDialog);
                     DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok, null, null));
                 }
@@ -610,7 +610,7 @@ namespace Game {
                 userId,
                 busyDialog.Progress,
                 delegate { DialogsManager.HideDialog(busyDialog); },
-                delegate(Exception error) {
+                delegate (Exception error) {
                     DialogsManager.HideDialog(busyDialog);
                     DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok, null, null));
                 }
@@ -626,7 +626,7 @@ namespace Game {
                         LanguageControl.Get(fName, 5),
                         LanguageControl.Yes,
                         LanguageControl.No,
-                        delegate(MessageDialogButton button) {
+                        delegate (MessageDialogButton button) {
                             if (button == MessageDialogButton.Button1) {
                                 CancellableBusyDialog busyDialog = new(string.Format(LanguageControl.Get(fName, 3), entry.Name), false);
                                 DialogsManager.ShowDialog(null, busyDialog);
@@ -647,7 +647,7 @@ namespace Game {
                                             )
                                         );
                                     },
-                                    delegate(Exception error) {
+                                    delegate (Exception error) {
                                         DialogsManager.HideDialog(busyDialog);
                                         DialogsManager.ShowDialog(
                                             null,

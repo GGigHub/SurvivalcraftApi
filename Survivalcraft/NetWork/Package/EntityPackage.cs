@@ -1,19 +1,15 @@
 using Engine;
 using GameEntitySystem;
-using System.Collections.Generic;
 using TemplatesDatabase;
-namespace Game.NetWork.Packages
-{
-    public class EntityPackage : IPackage
-    {
+namespace Game.NetWork.Packages {
+    public class EntityPackage : IPackage {
         public byte ID => (byte)PackageType.Entity;
         public Client To { get; set; }
         public Client Except { get; set; }
         public Client From { get; set; }
         public ClientStage MinNeedState => ClientStage.ProjectLoaded;
         public List<Entity> m_entities;
-        public enum EventType
-        {
+        public enum EventType {
             Remove,
             LoadList,
             LoadOne,
@@ -24,35 +20,28 @@ namespace Game.NetWork.Packages
         public ushort m_entityId;
         public List<ushort> m_entityIdList;
 
-        public EntityPackage()
-        {
+        public EntityPackage() {
         }
-        public EntityPackage(ushort id)
-        {
+        public EntityPackage(ushort id) {
             m_type = EventType.Remove;
             m_entityId = id;
         }
-        public EntityPackage(List<ushort> idList)
-        {
+        public EntityPackage(List<ushort> idList) {
             m_type = EventType.RequestSync;
             m_entityIdList = [.. idList];
         }
-        public EntityPackage(Entity entity)
-        {
+        public EntityPackage(Entity entity) {
             m_type = EventType.LoadOne;
             m_entities = [entity];
         }
-        public EntityPackage(List<Entity> entities)
-        {
+        public EntityPackage(List<Entity> entities) {
             m_type = EventType.LoadList;
             m_entities = [.. entities];
         }
 
-        public void WriteData(PackageStreamWriter writer)
-        {
+        public void WriteData(PackageStreamWriter writer) {
             writer.WriteEnum(m_type);
-            switch (m_type)
-            {
+            switch (m_type) {
                 case EventType.LoadOne:
                 case EventType.LoadList:
                     writer.WriteEntityLoadList(m_entities, To);
@@ -66,11 +55,9 @@ namespace Game.NetWork.Packages
                     break;
             }
         }
-        public void ReadData(PackageStreamReader reader)
-        {
+        public void ReadData(PackageStreamReader reader) {
             m_type = reader.ReadEnum<EventType>();
-            switch (m_type)
-            {
+            switch (m_type) {
                 case EventType.LoadOne:
                 case EventType.LoadList:
                     m_entities = reader.ReadEntityLoadList();
@@ -86,22 +73,17 @@ namespace Game.NetWork.Packages
             }
         }
 
-        public void Handle(ProjectNet projectNet, bool isServer)
-        {
-            if (isServer)
-            {
+        public void Handle(ProjectNet projectNet, bool isServer) {
+            if (isServer) {
                 return;
             }
             List<Entity> el = new List<Entity>();
-            switch (m_type)
-            {
+            switch (m_type) {
                 case EventType.LoadOne:
                 case EventType.LoadList:
-                    foreach (var e in m_entities)
-                    {
+                    foreach (var e in m_entities) {
                         // 如果本地 ID 没有重复就直接添加，重复了则先替换。
-                        if (!projectNet.FindEntityById(e.EntityId, e2 =>
-                        {
+                        if (!projectNet.FindEntityById(e.EntityId, e2 => {
                             projectNet.RemoveEntity(e2, true);
                             projectNet.AddEntity(e);
 #if DEBUG
@@ -112,16 +94,13 @@ namespace Game.NetWork.Packages
                     projectNet.AddEntities(el);
                     break;
                 case EventType.Remove:
-                    projectNet.FindEntityById(m_entityId, (entity) =>
-                    {
+                    projectNet.FindEntityById(m_entityId, (entity) => {
                         projectNet.RemoveEntity(entity, true);
                     });
                     break;
                 case EventType.RequestSync:
-                    foreach (var e in m_entityIdList)
-                    {
-                        projectNet.FindEntityById(e, entity =>
-                        {
+                    foreach (var e in m_entityIdList) {
+                        projectNet.FindEntityById(e, entity => {
                             el.Add(entity);
                         });
                     }
@@ -130,11 +109,9 @@ namespace Game.NetWork.Packages
             }
         }
 
-        public static void ConfuseGuid(List<Entity> entities, ValuesDictionary vd, EntityDataList entityDataList, Client to)
-        {
+        public static void ConfuseGuid(List<Entity> entities, ValuesDictionary vd, EntityDataList entityDataList, Client to) {
             // 在这里对 vd 进行读取与修正。
-            for (int i = 1; i <= entityDataList.EntitiesData.Count; i++)
-            {
+            for (int i = 1; i <= entityDataList.EntitiesData.Count; i++) {
                 // 每个实体对应一个以 i 为字符串的子字典
                 if (!vd.ContainsKey(i.ToString()))
                     continue;
@@ -146,17 +123,14 @@ namespace Game.NetWork.Packages
                 var overrides = entityDict.GetValue<ValuesDictionary>("Overrides");
 
                 // 玩家组件在 "Player" 键下
-                if (overrides.ContainsKey("Player"))
-                {
+                if (overrides.ContainsKey("Player")) {
                     var playerVD = overrides.GetValue<ValuesDictionary>("Player");
 
                     // 取回源实体（i-1 对应 entities 的索引）
                     var e = entities[i - 1];
                     var cp = e.FindComponent<ComponentPlayer>();
-                    if (cp != null)
-                    {
-                        if (cp.PlayerGuid != to.PlayerGuid)
-                        {
+                    if (cp != null) {
+                        if (cp.PlayerGuid != to.PlayerGuid) {
                             playerVD.SetValue("PlayerGuid", cp.PlayerData.Client.TokenId);
                         }
                     }

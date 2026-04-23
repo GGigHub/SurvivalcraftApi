@@ -33,7 +33,7 @@ namespace Game {
             m_reportButton = Children.Find<ButtonWidget>("ReportButton");
             m_recipaediaButton = Children.Find<ButtonWidget>("RecipaediaButton");
             m_bestiaryButton = Children.Find<ButtonWidget>("BestiaryButton");
-            m_topicsList.ItemWidgetFactory = delegate(object item) {
+            m_topicsList.ItemWidgetFactory = delegate (object item) {
                 HelpTopic helpTopic3 = (HelpTopic)item;
                 XElement node2 = ContentManager.Get<XElement>("Widgets/HelpTopicItem");
                 ContainerWidget obj = (ContainerWidget)LoadWidget(this, node2, null);
@@ -72,7 +72,10 @@ namespace Game {
                     }
                     bool floatParseSucceed = float.TryParse(item.Key, out float index);
                     HelpTopic helpTopic = new() {
-                        Index = floatParseSucceed ? index : 0f, Name = attributeValue, Title = attributeValue2, Text = text
+                        Index = floatParseSucceed ? index : 0f,
+                        Name = attributeValue,
+                        Title = attributeValue2,
+                        Text = text
                     };
                     if (!string.IsNullOrEmpty(helpTopic.Name)) {
                         if (m_topics.TryAdd(helpTopic.Name, helpTopic)) {

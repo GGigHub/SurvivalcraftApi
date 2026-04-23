@@ -51,7 +51,7 @@ namespace Game {
 
         public bool[] m_visibleSides = new bool[6];
 
-        public BlockGeometryGenerator() {}
+        public BlockGeometryGenerator() { }
 
         public BlockGeometryGenerator(Terrain terrain,
             SubsystemTerrain subsystemTerrain,

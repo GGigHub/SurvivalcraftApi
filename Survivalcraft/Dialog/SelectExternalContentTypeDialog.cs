@@ -8,7 +8,7 @@ namespace Game {
             where ExternalContentManager.IsEntryTypeDownloadSupported((ExternalContentType)v)
             select v,
             64f,
-            delegate(object item) {
+            delegate (object item) {
                 ExternalContentType type = (ExternalContentType)item;
                 XElement node = ContentManager.Get<XElement>("Widgets/SelectExternalContentTypeItem");
                 ContainerWidget obj = (ContainerWidget)LoadWidget(null, node, null);
@@ -16,7 +16,7 @@ namespace Game {
                 obj.Children.Find<LabelWidget>("SelectExternalContentType.Text").Text = ExternalContentManager.GetEntryTypeDescription(type);
                 return obj;
             },
-            delegate(object item) { selectionHandler((ExternalContentType)item); }
+            delegate (object item) { selectionHandler((ExternalContentType)item); }
         ) { }
     }
 }

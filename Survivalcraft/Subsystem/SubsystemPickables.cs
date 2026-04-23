@@ -47,8 +47,7 @@ namespace Game {
 
         public List<int> useMaps = [];
 
-        public bool PickableAction(int id, Action<Pickable> action, bool requestSync = true)
-        {
+        public bool PickableAction(int id, Action<Pickable> action, bool requestSync = true) {
             lock (m_lock) {
                 Pickable pickable = m_pickables.FirstOrDefault(p => p.Id == id);
                 if (pickable != null) {
@@ -294,8 +293,7 @@ namespace Game {
             }
         }
 
-        public void PlayPickableCollectedSound(Pickable pickable)
-        {
+        public void PlayPickableCollectedSound(Pickable pickable) {
             m_subsystemAudio.PlaySound("Audio/PickableCollected", 0.7f, -0.4f, pickable.Position, 2f, false);
         }
 

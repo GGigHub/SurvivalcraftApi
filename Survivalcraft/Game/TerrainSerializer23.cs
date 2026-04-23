@@ -581,7 +581,7 @@ namespace Game {
 
         bool m_ioExceptionDealt;
 
-        public TerrainSerializer23() {}
+        public TerrainSerializer23() { }
 
         public TerrainSerializer23(string directoryName, string suffix = "") {
             m_storage = new RegionFileStorage();
@@ -610,16 +610,16 @@ namespace Game {
                 }
                 catch (IOException) {
                     Dispatcher.Dispatch(() => {
-                            if (m_ioExceptionDealt) {
-                                return;
-                            }
-                            m_ioExceptionDealt = true;
-                            GameManager.DisposeProject();
-                            ScreensManager.SwitchScreen("Play");
-                            ViewGameLogDialog dialog = new();
-                            dialog.SetErrorHead(11, 14);
-                            DialogsManager.ShowDialog(null, dialog);
+                        if (m_ioExceptionDealt) {
+                            return;
                         }
+                        m_ioExceptionDealt = true;
+                        GameManager.DisposeProject();
+                        ScreensManager.SwitchScreen("Play");
+                        ViewGameLogDialog dialog = new();
+                        dialog.SetErrorHead(11, 14);
+                        DialogsManager.ShowDialog(null, dialog);
+                    }
                     );
                     return false;
                 }

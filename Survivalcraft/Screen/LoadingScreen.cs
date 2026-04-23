@@ -30,7 +30,9 @@ namespace Game {
         CanvasWidget Canvas = new() { Size = new Vector2(float.PositiveInfinity) };
 
         RectangleWidget Background = new() {
-            FillColor = SettingsManager.DisplayLog ? Color.Black : Color.White, OutlineThickness = 0f, DepthWriteEnabled = true
+            FillColor = SettingsManager.DisplayLog ? Color.Black : Color.White,
+            OutlineThickness = 0f,
+            DepthWriteEnabled = true
         };
 
         static ListPanelWidget LogList;
@@ -43,7 +45,9 @@ namespace Game {
                 LogList.ItemWidgetFactory = obj => {
                     if (obj is LogItem logItem) {
                         CanvasWidget canvasWidget = new() {
-                            Size = new Vector2(Display.Viewport.Width, 40), Margin = new Vector2(0, 2), HorizontalAlignment = WidgetAlignment.Near
+                            Size = new Vector2(Display.Viewport.Width, 40),
+                            Margin = new Vector2(0, 2),
+                            HorizontalAlignment = WidgetAlignment.Near
                         };
                         FontTextWidget fontTextWidget = new() {
                             FontScale = 0.6f,
@@ -105,7 +109,9 @@ namespace Game {
             };
             rectangle2.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/EngineLogo");
             BusyBarWidget busyBar = new() {
-                VerticalAlignment = WidgetAlignment.Far, HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(0, 40)
+                VerticalAlignment = WidgetAlignment.Far,
+                HorizontalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(0, 40)
             };
             Canvas.AddChildren(Background);
             Canvas.AddChildren(rectangle1);
@@ -116,7 +122,7 @@ namespace Game {
             Task.Run(() => { _ = ContentManager.Get<Image>("Fonts/Pericles", ".webp"); });
         }
 
-        //日志已经附带状态，不需要添加状态字符串
+        //鏃ュ織宸茬粡闄勫甫鐘舵€侊紝涓嶉渶瑕佹坊鍔犵姸鎬佸瓧绗︿覆
         public static void Error(string mesg) {
             Add(LogType.Error, mesg);
         }
@@ -155,14 +161,14 @@ namespace Game {
             bool isLoadSucceed = true;
             Exception exception = null;
             AddLoadAction(
-                delegate { //将所有的有效的scmod读取为ModEntity，并自动添加SurvivalCraftModEntity
+                delegate { //灏嗘墍鏈夌殑鏈夋晥鐨剆cmod璇诲彇涓篗odEntity锛屽苟鑷姩娣诲姞SurvivalCraftModEntity
                     ContentManager.Initialize();
                     ModsManager.Initialize();
                 }
             );
             AddLoadAction(
-                delegate { //检查所有Mod依赖�?
-                    //根据加载顺序排序后的结果
+                delegate { //妫€鏌ユ墍鏈塎od渚濊禆椤?
+                    //鏍规嵁鍔犺浇椤哄簭鎺掑簭鍚庣殑缁撴灉
                     ModsManager.ModList.Clear();
                     foreach (ModEntity item in ModsManager.ModListAll) {
                         if (item.IsDependencyChecked || item.IsDisabled) {
@@ -180,85 +186,85 @@ namespace Game {
             });
             AddLoadAction(ContentLoaded);
             AddLoadAction(() => {
-                    Dictionary<string, Assembly[]> assemblies = [];
-                    ModsManager.ModListAllDo(modEntity => {
-                            bool flag = true;
-                            assemblies[modEntity.modInfo.PackageName] = modEntity.GetAssemblies();
-                            foreach (Assembly assembly in assemblies[modEntity.modInfo.PackageName]) {
-                                if (flag) {
-                                    Log.Information($"[{modEntity.modInfo.Name}] Getting assemblies.");
-                                    flag = false;
-                                }
-                                AssemblyName assemblyName = assembly.GetName();
-                                string fullName = assemblyName.FullName;
-                                if (ModsManager.Dlls.TryGetValue(fullName, out Assembly existingAssembly)) {
-                                    if (existingAssembly.GetName().Version < assemblyName.Version) {
-                                        ModsManager.Dlls[fullName] = assembly;
-                                    }
-                                }
-                                else {
-                                    ModsManager.Dlls.Add(fullName, assembly);
-                                }
+                Dictionary<string, Assembly[]> assemblies = [];
+                ModsManager.ModListAllDo(modEntity => {
+                    bool flag = true;
+                    assemblies[modEntity.modInfo.PackageName] = modEntity.GetAssemblies();
+                    foreach (Assembly assembly in assemblies[modEntity.modInfo.PackageName]) {
+                        if (flag) {
+                            Log.Information($"[{modEntity.modInfo.Name}] Getting assemblies.");
+                            flag = false;
+                        }
+                        AssemblyName assemblyName = assembly.GetName();
+                        string fullName = assemblyName.FullName;
+                        if (ModsManager.Dlls.TryGetValue(fullName, out Assembly existingAssembly)) {
+                            if (existingAssembly.GetName().Version < assemblyName.Version) {
+                                ModsManager.Dlls[fullName] = assembly;
                             }
                         }
-                    );
-                    //加载 mod 程序�?.dll)文件
-                    //但不进行处理操作(如添加block�?
-                    ModsManager.ModHooks.Clear();
-                    ModsManager.m_tempModHooks.Clear();
-                    ModsManager.ModListAllDo(modEntity => {
-                            if (!isLoadSucceed) {
-                                return;
-                            }
-                            foreach (Assembly asm in assemblies[modEntity.modInfo.PackageName]) {
-                                Log.Information($"[{modEntity.modInfo.Name}] Handling assembly [{asm.FullName}]");
-                                try {
-                                    modEntity.HandleAssembly(asm);
-                                }
-                                catch (Exception e) {
-                                    exception = e;
-                                    string separator = new('-', 10); //生成10�?'-' 连一起的字符�?
-                                    Log.Error($"{separator}Handle assembly failed{separator}");
-                                    Log.Error(
-                                        $"Loaded assembly:\n{string.Join("\n", AppDomain.CurrentDomain.GetAssemblies().Select(x => x.FullName ?? x.GetName().FullName))}"
-                                    );
-                                    Log.Error(separator);
-                                    Log.Error($"Error assembly: {asm.FullName}");
-#pragma warning disable IL2026
-                                    Log.Error($"Dependencies:\n{string.Join("\n", asm.GetReferencedAssemblies().Select(x => x.FullName))}");
-#pragma warning restore IL2026
-                                    Log.Error(separator);
-                                    Log.Error(e);
-                                    isLoadSucceed = false;
-                                    break;
-                                }
-                            }
+                        else {
+                            ModsManager.Dlls.Add(fullName, assembly);
                         }
-                    );
+                    }
+                }
+                );
+                //鍔犺浇 mod 绋嬪簭闆?.dll)鏂囦欢
+                //浣嗕笉杩涜澶勭悊鎿嶄綔(濡傛坊鍔燽lock绛?
+                ModsManager.ModHooks.Clear();
+                ModsManager.m_tempModHooks.Clear();
+                ModsManager.ModListAllDo(modEntity => {
                     if (!isLoadSucceed) {
-                        ModsManager.ModList.RemoveAll(entity => entity is not SurvivalCraftModEntity && entity is not FastDebugModEntity);
-                        LoadingActoins.RemoveRange(1, LoadingActoins.Count - 1);
-                        ModLoadingActoins.Clear();
-                        ScreensManager.SwitchScreen(
-                            new LoadingFailedScreen(
-                                "Loading failed ����ʧ��",
-                                ["Exceptions: �쳣��Ϣ��", ..exception?.ToString().Split('\n') ?? []],
-                                [
-                                    $"Check the API version required by mod is equal to the current API version ({ModsManager.APIVersionString}). Check and add missing mods. If not solved, please contact the developer of the mods or API with Game.log in the path below.",
-                                    $"���ģ���Ƿ�ȱʧ����������ȱʧ��ģ�顣�鿴ģ����������汾�뵱ǰ�����汾��{ModsManager.APIVersionString}���Ƿ�һ�¡������Ϸ�ʽ���޷����������ϵģ�顢����濪���ߣ�����������·���е� Game.log",
+                        return;
+                    }
+                    foreach (Assembly asm in assemblies[modEntity.modInfo.PackageName]) {
+                        Log.Information($"[{modEntity.modInfo.Name}] Handling assembly [{asm.FullName}]");
+                        try {
+                            modEntity.HandleAssembly(asm);
+                        }
+                        catch (Exception e) {
+                            exception = e;
+                            string separator = new('-', 10); //鐢熸垚10涓?'-' 杩炰竴璧风殑瀛楃涓?
+                            Log.Error($"{separator}Handle assembly failed{separator}");
+                            Log.Error(
+                                $"Loaded assembly:\n{string.Join("\n", AppDomain.CurrentDomain.GetAssemblies().Select(x => x.FullName ?? x.GetName().FullName))}"
+                            );
+                            Log.Error(separator);
+                            Log.Error($"Error assembly: {asm.FullName}");
+#pragma warning disable IL2026
+                            Log.Error($"Dependencies:\n{string.Join("\n", asm.GetReferencedAssemblies().Select(x => x.FullName))}");
+#pragma warning restore IL2026
+                            Log.Error(separator);
+                            Log.Error(e);
+                            isLoadSucceed = false;
+                            break;
+                        }
+                    }
+                }
+                );
+                if (!isLoadSucceed) {
+                    ModsManager.ModList.RemoveAll(entity => entity is not SurvivalCraftModEntity && entity is not FastDebugModEntity);
+                    LoadingActoins.RemoveRange(1, LoadingActoins.Count - 1);
+                    ModLoadingActoins.Clear();
+                    ScreensManager.SwitchScreen(
+                        new LoadingFailedScreen(
+                            "Loading failed 加载失败",
+                            ["Exceptions: 异常信息：", .. exception?.ToString().Split('\n') ?? []],
+                            [
+                                $"Check the API version required by mod is equal to the current API version ({ModsManager.APIVersionString}). Check and add missing mods. If not solved, please contact the developer of the mods or API with Game.log in the path below.",
+                                    $"检查模组是否缺失，并添加所缺失的模组。查看模组所需插件版版本与当前插件版版本（{ModsManager.APIVersionString}）是否一致。若以上方式都无法解决，请联系模组、插件版开发者，并发送下面路径中的 Game.log",
                                     Storage.GetSystemPath(ModsManager.LogPath),
                                     "And you can enable Safe Mode to stop loading any mod.",
-                                    "�㻹�������ð�ȫģʽ��ֹͣ�����κ�ģ�顣"
-                                ]
-                            )
-                        );
-                    }
-                    //处理程序�?
+                                    "你还可以启用安全模式，停止加载任何模组。"
+                            ]
+                        )
+                    );
                 }
+                //澶勭悊绋嬪簭闆?
+            }
             );
             AddLoadAction(
-                delegate { //初始化所有ModEntity的语言�?
-                    //>>>初始化语言列表
+                delegate { //鍒濆鍖栨墍鏈塎odEntity鐨勮瑷€鍖?
+                    //>>>鍒濆鍖栬瑷€鍒楄〃
                     LanguageControl.LanguageTypes.Clear();
                     foreach (ContentInfo contentInfo in ContentManager.List("Lang")) {
                         string fileName = Path.GetFileNameWithoutExtension(contentInfo.Filename);
@@ -270,14 +276,14 @@ namespace Game {
                             LanguageControl.LanguageTypes.Add(fileName);
 #else
                             CultureInfo cultureInfo = new(fileName.EndsWith("-old") ? fileName.Substring(0, fileName.Length - 4) : fileName, false);
-                            LanguageControl.LanguageTypes.TryAdd(fileName, cultureInfo); //第二个参数应为CultureInfo
+                            LanguageControl.LanguageTypes.TryAdd(fileName, cultureInfo); //绗簩涓弬鏁板簲涓篊ultureInfo
 #endif
                         }
                         catch (Exception) {
                             // ignore
                         }
                     }
-                    //<<<结束
+                    //<<<缁撴潫
 #if BROWSER
                     if (ModsManager.Configs.TryGetValue("Language", out string value)
                         && LanguageControl.LanguageTypes.Contains(value)) {
@@ -286,7 +292,7 @@ namespace Game {
                     else {
                         string systemLanguage = Program.SystemLanguage;
                         if (string.IsNullOrEmpty(systemLanguage)) {
-                            //如果不支持系统语言，英语是最佳选择
+                            //濡傛灉涓嶆敮鎸佺郴缁熻瑷€锛岃嫳璇槸鏈€浣抽€夋嫨
                             LanguageControl.Initialize("en-US");
                             Log.Information("Language is not specified, and system language is not detected, en-US is loaded instead.");
                         }
@@ -342,7 +348,7 @@ namespace Game {
                     else {
                         string systemLanguage = Program.SystemLanguage;
                         if (string.IsNullOrEmpty(systemLanguage)) {
-                            //如果不支持系统语言，英语是最佳选择
+                            //濡傛灉涓嶆敮鎸佺郴缁熻瑷€锛岃嫳璇槸鏈€浣抽€夋嫨
                             LanguageControl.Initialize("en-US");
                             Log.Information("Language is not specified, and system language is not detected, en-US is loaded instead.");
                         }
@@ -401,7 +407,7 @@ namespace Game {
             );
 #if !IOS && !BROWSER
             AddLoadAction(
-                delegate { //读取所有的ModEntity的JavaScript
+                delegate { //璇诲彇鎵€鏈夌殑ModEntity鐨凧avaScript
                     JsInterface.Initiate();
                     ModsManager.ModListAllDo(modEntity => { modEntity.LoadJs(); });
                     JsInterface.RegisterEvent();
@@ -427,13 +433,13 @@ namespace Game {
             );
             AddLoadAction(ClothingSlot.Initialize);
             AddLoadAction(
-                delegate { //初始化TextureAtlas
+                delegate { //鍒濆鍖朤extureAtlas
                     Info(LanguageControl.Get(fName, "2"));
                     TextureAtlasManager.Initialize();
                 }
             );
             AddLoadAction(
-                delegate { //初始化Database
+                delegate { //鍒濆鍖朌atabase
                     try {
                         ModsManager.InitImportantDatabaseClasses();
                         DatabaseManager.Initialize();
@@ -459,14 +465,14 @@ namespace Game {
                 }
             );
             AddLoadAction(
-                delegate { //初始化方块管理器
+                delegate { //鍒濆鍖栨柟鍧楃鐞嗗櫒
                     Stopwatch stopwatch = Stopwatch.StartNew();
                     BlocksManager.Initialize();
                     stopwatch.Stop();
                     Info($"{LanguageControl.Get(fName, "4")}({stopwatch.ElapsedMilliseconds}ms)");
                 }
             );
-            AddLoadAction(CraftingRecipesManager.Initialize); //初始化合成谱
+            AddLoadAction(CraftingRecipesManager.Initialize); //鍒濆鍖栧悎鎴愯氨
             AddLoadAction(
                 delegate {
                     Info(LanguageControl.Get(fName, "7"));
@@ -491,15 +497,15 @@ namespace Game {
             AddLoadAction(
                 delegate {
                     ModsManager.ModListAllDo(modEntity => {
-                            if (modEntity.Loader != null) {
-                                Info($"[{modEntity.modInfo?.Name}] {LanguageControl.Get(fName, "6")}");
-                                modEntity.Loader.OnLoadingFinished(ModLoadingActoins);
-                            }
+                        if (modEntity.Loader != null) {
+                            Info($"[{modEntity.modInfo?.Name}] {LanguageControl.Get(fName, "6")}");
+                            modEntity.Loader.OnLoadingFinished(ModLoadingActoins);
                         }
+                    }
                     );
                 }
             );
-            AddLoadAction(KeyCompatibleGroupsManager.Initialize); //初始化按键兼容组
+            AddLoadAction(KeyCompatibleGroupsManager.Initialize); //鍒濆鍖栨寜閿吋瀹圭粍
             AddLoadAction(
                 delegate {
                     if (Program.StartupParameters.TryGetValue("play", out string worldDirectory)) {
@@ -565,7 +571,7 @@ namespace Game {
         public override void Leave() {
             LogList?.ClearItems();
 #if ANDROID
-            // 当前Android端SDL不支持半垂直同步
+            // 褰撳墠Android绔疭DL涓嶆敮鎸佸崐鍨傜洿鍚屾
             if (SettingsManager.PresentationInterval > 1) {
                 SettingsManager.PresentationInterval = 1;
             }
@@ -641,9 +647,9 @@ namespace Game {
                 return;
             }
             Window.Activity.RunOnUiThread(() => {
-                    new AlertDialog.Builder(Window.Activity).SetMessage("Exit �˳�?")
-                        ?.SetPositiveButton("Yes ��", (_, _) => { Window.Close(); })
-                        ?.SetNegativeButton("No ��", (_, _) => { })
+                    new AlertDialog.Builder(Window.Activity).SetMessage("Exit 退出?")
+                        ?.SetPositiveButton("Yes 是", (_, _) => { Window.Close(); })
+                        ?.SetNegativeButton("No 否", (_, _) => { })
                         ?.Show();
                 }
             );
@@ -652,7 +658,7 @@ namespace Game {
             /*
             Task.Run(() =>
             {
-                if(MessageBox.Show("Exit 退�?","", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                if(MessageBox.Show("Exit 閫€鍑?","", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     Window.Close();
                 }

@@ -13,39 +13,39 @@ namespace Game {
             int cellValueFast = SubsystemTerrain.Terrain.GetCellValueFast(x, y, z);
             switch (Terrain.ExtractContents(cellValueFast)) {
                 case 31: {
-                    Point3 point = CellFace.FaceToPoint3(Terrain.ExtractData(cellValueFast));
-                    int x2 = x - point.X;
-                    int y2 = y - point.Y;
-                    int z2 = z - point.Z;
-                    int cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x2, y2, z2);
-                    if (!BlocksManager.Blocks[cellContents2].IsCollidable_(cellValueFast)) {
-                        SubsystemTerrain.DestroyCell(
-                            0,
-                            x,
-                            y,
-                            z,
-                            0,
-                            false,
-                            false
-                        );
+                        Point3 point = CellFace.FaceToPoint3(Terrain.ExtractData(cellValueFast));
+                        int x2 = x - point.X;
+                        int y2 = y - point.Y;
+                        int z2 = z - point.Z;
+                        int cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x2, y2, z2);
+                        if (!BlocksManager.Blocks[cellContents2].IsCollidable_(cellValueFast)) {
+                            SubsystemTerrain.DestroyCell(
+                                0,
+                                x,
+                                y,
+                                z,
+                                0,
+                                false,
+                                false
+                            );
+                        }
+                        break;
                     }
-                    break;
-                }
                 case 132: {
-                    int cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-                    if (!BlocksManager.Blocks[cellContents].IsCollidable_(cellValueFast)) {
-                        SubsystemTerrain.DestroyCell(
-                            0,
-                            x,
-                            y,
-                            z,
-                            0,
-                            false,
-                            false
-                        );
+                        int cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
+                        if (!BlocksManager.Blocks[cellContents].IsCollidable_(cellValueFast)) {
+                            SubsystemTerrain.DestroyCell(
+                                0,
+                                x,
+                                y,
+                                z,
+                                0,
+                                false,
+                                false
+                            );
+                        }
+                        break;
                     }
-                    break;
-                }
             }
         }
 

@@ -213,7 +213,7 @@ namespace Game {
                             LanguageControl.Get(fName, 11),
                             LanguageControl.Ok,
                             LanguageControl.Back,
-                            delegate(MessageDialogButton button) {
+                            delegate (MessageDialogButton button) {
                                 if (button == MessageDialogButton.Button1) {
                                     ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
                                 }

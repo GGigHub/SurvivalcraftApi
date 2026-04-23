@@ -107,7 +107,7 @@ namespace Game {
                                 HorizontalAlignment = WidgetAlignment.Center,
                                 VerticalAlignment = WidgetAlignment.Center
                             },
-                            delegate(object c) {
+                            delegate (object c) {
                                 if (c != null) {
                                     m_componentCreativeInventory.CategoryIndex = m_categories.IndexOf((Category)c);
                                 }

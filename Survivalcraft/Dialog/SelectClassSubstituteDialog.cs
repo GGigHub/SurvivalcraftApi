@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 
 namespace Game {
     public class SelectClassSubstituteDialog : Dialog {
@@ -22,7 +22,8 @@ namespace Game {
                 }
                 if (substitute.PackageName == "survivalcraft") {
                     return new LabelWidget() {
-                        Text = $"{LanguageControl.Get(fName, "1")} - {substitute.ClassName}", VerticalAlignment = WidgetAlignment.Center
+                        Text = $"{LanguageControl.Get(fName, "1")} - {substitute.ClassName}",
+                        VerticalAlignment = WidgetAlignment.Center
                     };
                 }
                 if (ModsManager.PackageNameToModEntity.TryGetValue(substitute.PackageName, out ModEntity modEntity)) {

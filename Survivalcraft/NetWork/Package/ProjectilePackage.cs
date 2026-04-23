@@ -1,15 +1,13 @@
 using Engine;
 namespace Game.NetWork.Packages;
 
-public class ProjectilePackage : IPackage
-{
+public class ProjectilePackage : IPackage {
     public byte ID => (byte)PackageType.Projectile;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.ProjectLoaded;
-    public enum ProjectileTailInfo : byte
-    {
+    public enum ProjectileTailInfo : byte {
         None = 0,
         Smoke = 1,
         Fireworks = 2,
@@ -24,11 +22,9 @@ public class ProjectilePackage : IPackage
     public ushort m_ownerId;
     public bool m_isFireProjectile;
 
-    public ProjectilePackage()
-    {
+    public ProjectilePackage() {
     }
-    public ProjectilePackage(Projectile projectile)
-    {
+    public ProjectilePackage(Projectile projectile) {
         m_value = projectile.Value;
         m_position = projectile.Position;
         m_velocity = projectile.Velocity;
@@ -36,8 +32,7 @@ public class ProjectilePackage : IPackage
         m_angularVelocity = projectile.AngularVelocity;
         m_ownerId = projectile.Owner == null ? (ushort)0 : projectile.Owner.Entity.EntityId;
     }
-    public void WriteData(PackageStreamWriter writer)
-    {
+    public void WriteData(PackageStreamWriter writer) {
         writer.Write(m_value);
         writer.Write(m_position);
         writer.Write(m_velocity);
@@ -45,8 +40,7 @@ public class ProjectilePackage : IPackage
         writer.Write(m_angularVelocity);
         writer.Write(m_ownerId);
     }
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         m_value = reader.ReadInt32();
         m_position = reader.ReadVector3();
         m_velocity = reader.ReadVector3();
@@ -55,18 +49,14 @@ public class ProjectilePackage : IPackage
         m_ownerId = reader.ReadUInt16();
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer)
-    {
-        if (isServer)
-        {
+    public void Handle(ProjectNet projectNet, bool isServer) {
+        if (isServer) {
             return;
         }
         var subsystem = projectNet.FindSubsystem<SubsystemProjectiles>();
         ComponentCreature creature = null;
-        if (m_ownerId != 0)
-        {
-            projectNet.FindEntityById(m_ownerId, (entity) =>
-            {
+        if (m_ownerId != 0) {
+            projectNet.FindEntityById(m_ownerId, (entity) => {
                 creature = entity.FindComponent<ComponentCreature>();
             });
         }

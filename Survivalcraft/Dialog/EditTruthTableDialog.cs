@@ -13,7 +13,7 @@ namespace Game {
         public ButtonWidget m_switchViewButton;
         public CheckboxWidget[] m_lineCheckboxes = new CheckboxWidget[16];
         public TextBoxWidget m_linearTextBox;
-        
+
         public TruthTableData m_truthTableData;
         public TruthTableData m_tmpTruthTableData;
         public byte[] m_lastTmpTruthTableDataData;

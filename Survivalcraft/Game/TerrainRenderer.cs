@@ -16,7 +16,10 @@ namespace Game {
         public static Shader m_transparentShader;
 
         public SamplerState m_samplerState = new() {
-            AddressModeU = TextureAddressMode.Clamp, AddressModeV = TextureAddressMode.Clamp, FilterMode = TextureFilterMode.Point, MaxLod = 0f
+            AddressModeU = TextureAddressMode.Clamp,
+            AddressModeV = TextureAddressMode.Clamp,
+            FilterMode = TextureFilterMode.Point,
+            MaxLod = 0f
         };
 
         public SamplerState m_samplerStateMips = new() {

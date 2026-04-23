@@ -59,7 +59,7 @@ namespace Game {
                 try {
                     ArrangeChildWidgetInCell(Vector2.Zero, ActualSize, child);
                 }
-                catch(Exception e) {
+                catch (Exception e) {
                     throw new Exception($"Exception arranging widget of type {child.GetType().FullName}.", e);
                 }
             }

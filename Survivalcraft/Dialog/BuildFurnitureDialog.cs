@@ -121,7 +121,7 @@ namespace Game {
                                         LanguageControl.Get(fName, 10),
                                         m_sourceDesign.Name,
                                         20,
-                                        delegate(string s) {
+                                        delegate (string s) {
                                             try {
                                                 if (s != null) {
                                                     m_sourceDesign.Name = s;
@@ -149,7 +149,7 @@ namespace Game {
                                         LanguageControl.Get(fName, 11),
                                         m_design.Name,
                                         20,
-                                        delegate(string s) {
+                                        delegate (string s) {
                                             try {
                                                 if (s != null) {
                                                     m_design.Name = s;
@@ -179,7 +179,7 @@ namespace Game {
                                         LanguageControl.Get(fName, 11),
                                         m_design.Name,
                                         20,
-                                        delegate(string s) {
+                                        delegate (string s) {
                                             try {
                                                 if (s != null) {
                                                     m_design.Name = s;
@@ -209,7 +209,7 @@ namespace Game {
                             list,
                             64f,
                             t => ((Tuple<string, Action>)t).Item1,
-                            delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
+                            delegate (object t) { ((Tuple<string, Action>)t).Item2(); }
                         )
                     );
                 }

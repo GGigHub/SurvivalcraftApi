@@ -12,17 +12,17 @@ namespace Game {
             XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
             foreach (XElement item in projectNode.Element("Subsystems").Elements()) {
                 foreach (XElement item2 in from e in item.Elements("Values")
-                    where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CreatureSpawn"
-                    select e) {
+                                           where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CreatureSpawn"
+                                           select e) {
                     XmlUtils.SetAttributeValue(item2, "Name", "Spawn");
                     foreach (XElement item3 in from e in item2.Elements("Value")
-                        where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CreaturesData"
-                        select e) {
+                                               where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CreaturesData"
+                                               select e) {
                         XmlUtils.SetAttributeValue(item3, "Name", "SpawnsData");
                     }
                     foreach (XElement item4 in from e in item2.Elements("Value")
-                        where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CreaturesGenerated"
-                        select e) {
+                                               where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CreaturesGenerated"
+                                               select e) {
                         XmlUtils.SetAttributeValue(item4, "Name", "IsSpawned");
                     }
                 }

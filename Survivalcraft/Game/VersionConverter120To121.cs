@@ -12,12 +12,12 @@ namespace Game {
             XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
             foreach (XElement item in projectNode.Element("Entities").Elements()) {
                 foreach (XElement item2 in from e in item.Elements("Values")
-                    where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Body"
-                        || XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Frame"
-                    select e) {
+                                           where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Body"
+                                               || XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Frame"
+                                           select e) {
                     using (IEnumerator<XElement> enumerator3 = (from e in item2.Elements("Value")
-                            where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "LocalMatrix"
-                            select e).GetEnumerator()) {
+                                                                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "LocalMatrix"
+                                                                select e).GetEnumerator()) {
                         if (enumerator3.MoveNext()) {
                             XElement current2 = enumerator3.Current;
                             XmlUtils.GetAttributeValue<Matrix>(current2, "Value")

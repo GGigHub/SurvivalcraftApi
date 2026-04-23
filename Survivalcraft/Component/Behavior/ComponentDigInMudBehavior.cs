@@ -1,8 +1,8 @@
 using Engine;
-using GameEntitySystem;
-using TemplatesDatabase;
 using Game.NetWork;
 using Game.NetWork.Packages;
+using GameEntitySystem;
+using TemplatesDatabase;
 
 namespace Game {
     public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable {
@@ -40,13 +40,10 @@ namespace Game {
 
         private bool m_isDigIn;
 
-        public bool IsDigIn
-        {
+        public bool IsDigIn {
             get { return m_isDigIn; }
-            set
-            {
-                if (m_isDigIn != value)
-                {
+            set {
+                if (m_isDigIn != value) {
                     m_isDigIn = value;
                     if (NetworkManager.WorkType == WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isDigIn));
                 }
@@ -85,7 +82,7 @@ namespace Game {
                 ? BlocksManager.Blocks.First(b => b.GetType().Name == digInBlockName).BlockIndex
                 : 0;
             m_maxDigInDepth = valuesDictionary.GetValue<float>("MaxDigInDepth");
-            m_componentCreature.ComponentBody.CollidedWithBody += delegate(ComponentBody b) { m_collidedWithBody = b; };
+            m_componentCreature.ComponentBody.CollidedWithBody += delegate (ComponentBody b) { m_collidedWithBody = b; };
             m_stateMachine.AddState(
                 "Inactive",
                 delegate { m_importanceLevel = 0f; },
@@ -170,7 +167,7 @@ namespace Game {
                     vector2,
                     false,
                     false,
-                    delegate(int value, float _) {
+                    delegate (int value, float _) {
                         int num = Terrain.ExtractContents(value);
                         return !(BlocksManager.Blocks[num] is WaterBlock);
                     }

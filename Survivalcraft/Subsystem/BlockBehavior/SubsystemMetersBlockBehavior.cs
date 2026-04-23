@@ -238,7 +238,7 @@ namespace Game {
                                         new Vector3(x + j, y + l, z + k) + new Vector3(0.5f, 0.75f, 0.5f),
                                         false,
                                         true,
-                                        delegate(int raycastValue, float _) {
+                                        delegate (int raycastValue, float _) {
                                             Block block2 = BlocksManager.Blocks[Terrain.ExtractContents(raycastValue)];
                                             return block2.IsCollidable_(raycastValue) && !block2.IsTransparent_(raycastValue);
                                         }

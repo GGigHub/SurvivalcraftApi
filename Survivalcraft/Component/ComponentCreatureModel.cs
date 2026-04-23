@@ -137,7 +137,7 @@ namespace Game {
             m_subsystemSky = Project.FindSubsystem<SubsystemSky>(true);
             m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
             m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
-            m_componentCreature.ComponentHealth.Injured += delegate(Injury injury) {
+            m_componentCreature.ComponentHealth.Injured += delegate (Injury injury) {
                 ComponentCreature attacker = injury.Attacker;
                 if (attacker == null) {
                     return;

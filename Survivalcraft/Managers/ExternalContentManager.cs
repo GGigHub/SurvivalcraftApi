@@ -156,21 +156,21 @@ namespace Game {
 
             async Task<string> Import(Stream stream, string fileName) {
                 return await Task.Run(() => {
-                        ExternalContentType type = ExtensionToType(Storage.GetExtension(fileName));
-                        if (IsEntryTypeDownloadSupported(type)) {
-                            try {
-                                ImportExternalContentSync(stream, type, fileName);
-                            }
-                            catch (Exception e) {
-                                return string.Format(failureFormat, fileName, e.Message);
-                            }
-                            finally {
-                                stream.Dispose();
-                            }
-                            return string.Format(successFormat, fileName);
+                    ExternalContentType type = ExtensionToType(Storage.GetExtension(fileName));
+                    if (IsEntryTypeDownloadSupported(type)) {
+                        try {
+                            ImportExternalContentSync(stream, type, fileName);
                         }
-                        return string.Format(failureFormat, fileName, unsupportedString);
+                        catch (Exception e) {
+                            return string.Format(failureFormat, fileName, e.Message);
+                        }
+                        finally {
+                            stream.Dispose();
+                        }
+                        return string.Format(successFormat, fileName);
                     }
+                    return string.Format(failureFormat, fileName, unsupportedString);
+                }
                 );
             }
 
@@ -188,11 +188,11 @@ namespace Game {
             Log.Information(finalResult);
             if (showResultDialog) {
                 Dispatcher.Dispatch(() => {
-                        DialogsManager.ShowDialog(
-                            null,
-                            new MessageDialog(LanguageControl.Get(fName, 20), finalResult, LanguageControl.Ok, null, null)
-                        );
-                    }
+                    DialogsManager.ShowDialog(
+                        null,
+                        new MessageDialog(LanguageControl.Get(fName, 20), finalResult, LanguageControl.Ok, null, null)
+                    );
+                }
                 );
             }
         }
@@ -236,7 +236,7 @@ namespace Game {
                             DialogsManager.HideDialog(busyDialog);
                             handler?.Invoke();
                         },
-                        delegate(Exception error) {
+                        delegate (Exception error) {
                             DialogsManager.HideDialog(busyDialog);
                             if (error != null) {
                                 DialogsManager.ShowDialog(
@@ -256,7 +256,7 @@ namespace Game {
                             string.Format(LanguageControl.Get(fName, 7), provider.DisplayName),
                             LanguageControl.Get(fName, 8),
                             LanguageControl.Cancel,
-                            delegate(MessageDialogButton b) {
+                            delegate (MessageDialogButton b) {
                                 if (b == MessageDialogButton.Button1) {
                                     LoginAction();
                                 }
@@ -279,7 +279,7 @@ namespace Game {
                 new SelectExternalContentProviderDialog(
                     LanguageControl.Get(fName, 9),
                     false,
-                    delegate(IExternalContentProvider provider) {
+                    delegate (IExternalContentProvider provider) {
                         try {
                             if (provider != null) {
                                 ShowLoginUiIfNeeded(
@@ -350,7 +350,7 @@ namespace Game {
                                                         path,
                                                         stream,
                                                         busyDialog.Progress,
-                                                        delegate(string link) {
+                                                        delegate (string link) {
                                                             // ReSharper disable AccessToModifiedClosure
                                                             long length = stream.Length;
                                                             // ReSharper restore AccessToModifiedClosure
@@ -406,7 +406,7 @@ namespace Game {
                                                                 DialogsManager.ShowDialog(null, new ExternalContentLinkDialog(link));
                                                             }
                                                         },
-                                                        delegate(Exception error) {
+                                                        delegate (Exception error) {
                                                             Cleanup();
                                                             DialogsManager.HideDialog(busyDialog);
                                                             DialogsManager.ShowDialog(

@@ -1,18 +1,14 @@
+using System.Reflection;
 using Engine;
 using Engine.Serialization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using TemplatesDatabase;
-using GameEntitySystem;
 using Game.NetWork.Packages;
+using GameEntitySystem;
+using TemplatesDatabase;
 
 
 namespace Game.NetWork;
 
-public class ProjectNet : Project
-{
+public class ProjectNet : Project {
     Dictionary<string, Subsystem> dictionary = new Dictionary<string, Subsystem>();
     public static SubsystemPlayers subsystemPlayers;
     public static SubsystemTerrain subsystemTerrain;
@@ -47,32 +43,25 @@ public class ProjectNet : Project
 
     public Dictionary<int, Entity> EntityMaps = new Dictionary<int, Entity>();
 
-    public ProjectNet(GameDatabase gameDatabase, ProjectData projectData)
-    {
-        try
-        {
+    public ProjectNet(GameDatabase gameDatabase, ProjectData projectData) {
+        try {
             dictionary.Clear();
             m_gameDatabase = gameDatabase;
             m_projectTemplate = projectData.ValuesDictionary.DatabaseObject;
-            foreach (ValuesDictionary item in from x in projectData.ValuesDictionary.Values select x as ValuesDictionary into x where x != null && x.DatabaseObject != null && x.DatabaseObject.Type == gameDatabase.MemberSubsystemTemplateType select x)
-            {
+            foreach (ValuesDictionary item in from x in projectData.ValuesDictionary.Values select x as ValuesDictionary into x where x != null && x.DatabaseObject != null && x.DatabaseObject.Type == gameDatabase.MemberSubsystemTemplateType select x) {
                 bool value = item.GetValue<bool>("IsOptional");
                 string value2 = item.GetValue<string>("Class");
                 Type type = TypeCache.FindType(value2, skipSystemAssemblies: false, !value);
-                if (type != null)
-                {
+                if (type != null) {
                     object obj;
-                    try
-                    {
+                    try {
                         obj = Activator.CreateInstance(type);
                     }
-                    catch (TargetInvocationException ex)
-                    {
+                    catch (TargetInvocationException ex) {
                         throw ex.InnerException;
                     }
                     var subsystem = obj as Subsystem;
-                    if (subsystem == null)
-                    {
+                    if (subsystem == null) {
                         throw new InvalidOperationException($"Type \"{value2}\" cannot be used as a subsystem because it does not inherit from Subsystem class.");
                     }
                     subsystem.Initialize(this, item);
@@ -102,25 +91,18 @@ public class ProjectNet : Project
             subsystemAnimatedTextures = FindSubsystem<SubsystemAnimatedTextures>();
             subsystemProjectiles = FindSubsystem<SubsystemProjectiles>();
             inventories = FindSubsystem<SubsystemInventories>();
-            if (NetworkManager.WorkType == WorkType.Client)
-            {
-                BeforeEntityAdded += (obj, arg) =>
-                {
+            if (NetworkManager.WorkType == WorkType.Client) {
+                BeforeEntityAdded += (obj, arg) => {
                     EntityMaps[arg.Entity.EntityId] = arg.Entity;
                 };
-                EntityRemoved += (obj, arg) =>
-                {
+                EntityRemoved += (obj, arg) => {
                     EntityMaps.Remove(arg.Entity.EntityId);
                 };
-                NetworkManager.OnClientStateChanged += (c) =>
-                {
-                    switch (c.State)
-                    {
-                        case ClientStage.NotConnected:
-                            {
+                NetworkManager.OnClientStateChanged += (c) => {
+                    switch (c.State) {
+                        case ClientStage.NotConnected: {
                                 var playerData = subsystemPlayers.PlayersData.Find(pd => pd.PlayerGUID == c.PlayerGuid);
-                                if (playerData != null && !playerData.IsMainPlayer)
-                                {
+                                if (playerData != null && !playerData.IsMainPlayer) {
                                     subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
                                 }
                                 break;
@@ -129,33 +111,25 @@ public class ProjectNet : Project
                 };
                 SettingsManager.VisibilityRange = Math.Min(256, SettingsManager.VisibilityRange);
             }
-            else
-            {
+            else {
                 //非客户端生成EntityID序号
-                BeforeEntityAdded += (obj, arg) =>
-                {
+                BeforeEntityAdded += (obj, arg) => {
                     if (arg.Entity.EntityId == 0 || EntityMaps.ContainsKey(arg.Entity.EntityId)) GenerateEntityId(arg.Entity);
-                    else
-                    {
+                    else {
                         EntityMaps.Add(arg.Entity.EntityId, arg.Entity);
                     }
                 };
-                EntityRemoved += (obj, arg) =>
-                {
+                EntityRemoved += (obj, arg) => {
                     EntityMaps.Remove(arg.Entity.EntityId);
                 };
-                if (NetworkManager.WorkType == WorkType.Server)
-                {
-                    EntityAdded += (obj, arg) =>
-                    {
-                        foreach (var client in NetworkManager.Clients)
-                        {
+                if (NetworkManager.WorkType == WorkType.Server) {
+                    EntityAdded += (obj, arg) => {
+                        foreach (var client in NetworkManager.Clients) {
                             if (client.Value == NetworkManager.Self) continue;
                             NetworkManager.QueuePackage(new EntityPackage(arg.Entity) { To = client.Value });
                         }
                     };
-                    EntityRemoved += (obj, arg) =>
-                    {
+                    EntityRemoved += (obj, arg) => {
                         NetworkManager.QueuePackage(new EntityPackage(arg.Entity.EntityId));
                     };
                     NetworkManager.OnClientStateChanged += GrantClient;
@@ -165,26 +139,21 @@ public class ProjectNet : Project
 
             Load(dictionary, projectData);
 
-            if (NetworkManager.WorkType == WorkType.Client)
-            {
+            if (NetworkManager.WorkType == WorkType.Client) {
                 NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Self.ID, ClientStage.ProjectLoaded));
             }
             //开启包处理
             NetworkManager.TurnOnPackageHanlde(this);
         }
-        catch
-        {
+        catch {
 
-            try
-            {
+            try {
                 Dispose();
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 Log.Error(e);
             }
-            finally
-            {
+            finally {
                 if (NetworkManager.WorkType == WorkType.Server) NetworkManager.Stop();
             }
 
@@ -193,27 +162,22 @@ public class ProjectNet : Project
         Project = this;
     }
 
-    public override void AddEntity(Entity entity)
-    {
+    public override void AddEntity(Entity entity) {
 #if DEBUG
         if (NetworkManager.WorkType == WorkType.Client) Log.Information($"添加实体{entity.EntityId}");
 #endif
         base.AddEntity(entity);
     }
-    public override void RemoveEntity(Entity entity, bool disposeEntity)
-    {
+    public override void RemoveEntity(Entity entity, bool disposeEntity) {
 #if DEBUG
         if (NetworkManager.WorkType == WorkType.Client) Log.Information($"移出实体{entity.EntityId}");
 #endif
         base.RemoveEntity(entity, disposeEntity);
     }
 
-    public void GenerateEntityId(Entity entity)
-    {
-        for (ushort i = 1; i < ushort.MaxValue; i++)
-        {
-            if (!EntityMaps.ContainsKey(i))
-            {
+    public void GenerateEntityId(Entity entity) {
+        for (ushort i = 1; i < ushort.MaxValue; i++) {
+            if (!EntityMaps.ContainsKey(i)) {
                 entity.EntityId = i;
                 EntityMaps.Add(i, entity);
                 return;
@@ -221,16 +185,13 @@ public class ProjectNet : Project
         }
     }
 
-    public bool FindEntityById(ushort Id, Action<Entity> action = null)
-    {
-        if (EntityMaps.TryGetValue(Id, out var entity))
-        {
+    public bool FindEntityById(ushort Id, Action<Entity> action = null) {
+        if (EntityMaps.TryGetValue(Id, out var entity)) {
             action?.Invoke(entity);
             return true;
         }
 #if DEBUG
-        else
-        {
+        else {
             Log.Information($"没有找到对应实体{Id}");
         }
 #endif
@@ -240,35 +201,26 @@ public class ProjectNet : Project
     /// 客户端连接状态变更
     /// </summary>
     /// <param name="c"></param>
-    public void OnClientStateChanged(Client c)
-    {
+    public void OnClientStateChanged(Client c) {
 #if DEBUG
         Log.Information($"Client {c.ID} State is {c.State}");
 
 #endif
-        if (NetworkManager.WorkType == WorkType.Server)
-        {
+        if (NetworkManager.WorkType == WorkType.Server) {
             NetworkManager.QueuePackage(new ClientPackage(c.ID, c.State) { Except = c });
-            switch (c.State)
-            {
-                case ClientStage.Connected:
-                    {
+            switch (c.State) {
+                case ClientStage.Connected: {
                         byte[] textureData = null;
-                        if (subsystemPlayers.MakePlayerOnline(c.PlayerGuid, out PlayerData playerData, out Entity entity))
-                        {
+                        if (subsystemPlayers.MakePlayerOnline(c.PlayerGuid, out PlayerData playerData, out Entity entity)) {
                             c.CachePlayerEntity = entity;
-                            foreach (var client in NetworkManager.Clients)
-                            {
-                                if (client.Value != NetworkManager.Self && client.Value != c)
-                                {
+                            foreach (var client in NetworkManager.Clients) {
+                                if (client.Value != NetworkManager.Self && client.Value != c) {
                                     NetworkManager.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
                                 }
                             }
                         }
-                        if (!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.BlocksTextureName))
-                        {
-                            using (var s = Storage.OpenFile(BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName), OpenFileMode.Read))
-                            {
+                        if (!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.BlocksTextureName)) {
+                            using (var s = Storage.OpenFile(BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName), OpenFileMode.Read)) {
                                 textureData = ModsManager.StreamToBytes(s);
                             }
                         }
@@ -276,20 +228,17 @@ public class ProjectNet : Project
                         NetworkManager.QueuePackage(new ProjectPackage(textureData, data) { To = c });
                         break;
                     }
-                case ClientStage.NotConnected:
-                    {
+                case ClientStage.NotConnected: {
                         subsystemPlayers.MakePlayerOffline(c.PlayerGuid);
                         GC.Collect();
                         break;
                     }
-                case ClientStage.ProjectLoaded:
-                    {
+                case ClientStage.ProjectLoaded: {
                         List<Entity> sendList = [.. m_entities.Keys];
                         //向客户端广播实体列表
                         NetworkManager.QueuePackage(new EntityPackage(sendList) { To = c });
                         //如果有实体，添加到Project中并广播给其它客户端
-                        if (c.CachePlayerEntity != null)
-                        {
+                        if (c.CachePlayerEntity != null) {
                             AddEntity(c.CachePlayerEntity);
                             c.CachePlayerEntity = null;
                         }
@@ -298,21 +247,17 @@ public class ProjectNet : Project
                 case ClientStage.LoadTerrain:
                     GC.Collect();
                     //进入无敌状态
-                    if (c.PlayerData != null && c.PlayerData.ComponentPlayer != null)
-                    {
-                        if (FindSubsystem<SubsystemGameInfo>().WorldSettings.GameMode != GameMode.Creative)
-                        {
+                    if (c.PlayerData != null && c.PlayerData.ComponentPlayer != null) {
+                        if (FindSubsystem<SubsystemGameInfo>().WorldSettings.GameMode != GameMode.Creative) {
                             c.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = true;
                         }
                     }
                     break;
                 case ClientStage.Playing:
-                    if (c.PlayerData == null)
-                    {
+                    if (c.PlayerData == null) {
                         NetworkManager.Server.RemoveClient(c, "未知错误！该Client没有对应PlayerData");
                     }
-                    else
-                    {
+                    else {
                         //解除无敌状态
                         if (c.PlayerData.ComponentPlayer != null) {
                             if (FindSubsystem<SubsystemGameInfo>().WorldSettings.GameMode != GameMode.Creative) {
@@ -323,10 +268,8 @@ public class ProjectNet : Project
                     break;
             }
         }
-        else
-        {
-            switch (c.State)
-            {
+        else {
+            switch (c.State) {
                 case ClientStage.NotConnected:
                     subsystemPlayers.MakePlayerOffline(c.PlayerGuid);
                     break;
@@ -346,34 +289,27 @@ public class ProjectNet : Project
         }
     }
 
-    public void PlayerAction(Guid? guid, Action<ComponentPlayer> action)
-    {
+    public void PlayerAction(Guid? guid, Action<ComponentPlayer> action) {
         var pl = subsystemPlayers.ComponentPlayers.FirstOrDefault(pll => pll.PlayerData.PlayerGUID == guid);
         if (pl != null) action(pl);
     }
 
-    public List<Entity> LoadEntities(EntityDataList entityDataList)
-    {
+    public List<Entity> LoadEntities(EntityDataList entityDataList) {
         //List<Entity> list = new List<Entity>(entityDataList.EntitiesData.Count);
         List<Entity> list = new List<Entity>();
         Dictionary<int, Entity> dictionary = new Dictionary<int, Entity>();
         IdToEntityMap idToEntityMap = new IdToEntityMap(dictionary);
         var tmpList = new List<EntityData>();
         var toRemovePlayer = new List<EntityData>();
-        for (int i = 0; i < entityDataList.EntitiesData.Count; i++)
-        {
+        for (int i = 0; i < entityDataList.EntitiesData.Count; i++) {
             EntityData entitiesDatum = entityDataList.EntitiesData[i];
-            try
-            {
-                if (entitiesDatum.ValuesDictionary.ContainsKey("Player"))
-                {
+            try {
+                if (entitiesDatum.ValuesDictionary.ContainsKey("Player")) {
                     var palyerValue = entitiesDatum.ValuesDictionary.GetValue<ValuesDictionary>("Player");
-                    if (palyerValue.ContainsKey("PlayerGuid"))
-                    {
+                    if (palyerValue.ContainsKey("PlayerGuid")) {
                         Guid playerGuid = palyerValue.GetValue<Guid>("PlayerGuid");
                         PlayerData playerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.PlayerGUID == playerGuid);
-                        if (playerData == null)
-                        {
+                        if (playerData == null) {
                             toRemovePlayer.Add(entitiesDatum);
                             continue;
                         }
@@ -381,44 +317,37 @@ public class ProjectNet : Project
                 }
                 Entity entity = new Entity(this, entitiesDatum.ValuesDictionary);
                 list.Add(entity);
-                if (entitiesDatum.Id != 0)
-                {
+                if (entitiesDatum.Id != 0) {
                     entity.EntityId = (ushort)entitiesDatum.Id;
                     dictionary.Add(entitiesDatum.Id, entity);
                     tmpList.Add(entitiesDatum);
                 }
             }
-            catch (Exception innerException)
-            {
+            catch (Exception innerException) {
                 throw new Exception($"Error creating entity from template \"{entitiesDatum.ValuesDictionary.DatabaseObject.Name}\".", innerException);
             }
         }
-        foreach (var rp in toRemovePlayer)
-        {
+        foreach (var rp in toRemovePlayer) {
             entityDataList.EntitiesData.Remove(rp);
         }
         int num = 0;
-        foreach (EntityData entitiesDatum2 in tmpList)
-        {
+        foreach (EntityData entitiesDatum2 in tmpList) {
             list[num].publicLoadEntity(entitiesDatum2.ValuesDictionary, idToEntityMap);
             num++;
         }
         return list;
     }
 
-    public override EntityDataList SaveEntities(IEnumerable<Entity> entities)
-    {
+    public override EntityDataList SaveEntities(IEnumerable<Entity> entities) {
         Dictionary<Entity, bool> dictionary = DetermineNotOwnedEntities(entities);
         Dictionary<Entity, int> dictionary2 = new Dictionary<Entity, int>();
         EntityToIdMap entityToIdMap = new EntityToIdMap(dictionary2);
-        foreach (Entity key in dictionary.Keys)
-        {
+        foreach (Entity key in dictionary.Keys) {
             dictionary2.Add(key, key.EntityId);
         }
         EntityDataList entityDataList = new EntityDataList();
         entityDataList.EntitiesData = new List<EntityData>(dictionary.Keys.Count);
-        foreach (Entity key2 in dictionary.Keys)
-        {
+        foreach (Entity key2 in dictionary.Keys) {
             EntityData entityData = new EntityData();
             entityData.Id = key2.EntityId;
             entityData.ValuesDictionary = new ValuesDictionary();
@@ -434,28 +363,22 @@ public class ProjectNet : Project
     /// </summary>
     /// <param name="entityDataList"></param>
     /// <returns></returns>
-    public List<Entity> LoadEntitiesAll(EntityDataList entityDataList)
-    {
+    public List<Entity> LoadEntitiesAll(EntityDataList entityDataList) {
         //List<Entity> list = new List<Entity>(entityDataList.EntitiesData.Count);
         List<Entity> list = new List<Entity>();
         Dictionary<int, Entity> dictionary = new Dictionary<int, Entity>();
         IdToEntityMap idToEntityMap = new IdToEntityMap(dictionary);
         var tmpList = new List<EntityData>();
         var toRemovePlayer = new List<EntityData>();
-        for (int i = 0; i < entityDataList.EntitiesData.Count; i++)
-        {
+        for (int i = 0; i < entityDataList.EntitiesData.Count; i++) {
             EntityData entitiesDatum = entityDataList.EntitiesData[i];
-            try
-            {
-                if (entitiesDatum.ValuesDictionary.ContainsKey("Player"))
-                {
+            try {
+                if (entitiesDatum.ValuesDictionary.ContainsKey("Player")) {
                     var palyerValue = entitiesDatum.ValuesDictionary.GetValue<ValuesDictionary>("Player");
-                    if (palyerValue.ContainsKey("PlayerGuid"))
-                    {
+                    if (palyerValue.ContainsKey("PlayerGuid")) {
                         Guid playerGuid = palyerValue.GetValue<Guid>("PlayerGuid", NetworkManager.Self.PlayerGuid);
                         PlayerData playerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.PlayerGUID == playerGuid);
-                        if (playerData == null)
-                        {
+                        if (playerData == null) {
                             toRemovePlayer.Add(entitiesDatum);
                             continue;
                         }
@@ -467,18 +390,15 @@ public class ProjectNet : Project
                 dictionary.Add(entitiesDatum.Id, entity);
                 tmpList.Add(entitiesDatum);
             }
-            catch (Exception innerException)
-            {
+            catch (Exception innerException) {
                 throw new Exception($"Error creating entity from template \"{entitiesDatum.ValuesDictionary.DatabaseObject.Name}\".", innerException);
             }
         }
-        foreach (var rp in toRemovePlayer)
-        {
+        foreach (var rp in toRemovePlayer) {
             entityDataList.EntitiesData.Remove(rp);
         }
         int num = 0;
-        foreach (EntityData entitiesDatum2 in tmpList)
-        {
+        foreach (EntityData entitiesDatum2 in tmpList) {
             list[num].publicLoadEntity(entitiesDatum2.ValuesDictionary, idToEntityMap);
             num++;
         }
@@ -490,18 +410,15 @@ public class ProjectNet : Project
     /// </summary>
     /// <param name="entities"></param>
     /// <returns></returns>
-    public EntityDataList SaveEntitiesAll(IEnumerable<Entity> entities)
-    {
+    public EntityDataList SaveEntitiesAll(IEnumerable<Entity> entities) {
         Dictionary<Entity, int> dictionary2 = new Dictionary<Entity, int>();
         EntityToIdMap entityToIdMap = new EntityToIdMap(dictionary2);
-        foreach (Entity key in entities)
-        {
+        foreach (Entity key in entities) {
             dictionary2.Add(key, key.EntityId);
         }
         EntityDataList entityDataList = new EntityDataList();
         entityDataList.EntitiesData = new List<EntityData>(dictionary.Keys.Count);
-        foreach (Entity key2 in entities)
-        {
+        foreach (Entity key2 in entities) {
             EntityData entityData = new EntityData();
             entityData.Id = key2.EntityId;
             entityData.ValuesDictionary = new ValuesDictionary();
@@ -511,16 +428,13 @@ public class ProjectNet : Project
         }
         return entityDataList;
     }
-    public void Load(Dictionary<string, Subsystem> dictionary, ProjectData projectData)
-    {
+    public void Load(Dictionary<string, Subsystem> dictionary, ProjectData projectData) {
         PostponeFireEntityAddedEvents = false;
         var loadedSubsystems = new Dictionary<Subsystem, bool>();
-        foreach (Subsystem value3 in dictionary.Values)
-        {
+        foreach (Subsystem value3 in dictionary.Values) {
             LoadSubsystem(value3, dictionary, loadedSubsystems, 0);
         }
-        if (projectData.EntityDataList != null && NetworkManager.WorkType != WorkType.Client)
-        {
+        if (projectData.EntityDataList != null && NetworkManager.WorkType != WorkType.Client) {
             List<Entity> entities = LoadEntities(projectData.EntityDataList);
             AddEntities(entities);
         }

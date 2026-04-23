@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 
 namespace Game {
     public class EditCommunityServerInfoDialog : Dialog {
@@ -57,7 +57,8 @@ namespace Game {
             m_cancelButton = Children.Find<ButtonWidget>("EditCommunityServerInfoDialog.Cancel");
             if (m_info.Type == CommunityServerManager.Type.Chinese) {
                 m_chineseCheckbox.IsChecked = true;
-            }else {
+            }
+            else {
                 m_originalCheckbox.IsChecked = true;
             }
             m_nameTextBox.Text = m_info.Name;

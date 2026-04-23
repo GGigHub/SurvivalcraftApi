@@ -1,12 +1,9 @@
+using System.Net;
 using LiteNetLib;
 using LiteNetLib.Utils;
-using System;
-using System.Net;
 
-namespace Game.NetWork
-{
-    public class EventBasedNetListener : INetEventListener
-    {
+namespace Game.NetWork {
+    public class EventBasedNetListener : INetEventListener {
         public event OnNetworkReceive NetworkReceiveEvent;
 
         public delegate void OnNetworkReceive(NetPeer peer, NetDataReader reader, DeliveryMethod deliveryMethod);
@@ -17,80 +14,65 @@ namespace Game.NetWork
         public event Action<ConnectionRequest> ConnectionRequestEvent;
         public event Action<NetPeer, object> DeliveryEvent;
 
-        public EventBasedNetListener()
-        {
+        public EventBasedNetListener() {
         }
 
-        public void ClearNetworkReceiveEvent()
-        {
+        public void ClearNetworkReceiveEvent() {
             NetworkReceiveEvent = null;
         }
 
-        public void ClearPeerConnectedEvent()
-        {
+        public void ClearPeerConnectedEvent() {
             PeerConnectedEvent = null;
         }
 
-        public void ClearPeerDisconnectedEvent()
-        {
+        public void ClearPeerDisconnectedEvent() {
             PeerDisconnectedEvent = null;
         }
 
-        public void ClearNetworkReceiveUnconnectedEvent()
-        {
+        public void ClearNetworkReceiveUnconnectedEvent() {
             NetworkReceiveUnconnectedEvent = null;
         }
 
-        public void ClearNetworkErrorEvent()
-        {
+        public void ClearNetworkErrorEvent() {
             NetworkErrorEvent = null;
         }
 
-        public void ClearConnectionRequestEvent()
-        {
+        public void ClearConnectionRequestEvent() {
             ConnectionRequestEvent = null;
         }
 
-        public void ClearDeliveryEvent()
-        {
+        public void ClearDeliveryEvent() {
             // 不直接操作事件，而是通过其他方式处理
             // 在实际应用中，可以通过生命周期管理来处理事件订阅
         }
 
-        void INetEventListener.OnPeerConnected(NetPeer peer)
-        {
+        void INetEventListener.OnPeerConnected(NetPeer peer) {
             PeerConnectedEvent?.Invoke(peer);
         }
 
-        void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
-        {
+        void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
             PeerDisconnectedEvent?.Invoke(peer, disconnectInfo);
         }
 
-        void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod)
-        {
+        void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod) {
             // 将NetPacketReader的数据复制到NetDataReader来兼容现有代码
             var dataReader = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
             NetworkReceiveEvent?.Invoke(peer, dataReader, deliveryMethod);
         }
 
-        void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
-        {
+        void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
             NetworkReceiveUnconnectedEvent?.Invoke(remoteEndPoint, reader, messageType);
         }
 
-        void INetEventListener.OnNetworkError(IPEndPoint endPoint, System.Net.Sockets.SocketError socketError)
-        {
+        void INetEventListener.OnNetworkError(IPEndPoint endPoint, System.Net.Sockets.SocketError socketError) {
             NetworkErrorEvent?.Invoke(null, endPoint); // 简单处理，实际可能需要传递socketError信息
         }
 
-        void INetEventListener.OnConnectionRequest(ConnectionRequest request)
-        {
+        void INetEventListener.OnConnectionRequest(ConnectionRequest request) {
             ConnectionRequestEvent?.Invoke(request);
         }
 
-        void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency)
-        {
+        void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency) {
             // 暂不处理延迟更新
         }
 

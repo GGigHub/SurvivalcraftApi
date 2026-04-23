@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Engine.Media;
 
 namespace Game.IContentReader {

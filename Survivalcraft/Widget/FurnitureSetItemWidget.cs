@@ -1,7 +1,6 @@
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
-using Game.NetWork;
 
 namespace Game {
     public class FurnitureSetItemWidget : CanvasWidget, IDragTargetWidget {

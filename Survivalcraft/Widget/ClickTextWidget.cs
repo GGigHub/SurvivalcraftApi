@@ -11,13 +11,16 @@ namespace Game {
 
         // ReSharper disable UnusedParameter.Local
         public ClickTextWidget(Vector2 vector2, string text, Action click, bool box = false)
-            // ReSharper restore UnusedParameter.Local
+        // ReSharper restore UnusedParameter.Local
         {
             Size = vector2;
             HorizontalAlignment = WidgetAlignment.Center;
             VerticalAlignment = WidgetAlignment.Center;
             labelWidget = new LabelWidget {
-                Text = text, FontScale = 0.8f, HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Center
+                Text = text,
+                FontScale = 0.8f,
+                HorizontalAlignment = WidgetAlignment.Center,
+                VerticalAlignment = WidgetAlignment.Center
             };
             Children.Add(labelWidget);
             IsDrawEnabled = true;

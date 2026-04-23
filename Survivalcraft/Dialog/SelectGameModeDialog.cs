@@ -7,7 +7,7 @@ namespace Game {
             title,
             GetAllowedGameModes(allowAdventure, allowCruel),
             140f,
-            delegate(object item) {
+            delegate (object item) {
                 GameMode gameMode = (GameMode)item;
                 XElement node = ContentManager.Get<XElement>("Widgets/SelectGameModeItem");
                 ContainerWidget obj = (ContainerWidget)LoadWidget(null, node, null);
@@ -16,7 +16,7 @@ namespace Game {
                     StringsManager.GetString($"GameMode.{gameMode}.Description");
                 return obj;
             },
-            delegate(object item) { selectionHandler((GameMode)item); }
+            delegate (object item) { selectionHandler((GameMode)item); }
         ) => ContentSize = new Vector2(750f, 420f);
 
         public static IEnumerable<GameMode> GetAllowedGameModes(bool allowAdventure, bool allowCruel) {

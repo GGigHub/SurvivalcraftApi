@@ -106,7 +106,7 @@ namespace Game {
                     vector3,
                     false,
                     false,
-                    delegate(int value, float _) {
+                    delegate (int value, float _) {
                         int num3 = Terrain.ExtractContents(value);
                         return !(BlocksManager.Blocks[num3] is WaterBlock);
                     }

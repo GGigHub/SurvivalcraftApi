@@ -10,7 +10,6 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using Engine;
-using OperationCanceledException = System.OperationCanceledException;
 using Uri = System.Uri;
 
 namespace Game {

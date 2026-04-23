@@ -261,7 +261,7 @@ namespace Game {
                             text.ToString(),
                             LanguageControl.Yes,
                             LanguageControl.No,
-                            delegate(MessageDialogButton button) {
+                            delegate (MessageDialogButton button) {
                                 if (button == MessageDialogButton.Button1) {
                                     GameLoad(item);
                                 }
@@ -324,7 +324,7 @@ namespace Game {
                         tips,
                         LanguageControl.Get(fName, "2"),
                         LanguageControl.Back,
-                        delegate(MessageDialogButton button) {
+                        delegate (MessageDialogButton button) {
                             if (button == MessageDialogButton.Button1) {
                                 GameLoad(item);
                             }

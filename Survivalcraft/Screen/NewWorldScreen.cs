@@ -83,7 +83,7 @@ namespace Game {
             if (m_gameModeButton.IsClicked) {
                 DialogsManager.ShowDialog(
                     null,
-                    new SelectGameModeDialog(string.Empty, false, true, delegate(GameMode gameMode) { m_worldSettings.GameMode = gameMode; })
+                    new SelectGameModeDialog(string.Empty, false, true, delegate (GameMode gameMode) { m_worldSettings.GameMode = gameMode; })
                 );
             }
             if (m_startingPositionButton.IsClicked) {

@@ -50,7 +50,8 @@ namespace Game {
         public string Description { get; set; }
 #else
 
-        public string Description { get => field;
+        public string Description {
+            get => field;
             set {
                 if (field != value
                     && value != null) {
@@ -97,15 +98,15 @@ namespace Game {
             }
         }
 #endif
-            /// <summary>
-            ///     <para>
-            ///         旧版文本框的光标位置，现版本不再使用。
-            ///     </para>
-            ///     <para>
-            ///         Old caret position, now is deprecated.
-            ///     </para>
-            /// </summary>
-            [Obsolete($"TextBoxWidget.m_caretPosition is deprecated, use {nameof(TextBoxWidget)}.{nameof(Caret)} instead.", true)]
+        /// <summary>
+        ///     <para>
+        ///         旧版文本框的光标位置，现版本不再使用。
+        ///     </para>
+        ///     <para>
+        ///         Old caret position, now is deprecated.
+        ///     </para>
+        /// </summary>
+        [Obsolete($"TextBoxWidget.m_caretPosition is deprecated, use {nameof(TextBoxWidget)}.{nameof(Caret)} instead.", true)]
         public int m_caretPosition;
 
         /// <summary>
@@ -157,7 +158,7 @@ namespace Game {
         [Obsolete($"TextBoxWidget.m_focusStartTime is deprecated, use {nameof(TextBoxWidget)}.{nameof(FocusStartTime)} instead.", true)]
         public float m_focusStartTime = 0;
 
-#endregion
+        #endregion
 
         // 文本存储
 
@@ -934,7 +935,7 @@ namespace Game {
                 Escape?.Invoke(this);
             }
 
-//#if !ANDROID
+            //#if !ANDROID
             // 处理 Delete 键。
             if (HasFocus
                 && Caret != Text.Length
@@ -956,7 +957,7 @@ namespace Game {
                     CloseInputMethod();
                 }
             }
-//#endif
+            //#endif
 
             // 处理键盘输入。
             // 如果输入法已开启，就跳过。
@@ -1023,7 +1024,7 @@ namespace Game {
 
             // ReSharper disable UnusedLocalFunction
             static List<TextBoxWidget> FindTextBoxWidgets(ContainerWidget widget)
-                // ReSharper restore UnusedLocalFunction
+            // ReSharper restore UnusedLocalFunction
             {
                 List<TextBoxWidget> textBoxes = new(16);
                 foreach (Widget child in widget.Children) {
@@ -1453,7 +1454,7 @@ namespace Game {
 
         // ReSharper disable UnusedParameter.Local
         static void SetCursorPosition(TextBoxWidget widget)
-            // ReSharper restore UnusedParameter.Local
+        // ReSharper restore UnusedParameter.Local
         {
 #if WINDOWS
             Vector2 caretPosition = widget.Font.MeasureText(

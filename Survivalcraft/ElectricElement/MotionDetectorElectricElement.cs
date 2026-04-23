@@ -100,7 +100,7 @@ namespace Game {
                         p,
                         false,
                         true,
-                        delegate(int value, float _) {
+                        delegate (int value, float _) {
                             Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
                             return block.IsCollidable_(value)
                                 && block.BlockIndex != 15

@@ -70,7 +70,7 @@ namespace Game {
             if (m_gameModeButton.IsClicked && m_changingGameModeAllowed) {
                 DialogsManager.ShowDialog(
                     null,
-                    new SelectGameModeDialog(string.Empty, true, m_cruelAllowed, delegate(GameMode gameMode) { m_worldSettings.GameMode = gameMode; })
+                    new SelectGameModeDialog(string.Empty, true, m_cruelAllowed, delegate (GameMode gameMode) { m_worldSettings.GameMode = gameMode; })
                 );
             }
             m_worldSettingsData.Clear();
@@ -96,7 +96,7 @@ namespace Game {
                         LanguageControl.Get(fName, 1) + LanguageControl.Get(fName, 5),
                         string.Empty,
                         3,
-                        delegate(string content) {
+                        delegate (string content) {
                             if (content?.ToLower() == "yes") {
                                 WorldsManager.DeleteWorld(m_directoryName);
                                 ScreensManager.SwitchScreen("Play");
@@ -118,7 +118,7 @@ namespace Game {
                         LanguageControl.Get(fName, 2),
                         LanguageControl.Yes,
                         LanguageControl.No,
-                        delegate(MessageDialogButton button) {
+                        delegate (MessageDialogButton button) {
                             if (button == MessageDialogButton.Button1) {
                                 WorldsManager.DeleteWorld(m_directoryName);
                                 ScreensManager.SwitchScreen("Play");
@@ -161,7 +161,7 @@ namespace Game {
                         LanguageControl.Get(fName, 4),
                         LanguageControl.Yes,
                         LanguageControl.No,
-                        delegate(MessageDialogButton button) {
+                        delegate (MessageDialogButton button) {
                             if (button == MessageDialogButton.Button1) {
                                 ScreensManager.SwitchScreen("Play");
                             }

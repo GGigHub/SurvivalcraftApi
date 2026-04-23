@@ -253,17 +253,17 @@ namespace Game {
                 default:
                     switch (GetCornerType(data)) {
                         case CornerType.None: {
-                            int rotation2 = GetRotation(data);
-                            return face != ((rotation2 + 2) & 3);
-                        }
+                                int rotation2 = GetRotation(data);
+                                return face != ((rotation2 + 2) & 3);
+                            }
                         case CornerType.OneQuarter: return true;
                         default: {
-                            int rotation = GetRotation(data);
-                            if (face != ((rotation + 1) & 3)) {
-                                return face != ((rotation + 2) & 3);
+                                int rotation = GetRotation(data);
+                                if (face != ((rotation + 1) & 3)) {
+                                    return face != ((rotation + 2) & 3);
+                                }
+                                return false;
                             }
-                            return false;
-                        }
                     }
             }
         }

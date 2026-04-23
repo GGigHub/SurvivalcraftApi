@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
 using Engine;
-using GameEntitySystem;
 using Game.NetWork;
+using GameEntitySystem;
 using TemplatesDatabase;
 
 namespace Game {

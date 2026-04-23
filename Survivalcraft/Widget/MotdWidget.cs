@@ -142,14 +142,19 @@ namespace Game {
                     throw new InvalidOperationException("Invalid MOTD line.");
                 }
                 StackPanelWidget stackPanelWidget = new() {
-                    Direction = LayoutDirection.Vertical, HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Center
+                    Direction = LayoutDirection.Vertical,
+                    HorizontalAlignment = WidgetAlignment.Center,
+                    VerticalAlignment = WidgetAlignment.Center
                 };
                 string[] array = line.Text.Replace("\r", "").Split(["\n"], StringSplitOptions.None);
                 for (int i = 0; i < array.Length; i++) {
                     string text = array[i].Trim();
                     if (!string.IsNullOrEmpty(text)) {
                         LabelWidget widget = new() {
-                            Text = text, HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Center, DropShadow = true
+                            Text = text,
+                            HorizontalAlignment = WidgetAlignment.Center,
+                            VerticalAlignment = WidgetAlignment.Center,
+                            DropShadow = true
                         };
                         stackPanelWidget.Children.Add(widget);
                     }

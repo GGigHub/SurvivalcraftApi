@@ -1,59 +1,41 @@
-using Engine;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Game
-{
-    public class UnSeasonSpawnDialog : Dialog
-    {
+namespace Game {
+    public class UnSeasonSpawnDialog : Dialog {
         public LabelWidget m_largeLabelWidget;
 
         public LabelWidget m_smallLabelWidget;
 
         public ValueBarWidget m_progressWidget;
 
-        public string LargeMessage
-        {
-            get
-            {
+        public string LargeMessage {
+            get {
                 return m_largeLabelWidget.Text;
             }
-            set
-            {
+            set {
                 m_largeLabelWidget.Text = value;
             }
         }
 
-        public string SmallMessage
-        {
-            get
-            {
+        public string SmallMessage {
+            get {
                 return m_smallLabelWidget.Text;
             }
-            set
-            {
+            set {
                 m_smallLabelWidget.Text = value;
             }
         }
 
-        public float Progress
-        {
-            get
-            {
+        public float Progress {
+            get {
                 return m_progressWidget.Value;
             }
-            set
-            {
+            set {
                 m_progressWidget.Value = value;
             }
         }
 
-        public UnSeasonSpawnDialog()
-        {
+        public UnSeasonSpawnDialog() {
             XElement node = ContentManager.Get<XElement>("Dialogs/UnSeasonSpawnDialog");
             LoadContents(this, node);
             m_largeLabelWidget = Children.Find<LabelWidget>("UnSeasonSpawnDialog.LargeLabel");

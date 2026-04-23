@@ -31,7 +31,7 @@ namespace Game {
             m_uploadButton = Children.Find<ButtonWidget>("ViewGameLogDialog.Upload");
             m_headText = Children.Find<LabelWidget>("HeadText");
             m_adviceText = Children.Find<LabelWidget>("AdviceText");
-            m_listPanel.ItemClicked += delegate(object item) {
+            m_listPanel.ItemClicked += delegate (object item) {
                 if (m_listPanel.SelectedItem == item) {
                     DialogsManager.ShowDialog(
                         ParentWidget,
@@ -116,7 +116,7 @@ namespace Game {
                             GameLogSink.m_writer.Flush();
                             PopulateList();
                         },
-                        delegate(Exception error) {
+                        delegate (Exception error) {
                             dialog.LargeMessage = LanguageControl.Get(fName, 7);
                             dialog.SmallMessage = error.Message;
                         }
@@ -126,7 +126,7 @@ namespace Game {
         }
 
         public void PopulateList() {
-            m_listPanel.ItemWidgetFactory = delegate(object item) {
+            m_listPanel.ItemWidgetFactory = delegate (object item) {
                 string text = item != null ? item.ToString() : string.Empty;
                 Color color = Color.Gray;
                 if (text.Contains("ERROR:")) {

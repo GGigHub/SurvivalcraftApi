@@ -1,21 +1,12 @@
-using Engine;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Game.NetWork.Packages;
 
-public class ComponentVitalStatPackage : IPackage
-{
+public class ComponentVitalStatPackage : IPackage {
     public byte ID => (byte)PackageType.ComponentVitalStat;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.Playing;
-    public enum EventType
-    {
+    public enum EventType {
         SyncStat,
         RequestEat
     }
@@ -29,12 +20,10 @@ public class ComponentVitalStatPackage : IPackage
     public float Sleep = default;
     public float Wetness = default;
     public float Temperature = default;
-    public ComponentVitalStatPackage()
-    {
+    public ComponentVitalStatPackage() {
 
     }
-    public ComponentVitalStatPackage(ComponentVitalStats vitalStats)
-    {
+    public ComponentVitalStatPackage(ComponentVitalStats vitalStats) {
         m_eventType = EventType.SyncStat;
         m_entityId = vitalStats.Entity.EntityId;
         Food = vitalStats.Food;
@@ -53,12 +42,10 @@ public class ComponentVitalStatPackage : IPackage
                 m_entityId = vitalStats.Entity.EntityId;
             }*/
 
-    public void WriteData(PackageStreamWriter writer)
-    {
+    public void WriteData(PackageStreamWriter writer) {
         writer.Write(m_entityId);
         writer.WriteEnum(m_eventType);
-        switch (m_eventType)
-        {
+        switch (m_eventType) {
             case EventType.SyncStat:
                 writer.Write(Food);
                 writer.Write(Sleep);
@@ -73,12 +60,10 @@ public class ComponentVitalStatPackage : IPackage
                                     break;*/
         }
     }
-    public void ReadData(PackageStreamReader reader)
-    {
+    public void ReadData(PackageStreamReader reader) {
         m_entityId = reader.ReadUInt16();
         m_eventType = reader.ReadEnum<EventType>();
-        switch (m_eventType)
-        {
+        switch (m_eventType) {
             case EventType.SyncStat:
                 Food = reader.ReadSingle();
                 Sleep = reader.ReadSingle();
@@ -94,20 +79,15 @@ public class ComponentVitalStatPackage : IPackage
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer)
-    {
-        if (isServer)
-        {
+    public void Handle(ProjectNet projectNet, bool isServer) {
+        if (isServer) {
             return;
         }
-        switch (m_eventType)
-        {
+        switch (m_eventType) {
             case EventType.SyncStat:
-                projectNet.FindEntityById(m_entityId, (entity) =>
-                {
+                projectNet.FindEntityById(m_entityId, (entity) => {
                     var m_vitalStats = entity.FindComponent<ComponentVitalStats>();
-                    if (m_vitalStats != null)
-                    {
+                    if (m_vitalStats != null) {
                         m_vitalStats.Food = Food;
                         m_vitalStats.Sleep = Sleep;
                         m_vitalStats.Wetness = Wetness;

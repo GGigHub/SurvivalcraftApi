@@ -129,7 +129,7 @@ namespace Game {
                     }
                 }
                 continue;
-                IL_00e8:
+            IL_00e8:
                 flag = true;
                 break;
             }

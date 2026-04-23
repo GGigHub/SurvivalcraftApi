@@ -10,17 +10,23 @@ namespace Game {
         public BusyDialog busyDialog = new("提示", "登录中");
 
         public LabelWidget tip = new() {
-            HorizontalAlignment = WidgetAlignment.Near, VerticalAlignment = WidgetAlignment.Near, Margin = new Vector2(1f, 1f)
+            HorizontalAlignment = WidgetAlignment.Near,
+            VerticalAlignment = WidgetAlignment.Near,
+            Margin = new Vector2(1f, 1f)
         };
 
         public Action cancel;
 
         public LoginDialog() {
             CanvasWidget canvasWidget = new() {
-                Size = new Vector2(600f, 240f), HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Center
+                Size = new Vector2(600f, 240f),
+                HorizontalAlignment = WidgetAlignment.Center,
+                VerticalAlignment = WidgetAlignment.Center
             };
             RectangleWidget rectangleWidget = new() {
-                FillColor = new Color(0, 0, 0, 255), OutlineColor = new Color(128, 128, 128, 128), OutlineThickness = 2
+                FillColor = new Color(0, 0, 0, 255),
+                OutlineColor = new Color(128, 128, 128, 128),
+                OutlineThickness = 2
             };
             StackPanelWidget stackPanelWidget = new() {
                 Direction = LayoutDirection.Vertical,
@@ -41,11 +47,16 @@ namespace Game {
         public Widget makeTextBox(string title, bool passwordMode = false) {
             CanvasWidget canvasWidget = new() { Margin = new Vector2(10, 0) };
             RectangleWidget rectangleWidget = new() {
-                FillColor = Color.Black, OutlineColor = Color.White, Size = new Vector2(float.PositiveInfinity, 80)
+                FillColor = Color.Black,
+                OutlineColor = Color.White,
+                Size = new Vector2(float.PositiveInfinity, 80)
             };
             StackPanelWidget stack = new() { Direction = LayoutDirection.Horizontal };
             LabelWidget label = new() {
-                HorizontalAlignment = WidgetAlignment.Near, VerticalAlignment = WidgetAlignment.Near, Text = title, Margin = new Vector2(1f, 1f)
+                HorizontalAlignment = WidgetAlignment.Near,
+                VerticalAlignment = WidgetAlignment.Near,
+                Text = title,
+                Margin = new Vector2(1f, 1f)
             };
             TextBoxWidget textBox = new() {
                 PasswordMode = passwordMode,

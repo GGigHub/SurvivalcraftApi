@@ -102,7 +102,7 @@ namespace Game {
                 null,
                 null,
                 null,
-                delegate(byte[] result) {
+                delegate (byte[] result) {
                     try {
                         string motdLastDownloadedData = UnpackMotd(result);
                         MessageOfTheDay = null;
@@ -113,7 +113,7 @@ namespace Game {
                         Log.Warning($"Failed processing MOTD string. Reason: {ex.Message}");
                     }
                 },
-                delegate(Exception error) { Log.Warning($"Failed downloading MOTD. Reason: {error.Message}"); }
+                delegate (Exception error) { Log.Warning($"Failed downloading MOTD. Reason: {error.Message}"); }
             );
         }
 
@@ -134,7 +134,7 @@ namespace Game {
 #endif
             if (CanDownloadMotd) {
                 DownloadMotd();
-                CommunityContentManager.IsAdmin(new CancellableProgress(), delegate(bool isAdmin) { m_isAdmin = isAdmin; }, delegate { });
+                CommunityContentManager.IsAdmin(new CancellableProgress(), delegate (bool isAdmin) { m_isAdmin = isAdmin; }, delegate { });
                 CanDownloadMotd = false;
             }
             if (MessageOfTheDay == null
@@ -182,7 +182,9 @@ namespace Game {
                 foreach (XElement item2 in xElement.Elements()) {
                     if (Widget.IsNodeIncludedOnCurrentPlatform(item2)) {
                         Line item = new() {
-                            Time = XmlUtils.GetAttributeValue<float>(item2, "Time"), Node = item2.Elements().FirstOrDefault(), Text = item2.Value
+                            Time = XmlUtils.GetAttributeValue<float>(item2, "Time"),
+                            Node = item2.Elements().FirstOrDefault(),
+                            Text = item2.Value
                         };
                         message.Lines.Add(item);
                     }
@@ -317,21 +319,21 @@ namespace Game {
                     content,
                     time,
                     delegate { SettingsManager.BulletinTime = m_bulletin.Time; },
-                    delegate(LabelWidget titleLabel, LabelWidget contentLabel) {
+                    delegate (LabelWidget titleLabel, LabelWidget contentLabel) {
                         DialogsManager.ShowDialog(
                             null,
                             new TextBoxDialog(
                                 "请输入标题",
                                 titleLabel.Text,
                                 1024,
-                                delegate(string inputTitle) {
+                                delegate (string inputTitle) {
                                     DialogsManager.ShowDialog(
                                         null,
                                         new TextBoxDialog(
                                             "请输入内容",
                                             contentLabel.Text.Replace("\n", "[n]"),
                                             8192,
-                                            delegate(string inputContent) {
+                                            delegate (string inputContent) {
                                                 if (!string.IsNullOrEmpty(inputTitle)
                                                     && !string.IsNullOrEmpty(inputContent)) {
                                                     titleLabel.Text = inputTitle;
@@ -350,14 +352,14 @@ namespace Game {
                                                     m_bulletin.Time = $"{languageType}${DateTime.Now}";
                                                 }
                                             },
-                                            delegate(TextBoxWidget textBox) { textBox.Text = textBox.Text.Replace("\n", "[n]"); }
+                                            delegate (TextBoxWidget textBox) { textBox.Text = textBox.Text.Replace("\n", "[n]"); }
                                         )
                                     );
                                 }
                             )
                         );
                     },
-                    delegate(LabelWidget titleLabel, LabelWidget contentLabel) {
+                    delegate (LabelWidget titleLabel, LabelWidget contentLabel) {
                         int num = SettingsManager.MotdLastDownloadedData.IndexOf("<Motd2");
                         int num2 = SettingsManager.MotdLastDownloadedData.IndexOf("</Motd2>") + 8;
                         XElement xElement = XmlUtils.LoadXmlFromString(SettingsManager.MotdLastDownloadedData.Substring(num, num2 - num), true);
@@ -399,7 +401,7 @@ namespace Game {
                         SaveBulletin(
                             newDownloadedData,
                             busyDialog.Progress,
-                            delegate(byte[] data) {
+                            delegate (byte[] data) {
                                 DialogsManager.HideDialog(busyDialog);
                                 JsonElement result = JsonDocument.Parse(data, JsonDocumentReader.DefaultJsonOptions).RootElement;
                                 bool success = result[0].GetInt32() == 200;
@@ -409,14 +411,14 @@ namespace Game {
                                 }
                                 DialogsManager.ShowDialog(null, new MessageDialog("操作成功", msg, LanguageControl.Ok, null, null));
                             },
-                            delegate(Exception e) {
+                            delegate (Exception e) {
                                 DialogsManager.HideDialog(busyDialog);
                                 Log.Warning($"SaveBulletin:{e.Message}");
                             }
                         );
                     }
                 );
-                CommunityContentManager.IsAdmin(new CancellableProgress(), delegate(bool isAdmin) { m_isAdmin = isAdmin; }, delegate { });
+                CommunityContentManager.IsAdmin(new CancellableProgress(), delegate (bool isAdmin) { m_isAdmin = isAdmin; }, delegate { });
                 bulletinDialog.m_editButton.IsVisible = m_isAdmin;
                 bulletinDialog.m_updateButton.IsVisible = m_isAdmin;
                 DialogsManager.ShowDialog(null, bulletinDialog);

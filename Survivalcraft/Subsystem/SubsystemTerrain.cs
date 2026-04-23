@@ -373,8 +373,7 @@ namespace Game {
             NetworkManager.QueuePackage(new NetWork.Packages.SubsystemTerrainPackage(x, y, z, value));
         }
 
-        public void ChangeCellNet(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null)
-        {
+        public void ChangeCellNet(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null) {
             if (!Terrain.IsCellValid(x, y, z)) {
                 return;
             }

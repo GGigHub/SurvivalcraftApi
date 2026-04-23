@@ -1,8 +1,7 @@
-﻿using Engine;
 using System.Xml.Linq;
 
 namespace Game {
-    public class SelectCommunityServerDialog: Dialog {
+    public class SelectCommunityServerDialog : Dialog {
         public ListPanelWidget m_listPanel;
         public ButtonWidget m_openButton;
         public ButtonWidget m_addButton;
@@ -19,7 +18,7 @@ namespace Game {
                 if (o is not CommunityServerManager.Info info) {
                     return null;
                 }
-                LabelWidget labelWidget = new () {
+                LabelWidget labelWidget = new() {
                     HorizontalAlignment = WidgetAlignment.Center,
                     VerticalAlignment = WidgetAlignment.Center
                 };

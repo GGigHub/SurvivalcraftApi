@@ -1,15 +1,11 @@
 using Engine;
 using Game.NetWork;
 using GameEntitySystem;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using TemplatesDatabase;
 
 namespace Game;
 
-public class SubsystemGameWidgets : Subsystem, IUpdateable
-{
+public class SubsystemGameWidgets : Subsystem, IUpdateable {
     public const int MaxMassageCount = 200;
 
     public SubsystemPlayers m_subsystemPlayers;
@@ -18,22 +14,18 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 
     public GameWidget mainPlayerWidget;
 
-    public GamesWidget GamesWidget
-    {
+    public GamesWidget GamesWidget {
         get;
         set;
     }
 
-    public ReadOnlyList<GameWidget> GameWidgets
-    {
-        get
-        {
+    public ReadOnlyList<GameWidget> GameWidgets {
+        get {
             return new ReadOnlyList<GameWidget>(m_gameWidgets);
         }
     }
 
-    public SubsystemTerrain SubsystemTerrain
-    {
+    public SubsystemTerrain SubsystemTerrain {
         get;
         set;
     }
@@ -42,83 +34,66 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 
     public PlayerData MainPlayerData = null;
 
-    public float CalculateSquaredDistanceFromNearestView(Vector3 p)
-    {
+    public float CalculateSquaredDistanceFromNearestView(Vector3 p) {
         float num = float.MaxValue;
-        foreach (GameWidget gameWidget in m_gameWidgets)
-        {
+        foreach (GameWidget gameWidget in m_gameWidgets) {
             float num2 = Vector3.DistanceSquared(p, gameWidget.ActiveCamera.ViewPosition);
-            if (num2 < num)
-            {
+            if (num2 < num) {
                 num = num2;
             }
         }
         return num;
     }
 
-    public float CalculateDistanceFromNearestView(Vector3 p)
-    {
+    public float CalculateDistanceFromNearestView(Vector3 p) {
         return MathUtils.Sqrt(CalculateSquaredDistanceFromNearestView(p));
     }
 
-    public void Update(float dt)
-    {
-        foreach (GameWidget gameWidget in GameWidgets)
-        {
+    public void Update(float dt) {
+        foreach (GameWidget gameWidget in GameWidgets) {
             gameWidget.ActiveCamera.Update(Time.FrameDuration);
         }
     }
 
-    public override void Load(ValuesDictionary valuesDictionary)
-    {
+    public override void Load(ValuesDictionary valuesDictionary) {
         m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(throwOnError: true);
         SubsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(throwOnError: true);
-        m_subsystemPlayers.PlayerAdded += delegate (PlayerData playerData)
-        {
+        m_subsystemPlayers.PlayerAdded += delegate (PlayerData playerData) {
             AddGameWidgetForPlayer(playerData);
         };
-        m_subsystemPlayers.PlayerRemoved += delegate (PlayerData playerData)
-        {
-            if (playerData.GameWidget != null)
-            {
+        m_subsystemPlayers.PlayerRemoved += delegate (PlayerData playerData) {
+            if (playerData.GameWidget != null) {
                 RemoveGameWidget(playerData.GameWidget);
             }
         };
-        if (NetworkManager.MainPlayer != null)
-        {
+        if (NetworkManager.MainPlayer != null) {
             MainPlayerData = NetworkManager.MainPlayer.PlayerData;
         }
         GamesWidget = valuesDictionary.GetValue<GamesWidget>("GamesWidget");
-        foreach (PlayerData playersDatum in m_subsystemPlayers.PlayersData)
-        {
+        foreach (PlayerData playersDatum in m_subsystemPlayers.PlayersData) {
             AddGameWidgetForPlayer(playersDatum);
         }
     }
 
-    public override void Save(ValuesDictionary valuesDictionary)
-    {
+    public override void Save(ValuesDictionary valuesDictionary) {
     }
 
-    public override void Dispose()
-    {
+    public override void Dispose() {
         GameWidget[] array = GameWidgets.ToArray();
-        foreach (GameWidget gameWidget in array)
-        {
+        foreach (GameWidget gameWidget in array) {
             RemoveGameWidget(gameWidget);
             gameWidget.Dispose();
         }
     }
 
-    public void AddGameWidgetForPlayer(PlayerData playerData)
-    {
+    public void AddGameWidgetForPlayer(PlayerData playerData) {
         var gameWidget = new GameWidget(playerData, playerData.PlayerIndex);
         m_gameWidgets.Add(gameWidget);
         GamesWidget.Children.Add(gameWidget);
         playerData.GameWidget = gameWidget;
     }
 
-    public void RemoveGameWidget(GameWidget gameWidget)
-    {
+    public void RemoveGameWidget(GameWidget gameWidget) {
         m_gameWidgets.Remove(gameWidget);
         GamesWidget.Children.Remove(gameWidget);
     }

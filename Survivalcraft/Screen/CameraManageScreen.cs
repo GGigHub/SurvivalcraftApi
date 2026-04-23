@@ -107,7 +107,7 @@ namespace Game {
                     LanguageControl.Get("ContentWidgets", "CameraManageScreen", "ResetText"),
                     LanguageControl.Yes,
                     LanguageControl.No,
-                    delegate(MessageDialogButton button) {
+                    delegate (MessageDialogButton button) {
                         if (button == MessageDialogButton.Button1) {
                             ResetAll();
                         }

@@ -19,7 +19,7 @@ namespace Game {
             foreach (Subsystem subsystem in Project.Subsystems) {
                 // ReSharper disable SuspiciousTypeConversion.Global
                 if (subsystem is IInventory inventory)
-                    // ReSharper restore SuspiciousTypeConversion.Global
+                // ReSharper restore SuspiciousTypeConversion.Global
                 {
                     ScanInventory(inventory, m_items);
                 }
@@ -51,7 +51,10 @@ namespace Game {
                 for (int i = 0; i < movingBlockSet.Blocks.Count; i++) {
                     List<ScannedItemData> items3 = m_items;
                     item = new ScannedItemData {
-                        Container = movingBlockSet, Value = movingBlockSet.Blocks[i].Value, Count = 1, IndexInContainer = i
+                        Container = movingBlockSet,
+                        Value = movingBlockSet.Blocks[i].Value,
+                        Count = 1,
+                        IndexInContainer = i
                     };
                     items3.Add(item);
                 }

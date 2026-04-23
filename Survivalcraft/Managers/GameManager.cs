@@ -72,7 +72,7 @@ namespace Game {
                         return false;
                     }
                 );
-                Project.OnProjectLoad += delegate(Project project) {
+                Project.OnProjectLoad += delegate (Project project) {
                     ModsManager.HookAction(
                         "OnProjectLoaded",
                         loader => {

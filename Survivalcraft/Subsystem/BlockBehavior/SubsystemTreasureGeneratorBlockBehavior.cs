@@ -162,33 +162,47 @@ namespace Game {
             treasureData = new TreasureData { Value = 191, Probability = 4f, MaxCount = 1 };
             array[31] = treasureData;
             treasureData = new TreasureData {
-                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.CopperArrow)), Probability = 2f, MaxCount = 2
+                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.CopperArrow)),
+                Probability = 2f,
+                MaxCount = 2
             };
             array[32] = treasureData;
             treasureData = new TreasureData {
-                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.IronArrow)), Probability = 2f, MaxCount = 2
+                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.IronArrow)),
+                Probability = 2f,
+                MaxCount = 2
             };
             array[33] = treasureData;
             treasureData = new TreasureData {
-                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.DiamondArrow)), Probability = 1f, MaxCount = 2
+                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.DiamondArrow)),
+                Probability = 1f,
+                MaxCount = 2
             };
             array[34] = treasureData;
             treasureData = new TreasureData {
-                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.FireArrow)), Probability = 2f, MaxCount = 2
+                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.FireArrow)),
+                Probability = 2f,
+                MaxCount = 2
             };
             array[35] = treasureData;
             treasureData = new TreasureData { Value = 200, Probability = 1f, MaxCount = 1 };
             array[36] = treasureData;
             treasureData = new TreasureData {
-                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.IronBolt)), Probability = 2f, MaxCount = 2
+                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.IronBolt)),
+                Probability = 2f,
+                MaxCount = 2
             };
             array[37] = treasureData;
             treasureData = new TreasureData {
-                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.DiamondBolt)), Probability = 1f, MaxCount = 2
+                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.DiamondBolt)),
+                Probability = 1f,
+                MaxCount = 2
             };
             array[38] = treasureData;
             treasureData = new TreasureData {
-                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.ExplosiveBolt)), Probability = 1f, MaxCount = 2
+                Value = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.ExplosiveBolt)),
+                Probability = 1f,
+                MaxCount = 2
             };
             array[39] = treasureData;
             treasureData = new TreasureData { Value = 212, Probability = 1f, MaxCount = 1 };

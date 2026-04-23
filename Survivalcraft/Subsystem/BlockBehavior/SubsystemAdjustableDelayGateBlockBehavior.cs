@@ -14,7 +14,7 @@ namespace Game {
                 componentPlayer.GuiWidget,
                 new EditAdjustableDelayGateDialog(
                     delay,
-                    delegate(int newDelay) {
+                    delegate (int newDelay) {
                         int data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                         int num = Terrain.ReplaceData(value, data2);
                         var p = new EditableBlockPackage(EditableType.AdjustableDelayGate, default, true, inventory.Id, slotIndex, newDelay);
@@ -35,7 +35,7 @@ namespace Game {
                 componentPlayer.GuiWidget,
                 new EditAdjustableDelayGateDialog(
                     delay,
-                    delegate(int newDelay) {
+                    delegate (int newDelay) {
                         int num = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                         if (num != data) {
                             int face = ((AdjustableDelayGateBlock)BlocksManager.Blocks[AdjustableDelayGateBlock.Index]).GetFace(value);

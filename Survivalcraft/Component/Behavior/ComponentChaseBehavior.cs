@@ -1,8 +1,8 @@
 using Engine;
-using GameEntitySystem;
-using TemplatesDatabase;
 using Game.NetWork;
 using Game.NetWork.Packages;
+using GameEntitySystem;
+using TemplatesDatabase;
 
 namespace Game {
     public class ComponentChaseBehavior : ComponentBehavior, IUpdateable {
@@ -232,7 +232,7 @@ namespace Game {
             m_chaseNonPlayerProbability = valuesDictionary.GetValue<float>("ChaseNonPlayerProbability");
             m_chaseWhenAttackedProbability = valuesDictionary.GetValue<float>("ChaseWhenAttackedProbability");
             m_chaseOnTouchProbability = valuesDictionary.GetValue<float>("ChaseOnTouchProbability");
-            m_componentCreature.ComponentBody.CollidedWithBody += delegate(ComponentBody body) {
+            m_componentCreature.ComponentBody.CollidedWithBody += delegate (ComponentBody body) {
                 if (m_target == null
                     && m_autoChaseSuppressionTime <= 0f
                     && m_random.Float(0f, 1f) < m_chaseOnTouchProbability) {
@@ -253,7 +253,7 @@ namespace Game {
                     m_componentCreature.ComponentLocomotion.JumpOrder = 1f;
                 }
             };
-            m_componentCreature.ComponentHealth.Injured += delegate(Injury injury) {
+            m_componentCreature.ComponentHealth.Injured += delegate (Injury injury) {
                 ComponentCreature attacker = injury.Attacker;
                 if (m_random.Float(0f, 1f) < m_chaseWhenAttackedProbability) {
                     float chaseRange;
@@ -561,13 +561,10 @@ namespace Game {
 
         private bool m_isAttack;
 
-        public bool IsAttack
-        {
+        public bool IsAttack {
             get { return m_isAttack; }
-            set
-            {
-                if (m_isAttack != value)
-                {
+            set {
+                if (m_isAttack != value) {
                     m_isAttack = value;
                     if (NetworkManager.WorkType != WorkType.Client) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, value));
                 }

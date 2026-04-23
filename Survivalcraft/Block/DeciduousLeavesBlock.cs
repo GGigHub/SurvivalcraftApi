@@ -74,21 +74,21 @@ namespace Game {
             int data = Terrain.ExtractData(value);
             switch (GetSeason(data)) {
                 case Season.Spring: {
-                    Color springColor = SpringColor;
-                    Color c3 = BlockColorsMap.Lookup(terrain, x, y, z);
-                    float timeOfSeason = GetTimeOfSeason(data);
-                    return Color.LerpNotSaturated(springColor, c3, timeOfSeason);
-                }
+                        Color springColor = SpringColor;
+                        Color c3 = BlockColorsMap.Lookup(terrain, x, y, z);
+                        float timeOfSeason = GetTimeOfSeason(data);
+                        return Color.LerpNotSaturated(springColor, c3, timeOfSeason);
+                    }
                 case Season.Autumn: {
-                    Color c = BlockColorsMap.Lookup(terrain, x, y, z);
-                    Color c2 = Color.LerpNotSaturated(
-                        f: MathUtils.Hash((uint)(x + 59 * y + 2497 * z)) / 4.2949673E+09f,
-                        c1: AutumnColor1,
-                        c2: AutumnColor2
-                    );
-                    float f2 = MathUtils.Min(GetTimeOfSeason(data) * AutumnSpeedupFactor, 1f);
-                    return Color.MultiplyColorOnly(s: MathUtils.Lerp(1f, AutumnTransitionLightening, Hat(f2)), c: Color.LerpNotSaturated(c, c2, f2));
-                }
+                        Color c = BlockColorsMap.Lookup(terrain, x, y, z);
+                        Color c2 = Color.LerpNotSaturated(
+                            f: MathUtils.Hash((uint)(x + 59 * y + 2497 * z)) / 4.2949673E+09f,
+                            c1: AutumnColor1,
+                            c2: AutumnColor2
+                        );
+                        float f2 = MathUtils.Min(GetTimeOfSeason(data) * AutumnSpeedupFactor, 1f);
+                        return Color.MultiplyColorOnly(s: MathUtils.Lerp(1f, AutumnTransitionLightening, Hat(f2)), c: Color.LerpNotSaturated(c, c2, f2));
+                    }
                 case Season.Winter: return Color.White;
                 default: return BlockColorsMap.Lookup(terrain, x, y, z);
             }
@@ -98,17 +98,17 @@ namespace Game {
             int data = Terrain.ExtractData(value);
             switch (GetSeason(data)) {
                 case Season.Spring: {
-                    Color springColor = SpringColor;
-                    Color c3 = BlockColorsMap.Lookup(environmentData);
-                    float timeOfSeason = GetTimeOfSeason(data);
-                    return Color.LerpNotSaturated(springColor, c3, timeOfSeason);
-                }
+                        Color springColor = SpringColor;
+                        Color c3 = BlockColorsMap.Lookup(environmentData);
+                        float timeOfSeason = GetTimeOfSeason(data);
+                        return Color.LerpNotSaturated(springColor, c3, timeOfSeason);
+                    }
                 case Season.Autumn: {
-                    Color c = BlockColorsMap.Lookup(environmentData);
-                    Color c2 = Color.Lerp(AutumnColor1, AutumnColor2, 0.5f);
-                    float f = MathUtils.Min(GetTimeOfSeason(data) * AutumnSpeedupFactor, 1f);
-                    return Color.MultiplyColorOnly(s: MathUtils.Lerp(1f, AutumnTransitionLightening, Hat(f)), c: Color.LerpNotSaturated(c, c2, f));
-                }
+                        Color c = BlockColorsMap.Lookup(environmentData);
+                        Color c2 = Color.Lerp(AutumnColor1, AutumnColor2, 0.5f);
+                        float f = MathUtils.Min(GetTimeOfSeason(data) * AutumnSpeedupFactor, 1f);
+                        return Color.MultiplyColorOnly(s: MathUtils.Lerp(1f, AutumnTransitionLightening, Hat(f)), c: Color.LerpNotSaturated(c, c2, f));
+                    }
                 case Season.Winter: return Color.White;
                 default: return BlockColorsMap.Lookup(environmentData);
             }
