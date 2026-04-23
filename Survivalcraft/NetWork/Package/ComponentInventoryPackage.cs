@@ -14,10 +14,10 @@ public class ComponentInventoryPackage : IPackage
 
     public enum EventType
     {
-        ActiveSlotChange,                           // 娲诲姩鎻掓Ы鏇存敼锛屾嬁鐗╁搧鐨勯偅鍑犱釜涓荤晫闈㈡Ы浣?
-        InventorySync,                                // 鍚屾鑳屽寘
+        ActiveSlotChange,                           // 活动槽变更，拿物品的那几个主界面槽位
+        InventorySync,                                // 同步背包
 
-        // 涓嬮潰2涓彲浠ヨ€冭檻鍘绘帀锛屼絾鏄殏鏃舵悂缃苟淇濈暀
+        // 下面 2 个可以考虑删掉，但暂时先保留
         QueryErrorInventoryInfo,
         FurnaceSync,
         // =============================
@@ -85,9 +85,9 @@ public class ComponentInventoryPackage : IPackage
         m_eventType = EventType.SetSlotsItem;
     }
 
-    //瀹㈡埛绔?鏈嶅姟鍣ㄥ彂閫佸寘鍚庣浉鍏崇殑Inventory鐨凣eneration灏?1
-    //鏈嶅姟鍣ㄦ帴鏀跺埌鍖咃紝鍒ゆ柇Inventory鐨凣eneration鏄惁涓烘湰鍦?1锛屼负閫氳繃楠岃瘉锛屼笉涓哄氨椹冲洖骞跺己鍒跺悓姝ユ垚鏈嶅姟鍣ㄧ殑鏁版嵁
-    // isLostSync 濡傛灉涓簍rue锛屽垯杩斿洖鎵€鏈夋牸瀛愮殑鏁版嵁??
+    // 客户端/服务器发送包后，相关 Inventory 的 Generation 加 1。
+    // 服务端收到包后，判断 Inventory 的 Generation 是否为本地值 +1，验证失败则驳回并强制同步服务端数据。
+    // isLostSync 如果为 true，则返回所有格子的完整数据。
     public ComponentInventoryPackage(Dictionary<IInventory, List<int>> syncItems)
     {
         m_slots = new Dictionary<int, List<Slot>>();
@@ -309,11 +309,11 @@ public class ComponentInventoryPackage : IPackage
             case EventType.InventorySync:
                 if (isServer)
                 {
-                    // 鏈嶅姟鍣ㄤ笉鎺ュ彈鏉ヨ嚜瀹㈡埛绔殑鍚屾锛佹暍鍙戝彲浠ョ洿鎺ヨ涪鍑烘湇鍔″櫒
+                    // 服务端不接受来自客户端的同步，乱发可以直接踢出服务器。
                 }
                 else
                 {
-                    //瀹㈡埛绔帴鍙楁湇鍔″櫒鐨勫寘
+                    // 客户端接收服务端的同步包
                     foreach (var item in m_slots)
                     {
                         subsystemInventories.FindInventoryById(item.Key, (inventory) =>
@@ -345,7 +345,7 @@ public class ComponentInventoryPackage : IPackage
                         {
                             extra = t.Entity.ValuesDictionary.DatabaseObject.Name;
                         }
-                        Log.Information($"璇锋眰閿欒鐨勭瀛怚D[{m_inventory_id}]鏉ヨ嚜[{m_inventory.GetType().Name}][{extra}]");
+                        Log.Information($"请求错误的背包 ID [{m_inventory_id}]，来自 [{m_inventory.GetType().Name}][{extra}]");
                     });
                 }
                 break;
@@ -393,7 +393,7 @@ public class ComponentInventoryPackage : IPackage
                 }
                 else
                 {
-                    // 鏈嶅姟鍣ㄦ壘涓嶅埌鑳屽寘锛熸€€鐤戞槸鏉ユ墦鏈嶇殑锛侊紒锛?
+                    // 服务端找不到背包？怀疑是来打服的！！
 
                 }
                 break;
@@ -439,14 +439,14 @@ public class ComponentInventoryPackage : IPackage
                 }
                 else
                 {
-                    // 鏈嶅姟鍣ㄦ壘涓嶅埌鑳屽寘锛熸€€鐤戞槸鏉ユ墦鏈嶇殑锛侊紒锛?
+                    // 服务端找不到背包？怀疑是来打服的！！
 
                 }
                 break;
             case EventType.SetSlotsItem:
                 if (isServer)
                 {
-                    // 瀹㈡埛绔姹傛湇鍔″櫒绔敼鑳屽寘锛燂紵杩欑畝鐩存槸閫犲弽锛侊紒锛?
+                    // 客户端要求服务端改背包？？这简直是造反！！
 
                 }
                 else

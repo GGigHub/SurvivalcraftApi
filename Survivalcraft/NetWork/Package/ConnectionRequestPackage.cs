@@ -16,7 +16,7 @@ public class ConnectionRequestPackage : IPackage
     public Client Except { get; set; }
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.NotConnected;
-    const int verrifyMagic = 9421523;//鏍￠獙鐮?
+    const int verrifyMagic = 9421523;//校验码
     int m_magic;
     string m_version;
     string m_password;
@@ -87,7 +87,7 @@ public class ConnectionRequestPackage : IPackage
         }
         catch (Exception ex)
         {
-            Log.Warning("鏌ユ壘鐜╁鍚嶇О鏃跺彂鐢熼敊璇? " + ex.Message);
+            Log.Warning("查找玩家名称时发生错误: " + ex.Message);
         }
         return "";
     }
@@ -126,7 +126,7 @@ public class ConnectionRequestPackage : IPackage
         }
         catch (Exception ex)
         {
-            Log.Warning("浠庢枃浠?" + filePath + " 鍔犺浇鐜╁鍚嶇О鏃跺彂鐢熼敊璇? " + ex.Message);
+            Log.Warning("从文件 " + filePath + " 加载玩家名称时发生错误: " + ex.Message);
         }
         return "";
     }
@@ -157,11 +157,11 @@ public class ConnectionRequestPackage : IPackage
         {
             if (NetworkManager.Self.PlayerGuid == guid)
             {
-                ConnectionError.AppendLine("瀹㈡埛绔拰鏈嶅姟鍣╰oken鐩稿悓");
+                ConnectionError.AppendLine("客户端和服务器 token 相同");
             }
             else if (NetworkManager.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null)
             {
-                ConnectionError.AppendLine("浣犵殑ID涓庢湇鍔″櫒涓煇涓湪绾跨帺瀹剁殑ID鐩稿悓");
+                ConnectionError.AppendLine("你的 ID 与服务器中某个在线玩家的 ID 相同");
             }
             else if (m_version != ProjectNet.Server_Version)
             {
@@ -169,26 +169,26 @@ public class ConnectionRequestPackage : IPackage
             }
             else if (ProjectNet.subsystemPlayers.BlackPlayerGuidList.ContainsKey(token.ToString()))
             {
-                ConnectionError.AppendLine("浣犲凡琚姝㈠姞鍏ユ湇鍔″櫒");
+                ConnectionError.AppendLine("你已被禁止加入服务器");
             }
             else if (NetworkManager.ClientCount >= ProjectNet.subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount)
             {
-                ConnectionError.AppendLine("鍦ㄧ嚎浜烘暟杈惧埌鏈€澶э紝鎷掔粷鍔犲叆");
+                ConnectionError.AppendLine("在线人数达到上限，拒绝加入");
             }
             else if (!string.IsNullOrEmpty(pwd2))
             {
                 if (!useExternalPassword && m_password != pwd2)
                 {
-                    ConnectionError.AppendLine("鎴块棿瀵嗙爜楠岃瘉閿欒");
+                    ConnectionError.AppendLine("房间密码验证错误");
                 }
             }
             else if (string.IsNullOrEmpty(token))
             {
-                ConnectionError.AppendLine("韬唤淇℃伅楠岃瘉閿欒");
+                ConnectionError.AppendLine("身份信息验证错误");
             }
             if (ConnectionError.Length > 0)
             {
-                if (ModsManager.Configs.ContainsKey(saveKey)) //濡傛灉楠岃瘉澶辫触搴旇娓呯悊鐧诲綍淇℃伅
+                if (ModsManager.Configs.ContainsKey(saveKey)) // 如果验证失败，应该清理登录信息
                 {
                     ModsManager.Configs.Remove(saveKey);
                 }
@@ -222,14 +222,14 @@ public class ConnectionRequestPackage : IPackage
                         var acceptedLiteNetPeer = From?.Request?.Accept();
                         if (acceptedLiteNetPeer == null)
                         {
-                            NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("妯＄粍涓嶄竴鑷翠笖鏃犳硶寤虹珛杩炴帴"), From?.Request, true);
+                            NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("模组不一致且无法建立连接"), From?.Request, true);
                             return;
                         }
 
                     }
                     catch (Exception e)
                     {
-                        NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage($"妯＄粍浼犺緭鍒濆鍖栧け璐?{e.Message}"), From?.Request, true);
+                        NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage($"模组传输初始化失败: {e.Message}"), From?.Request, true);
                     }
                     return;
                 }
@@ -241,7 +241,7 @@ public class ConnectionRequestPackage : IPackage
                 foreach (var c in NetworkManager.Peers)
                 {
 #if DEBUG
-                    Log.Information($"閫氱煡Client[{c.ID}]鏂板姞鍏ュ鎴风{AddClient.ID}");
+                    Log.Information($"通知 Client[{c.ID}] 新加入客户端 {AddClient.ID}");
 #endif
                     NetworkManager.AgreeOnPendingPeer.Add(c.ID);
                     NetworkManager.Server.SendWriterFromPackage(clientPackage, c.Peer, true);

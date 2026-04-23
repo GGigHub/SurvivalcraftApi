@@ -16,7 +16,7 @@ public class Client {
     public byte ID { get; internal set; }
 
     // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
-    // 客户端自己的PlayerGuid，以及服务端上所有玩家的PlayerGuid都未经混�?
+    // 客户端自己的 PlayerGuid，以及服务端上所有玩家的 PlayerGuid 都未经混淆。
     // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
     public Guid PlayerGuid { get; internal set; }
 
@@ -41,11 +41,11 @@ public class Client {
     public Entity CachePlayerEntity { get; set; }
 
     /// <summary>
-    /// 是否在连接成功列�?
+    /// 是否已加入连接成功列表。
     /// </summary>
     public bool IsAddedToNetNode { get; private set; }
 
-    //服务器本身构�?
+    // 服务器本身的虚拟 Client 构造。
     public Client(Guid guid) {
         PlayerGuid = guid;
         State = ClientStage.Connected;

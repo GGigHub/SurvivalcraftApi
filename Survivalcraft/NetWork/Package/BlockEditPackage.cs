@@ -13,9 +13,9 @@ public class BlockEditPackage : IPackage
 
     public enum EventType
     {
-        OpenInventoryByID,                  // 打开背包，通过背包id�?注：背包指的是IInventory
+        OpenInventoryByID,                  // 打开背包，通过背包 id。注：背包指的是 IInventory
         OpenInventoryByPoint,              // 打开背包，通过位置，通常是BlockEntity，例如箱子，炉子
-        CrossbowPull,                            // 十字弩拉�?
+        CrossbowPull,                            // 十字弩拉弦
         EditSign,                                     // 编辑牌子
     }
 
@@ -131,13 +131,13 @@ public class BlockEditPackage : IPackage
                             player.ComponentGui.ModalPanelWidget = new FurnaceWidget(player.ComponentMiner.Inventory, componentFurnace);
                             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
                         }
-                        // 发射�?
+                        // 发射器
                         else if(inventory is ComponentDispenser componentDispenser)
                         {
                             player.ComponentMiner.ComponentPlayer.ComponentGui.ModalPanelWidget = new DispenserWidget(player.ComponentMiner.Inventory, componentDispenser);
                             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
                         }
-                        // 工具�?
+                        // 工作台
                         else if(inventory is ComponentCraftingTable componentCraftingTable)
                         {
                             player.ComponentMiner.ComponentPlayer.ComponentGui.ModalPanelWidget = new CraftingTableWidget(player.ComponentMiner.Inventory, componentCraftingTable);

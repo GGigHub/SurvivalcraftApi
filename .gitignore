@@ -343,10 +343,6 @@ healthchecksdb
 
 # Local Netlify folder
 .netlify
-<<<<<<< HEAD
 Survivalcraft.Browser/ContentFileInfo.g.cs
-=======
 /Engine.Browser/Properties/launchSettings.json
 /EntitySystem.Browser/Properties/launchSettings.json
->>>>>>> 305b15e4 (简化代�?
-

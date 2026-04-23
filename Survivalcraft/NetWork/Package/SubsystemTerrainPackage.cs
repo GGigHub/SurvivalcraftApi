@@ -22,7 +22,7 @@ public class SubsystemTerrainPackage : IPackage
         ReplyResult,
         ChangeCell,
         RequestChangeCell,
-        ChangeCellList          // 有这个的话，后面创世神，命令方块处理方块就不用一个包一个包的发�?
+        ChangeCellList          // 有这个的话，后面创世神、命令方块处理方块就不用一个包一个包地发了
     }
 
     public Client To { get; set; }

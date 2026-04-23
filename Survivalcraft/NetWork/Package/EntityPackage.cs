@@ -99,7 +99,7 @@ namespace Game.NetWork.Packages
                 case EventType.LoadList:
                     foreach (var e in m_entities)
                     {
-                        //如果本地ID没有重复的添加，重复了进行替�?
+                        // 如果本地 ID 没有重复就直接添加，重复了则先替换。
                         if (!projectNet.FindEntityById(e.EntityId, e2 =>
                         {
                             projectNet.RemoveEntity(e2, true);
@@ -132,7 +132,7 @@ namespace Game.NetWork.Packages
 
         public static void ConfuseGuid(List<Entity> entities, ValuesDictionary vd, EntityDataList entityDataList, Client to)
         {
-            // 在这里对 vd 进行读取与修�?
+            // 在这里对 vd 进行读取与修正。
             for (int i = 1; i <= entityDataList.EntitiesData.Count; i++)
             {
                 // 每个实体对应一个以 i 为字符串的子字典
@@ -145,7 +145,7 @@ namespace Game.NetWork.Packages
 
                 var overrides = entityDict.GetValue<ValuesDictionary>("Overrides");
 
-                // 玩家组件�?"Player" 键下
+                // 玩家组件在 "Player" 键下
                 if (overrides.ContainsKey("Player"))
                 {
                     var playerVD = overrides.GetValue<ValuesDictionary>("Player");

@@ -38,9 +38,9 @@ public class PlayerDataPackage : IPackage
     public EntityDataList m_entity;
     public TerrainUpdater.UpdateLocation m_updateLocation;
 
-    public string m_bugleTitle; //灏忓枃鍙爣棰?
-    public string m_bugleContent; //灏忓枃鍙唴瀹?
-    public int m_playerCount; //鐜╁浜烘暟
+    public string m_bugleTitle; // 小喇叭标题
+    public string m_bugleContent; // 小喇叭内容
+    public int m_playerCount; // 玩家人数
 
     public PlayerDataPackage()
     {
@@ -193,7 +193,7 @@ public class PlayerDataPackage : IPackage
                 playerData = new PlayerData(projectNet);
                 playerData.Load(m_vd);
                 subsystemPlayers.AddPlayerData(playerData);
-                //鏈嶅姟鍣ㄥ箍鎾粰鎵€鏈夊鎴风锛屾坊鍔犵帺瀹?
+                // 服务端广播给所有客户端，添加玩家。
                 foreach (var client in NetworkManager.Clients)
                 {
                     if (client.Value == NetworkManager.Self) continue;
@@ -225,7 +225,7 @@ public class PlayerDataPackage : IPackage
                 NetworkManager.Server.RemoveClient(From);
                 break;
             case DataType.AddPlayer:
-                //瀹㈡埛绔帴鏀跺埌娣诲姞鐜╁骞挎挱
+                // 客户端收到新增玩家广播。
                 playerData = new PlayerData(projectNet);
                 playerData.Load(m_vd);
                 subsystemPlayers.AddPlayerData(playerData);

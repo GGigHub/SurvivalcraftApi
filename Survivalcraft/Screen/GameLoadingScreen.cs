@@ -40,7 +40,7 @@ public class GameLoadingScreen : Screen {
                         NetworkManager.ConnectServer(m_serverEndPoint, m_password);
                         DialogsManager.ShowDialog(this, spawnDialog);
                         m_stateMachine.TransitionTo("WaitServerReply");
-                        //瀹㈡埛绔紑鍚寘澶勭悊
+                        // 客户端开启收包处理
                         NetworkManager.OnRecieve += Handle;
                     }
                     else {
@@ -57,7 +57,7 @@ public class GameLoadingScreen : Screen {
             timer = Stopwatch.StartNew();
         }, delegate {
             SetSpwanDialogMessage("等待服务器响应", 0.25f);
-            //Fix me::瀹㈡埛绔腑鏂繛鎺ュ彛鍐嶆杩炴帴浼氬崱浣?
+            // Fix me: 客户端中断连接后再次连接可能会卡住。
             if (NetworkManager.CurrentStage == Stage.WaitForClientList) {
                 if (timer.ElapsedMilliseconds >= NetworkManager.DISCONNECT_TIMEOUT) {
                     NetworkManager.Stop("连接超时");
@@ -97,7 +97,7 @@ public class GameLoadingScreen : Screen {
             IsServerReply = false;
         });
         m_stateMachine.AddState("LoadServerReply", null, delegate {
-            SetSpwanDialogMessage("鍔犺浇鏈嶅姟鍣≒roject", 0.6f);
+            SetSpwanDialogMessage("加载服务器 Project", 0.6f);
             if (NetworkManager.CurrentStage == Stage.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
                 ScreensManager.SwitchScreen("Game");
@@ -127,7 +127,7 @@ public class GameLoadingScreen : Screen {
                 }
             }
             else {
-                //鏃犳硶澶勭悊鐨勫寘鍦≒roject鍔犺浇鍚庤繘琛屽鐞?
+                // 无法立即处理的包，在 Project 加载完成后再处理。
                 NetworkManager.AddPendingHandlePackage(p);
             }
             OriginalCommunityContentScreen originalCommunityContentScreen = ScreensManager.FindScreen<OriginalCommunityContentScreen>("OriginalCommunityContent");

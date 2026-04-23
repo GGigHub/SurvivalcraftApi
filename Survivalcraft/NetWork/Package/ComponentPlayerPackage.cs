@@ -614,12 +614,12 @@ public class ComponentPlayerPackage : IPackage
                 });
                 break;
             case PlayerAction.DragDrop:
-                // 鎴戝幓锛屽埆杩欐牱鎼炲晩锛屽洖璋冨湴鐙卞彲鏄細寰堝ご鐤肩殑锛侊紒锛侊紒锛?
+                // 别这样搞，回调地狱很头疼的啊。。。
                 PlayerEvent((player) =>
                 {
                     projectNet.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventory_id, (inventory) =>
                     {
-                        // 涓㈠純鑳屽寘鍐呯殑鐗╁搧锛屼笉鏄椿鍔ㄦ爮鐨?
+                        // 丢弃背包内的物品，不是活动栏里的物品
                         if (inventory == null || ComponentInventoryPackage.IsOwnedByOtherPlayer(inventory, From, out _))
                         {
                             return;

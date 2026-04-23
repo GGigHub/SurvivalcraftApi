@@ -62,11 +62,11 @@ public class ComponentMountPackage : IPackage
                 projectNet.FindEntityById(m_fromId, (entity) =>
                 {
                     var rider = entity.FindComponent<ComponentRider>();
-                    //rider是骑乘�?
+                    // rider 是骑乘者
                     rider?.StartNetDismounting();
                     if (!isServer && rider.Mount != null)
                     {
-                        //禁用骑乘生物的组件行�?
+                        // 禁用骑乘生物的组件行为
                         var select = rider.Mount.Entity.FindComponent<ComponentBehaviorSelector>();
                         if (select != null) select.IsDisableBehavior = true;
                     }
@@ -91,7 +91,7 @@ public class ComponentMountPackage : IPackage
                             rider.StartNetMounting(mount);
                             if (!isServer)
                             {
-                                //启动骑乘生物的组件行�?
+                                // 启用骑乘生物的组件行为
                                 var select = rider.Mount.Entity.FindComponent<ComponentBehaviorSelector>();
                                 if (select != null) select.IsDisableBehavior = false;
                             }
