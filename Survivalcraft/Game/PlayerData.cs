@@ -167,7 +167,7 @@ namespace Game {
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
             }, null);
-            m_stateMachine.AddState("MakePlayerOffline", delegate { AsyncDispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(PlayerGUID, false)); }, null, null);
+            m_stateMachine.AddState("MakePlayerOffline", delegate { Dispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(PlayerGUID, false)); }, null, null);
             m_stateMachine.AddState("PrepareSpawn", delegate {
                 if (SpawnPosition == Vector3.Zero) {
                     if (NetworkManager.WorkType != WorkType.Local && m_subsystemGameInfo.WorldSettings.RandomSpawnPosition) SubsystemPlayers.GlobalSpawnPosition = Vector3.Zero;

@@ -135,7 +135,7 @@ internal sealed class NetPacketTransport {
     public byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer) {
         PackageStreamWriter writer = new PackageStreamWriter {
             IsServer = isServer,
-            Project = GameManager.Project
+            Project = GameManager.Project as ProjectNet
         };
         foreach (var package in packages) {
             writer.Write(NetworkFragment.VerifyByte);
@@ -166,7 +166,7 @@ internal sealed class NetPacketTransport {
     public static int SendWriterFromPackage(NetManager netManager, IEnumerable<IPackage> packages, IPEndPoint endPoint) {
         PackageStreamWriter writer = new PackageStreamWriter {
             IsServer = false,
-            Project = GameManager.Project
+            Project = GameManager.Project as ProjectNet
         };
         foreach (var packet in packages) {
             writer.Write(NetworkFragment.VerifyByte);

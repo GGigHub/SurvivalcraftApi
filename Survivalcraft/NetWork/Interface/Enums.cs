@@ -30,5 +30,4 @@ namespace Game {
         Server = 1,
         Client = 2
     }
-
 }

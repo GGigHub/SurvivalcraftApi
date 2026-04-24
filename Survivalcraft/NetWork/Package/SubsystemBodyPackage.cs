@@ -208,8 +208,11 @@ public class SubsystemBodyPackage : IPackage {
                     });
                 }
                 foreach (var item2 in bodies.Bodies) {
-                    BodyItem? m = m_bodyList.Find(x => { return x.CreatureId == item2.Entity.Id; });
-                    if (!m.HasValue) {
+                    // 如果是玩家或者有子物体（如坐骑），则不通过此包同步，也不应在此时被移除
+                    if (item2.Entity.FindComponent<ComponentPlayer>() != null || item2.ChildBodies.Count > 0) {
+                        continue;
+                    }
+                    if (!m_bodyList.Exists(x => x.CreatureId == item2.Entity.Id)) {
                         rl.Add(item2);
                     }
                 }

@@ -136,25 +136,25 @@ public class PickablePackage : IPackage {
                     int count = reader.ReadInt32();
                     for (int i = 0; i < count; i++) {
                         Pickable pickable = new Pickable();
-                        pickable.Id = reader.ReadUInt16();
+                        pickable.Id = reader.ReadInt32();
                         pickable.Position = reader.ReadVector3();
                         m_pickables.Add(pickable);
                     }
                 }
                 break;
             case PickType.SetFlyToPosition:
-                m_id = reader.ReadUInt16();
+                m_id = reader.ReadInt32();
                 m_flyToPosition = reader.ReadVector3();
                 break;
             case PickType.Delete:
-                m_id = reader.ReadUInt16();
+                m_id = reader.ReadInt32();
                 PlaySound = reader.ReadBoolean();
                 break;
             case PickType.CreateList: {
                     int count = reader.ReadInt32();
                     for (int i = 0; i < count; i++) {
                         Pickable pickable = new Pickable();
-                        pickable.Id = reader.ReadUInt16();
+                        pickable.Id = reader.ReadInt32();
                         pickable.Count = reader.ReadInt32();
                         pickable.Value = reader.ReadInt32();
                         pickable.Position = reader.ReadVector3();
@@ -168,19 +168,19 @@ public class PickablePackage : IPackage {
                     int count = reader.ReadInt32();
                     for (int i = 0; i < count; i++) {
                         Pickable pickable = new Pickable();
-                        pickable.Id = reader.ReadUInt16();
+                        pickable.Id = reader.ReadInt32();
                         m_pickables.Add(pickable);
                     }
                 }
                 break;
             case PickType.RequestSync:
-                m_id = reader.ReadUInt16();
+                m_id = reader.ReadInt32();
                 break;
             case PickType.SyncList: {
                     int count = reader.ReadInt32();
                     for (int i = 0; i < count; i++) {
                         Pickable pickable = new Pickable();
-                        pickable.Id = reader.ReadUInt16();
+                        pickable.Id = reader.ReadInt32();
                         pickable.Count = reader.ReadInt32();
                         pickable.Value = reader.ReadInt32();
                         pickable.Position = reader.ReadVector3();

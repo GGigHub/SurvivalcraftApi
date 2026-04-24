@@ -15,10 +15,6 @@ public class PackageStreamReader : BinaryReader {
         BaseStream.Position = 0L;
     }
 
-    public float ReadSmallFloat() {
-        byte[] d = ReadBytes(2);
-        return HalfFloat.HalfToFloat(d);
-    }
     public float? ReadSingleNullable() {
         if (ReadBoolean()) return ReadSingle();
         else return null;
@@ -38,25 +34,14 @@ public class PackageStreamReader : BinaryReader {
     public Vector3 ReadVector3() {
         return new Vector3(ReadSingle(), ReadSingle(), ReadSingle());
     }
-    public Vector3 ReadSmallVec3() {
-        return new Vector3(ReadSmallFloat(), ReadSmallFloat(), ReadSmallFloat());
-    }
 
     public Vector3? ReadVector3Nullable() {
         if (ReadBoolean()) return new Vector3(ReadSingle(), ReadSingle(), ReadSingle());
         else return null;
     }
-    public Vector3? ReadSmallVector3Nullable() {
-        if (ReadBoolean()) return new Vector3(ReadSmallFloat(), ReadSmallFloat(), ReadSmallFloat());
-        else return null;
-    }
 
     public Vector2 ReadVector2() {
         return new Vector2(ReadSingle(), ReadSingle());
-    }
-
-    public Vector2 ReadSmallVec2() {
-        return new Vector2(ReadSmallFloat(), ReadSmallFloat());
     }
     public Vector2? ReadVector2Nullable() {
         if (ReadBoolean()) return new Vector2(ReadSingle(), ReadSingle());
@@ -75,9 +60,6 @@ public class PackageStreamReader : BinaryReader {
     }
     public Quaternion ReadQuaternion() {
         return new Quaternion(ReadSingle(), ReadSingle(), ReadSingle(), ReadSingle());
-    }
-    public Quaternion ReadSmallQuaternion() {
-        return new Quaternion(ReadSmallFloat(), ReadSmallFloat(), ReadSmallFloat(), ReadSmallFloat());
     }
 
     public Ray3 ReadRay3() {

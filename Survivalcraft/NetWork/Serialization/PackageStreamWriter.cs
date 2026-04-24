@@ -19,9 +19,6 @@ public class PackageStreamWriter : BinaryWriter {
         return NetworkManager.Compress(BaseStream);
     }
 
-    public void WriteSmallFloat(float f) {
-        Write(HalfFloat.FloatToHalf(f));
-    }
     public void WriteNullable(float? v) {
         Write(v.HasValue);
         if (v.HasValue) Write(v.Value);
@@ -55,28 +52,13 @@ public class PackageStreamWriter : BinaryWriter {
         Write(vector.Z);
     }
 
-    public void WriteSmallVec3(Vector3 vector) {
-        WriteSmallFloat(vector.X);
-        WriteSmallFloat(vector.Y);
-        WriteSmallFloat(vector.Z);
-    }
-
     public void Write(Vector3? vector) {
         Write(vector.HasValue);
         if (vector.HasValue) Write(vector.Value);
     }
-    public void WriteSmallVector3Nuallable(Vector3? vector) {
-        Write(vector.HasValue);
-        if (vector.HasValue) WriteSmallVec3(vector.Value);
-    }
-
     public void Write(Vector2 vector) {
         Write(vector.X);
         Write(vector.Y);
-    }
-    public void WriteSmallVec2(Vector2 vector) {
-        WriteSmallFloat(vector.X);
-        WriteSmallFloat(vector.Y);
     }
 
     public void Write(Vector2? vector) {
@@ -104,13 +86,6 @@ public class PackageStreamWriter : BinaryWriter {
         Write(quaternion.Z);
         Write(quaternion.W);
     }
-    public void WriteSmallQuaternion(Quaternion quaternion) {
-        WriteSmallFloat(quaternion.X);
-        WriteSmallFloat(quaternion.Y);
-        WriteSmallFloat(quaternion.Z);
-        WriteSmallFloat(quaternion.W);
-    }
-
     public void Write(Ray3 ray) {
         Write(ray.Position);
         Write(ray.Direction);

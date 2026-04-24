@@ -124,26 +124,6 @@ public class ProjectNet : Project {
         }
     }
 
-    public override EntityDataList SaveEntities(IEnumerable<Entity> entities) {
-        Dictionary<Entity, bool> dictionary = DetermineNotOwnedEntities(entities);
-        Dictionary<Entity, int> dictionary2 = new Dictionary<Entity, int>();
-        EntityToIdMap entityToIdMap = new EntityToIdMap(dictionary2);
-        foreach (Entity key in dictionary.Keys) {
-            dictionary2.Add(key, key.Id);
-        }
-        EntityDataList entityDataList = new EntityDataList();
-        entityDataList.EntitiesData = new List<EntityData>(dictionary.Keys.Count);
-        foreach (Entity key2 in dictionary.Keys) {
-            EntityData entityData = new EntityData();
-            entityData.Id = key2.Id;
-            entityData.ValuesDictionary = new ValuesDictionary();
-            entityData.ValuesDictionary.DatabaseObject = key2.ValuesDictionary.DatabaseObject;
-            key2.InternalSaveEntity(entityData.ValuesDictionary, entityToIdMap);
-            entityDataList.EntitiesData.Add(entityData);
-        }
-        return entityDataList;
-    }
-
     /// <summary>
     /// Entity包的加载方法
     /// </summary>

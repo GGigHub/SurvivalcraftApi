@@ -27,7 +27,7 @@ public class ComponentFurnacePackage : IPackage {
             furnaceDataList.Add(furnaceData);
         }
     }
-    public ComponentFurnacePackage(ushort entityId, float fireTimeRemaining, float smeltingProgress, float heatLevel) {
+    public ComponentFurnacePackage(int entityId, float fireTimeRemaining, float smeltingProgress, float heatLevel) {
         FurnacePackageData furnaceData = new FurnacePackageData();
         furnaceData.entityID = entityId;
         furnaceData.fireTimeRemaining = fireTimeRemaining;
