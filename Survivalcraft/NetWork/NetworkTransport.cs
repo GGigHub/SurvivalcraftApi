@@ -25,7 +25,7 @@ internal sealed class NetPacketTransport {
             foreach (var package in packages) {
                 package.From.IsLocalRemote = fromBroadcast;
                 try {
-                    package.Handle(null, m_node.IsServer);
+                    package.Handle(m_node.IsServer);
                 }
                 catch (Exception e) {
                     Log.Error(string.Format("[{0}]{1}", package.GetType().Name, e.Message));
@@ -105,7 +105,7 @@ internal sealed class NetPacketTransport {
         NetworkManager.OnRecieve += list => {
             foreach (var package in list) {
                 try {
-                    package.Handle(projectNet, m_node.IsServer);
+                    package.Handle(m_node.IsServer);
                 }
                 catch (Exception e) {
                     Log.Error(string.Format("[{0}]{1}", package.GetType().Name, e.Message));

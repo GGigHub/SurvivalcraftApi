@@ -287,7 +287,7 @@ namespace Game {
                 var elist = GameManager.Project.LoadEntities(list);
                 if (elist.Count > 0) {
                     entity = elist[0];
-                    Entity.Id = 0;
+                    entity.Id = 0;
                 }
                 else {
                     entity = null;

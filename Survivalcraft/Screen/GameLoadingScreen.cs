@@ -117,7 +117,7 @@ public class GameLoadingScreen : Screen {
         foreach (var p in packages) {
             if (p is ClientPackage || p is ProjectPackage) {
                 try {
-                    p.Handle(null, false);
+                    p.Handle(false);
                 }
                 catch (Exception e) {
                     Log.Error(string.Format("[{0}]{1}", p.GetType().Name, e.Message));

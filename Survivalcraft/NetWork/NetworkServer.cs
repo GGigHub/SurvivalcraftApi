@@ -171,7 +171,7 @@ public class NetworkServer : NetworkBase {
         else {
             try {
                 ConnectionRequestPackage requestPackage = PackageManager.DecodePackage<ConnectionRequestPackage>(this, request.Data, null, request);
-                requestPackage.Handle(GameManager.Project, true);
+                requestPackage.Handle(true);
             }
             catch (Exception e) {
                 SendWriterFromPackage(new ConnectionRejectPackage($"Invalid connection request packet: {e.Message}"), request, true);

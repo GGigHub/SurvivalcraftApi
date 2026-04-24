@@ -20,7 +20,7 @@ namespace Game {
                         var p = new EditableBlockPackage(EditableType.AdjustableDelayGate, default, true, inventory.Id, slotIndex, newDelay);
                         NetworkManager.QueuePackage(p);
                         if (NetworkManager.WorkType != WorkType.Client) {
-                            p.Handle(GameManager.Project, false);
+                            p.Handle(false);
                         }
                     }
                 )
@@ -43,7 +43,7 @@ namespace Game {
                             var p = new EditableBlockPackage(EditableType.AdjustableDelayGate, cell, false, default, default, newDelay);
                             NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != WorkType.Client) {
-                                p.Handle(GameManager.Project, false);
+                                p.Handle(false);
                             }
                         }
                     }

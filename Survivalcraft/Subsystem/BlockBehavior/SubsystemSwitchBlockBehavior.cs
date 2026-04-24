@@ -24,7 +24,7 @@ namespace Game {
                             var p = new EditableBlockPackage(EditableType.Switch, default, true, inventory.Id, slotIndex, newVoltageLevel);
                             NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != WorkType.Client) {
-                                p.Handle(GameManager.Project, false);
+                                p.Handle(false);
                             }
                         }
                     }
@@ -48,7 +48,7 @@ namespace Game {
                             var p = new EditableBlockPackage(EditableType.Switch, cell, false, default, default, newVoltageLevel);
                             NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != WorkType.Client) {
-                                p.Handle(GameManager.Project, false);
+                                p.Handle(false);
                             }
                         }
                     }
