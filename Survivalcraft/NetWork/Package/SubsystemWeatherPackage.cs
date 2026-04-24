@@ -64,11 +64,11 @@ public class SubsystemWeatherPackage : IPackage {
         m_fogEndTime = reader.ReadDouble();
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer && (From.PlayerData == null || NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)) {
             return;
         }
-        SubsystemWeather weather = projectNet.FindSubsystem<SubsystemWeather>();
+        SubsystemWeather weather = GameManager.Project.FindSubsystem<SubsystemWeather>();
         if (m_weatherType != 0) {
             switch (m_weatherType) {
                 case 1:

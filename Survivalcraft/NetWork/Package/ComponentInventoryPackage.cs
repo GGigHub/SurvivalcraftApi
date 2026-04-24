@@ -240,8 +240,8 @@ public class ComponentInventoryPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
-        var subsystemInventories = projectNet.FindSubsystem<SubsystemInventories>();
+    public void Handle(bool isServer) {
+        var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
 
         IInventory sourceInventoryObject = null;
         IInventory targetInventoryObject = null;

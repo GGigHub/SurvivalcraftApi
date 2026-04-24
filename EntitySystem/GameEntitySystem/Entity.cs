@@ -78,11 +78,6 @@ namespace GameEntitySystem {
 
         public int Id;
 
-        public ushort EntityId {
-            get => (ushort)Id;
-            set => Id = value;
-        }
-
         public Entity(Project project, ValuesDictionary valuesDictionary, int id) : this(project, valuesDictionary) => Id = id;
 
         public static event Action<Entity, List<KeyValuePair<int, Component>>> EntityComponentsInitialized;

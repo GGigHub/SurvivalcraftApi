@@ -7,10 +7,10 @@ public class ComponentClothingPackage : IPackage {
     public byte ID => (byte)PackageType.ComponentClothing;
 
     public enum DataType {
-        RequestSkin,//璇锋眰鐨偆
-        ReplySkin,//鍥炲鐨偆
-        WhoHas,//鍚戝鎴风璇锋眰璧勬簮
-        WhoHasReply//瀹㈡埛鍥炲簲璇锋眰
+        RequestSkin,
+        ReplySkin,
+        WhoHas,
+        WhoHasReply
     }
 
     public Client To { get; set; }
@@ -67,7 +67,7 @@ public class ComponentClothingPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         switch (m_type) {
             case DataType.RequestSkin:
                 if (CharacterSkinsManager.HasSkinRes(SkinName)) {
@@ -80,13 +80,11 @@ public class ComponentClothingPackage : IPackage {
                     }
                 }
                 break;
-            //鍌ㄥ瓨鍥炲鐨勮祫婧?
             case DataType.WhoHasReply:
             case DataType.ReplySkin:
                 if (CharacterSkinsManager.waitReplyList.Contains(SkinName)) CharacterSkinsManager.waitReplyList.Remove(SkinName);
                 CharacterSkinsManager.SaveSkinToFile(SkinName, m_skinData);
                 break;
-            //鍝嶅簲璋佹湁杩欎釜璧勬簮
             case DataType.WhoHas:
                 if (CharacterSkinsManager.HasSkinRes(SkinName)) {
                     NetworkManager.QueuePackage(new ComponentClothingPackage(SkinName, DataType.WhoHasReply));

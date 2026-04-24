@@ -9,9 +9,9 @@ public class ComponentHealthPackage : IPackage {
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public float m_amount;
-    public ushort m_attackerId;
+    public int m_attackerId;
     public string m_cuase;
-    public ushort m_targetId;
+    public int m_targetId;
     public bool m_ignoreInvulnerability;
 
     public Vector3 m_position;
@@ -45,13 +45,13 @@ public class ComponentHealthPackage : IPackage {
     }
 
     public ComponentHealthPackage(ComponentHealth health) {
-        m_targetId = health.Entity.EntityId;
+        m_targetId = health.Entity.Id;
         m_health = health.Health;
         m_type = EventType.SyncHealth;
     }
 
     public ComponentHealthPackage(ComponentDamage health) {
-        m_targetId = health.Entity.EntityId;
+        m_targetId = health.Entity.Id;
         m_health = health.Hitpoints;
         m_type = EventType.Damage;
     }
@@ -59,9 +59,9 @@ public class ComponentHealthPackage : IPackage {
     public ComponentHealthPackage(ComponentHealth target, ComponentCreature attacker, float amount, string cuase, bool ignoreInvulnerability = false, bool isRequest = false, RequestInjureType requestInjureType = RequestInjureType.Unkonw) {
         m_type = isRequest ? EventType.RequestInjure : EventType.Injure;
         m_amount = amount;
-        m_attackerId = attacker == null ? (ushort)0 : attacker.Entity.EntityId;
+        m_attackerId = attacker == null ? 0 : attacker.Entity.Id;
         m_health = target.Health;
-        m_targetId = target.Entity.EntityId;
+        m_targetId = target.Entity.Id;
         m_cuase = cuase;
         m_ignoreInvulnerability = ignoreInvulnerability;
         this.m_requestInjureType = requestInjureType;
@@ -115,8 +115,8 @@ public class ComponentHealthPackage : IPackage {
         m_type = reader.ReadEnum<EventType>();
         switch (m_type) {
             case EventType.RequestInjure:
-                m_targetId = reader.ReadUInt16();
-                m_attackerId = reader.ReadUInt16();
+                m_targetId = reader.ReadInt32();
+                m_attackerId = reader.ReadInt32();
                 m_health = reader.ReadSingle();
                 m_ignoreInvulnerability = reader.ReadBoolean();
                 m_amount = reader.ReadSingle();
@@ -124,8 +124,8 @@ public class ComponentHealthPackage : IPackage {
                 m_requestInjureType = reader.ReadEnum<RequestInjureType>();
                 break;
             case EventType.Injure:
-                m_targetId = reader.ReadUInt16();
-                m_attackerId = reader.ReadUInt16();
+                m_targetId = reader.ReadInt32();
+                m_attackerId = reader.ReadInt32();
                 m_health = reader.ReadSingle();
                 m_ignoreInvulnerability = reader.ReadBoolean();
                 m_amount = reader.ReadSingle();
@@ -138,17 +138,17 @@ public class ComponentHealthPackage : IPackage {
                 m_text = reader.ReadString();
                 break;
             case EventType.SyncHealth:
-                m_targetId = reader.ReadUInt16();
+                m_targetId = reader.ReadInt32();
                 m_health = reader.ReadSingle();
                 break;
             case EventType.Damage:
-                m_targetId = reader.ReadUInt16();
+                m_targetId = reader.ReadInt32();
                 m_health = reader.ReadSingle();
                 break;
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         // 前置过滤：服务端只处理 RequestInjure，客户端只处理其他事件。
         if (NetworkManager.WorkType == WorkType.Server && m_type != EventType.RequestInjure) {
             return; // 服务端忽略非请求事件。
@@ -156,7 +156,7 @@ public class ComponentHealthPackage : IPackage {
 
         switch (m_type) {
             case EventType.RequestInjure:
-                projectNet.FindEntityById(m_targetId, (entity) => {
+                GameManager.Project.FindEntity(m_targetId, (entity) => {
                     // 仅接受客户端发起的自杀和摔落请求，其他环境伤害由服务端权威结算。
                     if (m_requestInjureType != RequestInjureType.Choke && m_requestInjureType != RequestInjureType.Fall) {
                         return;
@@ -169,7 +169,7 @@ public class ComponentHealthPackage : IPackage {
                 break;
 
             case EventType.Injure:
-                projectNet.FindEntityById(m_targetId, (entity) => {
+                GameManager.Project.FindEntity(m_targetId, (entity) => {
                     var health = entity.FindComponent<ComponentHealth>();
                     if (health == null) return;
 
@@ -178,7 +178,7 @@ public class ComponentHealthPackage : IPackage {
                         health.Health = m_health;
                     }
                     else {
-                        projectNet.FindEntityById(m_attackerId, (entity2) => {
+                        GameManager.Project.FindEntity(m_attackerId, (entity2) => {
                             var attacker = entity2.FindComponent<ComponentCreature>();
                             health.NetInjure(m_amount, attacker, m_cuase);
                             health.Health = m_health;
@@ -190,19 +190,19 @@ public class ComponentHealthPackage : IPackage {
             case EventType.HitResult:
                 HitValueParticleSystem particleSystem = new HitValueParticleSystem(m_position, m_velocity, m_color, m_text);
                 float pitch = new Random().Float(-0.2f, 0.2f);
-                projectNet.FindSubsystem<SubsystemParticles>(throwOnError: true).AddParticleSystem(particleSystem);
-                projectNet.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Swoosh", 1f, pitch, m_position, 3f, false);
+                GameManager.Project.FindSubsystem<SubsystemParticles>(throwOnError: true).AddParticleSystem(particleSystem);
+                GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Swoosh", 1f, pitch, m_position, 3f, false);
                 break;
 
             case EventType.SyncHealth:
-                projectNet.FindEntityById(m_targetId, (e) => {
+                GameManager.Project.FindEntity(m_targetId, (e) => {
                     var h = e.FindComponent<ComponentHealth>();
                     if (h != null) h.Health = m_health;
                 });
                 break;
 
             case EventType.Damage:
-                projectNet.FindEntityById(m_targetId, (e) => {
+                GameManager.Project.FindEntity(m_targetId, (e) => {
                     var h = e.FindComponent<ComponentDamage>();
                     if (h != null) h.Hitpoints = m_health;
                 });

@@ -29,12 +29,12 @@ public class PopupPackage : IPackage {
         Message = reader.ReadString();
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer) {
             return;
         }
 
-        var subsystemPlayers = projectNet.FindSubsystem<SubsystemPlayers>();
+        var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
         var mainPlayer = subsystemPlayers?.MainPlayer;
         if (mainPlayer?.GameWidget?.GuiWidget == null) {
             return;

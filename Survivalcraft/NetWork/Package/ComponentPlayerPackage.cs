@@ -57,7 +57,7 @@ public class ComponentPlayerPackage : IPackage {
     public ChangFlag changFlag;
 
     public byte m_fromPlayerId;
-    public ushort bodyId;
+    public int bodyId;
     public Vector3 m_hitPosition;
     public Vector3 m_hitDirection;
     public int m_count;
@@ -181,7 +181,7 @@ public class ComponentPlayerPackage : IPackage {
     }
     public ComponentPlayerPackage(ComponentPlayer player, ComponentBody body, Vector3 hitPosition, Vector3 hitDirection) {
         m_playerData = player.PlayerData;
-        bodyId = body.Entity.EntityId;
+        bodyId = body.Entity.Id;
         m_hitPosition = hitPosition;
         m_hitDirection = hitDirection;
         m_type = PlayerAction.Hit;
@@ -322,7 +322,7 @@ public class ComponentPlayerPackage : IPackage {
                 m_netDigRaycast = reader.ReadTerrainRaycastResultNullable();
                 break;
             case PlayerAction.Hit:
-                bodyId = reader.ReadUInt16();
+                bodyId = reader.ReadInt32();
                 m_hitPosition = reader.ReadVector3();
                 m_hitDirection = reader.ReadVector3();
                 break;
@@ -360,8 +360,8 @@ public class ComponentPlayerPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
-        m_playerData = projectNet.FindSubsystem<SubsystemPlayers>().FindPlayerData((playerData) => { return playerData.ClientId.HasValue && playerData.ClientId.Value == m_fromPlayerId; });
+    public void Handle(bool isServer) {
+        m_playerData = GameManager.Project.FindSubsystem<SubsystemPlayers>().FindPlayerData((playerData) => { return playerData.ClientId.HasValue && playerData.ClientId.Value == m_fromPlayerId; });
         if (NeedHandleMainPlayer == false && m_playerData.IsMainPlayer && m_type != PlayerAction.AddExperience) {
             return;
         }
@@ -466,7 +466,7 @@ public class ComponentPlayerPackage : IPackage {
                 break;
             case PlayerAction.Hit:
                 if (isServer && m_playerData != null) {
-                    var time = projectNet.FindSubsystem<SubsystemTime>().GameTime;
+                    var time = GameManager.Project.FindSubsystem<SubsystemTime>().GameTime;
                     var guid = m_playerData.PlayerGUID;
                     if (s_lastHitTimes.TryGetValue(guid, out var last)) {
                         if (time - last < SERVER_HIT_COOLDOWN) {
@@ -486,8 +486,8 @@ public class ComponentPlayerPackage : IPackage {
                     var bodyHit = player.ComponentMiner.Raycast<BodyRaycastResult>(serverRay, RaycastMode.Interaction);
                     if (bodyHit.HasValue) {
                         var hit = bodyHit.Value;
-                        if (Vector3.Distance(hit.HitPoint(), eye) <= 6f && hit.ComponentBody?.Entity?.EntityId == bodyId) {
-                            projectNet.FindEntityById(bodyId, (entity) => {
+                        if (Vector3.Distance(hit.HitPoint(), eye) <= 6f && hit.ComponentBody?.Entity?.Id == bodyId) {
+                            GameManager.Project.FindEntity(bodyId, (entity) => {
                                 var body = entity.FindComponent<ComponentBody>();
                                 player.ComponentMiner.Hit(body, hit.HitPoint(), dir);
                                 if (isServer) {
@@ -525,7 +525,7 @@ public class ComponentPlayerPackage : IPackage {
             case PlayerAction.DragDrop:
                 // 别这样搞，回调地狱很头疼的啊。。。
                 PlayerEvent((player) => {
-                    projectNet.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventory_id, (inventory) => {
+                    GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventory_id, (inventory) => {
                         // 丢弃背包内的物品，不是活动栏里的物品
                         if (inventory == null || ComponentInventoryPackage.IsOwnedByOtherPlayer(inventory, From, out _)) {
                             return;

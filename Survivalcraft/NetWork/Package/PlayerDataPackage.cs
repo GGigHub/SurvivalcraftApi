@@ -160,7 +160,7 @@ public class PlayerDataPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer &&
             m_type != DataType.Create &&
             m_type != DataType.Modify &&
@@ -169,10 +169,10 @@ public class PlayerDataPackage : IPackage {
             return;
         }
         PlayerData playerData = null;
-        var subsystemPlayers = projectNet.FindSubsystem<SubsystemPlayers>();
+        var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
         switch (m_type) {
             case DataType.Create:
-                playerData = new PlayerData(projectNet);
+                playerData = new PlayerData(GameManager.Project);
                 playerData.Load(m_vd);
                 subsystemPlayers.AddPlayerData(playerData);
                 // 服务端广播给所有客户端，添加玩家。
@@ -203,7 +203,7 @@ public class PlayerDataPackage : IPackage {
                 break;
             case DataType.AddPlayer:
                 // 客户端收到新增玩家广播。
-                playerData = new PlayerData(projectNet);
+                playerData = new PlayerData(GameManager.Project);
                 playerData.Load(m_vd);
                 subsystemPlayers.AddPlayerData(playerData);
                 NetworkManager.QueuePackage(new PlayerDataPackage(playerData, DataType.ClientKnownPlayer));
@@ -211,13 +211,13 @@ public class PlayerDataPackage : IPackage {
             case DataType.SetUpdateLocation:
                 var player = subsystemPlayers.PlayersData.Find(x => x.Client == From);
                 if (player != null) {
-                    var updater = projectNet.FindSubsystem<SubsystemTerrain>().TerrainUpdater;
+                    var updater = GameManager.Project.FindSubsystem<SubsystemTerrain>().TerrainUpdater;
                     updater.SetLastChunksUpdateCenter(player.PlayerIndex, m_updateLocation.LastChunksUpdateCenter);
                     updater.SetUpdateLocation(player.PlayerIndex, m_updateLocation.Center, m_updateLocation.VisibilityDistance, m_updateLocation.ContentDistance);
                 }
                 break;
             case DataType.CloseTime:
-                var p3 = projectNet.FindSubsystem<SubsystemPlayers>().MainPlayer;
+                var p3 = GameManager.Project.FindSubsystem<SubsystemPlayers>().MainPlayer;
                 if (p3 != null) {
                     p3.ComponentGui.CloseTime = m_visibility;
                     DialogsManager.ShowDialog(null, new MessageDialog("服务器关闭提醒", m_playerName, LanguageControl.Yes, LanguageControl.No, btn => {
@@ -226,7 +226,7 @@ public class PlayerDataPackage : IPackage {
                 }
                 break;
             case DataType.Bugle:
-                ComponentPlayer mainPlayer = projectNet.FindSubsystem<SubsystemPlayers>().MainPlayer;
+                ComponentPlayer mainPlayer = GameManager.Project.FindSubsystem<SubsystemPlayers>().MainPlayer;
                 if (mainPlayer != null) {
                     if (m_playerGuid == Guid.Empty || (m_playerGuid != Guid.Empty && mainPlayer.PlayerData.PlayerGUID == m_playerGuid)) {
                         DialogsManager.HideAllDialogs();
@@ -240,9 +240,9 @@ public class PlayerDataPackage : IPackage {
                 }
                 break;
             case DataType.Count:
-                ComponentPlayer mainPlayer2 = projectNet.FindSubsystem<SubsystemPlayers>().MainPlayer;
+                ComponentPlayer mainPlayer2 = GameManager.Project.FindSubsystem<SubsystemPlayers>().MainPlayer;
                 if (mainPlayer2 != null) {
-                    int clientPlayerCount = projectNet.FindSubsystem<SubsystemPlayers>().PlayersData.Count;
+                    int clientPlayerCount = GameManager.Project.FindSubsystem<SubsystemPlayers>().PlayersData.Count;
                     Log.Information($"隐身测试，服务端人数：{m_playerCount}; 客户端人数：{clientPlayerCount}");
                     if (clientPlayerCount != m_playerCount) {
                         ScreensManager.SwitchScreen("NetPlay");
@@ -254,10 +254,10 @@ public class PlayerDataPackage : IPackage {
                 }
                 break;
             case DataType.AddNoMsg:
-                projectNet.FindSubsystem<SubsystemPlayers>().NoMsgPlayerGuidList.Add(m_playerGuid.ToString());
+                GameManager.Project.FindSubsystem<SubsystemPlayers>().NoMsgPlayerGuidList.Add(m_playerGuid.ToString());
                 break;
             case DataType.RemoveNoMsg:
-                projectNet.FindSubsystem<SubsystemPlayers>().NoMsgPlayerGuidList.Remove(m_playerGuid.ToString());
+                GameManager.Project.FindSubsystem<SubsystemPlayers>().NoMsgPlayerGuidList.Remove(m_playerGuid.ToString());
                 break;
         }
     }

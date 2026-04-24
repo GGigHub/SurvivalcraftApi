@@ -81,13 +81,13 @@ public class BlockEditPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (From == null) // 会出现空么？？？？？
         {
             Log.Information("出现空玩家打开背包");
             return;
         }
-        var subsystemInventories = projectNet.FindSubsystem<SubsystemInventories>();
+        var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
         switch (m_type) {
             case EventType.OpenInventoryByID:
                 if (isServer) {
@@ -129,7 +129,7 @@ public class BlockEditPackage : IPackage {
                 break;
             case EventType.OpenInventoryByPoint:
                 if (isServer) {
-                    var subsystemBlockEntities = projectNet.FindSubsystem<SubsystemBlockEntities>();
+                    var subsystemBlockEntities = GameManager.Project.FindSubsystem<SubsystemBlockEntities>();
                     ComponentBlockEntity blockEntity = subsystemBlockEntities.GetBlockEntity(m_point3.X, m_point3.Y, m_point3.Z);
                     if (blockEntity != null) {
                         IInventory inventory = blockEntity.Entity.FindComponent<IInventory>(throwOnError: false);
@@ -162,7 +162,7 @@ public class BlockEditPackage : IPackage {
                     NetworkManager.QueuePackage(this);
                 }
                 else {
-                    DialogsManager.ShowDialog(NetworkManager.MainPlayer.GuiWidget, new EditSignDialog(projectNet.FindSubsystem<SubsystemSignBlockBehavior>(), m_point3));
+                    DialogsManager.ShowDialog(NetworkManager.MainPlayer.GuiWidget, new EditSignDialog(GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>(), m_point3));
                 }
                 break;
         }

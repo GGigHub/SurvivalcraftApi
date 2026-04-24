@@ -1,3 +1,5 @@
+using GameEntitySystem;
+
 namespace Game.NetWork;
 
 public interface IPackage {
@@ -8,5 +10,5 @@ public interface IPackage {
     ClientStage MinNeedState { get; }
     void WriteData(PackageStreamWriter writer);
     void ReadData(PackageStreamReader reader);
-    void Handle(ProjectNet projectNet, bool isServer);
+    void Handle(bool isServer);
 }

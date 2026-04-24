@@ -128,11 +128,11 @@ public class MovingBlockPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer) {
             return;
         }
-        var obj = projectNet.FindSubsystem<SubsystemMovingBlocks>();
+        var obj = GameManager.Project.FindSubsystem<SubsystemMovingBlocks>();
         switch (m_type) {
             case EventType.Add:
                 List<MovingBlock> blocks = new(m_addBlocks.Count);
@@ -154,7 +154,7 @@ public class MovingBlockPackage : IPackage {
                     null,
                     false
                 ) as SubsystemMovingBlocks.MovingBlockSet;
-                var m_subsystemAudio = projectNet.FindSubsystem<SubsystemAudio>();
+                var m_subsystemAudio = GameManager.Project.FindSubsystem<SubsystemAudio>();
                 if (m != null && m.Id == SubsystemPistonBlockBehavior.IdString) {
                     m_subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, m.Position, 2f, autoDelay: true);
                 }

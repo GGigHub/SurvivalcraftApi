@@ -17,16 +17,16 @@ namespace Game.NetWork.Packages {
         }
 
         public EventType m_type;
-        public ushort m_entityId;
-        public List<ushort> m_entityIdList;
+        public int m_entityId;
+        public List<int> m_entityIdList;
 
         public EntityPackage() {
         }
-        public EntityPackage(ushort id) {
+        public EntityPackage(int id) {
             m_type = EventType.Remove;
             m_entityId = id;
         }
-        public EntityPackage(List<ushort> idList) {
+        public EntityPackage(List<int> idList) {
             m_type = EventType.RequestSync;
             m_entityIdList = [.. idList];
         }
@@ -50,7 +50,7 @@ namespace Game.NetWork.Packages {
                     writer.Write(m_entityId);
                     break;
                 case EventType.RequestSync:
-                    writer.Write((ushort)m_entityIdList.Count);
+                    writer.Write(m_entityIdList.Count);
                     foreach (var e in m_entityIdList) writer.Write(e);
                     break;
             }
@@ -63,17 +63,17 @@ namespace Game.NetWork.Packages {
                     m_entities = reader.ReadEntityLoadList();
                     break;
                 case EventType.Remove:
-                    m_entityId = reader.ReadUInt16();
+                    m_entityId = reader.ReadInt32();
                     break;
                 case EventType.RequestSync:
-                    ushort m = reader.ReadUInt16();
-                    m_entityIdList = new List<ushort>();
-                    for (int i = 0; i < m; i++) m_entityIdList.Add(reader.ReadUInt16());
+                    int m = reader.ReadInt32();
+                    m_entityIdList = new List<int>();
+                    for (int i = 0; i < m; i++) m_entityIdList.Add(reader.ReadInt32());
                     break;
             }
         }
 
-        public void Handle(ProjectNet projectNet, bool isServer) {
+        public void Handle(bool isServer) {
             if (isServer) {
                 return;
             }
@@ -83,24 +83,24 @@ namespace Game.NetWork.Packages {
                 case EventType.LoadList:
                     foreach (var e in m_entities) {
                         // 如果本地 ID 没有重复就直接添加，重复了则先替换。
-                        if (!projectNet.FindEntityById(e.EntityId, e2 => {
-                            projectNet.RemoveEntity(e2, true);
-                            projectNet.AddEntity(e);
+                        if (!GameManager.Project.FindEntity(e.Id, e2 => {
+                            GameManager.Project.RemoveEntity(e2, true);
+                            GameManager.Project.AddEntity(e);
 #if DEBUG
-                            Log.Information($"生物替换[{e.EntityId}]");
+                            Log.Information($"生物替换[{e.Id}]");
 #endif
                         })) el.Add(e);
                     }
-                    projectNet.AddEntities(el);
+                    GameManager.Project.AddEntities(el);
                     break;
                 case EventType.Remove:
-                    projectNet.FindEntityById(m_entityId, (entity) => {
-                        projectNet.RemoveEntity(entity, true);
+                    GameManager.Project.FindEntity(m_entityId, (entity) => {
+                        GameManager.Project.RemoveEntity(entity, true);
                     });
                     break;
                 case EventType.RequestSync:
                     foreach (var e in m_entityIdList) {
-                        projectNet.FindEntityById(e, entity => {
+                        GameManager.Project.FindEntity(e, entity => {
                             el.Add(entity);
                         });
                     }

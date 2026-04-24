@@ -22,8 +22,8 @@ public class DispenserPackage : IPackage {
         m_flag = flag;
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
-        var sut = projectNet.FindSubsystem<SubsystemTerrain>();
+    public void Handle(bool isServer) {
+        var sut = GameManager.Project.FindSubsystem<SubsystemTerrain>();
         var value = sut.Terrain.GetCellValue(m_point.X, m_point.Y, m_point.Z);
         if (Terrain.ExtractContents(value) == DispenserBlock.Index) {
             var data = Terrain.ExtractData(value);

@@ -13,7 +13,7 @@ public class ConnectionRejectPackage : IPackage {
 
     public ConnectionRejectPackage(string r) { reason = r; }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         NetworkManager.Stop($"[连接拒绝]{reason}");
     }
 

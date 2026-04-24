@@ -2,9 +2,6 @@ using Engine;
 
 namespace Game.NetWork.Packages;
 
-/// <summary>
-/// 鍩虹鍖呮ā鏉垮鍒?
-/// </summary>
 public class ClientPackage : IPackage {
     public byte ID => (byte)PackageType.Client;
     public Client To { get; set; }
@@ -43,7 +40,7 @@ public class ClientPackage : IPackage {
         eventType = EventType.SyncList;
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer && eventType != EventType.StateChange) {
             return;
         }

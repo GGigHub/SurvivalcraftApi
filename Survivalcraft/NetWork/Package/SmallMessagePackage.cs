@@ -42,10 +42,10 @@ public class SmallMessagePackage : IPackage {
         PlayNotificationSound = reader.ReadBoolean();
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (!isServer) {
             // 客户端接收到小消息提示
-            var subsystemPlayers = projectNet.FindSubsystem<SubsystemPlayers>();
+            var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
             var mainPlayer = subsystemPlayers.MainPlayer;
 
             mainPlayer?.ComponentGui?.DisplaySmallMessage(Message, MessageColor, Blinking, PlayNotificationSound);

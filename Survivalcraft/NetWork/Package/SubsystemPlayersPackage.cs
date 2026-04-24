@@ -35,9 +35,9 @@ public class SubsystemPlayersPackage : IPackage {
             }
         }
     }
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         foreach (var package in componentPlayerPackageList) {
-            package.Handle(projectNet, isServer);
+            package.Handle(isServer);
         }
     }
 }

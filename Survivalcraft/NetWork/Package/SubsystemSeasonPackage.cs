@@ -29,11 +29,11 @@ public class SubsystemSeasonPackage : IPackage {
         TimeOfSeasonNet = reader.ReadSingle(); // 直接读取 float 类型
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer) {
             return;
         }
-        SubsystemSeasons weather = projectNet.FindSubsystem<SubsystemSeasons>();
+        SubsystemSeasons weather = GameManager.Project.FindSubsystem<SubsystemSeasons>();
         weather.Season = (Season)SeasonIndexNet;
         weather.TimeOfSeason = TimeOfSeasonNet;
     }

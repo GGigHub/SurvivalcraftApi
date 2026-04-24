@@ -19,7 +19,7 @@ public class ProjectilePackage : IPackage {
     public Vector3 m_velocity;
     public Vector3 m_angularVelocity;
     public Vector3 m_trailOfffset;
-    public ushort m_ownerId;
+    public int m_ownerId;
     public bool m_isFireProjectile;
 
     public ProjectilePackage() {
@@ -30,7 +30,7 @@ public class ProjectilePackage : IPackage {
         m_velocity = projectile.Velocity;
         m_trailOfffset = projectile.TrailOffset;
         m_angularVelocity = projectile.AngularVelocity;
-        m_ownerId = projectile.Owner == null ? (ushort)0 : projectile.Owner.Entity.EntityId;
+        m_ownerId = projectile.Owner == null ? 0 : projectile.Owner.Entity.Id;
     }
     public void WriteData(PackageStreamWriter writer) {
         writer.Write(m_value);
@@ -46,17 +46,17 @@ public class ProjectilePackage : IPackage {
         m_velocity = reader.ReadVector3();
         m_trailOfffset = reader.ReadVector3();
         m_angularVelocity = reader.ReadVector3();
-        m_ownerId = reader.ReadUInt16();
+        m_ownerId = reader.ReadInt32();
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer) {
             return;
         }
-        var subsystem = projectNet.FindSubsystem<SubsystemProjectiles>();
+        var subsystem = GameManager.Project.FindSubsystem<SubsystemProjectiles>();
         ComponentCreature creature = null;
         if (m_ownerId != 0) {
-            projectNet.FindEntityById(m_ownerId, (entity) => {
+            GameManager.Project.FindEntity(m_ownerId, (entity) => {
                 creature = entity.FindComponent<ComponentCreature>();
             });
         }

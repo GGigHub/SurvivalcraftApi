@@ -44,7 +44,7 @@ public class ServerInfoPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (m_requestInfo) {
             NetworkManager.Server.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
         }

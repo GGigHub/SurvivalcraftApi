@@ -6,8 +6,8 @@ public class ComponentOnFirePackage : IPackage {
     public Client Except { get; set; }
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.ProjectLoaded;
-    public ushort m_entityId;
-    public ushort m_attackerEntityId;
+    public int m_entityId;
+    public int m_attackerEntityId;
     public float m_duration;
     public int x, y, z;
 
@@ -23,8 +23,8 @@ public class ComponentOnFirePackage : IPackage {
     public ComponentOnFirePackage(ComponentOnFire target, ComponentCreature attacker, float duration) {
         m_type = EventType.ComponentOnFire;
         m_duration = duration;
-        if (attacker != null) m_attackerEntityId = attacker.Entity.EntityId;
-        m_entityId = target.Entity.EntityId;
+        if (attacker != null) m_attackerEntityId = attacker.Entity.Id;
+        m_entityId = target.Entity.Id;
     }
     public ComponentOnFirePackage(int x, int y, int z, float expandability) {
         m_type = EventType.BlockOnFireAdd;
@@ -65,8 +65,8 @@ public class ComponentOnFirePackage : IPackage {
         m_type = reader.ReadEnum<EventType>();
         switch (m_type) {
             case EventType.ComponentOnFire:
-                m_entityId = reader.ReadUInt16();
-                m_attackerEntityId = reader.ReadUInt16();
+                m_entityId = reader.ReadInt32();
+                m_attackerEntityId = reader.ReadInt32();
                 m_duration = reader.ReadSingle();
                 break;
             case EventType.BlockOnFireAdd:
@@ -83,24 +83,24 @@ public class ComponentOnFirePackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer) {
             return;
         }
         switch (m_type) {
             case EventType.BlockOnFireAdd:
-                projectNet.FindSubsystem<SubsystemFireBlockBehavior>().AddFireNet(x, y, z, m_duration);
+                GameManager.Project.FindSubsystem<SubsystemFireBlockBehavior>().AddFireNet(x, y, z, m_duration);
                 break;
             case EventType.BlockOnFireRemove:
-                projectNet.FindSubsystem<SubsystemFireBlockBehavior>().RemoveFireNet(x, y, z);
+                GameManager.Project.FindSubsystem<SubsystemFireBlockBehavior>().RemoveFireNet(x, y, z);
                 break;
             case EventType.ComponentOnFire:
-                projectNet.FindEntityById(m_entityId, (e) => {
+                GameManager.Project.FindEntity(m_entityId, (e) => {
                     ComponentOnFire onFire = e.FindComponent<ComponentOnFire>();
                     if (onFire != null) {
                         if (m_attackerEntityId == 0) onFire.SetOnFireNet(null, m_duration);
                         else {
-                            projectNet.FindEntityById(m_attackerEntityId, (e2) => {
+                            GameManager.Project.FindEntity(m_attackerEntityId, (e2) => {
                                 ComponentCreature creature = e2.FindComponent<ComponentCreature>();
                                 onFire.SetOnFireNet(creature, m_duration);
                             });

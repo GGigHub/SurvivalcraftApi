@@ -42,7 +42,7 @@ public class ConnectionRequestPackage : IPackage {
         modInfos = [.. modEntities];
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         StringBuilder ConnectionError = new StringBuilder();
         if (string.IsNullOrEmpty(m_token)) {
             NetworkManager.Server.SendWriterFromPackage(new ConnectionRejectPackage("身份信息为空，验证失败"), From.Request, true);

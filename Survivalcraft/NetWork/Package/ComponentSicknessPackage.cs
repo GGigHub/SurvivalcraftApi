@@ -16,13 +16,13 @@ namespace Game.NetWork.Packages {
 
         public EventType m_eventType;
 
-        public ushort entityId;
+        public int entityId;
 
         public ComponentSicknessPackage() {
 
         }
         public ComponentSicknessPackage(ComponentSickness sickness) {
-            entityId = sickness.Entity.EntityId;
+            entityId = sickness.Entity.Id;
             m_sicknessDuration = sickness.m_sicknessDuration;
         }
 
@@ -31,15 +31,15 @@ namespace Game.NetWork.Packages {
             writer.Write(m_sicknessDuration);
         }
         public void ReadData(PackageStreamReader reader) {
-            entityId = reader.ReadUInt16();
+            entityId = reader.ReadInt32();
             m_sicknessDuration = reader.ReadSingle();
         }
 
-        public void Handle(ProjectNet projectNet, bool isServer) {
+        public void Handle(bool isServer) {
             if (isServer) {
                 return;
             }
-            projectNet.FindEntityById(entityId, (entity) => {
+            GameManager.Project.FindEntity(entityId, (entity) => {
                 var sickness = entity.FindComponent<ComponentSickness>();
                 if (sickness != null) {
                     sickness.m_sicknessDuration = m_sicknessDuration;

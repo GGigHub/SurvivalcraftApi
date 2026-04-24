@@ -14,7 +14,7 @@ public class SubsystemBodyPackage : IPackage {
         HandleAxisCollision
     }
     private struct BodyItem {
-        public ushort CreatureId;
+        public int CreatureId;
         public Vector3 Position;
         public Vector3 Velocity;
         public Quaternion Rotation;
@@ -23,8 +23,8 @@ public class SubsystemBodyPackage : IPackage {
         public ChangeFlag changeFlag;
     }
 
-    public ushort CreatureId;
-    public ushort TargetCreatureId;
+    public int CreatureId;
+    public int TargetCreatureId;
     public Vector3 m_Impulse;
     public EventType m_eventType;
 
@@ -50,7 +50,7 @@ public class SubsystemBodyPackage : IPackage {
 
     public void AddItem(ComponentBody body) {
         BodyItem bodyItem = new BodyItem();
-        bodyItem.CreatureId = body.Entity.EntityId;
+        bodyItem.CreatureId = body.Entity.Id;
         if (body.SendPosition.HasValue) {
             bodyItem.changeFlag |= ChangeFlag.PositionChange;
             bodyItem.Position = body.SendPosition.Value;
@@ -77,22 +77,22 @@ public class SubsystemBodyPackage : IPackage {
     }
 
     public SubsystemBodyPackage(ComponentBody body, Vector3 vector) {
-        CreatureId = body.Entity.EntityId;
+        CreatureId = body.Entity.Id;
         m_eventType = EventType.ApplyImpulse;
         m_Impulse = vector;
     }
 
     public SubsystemBodyPackage(ComponentBody from, ComponentBody target, Vector3 velocity) {
         m_eventType = EventType.HandleAxisCollision;
-        CreatureId = from.Entity.EntityId;
-        TargetCreatureId = target.Entity.EntityId;
+        CreatureId = from.Entity.Id;
+        TargetCreatureId = target.Entity.Id;
         m_Impulse = velocity;
     }
 
     private BodyItem ReadItem(PackageStreamReader reader) {
         BodyItem bodyItem = new BodyItem();
         bodyItem.changeFlag = reader.ReadEnum<ChangeFlag>();
-        bodyItem.CreatureId = reader.ReadUInt16();
+        bodyItem.CreatureId = reader.ReadInt32();
         if (bodyItem.changeFlag.HasFlag(ChangeFlag.PositionChange)) {
             bodyItem.Position = reader.ReadVector3();
         }
@@ -136,18 +136,18 @@ public class SubsystemBodyPackage : IPackage {
         m_eventType = reader.ReadEnum<EventType>();
         switch (m_eventType) {
             case EventType.BodyUpdate:
-                ushort cnt = reader.ReadUInt16();
+                int cnt = reader.ReadInt32();
                 for (ushort i = 0; i < cnt; i++) {
                     m_bodyList.Add(ReadItem(reader));
                 }
                 break;
             case EventType.HandleAxisCollision:
-                CreatureId = reader.ReadUInt16();
-                TargetCreatureId = reader.ReadUInt16();
+                CreatureId = reader.ReadInt32();
+                TargetCreatureId = reader.ReadInt32();
                 m_Impulse = reader.ReadVector3();
                 break;
             case EventType.ApplyImpulse:
-                CreatureId = reader.ReadUInt16();
+                CreatureId = reader.ReadInt32();
                 m_Impulse = reader.ReadVector3();
                 break;
         }
@@ -157,7 +157,7 @@ public class SubsystemBodyPackage : IPackage {
         writer.WriteEnum(m_eventType);
         switch (m_eventType) {
             case EventType.BodyUpdate:
-                writer.Write((ushort)m_bodyList.Count);
+                writer.Write(m_bodyList.Count);
                 foreach (var i in m_bodyList) WriteItem(writer, i);
                 break;
             case EventType.HandleAxisCollision:
@@ -173,14 +173,14 @@ public class SubsystemBodyPackage : IPackage {
     }
 
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer && m_eventType == EventType.BodyUpdate) {
             return;
         }
         switch (m_eventType) {
             case EventType.BodyUpdate:
-                var bodies = projectNet.FindSubsystem<SubsystemBodies>();
-                List<ushort> ml = new List<ushort>();
+                var bodies = GameManager.Project.FindSubsystem<SubsystemBodies>();
+                List<int> ml = new List<int>();
                 List<ComponentBody> rl = new List<ComponentBody>();
                 //服务器的动物列表
                 foreach (var item in m_bodyList) {
@@ -208,7 +208,7 @@ public class SubsystemBodyPackage : IPackage {
                     });
                 }
                 foreach (var item2 in bodies.Bodies) {
-                    BodyItem? m = m_bodyList.Find(x => { return x.CreatureId == item2.Entity.EntityId; });
+                    BodyItem? m = m_bodyList.Find(x => { return x.CreatureId == item2.Entity.Id; });
                     if (!m.HasValue) {
                         rl.Add(item2);
                     }
@@ -222,17 +222,17 @@ public class SubsystemBodyPackage : IPackage {
                 if (rl.Count > 0) {
                     foreach (var b in rl) {
 #if DEBUG
-                        Log.Information($"客户端移除不同步的实体 {b.Entity.EntityId}");
+                        Log.Information($"客户端移除不同步的实体 {b.Entity.Id}");
 #endif
-                        projectNet.RemoveEntity(b.Entity, true);
+                        GameManager.Project.RemoveEntity(b.Entity, true);
                     }
                 }
                 break;
             case EventType.HandleAxisCollision:
                 // 待补全逻辑，外挂可能把玩家撞飞
                 /*
-                projectNet.FindSubsystem<SubsystemBodies>().FindBodyByCreatureID(CreatureId, (from) => {
-                    projectNet.FindSubsystem<SubsystemBodies>().FindBodyByCreatureID(TargetCreatureId, (target) => {
+                GameManager.Project.FindSubsystem<SubsystemBodies>().FindBodyByCreatureID(CreatureId, (from) => {
+                    GameManager.Project.FindSubsystem<SubsystemBodies>().FindBodyByCreatureID(TargetCreatureId, (target) => {
                         target.Velocity = m_Impulse;
                         target.netVelocity.SetNext(m_Impulse);
                         from.CollidedWithBody?.Invoke(target);
@@ -244,7 +244,7 @@ public class SubsystemBodyPackage : IPackage {
             case EventType.ApplyImpulse:
                 // 同上
                 /*
-                projectNet.FindSubsystem<SubsystemBodies>().FindBodyByCreatureID(CreatureId, (body) => {
+                GameManager.Project.FindSubsystem<SubsystemBodies>().FindBodyByCreatureID(CreatureId, (body) => {
                     body.ApplyImpulseNet(m_Impulse);
                 });
                 */

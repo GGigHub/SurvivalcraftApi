@@ -1,7 +1,9 @@
+using GameEntitySystem;
+
 namespace Game.NetWork.Packages;
 
 /// <summary>
-/// 鍩虹鍖呮ā鏉垮鍒?
+/// 基础包模板复制
 /// </summary>
 public class EditableBlockPackage : IPackage {
     public byte ID => (byte)PackageType.EditableBlock;
@@ -63,11 +65,11 @@ public class EditableBlockPackage : IPackage {
         m_slotIndex = id;
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
-        var subInventory = projectNet.FindSubsystem<SubsystemInventories>();
+    public void Handle(bool isServer) {
+        var subInventory = GameManager.Project.FindSubsystem<SubsystemInventories>();
         switch (m_itemType) {
             case EditableType.MemoryBank:
-                var behavior = projectNet.FindSubsystem<SubsystemMemoryBankBlockBehavior>();
+                var behavior = GameManager.Project.FindSubsystem<SubsystemMemoryBankBlockBehavior>();
                 var data = new MemoryBankData();
                 foreach (var item in m_Data) {
                     data.Data.Add(item);
@@ -93,7 +95,7 @@ public class EditableBlockPackage : IPackage {
                 }
                 break;
             case EditableType.TruthTable:
-                var truthBehavior = projectNet.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>();
+                var truthBehavior = GameManager.Project.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>();
                 var truthData = new TruthTableData();
                 truthData.Data = m_Data;
                 if (syncItem) {
@@ -124,7 +126,7 @@ public class EditableBlockPackage : IPackage {
                     });
                 }
                 else {
-                    SubsystemTerrain st = projectNet.FindSubsystem<SubsystemTerrain>();
+                    SubsystemTerrain st = GameManager.Project.FindSubsystem<SubsystemTerrain>();
                     int value = st.Terrain.GetCellValue(m_cellFace.X, m_cellFace.Y, m_cellFace.Z);
                     int newValue = Terrain.ReplaceData(value, AdjustableDelayGateBlock.SetDelay(Terrain.ExtractData(value), m_delay));
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
@@ -137,7 +139,7 @@ public class EditableBlockPackage : IPackage {
                     });
                 }
                 else {
-                    SubsystemTerrain st = projectNet.FindSubsystem<SubsystemTerrain>();
+                    SubsystemTerrain st = GameManager.Project.FindSubsystem<SubsystemTerrain>();
                     int value = st.Terrain.GetCellValue(m_cellFace.X, m_cellFace.Y, m_cellFace.Z);
                     int newValue = Terrain.ReplaceData(value, BatteryBlock.SetVoltageLevel(Terrain.ExtractData(value), m_delay));
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
@@ -150,7 +152,7 @@ public class EditableBlockPackage : IPackage {
                     });
                 }
                 else {
-                    SubsystemTerrain st = projectNet.FindSubsystem<SubsystemTerrain>();
+                    SubsystemTerrain st = GameManager.Project.FindSubsystem<SubsystemTerrain>();
                     int value = st.Terrain.GetCellValue(m_cellFace.X, m_cellFace.Y, m_cellFace.Z);
                     int newValue = Terrain.ReplaceData(value, SwitchBlock.SetVoltageLevel(Terrain.ExtractData(value), m_delay));
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
@@ -163,7 +165,7 @@ public class EditableBlockPackage : IPackage {
                     });
                 }
                 else {
-                    SubsystemTerrain st = projectNet.FindSubsystem<SubsystemTerrain>();
+                    SubsystemTerrain st = GameManager.Project.FindSubsystem<SubsystemTerrain>();
                     int value = st.Terrain.GetCellValue(m_cellFace.X, m_cellFace.Y, m_cellFace.Z);
                     int newValue = Terrain.ReplaceData(value, ButtonBlock.SetVoltageLevel(Terrain.ExtractData(value), m_delay));
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
@@ -176,7 +178,7 @@ public class EditableBlockPackage : IPackage {
                     });
                 }
                 else {
-                    SubsystemTerrain st = projectNet.FindSubsystem<SubsystemTerrain>();
+                    SubsystemTerrain st = GameManager.Project.FindSubsystem<SubsystemTerrain>();
                     int value = st.Terrain.GetCellValue(m_cellFace.X, m_cellFace.Y, m_cellFace.Z);
                     int newValue = Terrain.ReplaceData(value, m_delay);
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);

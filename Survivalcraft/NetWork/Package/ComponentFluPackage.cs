@@ -21,14 +21,14 @@ public class ComponentFluPackage : IPackage {
 
     public EventType m_eventType;
 
-    public ushort entityId;
+    public int entityId;
 
     public ComponentFluPackage() {
 
     }
 
     public ComponentFluPackage(ComponentFlu flu, EventType eventType) {
-        entityId = flu.Entity.EntityId;
+        entityId = flu.Entity.Id;
         m_eventType = eventType;
         m_fluOnset = flu.m_fluOnset;
         m_fluDuration = flu.m_fluDuration;
@@ -46,7 +46,7 @@ public class ComponentFluPackage : IPackage {
     }
 
     public void ReadData(PackageStreamReader reader) {
-        entityId = reader.ReadUInt16();
+        entityId = reader.ReadInt32();
         m_eventType = reader.ReadEnum<EventType>();
         m_fluOnset = reader.ReadSingle();
         m_fluDuration = reader.ReadSingle();
@@ -54,13 +54,13 @@ public class ComponentFluPackage : IPackage {
         m_sneezeDuration = reader.ReadSingle();
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer) {
             return;
         }
         switch (m_eventType) {
             case EventType.SyncStat:
-                projectNet.FindEntityById(entityId, (entity) => {
+                GameManager.Project.FindEntity(entityId, (entity) => {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu != null) {
                         flu.m_fluOnset = m_fluOnset;
@@ -71,7 +71,7 @@ public class ComponentFluPackage : IPackage {
                 });
                 break;
             case EventType.FluEffect:
-                projectNet.FindEntityById(entityId, (entity) => {
+                GameManager.Project.FindEntity(entityId, (entity) => {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu != null) {
                         flu.m_fluOnset = m_fluOnset;
@@ -83,7 +83,7 @@ public class ComponentFluPackage : IPackage {
                 });
                 break;
             case EventType.StartFlu:
-                projectNet.FindEntityById(entityId, (entity) => {
+                GameManager.Project.FindEntity(entityId, (entity) => {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu != null) {
                         flu.m_fluOnset = m_fluOnset;
@@ -95,7 +95,7 @@ public class ComponentFluPackage : IPackage {
                 });
                 break;
             case EventType.Sneeze:
-                projectNet.FindEntityById(entityId, (entity) => {
+                GameManager.Project.FindEntity(entityId, (entity) => {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu != null) {
                         flu.m_fluOnset = m_fluOnset;

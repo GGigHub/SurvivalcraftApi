@@ -80,7 +80,7 @@ namespace Game {
                 var p = new DispenserPackage(m_componentBlockEntity.Coordinates, tmp);
                 NetworkManager.QueuePackage(p);
                 if (NetworkManager.WorkType != WorkType.Client) {
-                    p.Handle(ProjectNet.Project, false);
+                    p.Handle(GameManager.Project, false);
                 }
             }
             m_dispenseButton.IsChecked = mode == DispenserBlock.Mode.Dispense;

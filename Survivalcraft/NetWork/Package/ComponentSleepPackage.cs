@@ -8,7 +8,7 @@ public class ComponentSleepPackage : IPackage {
     public Client Except { get; set; }
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.ProjectLoaded;
-    public ushort m_entityId;
+    public int m_entityId;
     public string reason = "";
 
     public enum EventType {
@@ -26,7 +26,7 @@ public class ComponentSleepPackage : IPackage {
     }
     public ComponentSleepPackage(ComponentSleep sleep, EventType eventType, bool allow = false, bool result = false, string msg = "") {
         reason = msg;
-        m_entityId = sleep.Entity.EntityId;
+        m_entityId = sleep.Entity.Id;
         m_type = eventType;
         allowManualWakeup = allow;
         m_result = result;
@@ -39,15 +39,15 @@ public class ComponentSleepPackage : IPackage {
         writer.Write(reason);
     }
     public void ReadData(PackageStreamReader reader) {
-        m_entityId = reader.ReadUInt16();
+        m_entityId = reader.ReadInt32();
         m_type = reader.ReadEnum<EventType>();
         allowManualWakeup = reader.ReadBoolean();
         m_result = reader.ReadBoolean();
         reason = reader.ReadString();
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
-        projectNet.FindEntityById(m_entityId, (e) => {
+    public void Handle(bool isServer) {
+        GameManager.Project.FindEntity(m_entityId, (e) => {
             ComponentSleep sleep = e.FindComponent<ComponentSleep>();
             if (sleep == null) return;
             ComponentPlayer player = e.FindComponent<ComponentPlayer>();

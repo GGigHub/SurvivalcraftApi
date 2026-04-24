@@ -38,8 +38,8 @@ public class SubsystemElectricityPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
-        m_subsystem = projectNet.FindSubsystem<SubsystemElectricity>();
+    public void Handle(bool isServer) {
+        m_subsystem = GameManager.Project.FindSubsystem<SubsystemElectricity>();
         m_subsystem.list.AddRange(NetSimulates);
     }
 }

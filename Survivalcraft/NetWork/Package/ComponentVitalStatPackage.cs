@@ -14,7 +14,7 @@ public class ComponentVitalStatPackage : IPackage {
     public int m_slotIndex;
     public int m_foodValue;
     public EventType m_eventType;
-    public ushort m_entityId;
+    public int m_entityId;
     public float Food = default;
     public float Stamina = default;
     public float Sleep = default;
@@ -25,7 +25,7 @@ public class ComponentVitalStatPackage : IPackage {
     }
     public ComponentVitalStatPackage(ComponentVitalStats vitalStats) {
         m_eventType = EventType.SyncStat;
-        m_entityId = vitalStats.Entity.EntityId;
+        m_entityId = vitalStats.Entity.Id;
         Food = vitalStats.Food;
         Sleep = vitalStats.Sleep;
         Stamina = vitalStats.Stamina;
@@ -39,7 +39,7 @@ public class ComponentVitalStatPackage : IPackage {
                 m_foodValue = value;
                 m_inventoryId = inventory.Id;
                 m_slotIndex = slotIndex;
-                m_entityId = vitalStats.Entity.EntityId;
+                m_entityId = vitalStats.Entity.Id;
             }*/
 
     public void WriteData(PackageStreamWriter writer) {
@@ -61,7 +61,7 @@ public class ComponentVitalStatPackage : IPackage {
         }
     }
     public void ReadData(PackageStreamReader reader) {
-        m_entityId = reader.ReadUInt16();
+        m_entityId = reader.ReadInt32();
         m_eventType = reader.ReadEnum<EventType>();
         switch (m_eventType) {
             case EventType.SyncStat:
@@ -79,13 +79,13 @@ public class ComponentVitalStatPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer) {
             return;
         }
         switch (m_eventType) {
             case EventType.SyncStat:
-                projectNet.FindEntityById(m_entityId, (entity) => {
+                GameManager.Project.FindEntity(m_entityId, (entity) => {
                     var m_vitalStats = entity.FindComponent<ComponentVitalStats>();
                     if (m_vitalStats != null) {
                         m_vitalStats.Food = Food;
@@ -97,11 +97,11 @@ public class ComponentVitalStatPackage : IPackage {
                 });
                 break;
                 /*                case EventType.Eat:
-                                    projectNet.FindEntityById(m_entityId, (entity) => {
+                                    GameManager.Project.FindEntityById(m_entityId, (entity) => {
                                         var m_vitalStats = entity.FindComponent<ComponentVitalStats>();
                                         if (m_vitalStats != null)
                                         {
-                                            projectNet.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
+                                            GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
                                                 int v = inventory.GetSlotValue(m_slotIndex);
                                                 if (v == m_foodValue)
                                                 {

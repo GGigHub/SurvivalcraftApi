@@ -188,11 +188,11 @@ public class SubsystemTerrainPackage : IPackage {
             chunk2.WasUpgraded = true;
         }
     }
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer && m_type != DataType.RequestSyncChunks) {
             return;
         }
-        var subsystemTerrain = projectNet.FindSubsystem<SubsystemTerrain>();
+        var subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
         switch (m_type) {
             case DataType.RequestSyncChunks:
                 if (!subsystemTerrain.TerrainUpdater.waitChunkList.TryGetValue(From, out var list)) {

@@ -160,7 +160,7 @@ public class NetworkServer : NetworkBase {
     public void ConnectionRequestEvent(ConnectionRequest request) {
         Log.Information("Received connection request " + request.RemoteEndPoint);
 
-        if (ProjectNet.Project == null) {
+        if (GameManager.Project == null) {
             SendWriterFromPackage(new ConnectionRejectPackage("Please wait until server startup is complete before joining."), request, true);
         }
         else if (PendingClient != null) {
@@ -171,7 +171,7 @@ public class NetworkServer : NetworkBase {
         else {
             try {
                 ConnectionRequestPackage requestPackage = PackageManager.DecodePackage<ConnectionRequestPackage>(this, request.Data, null, request);
-                requestPackage.Handle(ProjectNet.Project, true);
+                requestPackage.Handle(GameManager.Project, true);
             }
             catch (Exception e) {
                 SendWriterFromPackage(new ConnectionRejectPackage($"Invalid connection request packet: {e.Message}"), request, true);

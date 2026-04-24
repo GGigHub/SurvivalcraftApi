@@ -193,11 +193,11 @@ public class PickablePackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer && m_type != PickType.RequestSync) {
             return;
         }
-        var subsystemPickable = projectNet.FindSubsystem<SubsystemPickables>();
+        var subsystemPickable = GameManager.Project.FindSubsystem<SubsystemPickables>();
         bool flag = false;
         switch (m_type) {
             case PickType.Create:

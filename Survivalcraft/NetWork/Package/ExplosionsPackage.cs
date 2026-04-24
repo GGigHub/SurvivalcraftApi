@@ -80,11 +80,11 @@ public class ExplosionsPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer) {
             return;
         }
-        var sub = projectNet.FindSubsystem<SubsystemExplosions>();
+        var sub = GameManager.Project.FindSubsystem<SubsystemExplosions>();
         switch (m_type) {
             case EventType.Cell:
                 foreach (var i in m_cells) {

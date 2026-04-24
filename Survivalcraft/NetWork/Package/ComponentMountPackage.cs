@@ -6,8 +6,8 @@ public class ComponentMountPackage : IPackage {
     public Client Except { get; set; }
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.ProjectLoaded;
-    public ushort m_targetId;
-    public ushort m_fromId;
+    public int m_targetId;
+    public int m_fromId;
 
     public EventType m_type;
 
@@ -22,12 +22,12 @@ public class ComponentMountPackage : IPackage {
     }
     public ComponentMountPackage(ComponentRider rider, ComponentMount mount, bool isRequest = false) {
         m_type = isRequest ? EventType.MountRequest : EventType.Mount;
-        m_fromId = rider.Entity.EntityId;
-        m_targetId = mount.Entity.EntityId;
+        m_fromId = rider.Entity.Id;
+        m_targetId = mount.Entity.Id;
     }
     public ComponentMountPackage(ComponentRider rider, bool isRequest = false) {
         m_type = isRequest ? EventType.DismountRequest : EventType.Dismount;
-        m_fromId = rider.Entity.EntityId;
+        m_fromId = rider.Entity.Id;
     }
 
     public void WriteData(PackageStreamWriter writer) {
@@ -37,17 +37,17 @@ public class ComponentMountPackage : IPackage {
     }
     public void ReadData(PackageStreamReader reader) {
         m_type = reader.ReadEnum<EventType>();
-        m_fromId = reader.ReadUInt16();
-        m_targetId = reader.ReadUInt16();
+        m_fromId = reader.ReadInt32();
+        m_targetId = reader.ReadInt32();
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer && (m_type != EventType.MountRequest && m_type != EventType.DismountRequest)) {
             return;
         }
         switch (m_type) {
             case EventType.Dismount:
-                projectNet.FindEntityById(m_fromId, (entity) => {
+                GameManager.Project.FindEntity(m_fromId, (entity) => {
                     var rider = entity.FindComponent<ComponentRider>();
                     // rider 是骑乘者
                     rider?.StartNetDismounting();
@@ -59,15 +59,15 @@ public class ComponentMountPackage : IPackage {
                 });
                 break;
             case EventType.DismountRequest:
-                projectNet.FindEntityById(m_fromId, (entity) => {
+                GameManager.Project.FindEntity(m_fromId, (entity) => {
                     var rider = entity.FindComponent<ComponentRider>();
                     rider?.StartDismounting();
                 });
                 break;
             case EventType.Mount:
-                projectNet.FindEntityById(m_fromId, (entity) => {
+                GameManager.Project.FindEntity(m_fromId, (entity) => {
                     var rider = entity.FindComponent<ComponentRider>();
-                    projectNet.FindEntityById(m_targetId, (entity2) => {
+                    GameManager.Project.FindEntity(m_targetId, (entity2) => {
                         var mount = entity2.FindComponent<ComponentMount>();
                         if (mount != null && rider != null) {
                             rider.StartNetMounting(mount);
@@ -81,9 +81,9 @@ public class ComponentMountPackage : IPackage {
                 });
                 break;
             case EventType.MountRequest:
-                projectNet.FindEntityById(m_fromId, (entity) => {
+                GameManager.Project.FindEntity(m_fromId, (entity) => {
                     var rider = entity.FindComponent<ComponentRider>();
-                    projectNet.FindEntityById(m_targetId, (entity2) => {
+                    GameManager.Project.FindEntity(m_targetId, (entity2) => {
                         var mount = entity2.FindComponent<ComponentMount>();
                         if (mount != null && rider != null) {
                             rider.StartMounting(mount);

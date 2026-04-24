@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 using Engine;
 using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 using XmlUtilities;
@@ -40,11 +41,9 @@ namespace Game {
             valuesDictionary.SetValue("Views", valuesDictionary3);
             valuesDictionary3.SetValue("GamesWidget", gamesWidget);
             var projectData = new ProjectData(DatabaseManager.GameDatabase, messagePackData, valuesDictionary, ignoreInvalidEntities: true);
-            if (useNetProj) {
-                m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
-                ((ProjectNet)m_project).Initialize();
-            }
+            if (useNetProj) m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
             else m_project = new Project(DatabaseManager.GameDatabase, projectData);
+            HookAction();
             m_subsystemUpdate = m_project.FindSubsystem<SubsystemUpdate>(throwOnError: true);
             m_worldInfo = new WorldInfo();
             Log.Information("加载NetProject");
@@ -121,11 +120,9 @@ namespace Game {
                     );
                 };
                 ProjectData projectData = new(DatabaseManager.GameDatabase, projectNode, valuesDictionary, true);
-                if (useNetProj) {
-                    m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
-                    ((ProjectNet)m_project).Initialize();
-                }
+                if (useNetProj) m_project = new ProjectNet(DatabaseManager.GameDatabase, projectData);
                 else m_project = new Project(DatabaseManager.GameDatabase, projectData);
+                HookAction();
                 m_subsystemUpdate = m_project.FindSubsystem<SubsystemUpdate>(true);
             }
             m_worldInfo = worldInfo;
@@ -231,6 +228,20 @@ namespace Game {
                     }
                 );
                 GC.Collect();
+            }
+        }
+
+        public static void HookAction() {
+            if (NetworkManager.WorkType == WorkType.Server) {
+                Project.EntityAdded += (obj, arg) => {
+                    foreach (Client client in NetworkManager.Clients.Values.Where(c => c != NetworkManager.Self)) {
+                        NetworkManager.QueuePackage(new EntityPackage(arg.Entity) { To = client });
+                    }
+                };
+
+                Project.EntityRemoved += (obj, arg) => {
+                    NetworkManager.QueuePackage(new EntityPackage(arg.Entity.Id));
+                };
             }
         }
     }

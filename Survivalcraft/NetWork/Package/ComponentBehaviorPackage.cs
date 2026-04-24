@@ -9,7 +9,7 @@ public class ComponentBehaviorPackage : IPackage {
     public Client From { get; set; }
     public ClientStage MinNeedState => ClientStage.Playing;
 
-    public ushort m_entityId;
+    public int m_entityId;
 
     public enum EventType {
         ChaseBehavior,
@@ -32,46 +32,46 @@ public class ComponentBehaviorPackage : IPackage {
     public ComponentBehaviorPackage() { }
 
     public ComponentBehaviorPackage(ComponentFishOutOfWaterBehavior fishOutOfWaterBehavior, bool isBend) {
-        m_entityId = fishOutOfWaterBehavior.Entity.EntityId;
+        m_entityId = fishOutOfWaterBehavior.Entity.Id;
         eventType = EventType.FishOutOfWater;
         m_rowLeft = isBend;
     }
 
     public ComponentBehaviorPackage(ComponentChaseBehavior behavior, bool isChase) {
-        m_entityId = behavior.Entity.EntityId;
+        m_entityId = behavior.Entity.Id;
         eventType = EventType.ChaseBehavior;
         m_rowLeft = isChase;
     }
     public ComponentBehaviorPackage(ComponentCreatureSounds creatureSound, byte type, bool skip = false) {
-        m_entityId = creatureSound.Entity.EntityId;
+        m_entityId = creatureSound.Entity.Id;
         eventType = EventType.CreatureSound;
         m_type = type;
         m_rowLeft = skip;
     }
     public ComponentBehaviorPackage(ComponentRandomPeckBehavior behavior, bool inRange) {
-        m_entityId = behavior.Entity.EntityId;
+        m_entityId = behavior.Entity.Id;
         eventType = EventType.RandomPeck;
         m_rowLeft = inRange;
     }
     public ComponentBehaviorPackage(ComponentRandomFeedBehavior behavior, bool inRange) {
-        m_entityId = behavior.Entity.EntityId;
+        m_entityId = behavior.Entity.Id;
         eventType = EventType.RandomFeed;
         m_rowLeft = inRange;
     }
 
     public ComponentBehaviorPackage(ComponentEatPickableBehavior behavior, bool inRange) {
-        m_entityId = behavior.Entity.EntityId;
+        m_entityId = behavior.Entity.Id;
         eventType = EventType.EatPickable;
         m_rowLeft = inRange;
     }
     public ComponentBehaviorPackage(ComponentDigInMudBehavior behavior, bool IsDigIn) {
-        m_entityId = behavior.Entity.EntityId;
+        m_entityId = behavior.Entity.Id;
         eventType = EventType.DigInMud;
         m_rowLeft = IsDigIn;
     }
     public ComponentBehaviorPackage(ComponentHumanModel componentModel) {
         eventType = EventType.HumanRow;
-        m_entityId = componentModel.Entity.EntityId;
+        m_entityId = componentModel.Entity.Id;
         m_rowLeft = componentModel.m_rowLeft;
         m_rowRight = componentModel.m_rowRight;
     }
@@ -99,7 +99,7 @@ public class ComponentBehaviorPackage : IPackage {
     }
     public void ReadData(PackageStreamReader reader) {
         eventType = reader.ReadEnum<EventType>();
-        m_entityId = reader.ReadUInt16();
+        m_entityId = reader.ReadInt32();
         switch (eventType) {
             case EventType.FishOutOfWater:
             case EventType.DigInMud:
@@ -120,11 +120,11 @@ public class ComponentBehaviorPackage : IPackage {
         }
     }
 
-    public void Handle(ProjectNet projectNet, bool isServer) {
+    public void Handle(bool isServer) {
         if (isServer && eventType != EventType.CreatureSound) {
             return;
         }
-        projectNet.FindEntityById(m_entityId, (entity) => {
+        GameManager.Project.FindEntity(m_entityId, (entity) => {
             switch (eventType) {
                 case EventType.ChaseBehavior:
                     ComponentChaseBehavior chaseBehavior = entity.FindComponent<ComponentChaseBehavior>();
@@ -185,7 +185,7 @@ public class ComponentBehaviorPackage : IPackage {
                         humanModel.m_rowLeft = m_rowLeft;
                         humanModel.m_rowRight = m_rowRight;
                         var m_random = new Random();
-                        projectNet.FindSubsystem<SubsystemAudio>().PlayRandomSound("Audio/Rowing", m_random.Float(0.4f, 0.6f), m_random.Float(-0.3f, 0.2f), humanModel.m_componentCreature.ComponentBody.Position, 3f, autoDelay: true);
+                        GameManager.Project.FindSubsystem<SubsystemAudio>().PlayRandomSound("Audio/Rowing", m_random.Float(0.4f, 0.6f), m_random.Float(-0.3f, 0.2f), humanModel.m_componentCreature.ComponentBody.Position, 3f, autoDelay: true);
                         if (isServer) {
                             Except = From;
                             NetworkManager.QueuePackage(this);

@@ -168,6 +168,15 @@ namespace GameEntitySystem {
             return Entities.FirstOrDefault(entity => entity.Id == EntityID, null);
         }
 
+        public virtual bool FindEntity(int EntityID, Action<Entity> action = null) {
+            Entity entity = FindEntity(EntityID);
+            if (entity == null) {
+                return false;
+            }
+            action?.Invoke(entity);
+            return true;
+        }
+
         public virtual Entity CreateEntity(ValuesDictionary valuesDictionary, int entityId = 0) {
             try {
                 Entity entity = new(this, valuesDictionary, entityId);
