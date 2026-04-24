@@ -201,17 +201,6 @@ namespace GameEntitySystem {
             return list;
         }
 
-        public void publicLoadEntity(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
-            foreach (Component component in m_components) {
-                try {
-                    component.Load(component.ValuesDictionary, idToEntityMap);
-                }
-                catch (Exception innerException) {
-                    throw new InvalidOperationException($"Error loading component {component.GetType().FullName}.", innerException);
-                }
-            }
-        }
-
         public void InternalLoadEntity(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
             foreach (Component component in m_components) {
                 try {

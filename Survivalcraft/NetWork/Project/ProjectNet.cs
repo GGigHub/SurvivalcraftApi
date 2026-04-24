@@ -130,45 +130,48 @@ public class ProjectNet : Project {
     /// <param name="entityDataList"></param>
     /// <returns></returns>
     public List<Entity> LoadEntitiesAll(EntityDataList entityDataList) {
-        //List<Entity> list = new List<Entity>(entityDataList.EntitiesData.Count);
-        List<Entity> list = new List<Entity>();
-        Dictionary<int, Entity> dictionary = new Dictionary<int, Entity>();
-        IdToEntityMap idToEntityMap = new IdToEntityMap(dictionary);
-        var tmpList = new List<EntityData>();
-        var toRemovePlayer = new List<EntityData>();
-        for (int i = 0; i < entityDataList.EntitiesData.Count; i++) {
-            EntityData entitiesDatum = entityDataList.EntitiesData[i];
+        List<Entity> list = [];
+        List<EntityData> filteredData = [];
+
+        foreach (EntityData entitiesDatum in entityDataList.EntitiesData) {
             try {
-                if (entitiesDatum.ValuesDictionary.ContainsKey("Player")) {
-                    var palyerValue = entitiesDatum.ValuesDictionary.GetValue<ValuesDictionary>("Player");
-                    if (palyerValue.ContainsKey("PlayerGuid")) {
-                        Guid playerGuid = palyerValue.GetValue<Guid>("PlayerGuid", NetworkManager.Self.PlayerGuid);
-                        PlayerData playerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.PlayerGUID == playerGuid);
-                        if (playerData == null) {
-                            toRemovePlayer.Add(entitiesDatum);
-                            continue;
-                        }
-                    }
+                if (ShouldSkipPlayerEntity(entitiesDatum)) {
+                    continue;
                 }
+
                 Entity entity = new Entity(this, entitiesDatum.ValuesDictionary);
+                entity.Id = entitiesDatum.Id;
+
                 list.Add(entity);
-                entity.Id = (ushort)entitiesDatum.Id;
-                dictionary.Add(entitiesDatum.Id, entity);
-                tmpList.Add(entitiesDatum);
+                filteredData.Add(entitiesDatum);
             }
             catch (Exception innerException) {
                 throw new Exception($"Error creating entity from template \"{entitiesDatum.ValuesDictionary.DatabaseObject.Name}\".", innerException);
             }
         }
-        foreach (var rp in toRemovePlayer) {
-            entityDataList.EntitiesData.Remove(rp);
+
+        entityDataList.EntitiesData = filteredData;
+
+        for (int i = 0; i < list.Count; i++) {
+            list[i].InternalLoadEntity(filteredData[i].ValuesDictionary, null);
         }
-        int num = 0;
-        foreach (EntityData entitiesDatum2 in tmpList) {
-            list[num].publicLoadEntity(entitiesDatum2.ValuesDictionary, idToEntityMap);
-            num++;
-        }
+
         return list;
+    }
+
+    private bool ShouldSkipPlayerEntity(EntityData entityData) {
+        if (!entityData.ValuesDictionary.ContainsKey("Player")) {
+            return false;
+        }
+
+        ValuesDictionary playerValue = entityData.ValuesDictionary.GetValue<ValuesDictionary>("Player");
+        if (!playerValue.ContainsKey("PlayerGuid")) {
+            return false;
+        }
+
+        Guid playerGuid = playerValue.GetValue("PlayerGuid", NetworkManager.Self.PlayerGuid);
+        PlayerData playerData = subsystemPlayers.PlayersData.Find(d => d.PlayerGUID == playerGuid);
+        return playerData == null;
     }
 
     /// <summary>
