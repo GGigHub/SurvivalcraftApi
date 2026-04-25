@@ -45,6 +45,8 @@ public class ProjectNet : Project {
         }
         //开启包处理
         NetworkManager.TurnOnPackageHanlde(this);
+
+        NextEntityID = projectData.NextEntityID;
     }
 
     /// <summary>
@@ -122,80 +124,6 @@ public class ProjectNet : Project {
                     break;
             }
         }
-    }
-
-    /// <summary>
-    /// Entity包的加载方法
-    /// </summary>
-    /// <param name="entityDataList"></param>
-    /// <returns></returns>
-    public List<Entity> LoadEntitiesAll(EntityDataList entityDataList) {
-        List<Entity> list = [];
-        List<EntityData> filteredData = [];
-
-        foreach (EntityData entitiesDatum in entityDataList.EntitiesData) {
-            try {
-                if (ShouldSkipPlayerEntity(entitiesDatum)) {
-                    continue;
-                }
-
-                Entity entity = new Entity(this, entitiesDatum.ValuesDictionary);
-                entity.Id = entitiesDatum.Id;
-
-                list.Add(entity);
-                filteredData.Add(entitiesDatum);
-            }
-            catch (Exception innerException) {
-                throw new Exception($"Error creating entity from template \"{entitiesDatum.ValuesDictionary.DatabaseObject.Name}\".", innerException);
-            }
-        }
-
-        entityDataList.EntitiesData = filteredData;
-
-        for (int i = 0; i < list.Count; i++) {
-            list[i].InternalLoadEntity(filteredData[i].ValuesDictionary, null);
-        }
-
-        return list;
-    }
-
-    private bool ShouldSkipPlayerEntity(EntityData entityData) {
-        if (!entityData.ValuesDictionary.ContainsKey("Player")) {
-            return false;
-        }
-
-        ValuesDictionary playerValue = entityData.ValuesDictionary.GetValue<ValuesDictionary>("Player");
-        if (!playerValue.ContainsKey("PlayerGuid")) {
-            return false;
-        }
-
-        Guid playerGuid = playerValue.GetValue("PlayerGuid", NetworkManager.Self.PlayerGuid);
-        PlayerData playerData = subsystemPlayers.PlayersData.Find(d => d.PlayerGUID == playerGuid);
-        return playerData == null;
-    }
-
-    /// <summary>
-    /// Entity包的保存方法
-    /// </summary>
-    /// <param name="entities"></param>
-    /// <returns></returns>
-    public EntityDataList SaveEntitiesAll(IEnumerable<Entity> entities) {
-        Dictionary<Entity, int> dictionary2 = new Dictionary<Entity, int>();
-        EntityToIdMap entityToIdMap = new EntityToIdMap(dictionary2);
-        foreach (Entity key in entities) {
-            dictionary2.Add(key, key.Id);
-        }
-        EntityDataList entityDataList = new EntityDataList();
-        entityDataList.EntitiesData = new List<EntityData>();
-        foreach (Entity key2 in entities) {
-            EntityData entityData = new EntityData();
-            entityData.Id = key2.Id;
-            entityData.ValuesDictionary = new ValuesDictionary();
-            entityData.ValuesDictionary.DatabaseObject = key2.ValuesDictionary.DatabaseObject;
-            key2.InternalSaveEntity(entityData.ValuesDictionary, entityToIdMap);
-            entityDataList.EntitiesData.Add(entityData);
-        }
-        return entityDataList;
     }
 }
 

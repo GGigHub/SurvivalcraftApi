@@ -8,7 +8,7 @@ namespace Game.NetWork.Packages {
         public Client Except { get; set; }
         public Client From { get; set; }
         public ClientStage MinNeedState => ClientStage.ProjectLoaded;
-        public List<Entity> m_entities;
+        public EntityDataList entityDataList;
         public enum EventType {
             Remove,
             LoadList,
@@ -32,11 +32,11 @@ namespace Game.NetWork.Packages {
         }
         public EntityPackage(Entity entity) {
             m_type = EventType.LoadOne;
-            m_entities = [entity];
+            entityDataList = GameManager.Project.SaveEntities([entity]);
         }
         public EntityPackage(List<Entity> entities) {
             m_type = EventType.LoadList;
-            m_entities = [.. entities];
+            entityDataList = GameManager.Project.SaveEntities([.. entities]);
         }
 
         public void WriteData(PackageStreamWriter writer) {
@@ -44,7 +44,7 @@ namespace Game.NetWork.Packages {
             switch (m_type) {
                 case EventType.LoadOne:
                 case EventType.LoadList:
-                    writer.WriteEntityLoadList(m_entities, To);
+                    writer.WriteEntityLoadList(entityDataList, To);
                     break;
                 case EventType.Remove:
                     writer.Write(m_entityId);
@@ -60,7 +60,7 @@ namespace Game.NetWork.Packages {
             switch (m_type) {
                 case EventType.LoadOne:
                 case EventType.LoadList:
-                    m_entities = reader.ReadEntityLoadList();
+                    entityDataList = reader.ReadEntityLoadList();
                     break;
                 case EventType.Remove:
                     m_entityId = reader.ReadInt32();
@@ -81,17 +81,10 @@ namespace Game.NetWork.Packages {
             switch (m_type) {
                 case EventType.LoadOne:
                 case EventType.LoadList:
-                    foreach (var e in m_entities) {
-                        // 如果本地 ID 没有重复就直接添加，重复了则先替换。
-                        if (!GameManager.Project.FindEntity(e.Id, e2 => {
-                            GameManager.Project.RemoveEntity(e2, true);
-                            GameManager.Project.AddEntity(e);
-#if DEBUG
-                            Log.Information($"生物替换[{e.Id}]");
-#endif
-                        })) el.Add(e);
-                    }
-                    GameManager.Project.AddEntities(el);
+                    el = GameManager.Project.InitializeAndLoadEntities(entityDataList);
+                    // 这里是否应该对重复实体则进行剔除呢？我认为不需要，因为单机也没做
+                    // 触发fire事件
+                    GameManager.Project.AttachEntities(el, true);
                     break;
                 case EventType.Remove:
                     GameManager.Project.FindEntity(m_entityId, (entity) => {
@@ -99,17 +92,17 @@ namespace Game.NetWork.Packages {
                     });
                     break;
                 case EventType.RequestSync:
-                    foreach (var e in m_entityIdList) {
-                        GameManager.Project.FindEntity(e, entity => {
-                            el.Add(entity);
-                        });
+                    foreach (int e in m_entityIdList) {
+                        GameManager.Project.FindEntity(e, entity => 
+                            el.Add(entity)
+                        );
                     }
                     NetworkManager.QueuePackage(new EntityPackage(el) { To = From });
                     break;
             }
         }
 
-        public static void ConfuseGuid(List<Entity> entities, ValuesDictionary vd, EntityDataList entityDataList, Client to) {
+        public static void ConfuseGuid(EntityDataList entityDataList, ValuesDictionary vd, Client to) {
             // 在这里对 vd 进行读取与修正。
             for (int i = 1; i <= entityDataList.EntitiesData.Count; i++) {
                 // 每个实体对应一个以 i 为字符串的子字典
@@ -127,7 +120,7 @@ namespace Game.NetWork.Packages {
                     var playerVD = overrides.GetValue<ValuesDictionary>("Player");
 
                     // 取回源实体（i-1 对应 entities 的索引）
-                    var e = entities[i - 1];
+                    var e = entityDataList.Entities[i - 1];
                     var cp = e.FindComponent<ComponentPlayer>();
                     if (cp != null) {
                         if (cp.PlayerGuid != to.PlayerGuid) {

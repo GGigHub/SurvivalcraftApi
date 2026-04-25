@@ -138,11 +138,10 @@ public class PackageStreamWriter : BinaryWriter {
         Write(str);
     }
 
-    public void WriteEntityLoadList(List<Entity> entities, Client to) {
+    public void WriteEntityLoadList(EntityDataList entityDataList, Client to) {
         ValuesDictionary vd = new ValuesDictionary();
-        EntityDataList entityDataList = ((ProjectNet)GameManager.Project).SaveEntitiesAll(entities);
         entityDataList.Save(vd);
-        EntityPackage.ConfuseGuid(entities, vd, entityDataList, to);
+        EntityPackage.ConfuseGuid(entityDataList, vd, to);
         WriteBuff(vd.ToMessagePack());
     }
 

@@ -10,6 +10,8 @@ namespace GameEntitySystem {
     public class EntityDataList {
         public List<EntityData> EntitiesData;
 
+        public List<Entity> Entities;
+
         public EntityDataList() { }
 
         public EntityDataList(GameDatabase gameDatabase, XElement entitiesNode, bool ignoreInvalidEntities) {

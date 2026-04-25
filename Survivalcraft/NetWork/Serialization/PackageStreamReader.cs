@@ -116,12 +116,11 @@ public class PackageStreamReader : BinaryReader {
         return XmlUtilities.XmlUtils.LoadXmlFromString(str, true);
     }
 
-    public List<Entity> ReadEntityLoadList() {
+    public EntityDataList ReadEntityLoadList() {
         byte[] messagePack = ReadBuff();
         ValuesDictionary vd = new ValuesDictionary();
         vd.ApplyOverridesUseMessagePack(messagePack);
-        EntityDataList entityDataList = new EntityDataList(GameManager.Project.GameDatabase, vd, false);
-        return ((ProjectNet)GameManager.Project).LoadEntitiesAll(entityDataList);
+        return new EntityDataList(GameManager.Project.GameDatabase, vd, false);
     }
 
     public Texture2D ReadTexture2D() {

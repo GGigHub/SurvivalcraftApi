@@ -257,7 +257,7 @@ namespace GameEntitySystem {
             return list;
         }
 
-        public virtual void LoadEntities(EntityDataList entityDataList, List<Entity> entityList) {
+        public virtual void LoadEntityData(EntityDataList entityDataList, List<Entity> entityList) {
             int num = 0;
             if (entityDataList?.EntitiesData != null) {
                 foreach (EntityData entitiesDatum2 in entityDataList.EntitiesData) {
@@ -265,6 +265,10 @@ namespace GameEntitySystem {
                     num++;
                 }
             }
+        }
+
+        public virtual void LoadEntities(EntityDataList entityDataList, List<Entity> entityList) {
+            LoadEntityData(entityDataList, entityList);
             if (Entities != null) {
                 foreach (Entity entity in Entities) {
                     FireEntityAddedEvents(entity);
@@ -283,7 +287,7 @@ namespace GameEntitySystem {
                 dictionary2.Add(key, num);
                 num++;
             }
-            EntityDataList entityDataList = new() { EntitiesData = new List<EntityData>(dictionary.Keys.Count) };
+            EntityDataList entityDataList = new() { EntitiesData = new List<EntityData>(dictionary.Keys.Count), Entities = enumerable.ToList() };
             foreach (Entity key2 in enumerable) {
                 EntityData entityData = new() { Id = key2.Id, ValuesDictionary = [] };
                 entityData.ValuesDictionary.DatabaseObject = key2.ValuesDictionary.DatabaseObject;
@@ -395,6 +399,31 @@ namespace GameEntitySystem {
             }
             subsystem.Load(subsystem.ValuesDictionary);
             loadedSubsystems.Add(subsystem, true);
+        }
+
+        public virtual List<Entity> InitializeAndLoadEntities(EntityDataList entityDataList) {
+            List<Entity> entities = [];
+            if (entityDataList != null) {
+                entities = InitializeEntities(entityDataList);
+            }
+            LoadEntityData(entityDataList, entities);
+            return entities;
+        }
+
+        public virtual void AttachEntities(IEnumerable<Entity> entities, bool fireAddedEvents) {
+            bool oldPostpone = PostponeFireEntityAddedEvents;
+            if (fireAddedEvents) {
+                PostponeFireEntityAddedEvents = true;
+            }
+            foreach (Entity entity in entities) {
+                AddEntity(entity);
+            }
+            PostponeFireEntityAddedEvents = oldPostpone;
+            if (fireAddedEvents) {
+                foreach (Entity entity in entities) {
+                    FireEntityAddedEvents(entity);
+                }
+            }
         }
     }
 }
