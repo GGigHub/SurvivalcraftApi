@@ -1,6 +1,6 @@
 namespace Game.NetWork.Packages {
     public class ComponentSicknessPackage : IPackage {
-        public byte ID => (byte)PackageType.ComponentSickness;
+        public byte ID => (byte)PackageType.Sickness;
         public Client To { get; set; }
         public Client Except { get; set; }
         public Client From { get; set; }

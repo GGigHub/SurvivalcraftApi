@@ -223,10 +223,6 @@ namespace Game {
         }
 
         public void FindBodyByCreatureID(int CreatureId, Action<ComponentBody> action, Action fail = null) {
-            if (Project is not Game.NetWork.ProjectNet projectNet) {
-                fail?.Invoke();
-                return;
-            }
             if (!GameManager.Project.FindEntity(CreatureId, e => {
                 ComponentBody body = e.FindComponent<ComponentBody>();
                 if (body != null) {

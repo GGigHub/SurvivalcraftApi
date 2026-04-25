@@ -9,7 +9,6 @@ using TemplatesDatabase;
 namespace Game.NetWork;
 
 public class PackageStreamWriter : BinaryWriter {
-    public ProjectNet Project;
     public bool IsServer;
     public PackageStreamWriter() : base(new MemoryStream()) {
 

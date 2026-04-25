@@ -1,7 +1,7 @@
 namespace Game.NetWork.Packages;
 
 public class SubsystemWeatherPackage : IPackage {
-    public byte ID => (byte)PackageType.SubsystemWeather;
+    public byte ID => (byte)PackageType.Weather;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

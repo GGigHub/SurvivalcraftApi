@@ -101,7 +101,7 @@ internal sealed class NetPacketTransport {
         }
     }
 
-    public void TurnOnPackageHandle(ProjectNet projectNet) {
+    public void TurnOnPackageHandle() {
         NetworkManager.OnRecieve += list => {
             foreach (var package in list) {
                 try {

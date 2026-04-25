@@ -3,7 +3,7 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class ComponentSleepPackage : IPackage {
-    public byte ID => (byte)PackageType.ComponentSleep;
+    public byte ID => (byte)PackageType.Sleep;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

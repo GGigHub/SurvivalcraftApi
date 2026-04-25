@@ -1,7 +1,7 @@
 namespace Game.NetWork.Packages;
 
 public class SubsystemElectricityPackage : IPackage {
-    public byte ID => (byte)PackageType.SubsystemElectricity;
+    public byte ID => (byte)PackageType.Electricity;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

@@ -4,7 +4,7 @@ namespace Game.NetWork.Packages;
 
 public class ComponentPlayerPackage : IPackage {
 
-    public byte ID => (byte)PackageType.ComponentPlayer;
+    public byte ID => (byte)PackageType.Player;
     public enum PlayerAction {
         BodyUpdate,
         InteractEvent,

@@ -1,7 +1,7 @@
 namespace Game.NetWork.Packages;
 
 public class ConnectionRejectPackage : IPackage {
-    public byte ID => (byte)PackageType.ConnectionReject;
+    public byte ID => (byte)PackageType.ConnectReject;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

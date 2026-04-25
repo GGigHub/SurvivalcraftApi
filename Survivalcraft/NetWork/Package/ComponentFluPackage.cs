@@ -1,7 +1,7 @@
 namespace Game.NetWork.Packages;
 
 public class ComponentFluPackage : IPackage {
-    public byte ID => (byte)PackageType.ComponentFlu;
+    public byte ID => (byte)PackageType.Flu;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

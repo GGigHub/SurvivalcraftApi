@@ -4,7 +4,7 @@ namespace Game.NetWork.Packages;
 
 public class ComponentClothingPackage : IPackage {
 
-    public byte ID => (byte)PackageType.ComponentClothing;
+    public byte ID => (byte)PackageType.Clothing;
 
     public enum DataType {
         RequestSkin,

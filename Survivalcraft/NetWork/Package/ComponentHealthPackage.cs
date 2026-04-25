@@ -3,7 +3,7 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class ComponentHealthPackage : IPackage {
-    public byte ID => (byte)PackageType.ComponentHealth;
+    public byte ID => (byte)PackageType.Health;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

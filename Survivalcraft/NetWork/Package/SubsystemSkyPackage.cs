@@ -3,7 +3,7 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class SubsystemSkyPackage : IPackage {
-    public byte ID => (byte)PackageType.SubsystemSky;
+    public byte ID => (byte)PackageType.Sky;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

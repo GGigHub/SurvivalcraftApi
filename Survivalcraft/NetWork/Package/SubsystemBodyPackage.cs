@@ -3,7 +3,7 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class SubsystemBodyPackage : IPackage {
-    public byte ID => (byte)PackageType.SubsystemBody;
+    public byte ID => (byte)PackageType.Body;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

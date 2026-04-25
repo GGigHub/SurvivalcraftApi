@@ -1,7 +1,7 @@
 namespace Game.NetWork.Packages;
 
 public class ComponentOnFirePackage : IPackage {
-    public byte ID => (byte)PackageType.ComponentOnFire;
+    public byte ID => (byte)PackageType.OnFire;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

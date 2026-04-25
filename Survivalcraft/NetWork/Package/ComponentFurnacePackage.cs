@@ -1,7 +1,7 @@
 namespace Game.NetWork.Packages;
 
 public class ComponentFurnacePackage : IPackage {
-    public byte ID => (byte)PackageType.ComponentFurnace;
+    public byte ID => (byte)PackageType.Furnace;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

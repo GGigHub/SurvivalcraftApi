@@ -3,7 +3,7 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class ComponentBehaviorPackage : IPackage {
-    public byte ID => (byte)PackageType.ComponentBehavior;
+    public byte ID => (byte)PackageType.Behavior;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

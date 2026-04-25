@@ -6,50 +6,21 @@ using LiteNetLib.Utils;
 namespace Game.NetWork;
 
 public enum PackageType : byte {
-    ServerInfo,
-    ConnectionRequest,
-    ConnectionReject,
-    Project,
-    Client,
-    Pickable,
-    SubsystemBody,
-    SubsystemTerrain,
-    SubsystemTime,
-    SubsystemSky,
-    SubsystemWeather,
-    SubsystemElectricity,
-    SubsystemPlayers,
-    ComponentPlayer,
-    ComponentInventory,
-    ComponentVitalStat,
-    ComponentClothing,
-    ComponentBehavior,
-    ComponentHealth,
-    ComponentMount,
-    ComponentSickness,
-    ComponentFlu,
-    ComponentOnFire,
-    ComponentSleep,
-    ComponentFurnace,
-    PlayerData,
-    Entity,
-    Projectile,
-    ReservedTerritoriy,
-    Explosion,
-    MovingBlockSet,
-    BlockEdit,
-    SignBlock,
-
-    Dispenser,
-    EditableBlock,
-    ReservedGroupManage,
-    SubsystemSeason,
-    SmallMessage,
-    Popup,
+    ServerInfo, ConnectRequest, ConnectReject,
+    Client, Project, PlayerData, Terrain, Entity,
+    Pickable, Body, Time, Sky,
+    Weather, Electricity, Player,
+    Inventory, VitalStat, Clothing,
+    Behavior, Health, Mount,
+    Sickness, Flu, OnFire,
+    Sleep, Furnace, Projectile,
+    ReservedTerritoriy, Explosion, MovingBlockSet,
+    BlockEdit, SignBlock, Dispenser,
+    EditableBlock, Season, SmallMessage, Popup,
 
     ModPackage = 255
-
 }
+
 public class PackageManager {
     public const byte VerifyByte = 0x88;
 

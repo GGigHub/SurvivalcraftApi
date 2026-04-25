@@ -1,7 +1,7 @@
 namespace Game.NetWork.Packages;
 
 public class ComponentMountPackage : IPackage {
-    public byte ID => (byte)PackageType.ComponentMount;
+    public byte ID => (byte)PackageType.Mount;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

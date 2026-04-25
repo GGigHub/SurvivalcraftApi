@@ -130,8 +130,8 @@ public class NetworkBase {
     public virtual void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type) {
     }
 
-    public void TurnOnPackageHanlde(ProjectNet projectNet) {
-        m_packetTransport.TurnOnPackageHandle(projectNet);
+    public void TurnOnPackageHanlde() {
+        m_packetTransport.TurnOnPackageHandle();
     }
 
     public void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true) {

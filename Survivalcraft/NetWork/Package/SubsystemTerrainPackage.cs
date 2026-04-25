@@ -9,7 +9,7 @@ public struct CellChange {
     public int Value;
 }
 public class SubsystemTerrainPackage : IPackage {
-    public byte ID => (byte)PackageType.SubsystemTerrain;
+    public byte ID => (byte)PackageType.Terrain;
 
     public enum DataType {
         RequestSyncChunks,

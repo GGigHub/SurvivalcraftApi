@@ -138,17 +138,9 @@ public static class NetworkManager {
     }
 
     public static byte[] GetNowProject(Project project, Client client) {
-        if (project is not ProjectNet net) return null;
-
-        net.SendToClientMode = true;
-        try {
-            ValuesDictionary rootNode = CreateProjectRootNode(project);
-            ReplacePlayerGUIDsWithTokenIds(rootNode, client);
-            return rootNode.ToMessagePack();
-        }
-        finally {
-            net.SendToClientMode = false;
-        }
+        ValuesDictionary rootNode = CreateProjectRootNode(project);
+        ReplacePlayerGUIDsWithTokenIds(rootNode, client);
+        return rootNode.ToMessagePack();
     }
 
     private static ValuesDictionary CreateProjectRootNode(Project project) {
@@ -259,7 +251,7 @@ public static class NetworkManager {
 
     public static void AddPendingHandlePackage(IPackage package) => Current.AddPendingHandlePackage(package);
 
-    public static void TurnOnPackageHanlde(ProjectNet projectNet) => Current.TurnOnPackageHanlde(projectNet);
+    public static void TurnOnPackageHanlde() => Current.TurnOnPackageHanlde();
 
     public static void Stop(string error = null) => Current.Stop(error);
 

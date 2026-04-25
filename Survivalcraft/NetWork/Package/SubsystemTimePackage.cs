@@ -3,7 +3,7 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class SubsystemTimePackage : IPackage {
-    public byte ID => (byte)PackageType.SubsystemTime;
+    public byte ID => (byte)PackageType.Time;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

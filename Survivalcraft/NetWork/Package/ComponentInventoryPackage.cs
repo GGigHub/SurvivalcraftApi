@@ -5,7 +5,7 @@ namespace Game.NetWork.Packages;
 
 public class ComponentInventoryPackage : IPackage {
 
-    public byte ID => (byte)PackageType.ComponentInventory;
+    public byte ID => (byte)PackageType.Inventory;
 
     public enum EventType {
         ActiveSlotChange,                           // 活动槽变更，拿物品的那几个主界面槽位

@@ -133,11 +133,6 @@ public class PackageStreamReader : BinaryReader {
         return Texture2D.Load(image);
     }
     public Matrix ReadMatrix() {
-        /*            byte count = ReadByte();
-                    byte[] data = ReadBytes(count);
-                    return Utilities.ArrayToStructure<Matrix>(data);*/
-
-
         Matrix matrix = new Matrix();
         matrix.M11 = ReadSingle();
         matrix.M21 = ReadSingle();

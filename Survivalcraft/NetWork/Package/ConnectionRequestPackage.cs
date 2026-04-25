@@ -6,7 +6,7 @@ using TemplatesDatabase;
 namespace Game.NetWork.Packages;
 
 public class ConnectionRequestPackage : IPackage {
-    public byte ID => (byte)PackageType.ConnectionRequest;
+    public byte ID => (byte)PackageType.ConnectRequest;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }

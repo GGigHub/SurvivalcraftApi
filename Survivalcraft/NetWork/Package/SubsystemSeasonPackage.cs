@@ -1,7 +1,7 @@
 namespace Game.NetWork.Packages;
 
 public class SubsystemSeasonPackage : IPackage {
-    public byte ID => (byte)PackageType.SubsystemSeason;
+    public byte ID => (byte)PackageType.Season;
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
