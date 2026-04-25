@@ -130,7 +130,7 @@ public class NetworkBase {
     public virtual void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type) {
     }
 
-    public void TurnOnPackageHanlde() {
+    public void TurnOnPackageHandle() {
         m_packetTransport.TurnOnPackageHandle();
     }
 

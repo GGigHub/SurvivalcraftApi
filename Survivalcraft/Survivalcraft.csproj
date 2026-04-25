@@ -7,9 +7,9 @@
       <Compile Remove="C:\Users\tk34\Desktop\NF2\SurvivalcraftApi\Survivalcraft\NetWork\NetworkPeerBase.cs" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />
+      <Compile Include="NetWork\NetworkListener.cs" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="NetWork\Others\" />
+        <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />
     </ItemGroup>
 </Project>

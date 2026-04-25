@@ -4,6 +4,7 @@ using System.Net.NetworkInformation;
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using LiteNetLib.Utils;
 using TemplatesDatabase;
@@ -13,7 +14,6 @@ namespace Game.NetWork;
 
 public static class NetworkManager {
     public const int DISCONNECT_TIMEOUT = 10000;
-
     public static NetworkServer Server { get; private set; }
     public static NetworkClient Client { get; private set; }
     private static NetworkBase Current => (NetworkBase)Server ?? Client;
@@ -251,7 +251,7 @@ public static class NetworkManager {
 
     public static void AddPendingHandlePackage(IPackage package) => Current.AddPendingHandlePackage(package);
 
-    public static void TurnOnPackageHanlde() => Current.TurnOnPackageHanlde();
+    public static void TurnOnPackageHanlde() => Current.TurnOnPackageHandle();
 
     public static void Stop(string error = null) => Current.Stop(error);
 

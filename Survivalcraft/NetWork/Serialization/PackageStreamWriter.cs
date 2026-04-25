@@ -9,22 +9,14 @@ using TemplatesDatabase;
 namespace Game.NetWork;
 
 public class PackageStreamWriter : BinaryWriter {
-    public bool IsServer;
+
     public PackageStreamWriter() : base(new MemoryStream()) {
 
     }
+
     public byte[] Data() {
         BaseStream.Seek(0, SeekOrigin.Begin);
         return NetworkManager.Compress(BaseStream);
-    }
-
-    public void WriteNullable(float? v) {
-        Write(v.HasValue);
-        if (v.HasValue) Write(v.Value);
-    }
-    public void WriteNullable(int? v) {
-        Write(v.HasValue);
-        if (v.HasValue) Write(v.Value);
     }
 
     public virtual void Write(Color color) {
@@ -32,17 +24,6 @@ public class PackageStreamWriter : BinaryWriter {
         Write(color.G);
         Write(color.B);
         Write(color.A);
-    }
-    public void Write(Vector4? vector) {
-        Write(vector.HasValue);
-        if (vector.HasValue) Write(vector.Value);
-    }
-
-    public void Write(Vector4 vector) {
-        Write(vector.X);
-        Write(vector.Y);
-        Write(vector.Z);
-        Write(vector.W);
     }
 
     public void Write(Vector3 vector) {
@@ -55,6 +36,7 @@ public class PackageStreamWriter : BinaryWriter {
         Write(vector.HasValue);
         if (vector.HasValue) Write(vector.Value);
     }
+
     public void Write(Vector2 vector) {
         Write(vector.X);
         Write(vector.Y);
@@ -70,40 +52,48 @@ public class PackageStreamWriter : BinaryWriter {
         Write((byte)data.Length);
         Write(data);
     }
+
     public void Write(Point3 point) {
         Write(point.X);
         Write(point.Y);
         Write(point.Z);
     }
+
     public void Write(Point2 point) {
         Write(point.X);
         Write(point.Y);
     }
+
     public void Write(Quaternion quaternion) {
         Write(quaternion.X);
         Write(quaternion.Y);
         Write(quaternion.Z);
         Write(quaternion.W);
     }
+
     public void Write(Ray3 ray) {
         Write(ray.Position);
         Write(ray.Direction);
     }
+
     public void Write(Ray3? ray) {
         Write(ray.HasValue);
         if (ray.HasValue) {
             Write(ray.Value);
         }
     }
+
     public void WriteBlockPoint(Point3 point) {
         Write(point.X);
         Write((byte)point.Y);
         Write(point.Z);
     }
+
     public void Write(CellFace cellFace) {
         WriteBlockPoint(cellFace.Point);
         Write((byte)cellFace.Face);
     }
+
     public void Write(TerrainRaycastResult raycastResult) {
         Write(raycastResult.Ray);
         Write(raycastResult.Value);
@@ -111,12 +101,14 @@ public class PackageStreamWriter : BinaryWriter {
         Write(raycastResult.Distance);
         Write(raycastResult.CellFace);
     }
+
     public void Write(TerrainRaycastResult? raycastResult) {
         Write(raycastResult.HasValue);
         if (raycastResult.HasValue) {
             Write(raycastResult.Value);
         }
     }
+
     public void Write(ValuesDictionary vd) {
         byte[] data = vd.ToMessagePack();
         Write(data.Length);
@@ -132,6 +124,7 @@ public class PackageStreamWriter : BinaryWriter {
         byte b = Convert.ToByte(obj);
         Write(b);
     }
+
     public void Write(XElement xElement) {
         string str = XmlUtilities.XmlUtils.SaveXmlToString(xElement, true);
         Write(str);
@@ -160,10 +153,8 @@ public class PackageStreamWriter : BinaryWriter {
         Write(image.Height);
         for (int i = 0; i < image.Pixels.Length; i++) Write(image.Pixels[i]);
     }
+
     public void Write(Matrix matrix) {
-        /*            byte[] data = Utilities.StructureToArray(matrix);
-                    Write((byte)data.Length);
-                    Write(data);*/
         Write(matrix.M11);
         Write(matrix.M21);
         Write(matrix.M31);
@@ -184,6 +175,7 @@ public class PackageStreamWriter : BinaryWriter {
         Write(matrix.M34);
         Write(matrix.M44);
     }
+
     public void Write(Matrix? matrix) {
         if (matrix.HasValue) {
             Write(true);
@@ -191,6 +183,5 @@ public class PackageStreamWriter : BinaryWriter {
         }
         else Write(false);
     }
-
 }
 
