@@ -7,7 +7,7 @@ using Engine.Graphics;
 using Engine.Media;
 using Game.NetWork;
 using Game.NetWork.Packages;
-using static Game.NetWork.NetworkBase;
+using Stage = Game.NetWork.NetworkStage;
 
 namespace Game;
 

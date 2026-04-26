@@ -8,7 +8,6 @@
     </ItemGroup>
     <ItemGroup>
       <Compile Include="NetWork\NetworkSimulate.cs" />
-      <Compile Include="NetWork\NetworkListener.cs" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />

@@ -6,16 +6,16 @@ using LiteNetLib.Utils;
 namespace Game.NetWork;
 
 internal sealed class NetPacketTransport {
-    private readonly NetworkBase m_node;
+    private readonly INetworkNode m_node;
     private readonly NetworkFragment m_chunkTransport;
 
-    public NetPacketTransport(NetworkBase node, NetworkFragment chunkTransport) {
+    public NetPacketTransport(INetworkNode node, NetworkFragment chunkTransport) {
         m_node = node;
         m_chunkTransport = chunkTransport;
     }
 
     public void HandleUnconnectedEvent(IPEndPoint remoteEndPoint, NetPacketReader reader, bool fromBroadcast) {
-        if (m_node.CurrentStage == NetworkBase.Stage.NotConnected) return;
+        if (m_node.CurrentStage == NetworkStage.NotConnected) return;
         var dataReader = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
         try {
             if (!m_node.TryDecodePackages(dataReader, null, null, remoteEndPoint, out List<IPackage> packages)) {
@@ -68,7 +68,7 @@ internal sealed class NetPacketTransport {
             }
 
             server.agreeOnPendingPeer.Remove(client.ID);
-            server.DeliveryEvent(null, null);
+            server.HandleDeliveryEvent(null, null);
         }
     }
 
@@ -77,7 +77,7 @@ internal sealed class NetPacketTransport {
     }
 
     public void HandleNetworkReceive(NetPeer peer, NetDataReader reader) {
-        if (m_node.CurrentStage == NetworkBase.Stage.NotConnected) return;
+        if (m_node.CurrentStage == NetworkStage.NotConnected) return;
         Client fromClient = peer.Tag as Client;
         if (!m_node.TryDecodePackages(reader, peer, null, null, out List<IPackage> packages)) {
             return;
@@ -86,7 +86,7 @@ internal sealed class NetPacketTransport {
         packages.InsertRange(0, m_node.PendingHandlePackages);
         m_node.PendingHandlePackages.Clear();
         try {
-            if (!m_node.HasReceiveHandlers) {
+            if (!m_node.HasReceiveHandlers()) {
                 m_node.PendingHandlePackages.AddRange(packages);
             }
             else {

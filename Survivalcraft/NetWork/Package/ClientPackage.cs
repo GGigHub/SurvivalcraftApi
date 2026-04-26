@@ -78,7 +78,7 @@ public class ClientPackage : IPackage {
                 Log.Information("SyncList End:" + m_list.Count);
 #endif
                 if (NetworkManager.Self == null) throw new Exception("Cannot find Self In Client List");
-                NetworkManager.Client.CurrentStage = NetworkBase.Stage.Connected;
+                NetworkManager.Client.CurrentStage = NetworkStage.Connected;
                 break;
             case EventType.StateChange:
                 if (NetworkManager.Clients.ContainsKey(m_client.ID)) {

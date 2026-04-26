@@ -26,11 +26,17 @@ public enum WorkType {
     Client = 2
 }
 
+public enum NetworkStage {
+    NotConnected,
+    WaitForClientList,
+    Connected
+}
+
 public static class NetworkManager {
     public const int DISCONNECT_TIMEOUT = 10000;
     public static NetworkServer Server { get; private set; }
     public static NetworkClient Client { get; private set; }
-    private static NetworkBase Current => (NetworkBase)Server ?? Client;
+    private static INetworkNode Current => (INetworkNode)Server ?? Client;
 
     public static Texture2D BlockTexture;
 
@@ -40,7 +46,7 @@ public static class NetworkManager {
     public static Dictionary<int, Client> Clients => Current.Clients;
     public static IEnumerable<Client> Peers => Current.Peers;
     public static int ClientCount => Current.ClientCount;
-    public static NetworkBase.Stage CurrentStage => Current.CurrentStage;
+    public static NetworkStage CurrentStage => Current.CurrentStage;
     public static bool IsNetRunning => Current.netManager.IsRunning;
     public static LiteNetLib.NetPeer PendingPeer {
         get => Server?.pendingPeer;
@@ -52,8 +58,8 @@ public static class NetworkManager {
     }
     public static HashSet<byte> AgreeOnPendingPeer => Server?.agreeOnPendingPeer;
     public static event Action<IEnumerable<IPackage>> OnRecieve {
-        add => Current.OnRecieve += value;
-        remove => Current.OnRecieve -= value;
+        add => Current.AddReceiveHandler(value);
+        remove => Current.RemoveReceiveHandler(value);
     }
     public static Action<Client> OnClientStateChanged {
         get => Current.OnClientStateChanged;
@@ -62,7 +68,7 @@ public static class NetworkManager {
 
     public static WorkType GetCurrentWorkType() {
         if (Server?.IsServer == true) return NetWork.WorkType.Server;
-        if (Client?.CurrentStage == NetworkBase.Stage.Connected) return NetWork.WorkType.Client;
+        if (Client?.CurrentStage == NetworkStage.Connected) return NetWork.WorkType.Client;
         return NetWork.WorkType.Local;
     }
 
@@ -100,8 +106,8 @@ public static class NetworkManager {
         }
     }
 
-    private static void ResetNet(NetworkBase networkBase) {
-        if (!ReferenceEquals(Current, networkBase)) {
+    private static void ResetNet(INetworkNode networkBase) {
+        if (Current != null && !ReferenceEquals(Current, networkBase)) {
             Current.StopImmediate();
         }
         Client = networkBase as NetworkClient;
@@ -270,4 +276,12 @@ public static class NetworkManager {
     public static void Stop(string error = null) => Current.Stop(error);
 
     public static void StopImmediate() => Current.StopImmediate();
+
+    public static bool IsValidIPAddress(string ip) {
+        return IPAddress.TryParse(ip, out _);
+    }
+
+    public static bool IsValidPort(int port) {
+        return port > 0 && port <= 65535;
+    }
 }

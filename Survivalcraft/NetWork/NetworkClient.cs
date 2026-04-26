@@ -2,10 +2,59 @@ using System.Net;
 using Engine;
 using Game.NetWork.Packages;
 using GameEntitySystem;
+using LiteNetLib;
+using LiteNetLib.Utils;
 
 namespace Game.NetWork;
 
-public class NetworkClient : NetworkBase {
+public class NetworkClient : INetworkNode, INetEventListener {
+    public event Action<NetPeer, NetDataReader, DeliveryMethod> NetworkReceiveEvent;
+    public event Action<NetPeer> PeerConnectedEvent;
+    public event Action<NetPeer, DisconnectInfo> PeerDisconnectedEvent;
+    public event Action<IPEndPoint, NetPacketReader, UnconnectedMessageType> NetworkReceiveUnconnectedEvent;
+    public event Action<byte[], IPEndPoint> NetworkErrorEvent;
+    public event Action<ConnectionRequest> ConnectionRequestEvent;
+    public event Action<NetPeer, object> DeliveryEvent;
+
+    public readonly NetManager netManager;
+    private readonly NetworkFragment m_chunkTransport;
+    private readonly NetPacketTransport m_packetTransport;
+    private readonly NetRuntimeController m_runtimeController;
+    private Action<IEnumerable<IPackage>> m_onRecieve;
+
+    public Client Self { get; set; }
+    public Client Server { get; set; }
+    public string Error { get; private set; }
+    public NetworkStage CurrentStage { get; set; } = NetworkStage.NotConnected;
+    public bool IsServer => CurrentStage == NetworkStage.Connected && Self == Server;
+    public int ClientCount => Peers.Count() + 1;
+    public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
+    public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
+    public List<IPackage> PendingPackages { get; } = new List<IPackage>();
+    public List<IPackage> PendingHandlePackages { get; } = new List<IPackage>();
+    public Action<Client> OnClientStateChanged { get; set; }
+    public Guid TokenId { get; set; }
+    public bool isStopping { get; set; }
+    public long sec_length { get; set; }
+    public long sec_length_total { get; set; }
+    public long sec_total { get; set; }
+    public bool AllowHandle { get; set; } = true;
+    public WorkType WorkType { get; set; }
+    NetManager INetworkNode.netManager => netManager;
+
+    public NetworkClient() {
+        netManager = new NetManager(this) {
+            MaxConnectAttempts = 6,
+            DisconnectTimeout = NetworkManager.DISCONNECT_TIMEOUT,
+            UnconnectedMessagesEnabled = true,
+            UpdateTime = 25,
+            ReuseAddress = true
+        };
+        m_chunkTransport = new NetworkFragment(this);
+        m_packetTransport = new NetPacketTransport(this, m_chunkTransport);
+        m_runtimeController = new NetRuntimeController(this, m_chunkTransport, m_packetTransport);
+    }
+
     public void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
         try {
             isStopping = false;
@@ -15,11 +64,11 @@ public class NetworkClient : NetworkBase {
             TokenId = Guid.NewGuid();
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
             SendWriterFromPackage(new ConnectionRequestPackage(TokenId, "ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
-            listener.NetworkReceiveEvent += NetworkReceiveEvent;
-            listener.NetworkReceiveUnconnectedEvent += HanldeUnconnectedEvent;
-            listener.PeerDisconnectedEvent += PeerDisconnectedEvent;
-            listener.NetworkErrorEvent += HandleNetworkError;
-            CurrentStage = Stage.WaitForClientList;
+            NetworkReceiveEvent += OnNetworkReceivePackage;
+            NetworkReceiveUnconnectedEvent += HanldeUnconnectedEvent;
+            PeerDisconnectedEvent += OnPeerDisconnected;
+            NetworkErrorEvent += HandleNetworkError;
+            CurrentStage = NetworkStage.WaitForClientList;
             WorkType = WorkType.Client;
             Window.Frame += Update;
             Window.Closed += StopImmediate;
@@ -27,8 +76,167 @@ public class NetworkClient : NetworkBase {
             TurnOnPackageHandle();
         }
         catch {
-            CurrentStage = Stage.NotConnected;
+            CurrentStage = NetworkStage.NotConnected;
         }
+    }
+
+    public void AddClient(Client c) {
+        Clients[c.ID] = c;
+    }
+
+    public void RemoveClientImmediate(Client c, string reason = null) {
+        if (c == Self) {
+            Stop();
+            return;
+        }
+
+        if (c.Peer != null && c.Peer.ConnectionState != ConnectionState.Disconnected) {
+            if (string.IsNullOrEmpty(reason)) c.Peer.Disconnect();
+            else c.Peer.Disconnect(NetDataWriter.FromString(reason));
+        }
+
+        if (c == Server) {
+            Stop();
+            CurrentStage = NetworkStage.NotConnected;
+            return;
+        }
+        if (Clients.ContainsKey(c.ID)) {
+            if (IsServer) {
+                NetworkManager.QueuePackage(new ClientPackage(c.ID));
+            }
+            c.State = ClientStage.NotConnected;
+            OnClientStateChanged?.Invoke(c);
+            Clients.Remove(c.ID);
+        }
+    }
+
+    public Client GetClientByID(byte id) {
+        if (Clients.ContainsKey(id))
+            return Clients[id];
+        return null;
+    }
+
+    public Client GetClientByGUID(Guid? guid) {
+        return Clients.Values.FirstOrDefault(c => c.PlayerGuid == guid);
+    }
+
+    public Client GetClientByTokenID(Guid? guid) {
+        return Clients.Values.FirstOrDefault(c => c.TokenId == guid);
+    }
+
+    public void StartLocal() {
+        Clients.Clear();
+        Self = new Client(new Guid(SettingsManager.OnlineAccessToken));
+        AddClient(Self);
+    }
+
+    public void HanldeUnconnectedEvent(IPEndPoint ip, NetPacketReader reader, UnconnectedMessageType messageType) {
+        m_packetTransport.HandleUnconnectedEvent(ip, reader, false);
+    }
+
+    public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
+        m_packetTransport.HandlePeerDisconnected(peer, disconnectInfo);
+    }
+
+    public void AddPendingHandlePackage(IPackage package) {
+        m_packetTransport.AddPendingHandlePackage(package);
+    }
+
+    public void OnNetworkReceivePackage(NetPeer peer, NetDataReader reader, DeliveryMethod deliveryMethod) {
+        m_packetTransport.HandleNetworkReceive(peer, reader);
+    }
+
+    public virtual void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type) {
+    }
+
+    public void TurnOnPackageHandle() {
+        m_packetTransport.TurnOnPackageHandle();
+    }
+
+    public void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true) {
+        m_packetTransport.SendWriterFromPackage(package, endPoint, isSend);
+    }
+
+    public void SendWriterFromPackage(IPackage package, NetPeer netPeer, bool useDeliveryEvent = false) {
+        m_packetTransport.SendWriterFromPackage(package, netPeer, useDeliveryEvent);
+    }
+
+    public void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject) {
+        m_packetTransport.SendWriterFromPackage(package, request, reject);
+    }
+
+    public void SendWriterFromPackages(IEnumerable<IPackage> packages, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
+        m_packetTransport.SendWriterFromPackages(packages, netPeer, request, iPEndPoint, useDeliveryEvent);
+    }
+
+    public void Stop(string error = null) {
+        isStopping = true;
+        Error = error;
+    }
+
+    public void StopImmediate() {
+        m_runtimeController.StopImmediate();
+    }
+
+    public void Update() {
+        m_runtimeController.Update();
+    }
+
+    public bool HasReceiveHandlers() {
+        return m_onRecieve != null;
+    }
+
+    public void DispatchReceivedPackages(IEnumerable<IPackage> packages) {
+        m_onRecieve?.Invoke(packages);
+    }
+
+    public void ClearTransientHandlers() {
+        m_onRecieve = null;
+        OnClientStateChanged = null;
+    }
+
+    public void CleanupAfterStop() {
+        Window.Closed -= StopImmediate;
+        Window.Frame -= Update;
+        ClearConnectionRequestEvent();
+        ClearNetworkReceiveUnconnectedEvent();
+        ClearNetworkReceiveEvent();
+        ClearNetworkErrorEvent();
+        ClearPeerDisconnectedEvent();
+        ClearDeliveryEvent();
+        ClearPeerConnectedEvent();
+        ClearTransientHandlers();
+        CurrentStage = NetworkStage.NotConnected;
+        WorkType = WorkType.Local;
+        if (Error != null) {
+            DialogsManager.Confirm(Error, btn => {
+                ScreensManager.SwitchScreen("MainMenu");
+            });
+        }
+    }
+
+    public byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer) {
+        return m_packetTransport.BuildOutgoingPayload(packages, isServer);
+    }
+
+    public void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
+        m_chunkTransport.SendPayload(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
+    }
+
+    public void CleanupChunkStates() {
+        m_chunkTransport.CleanupStates();
+    }
+
+    public bool TryDecodePackages(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<IPackage> packages) {
+        return m_packetTransport.TryDecodePackages(reader, peer, request, endPoint, out packages);
+    }
+
+    public void AddReceiveHandler(Action<IEnumerable<IPackage>> handler) {
+        m_onRecieve += handler;
+    }
+
+    public void RemoveReceiveHandler(Action<IEnumerable<IPackage>> handler) {
+        m_onRecieve -= handler;
     }
 
     private void ClientStateChanged(Client c) {
@@ -49,5 +257,61 @@ public class NetworkClient : NetworkBase {
     private void HandleNetworkError(byte[] _, IPEndPoint endPoint) {
         Log.Information("Connection error " + endPoint);
         Stop(endPoint?.ToString());
+    }
+
+    public void ClearNetworkReceiveEvent() {
+        NetworkReceiveEvent = null;
+    }
+
+    public void ClearPeerConnectedEvent() {
+        PeerConnectedEvent = null;
+    }
+
+    public void ClearPeerDisconnectedEvent() {
+        PeerDisconnectedEvent = null;
+    }
+
+    public void ClearNetworkReceiveUnconnectedEvent() {
+        NetworkReceiveUnconnectedEvent = null;
+    }
+
+    public void ClearNetworkErrorEvent() {
+        NetworkErrorEvent = null;
+    }
+
+    public void ClearConnectionRequestEvent() {
+        ConnectionRequestEvent = null;
+    }
+
+    public void ClearDeliveryEvent() {
+        DeliveryEvent = null;
+    }
+
+    void INetEventListener.OnPeerConnected(NetPeer peer) {
+        PeerConnectedEvent?.Invoke(peer);
+    }
+
+    void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
+        PeerDisconnectedEvent?.Invoke(peer, disconnectInfo);
+    }
+
+    void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod) {
+        var dataReader = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
+        NetworkReceiveEvent?.Invoke(peer, dataReader, deliveryMethod);
+    }
+
+    void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
+        NetworkReceiveUnconnectedEvent?.Invoke(remoteEndPoint, reader, messageType);
+    }
+
+    void INetEventListener.OnNetworkError(IPEndPoint endPoint, System.Net.Sockets.SocketError socketError) {
+        NetworkErrorEvent?.Invoke(null, endPoint);
+    }
+
+    void INetEventListener.OnConnectionRequest(ConnectionRequest request) {
+        ConnectionRequestEvent?.Invoke(request);
+    }
+
+    void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency) {
     }
 }

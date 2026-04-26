@@ -16,7 +16,7 @@ internal sealed class NetworkFragment {
 
     private static int s_chunkMessageId = 1;
 
-    private readonly NetworkBase m_node;
+    private readonly INetworkNode m_node;
     private readonly Dictionary<string, ChunkState> m_chunkStates = new Dictionary<string, ChunkState>();
     private double m_lastCleanupTime;
 
@@ -30,7 +30,7 @@ internal sealed class NetworkFragment {
         public bool[] Received;
     }
 
-    public NetworkFragment(NetworkBase node) {
+    public NetworkFragment(INetworkNode node) {
         m_node = node;
     }
 

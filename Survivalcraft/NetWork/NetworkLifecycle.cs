@@ -4,11 +4,11 @@ using Game.NetWork.Packages;
 namespace Game.NetWork;
 
 internal sealed class NetRuntimeController {
-    private readonly NetworkBase m_node;
+    private readonly INetworkNode m_node;
     private readonly NetworkFragment m_chunkTransport;
     private readonly NetPacketTransport m_packetTransport;
 
-    public NetRuntimeController(NetworkBase node, NetworkFragment chunkTransport, NetPacketTransport packetTransport) {
+    public NetRuntimeController(INetworkNode node, NetworkFragment chunkTransport, NetPacketTransport packetTransport) {
         m_node = node;
         m_chunkTransport = chunkTransport;
         m_packetTransport = packetTransport;

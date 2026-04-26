@@ -193,7 +193,7 @@ public class ConnectionRequestPackage : IPackage {
                     NetworkManager.Server.SendWriterFromPackage(clientPackage, c.Peer, true);
                 }
                 Log.Information("Received connection request from " + From.IPPoint + ", accepted");
-                NetworkManager.Server.DeliveryEvent(null, null);
+                NetworkManager.Server.HandleDeliveryEvent(null, null);
             }
         }
         else {

@@ -70,12 +70,12 @@ public class PackageManager {
         }
     }
 
-    public static T DecodePackage<T>(NetworkBase networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : class {
+    public static T DecodePackage<T>(INetworkNode networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : class {
         var obj = DecodePackages(networkBase, reader, netPeer, request, iPEndPoint)[0];
         return (T)obj;
     }
 
-    public static List<IPackage> DecodePackagesFromPayload(NetworkBase networkBase, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+    public static List<IPackage> DecodePackagesFromPayload(INetworkNode networkBase, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         Client from = ResolveFrom(networkBase, netPeer, request, iPEndPoint);
         List<IPackage> packages = new List<IPackage>();
         byte packageID = 99;
@@ -92,7 +92,7 @@ public class PackageManager {
         }
     }
 
-    public static List<IPackage> DecodePackages(NetworkBase networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+    public static List<IPackage> DecodePackages(INetworkNode networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         Client from = ResolveFrom(networkBase, netPeer, request, iPEndPoint);
         List<IPackage> packages = new List<IPackage>();
         byte packageID = 99;
@@ -109,7 +109,7 @@ public class PackageManager {
         }
     }
 
-    private static Client ResolveFrom(NetworkBase networkBase, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+    private static Client ResolveFrom(INetworkNode networkBase, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         Client from = null;
         if (networkBase != null) {
             from = networkBase.Clients.Values.Where(client =>
