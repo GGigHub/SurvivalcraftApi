@@ -16,11 +16,10 @@ public class NetworkClient : INetworkNode, INetEventListener {
     public event Action<ConnectionRequest> ConnectionRequestEvent;
     public event Action<NetPeer, object> DeliveryEvent;
 
-    public readonly NetManager netManager;
+    public readonly NetManager _client;
     private readonly NetworkFragment m_chunkTransport;
     private readonly NetPacketTransport m_packetTransport;
     private readonly NetRuntimeController m_runtimeController;
-    private Action<IEnumerable<IPackage>> m_onRecieve;
 
     public Client Self { get; set; }
     public Client Server { get; set; }
@@ -40,10 +39,10 @@ public class NetworkClient : INetworkNode, INetEventListener {
     public long sec_total { get; set; }
     public bool AllowHandle { get; set; } = true;
     public WorkType WorkType { get; set; }
-    NetManager INetworkNode.netManager => netManager;
+    NetManager INetworkNode.netManager => _client;
 
     public NetworkClient() {
-        netManager = new NetManager(this) {
+        _client = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = NetworkManager.DISCONNECT_TIMEOUT,
             UnconnectedMessagesEnabled = true,
@@ -60,7 +59,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
             isStopping = false;
             Log.Information($"connecting to server at {ep.Address}");
             Clients.Clear();
-            netManager.Start();
+            _client.Start();
             TokenId = Guid.NewGuid();
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
             SendWriterFromPackage(new ConnectionRequestPackage(TokenId, "ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
@@ -73,7 +72,6 @@ public class NetworkClient : INetworkNode, INetEventListener {
             Window.Frame += Update;
             Window.Closed += StopImmediate;
             OnClientStateChanged += ClientStateChanged;
-            TurnOnPackageHandle();
         }
         catch {
             CurrentStage = NetworkStage.NotConnected;
@@ -138,19 +136,11 @@ public class NetworkClient : INetworkNode, INetEventListener {
         m_packetTransport.HandlePeerDisconnected(peer, disconnectInfo);
     }
 
-    public void AddPendingHandlePackage(IPackage package) {
-        m_packetTransport.AddPendingHandlePackage(package);
-    }
-
     public void OnNetworkReceivePackage(NetPeer peer, NetDataReader reader, DeliveryMethod deliveryMethod) {
         m_packetTransport.HandleNetworkReceive(peer, reader);
     }
 
     public virtual void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type) {
-    }
-
-    public void TurnOnPackageHandle() {
-        m_packetTransport.TurnOnPackageHandle();
     }
 
     public void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true) {
@@ -182,30 +172,9 @@ public class NetworkClient : INetworkNode, INetEventListener {
         m_runtimeController.Update();
     }
 
-    public bool HasReceiveHandlers() {
-        return m_onRecieve != null;
-    }
-
-    public void DispatchReceivedPackages(IEnumerable<IPackage> packages) {
-        m_onRecieve?.Invoke(packages);
-    }
-
-    public void ClearTransientHandlers() {
-        m_onRecieve = null;
-        OnClientStateChanged = null;
-    }
-
     public void CleanupAfterStop() {
         Window.Closed -= StopImmediate;
         Window.Frame -= Update;
-        ClearConnectionRequestEvent();
-        ClearNetworkReceiveUnconnectedEvent();
-        ClearNetworkReceiveEvent();
-        ClearNetworkErrorEvent();
-        ClearPeerDisconnectedEvent();
-        ClearDeliveryEvent();
-        ClearPeerConnectedEvent();
-        ClearTransientHandlers();
         CurrentStage = NetworkStage.NotConnected;
         WorkType = WorkType.Local;
         if (Error != null) {
@@ -231,14 +200,6 @@ public class NetworkClient : INetworkNode, INetEventListener {
         return m_packetTransport.TryDecodePackages(reader, peer, request, endPoint, out packages);
     }
 
-    public void AddReceiveHandler(Action<IEnumerable<IPackage>> handler) {
-        m_onRecieve += handler;
-    }
-
-    public void RemoveReceiveHandler(Action<IEnumerable<IPackage>> handler) {
-        m_onRecieve -= handler;
-    }
-
     private void ClientStateChanged(Client c) {
         var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
 
@@ -258,35 +219,6 @@ public class NetworkClient : INetworkNode, INetEventListener {
         Log.Information("Connection error " + endPoint);
         Stop(endPoint?.ToString());
     }
-
-    public void ClearNetworkReceiveEvent() {
-        NetworkReceiveEvent = null;
-    }
-
-    public void ClearPeerConnectedEvent() {
-        PeerConnectedEvent = null;
-    }
-
-    public void ClearPeerDisconnectedEvent() {
-        PeerDisconnectedEvent = null;
-    }
-
-    public void ClearNetworkReceiveUnconnectedEvent() {
-        NetworkReceiveUnconnectedEvent = null;
-    }
-
-    public void ClearNetworkErrorEvent() {
-        NetworkErrorEvent = null;
-    }
-
-    public void ClearConnectionRequestEvent() {
-        ConnectionRequestEvent = null;
-    }
-
-    public void ClearDeliveryEvent() {
-        DeliveryEvent = null;
-    }
-
     void INetEventListener.OnPeerConnected(NetPeer peer) {
         PeerConnectedEvent?.Invoke(peer);
     }

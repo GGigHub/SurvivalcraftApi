@@ -32,9 +32,6 @@ public interface INetworkNode {
     Client GetClientByGUID(Guid? guid);
     Client GetClientByTokenID(Guid? guid);
     void StartLocal();
-    void AddPendingHandlePackage(IPackage package);
-    void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type);
-    void TurnOnPackageHandle();
     void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true);
     void SendWriterFromPackage(IPackage package, NetPeer netPeer, bool useDeliveryEvent = false);
     void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject);
@@ -42,14 +39,9 @@ public interface INetworkNode {
     void Stop(string error = null);
     void StopImmediate();
     void Update();
-    bool HasReceiveHandlers();
-    void DispatchReceivedPackages(IEnumerable<IPackage> packages);
-    void ClearTransientHandlers();
     void CleanupAfterStop();
     byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer);
     void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false);
     void CleanupChunkStates();
     bool TryDecodePackages(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<IPackage> packages);
-    void AddReceiveHandler(Action<IEnumerable<IPackage>> handler);
-    void RemoveReceiveHandler(Action<IEnumerable<IPackage>> handler);
 }

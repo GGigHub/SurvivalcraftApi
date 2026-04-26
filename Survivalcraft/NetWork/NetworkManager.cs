@@ -57,10 +57,6 @@ public static class NetworkManager {
         }
     }
     public static HashSet<byte> AgreeOnPendingPeer => Server?.agreeOnPendingPeer;
-    public static event Action<IEnumerable<IPackage>> OnRecieve {
-        add => Current.AddReceiveHandler(value);
-        remove => Current.RemoveReceiveHandler(value);
-    }
     public static Action<Client> OnClientStateChanged {
         get => Current.OnClientStateChanged;
         set => Current.OnClientStateChanged = value;
@@ -268,10 +264,6 @@ public static class NetworkManager {
 
     public static Client CreateClient(LiteNetLib.NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname) =>
         Server.CreateClient(peer, tokenId, guid, dataId, nickname);
-
-    public static void AddPendingHandlePackage(IPackage package) => Current.AddPendingHandlePackage(package);
-
-    public static void TurnOnPackageHanlde() => Current.TurnOnPackageHandle();
 
     public static void Stop(string error = null) => Current.Stop(error);
 

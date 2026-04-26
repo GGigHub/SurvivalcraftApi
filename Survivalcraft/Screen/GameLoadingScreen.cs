@@ -37,8 +37,6 @@ public class GameLoadingScreen : Screen {
                         NetworkManager.ConnectServer(m_serverEndPoint, m_password);
                         DialogsManager.ShowDialog(this, spawnDialog);
                         m_stateMachine.TransitionTo("WaitServerReply");
-                        // 客户端开启收包处理
-                        NetworkManager.OnRecieve += Handle;
                     }
                     else {
                         m_stateMachine.TransitionTo("Loading");
@@ -113,31 +111,7 @@ public class GameLoadingScreen : Screen {
         }, null);
     }
 
-    public void Handle(IEnumerable<IPackage> packages) {
-        foreach (var p in packages) {
-            if (p is ClientPackage || p is ProjectPackage) {
-                try {
-                    p.Handle(false);
-                }
-                catch (Exception e) {
-                    Log.Error(string.Format("[{0}]{1}", p.GetType().Name, e.Message));
-                }
-            }
-            else {
-                // 无法立即处理的包，在 Project 加载完成后再处理。
-                NetworkManager.AddPendingHandlePackage(p);
-            }
-            OriginalCommunityContentScreen originalCommunityContentScreen = ScreensManager.FindScreen<OriginalCommunityContentScreen>("OriginalCommunityContent");
-            if (originalCommunityContentScreen != null) {
-                originalCommunityContentScreen.m_listPanel.ClearItems();
-                originalCommunityContentScreen.m_listPanel.ScrollPosition = 0f;
-                originalCommunityContentScreen.m_itemsCacheExpiryTime = 0;
-            }
-        }
-    }
-
     public void ReplyCall(bool hasTexure, byte[] textureData, byte[] projectData) {
-        NetworkManager.OnRecieve -= Handle;
         IsServerReply = true;
         if (hasTexure) {
             if (NetworkManager.BlockTexture != null) NetworkManager.BlockTexture.Dispose();

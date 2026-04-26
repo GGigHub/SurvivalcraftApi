@@ -72,10 +72,6 @@ internal sealed class NetPacketTransport {
         }
     }
 
-    public void AddPendingHandlePackage(IPackage package) {
-        m_node.PendingHandlePackages.Add(package);
-    }
-
     public void HandleNetworkReceive(NetPeer peer, NetDataReader reader) {
         if (m_node.CurrentStage == NetworkStage.NotConnected) return;
         Client fromClient = peer.Tag as Client;
@@ -84,34 +80,14 @@ internal sealed class NetPacketTransport {
         }
 
         packages.InsertRange(0, m_node.PendingHandlePackages);
-        m_node.PendingHandlePackages.Clear();
-        try {
-            if (!m_node.HasReceiveHandlers()) {
-                m_node.PendingHandlePackages.AddRange(packages);
+        foreach (var package in packages) {
+            try {
+                package.Handle(m_node.IsServer);
             }
-            else {
-                m_node.DispatchReceivedPackages(packages);
-            }
-        }
-        catch (Exception e) {
-            Log.Error(e);
-            if (m_node is NetworkServer server) {
-                server.RemoveClient(fromClient, "Error On RecieveEvent:\n" + e);
+            catch (Exception e) {
+                Log.Error(string.Format("[{0}]{1}", package.GetType().Name, e.Message));
             }
         }
-    }
-
-    public void TurnOnPackageHandle() {
-        NetworkManager.OnRecieve += list => {
-            foreach (var package in list) {
-                try {
-                    package.Handle(m_node.IsServer);
-                }
-                catch (Exception e) {
-                    Log.Error(string.Format("[{0}]{1}", package.GetType().Name, e.Message));
-                }
-            }
-        };
     }
 
     public void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true) {
