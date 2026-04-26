@@ -9,39 +9,25 @@ namespace Game.NetWork;
 
 public class Client {
     public bool IsLocalRemote { get; set; }
-
     public string Nickname { get; set; }
-
     public byte ID { get; internal set; }
-
     // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
     // 客户端自己的 PlayerGuid，以及服务端上所有玩家的 PlayerGuid 都未经混淆。
     // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
     public Guid PlayerGuid { get; internal set; }
-
     public Guid TokenId { get; internal set; }
-
     public NetPeer Peer { get; internal set; }
-
     public ConnectionRequest Request { get; internal set; }
-
     public IPEndPoint IPPoint { get; internal set; }
-
     public SubsystemPlayers SubsystemPlayers => GameManager.Project.FindSubsystem<SubsystemPlayers>();
-
     public bool IsConnected => Peer != null && Peer.ConnectionState != ConnectionState.Disconnected;
-
-    public string CommunityAccountId { get; set; } = "-1";
-
     public ClientStage State { get; set; }
-
     public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID); } }
 
     /// <summary>
     /// 是否已加入连接成功列表
     /// </summary>
     public bool IsAddedToNetNode { get; private set; }
-
     // 服务器本身的Client
     public Client(Guid guid) {
         PlayerGuid = guid;
@@ -57,7 +43,6 @@ public class Client {
     /// <param name="id">客户端ID</param>
     /// <param name="tokenId">客户端tokenId</param>
     /// <param name="guid">客户端Guid</param>
-    /// <param name="dataId">社区账号ID</param>
     /// <param name="nickName">社区昵称</param>
     public Client(NetPeer netPeer, byte id, Guid tokenId, Guid guid, string nickName) {
         ID = id;
@@ -90,12 +75,10 @@ public class Client {
     public override int GetHashCode() => PlayerGuid.GetHashCode();
 
     public static bool operator ==(Client a, Client b) {
-        return a is null && b is null || !(a is null) && !(b is null) && a.ID == b.ID;
+        return (a is null && b is null) || (a is not null && b is not null && a.ID == b.ID);
     }
 
     public static bool operator !=(Client a, Client b) => !(a == b);
-
-    public override string ToString() => $"Client : {{ID : {ID}, GUID : {PlayerGuid}}}";
 }
 
 public class NetworkClient : INetworkNode, INetEventListener {

@@ -92,9 +92,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
         foreach (var p in Peers) {
             if (p.PlayerGuid == guid) RemoveClient(p, "Duplicate account login.");
         }
-        var c = new Client(peer, FindUnusedIndex(), tokenId, guid, nickname) {
-            CommunityAccountId = dataId
-        };
+        var c = new Client(peer, FindUnusedIndex(), tokenId, guid, nickname);
         peer.Tag = c;
         return c;
     }

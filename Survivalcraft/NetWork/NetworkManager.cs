@@ -53,12 +53,6 @@ public static class NetworkManager {
         set => Current.OnClientStateChanged = value;
     }
 
-    public static WorkType GetCurrentWorkType() {
-        if (Server?.IsServer == true) return NetWork.WorkType.Server;
-        if (Client?.CurrentStage == NetworkStage.Connected) return NetWork.WorkType.Client;
-        return NetWork.WorkType.Local;
-    }
-
     /// <summary>
     /// 获取玩家的有效模式
     /// </summary>
@@ -208,7 +202,7 @@ public static class NetworkManager {
     public static byte[] Compress(Stream stream) {
         stream.Position = 0L;
         byte[] data = new byte[stream.Length];
-        stream.Read(data, 0, (int)stream.Length);
+        stream.ReadExactly(data, 0, (int)stream.Length);
         return Compress(data);
     }
 
@@ -232,19 +226,6 @@ public static class NetworkManager {
             }
         }
         return outStream.ToArray();
-    }
-
-    public static string SerializeVDict(ValuesDictionary dict) {
-        var elem = new XElement("Values");
-        dict.Save(elem);
-        return XmlUtilities.XmlUtils.SaveXmlToString(elem, true);
-    }
-
-    public static ValuesDictionary ReadVDict(string str) {
-        var dict = new ValuesDictionary();
-        var elem = XmlUtilities.XmlUtils.LoadXmlFromString(str, true);
-        dict.ApplyOverrides(elem);
-        return dict;
     }
 
     public static Client GetClientByID(byte id) => Current.GetClientByID(id);
