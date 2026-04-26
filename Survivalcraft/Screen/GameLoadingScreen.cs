@@ -55,14 +55,14 @@ public class GameLoadingScreen : Screen {
             // Fix me: 客户端中断连接后再次连接可能会卡住。
             if (NetworkManager.CurrentStage == Stage.WaitForClientList) {
                 if (timer.ElapsedMilliseconds >= NetworkManager.DISCONNECT_TIMEOUT) {
-                    NetworkManager.Stop("连接超时");
+                    NetworkManager.Stop();
                 }
             }
             else if (NetworkManager.CurrentStage == Stage.Connected) {
                 m_stateMachine.TransitionTo("Loading");
             }
             else {
-                NetworkManager.Stop("连接断开");
+                NetworkManager.Stop();
             }
         }, delegate {
             if (NetworkManager.CurrentStage == Stage.Connected) {
@@ -77,7 +77,7 @@ public class GameLoadingScreen : Screen {
                     m_stateMachine.TransitionTo("LoadServerReply");
                 }
                 if (NetworkManager.CurrentStage != Stage.Connected) {
-                    NetworkManager.Stop("与服务器连接断开");
+                    NetworkManager.Stop();
                 }
             }
             else {

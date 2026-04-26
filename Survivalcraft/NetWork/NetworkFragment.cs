@@ -80,11 +80,11 @@ internal sealed class NetworkFragment {
                 netPeer.Send(writer, DeliveryMethod.ReliableOrdered);
             }
             else if (request != null) {
-                m_node.netManager.SendUnconnectedMessage(writer, request.RemoteEndPoint);
+                m_node.NetManager.SendUnconnectedMessage(writer, request.RemoteEndPoint);
             }
             else if (iPEndPoint != null) {
-                if (!useDeliveryEvent) m_node.netManager.Connect(iPEndPoint, writer);
-                else m_node.netManager.SendUnconnectedMessage(writer, iPEndPoint);
+                if (!useDeliveryEvent) m_node.NetManager.Connect(iPEndPoint, writer);
+                else m_node.NetManager.SendUnconnectedMessage(writer, iPEndPoint);
             }
             return;
         }
@@ -96,10 +96,10 @@ internal sealed class NetworkFragment {
                 netPeer.Send(chunkWriter, DeliveryMethod.ReliableOrdered);
             }
             else if (request != null) {
-                m_node.netManager.SendUnconnectedMessage(chunkWriter, request.RemoteEndPoint);
+                m_node.NetManager.SendUnconnectedMessage(chunkWriter, request.RemoteEndPoint);
             }
             else if (iPEndPoint != null) {
-                m_node.netManager.SendUnconnectedMessage(chunkWriter, iPEndPoint);
+                m_node.NetManager.SendUnconnectedMessage(chunkWriter, iPEndPoint);
             }
         }
     }

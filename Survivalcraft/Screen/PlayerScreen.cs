@@ -129,7 +129,7 @@ public class PlayerScreen : Screen {
         }
         if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.WorkType == NetWork.WorkType.Client && NetworkManager.IsNetRunning) {
             //客户端卡在新增玩家界面两分钟自动中断连接
-            NetworkManager.Stop("客户端主动关闭连接");
+            NetworkManager.Stop();
         }
 
         if (DialogsManager.Dialogs.Contains(m_fetchingPlayerDialog)) {

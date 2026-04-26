@@ -25,8 +25,8 @@ internal sealed class NetRuntimeController {
             if (m_node.WorkType == WorkType.Server) {
                 ((NetworkServer)m_node).RemoveAllClients("Server is shutting down.");
             }
-            if (m_node.netManager.IsRunning) {
-                m_node.netManager.Stop(true);
+            if (m_node.NetManager.IsRunning) {
+                m_node.NetManager.Stop(true);
             }
         }
         catch (Exception e) {
@@ -50,7 +50,7 @@ internal sealed class NetRuntimeController {
         }
 
         try {
-            m_node.netManager.PollEvents();
+            m_node.NetManager.PollEvents();
         }
         catch (Exception ex) {
             Log.Error(ex);
@@ -134,7 +134,6 @@ internal sealed class NetRuntimeController {
             return;
         }
         m_node.SendPayload(payload, client.Peer);
-        m_node.sec_length += payload.Length;
     }
 
     private void FlushServerPackages() {
@@ -148,7 +147,6 @@ internal sealed class NetRuntimeController {
                 continue;
             }
             m_node.SendPayload(payload, client.Peer);
-            m_node.sec_length += payload.Length;
         }
     }
 

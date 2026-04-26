@@ -14,7 +14,7 @@ public class ConnectionRejectPackage : IPackage {
     public ConnectionRejectPackage(string r) { reason = r; }
 
     public void Handle(bool isServer) {
-        NetworkManager.Stop($"[连接拒绝]{reason}");
+        NetworkManager.Stop();
     }
 
     public void ReadData(PackageStreamReader reader) {

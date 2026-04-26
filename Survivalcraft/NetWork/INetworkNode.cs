@@ -6,10 +6,9 @@ using LiteNetLib.Utils;
 namespace Game.NetWork;
 
 public interface INetworkNode {
-    NetManager netManager { get; }
+    NetManager NetManager { get; }
     Client Self { get; set; }
     Client Server { get; set; }
-    string Error { get; }
     NetworkStage CurrentStage { get; set; }
     bool IsServer { get; }
     int ClientCount { get; }
@@ -20,10 +19,6 @@ public interface INetworkNode {
     Action<Client> OnClientStateChanged { get; set; }
     Guid TokenId { get; set; }
     bool isStopping { get; set; }
-    long sec_length { get; set; }
-    long sec_length_total { get; set; }
-    long sec_total { get; set; }
-    bool AllowHandle { get; set; }
     WorkType WorkType { get; set; }
 
     void AddClient(Client c);
@@ -36,7 +31,7 @@ public interface INetworkNode {
     void SendWriterFromPackage(IPackage package, NetPeer netPeer, bool useDeliveryEvent = false);
     void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject);
     void SendWriterFromPackages(IEnumerable<IPackage> packages, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false);
-    void Stop(string error = null);
+    void Stop();
     void StopImmediate();
     void Update();
     void CleanupAfterStop();

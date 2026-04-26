@@ -8,99 +8,6 @@ using LiteNetLib.Utils;
 
 namespace Game.NetWork;
 
-public class Client {
-    public bool IsLocalRemote { get; set; }
-
-    public string Nickname { get; set; }
-
-    public byte ID { get; internal set; }
-
-    // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
-    // 客户端自己的 PlayerGuid，以及服务端上所有玩家的 PlayerGuid 都未经混淆。
-    // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
-    public Guid PlayerGuid { get; internal set; }
-
-    public Guid TokenId { get; internal set; }
-
-    public NetPeer Peer { get; internal set; }
-
-    public ConnectionRequest Request { get; internal set; }
-
-    public IPEndPoint IPPoint { get; internal set; }
-
-    public SubsystemPlayers SubsystemPlayers => GameManager.Project.FindSubsystem<SubsystemPlayers>();
-
-    public bool IsConnected => Peer != null && Peer.ConnectionState != ConnectionState.Disconnected;
-
-    public string CommunityAccountId { get; set; } = "-1";
-
-    public ClientStage State { get; set; }
-
-    public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID); } }
-
-    public Entity CachePlayerEntity { get; set; }
-
-    /// <summary>
-    /// 是否已加入连接成功列表
-    /// </summary>
-    public bool IsAddedToNetNode { get; private set; }
-
-    // 服务器本身的Client
-    public Client(Guid guid) {
-        PlayerGuid = guid;
-        State = ClientStage.Connected;
-        TokenId = Guid.NewGuid();
-        ID = 0;
-    }
-
-    /// <summary>
-    /// 服务端创建新的Client
-    /// </summary>
-    /// <param name="netPeer">peer</param>
-    /// <param name="id">客户端ID</param>
-    /// <param name="tokenId">客户端tokenId</param>
-    /// <param name="guid">客户端Guid</param>
-    /// <param name="dataId">社区账号ID</param>
-    /// <param name="nickName">社区昵称</param>
-    public Client(NetPeer netPeer, byte id, Guid tokenId, Guid guid, string nickName) {
-        ID = id;
-        PlayerGuid = guid;
-        TokenId = tokenId;
-        Nickname = nickName;
-        Peer = netPeer;
-        IsAddedToNetNode = true;
-    }
-
-    public Client(IPEndPoint iPEndPoint) {
-        IPPoint = iPEndPoint;
-        State = ClientStage.NotConnected;
-    }
-
-    public Client(ConnectionRequest request) {
-        Request = request;
-        IPPoint = request.RemoteEndPoint;
-        State = ClientStage.NotConnected;
-    }
-
-    public Client(NetPeer peer) {
-        Peer = peer;
-        State = ClientStage.NotConnected;
-        TokenId = Guid.NewGuid();
-    }
-
-    public override bool Equals(object obj) => obj is Client c && c.ID == ID;
-
-    public override int GetHashCode() => PlayerGuid.GetHashCode();
-
-    public static bool operator ==(Client a, Client b) {
-        return a is null && b is null || !(a is null) && !(b is null) && a.ID == b.ID;
-    }
-
-    public static bool operator !=(Client a, Client b) => !(a == b);
-
-    public override string ToString() => $"Client : {{ID : {ID}, GUID : {PlayerGuid}}}";
-}
-
 public class NetworkServer : INetworkNode, INetEventListener {
     public event Action<NetPeer> ClientConnected;
     public event Action<NetPeer, DisconnectInfo> ClientDisconnected;
@@ -112,7 +19,6 @@ public class NetworkServer : INetworkNode, INetEventListener {
 
     public Client Self { get; set; }
     public Client Server { get; set; }
-    public string Error { get; private set; }
     public NetworkStage CurrentStage { get; set; } = NetworkStage.NotConnected;
     public bool IsServer => CurrentStage == NetworkStage.Connected && Self == Server;
     public int ClientCount => Peers.Count() + 1;
@@ -123,12 +29,9 @@ public class NetworkServer : INetworkNode, INetEventListener {
     public Action<Client> OnClientStateChanged { get; set; }
     public Guid TokenId { get; set; }
     public bool isStopping { get; set; }
-    public long sec_length { get; set; }
-    public long sec_length_total { get; set; }
-    public long sec_total { get; set; }
-    public bool AllowHandle { get; set; } = true;
     public WorkType WorkType { get; set; }
-    NetManager INetworkNode.netManager => _server;
+
+    public NetManager NetManager => _server;
 
     public NetPeer pendingPeer = null;
     public HashSet<byte> agreeOnPendingPeer = new HashSet<byte>();
@@ -305,9 +208,8 @@ public class NetworkServer : INetworkNode, INetEventListener {
         m_packetTransport.SendWriterFromPackages(packages, netPeer, request, iPEndPoint, useDeliveryEvent);
     }
 
-    public void Stop(string error = null) {
+    public void Stop() {
         isStopping = true;
-        Error = error;
     }
 
     public void StopImmediate() {
@@ -322,12 +224,6 @@ public class NetworkServer : INetworkNode, INetEventListener {
         Window.Closed -= StopImmediate;
         Window.Frame -= Update;
         CurrentStage = NetworkStage.NotConnected;
-        WorkType = WorkType.Local;
-        if (Error != null) {
-            DialogsManager.Confirm(Error, btn => {
-                ScreensManager.SwitchScreen("MainMenu");
-            });
-        }
     }
 
     public byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer) {

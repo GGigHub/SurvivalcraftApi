@@ -47,7 +47,7 @@ public static class NetworkManager {
     public static IEnumerable<Client> Peers => Current.Peers;
     public static int ClientCount => Current.ClientCount;
     public static NetworkStage CurrentStage => Current.CurrentStage;
-    public static bool IsNetRunning => Current.netManager.IsRunning;
+    public static bool IsNetRunning => Current.NetManager.IsRunning;
     public static LiteNetLib.NetPeer PendingPeer {
         get => Server?.pendingPeer;
         set {
@@ -265,7 +265,7 @@ public static class NetworkManager {
     public static Client CreateClient(LiteNetLib.NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname) =>
         Server.CreateClient(peer, tokenId, guid, dataId, nickname);
 
-    public static void Stop(string error = null) => Current.Stop(error);
+    public static void Stop() => Current.Stop();
 
     public static void StopImmediate() => Current.StopImmediate();
 

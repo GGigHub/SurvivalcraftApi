@@ -47,7 +47,7 @@ internal sealed class NetPacketTransport {
         }
 
         if (m_node.WorkType == WorkType.Client) {
-            m_node.Stop(reason);
+            m_node.Stop();
             return;
         }
 
