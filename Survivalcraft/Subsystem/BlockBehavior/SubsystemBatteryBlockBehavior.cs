@@ -23,7 +23,7 @@ namespace Game {
                         if (num != value) {
                             var p = new EditableBlockPackage(EditableType.Battery, default, true, inventory.Id, slotIndex, newVoltageLevel);
                             NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != WorkType.Client) {
+                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -47,7 +47,7 @@ namespace Game {
                             var cell = new CellFace(x, y, z, face);
                             var p = new EditableBlockPackage(EditableType.Battery, cell, false, default, default, newVoltageLevel);
                             NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != WorkType.Client) {
+                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }

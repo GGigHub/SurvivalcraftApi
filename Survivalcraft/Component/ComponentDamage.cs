@@ -39,7 +39,7 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Damage(float amount) {
-            if (NetworkManager.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                 return;
             }
             if (amount > 0f
@@ -52,7 +52,7 @@ namespace Game {
         public virtual void Update(float dt) {
             Vector3 position = m_componentBody.Position;
             if (Hitpoints <= 0f) {
-                if (NetworkManager.WorkType != WorkType.Client) {
+                if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                     NetworkManager.QueuePackage(new ComponentHealthPackage(this));
                 }
                 m_subsystemParticles.AddParticleSystem(

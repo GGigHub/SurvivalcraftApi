@@ -644,7 +644,7 @@ namespace Game {
                     Utilities.Dispose(ref m_outerClothedTexture);
                 }
                 else if (Time.PeriodicEvent(1.0, 0.0)) {
-                    if (NetworkManager.WorkType == WorkType.Client) {
+                    if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                         NetworkManager.QueuePackage(
                             new NetWork.Packages.ComponentClothingPackage(
                                 m_componentPlayer.PlayerData.CharacterSkinName,
@@ -652,7 +652,7 @@ namespace Game {
                             )
                         );
                     }
-                    else if (NetworkManager.WorkType == WorkType.Server) {
+                    else if (NetworkManager.WorkType == NetWork.WorkType.Server) {
                         NetworkManager.QueuePackage(
                             new NetWork.Packages.ComponentClothingPackage(
                                 m_componentPlayer.PlayerData.CharacterSkinName,

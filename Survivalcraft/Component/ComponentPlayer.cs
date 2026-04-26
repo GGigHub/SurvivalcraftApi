@@ -365,7 +365,7 @@ namespace Game {
             Block block = BlocksManager.Blocks[num];
 
             if (Time.PeriodicEvent(0.1f, 0.0)) {
-                if (NetworkManager.WorkType != WorkType.Client) {
+                if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                     //服务器广播玩家数据
                     NetworkManager.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate) { Except = PlayerData.Client });
                 }
@@ -376,7 +376,7 @@ namespace Game {
             }
 
             // Handle replicated Interact/Aim/Dig events on server and remote clients.
-            if (NetworkManager.WorkType != WorkType.Local && !PlayerData.IsMainPlayer) {
+            if (NetworkManager.WorkType != NetWork.WorkType.Local && !PlayerData.IsMainPlayer) {
                 if (digEvents.Count > 0) {
                     digEvent = digEvents[0];
                     digEvents.RemoveAt(0);
@@ -461,8 +461,8 @@ namespace Game {
                 }
             }
 
-            bool shouldSyncPlayerEvents = NetworkManager.WorkType == WorkType.Local
-                || (NetworkManager.WorkType != WorkType.Local && PlayerData.IsMainPlayer);
+            bool shouldSyncPlayerEvents = NetworkManager.WorkType == NetWork.WorkType.Local
+                || (NetworkManager.WorkType != NetWork.WorkType.Local && PlayerData.IsMainPlayer);
             if (shouldSyncPlayerEvents) {
                 digEvent = default;
                 interactEvent = default;
@@ -657,7 +657,7 @@ namespace Game {
                                 bodyRaycastResult.Value.HitPoint(),
                                 playerInput.Hit.Value.Direction
                             );
-                            if (NetworkManager.WorkType == WorkType.Client) {
+                            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                                 NetworkManager.QueuePackage(new ComponentPlayerPackage(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
                             }
                         }
@@ -866,7 +866,7 @@ namespace Game {
         private static readonly object _saveLock = new();
 
         public virtual void SavePlayerEntity() {
-            if (NetworkManager.WorkType != WorkType.Client) {
+            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                 lock (_saveLock) {
                     try {
                         var list = Project.SaveEntities([Entity]);

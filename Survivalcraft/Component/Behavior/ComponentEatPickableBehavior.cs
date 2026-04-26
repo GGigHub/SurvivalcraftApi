@@ -47,7 +47,7 @@ namespace Game {
             set {
                 if (m_isFeed != value) {
                     m_isFeed = value;
-                    if (NetworkManager.WorkType == WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
+                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
                 }
             }
         }
@@ -59,7 +59,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                 m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {

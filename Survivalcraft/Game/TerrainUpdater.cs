@@ -274,7 +274,7 @@ namespace Game {
                 value.ContentDistance = contentDistance;
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
-                if (NetworkManager.WorkType == WorkType.Client) {
+                if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                     NetworkManager.QueuePackage(new PlayerDataPackage(value));
                 }
             }
@@ -394,7 +394,7 @@ namespace Game {
                 }
             }
             foreach (TerrainChunk terrainChunk in m_terrain.AllocatedChunks) {
-                if (NetworkManager.WorkType == WorkType.Client) {
+                if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                     if (terrainChunk.ThreadState == TerrainChunkState.NotLoaded) {
                         if (!terrainChunk.IsRequested) {
                             terrainChunk.IsRequested = true;
@@ -729,7 +729,7 @@ namespace Game {
             switch (chunk.ThreadState) {
                 case TerrainChunkState.NotLoaded: {
                         double realTime19 = Time.RealTime;
-                        if (NetworkManager.WorkType == WorkType.Client) {
+                        if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                             chunk.WasUpgraded = true;
                         }
                         else {

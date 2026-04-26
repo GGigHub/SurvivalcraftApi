@@ -19,7 +19,7 @@ namespace Game {
                         int num = Terrain.ReplaceData(value, data2);
                         var p = new EditableBlockPackage(EditableType.AdjustableDelayGate, default, true, inventory.Id, slotIndex, newDelay);
                         NetworkManager.QueuePackage(p);
-                        if (NetworkManager.WorkType != WorkType.Client) {
+                        if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                             p.Handle(false);
                         }
                     }
@@ -42,7 +42,7 @@ namespace Game {
                             var cell = new CellFace(x, y, z, face);
                             var p = new EditableBlockPackage(EditableType.AdjustableDelayGate, cell, false, default, default, newDelay);
                             NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != WorkType.Client) {
+                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }

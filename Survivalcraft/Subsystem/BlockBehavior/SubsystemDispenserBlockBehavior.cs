@@ -26,7 +26,7 @@ namespace Game {
         }
 
         public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner) {
-            if (NetworkManager.WorkType == WorkType.Client && NetworkManager.MainPlayer == componentMiner.ComponentPlayer) {
+            if (NetworkManager.WorkType == NetWork.WorkType.Client && NetworkManager.MainPlayer == componentMiner.ComponentPlayer) {
                 IPackage package = new BlockEditPackage(new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z), BlockEditPackage.EventType.OpenInventoryByPoint);
                 NetworkManager.QueuePackage(package);
                 return true;

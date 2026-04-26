@@ -26,7 +26,7 @@ namespace Game {
                         () => {
                             var p = new EditableBlockPackage(default, true, inventory.Id, slotIndex, memoryBankData);
                             NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != WorkType.Client) {
+                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -62,7 +62,7 @@ namespace Game {
                             var cell = new CellFace(x, y, z, face);
                             var p = new EditableBlockPackage(cell, false, default, default, memoryBankData);
                             NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != WorkType.Client) {
+                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }

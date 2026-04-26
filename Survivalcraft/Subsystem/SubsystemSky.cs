@@ -188,7 +188,7 @@ namespace Game {
         public static bool DrawGalaxyEnabled = true;
 
         public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual) {
-            if (NetworkManager.WorkType != WorkType.Client) {
+            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                 NetMakeLightningStrike(targetPosition, manual);
                 NetworkManager.QueuePackage(new NetWork.Packages.SubsystemSkyPackage(targetPosition));
             }

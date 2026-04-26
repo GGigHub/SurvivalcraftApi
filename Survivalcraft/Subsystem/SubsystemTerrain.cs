@@ -368,7 +368,7 @@ namespace Game {
             if (pass) {
                 return;
             }
-            if (NetworkManager.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
             ChangeCellNet(x, y, z, value, updateModificationCounter, movingBlock);
             NetworkManager.QueuePackage(new NetWork.Packages.SubsystemTerrainPackage(x, y, z, value));
         }
@@ -512,7 +512,7 @@ namespace Game {
             Terrain = new Terrain();
             TerrainRenderer = new TerrainRenderer(this);
             TerrainUpdater = new TerrainUpdater(this);
-            if (NetworkManager.WorkType != WorkType.Client) {
+            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                 TerrainSerializer = new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             else {

@@ -150,7 +150,7 @@ public class ComponentHealthPackage : IPackage {
 
     public void Handle(bool isServer) {
         // 前置过滤：服务端只处理 RequestInjure，客户端只处理其他事件。
-        if (NetworkManager.WorkType == WorkType.Server && m_type != EventType.RequestInjure) {
+        if (NetworkManager.WorkType == NetWork.WorkType.Server && m_type != EventType.RequestInjure) {
             return; // 服务端忽略非请求事件。
         }
 

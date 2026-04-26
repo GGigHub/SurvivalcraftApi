@@ -62,7 +62,7 @@ namespace Game {
         public virtual void StartMounting(ComponentMount componentMount) {
             if (!m_isAnimating
                 && Mount == null) {
-                if (NetWork.NetworkManager.WorkType != WorkType.Client) {
+                if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                     StartNetMounting(componentMount);
                     NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, componentMount));
                 }
@@ -75,7 +75,7 @@ namespace Game {
         public virtual void StartDismounting() {
             if (!m_isAnimating
                 && Mount != null) {
-                if (NetWork.NetworkManager.WorkType != WorkType.Client) {
+                if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                     StartNetDismounting();
                     NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentMountPackage(this));
                 }
@@ -136,7 +136,7 @@ namespace Game {
                     || (componentHealth != null && componentHealth.Health <= 0f)
                     || ComponentCreature.ComponentHealth.Health <= 0f) {
                     //服务器和客户端都由自己控制下马
-                    if (NetWork.NetworkManager.WorkType != WorkType.Local && ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer) {
+                    if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Local && ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer) {
 
                     }
                     else {

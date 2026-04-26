@@ -90,7 +90,7 @@ namespace Game {
         }
 
         public static void SaveProject(bool waitForCompletion, bool showErrorDialog) {
-            if (m_project != null && NetworkManager.WorkType == WorkType.Server) {
+            if (m_project != null && NetworkManager.WorkType == NetWork.WorkType.Server) {
                 double realTime = Time.RealTime;
                 ProjectData projectData = m_project.Save();
                 m_saveCompleted.WaitOne();

@@ -222,7 +222,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (NetWork.NetworkManager.WorkType != WorkType.Client) {
+            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 UpdatePrecipitation(dt);
                 UpdateLightning(dt);
                 UpdateFog(dt);

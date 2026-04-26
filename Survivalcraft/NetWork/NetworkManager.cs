@@ -12,6 +12,20 @@ using TemplatesDatabase;
 
 namespace Game.NetWork;
 
+public enum ClientStage {
+    NotConnected,
+    Connected,
+    ProjectLoaded,
+    LoadTerrain,
+    Playing
+}
+
+public enum WorkType {
+    Local = 0,
+    Server = 1,
+    Client = 2
+}
+
 public static class NetworkManager {
     public const int DISCONNECT_TIMEOUT = 10000;
     public static NetworkServer Server { get; private set; }
@@ -47,9 +61,9 @@ public static class NetworkManager {
     }
 
     public static WorkType GetCurrentWorkType() {
-        if (Server?.IsServer == true) return WorkType.Server;
-        if (Client?.CurrentStage == NetworkBase.Stage.Connected) return WorkType.Client;
-        return WorkType.Local;
+        if (Server?.IsServer == true) return NetWork.WorkType.Server;
+        if (Client?.CurrentStage == NetworkBase.Stage.Connected) return NetWork.WorkType.Client;
+        return NetWork.WorkType.Local;
     }
 
     /// <summary>

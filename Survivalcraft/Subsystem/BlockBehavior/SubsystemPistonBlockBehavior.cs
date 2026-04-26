@@ -74,7 +74,7 @@ namespace Game {
                         if (num != value) {
                             var p = new EditableBlockPackage(EditableType.Piston, default, true, inventory.Id, slotIndex, newData);
                             NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != WorkType.Client) {
+                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -97,7 +97,7 @@ namespace Game {
                             var cell = new CellFace(x, y, z, 0);
                             var p = new EditableBlockPackage(EditableType.Piston, cell, false, default, default, newData);
                             NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != WorkType.Client) {
+                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }

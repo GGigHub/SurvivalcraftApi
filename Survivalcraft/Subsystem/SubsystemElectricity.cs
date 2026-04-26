@@ -401,7 +401,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (NetWork.NetworkManager.WorkType == WorkType.Client) {
+            if (NetWork.NetworkManager.WorkType == NetWork.WorkType.Client) {
                 m_remainingSimulationTime = MathUtils.Min(m_remainingSimulationTime + dt, 0.1f);
                 FrameStartCircuitStep = CircuitStep;
                 while (m_remainingSimulationTime >= 0.01f) {

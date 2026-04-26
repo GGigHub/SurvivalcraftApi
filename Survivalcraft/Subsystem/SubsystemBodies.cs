@@ -125,7 +125,7 @@ namespace Game {
         public SubsystemTerrain m_subsystemTerrain;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType != WorkType.Client) {
+            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                 bool flag = Time.PeriodicEvent(0.1, 0.0);
                 _toSendList.Clear();
                 foreach (ComponentBody body in Bodies) {

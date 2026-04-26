@@ -85,7 +85,7 @@ public class GameLoadingScreen : Screen {
             else {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
-                if (IsAdventureRestart && NetworkManager.WorkType == WorkType.Client) {
+                if (IsAdventureRestart && NetworkManager.WorkType == NetWork.WorkType.Client) {
                     NetworkManager.QueuePackage(new ComponentPlayerPackage(NetworkManager.MainPlayer, ComponentPlayerPackage.PlayerAction.IntoPlaying));
                 }
                 ScreensManager.SwitchScreen("Game");
@@ -180,7 +180,7 @@ public class GameLoadingScreen : Screen {
         }
     }
     public override void Leave() {
-        //if (m_serverEndPoint != null && CommonLib.GetCurrentWorkType() == WorkType.Local) CommonLib.Net.StopImmediate();
+        //if (m_serverEndPoint != null && CommonLib.GetCurrentWorkType() == NetWork.WorkType.Local) CommonLib.Net.StopImmediate();
         DialogsManager.HideDialog(spawnDialog);
     }
 

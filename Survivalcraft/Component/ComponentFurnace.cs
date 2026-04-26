@@ -160,7 +160,7 @@ namespace Game {
             }
 
             // 添加网络同步逻辑
-            if (isRun && NetWork.NetworkManager.WorkType != WorkType.Client) {
+            if (isRun && NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 if (m_smeltingRecipe == null && m_fireTimeRemaining == 0) {
                     isRun = false;
                     NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentFurnacePackage(Entity.Id, m_fireTimeRemaining, m_smeltingProgress, m_heatLevel));

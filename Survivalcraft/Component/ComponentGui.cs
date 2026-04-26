@@ -651,7 +651,7 @@ namespace Game {
             if (m_lightningButtonWidget.IsVisible
                 && (m_lightningButtonWidget.IsClicked || playerInput.Lighting)) {
                 Matrix matrix = Matrix.CreateFromQuaternion(m_componentPlayer.ComponentCreatureModel.EyeRotation);
-                if (NetworkManager.WorkType != WorkType.Client) {
+                if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                     Project.FindSubsystem<SubsystemWeather>(throwOnError: true).ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
                     m_subsystemWeather.ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
                 }

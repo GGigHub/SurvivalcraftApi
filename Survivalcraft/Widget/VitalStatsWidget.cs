@@ -196,7 +196,7 @@ namespace Game {
                 );
             }
             if (m_chokeButton.IsClicked) {
-                if (NetworkManager.WorkType == WorkType.Client) {
+                if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                     NetworkManager.QueuePackage(
                         new ComponentHealthPackage(
                             m_componentPlayer.ComponentHealth,

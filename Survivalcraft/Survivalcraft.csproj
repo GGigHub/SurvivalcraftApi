@@ -7,6 +7,7 @@
       <Compile Remove="C:\Users\tk34\Desktop\NF2\SurvivalcraftApi\Survivalcraft\NetWork\NetworkPeerBase.cs" />
     </ItemGroup>
     <ItemGroup>
+      <Compile Include="NetWork\NetworkSimulate.cs" />
       <Compile Include="NetWork\NetworkListener.cs" />
     </ItemGroup>
     <ItemGroup>

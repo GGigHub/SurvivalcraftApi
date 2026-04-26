@@ -196,7 +196,7 @@ namespace Game {
                 GenerateGeometry(movingBlockSet);
             }
             m_movingBlockSets.Add(movingBlockSet);
-            if (NetWork.NetworkManager.WorkType != WorkType.Client) {
+            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 m_movingBlockSets.Add(movingBlockSet);
                 NetWork.NetworkManager.QueuePackage(new MovingBlockPackage(movingBlockSet));
             }
@@ -204,7 +204,7 @@ namespace Game {
         }
 
         public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet) {
-            if (NetWork.NetworkManager.WorkType == WorkType.Client) return;
+            if (NetWork.NetworkManager.WorkType == NetWork.WorkType.Client) return;
             MovingBlockSet movingBlockSet2 = (MovingBlockSet)movingBlockSet;
             if (m_movingBlockSets.Remove(movingBlockSet2)) {
                 m_removing.Add(movingBlockSet2);
@@ -420,7 +420,7 @@ namespace Game {
             foreach (MovingBlockSet item in m_stopped) {
                 Stopped?.Invoke(item);
             }
-            if (NetWork.NetworkManager.WorkType != WorkType.Client) {
+            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 foreach (MovingBlockSet item in m_stopped) {
                     DoStop(item);
                     NetWork.NetworkManager.QueuePackage(new MovingBlockPackage(item, true));

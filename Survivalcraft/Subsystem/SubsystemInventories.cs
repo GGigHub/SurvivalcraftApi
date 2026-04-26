@@ -25,7 +25,7 @@ public class SubsystemInventories : Subsystem {
             return inventory.Id;
         }
         else {
-            if (NetworkManager.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                 inventories[inventory.Id] = inventory;
                 return inventory.Id;
             }
@@ -63,7 +63,7 @@ public class SubsystemInventories : Subsystem {
     }
     public static void flushSyncItems() {
         if (syncItems.Count > 0) {
-            if (NetworkManager.WorkType == WorkType.Server) {
+            if (NetworkManager.WorkType == NetWork.WorkType.Server) {
                 NetworkManager.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(syncItems));
             }
             syncItems.Clear();

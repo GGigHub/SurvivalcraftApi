@@ -5,6 +5,17 @@ using LiteNetLib.Utils;
 
 namespace Game.NetWork;
 
+public interface IPackage {
+    byte ID { get; }
+    Client To { get; set; }
+    Client Except { get; set; }
+    Client From { get; set; }
+    ClientStage MinNeedState { get; }
+    void WriteData(PackageStreamWriter writer);
+    void ReadData(PackageStreamReader reader);
+    void Handle(bool isServer);
+}
+
 public enum PackageType : byte {
     ServerInfo, ConnectRequest, ConnectReject,
     Client, Project, PlayerData, Terrain, Entity,

@@ -39,7 +39,7 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void SetOnFire(ComponentCreature attacker, float duration) {
-            if (NetWork.NetworkManager.WorkType == WorkType.Client) {
+            if (NetWork.NetworkManager.WorkType == NetWork.WorkType.Client) {
                 return;
             }
             NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentOnFirePackage(this, attacker, duration));

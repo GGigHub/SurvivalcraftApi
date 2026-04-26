@@ -45,7 +45,7 @@ namespace Game {
             set {
                 if (m_isDigIn != value) {
                     m_isDigIn = value;
-                    if (NetworkManager.WorkType == WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isDigIn));
+                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isDigIn));
                 }
             }
         }
@@ -55,7 +55,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                 if (IsDigIn) {
                     m_componentFishModel.DigInOrder = m_maxDigInDepth;
                 }

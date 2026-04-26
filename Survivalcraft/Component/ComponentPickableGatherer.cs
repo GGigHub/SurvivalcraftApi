@@ -59,7 +59,7 @@ namespace Game {
                         lock (pickable) {
                             pickable.FlyToPosition = Position + 0.1f * MathF.Sqrt(distanceToTargetSquare) * m_componentBody.Velocity;
                             pickable.FlyToGatherer = this;
-                            if (NetworkManager.WorkType == WorkType.Server) {
+                            if (NetworkManager.WorkType == NetWork.WorkType.Server) {
                                 NetworkManager.QueuePackage(new PickablePackage(pickable, PickablePackage.PickType.SetFlyToPosition));
                             }
                         }

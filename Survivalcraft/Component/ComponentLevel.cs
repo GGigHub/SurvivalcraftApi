@@ -89,7 +89,7 @@ namespace Game {
         }
 
         public virtual void AddExperience(int count, bool playSound) {
-            if (NetworkManager.WorkType != WorkType.Client) {
+            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                 NetAddExperience(count, playSound);
                 NetworkManager.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(m_componentPlayer.PlayerData, count, playSound, m_componentPlayer.PlayerData.Level));
             }

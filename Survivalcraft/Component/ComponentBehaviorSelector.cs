@@ -43,7 +43,7 @@ namespace Game {
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
             m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
-            if (NetworkManager.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                 IsDisableBehavior = true;
             }
             foreach (ComponentBehavior item in Entity.FindComponents<ComponentBehavior>()) {

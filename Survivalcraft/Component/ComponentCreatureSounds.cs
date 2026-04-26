@@ -50,7 +50,7 @@ namespace Game {
         public double m_lastPukeSoundTime = -1000.0;
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (NetworkManager.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
             PlayIdleSoundLogic(skipIfRecentlyPlayed);
         }
 
@@ -63,7 +63,7 @@ namespace Game {
         }
 
         public virtual void PlayPainSound() {
-            if (NetworkManager.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
             PlayPainSoundLogic();
         }
 
@@ -76,7 +76,7 @@ namespace Game {
         }
 
         public virtual void PlayMoanSound() {
-            if (NetworkManager.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
             PlayMoanSoundLogic();
         }
 
@@ -89,7 +89,7 @@ namespace Game {
         }
 
         public virtual void PlaySneezeSound() {
-            if (NetworkManager.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
             PlaySneezeSoundLogic();
         }
 
@@ -102,7 +102,7 @@ namespace Game {
         }
 
         public void PlayCoughSound() {
-            if (NetworkManager.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
             PlayCoughSoundLogic();
         }
 
@@ -115,7 +115,7 @@ namespace Game {
         }
 
         public virtual void PlayPukeSound() {
-            if (NetworkManager.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
             PlayPukeSoundLogic();
         }
 
@@ -128,7 +128,7 @@ namespace Game {
         }
 
         public virtual void PlayAttackSound() {
-            if (NetworkManager.WorkType == WorkType.Client) return;
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
             PlayAttackSoundLogic();
         }
 

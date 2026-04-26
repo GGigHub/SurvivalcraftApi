@@ -75,11 +75,11 @@ namespace Game {
                 flag = true;
             }
             DispenserBlock.Mode mode = DispenserBlock.GetMode(data);
-            if (flag && NetworkManager.WorkType == WorkType.Client) {
+            if (flag && NetworkManager.WorkType == NetWork.WorkType.Client) {
                 byte tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) | (DispenserBlock.GetAcceptsDrops(data) ? (1 << 1) : 0));
                 var p = new DispenserPackage(m_componentBlockEntity.Coordinates, tmp);
                 NetworkManager.QueuePackage(p);
-                if (NetworkManager.WorkType != WorkType.Client) {
+                if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                     p.Handle(false);
                 }
             }

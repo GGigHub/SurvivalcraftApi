@@ -559,7 +559,7 @@ namespace Game {
             int slotCount = sourceInventory.GetSlotCount(sourceSlotIndex);
             int slotCount2 = targetInventory.GetSlotCount(targetSlotIndex);
 
-            if (NetworkManager.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                 InventorySlot sourceInventorySlot = new() { inventoryId = sourceInventory.Id, slotIndex = sourceSlotIndex };
                 InventorySlot targetInventorySlot = new() {
                     inventoryId = targetInventory.Id,
@@ -597,7 +597,7 @@ namespace Game {
 
             dragCount = CalculateSplitCount(dragCount, dragMode);
 
-            if (NetworkManager.WorkType == WorkType.Client) {
+            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                 InventorySlot sourceInventorySlot = new() { inventoryId = sourceInventory.Id, slotIndex = sourceSlotIndex };
                 InventorySlot targetInventorySlot = new() { inventoryId = targetInventory.Id, slotIndex = targetSlotIndex };
                 ComponentInventoryPackage package = new(sourceInventorySlot, targetInventorySlot, ComponentInventoryPackage.EventType.HandleDragDrop) {

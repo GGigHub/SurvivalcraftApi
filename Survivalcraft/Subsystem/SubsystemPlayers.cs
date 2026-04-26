@@ -131,7 +131,7 @@ namespace Game {
                 ScreensManager.SwitchScreen("Player", PlayerScreen.Mode.Initial, Project);
             }
             foreach (PlayerData playersDatum in m_playersData) {
-                if (NetworkManager.WorkType == WorkType.Server && playersDatum.Client == null) {
+                if (NetworkManager.WorkType == NetWork.WorkType.Server && playersDatum.Client == null) {
                     toRemove.Add(playersDatum);
                 }
                 else {
@@ -244,7 +244,7 @@ namespace Game {
                 }
                 if (componentPlayer != null) {
                     Project.RemoveEntity(componentPlayer.Entity, true);
-                    if (NetworkManager.WorkType == WorkType.Server) {
+                    if (NetworkManager.WorkType == NetWork.WorkType.Server) {
                         componentPlayer.SavePlayerEntity();
                     }
                 }
@@ -263,7 +263,7 @@ namespace Game {
         }
 
         public bool MakePlayerOnline(Guid playerGuid, out PlayerData playerData, out Entity entity) {
-            if (CheckPlayerDataExists(playerGuid, out string entityFilePath) && NetworkManager.WorkType == WorkType.Server) {
+            if (CheckPlayerDataExists(playerGuid, out string entityFilePath) && NetworkManager.WorkType == NetWork.WorkType.Server) {
                 playerData = new PlayerData(Project);
                 ValuesDictionary dict = new ValuesDictionary();
                 using (Stream s = Storage.OpenFile(entityFilePath, OpenFileMode.Read)) {
