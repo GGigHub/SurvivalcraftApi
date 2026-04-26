@@ -37,8 +37,6 @@ public class Client {
 
     public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID); } }
 
-    public Entity CachePlayerEntity { get; set; }
-
     /// <summary>
     /// 是否已加入连接成功列表
     /// </summary>

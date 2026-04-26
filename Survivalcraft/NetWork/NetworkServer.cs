@@ -33,11 +33,6 @@ public class NetworkServer : INetworkNode, INetEventListener {
 
     public NetManager NetManager => _server;
 
-    public NetPeer pendingPeer = null;
-    public HashSet<byte> agreeOnPendingPeer = new HashSet<byte>();
-    internal Client PendingClient => (Client)pendingPeer?.Tag;
-    internal DateTime? pendingStartUtc;
-    internal const double PendingJoinTimeoutSeconds = 2.0;
     internal readonly Dictionary<Client, string> ClientsToRemove = new Dictionary<Client, string>();
 
     public NetworkServer() {
@@ -90,21 +85,6 @@ public class NetworkServer : INetworkNode, INetEventListener {
     }
 
     public void HandleDeliveryEvent(NetPeer peer, object userData) {
-        if (userData is NetPeer netPeer && netPeer.Tag is Client client) {
-            agreeOnPendingPeer.Remove(client.ID);
-#if DEBUG
-            Log.Information($"Client[{client.ID}] acknowledged pending client [{PendingClient.ID}]");
-#endif
-        }
-        if (agreeOnPendingPeer.Count == 0 && PendingClient != null) {
-            AddClient(PendingClient);
-            NetworkManager.QueuePackage(new ClientPackage(Clients.Values) { To = PendingClient });
-#if DEBUG
-            Log.Information($"Client[{PendingClient.ID}] join flow completed.");
-#endif
-            pendingPeer = null;
-            pendingStartUtc = null;
-        }
     }
 
     public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname) {
@@ -259,7 +239,11 @@ public class NetworkServer : INetworkNode, INetEventListener {
             case ClientStage.Connected: {
                     byte[] textureData = null;
                     if (subsystemPlayers.MakePlayerOnline(c.PlayerGuid, out PlayerData playerData, out Entity entity)) {
-                        c.CachePlayerEntity = entity;
+                        if (entity != null) {
+                            // Keep restored players on the main world path immediately so
+                            // concurrent joiners cannot miss them in later entity snapshots.
+                            GameManager.Project.AddEntity(entity);
+                        }
                         foreach (KeyValuePair<int, Client> client in Clients) {
                             if (client.Value != Self && client.Value != c) {
                                 NetworkManager.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
@@ -280,10 +264,6 @@ public class NetworkServer : INetworkNode, INetEventListener {
             case ClientStage.ProjectLoaded: {
                     List<Entity> sendList = [.. GameManager.Project.Entities];
                     NetworkManager.QueuePackage(new EntityPackage(sendList) { To = c });
-                    if (c.CachePlayerEntity != null) {
-                        GameManager.Project.AddEntity(c.CachePlayerEntity);
-                        c.CachePlayerEntity = null;
-                    }
                     break;
                 }
             case ClientStage.LoadTerrain:
@@ -329,11 +309,6 @@ public class NetworkServer : INetworkNode, INetEventListener {
 
         if (GameManager.Project == null) {
             SendWriterFromPackage(new ConnectionRejectPackage("Please wait until server startup is complete before joining."), request, true);
-        }
-        else if (PendingClient != null) {
-            Log.Information($"Too Many Request And Reject Current Request:{request.RemoteEndPoint}");
-            Log.Information($"Current Pending Client:{PendingClient}");
-            SendWriterFromPackage(new ConnectionRejectPackage($"Server is handling another pending join. Waiting client confirmations: {agreeOnPendingPeer.Count}"), request, true);
         }
         else {
             try {

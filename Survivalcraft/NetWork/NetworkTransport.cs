@@ -60,14 +60,6 @@ internal sealed class NetPacketTransport {
         m_node.RemoveClientImmediate(client);
         m_node.OnClientStateChanged?.Invoke(client);
         if (m_node is NetworkServer server) {
-            if (peer == server.pendingPeer) {
-                server.pendingPeer = null;
-                server.agreeOnPendingPeer.Clear();
-                server.pendingStartUtc = null;
-                return;
-            }
-
-            server.agreeOnPendingPeer.Remove(client.ID);
             server.HandleDeliveryEvent(null, null);
         }
     }

@@ -48,15 +48,6 @@ public static class NetworkManager {
     public static int ClientCount => Current.ClientCount;
     public static NetworkStage CurrentStage => Current.CurrentStage;
     public static bool IsNetRunning => Current.NetManager.IsRunning;
-    public static LiteNetLib.NetPeer PendingPeer {
-        get => Server?.pendingPeer;
-        set {
-            if (Server != null) {
-                Server.pendingPeer = value;
-            }
-        }
-    }
-    public static HashSet<byte> AgreeOnPendingPeer => Server?.agreeOnPendingPeer;
     public static Action<Client> OnClientStateChanged {
         get => Current.OnClientStateChanged;
         set => Current.OnClientStateChanged = value;

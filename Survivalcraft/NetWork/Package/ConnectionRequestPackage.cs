@@ -182,14 +182,18 @@ public class ConnectionRequestPackage : IPackage {
                 }
 
                 var acceptedPeer = From.Request.Accept();
-                NetworkManager.PendingPeer = (NetPeer)(object)acceptedPeer;
-                Client AddClient = NetworkManager.CreateClient(NetworkManager.PendingPeer, m_tmp_token, guid, communityAccountId, nickname);
-                var clientPackage = new ClientPackage(AddClient.ID, AddClient.TokenId, AddClient.PlayerGuid, AddClient.Nickname);
+                Client addClient = NetworkManager.CreateClient((NetPeer)(object)acceptedPeer, m_tmp_token, guid, communityAccountId, nickname);
+                NetworkManager.Server.AddClient(addClient);
+                
+                // Send full client list to the new client
+                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Server.Clients.Values) { To = addClient });
+
+                var clientPackage = new ClientPackage(addClient.ID, addClient.TokenId, addClient.PlayerGuid, addClient.Nickname);
                 foreach (var c in NetworkManager.Peers) {
+                    if (c.ID == addClient.ID) continue;
 #if DEBUG
-                    Log.Information($"通知 Client[{c.ID}] 新加入客户端 {AddClient.ID}");
+                    Log.Information($"通知 Client[{c.ID}] 新加入客户端 {addClient.ID}");
 #endif
-                    NetworkManager.AgreeOnPendingPeer.Add(c.ID);
                     NetworkManager.Server.SendWriterFromPackage(clientPackage, c.Peer, true);
                 }
                 Log.Information("Received connection request from " + From.IPPoint + ", accepted");
