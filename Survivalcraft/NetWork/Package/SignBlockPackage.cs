@@ -3,19 +3,18 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 /// <summary>
-/// 鍩虹鍖呮ā鏉垮鍒?
+/// 閸╄櫣顢呴崠鍛侀弶鍨槻閸?
 /// </summary>
 public class SignBlockPackage : IPackage {
-    public byte ID => (byte)PackageType.SignBlock;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.SignBlock;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public Point3 m_point;
     public SignData m_signData;
-    public SignBlockPackage() { }
+
+    public SignBlockPackage() {
+    }
+
     public SignBlockPackage(Point3 point, string[] lines, Color[] colors, string url) {
         m_point = point;
         m_signData = new SignData();
@@ -24,7 +23,41 @@ public class SignBlockPackage : IPackage {
         m_signData.Url = url;
     }
 
-    public void Handle(bool isServer) {
+    public override void Serialize(PackageSerializer archive) {
+        archive.Value(ref m_point);
+        m_signData ??= new SignData();
+        string url = m_signData.Url;
+        archive.Value(ref url);
+        m_signData.Url = url;
+
+        byte colorCount = archive.IsWriting ? (byte)m_signData.Colors.Length : (byte)0;
+        archive.Value(ref colorCount);
+        if (archive.IsReading) {
+            m_signData.Colors = new Color[colorCount];
+        }
+        for (int i = 0; i < colorCount; i++) {
+            Color color = archive.IsWriting ? m_signData.Colors[i] : default;
+            archive.Value(ref color);
+            if (archive.IsReading) {
+                m_signData.Colors[i] = color;
+            }
+        }
+
+        byte lineCount = archive.IsWriting ? (byte)m_signData.Lines.Length : (byte)0;
+        archive.Value(ref lineCount);
+        if (archive.IsReading) {
+            m_signData.Lines = new string[lineCount];
+        }
+        for (int i = 0; i < lineCount; i++) {
+            string line = archive.IsWriting ? m_signData.Lines[i] : string.Empty;
+            archive.Value(ref line);
+            if (archive.IsReading) {
+                m_signData.Lines[i] = line;
+            }
+        }
+    }
+
+    public override void Handle(bool isServer) {
         if (isServer) {
             if (From.PlayerData != null) {
                 GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>().SetSignData(m_point, m_signData.Lines, m_signData.Colors, m_signData.Url);
@@ -35,25 +68,4 @@ public class SignBlockPackage : IPackage {
             GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>().SetSignData(m_point, m_signData.Lines, m_signData.Colors, m_signData.Url);
         }
     }
-
-    public void ReadData(PackageStreamReader reader) {
-        m_point = reader.ReadPoint3();
-        m_signData = new SignData();
-        m_signData.Url = reader.ReadString();
-        m_signData.Colors = new Color[reader.ReadByte()];
-        for (byte i = 0; i < m_signData.Colors.Length; i++) m_signData.Colors[i] = reader.ReadColor();
-        m_signData.Lines = new string[reader.ReadByte()];
-        for (byte i = 0; i < m_signData.Colors.Length; i++) m_signData.Lines[i] = reader.ReadString();
-
-    }
-
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write(m_point);
-        writer.Write(m_signData.Url);
-        writer.Write((byte)m_signData.Colors.Length);
-        foreach (var i in m_signData.Colors) writer.Write(i);
-        writer.Write((byte)m_signData.Lines.Length);
-        foreach (var i in m_signData.Lines) writer.Write(i);
-    }
-
 }

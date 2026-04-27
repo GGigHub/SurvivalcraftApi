@@ -3,15 +3,11 @@ using static Game.NetPlayScreen;
 namespace Game.NetWork.Packages;
 
 /// <summary>
-/// 基础包模板复制
+/// 鍩虹鍖呮ā鏉垮鍒?
 /// </summary>
 public class ServerInfoPackage : IPackage {
-    public byte ID => (byte)PackageType.ServerInfo;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.ServerInfo;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public string m_version;
     ushort m_clientCount;
@@ -23,28 +19,54 @@ public class ServerInfoPackage : IPackage {
     public int Ping;
     public string m_modServerAddress;
 
-    public Season Season { get; set; } // 添加季节属性
-    public float TimeOfSeason { get; set; } // 添加季节进度属性
+    public Season Season { get; set; }
+    public float TimeOfSeason { get; set; }
     public bool IsLegacyVersion { get; set; }
 
-    public ServerInfoPackage() { }
-
+    public ServerInfoPackage() {
+    }
 
     public ServerInfoPackage(bool requestInfo) {
         m_requestInfo = requestInfo;
         if (!m_requestInfo) {
-
             m_clientCount = (ushort)NetworkManager.ClientCount;
             m_maxPlayerCount = GameManager.Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.MaxOnlinePlayerCount;
             m_gameMode = GameManager.Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.GameMode;
-            m_needPasswd = (string.IsNullOrEmpty(GameManager.Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.Password) == false);
+            m_needPasswd = string.IsNullOrEmpty(GameManager.Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.Password) == false;
             m_timeOfDay = GameManager.Project.FindSubsystem<SubsystemTimeOfDay>().CalculateTimeOfDay();
-            Season = GameManager.Project.FindSubsystem<SubsystemSeasons>()?.Season ?? (Season)(-1); // 获取当前季节
-            TimeOfSeason = GameManager.Project.FindSubsystem<SubsystemSeasons>()?.TimeOfSeason ?? -1f; // 获取当前季节进度
+            Season = GameManager.Project.FindSubsystem<SubsystemSeasons>()?.Season ?? (Season)(-1);
+            TimeOfSeason = GameManager.Project.FindSubsystem<SubsystemSeasons>()?.TimeOfSeason ?? -1f;
         }
     }
 
-    public void Handle(bool isServer) {
+    public override void Serialize(PackageSerializer archive) {
+        archive.Value(ref m_requestInfo);
+        if (!m_requestInfo) {
+            archive.Value(ref m_version);
+            archive.Value(ref m_clientCount);
+            archive.Value(ref m_maxPlayerCount);
+            archive.Enum(ref m_gameMode);
+            bool reserved = false;
+            archive.Value(ref reserved);
+            archive.Value(ref m_needPasswd);
+            archive.Value(ref m_timeOfDay);
+            int season = (int)Season;
+            archive.Value(ref season);
+            float timeOfSeason = TimeOfSeason;
+            archive.Value(ref timeOfSeason);
+            if (archive.IsReading) {
+                try {
+                    Season = (Season)season;
+                    TimeOfSeason = timeOfSeason;
+                }
+                catch {
+                    IsLegacyVersion = true;
+                }
+            }
+        }
+    }
+
+    public override void Handle(bool isServer) {
         if (m_requestInfo) {
             NetworkManager.Server.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
         }
@@ -65,8 +87,8 @@ public class ServerInfoPackage : IPackage {
             c.usedTime = Ping;
             c.version = m_version;
             c.TimeOfDay = m_timeOfDay;
-            c.season = Season; // 设置季节
-            c.timeOfSeason = TimeOfSeason; // 设置季节进度
+            c.season = Season;
+            c.timeOfSeason = TimeOfSeason;
             c.isLegacyVersion = IsLegacyVersion;
             if (IpToDNS.TryGetValue(c.ip, out string dns)) {
                 c.ip = dns;
@@ -87,55 +109,17 @@ public class ServerInfoPackage : IPackage {
                 found.usedTime = c.usedTime;
                 found.version = c.version;
                 found.TimeOfDay = c.TimeOfDay;
-                found.season = Season; // 更新季节
-                found.timeOfSeason = TimeOfSeason; // 更新季节进度
+                found.season = Season;
+                found.timeOfSeason = TimeOfSeason;
                 found.isLegacyVersion = IsLegacyVersion;
             }
-            else {
-                if (From.IsLocalRemote) //局域网
-                {
-                    if (p.CheckSaveConnectExists(c, out Connect f)) {
-                        ModsManager.SaveConnects.Remove(f);
-                    }
-                    ModsManager.SaveConnects.Add(c);
+            else if (From.IsLocalRemote) {
+                if (p.CheckSaveConnectExists(c, out Connect f)) {
+                    ModsManager.SaveConnects.Remove(f);
                 }
+                ModsManager.SaveConnects.Add(c);
             }
             p.UpdateList();
-        }
-    }
-
-    public void ReadData(PackageStreamReader reader) {
-        m_requestInfo = reader.ReadBoolean();
-        if (!m_requestInfo) {
-            m_version = reader.ReadString();
-            m_clientCount = reader.ReadUInt16();
-            m_maxPlayerCount = reader.ReadUInt16();
-            m_gameMode = reader.ReadEnum<GameMode>();
-            reader.ReadBoolean();
-            m_needPasswd = reader.ReadBoolean();
-            m_timeOfDay = reader.ReadSingle();
-            try {
-                Season = (Season)reader.ReadInt32(); // 读取季节
-                TimeOfSeason = reader.ReadSingle(); // 读取季节进度
-            }
-            catch {
-                // 兼容旧版本
-                IsLegacyVersion = true;
-            }
-        }
-    }
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write(m_requestInfo);
-        if (!m_requestInfo) {
-            writer.Write(m_version);
-            writer.Write(m_clientCount);
-            writer.Write(m_maxPlayerCount);
-            writer.WriteEnum(m_gameMode);
-            writer.Write(false);
-            writer.Write(m_needPasswd);
-            writer.Write(m_timeOfDay);
-            writer.Write((int)Season); // 写入季节
-            writer.Write(TimeOfSeason); // 写入季节进度
         }
     }
 }

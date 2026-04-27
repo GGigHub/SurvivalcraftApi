@@ -1,11 +1,9 @@
 namespace Game.NetWork.Packages;
 
 public class ComponentFluPackage : IPackage {
-    public byte ID => (byte)PackageType.Flu;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.Flu;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+
     public enum EventType {
         SyncStat,
         FluEffect,
@@ -24,7 +22,6 @@ public class ComponentFluPackage : IPackage {
     public int entityId;
 
     public ComponentFluPackage() {
-
     }
 
     public ComponentFluPackage(ComponentFlu flu, EventType eventType) {
@@ -36,31 +33,22 @@ public class ComponentFluPackage : IPackage {
         m_sneezeDuration = flu.m_sneezeDuration;
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write(entityId);
-        writer.WriteEnum(m_eventType);
-        writer.Write(m_fluOnset);
-        writer.Write(m_fluDuration);
-        writer.Write(m_coughDuration);
-        writer.Write(m_sneezeDuration);
+    public override void Serialize(PackageSerializer archive) {
+        archive.Value(ref entityId);
+        archive.Enum(ref m_eventType);
+        archive.Value(ref m_fluOnset);
+        archive.Value(ref m_fluDuration);
+        archive.Value(ref m_coughDuration);
+        archive.Value(ref m_sneezeDuration);
     }
 
-    public void ReadData(PackageStreamReader reader) {
-        entityId = reader.ReadInt32();
-        m_eventType = reader.ReadEnum<EventType>();
-        m_fluOnset = reader.ReadSingle();
-        m_fluDuration = reader.ReadSingle();
-        m_coughDuration = reader.ReadSingle();
-        m_sneezeDuration = reader.ReadSingle();
-    }
-
-    public void Handle(bool isServer) {
+    public override void Handle(bool isServer) {
         if (isServer) {
             return;
         }
         switch (m_eventType) {
             case EventType.SyncStat:
-                GameManager.Project.FindEntity(entityId, (entity) => {
+                GameManager.Project.FindEntity(entityId, entity => {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu != null) {
                         flu.m_fluOnset = m_fluOnset;
@@ -71,7 +59,7 @@ public class ComponentFluPackage : IPackage {
                 });
                 break;
             case EventType.FluEffect:
-                GameManager.Project.FindEntity(entityId, (entity) => {
+                GameManager.Project.FindEntity(entityId, entity => {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu != null) {
                         flu.m_fluOnset = m_fluOnset;
@@ -83,7 +71,7 @@ public class ComponentFluPackage : IPackage {
                 });
                 break;
             case EventType.StartFlu:
-                GameManager.Project.FindEntity(entityId, (entity) => {
+                GameManager.Project.FindEntity(entityId, entity => {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu != null) {
                         flu.m_fluOnset = m_fluOnset;
@@ -95,7 +83,7 @@ public class ComponentFluPackage : IPackage {
                 });
                 break;
             case EventType.Sneeze:
-                GameManager.Project.FindEntity(entityId, (entity) => {
+                GameManager.Project.FindEntity(entityId, entity => {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu != null) {
                         flu.m_fluOnset = m_fluOnset;
@@ -106,7 +94,6 @@ public class ComponentFluPackage : IPackage {
                     }
                 });
                 break;
-
         }
     }
 }

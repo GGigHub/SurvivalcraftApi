@@ -1,35 +1,28 @@
 namespace Game.NetWork.Packages;
 
 public class SubsystemSeasonPackage : IPackage {
-    public byte ID => (byte)PackageType.Season;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.Season;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public Season SeasonNet { get; set; }
     public int SeasonIndexNet;
     public float TimeOfSeasonNet { get; set; }
-    public SubsystemSeasonPackage() {
 
+    public SubsystemSeasonPackage() {
     }
 
     public SubsystemSeasonPackage(int seasonIndex, float timeofseason) {
-        SeasonIndexNet = seasonIndex;//季节编号
+        SeasonIndexNet = seasonIndex;
         TimeOfSeasonNet = timeofseason;
     }
 
-
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write(SeasonIndexNet);
-        writer.Write(TimeOfSeasonNet); // 直接写入 float 类型
+    public override void Serialize(PackageSerializer archive) {
+        archive.Value(ref SeasonIndexNet);
+        float timeOfSeasonNet = TimeOfSeasonNet;
+        archive.Value(ref timeOfSeasonNet);
+        TimeOfSeasonNet = timeOfSeasonNet;
     }
 
-    public void ReadData(PackageStreamReader reader) {
-        SeasonIndexNet = reader.ReadInt32();
-        TimeOfSeasonNet = reader.ReadSingle(); // 直接读取 float 类型
-    }
-
-    public void Handle(bool isServer) {
+    public override void Handle(bool isServer) {
         if (isServer) {
             return;
         }

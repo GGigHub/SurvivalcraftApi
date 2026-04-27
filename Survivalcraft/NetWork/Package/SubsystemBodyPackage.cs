@@ -3,16 +3,15 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class SubsystemBodyPackage : IPackage {
-    public byte ID => (byte)PackageType.Body;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.Playing;
+    public override byte ID => (byte)PackageType.Body;
+    public override ClientStage MinNeedState => ClientStage.Playing;
+
     public enum EventType {
         BodyUpdate,
         ApplyImpulse,
         HandleAxisCollision
     }
+
     private struct BodyItem {
         public int CreatureId;
         public Vector3 Position;
@@ -27,7 +26,6 @@ public class SubsystemBodyPackage : IPackage {
     public int TargetCreatureId;
     public Vector3 m_Impulse;
     public EventType m_eventType;
-
     public ComponentModel CreatureModel;
 
     public enum ChangeFlag : byte {
@@ -40,7 +38,10 @@ public class SubsystemBodyPackage : IPackage {
     }
 
     private List<BodyItem> m_bodyList = new List<BodyItem>();
-    public SubsystemBodyPackage() { }
+
+    public SubsystemBodyPackage() {
+    }
+
     public SubsystemBodyPackage(List<ComponentBody> bodies) {
         m_eventType = EventType.BodyUpdate;
         foreach (var b in bodies) {
@@ -89,91 +90,50 @@ public class SubsystemBodyPackage : IPackage {
         m_Impulse = velocity;
     }
 
-    private BodyItem ReadItem(PackageStreamReader reader) {
-        BodyItem bodyItem = new BodyItem();
-        bodyItem.changeFlag = reader.ReadEnum<ChangeFlag>();
-        bodyItem.CreatureId = reader.ReadInt32();
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.PositionChange)) {
-            bodyItem.Position = reader.ReadVector3();
-        }
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.RotationChange)) {
-            bodyItem.Rotation = reader.ReadQuaternion();
-        }
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.VelocityChange)) {
-            bodyItem.Velocity = reader.ReadVector3();
-        }
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) {
-            bodyItem.LookAngles = reader.ReadVector2();
-        }
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.FlyOrderChange)) {
-            bodyItem.FlyOrder = reader.ReadVector3Nullable();
-        }
-        return bodyItem;
-    }
-
-    private void WriteItem(PackageStreamWriter writer, BodyItem bodyItem) {
-        writer.WriteEnum(bodyItem.changeFlag);
-        writer.Write(bodyItem.CreatureId);
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.PositionChange)) {
-            writer.Write(bodyItem.Position);
-        }
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.RotationChange)) {
-            writer.Write(bodyItem.Rotation);
-        }
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.VelocityChange)) {
-            writer.Write(bodyItem.Velocity);
-        }
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) {
-            writer.Write(bodyItem.LookAngles);
-        }
-        if (bodyItem.changeFlag.HasFlag(ChangeFlag.FlyOrderChange)) {
-            writer.Write(bodyItem.FlyOrder);
-        }
-
-    }
-
-    public void ReadData(PackageStreamReader reader) {
-        m_eventType = reader.ReadEnum<EventType>();
+    public override void Serialize(PackageSerializer archive) {
+        archive.Enum(ref m_eventType);
         switch (m_eventType) {
             case EventType.BodyUpdate:
-                int cnt = reader.ReadInt32();
-                for (ushort i = 0; i < cnt; i++) {
-                    m_bodyList.Add(ReadItem(reader));
+                int cnt = archive.IsWriting ? m_bodyList.Count : 0;
+                archive.Value(ref cnt);
+                if (archive.IsReading) {
+                    m_bodyList.Clear();
+                    for (int i = 0; i < cnt; i++) {
+                        BodyItem bodyItem = new BodyItem();
+                        SerializeBodyItem(archive, ref bodyItem);
+                        m_bodyList.Add(bodyItem);
+                    }
+                }
+                else {
+                    for (int i = 0; i < cnt; i++) {
+                        BodyItem bodyItem = m_bodyList[i];
+                        SerializeBodyItem(archive, ref bodyItem);
+                    }
                 }
                 break;
             case EventType.HandleAxisCollision:
-                CreatureId = reader.ReadInt32();
-                TargetCreatureId = reader.ReadInt32();
-                m_Impulse = reader.ReadVector3();
+                archive.Value(ref CreatureId);
+                archive.Value(ref TargetCreatureId);
+                archive.Value(ref m_Impulse);
                 break;
             case EventType.ApplyImpulse:
-                CreatureId = reader.ReadInt32();
-                m_Impulse = reader.ReadVector3();
+                archive.Value(ref CreatureId);
+                archive.Value(ref m_Impulse);
                 break;
         }
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        writer.WriteEnum(m_eventType);
-        switch (m_eventType) {
-            case EventType.BodyUpdate:
-                writer.Write(m_bodyList.Count);
-                foreach (var i in m_bodyList) WriteItem(writer, i);
-                break;
-            case EventType.HandleAxisCollision:
-                writer.Write(CreatureId);
-                writer.Write(TargetCreatureId);
-                writer.Write(m_Impulse);
-                break;
-            case EventType.ApplyImpulse:
-                writer.Write(CreatureId);
-                writer.Write(m_Impulse);
-                break;
-        }
+    private void SerializeBodyItem(PackageSerializer archive, ref BodyItem bodyItem) {
+        archive.Enum(ref bodyItem.changeFlag);
+        archive.Value(ref bodyItem.CreatureId);
+        if (bodyItem.changeFlag.HasFlag(ChangeFlag.PositionChange)) archive.Value(ref bodyItem.Position);
+        if (bodyItem.changeFlag.HasFlag(ChangeFlag.RotationChange)) archive.Value(ref bodyItem.Rotation);
+        if (bodyItem.changeFlag.HasFlag(ChangeFlag.VelocityChange)) archive.Value(ref bodyItem.Velocity);
+        if (bodyItem.changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) archive.Value(ref bodyItem.LookAngles);
+        if (bodyItem.changeFlag.HasFlag(ChangeFlag.FlyOrderChange)) archive.Value(ref bodyItem.FlyOrder);
     }
 
-
-    public void Handle(bool isServer) {
+    public override void Handle(bool isServer) {
         if (isServer && m_eventType == EventType.BodyUpdate) {
             return;
         }
@@ -182,33 +142,20 @@ public class SubsystemBodyPackage : IPackage {
                 var bodies = GameManager.Project.FindSubsystem<SubsystemBodies>();
                 List<int> ml = new List<int>();
                 List<ComponentBody> rl = new List<ComponentBody>();
-                //服务器的动物列表
                 foreach (var item in m_bodyList) {
-                    bodies.FindBodyByCreatureID(item.CreatureId, (body) => {
-                        if (item.changeFlag.HasFlag(ChangeFlag.PositionChange)) {
-                            body.netPosition.SetNext(item.Position);
-                        }
-                        if (item.changeFlag.HasFlag(ChangeFlag.RotationChange)) {
-                            body.netRotation.SetNext(item.Rotation);
-                        }
-                        if (item.changeFlag.HasFlag(ChangeFlag.VelocityChange)) {
-                            body.netVelocity.SetNext(item.Velocity);
-                        }
+                    bodies.FindBodyByCreatureID(item.CreatureId, body => {
+                        if (item.changeFlag.HasFlag(ChangeFlag.PositionChange)) body.netPosition.SetNext(item.Position);
+                        if (item.changeFlag.HasFlag(ChangeFlag.RotationChange)) body.netRotation.SetNext(item.Rotation);
+                        if (item.changeFlag.HasFlag(ChangeFlag.VelocityChange)) body.netVelocity.SetNext(item.Velocity);
                         if (body.Locomotion != null) {
-                            if (item.changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) {
-                                body.Locomotion.NetLookAngles.SetNext(item.LookAngles);
-                            }
-                            if (item.changeFlag.HasFlag(ChangeFlag.FlyOrderChange)) {
-                                body.Locomotion.LastFlyOrder = item.FlyOrder;
-                            }
+                            if (item.changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) body.Locomotion.NetLookAngles.SetNext(item.LookAngles);
+                            if (item.changeFlag.HasFlag(ChangeFlag.FlyOrderChange)) body.Locomotion.LastFlyOrder = item.FlyOrder;
                         }
                     }, () => {
-                        // 本地没有这个动物，向服务器请求同步。
                         ml.Add(item.CreatureId);
                     });
                 }
                 foreach (var item2 in bodies.Bodies) {
-                    // 如果是玩家或者有子物体（如坐骑），则不通过此包同步，也不应在此时被移除
                     if (item2.Entity.FindComponent<ComponentPlayer>() != null || item2.ChildBodies.Count > 0) {
                         continue;
                     }
@@ -219,40 +166,22 @@ public class SubsystemBodyPackage : IPackage {
                 if (ml.Count > 0) {
                     NetworkManager.QueuePackage(new EntityPackage(ml));
 #if DEBUG
-                    Log.Information($"客户端向服务器请求同步动物数:{ml.Count}");
+                    Log.Information($"瀹㈡埛绔悜鏈嶅姟鍣ㄨ姹傚悓姝ュ姩鐗╂暟:{ml.Count}");
 #endif
                 }
                 if (rl.Count > 0) {
                     foreach (var b in rl) {
 #if DEBUG
-                        Log.Information($"客户端移除不同步的实体 {b.Entity.Id}");
+                        Log.Information($"瀹㈡埛绔Щ闄や笉鍚屾鐨勫疄浣?{b.Entity.Id}");
 #endif
                         GameManager.Project.RemoveEntity(b.Entity, true);
                     }
                 }
                 break;
             case EventType.HandleAxisCollision:
-                // 待补全逻辑，外挂可能把玩家撞飞
-                /*
-                GameManager.Project.FindSubsystem<SubsystemBodies>().FindBodyByCreatureID(CreatureId, (from) => {
-                    GameManager.Project.FindSubsystem<SubsystemBodies>().FindBodyByCreatureID(TargetCreatureId, (target) => {
-                        target.Velocity = m_Impulse;
-                        target.netVelocity.SetNext(m_Impulse);
-                        from.CollidedWithBody?.Invoke(target);
-                        target.CollidedWithBody?.Invoke(from);
-                    });
-                });
-                */
                 break;
             case EventType.ApplyImpulse:
-                // 同上
-                /*
-                GameManager.Project.FindSubsystem<SubsystemBodies>().FindBodyByCreatureID(CreatureId, (body) => {
-                    body.ApplyImpulseNet(m_Impulse);
-                });
-                */
                 break;
         }
-
     }
 }

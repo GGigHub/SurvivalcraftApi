@@ -4,7 +4,7 @@ namespace Game.NetWork.Packages;
 
 public class ComponentPlayerPackage : IPackage {
 
-    public byte ID => (byte)PackageType.Player;
+    public override byte ID => (byte)PackageType.Player;
     public enum PlayerAction {
         BodyUpdate,
         InteractEvent,
@@ -37,10 +37,7 @@ public class ComponentPlayerPackage : IPackage {
     private static readonly Dictionary<Guid, double> s_lastHitTimes = [];
     private const double SERVER_HIT_COOLDOWN = 0.2;
 
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public PlayerData m_playerData;
     public PlayerAction m_type;
@@ -187,169 +184,78 @@ public class ComponentPlayerPackage : IPackage {
         m_type = PlayerAction.Hit;
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        if (m_playerData.ClientId.HasValue) {
-            writer.Write(m_playerData.ClientId.Value);
+    public override void Serialize(PackageSerializer archive) {
+        if (archive.IsWriting) {
+            m_fromPlayerId = m_playerData?.ClientId ?? 0;
         }
-        else writer.Write((byte)0);
-        writer.WriteEnum(m_type);
+        archive.Value(ref m_fromPlayerId);
+        archive.Enum(ref m_type);
         switch (m_type) {
             case PlayerAction.BodyUpdate:
-                writer.WriteEnum(changFlag);
-                if (changFlag.HasFlag(ChangFlag.ParentBodyChange)) {
-                    if (changFlag.HasFlag(ChangFlag.LookAnglesChange)) {
-                        writer.Write(LookAngles);
-                    }
-                    if (changFlag.HasFlag(ChangFlag.ChildLookAnglesChange)) {
-                        writer.Write(ChildLookAngles);
-                    }
-                }
-                else {
-                    if (changFlag.HasFlag(ChangFlag.LookAnglesChange)) {
-                        writer.Write(LookAngles);
-                    }
-                }
-                if (changFlag.HasFlag(ChangFlag.PositionChange)) {
-                    writer.Write(Position);
-                }
-                if (changFlag.HasFlag(ChangFlag.RotationChange)) {
-                    writer.Write(Rotation);
-                }
-                if (changFlag.HasFlag(ChangFlag.VelocityChange)) {
-                    writer.Write(Velocity);
-                }
-                if (changFlag.HasFlag(ChangFlag.LadderChange)) {
-                    writer.Write(m_ladderValue);
-                }
-                if (changFlag.HasFlag(ChangFlag.SneakChange)) {
-                    writer.Write(m_sneaking);
-                }
+                SerializeBodyUpdate(archive);
                 break;
             case PlayerAction.InteractEvent:
-                writer.WriteEnum(m_interactEvent);
-                writer.Write(m_netInteractRay);
-                writer.Write(m_netInteractRaycast);
+                archive.Enum(ref m_interactEvent);
+                archive.Value(ref m_netInteractRay);
+                archive.Value(ref m_netInteractRaycast);
                 break;
             case PlayerAction.AimEvent:
-                writer.WriteEnum(m_aimEvent);
-                writer.Write(m_netAimRay);
+                archive.Enum(ref m_aimEvent);
+                archive.Value(ref m_netAimRay);
                 break;
             case PlayerAction.DigEvent:
-                writer.WriteEnum(m_digEvent);
-                writer.Write(m_netDigRay);
-                writer.Write(m_netDigRaycast);
+                archive.Enum(ref m_digEvent);
+                archive.Value(ref m_netDigRay);
+                archive.Value(ref m_netDigRaycast);
                 break;
             case PlayerAction.Hit:
-                writer.Write(bodyId);
-                writer.Write(m_hitPosition);
-                writer.Write(m_hitDirection);
+                archive.Value(ref bodyId);
+                archive.Value(ref m_hitPosition);
+                archive.Value(ref m_hitDirection);
                 break;
             case PlayerAction.AddExperience:
-                writer.Write(m_count);
-                writer.Write(m_playSound);
-                writer.Write(m_level);
+                archive.Value(ref m_count);
+                archive.Value(ref m_playSound);
+                archive.Value(ref m_level);
                 break;
             case PlayerAction.DragDrop:
-                writer.Write(m_inventory_id);
-                writer.Write(m_ActiveSlot);
-                writer.Write(m_hitPosition);
-                writer.Write(m_count);
+                archive.Value(ref m_inventory_id);
+                archive.Value(ref m_ActiveSlot);
+                archive.Value(ref m_hitPosition);
+                archive.Value(ref m_count);
                 break;
             case PlayerAction.CreativeFlyChange:
-                writer.Write(m_isCreativeFly);
+                archive.Value(ref m_isCreativeFly);
                 break;
             case PlayerAction.SyncStat:
-                writer.WriteBuff(m_stat.ToMessagePack());
+                byte[] messagePack = archive.IsWriting ? m_stat.ToMessagePack() : null;
+                archive.Buffer(ref messagePack);
+                if (archive.IsReading) {
+                    m_stat = new TemplatesDatabase.ValuesDictionary();
+                    m_stat.ApplyOverridesUseMessagePack(messagePack);
+                }
                 break;
             case PlayerAction.PositionSet:
-                writer.Write(Position);
-                writer.Write(Velocity);
+                archive.Value(ref Position);
+                archive.Value(ref Velocity);
                 break;
         }
     }
-    public void ReadData(PackageStreamReader reader) {
-        m_fromPlayerId = reader.ReadByte();
-        m_type = reader.ReadEnum<PlayerAction>();
-        switch (m_type) {
-            case PlayerAction.BodyUpdate:
-                changFlag = reader.ReadEnum<ChangFlag>();
-                if (changFlag.HasFlag(ChangFlag.ParentBodyChange)) {
-                    if (changFlag.HasFlag(ChangFlag.LookAnglesChange)) {
-                        LookAngles = reader.ReadVector2();
-                    }
-                    if (changFlag.HasFlag(ChangFlag.ChildLookAnglesChange)) {
-                        ChildLookAngles = reader.ReadVector2();
-                    }
-                }
-                else {
-                    if (changFlag.HasFlag(ChangFlag.LookAnglesChange)) {
-                        LookAngles = reader.ReadVector2();
-                    }
-                }
 
-                if (changFlag.HasFlag(ChangFlag.PositionChange)) {
-                    Position = reader.ReadVector3();
-                }
-
-                if (changFlag.HasFlag(ChangFlag.RotationChange)) {
-                    Rotation = reader.ReadQuaternion();
-                }
-
-                if (changFlag.HasFlag(ChangFlag.VelocityChange)) {
-                    Velocity = reader.ReadVector3();
-                }
-
-                if (changFlag.HasFlag(ChangFlag.LadderChange)) {
-                    m_ladderValue = reader.ReadInt32();
-                }
-
-                if (changFlag.HasFlag(ChangFlag.SneakChange)) {
-                    m_sneaking = reader.ReadBoolean();
-                }
-                break;
-            case PlayerAction.InteractEvent:
-                m_interactEvent = reader.ReadEnum<ComponentPlayer.InteractEvent>();
-                m_netInteractRay = reader.ReadRay3();
-                m_netInteractRaycast = reader.ReadTerrainRaycastResultNullable();
-                break;
-            case PlayerAction.AimEvent:
-                m_aimEvent = reader.ReadEnum<ComponentPlayer.AimEvent>();
-                m_netAimRay = reader.ReadRay3Nullable();
-                break;
-            case PlayerAction.DigEvent:
-                m_digEvent = reader.ReadEnum<ComponentPlayer.DigEvent>();
-                m_netDigRay = reader.ReadRay3Nullable();
-                m_netDigRaycast = reader.ReadTerrainRaycastResultNullable();
-                break;
-            case PlayerAction.Hit:
-                bodyId = reader.ReadInt32();
-                m_hitPosition = reader.ReadVector3();
-                m_hitDirection = reader.ReadVector3();
-                break;
-            case PlayerAction.AddExperience:
-                m_count = reader.ReadInt32();
-                m_playSound = reader.ReadBoolean();
-                m_level = reader.ReadSingle();
-                break;
-            case PlayerAction.DragDrop:
-                m_inventory_id = reader.ReadInt32();
-                m_ActiveSlot = reader.ReadInt32();
-                m_hitPosition = reader.ReadVector3();
-                m_count = reader.ReadInt32();
-                break;
-            case PlayerAction.CreativeFlyChange:
-                m_isCreativeFly = reader.ReadBoolean();
-                break;
-            case PlayerAction.SyncStat:
-                byte[] messagePack = reader.ReadBuff();
-                m_stat = new TemplatesDatabase.ValuesDictionary();
-                m_stat.ApplyOverridesUseMessagePack(messagePack);
-                break;
-            case PlayerAction.PositionSet:
-                Position = reader.ReadVector3();
-                Velocity = reader.ReadVector3();
-                break;
+    private void SerializeBodyUpdate(PackageSerializer archive) {
+        archive.Enum(ref changFlag);
+        if (changFlag.HasFlag(ChangFlag.ParentBodyChange)) {
+            if (changFlag.HasFlag(ChangFlag.LookAnglesChange)) archive.Value(ref LookAngles);
+            if (changFlag.HasFlag(ChangFlag.ChildLookAnglesChange)) archive.Value(ref ChildLookAngles);
         }
+        else {
+            if (changFlag.HasFlag(ChangFlag.LookAnglesChange)) archive.Value(ref LookAngles);
+        }
+        if (changFlag.HasFlag(ChangFlag.PositionChange)) archive.Value(ref Position);
+        if (changFlag.HasFlag(ChangFlag.RotationChange)) archive.Value(ref Rotation);
+        if (changFlag.HasFlag(ChangFlag.VelocityChange)) archive.Value(ref Velocity);
+        if (changFlag.HasFlag(ChangFlag.LadderChange)) archive.Value(ref m_ladderValue);
+        if (changFlag.HasFlag(ChangFlag.SneakChange)) archive.Value(ref m_sneaking);
     }
     public void PlayerEvent(Action<ComponentPlayer> action, Action fail = null) {
         if (m_playerData != null && m_playerData.ComponentPlayer != null) {
@@ -360,7 +266,7 @@ public class ComponentPlayerPackage : IPackage {
         }
     }
 
-    public void Handle(bool isServer) {
+    public override void Handle(bool isServer) {
         m_playerData = GameManager.Project.FindSubsystem<SubsystemPlayers>().FindPlayerData((playerData) => { return playerData.ClientId.HasValue && playerData.ClientId.Value == m_fromPlayerId; });
         if (NeedHandleMainPlayer == false && m_playerData.IsMainPlayer && m_type != PlayerAction.AddExperience) {
             return;

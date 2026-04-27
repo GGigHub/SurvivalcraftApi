@@ -3,12 +3,8 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class BlockEditPackage : IPackage {
-    public byte ID => (byte)PackageType.BlockEdit;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.BlockEdit;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public enum EventType {
         OpenInventoryByID,                  // 打开背包，通过背包 id。注：背包指的是 IInventory
@@ -19,9 +15,7 @@ public class BlockEditPackage : IPackage {
 
     public int m_inventoryId;
     public int m_slotIndex;
-
     public EventType m_type;
-
     public Point3 m_point3;
 
     public BlockEditPackage() {
@@ -43,45 +37,26 @@ public class BlockEditPackage : IPackage {
         m_type = type;
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        writer.WriteEnum(m_type);
+    public override void Serialize(PackageSerializer archive) {
+        archive.Enum(ref m_type);
         switch (m_type) {
             case EventType.OpenInventoryByID:
-                writer.Write(m_inventoryId);
+                archive.Value(ref m_inventoryId);
                 break;
             case EventType.OpenInventoryByPoint:
-                writer.Write(m_point3);
+                archive.Value(ref m_point3);
                 break;
             case EventType.CrossbowPull:
-                writer.Write(m_inventoryId);
-                writer.Write(m_slotIndex);
+                archive.Value(ref m_inventoryId);
+                archive.Value(ref m_slotIndex);
                 break;
             case EventType.EditSign:
-                writer.Write(m_point3);
+                archive.Value(ref m_point3);
                 break;
         }
     }
 
-    public void ReadData(PackageStreamReader reader) {
-        m_type = reader.ReadEnum<EventType>();
-        switch (m_type) {
-            case EventType.OpenInventoryByID:
-                m_inventoryId = reader.ReadInt32();
-                break;
-            case EventType.OpenInventoryByPoint:
-                m_point3 = reader.ReadPoint3();
-                break;
-            case EventType.CrossbowPull:
-                m_inventoryId = reader.ReadInt32();
-                m_slotIndex = reader.ReadInt32();
-                break;
-            case EventType.EditSign:
-                m_point3 = reader.ReadPoint3();
-                break;
-        }
-    }
-
-    public void Handle(bool isServer) {
+    public override void Handle(bool isServer) {
         if (From == null) // 会出现空么？？？？？
         {
             Log.Information("出现空玩家打开背包");

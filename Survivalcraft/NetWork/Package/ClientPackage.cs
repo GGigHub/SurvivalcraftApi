@@ -3,22 +3,22 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class ClientPackage : IPackage {
-    public byte ID => (byte)PackageType.Client;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.NotConnected;
+    public override byte ID => (byte)PackageType.Client;
+    public override ClientStage MinNeedState => ClientStage.NotConnected;
+
     public enum EventType {
         Add,
         Remove,
         SyncList,
         StateChange
     }
+
     public EventType eventType;
     public Client m_client;
     public List<Client> m_list;
 
-    public ClientPackage() { }
+    public ClientPackage() {
+    }
 
     public ClientPackage(byte id, Guid tokenId, Guid guid, string nickname) {
         eventType = EventType.Add;
@@ -29,18 +29,90 @@ public class ClientPackage : IPackage {
         eventType = EventType.Remove;
         m_client = new Client(null, id, Guid.Empty, Guid.Empty, null);
     }
-    public ClientPackage(byte id, ClientStage ClientStage) {
+
+    public ClientPackage(byte id, ClientStage clientStage) {
         eventType = EventType.StateChange;
         m_client = new Client(null, id, Guid.Empty, Guid.Empty, null) {
-            State = ClientStage
+            State = clientStage
         };
     }
+
     public ClientPackage(IEnumerable<Client> clients) {
         m_list = [.. clients];
         eventType = EventType.SyncList;
     }
 
-    public void Handle(bool isServer) {
+    public override void Serialize(PackageSerializer archive) {
+        archive.Enum(ref eventType);
+        switch (eventType) {
+            case EventType.Add:
+                SerializeClient(archive, ref m_client);
+                break;
+            case EventType.Remove:
+                SerializeClientId(archive, ref m_client);
+                break;
+            case EventType.SyncList:
+                SerializeClientList(archive);
+                break;
+            case EventType.StateChange:
+                SerializeClientId(archive, ref m_client);
+                ClientStage state = m_client?.State ?? ClientStage.NotConnected;
+                archive.Enum(ref state);
+                if (archive.IsReading) {
+                    m_client.State = state;
+                }
+                break;
+        }
+    }
+
+    private void SerializeClientList(PackageSerializer archive) {
+        byte count = archive.IsWriting ? (byte)m_list.Count : (byte)0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            m_list = [];
+            for (int i = 0; i < count; i++) {
+                Client client = null;
+                SerializeClient(archive, ref client);
+                m_list.Add(client);
+            }
+        }
+        else {
+            for (int i = 0; i < count; i++) {
+                Client client = m_list[i];
+                SerializeClient(archive, ref client);
+            }
+        }
+    }
+
+    private void SerializeClientId(PackageSerializer archive, ref Client client) {
+        byte id = client?.ID ?? 0;
+        archive.Value(ref id);
+        if (archive.IsReading) {
+            client = new Client(null, id, Guid.Empty, Guid.Empty, null);
+        }
+    }
+
+    private void SerializeClient(PackageSerializer archive, ref Client client) {
+        byte id = client?.ID ?? 0;
+        Guid tokenId = client?.TokenId ?? Guid.Empty;
+        Guid playerGuid = client?.PlayerGuid ?? Guid.Empty;
+        string nickname = client?.Nickname ?? string.Empty;
+
+        if (archive.IsWriting && To != null && client != null && To.PlayerGuid == client.PlayerGuid) {
+            playerGuid = client.TokenId;
+        }
+
+        archive.Value(ref id);
+        archive.Value(ref tokenId);
+        archive.Value(ref playerGuid);
+        archive.Value(ref nickname);
+
+        if (archive.IsReading) {
+            client = new Client(null, id, tokenId, playerGuid, nickname);
+        }
+    }
+
+    public override void Handle(bool isServer) {
         if (isServer && eventType != EventType.StateChange) {
             return;
         }
@@ -70,14 +142,18 @@ public class ClientPackage : IPackage {
                         NetworkManager.Client.Server = From;
                     }
                     else {
-                        if (c.TokenId == NetworkManager.Client.TokenId) NetworkManager.Client.Self = c;
+                        if (c.TokenId == NetworkManager.Client.TokenId) {
+                            NetworkManager.Client.Self = c;
+                        }
                     }
                     NetworkManager.AddClient(c);
                 }
 #if DEBUG
                 Log.Information("SyncList End:" + m_list.Count);
 #endif
-                if (NetworkManager.Self == null) throw new Exception("Cannot find Self In Client List");
+                if (NetworkManager.Self == null) {
+                    throw new Exception("Cannot find Self In Client List");
+                }
                 NetworkManager.Client.CurrentStage = NetworkStage.Connected;
                 break;
             case EventType.StateChange:
@@ -90,65 +166,5 @@ public class ClientPackage : IPackage {
                 }
                 break;
         }
-    }
-
-    public void ReadData(PackageStreamReader reader) {
-        eventType = reader.ReadEnum<EventType>();
-        switch (eventType) {
-            case EventType.Add:
-                m_client = ReadItem(reader);
-                break;
-            case EventType.Remove:
-                m_client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null);
-                break;
-            case EventType.SyncList:
-                m_list = [];
-                byte count = reader.ReadByte();
-                for (int i = 0; i < count; i++) {
-                    m_list.Add(ReadItem(reader));
-                }
-                break;
-            case EventType.StateChange:
-                m_client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null) {
-                    State = reader.ReadEnum<ClientStage>()
-                };
-                break;
-        }
-
-    }
-
-    public void WriteData(PackageStreamWriter writer) {
-        writer.WriteEnum(eventType);
-        switch (eventType) {
-            case EventType.Add:
-                WriteItem(writer, m_client);
-                break;
-            case EventType.Remove:
-                writer.Write(m_client.ID);
-                break;
-            case EventType.SyncList:
-                writer.Write((byte)m_list.Count);
-                foreach (var c in m_list) WriteItem(writer, c);
-                break;
-            case EventType.StateChange:
-                writer.Write(m_client.ID);
-                writer.WriteEnum(m_client.State);
-                break;
-        }
-    }
-
-    private void WriteItem(PackageStreamWriter writer, Client client) {
-        writer.Write(client.ID);
-        writer.Write(client.TokenId);
-
-        if ((To == null || To.PlayerGuid != client.PlayerGuid))
-            writer.Write(client.TokenId);
-        else
-            writer.Write(client.PlayerGuid);
-
-        writer.Write(client.Nickname ?? string.Empty);
-    }
-    private Client ReadItem(PackageStreamReader reader) {
-        return new Client(null, reader.ReadByte(), reader.ReadGuid(), reader.ReadGuid(), reader.ReadString());
     }
 }

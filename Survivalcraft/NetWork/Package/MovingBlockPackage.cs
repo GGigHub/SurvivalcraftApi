@@ -3,11 +3,9 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class MovingBlockPackage : IPackage {
-    public byte ID => (byte)PackageType.MovingBlockSet;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.MovingBlockSet;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+
     public enum EventType {
         Add = 1,
         Remove = 2,
@@ -16,25 +14,15 @@ public class MovingBlockPackage : IPackage {
     }
 
     public EventType m_type;
-
     public Vector3 m_addPosition;
-
     public Vector3 m_addTargetPosition;
-
     public float m_addSpeed;
-
     public float m_addAcceleration;
-
     public float m_addDrag;
-
     public Vector2 m_addSmoothness;
-
     public string m_addId;
-
     public readonly List<MovingBlockData> m_addBlocks = [];
-
     public string movingBlockId;
-
     public Point3 m_position;
 
     public struct MovingBlockData {
@@ -42,7 +30,8 @@ public class MovingBlockPackage : IPackage {
         public int Value;
     }
 
-    public MovingBlockPackage() { }
+    public MovingBlockPackage() {
+    }
 
     public MovingBlockPackage(SubsystemMovingBlocks.MovingBlockSet movingSet) {
         m_type = EventType.Add;
@@ -71,64 +60,49 @@ public class MovingBlockPackage : IPackage {
         }
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        writer.WriteEnum(m_type);
+    public override void Serialize(PackageSerializer archive) {
+        archive.Enum(ref m_type);
         switch (m_type) {
             case EventType.Add:
-                writer.Write(m_addPosition);
-                writer.Write(m_addTargetPosition);
-                writer.Write(m_addSpeed);
-                writer.Write(m_addAcceleration);
-                writer.Write(m_addDrag);
-                writer.Write(m_addSmoothness);
-                writer.Write(m_addId);
-                writer.Write(m_addBlocks.Count);
-                foreach (MovingBlockData block in m_addBlocks) {
-                    writer.Write(block.Offset);
-                    writer.Write(block.Value);
+                archive.Value(ref m_addPosition);
+                archive.Value(ref m_addTargetPosition);
+                archive.Value(ref m_addSpeed);
+                archive.Value(ref m_addAcceleration);
+                archive.Value(ref m_addDrag);
+                archive.Value(ref m_addSmoothness);
+                archive.Value(ref m_addId);
+                int count = archive.IsWriting ? m_addBlocks.Count : 0;
+                archive.Value(ref count);
+                if (archive.IsReading) {
+                    m_addBlocks.Clear();
+                    if (count < 0) {
+                        throw new InvalidDataException($"MovingBlockPackage contains invalid block count: {count}");
+                    }
+                    for (int i = 0; i < count; i++) {
+                        MovingBlockData data = new MovingBlockData();
+                        archive.Value(ref data.Offset);
+                        archive.Value(ref data.Value);
+                        m_addBlocks.Add(data);
+                    }
+                }
+                else {
+                    for (int i = 0; i < count; i++) {
+                        MovingBlockData data = m_addBlocks[i];
+                        archive.Value(ref data.Offset);
+                        archive.Value(ref data.Value);
+                    }
                 }
                 break;
             default:
-                writer.Write(movingBlockId);
+                archive.Value(ref movingBlockId);
                 if (m_type.HasFlag(EventType.HagTag)) {
-                    writer.Write(m_position);
-                }
-                break;
-        }
-    }
-    public void ReadData(PackageStreamReader reader) {
-        m_type = reader.ReadEnum<EventType>();
-        switch (m_type) {
-            case EventType.Add:
-                m_addPosition = reader.ReadVector3();
-                m_addTargetPosition = reader.ReadVector3();
-                m_addSpeed = reader.ReadSingle();
-                m_addAcceleration = reader.ReadSingle();
-                m_addDrag = reader.ReadSingle();
-                m_addSmoothness = reader.ReadVector2();
-                m_addId = reader.ReadString();
-                m_addBlocks.Clear();
-                int count = reader.ReadInt32();
-                if (count < 0) {
-                    throw new InvalidDataException($"MovingBlockPackage contains invalid block count: {count}");
-                }
-                for (int i = 0; i < count; i++) {
-                    m_addBlocks.Add(new MovingBlockData {
-                        Offset = reader.ReadPoint3(),
-                        Value = reader.ReadInt32()
-                    });
-                }
-                break;
-            default:
-                movingBlockId = reader.ReadString();
-                if (m_type.HasFlag(EventType.HagTag)) {
-                    m_position = reader.ReadPoint3();
+                    archive.Value(ref m_position);
                 }
                 break;
         }
     }
 
-    public void Handle(bool isServer) {
+    public override void Handle(bool isServer) {
         if (isServer) {
             return;
         }
@@ -142,18 +116,7 @@ public class MovingBlockPackage : IPackage {
                         Value = block.Value
                     });
                 }
-                var m = obj.AddMovingBlockSet(
-                    m_addPosition,
-                    m_addTargetPosition,
-                    m_addSpeed,
-                    m_addAcceleration,
-                    m_addDrag,
-                    m_addSmoothness,
-                    blocks,
-                    m_addId,
-                    null,
-                    false
-                ) as SubsystemMovingBlocks.MovingBlockSet;
+                var m = obj.AddMovingBlockSet(m_addPosition, m_addTargetPosition, m_addSpeed, m_addAcceleration, m_addDrag, m_addSmoothness, blocks, m_addId, null, false) as SubsystemMovingBlocks.MovingBlockSet;
                 var m_subsystemAudio = GameManager.Project.FindSubsystem<SubsystemAudio>();
                 if (m != null && m.Id == SubsystemPistonBlockBehavior.IdString) {
                     m_subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, m.Position, 2f, autoDelay: true);
@@ -175,4 +138,3 @@ public class MovingBlockPackage : IPackage {
         }
     }
 }
-

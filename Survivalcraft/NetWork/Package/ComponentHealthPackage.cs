@@ -3,11 +3,8 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class ComponentHealthPackage : IPackage {
-    public byte ID => (byte)PackageType.Health;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.Health;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public float m_amount;
     public int m_attackerId;
     public string m_cuase;
@@ -26,16 +23,16 @@ public class ComponentHealthPackage : IPackage {
         Injure,
         RequestInjure,
         SyncHealth,
-        Damage //船被破坏
+        Damage
     }
 
     public enum RequestInjureType {
-        Unkonw,     // 未知
-        Choke,      // 窒息
-        Suicide,    // 自杀 ← 新加
-        Cactus,     // 仙人掌刺伤
-        Fall,       // 摔伤
-        Fire        // 着火
+        Unkonw,
+        Choke,
+        Suicide,
+        Cactus,
+        Fall,
+        Fire
     }
 
     public EventType m_type;
@@ -64,7 +61,7 @@ public class ComponentHealthPackage : IPackage {
         m_targetId = target.Entity.Id;
         m_cuase = cuase;
         m_ignoreInvulnerability = ignoreInvulnerability;
-        this.m_requestInjureType = requestInjureType;
+        m_requestInjureType = requestInjureType;
     }
 
     public ComponentHealthPackage(Vector3 position, Vector3 velocity, Color color, string text) {
@@ -75,89 +72,48 @@ public class ComponentHealthPackage : IPackage {
         m_type = EventType.HitResult;
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        writer.WriteEnum(m_type);
+    public override void Serialize(PackageSerializer archive) {
+        archive.Enum(ref m_type);
         switch (m_type) {
             case EventType.RequestInjure:
-                writer.Write(m_targetId);
-                writer.Write(m_attackerId);
-                writer.Write(m_health);
-                writer.Write(m_ignoreInvulnerability);
-                writer.Write(m_amount);
-                writer.Write(m_cuase);
-                writer.WriteEnum(m_requestInjureType);
+                archive.Value(ref m_targetId);
+                archive.Value(ref m_attackerId);
+                archive.Value(ref m_health);
+                archive.Value(ref m_ignoreInvulnerability);
+                archive.Value(ref m_amount);
+                archive.Value(ref m_cuase);
+                archive.Enum(ref m_requestInjureType);
                 break;
             case EventType.Injure:
-                writer.Write(m_targetId);
-                writer.Write(m_attackerId);
-                writer.Write(m_health);
-                writer.Write(m_ignoreInvulnerability);
-                writer.Write(m_amount);
-                writer.Write(m_cuase);
+                archive.Value(ref m_targetId);
+                archive.Value(ref m_attackerId);
+                archive.Value(ref m_health);
+                archive.Value(ref m_ignoreInvulnerability);
+                archive.Value(ref m_amount);
+                archive.Value(ref m_cuase);
                 break;
             case EventType.HitResult:
-                writer.Write(m_position);
-                writer.Write(m_velocity);
-                writer.Write(m_color);
-                writer.Write(m_text);
+                archive.Value(ref m_position);
+                archive.Value(ref m_velocity);
+                archive.Value(ref m_color);
+                archive.Value(ref m_text);
                 break;
             case EventType.SyncHealth:
-                writer.Write(m_targetId);
-                writer.Write(m_health);
-                break;
             case EventType.Damage:
-                writer.Write(m_targetId);
-                writer.Write(m_health);
-                break;
-        }
-    }
-    public void ReadData(PackageStreamReader reader) {
-        m_type = reader.ReadEnum<EventType>();
-        switch (m_type) {
-            case EventType.RequestInjure:
-                m_targetId = reader.ReadInt32();
-                m_attackerId = reader.ReadInt32();
-                m_health = reader.ReadSingle();
-                m_ignoreInvulnerability = reader.ReadBoolean();
-                m_amount = reader.ReadSingle();
-                m_cuase = reader.ReadString();
-                m_requestInjureType = reader.ReadEnum<RequestInjureType>();
-                break;
-            case EventType.Injure:
-                m_targetId = reader.ReadInt32();
-                m_attackerId = reader.ReadInt32();
-                m_health = reader.ReadSingle();
-                m_ignoreInvulnerability = reader.ReadBoolean();
-                m_amount = reader.ReadSingle();
-                m_cuase = reader.ReadString();
-                break;
-            case EventType.HitResult:
-                m_position = reader.ReadVector3();
-                m_velocity = reader.ReadVector3();
-                m_color = reader.ReadColor();
-                m_text = reader.ReadString();
-                break;
-            case EventType.SyncHealth:
-                m_targetId = reader.ReadInt32();
-                m_health = reader.ReadSingle();
-                break;
-            case EventType.Damage:
-                m_targetId = reader.ReadInt32();
-                m_health = reader.ReadSingle();
+                archive.Value(ref m_targetId);
+                archive.Value(ref m_health);
                 break;
         }
     }
 
-    public void Handle(bool isServer) {
-        // 前置过滤：服务端只处理 RequestInjure，客户端只处理其他事件。
+    public override void Handle(bool isServer) {
         if (NetworkManager.WorkType == NetWork.WorkType.Server && m_type != EventType.RequestInjure) {
-            return; // 服务端忽略非请求事件。
+            return;
         }
 
         switch (m_type) {
             case EventType.RequestInjure:
-                GameManager.Project.FindEntity(m_targetId, (entity) => {
-                    // 仅接受客户端发起的自杀和摔落请求，其他环境伤害由服务端权威结算。
+                GameManager.Project.FindEntity(m_targetId, entity => {
                     if (m_requestInjureType != RequestInjureType.Choke && m_requestInjureType != RequestInjureType.Fall) {
                         return;
                     }
@@ -167,18 +123,19 @@ public class ComponentHealthPackage : IPackage {
                     }
                 });
                 break;
-
             case EventType.Injure:
-                GameManager.Project.FindEntity(m_targetId, (entity) => {
+                GameManager.Project.FindEntity(m_targetId, entity => {
                     var health = entity.FindComponent<ComponentHealth>();
-                    if (health == null) return;
+                    if (health == null) {
+                        return;
+                    }
 
                     if (m_attackerId == 0) {
                         health.NetInjure(m_amount, null, m_cuase);
                         health.Health = m_health;
                     }
                     else {
-                        GameManager.Project.FindEntity(m_attackerId, (entity2) => {
+                        GameManager.Project.FindEntity(m_attackerId, entity2 => {
                             var attacker = entity2.FindComponent<ComponentCreature>();
                             health.NetInjure(m_amount, attacker, m_cuase);
                             health.Health = m_health;
@@ -186,38 +143,43 @@ public class ComponentHealthPackage : IPackage {
                     }
                 });
                 break;
-
             case EventType.HitResult:
                 HitValueParticleSystem particleSystem = new HitValueParticleSystem(m_position, m_velocity, m_color, m_text);
                 float pitch = new Random().Float(-0.2f, 0.2f);
                 GameManager.Project.FindSubsystem<SubsystemParticles>(throwOnError: true).AddParticleSystem(particleSystem);
                 GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Swoosh", 1f, pitch, m_position, 3f, false);
                 break;
-
             case EventType.SyncHealth:
-                GameManager.Project.FindEntity(m_targetId, (e) => {
+                GameManager.Project.FindEntity(m_targetId, e => {
                     var h = e.FindComponent<ComponentHealth>();
-                    if (h != null) h.Health = m_health;
+                    if (h != null) {
+                        h.Health = m_health;
+                    }
                 });
                 break;
-
             case EventType.Damage:
-                GameManager.Project.FindEntity(m_targetId, (e) => {
+                GameManager.Project.FindEntity(m_targetId, e => {
                     var h = e.FindComponent<ComponentDamage>();
-                    if (h != null) h.Hitpoints = m_health;
+                    if (h != null) {
+                        h.Hitpoints = m_health;
+                    }
                 });
                 break;
         }
     }
 
-    private static string NormalizeCause(ComponentHealthPackage.RequestInjureType type) {
+    private static string NormalizeCause(RequestInjureType type) {
         switch (type) {
-            case RequestInjureType.Cactus: return "被仙人掌刺入";
-            case RequestInjureType.Fall: return "从高处坠落";
-            case RequestInjureType.Fire: return "被火焰灼烧";
-            case RequestInjureType.Choke: return "窒息";
-            default: return "未知";
+            case RequestInjureType.Cactus:
+                return "Cactus";
+            case RequestInjureType.Fall:
+                return "Fall";
+            case RequestInjureType.Fire:
+                return "Fire";
+            case RequestInjureType.Choke:
+                return "Choke";
+            default:
+                return "Unknown";
         }
     }
 }
-

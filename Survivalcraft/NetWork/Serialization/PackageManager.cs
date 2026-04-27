@@ -5,15 +5,15 @@ using LiteNetLib.Utils;
 
 namespace Game.NetWork;
 
-public interface IPackage {
-    byte ID { get; }
-    Client To { get; set; }
-    Client Except { get; set; }
-    Client From { get; set; }
-    ClientStage MinNeedState { get; }
-    void WriteData(PackageStreamWriter writer);
-    void ReadData(PackageStreamReader reader);
-    void Handle(bool isServer);
+public abstract class IPackage {
+    public abstract byte ID { get; }
+    public Client To { get; set; }
+    public Client Except { get; set; }
+    public Client From { get; set; }
+    public abstract ClientStage MinNeedState { get; }
+
+    public abstract void Handle(bool isServer);
+    public abstract void Serialize(PackageSerializer archive);
 }
 
 public enum PackageType : byte {
@@ -70,7 +70,7 @@ public class PackageManager {
         }
     }
 
-    public static T DecodePackage<T>(INetworkNode networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : class {
+    public static T DecodePackage<T>(INetworkNode networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : IPackage {
         var obj = DecodePackages(networkBase, reader, netPeer, request, iPEndPoint)[0];
         return (T)obj;
     }
@@ -141,7 +141,7 @@ public class PackageManager {
                 IPackage package = (IPackage)obj;
                 last = package;
                 package.From = from;
-                package.ReadData(preader);
+                package.Serialize(new PackageSerializer(preader));
                 packages.Add(package);
             }
             else {

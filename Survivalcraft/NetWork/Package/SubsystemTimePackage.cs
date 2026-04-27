@@ -3,11 +3,8 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class SubsystemTimePackage : IPackage {
-    public byte ID => (byte)PackageType.Time;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.Playing;
+    public override byte ID => (byte)PackageType.Time;
+    public override ClientStage MinNeedState => ClientStage.Playing;
     public double m_time;
     public double m_timeOfDayOffset;
 
@@ -19,24 +16,19 @@ public class SubsystemTimePackage : IPackage {
         m_timeOfDayOffset = TimeOfDayOffset;
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write(m_time);
-        writer.Write(m_timeOfDayOffset);
-    }
-    public void ReadData(PackageStreamReader reader) {
-        m_time = reader.ReadDouble();
-        m_timeOfDayOffset = reader.ReadDouble();
+    public override void Serialize(PackageSerializer archive) {
+        archive.Value(ref m_time);
+        archive.Value(ref m_timeOfDayOffset);
     }
 
-    public void Handle(bool isServer) {
+    public override void Handle(bool isServer) {
         var m_info = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
         if (!isServer || (From?.PlayerData != null && NetworkManager.GetEffectiveGameMode(From.PlayerData) == GameMode.Creative)) {
             m_info.TotalElapsedGameTime = m_time;
             m_info.TimeOfDay.TimeOfDayOffset = m_timeOfDayOffset;
         }
         else {
-            if (From.PlayerData != null) Log.Information($"{From.PlayerData.Name} 打算在非创造模式下修改时间");
+            if (From.PlayerData != null) Log.Information($"{From.PlayerData.Name} 鎵撶畻鍦ㄩ潪鍒涢€犳ā寮忎笅淇敼鏃堕棿");
         }
     }
 }
-

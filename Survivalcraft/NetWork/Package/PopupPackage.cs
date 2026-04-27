@@ -1,12 +1,8 @@
 namespace Game.NetWork.Packages;
 
 public class PopupPackage : IPackage {
-    public byte ID => (byte)PackageType.Popup;
-
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.Popup;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
@@ -19,17 +15,16 @@ public class PopupPackage : IPackage {
         Message = message ?? string.Empty;
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write(Title ?? string.Empty);
-        writer.Write(Message ?? string.Empty);
+    public override void Serialize(PackageSerializer archive) {
+        string title = Title;
+        string message = Message;
+        archive.Value(ref title);
+        archive.Value(ref message);
+        Title = title;
+        Message = message;
     }
 
-    public void ReadData(PackageStreamReader reader) {
-        Title = reader.ReadString();
-        Message = reader.ReadString();
-    }
-
-    public void Handle(bool isServer) {
+    public override void Handle(bool isServer) {
         if (isServer) {
             return;
         }

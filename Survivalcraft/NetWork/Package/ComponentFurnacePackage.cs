@@ -1,22 +1,21 @@
 namespace Game.NetWork.Packages;
 
 public class ComponentFurnacePackage : IPackage {
-    public byte ID => (byte)PackageType.Furnace;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.Furnace;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
-    struct FurnacePackageData {
+    private struct FurnacePackageData {
         public float fireTimeRemaining;
         public float smeltingProgress;
         public float heatLevel;
         public int entityID;
     }
 
-    List<FurnacePackageData> furnaceDataList = new List<FurnacePackageData>();
+    private readonly List<FurnacePackageData> furnaceDataList = [];
 
-    public ComponentFurnacePackage() { }
+    public ComponentFurnacePackage() {
+    }
+
     public ComponentFurnacePackage(List<ComponentFurnace> componentFurnaces) {
         foreach (var componentFurnace in componentFurnaces) {
             FurnacePackageData furnaceData = new FurnacePackageData();
@@ -27,16 +26,42 @@ public class ComponentFurnacePackage : IPackage {
             furnaceDataList.Add(furnaceData);
         }
     }
+
     public ComponentFurnacePackage(int entityId, float fireTimeRemaining, float smeltingProgress, float heatLevel) {
         FurnacePackageData furnaceData = new FurnacePackageData();
         furnaceData.entityID = entityId;
         furnaceData.fireTimeRemaining = fireTimeRemaining;
         furnaceData.smeltingProgress = smeltingProgress;
         furnaceData.heatLevel = heatLevel;
-
         furnaceDataList.Add(furnaceData);
     }
-    public void Handle(bool isServer) {
+
+    public override void Serialize(PackageSerializer archive) {
+        int count = furnaceDataList.Count;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            furnaceDataList.Clear();
+            for (int i = 0; i < count; i++) {
+                FurnacePackageData furnaceData = new FurnacePackageData();
+                archive.Value(ref furnaceData.entityID);
+                archive.Value(ref furnaceData.fireTimeRemaining);
+                archive.Value(ref furnaceData.smeltingProgress);
+                archive.Value(ref furnaceData.heatLevel);
+                furnaceDataList.Add(furnaceData);
+            }
+        }
+        else {
+            for (int i = 0; i < count; i++) {
+                FurnacePackageData furnaceData = furnaceDataList[i];
+                archive.Value(ref furnaceData.entityID);
+                archive.Value(ref furnaceData.fireTimeRemaining);
+                archive.Value(ref furnaceData.smeltingProgress);
+                archive.Value(ref furnaceData.heatLevel);
+            }
+        }
+    }
+
+    public override void Handle(bool isServer) {
         if (isServer) {
             return;
         }
@@ -48,28 +73,5 @@ public class ComponentFurnacePackage : IPackage {
                 furnace.m_heatLevel = furnaceData.heatLevel;
             });
         }
-    }
-
-    public void ReadData(PackageStreamReader reader) {
-        int count = reader.ReadInt32();
-        for (int i = 0; i < count; i++) {
-            FurnacePackageData furnaceData = new FurnacePackageData();
-            furnaceData.entityID = reader.ReadInt32();
-            furnaceData.fireTimeRemaining = reader.ReadSingle();
-            furnaceData.smeltingProgress = reader.ReadSingle();
-            furnaceData.heatLevel = reader.ReadSingle();
-            furnaceDataList.Add(furnaceData);
-        }
-    }
-
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write(furnaceDataList.Count);
-        foreach (var furnace in furnaceDataList) {
-            writer.Write(furnace.entityID);
-            writer.Write(furnace.fireTimeRemaining);
-            writer.Write(furnace.smeltingProgress);
-            writer.Write(furnace.heatLevel);
-        }
-
     }
 }

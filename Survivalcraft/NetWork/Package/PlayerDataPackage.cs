@@ -5,7 +5,7 @@ using TemplatesDatabase;
 namespace Game.NetWork.Packages;
 
 public class PlayerDataPackage : IPackage {
-    public byte ID => (byte)PackageType.PlayerData;
+    public override byte ID => (byte)PackageType.PlayerData;
     public enum DataType {
         Create,
         Modify,
@@ -20,10 +20,7 @@ public class PlayerDataPackage : IPackage {
         Count
     }
 
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.Connected;
+    public override ClientStage MinNeedState => ClientStage.Connected;
     public int m_visibility;
     public ValuesDictionary m_vd;
     public Guid m_playerGuid;
@@ -75,92 +72,69 @@ public class PlayerDataPackage : IPackage {
         m_type = DataType.SetUpdateLocation;
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        byte[] messagePack = null;
-        writer.WriteEnum(m_type);
+    public override void Serialize(PackageSerializer archive) {
+        archive.Enum(ref m_type);
         switch (m_type) {
             case DataType.AddPlayer:
             case DataType.Create:
-                messagePack = m_vd.ToMessagePack();
-                writer.WriteBuff(messagePack);
+                byte[] messagePack = archive.IsWriting ? m_vd.ToMessagePack() : null;
+                archive.Buffer(ref messagePack);
+                if (archive.IsReading) {
+                    m_vd = new ValuesDictionary();
+                    m_vd.ApplyOverridesUseMessagePack(messagePack);
+                }
                 break;
             case DataType.Modify:
-                writer.Write(m_playerGuid);
-                writer.Write(m_playerName);
-                writer.Write(m_skinName);
-                writer.WriteEnum(m_playerClass);
+                archive.Value(ref m_playerGuid);
+                archive.Value(ref m_playerName);
+                archive.Value(ref m_skinName);
+                archive.Enum(ref m_playerClass);
                 break;
             case DataType.ClientKnownPlayer:
-                writer.Write(m_playerGuid);
+                archive.Value(ref m_playerGuid);
                 break;
             case DataType.SetUpdateLocation:
-                writer.Write(m_updateLocation.Center);
-                writer.Write((ushort)m_updateLocation.ContentDistance);
-                writer.Write((ushort)m_updateLocation.VisibilityDistance);
-                writer.Write(m_updateLocation.LastChunksUpdateCenter);
+                SerializeUpdateLocation(archive);
                 break;
             case DataType.CloseTime:
-                writer.Write(m_visibility);
-                writer.Write(m_playerName);
+                archive.Value(ref m_visibility);
+                archive.Value(ref m_playerName);
                 break;
             case DataType.Bugle:
-                writer.Write(m_bugleTitle);
-                writer.Write(m_bugleContent);
+                archive.Value(ref m_bugleTitle);
+                archive.Value(ref m_bugleContent);
                 break;
             case DataType.Count:
-                writer.Write(m_playerCount);
+                archive.Value(ref m_playerCount);
                 break;
             case DataType.AddNoMsg:
             case DataType.RemoveNoMsg:
-                writer.Write(m_playerGuid);
-                break;
-        }
-    }
-    public void ReadData(PackageStreamReader reader) {
-        byte[] messagePack = null;
-        m_type = reader.ReadEnum<DataType>();
-        switch (m_type) {
-            case DataType.AddPlayer:
-            case DataType.Create:
-                messagePack = reader.ReadBuff();
-                m_vd = new ValuesDictionary();
-                m_vd.ApplyOverridesUseMessagePack(messagePack);
-                break;
-            case DataType.Modify:
-                m_playerGuid = reader.ReadGuid();
-                m_playerName = reader.ReadString();
-                m_skinName = reader.ReadString();
-                m_playerClass = reader.ReadEnum<PlayerClass>();
-                break;
-            case DataType.ClientKnownPlayer:
-                m_playerGuid = reader.ReadGuid();
-                break;
-            case DataType.SetUpdateLocation:
-                m_updateLocation = new TerrainUpdater.UpdateLocation();
-                m_updateLocation.Center = reader.ReadVector2();
-                m_updateLocation.ContentDistance = reader.ReadUInt16();
-                m_updateLocation.VisibilityDistance = reader.ReadUInt16();
-                m_updateLocation.LastChunksUpdateCenter = reader.ReadVector2Nullable();
-                break;
-            case DataType.CloseTime:
-                m_visibility = reader.ReadInt32();
-                m_playerName = reader.ReadString();
-                break;
-            case DataType.Bugle:
-                m_bugleTitle = reader.ReadString();
-                m_bugleContent = reader.ReadString();
-                break;
-            case DataType.Count:
-                m_playerCount = reader.ReadInt32();
-                break;
-            case DataType.AddNoMsg:
-            case DataType.RemoveNoMsg:
-                m_playerGuid = reader.ReadGuid();
+                archive.Value(ref m_playerGuid);
                 break;
         }
     }
 
-    public void Handle(bool isServer) {
+    private void SerializeUpdateLocation(PackageSerializer archive) {
+        if (archive.IsReading) {
+            m_updateLocation = new TerrainUpdater.UpdateLocation();
+        }
+        Vector2 center = m_updateLocation.Center;
+        ushort contentDistance = (ushort)m_updateLocation.ContentDistance;
+        ushort visibilityDistance = (ushort)m_updateLocation.VisibilityDistance;
+        Vector2? lastChunksUpdateCenter = m_updateLocation.LastChunksUpdateCenter;
+
+        archive.Value(ref center);
+        archive.Value(ref contentDistance);
+        archive.Value(ref visibilityDistance);
+        archive.Value(ref lastChunksUpdateCenter);
+
+        m_updateLocation.Center = center;
+        m_updateLocation.ContentDistance = contentDistance;
+        m_updateLocation.VisibilityDistance = visibilityDistance;
+        m_updateLocation.LastChunksUpdateCenter = lastChunksUpdateCenter;
+    }
+
+    public override void Handle(bool isServer) {
         if (isServer &&
             m_type != DataType.Create &&
             m_type != DataType.Modify &&

@@ -13,15 +13,11 @@ public enum EditableType : byte {
 }
 
 /// <summary>
-/// 基础包模板复制
+/// 鍩虹鍖呮ā鏉垮鍒?
 /// </summary>
 public class EditableBlockPackage : IPackage {
-    public byte ID => (byte)PackageType.EditableBlock;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.EditableBlock;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
 
     private EditableType m_itemType;
     private bool m_editAsItem;
@@ -33,7 +29,8 @@ public class EditableBlockPackage : IPackage {
     private byte[] m_Data;
     private bool syncItem;
 
-    public EditableBlockPackage() { }
+    public EditableBlockPackage() {
+    }
 
     public EditableBlockPackage(EditableType itemType, CellFace cell, bool eidtAsItem, int indentoryId, int slotIndex, int delay) {
         m_itemType = itemType;
@@ -50,7 +47,7 @@ public class EditableBlockPackage : IPackage {
         m_editAsItem = eidtAsItem;
         m_inventoryId = indentoryId;
         m_slotIndex = slotIndex;
-        m_Data = truthTableData.Data.ToArray(); ;
+        m_Data = truthTableData.Data.ToArray();
     }
 
     public EditableBlockPackage(CellFace cell, bool eidtAsItem, int indentoryId, int slotIndex, MemoryBankData memoryBankData) {
@@ -68,6 +65,7 @@ public class EditableBlockPackage : IPackage {
         m_slotIndex = id;
         syncItem = true;
     }
+
     public EditableBlockPackage(int id, MemoryBankData memoryBankData) {
         m_itemType = EditableType.MemoryBank;
         m_Data = memoryBankData.Data.ToArray();
@@ -75,33 +73,72 @@ public class EditableBlockPackage : IPackage {
         m_slotIndex = id;
     }
 
-    public void Handle(bool isServer) {
+    public override void Serialize(PackageSerializer archive) {
+        archive.Enum(ref m_itemType);
+        archive.Value(ref syncItem);
+        if (syncItem) {
+            archive.Value(ref m_slotIndex);
+        }
+        else {
+            archive.Value(ref m_editAsItem);
+            if (m_editAsItem) {
+                archive.Value(ref m_inventoryId);
+                archive.Value(ref m_slotIndex);
+            }
+            else {
+                archive.Value(ref m_cellFace);
+            }
+        }
+        switch (m_itemType) {
+            case EditableType.TruthTable:
+            case EditableType.MemoryBank:
+                bool hasId = m_id.HasValue;
+                archive.Value(ref hasId);
+                if (hasId) {
+                    int id = m_id ?? 0;
+                    archive.Value(ref id);
+                    if (archive.IsReading) m_id = id;
+                }
+                else if (archive.IsReading) {
+                    m_id = null;
+                }
+                ushort count = archive.IsWriting ? (ushort)m_Data.Length : (ushort)0;
+                archive.Value(ref count);
+                byte[] data = archive.IsWriting ? m_Data : null;
+                archive.Raw(ref data, count);
+                if (archive.IsReading) {
+                    m_Data = data;
+                }
+                break;
+            default:
+                archive.Value(ref m_delay);
+                break;
+        }
+    }
+
+    public override void Handle(bool isServer) {
         var subInventory = GameManager.Project.FindSubsystem<SubsystemInventories>();
         switch (m_itemType) {
             case EditableType.MemoryBank:
                 var behavior = GameManager.Project.FindSubsystem<SubsystemMemoryBankBlockBehavior>();
                 var data = new MemoryBankData();
-                foreach (var item in m_Data) {
-                    data.Data.Add(item);
-                }
+                foreach (var item in m_Data) data.Data.Add(item);
                 if (syncItem) {
                     behavior.m_itemsData[m_slotIndex] = data;
                 }
+                else if (m_editAsItem) {
+                    subInventory.FindInventoryById(m_inventoryId, inventory => {
+                        if (!m_id.HasValue) {
+                            m_id = behavior.StoreItemDataAtUniqueId(data);
+                            ReplaceDataAtSlot(inventory, m_slotIndex, d => m_id.Value);
+                        }
+                        else {
+                            behavior.m_itemsData[m_id.Value] = data;
+                        }
+                    });
+                }
                 else {
-                    if (m_editAsItem) {
-                        subInventory.FindInventoryById(m_inventoryId, inventory => {
-                            if (!m_id.HasValue) {
-                                m_id = behavior.StoreItemDataAtUniqueId(data);
-                                ReplaceDataAtSlot(inventory, m_slotIndex, d => m_id.Value);
-                            }
-                            else {
-                                behavior.m_itemsData[m_id.Value] = data;
-                            }
-                        });
-                    }
-                    else {
-                        behavior.SetBlockData(m_cellFace.Point, data);
-                    }
+                    behavior.SetBlockData(m_cellFace.Point, data);
                 }
                 break;
             case EditableType.TruthTable:
@@ -111,22 +148,19 @@ public class EditableBlockPackage : IPackage {
                 if (syncItem) {
                     truthBehavior.m_itemsData[m_slotIndex] = truthData;
                 }
+                else if (m_editAsItem) {
+                    subInventory.FindInventoryById(m_inventoryId, inventory => {
+                        if (m_id.HasValue) {
+                            m_id = truthBehavior.StoreItemDataAtUniqueId(truthData);
+                            ReplaceDataAtSlot(inventory, m_slotIndex, d => m_id.Value);
+                        }
+                        else {
+                            truthBehavior.m_itemsData[m_id.Value] = truthData;
+                        }
+                    });
+                }
                 else {
-                    if (m_editAsItem) {
-                        subInventory.FindInventoryById(m_inventoryId, inventory => {
-                            if (m_id.HasValue) {
-                                m_id = truthBehavior.StoreItemDataAtUniqueId(truthData);
-                                ReplaceDataAtSlot(inventory, m_slotIndex, d => m_id.Value);
-                            }
-                            else {
-                                truthBehavior.m_itemsData[m_id.Value] = truthData;
-                            }
-                        });
-                    }
-                    else {
-                        truthBehavior.SetBlockData(m_cellFace.Point, truthData);
-                    }
-
+                    truthBehavior.SetBlockData(m_cellFace.Point, truthData);
                 }
                 break;
             case EditableType.AdjustableDelayGate:
@@ -193,13 +227,13 @@ public class EditableBlockPackage : IPackage {
                     int newValue = Terrain.ReplaceData(value, m_delay);
                     st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
                 }
-
                 break;
         }
         if (isServer) {
             NetworkManager.QueuePackage(this);
         }
     }
+
     public int ReplaceDataAtSlot(IInventory inventory, int slotIndex, Func<int, int> newData) {
         int value = inventory.GetSlotValue(slotIndex);
         int count = inventory.GetSlotCount(slotIndex);
@@ -208,66 +242,4 @@ public class EditableBlockPackage : IPackage {
         inventory.AddSlotItems(slotIndex, newValue, count);
         return newValue;
     }
-    public void ReadData(PackageStreamReader reader) {
-        m_itemType = reader.ReadEnum<EditableType>();
-        syncItem = reader.ReadBoolean();
-        if (syncItem) {
-            m_slotIndex = reader.ReadInt32();
-        }
-        else {
-            m_editAsItem = reader.ReadBoolean();
-            if (m_editAsItem) {
-                m_inventoryId = reader.ReadInt32();
-                m_slotIndex = reader.ReadInt32();
-            }
-            else {
-                m_cellFace = reader.ReadCellFace();
-            }
-        }
-        switch (m_itemType) {
-            case EditableType.TruthTable:
-            case EditableType.MemoryBank:
-                if (reader.ReadBoolean()) m_id = reader.ReadInt32();
-                ushort count = reader.ReadUInt16();
-                m_Data = new byte[count];
-                m_Data = reader.ReadBytes(count);
-                break;
-
-            default:
-                m_delay = reader.ReadInt32();
-                break;
-        }
-    }
-
-    public void WriteData(PackageStreamWriter writer) {
-        writer.WriteEnum(m_itemType);
-        writer.Write(syncItem);
-        if (syncItem) {
-            writer.Write(m_slotIndex);
-        }
-        else {
-            writer.Write(m_editAsItem);
-            if (m_editAsItem) {
-                writer.Write(m_inventoryId);
-                writer.Write(m_slotIndex);
-            }
-            else {
-                writer.Write(m_cellFace);
-            }
-        }
-        switch (m_itemType) {
-            case EditableType.TruthTable:
-            case EditableType.MemoryBank:
-                writer.Write(m_id.HasValue);
-                if (m_id.HasValue) writer.Write(m_id.Value);
-                writer.Write((ushort)m_Data.Length);
-                writer.Write(m_Data);
-                break;
-            default:
-                writer.Write(m_delay);
-                break;
-        }
-    }
-
 }
-

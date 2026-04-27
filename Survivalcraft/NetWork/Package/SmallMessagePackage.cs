@@ -3,15 +3,11 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 /// <summary>
-/// 小消息提示包，用于同步 DisplaySmallMessage 到客户端
+/// 灏忔秷鎭彁绀哄寘锛岀敤浜庡悓姝?DisplaySmallMessage 鍒板鎴风
 /// </summary>
 public class SmallMessagePackage : IPackage {
-    public byte ID => (byte)PackageType.SmallMessage;
-
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.Playing;
+    public override byte ID => (byte)PackageType.SmallMessage;
+    public override ClientStage MinNeedState => ClientStage.Playing;
 
     public string Message { get; set; } = string.Empty;
     public Color MessageColor { get; set; }
@@ -28,23 +24,26 @@ public class SmallMessagePackage : IPackage {
         PlayNotificationSound = playNotificationSound;
     }
 
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write(Message);
-        writer.Write(MessageColor);
-        writer.Write(Blinking);
-        writer.Write(PlayNotificationSound);
+    public override void Serialize(PackageSerializer archive) {
+        string message = Message;
+        Color messageColor = MessageColor;
+        bool blinking = Blinking;
+        bool playNotificationSound = PlayNotificationSound;
+
+        archive.Value(ref message);
+        archive.Value(ref messageColor);
+        archive.Value(ref blinking);
+        archive.Value(ref playNotificationSound);
+
+        Message = message;
+        MessageColor = messageColor;
+        Blinking = blinking;
+        PlayNotificationSound = playNotificationSound;
     }
 
-    public void ReadData(PackageStreamReader reader) {
-        Message = reader.ReadString();
-        MessageColor = reader.ReadColor();
-        Blinking = reader.ReadBoolean();
-        PlayNotificationSound = reader.ReadBoolean();
-    }
-
-    public void Handle(bool isServer) {
+    public override void Handle(bool isServer) {
         if (!isServer) {
-            // 客户端接收到小消息提示
+            // 瀹㈡埛绔帴鏀跺埌灏忔秷鎭彁绀?
             var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
             var mainPlayer = subsystemPlayers.MainPlayer;
 

@@ -3,11 +3,8 @@ using Engine;
 namespace Game.NetWork.Packages;
 
 public class ComponentSleepPackage : IPackage {
-    public byte ID => (byte)PackageType.Sleep;
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override byte ID => (byte)PackageType.Sleep;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public int m_entityId;
     public string reason = "";
 
@@ -24,6 +21,7 @@ public class ComponentSleepPackage : IPackage {
 
     public ComponentSleepPackage() {
     }
+
     public ComponentSleepPackage(ComponentSleep sleep, EventType eventType, bool allow = false, bool result = false, string msg = "") {
         reason = msg;
         m_entityId = sleep.Entity.Id;
@@ -31,27 +29,25 @@ public class ComponentSleepPackage : IPackage {
         allowManualWakeup = allow;
         m_result = result;
     }
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write(m_entityId);
-        writer.WriteEnum(m_type);
-        writer.Write(allowManualWakeup);
-        writer.Write(m_result);
-        writer.Write(reason);
-    }
-    public void ReadData(PackageStreamReader reader) {
-        m_entityId = reader.ReadInt32();
-        m_type = reader.ReadEnum<EventType>();
-        allowManualWakeup = reader.ReadBoolean();
-        m_result = reader.ReadBoolean();
-        reason = reader.ReadString();
+
+    public override void Serialize(PackageSerializer archive) {
+        archive.Value(ref m_entityId);
+        archive.Enum(ref m_type);
+        archive.Value(ref allowManualWakeup);
+        archive.Value(ref m_result);
+        archive.Value(ref reason);
     }
 
-    public void Handle(bool isServer) {
-        GameManager.Project.FindEntity(m_entityId, (e) => {
+    public override void Handle(bool isServer) {
+        GameManager.Project.FindEntity(m_entityId, e => {
             ComponentSleep sleep = e.FindComponent<ComponentSleep>();
-            if (sleep == null) return;
+            if (sleep == null) {
+                return;
+            }
             ComponentPlayer player = e.FindComponent<ComponentPlayer>();
-            if (player == null) return;
+            if (player == null) {
+                return;
+            }
             if (isServer && player.PlayerGuid != From.PlayerGuid) {
                 return;
             }
@@ -65,7 +61,9 @@ public class ComponentSleepPackage : IPackage {
                     }
                     break;
                 case EventType.Sleep:
-                    if (m_result) sleep.NetSleep(allowManualWakeup);
+                    if (m_result) {
+                        sleep.NetSleep(allowManualWakeup);
+                    }
                     else {
                         var player1 = sleep.Entity.FindComponent<ComponentPlayer>();
                         player1.ComponentGui.DisplaySmallMessage(reason, Color.White, false, true);
@@ -81,4 +79,3 @@ public class ComponentSleepPackage : IPackage {
         });
     }
 }
-

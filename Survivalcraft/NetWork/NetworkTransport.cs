@@ -105,7 +105,7 @@ internal sealed class NetPacketTransport {
         foreach (var package in packages) {
             writer.Write(NetworkFragment.VerifyByte);
             writer.Write(package.ID);
-            package.WriteData(writer);
+            package.Serialize(new PackageSerializer(writer));
         }
         return writer.Data();
     }
@@ -133,7 +133,7 @@ internal sealed class NetPacketTransport {
         foreach (var packet in packages) {
             writer.Write(NetworkFragment.VerifyByte);
             writer.Write(packet.ID);
-            packet.WriteData(writer);
+            packet.Serialize(new PackageSerializer(writer));
         }
         byte[] payload = writer.Data();
         NetworkFragment.SendPayload(netManager, payload, endPoint);

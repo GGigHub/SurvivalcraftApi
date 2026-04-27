@@ -8,8 +8,9 @@ public struct CellChange {
     public int Z;
     public int Value;
 }
+
 public class SubsystemTerrainPackage : IPackage {
-    public byte ID => (byte)PackageType.Terrain;
+    public override byte ID => (byte)PackageType.Terrain;
 
     public enum DataType {
         RequestSyncChunks,
@@ -17,13 +18,10 @@ public class SubsystemTerrainPackage : IPackage {
         ReplyResult,
         ChangeCell,
         RequestChangeCell,
-        ChangeCellList          // 有这个的话，后面创世神、命令方块处理方块就不用一个包一个包地发了
+        ChangeCellList
     }
 
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
-    public ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public DataType m_type;
     public List<Point2> RelateChunks;
     public List<TerrainChunk> Chunks;
@@ -43,10 +41,12 @@ public class SubsystemTerrainPackage : IPackage {
 
     public SubsystemTerrainPackage() {
     }
+
     public SubsystemTerrainPackage(List<Point2> points) {
         m_type = DataType.RequestSyncChunks;
         RelateChunks = [.. points];
     }
+
     public SubsystemTerrainPackage(List<Point2> resultPoints, byte r) {
         m_type = DataType.ReplyResult;
         RelateChunks = [.. resultPoints];
@@ -69,116 +69,130 @@ public class SubsystemTerrainPackage : IPackage {
         m_Z = z;
         m_value = v;
     }
-    public void WriteData(PackageStreamWriter writer) {
-        writer.Write((byte)m_type);
-        switch (m_type) {
-            case DataType.RequestSyncChunks:
-                writer.Write(RelateChunks.Count);
-                foreach (var p in RelateChunks) {
-                    writer.Write(p);
-                }
-                break;
-            case DataType.SyncTerrainChunkList:
-                writer.Write((ushort)Chunks.Count);
-                foreach (var c in Chunks) {
-                    WriteOneChunk(writer, c);
-                }
-                break;
-            case DataType.RequestChangeCell:
-            case DataType.ChangeCell:
-                writer.Write(m_X);
-                writer.Write(m_Y);
-                writer.Write(m_Z);
-                writer.Write(m_value);
-                break;
-            case DataType.ReplyResult:
-                writer.Write((ushort)RelateChunks.Count);
-                foreach (var p in RelateChunks) {
-                    writer.Write(p);
-                }
-                break;
-            case DataType.ChangeCellList:
-                writer.Write(cellChanges.Count);
-                foreach (CellChange cellChange in cellChanges) {
-                    writer.Write(cellChange.X);
-                    writer.Write((byte)cellChange.Y);
-                    writer.Write(cellChange.Z);
-                    writer.Write(cellChange.Value);
-                }
-                break;
-        }
-    }
-    public void ReadData(PackageStreamReader reader) {
-        m_type = (DataType)reader.ReadByte();
-        switch (m_type) {
-            case DataType.RequestSyncChunks:
-                RelateChunks = [];
-                int count = reader.ReadInt32();
-                while (count-- > 0) RelateChunks.Add(reader.ReadPoint2());
-                break;
-            case DataType.SyncTerrainChunkList:
-                ushort cn = reader.ReadUInt16();
-                Chunks = new List<TerrainChunk>(cn);
-                while (cn-- > 0) {
-                    ReadChunks(reader);
-                }
-                break;
-            case DataType.RequestChangeCell:
-            case DataType.ChangeCell:
-                m_X = reader.ReadInt32();
-                m_Y = reader.ReadByte();
-                m_Z = reader.ReadInt32();
-                m_value = reader.ReadInt32();
-                break;
-            case DataType.ReplyResult:
-                RelateChunks = [];
-                ushort mc = reader.ReadUInt16();
-                while (mc-- > 0) {
-                    RelateChunks.Add(reader.ReadPoint2());
-                }
-                break;
-            case DataType.ChangeCellList:
-                int cellCount = reader.ReadInt32();
-                while (cellCount-- > 0) {
-                    CellChange cellChange = new CellChange();
-                    cellChange.X = reader.ReadInt32();
-                    cellChange.Y = reader.ReadByte();
-                    cellChange.Z = reader.ReadInt32();
-                    cellChange.Value = reader.ReadInt32();
-                    cellChanges.Add(cellChange);
-                }
-                break;
 
+    public override void Serialize(PackageSerializer archive) {
+        archive.Enum(ref m_type);
+        switch (m_type) {
+            case DataType.RequestSyncChunks:
+                SerializePoint2List(archive, ref RelateChunks, useUShort: false);
+                break;
+            case DataType.SyncTerrainChunkList:
+                SerializeChunkList(archive);
+                break;
+            case DataType.RequestChangeCell:
+            case DataType.ChangeCell:
+                archive.Value(ref m_X);
+                archive.Value(ref m_Y);
+                archive.Value(ref m_Z);
+                archive.Value(ref m_value);
+                break;
+            case DataType.ReplyResult:
+                SerializePoint2List(archive, ref RelateChunks, useUShort: true);
+                break;
+            case DataType.ChangeCellList:
+                SerializeCellChangeList(archive);
+                break;
         }
     }
-    public void WriteOneChunk(PackageStreamWriter writer, TerrainChunk chunk) {
-        writer.Write(chunk.Coords);
+
+    private void SerializePoint2List(PackageSerializer archive, ref List<Point2> points, bool useUShort) {
+        int count = archive.IsWriting ? points.Count : 0;
+        if (useUShort) {
+            ushort shortCount = (ushort)count;
+            archive.Value(ref shortCount);
+            count = shortCount;
+        }
+        else {
+            archive.Value(ref count);
+        }
+        if (archive.IsReading) {
+            points = [];
+            for (int i = 0; i < count; i++) {
+                Point2 point = default;
+                archive.Value(ref point);
+                points.Add(point);
+            }
+        }
+        else {
+            for (int i = 0; i < count; i++) {
+                Point2 point = points[i];
+                archive.Value(ref point);
+            }
+        }
+    }
+
+    private void SerializeChunkList(PackageSerializer archive) {
+        ushort count = archive.IsWriting ? (ushort)Chunks.Count : (ushort)0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            Chunks = new List<TerrainChunk>(count);
+            for (int i = 0; i < count; i++) {
+                ReadChunk(archive);
+            }
+        }
+        else {
+            foreach (var chunk in Chunks) {
+                WriteChunk(archive, chunk);
+            }
+        }
+    }
+
+    private void WriteChunk(PackageSerializer archive, TerrainChunk chunk) {
+        Point2 coords = chunk.Coords;
+        archive.Value(ref coords);
         for (int i = 0; i < chunk.Cells.Length; i++) {
             int v = chunk.Cells[i];
-            writer.Write(v);
+            archive.Value(ref v);
         }
         for (int i = 0; i < chunk.Shafts.Length; i++) {
-            writer.Write(chunk.Shafts[i]);
+            int shaft = chunk.Shafts[i];
+            archive.Value(ref shaft);
         }
-
     }
-    public void ReadChunks(PackageStreamReader reader) {
-        var p = reader.ReadPoint2();
+
+    private void ReadChunk(PackageSerializer archive) {
+        Point2 p = default;
+        archive.Value(ref p);
         TerrainChunk chunk = new TerrainChunk(null, p.X, p.Y);
         for (int i = 0; i < 65536; i++) {
-            chunk.Cells[i] = reader.ReadInt32();
+            archive.Value(ref chunk.Cells[i]);
         }
         for (int i = 0; i < 256; i++) {
-            chunk.Shafts[i] = reader.ReadInt32();
+            archive.Value(ref chunk.Shafts[i]);
         }
         Chunks.Add(chunk);
     }
+
+    private void SerializeCellChangeList(PackageSerializer archive) {
+        int count = archive.IsWriting ? cellChanges.Count : 0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            cellChanges = [];
+            for (int i = 0; i < count; i++) {
+                CellChange cellChange = new CellChange();
+                archive.Value(ref cellChange.X);
+                archive.Value(ref cellChange.Y);
+                archive.Value(ref cellChange.Z);
+                archive.Value(ref cellChange.Value);
+                cellChanges.Add(cellChange);
+            }
+        }
+        else {
+            for (int i = 0; i < count; i++) {
+                CellChange cellChange = cellChanges[i];
+                archive.Value(ref cellChange.X);
+                archive.Value(ref cellChange.Y);
+                archive.Value(ref cellChange.Z);
+                archive.Value(ref cellChange.Value);
+            }
+        }
+    }
+
     public void ApplyOneChunk(SubsystemTerrain subsystemTerrain, TerrainChunk chunk) {
         int x = chunk.Coords.X;
         int y = chunk.Coords.Y;
         var chunk2 = subsystemTerrain.Terrain.GetChunkAtCoords(x, y);
         if (chunk2 == null) chunk2 = subsystemTerrain.Terrain.AllocateChunk(x, y);
-        //如果上面申请没有失败
         if (chunk2 != null) {
             chunk2.Cells = chunk.Cells;
             chunk2.Shafts = chunk.Shafts;
@@ -188,7 +202,8 @@ public class SubsystemTerrainPackage : IPackage {
             chunk2.WasUpgraded = true;
         }
     }
-    public void Handle(bool isServer) {
+
+    public override void Handle(bool isServer) {
         if (isServer && m_type != DataType.RequestSyncChunks) {
             return;
         }
@@ -207,17 +222,14 @@ public class SubsystemTerrainPackage : IPackage {
                 }
                 break;
             case DataType.RequestChangeCell:
-            case DataType.ChangeCell: {
+            case DataType.ChangeCell:
+                {
                     int chunkX = m_X >> 4;
                     int chunkZ = m_Z >> 4;
                     TerrainChunk chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
                     if (chunk != null) {
-                        if (m_type == DataType.RequestChangeCell) {
-                            subsystemTerrain.ChangeCell(m_X, m_Y, m_Z, m_value);
-                        }
-                        else {
-                            subsystemTerrain.ChangeCellNet(m_X, m_Y, m_Z, m_value);
-                        }
+                        if (m_type == DataType.RequestChangeCell) subsystemTerrain.ChangeCell(m_X, m_Y, m_Z, m_value);
+                        else subsystemTerrain.ChangeCellNet(m_X, m_Y, m_Z, m_value);
                     }
                 }
                 break;
@@ -244,4 +256,3 @@ public class SubsystemTerrainPackage : IPackage {
         }
     }
 }
-
