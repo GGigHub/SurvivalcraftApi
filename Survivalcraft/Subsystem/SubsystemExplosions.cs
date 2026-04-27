@@ -296,7 +296,7 @@ namespace Game {
                 m_surroundingPressureByPoint = null;
             }
             if (NetworkManager.WorkType != NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new ExplosionsPackage(m_explosionCells));
+                NetworkManager.QueuePackage(new ExplosionCellPackage(m_explosionCells));
                 //清空爆炸点
                 m_explosionCells.Clear();
             }
@@ -824,7 +824,7 @@ namespace Game {
             if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                 PlayExplosionSound(position, pressure, delay, playExplosionSound);
                 if (playExplosionSound) {
-                    NetworkManager.QueuePackage(new ExplosionsPackage(position, pressure, delay));
+                    NetworkManager.QueuePackage(new ExplosionSoundPackage(position, pressure, delay));
                 }
             }
             if (pressure > 2000000f) {

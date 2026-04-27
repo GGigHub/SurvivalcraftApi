@@ -239,7 +239,7 @@ namespace Game {
         public virtual void Update(float dt) {
             if (PlayerData.IsMainPlayer && ComponentMiner?.Inventory != null && LastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex) {
                 LastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
-                NetworkManager.QueuePackage(new ComponentInventoryPackage(ComponentMiner.Inventory, ComponentMiner.Inventory.ActiveSlotIndex));
+                NetworkManager.QueuePackage(new ActiveSlotChangePackage(ComponentMiner.Inventory));
             }
             PlayerInput playerInput = ComponentInput.PlayerInput;
             if (ComponentInput.IsControlledByTouch

@@ -18,16 +18,35 @@ public abstract class IPackage {
 
 public enum PackageType : byte {
     ServerInfo, ConnectRequest, ConnectReject,
-    Client, Project, PlayerData, Terrain, Entity,
-    Pickable, Body, Time, Sky,
+    Client, Project, Terrain, 
+    Pickable, Time, Sky,
     Weather, Electricity, Player,
-    Inventory, VitalStat, Clothing,
-    Behavior, Health, Mount,
+    VitalStat, Clothing,
+    Behavior, Mount,
     Sickness, Flu, OnFire,
-    Sleep, Furnace, Projectile,
-    ReservedTerritoriy, Explosion, MovingBlockSet,
+    Furnace, Projectile,
+    ReservedTerritoriy,  MovingBlockSet,
     BlockEdit, SignBlock, Dispenser,
     EditableBlock, Season, SmallMessage, Popup,
+
+    // BlockEdit
+    OpenInventoryByID, OpenInventoryByPoint, CrossbowPull, EditSign,
+    // Sleep
+    SleepRequest, SleepStatus, WakeupRequest, WakeupStatus,
+    // Explosion
+    ExplosionSound, ExplosionCell,
+    // Entity
+    EntityRemove, EntityLoad, EntitySyncRequest,
+    // Health
+    HealthSync, InjureEvent, InjureRequest, HitResult, DamageSync,
+    // Body
+    BodyUpdate, ApplyImpulse, BodyCollision,
+    // Inventory
+    ActiveSlotChange, InventorySync, MoveItem, DragDropItem, SetSlotItem,
+    // PlayerData
+    PlayerCreate, PlayerModify, PlayerDelete, PlayerAdd, PlayerKnown,
+    PlayerUpdateLocation, ServerCloseTime, PlayerBugle, PlayerCount,
+    PlayerNoMsgAdd, PlayerNoMsgRemove,
 
     ModPackage = 255
 }

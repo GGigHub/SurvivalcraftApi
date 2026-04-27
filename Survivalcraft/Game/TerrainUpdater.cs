@@ -275,7 +275,7 @@ namespace Game {
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
                 if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                    NetworkManager.QueuePackage(new PlayerDataPackage(value));
+                    NetworkManager.QueuePackage(new PlayerUpdateLocationPackage(value));
                 }
             }
         }

@@ -5,6 +5,7 @@
     </PropertyGroup>
     <ItemGroup>
       <Compile Remove="C:\Users\tk34\Desktop\NF2\SurvivalcraftApi\Survivalcraft\NetWork\NetworkPeerBase.cs" />
+      <Compile Remove="C:\Users\tk34\Desktop\NF3\SurvivalcraftApi\Survivalcraft\NetWork\Package\ComponentInventoryPackage.cs" />
     </ItemGroup>
     <ItemGroup>
       <Compile Include="NetWork\NetworkSimulate.cs" />
