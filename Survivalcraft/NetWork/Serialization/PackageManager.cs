@@ -18,52 +18,16 @@ public abstract class IPackage {
 
 public enum PackageType : byte {
     ServerInfo, ConnectRequest, ConnectReject,
-    Client, Project, Terrain, 
-    Pickable, Time, Sky,
+    Client, Project, PlayerData, Terrain, Entity,
+    Pickable, Body, Time, Sky,
     Weather, Electricity, Player,
-    VitalStat, Clothing,
-    Behavior, Mount,
+    Inventory, VitalStat, Clothing,
+    Behavior, Health, Mount,
     Sickness, Flu, OnFire,
-    Furnace, Projectile,
-    ReservedTerritoriy,  MovingBlockSet,
+    Sleep, Furnace, Projectile,
+    ReservedTerritoriy, Explosion, MovingBlockSet,
     BlockEdit, SignBlock, Dispenser,
     EditableBlock, Season, SmallMessage, Popup,
-
-    // BlockEdit
-    OpenInventoryByID, OpenInventoryByPoint, CrossbowPull, EditSign,
-    // Sleep
-    SleepRequest, SleepStatus, WakeupRequest, WakeupStatus,
-    // Explosion
-    ExplosionSound, ExplosionCell,
-    // Entity
-    EntityRemove, EntityLoad, EntitySyncRequest,
-    // Health
-    HealthSync, InjureEvent, InjureRequest, HitResult, DamageSync,
-    // Body
-    BodyUpdate, ApplyImpulse, BodyCollision,
-    // Inventory
-    ActiveSlotChange, InventorySync, MoveItem, DragDropItem, SetSlotItem,
-    // PlayerData
-    PlayerCreate, PlayerModify, PlayerDelete, PlayerAdd, PlayerKnown,
-    PlayerUpdateLocation, ServerCloseTime, PlayerBugle, PlayerCount,
-    PlayerNoMsgAdd, PlayerNoMsgRemove,
-
-    ClientAdd, ClientRemove, ClientSyncList, ClientStateChange,
-    BehaviorChase, BehaviorRandomPeck, BehaviorRandomFeed, BehaviorEatPickable,
-    BehaviorHumanRow, BehaviorCreatureSound, BehaviorDigInMud, BehaviorFishOutOfWater,
-    ClothingRequestSkin, ClothingReplySkin, ClothingWhoHas, ClothingWhoHasReply,
-    EntityOnFire, FireBlockAdd, FireBlockRemove,
-    PlayerBodyUpdate, PlayerInteract, PlayerAim, PlayerDig, PlayerHit,
-    PlayerCreativeFly, PlayerIntoPlaying, PlayerRestart, PlayerAddExperience,
-    PlayerDrop, PlayerDragDrop, PlayerStatSync, PlayerPositionSet,
-    VitalStatSync,
-    EditableMemoryBank, EditableTruthTable, EditableAdjustableDelayGate,
-    EditableBattery, EditablePiston, EditableSwitch, EditableButton,
-    MovingBlockAdd, MovingBlockRemove,
-    PickableCreate, PickableUpdate, PickableDelete, PickableRequestSync,
-    PickableSetFlyToPosition, PickableCreateList, PickableDeleteList, PickableSyncList,
-    TerrainRequestSyncChunks, TerrainSyncChunkList, TerrainReplyResult,
-    TerrainChangeCell, TerrainRequestChangeCell, TerrainChangeCellList,
 
     ModPackage = 255
 }

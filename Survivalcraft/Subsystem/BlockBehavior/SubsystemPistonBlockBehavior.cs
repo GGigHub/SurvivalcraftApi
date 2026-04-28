@@ -72,7 +72,7 @@ namespace Game {
                     delegate (int newData) {
                         int num = Terrain.ReplaceData(value, newData);
                         if (num != value) {
-                            var p = new PistonDataPackage(default, true, inventory.Id, slotIndex, newData);
+                            var p = new EditableBlockPackage(EditableType.Piston, default, true, inventory.Id, slotIndex, newData);
                             NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);
@@ -95,7 +95,7 @@ namespace Game {
                         if (newData != data
                             && SubsystemTerrain.Terrain.GetCellContents(x, y, z) == contents) {
                             var cell = new CellFace(x, y, z, 0);
-                            var p = new PistonDataPackage(cell, false, default, default, newData);
+                            var p = new EditableBlockPackage(EditableType.Piston, cell, false, default, default, newData);
                             NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);

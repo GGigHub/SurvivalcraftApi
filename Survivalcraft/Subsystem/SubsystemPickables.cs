@@ -57,7 +57,7 @@ namespace Game {
             }
             if (requestSync
                 && NetworkManager.WorkType == NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new PickableRequestSyncPackage(id));
+                NetworkManager.QueuePackage(new PickablePackage(new Pickable { Id = id }, PickablePackage.PickType.RequestSync));
             }
             return false;
         }
@@ -104,7 +104,7 @@ namespace Game {
             }
             PickableAdded?.Invoke(pickable);
             if (NetworkManager.WorkType == NetWork.WorkType.Server) {
-                NetworkManager.QueuePackage(new PickableCreatePackage(pickable));
+                NetworkManager.QueuePackage(new PickablePackage(pickable, PickablePackage.PickType.Create));
             }
             return pickable;
         }
@@ -212,7 +212,7 @@ namespace Game {
                     useMaps.Remove(item.Id);
                     PickableRemoved?.Invoke(item);
                     if (NetworkManager.WorkType == NetWork.WorkType.Server) {
-                        NetworkManager.QueuePackage(new PickableDeletePackage(item));
+                        NetworkManager.QueuePackage(new PickablePackage(item, PickablePackage.PickType.Delete));
                     }
                 }
                 m_pickablesToRemove.Clear();

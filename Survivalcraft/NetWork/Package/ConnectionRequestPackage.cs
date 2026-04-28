@@ -101,48 +101,56 @@ public class ConnectionRequestPackage : IPackage {
     }
 
     private string FindPlayerNameByGUID(string m_token) {
-        if (!Guid.TryParse(m_token, out var playerGuid)) {
-            return "";
-        }
-        SubsystemGameInfo subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
-        if (subsystemGameInfo != null) {
-            string entityFileDir = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "PlayerEntities/");
-            string entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.json");
-            if (Storage.FileExists(entityFilePath)) {
-                return LoadPlayerNameFromFile(entityFilePath, isJson: true);
+        try {
+            if (!Guid.TryParse(m_token, out var playerGuid)) {
+                return "";
             }
-            entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.dat");
-            if (Storage.FileExists(entityFilePath)) {
-                return LoadPlayerNameFromFile(entityFilePath, isJson: false);
+            SubsystemGameInfo subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
+            if (subsystemGameInfo != null) {
+                string entityFileDir = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "PlayerEntities/");
+                string entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.json");
+                if (Storage.FileExists(entityFilePath)) {
+                    return LoadPlayerNameFromFile(entityFilePath, isJson: true);
+                }
+                entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.dat");
+                if (Storage.FileExists(entityFilePath)) {
+                    return LoadPlayerNameFromFile(entityFilePath, isJson: false);
+                }
             }
         }
-
+        catch (Exception ex) {
+            Log.Warning("鏌ユ壘鐜╁鍚嶇О鏃跺彂鐢熼敊璇? " + ex.Message);
+        }
         return "";
     }
 
     private string LoadPlayerNameFromFile(string filePath, bool isJson) {
-        using (Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read)) {
-            ValuesDictionary dict = new ValuesDictionary();
-            if (isJson) {
-                using (StreamReader reader = new StreamReader(stream)) {
-                    string jsonText = reader.ReadToEnd();
-                    dict.ApplyOverridesUseJson(jsonText, out var _);
+        try {
+            using (Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read)) {
+                ValuesDictionary dict = new ValuesDictionary();
+                if (isJson) {
+                    using (StreamReader reader = new StreamReader(stream)) {
+                        string jsonText = reader.ReadToEnd();
+                        dict.ApplyOverridesUseJson(jsonText, out var _);
+                    }
                 }
-            }
-            else {
-                byte[] data2 = new byte[stream.Length];
-                stream.Read(data2, 0, data2.Length);
-                dict.ApplyOverridesUseMessagePack(data2);
-            }
-            ValuesDictionary playerDataDict = dict.GetValue<ValuesDictionary>("Data");
-            if (playerDataDict != null) {
-                string playerName = playerDataDict.GetValue("Name", "");
-                if (!string.IsNullOrEmpty(playerName)) {
-                    return playerName;
+                else {
+                    byte[] data2 = new byte[stream.Length];
+                    stream.Read(data2, 0, data2.Length);
+                    dict.ApplyOverridesUseMessagePack(data2);
+                }
+                ValuesDictionary playerDataDict = dict.GetValue<ValuesDictionary>("Data");
+                if (playerDataDict != null) {
+                    string playerName = playerDataDict.GetValue("Name", "");
+                    if (!string.IsNullOrEmpty(playerName)) {
+                        return playerName;
+                    }
                 }
             }
         }
-
+        catch (Exception ex) {
+            Log.Warning("浠庢枃浠?" + filePath + " 鍔犺浇鐜╁鍚嶇О鏃跺彂鐢熼敊璇? " + ex.Message);
+        }
         return "";
     }
 
@@ -210,11 +218,14 @@ public class ConnectionRequestPackage : IPackage {
                 var acceptedPeer = From.Request.Accept();
                 Client addClient = NetworkManager.CreateClient((NetPeer)(object)acceptedPeer, m_tmp_token, guid, communityAccountId, nickname);
                 NetworkManager.Server.AddClient(addClient);
-                NetworkManager.QueuePackage(new ClientSyncListPackage(NetworkManager.Server.Clients.Values) { To = addClient });
+                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Server.Clients.Values) { To = addClient });
 
-                var clientPackage = new ClientAddPackage(addClient.ID, addClient.TokenId, addClient.PlayerGuid, addClient.Nickname);
+                var clientPackage = new ClientPackage(addClient.ID, addClient.TokenId, addClient.PlayerGuid, addClient.Nickname);
                 foreach (var c in NetworkManager.Peers) {
                     if (c.ID == addClient.ID) continue;
+#if DEBUG
+                    Log.Information($"閫氱煡 Client[{c.ID}] 鏂板姞鍏ュ鎴风 {addClient.ID}");
+#endif
                     NetworkManager.Server.SendWriterFromPackage(clientPackage, c.Peer, true);
                 }
                 Log.Information("Received connection request from " + From.IPPoint + ", accepted");

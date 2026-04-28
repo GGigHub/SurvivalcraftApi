@@ -33,7 +33,7 @@ namespace Game {
             set {
                 if (m_isFeed != value) {
                     m_isFeed = value;
-                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new RandomPeckBehaviorPackage(this, m_isFeed));
+                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isFeed));
                 }
             }
         }

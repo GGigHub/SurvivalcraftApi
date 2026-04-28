@@ -629,7 +629,7 @@ namespace Game {
                         DisplaySmallMessage(LanguageControl.Get(fName, 8), Color.White, false, false);
                     }
                 }
-                NetworkManager.QueuePackage(new NetWork.Packages.PlayerCreativeFlyPackage(m_componentPlayer));
+                NetworkManager.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(m_componentPlayer, NetWork.Packages.ComponentPlayerPackage.PlayerAction.CreativeFlyChange));
             }
             if (m_cameraButtonWidget.IsClicked
                 || playerInput.SwitchCameraMode) {

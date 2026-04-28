@@ -566,7 +566,7 @@ namespace Game {
             set {
                 if (m_isAttack != value) {
                     m_isAttack = value;
-                    if (NetworkManager.WorkType != NetWork.WorkType.Client) NetworkManager.QueuePackage(new ChaseBehaviorPackage(this, value));
+                    if (NetworkManager.WorkType != NetWork.WorkType.Client) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, value));
                 }
             }
         }

@@ -646,15 +646,17 @@ namespace Game {
                 else if (Time.PeriodicEvent(1.0, 0.0)) {
                     if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                         NetworkManager.QueuePackage(
-                            new NetWork.Packages.RequestSkinPackage(
-                                m_componentPlayer.PlayerData.CharacterSkinName
+                            new NetWork.Packages.ComponentClothingPackage(
+                                m_componentPlayer.PlayerData.CharacterSkinName,
+                                NetWork.Packages.ComponentClothingPackage.DataType.RequestSkin
                             )
                         );
                     }
                     else if (NetworkManager.WorkType == NetWork.WorkType.Server) {
                         NetworkManager.QueuePackage(
-                            new NetWork.Packages.WhoHasSkinPackage(
-                                m_componentPlayer.PlayerData.CharacterSkinName
+                            new NetWork.Packages.ComponentClothingPackage(
+                                m_componentPlayer.PlayerData.CharacterSkinName,
+                                NetWork.Packages.ComponentClothingPackage.DataType.WhoHas
                             )
                         );
                     }

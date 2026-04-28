@@ -170,7 +170,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
         }
         if (Clients.ContainsKey(c.ID)) {
             if (IsServer) {
-                NetworkManager.QueuePackage(new ClientRemovePackage(c.ID));
+                NetworkManager.QueuePackage(new ClientPackage(c.ID));
             }
             c.State = ClientStage.NotConnected;
             OnClientStateChanged?.Invoke(c);
@@ -276,7 +276,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
             subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
         }
         SettingsManager.VisibilityRange = Math.Min(256, SettingsManager.VisibilityRange);
-        NetworkManager.QueuePackage(new ClientStateChangePackage(Self.ID, ClientStage.ProjectLoaded));
+        NetworkManager.QueuePackage(new ClientPackage(Self.ID, ClientStage.ProjectLoaded));
     }
 
     private void HandleNetworkError(byte[] _, IPEndPoint endPoint) {

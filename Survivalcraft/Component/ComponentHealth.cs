@@ -166,8 +166,9 @@ namespace Game {
                     if (NetworkManager.WorkType != NetWork.WorkType.Client
                         && injuryAmount > 0f) {
                         NetworkManager.QueuePackage(
-                            new InjureEventPackage(this, injury.Attacker, injuryAmount, injury.Cause, injury.IgnoreInvulnerability)
-                        );                    }
+                            new ComponentHealthPackage(this, injury.Attacker, injuryAmount, injury.Cause, injury.IgnoreInvulnerability)
+                        );
+                    }
                     if (Health <= 0f) {
                         ModsManager.HookAction(
                             "OnCreatureDying",
@@ -202,7 +203,9 @@ namespace Game {
             );
             CauseOfDeath = injury?.Cause;
             if (NetworkManager.WorkType != NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new HealthSyncPackage(this));
+                ComponentHealthPackage componentHealthPackage = new(this);
+                componentHealthPackage.m_cuase = CauseOfDeath;
+                NetworkManager.QueuePackage(componentHealthPackage);
             }
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
                 m_componentCreature.PlayerStats.AddDeathRecord(
@@ -273,7 +276,7 @@ namespace Game {
                     && Health < 1f) {
                     if (NetworkManager.WorkType != NetWork.WorkType.Client
                         && Time.PeriodicEvent(2.0, 0.0)) {
-                        NetworkManager.QueuePackage(new HealthSyncPackage(this));
+                        NetworkManager.QueuePackage(new ComponentHealthPackage(this));
                     }
                     float num = 0f;
                     if (m_componentPlayer != null) {
@@ -349,7 +352,7 @@ namespace Game {
                     }
                     else if (flagMainPlayer || flagMainRider) {
                         NetworkManager.QueuePackage(
-                            new InjureRequestPackage(this, null, fallDamage, cause, false, InjureRequestPackage.RequestInjureType.Fall)
+                            new ComponentHealthPackage(this, null, fallDamage, cause, false, true, ComponentHealthPackage.RequestInjureType.Fall)
                         );
                     }
                 }

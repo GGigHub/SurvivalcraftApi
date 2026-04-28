@@ -31,7 +31,7 @@ namespace Game {
             set {
                 if (m_isBend != value) {
                     m_isBend = value;
-                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new FishOutOfWaterBehaviorPackage(this, m_isBend));
+                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isBend));
                 }
             }
         }

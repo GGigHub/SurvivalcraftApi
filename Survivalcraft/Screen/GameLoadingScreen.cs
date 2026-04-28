@@ -66,7 +66,7 @@ public class GameLoadingScreen : Screen {
             }
         }, delegate {
             if (NetworkManager.CurrentStage == Stage.Connected) {
-                NetworkManager.QueuePackage(new ClientStateChangePackage(NetworkManager.Self.ID, ClientStage.Connected));
+                NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Self.ID, ClientStage.Connected));
             }
         });
         m_stateMachine.AddState("Loading", null,
@@ -84,7 +84,7 @@ public class GameLoadingScreen : Screen {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
                 if (IsAdventureRestart && NetworkManager.WorkType == NetWork.WorkType.Client) {
-                    NetworkManager.QueuePackage(new PlayerIntoPlayingPackage(NetworkManager.MainPlayer));
+                    NetworkManager.QueuePackage(new ComponentPlayerPackage(NetworkManager.MainPlayer, ComponentPlayerPackage.PlayerAction.IntoPlaying));
                 }
                 ScreensManager.SwitchScreen("Game");
             }

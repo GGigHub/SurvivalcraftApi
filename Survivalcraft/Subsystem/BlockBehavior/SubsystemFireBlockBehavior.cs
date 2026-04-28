@@ -361,7 +361,7 @@ namespace Game {
 
         public void AddFire(int x, int y, int z, float expandability) {
             if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
-                NetWork.NetworkManager.QueuePackage(new NetWork.Packages.FireBlockAddPackage(x, y, z, expandability));
+                NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentOnFirePackage(x, y, z, expandability));
                 AddFireNet(x, y, z, expandability);
             }
         }
@@ -377,7 +377,7 @@ namespace Game {
 
         public void RemoveFire(int x, int y, int z) {
             if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
-                NetWork.NetworkManager.QueuePackage(new NetWork.Packages.FireBlockRemovePackage(x, y, z));
+                NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentOnFirePackage(x, y, z));
                 RemoveFireNet(x, y, z);
             }
         }

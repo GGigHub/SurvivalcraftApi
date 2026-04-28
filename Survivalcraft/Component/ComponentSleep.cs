@@ -67,11 +67,11 @@ namespace Game {
 
         public virtual void Sleep(bool allowManualWakeup) {
             if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new SleepRequestPackage(this, allowManualWakeup));
+                NetworkManager.QueuePackage(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.SleepRequest, allowManualWakeup));
             }
             else {
                 NetSleep(allowManualWakeup);
-                NetworkManager.QueuePackage(new SleepStatusPackage(this, allowManualWakeup, true));
+                NetworkManager.QueuePackage(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.Sleep, allowManualWakeup, true));
             }
         }
 
@@ -89,11 +89,11 @@ namespace Game {
 
         public virtual void WakeUp() {
             if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new WakeupRequestPackage(this));
+                NetworkManager.QueuePackage(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.WakeupRequest));
             }
             else {
                 NetWakeUp();
-                NetworkManager.QueuePackage(new WakeupStatusPackage(this));
+                NetworkManager.QueuePackage(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.WakeUp));
             }
         }
 
