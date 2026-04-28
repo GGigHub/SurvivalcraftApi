@@ -253,7 +253,7 @@ public sealed class PackageSerializer {
         if (IsWriting) {
             ValuesDictionary vd = new ValuesDictionary();
             value.Save(vd);
-            EntityPackage.ConfuseGuid(value, vd, to);
+            EntityPackageHelper.ConfuseGuid(value, vd, to);
             byte[] data = vd.ToMessagePack();
             m_writer.Write(data.Length);
             m_writer.Write(data);

@@ -560,13 +560,7 @@ namespace Game {
             int slotCount2 = targetInventory.GetSlotCount(targetSlotIndex);
 
             if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                InventorySlot sourceInventorySlot = new() { inventoryId = sourceInventory.Id, slotIndex = sourceSlotIndex };
-                InventorySlot targetInventorySlot = new() {
-                    inventoryId = targetInventory.Id,
-                    slotIndex = targetSlotIndex,
-                    count = count
-                };
-                IPackage package = new MoveItemPackage(sourceInventorySlot.Inventory, sourceInventorySlot.SlotIndex, targetInventorySlot.Inventory, targetInventorySlot.SlotIndex, sourceInventorySlot.Inventory.GetSlotCount(sourceInventorySlot.SlotIndex));
+                IPackage package = new MoveItemPackage(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count);
                 NetworkManager.QueuePackage(package);
             }
             if (slotCount2 == 0

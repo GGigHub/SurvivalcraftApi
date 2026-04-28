@@ -142,7 +142,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
         }
         if (Clients.ContainsKey(c.ID)) {
             if (IsServer) {
-                NetworkManager.QueuePackage(new ClientPackage(c.ID));
+                NetworkManager.QueuePackage(new ClientRemovePackage(c.ID));
             }
             c.State = ClientStage.NotConnected;
             OnClientStateChanged?.Invoke(c);
@@ -231,7 +231,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
         var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
         var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
 
-        NetworkManager.QueuePackage(new ClientPackage(c.ID, c.State) { Except = c });
+        NetworkManager.QueuePackage(new ClientStateChangePackage(c.ID, c.State) { Except = c });
 
         switch (c.State) {
             case ClientStage.Connected: {

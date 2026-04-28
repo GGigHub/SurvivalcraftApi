@@ -4,6 +4,30 @@ using TemplatesDatabase;
 
 namespace Game.NetWork.Packages;
 
+public static class EntityPackageHelper {
+    public static void ConfuseGuid(EntityDataList entityDataList, ValuesDictionary vd, Client to) {
+        for (int i = 1; i <= entityDataList.EntitiesData.Count; i++) {
+            if (!vd.ContainsKey(i.ToString())) {
+                continue;
+            }
+            var entityDict = vd.GetValue<ValuesDictionary>(i.ToString());
+            if (!entityDict.ContainsKey("Overrides")) {
+                continue;
+            }
+            var overrides = entityDict.GetValue<ValuesDictionary>("Overrides");
+            if (!overrides.ContainsKey("Player")) {
+                continue;
+            }
+            var playerVD = overrides.GetValue<ValuesDictionary>("Player");
+            var entity = entityDataList.Entities[i - 1];
+            var player = entity.FindComponent<ComponentPlayer>();
+            if (player != null && player.PlayerGuid != to.PlayerGuid) {
+                playerVD.SetValue("PlayerGuid", player.PlayerData.Client.TokenId);
+            }
+        }
+    }
+}
+
 public class EntityRemovePackage : IPackage {
     public override byte ID => (byte)PackageType.EntityRemove;
     public override ClientStage MinNeedState => ClientStage.ProjectLoaded;

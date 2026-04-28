@@ -45,7 +45,7 @@ namespace Game {
             set {
                 if (m_isDigIn != value) {
                     m_isDigIn = value;
-                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, m_isDigIn));
+                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new DigInMudBehaviorPackage(this, m_isDigIn));
                 }
             }
         }

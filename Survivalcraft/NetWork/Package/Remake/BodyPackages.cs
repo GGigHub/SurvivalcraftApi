@@ -175,7 +175,12 @@ public class BodyCollisionPackage : IPackage {
 
     public override void Handle(bool isServer) {
         GameManager.Project.FindEntity(m_entityId, e => {
-            e.FindComponent<ComponentBody>()?.HandleAxisCollision(m_axis, m_distance);
+            ComponentBody body = e.FindComponent<ComponentBody>();
+            if (body != null) {
+                Vector3 position = body.Position;
+                body.HandleAxisCollision(m_axis, m_distance, ref position, false);
+                body.Position = position;
+            }
         });
     }
 }
