@@ -8,6 +8,7 @@
     </ItemGroup>
     <ItemGroup>
       <Compile Include="NetWork\NetworkSimulate.cs" />
+      <Compile Include="NetWork\Partial\GenPackage.cs" />
       <Compile Include="NetWork\Serialization\PackageSerializer.cs" />
     </ItemGroup>
     <ItemGroup>

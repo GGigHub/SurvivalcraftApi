@@ -87,6 +87,13 @@ public static class NetworkManager {
         }
     }
 
+    // 第一个ComponentPlayer是本地对象，另外一个是远程的ComponentPlayer
+    // 这是一个疯狂的计划，因为我认为大部分代码都是用代码生成器生成的
+    public static void SyncByPlayer(byte? clientId, Action<ComponentPlayer> action) {
+        // 调用点要在编译时动态修改，不过倒可以用Interceptors+SG / Metalama实现
+        // 不必实现这个方法
+    }
+
     private static void ResetNet(INetworkNode networkBase) {
         if (Current != null && !ReferenceEquals(Current, networkBase)) {
             Current.StopImmediate();

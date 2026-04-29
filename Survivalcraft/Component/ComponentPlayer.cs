@@ -2,6 +2,7 @@ using Engine;
 using Game.NetWork;
 using Game.NetWork.Packages;
 using GameEntitySystem;
+using Silk.NET.Core.Native;
 using TemplatesDatabase;
 
 namespace Game {
@@ -365,9 +366,19 @@ namespace Game {
             Block block = BlocksManager.Blocks[num];
 
             if (Time.PeriodicEvent(0.1f, 0.0)) {
-                if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                if (NetworkManager.WorkType != WorkType.Client) {
                     //服务器广播玩家数据
-                    NetworkManager.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate) { Except = PlayerData.Client });
+                    if (ComponentLocomotion.SendLookAngles != null) {
+                        NetworkManager.SyncByPlayer(PlayerData.ClientId, (target) => {
+                            target.ComponentLocomotion.NetLookAngles.SetNext(ComponentLocomotion.SendLookAngles.Value);
+                        });
+                    }
+                    // 编译后这块应该是
+                    /*
+                    if (ComponentLocomotion.SendLookAngles != null) {
+                        NetworkManager.QueuePackage(new GenPackage(PlayerData.ClientId, sendLookAngles.Value));
+                    }
+                    */
                 }
                 else if (PlayerData.IsMainPlayer) {
                     //客户端广播自身的数据
