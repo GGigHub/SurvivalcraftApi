@@ -98,10 +98,6 @@ public class ClientPackage : IPackage {
         Guid playerGuid = client?.PlayerGuid ?? Guid.Empty;
         string nickname = client?.Nickname ?? string.Empty;
 
-        if (archive.IsWriting && To != null && client != null && To.PlayerGuid == client.PlayerGuid) {
-            playerGuid = client.TokenId;
-        }
-
         archive.Value(ref id);
         archive.Value(ref tokenId);
         archive.Value(ref playerGuid);

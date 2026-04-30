@@ -249,11 +249,10 @@ public sealed class PackageSerializer {
         else value = new CellFace(m_reader.ReadInt32(), m_reader.ReadByte(), m_reader.ReadInt32(), m_reader.ReadByte());
     }
 
-    public void EntityLoadList(ref EntityDataList value, Client to) {
+    public void EntityLoadList(ref EntityDataList value) {
         if (IsWriting) {
             ValuesDictionary vd = new ValuesDictionary();
             value.Save(vd);
-            EntityPackage.ConfuseGuid(value, vd, to);
             byte[] data = vd.ToMessagePack();
             m_writer.Write(data.Length);
             m_writer.Write(data);

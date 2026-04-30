@@ -34,12 +34,7 @@ public class PlayerCreatePackage : IPackage {
         // 服务端广播给所有客户端，添加玩家。
         foreach (var client in NetworkManager.Clients) {
             if (client.Value == NetworkManager.Self) continue;
-            if (client.Value != playerData.Client) {
-                NetworkManager.QueuePackage(new PlayerAddPackage(playerData, true) { To = client.Value });
-            }
-            else {
-                NetworkManager.QueuePackage(new PlayerAddPackage(playerData, false) { To = client.Value });
-            }
+            NetworkManager.QueuePackage(new PlayerAddPackage(playerData));
         }
     }
 }
@@ -101,12 +96,9 @@ public class PlayerAddPackage : IPackage {
 
     public PlayerAddPackage() { }
 
-    public PlayerAddPackage(PlayerData playerData, bool confusion) {
+    public PlayerAddPackage(PlayerData playerData) {
         m_vd = new ValuesDictionary();
         playerData.Save(m_vd);
-        if (confusion) {
-            m_vd.SetValue("PlayerGUID", playerData.Client.TokenId);
-        }
     }
 
     public override void Serialize(PackageSerializer archive) {

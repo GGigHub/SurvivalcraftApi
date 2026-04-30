@@ -138,9 +138,8 @@ public static class NetworkManager {
         }
     }
 
-    public static byte[] GetNowProject(Project project, Client client) {
+    public static byte[] GetNowProject(Project project) {
         ValuesDictionary rootNode = CreateProjectRootNode(project);
-        ReplacePlayerGUIDsWithTokenIds(rootNode, client);
         return rootNode.ToMessagePack();
     }
 
@@ -165,38 +164,6 @@ public static class NetworkManager {
             }
         }
         return projectData;
-    }
-
-    private static void ReplacePlayerGUIDsWithTokenIds(ValuesDictionary rootNode, Client client) {
-        try {
-            var playersSubsystem = rootNode?
-                .GetValue("Subsystems", new ValuesDictionary())
-                .GetValue("Players", null as ValuesDictionary);
-
-            if (playersSubsystem == null) return;
-
-            var playersList = playersSubsystem.GetValue("Players", null as ValuesDictionary);
-
-            if (playersList != null) {
-                foreach (var playerVD in playersList.Values.OfType<ValuesDictionary>()) {
-                    Guid originalGuid = playerVD.GetValue("PlayerGUID", Guid.Empty);
-                    if (originalGuid != Guid.Empty) {
-                        ReplaceGUIDIfNeeded(playerVD, client, originalGuid);
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-            Log.Information($"ReplacePlayerGUIDsWithTokenIds error: {e.Message}");
-        }
-    }
-
-    private static void ReplaceGUIDIfNeeded(ValuesDictionary playerVD, Client currentClient, Guid originalGuid) {
-        var targetClient = GetClientByGUID(originalGuid);
-
-        if (targetClient != null && targetClient.PlayerGuid != currentClient.PlayerGuid) {
-            playerVD.SetValue("PlayerGUID", targetClient.TokenId);
-        }
     }
 
     public static byte[] Compress(Stream stream) {

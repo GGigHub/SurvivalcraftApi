@@ -65,9 +65,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
                 WorkType = WorkType.Server;
                 OnClientStateChanged += ClientStateChanged;
                 Project.EntityAdded += (_, arg) => {
-                    foreach (Client client in Clients.Values.Where(c => c != Self)) {
-                        NetworkManager.QueuePackage(new EntityLoadPackage(arg.Entity) { To = client });
-                    }
+                    NetworkManager.QueuePackage(new EntityLoadPackage(arg.Entity));
                 };
                 Project.EntityRemoved += (_, arg) => {
                     NetworkManager.QueuePackage(new EntityRemovePackage(arg.Entity.Id));
@@ -242,17 +240,13 @@ public class NetworkServer : INetworkNode, INetEventListener {
                             // concurrent joiners cannot miss them in later entity snapshots.
                             GameManager.Project.AddEntity(entity);
                         }
-                        foreach (KeyValuePair<int, Client> client in Clients) {
-                            if (client.Value != Self && client.Value != c) {
-                                NetworkManager.QueuePackage(new PlayerAddPackage(playerData, true) { To = client.Value });
-                            }
-                        }
+                        NetworkManager.QueuePackage(new PlayerAddPackage(playerData) { Except = c });
                     }
                     if (!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.BlocksTextureName)) {
                         using var s = Storage.OpenFile(BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName), OpenFileMode.Read);
                         textureData = ModsManager.StreamToBytes(s);
                     }
-                    byte[] data = NetworkManager.GetNowProject(GameManager.Project, c);
+                    byte[] data = NetworkManager.GetNowProject(GameManager.Project);
                     NetworkManager.QueuePackage(new ProjectPackage(textureData, data) { To = c });
                     break;
                 }

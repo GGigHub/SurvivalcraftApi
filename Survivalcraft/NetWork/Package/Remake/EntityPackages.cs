@@ -45,7 +45,7 @@ public class EntityLoadPackage : IPackage {
     }
 
     public override void Serialize(PackageSerializer archive) {
-        archive.EntityLoadList(ref entityDataList, To);
+        archive.EntityLoadList(ref entityDataList);
     }
 
     public override void Handle(bool isServer) {
