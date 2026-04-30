@@ -58,7 +58,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_idleSound) && m_subsystemTime.GameTime > m_lastSoundTime + (skipIfRecentlyPlayed ? 12f : 1f)) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_idleSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_idleSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
+                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 0, skipIfRecentlyPlayed));
             }
         }
 
@@ -71,7 +71,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_painSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_painSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_painSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 1));
+                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 1));
             }
         }
 
@@ -84,7 +84,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_moanSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_moanSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_moanSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 2));
+                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 2));
             }
         }
 
@@ -97,7 +97,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_sneezeSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_sneezeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_sneezeSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 3));
+                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 3));
             }
         }
 
@@ -110,7 +110,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_coughSound) && m_subsystemTime.GameTime > m_lastCoughingSoundTime + 1.0) {
                 m_lastCoughingSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_coughSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_coughSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 4));
+                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 4));
             }
         }
 
@@ -123,7 +123,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_pukeSound) && m_subsystemTime.GameTime > m_lastPukeSoundTime + 1.0) {
                 m_lastPukeSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_pukeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_pukeSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 5));
+                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 5));
             }
         }
 
@@ -136,7 +136,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_attackSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_attackSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_attackSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new ComponentBehaviorPackage(this, 6));
+                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 6));
             }
         }
 

@@ -560,13 +560,7 @@ namespace Game {
             int slotCount2 = targetInventory.GetSlotCount(targetSlotIndex);
 
             if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                InventorySlot sourceInventorySlot = new() { inventoryId = sourceInventory.Id, slotIndex = sourceSlotIndex };
-                InventorySlot targetInventorySlot = new() {
-                    inventoryId = targetInventory.Id,
-                    slotIndex = targetSlotIndex,
-                    count = count
-                };
-                IPackage package = new ComponentInventoryPackage(sourceInventorySlot, targetInventorySlot, ComponentInventoryPackage.EventType.HandleMoveItem);
+                IPackage package = new MoveItemPackage(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count);
                 NetworkManager.QueuePackage(package);
             }
             if (slotCount2 == 0
@@ -598,13 +592,7 @@ namespace Game {
             dragCount = CalculateSplitCount(dragCount, dragMode);
 
             if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                InventorySlot sourceInventorySlot = new() { inventoryId = sourceInventory.Id, slotIndex = sourceSlotIndex };
-                InventorySlot targetInventorySlot = new() { inventoryId = targetInventory.Id, slotIndex = targetSlotIndex };
-                ComponentInventoryPackage package = new(sourceInventorySlot, targetInventorySlot, ComponentInventoryPackage.EventType.HandleDragDrop) {
-                    m_dragMode = dragMode,
-                    m_processingOnly = processingOnly
-                };
-                NetworkManager.QueuePackage(package);
+                NetworkManager.QueuePackage(new DragDropItemPackage(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly));
             }
 
             bool flag = false;

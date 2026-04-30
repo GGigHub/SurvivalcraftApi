@@ -66,11 +66,11 @@ public class NetworkServer : INetworkNode, INetEventListener {
                 OnClientStateChanged += ClientStateChanged;
                 Project.EntityAdded += (_, arg) => {
                     foreach (Client client in Clients.Values.Where(c => c != Self)) {
-                        NetworkManager.QueuePackage(new EntityPackage(arg.Entity) { To = client });
+                        NetworkManager.QueuePackage(new EntityLoadPackage(arg.Entity) { To = client });
                     }
                 };
                 Project.EntityRemoved += (_, arg) => {
-                    NetworkManager.QueuePackage(new EntityPackage(arg.Entity.Id));
+                    NetworkManager.QueuePackage(new EntityRemovePackage(arg.Entity.Id));
                 };
             }
             else {
@@ -142,7 +142,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
         }
         if (Clients.ContainsKey(c.ID)) {
             if (IsServer) {
-                NetworkManager.QueuePackage(new ClientPackage(c.ID));
+                NetworkManager.QueuePackage(new ClientRemovePackage(c.ID));
             }
             c.State = ClientStage.NotConnected;
             OnClientStateChanged?.Invoke(c);
@@ -231,7 +231,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
         var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
         var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
 
-        NetworkManager.QueuePackage(new ClientPackage(c.ID, c.State) { Except = c });
+        NetworkManager.QueuePackage(new ClientStateChangePackage(c.ID, c.State) { Except = c });
 
         switch (c.State) {
             case ClientStage.Connected: {
@@ -244,7 +244,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
                         }
                         foreach (KeyValuePair<int, Client> client in Clients) {
                             if (client.Value != Self && client.Value != c) {
-                                NetworkManager.QueuePackage(new PlayerDataPackage(playerData, true) { To = client.Value });
+                                NetworkManager.QueuePackage(new PlayerAddPackage(playerData, true) { To = client.Value });
                             }
                         }
                     }
@@ -261,7 +261,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
                 break;
             case ClientStage.ProjectLoaded: {
                     List<Entity> sendList = [.. GameManager.Project.Entities];
-                    NetworkManager.QueuePackage(new EntityPackage(sendList) { To = c });
+                    NetworkManager.QueuePackage(new EntityLoadPackage(sendList) { To = c });
                     break;
                 }
             case ClientStage.LoadTerrain:

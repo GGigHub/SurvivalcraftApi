@@ -2,6 +2,7 @@ using System.Xml.Linq;
 using Engine.Graphics;
 using Engine.Input;
 using Game.NetWork;
+using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -231,7 +232,7 @@ public class PlayerScreen : Screen {
         if (m_playButton.IsClicked && VerifyName()) {
             if (m_mode == Mode.Initial) {
                 if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                    NetworkManager.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Create));
+                    NetworkManager.QueuePackage(new PlayerCreatePackage(m_playerData));
                     DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
                 }
                 else {
@@ -256,7 +257,7 @@ public class PlayerScreen : Screen {
                 ScreensManager.SwitchScreen("Players", m_playerData.SubsystemPlayers);
             }
             if (m_mode == Mode.Edit) {
-                NetworkManager.QueuePackage(new NetWork.Packages.PlayerDataPackage(m_playerData, NetWork.Packages.PlayerDataPackage.DataType.Modify));
+                NetworkManager.QueuePackage(new PlayerModifyPackage(m_playerData));
             }
         }
         m_nameWasInvalid = false;

@@ -82,7 +82,7 @@ namespace Game {
                 else {
                     m_dragStartOffset = null;
                     if (draw == 15) {
-                        NetworkManager.QueuePackage(new BlockEditPackage(m_inventory, m_slotIndex, BlockEditPackage.EventType.CrossbowPull));
+                        NetworkManager.QueuePackage(new CrossbowPullPackage(m_inventory, m_slotIndex));
                         AudioManager.PlaySound("Audio/UI/ItemMoved", 1f, 0f, 0f);
                         return;
                     }

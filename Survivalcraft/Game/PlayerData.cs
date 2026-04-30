@@ -267,7 +267,7 @@ namespace Game {
             m_stateMachine.AddState("Playing", delegate {
                 HideSpawnDialog();
                 if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                    NetworkManager.QueuePackage(new ClientPackage(NetworkManager.Self.ID, ClientStage.Playing));
+                    NetworkManager.QueuePackage(new ClientStateChangePackage(NetworkManager.Self.ID, ClientStage.Playing));
                 }
             }, delegate {
                 if (ComponentPlayer == null) {
@@ -316,7 +316,7 @@ namespace Game {
                 }
                 else if (IsMainPlayer && Time.RealTime - m_playerDeathTime.Value > 1.5 && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any || readyToRestart) {
                     if (NetworkManager.WorkType == NetWork.WorkType.Client && IsMainPlayer) {
-                        NetworkManager.QueuePackage(new NetWork.Packages.ComponentPlayerPackage(this, NetWork.Packages.ComponentPlayerPackage.PlayerAction.Restart));
+                        NetworkManager.QueuePackage(new NetWork.Packages.PlayerRestartPackage(this));
                     }
                     IsDead = true;
                     readyToRestart = true;

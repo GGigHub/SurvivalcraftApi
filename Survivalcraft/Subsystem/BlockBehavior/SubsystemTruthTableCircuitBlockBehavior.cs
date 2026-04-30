@@ -22,7 +22,7 @@ namespace Game {
                 new EditTruthTableDialog(
                     truthTableData,
                     delegate {
-                        var p = new EditableBlockPackage(default, true, inventory.Id, slotIndex, truthTableData);
+                        var p = new TruthTableDataPackage(default, true, inventory.Id, slotIndex, truthTableData);
                         NetworkManager.QueuePackage(p);
                         if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                             p.Handle(false);
@@ -42,7 +42,7 @@ namespace Game {
                     delegate {
                         int face = ((TruthTableCircuitBlock)BlocksManager.Blocks[188]).GetFace(value);
                         var cell = new CellFace(x, y, z, face);
-                        var p = new EditableBlockPackage(cell, false, default, default, truthTableData);
+                        var p = new TruthTableDataPackage(cell, false, default, default, truthTableData);
                         NetworkManager.QueuePackage(p);
                         if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                             p.Handle(false);

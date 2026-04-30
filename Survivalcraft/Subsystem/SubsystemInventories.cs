@@ -42,7 +42,7 @@ public class SubsystemInventories : Subsystem {
             return true;
         }
 #if DEBUG
-        NetworkManager.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(id, NetWork.Packages.ComponentInventoryPackage.EventType.QueryErrorInventoryInfo));
+        Engine.Log.Information($"Inventory id not found: {id}");
 #endif
         return false;
     }
@@ -64,7 +64,9 @@ public class SubsystemInventories : Subsystem {
     public static void flushSyncItems() {
         if (syncItems.Count > 0) {
             if (NetworkManager.WorkType == NetWork.WorkType.Server) {
-                NetworkManager.QueuePackage(new NetWork.Packages.ComponentInventoryPackage(syncItems));
+                foreach (var item in syncItems.Keys) {
+                    NetworkManager.QueuePackage(new NetWork.Packages.InventorySyncPackage(item));
+                }
             }
             syncItems.Clear();
         }

@@ -198,14 +198,13 @@ namespace Game {
             if (m_chokeButton.IsClicked) {
                 if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                     NetworkManager.QueuePackage(
-                        new ComponentHealthPackage(
+                        new InjureRequestPackage(
                             m_componentPlayer.ComponentHealth,
                             null,
                             0.1f,
                             LanguageControl.GetContentWidgets(fName, "Choked"),
                             true,
-                            true,
-                            ComponentHealthPackage.RequestInjureType.Choke
+                            InjureRequestPackage.RequestInjureType.Choke
                         )
                     );
                 }

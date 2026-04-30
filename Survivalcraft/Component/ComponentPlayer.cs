@@ -2,7 +2,6 @@ using Engine;
 using Game.NetWork;
 using Game.NetWork.Packages;
 using GameEntitySystem;
-using Silk.NET.Core.Native;
 using TemplatesDatabase;
 
 namespace Game {
@@ -240,7 +239,7 @@ namespace Game {
         public virtual void Update(float dt) {
             if (PlayerData.IsMainPlayer && ComponentMiner?.Inventory != null && LastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex) {
                 LastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
-                NetworkManager.QueuePackage(new ComponentInventoryPackage(ComponentMiner.Inventory, ComponentMiner.Inventory.ActiveSlotIndex));
+                NetworkManager.QueuePackage(new ActiveSlotChangePackage(ComponentMiner.Inventory));
             }
             PlayerInput playerInput = ComponentInput.PlayerInput;
             if (ComponentInput.IsControlledByTouch
@@ -366,23 +365,13 @@ namespace Game {
             Block block = BlocksManager.Blocks[num];
 
             if (Time.PeriodicEvent(0.1f, 0.0)) {
-                if (NetworkManager.WorkType != WorkType.Client) {
+                if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                     //服务器广播玩家数据
-                    if (ComponentLocomotion.SendLookAngles != null) {
-                        NetworkManager.SyncByPlayer(PlayerData.ClientId, (target) => {
-                            target.ComponentLocomotion.NetLookAngles.SetNext(ComponentLocomotion.SendLookAngles.Value);
-                        });
-                    }
-                    // 编译后这块应该是
-                    /*
-                    if (ComponentLocomotion.SendLookAngles != null) {
-                        NetworkManager.QueuePackage(new GenPackage(PlayerData.ClientId, sendLookAngles.Value));
-                    }
-                    */
+                    NetworkManager.QueuePackage(new PlayerBodyUpdatePackage(this) { Except = PlayerData.Client });
                 }
                 else if (PlayerData.IsMainPlayer) {
                     //客户端广播自身的数据
-                    NetworkManager.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate));
+                    NetworkManager.QueuePackage(new PlayerBodyUpdatePackage(this));
                 }
             }
 
@@ -669,7 +658,7 @@ namespace Game {
                                 playerInput.Hit.Value.Direction
                             );
                             if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                                NetworkManager.QueuePackage(new ComponentPlayerPackage(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
+                                NetworkManager.QueuePackage(new PlayerHitPackage(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
                             }
                         }
                     }
@@ -730,15 +719,15 @@ namespace Game {
             if (shouldSyncPlayerEvents) {
                 if (last_digEvent.digEvent != digEvent.digEvent) {
                     last_digEvent = digEvent;
-                    NetworkManager.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.DigEvent));
+                    NetworkManager.QueuePackage(new PlayerDigPackage(this));
                 }
                 if (last_interactEvent.interactEvent != interactEvent.interactEvent) {
                     last_interactEvent = interactEvent;
-                    NetworkManager.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.InteractEvent));
+                    NetworkManager.QueuePackage(new PlayerInteractPackage(this));
                 }
                 if (last_aimEvent.aimEvent != aimEvent.aimEvent) {
                     last_aimEvent = aimEvent;
-                    NetworkManager.QueuePackage(new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.AimEvent));
+                    NetworkManager.QueuePackage(new PlayerAimPackage(this));
                 }
             }
             if (playerInput.Drop
