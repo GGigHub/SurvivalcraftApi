@@ -24,7 +24,7 @@ namespace Game {
                     new EditMemoryBankDialog(
                         memoryBankData,
                         () => {
-                            var p = new EditableBlockPackage(default, true, inventory.Id, slotIndex, memoryBankData);
+                            var p = new MemoryBankDataPackage(default, true, inventory.Id, slotIndex, memoryBankData);
                             NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);
@@ -60,7 +60,7 @@ namespace Game {
                         () => {
                             int face = ((MemoryBankBlock)BlocksManager.Blocks[186]).GetFace(value);
                             var cell = new CellFace(x, y, z, face);
-                            var p = new EditableBlockPackage(cell, false, default, default, memoryBankData);
+                            var p = new MemoryBankDataPackage(cell, false, default, default, memoryBankData);
                             NetworkManager.QueuePackage(p);
                             if (NetworkManager.WorkType != NetWork.WorkType.Client) {
                                 p.Handle(false);

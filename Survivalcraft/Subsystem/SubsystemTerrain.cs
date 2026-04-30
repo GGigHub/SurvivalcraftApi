@@ -370,7 +370,7 @@ namespace Game {
             }
             if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
             ChangeCellNet(x, y, z, value, updateModificationCounter, movingBlock);
-            NetworkManager.QueuePackage(new NetWork.Packages.SubsystemTerrainPackage(x, y, z, value));
+            NetworkManager.QueuePackage(new NetWork.Packages.TerrainChangeCellPackage(x, y, z, value));
         }
 
         public void ChangeCellNet(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null) {

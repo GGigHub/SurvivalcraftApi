@@ -2,101 +2,20 @@ using Engine;
 
 namespace Game.NetWork.Packages;
 
-public class ClientPackage : IPackage {
-    public override byte ID => (byte)PackageType.Client;
-    public override ClientStage MinNeedState => ClientStage.NotConnected;
-
-    public enum EventType {
-        Add,
-        Remove,
-        SyncList,
-        StateChange
-    }
-
-    public EventType eventType;
-    public Client m_client;
-    public List<Client> m_list;
-
-    public ClientPackage() {
-    }
-
-    public ClientPackage(byte id, Guid tokenId, Guid guid, string nickname) {
-        eventType = EventType.Add;
-        m_client = new Client(null, id, tokenId, guid, nickname);
-    }
-
-    public ClientPackage(byte id) {
-        eventType = EventType.Remove;
-        m_client = new Client(null, id, Guid.Empty, Guid.Empty, null);
-    }
-
-    public ClientPackage(byte id, ClientStage clientStage) {
-        eventType = EventType.StateChange;
-        m_client = new Client(null, id, Guid.Empty, Guid.Empty, null) {
-            State = clientStage
-        };
-    }
-
-    public ClientPackage(IEnumerable<Client> clients) {
-        m_list = [.. clients];
-        eventType = EventType.SyncList;
-    }
-
-    public override void Serialize(PackageSerializer archive) {
-        archive.Enum(ref eventType);
-        switch (eventType) {
-            case EventType.Add:
-                SerializeClient(archive, ref m_client);
-                break;
-            case EventType.Remove:
-                SerializeClientId(archive, ref m_client);
-                break;
-            case EventType.SyncList:
-                SerializeClientList(archive);
-                break;
-            case EventType.StateChange:
-                SerializeClientId(archive, ref m_client);
-                ClientStage state = m_client?.State ?? ClientStage.NotConnected;
-                archive.Enum(ref state);
-                if (archive.IsReading) {
-                    m_client.State = state;
-                }
-                break;
-        }
-    }
-
-    private void SerializeClientList(PackageSerializer archive) {
-        byte count = archive.IsWriting ? (byte)m_list.Count : (byte)0;
-        archive.Value(ref count);
-        if (archive.IsReading) {
-            m_list = [];
-            for (int i = 0; i < count; i++) {
-                Client client = null;
-                SerializeClient(archive, ref client);
-                m_list.Add(client);
-            }
-        }
-        else {
-            for (int i = 0; i < count; i++) {
-                Client client = m_list[i];
-                SerializeClient(archive, ref client);
-            }
-        }
-    }
-
-    private void SerializeClientId(PackageSerializer archive, ref Client client) {
-        byte id = client?.ID ?? 0;
+internal static class ClientPackageSerialization {
+    public static void SerializeClientId(PackageSerializer archive, ref byte id) {
         archive.Value(ref id);
-        if (archive.IsReading) {
-            client = new Client(null, id, Guid.Empty, Guid.Empty, null);
-        }
     }
 
-    private void SerializeClient(PackageSerializer archive, ref Client client) {
+    public static void SerializeClient(PackageSerializer archive, Client to, ref Client client) {
         byte id = client?.ID ?? 0;
         Guid tokenId = client?.TokenId ?? Guid.Empty;
         Guid playerGuid = client?.PlayerGuid ?? Guid.Empty;
         string nickname = client?.Nickname ?? string.Empty;
+
+        if (archive.IsWriting && to != null && client != null && to.PlayerGuid == client.PlayerGuid) {
+            playerGuid = client.TokenId;
+        }
 
         archive.Value(ref id);
         archive.Value(ref tokenId);
@@ -107,60 +26,137 @@ public class ClientPackage : IPackage {
             client = new Client(null, id, tokenId, playerGuid, nickname);
         }
     }
+}
+
+public class ClientAddPackage : IPackage {
+    public override byte ID => (byte)PackageType.ClientAdd;
+    public override ClientStage MinNeedState => ClientStage.NotConnected;
+    public Client m_client;
+
+    public ClientAddPackage() { }
+
+    public ClientAddPackage(byte id, Guid tokenId, Guid guid, string nickname) {
+        m_client = new Client(null, id, tokenId, guid, nickname);
+    }
+
+    public override void Serialize(PackageSerializer archive) {
+        ClientPackageSerialization.SerializeClient(archive, To, ref m_client);
+    }
 
     public override void Handle(bool isServer) {
-        if (isServer && eventType != EventType.StateChange) {
+        if (isServer) {
             return;
         }
-        switch (eventType) {
-            case EventType.Add:
-                NetworkManager.AddClient(new Client(From.Peer, m_client.ID, m_client.TokenId, m_client.PlayerGuid, m_client.Nickname));
-#if DEBUG
-                Log.Information("AddClient:" + m_client.ID);
-#endif
-                break;
-            case EventType.Remove:
-#if DEBUG
-                Log.Information("RemoveClient:" + m_client.ID);
-#endif
-                if (NetworkManager.Clients.ContainsKey(m_client.ID)) {
-                    var client = NetworkManager.Clients[m_client.ID];
-                    client.State = ClientStage.NotConnected;
-                    NetworkManager.OnClientStateChanged?.Invoke(client);
-                    NetworkManager.Clients.Remove(m_client.ID);
-                }
-                break;
-            case EventType.SyncList:
-                foreach (var c in m_list) {
-                    if (c.ID == 0) {
-                        c.Peer = From.Peer;
-                        c.Peer.Tag = c;
-                        NetworkManager.Client.Server = From;
-                    }
-                    else {
-                        if (c.TokenId == NetworkManager.Client.TokenId) {
-                            NetworkManager.Client.Self = c;
-                        }
-                    }
-                    NetworkManager.AddClient(c);
-                }
-#if DEBUG
-                Log.Information("SyncList End:" + m_list.Count);
-#endif
-                if (NetworkManager.Self == null) {
-                    throw new Exception("Cannot find Self In Client List");
-                }
-                NetworkManager.Client.CurrentStage = NetworkStage.Connected;
-                break;
-            case EventType.StateChange:
-                if (NetworkManager.Clients.ContainsKey(m_client.ID)) {
-                    From = NetworkManager.Clients[m_client.ID];
-                    if (From.State != m_client.State) {
-                        From.State = m_client.State;
-                        NetworkManager.OnClientStateChanged?.Invoke(From);
-                    }
-                }
-                break;
+        NetworkManager.AddClient(new Client(From.Peer, m_client.ID, m_client.TokenId, m_client.PlayerGuid, m_client.Nickname));
+    }
+}
+
+public class ClientRemovePackage : IPackage {
+    public override byte ID => (byte)PackageType.ClientRemove;
+    public override ClientStage MinNeedState => ClientStage.NotConnected;
+    public byte m_clientId;
+
+    public ClientRemovePackage() { }
+
+    public ClientRemovePackage(byte id) {
+        m_clientId = id;
+    }
+
+    public override void Serialize(PackageSerializer archive) {
+        ClientPackageSerialization.SerializeClientId(archive, ref m_clientId);
+    }
+
+    public override void Handle(bool isServer) {
+        if (isServer) {
+            return;
+        }
+        if (NetworkManager.Clients.ContainsKey(m_clientId)) {
+            var client = NetworkManager.Clients[m_clientId];
+            client.State = ClientStage.NotConnected;
+            NetworkManager.OnClientStateChanged?.Invoke(client);
+            NetworkManager.Clients.Remove(m_clientId);
+        }
+    }
+}
+
+public class ClientSyncListPackage : IPackage {
+    public override byte ID => (byte)PackageType.ClientSyncList;
+    public override ClientStage MinNeedState => ClientStage.NotConnected;
+    public List<Client> m_list = [];
+
+    public ClientSyncListPackage() { }
+
+    public ClientSyncListPackage(IEnumerable<Client> clients) {
+        m_list = [.. clients];
+    }
+
+    public override void Serialize(PackageSerializer archive) {
+        byte count = archive.IsWriting ? (byte)m_list.Count : (byte)0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            m_list = [];
+            for (int i = 0; i < count; i++) {
+                Client client = null;
+                ClientPackageSerialization.SerializeClient(archive, To, ref client);
+                m_list.Add(client);
+            }
+        }
+        else {
+            for (int i = 0; i < count; i++) {
+                Client client = m_list[i];
+                ClientPackageSerialization.SerializeClient(archive, To, ref client);
+            }
+        }
+    }
+
+    public override void Handle(bool isServer) {
+        if (isServer) {
+            return;
+        }
+        foreach (var client in m_list) {
+            if (client.ID == 0) {
+                client.Peer = From.Peer;
+                client.Peer.Tag = client;
+                NetworkManager.Client.Server = From;
+            }
+            else if (client.TokenId == NetworkManager.Client.TokenId) {
+                NetworkManager.Client.Self = client;
+            }
+            NetworkManager.AddClient(client);
+        }
+        if (NetworkManager.Self == null) {
+            throw new Exception("Cannot find Self In Client List");
+        }
+        NetworkManager.Client.CurrentStage = NetworkStage.Connected;
+    }
+}
+
+public class ClientStateChangePackage : IPackage {
+    public override byte ID => (byte)PackageType.ClientStateChange;
+    public override ClientStage MinNeedState => ClientStage.NotConnected;
+    public byte m_clientId;
+    public ClientStage m_state;
+
+    public ClientStateChangePackage() { }
+
+    public ClientStateChangePackage(byte id, ClientStage clientStage) {
+        m_clientId = id;
+        m_state = clientStage;
+    }
+
+    public override void Serialize(PackageSerializer archive) {
+        ClientPackageSerialization.SerializeClientId(archive, ref m_clientId);
+        archive.Enum(ref m_state);
+    }
+
+    public override void Handle(bool isServer) {
+        if (!NetworkManager.Clients.ContainsKey(m_clientId)) {
+            return;
+        }
+        var client = NetworkManager.Clients[m_clientId];
+        if (client.State != m_state) {
+            client.State = m_state;
+            NetworkManager.OnClientStateChanged?.Invoke(client);
         }
     }
 }

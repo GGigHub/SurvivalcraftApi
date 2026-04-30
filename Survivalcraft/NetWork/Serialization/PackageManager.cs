@@ -48,6 +48,23 @@ public enum PackageType : byte {
     PlayerUpdateLocation, ServerCloseTime, PlayerBugle, PlayerCount,
     PlayerNoMsgAdd, PlayerNoMsgRemove,
 
+    ClientAdd, ClientRemove, ClientSyncList, ClientStateChange,
+    BehaviorChase, BehaviorRandomPeck, BehaviorRandomFeed, BehaviorEatPickable,
+    BehaviorHumanRow, BehaviorCreatureSound, BehaviorDigInMud, BehaviorFishOutOfWater,
+    ClothingRequestSkin, ClothingReplySkin, ClothingWhoHas, ClothingWhoHasReply,
+    EntityOnFire, FireBlockAdd, FireBlockRemove,
+    PlayerBodyUpdate, PlayerInteract, PlayerAim, PlayerDig, PlayerHit,
+    PlayerCreativeFly, PlayerIntoPlaying, PlayerRestart, PlayerAddExperience,
+    PlayerDrop, PlayerDragDrop, PlayerStatSync, PlayerPositionSet,
+    VitalStatSync,
+    EditableMemoryBank, EditableTruthTable, EditableAdjustableDelayGate,
+    EditableBattery, EditablePiston, EditableSwitch, EditableButton,
+    MovingBlockAdd, MovingBlockRemove,
+    PickableCreate, PickableUpdate, PickableDelete, PickableRequestSync,
+    PickableSetFlyToPosition, PickableCreateList, PickableDeleteList, PickableSyncList,
+    TerrainRequestSyncChunks, TerrainSyncChunkList, TerrainReplyResult,
+    TerrainChangeCell, TerrainRequestChangeCell, TerrainChangeCellList,
+
     ModPackage = 255
 }
 
