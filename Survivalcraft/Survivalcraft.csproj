@@ -9,6 +9,14 @@
     </ItemGroup>
     <ItemGroup>
       <Compile Include="NetWork\NetworkSimulate.cs" />
+      <Compile Include="NetWork\Package\BlockEditPackages.cs" />
+      <Compile Include="NetWork\Package\BodyPackages.cs" />
+      <Compile Include="NetWork\Package\EntityPackages.cs" />
+      <Compile Include="NetWork\Package\ExplosionPackages.cs" />
+      <Compile Include="NetWork\Package\HealthPackages.cs" />
+      <Compile Include="NetWork\Package\InventoryPackages.cs" />
+      <Compile Include="NetWork\Package\PlayerPackages.cs" />
+      <Compile Include="NetWork\Package\SleepPackages.cs" />
       <Compile Include="NetWork\Serialization\PackageSerializer.cs" />
     </ItemGroup>
     <ItemGroup>
