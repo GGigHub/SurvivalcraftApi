@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -14,7 +14,7 @@ public class TerrainSyncChunkListPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        TerrainPacketHelpers.SerializeChunkList(archive, ref Chunks);
+        TerrainHelpers.SerializeChunkList(archive, ref Chunks);
     }
 
     public override void Handle(bool isServer) {
@@ -23,7 +23,7 @@ public class TerrainSyncChunkListPacket : Packet {
         }
         SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
         foreach (TerrainChunk chunk in Chunks) {
-            TerrainPacketHelpers.ApplyOneChunk(subsystemTerrain, chunk);
+            TerrainHelpers.ApplyOneChunk(subsystemTerrain, chunk);
         }
     }
 }

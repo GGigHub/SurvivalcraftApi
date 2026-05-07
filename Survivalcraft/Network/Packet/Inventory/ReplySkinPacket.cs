@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -11,16 +11,16 @@ public class ReplySkinPacket : Packet {
     public ReplySkinPacket() { }
     public ReplySkinPacket(string skinName) {
         SkinName = skinName;
-        m_skinData = ClothingPacketHelpers.LoadSkinData(skinName);
+        m_skinData = ClothingHelpers.LoadSkinData(skinName);
     }
 
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref SkinName);
-        ClothingPacketHelpers.SerializeSkinData(archive, ref m_skinData);
+        ClothingHelpers.SerializeSkinData(archive, ref m_skinData);
     }
 
     public override void Handle(bool isServer) {
-        ClothingPacketHelpers.SaveSkin(SkinName, m_skinData);
+        ClothingHelpers.SaveSkin(SkinName, m_skinData);
     }
 }
 

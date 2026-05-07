@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -46,7 +46,7 @@ public class MovingBlockAddPacket : Packet {
         archive.Value(ref m_addDrag);
         archive.Value(ref m_addSmoothness);
         archive.Value(ref m_addId);
-        MovingBlockPacketHelpers.SerializeBlockList(archive, m_addBlocks);
+        MovingBlockHelpers.SerializeBlockList(archive, m_addBlocks);
     }
 
     public override void Handle(bool isServer) {

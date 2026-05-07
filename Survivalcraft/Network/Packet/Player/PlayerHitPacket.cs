@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using TemplatesDatabase;
 
 namespace Game.Network;
@@ -16,14 +16,14 @@ public class PlayerHitPacket : PlayerPacketBase {
         m_hitDirection = hitDirection;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerPacketHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
         archive.Value(ref bodyId);
         archive.Value(ref m_hitPosition);
         archive.Value(ref m_hitDirection);
     }
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
-        if (isServer && PlayerPacketHelpers.ThrottleHit(playerData)) {
+        if (isServer && PlayerHelpers.ThrottleHit(playerData)) {
             return;
         }
         ComponentPlayer player = playerData.ComponentPlayer;
@@ -41,7 +41,7 @@ public class PlayerHitPacket : PlayerPacketBase {
                 GameManager.Project.FindEntity(bodyId, entity => {
                     ComponentBody body = entity.FindComponent<ComponentBody>();
                     player.ComponentMiner.Hit(body, hit.HitPoint(), dir);
-                    PlayerPacketHelpers.QueuePlayerPacket(this, isServer);
+                    PlayerHelpers.QueuePlayerPacket(this, isServer);
                 });
             }
         }

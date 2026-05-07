@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using TemplatesDatabase;
 
 namespace Game.Network;
@@ -13,7 +13,7 @@ public class PlayerStatSyncPacket : PlayerPacketBase {
         player.PlayerStats.Save(m_stat);
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerPacketHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
         byte[] messagePack = archive.IsWriting ? m_stat.ToMessagePack() : null;
         archive.Buffer(ref messagePack);
         if (archive.IsReading) {

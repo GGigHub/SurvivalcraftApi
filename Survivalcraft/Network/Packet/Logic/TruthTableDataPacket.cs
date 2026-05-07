@@ -1,4 +1,4 @@
-﻿using GameEntitySystem;
+using GameEntitySystem;
 
 namespace Game.Network;
 
@@ -32,10 +32,10 @@ public class TruthTableDataPacket : Packet {
             archive.Value(ref m_slotIndex);
         }
         else {
-            EditableBlockPacketHelpers.SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
-            EditableBlockPacketHelpers.SerializeOptionalId(archive, ref m_id);
+            EditableBlockHelpers.SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
+            EditableBlockHelpers.SerializeOptionalId(archive, ref m_id);
         }
-        EditableBlockPacketHelpers.SerializeByteArray(archive, ref m_data);
+        EditableBlockHelpers.SerializeByteArray(archive, ref m_data);
     }
     public override void Handle(bool isServer) {
         SubsystemTruthTableCircuitBlockBehavior behavior = GameManager.Project.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>();
@@ -47,7 +47,7 @@ public class TruthTableDataPacket : Packet {
             GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
                 if (!m_id.HasValue) {
                     m_id = behavior.StoreItemDataAtUniqueId(data);
-                    EditableBlockPacketHelpers.ReplaceDataAtSlot(inventory, m_slotIndex, _ => m_id.Value);
+                    EditableBlockHelpers.ReplaceDataAtSlot(inventory, m_slotIndex, _ => m_id.Value);
                 }
                 else {
                     behavior.m_itemsData[m_id.Value] = data;

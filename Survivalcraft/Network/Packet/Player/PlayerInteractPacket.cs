@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using TemplatesDatabase;
 
 namespace Game.Network;
@@ -17,7 +17,7 @@ public class PlayerInteractPacket : PlayerPacketBase {
         m_netInteractRaycast = player.interactEvent.NetPlaceRaycast;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerPacketHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
         archive.Enum(ref m_interactEvent);
         archive.Value(ref m_netInteractRay);
         archive.Value(ref m_netInteractRaycast);
@@ -25,7 +25,7 @@ public class PlayerInteractPacket : PlayerPacketBase {
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
         playerData.ComponentPlayer.AddInteractEvent(m_interactEvent, m_netInteractRay, m_netInteractRaycast);
-        PlayerPacketHelpers.QueuePlayerPacket(this, isServer);
+        PlayerHelpers.QueuePlayerPacket(this, isServer);
     }
 }
 

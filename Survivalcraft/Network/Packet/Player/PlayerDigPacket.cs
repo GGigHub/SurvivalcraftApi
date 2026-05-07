@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using TemplatesDatabase;
 
 namespace Game.Network;
@@ -16,7 +16,7 @@ public class PlayerDigPacket : PlayerPacketBase {
         m_netDigRaycast = player.digEvent.NetDigRaycast;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerPacketHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
         archive.Enum(ref m_digEvent);
         archive.Value(ref m_netDigRay);
         archive.Value(ref m_netDigRaycast);
@@ -24,7 +24,7 @@ public class PlayerDigPacket : PlayerPacketBase {
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
         playerData.ComponentPlayer.AddDigEvent(m_digEvent, m_netDigRay, m_netDigRaycast);
-        PlayerPacketHelpers.QueuePlayerPacket(this, isServer);
+        PlayerHelpers.QueuePlayerPacket(this, isServer);
     }
 }
 

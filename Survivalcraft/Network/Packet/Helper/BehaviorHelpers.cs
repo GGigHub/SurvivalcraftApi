@@ -1,9 +1,9 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 
 namespace Game.Network;
 
-public static class BehaviorPacketHelpers {
+public static class BehaviorHelpers {
     public static void WithEntity(int entityId, Action<Entity> action) {
         GameManager.Project.FindEntity(entityId, action);
     }

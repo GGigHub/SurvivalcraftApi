@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -16,7 +16,7 @@ public class ClientStateChangePacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        ClientPacketSerialization.SerializeClientId(archive, ref m_clientId);
+        ClientHelper.SerializeClientId(archive, ref m_clientId);
         archive.Enum(ref m_state);
     }
 

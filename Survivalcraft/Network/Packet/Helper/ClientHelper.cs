@@ -1,8 +1,8 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
-public static class ClientPacketSerialization {
+public static class ClientHelper {
     public static void SerializeClientId(PacketSerializer archive, ref byte id) {
         archive.Value(ref id);
     }
@@ -25,6 +25,16 @@ public static class ClientPacketSerialization {
         if (archive.IsReading) {
             client = new Client(null, id, tokenId, playerGuid, nickname);
         }
+    }
+}
+
+public static class ClientPacketSerialization {
+    public static void SerializeClient(PacketSerializer archive, Client to, ref Client client) {
+        ClientPacketHelper.SerializeClient(archive, to, ref client);
+    }
+
+    public static void SerializeClientId(PacketSerializer archive, ref byte id) {
+        ClientPacketHelper.SerializeClientId(archive, ref id);
     }
 }
 

@@ -91,13 +91,13 @@ public class PacketManager {
         }
     }
 
-    public static T DecodePacket<T>(INetworkNode networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : Packet {
-        var obj = DecodePackets(networkBase, reader, netPeer, request, iPEndPoint)[0];
+    public static T DecodePacket<T>(IEnumerable<Client> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : Packet {
+        var obj = DecodePackets(clients, reader, netPeer, request, iPEndPoint)[0];
         return (T)obj;
     }
 
-    public static List<Packet> DecodePacketsFromPayload(INetworkNode networkBase, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        Client from = ResolveFrom(networkBase, netPeer, request, iPEndPoint);
+    public static List<Packet> DecodePacketsFromPayload(IEnumerable<Client> clients, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+        Client from = ResolveFrom(clients, netPeer, request, iPEndPoint);
         List<Packet> packets = new List<Packet>();
         byte packetID = 99;
         if (payload == null || payload.Length == 0) {
@@ -113,15 +113,15 @@ public class PacketManager {
         }
     }
 
-    public static List<Packet> DecodePackets(INetworkNode networkBase, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        Client from = ResolveFrom(networkBase, netPeer, request, iPEndPoint);
+    public static List<Packet> DecodePackets(IEnumerable<Client> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+        Client from = ResolveFrom(clients, netPeer, request, iPEndPoint);
         List<Packet> packets = new List<Packet>();
         byte packetID = 99;
         if (reader.AvailableBytes == 0) {
             return packets;
         }
         try {
-            var preader = NetworkManager.GetReader(reader);
+            var preader = NetworkHelper.GetReader(reader);
             return DecodePacketsFromReader(preader, from, ref packetID);
         }
         catch {
@@ -130,13 +130,13 @@ public class PacketManager {
         }
     }
 
-    private static Client ResolveFrom(INetworkNode networkBase, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+    private static Client ResolveFrom(IEnumerable<Client> clients, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         Client from = null;
-        if (networkBase != null) {
-            from = networkBase.Clients.Values.Where(client =>
+        if (clients != null) {
+            from = clients.FirstOrDefault(client =>
                 (client.Peer != null && client.Peer == netPeer) ||
                 (client.Request != null && client.Request == request) ||
-                (client.IPPoint != null && client.IPPoint == iPEndPoint)).FirstOrDefault();
+                (client.IPPoint != null && client.IPPoint == iPEndPoint));
         }
         if (from == null) {
             if (netPeer != null) from = new Client(netPeer);

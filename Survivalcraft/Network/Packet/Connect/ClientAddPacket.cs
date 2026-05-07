@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -14,7 +14,7 @@ public class ClientAddPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        ClientPacketSerialization.SerializeClient(archive, To, ref m_client);
+        ClientHelper.SerializeClient(archive, To, ref m_client);
     }
 
     public override void Handle(bool isServer) {

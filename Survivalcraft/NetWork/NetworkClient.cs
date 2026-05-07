@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using Engine;
 using Game.Network;
 using GameEntitySystem;
@@ -12,7 +12,7 @@ public class Client {
     public string Nickname { get; set; }
     public byte ID { get; internal set; }
     // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
-    // 客户端自己的 PlayerGuid，以及服务端上所有玩家的 PlayerGuid 都未经混淆�?
+    // 客户端自己的 PlayerGuid，以及服务端上所有玩家的 PlayerGuid 都未经混淆
     // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
     public Guid PlayerGuid { get; internal set; }
     public Guid TokenId { get; internal set; }
@@ -81,7 +81,7 @@ public class Client {
     public static bool operator !=(Client a, Client b) => !(a == b);
 }
 
-public class NetworkClient : INetworkNode, INetEventListener {
+public class NetworkClient : INetEventListener {
     public event Action<NetPeer, NetDataReader, DeliveryMethod> NetworkReceiveEvent;
     public event Action<NetPeer> PeerConnectedEvent;
     public event Action<NetPeer, DisconnectInfo> PeerDisconnectedEvent;
@@ -116,7 +116,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
             UpdateTime = 25,
             ReuseAddress = true
         };
-        m_chunkTransport = new PacketFragment(this);
+        m_chunkTransport = new PacketFragment(_client);
     }
 
     public void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
@@ -191,34 +191,34 @@ public class NetworkClient : INetworkNode, INetEventListener {
     }
 
     public void HanldeUnconnectedEvent(IPEndPoint ip, NetPacketReader reader, UnconnectedMessageType messageType) {
-        NetworkManager.HandleUnconnectedEvent(this, m_chunkTransport, ip, reader, false);
+        NetworkHelper.HandleUnconnectedEvent(Clients.Values, IsServer, m_chunkTransport, ip, reader, false);
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-        NetworkManager.HandlePeerDisconnected(this, peer, disconnectInfo);
+        NetworkHelper.HandlePeerDisconnected(this, peer, disconnectInfo);
     }
 
     public void OnNetworkReceivePacket(NetPeer peer, NetDataReader reader, DeliveryMethod deliveryMethod) {
-        NetworkManager.HandleNetworkReceive(this, m_chunkTransport, peer, reader);
+        NetworkHelper.HandleNetworkReceive(this, m_chunkTransport, peer, reader);
     }
 
     public virtual void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type) {
     }
 
     public void SendWriterFromPacket(Packet packet, IPEndPoint endPoint, bool isSend = true) {
-        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, endPoint, isSend);
+        NetworkHelper.SendWriterFromPacket(this, m_chunkTransport, packet, endPoint, isSend);
     }
 
     public void SendWriterFromPacket(Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
-        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, netPeer, useDeliveryEvent);
+        NetworkHelper.SendWriterFromPacket(this, m_chunkTransport, packet, netPeer, useDeliveryEvent);
     }
 
     public void SendWriterFromPacket(Packet packet, ConnectionRequest request, bool reject) {
-        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, request, reject);
+        NetworkHelper.SendWriterFromPacket(this, m_chunkTransport, packet, request, reject);
     }
 
     public void SendWriterFromPackets(IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-        NetworkManager.SendWriterFromPackets(this, m_chunkTransport, packets, netPeer, request, iPEndPoint, useDeliveryEvent);
+        NetworkHelper.SendWriterFromPackets(this, m_chunkTransport, packets, netPeer, request, iPEndPoint, useDeliveryEvent);
     }
 
     public void Stop() {
@@ -229,7 +229,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
 
     public void Update() {
         if (NetManager.IsRunning) {
-            byte[] payload = NetworkManager.BuildPayloadForClient(this, Clients[0], false);
+            byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, Clients[0], false, IsServer);
             SendPayload(payload, Clients[0].Peer);
             PendingPackets.Clear();
             m_chunkTransport.CleanupStates();
@@ -238,7 +238,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
     }
 
     public byte[] BuildOutgoingPayload(IEnumerable<Packet> packets, bool isServer) {
-        return NetworkManager.BuildOutgoingPayload(packets, isServer);
+        return NetworkHelper.BuildOutgoingPayload(packets);
     }
 
     public void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
@@ -250,7 +250,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
     }
 
     public bool TryDecodePackets(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
-        return NetworkManager.TryDecodePackets(this, m_chunkTransport, reader, peer, request, endPoint, out packets);
+        return NetworkHelper.TryDecodePackets(Clients.Values, m_chunkTransport, reader, peer, request, endPoint, out packets);
     }
 
     private void ClientStateChanged(Client c) {

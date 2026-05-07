@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 
 namespace Game.Network;
@@ -19,7 +19,7 @@ public class EatPickableBehaviorPacket : Packet {
     }
     public override void Handle(bool isServer) {
         if (isServer) return;
-        BehaviorPacketHelpers.WithEntity(m_entityId, entity => {
+        BehaviorHelpers.WithEntity(m_entityId, entity => {
             ComponentEatPickableBehavior behavior = entity.FindComponent<ComponentEatPickableBehavior>();
             if (behavior != null) {
                 behavior.IsFeed = m_isFeed;

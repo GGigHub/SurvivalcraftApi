@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 
 namespace Game.Network;
@@ -21,7 +21,7 @@ public class CreatureSoundPacket : Packet {
         archive.Value(ref m_skipIfRecentlyPlayed);
     }
     public override void Handle(bool isServer) {
-        BehaviorPacketHelpers.WithEntity(m_entityId, entity => {
+        BehaviorHelpers.WithEntity(m_entityId, entity => {
             ComponentCreatureSounds creatureSound = entity.FindComponent<ComponentCreatureSounds>();
             if (creatureSound == null) {
                 return;

@@ -5,7 +5,7 @@ using LiteNetLib.Utils;
 
 namespace Game.Network;
 
-internal sealed class PacketFragment {
+public sealed class PacketFragment {
     internal const byte VerifyByte = 0x88;
     internal const uint ChunkMagic = 0x4E46434B;
     internal const byte ChunkVersion = 2;
@@ -16,7 +16,7 @@ internal sealed class PacketFragment {
 
     private static int s_chunkMessageId = 1;
 
-    private readonly INetworkNode m_node;
+    private readonly NetManager m_netManager;
     private readonly Dictionary<string, ChunkState> m_chunkStates = new Dictionary<string, ChunkState>();
     private double m_lastCleanupTime;
 
@@ -30,8 +30,8 @@ internal sealed class PacketFragment {
         public bool[] Received;
     }
 
-    public PacketFragment(INetworkNode node) {
-        m_node = node;
+    public PacketFragment(NetManager netManager) {
+        m_netManager = netManager;
     }
 
     public void CleanupStates() {
@@ -80,11 +80,11 @@ internal sealed class PacketFragment {
                 netPeer.Send(writer, DeliveryMethod.ReliableOrdered);
             }
             else if (request != null) {
-                m_node.NetManager.SendUnconnectedMessage(writer, request.RemoteEndPoint);
+                m_netManager.SendUnconnectedMessage(writer, request.RemoteEndPoint);
             }
             else if (iPEndPoint != null) {
-                if (!useDeliveryEvent) m_node.NetManager.Connect(iPEndPoint, writer);
-                else m_node.NetManager.SendUnconnectedMessage(writer, iPEndPoint);
+                if (!useDeliveryEvent) m_netManager.Connect(iPEndPoint, writer);
+                else m_netManager.SendUnconnectedMessage(writer, iPEndPoint);
             }
             return;
         }
@@ -96,10 +96,10 @@ internal sealed class PacketFragment {
                 netPeer.Send(chunkWriter, DeliveryMethod.ReliableOrdered);
             }
             else if (request != null) {
-                m_node.NetManager.SendUnconnectedMessage(chunkWriter, request.RemoteEndPoint);
+                m_netManager.SendUnconnectedMessage(chunkWriter, request.RemoteEndPoint);
             }
             else if (iPEndPoint != null) {
-                m_node.NetManager.SendUnconnectedMessage(chunkWriter, iPEndPoint);
+                m_netManager.SendUnconnectedMessage(chunkWriter, iPEndPoint);
             }
         }
     }

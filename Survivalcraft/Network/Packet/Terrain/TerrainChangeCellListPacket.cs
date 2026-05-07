@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -14,7 +14,7 @@ public class TerrainChangeCellListPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        TerrainPacketHelpers.SerializeCellChangeList(archive, ref cellChanges);
+        TerrainHelpers.SerializeCellChangeList(archive, ref cellChanges);
     }
 
     public override void Handle(bool isServer) {

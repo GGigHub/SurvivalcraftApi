@@ -1,8 +1,8 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
-public static class MovingBlockPacketHelpers {
+public static class MovingBlockHelpers {
     public static void SerializeBlockList(PacketSerializer archive, List<MovingBlockAddPacket.MovingBlockData> blocks) {
         int count = archive.IsWriting ? blocks.Count : 0;
         archive.Value(ref count);

@@ -1,4 +1,4 @@
-﻿using System.IO.Compression;
+using System.IO.Compression;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Xml.Linq;
@@ -7,9 +7,7 @@ using Engine.Graphics;
 using Game.Network;
 using GameEntitySystem;
 using LiteNetLib;
-using LiteNetLib.Utils;
 using TemplatesDatabase;
-#pragma warning disable CA1416
 
 namespace Game.Network;
 
@@ -37,21 +35,27 @@ public static class NetworkManager {
     public const int DISCONNECT_TIMEOUT = 10000;
     public static NetworkServer Server { get; private set; }
     public static NetworkClient Client { get; private set; }
-    private static INetworkNode Current => (INetworkNode)Server ?? Client;
 
     public static Texture2D BlockTexture;
 
     public static bool IsOfflineMode;
-    public static WorkType WorkType => Current.WorkType;
-    public static Client Self => Current.Self;
-    public static Dictionary<int, Client> Clients => Current.Clients;
-    public static IEnumerable<Client> Peers => Current.Peers;
-    public static int ClientCount => Current.ClientCount;
-    public static NetworkStage CurrentStage => Current.CurrentStage;
-    public static bool IsNetRunning => Current.NetManager.IsRunning;
+    public static WorkType WorkType => Server != null ? Server.WorkType : Client != null ? Client.WorkType : Game.Network.WorkType.Local;
+    public static Client Self => Server != null ? Server.Self : Client != null ? Client.Self : null;
+    public static Dictionary<int, Client> Clients => Server != null ? Server.Clients : Client != null ? Client.Clients : [];
+    public static IEnumerable<Client> Peers => Server != null ? Server.Peers : Client != null ? Client.Peers : [];
+    public static int ClientCount => Server != null ? Server.ClientCount : Client != null ? Client.ClientCount : 0;
+    public static NetworkStage CurrentStage => Server != null ? Server.CurrentStage : Client != null ? Client.CurrentStage : NetworkStage.NotConnected;
+    public static bool IsNetRunning => (Server != null ? Server.NetManager : Client != null ? Client.NetManager : null)?.IsRunning ?? false;
     public static Action<Client> OnClientStateChanged {
-        get => Current.OnClientStateChanged;
-        set => Current.OnClientStateChanged = value;
+        get => Server != null ? Server.OnClientStateChanged : Client != null ? Client.OnClientStateChanged : null;
+        set {
+            if (Server != null) {
+                Server.OnClientStateChanged = value;
+            }
+            else if (Client != null) {
+                Client.OnClientStateChanged = value;
+            }
+        }
     }
 
     /// <summary>
@@ -81,51 +85,16 @@ public static class NetworkManager {
     }
 
     public static void QueuePacket(Packet packet) {
-        lock (Current.PendingPackets) {
-            Current.PendingPackets.Add(packet);
-        }
-    }
-
-    public static PacketStreamReader GetReader(NetDataReader reader) {
-        return new PacketStreamReader(reader.GetBytesWithLength());
-    }
-
-    public static string GetInnerIp() {
-        try {
-            var validTypes = new List<NetworkInterfaceType>
-            {
-                    NetworkInterfaceType.Ethernet,
-                    NetworkInterfaceType.Ethernet3Megabit,
-                    NetworkInterfaceType.FastEthernetFx,
-                    NetworkInterfaceType.FastEthernetT,
-                    NetworkInterfaceType.GigabitEthernet,
-                    NetworkInterfaceType.Wireless80211
-                };
-
-            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces()) {
-                if (ni.OperationalStatus != OperationalStatus.Up) continue;
-                if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
-
-                // 物理网卡类型检�?
-                if (validTypes.Contains(ni.NetworkInterfaceType)) {
-                    foreach (var ip in ni.GetIPProperties().UnicastAddresses) {
-                        if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
-                            return ip.Address.ToString();
-                        }
-                    }
-                }
+        if (Server != null) {
+            lock (Server.PendingPackets) {
+                Server.PendingPackets.Add(packet);
             }
-
-            // 备用方案：获取首个非虚拟IPv4地址
-            return NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.OperationalStatus == OperationalStatus.Up)
-                .SelectMany(n => n.GetIPProperties().UnicastAddresses)
-                .Where(ip => ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                .Select(ip => ip.Address.ToString())
-                .FirstOrDefault() ?? "127.0.0.1";
+            return;
         }
-        catch {
-            return "127.0.0.1";
+        if (Client != null) {
+            lock (Client.PendingPackets) {
+                Client.PendingPackets.Add(packet);
+            }
         }
     }
 
@@ -186,159 +155,40 @@ public static class NetworkManager {
         return outStream.ToArray();
     }
 
-    public static Client GetClientByID(byte id) => Current.GetClientByID(id);
+    public static Client GetClientByID(byte id) {
+        if (Server != null) return Server.GetClientByID(id);
+        return Client != null ? Client.GetClientByID(id) : null;
+    }
 
-    public static Client GetClientByGUID(Guid? guid) => Current.GetClientByGUID(guid);
+    public static Client GetClientByGUID(Guid? guid) {
+        if (Server != null) return Server.GetClientByGUID(guid);
+        return Client != null ? Client.GetClientByGUID(guid) : null;
+    }
 
-    public static void AddClient(Client client) => Current.AddClient(client);
+    public static void AddClient(Client client) {
+        if (Server != null) {
+            Server.AddClient(client);
+        }
+        else {
+            Client.AddClient(client);
+        }
+    }
 
     public static Client CreateClient(NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname) =>
         Server.CreateClient(peer, tokenId, guid, dataId, nickname);
 
-    public static void Stop() => Current.Stop();
-
-    public static bool IsValidIPAddress(string ip) {
-        return IPAddress.TryParse(ip, out _);
-    }
-
-    public static bool IsValidPort(int port) {
-        return port > 0 && port <= 65535;
-    }
-
-    internal static void HandleUnconnectedEvent(INetworkNode node, PacketFragment chunkTransport, IPEndPoint remoteEndPoint, NetPacketReader reader, bool fromBroadcast) {
-        if (node.CurrentStage == NetworkStage.NotConnected) return;
-        var dataReader = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
-        try {
-            if (!TryDecodePackets(node, chunkTransport, dataReader, null, null, remoteEndPoint, out List<Packet> packets)) {
-                return;
-            }
-
-            foreach (var packet in packets) {
-                packet.From.IsLocalRemote = fromBroadcast;
-                try {
-                    packet.Handle(node.IsServer);
-                }
-                catch (Exception e) {
-                    Log.Error(string.Format("[{0}]{1}", packet.GetType().Name, e.Message));
-                }
-            }
+    public static void Stop() {
+        if (Server != null) {
+            Server.Stop();
         }
-        finally {
-            reader.Recycle();
+        else {
+            Client?.Stop();
         }
-    }
-
-    internal static void HandlePeerDisconnected(INetworkNode node, NetPeer peer, DisconnectInfo disconnectInfo) {
-        string reason = disconnectInfo.Reason.ToString();
-        if (disconnectInfo.AdditionalData != null && disconnectInfo.AdditionalData.TryGetString(out string extra)) {
-            Log.Information("----Additional message----");
-            Log.Information(extra);
-            Log.Information("----End of message----");
-            reason = extra;
-        }
-
-        if (node.WorkType == WorkType.Client) {
-            node.Stop();
-            return;
-        }
-
-        Client client = peer.Tag as Client;
-        if (client == null) {
-            return;
-        }
-
-        client.State = ClientStage.NotConnected;
-        node.RemoveClientImmediate(client);
-        node.OnClientStateChanged?.Invoke(client);
-        if (node is NetworkServer server) {
-            server.HandleDeliveryEvent(null, null);
-        }
-    }
-
-    internal static void HandleNetworkReceive(INetworkNode node, PacketFragment chunkTransport, NetPeer peer, NetDataReader reader) {
-        if (node.CurrentStage == NetworkStage.NotConnected) return;
-        Client fromClient = peer.Tag as Client;
-        if (!TryDecodePackets(node, chunkTransport, reader, peer, null, null, out List<Packet> packets)) {
-            return;
-        }
-
-        packets.InsertRange(0, node.PendingHandlePackets);
-        foreach (var packet in packets) {
-            try {
-                packet.Handle(node.IsServer);
-            }
-            catch (Exception e) {
-                Log.Error(string.Format("[{0}]{1}", packet.GetType().Name, e.Message));
-            }
-        }
-    }
-
-    internal static void SendWriterFromPacket(INetworkNode node, PacketFragment chunkTransport, Packet packet, IPEndPoint endPoint, bool isSend = true) {
-        SendWriterFromPackets(node, chunkTransport, [packet], null, null, endPoint, isSend);
-    }
-
-    internal static void SendWriterFromPacket(INetworkNode node, PacketFragment chunkTransport, Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
-        SendWriterFromPackets(node, chunkTransport, [packet], netPeer, null, null, useDeliveryEvent);
-    }
-
-    internal static void SendWriterFromPacket(INetworkNode node, PacketFragment chunkTransport, Packet packet, ConnectionRequest request, bool reject) {
-        if (reject) request.Reject();
-        SendWriterFromPackets(node, chunkTransport, [packet], null, request, null);
-    }
-
-    internal static void SendWriterFromPackets(INetworkNode node, PacketFragment chunkTransport, IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-        byte[] payload = BuildOutgoingPayload(packets, node.IsServer);
-        chunkTransport.SendPayload(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
-    }
-
-    internal static byte[] BuildOutgoingPayload(IEnumerable<Packet> packets, bool isServer) {
-        PacketStreamWriter writer = new();
-        foreach (var packet in packets) {
-            writer.Write(PacketFragment.VerifyByte);
-            writer.Write(packet.ID);
-            packet.Serialize(new PacketSerializer(writer));
-        }
-        return writer.Data();
-    }
-
-    internal static bool TryDecodePackets(INetworkNode node, PacketFragment chunkTransport, NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
-        packets = null;
-        if (chunkTransport.TryReadPayload(reader, peer, request, endPoint, out byte[] payload, out bool consumedChunkFrame)) {
-            if (payload == null) {
-                return false;
-            }
-            packets = PacketManager.DecodePacketsFromPayload(node, payload, peer, request, endPoint);
-            return true;
-        }
-
-        if (consumedChunkFrame) {
-            return false;
-        }
-
-        packets = PacketManager.DecodePackets(node, reader, peer, request, endPoint);
-        return true;
-    }
-
-    internal static int SendWriterFromPacket(NetManager netManager, IEnumerable<Packet> packets, IPEndPoint endPoint) {
-        byte[] payload = BuildOutgoingPayload(packets, false);
-        PacketFragment.SendPayload(netManager, payload, endPoint);
-        return payload.Length;
     }
 
     public static void Update() {
         Client?.Update();
         Server?.Update();
-    }
-
-    public static byte[] BuildPayloadForClient(INetworkNode node, Client client, bool respectMinState) {
-        List<Packet> packets = new List<Packet>();
-        foreach (Packet packet in node.PendingPackets) {
-            if (packet.To != null && packet.To != client) continue;
-            if (packet.Except != null && packet.Except == client) continue;
-            if (respectMinState && client.State < packet.MinNeedState && node.WorkType != WorkType.Client) continue;
-            packets.Add(packet);
-        }
-        return packets.Count > 0 ? BuildOutgoingPayload(packets, node.IsServer) : null;
     }
 }
 

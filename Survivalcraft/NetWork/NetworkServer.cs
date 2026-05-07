@@ -8,7 +8,7 @@ using LiteNetLib.Utils;
 
 namespace Game.Network;
 
-public class NetworkServer : INetworkNode, INetEventListener {
+public class NetworkServer : INetEventListener {
     public event Action<NetPeer> ClientConnected;
     public event Action<NetPeer, DisconnectInfo> ClientDisconnected;
 
@@ -40,7 +40,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
             UpdateTime = 25,
             ReuseAddress = true
         };
-        m_chunkTransport = new PacketFragment(this);
+        m_chunkTransport = new PacketFragment(_server);
     }
 
     public bool StartServer(int port) {
@@ -163,19 +163,19 @@ public class NetworkServer : INetworkNode, INetEventListener {
     }
 
     public void SendWriterFromPacket(Packet packet, IPEndPoint endPoint, bool isSend = true) {
-        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, endPoint, isSend);
+        NetworkHelper.SendWriterFromPacket(this, m_chunkTransport, packet, endPoint, isSend);
     }
 
     public void SendWriterFromPacket(Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
-        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, netPeer, useDeliveryEvent);
+        NetworkHelper.SendWriterFromPacket(this, m_chunkTransport, packet, netPeer, useDeliveryEvent);
     }
 
     public void SendWriterFromPacket(Packet packet, ConnectionRequest request, bool reject) {
-        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, request, reject);
+        NetworkHelper.SendWriterFromPacket(this, m_chunkTransport, packet, request, reject);
     }
 
     public void SendWriterFromPackets(IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-        NetworkManager.SendWriterFromPackets(this, m_chunkTransport, packets, netPeer, request, iPEndPoint, useDeliveryEvent);
+        NetworkHelper.SendWriterFromPackets(this, m_chunkTransport, packets, netPeer, request, iPEndPoint, useDeliveryEvent);
     }
 
     public void Stop() {
@@ -191,7 +191,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
                 if (!client.IsConnected) {
                     continue;
                 }
-                byte[] payload = NetworkManager.BuildPayloadForClient(this, client, false);
+                byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, client, false, IsServer);
                 SendPayload(payload, client.Peer);
             }
             PendingPackets.Clear();
@@ -201,7 +201,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
     }
 
     public byte[] BuildOutgoingPayload(IEnumerable<Packet> packets, bool isServer) {
-        return NetworkManager.BuildOutgoingPayload(packets, isServer);
+        return NetworkHelper.BuildOutgoingPayload(packets);
     }
 
     public void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
@@ -213,7 +213,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
     }
 
     public bool TryDecodePackets(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
-        return NetworkManager.TryDecodePackets(this, m_chunkTransport, reader, peer, request, endPoint, out packets);
+        return NetworkHelper.TryDecodePackets(Clients.Values, m_chunkTransport, reader, peer, request, endPoint, out packets);
     }
 
     private byte FindUnusedIndex() {
@@ -284,11 +284,11 @@ public class NetworkServer : INetworkNode, INetEventListener {
 
     void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod) {
         var dataReader = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
-        NetworkManager.HandleNetworkReceive(this, m_chunkTransport, peer, dataReader);
+        NetworkHelper.HandleNetworkReceive(this, m_chunkTransport, peer, dataReader);
     }
 
     void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
-        NetworkManager.HandleUnconnectedEvent(this, m_chunkTransport, remoteEndPoint, reader, false);
+        NetworkHelper.HandleUnconnectedEvent(Clients.Values, IsServer, m_chunkTransport, remoteEndPoint, reader, false);
     }
 
     void INetEventListener.OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
@@ -302,7 +302,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
         }
         else {
             try {
-                ConnectionRequestPacket requestPacket = PacketManager.DecodePacket<ConnectionRequestPacket>(this, request.Data, null, request);
+                ConnectionRequestPacket requestPacket = PacketManager.DecodePacket<ConnectionRequestPacket>(Clients.Values, request.Data, null, request);
                 requestPacket.Handle(true);
             }
             catch (Exception e) {

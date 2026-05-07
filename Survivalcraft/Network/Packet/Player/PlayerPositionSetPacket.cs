@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using TemplatesDatabase;
 
 namespace Game.Network;
@@ -14,7 +14,7 @@ public class PlayerPositionSetPacket : PlayerPacketBase {
         Velocity = player.ComponentBody.Velocity;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerPacketHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
         archive.Value(ref Position);
         archive.Value(ref Velocity);
     }

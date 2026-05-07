@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 
 namespace Game.Network;
@@ -22,7 +22,7 @@ public class ChaseBehaviorPacket : Packet {
         if (isServer) {
             return;
         }
-        BehaviorPacketHelpers.WithEntity(m_entityId, entity => {
+        BehaviorHelpers.WithEntity(m_entityId, entity => {
             ComponentChaseBehavior behavior = entity.FindComponent<ComponentChaseBehavior>();
             if (behavior != null) {
                 behavior.IsAttack = m_isAttack;

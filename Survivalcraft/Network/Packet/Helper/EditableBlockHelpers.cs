@@ -1,8 +1,8 @@
-﻿using GameEntitySystem;
+using GameEntitySystem;
 
 namespace Game.Network;
 
-public static class EditableBlockPacketHelpers {
+public static class EditableBlockHelpers {
     public static void SerializeEditableTarget(PacketSerializer archive, ref bool editAsItem, ref int inventoryId, ref int slotIndex, ref CellFace cellFace) {
         archive.Value(ref editAsItem);
         if (editAsItem) {

@@ -1,8 +1,8 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
-public static class ClothingPacketHelpers {
+public static class ClothingHelpers {
     public static byte[] LoadSkinData(string skinName) {
         if (!CharacterSkinsManager.HasSkinRes(skinName)) {
             return null;

@@ -7,7 +7,7 @@ public class InventorySyncPacket : Packet {
     public override byte ID => (byte)PacketType.InventorySync;
     public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public int m_inventoryId;
-    public List<InventorySlot> m_slots = new List<InventorySlot>();
+    public List<Game.Network.InventorySlot> m_slots = new List<Game.Network.InventorySlot>();
 
     public InventorySyncPacket() {
     }
@@ -15,7 +15,7 @@ public class InventorySyncPacket : Packet {
     public InventorySyncPacket(IInventory inventory) {
         m_inventoryId = inventory.Id;
         for (int i = 0; i < inventory.SlotsCount; i++) {
-            m_slots.Add(new InventorySlot {
+            m_slots.Add(new Game.Network.InventorySlot {
                 inventoryId = m_inventoryId,
                 slotIndex = i,
                 value = inventory.GetSlotValue(i),
@@ -31,7 +31,7 @@ public class InventorySyncPacket : Packet {
         if (archive.IsReading) {
             m_slots.Clear();
             for (int i = 0; i < count; i++) {
-                InventorySlot slot = new InventorySlot();
+                Game.Network.InventorySlot slot = new Game.Network.InventorySlot();
                 archive.Value(ref slot.slotIndex);
                 archive.Value(ref slot.value);
                 archive.Value(ref slot.count);

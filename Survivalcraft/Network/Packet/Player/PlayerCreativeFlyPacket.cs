@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using TemplatesDatabase;
 
 namespace Game.Network;
@@ -12,7 +12,7 @@ public class PlayerCreativeFlyPacket : PlayerPacketBase {
         m_isCreativeFly = player.ComponentLocomotion.IsCreativeFlyEnabled;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerPacketHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
         archive.Value(ref m_isCreativeFly);
     }
     public override void Handle(bool isServer) {
@@ -22,7 +22,7 @@ public class PlayerCreativeFlyPacket : PlayerPacketBase {
             return;
         }
         playerData.ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled = m_isCreativeFly;
-        PlayerPacketHelpers.QueuePlayerPacket(this, isServer);
+        PlayerHelpers.QueuePlayerPacket(this, isServer);
     }
 }
 

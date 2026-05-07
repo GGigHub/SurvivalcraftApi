@@ -1,8 +1,16 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
-public static class TerrainPacketHelpers {
+public struct CellChange {
+    public int X;
+    public int Y;
+    public int Z;
+    public int Value;
+}
+
+
+public static class TerrainHelpers {
     public static void SerializePoint2List(PacketSerializer archive, ref List<Point2> points, bool useUShort) {
         int count = archive.IsWriting ? points.Count : 0;
         if (useUShort) {

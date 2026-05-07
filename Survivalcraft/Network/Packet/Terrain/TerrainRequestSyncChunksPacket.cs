@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -14,7 +14,7 @@ public class TerrainRequestSyncChunksPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        TerrainPacketHelpers.SerializePoint2List(archive, ref RelateChunks, useUShort: false);
+        TerrainHelpers.SerializePoint2List(archive, ref RelateChunks, useUShort: false);
     }
 
     public override void Handle(bool isServer) {

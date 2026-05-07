@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using TemplatesDatabase;
 
 namespace Game.Network;
@@ -10,7 +10,7 @@ public class PlayerIntoPlayingPacket : PlayerPacketBase {
         m_fromPlayerId = player.PlayerData?.ClientId ?? 0;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerPacketHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
     }
     public override void Handle(bool isServer) {
         if (isServer || !TryResolvePlayer(false, out PlayerData playerData)) return;

@@ -1,4 +1,4 @@
-﻿using GameEntitySystem;
+using GameEntitySystem;
 
 namespace Game.Network;
 
@@ -19,13 +19,13 @@ public class PistonDataPacket : Packet {
         m_data = data;
     }
     public override void Serialize(PacketSerializer archive) {
-        EditableBlockPacketHelpers.SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
+        EditableBlockHelpers.SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
         archive.Value(ref m_data);
     }
     public override void Handle(bool isServer) {
         if (m_editAsItem) {
             GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
-                EditableBlockPacketHelpers.ReplaceDataAtSlot(inventory, m_slotIndex, _ => m_data);
+                EditableBlockHelpers.ReplaceDataAtSlot(inventory, m_slotIndex, _ => m_data);
             });
         }
         else {

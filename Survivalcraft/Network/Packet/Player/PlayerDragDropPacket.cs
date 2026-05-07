@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using TemplatesDatabase;
 
 namespace Game.Network;
@@ -18,7 +18,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
         m_count = count;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerPacketHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
         archive.Value(ref m_inventoryId);
         archive.Value(ref m_slotIndex);
         archive.Value(ref m_hitPosition);
@@ -27,14 +27,14 @@ public class PlayerDragDropPacket : PlayerPacketBase {
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
         GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
-            if (inventory == null || InventoryAccessGuard.IsOwnedByOtherPlayer(inventory, From, out _)) {
+            if (inventory == null || InventoryHelper.IsOwnedByOtherPlayer(inventory, From, out _)) {
                 return;
             }
             if (inventory is ComponentCreativeInventory && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative) {
                 NetworkManager.Server.RemoveClient(From.PlayerData.Client, "闈炴硶鎿嶄綔: 鐢熷瓨妯″紡浣跨敤鍒涢€犵墿�?");
                 return;
             }
-            if (!InventoryAccessGuard.IsSlotIndexValid(inventory, m_slotIndex)) {
+            if (!InventoryHelper.IsSlotIndexValid(inventory, m_slotIndex)) {
                 if (isServer && From != null) {
                     NetworkManager.QueuePacket(new InventorySyncPacket(inventory) { To = From });
                 }

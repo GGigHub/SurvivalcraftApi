@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
@@ -70,7 +70,7 @@ namespace Game {
                 }
             );
             if (NetworkManager.WorkType == Network.WorkType.Server) {
-                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerIP"), NetworkManager.GetInnerIp() + ":" + SettingsManager.ServerPort);
+                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerIP"), NetworkHelper.GetInnerIp() + ":" + SettingsManager.ServerPort);
                 string serverMode = SettingsManager.IsPublicServer
                     ? LanguageControl.Get(fName, "ServerModeWAN")
                     : LanguageControl.Get(fName, "ServerModeLAN");
