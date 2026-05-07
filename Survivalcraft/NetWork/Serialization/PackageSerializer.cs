@@ -1,5 +1,5 @@
 using Engine;
-using Game.NetWork.Packages;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 

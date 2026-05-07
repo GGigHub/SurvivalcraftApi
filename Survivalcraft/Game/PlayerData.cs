@@ -1,7 +1,6 @@
 using System.Globalization;
 using Engine;
 using Game.NetWork;
-using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -316,7 +315,7 @@ namespace Game {
                 }
                 else if (IsMainPlayer && Time.RealTime - m_playerDeathTime.Value > 1.5 && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any || readyToRestart) {
                     if (NetworkManager.WorkType == NetWork.WorkType.Client && IsMainPlayer) {
-                        NetworkManager.QueuePackage(new NetWork.Packages.PlayerRestartPackage(this));
+                        NetworkManager.QueuePackage(new NetWork.PlayerRestartPackage(this));
                     }
                     IsDead = true;
                     readyToRestart = true;

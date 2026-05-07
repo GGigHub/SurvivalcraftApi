@@ -1,5 +1,4 @@
 using Game.NetWork;
-using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 

@@ -448,7 +448,7 @@ namespace Game {
                     netSimulate.SaveData.Add(entry.Key, entry.Value);
                 }
                 list.Add(netSimulate);
-                NetWork.NetworkManager.QueuePackage(new NetWork.Packages.SubsystemElectricityPackage(list));
+                NetWork.NetworkManager.QueuePackage(new NetWork.SubsystemElectricityPackage(list));
                 list.Clear();
             }
             while (m_remainingSimulationTime >= 0.01f) {

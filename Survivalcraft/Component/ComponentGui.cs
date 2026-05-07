@@ -629,7 +629,7 @@ namespace Game {
                         DisplaySmallMessage(LanguageControl.Get(fName, 8), Color.White, false, false);
                     }
                 }
-                NetworkManager.QueuePackage(new NetWork.Packages.PlayerCreativeFlyPackage(m_componentPlayer));
+                NetworkManager.QueuePackage(new NetWork.PlayerCreativeFlyPackage(m_componentPlayer));
             }
             if (m_cameraButtonWidget.IsClicked
                 || playerInput.SwitchCameraMode) {
@@ -655,7 +655,7 @@ namespace Game {
                     Project.FindSubsystem<SubsystemWeather>(throwOnError: true).ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
                     m_subsystemWeather.ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
                 }
-                else NetworkManager.QueuePackage(new NetWork.Packages.SubsystemSkyPackage(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward));
+                else NetworkManager.QueuePackage(new NetWork.SubsystemSkyPackage(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward));
             }
             int? type = null;
             if (m_precipitationButtonWidget.IsVisible
@@ -685,7 +685,7 @@ namespace Game {
                 }
             }
             if (type.HasValue) {
-                NetworkManager.QueuePackage(new NetWork.Packages.SubsystemWeatherPackage((int)type));
+                NetworkManager.QueuePackage(new NetWork.SubsystemWeatherPackage((int)type));
             }
             if (m_timeOfDayButtonWidget.IsVisible
                 && (m_timeOfDayButtonWidget.IsClicked || playerInput.TimeOfDay)) {
@@ -716,7 +716,7 @@ namespace Game {
                     type1 = 3;
                 }
                 if (type1.HasValue) {
-                    NetworkManager.QueuePackage(new NetWork.Packages.SubsystemTimePackage(m_subsystemTimeOfDay.m_subsystemGameInfo.TotalElapsedGameTime, m_subsystemTimeOfDay.TimeOfDayOffset));
+                    NetworkManager.QueuePackage(new NetWork.SubsystemTimePackage(m_subsystemTimeOfDay.m_subsystemGameInfo.TotalElapsedGameTime, m_subsystemTimeOfDay.TimeOfDayOffset));
                 }
             }
             if (ModalPanelWidget != null) {

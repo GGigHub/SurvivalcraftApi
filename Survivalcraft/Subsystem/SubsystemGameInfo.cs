@@ -120,7 +120,7 @@ namespace Game {
             }
             //客户端禁用时间计算
             if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
-                if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) NetWork.NetworkManager.QueuePackage(new NetWork.Packages.SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset));
+                if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) NetWork.NetworkManager.QueuePackage(new NetWork.SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset));
             }
         }
     }

@@ -1,6 +1,6 @@
 using System.Net;
 using Engine;
-using Game.NetWork.Packages;
+using Game.NetWork;
 using GameEntitySystem;
 using LiteNetLib;
 using LiteNetLib.Utils;

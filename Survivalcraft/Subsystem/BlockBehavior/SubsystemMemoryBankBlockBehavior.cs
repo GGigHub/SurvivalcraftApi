@@ -1,6 +1,5 @@
 using Engine;
 using Game.NetWork;
-using Game.NetWork.Packages;
 
 namespace Game {
     public class SubsystemMemoryBankBlockBehavior : SubsystemEditableItemBehavior<MemoryBankData> {

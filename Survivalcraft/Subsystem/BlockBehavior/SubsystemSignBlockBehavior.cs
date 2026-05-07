@@ -3,7 +3,6 @@ using Engine;
 using Engine.Graphics;
 using Engine.Media;
 using Game.NetWork;
-using Game.NetWork.Packages;
 using TemplatesDatabase;
 
 namespace Game {

@@ -1,0 +1,88 @@
+
+
+namespace Game.NetWork;
+
+public class SubsystemWeatherPackage : IPackage {
+    public override byte ID => (byte)PackageType.Weather;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public double m_precipitationStartTime;
+    public double m_precipitationEndTime;
+    public float m_lightningIntensity;
+    public int m_weatherType = 0;
+    public int FogType = 0;
+    public double m_fogStartTime;
+    public double m_fogEndTime;
+    public float m_fogRampTime;
+    public float FogProgress;
+    public float m_intensity;
+
+    public SubsystemWeatherPackage() {
+    }
+
+    public SubsystemWeatherPackage(int weatherType) {
+        m_weatherType = weatherType;
+    }
+
+    public SubsystemWeatherPackage(float intensity) {
+        m_intensity = intensity;
+    }
+
+    public SubsystemWeatherPackage(double start, double end, float light) {
+        m_precipitationEndTime = end;
+        m_precipitationStartTime = start;
+        m_lightningIntensity = light;
+    }
+
+    public SubsystemWeatherPackage(double fogstart, float ramp, double fogend, float progress) {
+        m_fogStartTime = fogstart;
+        m_fogRampTime = ramp;
+        m_fogEndTime = fogend;
+        FogProgress = progress;
+    }
+
+    public SubsystemWeatherPackage(double fogstart, float ramp, double fogend) {
+        m_fogStartTime = fogstart;
+        m_fogRampTime = ramp;
+        m_fogEndTime = fogend;
+    }
+
+    public override void Serialize(PackageSerializer archive) {
+        archive.Value(ref m_precipitationStartTime);
+        archive.Value(ref m_precipitationEndTime);
+        archive.Value(ref m_lightningIntensity);
+        archive.Value(ref m_weatherType);
+        archive.Value(ref m_fogStartTime);
+        archive.Value(ref m_fogRampTime);
+        archive.Value(ref m_fogEndTime);
+    }
+
+    public override void Handle(bool isServer) {
+        if (isServer && (From.PlayerData == null || NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)) {
+            return;
+        }
+        SubsystemWeather weather = GameManager.Project.FindSubsystem<SubsystemWeather>();
+        if (m_weatherType != 0) {
+            switch (m_weatherType) {
+                case 1:
+                    weather.ManualPrecipitationEnd();
+                    break;
+                case 2:
+                    weather.ManualPrecipitationStart();
+                    break;
+                case 3:
+                    weather.ManualFogEnd();
+                    break;
+                case 4:
+                    weather.ManualFogStart();
+                    break;
+            }
+            return;
+        }
+        weather.m_precipitationStartTime = m_precipitationStartTime;
+        weather.m_precipitationEndTime = m_precipitationEndTime;
+        weather.m_lightningIntensity = m_lightningIntensity;
+        weather.m_fogStartTime = m_fogStartTime;
+        weather.m_fogEndTime = m_fogEndTime;
+        weather.m_fogRampTime = m_fogRampTime;
+    }
+}

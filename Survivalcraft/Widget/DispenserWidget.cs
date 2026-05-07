@@ -1,7 +1,6 @@
 using System.Xml.Linq;
 using Engine;
 using Game.NetWork;
-using Game.NetWork.Packages;
 
 namespace Game {
     public class DispenserWidget : CanvasWidget {

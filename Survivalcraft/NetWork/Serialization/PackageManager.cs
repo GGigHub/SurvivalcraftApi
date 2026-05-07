@@ -18,36 +18,21 @@ public abstract class IPackage {
 
 public enum PackageType : byte {
     ServerInfo, ConnectRequest, ConnectReject,
-    Client, Project, Terrain, 
-    Pickable, Time, Sky,
-    Weather, Electricity, Player,
-    VitalStat, Clothing,
-    Behavior, Mount,
-    Sickness, Flu, OnFire,
-    Furnace, Projectile,
-    ReservedTerritoriy,  MovingBlockSet,
-    BlockEdit, SignBlock, Dispenser,
-    EditableBlock, Season, SmallMessage, Popup,
+    Project, Time, Sky,
+    Weather, Electricity, Mount,
+    Sickness, Flu, Furnace, Projectile,
+    SignBlock, Dispenser, Season, SmallMessage, Popup,
 
-    // BlockEdit
     OpenInventoryByID, OpenInventoryByPoint, CrossbowPull, EditSign,
-    // Sleep
     SleepRequest, SleepStatus, WakeupRequest, WakeupStatus,
-    // Explosion
     ExplosionSound, ExplosionCell,
-    // Entity
     EntityRemove, EntityLoad, EntitySyncRequest,
-    // Health
     HealthSync, InjureEvent, InjureRequest, HitResult, DamageSync,
-    // Body
     BodyUpdate, ApplyImpulse, BodyCollision,
-    // Inventory
     ActiveSlotChange, InventorySync, MoveItem, DragDropItem, SetSlotItem,
-    // PlayerData
     PlayerCreate, PlayerModify, PlayerDelete, PlayerAdd, PlayerKnown,
     PlayerUpdateLocation, ServerCloseTime, PlayerBugle, PlayerCount,
     PlayerNoMsgAdd, PlayerNoMsgRemove,
-
     ClientAdd, ClientRemove, ClientSyncList, ClientStateChange,
     BehaviorChase, BehaviorRandomPeck, BehaviorRandomFeed, BehaviorEatPickable,
     BehaviorHumanRow, BehaviorCreatureSound, BehaviorDigInMud, BehaviorFishOutOfWater,
@@ -55,7 +40,7 @@ public enum PackageType : byte {
     EntityOnFire, FireBlockAdd, FireBlockRemove,
     PlayerBodyUpdate, PlayerInteract, PlayerAim, PlayerDig, PlayerHit,
     PlayerCreativeFly, PlayerIntoPlaying, PlayerRestart, PlayerAddExperience,
-    PlayerDrop, PlayerDragDrop, PlayerStatSync, PlayerPositionSet,
+    PlayerDragDrop, PlayerStatSync, PlayerPositionSet,
     VitalStatSync,
     EditableMemoryBank, EditableTruthTable, EditableAdjustableDelayGate,
     EditableBattery, EditablePiston, EditableSwitch, EditableButton,

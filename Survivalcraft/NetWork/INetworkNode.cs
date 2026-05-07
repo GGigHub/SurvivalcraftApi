@@ -1,5 +1,5 @@
 using System.Net;
-using Game.NetWork.Packages;
+using Game.NetWork;
 using LiteNetLib;
 using LiteNetLib.Utils;
 

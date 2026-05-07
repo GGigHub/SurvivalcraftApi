@@ -39,7 +39,7 @@ namespace Game {
 
         public virtual void EndSickness() {
             if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
-                NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentSicknessPackage(this));
+                NetWork.NetworkManager.QueuePackage(new NetWork.ComponentSicknessPackage(this));
                 m_sicknessDuration = 0f;
             }
         }
@@ -92,7 +92,7 @@ namespace Game {
                 if (m_componentPlayer.ComponentHealth.Health > 0f && !m_componentPlayer.ComponentSleep.IsSleeping && m_subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) && (!m_lastNauseaTime.HasValue || m_subsystemTime.GameTime - m_lastNauseaTime > 15.0)) {
                     if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                         NauseaEffect();
-                        NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentSicknessPackage(this));
+                        NetWork.NetworkManager.QueuePackage(new NetWork.ComponentSicknessPackage(this));
                     }
                 }
             }

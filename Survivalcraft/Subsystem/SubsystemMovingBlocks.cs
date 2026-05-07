@@ -3,7 +3,7 @@ using System.Text;
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
-using Game.NetWork.Packages;
+using Game.NetWork;
 using GameEntitySystem;
 using TemplatesDatabase;
 

@@ -163,7 +163,7 @@ namespace Game {
             if (isRun && NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                 if (m_smeltingRecipe == null && m_fireTimeRemaining == 0) {
                     isRun = false;
-                    NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentFurnacePackage(Entity.Id, m_fireTimeRemaining, m_smeltingProgress, m_heatLevel));
+                    NetWork.NetworkManager.QueuePackage(new NetWork.ComponentFurnacePackage(Entity.Id, m_fireTimeRemaining, m_smeltingProgress, m_heatLevel));
                 }
             }
         }
