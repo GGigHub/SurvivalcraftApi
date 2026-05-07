@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using TemplatesDatabase;
 
 namespace Game {
@@ -71,9 +71,9 @@ namespace Game {
                     delegate (int newData) {
                         int num = Terrain.ReplaceData(value, newData);
                         if (num != value) {
-                            var p = new PistonDataPackage(default, true, inventory.Id, slotIndex, newData);
-                            NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                            var p = new PistonDataPacket(default, true, inventory.Id, slotIndex, newData);
+                            NetworkManager.QueuePacket(p);
+                            if (NetworkManager.WorkType != Network.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -94,9 +94,9 @@ namespace Game {
                         if (newData != data
                             && SubsystemTerrain.Terrain.GetCellContents(x, y, z) == contents) {
                             var cell = new CellFace(x, y, z, 0);
-                            var p = new PistonDataPackage(cell, false, default, default, newData);
-                            NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                            var p = new PistonDataPacket(cell, false, default, default, newData);
+                            NetworkManager.QueuePacket(p);
+                            if (NetworkManager.WorkType != Network.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -559,4 +559,6 @@ namespace Game {
         public static bool IsBlockBlocking(int value) => BlocksManager.Blocks[Terrain.ExtractContents(value)].IsBlockingPiston(value);
     }
 }
+
+
 

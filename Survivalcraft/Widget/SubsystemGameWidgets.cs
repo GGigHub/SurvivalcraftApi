@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -98,3 +98,4 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable {
         GamesWidget.Children.Remove(gameWidget);
     }
 }
+

@@ -1,9 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -196,15 +196,15 @@ namespace Game {
                 GenerateGeometry(movingBlockSet);
             }
             m_movingBlockSets.Add(movingBlockSet);
-            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
+            if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
                 m_movingBlockSets.Add(movingBlockSet);
-                NetWork.NetworkManager.QueuePackage(new MovingBlockAddPackage(movingBlockSet));
+                Network.NetworkManager.QueuePacket(new MovingBlockAddPacket(movingBlockSet));
             }
             return movingBlockSet;
         }
 
         public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet) {
-            if (NetWork.NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (Network.NetworkManager.WorkType == Network.WorkType.Client) return;
             MovingBlockSet movingBlockSet2 = (MovingBlockSet)movingBlockSet;
             if (m_movingBlockSets.Remove(movingBlockSet2)) {
                 m_removing.Add(movingBlockSet2);
@@ -216,7 +216,7 @@ namespace Game {
                     }
                 );
                 movingBlockSet2.RemainCounter = 4;
-                NetWork.NetworkManager.QueuePackage(new MovingBlockRemovePackage(movingBlockSet, false));
+                Network.NetworkManager.QueuePacket(new MovingBlockRemovePacket(movingBlockSet, false));
             }
         }
 
@@ -420,10 +420,10 @@ namespace Game {
             foreach (MovingBlockSet item in m_stopped) {
                 Stopped?.Invoke(item);
             }
-            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
+            if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
                 foreach (MovingBlockSet item in m_stopped) {
                     DoStop(item);
-                    NetWork.NetworkManager.QueuePackage(new MovingBlockRemovePackage(item, true));
+                    Network.NetworkManager.QueuePacket(new MovingBlockRemovePacket(item, true));
                 }
             }
             m_stopped.Clear();
@@ -750,3 +750,5 @@ namespace Game {
         }
     }
 }
+
+

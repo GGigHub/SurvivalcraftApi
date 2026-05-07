@@ -1,0 +1,26 @@
+﻿using Engine;
+
+namespace Game.Network;
+
+public class ReplySkinPacket : Packet {
+    public override byte ID => (byte)PacketType.ClothingReplySkin;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public string SkinName;
+    public byte[] m_skinData;
+
+    public ReplySkinPacket() { }
+    public ReplySkinPacket(string skinName) {
+        SkinName = skinName;
+        m_skinData = ClothingPacketHelpers.LoadSkinData(skinName);
+    }
+
+    public override void Serialize(PacketSerializer archive) {
+        archive.Value(ref SkinName);
+        ClothingPacketHelpers.SerializeSkinData(archive, ref m_skinData);
+    }
+
+    public override void Handle(bool isServer) {
+        ClothingPacketHelpers.SaveSkin(SkinName, m_skinData);
+    }
+}
+

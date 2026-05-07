@@ -1,7 +1,7 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Engine;
 using Engine.Serialization;
-using Game.NetWork;
+using Game.Network;
 using TemplatesDatabase;
 
 namespace Game {
@@ -297,7 +297,7 @@ namespace Game {
                                     componentMiner.ComponentCreature.PlayerStats.FurnitureItemsMade += num3;
                                 }
                             }
-                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                            if (NetworkManager.WorkType != Network.WorkType.Client) {
                                 CreateDesign(componentMiner, design, valuesDictionary, start, startValue);
                             }
                         }
@@ -585,7 +585,7 @@ namespace Game {
         }
 
         public void GarbageCollectDesigns(ReadOnlyList<ScannedItemData> allExistingItems) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (NetworkManager.WorkType == Network.WorkType.Client) return;
             for (int i = 0; i < m_furnitureDesigns.Length; i++) {
                 if (m_furnitureDesigns[i] != null) {
                     m_furnitureDesigns[i].m_gcUsed = m_furnitureDesigns[i].m_terrainUseCount > 0;
@@ -679,3 +679,4 @@ namespace Game {
         }
     }
 }
+

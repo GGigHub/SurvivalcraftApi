@@ -1,6 +1,6 @@
-using Engine;
+﻿using Engine;
 
-namespace Game.NetWork;
+namespace Game.Network;
 
 public class TerrainSerializerNet : TerrainSerializer23 {
 
@@ -38,3 +38,5 @@ public class TerrainSerializerNet : TerrainSerializer23 {
         }
     }
 }
+
+

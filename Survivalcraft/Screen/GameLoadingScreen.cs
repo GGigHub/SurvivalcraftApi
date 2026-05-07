@@ -1,12 +1,12 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
-using Game.NetWork;
-using Stage = Game.NetWork.NetworkStage;
+using Game.Network;
+using Stage = Game.Network.NetworkStage;
 
 namespace Game;
 
@@ -65,7 +65,7 @@ public class GameLoadingScreen : Screen {
             }
         }, delegate {
             if (NetworkManager.CurrentStage == Stage.Connected) {
-                NetworkManager.QueuePackage(new ClientStateChangePackage(NetworkManager.Self.ID, ClientStage.Connected));
+                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientStage.Connected));
             }
         });
         m_stateMachine.AddState("Loading", null,
@@ -82,8 +82,8 @@ public class GameLoadingScreen : Screen {
             else {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
-                if (IsAdventureRestart && NetworkManager.WorkType == NetWork.WorkType.Client) {
-                    NetworkManager.QueuePackage(new PlayerIntoPlayingPackage(NetworkManager.MainPlayer));
+                if (IsAdventureRestart && NetworkManager.WorkType == Network.WorkType.Client) {
+                    NetworkManager.QueuePacket(new PlayerIntoPlayingPacket(NetworkManager.MainPlayer));
                 }
                 ScreensManager.SwitchScreen("Game");
             }
@@ -153,7 +153,7 @@ public class GameLoadingScreen : Screen {
         }
     }
     public override void Leave() {
-        //if (m_serverEndPoint != null && CommonLib.GetCurrentWorkType() == NetWork.WorkType.Local) CommonLib.Net.StopImmediate();
+        //if (m_serverEndPoint != null && CommonLib.GetCurrentWorkType() == Network.WorkType.Local) CommonLib.Net.StopImmediate();
         DialogsManager.HideDialog(spawnDialog);
     }
 
@@ -173,3 +173,5 @@ public class GameLoadingScreen : Screen {
         ProgressManager.UpdateProgress("Loading World", 0f);
     }
 }
+
+

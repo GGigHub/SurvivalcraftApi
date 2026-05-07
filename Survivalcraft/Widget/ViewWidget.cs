@@ -1,6 +1,6 @@
-using Engine;
+﻿using Engine;
 using Engine.Graphics;
-using Game.NetWork;
+using Game.Network;
 
 namespace Game {
     public class ViewWidget : TouchInputWidget, IDragTargetWidget {
@@ -85,8 +85,8 @@ namespace Game {
                 Vector2 screenPos = dragWidget.WidgetToScreen(dragWidget.ActualSize / 2f);
                 Vector3 worldPos = Vector3.Normalize(GameWidget.ActiveCamera.ScreenToWorld(new Vector3(screenPos.X, screenPos.Y, 1f), Matrix.Identity));
                 if (inventoryDragData != null && GameManager.Project != null) {
-                    if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                        NetworkManager.QueuePackage(new NetWork.PlayerDragDropPackage(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count));
+                    if (NetworkManager.WorkType == Network.WorkType.Client) {
+                        NetworkManager.QueuePacket(new Network.PlayerDragDropPacket(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count));
                     }
                     else {
                         NetDragDrop(worldPos, inventoryDragData, count);
@@ -161,3 +161,5 @@ namespace Game {
         }
     }
 }
+
+

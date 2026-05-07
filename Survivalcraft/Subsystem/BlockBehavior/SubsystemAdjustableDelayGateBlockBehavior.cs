@@ -1,4 +1,4 @@
-using Game.NetWork;
+﻿using Game.Network;
 
 namespace Game {
     public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior {
@@ -16,9 +16,9 @@ namespace Game {
                     delegate (int newDelay) {
                         int data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                         int num = Terrain.ReplaceData(value, data2);
-                        var p = new AdjustableDelayGatePackage(default, true, inventory.Id, slotIndex, newDelay);
-                        NetworkManager.QueuePackage(p);
-                        if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                        var p = new AdjustableDelayGatePacket(default, true, inventory.Id, slotIndex, newDelay);
+                        NetworkManager.QueuePacket(p);
+                        if (NetworkManager.WorkType != Network.WorkType.Client) {
                             p.Handle(false);
                         }
                     }
@@ -39,9 +39,9 @@ namespace Game {
                         if (num != data) {
                             int face = ((AdjustableDelayGateBlock)BlocksManager.Blocks[AdjustableDelayGateBlock.Index]).GetFace(value);
                             var cell = new CellFace(x, y, z, face);
-                            var p = new AdjustableDelayGatePackage(cell, false, default, default, newDelay);
-                            NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                            var p = new AdjustableDelayGatePacket(cell, false, default, default, newDelay);
+                            NetworkManager.QueuePacket(p);
+                            if (NetworkManager.WorkType != Network.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -52,4 +52,6 @@ namespace Game {
         }
     }
 }
+
+
 

@@ -1,4 +1,4 @@
-using Game.NetWork;
+﻿using Game.Network;
 using GameEntitySystem;
 
 namespace Game;
@@ -23,7 +23,7 @@ public class SubsystemInventories : Subsystem {
             return inventory.Id;
         }
         else {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
                 inventories[inventory.Id] = inventory;
                 return inventory.Id;
             }
@@ -53,7 +53,7 @@ public class SubsystemInventories : Subsystem {
     }
 
     public static void SyncInventoryItem(IInventory inventory, int slotIndex) {
-        NetworkManager.QueuePackage(new NetWork.Packages.InventorySyncPackage(inventory));
+        NetworkManager.QueuePacket(new Network.InventorySyncPacket(inventory));
     }
 
     public override void OnEntityRemoved(Entity entity) {
@@ -62,3 +62,5 @@ public class SubsystemInventories : Subsystem {
         }
     }
 }
+
+

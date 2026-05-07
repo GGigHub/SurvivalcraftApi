@@ -1,6 +1,6 @@
-using System.Net;
+﻿using System.Net;
 using System.Xml.Linq;
-using Game.NetWork;
+using Game.Network;
 
 namespace Game {
     public class ConnectServerDialog : Dialog {
@@ -98,3 +98,5 @@ namespace Game {
         }
     }
 }
+
+

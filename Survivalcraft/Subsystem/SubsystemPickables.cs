@@ -1,7 +1,7 @@
-using Engine;
+﻿using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -55,8 +55,8 @@ namespace Game {
                 }
             }
             if (requestSync
-                && NetworkManager.WorkType == NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new PickableRequestSyncPackage(id));
+                && NetworkManager.WorkType == Network.WorkType.Client) {
+                NetworkManager.QueuePacket(new PickableRequestSyncPacket(id));
             }
             return false;
         }
@@ -102,8 +102,8 @@ namespace Game {
                 m_pickables.Add(pickable);
             }
             PickableAdded?.Invoke(pickable);
-            if (NetworkManager.WorkType == NetWork.WorkType.Server) {
-                NetworkManager.QueuePackage(new PickableCreatePackage(pickable));
+            if (NetworkManager.WorkType == Network.WorkType.Server) {
+                NetworkManager.QueuePacket(new PickableCreatePacket(pickable));
             }
             return pickable;
         }
@@ -112,7 +112,7 @@ namespace Game {
             AddPickable(value, count, position, velocity, stuckMatrix, null);
 
         public virtual Pickable AddPickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
                 return null;
             }
             return AddPickable<Pickable>(value, count, position, velocity, stuckMatrix, owner);
@@ -210,8 +210,8 @@ namespace Game {
                     m_pickables.Remove(item);
                     useMaps.Remove(item.Id);
                     PickableRemoved?.Invoke(item);
-                    if (NetworkManager.WorkType == NetWork.WorkType.Server) {
-                        NetworkManager.QueuePackage(new PickableDeletePackage(item));
+                    if (NetworkManager.WorkType == Network.WorkType.Server) {
+                        NetworkManager.QueuePacket(new PickableDeletePacket(item));
                     }
                 }
                 m_pickablesToRemove.Clear();
@@ -309,3 +309,5 @@ namespace Game {
         }
     }
 }
+
+

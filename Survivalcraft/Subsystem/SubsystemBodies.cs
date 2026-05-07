@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -125,7 +125,7 @@ namespace Game {
         public SubsystemTerrain m_subsystemTerrain;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType != Network.WorkType.Client) {
                 bool flag = Time.PeriodicEvent(0.1, 0.0);
                 _toSendList.Clear();
                 foreach (ComponentBody body in Bodies) {
@@ -145,7 +145,7 @@ namespace Game {
                 if (_toSendList.Count > 0) {
                     foreach (var item in _toSendList) {
                         if (item.Value.Count > 0) {
-                            NetworkManager.QueuePackage(new BodyUpdatePackage(item.Value) { To = item.Key });
+                            NetworkManager.QueuePacket(new BodyUpdatePacket(item.Value) { To = item.Key });
                         }
                     }
                     //在这里重置标志
@@ -237,3 +237,5 @@ namespace Game {
         }
     }
 }
+
+

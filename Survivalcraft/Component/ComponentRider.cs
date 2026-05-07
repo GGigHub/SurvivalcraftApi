@@ -1,4 +1,4 @@
-using Engine;
+﻿using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -62,12 +62,12 @@ namespace Game {
         public virtual void StartMounting(ComponentMount componentMount) {
             if (!m_isAnimating
                 && Mount == null) {
-                if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
+                if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
                     StartNetMounting(componentMount);
-                    NetWork.NetworkManager.QueuePackage(new NetWork.ComponentMountPackage(this, componentMount));
+                    Network.NetworkManager.QueuePacket(new Network.ComponentMountPacket(this, componentMount));
                 }
                 else {
-                    NetWork.NetworkManager.QueuePackage(new NetWork.ComponentMountPackage(this, componentMount, true));
+                    Network.NetworkManager.QueuePacket(new Network.ComponentMountPacket(this, componentMount, true));
                 }
             }
         }
@@ -75,12 +75,12 @@ namespace Game {
         public virtual void StartDismounting() {
             if (!m_isAnimating
                 && Mount != null) {
-                if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
+                if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
                     StartNetDismounting();
-                    NetWork.NetworkManager.QueuePackage(new NetWork.ComponentMountPackage(this));
+                    Network.NetworkManager.QueuePacket(new Network.ComponentMountPacket(this));
                 }
                 else {
-                    NetWork.NetworkManager.QueuePackage(new NetWork.ComponentMountPackage(this, true));
+                    Network.NetworkManager.QueuePacket(new Network.ComponentMountPacket(this, true));
                 }
             }
         }
@@ -136,7 +136,7 @@ namespace Game {
                     || (componentHealth != null && componentHealth.Health <= 0f)
                     || ComponentCreature.ComponentHealth.Health <= 0f) {
                     //服务器和客户端都由自己控制下马
-                    if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Local && ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer) {
+                    if (Network.NetworkManager.WorkType != Network.WorkType.Local && ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer) {
 
                     }
                     else {
@@ -197,6 +197,7 @@ namespace Game {
         }
     }
 }
+
 
 
 

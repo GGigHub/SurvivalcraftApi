@@ -1,7 +1,7 @@
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using Engine;
 using Game;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 
 public class GameWidget : CanvasWidget {
@@ -191,3 +191,4 @@ public class GameWidget : CanvasWidget {
         base.MeasureOverride(parentAvailableSize);
     }
 }
+

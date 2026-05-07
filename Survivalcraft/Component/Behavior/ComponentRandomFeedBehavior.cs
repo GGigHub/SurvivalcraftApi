@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -34,7 +34,7 @@ namespace Game {
             set {
                 if (m_isFeed != value) {
                     m_isFeed = value;
-                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new RandomFeedBehaviorPackage(this, m_isFeed));
+                    if (NetworkManager.WorkType == Network.WorkType.Server) NetworkManager.QueuePacket(new RandomFeedBehaviorPacket(this, m_isFeed));
                 }
             }
         }
@@ -49,7 +49,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
                 m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {
@@ -194,3 +194,5 @@ namespace Game {
         }
     }
 }
+
+

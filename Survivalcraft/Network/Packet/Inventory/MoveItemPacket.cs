@@ -1,0 +1,49 @@
+﻿using Engine;
+using GameEntitySystem;
+
+namespace Game.Network;
+
+public class MoveItemPacket : Packet {
+    public override byte ID => (byte)PacketType.MoveItem;
+    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public int fromInventoryId;
+    public int fromSlotIndex;
+    public int toInventoryId;
+    public int toSlotIndex;
+    public int count;
+
+    public MoveItemPacket() {
+    }
+
+    public MoveItemPacket(IInventory from, int fromIndex, IInventory to, int toIndex, int c) {
+        fromInventoryId = from.Id;
+        fromSlotIndex = fromIndex;
+        toInventoryId = to.Id;
+        toSlotIndex = toIndex;
+        count = c;
+    }
+
+    public override void Serialize(PacketSerializer archive) {
+        archive.Value(ref fromInventoryId);
+        archive.Value(ref fromSlotIndex);
+        archive.Value(ref toInventoryId);
+        archive.Value(ref toSlotIndex);
+        archive.Value(ref count);
+    }
+
+    public override void Handle(bool isServer) {
+        if (!isServer) return;
+        var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
+        IInventory from = subsystemInventories.GetInventoryById(fromInventoryId);
+        IInventory to = subsystemInventories.GetInventoryById(toInventoryId);
+        if (from != null && to != null) {
+            int value = from.GetSlotValue(fromSlotIndex);
+            int actualCount = MathUtils.Min(count, from.GetSlotCount(fromSlotIndex));
+            from.RemoveSlotItems(fromSlotIndex, actualCount);
+            to.AddSlotItems(toSlotIndex, value, actualCount);
+            NetworkManager.QueuePacket(new InventorySyncPacket(from));
+            NetworkManager.QueuePacket(new InventorySyncPacket(to));
+        }
+    }
+}
+

@@ -1,4 +1,4 @@
-using Engine;
+﻿using Engine;
 using Engine.Audio;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -222,7 +222,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
+            if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
                 UpdatePrecipitation(dt);
                 UpdateLightning(dt);
                 UpdateFog(dt);
@@ -336,7 +336,7 @@ namespace Game {
                 }
                 m_precipitationEndTime = m_precipitationStartTime + 60f * m_random.Float(3f, 6f);
                 m_precipitationRampTime = m_random.Float(10f, 30f);
-                NetWork.NetworkManager.QueuePackage(new NetWork.SubsystemWeatherPackage(m_precipitationStartTime, m_precipitationEndTime, m_lightningIntensity));
+                Network.NetworkManager.QueuePacket(new Network.SubsystemWeatherPacket(m_precipitationStartTime, m_precipitationEndTime, m_lightningIntensity));
             }
             if (m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled) {
                 if (IsPrecipitationStarted) {
@@ -505,7 +505,7 @@ namespace Game {
                 m_fogEndTime = m_fogStartTime + 60f * m_random.Float(4f, 7f) * num;
                 m_fogRampTime = m_random.Float(20f, 40f);
                 FogProgress = 0f;
-                NetWork.NetworkManager.QueuePackage(new NetWork.SubsystemWeatherPackage(m_fogStartTime, m_fogRampTime, m_fogEndTime));
+                Network.NetworkManager.QueuePacket(new Network.SubsystemWeatherPacket(m_fogStartTime, m_fogRampTime, m_fogEndTime));
             }
             FogSeed = MathUtils.Hash((int)MathUtils.Remainder(m_fogStartTime, 1000000.0));
             if (m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled) {

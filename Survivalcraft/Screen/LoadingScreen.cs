@@ -1,10 +1,10 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
-using Game.NetWork;
+using Game.Network;
 #if ANDROID
 using Android.App;
 #elif WINDOWS
@@ -516,7 +516,7 @@ namespace Game {
                     }
                 }
             );
-            AddLoadAction(PackageManager.Initialize);
+            AddLoadAction(PacketManager.Initialize);
         }
 
         void InitScreens() {
@@ -667,5 +667,7 @@ namespace Game {
         }
     }
 }
+
+
 
 

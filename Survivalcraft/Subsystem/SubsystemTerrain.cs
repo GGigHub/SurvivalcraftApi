@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -368,9 +368,9 @@ namespace Game {
             if (pass) {
                 return;
             }
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (NetworkManager.WorkType == Network.WorkType.Client) return;
             ChangeCellNet(x, y, z, value, updateModificationCounter, movingBlock);
-            NetworkManager.QueuePackage(new NetWork.TerrainChangeCellPackage(x, y, z, value));
+            NetworkManager.QueuePacket(new Network.TerrainChangeCellPacket(x, y, z, value));
         }
 
         public void ChangeCellNet(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null) {
@@ -512,7 +512,7 @@ namespace Game {
             Terrain = new Terrain();
             TerrainRenderer = new TerrainRenderer(this);
             TerrainUpdater = new TerrainUpdater(this);
-            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType != Network.WorkType.Client) {
                 TerrainSerializer = new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             else {
@@ -584,3 +584,5 @@ namespace Game {
         }
     }
 }
+
+

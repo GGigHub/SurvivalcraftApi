@@ -1,8 +1,8 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using System.Xml.Linq;
 using Engine;
-using Game.NetWork;
+using Game.Network;
 using TemplatesDatabase;
 
 namespace Game {
@@ -365,3 +365,5 @@ namespace Game {
         }
     }
 }
+
+

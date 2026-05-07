@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 
 namespace Game {
     public class SubsystemTruthTableCircuitBlockBehavior : SubsystemEditableItemBehavior<TruthTableData> {
@@ -21,9 +21,9 @@ namespace Game {
                 new EditTruthTableDialog(
                     truthTableData,
                     delegate {
-                        var p = new TruthTableDataPackage(default, true, inventory.Id, slotIndex, truthTableData);
-                        NetworkManager.QueuePackage(p);
-                        if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                        var p = new TruthTableDataPacket(default, true, inventory.Id, slotIndex, truthTableData);
+                        NetworkManager.QueuePacket(p);
+                        if (NetworkManager.WorkType != Network.WorkType.Client) {
                             p.Handle(false);
                         }
                     }
@@ -41,9 +41,9 @@ namespace Game {
                     delegate {
                         int face = ((TruthTableCircuitBlock)BlocksManager.Blocks[188]).GetFace(value);
                         var cell = new CellFace(x, y, z, face);
-                        var p = new TruthTableDataPackage(cell, false, default, default, truthTableData);
-                        NetworkManager.QueuePackage(p);
-                        if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                        var p = new TruthTableDataPacket(cell, false, default, default, truthTableData);
+                        NetworkManager.QueuePacket(p);
+                        if (NetworkManager.WorkType != Network.WorkType.Client) {
                             p.Handle(false);
                         }
                     }
@@ -53,3 +53,5 @@ namespace Game {
         }
     }
 }
+
+

@@ -1,5 +1,5 @@
-using System.Xml.Linq;
-using Game.NetWork;
+﻿using System.Xml.Linq;
+using Game.Network;
 
 namespace Game {
     public class NewWorldScreen : Screen {
@@ -134,3 +134,5 @@ namespace Game {
         }
     }
 }
+
+

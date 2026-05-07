@@ -1,8 +1,8 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
-using Game.NetWork;
+using Game.Network;
 using TemplatesDatabase;
 
 namespace Game {
@@ -158,9 +158,9 @@ namespace Game {
                 }
             }
             else if (componentMiner.ComponentPlayer != null) {
-                if (NetworkManager.WorkType == NetWork.WorkType.Client && componentMiner.ComponentPlayer == NetworkManager.MainPlayer) {
-                    IPackage package = new EditSignPackage(point);
-                    NetworkManager.QueuePackage(package);
+                if (NetworkManager.WorkType == Network.WorkType.Client && componentMiner.ComponentPlayer == NetworkManager.MainPlayer) {
+                    Packet packet = new EditSignPacket(point);
+                    NetworkManager.QueuePacket(packet);
                     return true;
                 }
                 if (componentMiner.ComponentPlayer.PlayerData.IsMainPlayer) {
@@ -535,3 +535,5 @@ namespace Game {
         }
     }
 }
+
+

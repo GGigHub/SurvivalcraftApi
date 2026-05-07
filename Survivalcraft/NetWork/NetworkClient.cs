@@ -1,18 +1,18 @@
-using System.Net;
+﻿using System.Net;
 using Engine;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using LiteNetLib;
 using LiteNetLib.Utils;
 
-namespace Game.NetWork;
+namespace Game.Network;
 
 public class Client {
     public bool IsLocalRemote { get; set; }
     public string Nickname { get; set; }
     public byte ID { get; internal set; }
     // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
-    // 客户端自己的 PlayerGuid，以及服务端上所有玩家的 PlayerGuid 都未经混淆。
+    // 客户端自己的 PlayerGuid，以及服务端上所有玩家的 PlayerGuid 都未经混淆�?
     // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
     public Guid PlayerGuid { get; internal set; }
     public Guid TokenId { get; internal set; }
@@ -25,7 +25,7 @@ public class Client {
     public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID); } }
 
     /// <summary>
-    /// 是否已加入连接成功列表
+    /// 是否已加入连接成功列�?
     /// </summary>
     public bool IsAddedToNetNode { get; private set; }
     // 服务器本身的Client
@@ -91,7 +91,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
     public event Action<NetPeer, object> DeliveryEvent;
 
     public readonly NetManager _client;
-    private readonly NetworkFragment m_chunkTransport;
+    private readonly PacketFragment m_chunkTransport;
 
     public Client Self { get; set; }
     public Client Server { get; set; }
@@ -100,8 +100,8 @@ public class NetworkClient : INetworkNode, INetEventListener {
     public int ClientCount => Peers.Count() + 1;
     public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
     public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
-    public List<IPackage> PendingPackages { get; } = new List<IPackage>();
-    public List<IPackage> PendingHandlePackages { get; } = new List<IPackage>();
+    public List<Packet> PendingPackets { get; } = new List<Packet>();
+    public List<Packet> PendingHandlePackets { get; } = new List<Packet>();
     public Action<Client> OnClientStateChanged { get; set; }
     public Guid TokenId { get; set; }
     public WorkType WorkType { get; set; }
@@ -116,7 +116,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
             UpdateTime = 25,
             ReuseAddress = true
         };
-        m_chunkTransport = new NetworkFragment(this);
+        m_chunkTransport = new PacketFragment(this);
     }
 
     public void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
@@ -126,8 +126,8 @@ public class NetworkClient : INetworkNode, INetEventListener {
             _client.Start();
             TokenId = Guid.NewGuid();
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
-            SendWriterFromPackage(new ConnectionRequestPackage(TokenId, "ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
-            NetworkReceiveEvent += OnNetworkReceivePackage;
+            SendWriterFromPacket(new ConnectionRequestPacket(TokenId, "ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
+            NetworkReceiveEvent += OnNetworkReceivePacket;
             NetworkReceiveUnconnectedEvent += HanldeUnconnectedEvent;
             PeerDisconnectedEvent += OnPeerDisconnected;
             NetworkErrorEvent += HandleNetworkError;
@@ -162,7 +162,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
         }
         if (Clients.ContainsKey(c.ID)) {
             if (IsServer) {
-                NetworkManager.QueuePackage(new ClientRemovePackage(c.ID));
+                NetworkManager.QueuePacket(new ClientRemovePacket(c.ID));
             }
             c.State = ClientStage.NotConnected;
             OnClientStateChanged?.Invoke(c);
@@ -198,27 +198,27 @@ public class NetworkClient : INetworkNode, INetEventListener {
         NetworkManager.HandlePeerDisconnected(this, peer, disconnectInfo);
     }
 
-    public void OnNetworkReceivePackage(NetPeer peer, NetDataReader reader, DeliveryMethod deliveryMethod) {
+    public void OnNetworkReceivePacket(NetPeer peer, NetDataReader reader, DeliveryMethod deliveryMethod) {
         NetworkManager.HandleNetworkReceive(this, m_chunkTransport, peer, reader);
     }
 
     public virtual void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type) {
     }
 
-    public void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true) {
-        NetworkManager.SendWriterFromPackage(this, m_chunkTransport, package, endPoint, isSend);
+    public void SendWriterFromPacket(Packet packet, IPEndPoint endPoint, bool isSend = true) {
+        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, endPoint, isSend);
     }
 
-    public void SendWriterFromPackage(IPackage package, NetPeer netPeer, bool useDeliveryEvent = false) {
-        NetworkManager.SendWriterFromPackage(this, m_chunkTransport, package, netPeer, useDeliveryEvent);
+    public void SendWriterFromPacket(Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
+        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, netPeer, useDeliveryEvent);
     }
 
-    public void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject) {
-        NetworkManager.SendWriterFromPackage(this, m_chunkTransport, package, request, reject);
+    public void SendWriterFromPacket(Packet packet, ConnectionRequest request, bool reject) {
+        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, request, reject);
     }
 
-    public void SendWriterFromPackages(IEnumerable<IPackage> packages, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-        NetworkManager.SendWriterFromPackages(this, m_chunkTransport, packages, netPeer, request, iPEndPoint, useDeliveryEvent);
+    public void SendWriterFromPackets(IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
+        NetworkManager.SendWriterFromPackets(this, m_chunkTransport, packets, netPeer, request, iPEndPoint, useDeliveryEvent);
     }
 
     public void Stop() {
@@ -231,14 +231,14 @@ public class NetworkClient : INetworkNode, INetEventListener {
         if (NetManager.IsRunning) {
             byte[] payload = NetworkManager.BuildPayloadForClient(this, Clients[0], false);
             SendPayload(payload, Clients[0].Peer);
-            PendingPackages.Clear();
+            PendingPackets.Clear();
             m_chunkTransport.CleanupStates();
             NetManager.PollEvents();
         }
     }
 
-    public byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer) {
-        return NetworkManager.BuildOutgoingPayload(packages, isServer);
+    public byte[] BuildOutgoingPayload(IEnumerable<Packet> packets, bool isServer) {
+        return NetworkManager.BuildOutgoingPayload(packets, isServer);
     }
 
     public void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
@@ -249,8 +249,8 @@ public class NetworkClient : INetworkNode, INetEventListener {
         m_chunkTransport.CleanupStates();
     }
 
-    public bool TryDecodePackages(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<IPackage> packages) {
-        return NetworkManager.TryDecodePackages(this, m_chunkTransport, reader, peer, request, endPoint, out packages);
+    public bool TryDecodePackets(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
+        return NetworkManager.TryDecodePackets(this, m_chunkTransport, reader, peer, request, endPoint, out packets);
     }
 
     private void ClientStateChanged(Client c) {
@@ -265,7 +265,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
             subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
         }
         SettingsManager.VisibilityRange = Math.Min(256, SettingsManager.VisibilityRange);
-        NetworkManager.QueuePackage(new ClientStateChangePackage(Self.ID, ClientStage.ProjectLoaded));
+        NetworkManager.QueuePacket(new ClientStateChangePacket(Self.ID, ClientStage.ProjectLoaded));
     }
 
     private void HandleNetworkError(byte[] _, IPEndPoint endPoint) {
@@ -300,3 +300,5 @@ public class NetworkClient : INetworkNode, INetEventListener {
     void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency) {
     }
 }
+
+

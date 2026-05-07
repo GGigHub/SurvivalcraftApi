@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -58,8 +58,8 @@ namespace Game {
                         lock (pickable) {
                             pickable.FlyToPosition = Position + 0.1f * MathF.Sqrt(distanceToTargetSquare) * m_componentBody.Velocity;
                             pickable.FlyToGatherer = this;
-                            if (NetworkManager.WorkType == NetWork.WorkType.Server) {
-                                NetworkManager.QueuePackage(new PickableSetFlyToPositionPackage(pickable));
+                            if (NetworkManager.WorkType == Network.WorkType.Server) {
+                                NetworkManager.QueuePacket(new PickableSetFlyToPositionPacket(pickable));
                             }
                         }
                     }
@@ -77,3 +77,5 @@ namespace Game {
         }
     }
 }
+
+

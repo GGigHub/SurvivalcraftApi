@@ -1,17 +1,17 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using TemplatesDatabase;
 #pragma warning disable CA1416
 
-namespace Game.NetWork;
+namespace Game.Network;
 
 public enum ClientStage {
     NotConnected,
@@ -55,7 +55,7 @@ public static class NetworkManager {
     }
 
     /// <summary>
-    /// 获取玩家的有效模式
+    /// 获取玩家的有效模�?
     /// </summary>
     public static GameMode GetEffectiveGameMode(PlayerData pd) {
         return GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode ?? GameMode.Survival;
@@ -80,14 +80,14 @@ public static class NetworkManager {
         Client.ConnectServer(ep, passwd, onlineAccessToken);
     }
 
-    public static void QueuePackage(IPackage package) {
-        lock (Current.PendingPackages) {
-            Current.PendingPackages.Add(package);
+    public static void QueuePacket(Packet packet) {
+        lock (Current.PendingPackets) {
+            Current.PendingPackets.Add(packet);
         }
     }
 
-    public static PackageStreamReader GetReader(NetDataReader reader) {
-        return new PackageStreamReader(reader.GetBytesWithLength());
+    public static PacketStreamReader GetReader(NetDataReader reader) {
+        return new PacketStreamReader(reader.GetBytesWithLength());
     }
 
     public static string GetInnerIp() {
@@ -106,7 +106,7 @@ public static class NetworkManager {
                 if (ni.OperationalStatus != OperationalStatus.Up) continue;
                 if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
 
-                // 物理网卡类型检测
+                // 物理网卡类型检�?
                 if (validTypes.Contains(ni.NetworkInterfaceType)) {
                     foreach (var ip in ni.GetIPProperties().UnicastAddresses) {
                         if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
@@ -205,21 +205,21 @@ public static class NetworkManager {
         return port > 0 && port <= 65535;
     }
 
-    internal static void HandleUnconnectedEvent(INetworkNode node, NetworkFragment chunkTransport, IPEndPoint remoteEndPoint, NetPacketReader reader, bool fromBroadcast) {
+    internal static void HandleUnconnectedEvent(INetworkNode node, PacketFragment chunkTransport, IPEndPoint remoteEndPoint, NetPacketReader reader, bool fromBroadcast) {
         if (node.CurrentStage == NetworkStage.NotConnected) return;
         var dataReader = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
         try {
-            if (!TryDecodePackages(node, chunkTransport, dataReader, null, null, remoteEndPoint, out List<IPackage> packages)) {
+            if (!TryDecodePackets(node, chunkTransport, dataReader, null, null, remoteEndPoint, out List<Packet> packets)) {
                 return;
             }
 
-            foreach (var package in packages) {
-                package.From.IsLocalRemote = fromBroadcast;
+            foreach (var packet in packets) {
+                packet.From.IsLocalRemote = fromBroadcast;
                 try {
-                    package.Handle(node.IsServer);
+                    packet.Handle(node.IsServer);
                 }
                 catch (Exception e) {
-                    Log.Error(string.Format("[{0}]{1}", package.GetType().Name, e.Message));
+                    Log.Error(string.Format("[{0}]{1}", packet.GetType().Name, e.Message));
                 }
             }
         }
@@ -255,59 +255,59 @@ public static class NetworkManager {
         }
     }
 
-    internal static void HandleNetworkReceive(INetworkNode node, NetworkFragment chunkTransport, NetPeer peer, NetDataReader reader) {
+    internal static void HandleNetworkReceive(INetworkNode node, PacketFragment chunkTransport, NetPeer peer, NetDataReader reader) {
         if (node.CurrentStage == NetworkStage.NotConnected) return;
         Client fromClient = peer.Tag as Client;
-        if (!TryDecodePackages(node, chunkTransport, reader, peer, null, null, out List<IPackage> packages)) {
+        if (!TryDecodePackets(node, chunkTransport, reader, peer, null, null, out List<Packet> packets)) {
             return;
         }
 
-        packages.InsertRange(0, node.PendingHandlePackages);
-        foreach (var package in packages) {
+        packets.InsertRange(0, node.PendingHandlePackets);
+        foreach (var packet in packets) {
             try {
-                package.Handle(node.IsServer);
+                packet.Handle(node.IsServer);
             }
             catch (Exception e) {
-                Log.Error(string.Format("[{0}]{1}", package.GetType().Name, e.Message));
+                Log.Error(string.Format("[{0}]{1}", packet.GetType().Name, e.Message));
             }
         }
     }
 
-    internal static void SendWriterFromPackage(INetworkNode node, NetworkFragment chunkTransport, IPackage package, IPEndPoint endPoint, bool isSend = true) {
-        SendWriterFromPackages(node, chunkTransport, [package], null, null, endPoint, isSend);
+    internal static void SendWriterFromPacket(INetworkNode node, PacketFragment chunkTransport, Packet packet, IPEndPoint endPoint, bool isSend = true) {
+        SendWriterFromPackets(node, chunkTransport, [packet], null, null, endPoint, isSend);
     }
 
-    internal static void SendWriterFromPackage(INetworkNode node, NetworkFragment chunkTransport, IPackage package, NetPeer netPeer, bool useDeliveryEvent = false) {
-        SendWriterFromPackages(node, chunkTransport, [package], netPeer, null, null, useDeliveryEvent);
+    internal static void SendWriterFromPacket(INetworkNode node, PacketFragment chunkTransport, Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
+        SendWriterFromPackets(node, chunkTransport, [packet], netPeer, null, null, useDeliveryEvent);
     }
 
-    internal static void SendWriterFromPackage(INetworkNode node, NetworkFragment chunkTransport, IPackage package, ConnectionRequest request, bool reject) {
+    internal static void SendWriterFromPacket(INetworkNode node, PacketFragment chunkTransport, Packet packet, ConnectionRequest request, bool reject) {
         if (reject) request.Reject();
-        SendWriterFromPackages(node, chunkTransport, [package], null, request, null);
+        SendWriterFromPackets(node, chunkTransport, [packet], null, request, null);
     }
 
-    internal static void SendWriterFromPackages(INetworkNode node, NetworkFragment chunkTransport, IEnumerable<IPackage> packages, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-        byte[] payload = BuildOutgoingPayload(packages, node.IsServer);
+    internal static void SendWriterFromPackets(INetworkNode node, PacketFragment chunkTransport, IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
+        byte[] payload = BuildOutgoingPayload(packets, node.IsServer);
         chunkTransport.SendPayload(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
     }
 
-    internal static byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer) {
-        PackageStreamWriter writer = new();
-        foreach (var package in packages) {
-            writer.Write(NetworkFragment.VerifyByte);
-            writer.Write(package.ID);
-            package.Serialize(new PackageSerializer(writer));
+    internal static byte[] BuildOutgoingPayload(IEnumerable<Packet> packets, bool isServer) {
+        PacketStreamWriter writer = new();
+        foreach (var packet in packets) {
+            writer.Write(PacketFragment.VerifyByte);
+            writer.Write(packet.ID);
+            packet.Serialize(new PacketSerializer(writer));
         }
         return writer.Data();
     }
 
-    internal static bool TryDecodePackages(INetworkNode node, NetworkFragment chunkTransport, NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<IPackage> packages) {
-        packages = null;
+    internal static bool TryDecodePackets(INetworkNode node, PacketFragment chunkTransport, NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
+        packets = null;
         if (chunkTransport.TryReadPayload(reader, peer, request, endPoint, out byte[] payload, out bool consumedChunkFrame)) {
             if (payload == null) {
                 return false;
             }
-            packages = PackageManager.DecodePackagesFromPayload(node, payload, peer, request, endPoint);
+            packets = PacketManager.DecodePacketsFromPayload(node, payload, peer, request, endPoint);
             return true;
         }
 
@@ -315,13 +315,13 @@ public static class NetworkManager {
             return false;
         }
 
-        packages = PackageManager.DecodePackages(node, reader, peer, request, endPoint);
+        packets = PacketManager.DecodePackets(node, reader, peer, request, endPoint);
         return true;
     }
 
-    internal static int SendWriterFromPackage(NetManager netManager, IEnumerable<IPackage> packages, IPEndPoint endPoint) {
-        byte[] payload = BuildOutgoingPayload(packages, false);
-        NetworkFragment.SendPayload(netManager, payload, endPoint);
+    internal static int SendWriterFromPacket(NetManager netManager, IEnumerable<Packet> packets, IPEndPoint endPoint) {
+        byte[] payload = BuildOutgoingPayload(packets, false);
+        PacketFragment.SendPayload(netManager, payload, endPoint);
         return payload.Length;
     }
 
@@ -331,13 +331,15 @@ public static class NetworkManager {
     }
 
     public static byte[] BuildPayloadForClient(INetworkNode node, Client client, bool respectMinState) {
-        List<IPackage> packages = new List<IPackage>();
-        foreach (IPackage packet in node.PendingPackages) {
+        List<Packet> packets = new List<Packet>();
+        foreach (Packet packet in node.PendingPackets) {
             if (packet.To != null && packet.To != client) continue;
             if (packet.Except != null && packet.Except == client) continue;
             if (respectMinState && client.State < packet.MinNeedState && node.WorkType != WorkType.Client) continue;
-            packages.Add(packet);
+            packets.Add(packet);
         }
-        return packages.Count > 0 ? BuildOutgoingPayload(packages, node.IsServer) : null;
+        return packets.Count > 0 ? BuildOutgoingPayload(packets, node.IsServer) : null;
     }
 }
+
+

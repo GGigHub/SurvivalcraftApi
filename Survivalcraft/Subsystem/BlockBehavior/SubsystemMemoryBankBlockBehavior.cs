@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 
 namespace Game {
     public class SubsystemMemoryBankBlockBehavior : SubsystemEditableItemBehavior<MemoryBankData> {
@@ -23,9 +23,9 @@ namespace Game {
                     new EditMemoryBankDialog(
                         memoryBankData,
                         () => {
-                            var p = new MemoryBankDataPackage(default, true, inventory.Id, slotIndex, memoryBankData);
-                            NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                            var p = new MemoryBankDataPacket(default, true, inventory.Id, slotIndex, memoryBankData);
+                            NetworkManager.QueuePacket(p);
+                            if (NetworkManager.WorkType != Network.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -59,9 +59,9 @@ namespace Game {
                         () => {
                             int face = ((MemoryBankBlock)BlocksManager.Blocks[186]).GetFace(value);
                             var cell = new CellFace(x, y, z, face);
-                            var p = new MemoryBankDataPackage(cell, false, default, default, memoryBankData);
-                            NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                            var p = new MemoryBankDataPacket(cell, false, default, default, memoryBankData);
+                            NetworkManager.QueuePacket(p);
+                            if (NetworkManager.WorkType != Network.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -89,3 +89,5 @@ namespace Game {
         }
     }
 }
+
+

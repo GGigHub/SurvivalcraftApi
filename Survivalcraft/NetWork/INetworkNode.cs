@@ -1,9 +1,9 @@
-using System.Net;
-using Game.NetWork;
+﻿using System.Net;
+using Game.Network;
 using LiteNetLib;
 using LiteNetLib.Utils;
 
-namespace Game.NetWork;
+namespace Game.Network;
 
 public interface INetworkNode {
     NetManager NetManager { get; }
@@ -14,8 +14,8 @@ public interface INetworkNode {
     int ClientCount { get; }
     Dictionary<int, Client> Clients { get; }
     IEnumerable<Client> Peers { get; }
-    List<IPackage> PendingPackages { get; }
-    List<IPackage> PendingHandlePackages { get; }
+    List<Packet> PendingPackets { get; }
+    List<Packet> PendingHandlePackets { get; }
     Action<Client> OnClientStateChanged { get; set; }
     Guid TokenId { get; set; }
     WorkType WorkType { get; set; }
@@ -26,14 +26,16 @@ public interface INetworkNode {
     Client GetClientByGUID(Guid? guid);
     Client GetClientByTokenID(Guid? guid);
     void StartLocal();
-    void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true);
-    void SendWriterFromPackage(IPackage package, NetPeer netPeer, bool useDeliveryEvent = false);
-    void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject);
-    void SendWriterFromPackages(IEnumerable<IPackage> packages, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false);
+    void SendWriterFromPacket(Packet packet, IPEndPoint endPoint, bool isSend = true);
+    void SendWriterFromPacket(Packet packet, NetPeer netPeer, bool useDeliveryEvent = false);
+    void SendWriterFromPacket(Packet packet, ConnectionRequest request, bool reject);
+    void SendWriterFromPackets(IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false);
     void Stop();
     void Update();
-    byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer);
+    byte[] BuildOutgoingPayload(IEnumerable<Packet> packets, bool isServer);
     void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false);
     void CleanupChunkStates();
-    bool TryDecodePackages(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<IPackage> packages);
+    bool TryDecodePackets(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets);
 }
+
+

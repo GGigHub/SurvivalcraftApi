@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -65,12 +65,12 @@ namespace Game {
         }
 
         public virtual void Sleep(bool allowManualWakeup) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new SleepRequestPackage(this, allowManualWakeup));
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
+                NetworkManager.QueuePacket(new SleepRequestPacket(this, allowManualWakeup));
             }
             else {
                 NetSleep(allowManualWakeup);
-                NetworkManager.QueuePackage(new SleepStatusPackage(this, allowManualWakeup, true));
+                NetworkManager.QueuePacket(new SleepStatusPacket(this, allowManualWakeup, true));
             }
         }
 
@@ -87,12 +87,12 @@ namespace Game {
         }
 
         public virtual void WakeUp() {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new WakeupRequestPackage(this));
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
+                NetworkManager.QueuePacket(new WakeupRequestPacket(this));
             }
             else {
                 NetWakeUp();
-                NetworkManager.QueuePackage(new WakeupStatusPackage(this));
+                NetworkManager.QueuePacket(new WakeupStatusPacket(this));
             }
         }
 
@@ -264,3 +264,5 @@ namespace Game {
         }
     }
 }
+
+

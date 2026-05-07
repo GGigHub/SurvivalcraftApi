@@ -1,6 +1,6 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Engine;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -89,9 +89,9 @@ namespace Game {
         }
 
         public virtual void AddExperience(int count, bool playSound) {
-            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType != Network.WorkType.Client) {
                 NetAddExperience(count, playSound);
-                NetworkManager.QueuePackage(new NetWork.PlayerAddExperiencePackage(m_componentPlayer.PlayerData, count, playSound, m_componentPlayer.PlayerData.Level));
+                NetworkManager.QueuePacket(new Network.PlayerAddExperiencePacket(m_componentPlayer.PlayerData, count, playSound, m_componentPlayer.PlayerData.Level));
             }
         }
 
@@ -429,3 +429,5 @@ namespace Game {
         }
     }
 }
+
+

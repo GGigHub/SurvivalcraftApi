@@ -1,19 +1,19 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using Engine;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using LiteNetLib;
 using LiteNetLib.Utils;
 
-namespace Game.NetWork;
+namespace Game.Network;
 
 public class NetworkServer : INetworkNode, INetEventListener {
     public event Action<NetPeer> ClientConnected;
     public event Action<NetPeer, DisconnectInfo> ClientDisconnected;
 
     public readonly NetManager _server;
-    private readonly NetworkFragment m_chunkTransport;
+    private readonly PacketFragment m_chunkTransport;
 
     public Client Self { get; set; }
     public Client Server { get; set; }
@@ -22,8 +22,8 @@ public class NetworkServer : INetworkNode, INetEventListener {
     public int ClientCount => Peers.Count() + 1;
     public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
     public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
-    public List<IPackage> PendingPackages { get; } = new List<IPackage>();
-    public List<IPackage> PendingHandlePackages { get; } = new List<IPackage>();
+    public List<Packet> PendingPackets { get; } = new List<Packet>();
+    public List<Packet> PendingHandlePackets { get; } = new List<Packet>();
     public Action<Client> OnClientStateChanged { get; set; }
     public Guid TokenId { get; set; }
     public WorkType WorkType { get; set; }
@@ -40,7 +40,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
             UpdateTime = 25,
             ReuseAddress = true
         };
-        m_chunkTransport = new NetworkFragment(this);
+        m_chunkTransport = new PacketFragment(this);
     }
 
     public bool StartServer(int port) {
@@ -59,10 +59,10 @@ public class NetworkServer : INetworkNode, INetEventListener {
                 WorkType = WorkType.Server;
                 OnClientStateChanged += ClientStateChanged;
                 Project.EntityAdded += (_, arg) => {
-                    NetworkManager.QueuePackage(new EntityLoadPackage(arg.Entity));
+                    NetworkManager.QueuePacket(new EntityLoadPacket(arg.Entity));
                 };
                 Project.EntityRemoved += (_, arg) => {
-                    NetworkManager.QueuePackage(new EntityRemovePackage(arg.Entity.Id));
+                    NetworkManager.QueuePacket(new EntityRemovePacket(arg.Entity.Id));
                 };
             }
             else {
@@ -134,7 +134,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
         }
         if (Clients.ContainsKey(c.ID)) {
             if (IsServer) {
-                NetworkManager.QueuePackage(new ClientRemovePackage(c.ID));
+                NetworkManager.QueuePacket(new ClientRemovePacket(c.ID));
             }
             c.State = ClientStage.NotConnected;
             OnClientStateChanged?.Invoke(c);
@@ -162,20 +162,20 @@ public class NetworkServer : INetworkNode, INetEventListener {
         AddClient(Self);
     }
 
-    public void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true) {
-        NetworkManager.SendWriterFromPackage(this, m_chunkTransport, package, endPoint, isSend);
+    public void SendWriterFromPacket(Packet packet, IPEndPoint endPoint, bool isSend = true) {
+        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, endPoint, isSend);
     }
 
-    public void SendWriterFromPackage(IPackage package, NetPeer netPeer, bool useDeliveryEvent = false) {
-        NetworkManager.SendWriterFromPackage(this, m_chunkTransport, package, netPeer, useDeliveryEvent);
+    public void SendWriterFromPacket(Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
+        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, netPeer, useDeliveryEvent);
     }
 
-    public void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject) {
-        NetworkManager.SendWriterFromPackage(this, m_chunkTransport, package, request, reject);
+    public void SendWriterFromPacket(Packet packet, ConnectionRequest request, bool reject) {
+        NetworkManager.SendWriterFromPacket(this, m_chunkTransport, packet, request, reject);
     }
 
-    public void SendWriterFromPackages(IEnumerable<IPackage> packages, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-        NetworkManager.SendWriterFromPackages(this, m_chunkTransport, packages, netPeer, request, iPEndPoint, useDeliveryEvent);
+    public void SendWriterFromPackets(IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
+        NetworkManager.SendWriterFromPackets(this, m_chunkTransport, packets, netPeer, request, iPEndPoint, useDeliveryEvent);
     }
 
     public void Stop() {
@@ -194,14 +194,14 @@ public class NetworkServer : INetworkNode, INetEventListener {
                 byte[] payload = NetworkManager.BuildPayloadForClient(this, client, false);
                 SendPayload(payload, client.Peer);
             }
-            PendingPackages.Clear();
+            PendingPackets.Clear();
             m_chunkTransport.CleanupStates();
             NetManager.PollEvents();
         }
     }
 
-    public byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer) {
-        return NetworkManager.BuildOutgoingPayload(packages, isServer);
+    public byte[] BuildOutgoingPayload(IEnumerable<Packet> packets, bool isServer) {
+        return NetworkManager.BuildOutgoingPayload(packets, isServer);
     }
 
     public void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
@@ -212,8 +212,8 @@ public class NetworkServer : INetworkNode, INetEventListener {
         m_chunkTransport.CleanupStates();
     }
 
-    public bool TryDecodePackages(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<IPackage> packages) {
-        return NetworkManager.TryDecodePackages(this, m_chunkTransport, reader, peer, request, endPoint, out packages);
+    public bool TryDecodePackets(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
+        return NetworkManager.TryDecodePackets(this, m_chunkTransport, reader, peer, request, endPoint, out packets);
     }
 
     private byte FindUnusedIndex() {
@@ -227,7 +227,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
         var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
         var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
 
-        NetworkManager.QueuePackage(new ClientStateChangePackage(c.ID, c.State) { Except = c });
+        NetworkManager.QueuePacket(new ClientStateChangePacket(c.ID, c.State) { Except = c });
 
         switch (c.State) {
             case ClientStage.Connected: {
@@ -238,14 +238,14 @@ public class NetworkServer : INetworkNode, INetEventListener {
                             // concurrent joiners cannot miss them in later entity snapshots.
                             GameManager.Project.AddEntity(entity);
                         }
-                        NetworkManager.QueuePackage(new PlayerAddPackage(playerData) { Except = c });
+                        NetworkManager.QueuePacket(new PlayerAddPacket(playerData) { Except = c });
                     }
                     if (!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.BlocksTextureName)) {
                         using var s = Storage.OpenFile(BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName), OpenFileMode.Read);
                         textureData = ModsManager.StreamToBytes(s);
                     }
                     byte[] data = NetworkManager.GetNowProject(GameManager.Project);
-                    NetworkManager.QueuePackage(new ProjectPackage(textureData, data) { To = c });
+                    NetworkManager.QueuePacket(new ProjectPacket(textureData, data) { To = c });
                     break;
                 }
             case ClientStage.NotConnected:
@@ -253,7 +253,7 @@ public class NetworkServer : INetworkNode, INetEventListener {
                 break;
             case ClientStage.ProjectLoaded: {
                     List<Entity> sendList = [.. GameManager.Project.Entities];
-                    NetworkManager.QueuePackage(new EntityLoadPackage(sendList) { To = c });
+                    NetworkManager.QueuePacket(new EntityLoadPacket(sendList) { To = c });
                     break;
                 }
             case ClientStage.LoadTerrain:
@@ -298,15 +298,15 @@ public class NetworkServer : INetworkNode, INetEventListener {
         Log.Information("Received connection request " + request.RemoteEndPoint);
 
         if (GameManager.Project == null) {
-            SendWriterFromPackage(new ConnectionRejectPackage("Please wait until server startup is complete before joining."), request, true);
+            SendWriterFromPacket(new ConnectionRejectPacket("Please wait until server startup is complete before joining."), request, true);
         }
         else {
             try {
-                ConnectionRequestPackage requestPackage = PackageManager.DecodePackage<ConnectionRequestPackage>(this, request.Data, null, request);
-                requestPackage.Handle(true);
+                ConnectionRequestPacket requestPacket = PacketManager.DecodePacket<ConnectionRequestPacket>(this, request.Data, null, request);
+                requestPacket.Handle(true);
             }
             catch (Exception e) {
-                SendWriterFromPackage(new ConnectionRejectPackage($"Invalid connection request packet: {e.Message}"), request, true);
+                SendWriterFromPacket(new ConnectionRejectPacket($"Invalid connection request packet: {e.Message}"), request, true);
                 Log.Information("ConnectionRequestEvent Error:" + e.StackTrace);
             }
         }
@@ -315,3 +315,5 @@ public class NetworkServer : INetworkNode, INetEventListener {
     void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency) {
     }
 }
+
+

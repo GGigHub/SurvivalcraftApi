@@ -1,7 +1,7 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Engine;
 using Engine.Graphics;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -188,9 +188,9 @@ namespace Game {
         public static bool DrawGalaxyEnabled = true;
 
         public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual) {
-            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType != Network.WorkType.Client) {
                 NetMakeLightningStrike(targetPosition, manual);
-                NetworkManager.QueuePackage(new NetWork.SubsystemSkyPackage(targetPosition));
+                NetworkManager.QueuePacket(new Network.SubsystemSkyPacket(targetPosition));
             }
         }
 
@@ -1024,3 +1024,4 @@ namespace Game {
         #endregion
     }
 }
+

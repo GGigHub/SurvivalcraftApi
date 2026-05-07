@@ -1,8 +1,8 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -356,25 +356,27 @@ namespace Game {
         }
 
         Projectile AddProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
                 return null;
             }
             Projectile projectile = AddProjectileNet(value, position, velocity, angularVelocity, owner);
             if (projectile != null) {
-                NetworkManager.QueuePackage(new ProjectilePackage(projectile));
+                NetworkManager.QueuePacket(new ProjectilePacket(projectile));
             }
             return projectile;
         }
 
         Projectile FireProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
                 return null;
             }
             Projectile projectile = FireProjectileNet(value, position, velocity, angularVelocity, owner);
             if (projectile != null) {
-                NetworkManager.QueuePackage(new ProjectilePackage(projectile));
+                NetworkManager.QueuePacket(new ProjectilePacket(projectile));
             }
             return projectile;
         }
     }
 }
+
+

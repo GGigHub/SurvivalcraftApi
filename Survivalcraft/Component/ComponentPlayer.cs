@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -238,7 +238,7 @@ namespace Game {
         public virtual void Update(float dt) {
             if (PlayerData.IsMainPlayer && ComponentMiner?.Inventory != null && LastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex) {
                 LastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
-                NetworkManager.QueuePackage(new ActiveSlotChangePackage(ComponentMiner.Inventory));
+                NetworkManager.QueuePacket(new ActiveSlotChangePacket(ComponentMiner.Inventory));
             }
             PlayerInput playerInput = ComponentInput.PlayerInput;
             if (ComponentInput.IsControlledByTouch
@@ -364,18 +364,18 @@ namespace Game {
             Block block = BlocksManager.Blocks[num];
 
             if (Time.PeriodicEvent(0.1f, 0.0)) {
-                if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                if (NetworkManager.WorkType != Network.WorkType.Client) {
                     //服务器广播玩家数据
-                    NetworkManager.QueuePackage(new PlayerBodyUpdatePackage(this) { Except = PlayerData.Client });
+                    NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(this) { Except = PlayerData.Client });
                 }
                 else if (PlayerData.IsMainPlayer) {
                     //客户端广播自身的数据
-                    NetworkManager.QueuePackage(new PlayerBodyUpdatePackage(this));
+                    NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(this));
                 }
             }
 
             // Handle replicated Interact/Aim/Dig events on server and remote clients.
-            if (NetworkManager.WorkType != NetWork.WorkType.Local && !PlayerData.IsMainPlayer) {
+            if (NetworkManager.WorkType != Network.WorkType.Local && !PlayerData.IsMainPlayer) {
                 if (digEvents.Count > 0) {
                     digEvent = digEvents[0];
                     digEvents.RemoveAt(0);
@@ -460,8 +460,8 @@ namespace Game {
                 }
             }
 
-            bool shouldSyncPlayerEvents = NetworkManager.WorkType == NetWork.WorkType.Local
-                || (NetworkManager.WorkType != NetWork.WorkType.Local && PlayerData.IsMainPlayer);
+            bool shouldSyncPlayerEvents = NetworkManager.WorkType == Network.WorkType.Local
+                || (NetworkManager.WorkType != Network.WorkType.Local && PlayerData.IsMainPlayer);
             if (shouldSyncPlayerEvents) {
                 digEvent = default;
                 interactEvent = default;
@@ -656,8 +656,8 @@ namespace Game {
                                 bodyRaycastResult.Value.HitPoint(),
                                 playerInput.Hit.Value.Direction
                             );
-                            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                                NetworkManager.QueuePackage(new PlayerHitPackage(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
+                            if (NetworkManager.WorkType == Network.WorkType.Client) {
+                                NetworkManager.QueuePacket(new PlayerHitPacket(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
                             }
                         }
                     }
@@ -718,15 +718,15 @@ namespace Game {
             if (shouldSyncPlayerEvents) {
                 if (last_digEvent.digEvent != digEvent.digEvent) {
                     last_digEvent = digEvent;
-                    NetworkManager.QueuePackage(new PlayerDigPackage(this));
+                    NetworkManager.QueuePacket(new PlayerDigPacket(this));
                 }
                 if (last_interactEvent.interactEvent != interactEvent.interactEvent) {
                     last_interactEvent = interactEvent;
-                    NetworkManager.QueuePackage(new PlayerInteractPackage(this));
+                    NetworkManager.QueuePacket(new PlayerInteractPacket(this));
                 }
                 if (last_aimEvent.aimEvent != aimEvent.aimEvent) {
                     last_aimEvent = aimEvent;
-                    NetworkManager.QueuePackage(new PlayerAimPackage(this));
+                    NetworkManager.QueuePacket(new PlayerAimPacket(this));
                 }
             }
             if (playerInput.Drop
@@ -865,7 +865,7 @@ namespace Game {
         private static readonly object _saveLock = new();
 
         public virtual void SavePlayerEntity() {
-            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType != Network.WorkType.Client) {
                 lock (_saveLock) {
                     try {
                         var list = Project.SaveEntities([Entity]);
@@ -895,3 +895,5 @@ namespace Game {
         }
     }
 }
+
+

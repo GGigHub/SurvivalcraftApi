@@ -1,4 +1,4 @@
-#if ANDROID
+﻿#if ANDROID
 using Android.Content;
 using SC4Android;
 #elif BROWSER
@@ -17,7 +17,7 @@ using System.Reflection;
 using System.Globalization;
 using Engine;
 using Engine.Graphics;
-using Game.NetWork;
+using Game.Network;
 
 #if BROWSER
 [assembly: SupportedOSPlatform("browser")]
@@ -367,4 +367,6 @@ namespace Game {
         }
     }
 }
+
+
 

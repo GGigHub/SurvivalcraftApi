@@ -1,7 +1,7 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Engine;
 using Engine.Audio;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -194,9 +194,9 @@ namespace Game {
                 UpdateSleep();
                 UpdateTemperature();
                 UpdateWetness();
-                if (NetworkManager.WorkType == NetWork.WorkType.Server) {
+                if (NetworkManager.WorkType == Network.WorkType.Server) {
                     if (Time.PeriodicEvent(1.0, 0.5)) {
-                        NetworkManager.QueuePackage(new NetWork.VitalStatSyncPackage(this));
+                        NetworkManager.QueuePacket(new Network.VitalStatSyncPacket(this));
                     }
                 }
             }
@@ -697,3 +697,5 @@ namespace Game {
         }
     }
 }
+
+

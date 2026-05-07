@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -30,7 +30,7 @@ namespace Game {
             set {
                 if (m_isBend != value) {
                     m_isBend = value;
-                    if (NetworkManager.WorkType == NetWork.WorkType.Server) NetworkManager.QueuePackage(new FishOutOfWaterBehaviorPackage(this, m_isBend));
+                    if (NetworkManager.WorkType == Network.WorkType.Server) NetworkManager.QueuePacket(new FishOutOfWaterBehaviorPacket(this, m_isBend));
                 }
             }
         }
@@ -40,7 +40,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
                 if (IsBend) {
                     m_componentFishModel.BendOrder = 2f * (2f * MathUtils.Saturate(SimplexNoise.OctavedNoise(
                         (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0),
@@ -148,3 +148,5 @@ namespace Game {
         }
     }
 }
+
+

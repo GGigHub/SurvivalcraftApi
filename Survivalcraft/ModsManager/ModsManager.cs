@@ -843,12 +843,12 @@ public static class ModsManager {
         CombineDataBase(databaseRoot, toCombineStream, string.Empty);
     }
 
-    public static void CombineDataBase(XElement databaseRoot, Stream toCombineStream, string modPackageName) {
+    public static void CombineDataBase(XElement databaseRoot, Stream toCombineStream, string ModPacketName) {
         XElement toCombineRoot = XmlUtils.LoadXmlFromStream(toCombineStream, Encoding.UTF8, true);
         XElement databaseObjects = databaseRoot.Element("DatabaseObjects");
 
         // 为新增的 EntityTemplate 添加 ModSource 参数
-        if (!string.IsNullOrEmpty(modPackageName) && databaseObjects != null) {
+        if (!string.IsNullOrEmpty(ModPacketName) && databaseObjects != null) {
             HashSet<string> existingGuids = new(
                 databaseObjects.Descendants("EntityTemplate").Attributes("Guid").Select(a => a.Value),
                 StringComparer.OrdinalIgnoreCase
@@ -864,7 +864,7 @@ public static class ModsManager {
                     if (!hasModSource) {
                         XElement parameterElement = new("Parameter");
                         parameterElement.SetAttributeValue("Name", "ModSource");
-                        parameterElement.SetAttributeValue("Value", modPackageName);
+                        parameterElement.SetAttributeValue("Value", ModPacketName);
                         parameterElement.SetAttributeValue("Type", "string");
                         entity.Add(parameterElement);
                     }
@@ -894,12 +894,12 @@ public static class ModsManager {
                     if (newAttributeName == "Value"
                         && oldElement.Attribute("Name")?.Value == "Class") {
                         if (ClassSubstitutes.TryGetValue(guid, out List<ClassSubstitute> classSubstitutes)) {
-                            classSubstitutes.Add(new ClassSubstitute(modPackageName, newAttribute.Value));
+                            classSubstitutes.Add(new ClassSubstitute(ModPacketName, newAttribute.Value));
                         }
                         else {
                             ClassSubstitutes.Add(
                                 guid,
-                                [new ClassSubstitute("survivalcraft", oldElement.Attribute("Value")!.Value), new ClassSubstitute(modPackageName, newAttribute.Value)]
+                                [new ClassSubstitute("survivalcraft", oldElement.Attribute("Value")!.Value), new ClassSubstitute(ModPacketName, newAttribute.Value)]
                             );
                         }
                     }

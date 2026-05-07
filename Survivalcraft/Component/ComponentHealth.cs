@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -162,10 +162,10 @@ namespace Game {
                     float healthBefore = Health;
                     injury.Process();
                     float injuryAmount = MathUtils.Max(healthBefore - Health, 0f);
-                    if (NetworkManager.WorkType != NetWork.WorkType.Client
+                    if (NetworkManager.WorkType != Network.WorkType.Client
                         && injuryAmount > 0f) {
-                        NetworkManager.QueuePackage(
-                            new InjureEventPackage(this, injury.Attacker, injuryAmount, injury.Cause, injury.IgnoreInvulnerability)
+                        NetworkManager.QueuePacket(
+                            new InjureEventPacket(this, injury.Attacker, injuryAmount, injury.Cause, injury.IgnoreInvulnerability)
                         );                    }
                     if (Health <= 0f) {
                         ModsManager.HookAction(
@@ -200,8 +200,8 @@ namespace Game {
                 }
             );
             CauseOfDeath = injury?.Cause;
-            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new HealthSyncPackage(this));
+            if (NetworkManager.WorkType != Network.WorkType.Client) {
+                NetworkManager.QueuePacket(new HealthSyncPacket(this));
             }
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
                 m_componentCreature.PlayerStats.AddDeathRecord(
@@ -270,9 +270,9 @@ namespace Game {
                 if (m_regenerateLifeEnabled
                     && Health > 0f
                     && Health < 1f) {
-                    if (NetworkManager.WorkType != NetWork.WorkType.Client
+                    if (NetworkManager.WorkType != Network.WorkType.Client
                         && Time.PeriodicEvent(2.0, 0.0)) {
-                        NetworkManager.QueuePackage(new HealthSyncPackage(this));
+                        NetworkManager.QueuePacket(new HealthSyncPacket(this));
                     }
                     float num = 0f;
                     if (m_componentPlayer != null) {
@@ -338,17 +338,17 @@ namespace Game {
                     bool flagMainRider = riderPlayer != null && riderPlayer.PlayerData.IsMainPlayer;
                     bool flagMainPlayer = m_componentPlayer != null && m_componentPlayer.PlayerData.IsMainPlayer;
                     bool flagNoRider = m_componentCreature.ComponentBody.ChildBodies.Count == 0;
-                    if (NetworkManager.WorkType == NetWork.WorkType.Local) {
+                    if (NetworkManager.WorkType == Network.WorkType.Local) {
                         Injure(fallDamage, null, false, cause);
                     }
-                    else if (NetworkManager.WorkType == NetWork.WorkType.Server) {
+                    else if (NetworkManager.WorkType == Network.WorkType.Server) {
                         if (flagMainPlayer || flagMainRider || flagNoRider) {
                             Injure(fallDamage, null, false, cause);
                         }
                     }
                     else if (flagMainPlayer || flagMainRider) {
-                        NetworkManager.QueuePackage(
-                            new InjureRequestPackage(this, null, fallDamage, cause, false, InjureRequestPackage.RequestInjureType.Fall)
+                        NetworkManager.QueuePacket(
+                            new InjureRequestPacket(this, null, fallDamage, cause, false, InjureRequestPacket.RequestInjureType.Fall)
                         );
                     }
                 }
@@ -527,3 +527,5 @@ namespace Game {
         }
     }
 }
+
+

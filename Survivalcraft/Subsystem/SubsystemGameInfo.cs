@@ -1,4 +1,4 @@
-using GameEntitySystem;
+﻿using GameEntitySystem;
 using TemplatesDatabase;
 
 namespace Game {
@@ -119,8 +119,8 @@ namespace Game {
                 }
             }
             //客户端禁用时间计算
-            if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
-                if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) NetWork.NetworkManager.QueuePackage(new NetWork.SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset));
+            if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
+                if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) Network.NetworkManager.QueuePacket(new Network.SubsystemTimePacket(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset));
             }
         }
     }

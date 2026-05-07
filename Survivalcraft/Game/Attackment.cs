@@ -1,6 +1,6 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Engine;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -134,8 +134,8 @@ namespace Game {
                     return false;
                 }
             );
-            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new HitValuePackage(particlePosition, particleVelocity, color, text2));
+            if (NetworkManager.WorkType != Network.WorkType.Client) {
+                NetworkManager.QueuePacket(new HitValuePacket(particlePosition, particleVelocity, color, text2));
             }
             Target?.Project.FindSubsystem<SubsystemParticles>()?.AddParticleSystem(particleSystem);
         }
@@ -269,3 +269,5 @@ namespace Game {
         }
     }
 }
+
+

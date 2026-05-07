@@ -1,4 +1,4 @@
-using Game.NetWork;
+﻿using Game.Network;
 
 namespace Game {
     public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior {
@@ -20,9 +20,9 @@ namespace Game {
                         int data2 = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
                         int num = Terrain.ReplaceData(value, data2);
                         if (num != value) {
-                            var p = new ButtonVoltagePackage(default, true, inventory.Id, slotIndex, newVoltageLevel);
-                            NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                            var p = new ButtonVoltagePacket(default, true, inventory.Id, slotIndex, newVoltageLevel);
+                            NetworkManager.QueuePacket(p);
+                            if (NetworkManager.WorkType != Network.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -44,9 +44,9 @@ namespace Game {
                         if (num != data) {
                             int face = 4;
                             var cell = new CellFace(x, y, z, face);
-                            var p = new ButtonVoltagePackage(cell, false, default, default, newVoltageLevel);
-                            NetworkManager.QueuePackage(p);
-                            if (NetworkManager.WorkType != NetWork.WorkType.Client) {
+                            var p = new ButtonVoltagePacket(cell, false, default, default, newVoltageLevel);
+                            NetworkManager.QueuePacket(p);
+                            if (NetworkManager.WorkType != Network.WorkType.Client) {
                                 p.Handle(false);
                             }
                         }
@@ -57,4 +57,6 @@ namespace Game {
         }
     }
 }
+
+
 

@@ -1,6 +1,6 @@
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using Engine;
-using Game.NetWork;
+using Game.Network;
 
 namespace Game {
     public class CrossbowWidget : CanvasWidget {
@@ -81,7 +81,7 @@ namespace Game {
                 else {
                     m_dragStartOffset = null;
                     if (draw == 15) {
-                        NetworkManager.QueuePackage(new CrossbowPullPackage(m_inventory, m_slotIndex));
+                        NetworkManager.QueuePacket(new CrossbowPullPacket(m_inventory, m_slotIndex));
                         AudioManager.PlaySound("Audio/UI/ItemMoved", 1f, 0f, 0f);
                         return;
                     }
@@ -106,3 +106,5 @@ namespace Game {
         public static int PositionToDraw(float position) => (int)Math.Clamp(MathF.Round((position - 85f) / 5.4f), 0f, 15f);
     }
 }
+
+

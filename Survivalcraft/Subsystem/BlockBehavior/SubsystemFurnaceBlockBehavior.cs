@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -66,9 +66,9 @@ namespace Game {
         }
 
         public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client && NetworkManager.MainPlayer == componentMiner.ComponentPlayer) {
-                IPackage package = new OpenInventoryByPointPackage(new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z));
-                NetworkManager.QueuePackage(package);
+            if (NetworkManager.WorkType == Network.WorkType.Client && NetworkManager.MainPlayer == componentMiner.ComponentPlayer) {
+                Packet packet = new OpenInventoryByPointPacket(new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z));
+                NetworkManager.QueuePacket(packet);
                 return true;
             }
             return base.OnInteract(raycastResult, componentMiner);
@@ -101,7 +101,7 @@ namespace Game {
         }
 
         public void Update(float dt) {
-            if (Time.PeriodicEvent(5.0, 0.0) && NetworkManager.WorkType == NetWork.WorkType.Server) {
+            if (Time.PeriodicEvent(5.0, 0.0) && NetworkManager.WorkType == Network.WorkType.Server) {
                 List<ComponentFurnace> componentFurnaces = new List<ComponentFurnace>();
                 SubsystemBlockEntities subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>();
                 foreach (var pair in subsystemBlockEntities.m_blockEntities) {
@@ -111,9 +111,11 @@ namespace Game {
                     }
                 }
                 if (componentFurnaces.Count > 0) {
-                    NetworkManager.QueuePackage(new ComponentFurnacePackage(componentFurnaces));
+                    NetworkManager.QueuePacket(new ComponentFurnacePacket(componentFurnaces));
                 }
             }
         }
     }
 }
+
+

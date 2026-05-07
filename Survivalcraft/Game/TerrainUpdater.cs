@@ -1,6 +1,6 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Engine;
-using Game.NetWork;
+using Game.Network;
 
 namespace Game {
     public class TerrainUpdater {
@@ -273,8 +273,8 @@ namespace Game {
                 value.ContentDistance = contentDistance;
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
-                if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                    NetworkManager.QueuePackage(new PlayerUpdateLocationPackage(value));
+                if (NetworkManager.WorkType == Network.WorkType.Client) {
+                    NetworkManager.QueuePacket(new PlayerUpdateLocationPacket(value));
                 }
             }
         }
@@ -393,7 +393,7 @@ namespace Game {
                 }
             }
             foreach (TerrainChunk terrainChunk in m_terrain.AllocatedChunks) {
-                if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+                if (NetworkManager.WorkType == Network.WorkType.Client) {
                     if (terrainChunk.ThreadState == TerrainChunkState.NotLoaded) {
                         if (!terrainChunk.IsRequested) {
                             terrainChunk.IsRequested = true;
@@ -411,7 +411,7 @@ namespace Game {
             }
             lock (RequestSyncChunkList) {
                 if (RequestSyncChunkList.Count > 0 && Time.PeriodicEvent(0.5, 0.0)) {
-                    NetworkManager.QueuePackage(new TerrainRequestSyncChunksPackage(RequestSyncChunkList));
+                    NetworkManager.QueuePacket(new TerrainRequestSyncChunksPacket(RequestSyncChunkList));
                     RequestSyncChunkList.Clear();
                 }
             }
@@ -444,10 +444,10 @@ namespace Game {
 
                     }
                     if (toSendList.Count > 0) {
-                        NetworkManager.QueuePackage(new TerrainSyncChunkListPackage(toSendList) { To = item.Key });
+                        NetworkManager.QueuePacket(new TerrainSyncChunkListPacket(toSendList) { To = item.Key });
                     }
                     if (result.Count > 0) {
-                        NetworkManager.QueuePackage(new TerrainReplyResultPackage(result) { To = item.Key });
+                        NetworkManager.QueuePacket(new TerrainReplyResultPacket(result) { To = item.Key });
                     }
                 }
                 foreach (var item2 in toRemove) {
@@ -728,7 +728,7 @@ namespace Game {
             switch (chunk.ThreadState) {
                 case TerrainChunkState.NotLoaded: {
                         double realTime19 = Time.RealTime;
-                        if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+                        if (NetworkManager.WorkType == Network.WorkType.Client) {
                             chunk.WasUpgraded = true;
                         }
                         else {
@@ -1419,3 +1419,5 @@ namespace Game {
         }
     }
 }
+
+

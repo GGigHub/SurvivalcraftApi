@@ -1,4 +1,4 @@
-using Game.NetWork;
+﻿using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -49,7 +49,7 @@ namespace Game {
         public double m_lastPukeSoundTime = -1000.0;
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (NetworkManager.WorkType == Network.WorkType.Client) return;
             PlayIdleSoundLogic(skipIfRecentlyPlayed);
         }
 
@@ -57,12 +57,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_idleSound) && m_subsystemTime.GameTime > m_lastSoundTime + (skipIfRecentlyPlayed ? 12f : 1f)) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_idleSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_idleSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 0, skipIfRecentlyPlayed));
+                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 0, skipIfRecentlyPlayed));
             }
         }
 
         public virtual void PlayPainSound() {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (NetworkManager.WorkType == Network.WorkType.Client) return;
             PlayPainSoundLogic();
         }
 
@@ -70,12 +70,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_painSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_painSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_painSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 1));
+                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 1));
             }
         }
 
         public virtual void PlayMoanSound() {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (NetworkManager.WorkType == Network.WorkType.Client) return;
             PlayMoanSoundLogic();
         }
 
@@ -83,12 +83,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_moanSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_moanSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_moanSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 2));
+                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 2));
             }
         }
 
         public virtual void PlaySneezeSound() {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (NetworkManager.WorkType == Network.WorkType.Client) return;
             PlaySneezeSoundLogic();
         }
 
@@ -96,12 +96,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_sneezeSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_sneezeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_sneezeSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 3));
+                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 3));
             }
         }
 
         public void PlayCoughSound() {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (NetworkManager.WorkType == Network.WorkType.Client) return;
             PlayCoughSoundLogic();
         }
 
@@ -109,12 +109,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_coughSound) && m_subsystemTime.GameTime > m_lastCoughingSoundTime + 1.0) {
                 m_lastCoughingSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_coughSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_coughSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 4));
+                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 4));
             }
         }
 
         public virtual void PlayPukeSound() {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (NetworkManager.WorkType == Network.WorkType.Client) return;
             PlayPukeSoundLogic();
         }
 
@@ -122,12 +122,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_pukeSound) && m_subsystemTime.GameTime > m_lastPukeSoundTime + 1.0) {
                 m_lastPukeSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_pukeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_pukeSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 5));
+                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 5));
             }
         }
 
         public virtual void PlayAttackSound() {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) return;
+            if (NetworkManager.WorkType == Network.WorkType.Client) return;
             PlayAttackSoundLogic();
         }
 
@@ -135,7 +135,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_attackSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_attackSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_attackSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePackage(new CreatureSoundPackage(this, 6));
+                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 6));
             }
         }
 
@@ -164,3 +164,5 @@ namespace Game {
         }
     }
 }
+
+

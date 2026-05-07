@@ -1,7 +1,7 @@
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using Engine.Graphics;
 using Engine.Input;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -114,8 +114,8 @@ public class PlayerScreen : Screen {
             m_playButton.IsVisible = false;
             m_addAnotherButton.IsVisible = false;
         }
-        m_addAnotherButton.IsVisible &= NetworkManager.WorkType == NetWork.WorkType.Local;
-        m_deleteButton.IsVisible &= NetworkManager.WorkType != NetWork.WorkType.Client;
+        m_addAnotherButton.IsVisible &= NetworkManager.WorkType == Network.WorkType.Local;
+        m_deleteButton.IsVisible &= NetworkManager.WorkType != Network.WorkType.Client;
     }
 
     public override void Leave() {
@@ -127,7 +127,7 @@ public class PlayerScreen : Screen {
         if (m_mode == Mode.Edit && GameManager.Project != null) {
             GameManager.UpdateProject();
         }
-        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.WorkType == NetWork.WorkType.Client && NetworkManager.IsNetRunning) {
+        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.WorkType == Network.WorkType.Client && NetworkManager.IsNetRunning) {
             //客户端卡在新增玩家界面两分钟自动中断连接
             NetworkManager.Stop();
         }
@@ -135,7 +135,7 @@ public class PlayerScreen : Screen {
         if (DialogsManager.Dialogs.Contains(m_fetchingPlayerDialog)) {
             if (m_playerData.SubsystemPlayers.FindPlayerData(p => p.IsMainPlayer) != null) {
                 DialogsManager.HideAllDialogs();
-                ScreensManager.SwitchScreen("Game", NetWork.WorkType.Client);
+                ScreensManager.SwitchScreen("Game", Network.WorkType.Client);
             }
             return;
         }
@@ -209,14 +209,14 @@ public class PlayerScreen : Screen {
             }
         }
         if (m_deleteButton.IsClicked) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Server) {
+            if (NetworkManager.WorkType == Network.WorkType.Server) {
                 DialogsManager.Confirm("你确定要踢出这个玩家吗", btn => {
                     var client = NetworkManager.GetClientByGUID(m_playerData.PlayerGUID);
                     if (btn == MessageDialogButton.Button1) NetworkManager.Server.RemoveClient(client);
                     else DialogsManager.HideAllDialogs();
                 });
             }
-            else if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+            else if (NetworkManager.WorkType == Network.WorkType.Client) {
                 DialogsManager.Alert("不可进行操作");
             }
             else {
@@ -230,8 +230,8 @@ public class PlayerScreen : Screen {
         }
         if (m_playButton.IsClicked && VerifyName()) {
             if (m_mode == Mode.Initial) {
-                if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                    NetworkManager.QueuePackage(new PlayerCreatePackage(m_playerData));
+                if (NetworkManager.WorkType == Network.WorkType.Client) {
+                    NetworkManager.QueuePacket(new PlayerCreatePacket(m_playerData));
                     DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
                 }
                 else {
@@ -256,7 +256,7 @@ public class PlayerScreen : Screen {
                 ScreensManager.SwitchScreen("Players", m_playerData.SubsystemPlayers);
             }
             if (m_mode == Mode.Edit) {
-                NetworkManager.QueuePackage(new PlayerModifyPackage(m_playerData));
+                NetworkManager.QueuePacket(new PlayerModifyPacket(m_playerData));
             }
         }
         m_nameWasInvalid = false;
@@ -292,3 +292,5 @@ public class PlayerScreen : Screen {
         return false;
     }
 }
+
+

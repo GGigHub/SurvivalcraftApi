@@ -1,7 +1,7 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Xml.Linq;
 using Engine;
-using Game.NetWork;
+using Game.Network;
 
 namespace Game {
     public class VitalStatsWidget : CanvasWidget {
@@ -195,15 +195,15 @@ namespace Game {
                 );
             }
             if (m_chokeButton.IsClicked) {
-                if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                    NetworkManager.QueuePackage(
-                        new InjureRequestPackage(
+                if (NetworkManager.WorkType == Network.WorkType.Client) {
+                    NetworkManager.QueuePacket(
+                        new InjureRequestPacket(
                             m_componentPlayer.ComponentHealth,
                             null,
                             0.1f,
                             LanguageControl.GetContentWidgets(fName, "Choked"),
                             true,
-                            InjureRequestPackage.RequestInjureType.Choke
+                            InjureRequestPacket.RequestInjureType.Choke
                         )
                     );
                 }
@@ -214,3 +214,5 @@ namespace Game {
         }
     }
 }
+
+

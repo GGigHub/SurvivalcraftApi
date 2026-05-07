@@ -1,6 +1,6 @@
-using Engine;
+﻿using Engine;
 using Engine.Graphics;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -187,7 +187,7 @@ namespace Game {
                 && componentMount.ComponentBody.ImmersionFactor > 0f
                 && Math.Floor(1.1000000238418579 * m_subsystemTime.GameTime)
                 != Math.Floor(1.1000000238418579 * (m_subsystemTime.GameTime - m_subsystemTime.GameTimeDelta))) {
-                NetworkManager.QueuePackage(new HumanRowBehaviorPackage(this));
+                NetworkManager.QueuePacket(new HumanRowBehaviorPacket(this));
                 m_subsystemAudio.PlayRandomSound(
                     "Audio/Rowing",
                     m_random.Float(0.4f, 0.6f),
@@ -515,3 +515,5 @@ namespace Game {
         }
     }
 }
+
+

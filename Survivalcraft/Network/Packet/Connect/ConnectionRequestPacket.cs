@@ -1,0 +1,257 @@
+﻿using System.Text;
+using Engine;
+using LiteNetLib;
+using TemplatesDatabase;
+
+namespace Game.Network;
+
+public class ConnectionRequestPacket : Packet {
+    public override byte ID => (byte)PacketType.ConnectRequest;
+    public override ClientStage MinNeedState => ClientStage.NotConnected;
+
+    const int verrifyMagic = 9421523;
+    int m_magic;
+    string m_version;
+    string m_password;
+    string m_user;
+    string m_token;
+    Guid m_tmp_token;
+    List<ModEntity> modInfos;
+    bool m_supportsModTransfer;
+    string nickname = string.Empty;
+    string communityAccountId = string.Empty;
+
+    public ConnectionRequestPacket() {
+    }
+
+    public ConnectionRequestPacket(Guid tmp_token, string serverVersion, string user, string token, string passwd, List<ModEntity> modEntities) {
+        if (passwd == null) passwd = string.Empty;
+        if (serverVersion == null) serverVersion = string.Empty;
+        m_magic = verrifyMagic;
+        m_tmp_token = tmp_token;
+        m_user = user;
+        m_token = token;
+        m_version = serverVersion;
+        m_password = passwd;
+        m_supportsModTransfer = true;
+        modInfos = [.. modEntities];
+    }
+
+    public override void Serialize(PacketSerializer archive) {
+        archive.Value(ref m_magic);
+        archive.Value(ref m_version);
+        archive.Value(ref m_password);
+        archive.Value(ref m_user);
+        archive.Value(ref m_tmp_token);
+        archive.Value(ref m_token);
+        if (archive.IsReading) {
+            m_supportsModTransfer = false;
+            archive.TryValue(ref m_supportsModTransfer);
+        }
+        else {
+            archive.Value(ref m_supportsModTransfer);
+        }
+
+        byte count = archive.IsWriting ? (byte)modInfos.Count : (byte)0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            modInfos = [];
+            for (int i = 0; i < count; i++) {
+                string resourcesMd5 = string.Empty;
+                string name = string.Empty;
+                string packageName = string.Empty;
+                string version = string.Empty;
+                archive.Value(ref resourcesMd5);
+                archive.Value(ref name);
+                archive.Value(ref packageName);
+                archive.Value(ref version);
+                modInfos.Add(new ModEntity {
+                    ResourcesMd5 = resourcesMd5,
+                    modInfo = new ModInfo {
+                        Name = name,
+                        PackageName = packageName,
+                        Version = version
+                    }
+                });
+            }
+        }
+        else {
+            for (int i = 0; i < count; i++) {
+                var mod = modInfos[i];
+                string resourcesMd5 = mod.ResourcesMd5;
+                string name = mod.modInfo.Name;
+                string packageName = mod.modInfo.PackageName;
+                string version = mod.modInfo.Version;
+                archive.Value(ref resourcesMd5);
+                archive.Value(ref name);
+                archive.Value(ref packageName);
+                archive.Value(ref version);
+            }
+        }
+    }
+
+    public override void Handle(bool isServer) {
+        StringBuilder connectionError = new StringBuilder();
+        if (string.IsNullOrEmpty(m_token)) {
+            NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket("Invalid identity token."), From.Request, true);
+            return;
+        }
+        nickname = FindPlayerNameByGUID(m_token);
+        AcceptAclient(m_token, connectionError);
+    }
+
+    private string FindPlayerNameByGUID(string m_token) {
+        if (!Guid.TryParse(m_token, out var playerGuid)) {
+            return "";
+        }
+        SubsystemGameInfo subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
+        if (subsystemGameInfo != null) {
+            string entityFileDir = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "PlayerEntities/");
+            string entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.json");
+            if (Storage.FileExists(entityFilePath)) {
+                return LoadPlayerNameFromFile(entityFilePath, isJson: true);
+            }
+            entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.dat");
+            if (Storage.FileExists(entityFilePath)) {
+                return LoadPlayerNameFromFile(entityFilePath, isJson: false);
+            }
+        }
+
+        return "";
+    }
+
+    private string LoadPlayerNameFromFile(string filePath, bool isJson) {
+        using (Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read)) {
+            ValuesDictionary dict = new ValuesDictionary();
+            if (isJson) {
+                using (StreamReader reader = new StreamReader(stream)) {
+                    string jsonText = reader.ReadToEnd();
+                    dict.ApplyOverridesUseJson(jsonText, out var _);
+                }
+            }
+            else {
+                byte[] data2 = new byte[stream.Length];
+                stream.Read(data2, 0, data2.Length);
+                dict.ApplyOverridesUseMessagePack(data2);
+            }
+            ValuesDictionary playerDataDict = dict.GetValue<ValuesDictionary>("Data");
+            if (playerDataDict != null) {
+                string playerName = playerDataDict.GetValue("Name", "");
+                if (!string.IsNullOrEmpty(playerName)) {
+                    return playerName;
+                }
+            }
+        }
+
+        return "";
+    }
+
+    public void AcceptAclient(string token, StringBuilder connectionError, bool useExternalPassword = false, string saveKey = "") {
+        Guid guid = Guid.Empty;
+        if (!string.IsNullOrEmpty(token)) {
+            guid = new Guid(token);
+        }
+        var pwd2 = GameManager.Project.FindSubsystem<SubsystemGameInfo>().WorldSettings.Password;
+        var mList = ModsManager.ModList;
+        var serverMods = mList.Where(m => m.modInfo.PackageName != "survivalcraft" && m.modInfo.PackageName != "com.fastdebug").ToList();
+        var clientMods = modInfos.Where(m => m.modInfo.PackageName != "survivalcraft" && m.modInfo.PackageName != "com.fastdebug").ToList();
+
+        var clientMd5s = NormalizeMd5List(clientMods.Select(x => x.ResourcesMd5));
+        clientMd5s.Sort(StringComparer.OrdinalIgnoreCase);
+
+        var serverMd5s = NormalizeMd5List(serverMods.Select(x => x.ResourcesMd5));
+        serverMd5s.Sort(StringComparer.OrdinalIgnoreCase);
+
+        bool modsMismatch = serverMd5s.Count != clientMd5s.Count || !serverMd5s.SequenceEqual(clientMd5s, StringComparer.OrdinalIgnoreCase);
+
+        if (m_magic == verrifyMagic) {
+            if (NetworkManager.Self.PlayerGuid == guid) {
+                connectionError.AppendLine("Client token matches server token.");
+            }
+            else if (NetworkManager.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null) {
+                connectionError.AppendLine("Client token conflicts with an online player.");
+            }
+            else if (!string.IsNullOrEmpty(pwd2)) {
+                if (!useExternalPassword && m_password != pwd2) {
+                    connectionError.AppendLine("Password verification failed.");
+                }
+            }
+            else if (string.IsNullOrEmpty(token)) {
+                connectionError.AppendLine("Identity verification failed.");
+            }
+
+            if (connectionError.Length > 0) {
+                if (ModsManager.Configs.ContainsKey(saveKey)) {
+                    ModsManager.Configs.Remove(saveKey);
+                }
+                NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket(connectionError.ToString()), From.Request, true);
+                Log.Information("Received connection request from " + From.IPPoint + ", rejected -- " + connectionError);
+            }
+            else {
+                if (modsMismatch) {
+                    if (!m_supportsModTransfer) {
+                        NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket("Mod mismatch and client does not support automatic mod transfer."), From?.Request, true);
+                        return;
+                    }
+
+                    try {
+                        var acceptedLiteNetPeer = From?.Request?.Accept();
+                        if (acceptedLiteNetPeer == null) {
+                            NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket("Mod mismatch and connection could not be established."), From?.Request, true);
+                            return;
+                        }
+                    }
+                    catch (Exception e) {
+                        NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket($"Mod transfer initialization failed: {e.Message}"), From?.Request, true);
+                    }
+                    return;
+                }
+
+                var acceptedPeer = From.Request.Accept();
+                Client addClient = NetworkManager.CreateClient((NetPeer)(object)acceptedPeer, m_tmp_token, guid, communityAccountId, nickname);
+                NetworkManager.Server.AddClient(addClient);
+                NetworkManager.QueuePacket(new ClientSyncListPacket(NetworkManager.Server.Clients.Values) { To = addClient });
+
+                var clientPacket = new ClientAddPacket(addClient.ID, addClient.TokenId, addClient.PlayerGuid, addClient.Nickname);
+                foreach (var c in NetworkManager.Peers) {
+                    if (c.ID == addClient.ID) continue;
+                    NetworkManager.Server.SendWriterFromPacket(clientPacket, c.Peer, true);
+                }
+                Log.Information("Received connection request from " + From.IPPoint + ", accepted");
+                NetworkManager.Server.HandleDeliveryEvent(null, null);
+            }
+        }
+        else {
+            NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket("Unrecognized packet header."), From.Request, true);
+            Log.Information("Unrecognized packet header.");
+        }
+    }
+
+    private static List<string> NormalizeMd5List(IEnumerable<string> md5s) {
+        var sb = new StringBuilder();
+        foreach (var s in md5s) {
+            if (string.IsNullOrEmpty(s)) continue;
+            sb.Append(s.Trim());
+        }
+        var concat = sb.ToString();
+        var result = new List<string>();
+        for (int i = 0; i + 32 <= concat.Length; i += 32) {
+            var chunk = concat.Substring(i, 32).ToLowerInvariant();
+            if (IsHex32(chunk)) {
+                result.Add(chunk);
+            }
+        }
+        return result;
+    }
+
+    private static bool IsHex32(string s) {
+        if (s == null || s.Length != 32) return false;
+        for (int i = 0; i < s.Length; i++) {
+            char c = s[i];
+            bool isHex = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+            if (!isHex) return false;
+        }
+        return true;
+    }
+}
+

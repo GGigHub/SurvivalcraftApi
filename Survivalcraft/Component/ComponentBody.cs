@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -418,7 +418,7 @@ namespace Game {
             if (skipVanilla_) {
                 return;
             }
-            if (NetworkManager.WorkType == NetWork.WorkType.Client || NetworkManager.WorkType == NetWork.WorkType.Server) {
+            if (NetworkManager.WorkType == Network.WorkType.Client || NetworkManager.WorkType == Network.WorkType.Server) {
                 ComponentPlayer componentPlayer = Entity.FindComponent<ComponentPlayer>();
                 bool isMainPlayer = componentPlayer?.PlayerData?.IsMainPlayer == true;
                 bool hasChildPlayer = false;
@@ -434,7 +434,7 @@ namespace Game {
                     }
                 }
 
-                bool shouldApplyNetworkState = NetworkManager.WorkType == NetWork.WorkType.Client
+                bool shouldApplyNetworkState = NetworkManager.WorkType == Network.WorkType.Client
                     ? (componentPlayer != null && !isMainPlayer && componentPlayer.ComponentBody.ParentBody == null)
                         || (componentPlayer == null && !hasChildPlayer)
                         || hasNonMainChildPlayer
@@ -1541,3 +1541,5 @@ namespace Game {
         }
     }
 }
+
+

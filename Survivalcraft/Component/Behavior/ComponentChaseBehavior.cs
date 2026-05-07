@@ -1,5 +1,5 @@
-using Engine;
-using Game.NetWork;
+﻿using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -152,7 +152,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
                 m_componentCreatureModel.AttackOrder = IsAttack;
                 return;
             }
@@ -565,7 +565,7 @@ namespace Game {
             set {
                 if (m_isAttack != value) {
                     m_isAttack = value;
-                    if (NetworkManager.WorkType != NetWork.WorkType.Client) NetworkManager.QueuePackage(new ChaseBehaviorPackage(this, value));
+                    if (NetworkManager.WorkType != Network.WorkType.Client) NetworkManager.QueuePacket(new ChaseBehaviorPacket(this, value));
                 }
             }
         }
@@ -589,3 +589,5 @@ namespace Game {
         }
     }
 }
+
+

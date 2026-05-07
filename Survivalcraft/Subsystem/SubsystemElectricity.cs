@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Engine;
@@ -401,7 +401,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (NetWork.NetworkManager.WorkType == NetWork.WorkType.Client) {
+            if (Network.NetworkManager.WorkType == Network.WorkType.Client) {
                 m_remainingSimulationTime = MathUtils.Min(m_remainingSimulationTime + dt, 0.1f);
                 FrameStartCircuitStep = CircuitStep;
                 while (m_remainingSimulationTime >= 0.01f) {
@@ -448,7 +448,7 @@ namespace Game {
                     netSimulate.SaveData.Add(entry.Key, entry.Value);
                 }
                 list.Add(netSimulate);
-                NetWork.NetworkManager.QueuePackage(new NetWork.SubsystemElectricityPackage(list));
+                Network.NetworkManager.QueuePacket(new Network.SubsystemElectricityPacket(list));
                 list.Clear();
             }
             while (m_remainingSimulationTime >= 0.01f) {
@@ -801,3 +801,4 @@ namespace Game {
         public void DebugDraw() { }
     }
 }
+

@@ -1,7 +1,7 @@
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
-using Game.NetWork;
+using Game.Network;
 using GameEntitySystem;
 
 namespace Game {
@@ -558,9 +558,9 @@ namespace Game {
             int slotCount = sourceInventory.GetSlotCount(sourceSlotIndex);
             int slotCount2 = targetInventory.GetSlotCount(targetSlotIndex);
 
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                IPackage package = new MoveItemPackage(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count);
-                NetworkManager.QueuePackage(package);
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
+                Packet packet = new MoveItemPacket(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count);
+                NetworkManager.QueuePacket(packet);
             }
             if (slotCount2 == 0
                 || slotValue == slotValue2) {
@@ -590,8 +590,8 @@ namespace Game {
 
             dragCount = CalculateSplitCount(dragCount, dragMode);
 
-            if (NetworkManager.WorkType == NetWork.WorkType.Client) {
-                NetworkManager.QueuePackage(new DragDropItemPackage(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly));
+            if (NetworkManager.WorkType == Network.WorkType.Client) {
+                NetworkManager.QueuePacket(new DragDropItemPacket(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly));
             }
 
             bool flag = false;
@@ -678,3 +678,5 @@ namespace Game {
         }
     }
 }
+
+
