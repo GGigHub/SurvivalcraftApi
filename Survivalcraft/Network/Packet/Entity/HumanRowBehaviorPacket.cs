@@ -21,7 +21,7 @@ public class HumanRowBehaviorPacket : Packet {
         archive.Value(ref m_rowRight);
     }
     public override void Handle(bool isServer) {
-        BehaviorHelpers.WithEntity(m_entityId, entity => {
+        GameManager.Project.FindEntity(m_entityId, entity => {
             ComponentHumanModel humanModel = entity.FindComponent<ComponentHumanModel>();
             if (humanModel != null) {
                 humanModel.hasData = true;
@@ -29,7 +29,10 @@ public class HumanRowBehaviorPacket : Packet {
                 humanModel.m_rowRight = m_rowRight;
                 Random random = new();
                 GameManager.Project.FindSubsystem<SubsystemAudio>().PlayRandomSound("Audio/Rowing", random.Float(0.4f, 0.6f), random.Float(-0.3f, 0.2f), humanModel.m_componentCreature.ComponentBody.Position, 3f, autoDelay: true);
-                BehaviorHelpers.BroadcastFromServer(this, isServer);
+                if (isServer) {
+                    Except = From;
+                    NetworkManager.QueuePacket(this);
+                }
             }
         });
     }

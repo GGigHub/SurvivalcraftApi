@@ -14,14 +14,14 @@ public class PlayerAimPacket : PlayerPacketBase {
         m_netAimRay = player.aimEvent.NetAim;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
         archive.Enum(ref m_aimEvent);
         archive.Value(ref m_netAimRay);
     }
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
         playerData.ComponentPlayer.AddAimEvent(m_aimEvent, m_netAimRay);
-        PlayerHelpers.QueuePlayerPacket(this, isServer);
+        QueuePlayerPacket(this, isServer);
     }
 }
 

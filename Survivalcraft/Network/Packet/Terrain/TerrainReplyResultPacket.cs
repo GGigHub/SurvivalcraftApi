@@ -2,7 +2,7 @@ using Engine;
 
 namespace Game.Network;
 
-public class TerrainReplyResultPacket : Packet {
+public class TerrainReplyResultPacket : TerrainPacketBase {
     public override byte ID => (byte)PacketType.TerrainReplyResult;
     public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public List<Point2> RelateChunks = [];
@@ -14,7 +14,7 @@ public class TerrainReplyResultPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        TerrainHelpers.SerializePoint2List(archive, ref RelateChunks, useUShort: true);
+        SerializePoint2List(archive, ref RelateChunks, useUShort: true);
     }
 
     public override void Handle(bool isServer) {

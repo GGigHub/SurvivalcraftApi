@@ -2,7 +2,7 @@ using Engine;
 
 namespace Game.Network;
 
-public class ClientRemovePacket : Packet {
+public class ClientRemovePacket : ClientPacketBase {
     public override byte ID => (byte)PacketType.ClientRemove;
     public override ClientStage MinNeedState => ClientStage.NotConnected;
     public byte m_clientId;
@@ -14,7 +14,7 @@ public class ClientRemovePacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        ClientHelper.SerializeClientId(archive, ref m_clientId);
+        SerializeClientId(archive, ref m_clientId);
     }
 
     public override void Handle(bool isServer) {

@@ -2,7 +2,7 @@ using GameEntitySystem;
 
 namespace Game.Network;
 
-public class MemoryBankDataPacket : Packet {
+public class MemoryBankDataPacket : EditableBlockPacketBase {
     public override byte ID => (byte)PacketType.EditableMemoryBank;
     public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     private bool m_syncItem;
@@ -32,10 +32,10 @@ public class MemoryBankDataPacket : Packet {
             archive.Value(ref m_slotIndex);
         }
         else {
-            EditableBlockHelpers.SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
-            EditableBlockHelpers.SerializeOptionalId(archive, ref m_id);
+            SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
+            SerializeOptionalId(archive, ref m_id);
         }
-        EditableBlockHelpers.SerializeByteArray(archive, ref m_data);
+        SerializeByteArray(archive, ref m_data);
     }
     public override void Handle(bool isServer) {
         SubsystemMemoryBankBlockBehavior behavior = GameManager.Project.FindSubsystem<SubsystemMemoryBankBlockBehavior>();
@@ -48,7 +48,7 @@ public class MemoryBankDataPacket : Packet {
             GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
                 if (!m_id.HasValue) {
                     m_id = behavior.StoreItemDataAtUniqueId(data);
-                    EditableBlockHelpers.ReplaceDataAtSlot(inventory, m_slotIndex, _ => m_id.Value);
+                    ReplaceDataAtSlot(inventory, m_slotIndex, _ => m_id.Value);
                 }
                 else {
                     behavior.m_itemsData[m_id.Value] = data;

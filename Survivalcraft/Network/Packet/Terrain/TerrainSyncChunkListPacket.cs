@@ -2,7 +2,7 @@ using Engine;
 
 namespace Game.Network;
 
-public class TerrainSyncChunkListPacket : Packet {
+public class TerrainSyncChunkListPacket : TerrainPacketBase {
     public override byte ID => (byte)PacketType.TerrainSyncChunkList;
     public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public List<TerrainChunk> Chunks = [];
@@ -14,7 +14,7 @@ public class TerrainSyncChunkListPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        TerrainHelpers.SerializeChunkList(archive, ref Chunks);
+        SerializeChunkList(archive, ref Chunks);
     }
 
     public override void Handle(bool isServer) {
@@ -23,7 +23,7 @@ public class TerrainSyncChunkListPacket : Packet {
         }
         SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
         foreach (TerrainChunk chunk in Chunks) {
-            TerrainHelpers.ApplyOneChunk(subsystemTerrain, chunk);
+            ApplyOneChunk(subsystemTerrain, chunk);
         }
     }
 }

@@ -2,7 +2,7 @@ using Engine;
 
 namespace Game.Network;
 
-public class ReplySkinPacket : Packet {
+public class ReplySkinPacket : SkinPacketBase {
     public override byte ID => (byte)PacketType.ClothingReplySkin;
     public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public string SkinName;
@@ -11,16 +11,16 @@ public class ReplySkinPacket : Packet {
     public ReplySkinPacket() { }
     public ReplySkinPacket(string skinName) {
         SkinName = skinName;
-        m_skinData = ClothingHelpers.LoadSkinData(skinName);
+        m_skinData = LoadSkinData(skinName);
     }
 
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref SkinName);
-        ClothingHelpers.SerializeSkinData(archive, ref m_skinData);
+        SerializeSkinData(archive, ref m_skinData);
     }
 
     public override void Handle(bool isServer) {
-        ClothingHelpers.SaveSkin(SkinName, m_skinData);
+        SaveSkin(SkinName, m_skinData);
     }
 }
 

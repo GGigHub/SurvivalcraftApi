@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using Engine;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -17,7 +17,7 @@ public abstract class Packet {
 }
 
 public enum PacketType : byte {
-    ServerInfo, ConnectRequest, ConnectReject,
+    ConnectRequest, ConnectReject,
     Project, Time, Sky,
     Weather, Electricity, Mount,
     Sickness, Flu, Furnace, Projectile,

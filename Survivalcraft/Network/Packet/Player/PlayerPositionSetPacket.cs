@@ -14,7 +14,7 @@ public class PlayerPositionSetPacket : PlayerPacketBase {
         Velocity = player.ComponentBody.Velocity;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
         archive.Value(ref Position);
         archive.Value(ref Velocity);
     }

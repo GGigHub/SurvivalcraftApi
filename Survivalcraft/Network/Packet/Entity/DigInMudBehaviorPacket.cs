@@ -19,7 +19,7 @@ public class DigInMudBehaviorPacket : Packet {
     }
     public override void Handle(bool isServer) {
         if (isServer) return;
-        BehaviorHelpers.WithEntity(m_entityId, entity => {
+        GameManager.Project.FindEntity(m_entityId, entity => {
             ComponentDigInMudBehavior behavior = entity.FindComponent<ComponentDigInMudBehavior>();
             if (behavior != null) {
                 behavior.IsDigIn = m_isDigIn;

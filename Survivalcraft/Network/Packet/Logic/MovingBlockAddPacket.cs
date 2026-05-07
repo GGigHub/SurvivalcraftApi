@@ -46,7 +46,7 @@ public class MovingBlockAddPacket : Packet {
         archive.Value(ref m_addDrag);
         archive.Value(ref m_addSmoothness);
         archive.Value(ref m_addId);
-        MovingBlockHelpers.SerializeBlockList(archive, m_addBlocks);
+        SerializeBlockList(archive, m_addBlocks);
     }
 
     public override void Handle(bool isServer) {
@@ -64,6 +64,30 @@ public class MovingBlockAddPacket : Packet {
         var movingSet = subsystemMovingBlocks.AddMovingBlockSet(m_addPosition, m_addTargetPosition, m_addSpeed, m_addAcceleration, m_addDrag, m_addSmoothness, blocks, m_addId, null, false) as SubsystemMovingBlocks.MovingBlockSet;
         if (movingSet != null && movingSet.Id == SubsystemPistonBlockBehavior.IdString) {
             GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Piston", 1f, 0f, movingSet.Position, 2f, autoDelay: true);
+        }
+    }
+
+    public static void SerializeBlockList(PacketSerializer archive, List<MovingBlockAddPacket.MovingBlockData> blocks) {
+        int count = archive.IsWriting ? blocks.Count : 0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            blocks.Clear();
+            if (count < 0) {
+                throw new InvalidDataException($"MovingBlockPacket contains invalid block count: {count}");
+            }
+            for (int i = 0; i < count; i++) {
+                MovingBlockAddPacket.MovingBlockData data = new();
+                archive.Value(ref data.Offset);
+                archive.Value(ref data.Value);
+                blocks.Add(data);
+            }
+        }
+        else {
+            for (int i = 0; i < count; i++) {
+                MovingBlockAddPacket.MovingBlockData data = blocks[i];
+                archive.Value(ref data.Offset);
+                archive.Value(ref data.Value);
+            }
         }
     }
 }

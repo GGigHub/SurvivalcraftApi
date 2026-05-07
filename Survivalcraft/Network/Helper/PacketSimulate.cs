@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -45,24 +45,22 @@ public class NetRotation : NetworkSimulate<Quaternion> {
     }
 }
 
-public class NetPosition {
-    protected Vector3 Base;
-    protected Vector3 Next;
+public class NetPosition : NetworkSimulate<Vector3> {
     private float ElapsedTime;
 
-    public NetPosition(Vector3 v) {
+    public NetPosition(Vector3 v) : base(v) {
         Base = v;
         Next = v;
         ElapsedTime = 0;
     }
 
-    public void SetNext(Vector3 v) {
+    public override void SetNext(Vector3 v) {
         Base = Next;
         Next = v;
         ElapsedTime = 0;
     }
 
-    public Vector3 Get(float dt) {
+    public override Vector3 Get(float dt) {
         ElapsedTime += dt * 8;
         if (ElapsedTime >= 1f) return Next;
         return Vector3.Lerp(Base, Next, ElapsedTime);

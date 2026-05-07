@@ -1,8 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
 using Engine;
 
 namespace Game.Network;
 
-public static class ClothingHelpers {
+public abstract class SkinPacketBase : Packet {
     public static byte[] LoadSkinData(string skinName) {
         if (!CharacterSkinsManager.HasSkinRes(skinName)) {
             return null;
@@ -28,4 +31,3 @@ public static class ClothingHelpers {
         CharacterSkinsManager.SaveSkinToFile(skinName, skinData);
     }
 }
-

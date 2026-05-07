@@ -19,7 +19,7 @@ public class RandomPeckBehaviorPacket : Packet {
     }
     public override void Handle(bool isServer) {
         if (isServer) return;
-        BehaviorHelpers.WithEntity(m_entityId, entity => {
+        GameManager.Project.FindEntity(m_entityId, entity => {
             ComponentRandomPeckBehavior behavior = entity.FindComponent<ComponentRandomPeckBehavior>();
             if (behavior != null) {
                 behavior.IsFeed = m_isFeed;

@@ -4,14 +4,11 @@
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-      <Compile Include="Network\Packet\Helper\BehaviorHelpers.cs" />
-      <Compile Include="Network\Packet\Helper\ClientHelper.cs" />
-      <Compile Include="Network\Packet\Helper\ClothingHelpers.cs" />
-      <Compile Include="Network\Packet\Helper\EditableBlockHelpers.cs" />
-      <Compile Include="Network\Packet\Helper\InventoryHelper.cs" />
-      <Compile Include="Network\Packet\Helper\MovingBlockHelpers.cs" />
-      <Compile Include="Network\Packet\Helper\PlayerHelpers.cs" />
-      <Compile Include="Network\Packet\Helper\TerrainHelpers.cs" />
+      <Compile Include="Network\Packet\Base\ClientPacketBase.cs" />
+      <Compile Include="Network\Packet\Base\SkinPacketBase.cs" />
+      <Compile Include="Network\Packet\Base\EditableBlockPacketBase.cs" />
+      <Compile Include="Network\Packet\Base\PlayerPacketBase.cs" />
+      <Compile Include="Network\Packet\Base\TerrainPacketBase.cs" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />

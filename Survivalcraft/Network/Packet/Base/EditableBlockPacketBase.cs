@@ -1,8 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
 using GameEntitySystem;
+using Engine;
 
 namespace Game.Network;
 
-public static class EditableBlockHelpers {
+public abstract class EditableBlockPacketBase : Packet {
     public static void SerializeEditableTarget(PacketSerializer archive, ref bool editAsItem, ref int inventoryId, ref int slotIndex, ref CellFace cellFace) {
         archive.Value(ref editAsItem);
         if (editAsItem) {
@@ -48,4 +52,3 @@ public static class EditableBlockHelpers {
         return newValue;
     }
 }
-

@@ -2,7 +2,7 @@ using Engine;
 
 namespace Game.Network;
 
-public class ClientAddPacket : Packet {
+public class ClientAddPacket : ClientPacketBase{
     public override byte ID => (byte)PacketType.ClientAdd;
     public override ClientStage MinNeedState => ClientStage.NotConnected;
     public Client m_client;
@@ -14,7 +14,7 @@ public class ClientAddPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        ClientHelper.SerializeClient(archive, To, ref m_client);
+        SerializeClient(archive, To, ref m_client);
     }
 
     public override void Handle(bool isServer) {

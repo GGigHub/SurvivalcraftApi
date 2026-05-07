@@ -2,7 +2,7 @@ using GameEntitySystem;
 
 namespace Game.Network;
 
-public class SwitchVoltagePacket : Packet {
+public class SwitchVoltagePacket : EditableBlockPacketBase {
     public override byte ID => (byte)PacketType.EditableSwitch;
     public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     private bool m_editAsItem;
@@ -19,13 +19,13 @@ public class SwitchVoltagePacket : Packet {
         m_voltage = voltage;
     }
     public override void Serialize(PacketSerializer archive) {
-        EditableBlockHelpers.SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
+        SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
         archive.Value(ref m_voltage);
     }
     public override void Handle(bool isServer) {
         if (m_editAsItem) {
             GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
-                EditableBlockHelpers.ReplaceDataAtSlot(inventory, m_slotIndex, d => SwitchBlock.SetVoltageLevel(d, m_voltage));
+                ReplaceDataAtSlot(inventory, m_slotIndex, d => SwitchBlock.SetVoltageLevel(d, m_voltage));
             });
         }
         else {

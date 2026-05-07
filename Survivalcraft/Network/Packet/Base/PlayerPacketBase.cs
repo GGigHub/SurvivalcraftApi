@@ -1,5 +1,6 @@
-using Engine;
-using TemplatesDatabase;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Game.Network;
 
@@ -7,17 +8,6 @@ public abstract class PlayerPacketBase : Packet {
     public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public byte m_fromPlayerId;
 
-    protected void SerializePlayerId(PacketSerializer archive, PlayerData playerData) {
-        PlayerPacketHelpers.SerializeFromPlayerId(archive, ref m_fromPlayerId, playerData);
-    }
-
-    protected bool TryResolvePlayer(bool isServer, out PlayerData playerData) {
-        return PlayerPacketHelpers.TryResolvePlayer(m_fromPlayerId, isServer, From, out playerData);
-    }
-}
-
-
-public static class PlayerHelpers {
     public enum ChangeFlag : byte {
         None = 0,
         ParentBodyChange = 1,
@@ -42,13 +32,6 @@ public static class PlayerHelpers {
         return playerData != null && from != null && playerData.ClientId == from.ID;
     }
 
-    public static void SerializeFromPlayerId(PacketSerializer archive, ref byte fromPlayerId, PlayerData playerData) {
-        if (archive.IsWriting && playerData != null) {
-            fromPlayerId = playerData?.ClientId ?? 0;
-        }
-        archive.Value(ref fromPlayerId);
-    }
-
     public static bool ThrottleHit(PlayerData playerData) {
         if (playerData == null) {
             return false;
@@ -69,12 +52,20 @@ public static class PlayerHelpers {
         }
     }
 
-    public static bool TryResolvePlayer(byte fromPlayerId, bool isServer, Client from, out PlayerData playerData) {
-        playerData = ResolvePlayer(fromPlayerId);
-        if (isServer && !ValidateServerSender(playerData, from)) {
+    protected void SerializePlayerId(PacketSerializer archive, PlayerData playerData) {
+        if (archive.IsWriting && playerData != null) {
+            m_fromPlayerId = playerData?.ClientId ?? 0;
+        }
+        archive.Value(ref m_fromPlayerId);
+    }
+
+    protected bool TryResolvePlayer(bool isServer, out PlayerData playerData) {
+        playerData = ResolvePlayer(m_fromPlayerId);
+        if (isServer && !ValidateServerSender(playerData, From)) {
             return false;
         }
         return playerData != null;
     }
 }
+
 

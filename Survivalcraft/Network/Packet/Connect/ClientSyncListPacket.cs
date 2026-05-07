@@ -2,7 +2,7 @@ using Engine;
 
 namespace Game.Network;
 
-public class ClientSyncListPacket : Packet {
+public class ClientSyncListPacket : ClientPacketBase {
     public override byte ID => (byte)PacketType.ClientSyncList;
     public override ClientStage MinNeedState => ClientStage.NotConnected;
     public List<Client> m_list = [];
@@ -20,14 +20,14 @@ public class ClientSyncListPacket : Packet {
             m_list = [];
             for (int i = 0; i < count; i++) {
                 Client client = null;
-                ClientPacketSerialization.SerializeClient(archive, To, ref client);
+                SerializeClient(archive, To, ref client);
                 m_list.Add(client);
             }
         }
         else {
             for (int i = 0; i < count; i++) {
                 Client client = m_list[i];
-                ClientPacketSerialization.SerializeClient(archive, To, ref client);
+                SerializeClient(archive, To, ref client);
             }
         }
     }

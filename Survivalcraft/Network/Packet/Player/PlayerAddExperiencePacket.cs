@@ -16,7 +16,7 @@ public class PlayerAddExperiencePacket : PlayerPacketBase {
         m_level = level;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? PlayerHelpers.ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
         archive.Value(ref m_count);
         archive.Value(ref m_playSound);
         archive.Value(ref m_level);

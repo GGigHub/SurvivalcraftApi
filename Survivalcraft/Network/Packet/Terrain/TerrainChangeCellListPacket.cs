@@ -2,7 +2,15 @@ using Engine;
 
 namespace Game.Network;
 
-public class TerrainChangeCellListPacket : Packet {
+public struct CellChange {
+    public int X;
+    public int Y;
+    public int Z;
+    public int Value;
+}
+
+
+public class TerrainChangeCellListPacket : TerrainPacketBase {
     public override byte ID => (byte)PacketType.TerrainChangeCellList;
     public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
     public List<CellChange> cellChanges = [];
@@ -14,7 +22,7 @@ public class TerrainChangeCellListPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        TerrainHelpers.SerializeCellChangeList(archive, ref cellChanges);
+        SerializeCellChangeList(archive, ref cellChanges);
     }
 
     public override void Handle(bool isServer) {

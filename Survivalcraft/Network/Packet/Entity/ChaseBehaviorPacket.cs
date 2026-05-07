@@ -22,7 +22,7 @@ public class ChaseBehaviorPacket : Packet {
         if (isServer) {
             return;
         }
-        BehaviorHelpers.WithEntity(m_entityId, entity => {
+        GameManager.Project.FindEntity(m_entityId, entity => {
             ComponentChaseBehavior behavior = entity.FindComponent<ComponentChaseBehavior>();
             if (behavior != null) {
                 behavior.IsAttack = m_isAttack;

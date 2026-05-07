@@ -2,7 +2,7 @@ using Engine;
 
 namespace Game.Network;
 
-public class ClientStateChangePacket : Packet {
+public class ClientStateChangePacket : ClientPacketBase {
     public override byte ID => (byte)PacketType.ClientStateChange;
     public override ClientStage MinNeedState => ClientStage.NotConnected;
     public byte m_clientId;
@@ -16,7 +16,7 @@ public class ClientStateChangePacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        ClientHelper.SerializeClientId(archive, ref m_clientId);
+        SerializeClientId(archive, ref m_clientId);
         archive.Enum(ref m_state);
     }
 

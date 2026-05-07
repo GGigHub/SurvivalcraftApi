@@ -19,7 +19,7 @@ public class FishOutOfWaterBehaviorPacket : Packet {
     }
     public override void Handle(bool isServer) {
         if (isServer) return;
-        BehaviorHelpers.WithEntity(m_entityId, entity => {
+        GameManager.Project.FindEntity(m_entityId, entity => {
             ComponentFishOutOfWaterBehavior behavior = entity.FindComponent<ComponentFishOutOfWaterBehavior>();
             if (behavior != null) {
                 behavior.IsBend = m_isBend;
