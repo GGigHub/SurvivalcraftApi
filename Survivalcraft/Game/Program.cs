@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Globalization;
 using Engine;
 using Engine.Graphics;
+using Game.NetWork;
 
 #if BROWSER
 [assembly: SupportedOSPlatform("browser")]
@@ -45,7 +46,7 @@ namespace Game {
 #if !ANDROID
         // ReSharper disable UnusedMember.Local
 #if BROWSER
-        //浏览器运行最小测�?
+        //娴忚鍣ㄨ繍琛屾渶灏忔祴璇?
         public static async Task Main2(string[] args) {
             Display.Initialize();
             BrowserInterop.Initialize(InputBridge.Initialize());
@@ -90,10 +91,10 @@ namespace Game {
                                 string fileName = Storage.GetFileName(path);
                                 try {
                                     ExternalContentManager.ImportExternalContentSync(fileStream, type, fileName);
-                                    Window.MessageBox(IntPtr.Zero, $"Successfully imported {fileName}.\n导入 {fileName} 成功", "Success 成功", 0x40u);
+                                    Window.MessageBox(IntPtr.Zero, $"Successfully imported {fileName}.\n瀵煎叆 {fileName} 鎴愬姛", "Success 鎴愬姛", 0x40u);
                                 }
                                 catch (Exception e) {
-                                    Window.MessageBox(IntPtr.Zero, $"Failed to import {fileName}, reason:\n导入 {fileName} 失败，原因：\n{e}", null, 0x10u);
+                                    Window.MessageBox(IntPtr.Zero, $"Failed to import {fileName}, reason:\n瀵煎叆 {fileName} 澶辫触锛屽師鍥狅細\n{e}", null, 0x10u);
                                 }
                             }
                         }
@@ -151,7 +152,7 @@ namespace Game {
             if (!m_mutexHandled) {
 
                 string str =
-                    "This game is already running! If you cannot find the window, please stop it from the Task Manager, and check the log file in Bugs directory.\n��Ϸ�Ѿ������У�����Ҳ�����Ϸ���ڣ���������������ֹ��������� Bugs Ŀ¼�е���־�ļ���";
+                    "This game is already running! If you cannot find the window, please stop it from the Task Manager, and check the log file in Bugs directory.\n游戏已经在运行！如果找不到游戏窗口，请从任务管理器终止它，并检查 Bugs 目录中的日志文件。";
                 Window.MessageBox(IntPtr.Zero, str, null, 0x10u);
                 return;
             }
@@ -169,7 +170,7 @@ namespace Game {
             m_mutex.Dispose();
 #endif
             /*AppDomain.CurrentDomain.AssemblyResolve += (_, e) => {
-                //在程序目录下面寻找dll,解决部分设备找不到目录下程序集的问题
+                //鍦ㄧ▼搴忕洰褰曚笅闈㈠鎵綿ll,瑙ｅ喅閮ㄥ垎璁惧鎵句笉鍒扮洰褰曚笅绋嬪簭闆嗙殑闂
                 string location = new FileInfo(typeof(Program).Assembly.Location).Directory!.FullName;
                 return Assembly.LoadFrom(Path.Combine(location, e.Name));
             };*/
@@ -199,7 +200,7 @@ namespace Game {
             if (string.IsNullOrEmpty(SystemLanguage)) {
                 SystemLanguage = RegionInfo.CurrentRegion.DisplayName != "United States" ? "zh-CN" : "en-US";
             }
-            //预加�?
+            //棰勫姞杞?
             Storage.Initialize();
             VersionsManager.Initialize();
             Window.HandleUri += HandleUriHandler;
@@ -283,6 +284,7 @@ namespace Game {
 #if !IOS && !BROWSER
                     JsInterface.Update();
 #endif
+                    NetworkManager.Update();
                 }
                 else {
                     ExceptionManager.UpdateExceptionScreen();

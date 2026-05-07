@@ -4,8 +4,6 @@ using GameEntitySystem;
 namespace Game;
 
 public class SubsystemInventories : Subsystem {
-    private static Dictionary<IInventory, List<int>> syncItems = new Dictionary<IInventory, List<int>>();
-
     private Dictionary<int, IInventory> inventories = new Dictionary<int, IInventory>();
 
 
@@ -54,23 +52,10 @@ public class SubsystemInventories : Subsystem {
         return null;
     }
 
-    public static void pushSyncItem(IInventory inventory, int slotIndex) {
-        if (!syncItems.TryGetValue(inventory, out var list)) {
-            list = new List<int>();
-            syncItems.Add(inventory, list);
-        }
-        if (!list.Contains(slotIndex)) list.Add(slotIndex);
+    public static void SyncInventoryItem(IInventory inventory, int slotIndex) {
+        NetworkManager.QueuePackage(new NetWork.Packages.InventorySyncPackage(inventory));
     }
-    public static void flushSyncItems() {
-        if (syncItems.Count > 0) {
-            if (NetworkManager.WorkType == NetWork.WorkType.Server) {
-                foreach (var item in syncItems.Keys) {
-                    NetworkManager.QueuePackage(new NetWork.Packages.InventorySyncPackage(item));
-                }
-            }
-            syncItems.Clear();
-        }
-    }
+
     public override void OnEntityRemoved(Entity entity) {
         foreach (IInventory i in entity.FindComponents<IInventory>()) {
             inventories.Remove(i.Id);

@@ -42,7 +42,7 @@ namespace Game {
         }
 
         public virtual void OnSlotChange(int slotIndex) {
-            SubsystemInventories.pushSyncItem(this, slotIndex);
+            SubsystemInventories.SyncInventoryItem(this, slotIndex);
         }
 
         public int ActiveSlotIndex {

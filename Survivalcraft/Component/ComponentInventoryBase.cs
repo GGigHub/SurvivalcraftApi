@@ -262,7 +262,7 @@ namespace Game {
 
         public virtual void OnSlotChange(int slotIndex) {
             if (NetworkManager.WorkType == NetWork.WorkType.Server) {
-                SubsystemInventories.pushSyncItem(this, slotIndex);
+                SubsystemInventories.SyncInventoryItem(this, slotIndex);
             }
         }
 

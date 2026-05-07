@@ -101,7 +101,7 @@ namespace Game {
         }
 
         public virtual void OnSlotChange(int slotIndex) {
-            SubsystemInventories.pushSyncItem(this, slotIndex);
+            SubsystemInventories.SyncInventoryItem(this, slotIndex);
         }
 
         public virtual void SetSlotValue(int slotIndex, object obj) {

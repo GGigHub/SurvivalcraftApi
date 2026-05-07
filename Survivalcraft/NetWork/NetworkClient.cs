@@ -92,8 +92,6 @@ public class NetworkClient : INetworkNode, INetEventListener {
 
     public readonly NetManager _client;
     private readonly NetworkFragment m_chunkTransport;
-    private readonly NetPacketTransport m_packetTransport;
-    private readonly NetRuntimeController m_runtimeController;
 
     public Client Self { get; set; }
     public Client Server { get; set; }
@@ -106,7 +104,6 @@ public class NetworkClient : INetworkNode, INetEventListener {
     public List<IPackage> PendingHandlePackages { get; } = new List<IPackage>();
     public Action<Client> OnClientStateChanged { get; set; }
     public Guid TokenId { get; set; }
-    public bool isStopping { get; set; }
     public WorkType WorkType { get; set; }
 
     public NetManager NetManager => _client;
@@ -120,13 +117,10 @@ public class NetworkClient : INetworkNode, INetEventListener {
             ReuseAddress = true
         };
         m_chunkTransport = new NetworkFragment(this);
-        m_packetTransport = new NetPacketTransport(this, m_chunkTransport);
-        m_runtimeController = new NetRuntimeController(this, m_chunkTransport, m_packetTransport);
     }
 
     public void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
         try {
-            isStopping = false;
             Log.Information($"connecting to server at {ep.Address}");
             Clients.Clear();
             _client.Start();
@@ -139,8 +133,6 @@ public class NetworkClient : INetworkNode, INetEventListener {
             NetworkErrorEvent += HandleNetworkError;
             CurrentStage = NetworkStage.WaitForClientList;
             WorkType = WorkType.Client;
-            Window.Frame += Update;
-            Window.Closed += StopImmediate;
             OnClientStateChanged += ClientStateChanged;
         }
         catch {
@@ -199,57 +191,54 @@ public class NetworkClient : INetworkNode, INetEventListener {
     }
 
     public void HanldeUnconnectedEvent(IPEndPoint ip, NetPacketReader reader, UnconnectedMessageType messageType) {
-        m_packetTransport.HandleUnconnectedEvent(ip, reader, false);
+        NetworkManager.HandleUnconnectedEvent(this, m_chunkTransport, ip, reader, false);
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-        m_packetTransport.HandlePeerDisconnected(peer, disconnectInfo);
+        NetworkManager.HandlePeerDisconnected(this, peer, disconnectInfo);
     }
 
     public void OnNetworkReceivePackage(NetPeer peer, NetDataReader reader, DeliveryMethod deliveryMethod) {
-        m_packetTransport.HandleNetworkReceive(peer, reader);
+        NetworkManager.HandleNetworkReceive(this, m_chunkTransport, peer, reader);
     }
 
     public virtual void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type) {
     }
 
     public void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true) {
-        m_packetTransport.SendWriterFromPackage(package, endPoint, isSend);
+        NetworkManager.SendWriterFromPackage(this, m_chunkTransport, package, endPoint, isSend);
     }
 
     public void SendWriterFromPackage(IPackage package, NetPeer netPeer, bool useDeliveryEvent = false) {
-        m_packetTransport.SendWriterFromPackage(package, netPeer, useDeliveryEvent);
+        NetworkManager.SendWriterFromPackage(this, m_chunkTransport, package, netPeer, useDeliveryEvent);
     }
 
     public void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject) {
-        m_packetTransport.SendWriterFromPackage(package, request, reject);
+        NetworkManager.SendWriterFromPackage(this, m_chunkTransport, package, request, reject);
     }
 
     public void SendWriterFromPackages(IEnumerable<IPackage> packages, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-        m_packetTransport.SendWriterFromPackages(packages, netPeer, request, iPEndPoint, useDeliveryEvent);
+        NetworkManager.SendWriterFromPackages(this, m_chunkTransport, packages, netPeer, request, iPEndPoint, useDeliveryEvent);
     }
 
     public void Stop() {
-        isStopping = true;
-    }
-
-    public void StopImmediate() {
-        m_runtimeController.StopImmediate();
+        if (NetManager.IsRunning) {
+            NetManager.Stop(true);
+        }
     }
 
     public void Update() {
-        m_runtimeController.Update();
-    }
-
-    public void CleanupAfterStop() {
-        Window.Closed -= StopImmediate;
-        Window.Frame -= Update;
-        CurrentStage = NetworkStage.NotConnected;
-        WorkType = WorkType.Local;
+        if (NetManager.IsRunning) {
+            byte[] payload = NetworkManager.BuildPayloadForClient(this, Clients[0], false);
+            SendPayload(payload, Clients[0].Peer);
+            PendingPackages.Clear();
+            m_chunkTransport.CleanupStates();
+            NetManager.PollEvents();
+        }
     }
 
     public byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer) {
-        return m_packetTransport.BuildOutgoingPayload(packages, isServer);
+        return NetworkManager.BuildOutgoingPayload(packages, isServer);
     }
 
     public void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
@@ -261,7 +250,7 @@ public class NetworkClient : INetworkNode, INetEventListener {
     }
 
     public bool TryDecodePackages(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<IPackage> packages) {
-        return m_packetTransport.TryDecodePackages(reader, peer, request, endPoint, out packages);
+        return NetworkManager.TryDecodePackages(this, m_chunkTransport, reader, peer, request, endPoint, out packages);
     }
 
     private void ClientStateChanged(Client c) {

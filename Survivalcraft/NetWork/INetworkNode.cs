@@ -18,7 +18,6 @@ public interface INetworkNode {
     List<IPackage> PendingHandlePackages { get; }
     Action<Client> OnClientStateChanged { get; set; }
     Guid TokenId { get; set; }
-    bool isStopping { get; set; }
     WorkType WorkType { get; set; }
 
     void AddClient(Client c);
@@ -32,9 +31,7 @@ public interface INetworkNode {
     void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject);
     void SendWriterFromPackages(IEnumerable<IPackage> packages, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false);
     void Stop();
-    void StopImmediate();
     void Update();
-    void CleanupAfterStop();
     byte[] BuildOutgoingPayload(IEnumerable<IPackage> packages, bool isServer);
     void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false);
     void CleanupChunkStates();

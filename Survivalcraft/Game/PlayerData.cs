@@ -330,14 +330,14 @@ namespace Game {
                 // 残酷模式禁止重生，直接提示并断开当前联机会话。
                 m_stateMachine.TransitionTo(null);
                 DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("Notice", "You died in cruel mode and cannot respawn.", LanguageControl.Yes, LanguageControl.No, btn => {
-                    NetworkManager.StopImmediate();
+                    NetworkManager.Stop();
                 }));
             }
             else if (!m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
                 // 当前世界禁用了重生，直接提示并断开当前联机会话。
                 m_stateMachine.TransitionTo(null);
                 DialogsManager.ShowDialog(ComponentPlayer.GuiWidget, new MessageDialog("Notice", "The server has disabled player respawn.", LanguageControl.Yes, LanguageControl.No, btn => {
-                    NetworkManager.StopImmediate();
+                    NetworkManager.Stop();
                 }));
             }
             else if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure && !m_subsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed) {
