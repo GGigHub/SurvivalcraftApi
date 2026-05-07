@@ -320,14 +320,8 @@ namespace Game {
     }
 }
 #elif __IOS
-using Engine;
-using Engine.Input;
 using JavaScriptCore;
-using System.Diagnostics;
-using System.Net;
 using System.Runtime.InteropServices.JavaScript;
-using System.Text;
-using System.Text.Json;
 using System.Xml.Linq;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 

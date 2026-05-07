@@ -2,7 +2,6 @@ using System.Xml.Linq;
 using Engine.Graphics;
 using Engine.Input;
 using Game.NetWork;
-using Game.NetWork.Packages;
 using GameEntitySystem;
 using TemplatesDatabase;
 

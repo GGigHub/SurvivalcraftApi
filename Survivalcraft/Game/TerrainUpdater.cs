@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using Engine;
 using Game.NetWork;
-using Game.NetWork.Packages;
 
 namespace Game {
     public class TerrainUpdater {

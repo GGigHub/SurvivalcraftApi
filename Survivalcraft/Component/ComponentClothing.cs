@@ -646,14 +646,14 @@ namespace Game {
                 else if (Time.PeriodicEvent(1.0, 0.0)) {
                     if (NetworkManager.WorkType == NetWork.WorkType.Client) {
                         NetworkManager.QueuePackage(
-                            new NetWork.Packages.RequestSkinPackage(
+                            new NetWork.RequestSkinPackage(
                                 m_componentPlayer.PlayerData.CharacterSkinName
                             )
                         );
                     }
                     else if (NetworkManager.WorkType == NetWork.WorkType.Server) {
                         NetworkManager.QueuePackage(
-                            new NetWork.Packages.WhoHasSkinPackage(
+                            new NetWork.WhoHasSkinPackage(
                                 m_componentPlayer.PlayerData.CharacterSkinName
                             )
                         );

@@ -97,8 +97,6 @@ namespace Game {
 #elif __IOS
 
 
-using Engine;
-using GameEntitySystem;
 using JavaScriptCore;
 using static JavaScriptCore.JSValue;
 using static System.Runtime.InteropServices.JavaScript.JSType;

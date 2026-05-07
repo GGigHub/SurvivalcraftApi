@@ -64,10 +64,10 @@ namespace Game {
                 && Mount == null) {
                 if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                     StartNetMounting(componentMount);
-                    NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, componentMount));
+                    NetWork.NetworkManager.QueuePackage(new NetWork.ComponentMountPackage(this, componentMount));
                 }
                 else {
-                    NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, componentMount, true));
+                    NetWork.NetworkManager.QueuePackage(new NetWork.ComponentMountPackage(this, componentMount, true));
                 }
             }
         }
@@ -77,10 +77,10 @@ namespace Game {
                 && Mount != null) {
                 if (NetWork.NetworkManager.WorkType != NetWork.WorkType.Client) {
                     StartNetDismounting();
-                    NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentMountPackage(this));
+                    NetWork.NetworkManager.QueuePackage(new NetWork.ComponentMountPackage(this));
                 }
                 else {
-                    NetWork.NetworkManager.QueuePackage(new NetWork.Packages.ComponentMountPackage(this, true));
+                    NetWork.NetworkManager.QueuePackage(new NetWork.ComponentMountPackage(this, true));
                 }
             }
         }

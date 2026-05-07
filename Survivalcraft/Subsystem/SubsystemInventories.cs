@@ -65,7 +65,7 @@ public class SubsystemInventories : Subsystem {
         if (syncItems.Count > 0) {
             if (NetworkManager.WorkType == NetWork.WorkType.Server) {
                 foreach (var item in syncItems.Keys) {
-                    NetworkManager.QueuePackage(new NetWork.Packages.InventorySyncPackage(item));
+                    NetworkManager.QueuePackage(new NetWork.InventorySyncPackage(item));
                 }
             }
             syncItems.Clear();

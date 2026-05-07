@@ -2,7 +2,6 @@ using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
 using Game.NetWork;
-using Game.NetWork.Packages;
 using GameEntitySystem;
 
 namespace Game {
