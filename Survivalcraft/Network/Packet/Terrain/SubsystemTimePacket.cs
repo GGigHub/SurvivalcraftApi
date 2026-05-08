@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -23,7 +23,7 @@ public class SubsystemTimePacket : Packet {
 
     public override void Handle(bool isServer) {
         var m_info = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
-        if (!isServer || (From?.PlayerData != null && NetworkManager.GetEffectiveGameMode(From.PlayerData) == GameMode.Creative)) {
+        if (!isServer || (From?.PlayerData != null && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode == GameMode.Creative)) {
             m_info.TotalElapsedGameTime = m_time;
             m_info.TimeOfDay.TimeOfDayOffset = m_timeOfDayOffset;
         }

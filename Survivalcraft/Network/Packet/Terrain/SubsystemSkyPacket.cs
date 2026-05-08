@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -29,7 +29,7 @@ public class SubsystemSkyPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        if (!isServer || (From?.PlayerData != null && NetworkManager.GetEffectiveGameMode(From.PlayerData) == GameMode.Creative)) {
+        if (!isServer || (From?.PlayerData != null && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode == GameMode.Creative)) {
             SubsystemSky sky = GameManager.Project.FindSubsystem<SubsystemSky>();
             if (isRequest) {
                 GameManager.Project.FindSubsystem<SubsystemWeather>().ManualLightingStrike(LightningStrikePosition, m_direction);

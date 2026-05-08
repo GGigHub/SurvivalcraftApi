@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Engine;
 using LiteNetLib;
 using TemplatesDatabase;
@@ -15,7 +15,6 @@ public class ConnectionRequestPacket : Packet {
     string m_password;
     string m_user;
     string m_token;
-    Guid m_tmp_token;
     List<ModEntity> modInfos;
     bool m_supportsModTransfer;
     string nickname = string.Empty;
@@ -24,11 +23,10 @@ public class ConnectionRequestPacket : Packet {
     public ConnectionRequestPacket() {
     }
 
-    public ConnectionRequestPacket(Guid tmp_token, string serverVersion, string user, string token, string passwd, List<ModEntity> modEntities) {
+    public ConnectionRequestPacket(string serverVersion, string user, string token, string passwd, List<ModEntity> modEntities) {
         if (passwd == null) passwd = string.Empty;
         if (serverVersion == null) serverVersion = string.Empty;
         m_magic = verrifyMagic;
-        m_tmp_token = tmp_token;
         m_user = user;
         m_token = token;
         m_version = serverVersion;
@@ -42,7 +40,6 @@ public class ConnectionRequestPacket : Packet {
         archive.Value(ref m_version);
         archive.Value(ref m_password);
         archive.Value(ref m_user);
-        archive.Value(ref m_tmp_token);
         archive.Value(ref m_token);
         if (archive.IsReading) {
             m_supportsModTransfer = false;
@@ -168,7 +165,7 @@ public class ConnectionRequestPacket : Packet {
             if (NetworkManager.Self.PlayerGuid == guid) {
                 connectionError.AppendLine("Client token matches server token.");
             }
-            else if (NetworkManager.Peers.FirstOrDefault(c => c != From && (c.PlayerGuid == guid || c.TokenId == m_tmp_token)) != null) {
+            else if (NetworkManager.Peers.FirstOrDefault(c => c != From && c.PlayerGuid == guid) != null) {
                 connectionError.AppendLine("Client token conflicts with an online player.");
             }
             else if (!string.IsNullOrEmpty(pwd2)) {
@@ -208,17 +205,16 @@ public class ConnectionRequestPacket : Packet {
                 }
 
                 var acceptedPeer = From.Request.Accept();
-                Client addClient = NetworkManager.CreateClient((NetPeer)(object)acceptedPeer, m_tmp_token, guid, communityAccountId, nickname);
+                Client addClient = NetworkManager.CreateClient((NetPeer)(object)acceptedPeer, guid, communityAccountId, nickname);
                 NetworkManager.Server.AddClient(addClient);
                 NetworkManager.QueuePacket(new ClientSyncListPacket(NetworkManager.Server.Clients.Values) { To = addClient });
 
-                var clientPacket = new ClientAddPacket(addClient.ID, addClient.TokenId, addClient.PlayerGuid, addClient.Nickname);
+                var clientPacket = new ClientAddPacket(addClient.ID, addClient.PlayerGuid, addClient.Nickname);
                 foreach (var c in NetworkManager.Peers) {
                     if (c.ID == addClient.ID) continue;
                     NetworkManager.Server.SendWriterFromPacket(clientPacket, c.Peer, true);
                 }
                 Log.Information("Received connection request from " + From.IPPoint + ", accepted");
-                NetworkManager.Server.HandleDeliveryEvent(null, null);
             }
         }
         else {

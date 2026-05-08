@@ -42,9 +42,7 @@ namespace Game {
         public float m_progress;
         public int PlayerIndex { get; set; }
 
-        // 远程客户端看到的其他玩家 PlayerGuid 会被替换成对应的 TokenId。
-        // 玩家自己和服务端持有的 PlayerGuid 保持原始值，不做混淆。
-        // 这里的 PlayerGuid 指的是 ComponentPlayer、PlayerData、Client 中的同一标识。
+        // PlayerGUID is used consistently across the network without obfuscation.
         public Guid PlayerGUID { get; set; } = NetworkManager.Self.PlayerGuid;
 
         public Client Client => NetworkManager.GetClientByGUID(PlayerGUID);

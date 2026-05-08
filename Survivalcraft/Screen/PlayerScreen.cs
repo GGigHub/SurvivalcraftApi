@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 using Engine.Graphics;
 using Engine.Input;
 using Game.Network;
@@ -127,7 +127,7 @@ public class PlayerScreen : Screen {
         if (m_mode == Mode.Edit && GameManager.Project != null) {
             GameManager.UpdateProject();
         }
-        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.WorkType == Network.WorkType.Client && NetworkManager.IsNetRunning) {
+        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.WorkType == Network.WorkType.Client && NetworkManager.IsMultiplayer) {
             //客户端卡在新增玩家界面两分钟自动中断连接
             NetworkManager.Stop();
         }

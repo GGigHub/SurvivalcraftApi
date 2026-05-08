@@ -55,118 +55,30 @@ namespace Game.Network {
 
         public static void HandleUnconnectedEvent(IEnumerable<Client> clients, bool isServer, PacketFragment chunkTransport, IPEndPoint remoteEndPoint, NetPacketReader reader, bool fromBroadcast) {
             var dataReader = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
-            try {
-                if (!TryDecodePackets(clients, chunkTransport, dataReader, null, null, remoteEndPoint, out List<Packet> packets)) {
-                    return;
-                }
-
-                foreach (var packet in packets) {
-                    packet.From.IsLocalRemote = fromBroadcast;
-                    try {
-                        packet.Handle(isServer);
-                    }
-                    catch (Exception e) {
-                        Log.Error(string.Format("[{0}]{1}", packet.GetType().Name, e.Message));
-                    }
-                }
-            }
-            finally {
-                reader.Recycle();
-            }
-        }
-
-        public static void HandlePeerDisconnected(NetworkClient node, NetPeer peer, DisconnectInfo disconnectInfo) {
-            HandlePeerDisconnectedCore(node, peer, disconnectInfo);
-        }
-
-        public static void HandlePeerDisconnected(NetworkServer node, NetPeer peer, DisconnectInfo disconnectInfo) {
-            HandlePeerDisconnectedCore(node, peer, disconnectInfo);
-        }
-
-        private static void HandlePeerDisconnectedCore(dynamic node, NetPeer peer, DisconnectInfo disconnectInfo) {
-            string reason = disconnectInfo.Reason.ToString();
-            if (disconnectInfo.AdditionalData != null && disconnectInfo.AdditionalData.TryGetString(out string extra)) {
-                Log.Information("----Additional message----");
-                Log.Information(extra);
-                Log.Information("----End of message----");
-                reason = extra;
-            }
-
-            if (node.WorkType == WorkType.Client) {
-                node.Stop();
+            if (!TryDecodePackets(clients, chunkTransport, dataReader, null, null, remoteEndPoint, out List<Packet> packets)) {
                 return;
             }
 
-            Client client = peer.Tag as Client;
-            if (client == null) {
-                return;
-            }
-
-            client.State = ClientStage.NotConnected;
-            node.RemoveClientImmediate(client, reason);
-            node.OnClientStateChanged?.Invoke(client);
-            if (node is NetworkServer server) {
-                server.HandleDeliveryEvent(null, null);
-            }
-        }
-
-        public static void HandleNetworkReceive(NetworkClient node, PacketFragment chunkTransport, NetPeer peer, NetDataReader reader) {
-            HandleNetworkReceiveCore(node, chunkTransport, peer, reader);
-        }
-
-        public static void HandleNetworkReceive(NetworkServer node, PacketFragment chunkTransport, NetPeer peer, NetDataReader reader) {
-            HandleNetworkReceiveCore(node, chunkTransport, peer, reader);
-        }
-
-        private static void HandleNetworkReceiveCore(dynamic node, PacketFragment chunkTransport, NetPeer peer, NetDataReader reader) {
-            if (node.CurrentStage == NetworkStage.NotConnected) return;
-            if (!TryDecodePackets(node.Clients.Values, chunkTransport, reader, peer, null, null, out List<Packet> packets)) {
-                return;
-            }
-
-            packets.InsertRange(0, node.PendingHandlePackets);
             foreach (var packet in packets) {
-                try {
-                    packet.Handle(node.IsServer);
-                }
-                catch (Exception e) {
-                    Log.Error(string.Format("[{0}]{1}", packet.GetType().Name, e.Message));
-                }
+                packet.From.IsLocalRemote = fromBroadcast;
+                packet.Handle(isServer);
             }
         }
 
-        public static void SendWriterFromPacket(NetworkClient node, PacketFragment chunkTransport, Packet packet, IPEndPoint endPoint, bool isSend = true) {
-            SendWriterFromPackets(node, chunkTransport, [packet], null, null, endPoint, isSend);
+        public static void SendWriterFromPacket(PacketFragment chunkTransport, Packet packet, IPEndPoint endPoint, bool isSend = true) {
+            SendWriterFromPackets(chunkTransport, [packet], null, null, endPoint, isSend);
         }
 
-        public static void SendWriterFromPacket(NetworkClient node, PacketFragment chunkTransport, Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
-            SendWriterFromPackets(node, chunkTransport, [packet], netPeer, null, null, useDeliveryEvent);
+        public static void SendWriterFromPacket(PacketFragment chunkTransport, Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
+            SendWriterFromPackets(chunkTransport, [packet], netPeer, null, null, useDeliveryEvent);
         }
 
-        public static void SendWriterFromPacket(NetworkClient node, PacketFragment chunkTransport, Packet packet, ConnectionRequest request, bool reject) {
+        public static void SendWriterFromPacket(PacketFragment chunkTransport, Packet packet, ConnectionRequest request, bool reject) {
             if (reject) request.Reject();
-            SendWriterFromPackets(node, chunkTransport, [packet], null, request, null);
+            SendWriterFromPackets(chunkTransport, [packet], null, request, null);
         }
 
-        public static void SendWriterFromPacket(NetworkServer node, PacketFragment chunkTransport, Packet packet, IPEndPoint endPoint, bool isSend = true) {
-            SendWriterFromPackets(node, chunkTransport, [packet], null, null, endPoint, isSend);
-        }
-
-        public static void SendWriterFromPacket(NetworkServer node, PacketFragment chunkTransport, Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
-            SendWriterFromPackets(node, chunkTransport, [packet], netPeer, null, null, useDeliveryEvent);
-        }
-
-        public static void SendWriterFromPacket(NetworkServer node, PacketFragment chunkTransport, Packet packet, ConnectionRequest request, bool reject) {
-            if (reject) request.Reject();
-            SendWriterFromPackets(node, chunkTransport, [packet], null, request, null);
-        }
-
-        public static void SendWriterFromPackets(NetworkClient node, PacketFragment chunkTransport, IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-            byte[] payload = BuildOutgoingPayload(packets);
-            chunkTransport.SendPayload(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
-        }
-
-        public static void SendWriterFromPackets(NetworkServer node, PacketFragment chunkTransport, IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
+        public static void SendWriterFromPackets(PacketFragment chunkTransport, IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
             byte[] payload = BuildOutgoingPayload(packets);
             chunkTransport.SendPayload(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
         }

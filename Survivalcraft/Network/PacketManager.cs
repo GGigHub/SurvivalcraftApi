@@ -131,6 +131,8 @@ public class PacketManager {
     }
 
     private static Client ResolveFrom(IEnumerable<Client> clients, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+        if (netPeer != null && netPeer.Tag is Client client) return client;
+
         Client from = null;
         if (clients != null) {
             from = clients.FirstOrDefault(client =>

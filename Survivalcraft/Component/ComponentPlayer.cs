@@ -166,9 +166,7 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        // 客户端获取到其他玩家的PlayerGuid是他们各自的TokenID，被混淆过了
-        // 客户端自己的PlayerGuid，以及服务端上所有玩家的PlayerGuid都未经混淆
-        // 以上的PlayerGuid指的是ComponentPlayer,PlayerData,Client中的PlayerGuid
+        // PlayerGuid is the unique identifier for each player, used consistently across Client and Server.
         public Guid PlayerGuid { get; set; }
 
         public DragHostWidget m_dragHostWidget;

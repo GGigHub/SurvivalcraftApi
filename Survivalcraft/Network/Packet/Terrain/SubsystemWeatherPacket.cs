@@ -1,4 +1,4 @@
-﻿
+
 
 namespace Game.Network;
 
@@ -57,7 +57,7 @@ public class SubsystemWeatherPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        if (isServer && (From.PlayerData == null || NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative)) {
+        if (isServer && (From.PlayerData == null || GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode != GameMode.Creative)) {
             return;
         }
         SubsystemWeather weather = GameManager.Project.FindSubsystem<SubsystemWeather>();

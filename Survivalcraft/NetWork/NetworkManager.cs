@@ -32,20 +32,23 @@ public enum NetworkStage {
 }
 
 public static class NetworkManager {
-    public const int DISCONNECT_TIMEOUT = 10000;
     public static NetworkServer Server { get; private set; }
     public static NetworkClient Client { get; private set; }
 
     public static Texture2D BlockTexture;
 
     public static bool IsOfflineMode;
-    public static WorkType WorkType => Server != null ? Server.WorkType : Client != null ? Client.WorkType : Game.Network.WorkType.Local;
-    public static Client Self => Server != null ? Server.Self : Client != null ? Client.Self : null;
+    // 重构中
+    public static WorkType WorkType => WorkType.Local;
+    // 重构中
+    public static Client Self => new(new Guid());
     public static Dictionary<int, Client> Clients => Server != null ? Server.Clients : Client != null ? Client.Clients : [];
-    public static IEnumerable<Client> Peers => Server != null ? Server.Peers : Client != null ? Client.Peers : [];
-    public static int ClientCount => Server != null ? Server.ClientCount : Client != null ? Client.ClientCount : 0;
-    public static NetworkStage CurrentStage => Server != null ? Server.CurrentStage : Client != null ? Client.CurrentStage : NetworkStage.NotConnected;
-    public static bool IsNetRunning => (Server != null ? Server.NetManager : Client != null ? Client.NetManager : null)?.IsRunning ?? false;
+    public static IEnumerable<Client> Peers => Server != null ? Server.Peers : Client != null ? Client.Clients.Values.Where(c => c != Client.Self) : [];
+    // 重构中
+    public static NetworkStage CurrentStage => NetworkStage.NotConnected;
+    public static bool IsServer => Server != null && Server.NetManager.IsRunning;
+    public static bool IsClient => Client != null && Client.NetManager.IsRunning;
+    public static bool IsMultiplayer => IsServer || IsClient;
     public static Action<Client> OnClientStateChanged {
         get => Server != null ? Server.OnClientStateChanged : Client != null ? Client.OnClientStateChanged : null;
         set {
@@ -56,13 +59,6 @@ public static class NetworkManager {
                 Client.OnClientStateChanged = value;
             }
         }
-    }
-
-    /// <summary>
-    /// 获取玩家的有效模�?
-    /// </summary>
-    public static GameMode GetEffectiveGameMode(PlayerData pd) {
-        return GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode ?? GameMode.Survival;
     }
 
     public static ComponentPlayer MainPlayer {
@@ -155,35 +151,22 @@ public static class NetworkManager {
         return outStream.ToArray();
     }
 
-    public static Client GetClientByID(byte id) {
-        if (Server != null) return Server.GetClientByID(id);
-        return Client != null ? Client.GetClientByID(id) : null;
-    }
-
     public static Client GetClientByGUID(Guid? guid) {
         if (Server != null) return Server.GetClientByGUID(guid);
         return Client != null ? Client.GetClientByGUID(guid) : null;
     }
 
     public static void AddClient(Client client) {
-        if (Server != null) {
-            Server.AddClient(client);
-        }
-        else {
-            Client.AddClient(client);
-        }
+        Server?.AddClient(client);
+        Client?.AddClient(client);
     }
 
-    public static Client CreateClient(NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname) =>
-        Server.CreateClient(peer, tokenId, guid, dataId, nickname);
+    public static Client CreateClient(NetPeer peer, Guid guid, string dataId, string nickname) =>
+        Server.CreateClient(peer, guid, dataId, nickname);
 
     public static void Stop() {
-        if (Server != null) {
-            Server.Stop();
-        }
-        else {
-            Client?.Stop();
-        }
+        Server?.Stop();
+        Client?.Stop();
     }
 
     public static void Update() {

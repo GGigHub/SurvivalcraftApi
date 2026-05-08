@@ -32,7 +32,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
             if (inventory == null || IsOwnedByOtherPlayer(inventory, From, out _)) {
                 return;
             }
-            if (inventory is ComponentCreativeInventory && NetworkManager.GetEffectiveGameMode(From.PlayerData) != GameMode.Creative) {
+            if (inventory is ComponentCreativeInventory && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode != GameMode.Creative) {
                 NetworkManager.Server.RemoveClient(From.PlayerData.Client, "行为异常");
                 return;
             }

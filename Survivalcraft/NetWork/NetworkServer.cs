@@ -1,7 +1,6 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Sockets;
 using Engine;
-using Game.Network;
 using GameEntitySystem;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -12,48 +11,44 @@ public class NetworkServer : INetEventListener {
     public event Action<NetPeer> ClientConnected;
     public event Action<NetPeer, DisconnectInfo> ClientDisconnected;
 
-    public readonly NetManager _server;
-    private readonly PacketFragment m_chunkTransport;
-
-    public Client Self { get; set; }
     public Client Server { get; set; }
-    public NetworkStage CurrentStage { get; set; } = NetworkStage.NotConnected;
     public bool IsServer => CurrentStage == NetworkStage.Connected && Self == Server;
     public int ClientCount => Peers.Count() + 1;
     public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
     public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
     public List<Packet> PendingPackets { get; } = new List<Packet>();
-    public List<Packet> PendingHandlePackets { get; } = new List<Packet>();
     public Action<Client> OnClientStateChanged { get; set; }
-    public Guid TokenId { get; set; }
-    public WorkType WorkType { get; set; }
-
-    public NetManager NetManager => _server;
 
     internal readonly Dictionary<Client, string> ClientsToRemove = new Dictionary<Client, string>();
 
+    public Client Self { get; set; }
+    public NetworkStage CurrentStage { get; set; } = NetworkStage.NotConnected;
+    public WorkType WorkType { get; set; }
+    public NetManager NetManager { get; set; }
+    public PacketFragment PackageFragment { get; set; }
+
     public NetworkServer() {
-        _server = new NetManager(this) {
+        NetManager = new NetManager(this) {
             MaxConnectAttempts = 6,
-            DisconnectTimeout = NetworkManager.DISCONNECT_TIMEOUT,
+            DisconnectTimeout = 10000,
             UnconnectedMessagesEnabled = true,
             UpdateTime = 25,
             ReuseAddress = true
         };
-        m_chunkTransport = new PacketFragment(_server);
+        PackageFragment = new PacketFragment(NetManager);
     }
 
     public bool StartServer(int port) {
-        if (_server.IsRunning) {
+        if (NetManager.IsRunning) {
             Stop();
         }
         try {
             StartLocal();
-            if (_server.Start(port)) {
-                Log.Information($"Server started successfully on port {_server.LocalPort}");
+            if (NetManager.Start(port)) {
+                Log.Information($"Server started successfully on port {NetManager.LocalPort}");
                 Window.Frame += Update;
                 Window.Closed += Stop;
-                _server.PollEvents();
+                NetManager.PollEvents();
                 CurrentStage = NetworkStage.Connected;
                 Server = Self;
                 WorkType = WorkType.Server;
@@ -76,42 +71,6 @@ public class NetworkServer : INetEventListener {
         return CurrentStage == NetworkStage.Connected;
     }
 
-    public void HandleDeliveryEvent(NetPeer peer, object userData) {
-    }
-
-    public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname) {
-        if (!IsServer) throw new InvalidOperationException("creating client as non-server");
-        foreach (var p in Peers) {
-            if (p.PlayerGuid == guid) RemoveClient(p, "Duplicate account login.");
-        }
-        var c = new Client(peer, FindUnusedIndex(), tokenId, guid, nickname);
-        peer.Tag = c;
-        return c;
-    }
-
-    public void RemoveClient(Client c, string reason = null) {
-        if (ClientsToRemove.ContainsKey(c)) {
-            if (string.IsNullOrEmpty(reason))
-                ClientsToRemove[c] += '\n' + reason;
-        }
-        else {
-            ClientsToRemove[c] = reason ?? string.Empty;
-        }
-    }
-
-    public void RemoveAllClients(string reason = null) {
-        var cs = new List<Client>(Clients.Values);
-        foreach (var c in cs) {
-            if (c == Self) continue;
-            if (c.Peer != null && c.Peer.ConnectionState != ConnectionState.Disconnected) {
-                if (reason != null) c.Peer.Disconnect(NetDataWriter.FromString(reason));
-                else c.Peer.Disconnect();
-            }
-            Clients.Remove(c.ID);
-            c.State = ClientStage.NotConnected;
-        }
-    }
-
     public void AddClient(Client c) {
         Clients[c.ID] = c;
     }
@@ -132,13 +91,25 @@ public class NetworkServer : INetEventListener {
             CurrentStage = NetworkStage.NotConnected;
             return;
         }
+
         if (Clients.ContainsKey(c.ID)) {
-            if (IsServer) {
-                NetworkManager.QueuePacket(new ClientRemovePacket(c.ID));
-            }
+            NetworkManager.QueuePacket(new ClientRemovePacket(c.ID));
             c.State = ClientStage.NotConnected;
             OnClientStateChanged?.Invoke(c);
             Clients.Remove(c.ID);
+        }
+    }
+
+    public void RemoveAllClients(string reason = null) {
+        var cs = new List<Client>(Clients.Values);
+        foreach (var c in cs) {
+            if (c == Self) continue;
+            if (c.Peer != null && c.Peer.ConnectionState != ConnectionState.Disconnected) {
+                if (reason != null) c.Peer.Disconnect(NetDataWriter.FromString(reason));
+                else c.Peer.Disconnect();
+            }
+            Clients.Remove(c.ID);
+            c.State = ClientStage.NotConnected;
         }
     }
 
@@ -152,30 +123,38 @@ public class NetworkServer : INetEventListener {
         return Clients.Values.FirstOrDefault(c => c.PlayerGuid == guid);
     }
 
-    public Client GetClientByTokenID(Guid? guid) {
-        return Clients.Values.FirstOrDefault(c => c.TokenId == guid);
-    }
-
     public void StartLocal() {
         Clients.Clear();
         Self = new Client(new Guid(SettingsManager.OnlineAccessToken));
         AddClient(Self);
     }
 
-    public void SendWriterFromPacket(Packet packet, IPEndPoint endPoint, bool isSend = true) {
-        NetworkHelper.SendWriterFromPacket(this, m_chunkTransport, packet, endPoint, isSend);
+    public Client CreateClient(NetPeer peer, Guid guid, string dataId, string nickname) {
+        if (!IsServer) throw new InvalidOperationException("creating client as non-server");
+        foreach (var p in Peers) {
+            if (p.PlayerGuid == guid) RemoveClient(p, "Duplicate account login.");
+        }
+        var c = new Client(peer, FindUnusedIndex(), guid, nickname);
+        peer.Tag = c;
+        return c;
+    }
+
+    public void RemoveClient(Client c, string reason = null) {
+        if (ClientsToRemove.ContainsKey(c)) {
+            if (!string.IsNullOrEmpty(reason))
+                ClientsToRemove[c] += '\n' + reason;
+        }
+        else {
+            ClientsToRemove[c] = reason ?? string.Empty;
+        }
     }
 
     public void SendWriterFromPacket(Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
-        NetworkHelper.SendWriterFromPacket(this, m_chunkTransport, packet, netPeer, useDeliveryEvent);
+        NetworkHelper.SendWriterFromPacket(PackageFragment, packet, netPeer, useDeliveryEvent);
     }
 
     public void SendWriterFromPacket(Packet packet, ConnectionRequest request, bool reject) {
-        NetworkHelper.SendWriterFromPacket(this, m_chunkTransport, packet, request, reject);
-    }
-
-    public void SendWriterFromPackets(IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-        NetworkHelper.SendWriterFromPackets(this, m_chunkTransport, packets, netPeer, request, iPEndPoint, useDeliveryEvent);
+        NetworkHelper.SendWriterFromPacket(PackageFragment, packet, request, reject);
     }
 
     public void Stop() {
@@ -188,32 +167,25 @@ public class NetworkServer : INetEventListener {
     public void Update() {
         if (NetManager.IsRunning) {
             foreach (Client client in Clients.Values) {
-                if (!client.IsConnected) {
+                if (client == Self || !client.IsConnected) {
                     continue;
                 }
                 byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, client, false, IsServer);
-                SendPayload(payload, client.Peer);
+                if (payload != null) PackageFragment.SendPayload(payload, client.Peer);
             }
             PendingPackets.Clear();
-            m_chunkTransport.CleanupStates();
+
+            // Handle deferred client removal
+            if (ClientsToRemove.Count > 0) {
+                foreach (var pair in ClientsToRemove) {
+                    RemoveClientImmediate(pair.Key, pair.Value);
+                }
+                ClientsToRemove.Clear();
+            }
+
+            PackageFragment.CleanupStates();
             NetManager.PollEvents();
         }
-    }
-
-    public byte[] BuildOutgoingPayload(IEnumerable<Packet> packets, bool isServer) {
-        return NetworkHelper.BuildOutgoingPayload(packets);
-    }
-
-    public void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
-        m_chunkTransport.SendPayload(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
-    }
-
-    public void CleanupChunkStates() {
-        m_chunkTransport.CleanupStates();
-    }
-
-    public bool TryDecodePackets(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
-        return NetworkHelper.TryDecodePackets(Clients.Values, m_chunkTransport, reader, peer, request, endPoint, out packets);
     }
 
     private byte FindUnusedIndex() {
@@ -234,8 +206,6 @@ public class NetworkServer : INetEventListener {
                     byte[] textureData = null;
                     if (subsystemPlayers.MakePlayerOnline(c.PlayerGuid, out PlayerData playerData, out Entity entity)) {
                         if (entity != null) {
-                            // Keep restored players on the main world path immediately so
-                            // concurrent joiners cannot miss them in later entity snapshots.
                             GameManager.Project.AddEntity(entity);
                         }
                         NetworkManager.QueuePacket(new PlayerAddPacket(playerData) { Except = c });
@@ -274,27 +244,35 @@ public class NetworkServer : INetEventListener {
         }
     }
 
-    void INetEventListener.OnPeerConnected(NetPeer peer) {
+    public void OnPeerConnected(NetPeer peer) {
         ClientConnected?.Invoke(peer);
     }
 
-    void INetEventListener.OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
+    public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         ClientDisconnected?.Invoke(peer, disconnectInfo);
+        Client client = Clients.Values.FirstOrDefault(c => c.Peer == peer);
+        if (client != null) {
+            RemoveClient(client, disconnectInfo.Reason.ToString());
+        }
+        Log.Information("Disconnect by " + disconnectInfo);
     }
 
-    void INetEventListener.OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod) {
-        var dataReader = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
-        NetworkHelper.HandleNetworkReceive(this, m_chunkTransport, peer, dataReader);
+    public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod) {
+        if (!NetworkHelper.TryDecodePackets(Clients.Values, 
+            PackageFragment, reader, peer, null, null, out List<Packet> packets)) {
+            return;
+        }
+        packets.ForEach(packet => packet.Handle(true));
     }
 
-    void INetEventListener.OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
-        NetworkHelper.HandleUnconnectedEvent(Clients.Values, IsServer, m_chunkTransport, remoteEndPoint, reader, false);
+    public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
+        NetworkHelper.HandleUnconnectedEvent(Clients.Values, IsServer, PackageFragment, remoteEndPoint, reader, false);
     }
 
-    void INetEventListener.OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
+    public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
     }
 
-    void INetEventListener.OnConnectionRequest(ConnectionRequest request) {
+    public void OnConnectionRequest(ConnectionRequest request) {
         Log.Information("Received connection request " + request.RemoteEndPoint);
 
         if (GameManager.Project == null) {
@@ -312,8 +290,6 @@ public class NetworkServer : INetEventListener {
         }
     }
 
-    void INetEventListener.OnNetworkLatencyUpdate(NetPeer peer, int latency) {
+    public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
     }
 }
-
-

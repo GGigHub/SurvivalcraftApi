@@ -9,8 +9,8 @@ public class ClientAddPacket : ClientPacketBase{
 
     public ClientAddPacket() { }
 
-    public ClientAddPacket(byte id, Guid tokenId, Guid guid, string nickname) {
-        m_client = new Client(null, id, tokenId, guid, nickname);
+    public ClientAddPacket(byte id, Guid guid, string nickname) {
+        m_client = new Client(null, id, guid, nickname);
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -21,7 +21,7 @@ public class ClientAddPacket : ClientPacketBase{
         if (isServer) {
             return;
         }
-        NetworkManager.AddClient(new Client(From.Peer, m_client.ID, m_client.TokenId, m_client.PlayerGuid, m_client.Nickname));
+        NetworkManager.AddClient(new Client(From.Peer, m_client.ID, m_client.PlayerGuid, m_client.Nickname));
     }
 }
 
