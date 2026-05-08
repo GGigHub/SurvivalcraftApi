@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Engine.Graphics;
 using Game.Network;
 
@@ -9,7 +9,7 @@ namespace Game {
 
         public override void MeasureOverride(Vector2 parentAvailableSize) {
             base.MeasureOverride(parentAvailableSize);
-            IsOverdrawRequired = NetworkManager.WorkType == Network.WorkType.Local && Children.Count > 1;
+            IsOverdrawRequired = false;
         }
 
         public override void ArrangeOverride() {
@@ -19,7 +19,7 @@ namespace Game {
                 marginLeft = Window.DisplayCutoutInsets.X * ScreensManager.FinalUiScale;
                 marginRight = Window.DisplayCutoutInsets.Z * ScreensManager.FinalUiScale;
             }
-            if (NetworkManager.WorkType != Network.WorkType.Local && Children.Count > 0) {
+            if (Children.Count > 0) {
                 for (int i = 0; i < Children.Count; i++) {
                     var gameWidget = (GameWidget)Children[i];
                     gameWidget.IsVisible = gameWidget.PlayerData.IsMainPlayer;

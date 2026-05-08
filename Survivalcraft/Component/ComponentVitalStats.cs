@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Engine;
 using Engine.Audio;
 using Game.Network;
@@ -194,7 +194,7 @@ namespace Game {
                 UpdateSleep();
                 UpdateTemperature();
                 UpdateWetness();
-                if (NetworkManager.WorkType == Network.WorkType.Server) {
+                if (NetworkManager.IsServer) {
                     if (Time.PeriodicEvent(1.0, 0.5)) {
                         NetworkManager.QueuePacket(new Network.VitalStatSyncPacket(this));
                     }

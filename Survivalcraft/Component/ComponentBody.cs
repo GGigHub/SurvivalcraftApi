@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -418,7 +418,7 @@ namespace Game {
             if (skipVanilla_) {
                 return;
             }
-            if (NetworkManager.WorkType == Network.WorkType.Client || NetworkManager.WorkType == Network.WorkType.Server) {
+            if (NetworkManager.IsClient || NetworkManager.IsServer) {
                 ComponentPlayer componentPlayer = Entity.FindComponent<ComponentPlayer>();
                 bool isMainPlayer = componentPlayer?.PlayerData?.IsMainPlayer == true;
                 bool hasChildPlayer = false;
@@ -434,7 +434,7 @@ namespace Game {
                     }
                 }
 
-                bool shouldApplyNetworkState = NetworkManager.WorkType == Network.WorkType.Client
+                bool shouldApplyNetworkState = NetworkManager.IsClient
                     ? (componentPlayer != null && !isMainPlayer && componentPlayer.ComponentBody.ParentBody == null)
                         || (componentPlayer == null && !hasChildPlayer)
                         || hasNonMainChildPlayer

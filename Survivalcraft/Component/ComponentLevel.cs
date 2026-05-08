@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Engine;
 using Game.Network;
 using GameEntitySystem;
@@ -89,7 +89,7 @@ namespace Game {
         }
 
         public virtual void AddExperience(int count, bool playSound) {
-            if (NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 NetAddExperience(count, playSound);
                 NetworkManager.QueuePacket(new Network.PlayerAddExperiencePacket(m_componentPlayer.PlayerData, count, playSound, m_componentPlayer.PlayerData.Level));
             }

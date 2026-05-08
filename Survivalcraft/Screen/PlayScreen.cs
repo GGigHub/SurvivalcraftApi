@@ -284,16 +284,11 @@ namespace Game {
                 }
             );
             var modInfos = new List<ModInfo>();
-            if (SettingsManager.AllowLanConnection) {
-                if (NetworkManager.StartServer()) {
-                    ScreensManager.SwitchScreen("GameLoading", item, null);
-                }
-                else {
-                    DialogsManager.ShowDialog(this, new MessageDialog("提示", "创建服务器失败：端口被占用", "确定", null, (txt) => { NetworkManager.Stop(); DialogsManager.HideAllDialogs(); }));
-                }
+            if (NetworkManager.StartServer()) {
+                ScreensManager.SwitchScreen("GameLoading", item, null);
             }
             else {
-                ScreensManager.SwitchScreen("GameLoading", item, null);
+                DialogsManager.ShowDialog(this, new MessageDialog("提示", "创建服务器失败：端口被占用", "确定", null, (txt) => { NetworkManager.Stop(); DialogsManager.HideAllDialogs(); }));
             }
             m_worldsListWidget.SelectedItem = null;
         }

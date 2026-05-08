@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -362,7 +362,7 @@ namespace Game {
             Block block = BlocksManager.Blocks[num];
 
             if (Time.PeriodicEvent(0.1f, 0.0)) {
-                if (NetworkManager.WorkType != Network.WorkType.Client) {
+                if (!NetworkManager.IsClient) {
                     //服务器广播玩家数据
                     NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(this) { Except = PlayerData.Client });
                 }
@@ -373,7 +373,7 @@ namespace Game {
             }
 
             // Handle replicated Interact/Aim/Dig events on server and remote clients.
-            if (NetworkManager.WorkType != Network.WorkType.Local && !PlayerData.IsMainPlayer) {
+            if (!PlayerData.IsMainPlayer) {
                 if (digEvents.Count > 0) {
                     digEvent = digEvents[0];
                     digEvents.RemoveAt(0);
@@ -458,8 +458,7 @@ namespace Game {
                 }
             }
 
-            bool shouldSyncPlayerEvents = NetworkManager.WorkType == Network.WorkType.Local
-                || (NetworkManager.WorkType != Network.WorkType.Local && PlayerData.IsMainPlayer);
+            bool shouldSyncPlayerEvents = PlayerData.IsMainPlayer;
             if (shouldSyncPlayerEvents) {
                 digEvent = default;
                 interactEvent = default;
@@ -654,7 +653,7 @@ namespace Game {
                                 bodyRaycastResult.Value.HitPoint(),
                                 playerInput.Hit.Value.Direction
                             );
-                            if (NetworkManager.WorkType == Network.WorkType.Client) {
+                            if (NetworkManager.IsClient) {
                                 NetworkManager.QueuePacket(new PlayerHitPacket(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
                             }
                         }
@@ -863,7 +862,7 @@ namespace Game {
         private static readonly object _saveLock = new();
 
         public virtual void SavePlayerEntity() {
-            if (NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 lock (_saveLock) {
                     try {
                         var list = Project.SaveEntities([Entity]);

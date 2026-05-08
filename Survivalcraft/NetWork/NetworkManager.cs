@@ -13,22 +13,11 @@ namespace Game.Network;
 
 public enum ClientStage {
     NotConnected,
+    WaitForClientList,
     Connected,
     ProjectLoaded,
     LoadTerrain,
     Playing
-}
-
-public enum WorkType {
-    Local = 0,
-    Server = 1,
-    Client = 2
-}
-
-public enum NetworkStage {
-    NotConnected,
-    WaitForClientList,
-    Connected
 }
 
 public static class NetworkManager {
@@ -38,14 +27,9 @@ public static class NetworkManager {
     public static Texture2D BlockTexture;
 
     public static bool IsOfflineMode;
-    // 重构中
-    public static WorkType WorkType => WorkType.Local;
-    // 重构中
-    public static Client Self => new(new Guid());
+    public static Client Self => Server?.Self ?? Client?.Self;
     public static Dictionary<int, Client> Clients => Server != null ? Server.Clients : Client != null ? Client.Clients : [];
     public static IEnumerable<Client> Peers => Server != null ? Server.Peers : Client != null ? Client.Clients.Values.Where(c => c != Client.Self) : [];
-    // 重构中
-    public static NetworkStage CurrentStage => NetworkStage.NotConnected;
     public static bool IsServer => Server != null && Server.NetManager.IsRunning;
     public static bool IsClient => Client != null && Client.NetManager.IsRunning;
     public static bool IsMultiplayer => IsServer || IsClient;

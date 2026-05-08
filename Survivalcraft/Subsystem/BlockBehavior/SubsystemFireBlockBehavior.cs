@@ -1,4 +1,5 @@
-﻿using Engine;
+using Engine;
+using Game.Network;
 using TemplatesDatabase;
 
 namespace Game {
@@ -360,7 +361,7 @@ namespace Game {
         }
 
         public void AddFire(int x, int y, int z, float expandability) {
-            if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 Network.NetworkManager.QueuePacket(new Network.FireBlockAddPacket(x, y, z, expandability));
                 AddFireNet(x, y, z, expandability);
             }
@@ -376,7 +377,7 @@ namespace Game {
         }
 
         public void RemoveFire(int x, int y, int z) {
-            if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 Network.NetworkManager.QueuePacket(new Network.FireBlockRemovePacket(x, y, z));
                 RemoveFireNet(x, y, z);
             }

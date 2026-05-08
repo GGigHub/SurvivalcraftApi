@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -162,7 +162,7 @@ namespace Game {
                     float healthBefore = Health;
                     injury.Process();
                     float injuryAmount = MathUtils.Max(healthBefore - Health, 0f);
-                    if (NetworkManager.WorkType != Network.WorkType.Client
+                    if (!NetworkManager.IsClient
                         && injuryAmount > 0f) {
                         NetworkManager.QueuePacket(
                             new InjureEventPacket(this, injury.Attacker, injuryAmount, injury.Cause, injury.IgnoreInvulnerability)
@@ -200,7 +200,7 @@ namespace Game {
                 }
             );
             CauseOfDeath = injury?.Cause;
-            if (NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 NetworkManager.QueuePacket(new HealthSyncPacket(this));
             }
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
@@ -270,7 +270,7 @@ namespace Game {
                 if (m_regenerateLifeEnabled
                     && Health > 0f
                     && Health < 1f) {
-                    if (NetworkManager.WorkType != Network.WorkType.Client
+                    if (!NetworkManager.IsClient
                         && Time.PeriodicEvent(2.0, 0.0)) {
                         NetworkManager.QueuePacket(new HealthSyncPacket(this));
                     }
@@ -338,10 +338,7 @@ namespace Game {
                     bool flagMainRider = riderPlayer != null && riderPlayer.PlayerData.IsMainPlayer;
                     bool flagMainPlayer = m_componentPlayer != null && m_componentPlayer.PlayerData.IsMainPlayer;
                     bool flagNoRider = m_componentCreature.ComponentBody.ChildBodies.Count == 0;
-                    if (NetworkManager.WorkType == Network.WorkType.Local) {
-                        Injure(fallDamage, null, false, cause);
-                    }
-                    else if (NetworkManager.WorkType == Network.WorkType.Server) {
+                    if (NetworkManager.IsServer) {
                         if (flagMainPlayer || flagMainRider || flagNoRider) {
                             Injure(fallDamage, null, false, cause);
                         }

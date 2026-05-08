@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 using Engine;
 using Game.Network;
 
@@ -110,9 +110,7 @@ namespace Game {
                 string[] lines = [m_textBox1.Text, m_textBox2.Text, m_textBox3.Text, m_textBox4.Text];
                 Color[] colors = [m_colorButton1.Color, m_colorButton2.Color, m_colorButton3.Color, m_colorButton4.Color];
                 m_subsystemSignBlockBehavior.SetSignData(m_signPoint, lines, colors, m_urlTextBox.Text);
-                if (NetworkManager.WorkType != Network.WorkType.Local) {
-                    NetworkManager.QueuePacket(new SignBlockPacket(m_signPoint, lines, colors, m_urlTextBox.Text));
-                }
+                NetworkManager.QueuePacket(new SignBlockPacket(m_signPoint, lines, colors, m_urlTextBox.Text));
                 Dismiss();
             }
             if (m_urlButton.IsClicked) {

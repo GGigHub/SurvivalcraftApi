@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 using Engine;
 using Game;
 using Game.Network;
@@ -158,7 +158,7 @@ public class GameWidget : CanvasWidget {
 
     public WidgetInputDevice DetermineInputDevices() {
         if (PlayerData.SubsystemPlayers.PlayersData.Count > 0 && PlayerData.IsMainPlayer ||
-            NetworkManager.WorkType == WorkType.Local && PlayerData == PlayerData.SubsystemPlayers.PlayersData[0]) {
+            PlayerData == PlayerData.SubsystemPlayers.PlayersData[0]) {
             WidgetInputDevice widgetInputDevice = WidgetInputDevice.None;
             foreach (PlayerData playersDatum in PlayerData.SubsystemPlayers.PlayersData) {
                 if (playersDatum != PlayerData) {
@@ -185,9 +185,7 @@ public class GameWidget : CanvasWidget {
     }
 
     public override void MeasureOverride(Vector2 parentAvailableSize) {
-        if (NetworkManager.WorkType != WorkType.Local) {
-            IsVisible = PlayerData.IsMainPlayer;
-        }
+        IsVisible = PlayerData.IsMainPlayer;
         base.MeasureOverride(parentAvailableSize);
     }
 }

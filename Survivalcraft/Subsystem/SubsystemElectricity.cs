@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Engine;
@@ -401,7 +401,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (Network.NetworkManager.WorkType == Network.WorkType.Client) {
+            if (Network.NetworkManager.IsClient) {
                 m_remainingSimulationTime = MathUtils.Min(m_remainingSimulationTime + dt, 0.1f);
                 FrameStartCircuitStep = CircuitStep;
                 while (m_remainingSimulationTime >= 0.01f) {

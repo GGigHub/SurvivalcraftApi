@@ -24,7 +24,7 @@ namespace Game {
             LoadContents(this, node);
             m_statsPanel = Children.Find<StackPanelWidget>("StatsPanel");
             m_componentPlayer = componentPlayer;
-            if (NetworkManager.WorkType != Network.WorkType.Client && GameManager.WorldInfo != null)
+            if (!NetworkManager.IsClient && GameManager.WorldInfo != null)
                 m_adventureRestartExists = WorldsManager.SnapshotExists(GameManager.WorldInfo.DirectoryName, "AdventureRestart");
             if (!m_increaseDetailDialogShown
                 && PerformanceManager.LongTermAverageFrameTime.HasValue
@@ -69,7 +69,7 @@ namespace Game {
                     Color = white
                 }
             );
-            if (NetworkManager.WorkType == Network.WorkType.Server) {
+            if (NetworkManager.IsServer) {
                 AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerIP"), NetworkHelper.GetInnerIp() + ":" + SettingsManager.ServerPort);
                 string serverMode = SettingsManager.IsPublicServer
                     ? LanguageControl.Get(fName, "ServerModeWAN")

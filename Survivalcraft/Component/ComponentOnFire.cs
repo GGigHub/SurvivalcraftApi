@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -39,7 +39,7 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void SetOnFire(ComponentCreature attacker, float duration) {
-            if (Network.NetworkManager.WorkType == Network.WorkType.Client) {
+            if (Network.NetworkManager.IsClient) {
                 return;
             }
             Network.NetworkManager.QueuePacket(new Network.EntityOnFirePacket(this, attacker, duration));

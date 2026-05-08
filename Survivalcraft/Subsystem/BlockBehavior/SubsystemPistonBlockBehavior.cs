@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using TemplatesDatabase;
 
@@ -73,7 +73,7 @@ namespace Game {
                         if (num != value) {
                             var p = new PistonDataPacket(default, true, inventory.Id, slotIndex, newData);
                             NetworkManager.QueuePacket(p);
-                            if (NetworkManager.WorkType != Network.WorkType.Client) {
+                            if (!NetworkManager.IsClient) {
                                 p.Handle(false);
                             }
                         }
@@ -96,7 +96,7 @@ namespace Game {
                             var cell = new CellFace(x, y, z, 0);
                             var p = new PistonDataPacket(cell, false, default, default, newData);
                             NetworkManager.QueuePacket(p);
-                            if (NetworkManager.WorkType != Network.WorkType.Client) {
+                            if (!NetworkManager.IsClient) {
                                 p.Handle(false);
                             }
                         }

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text;
 using Engine;
 using Engine.Graphics;
@@ -196,7 +196,7 @@ namespace Game {
                 GenerateGeometry(movingBlockSet);
             }
             m_movingBlockSets.Add(movingBlockSet);
-            if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 m_movingBlockSets.Add(movingBlockSet);
                 Network.NetworkManager.QueuePacket(new MovingBlockAddPacket(movingBlockSet));
             }
@@ -204,7 +204,7 @@ namespace Game {
         }
 
         public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet) {
-            if (Network.NetworkManager.WorkType == Network.WorkType.Client) return;
+            if (Network.NetworkManager.IsClient) return;
             MovingBlockSet movingBlockSet2 = (MovingBlockSet)movingBlockSet;
             if (m_movingBlockSets.Remove(movingBlockSet2)) {
                 m_removing.Add(movingBlockSet2);
@@ -420,7 +420,7 @@ namespace Game {
             foreach (MovingBlockSet item in m_stopped) {
                 Stopped?.Invoke(item);
             }
-            if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 foreach (MovingBlockSet item in m_stopped) {
                     DoStop(item);
                     Network.NetworkManager.QueuePacket(new MovingBlockRemovePacket(item, true));

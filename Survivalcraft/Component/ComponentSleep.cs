@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -65,7 +65,7 @@ namespace Game {
         }
 
         public virtual void Sleep(bool allowManualWakeup) {
-            if (NetworkManager.WorkType == Network.WorkType.Client) {
+            if (NetworkManager.IsClient) {
                 NetworkManager.QueuePacket(new SleepRequestPacket(this, allowManualWakeup));
             }
             else {
@@ -87,7 +87,7 @@ namespace Game {
         }
 
         public virtual void WakeUp() {
-            if (NetworkManager.WorkType == Network.WorkType.Client) {
+            if (NetworkManager.IsClient) {
                 NetworkManager.QueuePacket(new WakeupRequestPacket(this));
             }
             else {

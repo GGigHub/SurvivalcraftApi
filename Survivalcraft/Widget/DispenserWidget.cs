@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 using Engine;
 using Game.Network;
 
@@ -74,11 +74,11 @@ namespace Game {
                 flag = true;
             }
             DispenserBlock.Mode mode = DispenserBlock.GetMode(data);
-            if (flag && NetworkManager.WorkType == Network.WorkType.Client) {
+            if (flag && NetworkManager.IsClient) {
                 byte tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) | (DispenserBlock.GetAcceptsDrops(data) ? (1 << 1) : 0));
                 var p = new DispenserPacket(m_componentBlockEntity.Coordinates, tmp);
                 NetworkManager.QueuePacket(p);
-                if (NetworkManager.WorkType != Network.WorkType.Client) {
+                if (!NetworkManager.IsClient) {
                     p.Handle(false);
                 }
             }

@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Engine.Serialization;
 using Game.Network;
 using TemplatesDatabase;
@@ -69,7 +69,7 @@ namespace Game {
                 int num = FindFreeItemId();
                 m_itemsData.Add(num, (T)blockData.Copy());
                 dropValue.Value = Terrain.ReplaceData(dropValue.Value, num);
-                if (NetworkManager.WorkType != Network.WorkType.Client) {
+                if (!NetworkManager.IsClient) {
                     if (blockData is MemoryBankData memory) NetworkManager.QueuePacket(new MemoryBankDataPacket(num, memory));
                     if (blockData is TruthTableData truthTableData) NetworkManager.QueuePacket(new TruthTableDataPacket(num, truthTableData));
                 }

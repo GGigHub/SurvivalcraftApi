@@ -1,4 +1,4 @@
-﻿using Game.Network;
+using Game.Network;
 using GameEntitySystem;
 
 namespace Game;
@@ -23,7 +23,7 @@ public class SubsystemInventories : Subsystem {
             return inventory.Id;
         }
         else {
-            if (NetworkManager.WorkType == Network.WorkType.Client) {
+            if (NetworkManager.IsClient) {
                 inventories[inventory.Id] = inventory;
                 return inventory.Id;
             }

@@ -1,4 +1,4 @@
-﻿using Game.Network;
+using Game.Network;
 
 namespace Game {
     public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior {
@@ -22,7 +22,7 @@ namespace Game {
                         if (num != value) {
                             var p = new ButtonVoltagePacket(default, true, inventory.Id, slotIndex, newVoltageLevel);
                             NetworkManager.QueuePacket(p);
-                            if (NetworkManager.WorkType != Network.WorkType.Client) {
+                            if (!NetworkManager.IsClient) {
                                 p.Handle(false);
                             }
                         }
@@ -46,7 +46,7 @@ namespace Game {
                             var cell = new CellFace(x, y, z, face);
                             var p = new ButtonVoltagePacket(cell, false, default, default, newVoltageLevel);
                             NetworkManager.QueuePacket(p);
-                            if (NetworkManager.WorkType != Network.WorkType.Client) {
+                            if (!NetworkManager.IsClient) {
                                 p.Handle(false);
                             }
                         }

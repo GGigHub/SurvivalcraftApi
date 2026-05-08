@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 
 namespace Game {
@@ -25,7 +25,7 @@ namespace Game {
                         () => {
                             var p = new MemoryBankDataPacket(default, true, inventory.Id, slotIndex, memoryBankData);
                             NetworkManager.QueuePacket(p);
-                            if (NetworkManager.WorkType != Network.WorkType.Client) {
+                            if (!NetworkManager.IsClient) {
                                 p.Handle(false);
                             }
                         }
@@ -61,7 +61,7 @@ namespace Game {
                             var cell = new CellFace(x, y, z, face);
                             var p = new MemoryBankDataPacket(cell, false, default, default, memoryBankData);
                             NetworkManager.QueuePacket(p);
-                            if (NetworkManager.WorkType != Network.WorkType.Client) {
+                            if (!NetworkManager.IsClient) {
                                 p.Handle(false);
                             }
                         }

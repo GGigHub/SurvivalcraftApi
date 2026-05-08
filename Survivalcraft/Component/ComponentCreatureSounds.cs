@@ -1,4 +1,4 @@
-﻿using Game.Network;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -49,7 +49,7 @@ namespace Game {
         public double m_lastPukeSoundTime = -1000.0;
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (NetworkManager.WorkType == Network.WorkType.Client) return;
+            if (NetworkManager.IsClient) return;
             PlayIdleSoundLogic(skipIfRecentlyPlayed);
         }
 
@@ -62,7 +62,7 @@ namespace Game {
         }
 
         public virtual void PlayPainSound() {
-            if (NetworkManager.WorkType == Network.WorkType.Client) return;
+            if (NetworkManager.IsClient) return;
             PlayPainSoundLogic();
         }
 
@@ -75,7 +75,7 @@ namespace Game {
         }
 
         public virtual void PlayMoanSound() {
-            if (NetworkManager.WorkType == Network.WorkType.Client) return;
+            if (NetworkManager.IsClient) return;
             PlayMoanSoundLogic();
         }
 
@@ -88,7 +88,7 @@ namespace Game {
         }
 
         public virtual void PlaySneezeSound() {
-            if (NetworkManager.WorkType == Network.WorkType.Client) return;
+            if (NetworkManager.IsClient) return;
             PlaySneezeSoundLogic();
         }
 
@@ -101,7 +101,7 @@ namespace Game {
         }
 
         public void PlayCoughSound() {
-            if (NetworkManager.WorkType == Network.WorkType.Client) return;
+            if (NetworkManager.IsClient) return;
             PlayCoughSoundLogic();
         }
 
@@ -114,7 +114,7 @@ namespace Game {
         }
 
         public virtual void PlayPukeSound() {
-            if (NetworkManager.WorkType == Network.WorkType.Client) return;
+            if (NetworkManager.IsClient) return;
             PlayPukeSoundLogic();
         }
 
@@ -127,7 +127,7 @@ namespace Game {
         }
 
         public virtual void PlayAttackSound() {
-            if (NetworkManager.WorkType == Network.WorkType.Client) return;
+            if (NetworkManager.IsClient) return;
             PlayAttackSoundLogic();
         }
 

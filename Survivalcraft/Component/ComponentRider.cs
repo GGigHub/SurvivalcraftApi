@@ -1,4 +1,5 @@
-﻿using Engine;
+using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -62,7 +63,7 @@ namespace Game {
         public virtual void StartMounting(ComponentMount componentMount) {
             if (!m_isAnimating
                 && Mount == null) {
-                if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
+                if (!NetworkManager.IsClient) {
                     StartNetMounting(componentMount);
                     Network.NetworkManager.QueuePacket(new Network.ComponentMountPacket(this, componentMount));
                 }
@@ -75,7 +76,7 @@ namespace Game {
         public virtual void StartDismounting() {
             if (!m_isAnimating
                 && Mount != null) {
-                if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
+                if (!NetworkManager.IsClient) {
                     StartNetDismounting();
                     Network.NetworkManager.QueuePacket(new Network.ComponentMountPacket(this));
                 }
@@ -136,7 +137,7 @@ namespace Game {
                     || (componentHealth != null && componentHealth.Health <= 0f)
                     || ComponentCreature.ComponentHealth.Health <= 0f) {
                     //服务器和客户端都由自己控制下马
-                    if (Network.NetworkManager.WorkType != Network.WorkType.Local && ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer) {
+                    if (ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer) {
 
                     }
                     else {

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Engine;
 using Game.Network;
 using GameEntitySystem;
@@ -134,7 +134,7 @@ namespace Game {
                     return false;
                 }
             );
-            if (NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 NetworkManager.QueuePacket(new HitValuePacket(particlePosition, particleVelocity, color, text2));
             }
             Target?.Project.FindSubsystem<SubsystemParticles>()?.AddParticleSystem(particleSystem);

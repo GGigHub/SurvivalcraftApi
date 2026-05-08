@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -125,7 +125,7 @@ namespace Game {
         public SubsystemTerrain m_subsystemTerrain;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 bool flag = Time.PeriodicEvent(0.1, 0.0);
                 _toSendList.Clear();
                 foreach (ComponentBody body in Bodies) {

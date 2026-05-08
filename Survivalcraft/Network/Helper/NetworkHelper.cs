@@ -60,7 +60,6 @@ namespace Game.Network {
             }
 
             foreach (var packet in packets) {
-                packet.From.IsLocalRemote = fromBroadcast;
                 packet.Handle(isServer);
             }
         }

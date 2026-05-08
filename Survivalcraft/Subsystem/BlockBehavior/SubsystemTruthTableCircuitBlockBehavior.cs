@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 
 namespace Game {
@@ -23,7 +23,7 @@ namespace Game {
                     delegate {
                         var p = new TruthTableDataPacket(default, true, inventory.Id, slotIndex, truthTableData);
                         NetworkManager.QueuePacket(p);
-                        if (NetworkManager.WorkType != Network.WorkType.Client) {
+                        if (!NetworkManager.IsClient) {
                             p.Handle(false);
                         }
                     }
@@ -43,7 +43,7 @@ namespace Game {
                         var cell = new CellFace(x, y, z, face);
                         var p = new TruthTableDataPacket(cell, false, default, default, truthTableData);
                         NetworkManager.QueuePacket(p);
-                        if (NetworkManager.WorkType != Network.WorkType.Client) {
+                        if (!NetworkManager.IsClient) {
                             p.Handle(false);
                         }
                     }

@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 using Engine;
 
 namespace Game {
@@ -74,7 +74,7 @@ namespace Game {
             }
             if (m_sleepButton.IsClicked
                 && m_componentPlayer != null) {
-                if (Network.NetworkManager.WorkType == Network.WorkType.Client) {
+                if (Network.NetworkManager.IsClient) {
                     Network.NetworkManager.QueuePacket(new Network.SleepRequestPacket(m_componentPlayer.ComponentSleep, true));
                 }
                 else {

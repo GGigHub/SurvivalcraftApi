@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Engine;
 using Game.Network;
 using GameEntitySystem;
@@ -261,7 +261,7 @@ namespace Game {
         }
 
         public virtual void OnSlotChange(int slotIndex) {
-            if (NetworkManager.WorkType == Network.WorkType.Server) {
+            if (NetworkManager.IsServer) {
                 SubsystemInventories.SyncInventoryItem(this, slotIndex);
             }
         }

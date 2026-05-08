@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Xml.Linq;
 using Engine;
 using Game.Network;
@@ -195,7 +195,7 @@ namespace Game {
                 );
             }
             if (m_chokeButton.IsClicked) {
-                if (NetworkManager.WorkType == Network.WorkType.Client) {
+                if (NetworkManager.IsClient) {
                     NetworkManager.QueuePacket(
                         new InjureRequestPacket(
                             m_componentPlayer.ComponentHealth,

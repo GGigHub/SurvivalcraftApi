@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Xml.Linq;
@@ -6,7 +6,7 @@ using Engine;
 using Engine.Graphics;
 using Engine.Media;
 using Game.Network;
-using Stage = Game.Network.NetworkStage;
+using Stage = Game.Network.ClientStage;
 
 namespace Game;
 
@@ -52,19 +52,19 @@ public class GameLoadingScreen : Screen {
         }, delegate {
             SetSpwanDialogMessage("等待服务器响应", 0.25f);
             // Fix me: 客户端中断连接后再次连接可能会卡住。
-            if (NetworkManager.CurrentStage == Stage.WaitForClientList) {
-                if (timer.ElapsedMilliseconds >= NetworkManager.DISCONNECT_TIMEOUT) {
+            if (NetworkManager.Self?.State == Stage.WaitForClientList) {
+                if (timer.ElapsedMilliseconds >= 10000) {
                     NetworkManager.Stop();
                 }
             }
-            else if (NetworkManager.CurrentStage == Stage.Connected) {
+            else if (NetworkManager.Self?.State == Stage.Connected) {
                 m_stateMachine.TransitionTo("Loading");
             }
             else {
                 NetworkManager.Stop();
             }
         }, delegate {
-            if (NetworkManager.CurrentStage == Stage.Connected) {
+            if (NetworkManager.Self?.State == Stage.Connected) {
                 NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientStage.Connected));
             }
         });
@@ -75,14 +75,14 @@ public class GameLoadingScreen : Screen {
                 if (IsServerReply) {
                     m_stateMachine.TransitionTo("LoadServerReply");
                 }
-                if (NetworkManager.CurrentStage != Stage.Connected) {
+                if (NetworkManager.Self?.State != Stage.Connected) {
                     NetworkManager.Stop();
                 }
             }
             else {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
-                if (IsAdventureRestart && NetworkManager.WorkType == Network.WorkType.Client) {
+                if (IsAdventureRestart && NetworkManager.IsClient) {
                     NetworkManager.QueuePacket(new PlayerIntoPlayingPacket(NetworkManager.MainPlayer));
                 }
                 ScreensManager.SwitchScreen("Game");
@@ -92,7 +92,7 @@ public class GameLoadingScreen : Screen {
         });
         m_stateMachine.AddState("LoadServerReply", null, delegate {
             SetSpwanDialogMessage("加载服务器 Project", 0.6f);
-            if (NetworkManager.CurrentStage == Stage.Connected) {
+            if (NetworkManager.Self?.State == Stage.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
                 ScreensManager.SwitchScreen("Game");
                 m_projectXmlData = null;

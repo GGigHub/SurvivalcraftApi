@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -46,7 +46,7 @@ namespace Game {
             set {
                 if (m_isFeed != value) {
                     m_isFeed = value;
-                    if (NetworkManager.WorkType == Network.WorkType.Server) NetworkManager.QueuePacket(new EatPickableBehaviorPacket(this, m_isFeed));
+                    if (NetworkManager.IsServer) NetworkManager.QueuePacket(new EatPickableBehaviorPacket(this, m_isFeed));
                 }
             }
         }
@@ -58,7 +58,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType == Network.WorkType.Client) {
+            if (NetworkManager.IsClient) {
                 m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {

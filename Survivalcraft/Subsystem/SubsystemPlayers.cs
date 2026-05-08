@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -131,7 +131,7 @@ namespace Game {
                 ScreensManager.SwitchScreen("Player", PlayerScreen.Mode.Initial, Project);
             }
             foreach (PlayerData playersDatum in m_playersData) {
-                if (NetworkManager.WorkType == Network.WorkType.Server && playersDatum.Client == null) {
+                if (NetworkManager.IsServer && playersDatum.Client == null) {
                     toRemove.Add(playersDatum);
                 }
                 else {
@@ -244,7 +244,7 @@ namespace Game {
                 }
                 if (componentPlayer != null) {
                     Project.RemoveEntity(componentPlayer.Entity, true);
-                    if (NetworkManager.WorkType == Network.WorkType.Server) {
+                    if (NetworkManager.IsServer) {
                         componentPlayer.SavePlayerEntity();
                     }
                 }
@@ -263,7 +263,7 @@ namespace Game {
         }
 
         public bool MakePlayerOnline(Guid playerGuid, out PlayerData playerData, out Entity entity) {
-            if (CheckPlayerDataExists(playerGuid, out string entityFilePath) && NetworkManager.WorkType == Network.WorkType.Server) {
+            if (CheckPlayerDataExists(playerGuid, out string entityFilePath) && NetworkManager.IsServer) {
                 playerData = new PlayerData(Project);
                 ValuesDictionary dict = new ValuesDictionary();
                 using (Stream s = Storage.OpenFile(entityFilePath, OpenFileMode.Read)) {

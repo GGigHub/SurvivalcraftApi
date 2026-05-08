@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
 using Game.Network;
@@ -644,14 +644,14 @@ namespace Game {
                     Utilities.Dispose(ref m_outerClothedTexture);
                 }
                 else if (Time.PeriodicEvent(1.0, 0.0)) {
-                    if (NetworkManager.WorkType == Network.WorkType.Client) {
+                    if (NetworkManager.IsClient) {
                         NetworkManager.QueuePacket(
                             new Network.RequestSkinPacket(
                                 m_componentPlayer.PlayerData.CharacterSkinName
                             )
                         );
                     }
-                    else if (NetworkManager.WorkType == Network.WorkType.Server) {
+                    else if (NetworkManager.IsServer) {
                         NetworkManager.QueuePacket(
                             new Network.WhoHasSkinPacket(
                                 m_componentPlayer.PlayerData.CharacterSkinName

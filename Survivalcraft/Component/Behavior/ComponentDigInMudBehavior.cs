@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -44,7 +44,7 @@ namespace Game {
             set {
                 if (m_isDigIn != value) {
                     m_isDigIn = value;
-                    if (NetworkManager.WorkType == Network.WorkType.Server) NetworkManager.QueuePacket(new DigInMudBehaviorPacket(this, m_isDigIn));
+                    if (NetworkManager.IsServer) NetworkManager.QueuePacket(new DigInMudBehaviorPacket(this, m_isDigIn));
                 }
             }
         }
@@ -54,7 +54,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.WorkType == Network.WorkType.Client) {
+            if (NetworkManager.IsClient) {
                 if (IsDigIn) {
                     m_componentFishModel.DigInOrder = m_maxDigInDepth;
                 }

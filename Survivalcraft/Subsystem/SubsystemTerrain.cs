@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -368,7 +368,7 @@ namespace Game {
             if (pass) {
                 return;
             }
-            if (NetworkManager.WorkType == Network.WorkType.Client) return;
+            if (NetworkManager.IsClient) return;
             ChangeCellNet(x, y, z, value, updateModificationCounter, movingBlock);
             NetworkManager.QueuePacket(new Network.TerrainChangeCellPacket(x, y, z, value));
         }
@@ -512,7 +512,7 @@ namespace Game {
             Terrain = new Terrain();
             TerrainRenderer = new TerrainRenderer(this);
             TerrainUpdater = new TerrainUpdater(this);
-            if (NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 TerrainSerializer = new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             else {

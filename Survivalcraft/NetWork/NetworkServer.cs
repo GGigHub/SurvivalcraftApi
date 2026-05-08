@@ -12,7 +12,7 @@ public class NetworkServer : INetEventListener {
     public event Action<NetPeer, DisconnectInfo> ClientDisconnected;
 
     public Client Server { get; set; }
-    public bool IsServer => CurrentStage == NetworkStage.Connected && Self == Server;
+    public bool IsServer => NetManager.IsRunning && Self == Server;
     public int ClientCount => Peers.Count() + 1;
     public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
     public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
@@ -22,8 +22,6 @@ public class NetworkServer : INetEventListener {
     internal readonly Dictionary<Client, string> ClientsToRemove = new Dictionary<Client, string>();
 
     public Client Self { get; set; }
-    public NetworkStage CurrentStage { get; set; } = NetworkStage.NotConnected;
-    public WorkType WorkType { get; set; }
     public NetManager NetManager { get; set; }
     public PacketFragment PackageFragment { get; set; }
 
@@ -49,9 +47,7 @@ public class NetworkServer : INetEventListener {
                 Window.Frame += Update;
                 Window.Closed += Stop;
                 NetManager.PollEvents();
-                CurrentStage = NetworkStage.Connected;
                 Server = Self;
-                WorkType = WorkType.Server;
                 OnClientStateChanged += ClientStateChanged;
                 Project.EntityAdded += (_, arg) => {
                     NetworkManager.QueuePacket(new EntityLoadPacket(arg.Entity));
@@ -61,14 +57,13 @@ public class NetworkServer : INetEventListener {
                 };
             }
             else {
-                CurrentStage = NetworkStage.NotConnected;
                 Stop();
             }
         }
         catch (Exception e) {
             Log.Error(e.Message);
         }
-        return CurrentStage == NetworkStage.Connected;
+        return NetManager.IsRunning;
     }
 
     public void AddClient(Client c) {
@@ -88,7 +83,6 @@ public class NetworkServer : INetEventListener {
 
         if (c == Server) {
             Stop();
-            CurrentStage = NetworkStage.NotConnected;
             return;
         }
 

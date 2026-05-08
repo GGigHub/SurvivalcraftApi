@@ -1,5 +1,6 @@
-﻿using Engine;
+using Engine;
 using Engine.Audio;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -222,7 +223,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (Network.NetworkManager.WorkType != Network.WorkType.Client) {
+            if (!NetworkManager.IsClient) {
                 UpdatePrecipitation(dt);
                 UpdateLightning(dt);
                 UpdateFog(dt);

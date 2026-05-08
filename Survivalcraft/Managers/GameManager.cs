@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 using Engine;
 using Game.Network;
 using GameEntitySystem;
@@ -90,7 +90,7 @@ namespace Game {
         }
 
         public static void SaveProject(bool waitForCompletion, bool showErrorDialog) {
-            if (m_project != null && NetworkManager.WorkType == Network.WorkType.Server) {
+            if (m_project != null && NetworkManager.IsServer) {
                 double realTime = Time.RealTime;
                 ProjectData projectData = m_project.Save();
                 m_saveCompleted.WaitOne();

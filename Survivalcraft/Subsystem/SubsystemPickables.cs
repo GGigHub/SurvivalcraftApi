@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
 using Game.Network;
@@ -55,7 +55,7 @@ namespace Game {
                 }
             }
             if (requestSync
-                && NetworkManager.WorkType == Network.WorkType.Client) {
+                && NetworkManager.IsClient) {
                 NetworkManager.QueuePacket(new PickableRequestSyncPacket(id));
             }
             return false;
@@ -102,7 +102,7 @@ namespace Game {
                 m_pickables.Add(pickable);
             }
             PickableAdded?.Invoke(pickable);
-            if (NetworkManager.WorkType == Network.WorkType.Server) {
+            if (NetworkManager.IsServer) {
                 NetworkManager.QueuePacket(new PickableCreatePacket(pickable));
             }
             return pickable;
@@ -112,7 +112,7 @@ namespace Game {
             AddPickable(value, count, position, velocity, stuckMatrix, null);
 
         public virtual Pickable AddPickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) {
-            if (NetworkManager.WorkType == Network.WorkType.Client) {
+            if (NetworkManager.IsClient) {
                 return null;
             }
             return AddPickable<Pickable>(value, count, position, velocity, stuckMatrix, owner);
@@ -210,7 +210,7 @@ namespace Game {
                     m_pickables.Remove(item);
                     useMaps.Remove(item.Id);
                     PickableRemoved?.Invoke(item);
-                    if (NetworkManager.WorkType == Network.WorkType.Server) {
+                    if (NetworkManager.IsServer) {
                         NetworkManager.QueuePacket(new PickableDeletePacket(item));
                     }
                 }

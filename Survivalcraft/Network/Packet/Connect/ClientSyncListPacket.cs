@@ -47,10 +47,10 @@ public class ClientSyncListPacket : ClientPacketBase {
             }
             NetworkManager.AddClient(client);
         }
-        if (NetworkManager.Self == null) {
+        if (NetworkManager.Client.Self == null) {
             throw new Exception("Cannot find Self In Client List");
         }
-        NetworkManager.Client.CurrentStage = NetworkStage.Connected;
+        NetworkManager.Client.Self.State = ClientStage.Connected;
     }
 }
 

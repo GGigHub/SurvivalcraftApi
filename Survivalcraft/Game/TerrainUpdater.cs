@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Engine;
 using Game.Network;
 
@@ -273,7 +273,7 @@ namespace Game {
                 value.ContentDistance = contentDistance;
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
-                if (NetworkManager.WorkType == Network.WorkType.Client) {
+                if (NetworkManager.IsClient) {
                     NetworkManager.QueuePacket(new PlayerUpdateLocationPacket(value));
                 }
             }
@@ -393,7 +393,7 @@ namespace Game {
                 }
             }
             foreach (TerrainChunk terrainChunk in m_terrain.AllocatedChunks) {
-                if (NetworkManager.WorkType == Network.WorkType.Client) {
+                if (NetworkManager.IsClient) {
                     if (terrainChunk.ThreadState == TerrainChunkState.NotLoaded) {
                         if (!terrainChunk.IsRequested) {
                             terrainChunk.IsRequested = true;
@@ -728,7 +728,7 @@ namespace Game {
             switch (chunk.ThreadState) {
                 case TerrainChunkState.NotLoaded: {
                         double realTime19 = Time.RealTime;
-                        if (NetworkManager.WorkType == Network.WorkType.Client) {
+                        if (NetworkManager.IsClient) {
                             chunk.WasUpgraded = true;
                         }
                         else {

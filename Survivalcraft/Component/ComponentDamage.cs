@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -38,7 +38,7 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Damage(float amount) {
-            if (NetworkManager.WorkType == Network.WorkType.Client) {
+            if (NetworkManager.IsClient) {
                 return;
             }
             if (amount > 0f
@@ -51,7 +51,7 @@ namespace Game {
         public virtual void Update(float dt) {
             Vector3 position = m_componentBody.Position;
             if (Hitpoints <= 0f) {
-                if (NetworkManager.WorkType != Network.WorkType.Client) {
+                if (!NetworkManager.IsClient) {
                     NetworkManager.QueuePacket(new DamageSyncPacket(this));
                 }
                 m_subsystemParticles.AddParticleSystem(

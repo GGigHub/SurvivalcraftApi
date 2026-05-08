@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
@@ -158,7 +158,7 @@ namespace Game {
                 }
             }
             else if (componentMiner.ComponentPlayer != null) {
-                if (NetworkManager.WorkType == Network.WorkType.Client && componentMiner.ComponentPlayer == NetworkManager.MainPlayer) {
+                if (NetworkManager.IsClient && componentMiner.ComponentPlayer == NetworkManager.MainPlayer) {
                     Packet packet = new EditSignPacket(point);
                     NetworkManager.QueuePacket(packet);
                     return true;
