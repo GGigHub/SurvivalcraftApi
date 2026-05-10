@@ -6,12 +6,32 @@ param(
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+
+public static class DpiAwareHelper {
+    [DllImport("user32.dll")]
+    private static extern bool SetProcessDPIAware();
+
+    public static void Enable() {
+        try {
+            SetProcessDPIAware();
+        }
+        catch {
+            // Ignore if the process is already DPI aware or the API is unavailable.
+        }
+    }
+}
+"@
+
 try {
-    $Screen = [System.Windows.Forms.Screen]::PrimaryScreen
-    $Width  = $Screen.Bounds.Width
-    $Height = $Screen.Bounds.Height
-    $Left   = $Screen.Bounds.Left
-    $Top    = $Screen.Bounds.Top
+    [DpiAwareHelper]::Enable()
+
+    $Left = [System.Windows.Forms.SystemInformation]::VirtualScreen.Left
+    $Top = [System.Windows.Forms.SystemInformation]::VirtualScreen.Top
+    $Width = [System.Windows.Forms.SystemInformation]::VirtualScreen.Width
+    $Height = [System.Windows.Forms.SystemInformation]::VirtualScreen.Height
 
     $Bitmap = New-Object System.Drawing.Bitmap($Width, $Height)
     $Graphic = [System.Drawing.Graphics]::FromImage($Bitmap)

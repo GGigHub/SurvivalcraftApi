@@ -333,7 +333,11 @@ public class PacketStreamReader : BinaryReader {
 }
 
 public class PacketStreamWriter : BinaryWriter {
+    public PacketStreamWriter() : base(new MemoryStream()) {
+    }
+
     public byte[] Data() {
+        Flush();
         BaseStream.Seek(0, SeekOrigin.Begin);
         return NetworkManager.Compress(BaseStream);
     }
