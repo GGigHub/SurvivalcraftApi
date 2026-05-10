@@ -162,6 +162,7 @@ namespace Game {
             Exception exception = null;
             AddLoadAction(
                 delegate { //灏嗘墍鏈夌殑鏈夋晥鐨剆cmod璇诲彇涓篗odEntity锛屽苟鑷姩娣诲姞SurvivalCraftModEntity
+                    PacketManager.Initialize();
                     ContentManager.Initialize();
                     ModsManager.Initialize();
                 }
@@ -516,7 +517,6 @@ namespace Game {
                     }
                 }
             );
-            AddLoadAction(PacketManager.Initialize);
         }
 
         void InitScreens() {

@@ -92,8 +92,8 @@ public class PacketManager {
     }
 
     public static T DecodePacket<T>(IEnumerable<Client> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : Packet {
-        var obj = DecodePackets(clients, reader, netPeer, request, iPEndPoint)[0];
-        return (T)obj;
+        var packets = DecodePackets(clients, reader, netPeer, request, iPEndPoint);
+        return (T)(packets.Count > 0 ? packets[0] : null);
     }
 
     public static List<Packet> DecodePacketsFromPayload(IEnumerable<Client> clients, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {

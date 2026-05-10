@@ -13,11 +13,11 @@ public class EntityLoadPacket : Packet {
     }
 
     public EntityLoadPacket(Entity entity) {
-        entityDataList = GameManager.Project.SaveEntities([entity]);
+        entityDataList = entity.Project.SaveEntities([entity]);
     }
 
     public EntityLoadPacket(List<Entity> entities) {
-        entityDataList = GameManager.Project.SaveEntities([.. entities]);
+        entityDataList = entities.Count > 0 ? entities[0].Project.SaveEntities(entities) : new EntityDataList();
     }
 
     public override void Serialize(PacketSerializer archive) {

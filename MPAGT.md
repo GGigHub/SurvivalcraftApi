@@ -26,6 +26,6 @@ public override void Enter(object[] parameters) {
 查看日志:字面意思，日志文件会存在于游戏文件夹的Bugs/Game.log中，建议从末尾开始查看
 截图工具:你可以使用命令来截图 .\scripts\screenshot.bat "myscreenshot.png" 其中myscreenshot.png是图片文件名
 注意:
-1.为了保证截图/调试效果，在运行多个进程时，请保证启动顺序正确，并且保证运行在不同的目录下
+1.为了保证截图/调试效果，在运行多个进程时，请保证启动顺序正确，并且保证运行在不同的目录下，测试完成后记得清理/关闭进程
 2.每个玩家的OnlineAccessToken不可以相同，否则会直接判定为相同用户然后拒绝连接，当然不建议在代码中改，在游戏文件夹下的docs/Setting.xml配置文件中
 3.测试完成后一定要使用截图工具截图，并且读取图片来证明你的任务确实完成了
