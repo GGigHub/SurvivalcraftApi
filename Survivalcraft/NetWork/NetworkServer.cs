@@ -252,11 +252,20 @@ public class NetworkServer : INetEventListener {
     }
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod) {
+        if (GameManager.Project == null) return;
+
         if (!NetworkHelper.TryDecodePackets(Clients.Values, 
             PackageFragment, reader, peer, null, null, out List<Packet> packets)) {
             return;
         }
-        packets.ForEach(packet => packet.Handle(true));
+        foreach (var packet in packets) {
+            if (packet.From == null) {
+                continue;
+            }
+            if (packet.MinNeedState <= packet.From.State) {
+                packet.Handle(true);
+            }
+        }
     }
 
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {

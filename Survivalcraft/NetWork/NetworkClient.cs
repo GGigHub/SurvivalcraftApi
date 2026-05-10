@@ -86,6 +86,8 @@ public class NetworkClient : INetEventListener {
     public Client Server { get; set; }
     public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
     public List<Packet> PendingPackets { get; } = new List<Packet>();
+
+    private List<Packet> m_bufferedPackets = new List<Packet>();
     public Action<Client> OnClientStateChanged { get; set; }
 
     public Client Self { get; set; }
@@ -142,6 +144,7 @@ public class NetworkClient : INetEventListener {
             subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
         }
         SettingsManager.VisibilityRange = Math.Min(256, SettingsManager.VisibilityRange);
+        NetworkManager.Self.State = ClientStage.ProjectLoaded;
         NetworkManager.QueuePacket(new ClientStateChangePacket(Self.ID, ClientStage.ProjectLoaded));
     }
 
@@ -153,6 +156,16 @@ public class NetworkClient : INetEventListener {
                 if (payload != null) PackageFragment.SendPayload(payload, serverClient.Peer);
             }
             PendingPackets.Clear();
+
+            // Process buffered packets
+            while (m_bufferedPackets.Count > 0) {
+                var packet = m_bufferedPackets[0];
+                if (Self == null || packet.MinNeedState > Self.State) break;
+
+                packet.Handle(false);
+                m_bufferedPackets.RemoveAt(0);
+            }
+
             PackageFragment.CleanupStates();
             NetManager.PollEvents();
         }
@@ -162,6 +175,7 @@ public class NetworkClient : INetEventListener {
         if (NetManager.IsRunning) {
             NetManager.Stop(true);
         }
+        m_bufferedPackets.Clear();
     }
 
     public void OnPeerConnected(NetPeer peer) {
@@ -179,7 +193,14 @@ public class NetworkClient : INetEventListener {
             PackageFragment, reader, peer, null, null, out List<Packet> packets)) {
             return;
         }
-        packets.ForEach(packet => packet.Handle(false));
+        foreach (var packet in packets) {
+            if (m_bufferedPackets.Count > 0 || Self == null || packet.MinNeedState > Self.State) {
+                m_bufferedPackets.Add(packet);
+            }
+            else {
+                packet.Handle(false);
+            }
+        }
     }
 
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {

@@ -255,6 +255,7 @@ namespace Game {
             m_stateMachine.AddState("Playing", delegate {
                 HideSpawnDialog();
                 if (NetworkManager.IsClient) {
+                    NetworkManager.Self.State = ClientStage.Playing;
                     NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientStage.Playing));
                 }
             }, delegate {

@@ -10,7 +10,10 @@ namespace Game.Network {
     public static class NetworkHelper {
 
         public static string GetInnerIp() {
-            return NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault().ToString();
+            return NetworkInterface.GetAllNetworkInterfaces()
+                .SelectMany(n => n.GetIPProperties().UnicastAddresses)
+                .FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                ?.Address.ToString();
         }
 
         public static bool IsValidIPAddress(string ip) {
