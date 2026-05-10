@@ -207,7 +207,11 @@ public class ConnectionRequestPacket : Packet {
                 var acceptedPeer = From.Request.Accept();
                 Client addClient = NetworkManager.CreateClient((NetPeer)(object)acceptedPeer, guid, communityAccountId, nickname);
                 NetworkManager.Server.AddClient(addClient);
-                NetworkManager.QueuePacket(new ClientSyncListPacket(NetworkManager.Server.Clients.Values) { To = addClient });
+                NetworkManager.Server.SendWriterFromPacket(
+                    new ClientSyncListPacket(NetworkManager.Server.Clients.Values) { To = addClient },
+                    (NetPeer)(object)acceptedPeer,
+                    true
+                );
 
                 var clientPacket = new ClientAddPacket(addClient.ID, addClient.PlayerGuid, addClient.Nickname);
                 foreach (var c in NetworkManager.Peers) {

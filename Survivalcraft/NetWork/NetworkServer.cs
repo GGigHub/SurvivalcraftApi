@@ -164,7 +164,7 @@ public class NetworkServer : INetEventListener {
                 if (client == Self || !client.IsConnected) {
                     continue;
                 }
-                byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, client, false, IsServer);
+                byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, client, true, IsServer);
                 if (payload != null) PackageFragment.SendPayload(payload, client.Peer);
             }
             PendingPackets.Clear();

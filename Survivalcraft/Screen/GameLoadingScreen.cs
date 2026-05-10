@@ -94,6 +94,8 @@ public class GameLoadingScreen : Screen {
             SetSpwanDialogMessage("加载服务器 Project", 0.6f);
             if (NetworkManager.Self?.State == Stage.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
+                NetworkManager.Self.State = Stage.ProjectLoaded;
+                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientStage.ProjectLoaded));
                 ScreensManager.SwitchScreen("Game");
                 m_projectXmlData = null;
                 m_blockTextureData = null;

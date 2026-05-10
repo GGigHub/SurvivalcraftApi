@@ -149,7 +149,7 @@ public class NetworkClient : INetEventListener {
         if (NetManager.IsRunning) {
             // Client only sends to server (ID 0 usually)
             if (Clients.TryGetValue(0, out Client serverClient) && serverClient.IsConnected) {
-                byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, serverClient, false, false);
+                byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, serverClient, true, false);
                 if (payload != null) PackageFragment.SendPayload(payload, serverClient.Peer);
             }
             PendingPackets.Clear();

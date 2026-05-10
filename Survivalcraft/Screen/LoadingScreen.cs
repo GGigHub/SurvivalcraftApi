@@ -1,5 +1,6 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Globalization;
+using System.Net;
 using System.Reflection;
 using Engine;
 using Engine.Graphics;
@@ -511,6 +512,9 @@ namespace Game {
                 delegate {
                     if (Program.StartupParameters.TryGetValue("play", out string worldDirectory)) {
                         ScreensManager.SwitchScreen("Play", worldDirectory);
+                    }
+                    else if (Program.StartupParameters.TryGetValue("join", out string serverEndpoint)) {
+                        ScreensManager.SwitchScreen("GameLoading", null, null, IPEndPoint.Parse(serverEndpoint), null);
                     }
                     else {
                         ScreensManager.SwitchScreen("MainMenu");
