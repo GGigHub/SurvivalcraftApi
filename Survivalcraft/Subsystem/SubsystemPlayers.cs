@@ -237,9 +237,9 @@ namespace Game {
                     var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
                     list.EntitiesData.Add(entityDataPlayer);
                     m_offlinePlayerEntities.Remove(playerGuid);
-                    List<Entity> entities = GameManager.Project.InitializeEntities(list);
-                    GameManager.Project.LoadEntities(list, entities);
-                    var e = entities[0];
+                    List<Entity> el = GameManager.Project.InitializeAndLoadEntities(list);
+                    GameManager.Project.AttachEntities(el, true);
+                    Entity e = el[0];
                     componentPlayer = e.FindComponent<ComponentPlayer>();
                 }
                 if (componentPlayer != null) {
@@ -286,10 +286,10 @@ namespace Game {
                 playerData.WaitEntityAdded();
                 var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
                 list.EntitiesData.Add(entityData);
-                List<Entity> elist = GameManager.Project.InitializeEntities(list);
-                GameManager.Project.LoadEntities(list, elist);
-                if (elist.Count > 0) {
-                    entity = elist[0];
+                List<Entity> el = GameManager.Project.InitializeAndLoadEntities(list);
+                GameManager.Project.AttachEntities(el, true);
+                if (el.Count > 0) {
+                    entity = el[0];
                     entity.Id = 0;
                 }
                 else {

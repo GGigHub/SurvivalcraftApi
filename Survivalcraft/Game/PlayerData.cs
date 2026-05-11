@@ -184,7 +184,7 @@ namespace Game {
                 }
                 if (m_spawnMode == SpawnMode.Respawn) {
                     if (!NetworkManager.IsClient) UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 2), Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
-                    else UpdateSpawnDialog(string.Format("玩家 {0} 已死亡 (经验等级 {1})", Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
+                    else UpdateSpawnDialog(string.Format("重生 {0} 的世界中 (等级 {1})", Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
                 }
                 else {
                     UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathUtils.Floor(Level)), null, 0f, resetProgress: true);
