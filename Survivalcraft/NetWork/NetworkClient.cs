@@ -113,7 +113,6 @@ public class NetworkClient : INetEventListener {
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
             Self = new Client(new Guid(onlineAccessToken)) { State = ClientStage.WaitForClientList };
             SendWriterFromPacket(new ConnectionRequestPacket("ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
-            OnClientStateChanged += ClientStateChanged;
         }
         catch {
             if (Self != null) Self.State = ClientStage.NotConnected;
@@ -130,22 +129,6 @@ public class NetworkClient : INetEventListener {
 
     public void SendWriterFromPacket(Packet packet, IPEndPoint endPoint, bool isSend = true) {
         NetworkHelper.SendWriterFromPacket(PackageFragment, packet, endPoint, isSend);
-    }
-
-    private void ClientStateChanged(Client c) {
-        var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
-
-        if (c.State != ClientStage.NotConnected) {
-            return;
-        }
-
-        var playerData = subsystemPlayers.PlayersData.Find(pd => pd.PlayerGUID == c.PlayerGuid);
-        if (playerData != null && !playerData.IsMainPlayer) {
-            subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
-        }
-        SettingsManager.VisibilityRange = Math.Min(256, SettingsManager.VisibilityRange);
-        NetworkManager.Self.State = ClientStage.ProjectLoaded;
-        NetworkManager.QueuePacket(new ClientStateChangePacket(Self.ID, ClientStage.ProjectLoaded));
     }
 
     public void Update() {

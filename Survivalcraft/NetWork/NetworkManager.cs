@@ -33,17 +33,6 @@ public static class NetworkManager {
     public static bool IsServer => Server != null && Server.NetManager.IsRunning;
     public static bool IsClient => Client != null && Client.NetManager.IsRunning;
     public static bool IsMultiplayer => IsServer || IsClient;
-    public static Action<Client> OnClientStateChanged {
-        get => Server != null ? Server.OnClientStateChanged : Client != null ? Client.OnClientStateChanged : null;
-        set {
-            if (Server != null) {
-                Server.OnClientStateChanged = value;
-            }
-            else if (Client != null) {
-                Client.OnClientStateChanged = value;
-            }
-        }
-    }
 
     public static ComponentPlayer MainPlayer {
         get {

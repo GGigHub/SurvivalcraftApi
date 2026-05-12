@@ -22,9 +22,13 @@ public class ClientRemovePacket : ClientPacketBase {
             return;
         }
         if (NetworkManager.Clients.ContainsKey(m_clientId)) {
-            var client = NetworkManager.Clients[m_clientId];
+            SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
+            Client client = NetworkManager.Clients[m_clientId];
             client.State = ClientStage.NotConnected;
-            NetworkManager.OnClientStateChanged?.Invoke(client);
+            PlayerData playerData = subsystemPlayers.PlayersData.Find(pd => pd.PlayerGUID == client.PlayerGuid);
+            if (playerData != null && !playerData.IsMainPlayer) {
+                subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
+            }
             NetworkManager.Clients.Remove(m_clientId);
         }
     }

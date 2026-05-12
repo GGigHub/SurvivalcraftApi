@@ -48,7 +48,6 @@ public class NetworkServer : INetEventListener {
                 Window.Closed += Stop;
                 NetManager.PollEvents();
                 Server = Self;
-                OnClientStateChanged += ClientStateChanged;
                 Project.EntityAdded += (_, arg) => {
                     NetworkManager.QueuePacket(new EntityLoadPacket(arg.Entity));
                 };
@@ -187,55 +186,6 @@ public class NetworkServer : INetEventListener {
             if (!Clients.ContainsKey(i)) return i;
         }
         throw new Exception("Server is full.");
-    }
-
-    private void ClientStateChanged(Client c) {
-        var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
-        var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
-
-        NetworkManager.QueuePacket(new ClientStateChangePacket(c.ID, c.State) { Except = c });
-
-        switch (c.State) {
-            case ClientStage.Connected: {
-                    byte[] textureData = null;
-                    if (subsystemPlayers.MakePlayerOnline(c.PlayerGuid, out PlayerData playerData, out Entity entity)) {
-                        if (entity != null) {
-                            GameManager.Project.AddEntity(entity);
-                        }
-                        NetworkManager.QueuePacket(new PlayerAddPacket(playerData) { Except = c });
-                    }
-                    if (!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.BlocksTextureName)) {
-                        using var s = Storage.OpenFile(BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName), OpenFileMode.Read);
-                        textureData = ModsManager.StreamToBytes(s);
-                    }
-                    byte[] data = NetworkManager.GetNowProject(GameManager.Project);
-                    NetworkManager.QueuePacket(new ProjectPacket(textureData, data) { To = c });
-                    break;
-                }
-            case ClientStage.NotConnected:
-                subsystemPlayers.MakePlayerOffline(c.PlayerGuid);
-                break;
-            case ClientStage.ProjectLoaded: {
-                    List<Entity> sendList = [.. GameManager.Project.Entities];
-                    NetworkManager.QueuePacket(new EntityLoadPacket(sendList) { To = c });
-                    break;
-                }
-            case ClientStage.LoadTerrain:
-                if (c.PlayerData?.ComponentPlayer != null
-                    && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
-                    c.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = true;
-                }
-                break;
-            case ClientStage.Playing:
-                if (c.PlayerData == null) {
-                    RemoveClient(c, "错误:该Client没有对应PlayerData");
-                }
-                else if (c.PlayerData.ComponentPlayer != null
-                    && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
-                    c.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = false;
-                }
-                break;
-        }
     }
 
     public void OnPeerConnected(NetPeer peer) {
