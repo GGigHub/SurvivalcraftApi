@@ -6,6 +6,15 @@ using LiteNetLib.Utils;
 
 namespace Game.Network;
 
+public enum ClientState {
+    NotConnected,
+    Connected,
+    ProjectLoaded,
+    LoadTerrain,
+    Playing
+}
+
+
 public class Client {
     public string Nickname { get; set; }
     public byte ID { get; internal set; }
@@ -111,7 +120,7 @@ public class NetworkClient : INetEventListener {
             Clients.Clear();
             NetManager.Start();
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
-            Self = new Client(new Guid(onlineAccessToken)) { State = ClientState.WaitForClientList };
+            Self = new Client(new Guid(onlineAccessToken)) { State = ClientState.NotConnected };
             SendWriterFromPacket(new ConnectionRequestPacket("ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
         }
         catch {

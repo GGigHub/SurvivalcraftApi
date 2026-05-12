@@ -11,15 +11,6 @@ using TemplatesDatabase;
 
 namespace Game.Network;
 
-public enum ClientState {
-    NotConnected,
-    WaitForClientList,
-    Connected,
-    ProjectLoaded,
-    LoadTerrain,
-    Playing
-}
-
 public static class NetworkManager {
     public static NetworkServer Server { get; private set; }
     public static NetworkClient Client { get; private set; }

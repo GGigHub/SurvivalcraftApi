@@ -52,7 +52,7 @@ public class GameLoadingScreen : Screen {
         }, delegate {
             SetSpwanDialogMessage("等待服务器响应", 0.25f);
             // Fix me: 客户端中断连接后再次连接可能会卡住。
-            if (NetworkManager.Self?.State == Stage.WaitForClientList) {
+            if (NetworkManager.IsClient && NetworkManager.Self?.State == Stage.NotConnected) {
                 if (timer.ElapsedMilliseconds >= 10000) {
                     NetworkManager.Stop();
                 }
