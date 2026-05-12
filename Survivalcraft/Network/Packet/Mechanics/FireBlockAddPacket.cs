@@ -1,10 +1,10 @@
-﻿
+
 
 namespace Game.Network;
 
 public class FireBlockAddPacket : Packet {
     public override byte ID => (byte)PacketType.FireBlockAdd;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int x;
     public int y;
     public int z;

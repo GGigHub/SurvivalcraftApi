@@ -16,7 +16,7 @@ public class Client {
     public IPEndPoint IPPoint { get; internal set; }
     public SubsystemPlayers SubsystemPlayers => GameManager.Project.FindSubsystem<SubsystemPlayers>();
     public bool IsConnected => Peer != null && Peer.ConnectionState != ConnectionState.Disconnected;
-    public ClientStage State { get; set; }
+    public ClientState State { get; set; }
     public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID); } }
 
     /// <summary>
@@ -27,7 +27,7 @@ public class Client {
     // 服务器本身的Client
     public Client(Guid guid) {
         PlayerGuid = guid;
-        State = ClientStage.Connected;
+        State = ClientState.Connected;
         ID = 0;
     }
 
@@ -48,18 +48,18 @@ public class Client {
 
     public Client(IPEndPoint iPEndPoint) {
         IPPoint = iPEndPoint;
-        State = ClientStage.NotConnected;
+        State = ClientState.NotConnected;
     }
 
     public Client(ConnectionRequest request) {
         Request = request;
         IPPoint = request.RemoteEndPoint;
-        State = ClientStage.NotConnected;
+        State = ClientState.NotConnected;
     }
 
     public Client(NetPeer peer) {
         Peer = peer;
-        State = ClientStage.NotConnected;
+        State = ClientState.NotConnected;
     }
 
     public override bool Equals(object obj) => obj is Client c && c.ID == ID;
@@ -111,11 +111,11 @@ public class NetworkClient : INetEventListener {
             Clients.Clear();
             NetManager.Start();
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
-            Self = new Client(new Guid(onlineAccessToken)) { State = ClientStage.WaitForClientList };
+            Self = new Client(new Guid(onlineAccessToken)) { State = ClientState.WaitForClientList };
             SendWriterFromPacket(new ConnectionRequestPacket("ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
         }
         catch {
-            if (Self != null) Self.State = ClientStage.NotConnected;
+            if (Self != null) Self.State = ClientState.NotConnected;
         }
     }
 

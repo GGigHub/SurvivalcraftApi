@@ -5,7 +5,7 @@ namespace Game.Network;
 
 public class HumanRowBehaviorPacket : Packet {
     public override byte ID => (byte)PacketType.BehaviorHumanRow;
-    public override ClientStage MinNeedState => ClientStage.Playing;
+    public override ClientState MinNeedState => ClientState.Playing;
     public int m_entityId;
     public bool m_rowLeft;
     public bool m_rowRight;

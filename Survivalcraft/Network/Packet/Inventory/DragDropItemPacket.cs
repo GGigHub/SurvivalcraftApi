@@ -1,11 +1,11 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 
 namespace Game.Network;
 
 public class DragDropItemPacket : Packet {
     public override byte ID => (byte)PacketType.DragDropItem;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int fromInventoryId;
     public int fromSlotIndex;
     public int toInventoryId;

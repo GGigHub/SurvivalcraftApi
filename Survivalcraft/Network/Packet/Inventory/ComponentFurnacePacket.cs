@@ -1,10 +1,10 @@
-﻿
+
 
 namespace Game.Network;
 
 public class ComponentFurnacePacket : Packet {
     public override byte ID => (byte)PacketType.Furnace;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public struct FurnacePacketData {
         public float fireTimeRemaining;

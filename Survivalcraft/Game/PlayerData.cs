@@ -255,8 +255,8 @@ namespace Game {
             m_stateMachine.AddState("Playing", delegate {
                 HideSpawnDialog();
                 if (NetworkManager.IsClient) {
-                    NetworkManager.Self.State = ClientStage.Playing;
-                    NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientStage.Playing));
+                    NetworkManager.Self.State = ClientState.Playing;
+                    NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientState.Playing));
                 }
             }, delegate {
                 if (ComponentPlayer == null) {
@@ -271,7 +271,7 @@ namespace Game {
                 // 非主玩家在未完成联机同步前保持无敌，避免状态不同步时被误伤。
                 if (!IsMainPlayer && !NetworkManager.IsClient) {
                     if (!isSetStatus) {
-                        if (Client != null && Client.State != ClientStage.Playing) {
+                        if (Client != null && Client.State != ClientState.Playing) {
                             ComponentPlayer.ComponentHealth.IsInvulnerable = true;
                         }
                         else {

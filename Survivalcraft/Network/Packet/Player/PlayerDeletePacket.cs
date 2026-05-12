@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerDeletePacket : Packet {
     public override byte ID => (byte)PacketType.PlayerDelete;
-    public override ClientStage MinNeedState => ClientStage.Connected;
+    public override ClientState MinNeedState => ClientState.Connected;
 
     public override void Serialize(PacketSerializer archive) { }
 

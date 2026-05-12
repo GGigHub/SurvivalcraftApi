@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class PistonDataPacket : EditableBlockPacketBase {
     public override byte ID => (byte)PacketType.EditablePiston;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     private bool m_editAsItem;
     private int m_inventoryId;
     private int m_slotIndex;

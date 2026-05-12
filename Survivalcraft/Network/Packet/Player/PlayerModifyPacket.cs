@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerModifyPacket : Packet {
     public override byte ID => (byte)PacketType.PlayerModify;
-    public override ClientStage MinNeedState => ClientStage.Connected;
+    public override ClientState MinNeedState => ClientState.Connected;
     public Guid m_playerGuid;
     public string m_playerName;
     public string m_skinName;

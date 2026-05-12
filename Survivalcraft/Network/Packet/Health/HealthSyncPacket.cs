@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class HealthSyncPacket : Packet {
     public override byte ID => (byte)PacketType.HealthSync;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int m_targetId;
     public float m_health;
     public string m_cause = "";

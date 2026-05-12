@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class WhoHasSkinPacket : Packet {
     public override byte ID => (byte)PacketType.ClothingWhoHas;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public string SkinName;
 
     public WhoHasSkinPacket() { }

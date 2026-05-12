@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class MovingBlockRemovePacket : Packet {
     public override byte ID => (byte)PacketType.MovingBlockRemove;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public string movingBlockId;
     public Point3 m_position;

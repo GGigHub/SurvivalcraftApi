@@ -1,10 +1,10 @@
-﻿
+
 
 namespace Game.Network;
 
 public class SubsystemSeasonPacket : Packet {
     public override byte ID => (byte)PacketType.Season;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public Season SeasonNet { get; set; }
     public int SeasonIndexNet;
     public float TimeOfSeasonNet { get; set; }

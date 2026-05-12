@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerCreatePacket : Packet {
     public override byte ID => (byte)PacketType.PlayerCreate;
-    public override ClientStage MinNeedState => ClientStage.Connected;
+    public override ClientState MinNeedState => ClientState.Connected;
     public ValuesDictionary m_vd;
 
     public PlayerCreatePacket() { }

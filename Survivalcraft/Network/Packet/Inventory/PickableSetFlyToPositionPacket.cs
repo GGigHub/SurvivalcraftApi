@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class PickableSetFlyToPositionPacket : Packet {
     public override byte ID => (byte)PacketType.PickableSetFlyToPosition;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int m_id;
     public Vector3? m_flyToPosition;
 

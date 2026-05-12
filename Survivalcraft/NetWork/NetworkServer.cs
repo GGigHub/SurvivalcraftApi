@@ -87,7 +87,7 @@ public class NetworkServer : INetEventListener {
 
         if (Clients.ContainsKey(c.ID)) {
             NetworkManager.QueuePacket(new ClientRemovePacket(c.ID));
-            c.State = ClientStage.NotConnected;
+            c.State = ClientState.NotConnected;
             OnClientStateChanged?.Invoke(c);
             Clients.Remove(c.ID);
         }
@@ -102,7 +102,7 @@ public class NetworkServer : INetEventListener {
                 else c.Peer.Disconnect();
             }
             Clients.Remove(c.ID);
-            c.State = ClientStage.NotConnected;
+            c.State = ClientState.NotConnected;
         }
     }
 

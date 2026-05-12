@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class HitValuePacket : Packet {
     public override byte ID => (byte)PacketType.HitResult;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public Vector3 m_position;
     public Vector3 m_velocity;
     public Color m_color;

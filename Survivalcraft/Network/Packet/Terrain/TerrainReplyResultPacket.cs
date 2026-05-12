@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class TerrainReplyResultPacket : TerrainPacketBase {
     public override byte ID => (byte)PacketType.TerrainReplyResult;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public List<Point2> RelateChunks = [];
 
     public TerrainReplyResultPacket() { }

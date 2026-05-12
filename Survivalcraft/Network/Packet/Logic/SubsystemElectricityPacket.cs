@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class SubsystemElectricityPacket : Packet {
     public override byte ID => (byte)PacketType.Electricity;
-    public override ClientStage MinNeedState => ClientStage.Playing;
+    public override ClientState MinNeedState => ClientState.Playing;
     public SubsystemElectricity m_subsystem;
     public List<SubsystemElectricity.NetSimulate> NetSimulates = new List<SubsystemElectricity.NetSimulate>();
 

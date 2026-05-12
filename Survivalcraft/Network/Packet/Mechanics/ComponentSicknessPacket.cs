@@ -1,10 +1,10 @@
-﻿
+
 
 namespace Game.Network;
 
 public class ComponentSicknessPacket : Packet {
     public override byte ID => (byte)PacketType.Sickness;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public enum EventType {
         SyncStat,

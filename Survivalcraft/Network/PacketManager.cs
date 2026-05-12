@@ -10,7 +10,7 @@ public abstract class Packet {
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public abstract ClientStage MinNeedState { get; }
+    public abstract ClientState MinNeedState { get; }
 
     public abstract void Handle(bool isServer);
     public abstract void Serialize(PacketSerializer archive);

@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class BodyUpdatePacket : Packet {
     public override byte ID => (byte)PacketType.BodyUpdate;
-    public override ClientStage MinNeedState => ClientStage.Playing;
+    public override ClientState MinNeedState => ClientState.Playing;
 
     [Flags]
     public enum ChangeFlag : byte {

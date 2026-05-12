@@ -12,7 +12,7 @@ public class InventorySlot {
 
 public class InventorySyncPacket : Packet {
     public override byte ID => (byte)PacketType.InventorySync;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int m_inventoryId;
     public List<InventorySlot> m_slots = new List<InventorySlot>();
 

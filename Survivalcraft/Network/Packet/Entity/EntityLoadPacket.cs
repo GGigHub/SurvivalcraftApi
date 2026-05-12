@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class EntityLoadPacket : Packet {
     public override byte ID => (byte)PacketType.EntityLoad;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public EntityDataList entityDataList;
 
     public EntityLoadPacket() {

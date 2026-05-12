@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class MemoryBankDataPacket : EditableBlockPacketBase {
     public override byte ID => (byte)PacketType.EditableMemoryBank;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     private bool m_syncItem;
     private bool m_editAsItem;
     private int m_slotIndex;

@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class ExplosionSoundPacket : Packet {
     public override byte ID => (byte)PacketType.ExplosionSound;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public Vector3 m_position;
     public float m_level;

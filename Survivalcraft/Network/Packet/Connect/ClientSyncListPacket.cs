@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ClientSyncListPacket : ClientPacketBase {
     public override byte ID => (byte)PacketType.ClientSyncList;
-    public override ClientStage MinNeedState => ClientStage.NotConnected;
+    public override ClientState MinNeedState => ClientState.NotConnected;
     public List<Client> m_list = [];
 
     public ClientSyncListPacket() { }
@@ -50,7 +50,7 @@ public class ClientSyncListPacket : ClientPacketBase {
         if (NetworkManager.Client.Self == null) {
             throw new Exception("Cannot find Self In Client List");
         }
-        NetworkManager.Client.Self.State = ClientStage.Connected;
+        NetworkManager.Client.Self.State = ClientState.Connected;
     }
 }
 

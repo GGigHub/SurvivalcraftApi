@@ -5,7 +5,7 @@ namespace Game.Network;
 
 public class DigInMudBehaviorPacket : Packet {
     public override byte ID => (byte)PacketType.BehaviorDigInMud;
-    public override ClientStage MinNeedState => ClientStage.Playing;
+    public override ClientState MinNeedState => ClientState.Playing;
     public int m_entityId;
     public bool m_isDigIn;
     public DigInMudBehaviorPacket() { }

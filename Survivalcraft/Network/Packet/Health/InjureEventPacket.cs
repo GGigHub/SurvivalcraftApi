@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class InjureEventPacket : Packet {
     public override byte ID => (byte)PacketType.InjureEvent;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int m_targetId;
     public int m_attackerId;
     public float m_amount;

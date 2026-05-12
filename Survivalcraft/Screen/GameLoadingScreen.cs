@@ -6,7 +6,7 @@ using Engine;
 using Engine.Graphics;
 using Engine.Media;
 using Game.Network;
-using Stage = Game.Network.ClientStage;
+using Stage = Game.Network.ClientState;
 
 namespace Game;
 
@@ -65,7 +65,7 @@ public class GameLoadingScreen : Screen {
             }
         }, delegate {
             if (NetworkManager.Self?.State == Stage.Connected) {
-                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientStage.Connected));
+                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientState.Connected));
             }
         });
         m_stateMachine.AddState("Loading", null,
@@ -95,7 +95,7 @@ public class GameLoadingScreen : Screen {
             if (NetworkManager.Self?.State == Stage.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
                 NetworkManager.Self.State = Stage.ProjectLoaded;
-                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientStage.ProjectLoaded));
+                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientState.ProjectLoaded));
                 ScreensManager.SwitchScreen("Game");
                 m_projectXmlData = null;
                 m_blockTextureData = null;

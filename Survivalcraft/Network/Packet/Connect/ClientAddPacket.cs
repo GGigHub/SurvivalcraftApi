@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ClientAddPacket : ClientPacketBase{
     public override byte ID => (byte)PacketType.ClientAdd;
-    public override ClientStage MinNeedState => ClientStage.NotConnected;
+    public override ClientState MinNeedState => ClientState.NotConnected;
     public Client m_client;
 
     public ClientAddPacket() { }

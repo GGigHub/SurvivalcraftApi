@@ -5,13 +5,13 @@ namespace Game.Network;
 
 public class ClientStateChangePacket : ClientPacketBase {
     public override byte ID => (byte)PacketType.ClientStateChange;
-    public override ClientStage MinNeedState => ClientStage.NotConnected;
+    public override ClientState MinNeedState => ClientState.NotConnected;
     public byte m_clientId;
-    public ClientStage m_state;
+    public ClientState m_state;
 
     public ClientStateChangePacket() { }
 
-    public ClientStateChangePacket(byte id, ClientStage clientStage) {
+    public ClientStateChangePacket(byte id, ClientState clientStage) {
         m_clientId = id;
         m_state = clientStage;
     }
@@ -34,7 +34,7 @@ public class ClientStateChangePacket : ClientPacketBase {
             NetworkManager.QueuePacket(new ClientStateChangePacket(client.ID, client.State) { Except = client });
 
             switch (client.State) {
-                case ClientStage.Connected: {
+                case ClientState.Connected: {
                         byte[] textureData = null;
                         if (subsystemPlayers.MakePlayerOnline(client.PlayerGuid, out PlayerData playerData, out Entity entity)) {
                             if (entity != null) {
@@ -50,21 +50,21 @@ public class ClientStateChangePacket : ClientPacketBase {
                         NetworkManager.QueuePacket(new ProjectPacket(textureData, data) { To = client });
                         break;
                     }
-                case ClientStage.NotConnected:
+                case ClientState.NotConnected:
                     subsystemPlayers.MakePlayerOffline(client.PlayerGuid);
                     break;
-                case ClientStage.ProjectLoaded: {
+                case ClientState.ProjectLoaded: {
                         List<Entity> sendList = [.. GameManager.Project.Entities];
                         NetworkManager.QueuePacket(new EntityLoadPacket(sendList) { To = client });
                         break;
                     }
-                case ClientStage.LoadTerrain:
+                case ClientState.LoadTerrain:
                     if (client.PlayerData?.ComponentPlayer != null
                         && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
                         client.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = true;
                     }
                     break;
-                case ClientStage.Playing:
+                case ClientState.Playing:
                     if (client.PlayerData == null) {
                         NetworkManager.Server.RemoveClient(client, "错误:该Client没有对应PlayerData");
                     }

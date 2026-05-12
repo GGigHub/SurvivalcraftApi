@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class ProjectilePacket : Packet {
     public override byte ID => (byte)PacketType.Projectile;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public enum ProjectileTailInfo : byte {
         None = 0,

@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class SleepRequestPacket : Packet {
     public override byte ID => (byte)PacketType.SleepRequest;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int m_entityId;
     public bool allowManualWakeup;
 

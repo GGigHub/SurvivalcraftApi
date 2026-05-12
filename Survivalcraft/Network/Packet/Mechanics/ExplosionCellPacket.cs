@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class ExplosionCellPacket : Packet {
     public override byte ID => (byte)PacketType.ExplosionCell;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public Dictionary<Point2, List<(Point3, float)>> m_cells;
 

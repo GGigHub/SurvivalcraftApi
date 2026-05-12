@@ -1,11 +1,11 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 
 namespace Game.Network;
 
 public class SetSlotItemPacket : Packet {
     public override byte ID => (byte)PacketType.SetSlotItem;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int m_inventoryId;
     public int m_slotIndex;
     public int m_value;

@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class DispenserPacket : Packet {
     public override byte ID => (byte)PacketType.Dispenser;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
 
     private Point3 m_point;
     private byte m_flag;

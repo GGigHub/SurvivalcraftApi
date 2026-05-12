@@ -5,7 +5,7 @@ using System.Text;
 namespace Game.Network;
 
 public abstract class PlayerPacketBase : Packet {
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public byte m_fromPlayerId;
 
     public enum ChangeFlag : byte {

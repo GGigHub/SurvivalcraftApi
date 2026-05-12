@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class PickableSyncListPacket : Packet {
     public override byte ID => (byte)PacketType.PickableSyncList;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public List<Pickable> m_pickables = [];
 
     public PickableSyncListPacket() { }

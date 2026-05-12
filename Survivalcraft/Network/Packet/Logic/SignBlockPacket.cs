@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class SignBlockPacket : Packet {
     public override byte ID => (byte)PacketType.SignBlock;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public Point3 m_point;
     public SignData m_signData;

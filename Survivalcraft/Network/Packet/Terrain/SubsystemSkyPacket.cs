@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class SubsystemSkyPacket : Packet {
     public override byte ID => (byte)PacketType.Sky;
-    public override ClientStage MinNeedState => ClientStage.Playing;
+    public override ClientState MinNeedState => ClientState.Playing;
     public Vector3 LightningStrikePosition;
     public Vector3 m_direction;
     public bool isRequest;

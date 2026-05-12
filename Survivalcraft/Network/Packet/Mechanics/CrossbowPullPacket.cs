@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class CrossbowPullPacket : Packet {
     public override byte ID => (byte)PacketType.CrossbowPull;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public int m_inventoryId;
     public int m_slotIndex;

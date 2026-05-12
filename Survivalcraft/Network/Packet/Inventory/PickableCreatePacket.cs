@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class PickableCreatePacket : Packet {
     public override byte ID => (byte)PacketType.PickableCreate;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public Pickable m_pickable = new();
 
     public PickableCreatePacket() { }

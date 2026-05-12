@@ -7,7 +7,7 @@ namespace Game.Network;
 
 public class ConnectionRequestPacket : Packet {
     public override byte ID => (byte)PacketType.ConnectRequest;
-    public override ClientStage MinNeedState => ClientStage.NotConnected;
+    public override ClientState MinNeedState => ClientState.NotConnected;
 
     const int verrifyMagic = 9421523;
     int m_magic;

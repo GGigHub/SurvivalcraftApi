@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class BodyCollisionPacket : Packet {
     public override byte ID => (byte)PacketType.BodyCollision;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int m_entityId;
     public int m_axis;
     public float m_distance;

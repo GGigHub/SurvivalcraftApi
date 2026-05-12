@@ -1,10 +1,10 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
 public class TerrainRequestChangeCellPacket : Packet {
     public override byte ID => (byte)PacketType.TerrainRequestChangeCell;
-    public override ClientStage MinNeedState => ClientStage.ProjectLoaded;
+    public override ClientState MinNeedState => ClientState.ProjectLoaded;
     public int m_X;
     public byte m_Y;
     public int m_Z;

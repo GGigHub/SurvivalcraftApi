@@ -11,7 +11,7 @@ using TemplatesDatabase;
 
 namespace Game.Network;
 
-public enum ClientStage {
+public enum ClientState {
     NotConnected,
     WaitForClientList,
     Connected,

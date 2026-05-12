@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerUpdateLocationPacket : Packet {
     public override byte ID => (byte)PacketType.PlayerUpdateLocation;
-    public override ClientStage MinNeedState => ClientStage.Connected;
+    public override ClientState MinNeedState => ClientState.Connected;
     public TerrainUpdater.UpdateLocation m_updateLocation;
 
     public PlayerUpdateLocationPacket() { }
