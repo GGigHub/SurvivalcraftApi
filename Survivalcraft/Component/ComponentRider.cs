@@ -1,6 +1,7 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
+using System.Linq;
 using TemplatesDatabase;
 
 namespace Game {
@@ -63,12 +64,12 @@ namespace Game {
         public virtual void StartMounting(ComponentMount componentMount) {
             if (!m_isAnimating
                 && Mount == null) {
-                if (!NetworkManager.IsClient) {
+                if (Network.NetworkManager.IsServer) {
                     StartNetMounting(componentMount);
-                    NetworkManager.QueuePacket(new ComponentMountPacket(this, componentMount));
+                    OnMounting?.Invoke(this, componentMount, false);
                 }
                 else {
-                    NetworkManager.QueuePacket(new ComponentMountPacket(this, componentMount, true));
+                    OnMounting?.Invoke(this, componentMount, true);
                 }
             }
         }
@@ -76,15 +77,19 @@ namespace Game {
         public virtual void StartDismounting() {
             if (!m_isAnimating
                 && Mount != null) {
-                if (!NetworkManager.IsClient) {
+                if (Network.NetworkManager.IsServer) {
                     StartNetDismounting();
-                    NetworkManager.QueuePacket(new ComponentMountPacket(this));
+                    OnDismounting?.Invoke(this, false);
                 }
                 else {
-                    NetworkManager.QueuePacket(new ComponentMountPacket(this, true));
+                    OnDismounting?.Invoke(this, true);
                 }
             }
         }
+
+        public event Action<ComponentRider, ComponentMount, bool> OnMounting;
+
+        public event Action<ComponentRider, bool> OnDismounting;
 
         public void StartNetMounting(ComponentMount componentMount) {
             if (!m_isAnimating

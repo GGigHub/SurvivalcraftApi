@@ -1,6 +1,6 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -25,12 +25,14 @@ namespace Game {
 
         private bool m_isBend;
 
+        public event Action<ComponentFishOutOfWaterBehavior, bool> OnIsBendChanged;
+
         public bool IsBend {
             get { return m_isBend; }
             set {
                 if (m_isBend != value) {
                     m_isBend = value;
-                    if (NetworkManager.IsServer) NetworkManager.QueuePacket(new FishOutOfWaterBehaviorPacket(this, m_isBend));
+                    OnIsBendChanged?.Invoke(this, value);
                 }
             }
         }
@@ -40,7 +42,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.IsClient) {
+            if (Game.Network.NetworkManager.IsClient) {
                 if (IsBend) {
                     m_componentFishModel.BendOrder = 2f * (2f * MathUtils.Saturate(SimplexNoise.OctavedNoise(
                         (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0),

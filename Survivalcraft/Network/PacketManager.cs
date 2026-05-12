@@ -141,9 +141,11 @@ public class PacketManager {
                 (client.IPPoint != null && client.IPPoint == iPEndPoint));
         }
         if (from == null) {
-            if (netPeer != null) from = new Client(netPeer);
-            if (request != null) from = new Client(request);
-            if (iPEndPoint != null) from = new Client(iPEndPoint);
+            from = new Client() {
+                Peer = netPeer,
+                Request = request,
+                IPPoint = iPEndPoint,
+            };
         }
         return from;
     }

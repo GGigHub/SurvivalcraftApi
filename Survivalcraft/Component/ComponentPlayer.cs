@@ -1,6 +1,7 @@
 using Engine;
 using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -236,7 +237,7 @@ namespace Game {
         public virtual void Update(float dt) {
             if (PlayerData.IsMainPlayer && ComponentMiner?.Inventory != null && LastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex) {
                 LastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
-                NetworkManager.QueuePacket(new ActiveSlotChangePacket(ComponentMiner.Inventory));
+                OnActiveSlotChanged?.Invoke(this);
             }
             PlayerInput playerInput = ComponentInput.PlayerInput;
             if (ComponentInput.IsControlledByTouch
@@ -360,17 +361,7 @@ namespace Game {
             }
             int num = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);
             Block block = BlocksManager.Blocks[num];
-
-            if (Time.PeriodicEvent(0.1f, 0.0)) {
-                if (!NetworkManager.IsClient) {
-                    //服务器广播玩家数据
-                    NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(this) { Except = PlayerData.Client });
-                }
-                else if (PlayerData.IsMainPlayer) {
-                    //客户端广播自身的数据
-                    NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(this));
-                }
-            }
+            OnBodyUpdate?.Invoke(this, PlayerData.IsMainPlayer);
 
             // Handle replicated Interact/Aim/Dig events on server and remote clients.
             if (!PlayerData.IsMainPlayer) {
@@ -653,9 +644,7 @@ namespace Game {
                                 bodyRaycastResult.Value.HitPoint(),
                                 playerInput.Hit.Value.Direction
                             );
-                            if (NetworkManager.IsClient) {
-                                NetworkManager.QueuePacket(new PlayerHitPacket(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
-                            }
+                            OnHit?.Invoke(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction);
                         }
                     }
                 }
@@ -715,15 +704,15 @@ namespace Game {
             if (shouldSyncPlayerEvents) {
                 if (last_digEvent.digEvent != digEvent.digEvent) {
                     last_digEvent = digEvent;
-                    NetworkManager.QueuePacket(new PlayerDigPacket(this));
+                    OnDigEvent?.Invoke(this);
                 }
                 if (last_interactEvent.interactEvent != interactEvent.interactEvent) {
                     last_interactEvent = interactEvent;
-                    NetworkManager.QueuePacket(new PlayerInteractPacket(this));
+                    OnInteractEvent?.Invoke(this);
                 }
                 if (last_aimEvent.aimEvent != aimEvent.aimEvent) {
                     last_aimEvent = aimEvent;
-                    NetworkManager.QueuePacket(new PlayerAimPacket(this));
+                    OnAimEvent?.Invoke(this);
                 }
             }
             if (playerInput.Drop
@@ -862,7 +851,7 @@ namespace Game {
         private static readonly object _saveLock = new();
 
         public virtual void SavePlayerEntity() {
-            if (!NetworkManager.IsClient) {
+            if (!Game.Network.NetworkManager.IsClient) {
                 lock (_saveLock) {
                     try {
                         var list = Project.SaveEntities([Entity]);
@@ -890,6 +879,18 @@ namespace Game {
                 }
             }
         }
+
+        public event Action<ComponentPlayer> OnActiveSlotChanged;
+
+        public event Action<ComponentPlayer, bool> OnBodyUpdate;
+
+        public event Action<ComponentPlayer, ComponentBody, Vector3, Vector3> OnHit;
+
+        public event Action<ComponentPlayer> OnDigEvent;
+
+        public event Action<ComponentPlayer> OnInteractEvent;
+
+        public event Action<ComponentPlayer> OnAimEvent;
     }
 }
 

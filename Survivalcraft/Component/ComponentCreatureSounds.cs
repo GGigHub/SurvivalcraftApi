@@ -1,5 +1,5 @@
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -48,8 +48,10 @@ namespace Game {
 
         public double m_lastPukeSoundTime = -1000.0;
 
+        public event Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
+
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (NetworkManager.IsClient) return;
+            if (Game.Network.NetworkManager.IsClient) return;
             PlayIdleSoundLogic(skipIfRecentlyPlayed);
         }
 
@@ -57,12 +59,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_idleSound) && m_subsystemTime.GameTime > m_lastSoundTime + (skipIfRecentlyPlayed ? 12f : 1f)) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_idleSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_idleSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 0, skipIfRecentlyPlayed));
+                OnPlaySound?.Invoke(this, 0, skipIfRecentlyPlayed);
             }
         }
 
         public virtual void PlayPainSound() {
-            if (NetworkManager.IsClient) return;
+            if (Game.Network.NetworkManager.IsClient) return;
             PlayPainSoundLogic();
         }
 
@@ -70,12 +72,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_painSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_painSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_painSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 1));
+                OnPlaySound?.Invoke(this, 1, false);
             }
         }
 
         public virtual void PlayMoanSound() {
-            if (NetworkManager.IsClient) return;
+            if (Game.Network.NetworkManager.IsClient) return;
             PlayMoanSoundLogic();
         }
 
@@ -83,12 +85,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_moanSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_moanSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_moanSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 2));
+                OnPlaySound?.Invoke(this, 2, false);
             }
         }
 
         public virtual void PlaySneezeSound() {
-            if (NetworkManager.IsClient) return;
+            if (Game.Network.NetworkManager.IsClient) return;
             PlaySneezeSoundLogic();
         }
 
@@ -96,12 +98,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_sneezeSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_sneezeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_sneezeSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 3));
+                OnPlaySound?.Invoke(this, 3, false);
             }
         }
 
         public void PlayCoughSound() {
-            if (NetworkManager.IsClient) return;
+            if (Game.Network.NetworkManager.IsClient) return;
             PlayCoughSoundLogic();
         }
 
@@ -109,12 +111,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_coughSound) && m_subsystemTime.GameTime > m_lastCoughingSoundTime + 1.0) {
                 m_lastCoughingSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_coughSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_coughSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 4));
+                OnPlaySound?.Invoke(this, 4, false);
             }
         }
 
         public virtual void PlayPukeSound() {
-            if (NetworkManager.IsClient) return;
+            if (Game.Network.NetworkManager.IsClient) return;
             PlayPukeSoundLogic();
         }
 
@@ -122,12 +124,12 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_pukeSound) && m_subsystemTime.GameTime > m_lastPukeSoundTime + 1.0) {
                 m_lastPukeSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_pukeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_pukeSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 5));
+                OnPlaySound?.Invoke(this, 5, false);
             }
         }
 
         public virtual void PlayAttackSound() {
-            if (NetworkManager.IsClient) return;
+            if (Game.Network.NetworkManager.IsClient) return;
             PlayAttackSoundLogic();
         }
 
@@ -135,7 +137,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_attackSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_attackSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_attackSoundMinDistance, autoDelay: false);
-                NetworkManager.QueuePacket(new CreatureSoundPacket(this, 6));
+                OnPlaySound?.Invoke(this, 6, false);
             }
         }
 

@@ -1,5 +1,6 @@
 using Engine;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -36,13 +37,15 @@ namespace Game {
 
         public ComponentCreature Attacker { get; set; }
 
+        public event Action<ComponentOnFire, ComponentCreature, float> OnSetOnFire;
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void SetOnFire(ComponentCreature attacker, float duration) {
             if (Network.NetworkManager.IsClient) {
                 return;
             }
-            Network.NetworkManager.QueuePacket(new Network.EntityOnFirePacket(this, attacker, duration));
+            OnSetOnFire?.Invoke(this, attacker, duration);
             SetOnFireNet(attacker, duration);
         }
 

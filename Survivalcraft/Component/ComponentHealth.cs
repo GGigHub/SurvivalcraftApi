@@ -16,6 +16,11 @@ namespace Game {
         public ComponentOnFire m_componentOnFire;
         public ComponentFactors m_componentFactors;
 
+        public event Action<ComponentHealth, Injury, float> OnHealthInjured;
+        public event Action<ComponentHealth> OnHealthDead;
+        public event Action<ComponentHealth> OnHealthHealUpdate;
+        public event Action<ComponentHealth, float, string> OnHealthFallDamage;
+
         //public Block ExperienceOrbBlock;
 
         public int ExperienceOrbBlockIndex = 8;
@@ -162,11 +167,7 @@ namespace Game {
                     float healthBefore = Health;
                     injury.Process();
                     float injuryAmount = MathUtils.Max(healthBefore - Health, 0f);
-                    if (!NetworkManager.IsClient
-                        && injuryAmount > 0f) {
-                        NetworkManager.QueuePacket(
-                            new InjureEventPacket(this, injury.Attacker, injuryAmount, injury.Cause, injury.IgnoreInvulnerability)
-                        );                    }
+                    OnHealthInjured?.Invoke(this, injury, injuryAmount);
                     if (Health <= 0f) {
                         ModsManager.HookAction(
                             "OnCreatureDying",
@@ -200,9 +201,7 @@ namespace Game {
                 }
             );
             CauseOfDeath = injury?.Cause;
-            if (!NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new HealthSyncPacket(this));
-            }
+            OnHealthDead?.Invoke(this);
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
                 m_componentCreature.PlayerStats.AddDeathRecord(
                     new PlayerStats.DeathRecord {
@@ -270,11 +269,9 @@ namespace Game {
                 if (m_regenerateLifeEnabled
                     && Health > 0f
                     && Health < 1f) {
-                    if (!NetworkManager.IsClient
-                        && Time.PeriodicEvent(2.0, 0.0)) {
-                        NetworkManager.QueuePacket(new HealthSyncPacket(this));
-                    }
+                    OnHealthHealUpdate?.Invoke(this);
                     float num = 0f;
+
                     if (m_componentPlayer != null) {
                         if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless) {
                             num = 0.0166666675f;
@@ -332,22 +329,7 @@ namespace Game {
                 );
                 if (fallDamage > 0f) {
                     string cause = LanguageControl.Get(fName, 2);
-                    ComponentPlayer riderPlayer = m_componentCreature.ComponentBody.ChildBodies.Count > 0
-                        ? m_componentCreature.ComponentBody.ChildBodies[0].Entity?.FindComponent<ComponentPlayer>()
-                        : null;
-                    bool flagMainRider = riderPlayer != null && riderPlayer.PlayerData.IsMainPlayer;
-                    bool flagMainPlayer = m_componentPlayer != null && m_componentPlayer.PlayerData.IsMainPlayer;
-                    bool flagNoRider = m_componentCreature.ComponentBody.ChildBodies.Count == 0;
-                    if (NetworkManager.IsServer) {
-                        if (flagMainPlayer || flagMainRider || flagNoRider) {
-                            Injure(fallDamage, null, false, cause);
-                        }
-                    }
-                    else if (flagMainPlayer || flagMainRider) {
-                        NetworkManager.QueuePacket(
-                            new InjureRequestPacket(this, null, fallDamage, cause, false, InjureRequestPacket.RequestInjureType.Fall)
-                        );
-                    }
+                    OnHealthFallDamage?.Invoke(this, fallDamage, cause);
                 }
                 m_wasStanding = m_componentCreature.ComponentBody.StandingOnValue.HasValue
                     || m_componentCreature.ComponentBody.StandingOnBody != null;

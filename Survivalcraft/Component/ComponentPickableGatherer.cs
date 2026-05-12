@@ -1,6 +1,6 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -58,14 +58,14 @@ namespace Game {
                         lock (pickable) {
                             pickable.FlyToPosition = Position + 0.1f * MathF.Sqrt(distanceToTargetSquare) * m_componentBody.Velocity;
                             pickable.FlyToGatherer = this;
-                            if (NetworkManager.IsServer) {
-                                NetworkManager.QueuePacket(new PickableSetFlyToPositionPacket(pickable));
-                            }
+                            OnPickableAttract?.Invoke(pickable);
                         }
                     }
                 }
             }
         }
+
+        public event Action<Pickable> OnPickableAttract;
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
             base.Load(valuesDictionary, idToEntityMap);

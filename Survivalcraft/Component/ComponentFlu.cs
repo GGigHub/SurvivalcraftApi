@@ -1,6 +1,6 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -38,6 +38,11 @@ namespace Game {
 
         public double m_lastMessageTime = -1000.0;
 
+        public event Action<ComponentFlu> OnFluUpdate;
+        public event Action<ComponentFlu> OnFluEffectEvent;
+        public event Action<ComponentFlu> OnStartFluEvent;
+        public event Action<ComponentFlu> OnSneezeEvent;
+
         public bool HasFlu => m_fluDuration > 0f;
 
         public bool IsCoughing => m_coughDuration > 0f;
@@ -69,9 +74,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (!NetworkManager.IsClient && Time.PeriodicEvent(1.0, 0.5)) {
-                NetworkManager.QueuePacket(new Network.ComponentFluPacket(this, Network.ComponentFluPacket.EventType.SyncStat));
-            }
+            OnFluUpdate?.Invoke(this);
             if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
                 || !m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled) {
                 m_fluDuration = 0f;
@@ -95,10 +98,8 @@ namespace Game {
                     && !m_componentPlayer.ComponentSleep.IsSleeping
                     && m_subsystemTime.PeriodicGameTimeEvent(5.0, -0.0099999997764825821)
                     && m_subsystemTime.GameTime - m_lastEffectTime > 13.0) {
-                    if (!NetworkManager.IsClient) {
-                        FluEffect();
-                        NetworkManager.QueuePacket(new Network.ComponentFluPacket(this, Network.ComponentFluPacket.EventType.FluEffect));
-                    }
+                    FluEffect();
+                    OnFluEffectEvent?.Invoke(this);
                 }
             }
             else if (m_componentPlayer.ComponentVitalStats.Temperature < 6f) {
@@ -108,10 +109,8 @@ namespace Game {
                     num2 = 9f;
                     if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)
                         && m_random.Bool(0.025f)) {
-                        if (!NetworkManager.IsClient) {
-                            StartFlu();
-                            NetworkManager.QueuePacket(new Network.ComponentFluPacket(this, Network.ComponentFluPacket.EventType.StartFlu));
-                        }
+                        StartFlu();
+                        OnStartFluEvent?.Invoke(this);
                     }
                     if (m_subsystemTime.GameTime - m_lastMessageTime > 60.0) {
                         m_lastMessageTime = m_subsystemTime.GameTime;
@@ -121,10 +120,8 @@ namespace Game {
                 if (m_fluOnset > 60f
                     && m_subsystemTime.PeriodicGameTimeEvent(num2, -0.0099999997764825821)
                     && m_random.Bool(0.75f)) {
-                    if (!NetworkManager.IsClient) {
-                        Sneeze();
-                        NetworkManager.QueuePacket(new Network.ComponentFluPacket(this, Network.ComponentFluPacket.EventType.Sneeze));
-                    }
+                    Sneeze();
+                    OnSneezeEvent?.Invoke(this);
                 }
             }
             else {
@@ -142,8 +139,13 @@ namespace Game {
                     m_componentPlayer.ComponentLocomotion.LookOrder.X,
                     Math.Clamp(num3 - m_componentPlayer.ComponentLocomotion.LookAngles.Y, -3f, 3f)
                 );
-                if (m_random.Bool(2f * dt) && !NetworkManager.IsClient) {
-                    m_componentPlayer.ComponentBody.ApplyImpulse(-1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector());
+                if (m_random.Bool(2f * dt)) {
+                    // I will leave this as IsClient check because this applies a physics impulse directly, which might be client-predicted or server-only. Wait, the original code had !NetworkManager.IsClient here.
+                    // Wait, I removed using Game.Network;. So NetworkManager will be undefined.
+                    // Let's use Game.Network.NetworkManager.IsClient for now to preserve physics logic.
+                    if (!Game.Network.NetworkManager.IsClient) {
+                        m_componentPlayer.ComponentBody.ApplyImpulse(-1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector());
+                    }
                 }
             }
             if (m_blackoutDuration > 0f) {

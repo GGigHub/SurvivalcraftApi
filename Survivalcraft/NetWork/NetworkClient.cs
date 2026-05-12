@@ -18,57 +18,28 @@ public enum ClientState {
 public class Client {
     public string Nickname { get; set; }
     public byte ID { get; internal set; }
-    // PlayerGuid is the unique identifier for each player, used consistently across Client and Server.
     public Guid PlayerGuid { get; internal set; }
     public NetPeer Peer { get; internal set; }
     public ConnectionRequest Request { get; internal set; }
     public IPEndPoint IPPoint { get; internal set; }
     public SubsystemPlayers SubsystemPlayers => GameManager.Project.FindSubsystem<SubsystemPlayers>();
     public bool IsConnected => Peer != null && Peer.ConnectionState != ConnectionState.Disconnected;
-    public ClientState State { get; set; }
+    public ClientState State { get; set; } = ClientState.NotConnected;
     public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID); } }
 
-    /// <summary>
-    /// 是否已加入连接成功列表
-    /// </summary>
-    public bool IsAddedToNetNode { get; private set; }
+    public Client() { }
 
-    // 服务器本身的Client
     public Client(Guid guid) {
         PlayerGuid = guid;
         State = ClientState.Connected;
         ID = 0;
     }
 
-    /// <summary>
-    /// 服务端创建新的Client
-    /// </summary>
-    /// <param name="netPeer">peer</param>
-    /// <param name="id">客户端ID</param>
-    /// <param name="guid">客户端Guid</param>
-    /// <param name="nickName">社区昵称</param>
     public Client(NetPeer netPeer, byte id, Guid guid, string nickName) {
         ID = id;
         PlayerGuid = guid;
         Nickname = nickName;
         Peer = netPeer;
-        IsAddedToNetNode = true;
-    }
-
-    public Client(IPEndPoint iPEndPoint) {
-        IPPoint = iPEndPoint;
-        State = ClientState.NotConnected;
-    }
-
-    public Client(ConnectionRequest request) {
-        Request = request;
-        IPPoint = request.RemoteEndPoint;
-        State = ClientState.NotConnected;
-    }
-
-    public Client(NetPeer peer) {
-        Peer = peer;
-        State = ClientState.NotConnected;
     }
 
     public override bool Equals(object obj) => obj is Client c && c.ID == ID;

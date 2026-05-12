@@ -1,6 +1,6 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -110,6 +110,8 @@ namespace Game {
 
         public ComponentCreature Target => m_target;
 
+        public event Action<ComponentChaseBehavior, bool> OnIsAttackChanged;
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override float ImportanceLevel => m_importanceLevel;
@@ -152,7 +154,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (NetworkManager.IsClient) {
+            if (Network.NetworkManager.IsClient) {
                 m_componentCreatureModel.AttackOrder = IsAttack;
                 return;
             }
@@ -565,7 +567,7 @@ namespace Game {
             set {
                 if (m_isAttack != value) {
                     m_isAttack = value;
-                    if (!NetworkManager.IsClient) NetworkManager.QueuePacket(new ChaseBehaviorPacket(this, value));
+                    OnIsAttackChanged?.Invoke(this, value);
                 }
             }
         }

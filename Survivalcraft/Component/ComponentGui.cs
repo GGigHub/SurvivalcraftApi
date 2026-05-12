@@ -1,6 +1,6 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -629,7 +629,7 @@ namespace Game {
                         DisplaySmallMessage(LanguageControl.Get(fName, 8), Color.White, false, false);
                     }
                 }
-                NetworkManager.QueuePacket(new Network.PlayerCreativeFlyPacket(m_componentPlayer));
+                OnPlayerCreativeFly?.Invoke(this, m_componentPlayer);
             }
             if (m_cameraButtonWidget.IsClicked
                 || playerInput.SwitchCameraMode) {
@@ -651,11 +651,11 @@ namespace Game {
             if (m_lightningButtonWidget.IsVisible
                 && (m_lightningButtonWidget.IsClicked || playerInput.Lighting)) {
                 Matrix matrix = Matrix.CreateFromQuaternion(m_componentPlayer.ComponentCreatureModel.EyeRotation);
-                if (!NetworkManager.IsClient) {
+                if (!Network.NetworkManager.IsClient) {
                     Project.FindSubsystem<SubsystemWeather>(throwOnError: true).ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
                     m_subsystemWeather.ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
                 }
-                else NetworkManager.QueuePacket(new Network.SubsystemSkyPacket(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward));
+                else OnManualLightingStrike?.Invoke(this, m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
             }
             int? type = null;
             if (m_precipitationButtonWidget.IsVisible
@@ -685,7 +685,7 @@ namespace Game {
                 }
             }
             if (type.HasValue) {
-                NetworkManager.QueuePacket(new Network.SubsystemWeatherPacket((int)type));
+                OnManualWeatherUpdate?.Invoke(this, type.Value);
             }
             if (m_timeOfDayButtonWidget.IsVisible
                 && (m_timeOfDayButtonWidget.IsClicked || playerInput.TimeOfDay)) {
@@ -716,7 +716,7 @@ namespace Game {
                     type1 = 3;
                 }
                 if (type1.HasValue) {
-                    NetworkManager.QueuePacket(new Network.SubsystemTimePacket(m_subsystemTimeOfDay.m_subsystemGameInfo.TotalElapsedGameTime, m_subsystemTimeOfDay.TimeOfDayOffset));
+                    OnManualTimeUpdate?.Invoke(this, m_subsystemTimeOfDay.m_subsystemGameInfo.TotalElapsedGameTime, m_subsystemTimeOfDay.TimeOfDayOffset);
                 }
             }
             if (ModalPanelWidget != null) {
@@ -763,6 +763,14 @@ namespace Game {
                 }
             );
         }
+
+        public event Action<ComponentGui, ComponentPlayer> OnPlayerCreativeFly;
+
+        public event Action<ComponentGui, Vector3, Vector3> OnManualLightingStrike;
+
+        public event Action<ComponentGui, int> OnManualWeatherUpdate;
+
+        public event Action<ComponentGui, double, double> OnManualTimeUpdate;
     }
 }
 

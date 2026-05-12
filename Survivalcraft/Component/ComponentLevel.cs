@@ -1,7 +1,7 @@
 using System.Globalization;
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -89,11 +89,13 @@ namespace Game {
         }
 
         public virtual void AddExperience(int count, bool playSound) {
-            if (!NetworkManager.IsClient) {
+            if (Network.NetworkManager.IsServer) {
                 NetAddExperience(count, playSound);
-                NetworkManager.QueuePacket(new Network.PlayerAddExperiencePacket(m_componentPlayer.PlayerData, count, playSound, m_componentPlayer.PlayerData.Level));
+                OnAddExperience?.Invoke(this, count, playSound);
             }
         }
+
+        public event Action<ComponentLevel, int, bool> OnAddExperience;
 
         /// <summary>
         ///     生成玩家的所有关于力量的因素

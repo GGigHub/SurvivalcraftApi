@@ -1,6 +1,6 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -27,12 +27,14 @@ namespace Game {
 
         private bool m_isFeed;
 
+        public event Action<ComponentRandomPeckBehavior, bool> OnIsFeedChanged;
+
         public bool IsFeed {
             get { return m_isFeed; }
             set {
                 if (m_isFeed != value) {
                     m_isFeed = value;
-                    if (NetworkManager.IsServer) NetworkManager.QueuePacket(new RandomPeckBehaviorPacket(this, m_isFeed));
+                    OnIsFeedChanged?.Invoke(this, value);
                 }
             }
         }
@@ -42,7 +44,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.IsClient) {
+            if (Game.Network.NetworkManager.IsClient) {
                 m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {

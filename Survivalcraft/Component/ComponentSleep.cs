@@ -1,6 +1,6 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -32,6 +32,9 @@ namespace Game {
         public float m_minWetness;
 
         public float m_messageFactor;
+
+        public event Action<ComponentSleep, bool> OnSleepEvent;
+        public event Action<ComponentSleep> OnWakeUpEvent;
 
         public bool IsSleeping => m_sleepStartTime.HasValue;
 
@@ -65,13 +68,10 @@ namespace Game {
         }
 
         public virtual void Sleep(bool allowManualWakeup) {
-            if (NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new SleepRequestPacket(this, allowManualWakeup));
-            }
-            else {
+            if (!Network.NetworkManager.IsClient) {
                 NetSleep(allowManualWakeup);
-                NetworkManager.QueuePacket(new SleepStatusPacket(this, allowManualWakeup, true));
             }
+            OnSleepEvent?.Invoke(this, allowManualWakeup);
         }
 
         public void NetSleep(bool allowManualWakeup) {
@@ -87,13 +87,10 @@ namespace Game {
         }
 
         public virtual void WakeUp() {
-            if (NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new WakeupRequestPacket(this));
-            }
-            else {
+            if (!Network.NetworkManager.IsClient) {
                 NetWakeUp();
-                NetworkManager.QueuePacket(new WakeupStatusPacket(this));
             }
+            OnWakeUpEvent?.Invoke(this);
         }
 
         public void NetWakeUp() {

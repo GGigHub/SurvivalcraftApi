@@ -1,7 +1,6 @@
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
-using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -615,6 +614,8 @@ namespace Game {
             m_clothedTexturesValid = false;
         }
 
+        public event Action<ComponentClothing, string> OnRequestSkin;
+
         public virtual bool CanWearClothing(int value) {
             Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
             ClothingData clothingData = block.GetClothingData(value);
@@ -643,22 +644,19 @@ namespace Game {
                     Utilities.Dispose(ref m_innerClothedTexture);
                     Utilities.Dispose(ref m_outerClothedTexture);
                 }
-                else if (Time.PeriodicEvent(1.0, 0.0)) {
-                    if (NetworkManager.IsClient) {
-                        NetworkManager.QueuePacket(
-                            new Network.RequestSkinPacket(
-                                m_componentPlayer.PlayerData.CharacterSkinName
-                            )
-                        );
+                else {
+                    OnRequestSkin?.Invoke(this, m_componentPlayer.PlayerData.CharacterSkinName);
+                }
+                /*
+                if (Time.PeriodicEvent(1.0, 0.0)) {
+                    if (Game.Network.NetworkManager.IsClient) {
+                        OnRequestSkin?.Invoke(this, m_componentPlayer.PlayerData.CharacterSkinName);
                     }
-                    else if (NetworkManager.IsServer) {
-                        NetworkManager.QueuePacket(
-                            new Network.WhoHasSkinPacket(
-                                m_componentPlayer.PlayerData.CharacterSkinName
-                            )
-                        );
+                    else if (Game.Network.NetworkManager.IsServer) {
+                        OnWhoHasSkin?.Invoke(this, m_componentPlayer.PlayerData.CharacterSkinName);
                     }
                 }
+                */
             }
             if (m_skinTexture == null) {
                 m_skinTexture = CharacterSkinsManager.LoadTexture("$Male1");

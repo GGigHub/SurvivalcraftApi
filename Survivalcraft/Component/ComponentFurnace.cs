@@ -1,7 +1,7 @@
 using System.Globalization;
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -70,6 +70,8 @@ namespace Game {
 
         public virtual float SmeltingProgress => m_smeltingProgress;
 
+        public event Action<ComponentFurnace> OnFurnaceUpdate;
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override int GetSlotCapacity(int slotIndex, int value) {
@@ -95,8 +97,6 @@ namespace Game {
         public override void OnEntityRemoved() {
             m_subsystemParticles.RemoveParticleSystem(m_fireParticleSystem);
         }
-
-        private bool isRun;
 
         public virtual void Update(float dt) {
             m_fuelEndTime = (float)(m_subsystemGameInfo.TotalElapsedGameTime + m_fireTimeRemaining);
@@ -124,8 +124,8 @@ namespace Game {
                 m_smeltingProgress = MathUtils.Max(0, m_smeltingProgress - dt * SmeltProgressReductionSpeed);
             }
             if (m_smeltingRecipe != null) {
+                OnFurnaceUpdate?.Invoke(this);
                 m_smeltingProgress = MathUtils.Min(m_smeltingProgress + SmeltSpeed * dt, 1f);
-                isRun = true;
                 if (m_smeltingProgress >= 1f) {
                     for (int i = 0; i < m_furnaceSize; i++) {
                         if (m_slots[i].Count > 0) {
@@ -157,14 +157,6 @@ namespace Game {
                 if (Terrain.ExtractContents(cellValue) == LitFurnaceBlock.Index) {
                     m_subsystemParticles.RemoveParticleSystem(m_fireParticleSystem);
                     m_componentBlockEntity.BlockValue = Terrain.ReplaceContents(cellValue, FurnaceBlock.Index);
-                }
-            }
-
-            // 添加网络同步逻辑
-            if (isRun && !NetworkManager.IsClient) {
-                if (m_smeltingRecipe == null && m_fireTimeRemaining == 0) {
-                    isRun = false;
-                    Network.NetworkManager.QueuePacket(new Network.ComponentFurnacePacket(Entity.Id, m_fireTimeRemaining, m_smeltingProgress, m_heatLevel));
                 }
             }
         }

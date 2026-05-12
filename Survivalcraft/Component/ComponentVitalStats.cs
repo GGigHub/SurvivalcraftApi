@@ -1,8 +1,8 @@
 using System.Globalization;
 using Engine;
 using Engine.Audio;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -69,6 +69,8 @@ namespace Game {
         public static string fName = "ComponentVitalStats";
 
         public Action<int> FoodEaten { get; set; }
+
+        public event Action<ComponentVitalStats> OnVitalStatsUpdate;
 
         /// <summary>
         ///     1.8.1.2添加：
@@ -194,11 +196,7 @@ namespace Game {
                 UpdateSleep();
                 UpdateTemperature();
                 UpdateWetness();
-                if (NetworkManager.IsServer) {
-                    if (Time.PeriodicEvent(1.0, 0.5)) {
-                        NetworkManager.QueuePacket(new Network.VitalStatSyncPacket(this));
-                    }
-                }
+                OnVitalStatsUpdate?.Invoke(this);
             }
             else {
                 m_pantingSound.Stop();

@@ -1,6 +1,7 @@
 using Engine;
 using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -35,6 +36,8 @@ namespace Game {
 
         public string DamageSoundName { get; set; }
 
+        public event Action<ComponentDamage> OnDamage;
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Damage(float amount) {
@@ -45,15 +48,13 @@ namespace Game {
                 && Hitpoints > 0f) {
                 Hitpoints = MathUtils.Max(Hitpoints - amount, 0f);
             }
-            NetworkManager.QueuePacket(new DamageSyncPacket(this));
+            OnDamage?.Invoke(this);
         }
 
         public virtual void Update(float dt) {
             Vector3 position = m_componentBody.Position;
             if (Hitpoints <= 0f) {
-                if (!NetworkManager.IsClient) {
-                    NetworkManager.QueuePacket(new DamageSyncPacket(this));
-                }
+                OnDamage?.Invoke(this);
                 m_subsystemParticles.AddParticleSystem(
                     new BlockDebrisParticleSystem(
                         m_subsystemTerrain,

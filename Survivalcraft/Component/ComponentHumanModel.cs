@@ -1,7 +1,7 @@
 ﻿using Engine;
 using Engine.Graphics;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -78,6 +78,8 @@ namespace Game {
         public Vector2 m_legAngles2;
 
         public bool hasData = false;
+
+        public event Action<ComponentHumanModel> OnRow;
 
         public override float AttackPhase {
             get => m_punchPhase;
@@ -187,7 +189,7 @@ namespace Game {
                 && componentMount.ComponentBody.ImmersionFactor > 0f
                 && Math.Floor(1.1000000238418579 * m_subsystemTime.GameTime)
                 != Math.Floor(1.1000000238418579 * (m_subsystemTime.GameTime - m_subsystemTime.GameTimeDelta))) {
-                NetworkManager.QueuePacket(new HumanRowBehaviorPacket(this));
+                OnRow?.Invoke(this);
                 m_subsystemAudio.PlayRandomSound(
                     "Audio/Rowing",
                     m_random.Float(0.4f, 0.6f),

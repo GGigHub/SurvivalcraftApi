@@ -1,6 +1,6 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
+using System;
 using TemplatesDatabase;
 
 namespace Game {
@@ -20,6 +20,8 @@ namespace Game {
         public double? m_lastPukeTime;
         public const string fName = "ComponentSickness";
 
+        public event Action<ComponentSickness> OnSicknessUpdate;
+
         public bool IsSick => m_sicknessDuration > 0f;
 
         public bool IsPuking => m_pukeParticleSystem != null;
@@ -36,13 +38,6 @@ namespace Game {
                 m_componentPlayer.PlayerStats.TimesWasSick++;
             }
             m_sicknessDuration = 900f;
-        }
-
-        public virtual void EndSickness() {
-            if (!NetworkManager.IsClient) {
-                Network.NetworkManager.QueuePacket(new Network.ComponentSicknessPacket(this));
-                m_sicknessDuration = 0f;
-            }
         }
 
         public virtual void NauseaEffect() {
@@ -88,13 +83,11 @@ namespace Game {
             }
             if (m_sicknessDuration > 0f) {
                 //开服后，睡觉疾病恢复速度x5
-                if (m_componentPlayer.ComponentSleep.IsSleeping && m_componentPlayer.ComponentSleep.m_subsystemUpdate.UpdatesPerFrame == 1 && Network.NetworkManager.IsServer) dt *= m_subsystemGameInfo.WorldSettings.RecoverFator;
+                if (m_componentPlayer.ComponentSleep.IsSleeping && m_componentPlayer.ComponentSleep.m_subsystemUpdate.UpdatesPerFrame == 1 && Game.Network.NetworkManager.IsServer) dt *= m_subsystemGameInfo.WorldSettings.RecoverFator;
                 m_sicknessDuration = MathUtils.Max(m_sicknessDuration - dt, 0f);
                 if (m_componentPlayer.ComponentHealth.Health > 0f && !m_componentPlayer.ComponentSleep.IsSleeping && m_subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) && (!m_lastNauseaTime.HasValue || m_subsystemTime.GameTime - m_lastNauseaTime > 15.0)) {
-                    if (!NetworkManager.IsClient) {
-                        NauseaEffect();
-                        Network.NetworkManager.QueuePacket(new Network.ComponentSicknessPacket(this));
-                    }
+                    NauseaEffect();
+                    OnSicknessUpdate?.Invoke(this);
                 }
             }
             if (m_pukeParticleSystem != null) {
