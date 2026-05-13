@@ -111,6 +111,10 @@ namespace Game {
             return -1f;
         }
 
+        public static Func<bool> IsNetworkMode;
+
+        public static event Action<Attackment, Vector3, Vector3, Color, string> OnHitValueParticleSystemAdded;
+
         public virtual void AddHitValueParticleSystem(float damage) {
             if (!EnableHitValueParticleSystem) {
                 return;
@@ -134,8 +138,8 @@ namespace Game {
                     return false;
                 }
             );
-            if (!NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new HitValuePacket(particlePosition, particleVelocity, color, text2));
+            if (IsNetworkMode?.Invoke() != true) {
+                OnHitValueParticleSystemAdded?.Invoke(this, particlePosition, particleVelocity, color, text2);
             }
             Target?.Project.FindSubsystem<SubsystemParticles>()?.AddParticleSystem(particleSystem);
         }

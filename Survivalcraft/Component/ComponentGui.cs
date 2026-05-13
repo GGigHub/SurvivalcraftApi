@@ -121,6 +121,8 @@ namespace Game {
 
         public ComponentInput m_componentInput;
 
+        public Func<bool> IsNetworkMode;
+
         public GameWidget GameWidget { get; set; }
 
         public ContainerWidget ControlsContainerWidget { get; set; }
@@ -651,7 +653,7 @@ namespace Game {
             if (m_lightningButtonWidget.IsVisible
                 && (m_lightningButtonWidget.IsClicked || playerInput.Lighting)) {
                 Matrix matrix = Matrix.CreateFromQuaternion(m_componentPlayer.ComponentCreatureModel.EyeRotation);
-                if (!Network.NetworkManager.IsClient) {
+                if (IsNetworkMode?.Invoke() != true) {
                     Project.FindSubsystem<SubsystemWeather>(throwOnError: true).ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
                     m_subsystemWeather.ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
                 }

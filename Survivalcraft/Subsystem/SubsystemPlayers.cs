@@ -50,6 +50,10 @@ namespace Game {
 
         public SubsystemGameInfo m_subsystemGameInfo;
 
+        public Func<bool> IsNetworkMode;
+
+        public Func<Guid, bool> IsClientOnline;
+
         public ComponentPlayer MainPlayer => MainPlayerData?.ComponentPlayer;
 
         public string PlayerEntitiesDir = string.Empty;
@@ -87,7 +91,7 @@ namespace Game {
         }
 
         public void AddPlayerData(PlayerData playerData) {
-            if (m_playersData.Contains(playerData) || m_playersData.Any(pd => pd.PlayerGUID == playerData.PlayerGUID)) {
+            if (m_playersData.Contains(playerData) || m_playersData.Any(pd => pd.NetworkGuid == playerData.NetworkGuid)) {
                 throw new InvalidOperationException("Player already added.");
             }
 
@@ -131,7 +135,7 @@ namespace Game {
                 ScreensManager.SwitchScreen("Player", PlayerScreen.Mode.Initial, Project);
             }
             foreach (PlayerData playersDatum in m_playersData) {
-                if (NetworkManager.IsServer && playersDatum.Client == null) {
+                if (IsNetworkMode?.Invoke() == false && playersDatum.Client == null) {
                     toRemove.Add(playersDatum);
                 }
                 else {
@@ -139,7 +143,7 @@ namespace Game {
                 }
             }
             foreach (PlayerData playerData in toRemove) {
-                MakePlayerOffline(playerData.PlayerGUID);
+                MakePlayerOffline(playerData.NetworkGuid);
             }
             toRemove.Clear();
         }
@@ -225,18 +229,18 @@ namespace Game {
             }
         }
 
-        public void MakePlayerOffline(Guid playerGuid, bool showMsg = true) {
-            var pd = m_playersData.Find(p => p.PlayerGUID == playerGuid);
+        public void MakePlayerOffline(Guid NetworkGuid, bool showMsg = true) {
+            var pd = m_playersData.Find(p => p.NetworkGuid == NetworkGuid);
             if (pd != null) {
                 var updater = m_subsystemTerrain.TerrainUpdater;
                 if (pd.Client != null && updater != null && updater.waitChunkList != null && updater.waitChunkList.ContainsKey(pd.Client)) {
                     updater.waitChunkList.Remove(pd.Client);
                 }
                 var componentPlayer = pd.ComponentPlayer;
-                if (componentPlayer == null && m_offlinePlayerEntities.TryGetValue(playerGuid, out var entityDataPlayer)) {
+                if (componentPlayer == null && m_offlinePlayerEntities.TryGetValue(NetworkGuid, out var entityDataPlayer)) {
                     var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
                     list.EntitiesData.Add(entityDataPlayer);
-                    m_offlinePlayerEntities.Remove(playerGuid);
+                    m_offlinePlayerEntities.Remove(NetworkGuid);
                     List<Entity> el = GameManager.Project.InitializeAndLoadEntities(list);
                     GameManager.Project.AttachEntities(el, true);
                     Entity e = el[0];
@@ -244,7 +248,7 @@ namespace Game {
                 }
                 if (componentPlayer != null) {
                     Project.RemoveEntity(componentPlayer.Entity, true);
-                    if (NetworkManager.IsServer) {
+                    if (IsNetworkMode?.Invoke() == false) {
                         componentPlayer.SavePlayerEntity();
                     }
                 }
@@ -253,17 +257,17 @@ namespace Game {
             }
         }
 
-        public bool CheckPlayerDataExists(Guid playerGuid, out string entityFilePath) {
+        public bool CheckPlayerDataExists(Guid NetworkGuid, out string entityFilePath) {
             var entityFileDir = Storage.CombinePaths(m_subsystemGameInfo.DirectoryName, $"PlayerEntities/");
-            entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.json");
+            entityFilePath = Storage.CombinePaths(entityFileDir, $"{NetworkGuid}.json");
             if (!Storage.FileExists(entityFilePath)) {
-                entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.dat");
+                entityFilePath = Storage.CombinePaths(entityFileDir, $"{NetworkGuid}.dat");
             }
             return Storage.FileExists(entityFilePath);
         }
 
-        public bool MakePlayerOnline(Guid playerGuid, out PlayerData playerData, out Entity entity) {
-            if (CheckPlayerDataExists(playerGuid, out string entityFilePath) && NetworkManager.IsServer) {
+        public bool MakePlayerOnline(Guid NetworkGuid, out PlayerData playerData, out Entity entity) {
+            if (CheckPlayerDataExists(NetworkGuid, out string entityFilePath) && IsNetworkMode?.Invoke() == false) {
                 playerData = new PlayerData(Project);
                 ValuesDictionary dict = new ValuesDictionary();
                 using (Stream s = Storage.OpenFile(entityFilePath, OpenFileMode.Read)) {

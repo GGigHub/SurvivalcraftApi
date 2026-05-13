@@ -21,7 +21,7 @@ public class ClientAddPacket : ClientPacketBase{
         if (isServer) {
             return;
         }
-        NetworkManager.AddClient(new Client(From.Peer, m_client.ID, m_client.PlayerGuid, m_client.Nickname));
+        NetworkManager.AddClient(new Client(From.Peer, m_client.ID, m_client.NetworkGuid, m_client.Nickname));
     }
 }
 

@@ -31,8 +31,10 @@ namespace Game {
         }
 
         public virtual void OnSlotChange(int slotIndex) {
-            SubsystemInventories.SyncInventoryItem(this, slotIndex);
+            OnSlotChanged?.Invoke(this, slotIndex);
         }
+
+        public event Action<IInventory, int> OnSlotChanged;
 
         public virtual void SetSlotValue(int slotIndex, object obj) {
         }

@@ -23,7 +23,7 @@ public class WakeupRequestPacket : Packet {
         GameManager.Project.FindEntity(m_entityId, e => {
             ComponentSleep sleep = e.FindComponent<ComponentSleep>();
             ComponentPlayer player = e.FindComponent<ComponentPlayer>();
-            if (sleep != null && player != null && player.PlayerGuid == From.PlayerGuid) {
+            if (sleep != null && player != null && player.NetworkGuid == From.NetworkGuid) {
                 sleep.WakeUp();
             }
         });

@@ -10,12 +10,12 @@ namespace Game {
 
         public static bool ShowAIBehavior;
 
-        public bool IsDisableBehavior;
+        public Func<bool> IsNetworkMode;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Update(float dt) {
-            if (IsDisableBehavior) return;
+            if (IsNetworkMode?.Invoke() == true) return;
 
             ComponentBehavior componentBehavior = null;
             if (m_componentCreature.ComponentHealth.Health > 0f
@@ -43,9 +43,6 @@ namespace Game {
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
             m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
-            if (NetworkManager.IsClient) {
-                IsDisableBehavior = true;
-            }
             foreach (ComponentBehavior item in Entity.FindComponents<ComponentBehavior>()) {
                 m_behaviors.Add(item);
             }

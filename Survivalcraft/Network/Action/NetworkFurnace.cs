@@ -9,5 +9,11 @@ namespace Game.Network {
                 NetworkManager.QueuePacket(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
             }
         }
+
+        public static void OnFurnacesUpdate(SubsystemFurnaceBlockBehavior subsystem, List<ComponentFurnace> furnaces) {
+            if (NetworkManager.IsServer) {
+                NetworkManager.QueuePacket(new ComponentFurnacePacket(furnaces));
+            }
+        }
     }
 }

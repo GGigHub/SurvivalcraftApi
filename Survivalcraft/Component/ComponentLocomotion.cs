@@ -73,6 +73,9 @@ namespace Game {
             set {
                 value.X = Math.Clamp(value.X, 0f - MathUtils.DegToRad(140f), MathUtils.DegToRad(140f));
                 value.Y = Math.Clamp(value.Y, 0f - MathUtils.DegToRad(82f), MathUtils.DegToRad(82f));
+                if (m_lookAngles != value) {
+                    SendLookAngles = value;
+                }
                 m_lookAngles = value;
             }
         }
@@ -158,6 +161,10 @@ namespace Game {
 
         public bool AllowShoesWarning = true;
 
+        public Func<bool> IsNetworkMode;
+
+        public event Action<ComponentLocomotion, float> OnLocomotionUpdate;
+
         public UpdateOrder UpdateOrder => UpdateOrder.Locomotion;
 
         public ComponentPlayer componentPlayer;
@@ -169,40 +176,13 @@ namespace Game {
             {
                 IsCreativeFlyEnabled = false;
             }*/
-            if (NetworkManager.IsClient) {
-                //非玩家
-                if (componentPlayer == null) {
-                    //没有被骑乘
-                    if (m_componentCreature.ComponentBody.ChildBodies.Count == 0) { LookAngles = NetLookAngles.Get(dt); return; }
-                    //被骑乘
-                    else {
-                        var pb = m_componentCreature.ComponentBody.ChildBodies[0];
-                        //骑乘者不是主玩家
-                        if (pb.Player != null && !pb.Player.PlayerData.IsMainPlayer) {
-                            LookAngles = NetLookAngles.Get(dt);
-                            return;
-                        }
-                    }
-                }
-                if (componentPlayer != null && !componentPlayer.PlayerData.IsMainPlayer) { LookAngles = NetLookAngles.Get(dt); NormalMovement(dt); return; }
+            OnLocomotionUpdate?.Invoke(this, dt);
+            if (IsNetworkMode?.Invoke() == true) {
+                LookAngles = NetLookAngles.Get(dt);
+                NormalMovement(dt);
+                return;
             }
-            else if (NetworkManager.IsServer) {
-                //非玩家
-                if (componentPlayer == null) {
-                    //被骑乘
-                    if (m_componentCreature.ComponentBody.ChildBodies.Count > 0) {
-                        var pb = m_componentCreature.ComponentBody.ChildBodies[0];
-                        //骑乘者不是主玩家
-                        if (pb.Player != null && !pb.Player.PlayerData.IsMainPlayer) {
-                            LookAngles = NetLookAngles.Get(dt);
-                            return;
-                        }
-                    }
-                }
-                //玩家且不是主玩家
-                if (componentPlayer != null && !componentPlayer.PlayerData.IsMainPlayer) { LookAngles = NetLookAngles.Get(dt); NormalMovement(dt); return; }
 
-            }
             StunTime = MathUtils.Max(StunTime - dt, 0f);
             if (m_componentCreature.ComponentHealth.Health > 0f
                 && StunTime <= 0f) {

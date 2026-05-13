@@ -51,7 +51,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (Game.Network.NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() == true) {
                 m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {

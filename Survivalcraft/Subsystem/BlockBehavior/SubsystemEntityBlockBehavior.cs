@@ -14,6 +14,12 @@ namespace Game {
 
         public DatabaseObject m_databaseObject;
 
+        public event Action<SubsystemEntityBlockBehavior, Point3> OnOpenInventoryRequest;
+
+        protected void InvokeOnOpenInventoryRequest(Point3 point) {
+            OnOpenInventoryRequest?.Invoke(this, point);
+        }
+
         public override void Load(ValuesDictionary valuesDictionary) {
             base.Load(valuesDictionary);
             m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);

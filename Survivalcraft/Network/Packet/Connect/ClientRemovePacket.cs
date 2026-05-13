@@ -25,9 +25,9 @@ public class ClientRemovePacket : ClientPacketBase {
             SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
             Client client = NetworkManager.Clients[m_clientId];
             client.State = ClientState.NotConnected;
-            PlayerData playerData = subsystemPlayers.PlayersData.Find(pd => pd.PlayerGUID == client.PlayerGuid);
+            PlayerData playerData = subsystemPlayers.PlayersData.Find(pd => pd.NetworkGuid == client.NetworkGuid);
             if (playerData != null && !playerData.IsMainPlayer) {
-                subsystemPlayers.MakePlayerOffline(playerData.PlayerGUID);
+                subsystemPlayers.MakePlayerOffline(playerData.NetworkGuid);
             }
             NetworkManager.Clients.Remove(m_clientId);
         }

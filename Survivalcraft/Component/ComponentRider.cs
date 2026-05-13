@@ -27,6 +27,9 @@ namespace Game {
         public float m_outOfMountTime;
 
         public float DetectSurroundingMountRange = 2.5f;
+
+        public Func<bool> IsNetworkMode;
+
         public ComponentCreature ComponentCreature { get; set; }
 
         public ComponentMount Mount {
@@ -64,7 +67,7 @@ namespace Game {
         public virtual void StartMounting(ComponentMount componentMount) {
             if (!m_isAnimating
                 && Mount == null) {
-                if (Network.NetworkManager.IsServer) {
+                if (IsNetworkMode?.Invoke() != true) {
                     StartNetMounting(componentMount);
                     OnMounting?.Invoke(this, componentMount, false);
                 }
@@ -77,7 +80,7 @@ namespace Game {
         public virtual void StartDismounting() {
             if (!m_isAnimating
                 && Mount != null) {
-                if (Network.NetworkManager.IsServer) {
+                if (IsNetworkMode?.Invoke() != true) {
                     StartNetDismounting();
                     OnDismounting?.Invoke(this, false);
                 }

@@ -4,6 +4,9 @@ namespace Game {
     public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior {
         public override int[] HandledBlocks => [224];
 
+        public event Action<SubsystemAdjustableDelayGateBlockBehavior, int, int, int> OnEditItemDelay;
+        public event Action<SubsystemAdjustableDelayGateBlockBehavior, CellFace, int> OnEditBlockDelay;
+
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             int value = inventory.GetSlotValue(slotIndex);
             int count = inventory.GetSlotCount(slotIndex);
@@ -16,11 +19,11 @@ namespace Game {
                     delegate (int newDelay) {
                         int data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                         int num = Terrain.ReplaceData(value, data2);
-                        var p = new AdjustableDelayGatePacket(default, true, inventory.Id, slotIndex, newDelay);
-                        NetworkManager.QueuePacket(p);
-                        if (!NetworkManager.IsClient) {
-                            p.Handle(false);
+                        if (IsNetworkMode?.Invoke() != true) {
+                            inventory.RemoveSlotItems(slotIndex, count);
+                            inventory.AddSlotItems(slotIndex, num, count);
                         }
+                        OnEditItemDelay?.Invoke(this, inventory.Id, slotIndex, newDelay);
                     }
                 )
             );
@@ -39,11 +42,11 @@ namespace Game {
                         if (num != data) {
                             int face = ((AdjustableDelayGateBlock)BlocksManager.Blocks[AdjustableDelayGateBlock.Index]).GetFace(value);
                             var cell = new CellFace(x, y, z, face);
-                            var p = new AdjustableDelayGatePacket(cell, false, default, default, newDelay);
-                            NetworkManager.QueuePacket(p);
-                            if (!NetworkManager.IsClient) {
-                                p.Handle(false);
+                            if (IsNetworkMode?.Invoke() != true) {
+                                int newValue = Terrain.ReplaceData(value, num);
+                                SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }
+                            OnEditBlockDelay?.Invoke(this, cell, newDelay);
                         }
                     }
                 )

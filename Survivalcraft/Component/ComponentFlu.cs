@@ -43,6 +43,8 @@ namespace Game {
         public event Action<ComponentFlu> OnStartFluEvent;
         public event Action<ComponentFlu> OnSneezeEvent;
 
+        public Func<bool> IsNetworkMode;
+
         public bool HasFlu => m_fluDuration > 0f;
 
         public bool IsCoughing => m_coughDuration > 0f;
@@ -140,10 +142,7 @@ namespace Game {
                     Math.Clamp(num3 - m_componentPlayer.ComponentLocomotion.LookAngles.Y, -3f, 3f)
                 );
                 if (m_random.Bool(2f * dt)) {
-                    // I will leave this as IsClient check because this applies a physics impulse directly, which might be client-predicted or server-only. Wait, the original code had !NetworkManager.IsClient here.
-                    // Wait, I removed using Game.Network;. So NetworkManager will be undefined.
-                    // Let's use Game.Network.NetworkManager.IsClient for now to preserve physics logic.
-                    if (!Game.Network.NetworkManager.IsClient) {
+                    if (IsNetworkMode?.Invoke() != true) {
                         m_componentPlayer.ComponentBody.ApplyImpulse(-1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector());
                     }
                 }

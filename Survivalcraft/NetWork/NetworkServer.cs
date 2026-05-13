@@ -113,7 +113,7 @@ public class NetworkServer : INetEventListener {
     }
 
     public Client GetClientByGUID(Guid? guid) {
-        return Clients.Values.FirstOrDefault(c => c.PlayerGuid == guid);
+        return Clients.Values.FirstOrDefault(c => c.NetworkGuid == guid);
     }
 
     public void StartLocal() {
@@ -125,7 +125,7 @@ public class NetworkServer : INetEventListener {
     public Client CreateClient(NetPeer peer, Guid guid, string dataId, string nickname) {
         if (!IsServer) throw new InvalidOperationException("creating client as non-server");
         foreach (var p in Peers) {
-            if (p.PlayerGuid == guid) RemoveClient(p, "Duplicate account login.");
+            if (p.NetworkGuid == guid) RemoveClient(p, "Duplicate account login.");
         }
         var c = new Client(peer, FindUnusedIndex(), guid, nickname);
         peer.Tag = c;

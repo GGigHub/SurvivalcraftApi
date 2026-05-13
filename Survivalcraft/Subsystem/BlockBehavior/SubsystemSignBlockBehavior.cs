@@ -81,6 +81,10 @@ namespace Game {
 
         public int[] DrawOrders => m_drawOrders;
 
+        public event Action<SubsystemSignBlockBehavior, Point3> OnEditSignRequest;
+
+        public event Action<SubsystemSignBlockBehavior, Point3, string[], Color[], string> OnSignDataChanged;
+
         public SignData GetSignData(Point3 point) {
             if (m_textsByPoint.TryGetValue(point, out TextData value)) {
                 return new SignData { Lines = value.Lines.ToArray(), Colors = value.Colors.ToArray(), Url = value.Url };
@@ -88,7 +92,7 @@ namespace Game {
             return null;
         }
 
-        public void SetSignData(Point3 point, string[] lines, Color[] colors, string url, MovingBlock movingBlock = null) {
+        public void SetSignData(Point3 point, string[] lines, Color[] colors, string url, MovingBlock movingBlock = null, bool sync = false) {
             TextData textData = new() { Point = point };
             for (int i = 0; i < 4; i++) {
                 textData.Lines[i] = lines[i];
@@ -103,6 +107,9 @@ namespace Game {
                 m_textsByPoint[point] = textData;
             }
             m_lastUpdatePositions.Clear();
+            if (sync) {
+                OnSignDataChanged?.Invoke(this, point, lines, colors, url);
+            }
         }
 
         public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ) {
@@ -158,9 +165,8 @@ namespace Game {
                 }
             }
             else if (componentMiner.ComponentPlayer != null) {
-                if (NetworkManager.IsClient && componentMiner.ComponentPlayer == NetworkManager.MainPlayer) {
-                    Packet packet = new EditSignPacket(point);
-                    NetworkManager.QueuePacket(packet);
+                if (IsNetworkMode?.Invoke() == true && IsMainPlayer?.Invoke(componentMiner.ComponentPlayer) == true) {
+                    OnEditSignRequest?.Invoke(this, point);
                     return true;
                 }
                 if (componentMiner.ComponentPlayer.PlayerData.IsMainPlayer) {

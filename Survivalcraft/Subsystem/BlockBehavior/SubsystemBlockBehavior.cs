@@ -8,6 +8,10 @@ namespace Game {
 
         public SubsystemTerrain SubsystemTerrain { get; set; }
 
+        public Func<bool> IsNetworkMode;
+
+        public Func<ComponentPlayer, bool> IsMainPlayer;
+
         public virtual void OnChunkInitialized(TerrainChunk chunk) { }
 
         public virtual void OnChunkDiscarding(TerrainChunk chunk) { }

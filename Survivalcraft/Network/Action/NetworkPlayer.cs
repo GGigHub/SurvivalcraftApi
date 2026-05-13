@@ -37,5 +37,22 @@ namespace Game.Network {
         public static void OnAimEvent(ComponentPlayer player) {
             NetworkManager.QueuePacket(new PlayerAimPacket(player));
         }
+
+        public static void OnPlayerPlaying(PlayerData playerData) {
+            if (NetworkManager.IsClient) {
+                NetworkManager.Self.State = ClientState.Playing;
+                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientState.Playing));
+            }
+        }
+
+        public static void OnPlayerRestart(PlayerData playerData) {
+            if (NetworkManager.IsClient && playerData.IsMainPlayer) {
+                NetworkManager.QueuePacket(new PlayerRestartPacket(playerData));
+            }
+        }
+
+        public static void OnPlayerDisconnected() {
+            NetworkManager.Stop();
+        }
     }
 }

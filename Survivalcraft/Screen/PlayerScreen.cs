@@ -205,7 +205,7 @@ public class PlayerScreen : Screen {
         if (m_deleteButton.IsClicked) {
             if (NetworkManager.IsServer) {
                 DialogsManager.Confirm("你确定要踢出这个玩家吗", btn => {
-                    var client = NetworkManager.GetClientByGUID(m_playerData.PlayerGUID);
+                    var client = NetworkManager.GetClientByGUID(m_playerData.NetworkGuid);
                     if (btn == MessageDialogButton.Button1) NetworkManager.Server.RemoveClient(client);
                     else DialogsManager.HideAllDialogs();
                 });

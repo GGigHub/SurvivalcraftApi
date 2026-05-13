@@ -42,10 +42,20 @@ namespace Game {
         public float m_progress;
         public int PlayerIndex { get; set; }
 
-        // PlayerGUID is used consistently across the network without obfuscation.
-        public Guid PlayerGUID { get; set; } = NetworkManager.Self.PlayerGuid;
+        // NetworkGuid is used consistently across the network without obfuscation.
+        public static Func<Guid> GetSelfNetworkGuid;
+        public Guid NetworkGuid { get; set; }
 
-        public Client Client => NetworkManager.GetClientByGUID(PlayerGUID);
+        public static Func<Guid, Client> GetClientByGUID;
+        public Client Client => GetClientByGUID?.Invoke(NetworkGuid);
+
+        public static Func<bool> IsNetworkMode;
+
+        public static Func<bool> IsServerMode;
+
+        public static event Action<PlayerData> OnPlayerPlaying;
+        public static event Action<PlayerData> OnPlayerRestart;
+        public static event Action OnPlayerDisconnected;
 
         public byte? ClientId => Client?.ID;
 
@@ -150,7 +160,7 @@ namespace Game {
             InputDevice = WidgetInputDevice.None;
             m_stateMachine.AddState("FirstUpdate", null, delegate {
                 // 非本地主玩家且缺少对应网络客户端时，转为离线状态。
-                if (NetworkManager.GetClientByGUID(PlayerGUID) == null) {
+                if (NetworkManager.GetClientByGUID(NetworkGuid) == null) {
                     m_stateMachine.TransitionTo("MakePlayerOffline");
                 }
                 else if (ComponentPlayer != null) {
@@ -159,12 +169,12 @@ namespace Game {
                 }
                 else {
 #if DEBUG
-                    Log.Debug($"玩家实体尚未创建，准备进入生成流程。ID: {PlayerGUID}");
+                    Log.Debug($"玩家实体尚未创建，准备进入生成流程。ID: {NetworkGuid}");
 #endif
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
             }, null);
-            m_stateMachine.AddState("MakePlayerOffline", delegate { Dispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(PlayerGUID, false)); }, null, null);
+            m_stateMachine.AddState("MakePlayerOffline", delegate { Dispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(NetworkGuid, false)); }, null, null);
             m_stateMachine.AddState("PrepareSpawn", delegate {
                 if (SpawnPosition == Vector3.Zero) {
                     if (m_subsystemGameInfo.WorldSettings.RandomSpawnPosition) SubsystemPlayers.GlobalSpawnPosition = Vector3.Zero;
@@ -224,14 +234,14 @@ namespace Game {
                     ClientCachePosition = null;
                 }
                 // 根据当前中心点刷新地形可见范围，客户端的非主玩家不需要提交 updateLocation。
-                if (!(NetworkManager.IsClient && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
+                if (!(IsNetworkMode?.Invoke() == true && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
             }, delegate {
                 if (Time.PeriodicEvent(0.1, 0.0)) {
                     float updateProgress = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, MathUtils.Min(SettingsManager.VisibilityRange, 64f), 0f);
                     UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
                     if ((updateProgress >= 1f && Time.FrameStartTime - m_terrainWaitStartTime > 2.0) || Time.FrameStartTime - m_terrainWaitStartTime >= 15.0) {
-                        if (ComponentPlayer == null || ComponentPlayer.PlayerData.PlayerGUID == Guid.Empty) {
-                            if (!NetworkManager.IsClient) {
+                        if (ComponentPlayer == null || ComponentPlayer.PlayerData.NetworkGuid == Guid.Empty) {
+                            if (IsNetworkMode?.Invoke() != true) {
                                 SpawnPlayer(SpawnPosition, m_spawnMode);
                             }
                             else {
@@ -254,9 +264,8 @@ namespace Game {
             }, null);
             m_stateMachine.AddState("Playing", delegate {
                 HideSpawnDialog();
-                if (NetworkManager.IsClient) {
-                    NetworkManager.Self.State = ClientState.Playing;
-                    NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientState.Playing));
+                if (IsNetworkMode?.Invoke() == true) {
+                    OnPlayerPlaying?.Invoke(this);
                 }
             }, delegate {
                 if (ComponentPlayer == null) {
@@ -269,8 +278,9 @@ namespace Game {
                     m_playerDeathTime = Time.RealTime;
                 }
                 // 非主玩家在未完成联机同步前保持无敌，避免状态不同步时被误伤。
-                if (!IsMainPlayer && !NetworkManager.IsClient) {
+                if (!IsMainPlayer && IsNetworkMode?.Invoke() != true) {
                     if (!isSetStatus) {
+                        // Assuming Client checking logic is handled differently or we just assume invulnerable if Client == null
                         if (Client != null && Client.State != ClientState.Playing) {
                             ComponentPlayer.ComponentHealth.IsInvulnerable = true;
                         }
@@ -369,12 +379,12 @@ namespace Game {
             LastSpawnTime = valuesDictionary.GetValue("LastSpawnTime", 0.0);
             SpawnsCount = valuesDictionary.GetValue("SpawnsCount", 0);
             Name = valuesDictionary.GetValue("Name", "Walter");
-            PlayerGUID = valuesDictionary.GetValue("PlayerGUID", NetworkManager.Self.PlayerGuid);
+            NetworkGuid = valuesDictionary.GetValue("NetworkGuid", NetworkManager.Self.NetworkGuid);
             PlayerClass = valuesDictionary.GetValue("PlayerClass", PlayerClass.Male);
             Level = valuesDictionary.GetValue("Level", 1f);
             CharacterSkinName = valuesDictionary.GetValue("CharacterSkinName", CharacterSkinsManager.CharacterSkinsNames[0]);
             InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
-            IsMainPlayer = PlayerGUID == NetworkManager.Self.PlayerGuid;
+            IsMainPlayer = NetworkGuid == NetworkManager.Self.NetworkGuid;
         }
 
         public void Save(ValuesDictionary valuesDictionary) {
@@ -383,7 +393,7 @@ namespace Game {
             valuesDictionary.SetValue("LastSpawnTime", LastSpawnTime);
             valuesDictionary.SetValue("SpawnsCount", SpawnsCount);
             valuesDictionary.SetValue("Name", Name);
-            valuesDictionary.SetValue("PlayerGUID", PlayerGUID);
+            valuesDictionary.SetValue("NetworkGuid", NetworkGuid);
             valuesDictionary.SetValue("PlayerClass", PlayerClass);
             valuesDictionary.SetValue("Level", Level);
             valuesDictionary.SetValue("CharacterSkinName", CharacterSkinName);
@@ -631,7 +641,7 @@ namespace Game {
                 value5 = m_subsystemGameInfo.WorldSettings.GameMode <= GameMode.Survival ? 1 : 0;
             }
             ValuesDictionary overrides = new() {
-                { "Player",new ValuesDictionary { { "PlayerIndex", PlayerIndex }, { "PlayerGuid", PlayerGUID  } } },
+                { "Player",new ValuesDictionary { { "PlayerIndex", PlayerIndex }, { "NetworkGuid", NetworkGuid  } } },
                 { "Intro", new ValuesDictionary { { "PlayIntro", spawnMode == SpawnMode.InitialIntro } } }, {
                     "Clothing",
                     new ValuesDictionary {

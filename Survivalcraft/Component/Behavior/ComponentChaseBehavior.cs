@@ -154,11 +154,11 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (Network.NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() == true) {
                 m_componentCreatureModel.AttackOrder = IsAttack;
                 return;
             }
-            if (Suppressed) {
+            if (m_target == null) {
                 StopAttack();
             }
             m_autoChaseSuppressionTime -= dt;

@@ -36,14 +36,17 @@ namespace Game {
 
         public string DamageSoundName { get; set; }
 
+        public Func<bool> IsNetworkMode;
+
         public event Action<ComponentDamage> OnDamage;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Damage(float amount) {
-            if (NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() == true) {
                 return;
             }
+
             if (amount > 0f
                 && Hitpoints > 0f) {
                 Hitpoints = MathUtils.Max(Hitpoints - amount, 0f);

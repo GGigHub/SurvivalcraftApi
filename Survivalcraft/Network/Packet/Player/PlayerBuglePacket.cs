@@ -29,7 +29,7 @@ public class PlayerBuglePacket : Packet {
         if (isServer) return;
         ComponentPlayer mainPlayer = GameManager.Project.FindSubsystem<SubsystemPlayers>().MainPlayer;
         if (mainPlayer != null) {
-            if (m_playerGuid == Guid.Empty || (m_playerGuid != Guid.Empty && mainPlayer.PlayerData.PlayerGUID == m_playerGuid)) {
+            if (m_playerGuid == Guid.Empty || (m_playerGuid != Guid.Empty && mainPlayer.PlayerData.NetworkGuid == m_playerGuid)) {
                 DialogsManager.HideAllDialogs();
                 mainPlayer.ComponentHealth.IsInvulnerable = true;
                 string content = m_content.Replace("[n]", "\n").Replace("[e]", " ");

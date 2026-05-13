@@ -36,7 +36,7 @@ public class ClientStateChangePacket : ClientPacketBase {
             switch (client.State) {
                 case ClientState.Connected: {
                         byte[] textureData = null;
-                        if (subsystemPlayers.MakePlayerOnline(client.PlayerGuid, out PlayerData playerData, out Entity entity)) {
+                        if (subsystemPlayers.MakePlayerOnline(client.NetworkGuid, out PlayerData playerData, out Entity entity)) {
                             if (entity != null) {
                                 GameManager.Project.AddEntity(entity);
                             }
@@ -51,7 +51,7 @@ public class ClientStateChangePacket : ClientPacketBase {
                         break;
                     }
                 case ClientState.NotConnected:
-                    subsystemPlayers.MakePlayerOffline(client.PlayerGuid);
+                    subsystemPlayers.MakePlayerOffline(client.NetworkGuid);
                     break;
                 case ClientState.ProjectLoaded: {
                         List<Entity> sendList = [.. GameManager.Project.Entities];

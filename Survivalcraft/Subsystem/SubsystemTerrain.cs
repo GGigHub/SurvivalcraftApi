@@ -36,6 +36,10 @@ namespace Game {
 
         public SubsystemBlockBehaviors m_subsystemBlockBehaviors;
 
+        public Func<bool> IsNetworkMode;
+
+        public event Action<SubsystemTerrain, int, int, int, int> OnTerrainChangeCell;
+
         public List<BlockDropValue> m_dropValues = [];
 
         public static int[] m_drawOrders = [0, 100];
@@ -368,9 +372,9 @@ namespace Game {
             if (pass) {
                 return;
             }
-            if (NetworkManager.IsClient) return;
+            if (IsNetworkMode?.Invoke() == true) return;
             ChangeCellNet(x, y, z, value, updateModificationCounter, movingBlock);
-            NetworkManager.QueuePacket(new Network.TerrainChangeCellPacket(x, y, z, value));
+            OnTerrainChangeCell?.Invoke(this, x, y, z, value);
         }
 
         public void ChangeCellNet(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null) {
@@ -512,7 +516,7 @@ namespace Game {
             Terrain = new Terrain();
             TerrainRenderer = new TerrainRenderer(this);
             TerrainUpdater = new TerrainUpdater(this);
-            if (!NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() != true) {
                 TerrainSerializer = new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             else {

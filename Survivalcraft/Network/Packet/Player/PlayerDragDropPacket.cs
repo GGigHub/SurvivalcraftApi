@@ -51,7 +51,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
         if (inventory is Component component) {
             owner = component.Entity?.FindComponent<ComponentPlayer>();
             if (owner != null && from != null) {
-                return owner.PlayerGuid != from.PlayerGuid;
+                return owner.NetworkGuid != from.NetworkGuid;
             }
         }
         return false;

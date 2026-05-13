@@ -142,6 +142,10 @@ namespace Game {
 
         public ComponentClothing ComponentClothing { get; set; }
 
+        public Func<bool> IsNetworkMode;
+
+        public static Func<Guid> GetSelfNetworkGuid;
+
         public ComponentOuterClothingModel ComponentOuterClothingModel {
             // ReSharper disable UnusedAutoPropertyAccessor.Global
             get;
@@ -167,8 +171,8 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        // PlayerGuid is the unique identifier for each player, used consistently across Client and Server.
-        public Guid PlayerGuid { get; set; }
+        // NetworkGuid is the unique identifier for each player, used consistently across Client and Server.
+        public Guid NetworkGuid { get; set; }
 
         public DragHostWidget m_dragHostWidget;
 
@@ -835,23 +839,23 @@ namespace Game {
             int playerIndex = valuesDictionary.GetValue<int>("PlayerIndex");
             SubsystemPlayers subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 
-            PlayerGuid = valuesDictionary.GetValue("PlayerGuid", NetworkManager.Self.PlayerGuid);
-            PlayerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.PlayerGUID == PlayerGuid);
+            NetworkGuid = valuesDictionary.GetValue("NetworkGuid", GetSelfNetworkGuid?.Invoke() ?? Guid.Empty);
+            PlayerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.NetworkGuid == NetworkGuid);
             if (PlayerData == null) {
-                throw new Exception($"Player data not found for guid {PlayerGuid}");
+                throw new Exception($"Player data not found for guid {NetworkGuid}");
             }
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
             base.Save(valuesDictionary, entityToIdMap);
-            valuesDictionary.SetValue("PlayerGuid", PlayerData.PlayerGUID);
+            valuesDictionary.SetValue("NetworkGuid", PlayerData.NetworkGuid);
             valuesDictionary.SetValue("PlayerIndex", PlayerData.PlayerIndex);
         }
 
         private static readonly object _saveLock = new();
 
         public virtual void SavePlayerEntity() {
-            if (!Game.Network.NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() != true) {
                 lock (_saveLock) {
                     try {
                         var list = Project.SaveEntities([Entity]);
@@ -866,7 +870,7 @@ namespace Game {
                         }
                         dict.SetValue("Entity", vdict);
                         dict.SetValue("Data", pdict);
-                        using (Stream stream = Storage.OpenFile(Storage.CombinePaths(entityFileDir, $"{PlayerData.PlayerGUID}.json"), OpenFileMode.Create)) {
+                        using (Stream stream = Storage.OpenFile(Storage.CombinePaths(entityFileDir, $"{PlayerData.NetworkGuid}.json"), OpenFileMode.Create)) {
                             StreamWriter streamWriter = new(stream);
                             streamWriter.Write(dict.ToJsonText());
                             streamWriter.Flush();

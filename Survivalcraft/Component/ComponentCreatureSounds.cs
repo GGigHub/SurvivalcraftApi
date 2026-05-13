@@ -48,10 +48,12 @@ namespace Game {
 
         public double m_lastPukeSoundTime = -1000.0;
 
+        public Func<bool> IsNetworkMode;
+
         public event Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (Game.Network.NetworkManager.IsClient) return;
+            if (IsNetworkMode?.Invoke() == true) return;
             PlayIdleSoundLogic(skipIfRecentlyPlayed);
         }
 
@@ -64,7 +66,7 @@ namespace Game {
         }
 
         public virtual void PlayPainSound() {
-            if (Game.Network.NetworkManager.IsClient) return;
+            if (IsNetworkMode?.Invoke() == true) return;
             PlayPainSoundLogic();
         }
 
@@ -77,7 +79,7 @@ namespace Game {
         }
 
         public virtual void PlayMoanSound() {
-            if (Game.Network.NetworkManager.IsClient) return;
+            if (IsNetworkMode?.Invoke() == true) return;
             PlayMoanSoundLogic();
         }
 
@@ -90,7 +92,7 @@ namespace Game {
         }
 
         public virtual void PlaySneezeSound() {
-            if (Game.Network.NetworkManager.IsClient) return;
+            if (IsNetworkMode?.Invoke() == true) return;
             PlaySneezeSoundLogic();
         }
 
@@ -103,7 +105,7 @@ namespace Game {
         }
 
         public void PlayCoughSound() {
-            if (Game.Network.NetworkManager.IsClient) return;
+            if (IsNetworkMode?.Invoke() == true) return;
             PlayCoughSoundLogic();
         }
 
@@ -116,7 +118,7 @@ namespace Game {
         }
 
         public virtual void PlayPukeSound() {
-            if (Game.Network.NetworkManager.IsClient) return;
+            if (IsNetworkMode?.Invoke() == true) return;
             PlayPukeSoundLogic();
         }
 
@@ -129,7 +131,7 @@ namespace Game {
         }
 
         public virtual void PlayAttackSound() {
-            if (Game.Network.NetworkManager.IsClient) return;
+            if (IsNetworkMode?.Invoke() == true) return;
             PlayAttackSoundLogic();
         }
 

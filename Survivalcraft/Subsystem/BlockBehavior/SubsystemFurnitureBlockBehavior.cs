@@ -297,7 +297,7 @@ namespace Game {
                                     componentMiner.ComponentCreature.PlayerStats.FurnitureItemsMade += num3;
                                 }
                             }
-                            if (!NetworkManager.IsClient) {
+                            if (IsNetworkMode?.Invoke() != true) {
                                 CreateDesign(componentMiner, design, valuesDictionary, start, startValue);
                             }
                         }
@@ -679,4 +679,5 @@ namespace Game {
         }
     }
 }
+
 

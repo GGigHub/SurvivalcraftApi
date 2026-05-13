@@ -100,8 +100,10 @@ namespace Game {
         }
 
         public virtual void OnSlotChange(int slotIndex) {
-            SubsystemInventories.SyncInventoryItem(this, slotIndex);
+            OnSlotChanged?.Invoke(this, slotIndex);
         }
+
+        public event Action<IInventory, int> OnSlotChanged;
 
         public virtual void SetSlotValue(int slotIndex, object obj) {
             List<int> list = (List<int>)obj;
@@ -647,16 +649,6 @@ namespace Game {
                 else {
                     OnRequestSkin?.Invoke(this, m_componentPlayer.PlayerData.CharacterSkinName);
                 }
-                /*
-                if (Time.PeriodicEvent(1.0, 0.0)) {
-                    if (Game.Network.NetworkManager.IsClient) {
-                        OnRequestSkin?.Invoke(this, m_componentPlayer.PlayerData.CharacterSkinName);
-                    }
-                    else if (Game.Network.NetworkManager.IsServer) {
-                        OnWhoHasSkin?.Invoke(this, m_componentPlayer.PlayerData.CharacterSkinName);
-                    }
-                }
-                */
             }
             if (m_skinTexture == null) {
                 m_skinTexture = CharacterSkinsManager.LoadTexture("$Male1");

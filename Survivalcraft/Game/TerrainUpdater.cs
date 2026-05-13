@@ -215,6 +215,13 @@ namespace Game {
 
         public static bool LogTerrainUpdateStats = false;
 
+        public Func<bool> IsNetworkMode;
+
+        public event Action<TerrainUpdater, List<Point2>> OnTerrainRequestSyncChunks;
+        public event Action<TerrainUpdater, Client, List<TerrainChunk>> OnTerrainSyncChunkList;
+        public event Action<TerrainUpdater, Client, List<Point2>> OnTerrainReplyResult;
+        public event Action<TerrainUpdater, UpdateLocation> OnTerrainPlayerLocationUpdate;
+
         public AutoResetEvent UpdateEvent => m_updateEvent;
 
         public event Action<TerrainChunk> ChunkInitialized;
@@ -273,8 +280,8 @@ namespace Game {
                 value.ContentDistance = contentDistance;
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
-                if (NetworkManager.IsClient) {
-                    NetworkManager.QueuePacket(new PlayerUpdateLocationPacket(value));
+                if (IsNetworkMode?.Invoke() == true) {
+                    OnTerrainPlayerLocationUpdate?.Invoke(this, value);
                 }
             }
         }

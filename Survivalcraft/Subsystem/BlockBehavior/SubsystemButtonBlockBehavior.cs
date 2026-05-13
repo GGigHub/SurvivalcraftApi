@@ -4,6 +4,9 @@ namespace Game {
     public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior {
         public override int[] HandledBlocks => [142];
 
+        public event Action<SubsystemButtonBlockBehavior, int, int, int> OnEditItemVoltage;
+        public event Action<SubsystemButtonBlockBehavior, CellFace, int> OnEditBlockVoltage;
+
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
                 return false;
@@ -20,11 +23,11 @@ namespace Game {
                         int data2 = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
                         int num = Terrain.ReplaceData(value, data2);
                         if (num != value) {
-                            var p = new ButtonVoltagePacket(default, true, inventory.Id, slotIndex, newVoltageLevel);
-                            NetworkManager.QueuePacket(p);
-                            if (!NetworkManager.IsClient) {
-                                p.Handle(false);
+                            if (IsNetworkMode?.Invoke() != true) {
+                                inventory.RemoveSlotItems(slotIndex, count);
+                                inventory.AddSlotItems(slotIndex, num, count);
                             }
+                            OnEditItemVoltage?.Invoke(this, inventory.Id, slotIndex, newVoltageLevel);
                         }
                     }
                 )
@@ -44,11 +47,11 @@ namespace Game {
                         if (num != data) {
                             int face = 4;
                             var cell = new CellFace(x, y, z, face);
-                            var p = new ButtonVoltagePacket(cell, false, default, default, newVoltageLevel);
-                            NetworkManager.QueuePacket(p);
-                            if (!NetworkManager.IsClient) {
-                                p.Handle(false);
+                            if (IsNetworkMode?.Invoke() != true) {
+                                int newValue = Terrain.ReplaceData(value, num);
+                                SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }
+                            OnEditBlockVoltage?.Invoke(this, cell, newVoltageLevel);
                         }
                     }
                 )

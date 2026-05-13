@@ -62,7 +62,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (Game.Network.NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() == true) {
                 m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {

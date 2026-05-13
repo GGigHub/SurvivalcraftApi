@@ -42,7 +42,7 @@ public class ClientSyncListPacket : ClientPacketBase {
                 client.Peer.Tag = client;
                 NetworkManager.Client.Server = From;
             }
-            else if (client.PlayerGuid == NetworkManager.Client.Self.PlayerGuid) {
+            else if (client.NetworkGuid == NetworkManager.Client.Self.NetworkGuid) {
                 NetworkManager.Client.Self = client;
             }
             NetworkManager.AddClient(client);

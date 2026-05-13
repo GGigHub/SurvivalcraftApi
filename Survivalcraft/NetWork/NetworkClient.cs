@@ -18,7 +18,7 @@ public enum ClientState {
 public class Client {
     public string Nickname { get; set; }
     public byte ID { get; internal set; }
-    public Guid PlayerGuid { get; internal set; }
+    public Guid NetworkGuid { get; internal set; }
     public NetPeer Peer { get; internal set; }
     public ConnectionRequest Request { get; internal set; }
     public IPEndPoint IPPoint { get; internal set; }
@@ -30,21 +30,21 @@ public class Client {
     public Client() { }
 
     public Client(Guid guid) {
-        PlayerGuid = guid;
+        NetworkGuid = guid;
         State = ClientState.Connected;
         ID = 0;
     }
 
     public Client(NetPeer netPeer, byte id, Guid guid, string nickName) {
         ID = id;
-        PlayerGuid = guid;
+        NetworkGuid = guid;
         Nickname = nickName;
         Peer = netPeer;
     }
 
     public override bool Equals(object obj) => obj is Client c && c.ID == ID;
 
-    public override int GetHashCode() => PlayerGuid.GetHashCode();
+    public override int GetHashCode() => NetworkGuid.GetHashCode();
 
     public static bool operator ==(Client a, Client b) {
         return (a is null && b is null) || (a is not null && b is not null && a.ID == b.ID);
@@ -104,7 +104,7 @@ public class NetworkClient : INetEventListener {
     }
 
     public Client GetClientByGUID(Guid? guid) {
-        return Clients.Values.FirstOrDefault(c => c.PlayerGuid == guid);
+        return Clients.Values.FirstOrDefault(c => c.NetworkGuid == guid);
     }
 
     public void SendWriterFromPacket(Packet packet, IPEndPoint endPoint, bool isSend = true) {

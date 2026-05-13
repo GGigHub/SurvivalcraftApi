@@ -37,14 +37,17 @@ namespace Game {
 
         public ComponentCreature Attacker { get; set; }
 
+        public Func<bool> IsNetworkMode;
+
         public event Action<ComponentOnFire, ComponentCreature, float> OnSetOnFire;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void SetOnFire(ComponentCreature attacker, float duration) {
-            if (Network.NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() == true) {
                 return;
             }
+
             OnSetOnFire?.Invoke(this, attacker, duration);
             SetOnFireNet(attacker, duration);
         }

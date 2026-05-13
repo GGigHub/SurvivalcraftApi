@@ -43,6 +43,8 @@ namespace Game {
         public string m_cachedPlayerClassName;
         public string m_cachedGameModeString;
 
+        public Func<bool> IsNetworkMode;
+
         public const float FemaleStrengthFactor = 0.8f;
         public const float FemaleResilienceFactor = 0.8f;
         public const float FemaleSpeedFactor = 1.03f;
@@ -89,10 +91,10 @@ namespace Game {
         }
 
         public virtual void AddExperience(int count, bool playSound) {
-            if (Network.NetworkManager.IsServer) {
+            if (IsNetworkMode?.Invoke() != true) {
                 NetAddExperience(count, playSound);
-                OnAddExperience?.Invoke(this, count, playSound);
             }
+            OnAddExperience?.Invoke(this, count, playSound);
         }
 
         public event Action<ComponentLevel, int, bool> OnAddExperience;

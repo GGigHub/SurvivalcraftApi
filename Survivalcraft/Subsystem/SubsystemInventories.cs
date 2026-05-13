@@ -7,6 +7,8 @@ public class SubsystemInventories : Subsystem {
     private Dictionary<int, IInventory> inventories = new Dictionary<int, IInventory>();
 
 
+    public Func<bool> IsNetworkMode;
+
     public int ProduceInventoryId(IInventory inventory) {
         for (int i = 1; i < int.MaxValue; i++) {
             if (!inventories.ContainsKey(i)) {
@@ -23,7 +25,7 @@ public class SubsystemInventories : Subsystem {
             return inventory.Id;
         }
         else {
-            if (NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() == true) {
                 inventories[inventory.Id] = inventory;
                 return inventory.Id;
             }
@@ -50,10 +52,6 @@ public class SubsystemInventories : Subsystem {
             return inventory;
         }
         return null;
-    }
-
-    public static void SyncInventoryItem(IInventory inventory, int slotIndex) {
-        NetworkManager.QueuePacket(new Network.InventorySyncPacket(inventory));
     }
 
     public override void OnEntityRemoved(Entity entity) {

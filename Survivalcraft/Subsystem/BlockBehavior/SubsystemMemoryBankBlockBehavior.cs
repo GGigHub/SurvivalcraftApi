@@ -8,6 +8,9 @@ namespace Game {
 
         public SubsystemMemoryBankBlockBehavior() : base(186) { }
 
+        public event Action<SubsystemMemoryBankBlockBehavior, int, int, MemoryBankData> OnEditItemData;
+        public event Action<SubsystemMemoryBankBlockBehavior, CellFace, MemoryBankData> OnEditBlockData;
+
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
                 return false;
@@ -23,11 +26,13 @@ namespace Game {
                     new EditMemoryBankDialog(
                         memoryBankData,
                         () => {
-                            var p = new MemoryBankDataPacket(default, true, inventory.Id, slotIndex, memoryBankData);
-                            NetworkManager.QueuePacket(p);
-                            if (!NetworkManager.IsClient) {
-                                p.Handle(false);
+                            if (IsNetworkMode?.Invoke() != true) {
+                                int data = StoreItemDataAtUniqueId(memoryBankData);
+                                int value2 = Terrain.ReplaceData(value, data);
+                                inventory.RemoveSlotItems(slotIndex, count);
+                                inventory.AddSlotItems(slotIndex, value2, count);
                             }
+                            OnEditItemData?.Invoke(this, inventory.Id, slotIndex, memoryBankData);
                         }
                     )
                 );
@@ -59,11 +64,15 @@ namespace Game {
                         () => {
                             int face = ((MemoryBankBlock)BlocksManager.Blocks[186]).GetFace(value);
                             var cell = new CellFace(x, y, z, face);
-                            var p = new MemoryBankDataPacket(cell, false, default, default, memoryBankData);
-                            NetworkManager.QueuePacket(p);
-                            if (!NetworkManager.IsClient) {
-                                p.Handle(false);
+                            if (IsNetworkMode?.Invoke() != true) {
+                                SetBlockData(new Point3(x, y, z), memoryBankData);
+                                SubsystemElectricity subsystemElectricity = SubsystemTerrain.Project.FindSubsystem<SubsystemElectricity>(true);
+                                ElectricElement electricElement = subsystemElectricity.GetElectricElement(x, y, z, face);
+                                if (electricElement != null) {
+                                    subsystemElectricity.QueueElectricElementForSimulation(electricElement, subsystemElectricity.CircuitStep + 1);
+                                }
                             }
+                            OnEditBlockData?.Invoke(this, cell, memoryBankData);
                         }
                     )
                 );

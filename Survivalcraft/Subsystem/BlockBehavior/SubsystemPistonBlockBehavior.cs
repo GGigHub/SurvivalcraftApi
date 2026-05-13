@@ -57,6 +57,9 @@ namespace Game {
             UpdateMovableBlocks();
         }
 
+        public event Action<SubsystemPistonBlockBehavior, int, int, int> OnEditItemData;
+        public event Action<SubsystemPistonBlockBehavior, CellFace, int> OnEditBlockData;
+
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
                 return false;
@@ -71,11 +74,11 @@ namespace Game {
                     delegate (int newData) {
                         int num = Terrain.ReplaceData(value, newData);
                         if (num != value) {
-                            var p = new PistonDataPacket(default, true, inventory.Id, slotIndex, newData);
-                            NetworkManager.QueuePacket(p);
-                            if (!NetworkManager.IsClient) {
-                                p.Handle(false);
+                            if (IsNetworkMode?.Invoke() != true) {
+                                inventory.RemoveSlotItems(slotIndex, count);
+                                inventory.AddSlotItems(slotIndex, num, count);
                             }
+                            OnEditItemData?.Invoke(this, inventory.Id, slotIndex, newData);
                         }
                     }
                 )
@@ -94,11 +97,11 @@ namespace Game {
                         if (newData != data
                             && SubsystemTerrain.Terrain.GetCellContents(x, y, z) == contents) {
                             var cell = new CellFace(x, y, z, 0);
-                            var p = new PistonDataPacket(cell, false, default, default, newData);
-                            NetworkManager.QueuePacket(p);
-                            if (!NetworkManager.IsClient) {
-                                p.Handle(false);
+                            if (IsNetworkMode?.Invoke() != true) {
+                                int newValue = Terrain.ReplaceData(value, newData);
+                                SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }
+                            OnEditBlockData?.Invoke(this, cell, newData);
                         }
                     }
                 )

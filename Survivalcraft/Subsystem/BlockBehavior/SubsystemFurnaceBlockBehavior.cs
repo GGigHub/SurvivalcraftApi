@@ -66,9 +66,8 @@ namespace Game {
         }
 
         public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner) {
-            if (NetworkManager.IsClient && NetworkManager.MainPlayer == componentMiner.ComponentPlayer) {
-                Packet packet = new OpenInventoryByPointPacket(new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z));
-                NetworkManager.QueuePacket(packet);
+            if (IsNetworkMode?.Invoke() == true && IsMainPlayer?.Invoke(componentMiner.ComponentPlayer) == true) {
+                InvokeOnOpenInventoryRequest(new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z));
                 return true;
             }
             return base.OnInteract(raycastResult, componentMiner);
@@ -100,8 +99,10 @@ namespace Game {
             */
         }
 
+        public event Action<SubsystemFurnaceBlockBehavior, List<ComponentFurnace>> OnFurnacesUpdate;
+
         public void Update(float dt) {
-            if (Time.PeriodicEvent(5.0, 0.0) && NetworkManager.IsServer) {
+            if (Time.PeriodicEvent(5.0, 0.0) && IsNetworkMode?.Invoke() != true) {
                 List<ComponentFurnace> componentFurnaces = new List<ComponentFurnace>();
                 SubsystemBlockEntities subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>();
                 foreach (var pair in subsystemBlockEntities.m_blockEntities) {
@@ -111,7 +112,7 @@ namespace Game {
                     }
                 }
                 if (componentFurnaces.Count > 0) {
-                    NetworkManager.QueuePacket(new ComponentFurnacePacket(componentFurnaces));
+                    OnFurnacesUpdate?.Invoke(this, componentFurnaces);
                 }
             }
         }

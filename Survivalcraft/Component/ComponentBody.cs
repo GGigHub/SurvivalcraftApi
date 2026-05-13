@@ -76,6 +76,12 @@ namespace Game {
 
         public Vector3? SendVelocity;
 
+        public Func<bool> IsNetworkMode;
+
+        public event Action<ComponentBody, float> OnBodyUpdate;
+
+
+
         public float m_crouchFactor;
 
         public int m_embeddedInIceCounter;
@@ -418,39 +424,16 @@ namespace Game {
             if (skipVanilla_) {
                 return;
             }
-            if (NetworkManager.IsClient || NetworkManager.IsServer) {
-                ComponentPlayer componentPlayer = Entity.FindComponent<ComponentPlayer>();
-                bool isMainPlayer = componentPlayer?.PlayerData?.IsMainPlayer == true;
-                bool hasChildPlayer = false;
-                bool hasNonMainChildPlayer = false;
-                for (int i = 0; i < m_childBodies.Count; i++) {
-                    ComponentPlayer childPlayer = m_childBodies[i].Entity.FindComponent<ComponentPlayer>();
-                    if (childPlayer != null) {
-                        hasChildPlayer = true;
-                        if (childPlayer.PlayerData?.IsMainPlayer != true) {
-                            hasNonMainChildPlayer = true;
-                            break;
-                        }
-                    }
-                }
-
-                bool shouldApplyNetworkState = NetworkManager.IsClient
-                    ? (componentPlayer != null && !isMainPlayer && componentPlayer.ComponentBody.ParentBody == null)
-                        || (componentPlayer == null && !hasChildPlayer)
-                        || hasNonMainChildPlayer
-                    : (componentPlayer != null && !isMainPlayer && componentPlayer.ComponentBody.ParentBody == null)
-                        || (componentPlayer == null && hasNonMainChildPlayer);
-
-                if (shouldApplyNetworkState) {
-                    Position = netPosition.Get(dt);
-                    Rotation = netRotation.Get(dt);
-                    Velocity = netVelocity.Get(dt);
-                }
-                else {
-                    netPosition.SetNext(Position);
-                    netRotation.SetNext(Rotation);
-                    netVelocity.SetNext(Velocity);
-                }
+            OnBodyUpdate?.Invoke(this, dt);
+            if (IsNetworkMode?.Invoke() == true) {
+                Position = netPosition.Get(dt);
+                Rotation = netRotation.Get(dt);
+                Velocity = netVelocity.Get(dt);
+            }
+            else {
+                netPosition.SetNext(Position);
+                netRotation.SetNext(Rotation);
+                netVelocity.SetNext(Velocity);
             }
             CollisionVelocityChange = Vector3.Zero;
             if (m_shakingStrength > 1f) {

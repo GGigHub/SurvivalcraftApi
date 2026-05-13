@@ -15,7 +15,7 @@ public class PlayerModifyPacket : Packet {
     public PlayerModifyPacket() { }
 
     public PlayerModifyPacket(PlayerData playerData) {
-        m_playerGuid = playerData.PlayerGUID;
+        m_playerGuid = playerData.NetworkGuid;
         m_playerName = playerData.Name;
         m_skinName = playerData.CharacterSkinName;
         m_playerClass = playerData.m_playerClass;
@@ -30,7 +30,7 @@ public class PlayerModifyPacket : Packet {
 
     public override void Handle(bool isServer) {
         var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
-        var playerData = subsystemPlayers.FindPlayerData(p => p.PlayerGUID == m_playerGuid);
+        var playerData = subsystemPlayers.FindPlayerData(p => p.NetworkGuid == m_playerGuid);
         if (playerData != null) {
             playerData.CharacterSkinName = m_skinName;
             playerData.m_playerClass = m_playerClass;

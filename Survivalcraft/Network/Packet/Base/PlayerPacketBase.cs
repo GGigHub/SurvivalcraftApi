@@ -37,7 +37,7 @@ public abstract class PlayerPacketBase : Packet {
             return false;
         }
         double time = GameManager.Project.FindSubsystem<SubsystemTime>().GameTime;
-        Guid guid = playerData.PlayerGUID;
+        Guid guid = playerData.NetworkGuid;
         if (s_lastHitTimes.TryGetValue(guid, out double last) && time - last < ServerHitCooldown) {
             return true;
         }

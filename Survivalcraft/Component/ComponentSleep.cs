@@ -33,6 +33,8 @@ namespace Game {
 
         public float m_messageFactor;
 
+        public Func<bool> IsNetworkMode;
+
         public event Action<ComponentSleep, bool> OnSleepEvent;
         public event Action<ComponentSleep> OnWakeUpEvent;
 
@@ -68,7 +70,7 @@ namespace Game {
         }
 
         public virtual void Sleep(bool allowManualWakeup) {
-            if (!Network.NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() != true) {
                 NetSleep(allowManualWakeup);
             }
             OnSleepEvent?.Invoke(this, allowManualWakeup);
@@ -87,7 +89,7 @@ namespace Game {
         }
 
         public virtual void WakeUp() {
-            if (!Network.NetworkManager.IsClient) {
+            if (IsNetworkMode?.Invoke() != true) {
                 NetWakeUp();
             }
             OnWakeUpEvent?.Invoke(this);

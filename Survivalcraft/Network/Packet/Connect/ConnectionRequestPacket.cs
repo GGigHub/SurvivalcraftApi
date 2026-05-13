@@ -98,17 +98,17 @@ public class ConnectionRequestPacket : Packet {
     }
 
     private string FindPlayerNameByGUID(string m_token) {
-        if (!Guid.TryParse(m_token, out var playerGuid)) {
+        if (!Guid.TryParse(m_token, out var NetworkGuid)) {
             return "";
         }
         SubsystemGameInfo subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
         if (subsystemGameInfo != null) {
             string entityFileDir = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "PlayerEntities/");
-            string entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.json");
+            string entityFilePath = Storage.CombinePaths(entityFileDir, $"{NetworkGuid}.json");
             if (Storage.FileExists(entityFilePath)) {
                 return LoadPlayerNameFromFile(entityFilePath, isJson: true);
             }
-            entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.dat");
+            entityFilePath = Storage.CombinePaths(entityFileDir, $"{NetworkGuid}.dat");
             if (Storage.FileExists(entityFilePath)) {
                 return LoadPlayerNameFromFile(entityFilePath, isJson: false);
             }
@@ -162,10 +162,10 @@ public class ConnectionRequestPacket : Packet {
         bool modsMismatch = serverMd5s.Count != clientMd5s.Count || !serverMd5s.SequenceEqual(clientMd5s, StringComparer.OrdinalIgnoreCase);
 
         if (m_magic == verrifyMagic) {
-            if (NetworkManager.Self.PlayerGuid == guid) {
+            if (NetworkManager.Self.NetworkGuid == guid) {
                 connectionError.AppendLine("Client token matches server token.");
             }
-            else if (NetworkManager.Peers.FirstOrDefault(c => c != From && c.PlayerGuid == guid) != null) {
+            else if (NetworkManager.Peers.FirstOrDefault(c => c != From && c.NetworkGuid == guid) != null) {
                 connectionError.AppendLine("Client token conflicts with an online player.");
             }
             else if (!string.IsNullOrEmpty(pwd2)) {
@@ -213,7 +213,7 @@ public class ConnectionRequestPacket : Packet {
                     true
                 );
 
-                var clientPacket = new ClientAddPacket(addClient.ID, addClient.PlayerGuid, addClient.Nickname);
+                var clientPacket = new ClientAddPacket(addClient.ID, addClient.NetworkGuid, addClient.Nickname);
                 foreach (var c in NetworkManager.Peers) {
                     if (c.ID == addClient.ID) continue;
                     NetworkManager.Server.SendWriterFromPacket(clientPacket, c.Peer, true);
