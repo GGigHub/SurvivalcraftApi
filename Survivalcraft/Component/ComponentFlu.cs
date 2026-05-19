@@ -38,11 +38,10 @@ namespace Game {
 
         public double m_lastMessageTime = -1000.0;
 
-        public event Action<ComponentFlu> OnFluUpdate;
-        public event Action<ComponentFlu> OnFluEffectEvent;
-        public event Action<ComponentFlu> OnStartFluEvent;
-        public event Action<ComponentFlu> OnSneezeEvent;
-
+        public Action<ComponentFlu> OnFluUpdate;
+        public Action<ComponentFlu> OnFluEffectEvent;
+        public Action<ComponentFlu> OnStartFluEvent;
+        public Action<ComponentFlu> OnSneezeEvent;
         public Func<bool> IsNetworkMode;
 
         public bool HasFlu => m_fluDuration > 0f;
@@ -207,6 +206,14 @@ namespace Game {
             else if (m_sneezeDuration == 0f) {
                 Sneeze();
             }
+        }
+
+        public override void OnEntityRemoved() {
+            OnFluUpdate = null;
+            OnFluEffectEvent = null;
+            OnStartFluEvent = null;
+            OnSneezeEvent = null;
+            IsNetworkMode = null;
         }
     }
 }

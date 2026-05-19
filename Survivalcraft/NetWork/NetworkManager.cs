@@ -45,17 +45,8 @@ public static class NetworkManager {
     }
 
     public static void QueuePacket(Packet packet) {
-        if (Server != null) {
-            lock (Server.PendingPackets) {
-                Server.PendingPackets.Add(packet);
-            }
-            return;
-        }
-        if (Client != null) {
-            lock (Client.PendingPackets) {
-                Client.PendingPackets.Add(packet);
-            }
-        }
+        Server?.PendingPackets.Add(packet);
+        Client?.PendingPackets.Add(packet);
     }
 
     public static byte[] GetNowProject(Project project) {

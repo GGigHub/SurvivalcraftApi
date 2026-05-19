@@ -32,7 +32,7 @@ namespace Game {
             set { }
         }
 
-        public event Action<IInventory, int> OnSlotChanged;
+        public Action<IInventory, int> OnSlotChanged;
 
         public static int FindAcquireSlotForItem(IInventory inventory, int value) {
             for (int i = 0; i < inventory.SlotsCount; i++) {
@@ -275,6 +275,10 @@ namespace Game {
                     m_random.Float(5f, 10f) * Vector3.Normalize(new Vector3(m_random.Float(-1f, 1f), m_random.Float(1f, 2f), m_random.Float(-1f, 1f)))
                 );
             }
+        }
+
+        public override void OnEntityRemoved() {
+            OnSlotChanged = null;
         }
     }
 }

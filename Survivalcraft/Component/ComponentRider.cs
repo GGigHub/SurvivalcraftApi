@@ -30,6 +30,16 @@ namespace Game {
 
         public Func<bool> IsNetworkMode;
 
+        public Action<ComponentRider, ComponentMount, bool> OnMounting;
+
+        public Action<ComponentRider, bool> OnDismounting;
+
+        public override void OnEntityRemoved() {
+            IsNetworkMode = null;
+            OnMounting = null;
+            OnDismounting = null;
+        }
+
         public ComponentCreature ComponentCreature { get; set; }
 
         public ComponentMount Mount {
@@ -89,10 +99,6 @@ namespace Game {
                 }
             }
         }
-
-        public event Action<ComponentRider, ComponentMount, bool> OnMounting;
-
-        public event Action<ComponentRider, bool> OnDismounting;
 
         public void StartNetMounting(ComponentMount componentMount) {
             if (!m_isAnimating

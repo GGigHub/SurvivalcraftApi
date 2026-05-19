@@ -122,6 +122,10 @@ namespace Game {
         public ComponentInput m_componentInput;
 
         public Func<bool> IsNetworkMode;
+        public Action<ComponentGui, ComponentPlayer> OnPlayerCreativeFly;
+        public Action<ComponentGui, Vector3, Vector3> OnManualLightingStrike;
+        public Action<ComponentGui, int> OnManualWeatherUpdate;
+        public Action<ComponentGui, double, double> OnManualTimeUpdate;
 
         public GameWidget GameWidget { get; set; }
 
@@ -318,6 +322,11 @@ namespace Game {
 
         public override void OnEntityRemoved() {
             ShortInventoryWidget.AssignComponents(null);
+            IsNetworkMode = null;
+            OnPlayerCreativeFly = null;
+            OnManualLightingStrike = null;
+            OnManualWeatherUpdate = null;
+            OnManualTimeUpdate = null;
             m_message = null;
         }
 
@@ -765,14 +774,6 @@ namespace Game {
                 }
             );
         }
-
-        public event Action<ComponentGui, ComponentPlayer> OnPlayerCreativeFly;
-
-        public event Action<ComponentGui, Vector3, Vector3> OnManualLightingStrike;
-
-        public event Action<ComponentGui, int> OnManualWeatherUpdate;
-
-        public event Action<ComponentGui, double, double> OnManualTimeUpdate;
     }
 }
 

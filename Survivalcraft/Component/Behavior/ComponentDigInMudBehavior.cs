@@ -39,7 +39,12 @@ namespace Game {
 
         private bool m_isDigIn;
 
-        public event Action<ComponentDigInMudBehavior, bool> OnIsDigInChanged;
+        public Action<ComponentDigInMudBehavior, bool> OnIsDigInChanged;
+
+        public override void OnEntityRemoved() {
+            base.OnEntityRemoved();
+            OnIsDigInChanged = null;
+        }
 
         public bool IsDigIn {
             get { return m_isDigIn; }

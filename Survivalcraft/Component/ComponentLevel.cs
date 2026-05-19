@@ -97,7 +97,12 @@ namespace Game {
             OnAddExperience?.Invoke(this, count, playSound);
         }
 
-        public event Action<ComponentLevel, int, bool> OnAddExperience;
+        public Action<ComponentLevel, int, bool> OnAddExperience;
+
+        public override void OnEntityRemoved() {
+            IsNetworkMode = null;
+            OnAddExperience = null;
+        }
 
         /// <summary>
         ///     生成玩家的所有关于力量的因素

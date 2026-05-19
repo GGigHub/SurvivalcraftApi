@@ -43,7 +43,12 @@ namespace Game {
 
         private bool m_isFeed;
 
-        public event Action<ComponentEatPickableBehavior, bool> OnIsFeedChanged;
+        public Action<ComponentEatPickableBehavior, bool> OnIsFeedChanged;
+
+        public override void OnEntityRemoved() {
+            base.OnEntityRemoved();
+            OnIsFeedChanged = null;
+        }
 
         public bool IsFeed {
             get { return m_isFeed; }

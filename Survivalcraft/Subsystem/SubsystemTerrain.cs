@@ -585,6 +585,8 @@ namespace Game {
             TerrainUpdater.Dispose();
             TerrainSerializer.Dispose();
             Terrain.Dispose();
+            OnTerrainChangeCell = null;
+            IsNetworkMode = null;
         }
     }
 }

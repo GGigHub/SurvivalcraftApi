@@ -50,7 +50,12 @@ namespace Game {
 
         public Func<bool> IsNetworkMode;
 
-        public event Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
+        public Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
+
+        public override void OnEntityRemoved() {
+            IsNetworkMode = null;
+            OnPlaySound = null;
+        }
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
             if (IsNetworkMode?.Invoke() == true) return;

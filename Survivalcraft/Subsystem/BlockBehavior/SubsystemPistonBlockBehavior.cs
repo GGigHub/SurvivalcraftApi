@@ -57,8 +57,16 @@ namespace Game {
             UpdateMovableBlocks();
         }
 
-        public event Action<SubsystemPistonBlockBehavior, int, int, int> OnEditItemData;
-        public event Action<SubsystemPistonBlockBehavior, CellFace, int> OnEditBlockData;
+        public Action<SubsystemPistonBlockBehavior, int, int, int> OnEditItemData;
+        public Action<SubsystemPistonBlockBehavior, CellFace, int> OnEditBlockData;
+
+        public override void Dispose() {
+            m_subsystemMovingBlocks.Stopped -= MovingBlocksStopped;
+            m_subsystemMovingBlocks.CollidedWithTerrain -= MovingBlocksCollidedWithTerrain;
+            OnEditItemData = null;
+            OnEditBlockData = null;
+            IsNetworkMode = null;
+        }
 
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {

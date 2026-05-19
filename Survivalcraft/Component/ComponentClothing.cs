@@ -1,6 +1,7 @@
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -616,7 +617,7 @@ namespace Game {
             m_clothedTexturesValid = false;
         }
 
-        public event Action<ComponentClothing, string> OnRequestSkin;
+        public Action<ComponentClothing, string> OnRequestSkin;
 
         public virtual bool CanWearClothing(int value) {
             Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
@@ -765,6 +766,10 @@ namespace Game {
                     Display.ScissorRectangle = scissorRectangle;
                 }
             }
+        }
+
+        public override void OnEntityRemoved() {
+            OnRequestSkin = null;
         }
     }
 }

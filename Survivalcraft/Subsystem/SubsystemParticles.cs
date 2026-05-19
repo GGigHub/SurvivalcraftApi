@@ -25,11 +25,15 @@ namespace Game {
 
         public int[] DrawOrders => m_drawOrders;
 
+        public Action<ParticleSystemBase> OnParticleSystemAdded;
+        public Action<ParticleSystemBase> OnParticleSystemRemoved;
+
         public void AddParticleSystem(ParticleSystemBase particleSystem, bool throwOnAlreadyAdded = false) {
             if (particleSystem.SubsystemParticles == null) {
                 m_particleSystems.Add(particleSystem, true);
                 particleSystem.SubsystemParticles = this;
                 particleSystem.OnAdded();
+                OnParticleSystemAdded?.Invoke(particleSystem);
                 return;
             }
             if (throwOnAlreadyAdded) {
@@ -42,6 +46,7 @@ namespace Game {
                 particleSystem.OnRemoved();
                 m_particleSystems.Remove(particleSystem);
                 particleSystem.SubsystemParticles = null;
+                OnParticleSystemRemoved?.Invoke(particleSystem);
                 return;
             }
             if (throwOnNotFound) {
@@ -108,6 +113,11 @@ namespace Game {
                 }
                 PrimitivesRenderer.Flush(camera.ViewProjectionMatrix);
             }
+        }
+
+        public override void Dispose() {
+            OnParticleSystemAdded = null;
+            OnParticleSystemRemoved = null;
         }
     }
 }

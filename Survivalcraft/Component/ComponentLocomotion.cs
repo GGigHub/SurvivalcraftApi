@@ -163,7 +163,12 @@ namespace Game {
 
         public Func<bool> IsNetworkMode;
 
-        public event Action<ComponentLocomotion, float> OnLocomotionUpdate;
+        public Action<ComponentLocomotion, float> OnLocomotionUpdate;
+
+        public override void OnEntityRemoved() {
+            IsNetworkMode = null;
+            OnLocomotionUpdate = null;
+        }
 
         public UpdateOrder UpdateOrder => UpdateOrder.Locomotion;
 

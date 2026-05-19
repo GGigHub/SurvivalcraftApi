@@ -260,7 +260,7 @@ namespace Game {
 
         public Func<bool> IsNetworkMode;
 
-        public event Action<SubsystemElectricity, List<NetSimulate>> OnElectricityPersistentVoltageChanged;
+        public Action<SubsystemElectricity, List<NetSimulate>> OnElectricityPersistentVoltageChanged;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -786,6 +786,11 @@ namespace Game {
                     }
                 }
             }
+        }
+
+        public override void Dispose() {
+            OnElectricityPersistentVoltageChanged = null;
+            IsNetworkMode = null;
         }
 
         public Dictionary<ElectricElement, bool> GetListFromCache() {

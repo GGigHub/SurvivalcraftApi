@@ -5,15 +5,12 @@ using Engine;
 
 namespace Game.Network {
     public static class NetworkDamage {
-        public static void OnDamage(ComponentDamage damageComponent, float damage) {
+        public static void OnHitValueParticleSystemAdded(ParticleSystemBase particleSystem) {
             if (!NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new DamageSyncPacket(damageComponent));
-            }
-        }
-
-        public static void OnHitValueParticleSystemAdded(Attackment attackment, Vector3 position, Vector3 velocity, Color color, string text) {
-            if (!NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new HitValuePacket(position, velocity, color, text));
+                if (particleSystem is HitValueParticleSystem hitValueParticleSystem) {
+                    HitValueParticleSystem.Particle particle = hitValueParticleSystem.Particles[0];
+                    NetworkManager.QueuePacket(new HitValuePacket(particle.Position, particle.Velocity, particle.BaseColor, particle.Text));
+                }
             }
         }
     }

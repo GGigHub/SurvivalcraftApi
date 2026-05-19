@@ -35,8 +35,15 @@ namespace Game {
 
         public Func<bool> IsNetworkMode;
 
-        public event Action<ComponentSleep, bool> OnSleepEvent;
-        public event Action<ComponentSleep> OnWakeUpEvent;
+        public Action<ComponentSleep, bool> OnSleepEvent;
+        public Action<ComponentSleep> OnWakeUpEvent;
+
+        public override void OnEntityRemoved() {
+            IsNetworkMode = null;
+            OnSleepEvent = null;
+            OnWakeUpEvent = null;
+            m_conditionsToSleep.Clear();
+        }
 
         public bool IsSleeping => m_sleepStartTime.HasValue;
 

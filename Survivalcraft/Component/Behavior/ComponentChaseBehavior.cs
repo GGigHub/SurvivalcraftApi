@@ -110,7 +110,12 @@ namespace Game {
 
         public ComponentCreature Target => m_target;
 
-        public event Action<ComponentChaseBehavior, bool> OnIsAttackChanged;
+        public Action<ComponentChaseBehavior, bool> OnIsAttackChanged;
+
+        public override void OnEntityRemoved() {
+            base.OnEntityRemoved();
+            OnIsAttackChanged = null;
+        }
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

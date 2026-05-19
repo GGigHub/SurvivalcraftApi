@@ -25,7 +25,12 @@ namespace Game {
 
         private bool m_isBend;
 
-        public event Action<ComponentFishOutOfWaterBehavior, bool> OnIsBendChanged;
+        public Action<ComponentFishOutOfWaterBehavior, bool> OnIsBendChanged;
+
+        public override void OnEntityRemoved() {
+            base.OnEntityRemoved();
+            OnIsBendChanged = null;
+        }
 
         public bool IsBend {
             get { return m_isBend; }

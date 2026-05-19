@@ -22,7 +22,13 @@ namespace Game {
 
         public Func<bool> IsNetworkMode;
 
-        public event Action<ComponentSickness> OnSicknessUpdate;
+        public Action<ComponentSickness> OnSicknessUpdate;
+
+        public override void OnEntityRemoved() {
+            IsNetworkMode = null;
+            OnSicknessUpdate = null;
+            m_pukeParticleSystem = null;
+        }
 
         public bool IsSick => m_sicknessDuration > 0f;
 

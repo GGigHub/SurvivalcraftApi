@@ -78,7 +78,7 @@ namespace Game {
 
         public Func<bool> IsNetworkMode;
 
-        public event Action<ComponentBody, float> OnBodyUpdate;
+        public Action<ComponentBody, float> OnBodyUpdate;
 
 
 
@@ -404,6 +404,11 @@ namespace Game {
         }
 
         public override void OnEntityRemoved() {
+            IsNetworkMode = null;
+            OnBodyUpdate = null;
+            CollidedWithBody = null;
+            CollidedWithMovingBlock = null;
+            Attacked = null;
             ParentBody = null;
             ComponentBody[] array = ChildBodies.ToArray();
             for (int i = 0; i < array.Length; i++) {
