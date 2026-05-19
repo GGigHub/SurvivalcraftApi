@@ -49,7 +49,7 @@ public class ComponentMountPacket : Packet {
                     if (!isServer && rider.Mount != null) {
                         var select = rider.Mount.Entity.FindComponent<ComponentBehaviorSelector>();
                         if (select != null) {
-                            select.IsNetworkMode = () => true;
+                            GameManager.IsNetworkMode = () => true;
                         }
                     }
                 });
@@ -70,7 +70,7 @@ public class ComponentMountPacket : Packet {
                             if (!isServer) {
                                 var select = rider.Mount.Entity.FindComponent<ComponentBehaviorSelector>();
                                 if (select != null) {
-                                    select.IsNetworkMode = () => false;
+                                    GameManager.IsNetworkMode = () => false;
                                 }
                             }
                         }

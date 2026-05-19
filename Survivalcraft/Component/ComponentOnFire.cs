@@ -37,13 +37,13 @@ namespace Game {
 
         public ComponentCreature Attacker { get; set; }
 
-        public Func<bool> IsNetworkMode;
-        public Action<ComponentOnFire, ComponentCreature, float> OnSetOnFire;
+
+        public event Action<ComponentOnFire, ComponentCreature, float> OnSetOnFire;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void SetOnFire(ComponentCreature attacker, float duration) {
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 return;
             }
 
@@ -135,9 +135,9 @@ namespace Game {
         }
 
         public override void OnEntityRemoved() {
-            IsNetworkMode = null;
-            OnSetOnFire = null;
-            m_onFireParticleSystem?.IsStopped = true;
+            if (m_onFireParticleSystem != null) {
+                m_onFireParticleSystem.IsStopped = true;
+            }
         }
 
         public virtual bool CheckIfBodyTouchesFire() {

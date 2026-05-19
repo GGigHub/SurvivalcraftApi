@@ -29,12 +29,7 @@ namespace Game {
 
         private bool m_isFeed;
 
-        public Action<ComponentRandomFeedBehavior, bool> OnIsFeedChanged;
-
-        public override void OnEntityRemoved() {
-            base.OnEntityRemoved();
-            OnIsFeedChanged = null;
-        }
+        public event Action<ComponentRandomFeedBehavior, bool> OnIsFeedChanged;
 
         public bool IsFeed {
             get { return m_isFeed; }
@@ -56,7 +51,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {

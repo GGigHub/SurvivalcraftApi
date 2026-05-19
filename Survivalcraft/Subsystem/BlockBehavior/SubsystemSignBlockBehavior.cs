@@ -165,7 +165,7 @@ namespace Game {
                 }
             }
             else if (componentMiner.ComponentPlayer != null) {
-                if (IsNetworkMode?.Invoke() == true && IsMainPlayer?.Invoke(componentMiner.ComponentPlayer) == true) {
+                if (GameManager.IsNetworkMode && IsMainPlayer?.Invoke(componentMiner.ComponentPlayer) == true) {
                     OnEditSignRequest?.Invoke(this, point);
                     return true;
                 }

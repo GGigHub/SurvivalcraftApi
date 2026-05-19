@@ -142,7 +142,6 @@ namespace Game {
 
         public ComponentClothing ComponentClothing { get; set; }
 
-        public Func<bool> IsNetworkMode;
 
         public static Func<Guid> GetSelfNetworkGuid;
 
@@ -855,7 +854,7 @@ namespace Game {
         private static readonly object _saveLock = new();
 
         public virtual void SavePlayerEntity() {
-            if (IsNetworkMode?.Invoke() != true) {
+            if (GameManager.IsNetworkMode?.Invoke() != true) {
                 lock (_saveLock) {
                     try {
                         var list = Project.SaveEntities([Entity]);
@@ -884,28 +883,17 @@ namespace Game {
             }
         }
 
-        public Action<ComponentPlayer> OnActiveSlotChanged;
+        public event Action<ComponentPlayer> OnActiveSlotChanged;
 
-        public Action<ComponentPlayer, bool> OnBodyUpdate;
+        public event Action<ComponentPlayer, bool> OnBodyUpdate;
 
-        public Action<ComponentPlayer, ComponentBody, Vector3, Vector3> OnHit;
+        public event Action<ComponentPlayer, ComponentBody, Vector3, Vector3> OnHit;
 
-        public Action<ComponentPlayer> OnDigEvent;
+        public event Action<ComponentPlayer> OnDigEvent;
 
-        public Action<ComponentPlayer> OnInteractEvent;
+        public event Action<ComponentPlayer> OnInteractEvent;
 
-        public Action<ComponentPlayer> OnAimEvent;
-
-        public override void OnEntityRemoved() {
-            base.OnEntityRemoved();
-            IsNetworkMode = null;
-            OnActiveSlotChanged = null;
-            OnBodyUpdate = null;
-            OnHit = null;
-            OnDigEvent = null;
-            OnInteractEvent = null;
-            OnAimEvent = null;
-        }
+        public event Action<ComponentPlayer> OnAimEvent;
     }
 }
 

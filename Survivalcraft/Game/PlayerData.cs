@@ -49,7 +49,6 @@ namespace Game {
         public static Func<Guid, Client> GetClientByGUID;
         public Client Client => GetClientByGUID?.Invoke(NetworkGuid);
 
-        public static Func<bool> IsNetworkMode;
 
         public static Func<bool> IsServerMode;
 
@@ -234,14 +233,14 @@ namespace Game {
                     ClientCachePosition = null;
                 }
                 // 根据当前中心点刷新地形可见范围，客户端的非主玩家不需要提交 updateLocation。
-                if (!(IsNetworkMode?.Invoke() == true && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
+                if (!(GameManager.IsNetworkMode && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
             }, delegate {
                 if (Time.PeriodicEvent(0.1, 0.0)) {
                     float updateProgress = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, MathUtils.Min(SettingsManager.VisibilityRange, 64f), 0f);
                     UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
                     if ((updateProgress >= 1f && Time.FrameStartTime - m_terrainWaitStartTime > 2.0) || Time.FrameStartTime - m_terrainWaitStartTime >= 15.0) {
                         if (ComponentPlayer == null || ComponentPlayer.PlayerData.NetworkGuid == Guid.Empty) {
-                            if (IsNetworkMode?.Invoke() != true) {
+                            if (GameManager.IsNetworkMode?.Invoke() != true) {
                                 SpawnPlayer(SpawnPosition, m_spawnMode);
                             }
                             else {
@@ -264,7 +263,7 @@ namespace Game {
             }, null);
             m_stateMachine.AddState("Playing", delegate {
                 HideSpawnDialog();
-                if (IsNetworkMode?.Invoke() == true) {
+                if (GameManager.IsNetworkMode) {
                     OnPlayerPlaying?.Invoke(this);
                 }
             }, delegate {
@@ -278,7 +277,7 @@ namespace Game {
                     m_playerDeathTime = Time.RealTime;
                 }
                 // 非主玩家在未完成联机同步前保持无敌，避免状态不同步时被误伤。
-                if (!IsMainPlayer && IsNetworkMode?.Invoke() != true) {
+                if (!IsMainPlayer && GameManager.IsNetworkMode?.Invoke() != true) {
                     if (!isSetStatus) {
                         // Assuming Client checking logic is handled differently or we just assume invulnerable if Client == null
                         if (Client != null && Client.State != ClientState.Playing) {

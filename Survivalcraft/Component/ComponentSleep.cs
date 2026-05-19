@@ -33,17 +33,9 @@ namespace Game {
 
         public float m_messageFactor;
 
-        public Func<bool> IsNetworkMode;
 
-        public Action<ComponentSleep, bool> OnSleepEvent;
-        public Action<ComponentSleep> OnWakeUpEvent;
-
-        public override void OnEntityRemoved() {
-            IsNetworkMode = null;
-            OnSleepEvent = null;
-            OnWakeUpEvent = null;
-            m_conditionsToSleep.Clear();
-        }
+        public event Action<ComponentSleep, bool> OnSleepEvent;
+        public event Action<ComponentSleep> OnWakeUpEvent;
 
         public bool IsSleeping => m_sleepStartTime.HasValue;
 
@@ -77,7 +69,7 @@ namespace Game {
         }
 
         public virtual void Sleep(bool allowManualWakeup) {
-            if (IsNetworkMode?.Invoke() != true) {
+            if (GameManager.IsNetworkMode?.Invoke() != true) {
                 NetSleep(allowManualWakeup);
             }
             OnSleepEvent?.Invoke(this, allowManualWakeup);
@@ -96,7 +88,7 @@ namespace Game {
         }
 
         public virtual void WakeUp() {
-            if (IsNetworkMode?.Invoke() != true) {
+            if (GameManager.IsNetworkMode?.Invoke() != true) {
                 NetWakeUp();
             }
             OnWakeUpEvent?.Invoke(this);

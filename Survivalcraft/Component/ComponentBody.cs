@@ -76,9 +76,8 @@ namespace Game {
 
         public Vector3? SendVelocity;
 
-        public Func<bool> IsNetworkMode;
 
-        public Action<ComponentBody, float> OnBodyUpdate;
+        public event Action<ComponentBody, float> OnBodyUpdate;
 
 
 
@@ -404,11 +403,6 @@ namespace Game {
         }
 
         public override void OnEntityRemoved() {
-            IsNetworkMode = null;
-            OnBodyUpdate = null;
-            CollidedWithBody = null;
-            CollidedWithMovingBlock = null;
-            Attacked = null;
             ParentBody = null;
             ComponentBody[] array = ChildBodies.ToArray();
             for (int i = 0; i < array.Length; i++) {
@@ -430,7 +424,7 @@ namespace Game {
                 return;
             }
             OnBodyUpdate?.Invoke(this, dt);
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 Position = netPosition.Get(dt);
                 Rotation = netRotation.Get(dt);
                 Velocity = netVelocity.Get(dt);

@@ -7,8 +7,6 @@ public class SubsystemInventories : Subsystem {
     private Dictionary<int, IInventory> inventories = new Dictionary<int, IInventory>();
 
 
-    public Func<bool> IsNetworkMode;
-
     public int ProduceInventoryId(IInventory inventory) {
         for (int i = 1; i < int.MaxValue; i++) {
             if (!inventories.ContainsKey(i)) {
@@ -25,7 +23,7 @@ public class SubsystemInventories : Subsystem {
             return inventory.Id;
         }
         else {
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 inventories[inventory.Id] = inventory;
                 return inventory.Id;
             }

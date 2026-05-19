@@ -43,12 +43,7 @@ namespace Game {
 
         private bool m_isFeed;
 
-        public Action<ComponentEatPickableBehavior, bool> OnIsFeedChanged;
-
-        public override void OnEntityRemoved() {
-            base.OnEntityRemoved();
-            OnIsFeedChanged = null;
-        }
+        public event Action<ComponentEatPickableBehavior, bool> OnIsFeedChanged;
 
         public bool IsFeed {
             get { return m_isFeed; }
@@ -67,7 +62,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 m_componentCreature.ComponentCreatureModel.FeedOrder = IsFeed;
             }
             else {

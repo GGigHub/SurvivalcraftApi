@@ -110,12 +110,7 @@ namespace Game {
 
         public ComponentCreature Target => m_target;
 
-        public Action<ComponentChaseBehavior, bool> OnIsAttackChanged;
-
-        public override void OnEntityRemoved() {
-            base.OnEntityRemoved();
-            OnIsAttackChanged = null;
-        }
+        public event Action<ComponentChaseBehavior, bool> OnIsAttackChanged;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -159,7 +154,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 m_componentCreatureModel.AttackOrder = IsAttack;
                 return;
             }

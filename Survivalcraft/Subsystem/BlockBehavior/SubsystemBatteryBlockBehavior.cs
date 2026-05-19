@@ -4,14 +4,8 @@ namespace Game {
     public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior {
         public override int[] HandledBlocks => [138];
 
-        public Action<SubsystemBatteryBlockBehavior, int, int, int> OnEditItemVoltage;
-        public Action<SubsystemBatteryBlockBehavior, CellFace, int> OnEditBlockVoltage;
-
-        public override void Dispose() {
-            OnEditItemVoltage = null;
-            OnEditBlockVoltage = null;
-            IsNetworkMode = null;
-        }
+        public event Action<SubsystemBatteryBlockBehavior, int, int, int> OnEditItemVoltage;
+        public event Action<SubsystemBatteryBlockBehavior, CellFace, int> OnEditBlockVoltage;
 
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
@@ -29,7 +23,7 @@ namespace Game {
                         int data2 = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
                         int num = Terrain.ReplaceData(value, data2);
                         if (num != value) {
-                            if (IsNetworkMode?.Invoke() != true) {
+                            if (GameManager.IsNetworkMode?.Invoke() != true) {
                                 inventory.RemoveSlotItems(slotIndex, count);
                                 inventory.AddSlotItems(slotIndex, num, count);
                             }
@@ -53,7 +47,7 @@ namespace Game {
                         if (num != data) {
                             int face = 4;
                             var cell = new CellFace(x, y, z, face);
-                            if (IsNetworkMode?.Invoke() != true) {
+                            if (GameManager.IsNetworkMode?.Invoke() != true) {
                                 int newValue = Terrain.ReplaceData(value, num);
                                 SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }

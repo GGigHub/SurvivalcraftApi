@@ -38,11 +38,11 @@ namespace Game {
 
         public double m_lastMessageTime = -1000.0;
 
-        public Action<ComponentFlu> OnFluUpdate;
-        public Action<ComponentFlu> OnFluEffectEvent;
-        public Action<ComponentFlu> OnStartFluEvent;
-        public Action<ComponentFlu> OnSneezeEvent;
-        public Func<bool> IsNetworkMode;
+        public event Action<ComponentFlu> OnFluUpdate;
+        public event Action<ComponentFlu> OnFluEffectEvent;
+        public event Action<ComponentFlu> OnStartFluEvent;
+        public event Action<ComponentFlu> OnSneezeEvent;
+
 
         public bool HasFlu => m_fluDuration > 0f;
 
@@ -141,7 +141,7 @@ namespace Game {
                     Math.Clamp(num3 - m_componentPlayer.ComponentLocomotion.LookAngles.Y, -3f, 3f)
                 );
                 if (m_random.Bool(2f * dt)) {
-                    if (IsNetworkMode?.Invoke() != true) {
+                    if (GameManager.IsNetworkMode?.Invoke() != true) {
                         m_componentPlayer.ComponentBody.ApplyImpulse(-1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector());
                     }
                 }
@@ -206,14 +206,6 @@ namespace Game {
             else if (m_sneezeDuration == 0f) {
                 Sneeze();
             }
-        }
-
-        public override void OnEntityRemoved() {
-            OnFluUpdate = null;
-            OnFluEffectEvent = null;
-            OnStartFluEvent = null;
-            OnSneezeEvent = null;
-            IsNetworkMode = null;
         }
     }
 }

@@ -39,12 +39,7 @@ namespace Game {
 
         private bool m_isDigIn;
 
-        public Action<ComponentDigInMudBehavior, bool> OnIsDigInChanged;
-
-        public override void OnEntityRemoved() {
-            base.OnEntityRemoved();
-            OnIsDigInChanged = null;
-        }
+        public event Action<ComponentDigInMudBehavior, bool> OnIsDigInChanged;
 
         public bool IsDigIn {
             get { return m_isDigIn; }
@@ -61,7 +56,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 if (IsDigIn) {
                     m_componentFishModel.DigInOrder = m_maxDigInDepth;
                 }

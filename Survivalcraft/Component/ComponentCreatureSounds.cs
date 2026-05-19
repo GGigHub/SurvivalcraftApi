@@ -48,17 +48,11 @@ namespace Game {
 
         public double m_lastPukeSoundTime = -1000.0;
 
-        public Func<bool> IsNetworkMode;
 
-        public Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
-
-        public override void OnEntityRemoved() {
-            IsNetworkMode = null;
-            OnPlaySound = null;
-        }
+        public event Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
             PlayIdleSoundLogic(skipIfRecentlyPlayed);
         }
 
@@ -71,7 +65,7 @@ namespace Game {
         }
 
         public virtual void PlayPainSound() {
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
             PlayPainSoundLogic();
         }
 
@@ -84,7 +78,7 @@ namespace Game {
         }
 
         public virtual void PlayMoanSound() {
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
             PlayMoanSoundLogic();
         }
 
@@ -97,7 +91,7 @@ namespace Game {
         }
 
         public virtual void PlaySneezeSound() {
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
             PlaySneezeSoundLogic();
         }
 
@@ -110,7 +104,7 @@ namespace Game {
         }
 
         public void PlayCoughSound() {
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
             PlayCoughSoundLogic();
         }
 
@@ -123,7 +117,7 @@ namespace Game {
         }
 
         public virtual void PlayPukeSound() {
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
             PlayPukeSoundLogic();
         }
 
@@ -136,7 +130,7 @@ namespace Game {
         }
 
         public virtual void PlayAttackSound() {
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
             PlayAttackSoundLogic();
         }
 

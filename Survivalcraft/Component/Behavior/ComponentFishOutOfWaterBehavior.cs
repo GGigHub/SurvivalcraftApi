@@ -25,12 +25,7 @@ namespace Game {
 
         private bool m_isBend;
 
-        public Action<ComponentFishOutOfWaterBehavior, bool> OnIsBendChanged;
-
-        public override void OnEntityRemoved() {
-            base.OnEntityRemoved();
-            OnIsBendChanged = null;
-        }
+        public event Action<ComponentFishOutOfWaterBehavior, bool> OnIsBendChanged;
 
         public bool IsBend {
             get { return m_isBend; }
@@ -47,7 +42,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 if (IsBend) {
                     m_componentFishModel.BendOrder = 2f * (2f * MathUtils.Saturate(SimplexNoise.OctavedNoise(
                         (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0),

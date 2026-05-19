@@ -70,7 +70,7 @@ namespace Game {
 
         public Action<int> FoodEaten { get; set; }
 
-        public Action<ComponentVitalStats> OnVitalStatsUpdate;
+        public event Action<ComponentVitalStats> OnVitalStatsUpdate;
 
         /// <summary>
         ///     1.8.1.2添加：
@@ -246,8 +246,6 @@ namespace Game {
         }
 
         public override void OnEntityRemoved() {
-            OnVitalStatsUpdate = null;
-            FoodEaten = null;
             m_pantingSound.Stop();
         }
 

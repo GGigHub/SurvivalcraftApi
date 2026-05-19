@@ -36,13 +36,13 @@ namespace Game {
 
         public string DamageSoundName { get; set; }
 
-        public Func<bool> IsNetworkMode;
-        public Action<ComponentDamage> OnDamage;
+
+        public event Action<ComponentDamage> OnDamage;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Damage(float amount) {
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 return;
             }
 
@@ -108,11 +108,6 @@ namespace Game {
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
             valuesDictionary.SetValue("Hitpoints", Hitpoints);
-        }
-
-        public override void OnEntityRemoved() {
-            IsNetworkMode = null;
-            OnDamage = null;
         }
     }
 }

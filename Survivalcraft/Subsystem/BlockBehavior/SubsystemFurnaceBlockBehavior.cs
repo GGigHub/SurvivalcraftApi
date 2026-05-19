@@ -66,7 +66,7 @@ namespace Game {
         }
 
         public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner) {
-            if (IsNetworkMode?.Invoke() == true && IsMainPlayer?.Invoke(componentMiner.ComponentPlayer) == true) {
+            if (GameManager.IsNetworkMode && IsMainPlayer?.Invoke(componentMiner.ComponentPlayer) == true) {
                 InvokeOnOpenInventoryRequest(new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z));
                 return true;
             }
@@ -102,7 +102,7 @@ namespace Game {
         public event Action<SubsystemFurnaceBlockBehavior, List<ComponentFurnace>> OnFurnacesUpdate;
 
         public void Update(float dt) {
-            if (Time.PeriodicEvent(5.0, 0.0) && IsNetworkMode?.Invoke() != true) {
+            if (Time.PeriodicEvent(5.0, 0.0) && GameManager.IsNetworkMode?.Invoke() != true) {
                 List<ComponentFurnace> componentFurnaces = new List<ComponentFurnace>();
                 SubsystemBlockEntities subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>();
                 foreach (var pair in subsystemBlockEntities.m_blockEntities) {

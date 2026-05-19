@@ -215,16 +215,15 @@ namespace Game {
 
         public static bool LogTerrainUpdateStats = false;
 
-        public Func<bool> IsNetworkMode;
 
-        public Action<TerrainUpdater, List<Point2>> OnTerrainRequestSyncChunks;
-        public Action<TerrainUpdater, Client, List<TerrainChunk>> OnTerrainSyncChunkList;
-        public Action<TerrainUpdater, Client, List<Point2>> OnTerrainReplyResult;
-        public Action<TerrainUpdater, UpdateLocation> OnTerrainPlayerLocationUpdate;
+        public event Action<TerrainUpdater, List<Point2>> OnTerrainRequestSyncChunks;
+        public event Action<TerrainUpdater, Client, List<TerrainChunk>> OnTerrainSyncChunkList;
+        public event Action<TerrainUpdater, Client, List<Point2>> OnTerrainReplyResult;
+        public event Action<TerrainUpdater, UpdateLocation> OnTerrainPlayerLocationUpdate;
 
         public AutoResetEvent UpdateEvent => m_updateEvent;
 
-        public Action<TerrainChunk> ChunkInitialized;
+        public event Action<TerrainChunk> ChunkInitialized;
 
         public Dictionary<int, UpdateLocation> UpdateLocations => m_updateParameters.Locations;
 
@@ -248,12 +247,6 @@ namespace Game {
 
         public virtual void Dispose() {
             SettingsManager.SettingChanged -= SettingsManager_SettingChanged;
-            IsNetworkMode = null;
-            OnTerrainRequestSyncChunks = null;
-            OnTerrainSyncChunkList = null;
-            OnTerrainReplyResult = null;
-            OnTerrainPlayerLocationUpdate = null;
-            ChunkInitialized = null;
             m_quitUpdateThread = true;
             UnpauseUpdateThread();
             m_updateEvent.Set();
@@ -286,7 +279,7 @@ namespace Game {
                 value.ContentDistance = contentDistance;
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
-                if (IsNetworkMode?.Invoke() == true) {
+                if (GameManager.IsNetworkMode) {
                     OnTerrainPlayerLocationUpdate?.Invoke(this, value);
                 }
             }

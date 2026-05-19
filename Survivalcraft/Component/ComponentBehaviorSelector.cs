@@ -10,12 +10,11 @@ namespace Game {
 
         public static bool ShowAIBehavior;
 
-        public Func<bool> IsNetworkMode;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Update(float dt) {
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
 
             ComponentBehavior componentBehavior = null;
             if (m_componentCreature.ComponentHealth.Health > 0f

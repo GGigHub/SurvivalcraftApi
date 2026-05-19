@@ -161,14 +161,8 @@ namespace Game {
 
         public bool AllowShoesWarning = true;
 
-        public Func<bool> IsNetworkMode;
 
-        public Action<ComponentLocomotion, float> OnLocomotionUpdate;
-
-        public override void OnEntityRemoved() {
-            IsNetworkMode = null;
-            OnLocomotionUpdate = null;
-        }
+        public event Action<ComponentLocomotion, float> OnLocomotionUpdate;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Locomotion;
 
@@ -182,7 +176,7 @@ namespace Game {
                 IsCreativeFlyEnabled = false;
             }*/
             OnLocomotionUpdate?.Invoke(this, dt);
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 LookAngles = NetLookAngles.Get(dt);
                 NormalMovement(dt);
                 return;

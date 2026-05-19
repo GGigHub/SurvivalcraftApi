@@ -8,14 +8,8 @@ namespace Game {
 
         public SubsystemMemoryBankBlockBehavior() : base(186) { }
 
-        public Action<SubsystemMemoryBankBlockBehavior, int, int, MemoryBankData> OnEditItemData;
-        public Action<SubsystemMemoryBankBlockBehavior, CellFace, MemoryBankData> OnEditBlockData;
-
-        public override void Dispose() {
-            OnEditItemData = null;
-            OnEditBlockData = null;
-            IsNetworkMode = null;
-        }
+        public event Action<SubsystemMemoryBankBlockBehavior, int, int, MemoryBankData> OnEditItemData;
+        public event Action<SubsystemMemoryBankBlockBehavior, CellFace, MemoryBankData> OnEditBlockData;
 
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
@@ -32,7 +26,7 @@ namespace Game {
                     new EditMemoryBankDialog(
                         memoryBankData,
                         () => {
-                            if (IsNetworkMode?.Invoke() != true) {
+                            if (GameManager.IsNetworkMode?.Invoke() != true) {
                                 int data = StoreItemDataAtUniqueId(memoryBankData);
                                 int value2 = Terrain.ReplaceData(value, data);
                                 inventory.RemoveSlotItems(slotIndex, count);
@@ -70,7 +64,7 @@ namespace Game {
                         () => {
                             int face = ((MemoryBankBlock)BlocksManager.Blocks[186]).GetFace(value);
                             var cell = new CellFace(x, y, z, face);
-                            if (IsNetworkMode?.Invoke() != true) {
+                            if (GameManager.IsNetworkMode?.Invoke() != true) {
                                 SetBlockData(new Point3(x, y, z), memoryBankData);
                                 SubsystemElectricity subsystemElectricity = SubsystemTerrain.Project.FindSubsystem<SubsystemElectricity>(true);
                                 ElectricElement electricElement = subsystemElectricity.GetElectricElement(x, y, z, face);

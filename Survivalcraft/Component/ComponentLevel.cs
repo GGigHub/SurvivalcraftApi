@@ -43,7 +43,6 @@ namespace Game {
         public string m_cachedPlayerClassName;
         public string m_cachedGameModeString;
 
-        public Func<bool> IsNetworkMode;
 
         public const float FemaleStrengthFactor = 0.8f;
         public const float FemaleResilienceFactor = 0.8f;
@@ -91,18 +90,13 @@ namespace Game {
         }
 
         public virtual void AddExperience(int count, bool playSound) {
-            if (IsNetworkMode?.Invoke() != true) {
+            if (GameManager.IsNetworkMode?.Invoke() != true) {
                 NetAddExperience(count, playSound);
             }
             OnAddExperience?.Invoke(this, count, playSound);
         }
 
-        public Action<ComponentLevel, int, bool> OnAddExperience;
-
-        public override void OnEntityRemoved() {
-            IsNetworkMode = null;
-            OnAddExperience = null;
-        }
+        public event Action<ComponentLevel, int, bool> OnAddExperience;
 
         /// <summary>
         ///     生成玩家的所有关于力量的因素

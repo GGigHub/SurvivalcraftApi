@@ -28,17 +28,6 @@ namespace Game {
 
         public float DetectSurroundingMountRange = 2.5f;
 
-        public Func<bool> IsNetworkMode;
-
-        public Action<ComponentRider, ComponentMount, bool> OnMounting;
-
-        public Action<ComponentRider, bool> OnDismounting;
-
-        public override void OnEntityRemoved() {
-            IsNetworkMode = null;
-            OnMounting = null;
-            OnDismounting = null;
-        }
 
         public ComponentCreature ComponentCreature { get; set; }
 
@@ -77,7 +66,7 @@ namespace Game {
         public virtual void StartMounting(ComponentMount componentMount) {
             if (!m_isAnimating
                 && Mount == null) {
-                if (IsNetworkMode?.Invoke() != true) {
+                if (GameManager.IsNetworkMode?.Invoke() != true) {
                     StartNetMounting(componentMount);
                     OnMounting?.Invoke(this, componentMount, false);
                 }
@@ -90,7 +79,7 @@ namespace Game {
         public virtual void StartDismounting() {
             if (!m_isAnimating
                 && Mount != null) {
-                if (IsNetworkMode?.Invoke() != true) {
+                if (GameManager.IsNetworkMode?.Invoke() != true) {
                     StartNetDismounting();
                     OnDismounting?.Invoke(this, false);
                 }
@@ -99,6 +88,10 @@ namespace Game {
                 }
             }
         }
+
+        public event Action<ComponentRider, ComponentMount, bool> OnMounting;
+
+        public event Action<ComponentRider, bool> OnDismounting;
 
         public void StartNetMounting(ComponentMount componentMount) {
             if (!m_isAnimating

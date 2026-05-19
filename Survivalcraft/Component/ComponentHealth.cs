@@ -16,19 +16,10 @@ namespace Game {
         public ComponentOnFire m_componentOnFire;
         public ComponentFactors m_componentFactors;
 
-        public Action<ComponentHealth, Injury, float> OnHealthInjured;
-        public Action<ComponentHealth> OnHealthDead;
-        public Action<ComponentHealth> OnHealthHealUpdate;
-        public Action<ComponentHealth, float, string> OnHealthFallDamage;
-
-        public override void OnEntityRemoved() {
-            OnHealthInjured = null;
-            OnHealthDead = null;
-            OnHealthHealUpdate = null;
-            OnHealthFallDamage = null;
-            Injured = null;
-            Attacked = null;
-        }
+        public event Action<ComponentHealth, Injury, float> OnHealthInjured;
+        public event Action<ComponentHealth> OnHealthDead;
+        public event Action<ComponentHealth> OnHealthHealUpdate;
+        public event Action<ComponentHealth, float, string> OnHealthFallDamage;
 
         //public Block ExperienceOrbBlock;
 

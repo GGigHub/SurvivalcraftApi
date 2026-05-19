@@ -65,7 +65,7 @@ namespace Game {
             }
         }
 
-        public Action<Pickable> OnPickableAttract;
+        public event Action<Pickable> OnPickableAttract;
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
             base.Load(valuesDictionary, idToEntityMap);
@@ -74,10 +74,6 @@ namespace Game {
             m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
             m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
             m_componentBody = Entity.FindComponent<ComponentBody>();
-        }
-
-        public override void OnEntityRemoved() {
-            OnPickableAttract = null;
         }
     }
 }

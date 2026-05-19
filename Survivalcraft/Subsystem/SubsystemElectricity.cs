@@ -258,9 +258,8 @@ namespace Game {
 
         public int CircuitStep { get; set; }
 
-        public Func<bool> IsNetworkMode;
 
-        public Action<SubsystemElectricity, List<NetSimulate>> OnElectricityPersistentVoltageChanged;
+        public event Action<SubsystemElectricity, List<NetSimulate>> OnElectricityPersistentVoltageChanged;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -405,7 +404,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (IsNetworkMode?.Invoke() == true) {
+            if (GameManager.IsNetworkMode) {
                 m_remainingSimulationTime = MathUtils.Min(m_remainingSimulationTime + dt, 0.1f);
                 FrameStartCircuitStep = CircuitStep;
                 while (m_remainingSimulationTime >= 0.01f) {
@@ -786,11 +785,6 @@ namespace Game {
                     }
                 }
             }
-        }
-
-        public override void Dispose() {
-            OnElectricityPersistentVoltageChanged = null;
-            IsNetworkMode = null;
         }
 
         public Dictionary<ElectricElement, bool> GetListFromCache() {

@@ -20,15 +20,8 @@ namespace Game {
         public double? m_lastPukeTime;
         public const string fName = "ComponentSickness";
 
-        public Func<bool> IsNetworkMode;
 
-        public Action<ComponentSickness> OnSicknessUpdate;
-
-        public override void OnEntityRemoved() {
-            IsNetworkMode = null;
-            OnSicknessUpdate = null;
-            m_pukeParticleSystem = null;
-        }
+        public event Action<ComponentSickness> OnSicknessUpdate;
 
         public bool IsSick => m_sicknessDuration > 0f;
 
@@ -37,7 +30,7 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void StartSickness() {
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
             StartSicknessNet();
         }
 
@@ -91,7 +84,7 @@ namespace Game {
             }
             if (m_sicknessDuration > 0f) {
                 //开服后，睡觉疾病恢复速度x5
-                if (m_componentPlayer.ComponentSleep.IsSleeping && m_componentPlayer.ComponentSleep.m_subsystemUpdate.UpdatesPerFrame == 1 && IsNetworkMode?.Invoke() != true) dt *= m_subsystemGameInfo.WorldSettings.RecoverFator;
+                if (m_componentPlayer.ComponentSleep.IsSleeping && m_componentPlayer.ComponentSleep.m_subsystemUpdate.UpdatesPerFrame == 1 && GameManager.IsNetworkMode?.Invoke() != true) dt *= m_subsystemGameInfo.WorldSettings.RecoverFator;
                 m_sicknessDuration = MathUtils.Max(m_sicknessDuration - dt, 0f);
                 if (m_componentPlayer.ComponentHealth.Health > 0f && !m_componentPlayer.ComponentSleep.IsSleeping && m_subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) && (!m_lastNauseaTime.HasValue || m_subsystemTime.GameTime - m_lastNauseaTime > 15.0)) {
                     NauseaEffect();

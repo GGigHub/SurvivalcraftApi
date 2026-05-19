@@ -57,16 +57,8 @@ namespace Game {
             UpdateMovableBlocks();
         }
 
-        public Action<SubsystemPistonBlockBehavior, int, int, int> OnEditItemData;
-        public Action<SubsystemPistonBlockBehavior, CellFace, int> OnEditBlockData;
-
-        public override void Dispose() {
-            m_subsystemMovingBlocks.Stopped -= MovingBlocksStopped;
-            m_subsystemMovingBlocks.CollidedWithTerrain -= MovingBlocksCollidedWithTerrain;
-            OnEditItemData = null;
-            OnEditBlockData = null;
-            IsNetworkMode = null;
-        }
+        public event Action<SubsystemPistonBlockBehavior, int, int, int> OnEditItemData;
+        public event Action<SubsystemPistonBlockBehavior, CellFace, int> OnEditBlockData;
 
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
@@ -82,7 +74,7 @@ namespace Game {
                     delegate (int newData) {
                         int num = Terrain.ReplaceData(value, newData);
                         if (num != value) {
-                            if (IsNetworkMode?.Invoke() != true) {
+                            if (GameManager.IsNetworkMode?.Invoke() != true) {
                                 inventory.RemoveSlotItems(slotIndex, count);
                                 inventory.AddSlotItems(slotIndex, num, count);
                             }
@@ -105,7 +97,7 @@ namespace Game {
                         if (newData != data
                             && SubsystemTerrain.Terrain.GetCellContents(x, y, z) == contents) {
                             var cell = new CellFace(x, y, z, 0);
-                            if (IsNetworkMode?.Invoke() != true) {
+                            if (GameManager.IsNetworkMode?.Invoke() != true) {
                                 int newValue = Terrain.ReplaceData(value, newData);
                                 SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }

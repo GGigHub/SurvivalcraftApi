@@ -70,7 +70,7 @@ namespace Game {
 
         public virtual float SmeltingProgress => m_smeltingProgress;
 
-        public Action<ComponentFurnace> OnFurnaceUpdate;
+        public event Action<ComponentFurnace> OnFurnaceUpdate;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -95,7 +95,6 @@ namespace Game {
         }
 
         public override void OnEntityRemoved() {
-            OnFurnaceUpdate = null;
             m_subsystemParticles.RemoveParticleSystem(m_fireParticleSystem);
         }
 

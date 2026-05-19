@@ -36,7 +36,6 @@ namespace Game {
 
         public SubsystemBlockBehaviors m_subsystemBlockBehaviors;
 
-        public Func<bool> IsNetworkMode;
 
         public event Action<SubsystemTerrain, int, int, int, int> OnTerrainChangeCell;
 
@@ -372,7 +371,7 @@ namespace Game {
             if (pass) {
                 return;
             }
-            if (IsNetworkMode?.Invoke() == true) return;
+            if (GameManager.IsNetworkMode) return;
             ChangeCellNet(x, y, z, value, updateModificationCounter, movingBlock);
             OnTerrainChangeCell?.Invoke(this, x, y, z, value);
         }
@@ -516,7 +515,7 @@ namespace Game {
             Terrain = new Terrain();
             TerrainRenderer = new TerrainRenderer(this);
             TerrainUpdater = new TerrainUpdater(this);
-            if (IsNetworkMode?.Invoke() != true) {
+            if (GameManager.IsNetworkMode?.Invoke() != true) {
                 TerrainSerializer = new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             else {
@@ -585,8 +584,6 @@ namespace Game {
             TerrainUpdater.Dispose();
             TerrainSerializer.Dispose();
             Terrain.Dispose();
-            OnTerrainChangeCell = null;
-            IsNetworkMode = null;
         }
     }
 }

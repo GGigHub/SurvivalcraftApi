@@ -23,6 +23,8 @@ namespace Game {
 
         public static event Action<Project> ProjectDisposed;
 
+        public static bool IsNetworkMode;
+
         public const string fName = "GameManager";
 
         public static void RepairAndUpgradeWorld(WorldInfo worldInfo) {

@@ -25,8 +25,8 @@ namespace Game {
 
         public int[] DrawOrders => m_drawOrders;
 
-        public Action<ParticleSystemBase> OnParticleSystemAdded;
-        public Action<ParticleSystemBase> OnParticleSystemRemoved;
+        public event Action<ParticleSystemBase> OnParticleSystemAdded;
+        public event Action<ParticleSystemBase> OnParticleSystemRemoved;
 
         public void AddParticleSystem(ParticleSystemBase particleSystem, bool throwOnAlreadyAdded = false) {
             if (particleSystem.SubsystemParticles == null) {
@@ -113,11 +113,6 @@ namespace Game {
                 }
                 PrimitivesRenderer.Flush(camera.ViewProjectionMatrix);
             }
-        }
-
-        public override void Dispose() {
-            OnParticleSystemAdded = null;
-            OnParticleSystemRemoved = null;
         }
     }
 }
