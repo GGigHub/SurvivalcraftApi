@@ -7,6 +7,10 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemPickables : Subsystem, IDrawable, IUpdateable {
+        public event Action<int> OnPickableRequestSync;
+        public event Action<Pickable> OnPickableCreate;
+        public event Action<Pickable> OnPickableDelete;
+
         public SubsystemAudio m_subsystemAudio;
 
         public SubsystemPlayers m_subsystemPlayers;
@@ -55,8 +59,8 @@ namespace Game {
                 }
             }
             if (requestSync
-                && NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new PickableRequestSyncPacket(id));
+                && GameManager.IsNetworkMode) {
+                OnPickableRequestSync?.Invoke(id);
             }
             return false;
         }
@@ -102,8 +106,8 @@ namespace Game {
                 m_pickables.Add(pickable);
             }
             PickableAdded?.Invoke(pickable);
-            if (NetworkManager.IsServer) {
-                NetworkManager.QueuePacket(new PickableCreatePacket(pickable));
+            if (!GameManager.IsNetworkMode) {
+                OnPickableCreate?.Invoke(pickable);
             }
             return pickable;
         }
@@ -210,8 +214,8 @@ namespace Game {
                     m_pickables.Remove(item);
                     useMaps.Remove(item.Id);
                     PickableRemoved?.Invoke(item);
-                    if (NetworkManager.IsServer) {
-                        NetworkManager.QueuePacket(new PickableDeletePacket(item));
+                    if (!GameManager.IsNetworkMode) {
+                        OnPickableDelete?.Invoke(item);
                     }
                 }
                 m_pickablesToRemove.Clear();

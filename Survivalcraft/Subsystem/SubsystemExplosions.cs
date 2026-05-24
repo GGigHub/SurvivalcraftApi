@@ -154,6 +154,9 @@ namespace Game {
             public bool IsIncendiary;
         }
 
+        public event Action<Dictionary<Point2, List<(Point3, float)>>> OnExplosionCell;
+        public event Action<Vector3, float, float> OnExplosionSound;
+
         public SubsystemTerrain m_subsystemTerrain;
 
         public SubsystemAudio m_subsystemAudio;
@@ -295,7 +298,7 @@ namespace Game {
                 m_surroundingPressureByPoint = null;
             }
             if (!NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new ExplosionCellPacket(m_explosionCells));
+                OnExplosionCell?.Invoke(m_explosionCells);
                 //清空爆炸点
                 m_explosionCells.Clear();
             }
@@ -823,7 +826,7 @@ namespace Game {
             if (!NetworkManager.IsClient) {
                 PlayExplosionSound(position, pressure, delay, playExplosionSound);
                 if (playExplosionSound) {
-                    NetworkManager.QueuePacket(new ExplosionSoundPacket(position, pressure, delay));
+                    OnExplosionSound?.Invoke(position, pressure, delay);
                 }
             }
             if (pressure > 2000000f) {

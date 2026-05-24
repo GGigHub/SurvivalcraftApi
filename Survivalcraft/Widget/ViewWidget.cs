@@ -4,6 +4,7 @@ using Game.Network;
 
 namespace Game {
     public class ViewWidget : TouchInputWidget, IDragTargetWidget {
+        public static event Action<PlayerData, int, int, Vector3, int> OnPlayerDragDrop;
         public SubsystemDrawing m_subsystemDrawing;
 
         public RenderTarget2D m_scalingRenderTarget;
@@ -85,8 +86,8 @@ namespace Game {
                 Vector2 screenPos = dragWidget.WidgetToScreen(dragWidget.ActualSize / 2f);
                 Vector3 worldPos = Vector3.Normalize(GameWidget.ActiveCamera.ScreenToWorld(new Vector3(screenPos.X, screenPos.Y, 1f), Matrix.Identity));
                 if (inventoryDragData != null && GameManager.Project != null) {
-                    if (NetworkManager.IsClient) {
-                        NetworkManager.QueuePacket(new Network.PlayerDragDropPacket(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count));
+                    if (GameManager.IsNetworkMode) {
+                        OnPlayerDragDrop?.Invoke(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count);
                     }
                     else {
                         NetDragDrop(worldPos, inventoryDragData, count);

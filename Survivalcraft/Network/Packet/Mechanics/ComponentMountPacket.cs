@@ -46,12 +46,6 @@ public class ComponentMountPacket : Packet {
                 GameManager.Project.FindEntity(m_fromId, entity => {
                     var rider = entity.FindComponent<ComponentRider>();
                     rider?.StartNetDismounting();
-                    if (!isServer && rider.Mount != null) {
-                        var select = rider.Mount.Entity.FindComponent<ComponentBehaviorSelector>();
-                        if (select != null) {
-                            GameManager.IsNetworkMode = () => true;
-                        }
-                    }
                 });
                 break;
             case EventType.DismountRequest:
@@ -67,12 +61,6 @@ public class ComponentMountPacket : Packet {
                         var mount = entity2.FindComponent<ComponentMount>();
                         if (mount != null && rider != null) {
                             rider.StartNetMounting(mount);
-                            if (!isServer) {
-                                var select = rider.Mount.Entity.FindComponent<ComponentBehaviorSelector>();
-                                if (select != null) {
-                                    GameManager.IsNetworkMode = () => false;
-                                }
-                            }
                         }
                     });
                 });

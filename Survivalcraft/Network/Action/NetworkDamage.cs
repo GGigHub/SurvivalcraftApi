@@ -13,5 +13,11 @@ namespace Game.Network {
                 }
             }
         }
+
+        public static void OnDamage(ComponentDamage damage, float fallbackValue = 0f) {
+            if (!NetworkManager.IsClient) {
+                NetworkManager.QueuePacket(new DamageSyncPacket(damage));
+            }
+        }
     }
 }

@@ -4,6 +4,9 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable {
+        public event Action<int, int, int, float> OnFireBlockAdd;
+        public event Action<int, int, int> OnFireBlockRemove;
+
         public class FireData {
             public Point3 Point;
 
@@ -361,8 +364,8 @@ namespace Game {
         }
 
         public void AddFire(int x, int y, int z, float expandability) {
-            if (!NetworkManager.IsClient) {
-                Network.NetworkManager.QueuePacket(new Network.FireBlockAddPacket(x, y, z, expandability));
+            if (!GameManager.IsNetworkMode) {
+                OnFireBlockAdd?.Invoke(x, y, z, expandability);
                 AddFireNet(x, y, z, expandability);
             }
         }
@@ -377,8 +380,8 @@ namespace Game {
         }
 
         public void RemoveFire(int x, int y, int z) {
-            if (!NetworkManager.IsClient) {
-                Network.NetworkManager.QueuePacket(new Network.FireBlockRemovePacket(x, y, z));
+            if (!GameManager.IsNetworkMode) {
+                OnFireBlockRemove?.Invoke(x, y, z);
                 RemoveFireNet(x, y, z);
             }
         }

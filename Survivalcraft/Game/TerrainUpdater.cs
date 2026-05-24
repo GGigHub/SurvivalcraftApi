@@ -417,7 +417,7 @@ namespace Game {
             }
             lock (RequestSyncChunkList) {
                 if (RequestSyncChunkList.Count > 0 && Time.PeriodicEvent(0.5, 0.0)) {
-                    NetworkManager.QueuePacket(new TerrainRequestSyncChunksPacket(RequestSyncChunkList));
+                    OnTerrainRequestSyncChunks?.Invoke(this, RequestSyncChunkList);
                     RequestSyncChunkList.Clear();
                 }
             }
@@ -450,10 +450,10 @@ namespace Game {
 
                     }
                     if (toSendList.Count > 0) {
-                        NetworkManager.QueuePacket(new TerrainSyncChunkListPacket(toSendList) { To = item.Key });
+                        OnTerrainSyncChunkList?.Invoke(this, item.Key, toSendList);
                     }
                     if (result.Count > 0) {
-                        NetworkManager.QueuePacket(new TerrainReplyResultPacket(result) { To = item.Key });
+                        OnTerrainReplyResult?.Invoke(this, item.Key, result);
                     }
                 }
                 foreach (var item2 in toRemove) {

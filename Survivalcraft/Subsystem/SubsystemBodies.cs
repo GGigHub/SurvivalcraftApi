@@ -5,6 +5,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemBodies : Subsystem, IUpdateable {
+        public event Action<Client, List<ComponentBody>> OnBodiesUpdate;
         public const float m_areaSize = 8f;
 
         public DynamicArray<ComponentBody> m_componentBodies = [];
@@ -125,7 +126,7 @@ namespace Game {
         public SubsystemTerrain m_subsystemTerrain;
 
         public virtual void Update(float dt) {
-            if (!NetworkManager.IsClient) {
+            if (!GameManager.IsNetworkMode) {
                 bool flag = Time.PeriodicEvent(0.1, 0.0);
                 _toSendList.Clear();
                 foreach (ComponentBody body in Bodies) {
@@ -145,7 +146,7 @@ namespace Game {
                 if (_toSendList.Count > 0) {
                     foreach (var item in _toSendList) {
                         if (item.Value.Count > 0) {
-                            NetworkManager.QueuePacket(new BodyUpdatePacket(item.Value) { To = item.Key });
+                            OnBodiesUpdate?.Invoke(item.Key, item.Value);
                         }
                     }
                     //在这里重置标志

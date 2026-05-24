@@ -102,7 +102,7 @@ namespace Game {
         public event Action<SubsystemFurnaceBlockBehavior, List<ComponentFurnace>> OnFurnacesUpdate;
 
         public void Update(float dt) {
-            if (Time.PeriodicEvent(5.0, 0.0) && GameManager.IsNetworkMode?.Invoke() != true) {
+            if (Time.PeriodicEvent(5.0, 0.0) && !GameManager.IsNetworkMode) {
                 List<ComponentFurnace> componentFurnaces = new List<ComponentFurnace>();
                 SubsystemBlockEntities subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>();
                 foreach (var pair in subsystemBlockEntities.m_blockEntities) {

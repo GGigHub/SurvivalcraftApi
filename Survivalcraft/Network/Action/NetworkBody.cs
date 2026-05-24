@@ -33,5 +33,9 @@ namespace Game.Network {
                     || (componentPlayer == null && hasNonMainChildPlayer);
             }
         }
+
+        public static void OnBodiesUpdate(SubsystemBodies subsystem, Client toClient, List<ComponentBody> bodies) {
+            NetworkManager.QueuePacket(new BodyUpdatePacket(bodies) { To = toClient });
+        }
     }
 }

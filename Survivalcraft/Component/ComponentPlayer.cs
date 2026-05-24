@@ -854,7 +854,7 @@ namespace Game {
         private static readonly object _saveLock = new();
 
         public virtual void SavePlayerEntity() {
-            if (GameManager.IsNetworkMode?.Invoke() != true) {
+            if (!GameManager.IsNetworkMode) {
                 lock (_saveLock) {
                     try {
                         var list = Project.SaveEntities([Entity]);

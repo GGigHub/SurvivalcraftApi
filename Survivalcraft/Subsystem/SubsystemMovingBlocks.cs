@@ -108,6 +108,9 @@ namespace Game {
             }
         }
 
+        public event Action<IMovingBlockSet> OnMovingBlockAdd;
+        public event Action<IMovingBlockSet, bool> OnMovingBlockRemove;
+
         public SubsystemTime m_subsystemTime;
 
         public SubsystemTerrain m_subsystemTerrain;
@@ -198,7 +201,7 @@ namespace Game {
             m_movingBlockSets.Add(movingBlockSet);
             if (!NetworkManager.IsClient) {
                 m_movingBlockSets.Add(movingBlockSet);
-                Network.NetworkManager.QueuePacket(new MovingBlockAddPacket(movingBlockSet));
+                OnMovingBlockAdd?.Invoke(movingBlockSet);
             }
             return movingBlockSet;
         }
@@ -216,7 +219,7 @@ namespace Game {
                     }
                 );
                 movingBlockSet2.RemainCounter = 4;
-                Network.NetworkManager.QueuePacket(new MovingBlockRemovePacket(movingBlockSet, false));
+                OnMovingBlockRemove?.Invoke(movingBlockSet, false);
             }
         }
 
@@ -423,7 +426,7 @@ namespace Game {
             if (!NetworkManager.IsClient) {
                 foreach (MovingBlockSet item in m_stopped) {
                     DoStop(item);
-                    Network.NetworkManager.QueuePacket(new MovingBlockRemovePacket(item, true));
+                    OnMovingBlockRemove?.Invoke(item, true);
                 }
             }
             m_stopped.Clear();

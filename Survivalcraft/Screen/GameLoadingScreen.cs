@@ -11,6 +11,9 @@ using Stage = Game.Network.ClientState;
 namespace Game;
 
 public class GameLoadingScreen : Screen {
+    public static event Action<int, ClientState> OnClientStateChanged;
+    public static event Action<ComponentPlayer> OnPlayerIntoPlaying;
+
     public WorldInfo m_worldInfo;
     public string m_worldSnapshotName;
     public StateMachine m_stateMachine = new StateMachine();
@@ -65,7 +68,7 @@ public class GameLoadingScreen : Screen {
             }
         }, delegate {
             if (NetworkManager.Self?.State == Stage.Connected) {
-                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientState.Connected));
+                OnClientStateChanged?.Invoke(NetworkManager.Self.ID, ClientState.Connected);
             }
         });
         m_stateMachine.AddState("Loading", null,
@@ -83,7 +86,7 @@ public class GameLoadingScreen : Screen {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
                 if (IsAdventureRestart && NetworkManager.IsClient) {
-                    NetworkManager.QueuePacket(new PlayerIntoPlayingPacket(NetworkManager.MainPlayer));
+                    OnPlayerIntoPlaying?.Invoke(NetworkManager.MainPlayer);
                 }
                 ScreensManager.SwitchScreen("Game");
             }
@@ -95,7 +98,7 @@ public class GameLoadingScreen : Screen {
             if (NetworkManager.Self?.State == Stage.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
                 NetworkManager.Self.State = Stage.ProjectLoaded;
-                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientState.ProjectLoaded));
+                OnClientStateChanged?.Invoke(NetworkManager.Self.ID, ClientState.ProjectLoaded);
                 ScreensManager.SwitchScreen("Game");
                 m_projectXmlData = null;
                 m_blockTextureData = null;

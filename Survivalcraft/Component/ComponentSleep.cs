@@ -69,7 +69,7 @@ namespace Game {
         }
 
         public virtual void Sleep(bool allowManualWakeup) {
-            if (GameManager.IsNetworkMode?.Invoke() != true) {
+            if (!GameManager.IsNetworkMode) {
                 NetSleep(allowManualWakeup);
             }
             OnSleepEvent?.Invoke(this, allowManualWakeup);
@@ -88,7 +88,7 @@ namespace Game {
         }
 
         public virtual void WakeUp() {
-            if (GameManager.IsNetworkMode?.Invoke() != true) {
+            if (!GameManager.IsNetworkMode) {
                 NetWakeUp();
             }
             OnWakeUpEvent?.Invoke(this);

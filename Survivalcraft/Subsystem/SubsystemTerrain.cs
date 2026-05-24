@@ -515,7 +515,7 @@ namespace Game {
             Terrain = new Terrain();
             TerrainRenderer = new TerrainRenderer(this);
             TerrainUpdater = new TerrainUpdater(this);
-            if (GameManager.IsNetworkMode?.Invoke() != true) {
+            if (!GameManager.IsNetworkMode) {
                 TerrainSerializer = new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             else {

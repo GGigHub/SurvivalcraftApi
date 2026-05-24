@@ -6,6 +6,9 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemWeather : Subsystem, IDrawable, IUpdateable {
+        public event Action<double, double, float> OnPrecipitationUpdate;
+        public event Action<double, float, double> OnFogUpdate;
+
         public SubsystemGameInfo m_subsystemGameInfo;
 
         public SubsystemBlocksScanner m_subsystemBlocksScanner;
@@ -337,7 +340,7 @@ namespace Game {
                 }
                 m_precipitationEndTime = m_precipitationStartTime + 60f * m_random.Float(3f, 6f);
                 m_precipitationRampTime = m_random.Float(10f, 30f);
-                Network.NetworkManager.QueuePacket(new Network.SubsystemWeatherPacket(m_precipitationStartTime, m_precipitationEndTime, m_lightningIntensity));
+                OnPrecipitationUpdate?.Invoke(m_precipitationStartTime, m_precipitationEndTime, m_lightningIntensity);
             }
             if (m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled) {
                 if (IsPrecipitationStarted) {
@@ -506,7 +509,7 @@ namespace Game {
                 m_fogEndTime = m_fogStartTime + 60f * m_random.Float(4f, 7f) * num;
                 m_fogRampTime = m_random.Float(20f, 40f);
                 FogProgress = 0f;
-                Network.NetworkManager.QueuePacket(new Network.SubsystemWeatherPacket(m_fogStartTime, m_fogRampTime, m_fogEndTime));
+                OnFogUpdate?.Invoke(m_fogStartTime, m_fogRampTime, m_fogEndTime);
             }
             FogSeed = MathUtils.Hash((int)MathUtils.Remainder(m_fogStartTime, 1000000.0));
             if (m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled) {

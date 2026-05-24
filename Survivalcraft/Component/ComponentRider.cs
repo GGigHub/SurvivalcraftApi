@@ -66,7 +66,7 @@ namespace Game {
         public virtual void StartMounting(ComponentMount componentMount) {
             if (!m_isAnimating
                 && Mount == null) {
-                if (GameManager.IsNetworkMode?.Invoke() != true) {
+                if (!GameManager.IsNetworkMode) {
                     StartNetMounting(componentMount);
                     OnMounting?.Invoke(this, componentMount, false);
                 }
@@ -79,7 +79,7 @@ namespace Game {
         public virtual void StartDismounting() {
             if (!m_isAnimating
                 && Mount != null) {
-                if (GameManager.IsNetworkMode?.Invoke() != true) {
+                if (!GameManager.IsNetworkMode) {
                     StartNetDismounting();
                     OnDismounting?.Invoke(this, false);
                 }

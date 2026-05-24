@@ -90,7 +90,7 @@ namespace Game {
         }
 
         public virtual void AddExperience(int count, bool playSound) {
-            if (GameManager.IsNetworkMode?.Invoke() != true) {
+            if (!GameManager.IsNetworkMode) {
                 NetAddExperience(count, playSound);
             }
             OnAddExperience?.Invoke(this, count, playSound);

@@ -87,4 +87,16 @@ public static class NetworkLogicBlock {
             NetworkManager.QueuePacket(new TruthTableDataPacket(cell, false, default, default, data));
         }
     }
+
+    public static void OnMemoryBankItemDataSync(SubsystemMemoryBankBlockBehavior subsystem, int id, MemoryBankData data) {
+        if (!NetworkManager.IsClient) {
+            NetworkManager.QueuePacket(new MemoryBankDataPacket(id, data));
+        }
+    }
+
+    public static void OnTruthTableItemDataSync(SubsystemTruthTableCircuitBlockBehavior subsystem, int id, TruthTableData data) {
+        if (!NetworkManager.IsClient) {
+            NetworkManager.QueuePacket(new TruthTableDataPacket(id, data));
+        }
+    }
 }

@@ -8,6 +8,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable {
+        public event Action<Projectile> OnProjectileFire;
         public SubsystemAudio m_subsystemAudio;
 
         public SubsystemSoundMaterials m_subsystemSoundMaterials;
@@ -361,18 +362,18 @@ namespace Game {
             }
             Projectile projectile = AddProjectileNet(value, position, velocity, angularVelocity, owner);
             if (projectile != null) {
-                NetworkManager.QueuePacket(new ProjectilePacket(projectile));
+                OnProjectileFire?.Invoke(projectile);
             }
             return projectile;
         }
 
         Projectile FireProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            if (NetworkManager.IsClient) {
+            if (GameManager.IsNetworkMode) {
                 return null;
             }
             Projectile projectile = FireProjectileNet(value, position, velocity, angularVelocity, owner);
             if (projectile != null) {
-                NetworkManager.QueuePacket(new ProjectilePacket(projectile));
+                OnProjectileFire?.Invoke(projectile);
             }
             return projectile;
         }

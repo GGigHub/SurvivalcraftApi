@@ -8,6 +8,9 @@ using TemplatesDatabase;
 namespace Game;
 
 public class PlayerScreen : Screen {
+    public static event Action<PlayerData> OnPlayerCreate;
+    public static event Action<PlayerData> OnPlayerModify;
+
     public enum Mode {
         Initial,
         Add,
@@ -224,8 +227,8 @@ public class PlayerScreen : Screen {
         }
         if (m_playButton.IsClicked && VerifyName()) {
             if (m_mode == Mode.Initial) {
-                if (NetworkManager.IsClient) {
-                    NetworkManager.QueuePacket(new PlayerCreatePacket(m_playerData));
+                if (GameManager.IsNetworkMode) {
+                    OnPlayerCreate?.Invoke(m_playerData);
                     DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
                 }
                 else {
@@ -250,7 +253,7 @@ public class PlayerScreen : Screen {
                 ScreensManager.SwitchScreen("Players", m_playerData.SubsystemPlayers);
             }
             if (m_mode == Mode.Edit) {
-                NetworkManager.QueuePacket(new PlayerModifyPacket(m_playerData));
+                OnPlayerModify?.Invoke(m_playerData);
             }
         }
         m_nameWasInvalid = false;

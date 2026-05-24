@@ -240,7 +240,7 @@ namespace Game {
                     UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
                     if ((updateProgress >= 1f && Time.FrameStartTime - m_terrainWaitStartTime > 2.0) || Time.FrameStartTime - m_terrainWaitStartTime >= 15.0) {
                         if (ComponentPlayer == null || ComponentPlayer.PlayerData.NetworkGuid == Guid.Empty) {
-                            if (GameManager.IsNetworkMode?.Invoke() != true) {
+                            if (!GameManager.IsNetworkMode) {
                                 SpawnPlayer(SpawnPosition, m_spawnMode);
                             }
                             else {
@@ -277,7 +277,7 @@ namespace Game {
                     m_playerDeathTime = Time.RealTime;
                 }
                 // 非主玩家在未完成联机同步前保持无敌，避免状态不同步时被误伤。
-                if (!IsMainPlayer && GameManager.IsNetworkMode?.Invoke() != true) {
+                if (!IsMainPlayer && !GameManager.IsNetworkMode) {
                     if (!isSetStatus) {
                         // Assuming Client checking logic is handled differently or we just assume invulnerable if Client == null
                         if (Client != null && Client.State != ClientState.Playing) {
@@ -314,7 +314,7 @@ namespace Game {
                 }
                 else if (IsMainPlayer && Time.RealTime - m_playerDeathTime.Value > 1.5 && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any || readyToRestart) {
                     if (NetworkManager.IsClient && IsMainPlayer) {
-                        NetworkManager.QueuePacket(new Network.PlayerRestartPacket(this));
+                        OnPlayerRestart?.Invoke(this);
                     }
                     IsDead = true;
                     readyToRestart = true;

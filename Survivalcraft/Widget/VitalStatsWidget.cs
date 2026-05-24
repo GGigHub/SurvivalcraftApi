@@ -5,6 +5,7 @@ using Game.Network;
 
 namespace Game {
     public class VitalStatsWidget : CanvasWidget {
+        public static event Action<ComponentHealth, ComponentCreature, float, string, bool, InjureRequestPacket.RequestInjureType> OnChokeRequest;
         public ButtonWidget m_chokeButton;
         public LabelWidget m_titleLabel;
         public LinkWidget m_healthLink;
@@ -195,16 +196,14 @@ namespace Game {
                 );
             }
             if (m_chokeButton.IsClicked) {
-                if (NetworkManager.IsClient) {
-                    NetworkManager.QueuePacket(
-                        new InjureRequestPacket(
-                            m_componentPlayer.ComponentHealth,
-                            null,
-                            0.1f,
-                            LanguageControl.GetContentWidgets(fName, "Choked"),
-                            true,
-                            InjureRequestPacket.RequestInjureType.Choke
-                        )
+                if (GameManager.IsNetworkMode) {
+                    OnChokeRequest?.Invoke(
+                        m_componentPlayer.ComponentHealth,
+                        null,
+                        0.1f,
+                        LanguageControl.GetContentWidgets(fName, "Choked"),
+                        true,
+                        InjureRequestPacket.RequestInjureType.Choke
                     );
                 }
                 else {
