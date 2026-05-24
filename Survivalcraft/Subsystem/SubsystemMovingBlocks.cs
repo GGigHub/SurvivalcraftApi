@@ -206,8 +206,11 @@ namespace Game {
             return movingBlockSet;
         }
 
-        public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet) {
-            if (NetworkManager.IsNetworkMode) return;
+        public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                OnMovingBlockRemove?.Invoke(movingBlockSet, false);
+                return;
+            }
             MovingBlockSet movingBlockSet2 = (MovingBlockSet)movingBlockSet;
             if (m_movingBlockSets.Remove(movingBlockSet2)) {
                 m_removing.Add(movingBlockSet2);
@@ -219,12 +222,8 @@ namespace Game {
                     }
                 );
                 movingBlockSet2.RemainCounter = 4;
-                OnMovingBlockRemove?.Invoke(movingBlockSet, false);
+                if (!fromNetwork) OnMovingBlockRemove?.Invoke(movingBlockSet, false);
             }
-        }
-
-        public void RemoveMovingBlockSetLogic(IMovingBlockSet movingBlockSet) {
-            RemoveMovingBlockSet(movingBlockSet);
         }
 
         public void DoStop(MovingBlockSet item) {

@@ -34,12 +34,12 @@ public class EntityOnFirePacket : Packet {
                 return;
             }
             if (m_attackerEntityId == 0) {
-                onFire.SetOnFireNet(null, m_duration);
+                onFire.SetOnFire(null, m_duration, true);
             }
             else {
                 GameManager.Project.FindEntity(m_attackerEntityId, e2 => {
                     ComponentCreature creature = e2.FindComponent<ComponentCreature>();
-                    onFire.SetOnFireNet(creature, m_duration);
+                    onFire.SetOnFire(creature, m_duration, true);
                 });
             }
         });

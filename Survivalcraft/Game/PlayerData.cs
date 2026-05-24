@@ -296,7 +296,7 @@ namespace Game {
                     Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 }
                 if (NetworkManager.IsNetworkMode && !IsMainPlayer) {
-                    NetRestart();
+                    Restart(true);
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
                 else if (ComponentPlayer == null) {
@@ -312,12 +312,12 @@ namespace Game {
                     }
                     IsDead = true;
                     readyToRestart = true;
-                    NetRestart();
+                    Restart();
                 }
             }, null);
         }
 
-        public void NetRestart() {
+        public void Restart(bool fromNetwork = false) {
             if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel) {
                 // 残酷模式禁止重生，直接提示并断开当前联机会话。
                 m_stateMachine.TransitionTo(null);

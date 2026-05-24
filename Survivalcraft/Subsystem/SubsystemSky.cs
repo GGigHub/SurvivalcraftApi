@@ -188,14 +188,12 @@ namespace Game {
 
         public static bool DrawGalaxyEnabled = true;
 
-        public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual) {
-            if (!NetworkManager.IsNetworkMode) {
-                NetMakeLightningStrike(targetPosition, manual);
+        public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) {
                 OnSkyLightning?.Invoke(targetPosition);
+                return;
             }
-        }
 
-        public virtual void NetMakeLightningStrike(Vector3 targetPosition, bool manual) {
             float explosionPressure = m_random.Float(0f, 1f) < 0.2f ? 39 : 19;
             bool strike = m_subsystemTime.GameTime - m_lastLightningStrikeTime > 1.0;
             bool setBodyOnFire = true;
@@ -227,6 +225,11 @@ namespace Game {
             else if (num < 200f) {
                 m_subsystemAudio.PlayRandomSound("Audio/ThunderFar", 0.8f, m_random.Float(-0.2f, 0.2f), 0f, delay);
             }
+            
+            if (!fromNetwork) {
+                OnSkyLightning?.Invoke(targetPosition);
+            }
+
             if (m_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != 0) {
                 return;
             }

@@ -40,6 +40,7 @@ public class ProjectilePacket : Packet {
         archive.Value(ref m_trailOfffset);
         archive.Value(ref m_angularVelocity);
         archive.Value(ref m_ownerId);
+        archive.Value(ref m_isFireProjectile);
     }
 
     public override void Handle(bool isServer) {
@@ -54,8 +55,8 @@ public class ProjectilePacket : Packet {
             });
         }
         _ = m_isFireProjectile
-            ? subsystem.FireProjectileNet(m_value, m_position, m_velocity, m_angularVelocity, creature)
-            : subsystem.AddProjectileNet(m_value, m_position, m_velocity, m_angularVelocity, creature);
+            ? subsystem.FireProjectile(m_value, m_position, m_velocity, m_angularVelocity, creature, true)
+            : subsystem.AddProjectile(m_value, m_position, m_velocity, m_angularVelocity, creature, true);
     }
 }
 

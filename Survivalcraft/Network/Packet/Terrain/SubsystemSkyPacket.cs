@@ -36,7 +36,7 @@ public class SubsystemSkyPacket : Packet {
                 sky.MakeLightningStrike(LightningStrikePosition, true);
             }
             else {
-                sky.NetMakeLightningStrike(LightningStrikePosition, false);
+                sky.MakeLightningStrike(LightningStrikePosition, false, true);
             }
         }
         else {

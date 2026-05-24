@@ -152,12 +152,12 @@ namespace Game {
             }
         }
 
-        public virtual void Injure(float amount, ComponentCreature attacker, bool ignoreInvulnerability, string cause) {
+        public virtual void Injure(float amount, ComponentCreature attacker, bool ignoreInvulnerability, string cause, bool fromNetwork = false) {
             Injury injury = new(amount, attacker, ignoreInvulnerability, cause);
-            Injure(injury);
+            Injure(injury, fromNetwork);
         }
 
-        public virtual void Injure(Injury injury) {
+        public virtual void Injure(Injury injury, bool fromNetwork = false) {
             if (injury == null) {
                 return;
             }
@@ -167,7 +167,7 @@ namespace Game {
                     float healthBefore = Health;
                     injury.Process();
                     float injuryAmount = MathUtils.Max(healthBefore - Health, 0f);
-                    OnHealthInjured?.Invoke(this, injury, injuryAmount);
+                    if (!fromNetwork) OnHealthInjured?.Invoke(this, injury, injuryAmount);
                     if (Health <= 0f) {
                         ModsManager.HookAction(
                             "OnCreatureDying",
@@ -184,9 +184,7 @@ namespace Game {
             }
         }
 
-        public void NetInjure(float amount, ComponentCreature attacker, string cause) {
-            Injure(amount, attacker, false, cause);
-        }
+
 
         public virtual void Die(Injury injury) {
             Health = 0f;

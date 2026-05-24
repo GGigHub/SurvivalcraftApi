@@ -26,7 +26,7 @@ public class FireBlockRemovePacket : Packet {
         if (isServer) {
             return;
         }
-        GameManager.Project.FindSubsystem<SubsystemFireBlockBehavior>().RemoveFireNet(x, y, z);
+        GameManager.Project.FindSubsystem<SubsystemFireBlockBehavior>().RemoveFire(x, y, z, true);
     }
 }
 

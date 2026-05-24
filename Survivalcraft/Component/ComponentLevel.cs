@@ -49,7 +49,8 @@ namespace Game {
         public const float FemaleSpeedFactor = 1.03f;
         public const float FemaleHungerFactor = 0.7f;
 
-        public void NetAddExperience(int count, bool playSound) {
+        public virtual void AddExperience(int count, bool playSound, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (playSound) {
                 m_subsystemAudio.PlaySound("Audio/ExperienceCollected", 0.2f, m_random.Float(-0.1f, 0.4f), 0f, 0f);
             }
@@ -87,13 +88,7 @@ namespace Game {
                 }
                 m_componentPlayer.PlayerData.Level += num;
             }
-        }
-
-        public virtual void AddExperience(int count, bool playSound) {
-            if (!NetworkManager.IsNetworkMode) {
-                NetAddExperience(count, playSound);
-            }
-            OnAddExperience?.Invoke(this, count, playSound);
+            if (!fromNetwork) OnAddExperience?.Invoke(this, count, playSound);
         }
 
         public event Action<ComponentLevel, int, bool> OnAddExperience;

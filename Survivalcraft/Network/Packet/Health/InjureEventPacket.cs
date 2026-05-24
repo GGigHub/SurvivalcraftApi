@@ -39,13 +39,13 @@ public class InjureEventPacket : Packet {
             var health = entity.FindComponent<ComponentHealth>();
             if (health == null) return;
             if (m_attackerId == 0) {
-                health.NetInjure(m_amount, null, m_cause);
+                health.Injure(m_amount, null, false, m_cause, true);
                 health.Health = m_health;
             }
             else {
                 GameManager.Project.FindEntity(m_attackerId, entity2 => {
                     var attacker = entity2.FindComponent<ComponentCreature>();
-                    health.NetInjure(m_amount, attacker, m_cause);
+                    health.Injure(m_amount, attacker, false, m_cause, true);
                     health.Health = m_health;
                 });
             }

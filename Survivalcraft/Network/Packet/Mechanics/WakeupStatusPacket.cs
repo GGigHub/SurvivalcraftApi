@@ -22,7 +22,7 @@ public class WakeupStatusPacket : Packet {
         if (isServer) return;
         GameManager.Project.FindEntity(m_entityId, e => {
             ComponentSleep sleep = e.FindComponent<ComponentSleep>();
-            sleep?.NetWakeUp();
+            sleep?.WakeUp(true);
         });
     }
 }

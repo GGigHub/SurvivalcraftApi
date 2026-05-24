@@ -29,7 +29,7 @@ public class FireBlockAddPacket : Packet {
         if (isServer) {
             return;
         }
-        GameManager.Project.FindSubsystem<SubsystemFireBlockBehavior>().AddFireNet(x, y, z, m_duration);
+        GameManager.Project.FindSubsystem<SubsystemFireBlockBehavior>().AddFire(x, y, z, m_duration, true);
     }
 }
 

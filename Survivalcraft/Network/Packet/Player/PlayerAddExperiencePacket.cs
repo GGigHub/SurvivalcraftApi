@@ -24,7 +24,7 @@ public class PlayerAddExperiencePacket : PlayerPacketBase {
     public override void Handle(bool isServer) {
         if (isServer || !TryResolvePlayer(false, out PlayerData playerData)) return;
         ComponentPlayer player = playerData.ComponentPlayer;
-        player.ComponentLevel.NetAddExperience(m_count, m_playSound);
+        player.ComponentLevel.AddExperience(m_count, m_playSound, true);
         player.PlayerData.Level = m_level;
     }
 }

@@ -356,7 +356,7 @@ namespace Game {
             return null;
         }
 
-        public virtual void ChangeCell(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null) {
+        public virtual void ChangeCell(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null, bool fromNetwork = false) {
             bool pass = false;
             ModsManager.HookAction(
                 "TerrainChangeCell",
@@ -371,12 +371,10 @@ namespace Game {
             if (pass) {
                 return;
             }
-            if (NetworkManager.IsNetworkMode) return;
-            ChangeCellNet(x, y, z, value, updateModificationCounter, movingBlock);
-            OnTerrainChangeCell?.Invoke(this, x, y, z, value);
-        }
-
-        public void ChangeCellNet(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                OnTerrainChangeCell?.Invoke(this, x, y, z, value);
+                return;
+            }
             if (!Terrain.IsCellValid(x, y, z)) {
                 return;
             }
@@ -401,6 +399,7 @@ namespace Game {
             catch (Exception e) {
                 Log.Error($"Block behavior on terrain change execute error: {e}");
             }
+            if (!fromNetwork) OnTerrainChangeCell?.Invoke(this, x, y, z, value);
         }
 
         public virtual void ChangeCellToBehavior(int x, int y, int z, int oldValue, int newValue, MovingBlock movingBlock) {

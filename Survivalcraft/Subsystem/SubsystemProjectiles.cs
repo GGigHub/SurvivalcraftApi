@@ -87,8 +87,16 @@ namespace Game {
             return projectile;
         }
 
-        public virtual Projectile AddProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) =>
-            AddProjectileWithSync(value, position, velocity, angularVelocity, owner);
+        public virtual Projectile AddProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                return null;
+            }
+            Projectile projectile = AddProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
+            if (projectile != null && !fromNetwork) {
+                OnProjectileFire?.Invoke(projectile);
+            }
+            return projectile;
+        }
 
         public virtual Projectile CreateProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) =>
             CreateProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
@@ -126,8 +134,16 @@ namespace Game {
             }
         }
 
-        public virtual Projectile FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) =>
-            FireProjectileWithSync(value, position, velocity, angularVelocity, owner);
+        public virtual Projectile FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                return null;
+            }
+            Projectile projectile = FireProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
+            if (projectile != null && !fromNetwork) {
+                OnProjectileFire?.Invoke(projectile);
+            }
+            return projectile;
+        }
 
         public virtual bool CanFireProjectile(int value, Vector3 position, Vector3 velocity, ComponentCreature owner, out Vector3 firePosition) {
             int num = Terrain.ExtractContents(value);
@@ -180,13 +196,7 @@ namespace Game {
             }
         }
 
-        public Projectile AddProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            return AddProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
-        }
 
-        public Projectile FireProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            return FireProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
-        }
 
         public virtual void AddTrail(Projectile projectile, Vector3 offset, ITrailParticleSystem particleSystem) {
             RemoveTrail(projectile);
@@ -356,27 +366,7 @@ namespace Game {
             matrix.Translation = position;
         }
 
-        Projectile AddProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            if (NetworkManager.IsNetworkMode) {
-                return null;
-            }
-            Projectile projectile = AddProjectileNet(value, position, velocity, angularVelocity, owner);
-            if (projectile != null) {
-                OnProjectileFire?.Invoke(projectile);
-            }
-            return projectile;
-        }
 
-        Projectile FireProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            if (NetworkManager.IsNetworkMode) {
-                return null;
-            }
-            Projectile projectile = FireProjectileNet(value, position, velocity, angularVelocity, owner);
-            if (projectile != null) {
-                OnProjectileFire?.Invoke(projectile);
-            }
-            return projectile;
-        }
     }
 }
 

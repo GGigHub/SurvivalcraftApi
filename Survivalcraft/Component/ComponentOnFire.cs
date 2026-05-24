@@ -42,20 +42,16 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        public virtual void SetOnFire(ComponentCreature attacker, float duration) {
-            if (NetworkManager.IsNetworkMode) {
+        public virtual void SetOnFire(ComponentCreature attacker, float duration, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                OnSetOnFire?.Invoke(this, attacker, duration);
                 return;
             }
-
-            OnSetOnFire?.Invoke(this, attacker, duration);
-            SetOnFireNet(attacker, duration);
-        }
-
-        public void SetOnFireNet(ComponentCreature attacker, float duration) {
             if (!IsOnFire) {
                 Attacker = attacker;
             }
             m_fireDuration = MathUtils.Max(m_fireDuration, duration);
+            if (!fromNetwork) OnSetOnFire?.Invoke(this, attacker, duration);
         }
 
         public virtual void Extinguish() {

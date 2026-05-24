@@ -33,7 +33,7 @@ public class SleepStatusPacket : Packet {
             ComponentSleep sleep = e.FindComponent<ComponentSleep>();
             if (sleep != null) {
                 if (m_result) {
-                    sleep.NetSleep(allowManualWakeup);
+                    sleep.Sleep(allowManualWakeup, true);
                 }
                 else {
                     var player = sleep.Entity.FindComponent<ComponentPlayer>();

@@ -46,7 +46,7 @@ public class MovingBlockRemovePacket : Packet {
             subsystemMovingBlocks.DoStop(movingSet as SubsystemMovingBlocks.MovingBlockSet);
         }
         else {
-            subsystemMovingBlocks.RemoveMovingBlockSetLogic(movingSet);
+            subsystemMovingBlocks.RemoveMovingBlockSet(movingSet, true);
         }
     }
 }

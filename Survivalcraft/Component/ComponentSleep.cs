@@ -68,37 +68,29 @@ namespace Game {
             return true;
         }
 
-        public virtual void Sleep(bool allowManualWakeup) {
-            if (!NetworkManager.IsNetworkMode) {
-                NetSleep(allowManualWakeup);
-            }
-            OnSleepEvent?.Invoke(this, allowManualWakeup);
-        }
-
-        public void NetSleep(bool allowManualWakeup) {
-            if (!IsSleeping) {
-                m_sleepStartTime = m_subsystemGameInfo.TotalElapsedGameTime;
-                m_allowManualWakeUp = allowManualWakeup;
-                m_minWetness = float.MaxValue;
-                m_messageFactor = 0f;
-                if (m_componentPlayer.PlayerStats != null) {
-                    m_componentPlayer.PlayerStats.TimesWentToSleep++;
+        public virtual void Sleep(bool allowManualWakeup, bool fromNetwork = false) {
+            if (!NetworkManager.IsNetworkMode || fromNetwork) {
+                if (!IsSleeping) {
+                    m_sleepStartTime = m_subsystemGameInfo.TotalElapsedGameTime;
+                    m_allowManualWakeUp = allowManualWakeup;
+                    m_minWetness = float.MaxValue;
+                    m_messageFactor = 0f;
+                    if (m_componentPlayer.PlayerStats != null) {
+                        m_componentPlayer.PlayerStats.TimesWentToSleep++;
+                    }
                 }
             }
+            if (!fromNetwork) OnSleepEvent?.Invoke(this, allowManualWakeup);
         }
 
-        public virtual void WakeUp() {
-            if (!NetworkManager.IsNetworkMode) {
-                NetWakeUp();
+        public virtual void WakeUp(bool fromNetwork = false) {
+            if (!NetworkManager.IsNetworkMode || fromNetwork) {
+                if (m_sleepStartTime.HasValue) {
+                    m_sleepStartTime = null;
+                    m_componentPlayer.PlayerData.SpawnPosition = m_componentPlayer.ComponentBody.Position + new Vector3(0f, 0.1f, 0f);
+                }
             }
-            OnWakeUpEvent?.Invoke(this);
-        }
-
-        public void NetWakeUp() {
-            if (m_sleepStartTime.HasValue) {
-                m_sleepStartTime = null;
-                m_componentPlayer.PlayerData.SpawnPosition = m_componentPlayer.ComponentBody.Position + new Vector3(0f, 0.1f, 0f);
-            }
+            if (!fromNetwork) OnWakeUpEvent?.Invoke(this);
         }
 
         public virtual void Update(float dt) {

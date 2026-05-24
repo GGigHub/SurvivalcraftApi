@@ -51,94 +51,66 @@ namespace Game {
 
         public event Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
 
-        public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (NetworkManager.IsNetworkMode) return;
-            PlayIdleSoundLogic(skipIfRecentlyPlayed);
-        }
-
-        public void PlayIdleSoundLogic(bool skipIfRecentlyPlayed) {
+        public virtual void PlayIdleSound(bool skipIfRecentlyPlayed, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (!string.IsNullOrEmpty(m_idleSound) && m_subsystemTime.GameTime > m_lastSoundTime + (skipIfRecentlyPlayed ? 12f : 1f)) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_idleSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_idleSoundMinDistance, autoDelay: false);
-                OnPlaySound?.Invoke(this, 0, skipIfRecentlyPlayed);
+                if (!fromNetwork) OnPlaySound?.Invoke(this, 0, skipIfRecentlyPlayed);
             }
         }
 
-        public virtual void PlayPainSound() {
-            if (NetworkManager.IsNetworkMode) return;
-            PlayPainSoundLogic();
-        }
-
-        public void PlayPainSoundLogic() {
+        public virtual void PlayPainSound(bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (!string.IsNullOrEmpty(m_painSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_painSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_painSoundMinDistance, autoDelay: false);
-                OnPlaySound?.Invoke(this, 1, false);
+                if (!fromNetwork) OnPlaySound?.Invoke(this, 1, false);
             }
         }
 
-        public virtual void PlayMoanSound() {
-            if (NetworkManager.IsNetworkMode) return;
-            PlayMoanSoundLogic();
-        }
-
-        public void PlayMoanSoundLogic() {
+        public virtual void PlayMoanSound(bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (!string.IsNullOrEmpty(m_moanSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_moanSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_moanSoundMinDistance, autoDelay: false);
-                OnPlaySound?.Invoke(this, 2, false);
+                if (!fromNetwork) OnPlaySound?.Invoke(this, 2, false);
             }
         }
 
-        public virtual void PlaySneezeSound() {
-            if (NetworkManager.IsNetworkMode) return;
-            PlaySneezeSoundLogic();
-        }
-
-        public void PlaySneezeSoundLogic() {
+        public virtual void PlaySneezeSound(bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (!string.IsNullOrEmpty(m_sneezeSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_sneezeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_sneezeSoundMinDistance, autoDelay: false);
-                OnPlaySound?.Invoke(this, 3, false);
+                if (!fromNetwork) OnPlaySound?.Invoke(this, 3, false);
             }
         }
 
-        public void PlayCoughSound() {
-            if (NetworkManager.IsNetworkMode) return;
-            PlayCoughSoundLogic();
-        }
-
-        public void PlayCoughSoundLogic() {
+        public void PlayCoughSound(bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (!string.IsNullOrEmpty(m_coughSound) && m_subsystemTime.GameTime > m_lastCoughingSoundTime + 1.0) {
                 m_lastCoughingSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_coughSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_coughSoundMinDistance, autoDelay: false);
-                OnPlaySound?.Invoke(this, 4, false);
+                if (!fromNetwork) OnPlaySound?.Invoke(this, 4, false);
             }
         }
 
-        public virtual void PlayPukeSound() {
-            if (NetworkManager.IsNetworkMode) return;
-            PlayPukeSoundLogic();
-        }
-
-        public void PlayPukeSoundLogic() {
+        public virtual void PlayPukeSound(bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (!string.IsNullOrEmpty(m_pukeSound) && m_subsystemTime.GameTime > m_lastPukeSoundTime + 1.0) {
                 m_lastPukeSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_pukeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_pukeSoundMinDistance, autoDelay: false);
-                OnPlaySound?.Invoke(this, 5, false);
+                if (!fromNetwork) OnPlaySound?.Invoke(this, 5, false);
             }
         }
 
-        public virtual void PlayAttackSound() {
-            if (NetworkManager.IsNetworkMode) return;
-            PlayAttackSoundLogic();
-        }
-
-        public void PlayAttackSoundLogic() {
+        public virtual void PlayAttackSound(bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (!string.IsNullOrEmpty(m_attackSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_attackSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_attackSoundMinDistance, autoDelay: false);
-                OnPlaySound?.Invoke(this, 6, false);
+                if (!fromNetwork) OnPlaySound?.Invoke(this, 6, false);
             }
         }
 

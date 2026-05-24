@@ -32,7 +32,7 @@ public class TerrainRequestChangeCellPacket : Packet {
         int chunkZ = m_Z >> 4;
         TerrainChunk chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
         if (chunk != null) {
-            subsystemTerrain.ChangeCell(m_X, m_Y, m_Z, m_value);
+            subsystemTerrain.ChangeCell(m_X, m_Y, m_Z, m_value, true, fromNetwork: true);
         }
     }
 }

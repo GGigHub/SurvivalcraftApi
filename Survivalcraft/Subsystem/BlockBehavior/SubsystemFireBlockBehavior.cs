@@ -363,14 +363,12 @@ namespace Game {
             }
         }
 
-        public void AddFire(int x, int y, int z, float expandability) {
-            if (!NetworkManager.IsNetworkMode) {
+        public void AddFire(int x, int y, int z, float expandability, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) {
                 OnFireBlockAdd?.Invoke(x, y, z, expandability);
-                AddFireNet(x, y, z, expandability);
+                return;
             }
-        }
 
-        public void AddFireNet(int x, int y, int z, float expandability) {
             Point3 point = new(x, y, z);
             if (!m_fireData.ContainsKey(point)) {
                 FireData fireData = new() { Point = point, FireExpandability = expandability };
@@ -379,14 +377,12 @@ namespace Game {
             }
         }
 
-        public void RemoveFire(int x, int y, int z) {
-            if (!NetworkManager.IsNetworkMode) {
+        public void RemoveFire(int x, int y, int z, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) {
                 OnFireBlockRemove?.Invoke(x, y, z);
-                RemoveFireNet(x, y, z);
+                return;
             }
-        }
 
-        public void RemoveFireNet(int x, int y, int z) {
             Point3 key = new(x, y, z);
             m_fireData.Remove(key);
         }

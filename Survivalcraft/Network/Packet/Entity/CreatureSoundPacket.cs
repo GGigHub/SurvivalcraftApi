@@ -26,13 +26,13 @@ public class CreatureSoundPacket : Packet {
             if (creatureSound == null) {
                 return;
             }
-            if (m_type == 0) creatureSound.PlayIdleSoundLogic(m_skipIfRecentlyPlayed);
-            else if (m_type == 1) creatureSound.PlayPainSoundLogic();
-            else if (m_type == 2) creatureSound.PlayMoanSoundLogic();
-            else if (m_type == 3) creatureSound.PlaySneezeSoundLogic();
-            else if (m_type == 4) creatureSound.PlayCoughSoundLogic();
-            else if (m_type == 5) creatureSound.PlayPukeSoundLogic();
-            else if (m_type == 6) creatureSound.PlayAttackSoundLogic();
+            if (m_type == 0) creatureSound.PlayIdleSound(m_skipIfRecentlyPlayed, true);
+            else if (m_type == 1) creatureSound.PlayPainSound(true);
+            else if (m_type == 2) creatureSound.PlayMoanSound(true);
+            else if (m_type == 3) creatureSound.PlaySneezeSound(true);
+            else if (m_type == 4) creatureSound.PlayCoughSound(true);
+            else if (m_type == 5) creatureSound.PlayPukeSound(true);
+            else if (m_type == 6) creatureSound.PlayAttackSound(true);
         });
     }
 }

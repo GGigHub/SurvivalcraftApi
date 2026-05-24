@@ -35,7 +35,7 @@ public class TerrainChangeCellListPacket : TerrainPacketBase {
             int chunkZ = cellChange.Z >> 4;
             TerrainChunk chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
             if (chunk != null) {
-                subsystemTerrain.ChangeCellNet(cellChange.X, cellChange.Y, cellChange.Z, cellChange.Value);
+                subsystemTerrain.ChangeCell(cellChange.X, cellChange.Y, cellChange.Z, cellChange.Value, true, fromNetwork: true);
             }
         }
     }

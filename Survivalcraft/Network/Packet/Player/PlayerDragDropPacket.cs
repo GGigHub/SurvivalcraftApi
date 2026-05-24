@@ -42,7 +42,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
                 }
                 return;
             }
-            playerData.ComponentPlayer.ViewWidget.NetDragDrop(m_hitPosition, new InventoryDragData { Inventory = inventory, SlotIndex = m_slotIndex }, m_count);
+            playerData.ComponentPlayer.ViewWidget.DragDrop(m_hitPosition, new InventoryDragData { Inventory = inventory, SlotIndex = m_slotIndex }, m_count, true);
         });
     }
 

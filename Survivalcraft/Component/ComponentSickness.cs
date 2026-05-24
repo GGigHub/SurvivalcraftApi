@@ -29,12 +29,8 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        public virtual void StartSickness() {
-            if (NetworkManager.IsNetworkMode) return;
-            StartSicknessNet();
-        }
-
-        public virtual void StartSicknessNet() {
+        public virtual void StartSickness(bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (m_sicknessDuration == 0f) {
                 m_componentPlayer.PlayerStats.TimesWasSick++;
             }

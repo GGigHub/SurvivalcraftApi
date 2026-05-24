@@ -49,7 +49,11 @@ namespace Game {
             Utilities.Dispose(ref m_scalingRenderTarget);
         }
 
-        public virtual void NetDragDrop(Vector3 hitPosition, InventoryDragData inventoryDragData, int count) {
+        public virtual void DragDrop(Vector3 hitPosition, InventoryDragData inventoryDragData, int count, bool fromNetwork = false) {
+            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                OnPlayerDragDrop?.Invoke(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, hitPosition, count);
+                return;
+            }
             if (inventoryDragData != null
                 && GameManager.Project != null) {
                 SubsystemPickables subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>(true);
@@ -86,12 +90,7 @@ namespace Game {
                 Vector2 screenPos = dragWidget.WidgetToScreen(dragWidget.ActualSize / 2f);
                 Vector3 worldPos = Vector3.Normalize(GameWidget.ActiveCamera.ScreenToWorld(new Vector3(screenPos.X, screenPos.Y, 1f), Matrix.Identity));
                 if (inventoryDragData != null && GameManager.Project != null) {
-                    if (NetworkManager.IsNetworkMode) {
-                        OnPlayerDragDrop?.Invoke(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count);
-                    }
-                    else {
-                        NetDragDrop(worldPos, inventoryDragData, count);
-                    }
+                    DragDrop(worldPos, inventoryDragData, count);
                 }
             }
         }

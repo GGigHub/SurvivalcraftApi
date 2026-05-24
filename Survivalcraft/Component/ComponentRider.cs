@@ -63,39 +63,17 @@ namespace Game {
             return result;
         }
 
-        public virtual void StartMounting(ComponentMount componentMount) {
-            if (!m_isAnimating
-                && Mount == null) {
-                if (!NetworkManager.IsNetworkMode) {
-                    StartNetMounting(componentMount);
-                    OnMounting?.Invoke(this, componentMount, false);
-                }
-                else {
-                    OnMounting?.Invoke(this, componentMount, true);
-                }
-            }
-        }
-
-        public virtual void StartDismounting() {
-            if (!m_isAnimating
-                && Mount != null) {
-                if (!NetworkManager.IsNetworkMode) {
-                    StartNetDismounting();
-                    OnDismounting?.Invoke(this, false);
-                }
-                else {
-                    OnDismounting?.Invoke(this, true);
-                }
-            }
-        }
-
         public event Action<ComponentRider, ComponentMount, bool> OnMounting;
 
         public event Action<ComponentRider, bool> OnDismounting;
 
-        public void StartNetMounting(ComponentMount componentMount) {
+        public virtual void StartMounting(ComponentMount componentMount, bool fromNetwork = false) {
             if (!m_isAnimating
                 && Mount == null) {
+                if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                    OnMounting?.Invoke(this, componentMount, true);
+                    return;
+                }
                 m_isAnimating = true;
                 m_animationTime = 0f;
                 m_isDismounting = false;
@@ -109,12 +87,19 @@ namespace Game {
                 m_targetPositionOffset = componentMount.MountOffset + m_riderOffset;
                 m_targetRotationOffset = Quaternion.Identity;
                 ComponentCreature.ComponentLocomotion.IsCreativeFlyEnabled = false;
+
+                if (!fromNetwork) OnMounting?.Invoke(this, componentMount, false);
             }
         }
 
-        public void StartNetDismounting() {
+        public virtual void StartDismounting(bool fromNetwork = false) {
             if (!m_isAnimating
                 && Mount != null) {
+                if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                    OnDismounting?.Invoke(this, true);
+                    return;
+                }
+
                 float x = 0f;
                 if (Mount.DismountOffset.X > 0f) {
                     float s = Mount.DismountOffset.X + 0.5f;
@@ -144,6 +129,8 @@ namespace Game {
                 m_isDismounting = true;
                 m_targetPositionOffset = Mount.MountOffset + m_riderOffset + new Vector3(x, Mount.DismountOffset.Y, Mount.DismountOffset.Z);
                 m_targetRotationOffset = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.Sign(x) * MathUtils.DegToRad(60f));
+
+                if (!fromNetwork) OnDismounting?.Invoke(this, false);
             }
         }
 
