@@ -2,7 +2,7 @@ using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
-using Game.Network;
+
 using GameEntitySystem;
 
 namespace Game {
@@ -17,6 +17,8 @@ namespace Game {
 
         public ComponentPlayer m_componentPlayer;
 
+        public static event Action<GameMenuDialog> OnGameMenuCreated; 
+
         public static string fName = "GameMenuDialog";
 
         public GameMenuDialog(ComponentPlayer componentPlayer) {
@@ -24,7 +26,7 @@ namespace Game {
             LoadContents(this, node);
             m_statsPanel = Children.Find<StackPanelWidget>("StatsPanel");
             m_componentPlayer = componentPlayer;
-            if (!NetworkManager.IsClient && GameManager.WorldInfo != null)
+            if (!NetworkManager.IsNetworkMode && GameManager.WorldInfo != null)
                 m_adventureRestartExists = WorldsManager.SnapshotExists(GameManager.WorldInfo.DirectoryName, "AdventureRestart");
             if (!m_increaseDetailDialogShown
                 && PerformanceManager.LongTermAverageFrameTime.HasValue
@@ -62,22 +64,6 @@ namespace Game {
             m_statsPanel.Children.Add(stackPanelWidget);
             stackPanelWidget.Children.Add(
                 new LabelWidget {
-                    Text = LanguageControl.Get(fName, "ServerInfo"),
-                    Font = font,
-                    HorizontalAlignment = WidgetAlignment.Center,
-                    Margin = new Vector2(0f, 10f),
-                    Color = white
-                }
-            );
-            if (NetworkManager.IsServer) {
-                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerIP"), NetworkHelper.GetInnerIp() + ":" + SettingsManager.ServerPort);
-                string serverMode = SettingsManager.IsPublicServer
-                    ? LanguageControl.Get(fName, "ServerModeWAN")
-                    : LanguageControl.Get(fName, "ServerModeLAN");
-                AddStat(stackPanelWidget, LanguageControl.Get(fName, "ServerMode"), serverMode);
-            }
-            stackPanelWidget.Children.Add(
-                new LabelWidget {
                     Text = LanguageControl.Get(fName, 5),
                     Font = font,
                     HorizontalAlignment = WidgetAlignment.Center,
@@ -85,6 +71,7 @@ namespace Game {
                     Color = white
                 }
             );
+            OnGameMenuCreated?.Invoke(this);
             AddStat(
                 stackPanelWidget,
                 LanguageControl.Get(fName, 6),

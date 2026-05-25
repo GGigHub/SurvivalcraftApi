@@ -1,4 +1,4 @@
-using Game.Network;
+
 using GameEntitySystem;
 
 namespace Game;
@@ -23,7 +23,7 @@ public class SubsystemInventories : Subsystem {
             return inventory.Id;
         }
         else {
-            if (GameManager.IsNetworkMode) {
+            if (NetworkManager.IsNetworkMode) {
                 inventories[inventory.Id] = inventory;
                 return inventory.Id;
             }

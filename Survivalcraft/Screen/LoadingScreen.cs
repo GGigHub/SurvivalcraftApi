@@ -5,7 +5,7 @@ using System.Reflection;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
-using Game.Network;
+
 #if ANDROID
 using Android.App;
 #elif WINDOWS
@@ -163,7 +163,6 @@ namespace Game {
             Exception exception = null;
             AddLoadAction(
                 delegate { //灏嗘墍鏈夌殑鏈夋晥鐨剆cmod璇诲彇涓篗odEntity锛屽苟鑷姩娣诲姞SurvivalCraftModEntity
-                    PacketManager.Initialize();
                     ContentManager.Initialize();
                     ModsManager.Initialize();
                 }

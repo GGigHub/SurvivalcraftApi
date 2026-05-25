@@ -2,7 +2,7 @@
 using System.Text;
 using System.Xml.Linq;
 using Engine;
-using Game.Network;
+
 using TemplatesDatabase;
 
 namespace Game {

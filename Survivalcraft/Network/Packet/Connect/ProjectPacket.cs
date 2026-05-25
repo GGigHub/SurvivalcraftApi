@@ -42,7 +42,7 @@ public class ProjectPacket : Packet {
             return;
         }
         var s = ScreensManager.FindScreen<GameLoadingScreen>("GameLoading");
-        s.ReplyCall(hasTexture, m_textureData, m_projectData);
+        s.ReplyCall(m_projectData);
     }
 }
 

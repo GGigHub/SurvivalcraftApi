@@ -245,4 +245,8 @@ public class NetworkServer : INetEventListener {
 
     public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
     }
+
+    internal PlayerData GetPlayerByClient(Client client) {
+        throw new NotImplementedException();
+    }
 }

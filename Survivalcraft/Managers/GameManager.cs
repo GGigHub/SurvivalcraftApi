@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 using Engine;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 using XmlUtilities;
@@ -22,8 +22,6 @@ namespace Game {
         public static List<Func<bool>> SyncDispatcher = [];
 
         public static event Action<Project> ProjectDisposed;
-
-        public static bool IsNetworkMode;
 
         public const string fName = "GameManager";
 
@@ -92,7 +90,7 @@ namespace Game {
         }
 
         public static void SaveProject(bool waitForCompletion, bool showErrorDialog) {
-            if (m_project != null && NetworkManager.IsServer) {
+            if (m_project != null && !NetworkManager.IsNetworkMode) {
                 double realTime = Time.RealTime;
                 ProjectData projectData = m_project.Save();
                 m_saveCompleted.WaitOne();

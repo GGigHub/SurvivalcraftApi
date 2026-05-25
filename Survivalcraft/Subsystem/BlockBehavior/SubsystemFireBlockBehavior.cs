@@ -1,5 +1,5 @@
 using Engine;
-using Game.Network;
+
 using TemplatesDatabase;
 
 namespace Game {
@@ -364,7 +364,7 @@ namespace Game {
         }
 
         public void AddFire(int x, int y, int z, float expandability) {
-            if (!GameManager.IsNetworkMode) {
+            if (!NetworkManager.IsNetworkMode) {
                 OnFireBlockAdd?.Invoke(x, y, z, expandability);
                 AddFireNet(x, y, z, expandability);
             }
@@ -380,7 +380,7 @@ namespace Game {
         }
 
         public void RemoveFire(int x, int y, int z) {
-            if (!GameManager.IsNetworkMode) {
+            if (!NetworkManager.IsNetworkMode) {
                 OnFireBlockRemove?.Invoke(x, y, z);
                 RemoveFireNet(x, y, z);
             }

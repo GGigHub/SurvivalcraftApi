@@ -5,14 +5,12 @@ using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
-using Game.Network;
-using Stage = Game.Network.ClientState;
 
 namespace Game;
 
 public class GameLoadingScreen : Screen {
-    public static event Action<int, ClientState> OnClientStateChanged;
-    public static event Action<ComponentPlayer> OnPlayerIntoPlaying;
+    public static event Action<NetworkState> OnPlayerStateChanged;
+    public static event Action OnPlayerIntoPlaying;
 
     public WorldInfo m_worldInfo;
     public string m_worldSnapshotName;
@@ -21,9 +19,7 @@ public class GameLoadingScreen : Screen {
     public UnSeasonSpawnDialog spawnDialog = new UnSeasonSpawnDialog();
     private IPEndPoint m_serverEndPoint;
     public byte[] m_projectXmlData;
-    public byte[] m_blockTextureData;
     public bool IsServerReply;
-    public bool existBlockTexture;
     private string m_password;
     private bool IsAdventureRestart;
     private Stopwatch timer;
@@ -55,20 +51,20 @@ public class GameLoadingScreen : Screen {
         }, delegate {
             SetSpwanDialogMessage("等待服务器响应", 0.25f);
             // Fix me: 客户端中断连接后再次连接可能会卡住。
-            if (NetworkManager.IsClient && NetworkManager.Self?.State == Stage.NotConnected) {
+            if (NetworkManager.IsNetworkMode && NetworkManager.SelfState == NetworkState.NotConnected) {
                 if (timer.ElapsedMilliseconds >= 10000) {
                     NetworkManager.Stop();
                 }
             }
-            else if (NetworkManager.Self?.State == Stage.Connected) {
+            else if (NetworkManager.SelfState == NetworkState.Connected) {
                 m_stateMachine.TransitionTo("Loading");
             }
             else {
                 NetworkManager.Stop();
             }
         }, delegate {
-            if (NetworkManager.Self?.State == Stage.Connected) {
-                OnClientStateChanged?.Invoke(NetworkManager.Self.ID, ClientState.Connected);
+            if (NetworkManager.SelfState == NetworkState.Connected) {
+                OnPlayerStateChanged?.Invoke(NetworkState.Connected);
             }
         });
         m_stateMachine.AddState("Loading", null,
@@ -78,15 +74,16 @@ public class GameLoadingScreen : Screen {
                 if (IsServerReply) {
                     m_stateMachine.TransitionTo("LoadServerReply");
                 }
-                if (NetworkManager.Self?.State != Stage.Connected) {
+                if (NetworkManager.SelfState != NetworkState.Connected) {
                     NetworkManager.Stop();
                 }
             }
             else {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
-                if (IsAdventureRestart && NetworkManager.IsClient) {
-                    OnPlayerIntoPlaying?.Invoke(NetworkManager.MainPlayer);
+                if (IsAdventureRestart && NetworkManager.IsNetworkMode) {
+                    // 需要注入主玩家的概念
+                    OnPlayerIntoPlaying?.Invoke();
                 }
                 ScreensManager.SwitchScreen("Game");
             }
@@ -95,15 +92,13 @@ public class GameLoadingScreen : Screen {
         });
         m_stateMachine.AddState("LoadServerReply", null, delegate {
             SetSpwanDialogMessage("加载服务器 Project", 0.6f);
-            if (NetworkManager.Self?.State == Stage.Connected) {
+            if (NetworkManager.SelfState == NetworkState.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
-                NetworkManager.Self.State = Stage.ProjectLoaded;
-                OnClientStateChanged?.Invoke(NetworkManager.Self.ID, ClientState.ProjectLoaded);
+                NetworkManager.SelfState = NetworkState.ProjectLoaded;
+                OnPlayerStateChanged?.Invoke(NetworkState.ProjectLoaded);
                 ScreensManager.SwitchScreen("Game");
                 m_projectXmlData = null;
-                m_blockTextureData = null;
                 IsServerReply = false;
-                existBlockTexture = false;
             }
         }, null);
 
@@ -115,12 +110,8 @@ public class GameLoadingScreen : Screen {
         }, null);
     }
 
-    public void ReplyCall(bool hasTexure, byte[] textureData, byte[] projectData) {
+    public void ReplyCall(byte[] projectData) {
         IsServerReply = true;
-        if (hasTexure) {
-            if (NetworkManager.BlockTexture != null) NetworkManager.BlockTexture.Dispose();
-            NetworkManager.BlockTexture = Texture2D.Load(Image.Load(new MemoryStream(textureData)));
-        }
         m_projectXmlData = projectData;
     }
 

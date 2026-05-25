@@ -25,7 +25,7 @@ public class Client {
     public SubsystemPlayers SubsystemPlayers => GameManager.Project.FindSubsystem<SubsystemPlayers>();
     public bool IsConnected => Peer != null && Peer.ConnectionState != ConnectionState.Disconnected;
     public ClientState State { get; set; } = ClientState.NotConnected;
-    public PlayerData PlayerData { get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID); } }
+    public PlayerData PlayerData { get { return NetworkManager.GetPlayerByClient(this); } }
 
     public Client() { }
 
@@ -182,5 +182,9 @@ public class NetworkClient : INetEventListener {
     }
 
     public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
+    }
+
+    internal PlayerData GetPlayerByClient(Client client) {
+        throw new NotImplementedException();
     }
 }

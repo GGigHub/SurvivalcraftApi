@@ -1,7 +1,7 @@
 using System.Xml.Linq;
 using Engine;
 using Game;
-using Game.Network;
+
 using GameEntitySystem;
 
 public class GameWidget : CanvasWidget {

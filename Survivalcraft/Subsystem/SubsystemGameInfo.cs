@@ -1,4 +1,4 @@
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -121,7 +121,7 @@ namespace Game {
                 }
             }
             //客户端禁用时间计算
-            if (!NetworkManager.IsClient) {
+            if (!NetworkManager.IsNetworkMode) {
                 if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) OnTimeUpdate?.Invoke(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset);
             }
         }

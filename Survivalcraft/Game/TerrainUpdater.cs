@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using Engine;
-using Game.Network;
+
 
 namespace Game {
     public class TerrainUpdater {
@@ -217,8 +217,8 @@ namespace Game {
 
 
         public event Action<TerrainUpdater, List<Point2>> OnTerrainRequestSyncChunks;
-        public event Action<TerrainUpdater, Client, List<TerrainChunk>> OnTerrainSyncChunkList;
-        public event Action<TerrainUpdater, Client, List<Point2>> OnTerrainReplyResult;
+        public event Action<TerrainUpdater, ComponentPlayer, List<TerrainChunk>> OnTerrainSyncChunkList;
+        public event Action<TerrainUpdater, ComponentPlayer, List<Point2>> OnTerrainReplyResult;
         public event Action<TerrainUpdater, UpdateLocation> OnTerrainPlayerLocationUpdate;
 
         public AutoResetEvent UpdateEvent => m_updateEvent;
@@ -279,7 +279,7 @@ namespace Game {
                 value.ContentDistance = contentDistance;
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
-                if (GameManager.IsNetworkMode) {
+                if (NetworkManager.IsNetworkMode) {
                     OnTerrainPlayerLocationUpdate?.Invoke(this, value);
                 }
             }
@@ -399,7 +399,7 @@ namespace Game {
                 }
             }
             foreach (TerrainChunk terrainChunk in m_terrain.AllocatedChunks) {
-                if (NetworkManager.IsClient) {
+                if (NetworkManager.IsNetworkMode) {
                     if (terrainChunk.ThreadState == TerrainChunkState.NotLoaded) {
                         if (!terrainChunk.IsRequested) {
                             terrainChunk.IsRequested = true;
@@ -727,14 +727,14 @@ namespace Game {
             return list;
         }
 
-        public Dictionary<Client, List<Point2>> waitChunkList = new Dictionary<Client, List<Point2>>();
-        public List<Client> waitChunkList_toRemove = new List<Client>();
+        public Dictionary<ComponentPlayer, List<Point2>> waitChunkList = new Dictionary<ComponentPlayer, List<Point2>>();
+        public List<ComponentPlayer> waitChunkList_toRemove = new List<ComponentPlayer>();
 
         public virtual void UpdateChunkSingleStep(TerrainChunk chunk, int skylightValue) {
             switch (chunk.ThreadState) {
                 case TerrainChunkState.NotLoaded: {
                         double realTime19 = Time.RealTime;
-                        if (NetworkManager.IsClient) {
+                        if (NetworkManager.IsNetworkMode) {
                             chunk.WasUpgraded = true;
                         }
                         else {

@@ -1,6 +1,6 @@
 using Engine;
 
-namespace Game.Network;
+namespace Game;
 
 public abstract class NetworkSimulate<T> {
     protected T Base;

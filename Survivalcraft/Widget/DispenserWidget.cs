@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 using Engine;
-using Game.Network;
+
 
 namespace Game {
     public class DispenserWidget : CanvasWidget {
@@ -75,7 +75,7 @@ namespace Game {
                 flag = true;
             }
             DispenserBlock.Mode mode = DispenserBlock.GetMode(data);
-            if (flag && NetworkManager.IsClient) {
+            if (flag && NetworkManager.IsNetworkMode) {
                 byte tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) | (DispenserBlock.GetAcceptsDrops(data) ? (1 << 1) : 0));
                 OnDispenserUpdate?.Invoke(m_componentBlockEntity.Coordinates, tmp);
             }

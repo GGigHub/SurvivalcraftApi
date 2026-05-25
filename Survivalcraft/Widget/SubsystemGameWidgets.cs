@@ -1,5 +1,5 @@
-﻿using Engine;
-using Game.Network;
+using Engine;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -32,7 +32,6 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable {
 
     public UpdateOrder UpdateOrder => UpdateOrder.Views;
 
-    public PlayerData MainPlayerData = null;
 
     public float CalculateSquaredDistanceFromNearestView(Vector3 p) {
         float num = float.MaxValue;
@@ -66,9 +65,6 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable {
                 RemoveGameWidget(playerData.GameWidget);
             }
         };
-        if (NetworkManager.MainPlayer != null) {
-            MainPlayerData = NetworkManager.MainPlayer.PlayerData;
-        }
         GamesWidget = valuesDictionary.GetValue<GamesWidget>("GamesWidget");
         foreach (PlayerData playersDatum in m_subsystemPlayers.PlayersData) {
             AddGameWidgetForPlayer(playersDatum);

@@ -404,7 +404,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (GameManager.IsNetworkMode) {
+            if (NetworkManager.IsNetworkMode) {
                 m_remainingSimulationTime = MathUtils.Min(m_remainingSimulationTime + dt, 0.1f);
                 FrameStartCircuitStep = CircuitStep;
                 while (m_remainingSimulationTime >= 0.01f) {

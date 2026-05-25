@@ -1,6 +1,6 @@
 using System.Net;
 using System.Xml.Linq;
-using Game.Network;
+
 
 namespace Game {
     public class ConnectServerDialog : Dialog {

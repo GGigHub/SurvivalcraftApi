@@ -1,5 +1,5 @@
 using Engine;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -26,6 +26,8 @@ namespace Game {
         public event Action<PlayerData> PlayerAdded;
 
         public event Action<PlayerData> PlayerRemoved;
+
+        public event Action<PlayerData> PlayerFirstUpdated;
 
         private PlayerData m_mainPlayer;
 
@@ -102,6 +104,7 @@ namespace Game {
 
             if (playerData.m_stateMachine.CurrentState == null) {
                 playerData.m_stateMachine.TransitionTo("FirstUpdate");
+                PlayerFirstUpdated?.Invoke(playerData);
             }
 
             m_subsystemTerrain?.TerrainUpdater?.SetLastChunksUpdateCenter(-1, null);
@@ -134,12 +137,7 @@ namespace Game {
                 ScreensManager.SwitchScreen("Player", PlayerScreen.Mode.Initial, Project);
             }
             foreach (PlayerData playersDatum in m_playersData) {
-                if (!GameManager.IsNetworkMode && playersDatum.Client == null) {
-                    toRemove.Add(playersDatum);
-                }
-                else {
-                    playersDatum.Update();
-                }
+                playersDatum.Update();
             }
             foreach (PlayerData playerData in toRemove) {
                 MakePlayerOffline(playerData.NetworkGuid);
@@ -232,8 +230,8 @@ namespace Game {
             var pd = m_playersData.Find(p => p.NetworkGuid == NetworkGuid);
             if (pd != null) {
                 var updater = m_subsystemTerrain.TerrainUpdater;
-                if (pd.Client != null && updater != null && updater.waitChunkList != null && updater.waitChunkList.ContainsKey(pd.Client)) {
-                    updater.waitChunkList.Remove(pd.Client);
+                if (updater != null && updater.waitChunkList != null && updater.waitChunkList.ContainsKey(pd.ComponentPlayer)) {
+                    updater.waitChunkList.Remove(pd.ComponentPlayer);
                 }
                 var componentPlayer = pd.ComponentPlayer;
                 if (componentPlayer == null && m_offlinePlayerEntities.TryGetValue(NetworkGuid, out var entityDataPlayer)) {
@@ -247,7 +245,7 @@ namespace Game {
                 }
                 if (componentPlayer != null) {
                     Project.RemoveEntity(componentPlayer.Entity, true);
-                    if (!GameManager.IsNetworkMode) {
+                    if (!NetworkManager.IsNetworkMode) {
                         componentPlayer.SavePlayerEntity();
                     }
                 }
@@ -266,7 +264,7 @@ namespace Game {
         }
 
         public bool MakePlayerOnline(Guid NetworkGuid, out PlayerData playerData, out Entity entity) {
-            if (CheckPlayerDataExists(NetworkGuid, out string entityFilePath) && !GameManager.IsNetworkMode) {
+            if (CheckPlayerDataExists(NetworkGuid, out string entityFilePath) && !NetworkManager.IsNetworkMode) {
                 playerData = new PlayerData(Project);
                 ValuesDictionary dict = new ValuesDictionary();
                 using (Stream s = Storage.OpenFile(entityFilePath, OpenFileMode.Read)) {
@@ -304,11 +302,6 @@ namespace Game {
             playerData = null;
             entity = null;
             return false;
-        }
-
-        public void FindPlayerByClientId(byte id, Action<ComponentPlayer> action) {
-            ComponentPlayer player = m_componentPlayers.FirstOrDefault(p => p.PlayerData.ClientId.HasValue && p.PlayerData.ClientId.Value == id);
-            action?.Invoke(player);
         }
 
         public PlayerData FindPlayerData(Func<PlayerData, bool> f) {

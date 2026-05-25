@@ -1,5 +1,5 @@
 using Engine;
-using Game.Network;
+
 using GameEntitySystem;
 using System;
 using TemplatesDatabase;
@@ -42,7 +42,7 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Damage(float amount) {
-            if (GameManager.IsNetworkMode) {
+            if (NetworkManager.IsNetworkMode) {
                 return;
             }
 

@@ -1,11 +1,11 @@
 using System.Globalization;
 using System.Xml.Linq;
 using Engine;
-using Game.Network;
+
 
 namespace Game {
     public class VitalStatsWidget : CanvasWidget {
-        public static event Action<ComponentHealth, ComponentCreature, float, string, bool, InjureRequestPacket.RequestInjureType> OnChokeRequest;
+        public static event Action<ComponentHealth, ComponentCreature, float, string, bool> OnChokeRequest;
         public ButtonWidget m_chokeButton;
         public LabelWidget m_titleLabel;
         public LinkWidget m_healthLink;
@@ -196,14 +196,13 @@ namespace Game {
                 );
             }
             if (m_chokeButton.IsClicked) {
-                if (GameManager.IsNetworkMode) {
+                if (NetworkManager.IsNetworkMode) {
                     OnChokeRequest?.Invoke(
                         m_componentPlayer.ComponentHealth,
                         null,
                         0.1f,
                         LanguageControl.GetContentWidgets(fName, "Choked"),
-                        true,
-                        InjureRequestPacket.RequestInjureType.Choke
+                        true
                     );
                 }
                 else {

@@ -3,7 +3,7 @@ using System.Text;
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -199,7 +199,7 @@ namespace Game {
                 GenerateGeometry(movingBlockSet);
             }
             m_movingBlockSets.Add(movingBlockSet);
-            if (!NetworkManager.IsClient) {
+            if (!NetworkManager.IsNetworkMode) {
                 m_movingBlockSets.Add(movingBlockSet);
                 OnMovingBlockAdd?.Invoke(movingBlockSet);
             }
@@ -207,7 +207,7 @@ namespace Game {
         }
 
         public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet) {
-            if (Network.NetworkManager.IsClient) return;
+            if (NetworkManager.IsNetworkMode) return;
             MovingBlockSet movingBlockSet2 = (MovingBlockSet)movingBlockSet;
             if (m_movingBlockSets.Remove(movingBlockSet2)) {
                 m_removing.Add(movingBlockSet2);
@@ -423,7 +423,7 @@ namespace Game {
             foreach (MovingBlockSet item in m_stopped) {
                 Stopped?.Invoke(item);
             }
-            if (!NetworkManager.IsClient) {
+            if (!NetworkManager.IsNetworkMode) {
                 foreach (MovingBlockSet item in m_stopped) {
                     DoStop(item);
                     OnMovingBlockRemove?.Invoke(item, true);

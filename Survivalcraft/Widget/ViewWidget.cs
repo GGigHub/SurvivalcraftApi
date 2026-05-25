@@ -1,6 +1,6 @@
 using Engine;
 using Engine.Graphics;
-using Game.Network;
+
 
 namespace Game {
     public class ViewWidget : TouchInputWidget, IDragTargetWidget {
@@ -86,7 +86,7 @@ namespace Game {
                 Vector2 screenPos = dragWidget.WidgetToScreen(dragWidget.ActualSize / 2f);
                 Vector3 worldPos = Vector3.Normalize(GameWidget.ActiveCamera.ScreenToWorld(new Vector3(screenPos.X, screenPos.Y, 1f), Matrix.Identity));
                 if (inventoryDragData != null && GameManager.Project != null) {
-                    if (GameManager.IsNetworkMode) {
+                    if (NetworkManager.IsNetworkMode) {
                         OnPlayerDragDrop?.Invoke(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count);
                     }
                     else {

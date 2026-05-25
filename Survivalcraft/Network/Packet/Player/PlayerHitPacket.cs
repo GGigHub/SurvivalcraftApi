@@ -10,7 +10,7 @@ public class PlayerHitPacket : PlayerPacketBase {
     public Vector3 m_hitDirection;
     public PlayerHitPacket() { }
     public PlayerHitPacket(ComponentPlayer player, ComponentBody body, Vector3 hitPosition, Vector3 hitDirection) {
-        m_fromPlayerId = player.PlayerData?.ClientId ?? 0;
+        m_fromPlayerId = NetworkManager.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
         bodyId = body.Entity.Id;
         m_hitPosition = hitPosition;
         m_hitDirection = hitDirection;

@@ -1,5 +1,5 @@
 using Engine;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -176,7 +176,7 @@ namespace Game {
                 IsCreativeFlyEnabled = false;
             }*/
             OnLocomotionUpdate?.Invoke(this, dt);
-            if (GameManager.IsNetworkMode) {
+            if (NetworkManager.IsNetworkMode) {
                 LookAngles = NetLookAngles.Get(dt);
                 NormalMovement(dt);
                 return;

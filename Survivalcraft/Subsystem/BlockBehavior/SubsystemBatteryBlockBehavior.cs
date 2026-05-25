@@ -1,4 +1,4 @@
-using Game.Network;
+
 
 namespace Game {
     public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior {
@@ -23,7 +23,7 @@ namespace Game {
                         int data2 = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
                         int num = Terrain.ReplaceData(value, data2);
                         if (num != value) {
-                            if (!GameManager.IsNetworkMode) {
+                            if (!NetworkManager.IsNetworkMode) {
                                 inventory.RemoveSlotItems(slotIndex, count);
                                 inventory.AddSlotItems(slotIndex, num, count);
                             }
@@ -47,7 +47,7 @@ namespace Game {
                         if (num != data) {
                             int face = 4;
                             var cell = new CellFace(x, y, z, face);
-                            if (!GameManager.IsNetworkMode) {
+                            if (!NetworkManager.IsNetworkMode) {
                                 int newValue = Terrain.ReplaceData(value, num);
                                 SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }

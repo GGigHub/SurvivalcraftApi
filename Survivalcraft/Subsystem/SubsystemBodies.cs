@@ -1,11 +1,11 @@
 using Engine;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemBodies : Subsystem, IUpdateable {
-        public event Action<Client, List<ComponentBody>> OnBodiesUpdate;
+        public event Action<ComponentBody> OnBodyUpdate;
         public const float m_areaSize = 8f;
 
         public DynamicArray<ComponentBody> m_componentBodies = [];
@@ -118,55 +118,13 @@ namespace Game {
             }
         }
 
-
-        private Dictionary<Client, List<ComponentBody>> _toSendList = [];
-
         public SubsystemPlayers m_subsystemPlayers;
 
         public SubsystemTerrain m_subsystemTerrain;
 
         public virtual void Update(float dt) {
-            if (!GameManager.IsNetworkMode) {
-                bool flag = Time.PeriodicEvent(0.1, 0.0);
-                _toSendList.Clear();
-                foreach (ComponentBody body in Bodies) {
-                    UpdateBody(body);
-                    if (flag) {
-                        foreach (var playerData in m_subsystemPlayers.PlayersData) {
-                            if (playerData.IsMainPlayer) continue;
-                            if (playerData.Client != null && playerData.ComponentPlayer != null && m_subsystemTerrain.TerrainUpdater.UpdateLocations.ContainsKey(playerData.PlayerIndex) && IsBodyInRange(body.Position.XZ, m_subsystemTerrain.TerrainUpdater.UpdateLocations[playerData.PlayerIndex])) {
-                                if (!_toSendList.TryGetValue(playerData.Client, out var list)) { list = new List<ComponentBody>(); _toSendList.Add(playerData.Client, list); }
-                                if (body.Player == null && body.ChildBodies.Count == 0 && flag) {
-                                    list.Add(body);
-                                }
-                            }
-                        }
-                    }
-                }
-                if (_toSendList.Count > 0) {
-                    foreach (var item in _toSendList) {
-                        if (item.Value.Count > 0) {
-                            OnBodiesUpdate?.Invoke(item.Key, item.Value);
-                        }
-                    }
-                    //在这里重置标志
-                    foreach (var item in _toSendList) {
-                        foreach (var body in item.Value) {
-                            body.SendPosition = null;
-                            body.SendRotation = null;
-                            body.SendVelocity = null;
-                            if (body.Locomotion != null) {
-                                body.Locomotion.SendLookAngles = null;
-                                body.Locomotion.FlyOrderChange = false;
-                            }
-                        }
-                    }
-                }
-            }
-            else {
-                foreach (ComponentBody body in Bodies) {
-                    UpdateBody(body);
-                }
+            foreach (ComponentBody body in Bodies) {
+                UpdateBody(body);
             }
         }
 
@@ -217,6 +175,7 @@ namespace Game {
                 }
                 value.Add(componentBody);
             }
+            OnBodyUpdate?.Invoke(componentBody);
         }
 
         public void ComponentBody_PositionChanged(ComponentFrame componentFrame) {

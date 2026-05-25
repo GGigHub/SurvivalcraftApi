@@ -1,7 +1,7 @@
 using System.Globalization;
 using Engine;
 using Engine.Graphics;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -189,7 +189,7 @@ namespace Game {
         public static bool DrawGalaxyEnabled = true;
 
         public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual) {
-            if (!GameManager.IsNetworkMode) {
+            if (!NetworkManager.IsNetworkMode) {
                 NetMakeLightningStrike(targetPosition, manual);
                 OnSkyLightning?.Invoke(targetPosition);
             }

@@ -25,11 +25,11 @@ public abstract class PlayerPacketBase : Packet {
 
     public static PlayerData ResolvePlayer(byte clientId) {
         return GameManager.Project.FindSubsystem<SubsystemPlayers>()
-            .FindPlayerData(playerData => playerData.ClientId.HasValue && playerData.ClientId.Value == clientId);
+            .FindPlayerData(playerData => NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID == clientId);
     }
 
     public static bool ValidateServerSender(PlayerData playerData, Client from) {
-        return playerData != null && from != null && playerData.ClientId == from.ID;
+        return playerData != null && from != null && NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID == from.ID;
     }
 
     public static bool ThrottleHit(PlayerData playerData) {
@@ -54,7 +54,7 @@ public abstract class PlayerPacketBase : Packet {
 
     protected void SerializePlayerId(PacketSerializer archive, PlayerData playerData) {
         if (archive.IsWriting && playerData != null) {
-            m_fromPlayerId = playerData?.ClientId ?? 0;
+            m_fromPlayerId = NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID;
         }
         archive.Value(ref m_fromPlayerId);
     }

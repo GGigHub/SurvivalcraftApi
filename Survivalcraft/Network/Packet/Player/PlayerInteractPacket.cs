@@ -11,7 +11,7 @@ public class PlayerInteractPacket : PlayerPacketBase {
 
     public PlayerInteractPacket() { }
     public PlayerInteractPacket(ComponentPlayer player) {
-        m_fromPlayerId = player.PlayerData?.ClientId ?? 0;
+        m_fromPlayerId = NetworkManager.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
         m_interactEvent = player.interactEvent.interactEvent;
         m_netInteractRay = player.interactEvent.NetInteractRay;
         m_netInteractRaycast = player.interactEvent.NetPlaceRaycast;

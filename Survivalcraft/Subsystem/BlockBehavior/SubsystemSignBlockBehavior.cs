@@ -2,7 +2,7 @@ using System.Globalization;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
-using Game.Network;
+
 using TemplatesDatabase;
 
 namespace Game {
@@ -165,7 +165,7 @@ namespace Game {
                 }
             }
             else if (componentMiner.ComponentPlayer != null) {
-                if (GameManager.IsNetworkMode && IsMainPlayer?.Invoke(componentMiner.ComponentPlayer) == true) {
+                if (NetworkManager.IsNetworkMode && IsMainPlayer?.Invoke(componentMiner.ComponentPlayer) == true) {
                     OnEditSignRequest?.Invoke(this, point);
                     return true;
                 }

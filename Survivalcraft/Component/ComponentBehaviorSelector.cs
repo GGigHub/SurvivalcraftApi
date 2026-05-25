@@ -1,4 +1,4 @@
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -14,7 +14,7 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Update(float dt) {
-            if (GameManager.IsNetworkMode) return;
+            if (NetworkManager.IsNetworkMode) return;
 
             ComponentBehavior componentBehavior = null;
             if (m_componentCreature.ComponentHealth.Health > 0f

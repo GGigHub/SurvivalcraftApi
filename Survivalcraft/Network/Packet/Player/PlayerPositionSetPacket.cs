@@ -9,7 +9,7 @@ public class PlayerPositionSetPacket : PlayerPacketBase {
     public Vector3 Velocity;
     public PlayerPositionSetPacket() { }
     public PlayerPositionSetPacket(ComponentPlayer player) {
-        m_fromPlayerId = player.PlayerData?.ClientId ?? 0;
+        m_fromPlayerId = NetworkManager.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
         Position = player.ComponentBody.Position;
         Velocity = player.ComponentBody.Velocity;
     }

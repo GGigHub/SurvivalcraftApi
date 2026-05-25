@@ -38,7 +38,7 @@ public class PlayerUpdateLocationPacket : Packet {
     public override void Handle(bool isServer) {
         if (!isServer) return;
         var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
-        var player = subsystemPlayers.PlayersData.Find(x => x.Client == From);
+        var player = NetworkManager.GetPlayerByClient(From);
         if (player != null) {
             var updater = GameManager.Project.FindSubsystem<SubsystemTerrain>().TerrainUpdater;
             updater.SetLastChunksUpdateCenter(player.PlayerIndex, m_updateLocation.LastChunksUpdateCenter);

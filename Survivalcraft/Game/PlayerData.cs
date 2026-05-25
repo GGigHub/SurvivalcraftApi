@@ -1,6 +1,6 @@
 using System.Globalization;
 using Engine;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -41,22 +41,12 @@ namespace Game {
 
         public float m_progress;
         public int PlayerIndex { get; set; }
-
-        // NetworkGuid is used consistently across the network without obfuscation.
-        public static Func<Guid> GetSelfNetworkGuid;
         public Guid NetworkGuid { get; set; }
-
-        public static Func<Guid, Client> GetClientByGUID;
-        public Client Client => GetClientByGUID?.Invoke(NetworkGuid);
-
-
-        public static Func<bool> IsServerMode;
 
         public static event Action<PlayerData> OnPlayerPlaying;
         public static event Action<PlayerData> OnPlayerRestart;
         public static event Action OnPlayerDisconnected;
-
-        public byte? ClientId => Client?.ID;
+        public static event Action<PlayerData> OnPlayerPlayingUpdate;
 
         public bool ServerManager { get; set; }
 
@@ -159,10 +149,10 @@ namespace Game {
             InputDevice = WidgetInputDevice.None;
             m_stateMachine.AddState("FirstUpdate", null, delegate {
                 // 非本地主玩家且缺少对应网络客户端时，转为离线状态。
-                if (NetworkManager.GetClientByGUID(NetworkGuid) == null) {
-                    m_stateMachine.TransitionTo("MakePlayerOffline");
-                }
-                else if (ComponentPlayer != null) {
+                //if (NetworkManager.GetClientByGUID(NetworkGuid) == null) {
+                //    m_stateMachine.TransitionTo("MakePlayerOffline");
+                //}
+                if (ComponentPlayer != null) {
                     UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathUtils.Floor(Level)), null, 0f, resetProgress: true);
                     m_stateMachine.TransitionTo("WaitForTerrain");
                 }
@@ -180,7 +170,7 @@ namespace Game {
                     if (SubsystemPlayers.GlobalSpawnPosition == Vector3.Zero) {
                         PlayerData playerData = SubsystemPlayers.PlayersData.FirstOrDefault((PlayerData pd) => pd.SpawnPosition != Vector3.Zero);
                         SpawnPosition = m_subsystemTerrain.TerrainContentsGenerator.FindCoarseSpawnPosition();
-                        m_spawnMode = NetworkManager.IsServer ? SpawnMode.InitialNoIntro : SpawnMode.InitialIntro;
+                        m_spawnMode = !NetworkManager.IsNetworkMode ? SpawnMode.InitialNoIntro : SpawnMode.InitialIntro;
                         SubsystemPlayers.GlobalSpawnPosition = SpawnPosition;
                     }
                     else {
@@ -192,14 +182,14 @@ namespace Game {
                     m_spawnMode = SpawnMode.Respawn;
                 }
                 if (m_spawnMode == SpawnMode.Respawn) {
-                    if (!NetworkManager.IsClient) UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 2), Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
+                    if (!NetworkManager.IsNetworkMode) UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 2), Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
                     else UpdateSpawnDialog(string.Format("重生 {0} 的世界中 (等级 {1})", Name, MathUtils.Floor(Level)), LanguageControl.Get(fName, 3), 0f, resetProgress: true);
                 }
                 else {
                     UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathUtils.Floor(Level)), null, 0f, resetProgress: true);
                 }
                 // 客户端只为自身玩家更新地形加载位置，避免为其他远端玩家重复设置 updateLocation。
-                if (!(NetworkManager.IsClient && !IsMainPlayer)) {
+                if (!(NetworkManager.IsNetworkMode && !IsMainPlayer)) {
                     m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, 0f, 64f);
                 }
                 m_terrainWaitStartTime = Time.FrameStartTime;
@@ -233,14 +223,14 @@ namespace Game {
                     ClientCachePosition = null;
                 }
                 // 根据当前中心点刷新地形可见范围，客户端的非主玩家不需要提交 updateLocation。
-                if (!(GameManager.IsNetworkMode && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
+                if (!(NetworkManager.IsNetworkMode && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
             }, delegate {
                 if (Time.PeriodicEvent(0.1, 0.0)) {
                     float updateProgress = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, MathUtils.Min(SettingsManager.VisibilityRange, 64f), 0f);
                     UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
                     if ((updateProgress >= 1f && Time.FrameStartTime - m_terrainWaitStartTime > 2.0) || Time.FrameStartTime - m_terrainWaitStartTime >= 15.0) {
                         if (ComponentPlayer == null || ComponentPlayer.PlayerData.NetworkGuid == Guid.Empty) {
-                            if (!GameManager.IsNetworkMode) {
+                            if (!NetworkManager.IsNetworkMode) {
                                 SpawnPlayer(SpawnPosition, m_spawnMode);
                             }
                             else {
@@ -263,7 +253,7 @@ namespace Game {
             }, null);
             m_stateMachine.AddState("Playing", delegate {
                 HideSpawnDialog();
-                if (GameManager.IsNetworkMode) {
+                if (NetworkManager.IsNetworkMode) {
                     OnPlayerPlaying?.Invoke(this);
                 }
             }, delegate {
@@ -276,8 +266,11 @@ namespace Game {
                 else if (ComponentPlayer.ComponentHealth.Health <= 0f) {
                     m_playerDeathTime = Time.RealTime;
                 }
+                OnPlayerPlayingUpdate?.Invoke(this);
                 // 非主玩家在未完成联机同步前保持无敌，避免状态不同步时被误伤。
-                if (!IsMainPlayer && !GameManager.IsNetworkMode) {
+                // todo: 应该由网络层完成
+                /*
+                if (!IsMainPlayer && !NetworkManager.IsNetworkMode) {
                     if (!isSetStatus) {
                         // Assuming Client checking logic is handled differently or we just assume invulnerable if Client == null
                         if (Client != null && Client.State != ClientState.Playing) {
@@ -289,6 +282,7 @@ namespace Game {
                         }
                     }
                 }
+                */
             }, null);
             m_stateMachine.AddState("PlayerDead", delegate {
                 isSetStatus = false;
@@ -298,10 +292,10 @@ namespace Game {
                 });
             }, delegate {
                 // 联机下非主玩家的死亡重生流程由网络同步驱动。
-                if (!NetworkManager.IsClient && !IsMainPlayer) {
+                if (!NetworkManager.IsNetworkMode && !IsMainPlayer) {
                     Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 }
-                if (NetworkManager.IsClient && !IsMainPlayer) {
+                if (NetworkManager.IsNetworkMode && !IsMainPlayer) {
                     NetRestart();
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
@@ -312,8 +306,8 @@ namespace Game {
                         m_stateMachine.TransitionTo("PrepareSpawn");
                     }
                 }
-                else if (IsMainPlayer && Time.RealTime - m_playerDeathTime.Value > 1.5 && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any || readyToRestart) {
-                    if (NetworkManager.IsClient && IsMainPlayer) {
+                else if ((IsMainPlayer && Time.RealTime - m_playerDeathTime.Value > 1.5 && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any) || readyToRestart) {
+                    if (NetworkManager.IsNetworkMode && IsMainPlayer) {
                         OnPlayerRestart?.Invoke(this);
                     }
                     IsDead = true;
@@ -378,12 +372,12 @@ namespace Game {
             LastSpawnTime = valuesDictionary.GetValue("LastSpawnTime", 0.0);
             SpawnsCount = valuesDictionary.GetValue("SpawnsCount", 0);
             Name = valuesDictionary.GetValue("Name", "Walter");
-            NetworkGuid = valuesDictionary.GetValue("NetworkGuid", NetworkManager.Self.NetworkGuid);
+            NetworkGuid = valuesDictionary.GetValue("NetworkGuid", NetworkManager.NetworkGuid);
             PlayerClass = valuesDictionary.GetValue("PlayerClass", PlayerClass.Male);
             Level = valuesDictionary.GetValue("Level", 1f);
             CharacterSkinName = valuesDictionary.GetValue("CharacterSkinName", CharacterSkinsManager.CharacterSkinsNames[0]);
             InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
-            IsMainPlayer = NetworkGuid == NetworkManager.Self.NetworkGuid;
+            IsMainPlayer = NetworkGuid == NetworkManager.NetworkGuid;
         }
 
         public void Save(ValuesDictionary valuesDictionary) {

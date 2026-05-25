@@ -1,5 +1,5 @@
 using Engine;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -424,7 +424,7 @@ namespace Game {
                 return;
             }
             OnBodyUpdate?.Invoke(this, dt);
-            if (GameManager.IsNetworkMode) {
+            if (NetworkManager.IsNetworkMode) {
                 Position = netPosition.Get(dt);
                 Rotation = netRotation.Get(dt);
                 Velocity = netVelocity.Get(dt);

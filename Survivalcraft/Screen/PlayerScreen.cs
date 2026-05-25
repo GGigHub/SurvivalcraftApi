@@ -1,7 +1,7 @@
 using System.Xml.Linq;
 using Engine.Graphics;
 using Engine.Input;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -10,6 +10,7 @@ namespace Game;
 public class PlayerScreen : Screen {
     public static event Action<PlayerData> OnPlayerCreate;
     public static event Action<PlayerData> OnPlayerModify;
+	public static event Action<PlayerData> OnPlayerDeleted;
 
     public enum Mode {
         Initial,
@@ -118,7 +119,7 @@ public class PlayerScreen : Screen {
             m_addAnotherButton.IsVisible = false;
         }
         m_addAnotherButton.IsVisible &= false;
-        m_deleteButton.IsVisible &= !NetworkManager.IsClient;
+        m_deleteButton.IsVisible &= !NetworkManager.IsNetworkMode;
     }
 
     public override void Leave() {
@@ -130,7 +131,7 @@ public class PlayerScreen : Screen {
         if (m_mode == Mode.Edit && GameManager.Project != null) {
             GameManager.UpdateProject();
         }
-        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.IsClient && NetworkManager.IsMultiplayer) {
+        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.IsNetworkMode) {
             //客户端卡在新增玩家界面两分钟自动中断连接
             NetworkManager.Stop();
         }
@@ -206,14 +207,13 @@ public class PlayerScreen : Screen {
             DialogsManager.Alert("不可进行操作");
         }
         if (m_deleteButton.IsClicked) {
-            if (NetworkManager.IsServer) {
+            if (!NetworkManager.IsNetworkMode) {
                 DialogsManager.Confirm("你确定要踢出这个玩家吗", btn => {
-                    var client = NetworkManager.GetClientByGUID(m_playerData.NetworkGuid);
-                    if (btn == MessageDialogButton.Button1) NetworkManager.Server.RemoveClient(client);
-                    else DialogsManager.HideAllDialogs();
+					if (btn == MessageDialogButton.Button1) OnPlayerDeleted?.Invoke(m_playerData);
+					else DialogsManager.HideAllDialogs();
                 });
             }
-            else if (NetworkManager.IsClient) {
+            else if (NetworkManager.IsNetworkMode) {
                 DialogsManager.Alert("不可进行操作");
             }
             else {
@@ -227,7 +227,7 @@ public class PlayerScreen : Screen {
         }
         if (m_playButton.IsClicked && VerifyName()) {
             if (m_mode == Mode.Initial) {
-                if (GameManager.IsNetworkMode) {
+                if (NetworkManager.IsNetworkMode) {
                     OnPlayerCreate?.Invoke(m_playerData);
                     DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
                 }

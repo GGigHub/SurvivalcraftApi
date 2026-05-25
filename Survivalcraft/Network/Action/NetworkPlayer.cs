@@ -13,7 +13,7 @@ namespace Game.Network {
 
         public static void OnBodyUpdate(ComponentPlayer player, bool isMainPlayer) {
             if (!NetworkManager.IsClient && Time.PeriodicEvent(0.1f, 0.0)) {
-                NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(player) { Except = player.PlayerData.Client });
+                NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(player) { Except = NetworkManager.GetClientByGUID(player.NetworkGuid) });
             }
             else if (isMainPlayer && Time.PeriodicEvent(0.1f, 0.0)) {
                 NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(player));

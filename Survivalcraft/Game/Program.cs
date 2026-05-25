@@ -17,7 +17,7 @@ using System.Reflection;
 using System.Globalization;
 using Engine;
 using Engine.Graphics;
-using Game.Network;
+
 
 #if BROWSER
 [assembly: SupportedOSPlatform("browser")]
@@ -253,6 +253,7 @@ namespace Game {
                 MusicManager.Initialize();
                 ScreensManager.Initialize();
                 APIUpdateManager.Initialize();
+                NetworkManager.Initialize();
                 Log.Information("Program Initialize Success");
             }
             catch (Exception e) {

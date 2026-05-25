@@ -1,6 +1,6 @@
 using Engine;
 using Engine.Serialization;
-using Game.Network;
+
 using TemplatesDatabase;
 
 namespace Game {

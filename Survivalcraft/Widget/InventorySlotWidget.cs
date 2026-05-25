@@ -1,7 +1,7 @@
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
-using Game.Network;
+
 using GameEntitySystem;
 
 namespace Game {
@@ -560,7 +560,7 @@ namespace Game {
             int slotCount = sourceInventory.GetSlotCount(sourceSlotIndex);
             int slotCount2 = targetInventory.GetSlotCount(targetSlotIndex);
 
-            if (GameManager.IsNetworkMode) {
+            if (NetworkManager.IsNetworkMode) {
                 OnMoveItem?.Invoke(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count);
             }
             if (slotCount2 == 0
@@ -591,7 +591,7 @@ namespace Game {
 
             dragCount = CalculateSplitCount(dragCount, dragMode);
 
-            if (GameManager.IsNetworkMode) {
+            if (NetworkManager.IsNetworkMode) {
                 OnDragDropItem?.Invoke(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly);
             }
 

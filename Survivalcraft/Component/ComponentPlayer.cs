@@ -1,5 +1,5 @@
 using Engine;
-using Game.Network;
+
 using GameEntitySystem;
 using System;
 using TemplatesDatabase;
@@ -854,7 +854,7 @@ namespace Game {
         private static readonly object _saveLock = new();
 
         public virtual void SavePlayerEntity() {
-            if (!GameManager.IsNetworkMode) {
+            if (!NetworkManager.IsNetworkMode) {
                 lock (_saveLock) {
                     try {
                         var list = Project.SaveEntities([Entity]);

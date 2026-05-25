@@ -111,6 +111,11 @@ public static class NetworkManager {
         return Client != null ? Client.GetClientByGUID(guid) : null;
     }
 
+    public static PlayerData GetPlayerByClient(Client client) {
+        if (Server != null) return Server.GetPlayerByClient(client);
+        return Client != null ? Client.GetPlayerByClient(client) : null;
+    }
+
     public static void AddClient(Client client) {
         Server?.AddClient(client);
         Client?.AddClient(client);

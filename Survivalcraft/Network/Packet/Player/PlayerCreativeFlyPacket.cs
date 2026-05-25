@@ -8,7 +8,7 @@ public class PlayerCreativeFlyPacket : PlayerPacketBase {
     public bool m_isCreativeFly;
     public PlayerCreativeFlyPacket() { }
     public PlayerCreativeFlyPacket(ComponentPlayer player) {
-        m_fromPlayerId = player.PlayerData?.ClientId ?? 0;
+        m_fromPlayerId = NetworkManager.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
         m_isCreativeFly = player.ComponentLocomotion.IsCreativeFlyEnabled;
     }
     public override void Serialize(PacketSerializer archive) {

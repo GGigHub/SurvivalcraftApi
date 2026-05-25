@@ -2,7 +2,7 @@ using System.Globalization;
 using Engine;
 using Engine.Graphics;
 using Engine.Serialization;
-using Game.Network;
+
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -357,7 +357,7 @@ namespace Game {
         }
 
         Projectile AddProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            if (NetworkManager.IsClient) {
+            if (NetworkManager.IsNetworkMode) {
                 return null;
             }
             Projectile projectile = AddProjectileNet(value, position, velocity, angularVelocity, owner);
@@ -368,7 +368,7 @@ namespace Game {
         }
 
         Projectile FireProjectileWithSync(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
-            if (GameManager.IsNetworkMode) {
+            if (NetworkManager.IsNetworkMode) {
                 return null;
             }
             Projectile projectile = FireProjectileNet(value, position, velocity, angularVelocity, owner);

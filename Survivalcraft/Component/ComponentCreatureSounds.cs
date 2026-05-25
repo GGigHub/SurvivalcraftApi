@@ -52,7 +52,7 @@ namespace Game {
         public event Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) {
-            if (GameManager.IsNetworkMode) return;
+            if (NetworkManager.IsNetworkMode) return;
             PlayIdleSoundLogic(skipIfRecentlyPlayed);
         }
 
@@ -65,7 +65,7 @@ namespace Game {
         }
 
         public virtual void PlayPainSound() {
-            if (GameManager.IsNetworkMode) return;
+            if (NetworkManager.IsNetworkMode) return;
             PlayPainSoundLogic();
         }
 
@@ -78,7 +78,7 @@ namespace Game {
         }
 
         public virtual void PlayMoanSound() {
-            if (GameManager.IsNetworkMode) return;
+            if (NetworkManager.IsNetworkMode) return;
             PlayMoanSoundLogic();
         }
 
@@ -91,7 +91,7 @@ namespace Game {
         }
 
         public virtual void PlaySneezeSound() {
-            if (GameManager.IsNetworkMode) return;
+            if (NetworkManager.IsNetworkMode) return;
             PlaySneezeSoundLogic();
         }
 
@@ -104,7 +104,7 @@ namespace Game {
         }
 
         public void PlayCoughSound() {
-            if (GameManager.IsNetworkMode) return;
+            if (NetworkManager.IsNetworkMode) return;
             PlayCoughSoundLogic();
         }
 
@@ -117,7 +117,7 @@ namespace Game {
         }
 
         public virtual void PlayPukeSound() {
-            if (GameManager.IsNetworkMode) return;
+            if (NetworkManager.IsNetworkMode) return;
             PlayPukeSoundLogic();
         }
 
@@ -130,7 +130,7 @@ namespace Game {
         }
 
         public virtual void PlayAttackSound() {
-            if (GameManager.IsNetworkMode) return;
+            if (NetworkManager.IsNetworkMode) return;
             PlayAttackSoundLogic();
         }
 
