@@ -31,11 +31,7 @@ public class PlayerCreatePacket : Packet {
         var playerData = new PlayerData(GameManager.Project);
         playerData.Load(m_vd);
         subsystemPlayers.AddPlayerData(playerData);
-        // 服务端广播给所有客户端，添加玩家�?
-        foreach (var client in NetworkService.Clients) {
-            if (client.Value == NetworkService.Self) continue;
-            NetworkService.QueuePacket(new PlayerAddPacket(playerData));
-        }
+        // 服务端广播给所有客户端，添加玩家
+        NetworkService.QueuePacket(new PlayerAddPacket(playerData));
     }
 }
-
