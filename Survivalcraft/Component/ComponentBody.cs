@@ -146,6 +146,8 @@ namespace Game {
 
         public virtual Vector3 StandingOnVelocity { get; set; }
 
+        public static Func<ComponentBody, bool> IsNetworkMode;
+
         [Obsolete("Use IsCrouching")]
         public virtual bool IsSneaking {
             get => IsCrouching;
@@ -421,7 +423,7 @@ namespace Game {
                 return;
             }
             OnBodyUpdate?.Invoke(this, dt);
-            if (NetworkManager.IsNetworkMode) {
+            if (IsNetworkMode?.Invoke(this) == true) {
                 Position = netPosition.Get(dt);
                 Rotation = netRotation.Get(dt);
                 Velocity = netVelocity.Get(dt);
@@ -1520,5 +1522,4 @@ namespace Game {
         }
     }
 }
-
 

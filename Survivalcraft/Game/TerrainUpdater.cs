@@ -218,9 +218,9 @@ namespace Game {
 
         public static Action<TerrainUpdater, List<Point2>> OnTerrainRequestSyncChunks;
 
-        public static Action<TerrainUpdater, ComponentPlayer, List<TerrainChunk>> OnTerrainSyncChunkList;
+        public static Action<TerrainUpdater, Guid, List<TerrainChunk>> OnTerrainSyncChunkList;
 
-        public static Action<TerrainUpdater, ComponentPlayer, List<Point2>> OnTerrainReplyResult;
+        public static Action<TerrainUpdater, Guid, List<Point2>> OnTerrainReplyResult;
 
         public static Action<TerrainUpdater, UpdateLocation> OnTerrainPlayerLocationUpdate;
 
@@ -730,8 +730,8 @@ namespace Game {
             return list;
         }
 
-        public Dictionary<ComponentPlayer, List<Point2>> waitChunkList = new Dictionary<ComponentPlayer, List<Point2>>();
-        public List<ComponentPlayer> waitChunkList_toRemove = new List<ComponentPlayer>();
+        public Dictionary<Guid, List<Point2>> waitChunkList = new Dictionary<Guid, List<Point2>>();
+        public List<Guid> waitChunkList_toRemove = new List<Guid>();
 
         public virtual void UpdateChunkSingleStep(TerrainChunk chunk, int skylightValue) {
             switch (chunk.ThreadState) {
@@ -1428,5 +1428,4 @@ namespace Game {
         }
     }
 }
-
 

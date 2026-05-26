@@ -196,6 +196,7 @@ public class NetworkServer : INetEventListener {
         if (client != null) {
             RemoveClient(client, disconnectInfo.Reason.ToString());
         }
+        GameManager.Project.FindSubsystem<SubsystemPlayers>().MakePlayerOffline(client.NetworkGuid);
         Log.Information("Disconnect by " + disconnectInfo);
     }
 

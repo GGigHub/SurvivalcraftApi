@@ -123,5 +123,129 @@ public class BodyUpdatePacket : Packet {
             }
         }
     }
+
+    public static bool ShouldBeNetworkControlled(ComponentBody body) {
+        if (body == null || (!NetworkService.IsClient && !NetworkService.IsServer)) {
+            return false;
+        }
+
+        ComponentPlayer componentPlayer = body.Entity.FindComponent<ComponentPlayer>();
+        bool isMainPlayer = componentPlayer?.PlayerData?.IsMainPlayer == true;
+
+        bool hasChildPlayer = false;
+        bool hasNonMainChildPlayer = false;
+        for (int i = 0; i < body.ChildBodies.Count; i++) {
+            ComponentPlayer childPlayer = body.ChildBodies[i].Entity.FindComponent<ComponentPlayer>();
+            if (childPlayer == null) {
+                continue;
+            }
+            hasChildPlayer = true;
+            if (childPlayer.PlayerData?.IsMainPlayer != true) {
+                hasNonMainChildPlayer = true;
+                break;
+            }
+        }
+
+        if (NetworkService.IsClient) {
+            return (componentPlayer != null && !isMainPlayer && body.ParentBody == null)
+                || (componentPlayer == null && !hasChildPlayer)
+                || hasNonMainChildPlayer;
+        }
+
+        return (componentPlayer != null && !isMainPlayer && body.ParentBody == null)
+            || (componentPlayer == null && hasNonMainChildPlayer);
+    }
+
+    public static readonly Dictionary<Client, List<ComponentBody>> s_bodySyncLists = [];
+    public static readonly Dictionary<Client, TerrainUpdater.UpdateLocation> s_bodySyncLocations = [];
+    public static readonly HashSet<ComponentBody> s_bodySyncResetBodies = [];
+    public static int s_bodySyncFrame = -1;
+    public static bool s_bodySyncFlushQueued;
+
+    public static void CollectBodyForSync(ComponentBody body, float dt) {
+        if (!NetworkService.IsServer || !Time.PeriodicEvent(0.1, 0.0) || !ShouldSyncBody(body)) {
+            return;
+        }
+        if (s_bodySyncFrame != Time.FrameIndex) {
+            BeginBodySyncFrame();
+        }
+        if (s_bodySyncLists.Count == 0) {
+            return;
+        }
+        foreach (KeyValuePair<Client, TerrainUpdater.UpdateLocation> pair in s_bodySyncLocations) {
+            if (SubsystemBodies.IsBodyInRange(body.Position.XZ, pair.Value)) {
+                s_bodySyncLists[pair.Key].Add(body);
+            }
+        }
+    }
+
+    public static void BeginBodySyncFrame() {
+        s_bodySyncFrame = Time.FrameIndex;
+        s_bodySyncLists.Clear();
+        s_bodySyncLocations.Clear();
+        s_bodySyncResetBodies.Clear();
+        s_bodySyncFlushQueued = false;
+
+        if (GameManager.Project == null) {
+            return;
+        }
+
+        SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
+        SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
+        foreach (PlayerData playerData in subsystemPlayers.PlayersData) {
+            if (playerData.IsMainPlayer || playerData.ComponentPlayer == null) {
+                continue;
+            }
+            Client client = NetworkService.GetClientByGUID(playerData.NetworkGuid);
+            if (client == null || !client.IsConnected || client.State < NetworkState.Playing) {
+                continue;
+            }
+            if (subsystemTerrain.TerrainUpdater.UpdateLocations.TryGetValue(playerData.PlayerIndex, out TerrainUpdater.UpdateLocation location)) {
+                s_bodySyncLists[client] = [];
+                s_bodySyncLocations[client] = location;
+            }
+        }
+
+        if (s_bodySyncLists.Count > 0 && !s_bodySyncFlushQueued) {
+            s_bodySyncFlushQueued = true;
+            Time.QueueFrameIndexDelayedExecution(Time.FrameIndex + 1, FlushBodySyncPackets);
+        }
+    }
+
+    public static void FlushBodySyncPackets() {
+        if (NetworkService.IsServer) {
+            foreach (KeyValuePair<Client, List<ComponentBody>> pair in s_bodySyncLists) {
+                if (pair.Key.IsConnected && pair.Key.State >= NetworkState.Playing) {
+                    NetworkService.QueuePacket(new BodyUpdatePacket(pair.Value) { To = pair.Key });
+                    foreach (ComponentBody body in pair.Value) {
+                        s_bodySyncResetBodies.Add(body);
+                    }
+                }
+            }
+            foreach (ComponentBody body in s_bodySyncResetBodies) {
+                ResetBodySyncFlags(body);
+            }
+        }
+
+        s_bodySyncFrame = -1;
+        s_bodySyncFlushQueued = false;
+        s_bodySyncLists.Clear();
+        s_bodySyncLocations.Clear();
+        s_bodySyncResetBodies.Clear();
+    }
+
+    public static bool ShouldSyncBody(ComponentBody body) {
+        return body.Entity.FindComponent<ComponentPlayer>() == null && body.ChildBodies.Count == 0;
+    }
+
+    public static void ResetBodySyncFlags(ComponentBody body) {
+        body.SendPosition = null;
+        body.SendRotation = null;
+        body.SendVelocity = null;
+        if (body.Locomotion != null) {
+            body.Locomotion.SendLookAngles = null;
+            body.Locomotion.FlyOrderChange = false;
+        }
+    }
 }
 

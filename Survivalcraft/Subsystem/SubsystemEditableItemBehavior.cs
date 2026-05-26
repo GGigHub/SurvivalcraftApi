@@ -5,7 +5,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public abstract class SubsystemEditableItemBehavior<T> : SubsystemBlockBehavior where T : IEditableItemData, new() {
-        public static Action<int, T> OnItemDataSync;
+        public static Action<int, T> OnItemDataHarvested;
 
         public SubsystemItemsScanner m_subsystemItemsScanner;
 
@@ -71,7 +71,7 @@ namespace Game {
                 int num = FindFreeItemId();
                 m_itemsData.Add(num, (T)blockData.Copy());
                 dropValue.Value = Terrain.ReplaceData(dropValue.Value, num);
-                OnItemDataSync?.Invoke(num, blockData);
+                OnItemDataHarvested?.Invoke(num, blockData);
             }
         }
 

@@ -68,6 +68,8 @@ namespace Game {
 
         public bool EnableGravityOnDeathOrStun = true;
 
+        public static Func<ComponentBody, bool> IsNetworkMode;
+
         public Vector2 LookAngles {
             get => m_lookAngles;
             set {
@@ -176,7 +178,7 @@ namespace Game {
                 IsCreativeFlyEnabled = false;
             }*/
             OnLocomotionUpdate?.Invoke(this, dt);
-            if (NetworkManager.IsNetworkMode) {
+            if (IsNetworkMode?.Invoke(m_componentCreature.ComponentBody) == true) {
                 LookAngles = NetLookAngles.Get(dt);
                 NormalMovement(dt);
                 return;
@@ -560,5 +562,4 @@ namespace Game {
         }
     }
 }
-
 

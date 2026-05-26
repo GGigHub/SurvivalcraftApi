@@ -19,6 +19,7 @@ public static class RootManager {
             if (NetworkService.IsServer)
                 NetworkService.QueuePacket(new DamageSyncPacket(damage));
         };
+        ComponentBody.OnBodyUpdate = BodyUpdatePacket.CollectBodyForSync;
         ComponentDigInMudBehavior.OnIsDigInChanged = (behavior, isDigIn) => {
             if (NetworkService.IsServer)
                 NetworkService.QueuePacket(new DigInMudBehaviorPacket(behavior, isDigIn));
@@ -178,7 +179,7 @@ public static class RootManager {
             if (NetworkService.IsClient)
                 NetworkService.QueuePacket(new MemoryBankDataPacket(default, true, inventoryId, slotIndex, data));
         };
-        SubsystemMemoryBankBlockBehavior.OnItemDataSync = (inventoryId, data) => {
+        SubsystemMemoryBankBlockBehavior.OnItemDataHarvested = (inventoryId, data) => {
             if (!NetworkService.IsClient)
                 NetworkService.QueuePacket(new MemoryBankDataPacket(default, true, inventoryId, -1, data));
         };
@@ -230,7 +231,7 @@ public static class RootManager {
             if (NetworkService.IsClient)
                 NetworkService.QueuePacket(new TruthTableDataPacket(default, true, inventoryId, slotIndex, data));
         };
-        SubsystemTruthTableCircuitBlockBehavior.OnItemDataSync = (inventoryId, data) => {
+        SubsystemTruthTableCircuitBlockBehavior.OnItemDataHarvested = (inventoryId, data) => {
             if (!NetworkService.IsClient)
                 NetworkService.QueuePacket(new TruthTableDataPacket(default, true, inventoryId, -1, data));
         };
@@ -240,12 +241,12 @@ public static class RootManager {
             NetworkService.QueuePacket(new SubsystemWeatherPacket(startTime, endTime, intensity));
         TerrainUpdater.OnTerrainPlayerLocationUpdate = (updater, location) =>
             NetworkService.QueuePacket(new PlayerUpdateLocationPacket(location));
-        TerrainUpdater.OnTerrainReplyResult = (updater, player, chunks) =>
-            NetworkService.QueuePacket(new TerrainReplyResultPacket(chunks) { To = NetworkService.GetClientByGUID(player?.PlayerData?.NetworkGuid) });
+        TerrainUpdater.OnTerrainReplyResult = (updater, playerGuid, chunks) =>
+            NetworkService.QueuePacket(new TerrainReplyResultPacket(chunks) { To = NetworkService.GetClientByGUID(playerGuid) });
         TerrainUpdater.OnTerrainRequestSyncChunks = (updater, chunks) =>
             NetworkService.QueuePacket(new TerrainRequestSyncChunksPacket(chunks));
-        TerrainUpdater.OnTerrainSyncChunkList = (updater, player, chunks) =>
-            NetworkService.QueuePacket(new TerrainSyncChunkListPacket(chunks) { To = NetworkService.GetClientByGUID(player?.PlayerData?.NetworkGuid) });
+        TerrainUpdater.OnTerrainSyncChunkList = (updater, playerGuid, chunks) =>
+            NetworkService.QueuePacket(new TerrainSyncChunkListPacket(chunks) { To = NetworkService.GetClientByGUID(playerGuid) });
         PlayerData.OnPlayerRestart = (playerData) => {
             if (NetworkService.IsClient && playerData.IsMainPlayer)
                 NetworkService.QueuePacket(new PlayerRestartPacket(playerData));
@@ -256,8 +257,10 @@ public static class RootManager {
             NetworkService.QueuePacket(new PlayerCreatePacket(playerData));
         PlayerScreen.OnPlayerModify = (playerData) =>
             NetworkService.QueuePacket(new PlayerModifyPacket(playerData));
-        GameLoadingScreen.OnPlayerStateChanged = (state) =>
-            NetworkService.QueuePacket(new NetworkStateChangePacket((byte)(NetworkService.Self != null ? NetworkService.Self.ID : 0), state));
+        GameLoadingScreen.OnPlayerStateChanged = (state) => {
+            NetworkService.Self.State = state;
+            NetworkService.QueuePacket(new NetworkStateChangePacket(NetworkService.Self.ID, state));
+        };
         CrossbowWidget.OnCrossbowPull = (inventory, slotIndex) =>
             NetworkService.QueuePacket(new CrossbowPullPacket(inventory, slotIndex));
         DispenserWidget.OnDispenserUpdate = (position, data) =>
@@ -299,6 +302,13 @@ public static class RootManager {
             if (isMainPlayer && Time.PeriodicEvent(0.1f, 0.0))
                 NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player));
         };
+        PlayerData.PlayerFirstUpdated = (player) => {
+            // 非本地主玩家且缺少对应网络客户端时，转为离线状态。
+            if (NetworkService.GetClientByGUID(player.NetworkGuid) == null) {
+                player.m_stateMachine.TransitionTo("MakePlayerOffline");
+            }
+        };
+        ComponentBody.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
+        ComponentLocomotion.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
     }
 }
-

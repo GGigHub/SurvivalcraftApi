@@ -47,6 +47,7 @@ namespace Game {
         public static Action<PlayerData> OnPlayerRestart;
         public static Action OnPlayerDisconnected;
         public static Action<PlayerData> OnPlayerPlayingUpdate;
+        public static Action<PlayerData> PlayerFirstUpdated;
 
         public bool ServerManager { get; set; }
 
@@ -148,10 +149,7 @@ namespace Game {
             ResetName();
             InputDevice = WidgetInputDevice.None;
             m_stateMachine.AddState("FirstUpdate", null, delegate {
-                // 非本地主玩家且缺少对应网络客户端时，转为离线状态。
-                //if (NetworkManager.GetClientByGUID(NetworkGuid) == null) {
-                //    m_stateMachine.TransitionTo("MakePlayerOffline");
-                //}
+                PlayerFirstUpdated?.Invoke(this);
                 if (ComponentPlayer != null) {
                     UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathUtils.Floor(Level)), null, 0f, resetProgress: true);
                     m_stateMachine.TransitionTo("WaitForTerrain");
@@ -267,22 +265,6 @@ namespace Game {
                     m_playerDeathTime = Time.RealTime;
                 }
                 OnPlayerPlayingUpdate?.Invoke(this);
-                // 非主玩家在未完成联机同步前保持无敌，避免状态不同步时被误伤。
-                // todo: 应该由网络层完成
-                /*
-                if (!IsMainPlayer && !NetworkManager.IsNetworkMode) {
-                    if (!isSetStatus) {
-                        // Assuming Client checking logic is handled differently or we just assume invulnerable if Client == null
-                        if (Client != null && Client.State != NetworkState.Playing) {
-                            ComponentPlayer.ComponentHealth.IsInvulnerable = true;
-                        }
-                        else {
-                            isSetStatus = true;
-                            if (m_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) ComponentPlayer.ComponentHealth.IsInvulnerable = false;
-                        }
-                    }
-                }
-                */
             }, null);
             m_stateMachine.AddState("PlayerDead", delegate {
                 isSetStatus = false;

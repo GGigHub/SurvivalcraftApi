@@ -7,9 +7,7 @@
       <EmbeddedResource Remove="Network\Action\**" />
       <None Remove="Network\Action\**" />
     </ItemGroup>
-    <ItemGroup>
-      <Compile Remove="C:\Users\tk34\Desktop\NF3\SurvivalcraftApi1\Survivalcraft\Network\SubsystemNetwork.cs" />
-    </ItemGroup>
+
     <ItemGroup>
       <Compile Include="Network\NetworkClient.cs" />
       <Compile Include="Network\NetworkService.cs" />

@@ -19,11 +19,11 @@ public class TerrainRequestSyncChunksPacket : TerrainPacketBase {
 
     public override void Handle(bool isServer) {
         SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
-        if (!subsystemTerrain.TerrainUpdater.waitChunkList.TryGetValue(NetworkService.GetPlayerByClient(From).ComponentPlayer, out List<Point2> list)) {
+
+        if (!subsystemTerrain.TerrainUpdater.waitChunkList.TryGetValue(From.NetworkGuid, out List<Point2> list)) {
             list = [];
-            subsystemTerrain.TerrainUpdater.waitChunkList.Add(NetworkService.GetPlayerByClient(From).ComponentPlayer, list);
+            subsystemTerrain.TerrainUpdater.waitChunkList.Add(From.NetworkGuid, list);
         }
         list.AddRange(RelateChunks);
     }
 }
-

@@ -27,8 +27,6 @@ namespace Game {
 
         public event Action<PlayerData> PlayerRemoved;
 
-        public static Action<PlayerData> PlayerFirstUpdated;
-
         private PlayerData m_mainPlayer;
 
         private Dictionary<int, PlayerData> usedIndies = new Dictionary<int, PlayerData>();
@@ -104,7 +102,6 @@ namespace Game {
 
             if (playerData.m_stateMachine.CurrentState == null) {
                 playerData.m_stateMachine.TransitionTo("FirstUpdate");
-                PlayerFirstUpdated?.Invoke(playerData);
             }
 
             m_subsystemTerrain?.TerrainUpdater?.SetLastChunksUpdateCenter(-1, null);
@@ -230,8 +227,8 @@ namespace Game {
             var pd = m_playersData.Find(p => p.NetworkGuid == NetworkGuid);
             if (pd != null) {
                 var updater = m_subsystemTerrain.TerrainUpdater;
-                if (updater != null && updater.waitChunkList != null && updater.waitChunkList.ContainsKey(pd.ComponentPlayer)) {
-                    updater.waitChunkList.Remove(pd.ComponentPlayer);
+                if (updater != null && updater.waitChunkList != null && updater.waitChunkList.ContainsKey(pd.NetworkGuid)) {
+                    updater.waitChunkList.Remove(pd.NetworkGuid);
                 }
                 var componentPlayer = pd.ComponentPlayer;
                 if (componentPlayer == null && m_offlinePlayerEntities.TryGetValue(NetworkGuid, out var entityDataPlayer)) {
@@ -314,5 +311,4 @@ namespace Game {
         }
     }
 }
-
 
