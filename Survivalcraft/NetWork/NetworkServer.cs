@@ -44,8 +44,6 @@ public class NetworkServer : INetEventListener {
             StartLocal();
             if (NetManager.Start(port)) {
                 Log.Information($"Server started successfully on port {NetManager.LocalPort}");
-                Window.Frame += Update;
-                Window.Closed += Stop;
                 NetManager.PollEvents();
                 Server = Self;
                 Project.EntityAdded += (_, arg) => {

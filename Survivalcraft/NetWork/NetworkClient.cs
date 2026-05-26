@@ -87,6 +87,7 @@ public class NetworkClient : INetEventListener {
         }
         catch {
             Self?.State = NetworkState.NotConnected;
+            NetManager.Stop();
         }
         return NetManager.IsRunning;
     }

@@ -41,7 +41,7 @@ namespace Game {
 
         public float m_progress;
         public int PlayerIndex { get; set; }
-        public Guid NetworkGuid { get; set; }
+        public Guid NetworkGuid { get; set; } = NetworkManager.NetworkGuid;
 
         public static Action<PlayerData> OnPlayerPlaying;
         public static Action<PlayerData> OnPlayerRestart;

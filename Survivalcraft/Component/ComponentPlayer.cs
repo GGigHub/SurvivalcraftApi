@@ -182,7 +182,6 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        // NetworkGuid is the unique identifier for each player, used consistently across Client and Server.
         public Guid NetworkGuid { get; set; }
 
         public DragHostWidget m_dragHostWidget;
@@ -850,11 +849,8 @@ namespace Game {
             int playerIndex = valuesDictionary.GetValue<int>("PlayerIndex");
             SubsystemPlayers subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 
-            NetworkGuid = valuesDictionary.GetValue("NetworkGuid", GetSelfNetworkGuid?.Invoke() ?? Guid.Empty);
-            PlayerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.NetworkGuid == NetworkGuid);
-            if (PlayerData == null) {
-                throw new Exception($"Player data not found for guid {NetworkGuid}");
-            }
+            NetworkGuid = valuesDictionary.GetValue("NetworkGuid", NetworkManager.NetworkGuid);
+            PlayerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.NetworkGuid == NetworkGuid) ?? throw new Exception($"Player data not found for guid {NetworkGuid}");
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
