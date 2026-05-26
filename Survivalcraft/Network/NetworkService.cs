@@ -50,6 +50,10 @@ public static class NetworkService {
         return Client.ConnectServer(ep, passwd, onlineAccessToken);
     }
 
+    public static void QueuePacket(Packet packet, bool needSend) {
+        if (needSend) QueuePacket(packet);
+    }
+
     public static void QueuePacket(Packet packet) {
         Server?.PendingPackets.Add(packet);
         Client?.PendingPackets.Add(packet);

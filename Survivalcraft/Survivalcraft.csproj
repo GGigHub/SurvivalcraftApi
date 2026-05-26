@@ -4,36 +4,13 @@
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
+      <EmbeddedResource Remove="Network\Action\**" />
+      <None Remove="Network\Action\**" />
+    </ItemGroup>
+    <ItemGroup>
       <Compile Remove="C:\Users\tk34\Desktop\NF3\SurvivalcraftApi1\Survivalcraft\Network\SubsystemNetwork.cs" />
     </ItemGroup>
     <ItemGroup>
-      <Compile Include="Network\Action\NetworkBehavior.cs" />
-      <Compile Include="Network\Action\NetworkBody.cs" />
-      <Compile Include="Network\Action\NetworkClothing.cs" />
-      <Compile Include="Network\Action\NetworkCreatureSounds.cs" />
-      <Compile Include="Network\Action\NetworkDamage.cs" />
-      <Compile Include="Network\Action\NetworkElectricity.cs" />
-      <Compile Include="Network\Action\NetworkEntityBlockBehavior.cs" />
-      <Compile Include="Network\Action\NetworkFlu.cs" />
-      <Compile Include="Network\Action\NetworkFurnace.cs" />
-      <Compile Include="Network\Action\NetworkGui.cs" />
-      <Compile Include="Network\Action\NetworkHealth.cs" />
-      <Compile Include="Network\Action\NetworkHumanModel.cs" />
-      <Compile Include="Network\Action\NetworkInventory.cs" />
-      <Compile Include="Network\Action\NetworkLevel.cs" />
-      <Compile Include="Network\Action\NetworkLogicBlock.cs" />
-      <Compile Include="Network\Action\NetworkOnFire.cs" />
-      <Compile Include="Network\Action\NetworkPickable.cs" />
-      <Compile Include="Network\Action\NetworkPlayer.cs" />
-      <Compile Include="Network\Action\NetworkRider.cs" />
-      <Compile Include="Network\Action\NetworkScreen.cs" />
-      <Compile Include="Network\Action\NetworkSickness.cs" />
-      <Compile Include="Network\Action\NetworkSign.cs" />
-      <Compile Include="Network\Action\NetworkSleep.cs" />
-      <Compile Include="Network\Action\NetworkSubsystems.cs" />
-      <Compile Include="Network\Action\NetworkTerrain.cs" />
-      <Compile Include="Network\Action\NetworkVitalStats.cs" />
-      <Compile Include="Network\Action\NetworkWidget.cs" />
       <Compile Include="Network\NetworkClient.cs" />
       <Compile Include="Network\NetworkService.cs" />
       <Compile Include="Network\NetworkServer.cs" />
