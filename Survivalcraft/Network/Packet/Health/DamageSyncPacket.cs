@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class DamageSyncPacket : Packet {
     public override byte ID => (byte)PacketType.DamageSync;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_targetId;
     public float m_health;
 

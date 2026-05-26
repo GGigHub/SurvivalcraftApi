@@ -14,7 +14,7 @@ namespace Game {
 
         public DatabaseObject m_databaseObject;
 
-        public event Action<SubsystemEntityBlockBehavior, Point3> OnOpenInventoryRequest;
+        public static Action<SubsystemEntityBlockBehavior, Point3> OnOpenInventoryRequest;
 
         protected void InvokeOnOpenInventoryRequest(Point3 point) {
             OnOpenInventoryRequest?.Invoke(this, point);

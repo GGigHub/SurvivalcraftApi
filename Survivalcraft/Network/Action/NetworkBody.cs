@@ -5,7 +5,7 @@ using System.Text;
 namespace Game.Network {
     public static class NetworkBody {
         public static bool ShouldBeNetworkControlled(ComponentBody body) {
-            if (!NetworkManager.IsClient && !NetworkManager.IsServer) return false;
+            if (!NetworkService.IsClient && !NetworkService.IsServer) return false;
 
             ComponentPlayer componentPlayer = body.Entity.FindComponent<ComponentPlayer>();
             bool isMainPlayer = componentPlayer?.PlayerData?.IsMainPlayer == true;
@@ -23,7 +23,7 @@ namespace Game.Network {
                 }
             }
 
-            if (NetworkManager.IsClient) {
+            if (NetworkService.IsClient) {
                 return (componentPlayer != null && !isMainPlayer && body.ParentBody == null)
                     || (componentPlayer == null && !hasChildPlayer)
                     || hasNonMainChildPlayer;
@@ -35,7 +35,7 @@ namespace Game.Network {
         }
 
         public static void OnBodiesUpdate(SubsystemBodies subsystem, Client toClient, List<ComponentBody> bodies) {
-            NetworkManager.QueuePacket(new BodyUpdatePacket(bodies) { To = toClient });
+            NetworkService.QueuePacket(new BodyUpdatePacket(bodies) { To = toClient });
         }
     }
 }

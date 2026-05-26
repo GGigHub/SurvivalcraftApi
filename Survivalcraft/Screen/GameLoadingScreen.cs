@@ -9,8 +9,8 @@ using Engine.Media;
 namespace Game;
 
 public class GameLoadingScreen : Screen {
-    public static event Action<NetworkState> OnPlayerStateChanged;
-    public static event Action OnPlayerIntoPlaying;
+    public static Action<NetworkState> OnPlayerStateChanged;
+    public static Action OnPlayerIntoPlaying;
 
     public WorldInfo m_worldInfo;
     public string m_worldSnapshotName;
@@ -94,7 +94,6 @@ public class GameLoadingScreen : Screen {
             SetSpwanDialogMessage("加载服务器 Project", 0.6f);
             if (NetworkManager.SelfState == NetworkState.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
-                NetworkManager.SelfState = NetworkState.ProjectLoaded;
                 OnPlayerStateChanged?.Invoke(NetworkState.ProjectLoaded);
                 ScreensManager.SwitchScreen("Game");
                 m_projectXmlData = null;

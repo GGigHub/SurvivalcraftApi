@@ -32,7 +32,7 @@ namespace Game {
             set { }
         }
 
-        public event Action<IInventory, int> OnSlotChanged;
+        public static Action<IInventory, int> OnSlotChanged;
 
         public static int FindAcquireSlotForItem(IInventory inventory, int value) {
             for (int i = 0; i < inventory.SlotsCount; i++) {

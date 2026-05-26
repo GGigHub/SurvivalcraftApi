@@ -2,7 +2,7 @@ namespace Game.Network;
 
 public class ProjectPacket : Packet {
     public override byte ID => (byte)PacketType.Project;
-    public override ClientState MinNeedState => ClientState.NotConnected;
+    public override NetworkState MinNeedState => NetworkState.NotConnected;
 
     public bool hasTexture;
     public byte[] m_textureData;

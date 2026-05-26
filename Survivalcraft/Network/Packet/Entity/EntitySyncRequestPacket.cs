@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class EntitySyncRequestPacket : Packet {
     public override byte ID => (byte)PacketType.EntitySyncRequest;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public List<int> m_entityIdList;
 
     public EntitySyncRequestPacket() {
@@ -41,7 +41,7 @@ public class EntitySyncRequestPacket : Packet {
         foreach (int e in m_entityIdList) {
             GameManager.Project.FindEntity(e, entity => el.Add(entity));
         }
-        NetworkManager.QueuePacket(new EntityLoadPacket(el) { To = From });
+        NetworkService.QueuePacket(new EntityLoadPacket(el) { To = From });
     }
 }
 

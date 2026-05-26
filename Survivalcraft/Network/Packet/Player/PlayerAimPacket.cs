@@ -9,7 +9,7 @@ public class PlayerAimPacket : PlayerPacketBase {
     public Ray3? m_netAimRay;
     public PlayerAimPacket() { }
     public PlayerAimPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkManager.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
         m_aimEvent = player.aimEvent.aimEvent;
         m_netAimRay = player.aimEvent.NetAim;
     }

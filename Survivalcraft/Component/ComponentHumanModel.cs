@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Engine.Graphics;
 using GameEntitySystem;
 using System;
@@ -79,7 +79,7 @@ namespace Game {
 
         public bool hasData = false;
 
-        public event Action<ComponentHumanModel> OnRow;
+        public static Action<ComponentHumanModel> OnRow;
 
         public override float AttackPhase {
             get => m_punchPhase;

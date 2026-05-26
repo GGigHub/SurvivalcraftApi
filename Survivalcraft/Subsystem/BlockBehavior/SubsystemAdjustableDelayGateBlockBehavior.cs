@@ -4,8 +4,9 @@ namespace Game {
     public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior {
         public override int[] HandledBlocks => [224];
 
-        public event Action<SubsystemAdjustableDelayGateBlockBehavior, int, int, int> OnEditItemDelay;
-        public event Action<SubsystemAdjustableDelayGateBlockBehavior, CellFace, int> OnEditBlockDelay;
+        public static Action<SubsystemAdjustableDelayGateBlockBehavior, int, int, int> OnEditItemDelay;
+
+        public static Action<SubsystemAdjustableDelayGateBlockBehavior, CellFace, int> OnEditBlockDelay;
 
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             int value = inventory.GetSlotValue(slotIndex);

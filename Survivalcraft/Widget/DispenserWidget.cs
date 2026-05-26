@@ -4,7 +4,7 @@ using Engine;
 
 namespace Game {
     public class DispenserWidget : CanvasWidget {
-        public static event Action<Point3, byte> OnDispenserUpdate;
+        public static Action<Point3, byte> OnDispenserUpdate;
         public SubsystemTerrain m_subsystemTerrain;
 
         public ComponentDispenser m_componentDispenser;

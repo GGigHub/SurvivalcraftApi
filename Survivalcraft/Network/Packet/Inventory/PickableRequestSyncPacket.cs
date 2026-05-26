@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class PickableRequestSyncPacket : Packet {
     public override byte ID => (byte)PacketType.PickableRequestSync;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_id;
 
     public PickableRequestSyncPacket() { }
@@ -20,10 +20,10 @@ public class PickableRequestSyncPacket : Packet {
     public override void Handle(bool isServer) {
         SubsystemPickables subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>();
         bool found = subsystemPickables.PickableAction(m_id, pick => {
-            NetworkManager.QueuePacket(new PickableCreatePacket(pick) { To = From });
+            NetworkService.QueuePacket(new PickableCreatePacket(pick) { To = From });
         });
         if (!found) {
-            NetworkManager.QueuePacket(new PickableDeletePacket(m_id) { To = From });
+            NetworkService.QueuePacket(new PickableDeletePacket(m_id) { To = From });
         }
     }
 }

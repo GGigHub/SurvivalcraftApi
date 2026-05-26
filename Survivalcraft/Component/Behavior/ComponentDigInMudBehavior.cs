@@ -39,7 +39,7 @@ namespace Game {
 
         private bool m_isDigIn;
 
-        public event Action<ComponentDigInMudBehavior, bool> OnIsDigInChanged;
+        public static Action<ComponentDigInMudBehavior, bool> OnIsDigInChanged;
 
         public bool IsDigIn {
             get { return m_isDigIn; }

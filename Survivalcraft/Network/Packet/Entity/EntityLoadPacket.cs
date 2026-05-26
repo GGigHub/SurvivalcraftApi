@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class EntityLoadPacket : Packet {
     public override byte ID => (byte)PacketType.EntityLoad;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public EntityDataList entityDataList;
 
     public EntityLoadPacket() {

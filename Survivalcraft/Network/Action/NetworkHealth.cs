@@ -6,22 +6,22 @@ using Engine;
 namespace Game.Network {
     public static class NetworkHealth {
         public static void OnHealthInjured(ComponentHealth health, Injury injury, float amount) {
-            if (!NetworkManager.IsClient && amount > 0f) {
-                NetworkManager.QueuePacket(
+            if (!NetworkService.IsClient && amount > 0f) {
+                NetworkService.QueuePacket(
                     new InjureEventPacket(health, injury.Attacker, amount, injury.Cause, injury.IgnoreInvulnerability)
                 );
             }
         }
 
         public static void OnHealthDead(ComponentHealth health) {
-            if (!NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new HealthSyncPacket(health));
+            if (!NetworkService.IsClient) {
+                NetworkService.QueuePacket(new HealthSyncPacket(health));
             }
         }
 
         public static void OnHealthHealUpdate(ComponentHealth health) {
-            if (!NetworkManager.IsClient && Time.PeriodicEvent(2.0, 0.0)) {
-                NetworkManager.QueuePacket(new HealthSyncPacket(health));
+            if (!NetworkService.IsClient && Time.PeriodicEvent(2.0, 0.0)) {
+                NetworkService.QueuePacket(new HealthSyncPacket(health));
             }
         }
 
@@ -34,13 +34,13 @@ namespace Game.Network {
             bool flagMainPlayer = health.m_componentPlayer != null && health.m_componentPlayer.PlayerData.IsMainPlayer;
             bool flagNoRider = health.m_componentCreature.ComponentBody.ChildBodies.Count == 0;
 
-            if (NetworkManager.IsServer) {
+            if (NetworkService.IsServer) {
                 if (flagMainPlayer || flagMainRider || flagNoRider) {
                     health.Injure(fallDamage, null, false, cause);
                 }
             }
             else if (flagMainPlayer || flagMainRider) {
-                NetworkManager.QueuePacket(
+                NetworkService.QueuePacket(
                     new InjureRequestPacket(health, null, fallDamage, cause, false, InjureRequestPacket.RequestInjureType.Fall)
                 );
             }

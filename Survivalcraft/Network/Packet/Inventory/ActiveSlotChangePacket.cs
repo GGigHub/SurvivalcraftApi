@@ -5,7 +5,7 @@ namespace Game.Network;
 
 public class ActiveSlotChangePacket : Packet {
     public override byte ID => (byte)PacketType.ActiveSlotChange;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_inventoryId;
     public int m_activeSlotIndex;
 
@@ -29,7 +29,7 @@ public class ActiveSlotChangePacket : Packet {
             inventory.ActiveSlotIndex = m_activeSlotIndex;
             if (isServer) {
                 To = From;
-                NetworkManager.QueuePacket(this);
+                NetworkService.QueuePacket(this);
             }
         }
     }

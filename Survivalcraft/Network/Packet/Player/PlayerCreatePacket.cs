@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerCreatePacket : Packet {
     public override byte ID => (byte)PacketType.PlayerCreate;
-    public override ClientState MinNeedState => ClientState.Connected;
+    public override NetworkState MinNeedState => NetworkState.Connected;
     public ValuesDictionary m_vd;
 
     public PlayerCreatePacket() { }
@@ -32,9 +32,9 @@ public class PlayerCreatePacket : Packet {
         playerData.Load(m_vd);
         subsystemPlayers.AddPlayerData(playerData);
         // 服务端广播给所有客户端，添加玩家�?
-        foreach (var client in NetworkManager.Clients) {
-            if (client.Value == NetworkManager.Self) continue;
-            NetworkManager.QueuePacket(new PlayerAddPacket(playerData));
+        foreach (var client in NetworkService.Clients) {
+            if (client.Value == NetworkService.Self) continue;
+            NetworkService.QueuePacket(new PlayerAddPacket(playerData));
         }
     }
 }

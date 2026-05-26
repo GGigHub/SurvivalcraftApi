@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class HitValuePacket : Packet {
     public override byte ID => (byte)PacketType.HitResult;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public Vector3 m_position;
     public Vector3 m_velocity;
     public Color m_color;

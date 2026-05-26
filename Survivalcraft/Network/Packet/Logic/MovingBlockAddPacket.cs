@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class MovingBlockAddPacket : Packet {
     public override byte ID => (byte)PacketType.MovingBlockAdd;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public Vector3 m_addPosition;
     public Vector3 m_addTargetPosition;

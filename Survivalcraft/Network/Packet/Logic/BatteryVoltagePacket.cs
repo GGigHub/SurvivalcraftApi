@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class BatteryVoltagePacket : EditableBlockPacketBase {
     public override byte ID => (byte)PacketType.EditableBattery;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     private bool m_editAsItem;
     private int m_inventoryId;
     private int m_slotIndex;
@@ -34,7 +34,7 @@ public class BatteryVoltagePacket : EditableBlockPacketBase {
             int newValue = Terrain.ReplaceData(value, BatteryBlock.SetVoltageLevel(Terrain.ExtractData(value), m_voltage));
             st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
         }
-        if (isServer) NetworkManager.QueuePacket(this);
+        if (isServer) NetworkService.QueuePacket(this);
     }
 }
 

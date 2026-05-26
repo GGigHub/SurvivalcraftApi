@@ -8,8 +8,9 @@ namespace Game {
 
         public SubsystemMemoryBankBlockBehavior() : base(186) { }
 
-        public event Action<SubsystemMemoryBankBlockBehavior, int, int, MemoryBankData> OnEditItemData;
-        public event Action<SubsystemMemoryBankBlockBehavior, CellFace, MemoryBankData> OnEditBlockData;
+        public static Action<SubsystemMemoryBankBlockBehavior, int, int, MemoryBankData> OnEditItemData;
+
+        public static Action<SubsystemMemoryBankBlockBehavior, CellFace, MemoryBankData> OnEditBlockData;
 
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {

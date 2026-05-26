@@ -4,20 +4,20 @@ using System.Text;
 
 namespace Game.Network {
     public static class NetworkScreen {
-        public static void OnClientStateChanged(int id, ClientState state) {
-            NetworkManager.QueuePacket(new ClientStateChangePacket((byte)id, state));
+        public static void OnNetworkStateChanged(NetworkState state) { int id = NetworkService.Self != null ? NetworkService.Self.ID : 0;
+            NetworkService.QueuePacket(new NetworkStateChangePacket((byte)id, state));
         }
 
-        public static void OnPlayerIntoPlaying(ComponentPlayer player) {
-            NetworkManager.QueuePacket(new PlayerIntoPlayingPacket(player));
+        public static void OnPlayerIntoPlaying() { ComponentPlayer player = NetworkService.MainPlayer;
+            NetworkService.QueuePacket(new PlayerIntoPlayingPacket(player));
         }
 
         public static void OnPlayerCreate(PlayerData playerData) {
-            NetworkManager.QueuePacket(new PlayerCreatePacket(playerData));
+            NetworkService.QueuePacket(new PlayerCreatePacket(playerData));
         }
 
         public static void OnPlayerModify(PlayerData playerData) {
-            NetworkManager.QueuePacket(new PlayerModifyPacket(playerData));
+            NetworkService.QueuePacket(new PlayerModifyPacket(playerData));
         }
     }
 }

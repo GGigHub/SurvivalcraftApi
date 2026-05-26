@@ -25,8 +25,9 @@ namespace Game {
 
         public int[] DrawOrders => m_drawOrders;
 
-        public event Action<ParticleSystemBase> OnParticleSystemAdded;
-        public event Action<ParticleSystemBase> OnParticleSystemRemoved;
+        public static Action<ParticleSystemBase> OnParticleSystemAdded;
+
+        public static Action<ParticleSystemBase> OnParticleSystemRemoved;
 
         public void AddParticleSystem(ParticleSystemBase particleSystem, bool throwOnAlreadyAdded = false) {
             if (particleSystem.SubsystemParticles == null) {

@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerModifyPacket : Packet {
     public override byte ID => (byte)PacketType.PlayerModify;
-    public override ClientState MinNeedState => ClientState.Connected;
+    public override NetworkState MinNeedState => NetworkState.Connected;
     public Guid m_playerGuid;
     public string m_playerName;
     public string m_skinName;
@@ -35,7 +35,7 @@ public class PlayerModifyPacket : Packet {
             playerData.CharacterSkinName = m_skinName;
             playerData.m_playerClass = m_playerClass;
             if (isServer) {
-                NetworkManager.QueuePacket(this);
+                NetworkService.QueuePacket(this);
             }
         }
     }

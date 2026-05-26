@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ConnectionRejectPacket : Packet {
     public override byte ID => (byte)PacketType.ConnectReject;
-    public override ClientState MinNeedState => ClientState.NotConnected;
+    public override NetworkState MinNeedState => NetworkState.NotConnected;
 
     public string reason;
 
@@ -20,7 +20,7 @@ public class ConnectionRejectPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        NetworkManager.Stop();
+        NetworkService.Stop();
     }
 }
 

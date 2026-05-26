@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ApplyImpulsePacket : Packet {
     public override byte ID => (byte)PacketType.ApplyImpulse;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_entityId;
     public Vector3 m_impulse;
 

@@ -17,14 +17,6 @@ public static class NetworkHelper {
             ?.Address.ToString();
     }
 
-    public static bool IsValidIPAddress(string ip) {
-        return IPAddress.TryParse(ip, out _);
-    }
-
-    public static bool IsValidPort(int port) {
-        return port > 0 && port <= 65535;
-    }
-
     public static PacketStreamReader GetReader(NetDataReader reader) {
         return new PacketStreamReader(reader.GetBytesWithLength());
     }

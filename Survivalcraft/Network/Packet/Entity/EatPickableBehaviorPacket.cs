@@ -5,7 +5,7 @@ namespace Game.Network;
 
 public class EatPickableBehaviorPacket : Packet {
     public override byte ID => (byte)PacketType.BehaviorEatPickable;
-    public override ClientState MinNeedState => ClientState.Playing;
+    public override NetworkState MinNeedState => NetworkState.Playing;
     public int m_entityId;
     public bool m_isFeed;
     public EatPickableBehaviorPacket() { }

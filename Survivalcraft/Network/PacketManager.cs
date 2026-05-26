@@ -10,7 +10,7 @@ public abstract class Packet {
     public Client To { get; set; }
     public Client Except { get; set; }
     public Client From { get; set; }
-    public abstract ClientState MinNeedState { get; }
+    public abstract NetworkState MinNeedState { get; }
 
     public abstract void Handle(bool isServer);
     public abstract void Serialize(PacketSerializer archive);
@@ -20,7 +20,7 @@ public enum PacketType : byte {
     // Connect
     ConnectRequest = 0, ConnectReject = 1,
     Project = 2,
-    ClientAdd = 52, ClientRemove = 53, ClientSyncList = 54, ClientStateChange = 55,
+    ClientAdd = 52, ClientRemove = 53, ClientSyncList = 54, NetworkStateChange = 55,
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
@@ -88,7 +88,7 @@ public class PacketManager {
         RegisterPacket<ProjectPacket>();
         RegisterPacket<ClientAddPacket>();
         RegisterPacket<ClientRemovePacket>();
-        RegisterPacket<ClientStateChangePacket>();
+        RegisterPacket<NetworkStateChangePacket>();
         RegisterPacket<ClientSyncListPacket>();
 
         // Entity

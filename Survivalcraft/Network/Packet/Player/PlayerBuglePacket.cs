@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerBuglePacket : Packet {
     public override byte ID => (byte)PacketType.PlayerBugle;
-    public override ClientState MinNeedState => ClientState.Connected;
+    public override NetworkState MinNeedState => NetworkState.Connected;
     public Guid m_playerGuid;
     public string m_title;
     public string m_content;

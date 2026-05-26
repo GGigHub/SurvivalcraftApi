@@ -4,8 +4,9 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable {
-        public event Action<int, int, int, float> OnFireBlockAdd;
-        public event Action<int, int, int> OnFireBlockRemove;
+        public static Action<int, int, int, float> OnFireBlockAdd;
+
+        public static Action<int, int, int> OnFireBlockRemove;
 
         public class FireData {
             public Point3 Point;

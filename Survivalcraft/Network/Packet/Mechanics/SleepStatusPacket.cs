@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class SleepStatusPacket : Packet {
     public override byte ID => (byte)PacketType.SleepStatus;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_entityId;
     public bool allowManualWakeup;
     public bool m_result;

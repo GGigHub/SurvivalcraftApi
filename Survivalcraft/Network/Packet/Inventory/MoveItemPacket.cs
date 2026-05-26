@@ -5,7 +5,7 @@ namespace Game.Network;
 
 public class MoveItemPacket : Packet {
     public override byte ID => (byte)PacketType.MoveItem;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int fromInventoryId;
     public int fromSlotIndex;
     public int toInventoryId;
@@ -41,8 +41,8 @@ public class MoveItemPacket : Packet {
             int actualCount = MathUtils.Min(count, from.GetSlotCount(fromSlotIndex));
             from.RemoveSlotItems(fromSlotIndex, actualCount);
             to.AddSlotItems(toSlotIndex, value, actualCount);
-            NetworkManager.QueuePacket(new InventorySyncPacket(from));
-            NetworkManager.QueuePacket(new InventorySyncPacket(to));
+            NetworkService.QueuePacket(new InventorySyncPacket(from));
+            NetworkService.QueuePacket(new InventorySyncPacket(to));
         }
     }
 }

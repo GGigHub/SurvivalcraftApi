@@ -17,7 +17,7 @@ public class NetworkServer : INetEventListener {
     public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
     public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
     public List<Packet> PendingPackets { get; } = new List<Packet>();
-    public Action<Client> OnClientStateChanged { get; set; }
+    public Action<Client> OnNetworkStateChanged { get; set; }
 
     internal readonly Dictionary<Client, string> ClientsToRemove = new Dictionary<Client, string>();
 
@@ -49,10 +49,10 @@ public class NetworkServer : INetEventListener {
                 NetManager.PollEvents();
                 Server = Self;
                 Project.EntityAdded += (_, arg) => {
-                    NetworkManager.QueuePacket(new EntityLoadPacket(arg.Entity));
+                    NetworkService.QueuePacket(new EntityLoadPacket(arg.Entity));
                 };
                 Project.EntityRemoved += (_, arg) => {
-                    NetworkManager.QueuePacket(new EntityRemovePacket(arg.Entity.Id));
+                    NetworkService.QueuePacket(new EntityRemovePacket(arg.Entity.Id));
                 };
             }
             else {
@@ -86,9 +86,9 @@ public class NetworkServer : INetEventListener {
         }
 
         if (Clients.ContainsKey(c.ID)) {
-            NetworkManager.QueuePacket(new ClientRemovePacket(c.ID));
-            c.State = ClientState.NotConnected;
-            OnClientStateChanged?.Invoke(c);
+            NetworkService.QueuePacket(new ClientRemovePacket(c.ID));
+            c.State = NetworkState.NotConnected;
+            OnNetworkStateChanged?.Invoke(c);
             Clients.Remove(c.ID);
         }
     }
@@ -102,7 +102,7 @@ public class NetworkServer : INetEventListener {
                 else c.Peer.Disconnect();
             }
             Clients.Remove(c.ID);
-            c.State = ClientState.NotConnected;
+            c.State = NetworkState.NotConnected;
         }
     }
 
@@ -247,6 +247,15 @@ public class NetworkServer : INetEventListener {
     }
 
     internal PlayerData GetPlayerByClient(Client client) {
-        throw new NotImplementedException();
+        if (client == null) return null;
+        var subsystemPlayers = GameManager.Project?.FindSubsystem<SubsystemPlayers>();
+        if (subsystemPlayers != null) {
+            foreach (var playerData in subsystemPlayers.PlayersData) {
+                if (playerData.NetworkGuid == client.NetworkGuid) {
+                    return playerData;
+                }
+            }
+        }
+        return null;
     }
 }

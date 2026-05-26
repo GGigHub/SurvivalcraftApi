@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class TruthTableDataPacket : EditableBlockPacketBase {
     public override byte ID => (byte)PacketType.EditableTruthTable;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     private bool m_syncItem;
     private bool m_editAsItem;
     private int m_slotIndex;
@@ -57,7 +57,7 @@ public class TruthTableDataPacket : EditableBlockPacketBase {
         else {
             behavior.SetBlockData(m_cellFace.Point, data);
         }
-        if (isServer) NetworkManager.QueuePacket(this);
+        if (isServer) NetworkService.QueuePacket(this);
     }
 }
 

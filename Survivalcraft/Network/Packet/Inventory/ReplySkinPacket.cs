@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ReplySkinPacket : SkinPacketBase {
     public override byte ID => (byte)PacketType.ClothingReplySkin;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public string SkinName;
     public byte[] m_skinData;
 

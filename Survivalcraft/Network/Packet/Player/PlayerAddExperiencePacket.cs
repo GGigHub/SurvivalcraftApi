@@ -10,7 +10,7 @@ public class PlayerAddExperiencePacket : PlayerPacketBase {
     public float m_level;
     public PlayerAddExperiencePacket() { }
     public PlayerAddExperiencePacket(PlayerData playerData, int count, bool playSound, float level) {
-        m_fromPlayerId = NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID;
+        m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
         m_count = count;
         m_playSound = playSound;
         m_level = level;

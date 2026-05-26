@@ -10,7 +10,7 @@ public class PlayerDigPacket : PlayerPacketBase {
     public TerrainRaycastResult? m_netDigRaycast;
     public PlayerDigPacket() { }
     public PlayerDigPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkManager.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
         m_digEvent = player.digEvent.digEvent;
         m_netDigRay = player.digEvent.NetDigRay;
         m_netDigRaycast = player.digEvent.NetDigRaycast;

@@ -37,7 +37,7 @@ namespace Game {
         public string DamageSoundName { get; set; }
 
 
-        public event Action<ComponentDamage> OnDamage;
+        public static Action<ComponentDamage> OnDamage;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

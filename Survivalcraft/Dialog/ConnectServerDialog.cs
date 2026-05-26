@@ -70,7 +70,7 @@ namespace Game {
             int port = 28887; // 默认端口
 
             if (parts.Length > 1) {
-                if (!(int.TryParse(parts[1], out port) && NetworkHelper.IsValidPort(port))) {
+                if (!(int.TryParse(parts[1], out port) && port > 0 && port <= 65535)) {
                     DialogsManager.ShowDialog(null, new MessageDialog(
                         "错误",
                         "无效的端口号",
@@ -79,7 +79,7 @@ namespace Game {
                 }
             }
 
-            if (!NetworkHelper.IsValidIPAddress(ip)) {
+            if (!IPAddress.TryParse(ip, out _)) {
                 DialogsManager.ShowDialog(null, new MessageDialog(
                     "错误",
                     "无效的IP地址",

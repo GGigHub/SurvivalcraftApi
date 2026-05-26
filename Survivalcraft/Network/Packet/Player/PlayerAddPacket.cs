@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerAddPacket : Packet {
     public override byte ID => (byte)PacketType.PlayerAdd;
-    public override ClientState MinNeedState => ClientState.Connected;
+    public override NetworkState MinNeedState => NetworkState.Connected;
     public ValuesDictionary m_vd;
 
     public PlayerAddPacket() { }
@@ -31,7 +31,7 @@ public class PlayerAddPacket : Packet {
         var playerData = new PlayerData(GameManager.Project);
         playerData.Load(m_vd);
         subsystemPlayers.AddPlayerData(playerData);
-        NetworkManager.QueuePacket(new PlayerKnownPacket(playerData.NetworkGuid));
+        NetworkService.QueuePacket(new PlayerKnownPacket(playerData.NetworkGuid));
     }
 }
 

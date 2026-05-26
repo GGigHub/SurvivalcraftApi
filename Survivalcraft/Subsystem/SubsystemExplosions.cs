@@ -5,6 +5,9 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemExplosions : Subsystem, IUpdateable {
+        public static Action<Dictionary<Point2, List<(Point3, float)>>> OnExplosionCell;
+
+        public static Action<Vector3, float, float> OnExplosionSound;
         public class SparseSpatialArray<T> {
             public const int m_bits1 = 4;
 
@@ -153,9 +156,6 @@ namespace Game {
 
             public bool IsIncendiary;
         }
-
-        public event Action<Dictionary<Point2, List<(Point3, float)>>> OnExplosionCell;
-        public event Action<Vector3, float, float> OnExplosionSound;
 
         public SubsystemTerrain m_subsystemTerrain;
 

@@ -43,7 +43,7 @@ namespace Game {
 
         private bool m_isFeed;
 
-        public event Action<ComponentEatPickableBehavior, bool> OnIsFeedChanged;
+        public static Action<ComponentEatPickableBehavior, bool> OnIsFeedChanged;
 
         public bool IsFeed {
             get { return m_isFeed; }

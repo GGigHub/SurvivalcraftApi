@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class SubsystemTimePacket : Packet {
     public override byte ID => (byte)PacketType.Time;
-    public override ClientState MinNeedState => ClientState.Playing;
+    public override NetworkState MinNeedState => NetworkState.Playing;
     public double m_time;
     public double m_timeOfDayOffset;
 

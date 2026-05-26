@@ -5,7 +5,7 @@ namespace Game.Network;
 
 public class SetSlotItemPacket : Packet {
     public override byte ID => (byte)PacketType.SetSlotItem;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_inventoryId;
     public int m_slotIndex;
     public int m_value;
@@ -36,7 +36,7 @@ public class SetSlotItemPacket : Packet {
             inventory.AddSlotItems(m_slotIndex, m_value, m_count);
             if (isServer) {
                 To = From;
-                NetworkManager.QueuePacket(this);
+                NetworkService.QueuePacket(this);
             }
         }
     }

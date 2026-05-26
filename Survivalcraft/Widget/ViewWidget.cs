@@ -4,7 +4,7 @@ using Engine.Graphics;
 
 namespace Game {
     public class ViewWidget : TouchInputWidget, IDragTargetWidget {
-        public static event Action<PlayerData, int, int, Vector3, int> OnPlayerDragDrop;
+        public static Action<PlayerData, int, int, Vector3, int> OnPlayerDragDrop;
         public SubsystemDrawing m_subsystemDrawing;
 
         public RenderTarget2D m_scalingRenderTarget;

@@ -27,7 +27,7 @@ namespace Game {
 
         public event Action<PlayerData> PlayerRemoved;
 
-        public event Action<PlayerData> PlayerFirstUpdated;
+        public static Action<PlayerData> PlayerFirstUpdated;
 
         private PlayerData m_mainPlayer;
 

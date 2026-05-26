@@ -25,7 +25,7 @@ namespace Game {
 
         private bool m_isBend;
 
-        public event Action<ComponentFishOutOfWaterBehavior, bool> OnIsBendChanged;
+        public static Action<ComponentFishOutOfWaterBehavior, bool> OnIsBendChanged;
 
         public bool IsBend {
             get { return m_isBend; }

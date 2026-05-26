@@ -8,6 +8,7 @@ namespace Game {
         public SubsystemParticles m_subsystemParticles;
         public SubsystemBlockEntities m_subsystemBlockEntities;
         public Dictionary<Point3, FireParticleSystem> m_particleSystemsByCell = [];
+        public static Action<SubsystemFurnaceBlockBehavior, List<ComponentFurnace>> OnFurnacesUpdate;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -98,8 +99,6 @@ namespace Game {
             m_particleSystemsByCell.Remove(key);
             */
         }
-
-        public event Action<SubsystemFurnaceBlockBehavior, List<ComponentFurnace>> OnFurnacesUpdate;
 
         public void Update(float dt) {
             if (Time.PeriodicEvent(5.0, 0.0) && !NetworkManager.IsNetworkMode) {

@@ -7,6 +7,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemElectricity : Subsystem, IUpdateable {
+        public static Action<SubsystemElectricity, List<NetSimulate>> OnElectricityPersistentVoltageChanged;
         public class NetSimulate {
             public int StartStep;
 
@@ -257,9 +258,6 @@ namespace Game {
         public int FrameStartCircuitStep { get; set; }
 
         public int CircuitStep { get; set; }
-
-
-        public event Action<SubsystemElectricity, List<NetSimulate>> OnElectricityPersistentVoltageChanged;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

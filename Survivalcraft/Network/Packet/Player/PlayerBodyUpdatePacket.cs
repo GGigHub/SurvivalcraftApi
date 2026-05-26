@@ -64,7 +64,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
             changeFlag |= ChangeFlag.VelocityChange;
             body.SendVelocity = null;
         }
-        m_fromPlayerId = NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID;
+        m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
     }
 
     public override void Serialize(PacketSerializer archive) {

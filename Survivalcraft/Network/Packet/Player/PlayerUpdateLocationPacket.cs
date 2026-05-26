@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerUpdateLocationPacket : Packet {
     public override byte ID => (byte)PacketType.PlayerUpdateLocation;
-    public override ClientState MinNeedState => ClientState.Connected;
+    public override NetworkState MinNeedState => NetworkState.Connected;
     public TerrainUpdater.UpdateLocation m_updateLocation;
 
     public PlayerUpdateLocationPacket() { }
@@ -38,7 +38,7 @@ public class PlayerUpdateLocationPacket : Packet {
     public override void Handle(bool isServer) {
         if (!isServer) return;
         var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
-        var player = NetworkManager.GetPlayerByClient(From);
+        var player = NetworkService.GetPlayerByClient(From);
         if (player != null) {
             var updater = GameManager.Project.FindSubsystem<SubsystemTerrain>().TerrainUpdater;
             updater.SetLastChunksUpdateCenter(player.PlayerIndex, m_updateLocation.LastChunksUpdateCenter);

@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class OpenInventoryByIDPacket : Packet {
     public override byte ID => (byte)PacketType.OpenInventoryByID;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public int m_inventoryId;
 
@@ -27,13 +27,13 @@ public class OpenInventoryByIDPacket : Packet {
             if (inventory != null) {
                 OpenInventoryByIDPacket packet = new OpenInventoryByIDPacket(inventory);
                 packet.To = From;
-                NetworkManager.QueuePacket(packet);
+                NetworkService.QueuePacket(packet);
             }
         }
         else {
             IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
             if (inventory != null) {
-                var player = NetworkManager.MainPlayer;
+                var player = NetworkService.MainPlayer;
                 if (inventory is ComponentChest componentChest) {
                     player.ComponentGui.ModalPanelWidget = new ChestWidget(player.ComponentMiner.Inventory, componentChest);
                     AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);

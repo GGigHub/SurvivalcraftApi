@@ -108,8 +108,13 @@ namespace Game {
             }
         }
 
-        public event Action<IMovingBlockSet> OnMovingBlockAdd;
-        public event Action<IMovingBlockSet, bool> OnMovingBlockRemove;
+        public static Action<IMovingBlockSet> OnMovingBlockAdd;
+
+        public static Action<IMovingBlockSet, bool> OnMovingBlockRemove;
+
+        public event Action<IMovingBlockSet, Point3> CollidedWithTerrain;
+
+        public event Action<IMovingBlockSet> Stopped;
 
         public SubsystemTime m_subsystemTime;
 
@@ -143,10 +148,6 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public int[] DrawOrders => m_drawOrders;
-
-        public event Action<IMovingBlockSet, Point3> CollidedWithTerrain;
-
-        public event Action<IMovingBlockSet> Stopped;
 
         public bool m_noDropOnMovingBlockStopped = false;
 

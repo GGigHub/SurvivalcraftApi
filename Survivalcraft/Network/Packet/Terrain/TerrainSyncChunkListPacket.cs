@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class TerrainSyncChunkListPacket : TerrainPacketBase {
     public override byte ID => (byte)PacketType.TerrainSyncChunkList;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public List<TerrainChunk> Chunks = [];
 
     public TerrainSyncChunkListPacket() { }

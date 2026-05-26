@@ -8,7 +8,7 @@ public class PlayerStatSyncPacket : PlayerPacketBase {
     public ValuesDictionary m_stat;
     public PlayerStatSyncPacket() { }
     public PlayerStatSyncPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkManager.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
         m_stat = new ValuesDictionary();
         player.PlayerStats.Save(m_stat);
     }

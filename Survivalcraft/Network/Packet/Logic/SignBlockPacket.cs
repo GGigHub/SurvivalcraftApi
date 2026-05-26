@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class SignBlockPacket : Packet {
     public override byte ID => (byte)PacketType.SignBlock;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public Point3 m_point;
     public SignData m_signData;
@@ -58,7 +58,7 @@ public class SignBlockPacket : Packet {
         if (isServer) {
             if (From.PlayerData != null) {
                 GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>().SetSignData(m_point, m_signData.Lines, m_signData.Colors, m_signData.Url);
-                NetworkManager.QueuePacket(this);
+                NetworkService.QueuePacket(this);
             }
         }
         else {

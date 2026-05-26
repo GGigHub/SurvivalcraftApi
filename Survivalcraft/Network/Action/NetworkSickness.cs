@@ -5,8 +5,8 @@ using System.Text;
 namespace Game.Network {
     public static class NetworkSickness {
         public static void OnSicknessSync(ComponentSickness sickness) {
-            if (!NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new ComponentSicknessPacket(sickness));
+            if (!NetworkService.IsClient) {
+                NetworkService.QueuePacket(new ComponentSicknessPacket(sickness));
             }
         }
     }

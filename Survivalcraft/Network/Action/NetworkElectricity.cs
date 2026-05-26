@@ -4,8 +4,8 @@ namespace Game.Network;
 
 public static class NetworkElectricity {
     public static void OnElectricityPersistentVoltageChanged(SubsystemElectricity subsystem, List<SubsystemElectricity.NetSimulate> list) {
-        if (!NetworkManager.IsClient) {
-            NetworkManager.QueuePacket(new SubsystemElectricityPacket(list));
+        if (!NetworkService.IsClient) {
+            NetworkService.QueuePacket(new SubsystemElectricityPacket(list));
         }
     }
 }

@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class PickableDeletePacket : Packet {
     public override byte ID => (byte)PacketType.PickableDelete;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_id;
     public bool PlaySound;
 

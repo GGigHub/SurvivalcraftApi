@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class BodyUpdatePacket : Packet {
     public override byte ID => (byte)PacketType.BodyUpdate;
-    public override ClientState MinNeedState => ClientState.Playing;
+    public override NetworkState MinNeedState => NetworkState.Playing;
 
     [Flags]
     public enum ChangeFlag : byte {
@@ -115,7 +115,7 @@ public class BodyUpdatePacket : Packet {
             }
         }
         if (ml.Count > 0) {
-            NetworkManager.QueuePacket(new EntitySyncRequestPacket(ml));
+            NetworkService.QueuePacket(new EntitySyncRequestPacket(ml));
         }
         if (rl.Count > 0) {
             foreach (var b in rl) {

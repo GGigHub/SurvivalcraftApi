@@ -7,52 +7,52 @@ namespace Game.Network {
     public static class NetworkPlayer {
         public static void OnActiveSlotChanged(ComponentPlayer player) {
             if (player.ComponentMiner?.Inventory != null) {
-                NetworkManager.QueuePacket(new ActiveSlotChangePacket(player.ComponentMiner.Inventory));
+                NetworkService.QueuePacket(new ActiveSlotChangePacket(player.ComponentMiner.Inventory));
             }
         }
 
         public static void OnBodyUpdate(ComponentPlayer player, bool isMainPlayer) {
-            if (!NetworkManager.IsClient && Time.PeriodicEvent(0.1f, 0.0)) {
-                NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(player) { Except = NetworkManager.GetClientByGUID(player.NetworkGuid) });
+            if (!NetworkService.IsClient && Time.PeriodicEvent(0.1f, 0.0)) {
+                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player) { Except = NetworkService.GetClientByGUID(player.NetworkGuid) });
             }
             else if (isMainPlayer && Time.PeriodicEvent(0.1f, 0.0)) {
-                NetworkManager.QueuePacket(new PlayerBodyUpdatePacket(player));
+                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player));
             }
         }
 
         public static void OnHit(ComponentPlayer player, ComponentBody hitBody, Vector3 hitPoint, Vector3 direction) {
-            if (NetworkManager.IsClient) {
-                NetworkManager.QueuePacket(new PlayerHitPacket(player, hitBody, hitPoint, direction));
+            if (NetworkService.IsClient) {
+                NetworkService.QueuePacket(new PlayerHitPacket(player, hitBody, hitPoint, direction));
             }
         }
 
         public static void OnDigEvent(ComponentPlayer player) {
-            NetworkManager.QueuePacket(new PlayerDigPacket(player));
+            NetworkService.QueuePacket(new PlayerDigPacket(player));
         }
 
         public static void OnInteractEvent(ComponentPlayer player) {
-            NetworkManager.QueuePacket(new PlayerInteractPacket(player));
+            NetworkService.QueuePacket(new PlayerInteractPacket(player));
         }
 
         public static void OnAimEvent(ComponentPlayer player) {
-            NetworkManager.QueuePacket(new PlayerAimPacket(player));
+            NetworkService.QueuePacket(new PlayerAimPacket(player));
         }
 
         public static void OnPlayerPlaying(PlayerData playerData) {
-            if (NetworkManager.IsClient) {
-                NetworkManager.Self.State = ClientState.Playing;
-                NetworkManager.QueuePacket(new ClientStateChangePacket(NetworkManager.Self.ID, ClientState.Playing));
+            if (NetworkService.IsClient) {
+                NetworkService.Self.State = NetworkState.Playing;
+                NetworkService.QueuePacket(new NetworkStateChangePacket(NetworkService.Self.ID, NetworkState.Playing));
             }
         }
 
         public static void OnPlayerRestart(PlayerData playerData) {
-            if (NetworkManager.IsClient && playerData.IsMainPlayer) {
-                NetworkManager.QueuePacket(new PlayerRestartPacket(playerData));
+            if (NetworkService.IsClient && playerData.IsMainPlayer) {
+                NetworkService.QueuePacket(new PlayerRestartPacket(playerData));
             }
         }
 
         public static void OnPlayerDisconnected() {
-            NetworkManager.Stop();
+            NetworkService.Stop();
         }
     }
 }

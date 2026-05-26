@@ -5,7 +5,7 @@ namespace Game.Network;
 
 public class DragDropItemPacket : Packet {
     public override byte ID => (byte)PacketType.DragDropItem;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int fromInventoryId;
     public int fromSlotIndex;
     public int toInventoryId;
@@ -63,8 +63,8 @@ public class DragDropItemPacket : Packet {
                     from.AddSlotItems(fromSlotIndex, targetSlotValue, count3);
                 }
             }
-            NetworkManager.QueuePacket(new InventorySyncPacket(from));
-            NetworkManager.QueuePacket(new InventorySyncPacket(to));
+            NetworkService.QueuePacket(new InventorySyncPacket(from));
+            NetworkService.QueuePacket(new InventorySyncPacket(to));
         }
     }
 }

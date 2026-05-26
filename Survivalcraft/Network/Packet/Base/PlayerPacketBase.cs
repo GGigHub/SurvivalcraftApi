@@ -5,7 +5,7 @@ using System.Text;
 namespace Game.Network;
 
 public abstract class PlayerPacketBase : Packet {
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public byte m_fromPlayerId;
 
     public enum ChangeFlag : byte {
@@ -25,11 +25,11 @@ public abstract class PlayerPacketBase : Packet {
 
     public static PlayerData ResolvePlayer(byte clientId) {
         return GameManager.Project.FindSubsystem<SubsystemPlayers>()
-            .FindPlayerData(playerData => NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID == clientId);
+            .FindPlayerData(playerData => NetworkService.GetClientByGUID(playerData.NetworkGuid).ID == clientId);
     }
 
     public static bool ValidateServerSender(PlayerData playerData, Client from) {
-        return playerData != null && from != null && NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID == from.ID;
+        return playerData != null && from != null && NetworkService.GetClientByGUID(playerData.NetworkGuid).ID == from.ID;
     }
 
     public static bool ThrottleHit(PlayerData playerData) {
@@ -48,13 +48,13 @@ public abstract class PlayerPacketBase : Packet {
     public static void QueuePlayerPacket(Packet packet, bool isServer) {
         if (isServer) {
             packet.Except = packet.From;
-            NetworkManager.QueuePacket(packet);
+            NetworkService.QueuePacket(packet);
         }
     }
 
     protected void SerializePlayerId(PacketSerializer archive, PlayerData playerData) {
         if (archive.IsWriting && playerData != null) {
-            m_fromPlayerId = NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID;
+            m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
         }
         archive.Value(ref m_fromPlayerId);
     }

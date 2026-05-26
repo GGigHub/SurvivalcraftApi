@@ -70,7 +70,7 @@ namespace Game {
 
         public Action<int> FoodEaten { get; set; }
 
-        public event Action<ComponentVitalStats> OnVitalStatsUpdate;
+        public static Action<ComponentVitalStats> OnVitalStatsUpdate;
 
         /// <summary>
         ///     1.8.1.2添加：

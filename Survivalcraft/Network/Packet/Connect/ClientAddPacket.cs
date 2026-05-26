@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ClientAddPacket : ClientPacketBase{
     public override byte ID => (byte)PacketType.ClientAdd;
-    public override ClientState MinNeedState => ClientState.NotConnected;
+    public override NetworkState MinNeedState => NetworkState.NotConnected;
     public Client m_client;
 
     public ClientAddPacket() { }
@@ -21,7 +21,7 @@ public class ClientAddPacket : ClientPacketBase{
         if (isServer) {
             return;
         }
-        NetworkManager.AddClient(new Client(From.Peer, m_client.ID, m_client.NetworkGuid, m_client.Nickname));
+        NetworkService.AddClient(new Client(From.Peer, m_client.ID, m_client.NetworkGuid, m_client.Nickname));
     }
 }
 

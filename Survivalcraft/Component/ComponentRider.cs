@@ -25,9 +25,12 @@ namespace Game {
         public Quaternion m_targetRotationOffset;
 
         public float m_outOfMountTime;
-
+        
         public float DetectSurroundingMountRange = 2.5f;
 
+        public static Action<ComponentRider, ComponentMount, bool> OnMounting;
+
+        public static Action<ComponentRider, bool> OnDismounting;
 
         public ComponentCreature ComponentCreature { get; set; }
 
@@ -62,10 +65,6 @@ namespace Game {
             }
             return result;
         }
-
-        public event Action<ComponentRider, ComponentMount, bool> OnMounting;
-
-        public event Action<ComponentRider, bool> OnDismounting;
 
         public virtual void StartMounting(ComponentMount componentMount, bool fromNetwork = false) {
             if (!m_isAnimating

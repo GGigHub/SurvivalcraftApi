@@ -49,6 +49,8 @@ namespace Game {
         public const float FemaleSpeedFactor = 1.03f;
         public const float FemaleHungerFactor = 0.7f;
 
+        public static Action<ComponentLevel, int, bool> OnAddExperience;
+
         public virtual void AddExperience(int count, bool playSound, bool fromNetwork = false) {
             if (NetworkManager.IsNetworkMode && !fromNetwork) return;
             if (playSound) {
@@ -90,8 +92,6 @@ namespace Game {
             }
             if (!fromNetwork) OnAddExperience?.Invoke(this, count, playSound);
         }
-
-        public event Action<ComponentLevel, int, bool> OnAddExperience;
 
         /// <summary>
         ///     生成玩家的所有关于力量的因素

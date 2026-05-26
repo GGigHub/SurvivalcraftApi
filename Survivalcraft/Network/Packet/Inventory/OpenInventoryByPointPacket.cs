@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class OpenInventoryByPointPacket : Packet {
     public override byte ID => (byte)PacketType.OpenInventoryByPoint;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public Point3 m_point3;
 
@@ -28,7 +28,7 @@ public class OpenInventoryByPointPacket : Packet {
                 if (inventory != null) {
                     OpenInventoryByIDPacket packet = new OpenInventoryByIDPacket(inventory);
                     packet.To = From;
-                    NetworkManager.QueuePacket(packet);
+                    NetworkService.QueuePacket(packet);
                 }
             }
         }

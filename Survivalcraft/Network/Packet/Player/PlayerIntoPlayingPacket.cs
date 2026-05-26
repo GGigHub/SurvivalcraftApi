@@ -7,7 +7,7 @@ public class PlayerIntoPlayingPacket : PlayerPacketBase {
     public override byte ID => (byte)PacketType.PlayerIntoPlaying;
     public PlayerIntoPlayingPacket() { }
     public PlayerIntoPlayingPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkManager.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
     }
     public override void Serialize(PacketSerializer archive) {
         SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);

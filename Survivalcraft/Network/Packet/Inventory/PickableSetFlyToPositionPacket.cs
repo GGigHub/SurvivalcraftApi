@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class PickableSetFlyToPositionPacket : Packet {
     public override byte ID => (byte)PacketType.PickableSetFlyToPosition;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_id;
     public Vector3? m_flyToPosition;
 

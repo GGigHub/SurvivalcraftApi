@@ -5,7 +5,7 @@ namespace Game.Network;
 
 public class CreatureSoundPacket : Packet {
     public override byte ID => (byte)PacketType.BehaviorCreatureSound;
-    public override ClientState MinNeedState => ClientState.Playing;
+    public override NetworkState MinNeedState => NetworkState.Playing;
     public int m_entityId;
     public byte m_type;
     public bool m_skipIfRecentlyPlayed;

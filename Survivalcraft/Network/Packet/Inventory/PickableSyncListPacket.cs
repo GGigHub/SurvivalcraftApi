@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class PickableSyncListPacket : Packet {
     public override byte ID => (byte)PacketType.PickableSyncList;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public List<Pickable> m_pickables = [];
 
     public PickableSyncListPacket() { }

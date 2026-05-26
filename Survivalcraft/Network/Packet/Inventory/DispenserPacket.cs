@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class DispenserPacket : Packet {
     public override byte ID => (byte)PacketType.Dispenser;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     private Point3 m_point;
     private byte m_flag;
@@ -32,7 +32,7 @@ public class DispenserPacket : Packet {
             sut.ChangeCell(m_point.X, m_point.Y, m_point.Z, Terrain.ReplaceData(value, data));
         }
         if (isServer) {
-            NetworkManager.QueuePacket(this);
+            NetworkService.QueuePacket(this);
         }
     }
 }

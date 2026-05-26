@@ -12,7 +12,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
     public int m_count;
     public PlayerDragDropPacket() { }
     public PlayerDragDropPacket(PlayerData playerData, int inventoryId, int slotIndex, Vector3 position, int count) {
-        m_fromPlayerId = NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID;
+        m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
         m_inventoryId = inventoryId;
         m_slotIndex = slotIndex;
         m_hitPosition = position;
@@ -33,12 +33,12 @@ public class PlayerDragDropPacket : PlayerPacketBase {
                 return;
             }
             if (inventory is ComponentCreativeInventory && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode != GameMode.Creative) {
-                NetworkManager.Server.RemoveClient(From, "行为异常");
+                NetworkService.Server.RemoveClient(From, "行为异常");
                 return;
             }
             if (!IsSlotIndexValid(inventory, m_slotIndex)) {
                 if (isServer && From != null) {
-                    NetworkManager.QueuePacket(new InventorySyncPacket(inventory) { To = From });
+                    NetworkService.QueuePacket(new InventorySyncPacket(inventory) { To = From });
                 }
                 return;
             }

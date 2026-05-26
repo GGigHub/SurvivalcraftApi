@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ComponentMountPacket : Packet {
     public override byte ID => (byte)PacketType.Mount;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_targetId;
     public int m_fromId;
 

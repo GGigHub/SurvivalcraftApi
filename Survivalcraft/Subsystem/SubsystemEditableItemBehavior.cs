@@ -5,7 +5,8 @@ using TemplatesDatabase;
 
 namespace Game {
     public abstract class SubsystemEditableItemBehavior<T> : SubsystemBlockBehavior where T : IEditableItemData, new() {
-        public event Action<int, T> OnItemDataSync;
+        public static Action<int, T> OnItemDataSync;
+
         public SubsystemItemsScanner m_subsystemItemsScanner;
 
         public int m_contents;

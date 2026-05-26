@@ -7,26 +7,18 @@ using Game;
 namespace Game;
 
 public enum NetworkState {
-    NotConnected,
-    Connected,
-    ProjectLoaded,
-    LoadTerrain,
-    Playing
-}
-
-public static class NetworkHelper {
-    public static bool IsValidIPAddress(string ip) => false;
-    public static bool IsValidPort(int port) => false;
+    NotConnected, Connected, ProjectLoaded, LoadTerrain, Playing
 }
 
 public static class NetworkManager {
-    public static bool IsNetworkMode { get; set; }
-    public static Guid NetworkGuid { get; set; }
-    public static NetworkState SelfState { get; set; }
+    public static bool IsNetworkMode => Network.NetworkService.IsClient;
+    public static Guid NetworkGuid => Network.NetworkService.NetworkGuid;
+    public static NetworkState SelfState => Network.NetworkService.SelfState;
 
-    public static void Initialize() { }
-    public static void Update() { }
-    public static void Stop() { }
-    public static bool StartServer() => false;
-    public static bool ConnectServer(IPEndPoint iPEndPoint, string passWord) => false;
+    public static void Initialize() => Network.NetworkService.Initialize();
+    public static void Update() => Network.NetworkService.Update();
+    public static void Stop() => Network.NetworkService.Stop();
+    public static bool StartServer() => Network.NetworkService.StartServer();
+    public static bool ConnectServer(IPEndPoint iPEndPoint, string passWord)
+                    => Network.NetworkService.ConnectServer(iPEndPoint, passWord);
 }

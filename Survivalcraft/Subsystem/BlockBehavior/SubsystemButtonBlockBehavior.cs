@@ -4,8 +4,9 @@ namespace Game {
     public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior {
         public override int[] HandledBlocks => [142];
 
-        public event Action<SubsystemButtonBlockBehavior, int, int, int> OnEditItemVoltage;
-        public event Action<SubsystemButtonBlockBehavior, CellFace, int> OnEditBlockVoltage;
+        public static Action<SubsystemButtonBlockBehavior, int, int, int> OnEditItemVoltage;
+
+        public static Action<SubsystemButtonBlockBehavior, CellFace, int> OnEditBlockVoltage;
 
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {

@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ComponentFluPacket : Packet {
     public override byte ID => (byte)PacketType.Flu;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public enum EventType {
         SyncStat,

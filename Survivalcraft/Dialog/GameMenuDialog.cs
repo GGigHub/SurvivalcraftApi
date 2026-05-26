@@ -17,7 +17,7 @@ namespace Game {
 
         public ComponentPlayer m_componentPlayer;
 
-        public static event Action<GameMenuDialog> OnGameMenuCreated; 
+        public static Action<GameMenuDialog> OnGameMenuCreated; 
 
         public static string fName = "GameMenuDialog";
 

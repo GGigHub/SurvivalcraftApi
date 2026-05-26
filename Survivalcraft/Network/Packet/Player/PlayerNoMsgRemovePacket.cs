@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerNoMsgRemovePacket : Packet {
     public override byte ID => (byte)PacketType.PlayerNoMsgRemove;
-    public override ClientState MinNeedState => ClientState.Connected;
+    public override NetworkState MinNeedState => NetworkState.Connected;
     public Guid m_playerGuid;
 
     public PlayerNoMsgRemovePacket() { }

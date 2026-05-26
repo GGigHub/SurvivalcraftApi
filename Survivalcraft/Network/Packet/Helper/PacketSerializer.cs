@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -326,7 +326,7 @@ public sealed class PacketSerializer {
 
 public class PacketStreamReader : BinaryReader {
     public PacketStreamReader(byte[] CompressedData) : base(new MemoryStream()) {
-        byte[] data = NetworkManager.Decompress(CompressedData);
+        byte[] data = NetworkService.Decompress(CompressedData);
         BaseStream.Write(data, 0, data.Length);
         BaseStream.Position = 0L;
     }
@@ -339,7 +339,7 @@ public class PacketStreamWriter : BinaryWriter {
     public byte[] Data() {
         Flush();
         BaseStream.Seek(0, SeekOrigin.Begin);
-        return NetworkManager.Compress(BaseStream);
+        return NetworkService.Compress(BaseStream);
     }
 }
 

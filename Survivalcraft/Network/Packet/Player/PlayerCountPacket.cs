@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class PlayerCountPacket : Packet {
     public override byte ID => (byte)PacketType.PlayerCount;
-    public override ClientState MinNeedState => ClientState.Connected;
+    public override NetworkState MinNeedState => NetworkState.Connected;
     public int m_playerCount;
 
     public PlayerCountPacket() { }
@@ -28,7 +28,7 @@ public class PlayerCountPacket : Packet {
             if (clientPlayerCount != m_playerCount) {
                 ScreensManager.SwitchScreen("NetPlay");
                 GameManager.DisposeProject();
-                NetworkManager.Stop();
+                NetworkService.Stop();
                 DialogsManager.ShowDialog(null, new MessageDialog("连接异常", "检测到玩家人数异常，请重新连接服务器", LanguageControl.Ok, null, btn => {
                 }));
             }

@@ -37,6 +37,18 @@ namespace Game {
 
         public double? m_aimStartTime;
 
+        public static Action<ComponentPlayer> OnActiveSlotChanged;
+
+        public static Action<ComponentPlayer, bool> OnBodyUpdate;
+
+        public static Action<ComponentPlayer, ComponentBody, Vector3, Vector3> OnHit;
+
+        public static Action<ComponentPlayer> OnDigEvent;
+
+        public static Action<ComponentPlayer> OnInteractEvent;
+
+        public static Action<ComponentPlayer> OnAimEvent;
+
         public double AimDuration {
             get {
                 if (m_aimStartTime.HasValue) {
@@ -882,18 +894,6 @@ namespace Game {
                 }
             }
         }
-
-        public event Action<ComponentPlayer> OnActiveSlotChanged;
-
-        public event Action<ComponentPlayer, bool> OnBodyUpdate;
-
-        public event Action<ComponentPlayer, ComponentBody, Vector3, Vector3> OnHit;
-
-        public event Action<ComponentPlayer> OnDigEvent;
-
-        public event Action<ComponentPlayer> OnInteractEvent;
-
-        public event Action<ComponentPlayer> OnAimEvent;
     }
 }
 

@@ -7,9 +7,11 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemPickables : Subsystem, IDrawable, IUpdateable {
-        public event Action<int> OnPickableRequestSync;
-        public event Action<Pickable> OnPickableCreate;
-        public event Action<Pickable> OnPickableDelete;
+        public static Action<int> OnPickableRequestSync;
+
+        public static Action<Pickable> OnPickableCreate;
+
+        public static Action<Pickable> OnPickableDelete;
 
         public SubsystemAudio m_subsystemAudio;
 

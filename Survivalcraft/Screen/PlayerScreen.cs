@@ -8,9 +8,9 @@ using TemplatesDatabase;
 namespace Game;
 
 public class PlayerScreen : Screen {
-    public static event Action<PlayerData> OnPlayerCreate;
-    public static event Action<PlayerData> OnPlayerModify;
-	public static event Action<PlayerData> OnPlayerDeleted;
+    public static Action<PlayerData> OnPlayerCreate;
+    public static Action<PlayerData> OnPlayerModify;
+	public static Action<PlayerData> OnPlayerDeleted;
 
     public enum Mode {
         Initial,

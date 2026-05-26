@@ -6,15 +6,6 @@ using LiteNetLib.Utils;
 
 namespace Game.Network;
 
-public enum ClientState {
-    NotConnected,
-    Connected,
-    ProjectLoaded,
-    LoadTerrain,
-    Playing
-}
-
-
 public class Client {
     public string Nickname { get; set; }
     public byte ID { get; internal set; }
@@ -24,14 +15,14 @@ public class Client {
     public IPEndPoint IPPoint { get; internal set; }
     public SubsystemPlayers SubsystemPlayers => GameManager.Project.FindSubsystem<SubsystemPlayers>();
     public bool IsConnected => Peer != null && Peer.ConnectionState != ConnectionState.Disconnected;
-    public ClientState State { get; set; } = ClientState.NotConnected;
-    public PlayerData PlayerData { get { return NetworkManager.GetPlayerByClient(this); } }
+    public NetworkState State { get; set; } = NetworkState.NotConnected;
+    public PlayerData PlayerData { get { return NetworkService.GetPlayerByClient(this); } }
 
     public Client() { }
 
     public Client(Guid guid) {
         NetworkGuid = guid;
-        State = ClientState.Connected;
+        State = NetworkState.Connected;
         ID = 0;
     }
 
@@ -68,7 +59,7 @@ public class NetworkClient : INetEventListener {
     public List<Packet> PendingPackets { get; } = new List<Packet>();
 
     private List<Packet> m_bufferedPackets = new List<Packet>();
-    public Action<Client> OnClientStateChanged { get; set; }
+    public Action<Client> OnNetworkStateChanged { get; set; }
 
     public Client Self { get; set; }
     public NetManager NetManager { get; set; }
@@ -85,18 +76,19 @@ public class NetworkClient : INetEventListener {
         PackageFragment = new PacketFragment(NetManager);
     }
 
-    public void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
+    public bool ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
         try {
             Log.Information($"connecting to server at {ep.Address}");
             Clients.Clear();
             NetManager.Start();
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
-            Self = new Client(new Guid(onlineAccessToken)) { State = ClientState.NotConnected };
+            Self = new Client(new Guid(onlineAccessToken)) { State = NetworkState.NotConnected };
             SendWriterFromPacket(new ConnectionRequestPacket("ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
         }
         catch {
-            if (Self != null) Self.State = ClientState.NotConnected;
+            Self?.State = NetworkState.NotConnected;
         }
+        return NetManager.IsRunning;
     }
 
     public void AddClient(Client c) {
@@ -185,6 +177,15 @@ public class NetworkClient : INetEventListener {
     }
 
     internal PlayerData GetPlayerByClient(Client client) {
-        throw new NotImplementedException();
+        if (client == null) return null;
+        var subsystemPlayers = GameManager.Project?.FindSubsystem<SubsystemPlayers>();
+        if (subsystemPlayers != null) {
+            foreach (var playerData in subsystemPlayers.PlayersData) {
+                if (playerData.NetworkGuid == client.NetworkGuid) {
+                    return playerData;
+                }
+            }
+        }
+        return null;
     }
 }

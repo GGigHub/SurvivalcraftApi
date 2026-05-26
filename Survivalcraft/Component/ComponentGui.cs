@@ -148,6 +148,14 @@ namespace Game {
 
         public int CloseTime;
 
+        public static Action<ComponentGui, ComponentPlayer> OnPlayerCreativeFly;
+
+        public static Action<ComponentGui, Vector3, Vector3> OnManualLightingStrike;
+
+        public static Action<ComponentGui, int> OnManualWeatherUpdate;
+
+        public static Action<ComponentGui, double, double> OnManualTimeUpdate;
+
         public Widget ModalPanelWidget {
             get {
                 if (m_modalPanelContainerWidget == null
@@ -764,14 +772,6 @@ namespace Game {
                 }
             );
         }
-
-        public event Action<ComponentGui, ComponentPlayer> OnPlayerCreativeFly;
-
-        public event Action<ComponentGui, Vector3, Vector3> OnManualLightingStrike;
-
-        public event Action<ComponentGui, int> OnManualWeatherUpdate;
-
-        public event Action<ComponentGui, double, double> OnManualTimeUpdate;
     }
 }
 

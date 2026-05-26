@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ExplosionCellPacket : Packet {
     public override byte ID => (byte)PacketType.ExplosionCell;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public Dictionary<Point2, List<(Point3, float)>> m_cells;
 

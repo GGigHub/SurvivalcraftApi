@@ -8,7 +8,7 @@ public class PlayerCreativeFlyPacket : PlayerPacketBase {
     public bool m_isCreativeFly;
     public PlayerCreativeFlyPacket() { }
     public PlayerCreativeFlyPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkManager.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
         m_isCreativeFly = player.ComponentLocomotion.IsCreativeFlyEnabled;
     }
     public override void Serialize(PacketSerializer archive) {
@@ -18,7 +18,7 @@ public class PlayerCreativeFlyPacket : PlayerPacketBase {
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
         if (isServer && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode != GameMode.Creative) {
-            NetworkManager.Server.RemoveClient(From, "非法操作");
+            NetworkService.Server.RemoveClient(From, "非法操作");
             return;
         }
         playerData.ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled = m_isCreativeFly;

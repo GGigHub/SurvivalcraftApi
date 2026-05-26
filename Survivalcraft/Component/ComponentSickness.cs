@@ -21,7 +21,7 @@ namespace Game {
         public const string fName = "ComponentSickness";
 
 
-        public event Action<ComponentSickness> OnSicknessUpdate;
+        public static Action<ComponentSickness> OnSicknessUpdate;
 
         public bool IsSick => m_sicknessDuration > 0f;
 

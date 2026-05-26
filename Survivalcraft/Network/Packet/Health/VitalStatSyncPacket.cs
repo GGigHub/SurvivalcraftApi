@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class VitalStatSyncPacket : Packet {
     public override byte ID => (byte)PacketType.VitalStatSync;
-    public override ClientState MinNeedState => ClientState.Playing;
+    public override NetworkState MinNeedState => NetworkState.Playing;
     public int m_entityId;
     public float Food = default;
     public float Stamina = default;

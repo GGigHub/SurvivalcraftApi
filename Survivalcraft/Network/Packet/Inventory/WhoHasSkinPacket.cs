@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class WhoHasSkinPacket : Packet {
     public override byte ID => (byte)PacketType.ClothingWhoHas;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public string SkinName;
 
     public WhoHasSkinPacket() { }
@@ -18,7 +18,7 @@ public class WhoHasSkinPacket : Packet {
 
     public override void Handle(bool isServer) {
         if (CharacterSkinsManager.HasSkinRes(SkinName)) {
-            NetworkManager.QueuePacket(new WhoHasSkinReplyPacket(SkinName));
+            NetworkService.QueuePacket(new WhoHasSkinReplyPacket(SkinName));
         }
     }
 }

@@ -7,7 +7,7 @@ public class PlayerRestartPacket : PlayerPacketBase {
     public override byte ID => (byte)PacketType.PlayerRestart;
     public PlayerRestartPacket() { }
     public PlayerRestartPacket(PlayerData playerData) {
-        m_fromPlayerId = NetworkManager.GetClientByGUID(playerData.NetworkGuid).ID;
+        m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
     }
     public override void Serialize(PacketSerializer archive) {
         SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);

@@ -7,7 +7,7 @@ namespace Game.Network;
 
 public class ConnectionRequestPacket : Packet {
     public override byte ID => (byte)PacketType.ConnectRequest;
-    public override ClientState MinNeedState => ClientState.NotConnected;
+    public override NetworkState MinNeedState => NetworkState.NotConnected;
 
     const int verrifyMagic = 9421523;
     int m_magic;
@@ -90,7 +90,7 @@ public class ConnectionRequestPacket : Packet {
     public override void Handle(bool isServer) {
         StringBuilder connectionError = new StringBuilder();
         if (string.IsNullOrEmpty(m_token)) {
-            NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket("Invalid identity token."), From.Request, true);
+            NetworkService.Server.SendWriterFromPacket(new ConnectionRejectPacket("Invalid identity token."), From.Request, true);
             return;
         }
         nickname = FindPlayerNameByGUID(m_token);
@@ -162,10 +162,10 @@ public class ConnectionRequestPacket : Packet {
         bool modsMismatch = serverMd5s.Count != clientMd5s.Count || !serverMd5s.SequenceEqual(clientMd5s, StringComparer.OrdinalIgnoreCase);
 
         if (m_magic == verrifyMagic) {
-            if (NetworkManager.Self.NetworkGuid == guid) {
+            if (NetworkService.Self.NetworkGuid == guid) {
                 connectionError.AppendLine("Client token matches server token.");
             }
-            else if (NetworkManager.Peers.FirstOrDefault(c => c != From && c.NetworkGuid == guid) != null) {
+            else if (NetworkService.Peers.FirstOrDefault(c => c != From && c.NetworkGuid == guid) != null) {
                 connectionError.AppendLine("Client token conflicts with an online player.");
             }
             else if (!string.IsNullOrEmpty(pwd2)) {
@@ -181,48 +181,48 @@ public class ConnectionRequestPacket : Packet {
                 if (ModsManager.Configs.ContainsKey(saveKey)) {
                     ModsManager.Configs.Remove(saveKey);
                 }
-                NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket(connectionError.ToString()), From.Request, true);
+                NetworkService.Server.SendWriterFromPacket(new ConnectionRejectPacket(connectionError.ToString()), From.Request, true);
                 Log.Information("Received connection request from " + From.IPPoint + ", rejected -- " + connectionError);
             }
             else {
                 if (modsMismatch) {
                     if (!m_supportsModTransfer) {
-                        NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket("Mod mismatch and client does not support automatic mod transfer."), From?.Request, true);
+                        NetworkService.Server.SendWriterFromPacket(new ConnectionRejectPacket("Mod mismatch and client does not support automatic mod transfer."), From?.Request, true);
                         return;
                     }
 
                     try {
                         var acceptedLiteNetPeer = From?.Request?.Accept();
                         if (acceptedLiteNetPeer == null) {
-                            NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket("Mod mismatch and connection could not be established."), From?.Request, true);
+                            NetworkService.Server.SendWriterFromPacket(new ConnectionRejectPacket("Mod mismatch and connection could not be established."), From?.Request, true);
                             return;
                         }
                     }
                     catch (Exception e) {
-                        NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket($"Mod transfer initialization failed: {e.Message}"), From?.Request, true);
+                        NetworkService.Server.SendWriterFromPacket(new ConnectionRejectPacket($"Mod transfer initialization failed: {e.Message}"), From?.Request, true);
                     }
                     return;
                 }
 
                 var acceptedPeer = From.Request.Accept();
-                Client addClient = NetworkManager.CreateClient((NetPeer)(object)acceptedPeer, guid, communityAccountId, nickname);
-                NetworkManager.Server.AddClient(addClient);
-                NetworkManager.Server.SendWriterFromPacket(
-                    new ClientSyncListPacket(NetworkManager.Server.Clients.Values) { To = addClient },
+                Client addClient = NetworkService.CreateClient((NetPeer)(object)acceptedPeer, guid, communityAccountId, nickname);
+                NetworkService.Server.AddClient(addClient);
+                NetworkService.Server.SendWriterFromPacket(
+                    new ClientSyncListPacket(NetworkService.Server.Clients.Values) { To = addClient },
                     (NetPeer)(object)acceptedPeer,
                     true
                 );
 
                 var clientPacket = new ClientAddPacket(addClient.ID, addClient.NetworkGuid, addClient.Nickname);
-                foreach (var c in NetworkManager.Peers) {
+                foreach (var c in NetworkService.Peers) {
                     if (c.ID == addClient.ID) continue;
-                    NetworkManager.Server.SendWriterFromPacket(clientPacket, c.Peer, true);
+                    NetworkService.Server.SendWriterFromPacket(clientPacket, c.Peer, true);
                 }
                 Log.Information("Received connection request from " + From.IPPoint + ", accepted");
             }
         }
         else {
-            NetworkManager.Server.SendWriterFromPacket(new ConnectionRejectPacket("Unrecognized packet header."), From.Request, true);
+            NetworkService.Server.SendWriterFromPacket(new ConnectionRejectPacket("Unrecognized packet header."), From.Request, true);
             Log.Information("Unrecognized packet header.");
         }
     }

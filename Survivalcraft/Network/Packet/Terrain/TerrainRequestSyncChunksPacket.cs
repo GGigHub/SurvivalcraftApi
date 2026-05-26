@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class TerrainRequestSyncChunksPacket : TerrainPacketBase {
     public override byte ID => (byte)PacketType.TerrainRequestSyncChunks;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public List<Point2> RelateChunks = [];
 
     public TerrainRequestSyncChunksPacket() { }
@@ -19,9 +19,9 @@ public class TerrainRequestSyncChunksPacket : TerrainPacketBase {
 
     public override void Handle(bool isServer) {
         SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
-        if (!subsystemTerrain.TerrainUpdater.waitChunkList.TryGetValue(NetworkManager.GetPlayerByClient(From).ComponentPlayer, out List<Point2> list)) {
+        if (!subsystemTerrain.TerrainUpdater.waitChunkList.TryGetValue(NetworkService.GetPlayerByClient(From).ComponentPlayer, out List<Point2> list)) {
             list = [];
-            subsystemTerrain.TerrainUpdater.waitChunkList.Add(NetworkManager.GetPlayerByClient(From).ComponentPlayer, list);
+            subsystemTerrain.TerrainUpdater.waitChunkList.Add(NetworkService.GetPlayerByClient(From).ComponentPlayer, list);
         }
         list.AddRange(RelateChunks);
     }

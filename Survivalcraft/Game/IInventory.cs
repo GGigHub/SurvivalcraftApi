@@ -41,7 +41,5 @@ namespace Game {
         void DropAllItems(Vector3 position);
 
         void DropSlotItems(int slotIndex, Vector3 position, Vector3 velocity);
-
-        event Action<IInventory, int> OnSlotChanged;
-        }
-        }
+    }
+}

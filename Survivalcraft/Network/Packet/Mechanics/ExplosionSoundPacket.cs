@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ExplosionSoundPacket : Packet {
     public override byte ID => (byte)PacketType.ExplosionSound;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public Vector3 m_position;
     public float m_level;

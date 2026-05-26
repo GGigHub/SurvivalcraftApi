@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class SubsystemWeatherPacket : Packet {
     public override byte ID => (byte)PacketType.Weather;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public double m_precipitationStartTime;
     public double m_precipitationEndTime;
     public float m_lightningIntensity;

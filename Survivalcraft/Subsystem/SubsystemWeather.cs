@@ -6,8 +6,9 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemWeather : Subsystem, IDrawable, IUpdateable {
-        public event Action<double, double, float> OnPrecipitationUpdate;
-        public event Action<double, float, double> OnFogUpdate;
+        public static Action<double, double, float> OnPrecipitationUpdate;
+
+        public static Action<double, float, double> OnFogUpdate;
 
         public SubsystemGameInfo m_subsystemGameInfo;
 

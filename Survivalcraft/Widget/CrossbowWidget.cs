@@ -4,7 +4,7 @@ using Engine;
 
 namespace Game {
     public class CrossbowWidget : CanvasWidget {
-        public static event Action<IInventory, int> OnCrossbowPull;
+        public static Action<IInventory, int> OnCrossbowPull;
         public IInventory m_inventory;
 
         public int m_slotIndex;

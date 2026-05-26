@@ -12,7 +12,7 @@ public class InjureRequestPacket : Packet {
         Fire
     }
     public override byte ID => (byte)PacketType.InjureRequest;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_targetId;
     public int m_attackerId;
     public float m_amount;

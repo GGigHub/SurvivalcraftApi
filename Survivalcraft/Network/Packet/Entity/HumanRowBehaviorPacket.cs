@@ -5,7 +5,7 @@ namespace Game.Network;
 
 public class HumanRowBehaviorPacket : Packet {
     public override byte ID => (byte)PacketType.BehaviorHumanRow;
-    public override ClientState MinNeedState => ClientState.Playing;
+    public override NetworkState MinNeedState => NetworkState.Playing;
     public int m_entityId;
     public bool m_rowLeft;
     public bool m_rowRight;
@@ -31,7 +31,7 @@ public class HumanRowBehaviorPacket : Packet {
                 GameManager.Project.FindSubsystem<SubsystemAudio>().PlayRandomSound("Audio/Rowing", random.Float(0.4f, 0.6f), random.Float(-0.3f, 0.2f), humanModel.m_componentCreature.ComponentBody.Position, 3f, autoDelay: true);
                 if (isServer) {
                     Except = From;
-                    NetworkManager.QueuePacket(this);
+                    NetworkService.QueuePacket(this);
                 }
             }
         });

@@ -12,7 +12,7 @@ public struct CellChange {
 
 public class TerrainChangeCellListPacket : TerrainPacketBase {
     public override byte ID => (byte)PacketType.TerrainChangeCellList;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public List<CellChange> cellChanges = [];
 
     public TerrainChangeCellListPacket() { }

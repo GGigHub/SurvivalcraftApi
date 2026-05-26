@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class MovingBlockRemovePacket : Packet {
     public override byte ID => (byte)PacketType.MovingBlockRemove;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public string movingBlockId;
     public Point3 m_position;

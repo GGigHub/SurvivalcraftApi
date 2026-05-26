@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class ClientSyncListPacket : ClientPacketBase {
     public override byte ID => (byte)PacketType.ClientSyncList;
-    public override ClientState MinNeedState => ClientState.NotConnected;
+    public override NetworkState MinNeedState => NetworkState.NotConnected;
     public List<Client> m_list = [];
 
     public ClientSyncListPacket() { }
@@ -40,17 +40,17 @@ public class ClientSyncListPacket : ClientPacketBase {
             if (client.ID == 0) {
                 client.Peer = From.Peer;
                 client.Peer.Tag = client;
-                NetworkManager.Client.Server = From;
+                NetworkService.Client.Server = From;
             }
-            else if (client.NetworkGuid == NetworkManager.Client.Self.NetworkGuid) {
-                NetworkManager.Client.Self = client;
+            else if (client.NetworkGuid == NetworkService.Client.Self.NetworkGuid) {
+                NetworkService.Client.Self = client;
             }
-            NetworkManager.AddClient(client);
+            NetworkService.AddClient(client);
         }
-        if (NetworkManager.Client.Self == null) {
+        if (NetworkService.Client.Self == null) {
             throw new Exception("Cannot find Self In Client List");
         }
-        NetworkManager.Client.Self.State = ClientState.Connected;
+        NetworkService.Client.Self.State = NetworkState.Connected;
     }
 }
 

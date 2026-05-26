@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public class ServerCloseTimePacket : Packet {
     public override byte ID => (byte)PacketType.ServerCloseTime;
-    public override ClientState MinNeedState => ClientState.Connected;
+    public override NetworkState MinNeedState => NetworkState.Connected;
     public int m_time;
     public string m_message;
 

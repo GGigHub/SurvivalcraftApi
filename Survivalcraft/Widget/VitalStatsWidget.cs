@@ -5,7 +5,7 @@ using Engine;
 
 namespace Game {
     public class VitalStatsWidget : CanvasWidget {
-        public static event Action<ComponentHealth, ComponentCreature, float, string, bool> OnChokeRequest;
+        public static Action<ComponentHealth, ComponentCreature, float, string, bool> OnChokeRequest;
         public ButtonWidget m_chokeButton;
         public LabelWidget m_titleLabel;
         public LinkWidget m_healthLink;

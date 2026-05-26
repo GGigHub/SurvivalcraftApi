@@ -78,10 +78,12 @@ namespace Game {
 
         public Dictionary<ClothingSlot, float> InsulationBySlots = [];
         public float Insulation { get; set; }
-
         public ClothingSlot LeastInsulatedSlot { get; set; }
-
         public float SteedMovementSpeedFactor { get; set; }
+
+        public static Action<IInventory, int> OnSlotChanged;
+
+        public static Action<ComponentClothing, string> OnRequestSkin;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -102,8 +104,6 @@ namespace Game {
         public virtual void OnSlotChange(int slotIndex) {
             OnSlotChanged?.Invoke(this, slotIndex);
         }
-
-        public event Action<IInventory, int> OnSlotChanged;
 
         public virtual void SetSlotValue(int slotIndex, object obj) {
             List<int> list = (List<int>)obj;
@@ -615,8 +615,6 @@ namespace Game {
         public virtual void Display_DeviceReset() {
             m_clothedTexturesValid = false;
         }
-
-        public event Action<ComponentClothing, string> OnRequestSkin;
 
         public virtual bool CanWearClothing(int value) {
             Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];

@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class InjureEventPacket : Packet {
     public override byte ID => (byte)PacketType.InjureEvent;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_targetId;
     public int m_attackerId;
     public float m_amount;

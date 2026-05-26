@@ -43,10 +43,10 @@ namespace Game {
         public int PlayerIndex { get; set; }
         public Guid NetworkGuid { get; set; }
 
-        public static event Action<PlayerData> OnPlayerPlaying;
-        public static event Action<PlayerData> OnPlayerRestart;
-        public static event Action OnPlayerDisconnected;
-        public static event Action<PlayerData> OnPlayerPlayingUpdate;
+        public static Action<PlayerData> OnPlayerPlaying;
+        public static Action<PlayerData> OnPlayerRestart;
+        public static Action OnPlayerDisconnected;
+        public static Action<PlayerData> OnPlayerPlayingUpdate;
 
         public bool ServerManager { get; set; }
 
@@ -273,7 +273,7 @@ namespace Game {
                 if (!IsMainPlayer && !NetworkManager.IsNetworkMode) {
                     if (!isSetStatus) {
                         // Assuming Client checking logic is handled differently or we just assume invulnerable if Client == null
-                        if (Client != null && Client.State != ClientState.Playing) {
+                        if (Client != null && Client.State != NetworkState.Playing) {
                             ComponentPlayer.ComponentHealth.IsInvulnerable = true;
                         }
                         else {

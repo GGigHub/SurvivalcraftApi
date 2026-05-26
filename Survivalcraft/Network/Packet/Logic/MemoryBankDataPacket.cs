@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class MemoryBankDataPacket : EditableBlockPacketBase {
     public override byte ID => (byte)PacketType.EditableMemoryBank;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     private bool m_syncItem;
     private bool m_editAsItem;
     private int m_slotIndex;
@@ -58,7 +58,7 @@ public class MemoryBankDataPacket : EditableBlockPacketBase {
         else {
             behavior.SetBlockData(m_cellFace.Point, data);
         }
-        if (isServer) NetworkManager.QueuePacket(this);
+        if (isServer) NetworkService.QueuePacket(this);
     }
 }
 

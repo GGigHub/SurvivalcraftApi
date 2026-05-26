@@ -57,8 +57,9 @@ namespace Game {
             UpdateMovableBlocks();
         }
 
-        public event Action<SubsystemPistonBlockBehavior, int, int, int> OnEditItemData;
-        public event Action<SubsystemPistonBlockBehavior, CellFace, int> OnEditBlockData;
+        public static Action<SubsystemPistonBlockBehavior, int, int, int> OnEditItemData;
+
+        public static Action<SubsystemPistonBlockBehavior, CellFace, int> OnEditBlockData;
 
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {

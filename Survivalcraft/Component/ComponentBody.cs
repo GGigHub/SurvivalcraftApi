@@ -76,10 +76,7 @@ namespace Game {
 
         public Vector3? SendVelocity;
 
-
-        public event Action<ComponentBody, float> OnBodyUpdate;
-
-
+        public static Action<ComponentBody, float> OnBodyUpdate;
 
         public float m_crouchFactor;
 

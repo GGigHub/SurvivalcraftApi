@@ -18,6 +18,8 @@ namespace Game {
 
         public SubsystemGameInfo m_subsystemGameInfo;
 
+        public static Action<Pickable> OnPickableAttract;
+
         public virtual bool IsPickableInAttractRange(Pickable pickable, float distanceToTargetSquare) {
             if (pickable.StuckMatrix.HasValue) {
                 return false;
@@ -64,8 +66,6 @@ namespace Game {
                 }
             }
         }
-
-        public event Action<Pickable> OnPickableAttract;
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
             base.Load(valuesDictionary, idToEntityMap);

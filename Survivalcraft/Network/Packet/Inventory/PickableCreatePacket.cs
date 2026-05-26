@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class PickableCreatePacket : Packet {
     public override byte ID => (byte)PacketType.PickableCreate;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public Pickable m_pickable = new();
 
     public PickableCreatePacket() { }

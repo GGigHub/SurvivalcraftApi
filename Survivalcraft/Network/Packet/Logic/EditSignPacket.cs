@@ -4,7 +4,7 @@ namespace Game.Network;
 
 public class EditSignPacket : Packet {
     public override byte ID => (byte)PacketType.EditSign;
-    public override ClientState MinNeedState => ClientState.ProjectLoaded;
+    public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public Point3 m_point3;
 
@@ -22,10 +22,10 @@ public class EditSignPacket : Packet {
     public override void Handle(bool isServer) {
         if (isServer) {
             To = From;
-            NetworkManager.QueuePacket(this);
+            NetworkService.QueuePacket(this);
         }
         else {
-            DialogsManager.ShowDialog(NetworkManager.MainPlayer.GuiWidget, new EditSignDialog(GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>(), m_point3));
+            DialogsManager.ShowDialog(NetworkService.MainPlayer.GuiWidget, new EditSignDialog(GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>(), m_point3));
         }
     }
 }

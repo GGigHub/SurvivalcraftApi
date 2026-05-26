@@ -11,7 +11,7 @@ using TemplatesDatabase;
 
 namespace Game.Network;
 
-public static class NetworkManager {
+public static class NetworkService {
     public static NetworkServer Server { get; private set; }
     public static NetworkClient Client { get; private set; }
 
@@ -23,7 +23,8 @@ public static class NetworkManager {
     public static IEnumerable<Client> Peers => Server != null ? Server.Peers : Client != null ? Client.Clients.Values.Where(c => c != Client.Self) : [];
     public static bool IsServer => Server != null && Server.NetManager.IsRunning;
     public static bool IsClient => Client != null && Client.NetManager.IsRunning;
-    public static bool IsMultiplayer => IsServer || IsClient;
+    public static Guid NetworkGuid => Guid.Parse(SettingsManager.OnlineAccessToken);
+    public static NetworkState SelfState => Self.State;
 
     public static ComponentPlayer MainPlayer {
         get {
@@ -34,14 +35,19 @@ public static class NetworkManager {
         }
     }
 
+    public static void Initialize() {
+        PacketManager.Initialize();
+        RootManager.Initialize();
+    }
+
     public static bool StartServer() {
         Server = new NetworkServer();
         return Server.StartServer(SettingsManager.ServerPort);
     }
 
-    public static void ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
+    public static bool ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
         Client = new NetworkClient();
-        Client.ConnectServer(ep, passwd, onlineAccessToken);
+        return Client.ConnectServer(ep, passwd, onlineAccessToken);
     }
 
     public static void QueuePacket(Packet packet) {
