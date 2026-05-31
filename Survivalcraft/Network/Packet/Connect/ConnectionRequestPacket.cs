@@ -216,7 +216,9 @@ public class ConnectionRequestPacket : Packet {
                 var clientPacket = new ClientAddPacket(addClient.ID, addClient.NetworkGuid, addClient.Nickname);
                 foreach (var c in NetworkService.Peers) {
                     if (c.ID == addClient.ID) continue;
-                    NetworkService.Server.SendWriterFromPacket(clientPacket, c.Peer, true);
+                    if (NetworkService.Server.ClientPeers.TryGetValue(c.ID, out var peer)) {
+                        NetworkService.Server.SendWriterFromPacket(clientPacket, peer, true);
+                    }
                 }
                 Log.Information("Received connection request from " + From.IPPoint + ", accepted");
             }

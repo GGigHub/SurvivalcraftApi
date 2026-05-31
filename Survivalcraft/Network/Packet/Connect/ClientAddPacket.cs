@@ -10,7 +10,7 @@ public class ClientAddPacket : ClientPacketBase{
     public ClientAddPacket() { }
 
     public ClientAddPacket(byte id, Guid guid, string nickname) {
-        m_client = new Client(null, id, guid, nickname);
+        m_client = new Client(id, guid, nickname);
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -21,7 +21,7 @@ public class ClientAddPacket : ClientPacketBase{
         if (isServer) {
             return;
         }
-        NetworkService.AddClient(new Client(From.Peer, m_client.ID, m_client.NetworkGuid, m_client.Nickname));
+        NetworkService.AddClient(new Client(m_client.ID, m_client.NetworkGuid, m_client.Nickname));
     }
 }
 

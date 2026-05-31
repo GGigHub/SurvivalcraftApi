@@ -15,6 +15,7 @@ public class NetworkServer : INetEventListener {
     public bool IsServer => NetManager.IsRunning && Self == Server;
     public int ClientCount => Peers.Count() + 1;
     public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
+    public Dictionary<int, NetPeer> ClientPeers { get; } = new Dictionary<int, NetPeer>();
     public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
     public List<Packet> PendingPackets { get; } = new List<Packet>();
     public Action<Client> OnNetworkStateChanged { get; set; }
@@ -73,9 +74,9 @@ public class NetworkServer : INetEventListener {
             return;
         }
 
-        if (c.Peer != null && c.Peer.ConnectionState != ConnectionState.Disconnected) {
-            if (string.IsNullOrEmpty(reason)) c.Peer.Disconnect();
-            else c.Peer.Disconnect(NetDataWriter.FromString(reason));
+        if (ClientPeers.TryGetValue(c.ID, out NetPeer peer) && peer.ConnectionState != ConnectionState.Disconnected) {
+            if (string.IsNullOrEmpty(reason)) peer.Disconnect();
+            else peer.Disconnect(NetDataWriter.FromString(reason));
         }
 
         if (c == Server) {
@@ -88,6 +89,7 @@ public class NetworkServer : INetEventListener {
             c.State = NetworkState.NotConnected;
             OnNetworkStateChanged?.Invoke(c);
             Clients.Remove(c.ID);
+            ClientPeers.Remove(c.ID);
         }
     }
 
@@ -95,11 +97,12 @@ public class NetworkServer : INetEventListener {
         var cs = new List<Client>(Clients.Values);
         foreach (var c in cs) {
             if (c == Self) continue;
-            if (c.Peer != null && c.Peer.ConnectionState != ConnectionState.Disconnected) {
-                if (reason != null) c.Peer.Disconnect(NetDataWriter.FromString(reason));
-                else c.Peer.Disconnect();
+            if (ClientPeers.TryGetValue(c.ID, out NetPeer peer) && peer.ConnectionState != ConnectionState.Disconnected) {
+                if (reason != null) peer.Disconnect(NetDataWriter.FromString(reason));
+                else peer.Disconnect();
             }
             Clients.Remove(c.ID);
+            ClientPeers.Remove(c.ID);
             c.State = NetworkState.NotConnected;
         }
     }
@@ -125,7 +128,8 @@ public class NetworkServer : INetEventListener {
         foreach (var p in Peers) {
             if (p.NetworkGuid == guid) RemoveClient(p, "Duplicate account login.");
         }
-        var c = new Client(peer, FindUnusedIndex(), guid, nickname);
+        var c = new Client(FindUnusedIndex(), guid, nickname);
+        ClientPeers[c.ID] = peer;
         peer.Tag = c;
         return c;
     }
@@ -162,7 +166,7 @@ public class NetworkServer : INetEventListener {
                     continue;
                 }
                 byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, client, true, IsServer);
-                if (payload != null) PackageFragment.SendPayload(payload, client.Peer);
+                if (payload != null && ClientPeers.TryGetValue(client.ID, out NetPeer peer)) PackageFragment.SendPayload(payload, peer);
             }
             PendingPackets.Clear();
 
@@ -192,7 +196,7 @@ public class NetworkServer : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         ClientDisconnected?.Invoke(peer, disconnectInfo);
-        Client client = Clients.Values.FirstOrDefault(c => c.Peer == peer);
+        Client client = peer.Tag as Client;
         if (client != null) {
             RemoveClient(client, disconnectInfo.Reason.ToString());
         }

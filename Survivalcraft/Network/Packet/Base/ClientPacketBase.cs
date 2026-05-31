@@ -18,7 +18,7 @@ namespace Game.Network {
             archive.Value(ref nickname);
 
             if (archive.IsReading) {
-                client = new Client(null, id, NetworkGuid, nickname);
+                client = new Client(id, NetworkGuid, nickname);
             }
         }
     }

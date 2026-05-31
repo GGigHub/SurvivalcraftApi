@@ -38,8 +38,6 @@ public class ClientSyncListPacket : ClientPacketBase {
         }
         foreach (var client in m_list) {
             if (client.ID == 0) {
-                client.Peer = From.Peer;
-                client.Peer.Tag = client;
                 NetworkService.Client.Server = From;
             }
             else if (client.NetworkGuid == NetworkService.Client.Self.NetworkGuid) {

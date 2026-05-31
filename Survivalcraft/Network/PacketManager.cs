@@ -280,14 +280,14 @@ public class PacketManager {
 
         Client from = null;
         if (clients != null) {
-            from = clients.FirstOrDefault(client =>
-                (client.Peer != null && client.Peer == netPeer) ||
-                (client.Request != null && client.Request == request) ||
-                (client.IPPoint != null && client.IPPoint == iPEndPoint));
+            from = clients.FirstOrDefault(c =>
+                (NetworkService.IsClient && NetworkService.Client?.ServerPeer != null && NetworkService.Client.ServerPeer == netPeer) ||
+                (!NetworkService.IsClient && NetworkService.Server != null && NetworkService.Server.ClientPeers.TryGetValue(c.ID, out var p) && p == netPeer) ||
+                (c.Request != null && c.Request == request) ||
+                (c.IPPoint != null && c.IPPoint == iPEndPoint));
         }
         if (from == null) {
             from = new Client() {
-                Peer = netPeer,
                 Request = request,
                 IPPoint = iPEndPoint,
             };

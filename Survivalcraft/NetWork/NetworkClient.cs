@@ -10,11 +10,10 @@ public class Client {
     public string Nickname { get; set; }
     public byte ID { get; internal set; }
     public Guid NetworkGuid { get; internal set; }
-    public NetPeer Peer { get; internal set; }
     public ConnectionRequest Request { get; internal set; }
     public IPEndPoint IPPoint { get; internal set; }
     public SubsystemPlayers SubsystemPlayers => GameManager.Project.FindSubsystem<SubsystemPlayers>();
-    public bool IsConnected => Peer != null && Peer.ConnectionState != ConnectionState.Disconnected;
+    public bool IsConnected => State != NetworkState.NotConnected;
     public NetworkState State { get; set; } = NetworkState.NotConnected;
     public PlayerData PlayerData { get { return NetworkService.GetPlayerByClient(this); } }
 
@@ -26,11 +25,10 @@ public class Client {
         ID = 0;
     }
 
-    public Client(NetPeer netPeer, byte id, Guid guid, string nickName) {
+    public Client(byte id, Guid guid, string nickName) {
         ID = id;
         NetworkGuid = guid;
         Nickname = nickName;
-        Peer = netPeer;
     }
 
     public override bool Equals(object obj) => obj is Client c && c.ID == ID;
@@ -55,6 +53,7 @@ public class NetworkClient : INetEventListener {
     public event Action<NetPeer, object> DeliveryEvent;
 
     public Client Server { get; set; }
+    public NetPeer ServerPeer { get; internal set; }
     public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
     public List<Packet> PendingPackets { get; } = new List<Packet>();
 
@@ -107,9 +106,9 @@ public class NetworkClient : INetEventListener {
     public void Update() {
         if (NetManager.IsRunning) {
             // Client only sends to server (ID 0 usually)
-            if (Clients.TryGetValue(0, out Client serverClient) && serverClient.IsConnected) {
+            if (Clients.TryGetValue(0, out Client serverClient) && serverClient.IsConnected && ServerPeer != null) {
                 byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, serverClient, true, false);
-                if (payload != null) PackageFragment.SendPayload(payload, serverClient.Peer);
+                if (payload != null) PackageFragment.SendPayload(payload, ServerPeer);
             }
             PendingPackets.Clear();
 
@@ -135,10 +134,12 @@ public class NetworkClient : INetEventListener {
     }
 
     public void OnPeerConnected(NetPeer peer) {
+        ServerPeer = peer;
         PeerConnectedEvent?.Invoke(peer);
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
+        ServerPeer = null;
         PeerDisconnectedEvent?.Invoke(peer, disconnectInfo);
         Log.Information("Disconnect by " + disconnectInfo);
         Stop();
