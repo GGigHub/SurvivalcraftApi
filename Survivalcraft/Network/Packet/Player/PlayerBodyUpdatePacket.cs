@@ -5,6 +5,20 @@ namespace Game.Network;
 
 public class PlayerBodyUpdatePacket : PlayerPacketBase {
     public override byte ID => (byte)PacketType.PlayerBodyUpdate;
+    public struct PlayerBodySyncSnapshot {
+        public bool Initialized;
+        public bool HasParentBody;
+        public Vector3 Position;
+        public Vector3 Velocity;
+        public Quaternion Rotation;
+        public Vector2 LookAngles;
+        public Vector2 ChildLookAngles;
+        public int? LadderValue;
+        public bool IsCrouching;
+    }
+
+    public static readonly Dictionary<Guid, PlayerBodySyncSnapshot> s_playerBodySyncSnapshots = [];
+
     public Vector3 Position;
     public Vector3 Velocity;
     public Quaternion Rotation;
@@ -20,50 +34,48 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
         PlayerData playerData = player.PlayerData;
         changeFlag = ChangeFlag.None;
         ComponentBody body = player.ComponentBody.ParentBody;
+        s_playerBodySyncSnapshots.TryGetValue(playerData.NetworkGuid, out PlayerBodySyncSnapshot snapshot);
+        bool hasParentBody = body != null;
         if (body != null) {
             changeFlag |= ChangeFlag.ParentBodyChange;
-            if (body.Locomotion != null && body.Locomotion.SendLookAngles.HasValue) {
+            Vector2 lookAngles = body.Locomotion?.LookAngles ?? Vector2.Zero;
+            if (!snapshot.Initialized || !snapshot.HasParentBody || BodyUpdatePacket.HasVector2Changed(lookAngles, snapshot.LookAngles, BodyUpdatePacket.LookAnglesEpsilonSquared)) {
                 changeFlag |= ChangeFlag.LookAnglesChange;
-                LookAngles = body.Locomotion.SendLookAngles.Value;
-                body.Locomotion.SendLookAngles = null;
+                LookAngles = lookAngles;
             }
-            if (player.ComponentLocomotion.SendLookAngles.HasValue) {
+            if (!snapshot.Initialized || !snapshot.HasParentBody || BodyUpdatePacket.HasVector2Changed(player.ComponentLocomotion.LookAngles, snapshot.ChildLookAngles, BodyUpdatePacket.LookAnglesEpsilonSquared)) {
                 changeFlag |= ChangeFlag.ChildLookAnglesChange;
-                ChildLookAngles = player.ComponentLocomotion.SendLookAngles.Value;
-                player.ComponentLocomotion.SendLookAngles = null;
+                ChildLookAngles = player.ComponentLocomotion.LookAngles;
             }
         }
         else {
             body = player.ComponentBody;
-            if (player.ComponentLocomotion.SendLookAngles.HasValue) {
+            if (!snapshot.Initialized || snapshot.HasParentBody || BodyUpdatePacket.HasVector2Changed(player.ComponentLocomotion.LookAngles, snapshot.LookAngles, BodyUpdatePacket.LookAnglesEpsilonSquared)) {
                 changeFlag |= ChangeFlag.LookAnglesChange;
-                LookAngles = player.ComponentLocomotion.SendLookAngles.Value;
-                player.ComponentLocomotion.SendLookAngles = null;
+                LookAngles = player.ComponentLocomotion.LookAngles;
             }
             if (player.ComponentLocomotion.LadderValue.HasValue) {
                 changeFlag |= ChangeFlag.LadderChange;
                 m_ladderValue = player.ComponentLocomotion.LadderValue.Value;
             }
-            if (body.CanCrouch) {
+            if (body.CanCrouch && (!snapshot.Initialized || body.IsCrouching != snapshot.IsCrouching)) {
                 changeFlag |= ChangeFlag.SneakChange;
                 m_sneaking = body.IsCrouching;
             }
         }
-        if (body.SendPosition.HasValue) {
-            Position = body.SendPosition.Value;
+        if (!snapshot.Initialized || BodyUpdatePacket.HasVector3Changed(body.Position, snapshot.Position, BodyUpdatePacket.PositionEpsilonSquared)) {
+            Position = body.Position;
             changeFlag |= ChangeFlag.PositionChange;
-            body.SendPosition = null;
         }
-        if (body.SendRotation.HasValue) {
-            Rotation = body.SendRotation.Value;
+        if (!snapshot.Initialized || BodyUpdatePacket.HasRotationChanged(body.Rotation, snapshot.Rotation)) {
+            Rotation = body.Rotation;
             changeFlag |= ChangeFlag.RotationChange;
-            body.SendRotation = null;
         }
-        if (body.SendVelocity.HasValue) {
-            Velocity = body.SendVelocity.Value;
+        if (!snapshot.Initialized || BodyUpdatePacket.HasVector3Changed(body.Velocity, snapshot.Velocity, BodyUpdatePacket.VelocityEpsilonSquared)) {
+            Velocity = body.Velocity;
             changeFlag |= ChangeFlag.VelocityChange;
-            body.SendVelocity = null;
         }
+        s_playerBodySyncSnapshots[playerData.NetworkGuid] = CreateSnapshot(player, body, hasParentBody);
         m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
     }
 
@@ -88,33 +100,51 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
         if (changeFlag.HasFlag(ChangeFlag.ParentBodyChange) && player.ComponentBody.ParentBody != null) {
             body = player.ComponentBody.ParentBody;
             if (changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) {
-                body.Locomotion?.NetLookAngles.SetNext(LookAngles);
+                if (body.Locomotion != null) {
+                    body.Locomotion.LookAngles = LookAngles;
+                }
             }
             if (changeFlag.HasFlag(ChangeFlag.ChildLookAnglesChange)) {
-                player.ComponentBody.Locomotion?.NetLookAngles.SetNext(ChildLookAngles);
+                if (player.ComponentBody.Locomotion != null) {
+                    player.ComponentBody.Locomotion.LookAngles = ChildLookAngles;
+                }
             }
         }
         else {
             body = player.ComponentBody;
             if (changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) {
-                player.ComponentLocomotion.NetLookAngles.SetNext(LookAngles);
+                player.ComponentLocomotion.LookAngles = LookAngles;
             }
         }
         if (changeFlag.HasFlag(ChangeFlag.VelocityChange)) {
-            body.netVelocity.SetNext(Velocity);
+            body.Velocity = Velocity;
         }
         if (body.Locomotion != null) {
             body.Locomotion.LadderValue = changeFlag.HasFlag(ChangeFlag.LadderChange) ? m_ladderValue : null;
         }
         if (changeFlag.HasFlag(ChangeFlag.PositionChange)) {
-            body.netPosition.SetNext(Position);
+            body.Position = Position;
         }
         if (changeFlag.HasFlag(ChangeFlag.RotationChange)) {
-            body.netRotation.SetNext(Rotation);
+            body.Rotation = Rotation;
         }
         if (changeFlag.HasFlag(ChangeFlag.SneakChange)) {
             body.IsSneaking = m_sneaking;
         }
+    }
+
+    public static PlayerBodySyncSnapshot CreateSnapshot(ComponentPlayer player, ComponentBody body, bool hasParentBody) {
+        return new PlayerBodySyncSnapshot {
+            Initialized = true,
+            HasParentBody = hasParentBody,
+            Position = body.Position,
+            Rotation = body.Rotation,
+            Velocity = body.Velocity,
+            LookAngles = hasParentBody ? body.Locomotion?.LookAngles ?? Vector2.Zero : player.ComponentLocomotion.LookAngles,
+            ChildLookAngles = player.ComponentLocomotion.LookAngles,
+            LadderValue = hasParentBody ? null : player.ComponentLocomotion.LadderValue,
+            IsCrouching = body.IsCrouching
+        };
     }
 }
 

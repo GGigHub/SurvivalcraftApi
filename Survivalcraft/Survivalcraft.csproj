@@ -48,7 +48,6 @@
       <Compile Include="Network\Packet\Helper\NetworkHelper.cs" />
       <Compile Include="Network\Packet\Helper\PacketFragment.cs" />
       <Compile Include="Network\Packet\Helper\PacketSerializer.cs" />
-      <Compile Include="Network\Packet\Helper\PacketSimulate.cs" />
       <Compile Include="Network\Packet\Inventory\ActiveSlotChangePacket.cs" />
       <Compile Include="Network\Packet\Inventory\ComponentFurnacePacket.cs" />
       <Compile Include="Network\Packet\Inventory\DispenserPacket.cs" />

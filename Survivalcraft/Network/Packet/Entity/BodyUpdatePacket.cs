@@ -5,6 +5,19 @@ namespace Game.Network;
 public class BodyUpdatePacket : Packet {
     public override byte ID => (byte)PacketType.BodyUpdate;
     public override NetworkState MinNeedState => NetworkState.Playing;
+    public const float PositionEpsilonSquared = 0.0001f;
+    public const float VelocityEpsilonSquared = 0.0001f;
+    public const float LookAnglesEpsilonSquared = 0.000001f;
+    public const float RotationDotEpsilon = 0.000001f;
+
+    public struct BodySyncSnapshot {
+        public bool Initialized;
+        public Vector3 Position;
+        public Vector3 Velocity;
+        public Quaternion Rotation;
+        public Vector2 LookAngles;
+        public Vector3? FlyOrder;
+    }
 
     [Flags]
     public enum ChangeFlag : byte {
@@ -31,32 +44,35 @@ public class BodyUpdatePacket : Packet {
     public BodyUpdatePacket() {
     }
 
-    public BodyUpdatePacket(List<ComponentBody> bodies) {
+    public BodyUpdatePacket(List<ComponentBody> bodies, Client client) {
+        Dictionary<int, BodySyncSnapshot> snapshots = GetBodySyncSnapshots(client);
         foreach (var body in bodies) {
             BodyItem bodyItem = new BodyItem();
             bodyItem.CreatureId = body.Entity.Id;
-            if (body.SendPosition.HasValue) {
+            snapshots.TryGetValue(body.Entity.Id, out BodySyncSnapshot snapshot);
+            if (!snapshot.Initialized || HasVector3Changed(body.Position, snapshot.Position, PositionEpsilonSquared)) {
                 bodyItem.changeFlag |= ChangeFlag.PositionChange;
-                bodyItem.Position = body.SendPosition.Value;
+                bodyItem.Position = body.Position;
             }
-            if (body.SendRotation.HasValue) {
+            if (!snapshot.Initialized || HasRotationChanged(body.Rotation, snapshot.Rotation)) {
                 bodyItem.changeFlag |= ChangeFlag.RotationChange;
-                bodyItem.Rotation = body.SendRotation.Value;
+                bodyItem.Rotation = body.Rotation;
             }
-            if (body.SendVelocity.HasValue) {
+            if (!snapshot.Initialized || HasVector3Changed(body.Velocity, snapshot.Velocity, VelocityEpsilonSquared)) {
                 bodyItem.changeFlag |= ChangeFlag.VelocityChange;
-                bodyItem.Velocity = body.SendVelocity.Value;
+                bodyItem.Velocity = body.Velocity;
             }
             if (body.Locomotion != null) {
-                if (body.Locomotion.SendLookAngles.HasValue) {
+                if (!snapshot.Initialized || HasVector2Changed(body.Locomotion.LookAngles, snapshot.LookAngles, LookAnglesEpsilonSquared)) {
                     bodyItem.changeFlag |= ChangeFlag.LookAnglesChange;
-                    bodyItem.LookAngles = body.Locomotion.SendLookAngles.Value;
+                    bodyItem.LookAngles = body.Locomotion.LookAngles;
                 }
-                if (body.Locomotion.FlyOrderChange) {
+                if (!snapshot.Initialized || body.Locomotion.LastFlyOrder != snapshot.FlyOrder) {
                     bodyItem.changeFlag |= ChangeFlag.FlyOrderChange;
                     bodyItem.FlyOrder = body.Locomotion.LastFlyOrder;
                 }
             }
+            snapshots[body.Entity.Id] = CreateSnapshot(body);
             m_bodyList.Add(bodyItem);
         }
     }
@@ -97,11 +113,19 @@ public class BodyUpdatePacket : Packet {
         List<ComponentBody> rl = new List<ComponentBody>();
         foreach (var item in m_bodyList) {
             bodies.FindBodyByCreatureID(item.CreatureId, body => {
-                if (item.changeFlag.HasFlag(ChangeFlag.PositionChange)) body.netPosition.SetNext(item.Position);
-                if (item.changeFlag.HasFlag(ChangeFlag.RotationChange)) body.netRotation.SetNext(item.Rotation);
-                if (item.changeFlag.HasFlag(ChangeFlag.VelocityChange)) body.netVelocity.SetNext(item.Velocity);
+                if (item.changeFlag.HasFlag(ChangeFlag.PositionChange)) {
+                    body.Position = item.Position;
+                }
+                if (item.changeFlag.HasFlag(ChangeFlag.RotationChange)) {
+                    body.Rotation = item.Rotation;
+                }
+                if (item.changeFlag.HasFlag(ChangeFlag.VelocityChange)) {
+                    body.Velocity = item.Velocity;
+                }
                 if (body.Locomotion != null) {
-                    if (item.changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) body.Locomotion.NetLookAngles.SetNext(item.LookAngles);
+                    if (item.changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) {
+                        body.Locomotion.LookAngles = item.LookAngles;
+                    }
                     if (item.changeFlag.HasFlag(ChangeFlag.FlyOrderChange)) body.Locomotion.LastFlyOrder = item.FlyOrder;
                 }
             }, () => {
@@ -158,7 +182,7 @@ public class BodyUpdatePacket : Packet {
 
     public static readonly Dictionary<Client, List<ComponentBody>> s_bodySyncLists = [];
     public static readonly Dictionary<Client, TerrainUpdater.UpdateLocation> s_bodySyncLocations = [];
-    public static readonly HashSet<ComponentBody> s_bodySyncResetBodies = [];
+    public static readonly Dictionary<Client, Dictionary<int, BodySyncSnapshot>> s_bodySyncSnapshots = [];
     public static int s_bodySyncFrame = -1;
     public static bool s_bodySyncFlushQueued;
 
@@ -183,7 +207,6 @@ public class BodyUpdatePacket : Packet {
         s_bodySyncFrame = Time.FrameIndex;
         s_bodySyncLists.Clear();
         s_bodySyncLocations.Clear();
-        s_bodySyncResetBodies.Clear();
         s_bodySyncFlushQueued = false;
 
         if (GameManager.Project == null) {
@@ -203,6 +226,7 @@ public class BodyUpdatePacket : Packet {
             if (subsystemTerrain.TerrainUpdater.UpdateLocations.TryGetValue(playerData.PlayerIndex, out TerrainUpdater.UpdateLocation location)) {
                 s_bodySyncLists[client] = [];
                 s_bodySyncLocations[client] = location;
+                GetBodySyncSnapshots(client);
             }
         }
 
@@ -216,14 +240,8 @@ public class BodyUpdatePacket : Packet {
         if (NetworkService.IsServer) {
             foreach (KeyValuePair<Client, List<ComponentBody>> pair in s_bodySyncLists) {
                 if (pair.Key.IsConnected && pair.Key.State >= NetworkState.Playing) {
-                    NetworkService.QueuePacket(new BodyUpdatePacket(pair.Value) { To = pair.Key });
-                    foreach (ComponentBody body in pair.Value) {
-                        s_bodySyncResetBodies.Add(body);
-                    }
+                    NetworkService.QueuePacket(new BodyUpdatePacket(pair.Value, pair.Key) { To = pair.Key });
                 }
-            }
-            foreach (ComponentBody body in s_bodySyncResetBodies) {
-                ResetBodySyncFlags(body);
             }
         }
 
@@ -231,21 +249,41 @@ public class BodyUpdatePacket : Packet {
         s_bodySyncFlushQueued = false;
         s_bodySyncLists.Clear();
         s_bodySyncLocations.Clear();
-        s_bodySyncResetBodies.Clear();
     }
 
     public static bool ShouldSyncBody(ComponentBody body) {
         return body.Entity.FindComponent<ComponentPlayer>() == null && body.ChildBodies.Count == 0;
     }
 
-    public static void ResetBodySyncFlags(ComponentBody body) {
-        body.SendPosition = null;
-        body.SendRotation = null;
-        body.SendVelocity = null;
-        if (body.Locomotion != null) {
-            body.Locomotion.SendLookAngles = null;
-            body.Locomotion.FlyOrderChange = false;
+    public static Dictionary<int, BodySyncSnapshot> GetBodySyncSnapshots(Client client) {
+        if (!s_bodySyncSnapshots.TryGetValue(client, out Dictionary<int, BodySyncSnapshot> snapshots)) {
+            snapshots = [];
+            s_bodySyncSnapshots[client] = snapshots;
         }
+        return snapshots;
+    }
+
+    public static BodySyncSnapshot CreateSnapshot(ComponentBody body) {
+        return new BodySyncSnapshot {
+            Initialized = true,
+            Position = body.Position,
+            Rotation = body.Rotation,
+            Velocity = body.Velocity,
+            LookAngles = body.Locomotion?.LookAngles ?? Vector2.Zero,
+            FlyOrder = body.Locomotion?.LastFlyOrder
+        };
+    }
+
+    public static bool HasVector3Changed(Vector3 current, Vector3 previous, float epsilonSquared) {
+        return (current - previous).LengthSquared() > epsilonSquared;
+    }
+
+    public static bool HasVector2Changed(Vector2 current, Vector2 previous, float epsilonSquared) {
+        return (current - previous).LengthSquared() > epsilonSquared;
+    }
+
+    public static bool HasRotationChanged(Quaternion current, Quaternion previous) {
+        return 1f - MathF.Abs(Quaternion.Dot(current, previous)) > RotationDotEpsilon;
     }
 }
 

@@ -64,18 +64,6 @@ namespace Game {
 
         public Vector3 m_velocity;
 
-        public NetPosition netPosition;
-
-        public NetRotation netRotation;
-
-        public NetPosition netVelocity;
-
-        public Vector3? SendPosition;
-
-        public Quaternion? SendRotation;
-
-        public Vector3? SendVelocity;
-
         public static Action<ComponentBody, float> OnBodyUpdate;
 
         public float m_crouchFactor;
@@ -167,7 +155,6 @@ namespace Game {
                     : value;
                 if (newVelocity != m_velocity) {
                     m_velocity = newVelocity;
-                    SendVelocity = m_velocity;
                 }
             }
         }
@@ -376,15 +363,6 @@ namespace Game {
             IsGroundDragEnabled = true;
             IsWaterDragEnabled = true;
 
-            netPosition ??= new NetPosition(Position);
-            netRotation ??= new NetRotation(Rotation);
-            netVelocity ??= new NetPosition(Velocity);
-            RotationChanged += (obj) => {
-                SendRotation = obj.Rotation;
-            };
-            PositionChanged += (obj) => {
-                SendPosition = obj.Position;
-            };
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
@@ -423,16 +401,6 @@ namespace Game {
                 return;
             }
             OnBodyUpdate?.Invoke(this, dt);
-            if (IsNetworkMode?.Invoke(this) == true) {
-                Position = netPosition.Get(dt);
-                Rotation = netRotation.Get(dt);
-                Velocity = netVelocity.Get(dt);
-            }
-            else {
-                netPosition.SetNext(Position);
-                netRotation.SetNext(Rotation);
-                netVelocity.SetNext(Velocity);
-            }
             CollisionVelocityChange = Vector3.Zero;
             if (m_shakingStrength > 1f) {
                 Vector3 vector = default;
@@ -552,7 +520,6 @@ namespace Game {
             if (m_parentBody != null) {
                 Vector3 vector4 = Vector3.Transform(ParentBodyPositionOffset, m_parentBody.Rotation) + m_parentBody.Position - position;
                 m_velocity = dt > 0f ? vector4 / dt : Vector3.Zero;
-                SendVelocity = m_velocity;
                 Rotation = ParentBodyRotationOffset * m_parentBody.Rotation;
             }
             StandingOnValue = null;
@@ -580,7 +547,6 @@ namespace Game {
             }
             if (IsGroundDragEnabled && StandingOnValue.HasValue) {
                 m_velocity = Vector3.Lerp(m_velocity, StandingOnVelocity, 6f * dt);
-                SendVelocity = m_velocity;
             }
             UpdateImmersionData();
             if (ImmersionFluidBlock is WaterBlock

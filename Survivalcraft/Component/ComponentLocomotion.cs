@@ -24,7 +24,6 @@ namespace Game {
         public Vector2 m_turnOrder;
         public Vector2 m_lookOrder;
         public float m_jumpOrder;
-        public bool FlyOrderChange;
         public bool m_lookAutoLevelX;
         public bool m_lookAutoLevelY;
         public double m_shoesWarningTime;
@@ -33,8 +32,6 @@ namespace Game {
         public double m_ladderActivationTime;
         public float m_swimBurstRemaining;
         public Vector2 m_lookAngles;
-        public NetVector2 NetLookAngles;
-        public Vector2? SendLookAngles;
         public Vector3? m_lastPosition;
         public bool m_walking;
         public bool m_falling;
@@ -75,9 +72,6 @@ namespace Game {
             set {
                 value.X = Math.Clamp(value.X, 0f - MathUtils.DegToRad(140f), MathUtils.DegToRad(140f));
                 value.Y = Math.Clamp(value.Y, 0f - MathUtils.DegToRad(82f), MathUtils.DegToRad(82f));
-                if (m_lookAngles != value) {
-                    SendLookAngles = value;
-                }
                 m_lookAngles = value;
             }
         }
@@ -100,9 +94,6 @@ namespace Game {
         public Vector3? FlyOrder {
             get => m_flyOrder;
             set {
-                if (m_flyOrder != value) {
-                    FlyOrderChange = true;
-                }
                 m_flyOrder = value;
                 if (m_flyOrder.HasValue) {
                     float num = m_flyOrder.Value.LengthSquared();
@@ -179,7 +170,6 @@ namespace Game {
             }*/
             OnLocomotionUpdate?.Invoke(this, dt);
             if (IsNetworkMode?.Invoke(m_componentCreature.ComponentBody) == true) {
-                LookAngles = NetLookAngles.Get(dt);
                 NormalMovement(dt);
                 return;
             }
@@ -364,7 +354,6 @@ namespace Game {
                 FlySpeed *= m_random.Float(0.85f, 1f);
                 SwimSpeed *= m_random.Float(0.85f, 1f);
             }
-            NetLookAngles = new NetVector2(LookAngles);
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
