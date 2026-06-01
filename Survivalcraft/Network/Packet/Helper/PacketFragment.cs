@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using Engine;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -52,7 +52,18 @@ public sealed class PacketFragment {
         }
     }
 
-    public bool TryReadPayload(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out byte[] payload, out bool consumedChunkFrame) {
+    public List<Packet> TryRead(NetDataReader reader, string sourceKey) {
+        if (!TryReadChunkFrame(reader, out int messageId, out int totalLength, out int offset, out byte[] chunkData)) {
+            return null;
+        }
+
+        if (chunkData == null || !TryAssembleChunk(sourceKey, messageId, totalLength, offset, chunkData, out byte[] payload)) {
+            return null;
+        }
+        return PacketManager.DecodePackets(payload);
+    }
+
+    public bool TryRead(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out byte[] payload, out bool consumedChunkFrame) {
         payload = null;
         consumedChunkFrame = false;
         if (!TryReadChunkFrame(reader, out int messageId, out int totalLength, out int offset, out byte[] chunkData)) {
@@ -67,7 +78,7 @@ public sealed class PacketFragment {
         return true;
     }
 
-    public void SendPayload(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
+    public void Send(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
         if (payload == null) {
             return;
         }
@@ -104,7 +115,7 @@ public sealed class PacketFragment {
         }
     }
 
-    public static void SendPayload(NetManager netManager, byte[] payload, IPEndPoint endPoint) {
+    public static void Send(NetManager netManager, byte[] payload, IPEndPoint endPoint) {
         if (payload == null || endPoint == null) {
             return;
         }
@@ -243,9 +254,9 @@ public sealed class PacketFragment {
     }
 
     private static string GetSourceKey(NetPeer peer, ConnectionRequest request, IPEndPoint endPoint) {
-        if (peer != null) return "peer:" + peer.Address;
-        if (request != null) return "req:" + request.RemoteEndPoint;
-        if (endPoint != null) return "ep:" + endPoint;
+        if (peer != null) return peer.Address.ToString();
+        if (request != null) return request.RemoteEndPoint.ToString();
+        if (endPoint != null) return endPoint.ToString();
         return "unknown";
     }
 }

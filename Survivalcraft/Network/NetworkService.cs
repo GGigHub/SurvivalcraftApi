@@ -12,12 +12,8 @@ using TemplatesDatabase;
 namespace Game.Network;
 
 public static class NetworkService {
-    public static NetworkServer Server { get; private set; }
-    public static NetworkClient Client { get; private set; }
-
-    public static Texture2D BlockTexture;
-
-    public static bool IsOfflineMode;
+    public static ONetworkServer Server { get; private set; }
+    public static ONetworkClient Client { get; private set; }
     public static Client Self => Server?.Self ?? Client?.Self;
     public static Dictionary<int, Client> Clients => Server != null ? Server.Clients : Client != null ? Client.Clients : [];
     public static IEnumerable<Client> Peers => Server != null ? Server.Peers : Client != null ? Client.Clients.Values.Where(c => c != Client.Self) : [];
@@ -41,12 +37,12 @@ public static class NetworkService {
     }
 
     public static bool StartServer() {
-        Server = new NetworkServer();
+        Server = new ONetworkServer();
         return Server.StartServer(SettingsManager.ServerPort);
     }
 
     public static bool ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
-        Client = new NetworkClient();
+        Client = new ONetworkClient();
         return Client.ConnectServer(ep, passwd, onlineAccessToken);
     }
 

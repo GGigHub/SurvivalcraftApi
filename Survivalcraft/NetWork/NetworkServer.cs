@@ -1,264 +1,113 @@
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Engine;
-using GameEntitySystem;
 using LiteNetLib;
-using LiteNetLib.Utils;
 
 namespace Game.Network;
 
-public class NetworkServer : INetEventListener {
-    public event Action<NetPeer> ClientConnected;
-    public event Action<NetPeer, DisconnectInfo> ClientDisconnected;
+public class NetworkServer : INetworkServer, INetEventListener {
+    private NetManager _netManager;
+    private PacketFragment _packageFragment;
+    private Dictionary<NetPeer, ClientSession> _clientSessions = new();
 
-    public Client Server { get; set; }
-    public bool IsServer => NetManager.IsRunning && Self == Server;
-    public int ClientCount => Peers.Count() + 1;
-    public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
-    public Dictionary<int, NetPeer> ClientPeers { get; } = new Dictionary<int, NetPeer>();
-    public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
-    public List<Packet> PendingPackets { get; } = new List<Packet>();
-    public Action<Client> OnNetworkStateChanged { get; set; }
-
-    internal readonly Dictionary<Client, string> ClientsToRemove = new Dictionary<Client, string>();
-
-    public Client Self { get; set; }
-    public NetManager NetManager { get; set; }
-    public PacketFragment PackageFragment { get; set; }
-
-    public NetworkServer() {
-        NetManager = new NetManager(this) {
+    public bool Start() {
+        _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
             UnconnectedMessagesEnabled = true,
             UpdateTime = 25,
             ReuseAddress = true
         };
-        PackageFragment = new PacketFragment(NetManager);
-    }
+        _packageFragment = new PacketFragment(_netManager);
 
-    public bool StartServer(int port) {
-        if (NetManager.IsRunning) {
-            Stop();
-        }
-        try {
-            StartLocal();
-            if (NetManager.Start(port)) {
-                Log.Information($"Server started successfully on port {NetManager.LocalPort}");
-                NetManager.PollEvents();
-                Server = Self;
-                Project.EntityAdded += (_, arg) => {
-                    NetworkService.QueuePacket(new EntityLoadPacket(arg.Entity));
-                };
-                Project.EntityRemoved += (_, arg) => {
-                    NetworkService.QueuePacket(new EntityRemovePacket(arg.Entity.Id));
-                };
-            }
-            else {
-                Stop();
-            }
-        }
-        catch (Exception e) {
-            Log.Error(e.Message);
-        }
-        return NetManager.IsRunning;
-    }
+        _netManager.Start(SettingsManager.ServerPort);
 
-    public void AddClient(Client c) {
-        Clients[c.ID] = c;
-    }
-
-    public void RemoveClientImmediate(Client c, string reason = null) {
-        if (c == Self) {
-            Stop();
-            return;
-        }
-
-        if (ClientPeers.TryGetValue(c.ID, out NetPeer peer) && peer.ConnectionState != ConnectionState.Disconnected) {
-            if (string.IsNullOrEmpty(reason)) peer.Disconnect();
-            else peer.Disconnect(NetDataWriter.FromString(reason));
-        }
-
-        if (c == Server) {
-            Stop();
-            return;
-        }
-
-        if (Clients.ContainsKey(c.ID)) {
-            NetworkService.QueuePacket(new ClientRemovePacket(c.ID));
-            c.State = NetworkState.NotConnected;
-            OnNetworkStateChanged?.Invoke(c);
-            Clients.Remove(c.ID);
-            ClientPeers.Remove(c.ID);
-        }
-    }
-
-    public void RemoveAllClients(string reason = null) {
-        var cs = new List<Client>(Clients.Values);
-        foreach (var c in cs) {
-            if (c == Self) continue;
-            if (ClientPeers.TryGetValue(c.ID, out NetPeer peer) && peer.ConnectionState != ConnectionState.Disconnected) {
-                if (reason != null) peer.Disconnect(NetDataWriter.FromString(reason));
-                else peer.Disconnect();
-            }
-            Clients.Remove(c.ID);
-            ClientPeers.Remove(c.ID);
-            c.State = NetworkState.NotConnected;
-        }
-    }
-
-    public Client GetClientByID(byte id) {
-        if (Clients.ContainsKey(id))
-            return Clients[id];
-        return null;
-    }
-
-    public Client GetClientByGUID(Guid? guid) {
-        return Clients.Values.FirstOrDefault(c => c.NetworkGuid == guid);
-    }
-
-    public void StartLocal() {
-        Clients.Clear();
-        Self = new Client(new Guid(SettingsManager.OnlineAccessToken));
-        AddClient(Self);
-    }
-
-    public Client CreateClient(NetPeer peer, Guid guid, string dataId, string nickname) {
-        if (!IsServer) throw new InvalidOperationException("creating client as non-server");
-        foreach (var p in Peers) {
-            if (p.NetworkGuid == guid) RemoveClient(p, "Duplicate account login.");
-        }
-        var c = new Client(FindUnusedIndex(), guid, nickname);
-        ClientPeers[c.ID] = peer;
-        peer.Tag = c;
-        return c;
-    }
-
-    public void RemoveClient(Client c, string reason = null) {
-        if (ClientsToRemove.ContainsKey(c)) {
-            if (!string.IsNullOrEmpty(reason))
-                ClientsToRemove[c] += '\n' + reason;
-        }
-        else {
-            ClientsToRemove[c] = reason ?? string.Empty;
-        }
-    }
-
-    public void SendWriterFromPacket(Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
-        NetworkHelper.SendWriterFromPacket(PackageFragment, packet, netPeer, useDeliveryEvent);
-    }
-
-    public void SendWriterFromPacket(Packet packet, ConnectionRequest request, bool reject) {
-        NetworkHelper.SendWriterFromPacket(PackageFragment, packet, request, reject);
+        Log.Information("Server started");
+        return _netManager.IsRunning;
     }
 
     public void Stop() {
-        if (NetManager.IsRunning) {
-            RemoveAllClients("Server is shutting down.");
-            NetManager.Stop(true);
-        }
+        _netManager.Stop(true);
+        _clientSessions.Clear();
     }
 
     public void Update() {
-        if (NetManager.IsRunning) {
-            foreach (Client client in Clients.Values) {
-                if (client == Self || !client.IsConnected) {
-                    continue;
-                }
-                byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, client, true, IsServer);
-                if (payload != null && ClientPeers.TryGetValue(client.ID, out NetPeer peer)) PackageFragment.SendPayload(payload, peer);
-            }
-            PendingPackets.Clear();
-
-            // Handle deferred client removal
-            if (ClientsToRemove.Count > 0) {
-                foreach (var pair in ClientsToRemove) {
-                    RemoveClientImmediate(pair.Key, pair.Value);
-                }
-                ClientsToRemove.Clear();
-            }
-
-            PackageFragment.CleanupStates();
-            NetManager.PollEvents();
-        }
+        _netManager.PollEvents();
+        _packageFragment.CleanupStates();
     }
 
-    private byte FindUnusedIndex() {
-        for (byte i = 0; i < 255; i++) {
-            if (!Clients.ContainsKey(i)) return i;
-        }
-        throw new Exception("Server is full.");
-    }
+    public void Board(Packet packet) {
+        foreach (KeyValuePair<NetPeer, ClientSession> clientSession in _clientSessions) {
+            if (packet.MinNeedState <= clientSession.Value.NetworkState) {
+                PacketStreamWriter writer = new();
+                writer.Write(PacketFragment.VerifyByte);
+                writer.Write(packet.ID);
+                packet.Serialize(new PacketSerializer(writer));
 
-    public void OnPeerConnected(NetPeer peer) {
-        ClientConnected?.Invoke(peer);
-    }
-
-    public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-        ClientDisconnected?.Invoke(peer, disconnectInfo);
-        Client client = peer.Tag as Client;
-        if (client != null) {
-            RemoveClient(client, disconnectInfo.Reason.ToString());
-        }
-        GameManager.Project.FindSubsystem<SubsystemPlayers>().MakePlayerOffline(client.NetworkGuid);
-        Log.Information("Disconnect by " + disconnectInfo);
-    }
-
-    public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod) {
-        if (GameManager.Project == null) return;
-
-        if (!NetworkHelper.TryDecodePackets(Clients.Values, 
-            PackageFragment, reader, peer, null, null, out List<Packet> packets)) {
-            return;
-        }
-        foreach (var packet in packets) {
-            if (packet.From == null) {
-                continue;
-            }
-            if (packet.MinNeedState <= packet.From.State) {
-                packet.Handle(true);
+                _packageFragment.Send(writer.Data(), clientSession.Key);
             }
         }
     }
 
-    public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
-        NetworkHelper.HandleUnconnectedEvent(Clients.Values, IsServer, PackageFragment, remoteEndPoint, reader, false);
-    }
+    public void Send(Packet packet, int playerIndex) {
+        KeyValuePair<NetPeer, ClientSession> clientSession =
+            _clientSessions.FirstOrDefault(kvp => kvp.Value.PlayerIndex == playerIndex);
 
-    public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
+        if (packet.MinNeedState <= clientSession.Value.NetworkState) {
+            PacketStreamWriter writer = new();
+            writer.Write(PacketFragment.VerifyByte);
+            writer.Write(packet.ID);
+            packet.Serialize(new PacketSerializer(writer));
+
+            _packageFragment.Send(writer.Data(), clientSession.Key);
+        }
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {
-        Log.Information("Received connection request " + request.RemoteEndPoint);
+        Log.Information($"Connection request by: {request.RemoteEndPoint}");
+        request.AcceptIfKey("x26.06.01");
+    }
 
-        if (GameManager.Project == null) {
-            SendWriterFromPacket(new ConnectionRejectPacket("Please wait until server startup is complete before joining."), request, true);
-        }
-        else {
-            try {
-                ConnectionRequestPacket requestPacket = PacketManager.DecodePacket<ConnectionRequestPacket>(Clients.Values, request.Data, null, request);
-                requestPacket.Handle(true);
-            }
-            catch (Exception e) {
-                SendWriterFromPacket(new ConnectionRejectPacket($"Invalid connection request packet: {e.Message}"), request, true);
-                Log.Information("ConnectionRequestEvent Error:" + e.StackTrace);
-            }
-        }
+    public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
+        Log.Error($"Network error on {endPoint}: {socketError}");
     }
 
     public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
+        // 可以用来计算延迟
     }
 
-    internal PlayerData GetPlayerByClient(Client client) {
-        if (client == null) return null;
-        var subsystemPlayers = GameManager.Project?.FindSubsystem<SubsystemPlayers>();
-        if (subsystemPlayers != null) {
-            foreach (var playerData in subsystemPlayers.PlayersData) {
-                if (playerData.NetworkGuid == client.NetworkGuid) {
-                    return playerData;
-                }
+    public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
+        if (!_clientSessions.TryGetValue(peer, out ClientSession session)) return;
+        _packageFragment.TryRead(reader, peer.Address.ToString()).ForEach(packet => {
+            if (packet.MinNeedState <= session.NetworkState) {
+                packet.Handle(false);
             }
-        }
-        return null;
+        });
+    }
+
+    public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
+        _packageFragment.TryRead(reader, remoteEndPoint.ToString()).ForEach(packet => {
+            if (packet.MinNeedState <= NetworkState.NotConnected) {
+                packet.Handle(false);
+            }
+        });
+        Log.Information($"Unconnected receive by: {remoteEndPoint}");
+    }
+
+    public void OnPeerConnected(NetPeer peer) {
+        ClientSession session = new() {
+            PlayerIndex = 0,
+            NetworkGuid = Guid.Empty,
+            NetworkState = NetworkState.Connected
+        };
+        _clientSessions[peer] = session;
+
+        Log.Information($"Connected: {peer.Address}");
+    }
+
+    public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
+        _clientSessions.Remove(peer);
+        Log.Information($"Disconnected: {peer.Address}, {disconnectInfo}");
     }
 }

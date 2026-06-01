@@ -275,6 +275,22 @@ public class PacketManager {
         }
     }
 
+    public static List<Packet> DecodePackets(byte[] payload) {
+        List<Packet> packets = new();
+        byte packetID = 99;
+        if (payload == null || payload.Length == 0) {
+            return packets;
+        }
+        try {
+            var preader = new PacketStreamReader(payload);
+            return DecodePacketsFromReader(preader, null, ref packetID);
+        }
+        catch {
+            Log.Information("接收到不规范的数据包:" + packetID);
+            return packets;
+        }
+    }
+
     private static Client ResolveFrom(IEnumerable<Client> clients, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         if (netPeer != null && netPeer.Tag is Client client) return client;
 

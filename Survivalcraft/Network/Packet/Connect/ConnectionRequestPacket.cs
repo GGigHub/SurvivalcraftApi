@@ -165,9 +165,6 @@ public class ConnectionRequestPacket : Packet {
             if (NetworkService.Self.NetworkGuid == guid) {
                 connectionError.AppendLine("Client token matches server token.");
             }
-            else if (NetworkService.Peers.FirstOrDefault(c => c != From && c.NetworkGuid == guid) != null) {
-                connectionError.AppendLine("Client token conflicts with an online player.");
-            }
             else if (!string.IsNullOrEmpty(pwd2)) {
                 if (!useExternalPassword && m_password != pwd2) {
                     connectionError.AppendLine("Password verification failed.");

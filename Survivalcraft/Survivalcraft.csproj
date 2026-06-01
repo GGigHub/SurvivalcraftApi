@@ -10,8 +10,10 @@
 
     <ItemGroup>
       <Compile Include="Network\NetworkClient.cs" />
-      <Compile Include="Network\NetworkService.cs" />
       <Compile Include="Network\NetworkServer.cs" />
+      <Compile Include="Network\ONetworkClient.cs" />
+      <Compile Include="Network\NetworkService.cs" />
+      <Compile Include="Network\ONetworkServer.cs" />
       <Compile Include="Network\PacketManager.cs" />
       <Compile Include="Network\Packet\Base\ClientPacketBase.cs" />
       <Compile Include="Network\Packet\Base\EditableBlockPacketBase.cs" />
@@ -45,6 +47,7 @@
       <Compile Include="Network\Packet\Health\InjureEventPacket.cs" />
       <Compile Include="Network\Packet\Health\InjureRequestPacket.cs" />
       <Compile Include="Network\Packet\Health\VitalStatSyncPacket.cs" />
+      <Compile Include="Network\Packet\Helper\NetworkInterface.cs" />
       <Compile Include="Network\Packet\Helper\NetworkHelper.cs" />
       <Compile Include="Network\Packet\Helper\PacketFragment.cs" />
       <Compile Include="Network\Packet\Helper\PacketSerializer.cs" />

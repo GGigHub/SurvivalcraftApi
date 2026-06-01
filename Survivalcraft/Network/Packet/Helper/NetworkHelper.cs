@@ -33,7 +33,7 @@ public static class NetworkHelper {
 
     public static bool TryDecodePackets(IEnumerable<Client> clients, PacketFragment chunkTransport, NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
         packets = null;
-        if (chunkTransport.TryReadPayload(reader, peer, request, endPoint, out byte[] payload, out bool consumedChunkFrame)) {
+        if (chunkTransport.TryRead(reader, peer, request, endPoint, out byte[] payload, out bool consumedChunkFrame)) {
             if (payload == null) {
                 return false;
             }
@@ -75,7 +75,7 @@ public static class NetworkHelper {
 
     public static void SendWriterFromPackets(PacketFragment chunkTransport, IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
         byte[] payload = BuildOutgoingPayload(packets);
-        chunkTransport.SendPayload(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
+        chunkTransport.Send(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
     }
 
     public static byte[] BuildPayloadForClient(IEnumerable<Packet> pendingPackets, Client client, bool respectMinState, bool isServer) {
