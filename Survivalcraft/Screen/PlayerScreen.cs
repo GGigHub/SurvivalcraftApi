@@ -232,7 +232,6 @@ public class PlayerScreen : Screen {
                     DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
                 }
                 else {
-                    m_playerData.IsMainPlayer = true;
                     m_playerData.SubsystemPlayers.AddPlayerData(m_playerData);
                     ScreensManager.SwitchScreen("Game");
                 }

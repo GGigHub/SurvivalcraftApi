@@ -62,7 +62,7 @@ namespace Game {
             set;
         }
 
-        public bool IsMainPlayer { get; set; }
+        public bool IsMainPlayer => NetworkGuid == NetworkManager.NetworkGuid;
 
         public SubsystemGameWidgets SubsystemGameWidgets { get; set; }
 
@@ -278,7 +278,7 @@ namespace Game {
                     Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 }
                 if (NetworkManager.IsNetworkMode && !IsMainPlayer) {
-                    Restart(true);
+                    Restart();
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
                 else if (ComponentPlayer == null) {
@@ -299,7 +299,7 @@ namespace Game {
             }, null);
         }
 
-        public void Restart(bool fromNetwork = false) {
+        public void Restart() {
             if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel) {
                 // 残酷模式禁止重生，直接提示并断开当前联机会话。
                 m_stateMachine.TransitionTo(null);
@@ -359,7 +359,7 @@ namespace Game {
             Level = valuesDictionary.GetValue("Level", 1f);
             CharacterSkinName = valuesDictionary.GetValue("CharacterSkinName", CharacterSkinsManager.CharacterSkinsNames[0]);
             InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
-            IsMainPlayer = NetworkGuid == NetworkManager.NetworkGuid;
+            PlayerIndex = valuesDictionary.GetValue("PlayerIndex", -1);
         }
 
         public void Save(ValuesDictionary valuesDictionary) {
@@ -373,6 +373,7 @@ namespace Game {
             valuesDictionary.SetValue("Level", Level);
             valuesDictionary.SetValue("CharacterSkinName", CharacterSkinName);
             valuesDictionary.SetValue("InputDevice", InputDevice);
+            valuesDictionary.SetValue("PlayerIndex", PlayerIndex);
         }
 
         public void WaitEntityAdded() {
