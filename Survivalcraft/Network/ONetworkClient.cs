@@ -35,7 +35,7 @@ public class ONetworkClient : INetEventListener {
             UpdateTime = 25,
             ReuseAddress = true
         };
-        PackageFragment = new PacketFragment(NetManager);
+        PackageFragment = new PacketFragment();
     }
 
     public bool ConnectServer(IPEndPoint ep, string passwd = "", string? onlineAccessToken = null) {
@@ -63,7 +63,7 @@ public class ONetworkClient : INetEventListener {
     }
 
     public void SendWriterFromPacket(Packet packet, IPEndPoint endPoint, bool isSend = true) {
-        NetworkHelper.SendWriterFromPacket(PackageFragment, packet, endPoint, isSend);
+        NetworkHelper.SendWriterFromPacket(NetManager, packet, endPoint, isSend);
     }
 
     public void Update() {
@@ -71,7 +71,11 @@ public class ONetworkClient : INetEventListener {
             // Client only sends to server (ID 0 usually)
             if (Clients.TryGetValue(0, out ClientSession serverClient) && serverClient.NetworkState != NetworkState.NotConnected && ServerPeer != null) {
                 byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, serverClient, true, false);
-                if (payload != null) PackageFragment.Send(payload, ServerPeer);
+                if (payload != null) {
+                    foreach (var chunk in PacketFragment.FragmentPayload(payload)) {
+                        ServerPeer.Send(chunk, DeliveryMethod.ReliableOrdered);
+                    }
+                }
             }
             PendingPackets.Clear();
 

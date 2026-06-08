@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using Engine;
 using LiteNetLib;
+using LiteNetLib.Utils;
 
 namespace Game.Network;
 
@@ -24,7 +25,7 @@ public class RelayHost : INetEventListener {
             ReuseAddress = true
         };
         _netManager.Start();
-        _packageFragment = new PacketFragment(_netManager);
+        _packageFragment = new PacketFragment();
 
         _relayAddress = relayAddress;
         _netManager.Connect(_relayAddress, "x26.06.01");
@@ -45,39 +46,29 @@ public class RelayHost : INetEventListener {
         _packageFragment.CleanupStates();
     }
 
-    public void Board(Packet packet) {
-        List<int> playerIndexs = [];
-        PacketStreamWriter writer = new();
+    public void Board(Packet packet) => 
+        Send(packet, [.. _clientSessions.Keys]);
 
-        foreach (KeyValuePair<int, ClientSession> clientSession in _clientSessions) {
-            if (packet.MinNeedState <= clientSession.Value.NetworkState) {
-                playerIndexs.Add(clientSession.Key);
+    public void Send(Packet packet, int playerIndex) => 
+        Send(packet, [playerIndex]);
+
+    void Send(Packet packet, List<int> playerIndexes) {
+        List<int> indexs = [];
+        playerIndexes.ForEach((index) => {
+            if (_clientSessions.ContainsKey(index)) {
+                indexs.Add(index);
             }
-        }
+        });
+
+        PacketStreamWriter writer = new();
         writer.Write(PacketFragment.VerifyByte);
         writer.Write(packet.ID);
-        writer.Write(playerIndexs.Count);
-        foreach (int index in playerIndexs) {
-            writer.Write(index);
-        }
+        writer.Write(indexs.Count);
+        indexs.ForEach(writer.Write);
         packet.Serialize(new PacketSerializer(writer));
 
-        _packageFragment.Send(writer.Data(), _relayPeer);
-    }
-
-    public void Send(Packet packet, int playerIndex) {
-        KeyValuePair<int, ClientSession> clientSession =
-            _clientSessions.FirstOrDefault(kvp => kvp.Value.PlayerIndex == playerIndex);
-
-        if (packet.MinNeedState <= clientSession.Value.NetworkState) {
-            PacketStreamWriter writer = new();
-            writer.Write(PacketFragment.VerifyByte);
-            writer.Write(packet.ID);
-            writer.Write(1);
-            writer.Write(playerIndex);
-            packet.Serialize(new PacketSerializer(writer));
-
-            _packageFragment.Send(writer.Data(), _relayPeer);
+        foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
+            _relayPeer?.Send(chunk, DeliveryMethod.ReliableOrdered);
         }
     }
 
@@ -95,24 +86,29 @@ public class RelayHost : INetEventListener {
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         // 这里仍然需要权限检测
-        _packageFragment.TryRead(reader, peer.Address.ToString()).ForEach(packet => {
-            packet.Handle(false);
-        });
+        if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
+            PacketManager.DecodePackets(payload).ForEach((packet) => {
+                packet.Handle(false);
+            });
+        }
     }
 
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
-        _packageFragment.TryRead(reader, remoteEndPoint.ToString()).ForEach(packet => {
-            packet.Handle(false);
-        });
+        if (_packageFragment.TryProcessIncoming(reader, remoteEndPoint.ToString(), out byte[] payload)) {
+            PacketManager.DecodePackets(payload).ForEach((packet) => {
+                packet.Handle(false);
+            });
+        }
         Log.Information($"Unconnected receive by: {remoteEndPoint}");
     }
 
-    // 无法按照peer索引玩家
     public void OnPeerConnected(NetPeer peer) {
+        _relayPeer = peer;
         Log.Information($"Relay connected: {peer.Address}");
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
+        _relayPeer = null;
         Log.Information($"Relay disconnected: {peer.Address}");
     }
 }

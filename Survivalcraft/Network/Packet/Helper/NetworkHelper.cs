@@ -33,20 +33,13 @@ public static class NetworkHelper {
 
     public static bool TryDecodePackets(IEnumerable<ClientSession> clients, PacketFragment chunkTransport, NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
         packets = null;
-        if (chunkTransport.TryRead(reader, peer, request, endPoint, out byte[] payload, out bool consumedChunkFrame)) {
-            if (payload == null) {
-                return false;
-            }
+        string sourceKey = peer?.Address.ToString() ?? request?.RemoteEndPoint.ToString() ?? endPoint?.ToString() ?? "unknown";
+        if (chunkTransport.TryProcessIncoming(reader, sourceKey, out byte[] payload)) {
             packets = PacketManager.DecodePacketsFromPayload(clients, payload, peer, request, endPoint);
             return true;
         }
 
-        if (consumedChunkFrame) {
-            return false;
-        }
-
-        packets = PacketManager.DecodePackets(clients, reader, peer, request, endPoint);
-        return true;
+        return false;
     }
 
     public static void HandleUnconnectedEvent(IEnumerable<ClientSession> clients, bool isServer, PacketFragment chunkTransport, IPEndPoint remoteEndPoint, NetPacketReader reader, bool fromBroadcast) {
@@ -60,22 +53,36 @@ public static class NetworkHelper {
         }
     }
 
-    public static void SendWriterFromPacket(PacketFragment chunkTransport, Packet packet, IPEndPoint endPoint, bool isSend = true) {
-        SendWriterFromPackets(chunkTransport, [packet], null, null, endPoint, isSend);
+    public static void SendWriterFromPacket(NetManager netManager, Packet packet, IPEndPoint endPoint, bool isSend = true) {
+        SendWriterFromPackets(netManager, [packet], null, null, endPoint, isSend);
     }
 
-    public static void SendWriterFromPacket(PacketFragment chunkTransport, Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
-        SendWriterFromPackets(chunkTransport, [packet], netPeer, null, null, useDeliveryEvent);
+    public static void SendWriterFromPacket(NetManager netManager, Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
+        SendWriterFromPackets(netManager, [packet], netPeer, null, null, useDeliveryEvent);
     }
 
-    public static void SendWriterFromPacket(PacketFragment chunkTransport, Packet packet, ConnectionRequest request, bool reject) {
+    public static void SendWriterFromPacket(NetManager netManager, Packet packet, ConnectionRequest request, bool reject) {
         if (reject) request.Reject();
-        SendWriterFromPackets(chunkTransport, [packet], null, request, null);
+        SendWriterFromPackets(netManager, [packet], null, request, null);
     }
 
-    public static void SendWriterFromPackets(PacketFragment chunkTransport, IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
+    public static void SendWriterFromPackets(NetManager netManager, IEnumerable<Packet> packets, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
         byte[] payload = BuildOutgoingPayload(packets);
-        chunkTransport.Send(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
+        foreach (var chunk in PacketFragment.FragmentPayload(payload)) {
+            if (netPeer != null) {
+                netPeer.Send(chunk, DeliveryMethod.ReliableOrdered);
+            }
+            else if (request != null) {
+                netManager?.SendUnconnectedMessage(chunk, request.RemoteEndPoint);
+            }
+            else if (iPEndPoint != null) {
+                if (!useDeliveryEvent && netManager != null) {
+                    netManager.Connect(iPEndPoint, chunk);
+                } else {
+                    netManager?.SendUnconnectedMessage(chunk, iPEndPoint);
+                }
+            }
+        }
     }
 
     public static byte[] BuildPayloadForClient(IEnumerable<Packet> pendingPackets, ClientSession client, bool respectMinState, bool isServer) {

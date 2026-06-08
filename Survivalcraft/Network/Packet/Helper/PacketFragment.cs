@@ -1,4 +1,6 @@
-using System.Net;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using Engine;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -16,7 +18,6 @@ public sealed class PacketFragment {
 
     private static int s_chunkMessageId = 1;
 
-    private readonly NetManager m_netManager;
     private readonly Dictionary<string, ChunkState> m_chunkStates = new Dictionary<string, ChunkState>();
     private double m_lastCleanupTime;
 
@@ -28,10 +29,6 @@ public sealed class PacketFragment {
         public DateTime LastUpdateUtc;
         public byte[] Buffer;
         public bool[] Received;
-    }
-
-    public PacketFragment(NetManager netManager) {
-        m_netManager = netManager;
     }
 
     public void CleanupStates() {
@@ -52,86 +49,45 @@ public sealed class PacketFragment {
         }
     }
 
-    public List<Packet> TryRead(NetDataReader reader, string sourceKey) {
-        if (!TryReadChunkFrame(reader, out int messageId, out int totalLength, out int offset, out byte[] chunkData)) {
-            return null;
-        }
-
-        if (chunkData == null || !TryAssembleChunk(sourceKey, messageId, totalLength, offset, chunkData, out byte[] payload)) {
-            return null;
-        }
-        return PacketManager.DecodePackets(payload);
-    }
-
-    public bool TryRead(NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out byte[] payload, out bool consumedChunkFrame) {
+    public bool TryProcessIncoming(NetDataReader reader, string sourceKey, out byte[] payload) {
         payload = null;
-        consumedChunkFrame = false;
-        if (!TryReadChunkFrame(reader, out int messageId, out int totalLength, out int offset, out byte[] chunkData)) {
+        if (reader == null || reader.AvailableBytes == 0) return false;
+
+        // Peek to see if it's a chunk frame
+        if (reader.AvailableBytes >= 4) {
+            var probe = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
+            if (probe.GetUInt() == ChunkMagic) {
+                // It is a chunk
+                if (!TryReadChunkFrame(reader, out int messageId, out int totalLength, out int offset, out byte[] chunkData)) {
+                    return false; // Invalid chunk
+                }
+                return TryAssembleChunk(sourceKey, messageId, totalLength, offset, chunkData, out payload);
+            }
+        }
+
+        // Not a chunk frame, it's a direct payload wrapped with PutBytesWithLength
+        try {
+            payload = reader.GetBytesWithLength();
+            return payload != null;
+        } catch {
             return false;
         }
-
-        consumedChunkFrame = true;
-        string sourceKey = GetSourceKey(peer, request, endPoint);
-        if (chunkData == null || !TryAssembleChunk(sourceKey, messageId, totalLength, offset, chunkData, out payload)) {
-            return true;
-        }
-        return true;
     }
 
-    public void Send(byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null, bool useDeliveryEvent = false) {
+    public static IEnumerable<NetDataWriter> FragmentPayload(byte[] payload) {
         if (payload == null) {
-            return;
-        }
-
-        int chunkSize = GetConfiguredChunkSize();
-        bool connectPath = iPEndPoint != null && !useDeliveryEvent;
-        if (payload.Length <= chunkSize || connectPath) {
-            var writer = BuildPayloadWriter(payload);
-            if (netPeer != null) {
-                netPeer.Send(writer, DeliveryMethod.ReliableOrdered);
-            }
-            else if (request != null) {
-                m_netManager.SendUnconnectedMessage(writer, request.RemoteEndPoint);
-            }
-            else if (iPEndPoint != null) {
-                if (!useDeliveryEvent) m_netManager.Connect(iPEndPoint, writer);
-                else m_netManager.SendUnconnectedMessage(writer, iPEndPoint);
-            }
-            return;
-        }
-
-        int messageId = Interlocked.Increment(ref s_chunkMessageId);
-        for (int offset = 0; offset < payload.Length; offset += chunkSize) {
-            var chunkWriter = BuildChunkWriter(messageId, payload.Length, offset, payload, chunkSize);
-            if (netPeer != null) {
-                netPeer.Send(chunkWriter, DeliveryMethod.ReliableOrdered);
-            }
-            else if (request != null) {
-                m_netManager.SendUnconnectedMessage(chunkWriter, request.RemoteEndPoint);
-            }
-            else if (iPEndPoint != null) {
-                m_netManager.SendUnconnectedMessage(chunkWriter, iPEndPoint);
-            }
-        }
-    }
-
-    public static void Send(NetManager netManager, byte[] payload, IPEndPoint endPoint) {
-        if (payload == null || endPoint == null) {
-            return;
+            yield break;
         }
 
         int chunkSize = GetConfiguredChunkSize();
         if (payload.Length <= chunkSize) {
-            NetDataWriter writer = new NetDataWriter();
-            writer.PutBytesWithLength(payload);
-            netManager.SendUnconnectedMessage(writer, endPoint);
-            return;
+            yield return BuildPayloadWriter(payload);
+            yield break;
         }
 
         int messageId = Interlocked.Increment(ref s_chunkMessageId);
         for (int offset = 0; offset < payload.Length; offset += chunkSize) {
-            var chunkWriter = BuildChunkWriter(messageId, payload.Length, offset, payload, chunkSize);
-            netManager.SendUnconnectedMessage(chunkWriter, endPoint);
+            yield return BuildChunkWriter(messageId, payload.Length, offset, payload, chunkSize);
         }
     }
 
@@ -140,31 +96,32 @@ public sealed class PacketFragment {
         totalLength = 0;
         offset = 0;
         chunkData = null;
+        
         if (reader == null || reader.AvailableBytes < ChunkHeaderBytes) {
             return false;
         }
 
-        var probe = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
-        if (probe.GetUInt() != ChunkMagic) {
+        if (reader.GetUInt() != ChunkMagic) {
             return false;
         }
 
-        byte version = probe.GetByte();
+        byte version = reader.GetByte();
         if (version != ChunkVersion) {
             throw new InvalidOperationException($"Invalid chunk frame version: {version}, expected {ChunkVersion}.");
         }
 
-        messageId = probe.GetInt();
-        totalLength = probe.GetInt();
-        offset = probe.GetInt();
-        int length = probe.GetUShort();
+        messageId = reader.GetInt();
+        totalLength = reader.GetInt();
+        offset = reader.GetInt();
+        int length = reader.GetUShort();
+        
         if (length <= 0 || totalLength <= 0 || offset < 0 || offset + length > totalLength) {
-            throw new InvalidOperationException($"Invalid chunk frame payload. totalLength={totalLength}, offset={offset}, length={length}, available={probe.AvailableBytes}.");
+            throw new InvalidOperationException($"Invalid chunk frame payload. totalLength={totalLength}, offset={offset}, length={length}.");
         }
 
-        byte[] body = probe.GetBytesWithLength();
+        byte[] body = reader.GetBytesWithLength();
         if (body == null || body.Length != length) {
-            throw new InvalidOperationException($"Invalid chunk frame body length. declared={length}, actual={(body == null ? -1 : body.Length)}, available={probe.AvailableBytes}.");
+            throw new InvalidOperationException($"Invalid chunk frame body length. declared={length}, actual={(body == null ? -1 : body.Length)}.");
         }
         chunkData = body;
         return true;
@@ -202,7 +159,7 @@ public sealed class PacketFragment {
         }
         else if (state.TotalLength != totalLength || state.ChunkSize != chunkSize || state.TotalChunks != totalChunks) {
             m_chunkStates.Remove(key);
-            throw new InvalidOperationException($"Chunk state mismatch for key={key}. state(total={state.TotalLength},size={state.ChunkSize},chunks={state.TotalChunks}) incoming(total={totalLength},size={chunkSize},chunks={totalChunks}).");
+            throw new InvalidOperationException($"Chunk state mismatch for key={key}.");
         }
 
         if (!state.Received[index]) {
@@ -252,13 +209,4 @@ public sealed class PacketFragment {
     private static string BuildChunkStateKey(string sourceKey, int messageId) {
         return $"{sourceKey}:{messageId}";
     }
-
-    private static string GetSourceKey(NetPeer peer, ConnectionRequest request, IPEndPoint endPoint) {
-        if (peer != null) return peer.Address.ToString();
-        if (request != null) return request.RemoteEndPoint.ToString();
-        if (endPoint != null) return endPoint.ToString();
-        return "unknown";
-    }
 }
-
-

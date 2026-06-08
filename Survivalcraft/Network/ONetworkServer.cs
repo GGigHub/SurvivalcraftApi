@@ -34,7 +34,7 @@ public class ONetworkServer : INetEventListener {
             UpdateTime = 25,
             ReuseAddress = true
         };
-        PackageFragment = new PacketFragment(NetManager);
+        PackageFragment = new PacketFragment();
     }
 
     public bool StartServer(int port) {
@@ -145,11 +145,11 @@ public class ONetworkServer : INetEventListener {
     }
 
     public void SendWriterFromPacket(Packet packet, NetPeer netPeer, bool useDeliveryEvent = false) {
-        NetworkHelper.SendWriterFromPacket(PackageFragment, packet, netPeer, useDeliveryEvent);
+        NetworkHelper.SendWriterFromPacket(NetManager, packet, netPeer, useDeliveryEvent);
     }
 
     public void SendWriterFromPacket(Packet packet, ConnectionRequest request, bool reject) {
-        NetworkHelper.SendWriterFromPacket(PackageFragment, packet, request, reject);
+        NetworkHelper.SendWriterFromPacket(NetManager, packet, request, reject);
     }
 
     public void Stop() {
@@ -166,7 +166,11 @@ public class ONetworkServer : INetEventListener {
                     continue;
                 }
                 byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, client, true, IsServer);
-                if (payload != null && ClientPeers.TryGetValue(client.PlayerIndex, out NetPeer peer)) PackageFragment.Send(payload, peer);
+                if (payload != null && ClientPeers.TryGetValue(client.PlayerIndex, out NetPeer peer)) {
+                    foreach (var chunk in PacketFragment.FragmentPayload(payload)) {
+                        peer.Send(chunk, DeliveryMethod.ReliableOrdered);
+                    }
+                }
             }
             PendingPackets.Clear();
 

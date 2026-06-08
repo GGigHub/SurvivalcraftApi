@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using Engine;
 using LiteNetLib;
+using LiteNetLib.Utils;
 
 namespace Game.Network;
 
@@ -21,7 +22,7 @@ public class NetworkClient : INetEventListener {
             ReuseAddress = true
         };
         _netManager.Start();
-        _packageFragment = new PacketFragment(_netManager);
+        _packageFragment = new PacketFragment();
 
         _serverAddress = serverAddress;
         _netManager.Connect(_serverAddress, "x26.06.01");
@@ -47,7 +48,9 @@ public class NetworkClient : INetEventListener {
         writer.Write(packet.ID);
         packet.Serialize(new PacketSerializer(writer));
 
-        _packageFragment.Send(writer.Data(), _serverPeer);
+        foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
+            _serverPeer?.Send(chunk, DeliveryMethod.ReliableOrdered);
+        }
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {
@@ -63,16 +66,20 @@ public class NetworkClient : INetEventListener {
     }
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-        _packageFragment.TryRead(reader, peer.Address.ToString()).ForEach(packet => {
-            packet.Handle(false);
-        });
+        if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
+            PacketManager.DecodePackets(payload).ForEach((packet) => {
+                packet.Handle(false);
+            });
+        }
     }
 
 
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
-        _packageFragment.TryRead(reader, remoteEndPoint.ToString()).ForEach(packet => {
-            packet.Handle(false);
-        });
+        if (_packageFragment.TryProcessIncoming(reader, remoteEndPoint.ToString(), out byte[] payload)) {
+            PacketManager.DecodePackets(payload).ForEach((packet) => {
+                packet.Handle(false);
+            });
+        }
         Log.Information($"Unconnected receive by: {remoteEndPoint}");
     }
 

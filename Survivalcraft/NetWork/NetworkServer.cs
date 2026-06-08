@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using Engine;
 using LiteNetLib;
-
+using LiteNetLib.Utils;
 namespace Game.Network;
 
 public class NetworkServer : INetEventListener {
@@ -19,7 +19,7 @@ public class NetworkServer : INetEventListener {
             UpdateTime = 25,
             ReuseAddress = true
         };
-        _packageFragment = new PacketFragment(_netManager);
+        _packageFragment = new PacketFragment();
 
         _netManager.Start(SettingsManager.ServerPort);
 
@@ -39,14 +39,7 @@ public class NetworkServer : INetEventListener {
 
     public void Board(Packet packet) {
         foreach (KeyValuePair<NetPeer, ClientSession> clientSession in _clientSessions) {
-            if (packet.MinNeedState <= clientSession.Value.NetworkState) {
-                PacketStreamWriter writer = new();
-                writer.Write(PacketFragment.VerifyByte);
-                writer.Write(packet.ID);
-                packet.Serialize(new PacketSerializer(writer));
-
-                _packageFragment.Send(writer.Data(), clientSession.Key);
-            }
+            Send(packet, clientSession.Value.PlayerIndex);
         }
     }
 
@@ -60,7 +53,9 @@ public class NetworkServer : INetEventListener {
             writer.Write(packet.ID);
             packet.Serialize(new PacketSerializer(writer));
 
-            _packageFragment.Send(writer.Data(), clientSession.Key);
+            foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
+                clientSession.Key.Send(chunk, DeliveryMethod.ReliableOrdered);
+            }
         }
     }
 
@@ -79,19 +74,19 @@ public class NetworkServer : INetEventListener {
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         if (!_clientSessions.TryGetValue(peer, out ClientSession session)) return;
-        _packageFragment.TryRead(reader, peer.Address.ToString()).ForEach(packet => {
-            if (packet.MinNeedState <= session.NetworkState) {
+        if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
+            PacketManager.DecodePackets(payload).ForEach((packet) => {
                 packet.Handle(false);
-            }
-        });
+            });
+        }
     }
 
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
-        _packageFragment.TryRead(reader, remoteEndPoint.ToString()).ForEach(packet => {
-            if (packet.MinNeedState <= NetworkState.NotConnected) {
+        if (_packageFragment.TryProcessIncoming(reader, remoteEndPoint.ToString(), out byte[] payload)) {
+            PacketManager.DecodePackets(payload).ForEach((packet) => {
                 packet.Handle(false);
-            }
-        });
+            });
+        }
         Log.Information($"Unconnected receive by: {remoteEndPoint}");
     }
 
