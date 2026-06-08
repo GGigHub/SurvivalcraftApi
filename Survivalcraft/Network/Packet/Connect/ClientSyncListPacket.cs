@@ -5,11 +5,11 @@ namespace Game.Network;
 public class ClientSyncListPacket : ClientPacketBase {
     public override byte ID => (byte)PacketType.ClientSyncList;
     public override NetworkState MinNeedState => NetworkState.NotConnected;
-    public List<Client> m_list = [];
+    public List<ClientSession> m_list = [];
 
     public ClientSyncListPacket() { }
 
-    public ClientSyncListPacket(IEnumerable<Client> clients) {
+    public ClientSyncListPacket(IEnumerable<ClientSession> clients) {
         m_list = [.. clients];
     }
 
@@ -19,15 +19,18 @@ public class ClientSyncListPacket : ClientPacketBase {
         if (archive.IsReading) {
             m_list = [];
             for (int i = 0; i < count; i++) {
-                Client client = null;
-                SerializeClient(archive, To, ref client);
-                m_list.Add(client);
+                int playerIndex = 0;
+                Guid guid = Guid.Empty;
+                SerializePlayerInfo(archive, ref playerIndex, ref guid);
+                m_list.Add(new ClientSession { PlayerIndex = playerIndex, NetworkGuid = guid });
             }
         }
         else {
             for (int i = 0; i < count; i++) {
-                Client client = m_list[i];
-                SerializeClient(archive, To, ref client);
+                ClientSession client = m_list[i];
+                int playerIndex = client.PlayerIndex;
+                Guid guid = client.NetworkGuid;
+                SerializePlayerInfo(archive, ref playerIndex, ref guid);
             }
         }
     }
@@ -37,7 +40,7 @@ public class ClientSyncListPacket : ClientPacketBase {
             return;
         }
         foreach (var client in m_list) {
-            if (client.ID == 0) {
+            if (client.PlayerIndex == 0) {
                 NetworkService.Client.Server = From;
             }
             else if (client.NetworkGuid == NetworkService.Client.Self.NetworkGuid) {
@@ -48,7 +51,7 @@ public class ClientSyncListPacket : ClientPacketBase {
         if (NetworkService.Client.Self == null) {
             throw new Exception("Cannot find Self In Client List");
         }
-        NetworkService.Client.Self.State = NetworkState.Connected;
+        NetworkService.Client.Self.NetworkState = NetworkState.Connected;
     }
 }
 

@@ -12,19 +12,3 @@ public class ClientSession {
     public Guid NetworkGuid { get; set; }
     public NetworkState NetworkState { get; set; }
 }
-
-interface INetworkClient {
-    // 我们使用PlayerIndex来存档内辨识玩家，客户端不该拥有ClientSession对象
-    bool Connect();
-    void Disconnect();
-    void Update();
-    void Send(Packet packet);
-}
-
-interface INetworkServer {
-    bool Start();
-    void Stop();
-    void Update();
-    void Board(Packet packet);
-    void Send(Packet packet, int playerIndex);
-}

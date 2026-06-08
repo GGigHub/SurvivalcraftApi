@@ -6,7 +6,7 @@ using LiteNetLib;
 
 namespace Game.Network;
 
-public class NetworkServer : INetworkServer, INetEventListener {
+public class NetworkServer : INetEventListener {
     private NetManager _netManager;
     private PacketFragment _packageFragment;
     private Dictionary<NetPeer, ClientSession> _clientSessions = new();

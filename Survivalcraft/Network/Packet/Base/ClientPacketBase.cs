@@ -4,22 +4,13 @@ using System.Text;
 
 namespace Game.Network {
     public abstract class ClientPacketBase : Packet {
-        public static void SerializeClientId(PacketSerializer archive, ref byte id) {
-            archive.Value(ref id);
+        public static void SerializePlayerIndex(PacketSerializer archive, ref int playerIndex) {
+            archive.Value(ref playerIndex);
         }
 
-        public static void SerializeClient(PacketSerializer archive, Client to, ref Client client) {
-            byte id = client?.ID ?? 0;
-            Guid NetworkGuid = client?.NetworkGuid ?? Guid.Empty;
-            string nickname = client?.Nickname ?? string.Empty;
-
-            archive.Value(ref id);
-            archive.Value(ref NetworkGuid);
-            archive.Value(ref nickname);
-
-            if (archive.IsReading) {
-                client = new Client(id, NetworkGuid, nickname);
-            }
+        public static void SerializePlayerInfo(PacketSerializer archive, ref int playerIndex, ref Guid networkGuid) {
+            archive.Value(ref playerIndex);
+            archive.Value(ref networkGuid);
         }
     }
 }

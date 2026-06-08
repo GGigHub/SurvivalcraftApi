@@ -6,14 +6,13 @@ using LiteNetLib;
 
 namespace Game.Network;
 
-public class NetworkClient : INetworkClient, INetEventListener {
+public class NetworkClient : INetEventListener {
     private NetPeer _serverPeer;
     private NetManager _netManager;
+    private IPEndPoint _serverAddress;
     private PacketFragment _packageFragment;
 
-    public IPEndPoint ServerAddress { get; set; }
-
-    public bool Connect() {
+    public bool Connect(IPEndPoint serverAddress) {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
@@ -24,16 +23,17 @@ public class NetworkClient : INetworkClient, INetEventListener {
         _netManager.Start();
         _packageFragment = new PacketFragment(_netManager);
 
-        _netManager.Connect(ServerAddress, "x26.06.01");
+        _serverAddress = serverAddress;
+        _netManager.Connect(_serverAddress, "x26.06.01");
 
-        Log.Information($"Connecting {ServerAddress}");
+        Log.Information($"Connecting {_serverAddress}");
         return _netManager.IsRunning;
     }
 
     public void Disconnect() {
         _netManager.Stop();
         _serverPeer = null;
-        Log.Information($"Disconnecting {ServerAddress}");
+        Log.Information($"Disconnecting {_serverAddress}");
     }
 
     public void Update() {
@@ -78,11 +78,11 @@ public class NetworkClient : INetworkClient, INetEventListener {
 
     public void OnPeerConnected(NetPeer peer) {
         _serverPeer = peer;
-        Log.Information($"Connected: {ServerAddress}");
+        Log.Information($"Connected: {_serverAddress}");
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         _serverPeer = null;
-        Log.Information($"Disconnected: {ServerAddress}");
+        Log.Information($"Disconnected: {_serverAddress}");
     }
 }

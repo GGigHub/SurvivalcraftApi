@@ -9,12 +9,12 @@ public class PlayerAimPacket : PlayerPacketBase {
     public Ray3? m_netAimRay;
     public PlayerAimPacket() { }
     public PlayerAimPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerIndex = player.PlayerData.PlayerIndex;
         m_aimEvent = player.aimEvent.aimEvent;
         m_netAimRay = player.aimEvent.NetAim;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Enum(ref m_aimEvent);
         archive.Value(ref m_netAimRay);
     }
@@ -24,4 +24,5 @@ public class PlayerAimPacket : PlayerPacketBase {
         QueuePlayerPacket(this, isServer);
     }
 }
+
 

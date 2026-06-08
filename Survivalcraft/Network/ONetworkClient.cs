@@ -6,43 +6,6 @@ using LiteNetLib.Utils;
 
 namespace Game.Network;
 
-public class Client {
-    public string Nickname { get; set; }
-    public byte ID { get; internal set; }
-    public Guid NetworkGuid { get; internal set; }
-    public ConnectionRequest Request { get; internal set; }
-    public IPEndPoint IPPoint { get; internal set; }
-    public SubsystemPlayers SubsystemPlayers => GameManager.Project.FindSubsystem<SubsystemPlayers>();
-    public bool IsConnected => State != NetworkState.NotConnected;
-    public NetworkState State { get; set; } = NetworkState.NotConnected;
-    public PlayerData PlayerData { get { return NetworkService.GetPlayerByClient(this); } }
-
-    public Client() { }
-
-    public Client(Guid guid) {
-        NetworkGuid = guid;
-        State = NetworkState.Connected;
-        ID = 0;
-    }
-
-    public Client(byte id, Guid guid, string nickName) {
-        ID = id;
-        NetworkGuid = guid;
-        Nickname = nickName;
-    }
-
-    public override bool Equals(object obj) => obj is Client c && c.ID == ID;
-
-    public override int GetHashCode() => NetworkGuid.GetHashCode();
-
-    public static bool operator ==(Client a, Client b) {
-        return (a is null && b is null) || (a is not null && b is not null && a.ID == b.ID);
-    }
-
-    public static bool operator !=(Client a, Client b) => !(a == b);
-}
-
-
 public class ONetworkClient : INetEventListener {
     public event Action<NetPeer, NetDataReader, DeliveryMethod> NetworkReceiveEvent;
     public event Action<NetPeer> PeerConnectedEvent;
@@ -52,15 +15,15 @@ public class ONetworkClient : INetEventListener {
     public event Action<ConnectionRequest> ConnectionRequestEvent;
     public event Action<NetPeer, object> DeliveryEvent;
 
-    public Client Server { get; set; }
+    public ClientSession Server { get; set; }
     public NetPeer ServerPeer { get; internal set; }
-    public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
+    public Dictionary<int, ClientSession> Clients { get; } = new Dictionary<int, ClientSession>();
     public List<Packet> PendingPackets { get; } = new List<Packet>();
 
     private List<Packet> m_bufferedPackets = new List<Packet>();
-    public Action<Client> OnNetworkStateChanged { get; set; }
+    public Action<ClientSession> OnNetworkStateChanged { get; set; }
 
-    public Client Self { get; set; }
+    public ClientSession Self { get; set; }
     public NetManager NetManager { get; set; }
     public PacketFragment PackageFragment { get; set; }
 
@@ -81,21 +44,21 @@ public class ONetworkClient : INetEventListener {
             Clients.Clear();
             NetManager.Start();
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
-            Self = new Client(new Guid(onlineAccessToken)) { State = NetworkState.NotConnected };
+            Self = new ClientSession { NetworkGuid = new Guid(onlineAccessToken), NetworkState = NetworkState.NotConnected };
             SendWriterFromPacket(new ConnectionRequestPacket("ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
         }
         catch {
-            Self?.State = NetworkState.NotConnected;
+            if (Self != null) Self.NetworkState = NetworkState.NotConnected;
             NetManager.Stop();
         }
         return NetManager.IsRunning;
     }
 
-    public void AddClient(Client c) {
-        Clients[c.ID] = c;
+    public void AddClient(ClientSession c) {
+        Clients[c.PlayerIndex] = c;
     }
 
-    public Client GetClientByGUID(Guid? guid) {
+    public ClientSession GetClientByGUID(Guid? guid) {
         return Clients.Values.FirstOrDefault(c => c.NetworkGuid == guid);
     }
 
@@ -106,7 +69,7 @@ public class ONetworkClient : INetEventListener {
     public void Update() {
         if (NetManager.IsRunning) {
             // Client only sends to server (ID 0 usually)
-            if (Clients.TryGetValue(0, out Client serverClient) && serverClient.IsConnected && ServerPeer != null) {
+            if (Clients.TryGetValue(0, out ClientSession serverClient) && serverClient.NetworkState != NetworkState.NotConnected && ServerPeer != null) {
                 byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, serverClient, true, false);
                 if (payload != null) PackageFragment.Send(payload, ServerPeer);
             }
@@ -115,7 +78,7 @@ public class ONetworkClient : INetEventListener {
             // Process buffered packets
             while (m_bufferedPackets.Count > 0) {
                 var packet = m_bufferedPackets[0];
-                if (Self == null || packet.MinNeedState > Self.State) break;
+                if (Self == null || packet.MinNeedState > Self.NetworkState) break;
 
                 packet.Handle(false);
                 m_bufferedPackets.RemoveAt(0);
@@ -151,7 +114,7 @@ public class ONetworkClient : INetEventListener {
             return;
         }
         foreach (var packet in packets) {
-            if (m_bufferedPackets.Count > 0 || Self == null || packet.MinNeedState > Self.State) {
+            if (m_bufferedPackets.Count > 0 || Self == null || packet.MinNeedState > Self.NetworkState) {
                 m_bufferedPackets.Add(packet);
             }
             else {
@@ -178,16 +141,5 @@ public class ONetworkClient : INetEventListener {
     public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
     }
 
-    internal PlayerData GetPlayerByClient(Client client) {
-        if (client == null) return null;
-        var subsystemPlayers = GameManager.Project?.FindSubsystem<SubsystemPlayers>();
-        if (subsystemPlayers != null) {
-            foreach (var playerData in subsystemPlayers.PlayersData) {
-                if (playerData.NetworkGuid == client.NetworkGuid) {
-                    return playerData;
-                }
-            }
-        }
-        return null;
-    }
+    // GetPlayerByClient removed
 }

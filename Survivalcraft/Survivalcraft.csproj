@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <Compile Include="Network\NetworkClient.cs" />
+      <Compile Include="Network\RelayHost.cs" />
       <Compile Include="Network\NetworkServer.cs" />
       <Compile Include="Network\ONetworkClient.cs" />
       <Compile Include="Network\NetworkService.cs" />

@@ -7,9 +7,32 @@ namespace Game.Network;
 
 public abstract class Packet {
     public abstract byte ID { get; }
-    public Client To { get; set; }
-    public Client Except { get; set; }
-    public Client From { get; set; }
+    public int ToPlayerIndex { get; set; } = -1;
+    public int ExceptPlayerIndex { get; set; } = -1;
+    public int SenderPlayerIndex { get; set; } = -1;
+    public ClientSession Connection { get; set; } // For network layer use only (e.g., login flow)
+    
+    public ConnectionRequest Request { get; set; }
+    public IPEndPoint IPPoint { get; set; }
+
+    [Obsolete("Use Connection instead")]
+    public ClientSession From {
+        get => Connection;
+        set => Connection = value;
+    }
+
+    [Obsolete("Use ToPlayerIndex instead")]
+    public ClientSession To {
+        get => NetworkService.GetClientByPlayerIndex(ToPlayerIndex);
+        set { ToPlayerIndex = value?.PlayerIndex ?? -1; }
+    }
+
+    [Obsolete("Use ExceptPlayerIndex instead")]
+    public ClientSession Except {
+        get => NetworkService.GetClientByPlayerIndex(ExceptPlayerIndex);
+        set { ExceptPlayerIndex = value?.PlayerIndex ?? -1; }
+    }
+
     public abstract NetworkState MinNeedState { get; }
 
     public abstract void Handle(bool isServer);
@@ -236,13 +259,13 @@ public class PacketManager {
         UnRegisterPacket(packet.ID);
     }
 
-    public static T DecodePacket<T>(IEnumerable<Client> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : Packet {
+    public static T DecodePacket<T>(IEnumerable<ClientSession> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : Packet {
         var packets = DecodePackets(clients, reader, netPeer, request, iPEndPoint);
         return (T)(packets.Count > 0 ? packets[0] : null);
     }
 
-    public static List<Packet> DecodePacketsFromPayload(IEnumerable<Client> clients, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        Client from = ResolveFrom(clients, netPeer, request, iPEndPoint);
+    public static List<Packet> DecodePacketsFromPayload(IEnumerable<ClientSession> clients, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+        ClientSession from = ResolveFrom(clients, netPeer, request, iPEndPoint);
         List<Packet> packets = new List<Packet>();
         byte packetID = 99;
         if (payload == null || payload.Length == 0) {
@@ -250,7 +273,7 @@ public class PacketManager {
         }
         try {
             var preader = new PacketStreamReader(payload);
-            return DecodePacketsFromReader(preader, from, ref packetID);
+            return DecodePacketsFromReader(preader, from, ref packetID, request, iPEndPoint);
         }
         catch {
             Log.Information("接收到不规范的数据包:" + packetID);
@@ -258,8 +281,8 @@ public class PacketManager {
         }
     }
 
-    public static List<Packet> DecodePackets(IEnumerable<Client> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        Client from = ResolveFrom(clients, netPeer, request, iPEndPoint);
+    public static List<Packet> DecodePackets(IEnumerable<ClientSession> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+        ClientSession from = ResolveFrom(clients, netPeer, request, iPEndPoint);
         List<Packet> packets = new List<Packet>();
         byte packetID = 99;
         if (reader.AvailableBytes == 0) {
@@ -267,7 +290,7 @@ public class PacketManager {
         }
         try {
             var preader = NetworkHelper.GetReader(reader);
-            return DecodePacketsFromReader(preader, from, ref packetID);
+            return DecodePacketsFromReader(preader, from, ref packetID, request, iPEndPoint);
         }
         catch {
             Log.Information("接收到不规范的数据包:" + packetID);
@@ -291,27 +314,23 @@ public class PacketManager {
         }
     }
 
-    private static Client ResolveFrom(IEnumerable<Client> clients, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        if (netPeer != null && netPeer.Tag is Client client) return client;
+    private static ClientSession ResolveFrom(IEnumerable<ClientSession> clients, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+        if (netPeer != null && netPeer.Tag is ClientSession client) return client;
 
-        Client from = null;
+        ClientSession from = null;
         if (clients != null) {
             from = clients.FirstOrDefault(c =>
                 (NetworkService.IsClient && NetworkService.Client?.ServerPeer != null && NetworkService.Client.ServerPeer == netPeer) ||
-                (!NetworkService.IsClient && NetworkService.Server != null && NetworkService.Server.ClientPeers.TryGetValue(c.ID, out var p) && p == netPeer) ||
-                (c.Request != null && c.Request == request) ||
-                (c.IPPoint != null && c.IPPoint == iPEndPoint));
+                (!NetworkService.IsClient && NetworkService.Server != null && NetworkService.Server.ClientPeers.TryGetValue(c.PlayerIndex, out var p) && p == netPeer)
+            );
         }
         if (from == null) {
-            from = new Client() {
-                Request = request,
-                IPPoint = iPEndPoint,
-            };
+            from = new ClientSession();
         }
         return from;
     }
 
-    private static List<Packet> DecodePacketsFromReader(PacketStreamReader preader, Client from, ref byte packetID) {
+    private static List<Packet> DecodePacketsFromReader(PacketStreamReader preader, ClientSession from, ref byte packetID, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         List<Packet> packets = new List<Packet>();
         Packet last = null;
         while (preader.BaseStream.Position < preader.BaseStream.Length) {
@@ -325,7 +344,10 @@ public class PacketManager {
             if (m_factories[ID] != null) {
                 Packet packet = m_factories[ID]();
                 last = packet;
-                packet.From = from;
+                packet.Connection = from;
+                packet.Request = request;
+                packet.IPPoint = iPEndPoint;
+                packet.SenderPlayerIndex = from?.PlayerIndex ?? -1;
                 packet.Serialize(new PacketSerializer(preader));
                 packets.Add(packet);
             }

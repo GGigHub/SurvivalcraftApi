@@ -8,12 +8,12 @@ public class PlayerStatSyncPacket : PlayerPacketBase {
     public ValuesDictionary m_stat;
     public PlayerStatSyncPacket() { }
     public PlayerStatSyncPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerIndex = player.PlayerData.PlayerIndex;
         m_stat = new ValuesDictionary();
         player.PlayerStats.Save(m_stat);
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         byte[] messagePack = archive.IsWriting ? m_stat.ToMessagePack() : null;
         archive.Buffer(ref messagePack);
         if (archive.IsReading) {
@@ -26,4 +26,5 @@ public class PlayerStatSyncPacket : PlayerPacketBase {
         playerData.ComponentPlayer.PlayerStats.Load(m_stat);
     }
 }
+
 

@@ -11,13 +11,13 @@ public class PlayerInteractPacket : PlayerPacketBase {
 
     public PlayerInteractPacket() { }
     public PlayerInteractPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerIndex = player.PlayerData.PlayerIndex;
         m_interactEvent = player.interactEvent.interactEvent;
         m_netInteractRay = player.interactEvent.NetInteractRay;
         m_netInteractRaycast = player.interactEvent.NetPlaceRaycast;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Enum(ref m_interactEvent);
         archive.Value(ref m_netInteractRay);
         archive.Value(ref m_netInteractRaycast);
@@ -28,4 +28,5 @@ public class PlayerInteractPacket : PlayerPacketBase {
         QueuePlayerPacket(this, isServer);
     }
 }
+
 

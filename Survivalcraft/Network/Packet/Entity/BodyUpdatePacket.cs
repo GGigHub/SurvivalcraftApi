@@ -44,7 +44,7 @@ public class BodyUpdatePacket : Packet {
     public BodyUpdatePacket() {
     }
 
-    public BodyUpdatePacket(List<ComponentBody> bodies, Client client) {
+    public BodyUpdatePacket(List<ComponentBody> bodies, ClientSession client) {
         Dictionary<int, BodySyncSnapshot> snapshots = GetBodySyncSnapshots(client);
         foreach (var body in bodies) {
             BodyItem bodyItem = new BodyItem();
@@ -180,9 +180,9 @@ public class BodyUpdatePacket : Packet {
             || (componentPlayer == null && hasNonMainChildPlayer);
     }
 
-    public static readonly Dictionary<Client, List<ComponentBody>> s_bodySyncLists = [];
-    public static readonly Dictionary<Client, TerrainUpdater.UpdateLocation> s_bodySyncLocations = [];
-    public static readonly Dictionary<Client, Dictionary<int, BodySyncSnapshot>> s_bodySyncSnapshots = [];
+    public static readonly Dictionary<ClientSession, List<ComponentBody>> s_bodySyncLists = [];
+    public static readonly Dictionary<ClientSession, TerrainUpdater.UpdateLocation> s_bodySyncLocations = [];
+    public static readonly Dictionary<ClientSession, Dictionary<int, BodySyncSnapshot>> s_bodySyncSnapshots = [];
     public static int s_bodySyncFrame = -1;
     public static bool s_bodySyncFlushQueued;
 
@@ -196,7 +196,7 @@ public class BodyUpdatePacket : Packet {
         if (s_bodySyncLists.Count == 0) {
             return;
         }
-        foreach (KeyValuePair<Client, TerrainUpdater.UpdateLocation> pair in s_bodySyncLocations) {
+        foreach (KeyValuePair<ClientSession, TerrainUpdater.UpdateLocation> pair in s_bodySyncLocations) {
             if (SubsystemBodies.IsBodyInRange(body.Position.XZ, pair.Value)) {
                 s_bodySyncLists[pair.Key].Add(body);
             }
@@ -213,14 +213,18 @@ public class BodyUpdatePacket : Packet {
             return;
         }
 
+        if (GameManager.Project == null) {
+            return;
+        }
+
         SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
         SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
         foreach (PlayerData playerData in subsystemPlayers.PlayersData) {
-            if (playerData.IsMainPlayer || playerData.ComponentPlayer == null) {
-                continue;
-            }
-            Client client = NetworkService.GetClientByGUID(playerData.NetworkGuid);
-            if (client == null || !client.IsConnected || client.State < NetworkState.Playing) {
+            if (playerData.IsMainPlayer) continue;
+            // The sender should not send to the player who triggered the update, so we compare playerIndex
+            if (playerData.PlayerIndex == NetworkService.SenderPlayerIndex) continue;
+            ClientSession client = NetworkService.GetClientByPlayerIndex(playerData.PlayerIndex);
+            if (client == null || client.NetworkState == NetworkState.NotConnected || client.NetworkState < NetworkState.Playing) {
                 continue;
             }
             if (subsystemTerrain.TerrainUpdater.UpdateLocations.TryGetValue(playerData.PlayerIndex, out TerrainUpdater.UpdateLocation location)) {
@@ -238,9 +242,9 @@ public class BodyUpdatePacket : Packet {
 
     public static void FlushBodySyncPackets() {
         if (NetworkService.IsServer) {
-            foreach (KeyValuePair<Client, List<ComponentBody>> pair in s_bodySyncLists) {
-                if (pair.Key.IsConnected && pair.Key.State >= NetworkState.Playing) {
-                    NetworkService.QueuePacket(new BodyUpdatePacket(pair.Value, pair.Key) { To = pair.Key });
+            foreach (KeyValuePair<ClientSession, List<ComponentBody>> pair in s_bodySyncLists) {
+                if (pair.Key.NetworkState != NetworkState.NotConnected && pair.Key.NetworkState >= NetworkState.Playing) {
+                    NetworkService.QueuePacket(new BodyUpdatePacket(pair.Value, pair.Key) { ToPlayerIndex = pair.Key.PlayerIndex });
                 }
             }
         }
@@ -255,7 +259,7 @@ public class BodyUpdatePacket : Packet {
         return body.Entity.FindComponent<ComponentPlayer>() == null && body.ChildBodies.Count == 0;
     }
 
-    public static Dictionary<int, BodySyncSnapshot> GetBodySyncSnapshots(Client client) {
+    public static Dictionary<int, BodySyncSnapshot> GetBodySyncSnapshots(ClientSession client) {
         if (!s_bodySyncSnapshots.TryGetValue(client, out Dictionary<int, BodySyncSnapshot> snapshots)) {
             snapshots = [];
             s_bodySyncSnapshots[client] = snapshots;

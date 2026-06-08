@@ -10,13 +10,13 @@ public class PlayerDigPacket : PlayerPacketBase {
     public TerrainRaycastResult? m_netDigRaycast;
     public PlayerDigPacket() { }
     public PlayerDigPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerIndex = player.PlayerData.PlayerIndex;
         m_digEvent = player.digEvent.digEvent;
         m_netDigRay = player.digEvent.NetDigRay;
         m_netDigRaycast = player.digEvent.NetDigRaycast;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Enum(ref m_digEvent);
         archive.Value(ref m_netDigRay);
         archive.Value(ref m_netDigRaycast);
@@ -27,4 +27,5 @@ public class PlayerDigPacket : PlayerPacketBase {
         QueuePlayerPacket(this, isServer);
     }
 }
+
 

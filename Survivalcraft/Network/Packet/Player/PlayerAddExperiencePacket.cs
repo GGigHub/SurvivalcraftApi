@@ -10,13 +10,13 @@ public class PlayerAddExperiencePacket : PlayerPacketBase {
     public float m_level;
     public PlayerAddExperiencePacket() { }
     public PlayerAddExperiencePacket(PlayerData playerData, int count, bool playSound, float level) {
-        m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
+        m_fromPlayerIndex = playerData.PlayerIndex;
         m_count = count;
         m_playSound = playSound;
         m_level = level;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Value(ref m_count);
         archive.Value(ref m_playSound);
         archive.Value(ref m_level);
@@ -28,4 +28,5 @@ public class PlayerAddExperiencePacket : PlayerPacketBase {
         player.PlayerData.Level = m_level;
     }
 }
+
 

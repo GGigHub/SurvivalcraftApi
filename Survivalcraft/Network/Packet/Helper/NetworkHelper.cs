@@ -31,7 +31,7 @@ public static class NetworkHelper {
         return writer.Data();
     }
 
-    public static bool TryDecodePackets(IEnumerable<Client> clients, PacketFragment chunkTransport, NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
+    public static bool TryDecodePackets(IEnumerable<ClientSession> clients, PacketFragment chunkTransport, NetDataReader reader, NetPeer peer, ConnectionRequest request, IPEndPoint endPoint, out List<Packet> packets) {
         packets = null;
         if (chunkTransport.TryRead(reader, peer, request, endPoint, out byte[] payload, out bool consumedChunkFrame)) {
             if (payload == null) {
@@ -49,7 +49,7 @@ public static class NetworkHelper {
         return true;
     }
 
-    public static void HandleUnconnectedEvent(IEnumerable<Client> clients, bool isServer, PacketFragment chunkTransport, IPEndPoint remoteEndPoint, NetPacketReader reader, bool fromBroadcast) {
+    public static void HandleUnconnectedEvent(IEnumerable<ClientSession> clients, bool isServer, PacketFragment chunkTransport, IPEndPoint remoteEndPoint, NetPacketReader reader, bool fromBroadcast) {
         var dataReader = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
         if (!TryDecodePackets(clients, chunkTransport, dataReader, null, null, remoteEndPoint, out List<Packet> packets)) {
             return;
@@ -78,14 +78,19 @@ public static class NetworkHelper {
         chunkTransport.Send(payload, netPeer, request, iPEndPoint, useDeliveryEvent);
     }
 
-    public static byte[] BuildPayloadForClient(IEnumerable<Packet> pendingPackets, Client client, bool respectMinState, bool isServer) {
+    public static byte[] BuildPayloadForClient(IEnumerable<Packet> pendingPackets, ClientSession client, bool respectMinState, bool isServer) {
         List<Packet> packets = new List<Packet>();
         foreach (Packet packet in pendingPackets) {
             if (packet.To != null && packet.To != client) continue;
             if (packet.Except != null && packet.Except == client) continue;
-            if (respectMinState && client.State < packet.MinNeedState && isServer) continue;
+            if (respectMinState && client.NetworkState < packet.MinNeedState && isServer) continue;
             packets.Add(packet);
         }
         return packets.Count > 0 ? BuildOutgoingPayload(packets) : null;
+    }
+
+    public static PlayerData GetPlayerData(this ClientSession client) {
+        if (client == null) return null;
+        return GameManager.Project?.FindSubsystem<SubsystemPlayers>()?.PlayersData.FirstOrDefault(p => p.PlayerIndex == client.PlayerIndex);
     }
 }

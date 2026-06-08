@@ -10,13 +10,13 @@ public class PlayerHitPacket : PlayerPacketBase {
     public Vector3 m_hitDirection;
     public PlayerHitPacket() { }
     public PlayerHitPacket(ComponentPlayer player, ComponentBody body, Vector3 hitPosition, Vector3 hitDirection) {
-        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerIndex = player.PlayerData.PlayerIndex;
         bodyId = body.Entity.Id;
         m_hitPosition = hitPosition;
         m_hitDirection = hitDirection;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Value(ref bodyId);
         archive.Value(ref m_hitPosition);
         archive.Value(ref m_hitDirection);
@@ -47,4 +47,5 @@ public class PlayerHitPacket : PlayerPacketBase {
         }
     }
 }
+
 

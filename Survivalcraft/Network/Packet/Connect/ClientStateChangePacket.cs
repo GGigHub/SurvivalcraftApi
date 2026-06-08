@@ -6,34 +6,35 @@ namespace Game.Network;
 public class NetworkStateChangePacket : ClientPacketBase {
     public override byte ID => (byte)PacketType.NetworkStateChange;
     public override NetworkState MinNeedState => NetworkState.NotConnected;
-    public byte m_clientId;
+    public int m_playerIndex;
     public NetworkState m_state;
 
     public NetworkStateChangePacket() { }
 
-    public NetworkStateChangePacket(byte id, NetworkState clientStage) {
-        m_clientId = id;
+    public NetworkStateChangePacket(int playerIndex, NetworkState clientStage) {
+        m_playerIndex = playerIndex;
         m_state = clientStage;
     }
 
     public override void Serialize(PacketSerializer archive) {
-        SerializeClientId(archive, ref m_clientId);
+        SerializePlayerIndex(archive, ref m_playerIndex);
         archive.Enum(ref m_state);
     }
 
     public override void Handle(bool isServer) {
-        if (!NetworkService.Clients.ContainsKey(m_clientId)) {
+        var clientKeyValuePair = NetworkService.Clients.FirstOrDefault(kv => kv.Value.PlayerIndex == m_playerIndex);
+        if (clientKeyValuePair.Value == null) {
             return;
         }
-        var client = NetworkService.Clients[m_clientId];
-        client.State = m_state;
+        var client = clientKeyValuePair.Value;
+        client.NetworkState = m_state;
         if (isServer) {
             var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
             var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
 
-            NetworkService.QueuePacket(new NetworkStateChangePacket(client.ID, client.State) { Except = client });
+            NetworkService.QueuePacket(new NetworkStateChangePacket(client.PlayerIndex, client.NetworkState) { ExceptPlayerIndex = client.PlayerIndex });
 
-            switch (client.State) {
+            switch (client.NetworkState) {
                 case NetworkState.Connected: {
                         byte[] textureData = null;
                         if (subsystemPlayers.MakePlayerOnline(client.NetworkGuid, out PlayerData playerData, out Entity entity)) {
@@ -59,18 +60,18 @@ public class NetworkStateChangePacket : ClientPacketBase {
                         break;
                     }
                 case NetworkState.LoadTerrain:
-                    if (client.PlayerData?.ComponentPlayer != null
+                    if (client.GetPlayerData()?.ComponentPlayer != null
                         && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
-                        client.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = true;
+                        client.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = true;
                     }
                     break;
                 case NetworkState.Playing:
-                    if (client.PlayerData == null) {
+                    if (client.GetPlayerData() == null) {
                         NetworkService.Server.RemoveClient(client, "错误:该Client没有对应PlayerData");
                     }
-                    else if (client.PlayerData.ComponentPlayer != null
+                    else if (client.GetPlayerData().ComponentPlayer != null
                         && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
-                        client.PlayerData.ComponentPlayer.ComponentHealth.IsInvulnerable = false;
+                        client.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = false;
                     }
                     break;
             }

@@ -12,14 +12,14 @@ public class PlayerDragDropPacket : PlayerPacketBase {
     public int m_count;
     public PlayerDragDropPacket() { }
     public PlayerDragDropPacket(PlayerData playerData, int inventoryId, int slotIndex, Vector3 position, int count) {
-        m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
+        m_fromPlayerIndex = playerData.PlayerIndex;
         m_inventoryId = inventoryId;
         m_slotIndex = slotIndex;
         m_hitPosition = position;
         m_count = count;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Value(ref m_inventoryId);
         archive.Value(ref m_slotIndex);
         archive.Value(ref m_hitPosition);
@@ -46,7 +46,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
         });
     }
 
-    public static bool IsOwnedByOtherPlayer(IInventory inventory, Client from, out ComponentPlayer owner) {
+    public static bool IsOwnedByOtherPlayer(IInventory inventory, ClientSession from, out ComponentPlayer owner) {
         owner = null;
         if (inventory is Component component) {
             owner = component.Entity?.FindComponent<ComponentPlayer>();
@@ -61,4 +61,5 @@ public class PlayerDragDropPacket : PlayerPacketBase {
         return inventory != null && index >= 0 && index < inventory.SlotsCount;
     }
 }
+
 

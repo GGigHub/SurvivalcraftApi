@@ -6,7 +6,7 @@ namespace Game.Network;
 
 public abstract class PlayerPacketBase : Packet {
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
-    public byte m_fromPlayerId;
+    public int m_fromPlayerIndex;
 
     public enum ChangeFlag : byte {
         None = 0,
@@ -23,13 +23,15 @@ public abstract class PlayerPacketBase : Packet {
     private static readonly Dictionary<Guid, double> s_lastHitTimes = [];
     private const double ServerHitCooldown = 0.2;
 
-    public static PlayerData ResolvePlayer(byte clientId) {
+    public static PlayerData ResolvePlayer(int playerIndex) {
         return GameManager.Project.FindSubsystem<SubsystemPlayers>()
-            .FindPlayerData(playerData => NetworkService.GetClientByGUID(playerData.NetworkGuid).ID == clientId);
+            .FindPlayerData(playerData => playerData.PlayerIndex == playerIndex);
     }
 
-    public static bool ValidateServerSender(PlayerData playerData, Client from) {
-        return playerData != null && from != null && NetworkService.GetClientByGUID(playerData.NetworkGuid).ID == from.ID;
+    public static bool ValidateServerSender(PlayerData playerData, ClientSession from) {
+        // Here `from` is the network connection. We check if the connection's ID matches the PlayerIndex.
+        // Once we fully migrate Client to NetSession, this will check connection.PlayerIndex.
+        return playerData != null && from != null && from.PlayerIndex == playerData.PlayerIndex;
     }
 
     public static bool ThrottleHit(PlayerData playerData) {
@@ -47,21 +49,21 @@ public abstract class PlayerPacketBase : Packet {
 
     public static void QueuePlayerPacket(Packet packet, bool isServer) {
         if (isServer) {
-            packet.Except = packet.From;
+            packet.ExceptPlayerIndex = packet.SenderPlayerIndex;
             NetworkService.QueuePacket(packet);
         }
     }
 
     protected void SerializePlayerId(PacketSerializer archive, PlayerData playerData) {
         if (archive.IsWriting && playerData != null) {
-            m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
+            m_fromPlayerIndex = playerData.PlayerIndex;
         }
-        archive.Value(ref m_fromPlayerId);
+        archive.Value(ref m_fromPlayerIndex);
     }
 
     protected bool TryResolvePlayer(bool isServer, out PlayerData playerData) {
-        playerData = ResolvePlayer(m_fromPlayerId);
-        if (isServer && !ValidateServerSender(playerData, From)) {
+        playerData = ResolvePlayer(m_fromPlayerIndex);
+        if (isServer && !ValidateServerSender(playerData, Connection)) {
             return false;
         }
         return playerData != null;

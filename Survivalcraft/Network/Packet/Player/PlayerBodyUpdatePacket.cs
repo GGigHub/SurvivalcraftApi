@@ -76,11 +76,11 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
             changeFlag |= ChangeFlag.VelocityChange;
         }
         s_playerBodySyncSnapshots[playerData.NetworkGuid] = CreateSnapshot(player, body, hasParentBody);
-        m_fromPlayerId = NetworkService.GetClientByGUID(playerData.NetworkGuid).ID;
+        m_fromPlayerIndex = playerData.PlayerIndex;
     }
 
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Enum(ref changeFlag);
         if (changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) archive.Value(ref LookAngles);
         if (changeFlag.HasFlag(ChangeFlag.ChildLookAnglesChange)) archive.Value(ref ChildLookAngles);
@@ -147,4 +147,5 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
         };
     }
 }
+
 

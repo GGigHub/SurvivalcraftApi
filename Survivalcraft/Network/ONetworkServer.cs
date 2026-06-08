@@ -11,18 +11,18 @@ public class ONetworkServer : INetEventListener {
     public event Action<NetPeer> ClientConnected;
     public event Action<NetPeer, DisconnectInfo> ClientDisconnected;
 
-    public Client Server { get; set; }
+    public ClientSession Server { get; set; }
     public bool IsServer => NetManager.IsRunning && Self == Server;
     public int ClientCount => Peers.Count() + 1;
-    public Dictionary<int, Client> Clients { get; } = new Dictionary<int, Client>();
+    public Dictionary<int, ClientSession> Clients { get; } = new Dictionary<int, ClientSession>();
     public Dictionary<int, NetPeer> ClientPeers { get; } = new Dictionary<int, NetPeer>();
-    public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
+    public IEnumerable<ClientSession> Peers => Clients.Values.Where(c => c != Self);
     public List<Packet> PendingPackets { get; } = new List<Packet>();
-    public Action<Client> OnNetworkStateChanged { get; set; }
+    public Action<ClientSession> OnNetworkStateChanged { get; set; }
 
-    internal readonly Dictionary<Client, string> ClientsToRemove = new Dictionary<Client, string>();
+    internal readonly Dictionary<ClientSession, string> ClientsToRemove = new Dictionary<ClientSession, string>();
 
-    public Client Self { get; set; }
+    public ClientSession Self { get; set; }
     public NetManager NetManager { get; set; }
     public PacketFragment PackageFragment { get; set; }
 
@@ -64,17 +64,17 @@ public class ONetworkServer : INetEventListener {
         return NetManager.IsRunning;
     }
 
-    public void AddClient(Client c) {
-        Clients[c.ID] = c;
+    public void AddClient(ClientSession c) {
+        Clients[c.PlayerIndex] = c;
     }
 
-    public void RemoveClientImmediate(Client c, string reason = null) {
+    public void RemoveClientImmediate(ClientSession c, string reason = null) {
         if (c == Self) {
             Stop();
             return;
         }
 
-        if (ClientPeers.TryGetValue(c.ID, out NetPeer peer) && peer.ConnectionState != ConnectionState.Disconnected) {
+        if (ClientPeers.TryGetValue(c.PlayerIndex, out NetPeer peer) && peer.ConnectionState != ConnectionState.Disconnected) {
             if (string.IsNullOrEmpty(reason)) peer.Disconnect();
             else peer.Disconnect(NetDataWriter.FromString(reason));
         }
@@ -84,57 +84,57 @@ public class ONetworkServer : INetEventListener {
             return;
         }
 
-        if (Clients.ContainsKey(c.ID)) {
-            NetworkService.QueuePacket(new ClientRemovePacket(c.ID));
-            c.State = NetworkState.NotConnected;
+        if (Clients.ContainsKey(c.PlayerIndex)) {
+            NetworkService.QueuePacket(new ClientRemovePacket(c.PlayerIndex));
+            c.NetworkState = NetworkState.NotConnected;
             OnNetworkStateChanged?.Invoke(c);
-            Clients.Remove(c.ID);
-            ClientPeers.Remove(c.ID);
+            Clients.Remove(c.PlayerIndex);
+            ClientPeers.Remove(c.PlayerIndex);
         }
     }
 
     public void RemoveAllClients(string reason = null) {
-        var cs = new List<Client>(Clients.Values);
+        var cs = new List<ClientSession>(Clients.Values);
         foreach (var c in cs) {
             if (c == Self) continue;
-            if (ClientPeers.TryGetValue(c.ID, out NetPeer peer) && peer.ConnectionState != ConnectionState.Disconnected) {
+            if (ClientPeers.TryGetValue(c.PlayerIndex, out NetPeer peer) && peer.ConnectionState != ConnectionState.Disconnected) {
                 if (reason != null) peer.Disconnect(NetDataWriter.FromString(reason));
                 else peer.Disconnect();
             }
-            Clients.Remove(c.ID);
-            ClientPeers.Remove(c.ID);
-            c.State = NetworkState.NotConnected;
+            Clients.Remove(c.PlayerIndex);
+            ClientPeers.Remove(c.PlayerIndex);
+            c.NetworkState = NetworkState.NotConnected;
         }
     }
 
-    public Client GetClientByID(byte id) {
-        if (Clients.ContainsKey(id))
-            return Clients[id];
+    public ClientSession GetClientByPlayerIndex(int playerIndex) {
+        if (Clients.ContainsKey(playerIndex))
+            return Clients[playerIndex];
         return null;
     }
 
-    public Client GetClientByGUID(Guid? guid) {
+    public ClientSession GetClientByGUID(Guid? guid) {
         return Clients.Values.FirstOrDefault(c => c.NetworkGuid == guid);
     }
 
     public void StartLocal() {
         Clients.Clear();
-        Self = new Client(new Guid(SettingsManager.OnlineAccessToken));
+        Self = new ClientSession { NetworkGuid = new Guid(SettingsManager.OnlineAccessToken) };
         AddClient(Self);
     }
 
-    public Client CreateClient(NetPeer peer, Guid guid, string dataId, string nickname) {
+    public ClientSession CreateClient(NetPeer peer, Guid guid, string dataId) {
         if (!IsServer) throw new InvalidOperationException("creating client as non-server");
         foreach (var p in Peers) {
             if (p.NetworkGuid == guid) RemoveClient(p, "Duplicate account login.");
         }
-        var c = new Client(FindUnusedIndex(), guid, nickname);
-        ClientPeers[c.ID] = peer;
+        var c = new ClientSession { PlayerIndex = FindUnusedIndex(), NetworkGuid = guid };
+        ClientPeers[c.PlayerIndex] = peer;
         peer.Tag = c;
         return c;
     }
 
-    public void RemoveClient(Client c, string reason = null) {
+    public void RemoveClient(ClientSession c, string reason = null) {
         if (ClientsToRemove.ContainsKey(c)) {
             if (!string.IsNullOrEmpty(reason))
                 ClientsToRemove[c] += '\n' + reason;
@@ -161,12 +161,12 @@ public class ONetworkServer : INetEventListener {
 
     public void Update() {
         if (NetManager.IsRunning) {
-            foreach (Client client in Clients.Values) {
-                if (client == Self || !client.IsConnected) {
+            foreach (ClientSession client in Clients.Values) {
+                    if (client == Self || client.NetworkState == NetworkState.NotConnected) {
                     continue;
                 }
                 byte[] payload = NetworkHelper.BuildPayloadForClient(PendingPackets, client, true, IsServer);
-                if (payload != null && ClientPeers.TryGetValue(client.ID, out NetPeer peer)) PackageFragment.Send(payload, peer);
+                if (payload != null && ClientPeers.TryGetValue(client.PlayerIndex, out NetPeer peer)) PackageFragment.Send(payload, peer);
             }
             PendingPackets.Clear();
 
@@ -183,11 +183,11 @@ public class ONetworkServer : INetEventListener {
         }
     }
 
-    private byte FindUnusedIndex() {
-        for (byte i = 0; i < 255; i++) {
+    private int FindUnusedIndex() {
+        for (int i = 1; i < int.MaxValue; i++) {
             if (!Clients.ContainsKey(i)) return i;
         }
-        throw new Exception("Server is full.");
+        throw new InvalidOperationException("Too many clients.");
     }
 
     public void OnPeerConnected(NetPeer peer) {
@@ -196,11 +196,11 @@ public class ONetworkServer : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         ClientDisconnected?.Invoke(peer, disconnectInfo);
-        Client client = peer.Tag as Client;
+        ClientSession client = peer.Tag as ClientSession;
         if (client != null) {
             RemoveClient(client, disconnectInfo.Reason.ToString());
         }
-        GameManager.Project.FindSubsystem<SubsystemPlayers>().MakePlayerOffline(client.NetworkGuid);
+        GameManager.Project.FindSubsystem<SubsystemPlayers>().MakePlayerOffline(client?.NetworkGuid ?? Guid.Empty);
         Log.Information("Disconnect by " + disconnectInfo);
     }
 
@@ -212,10 +212,10 @@ public class ONetworkServer : INetEventListener {
             return;
         }
         foreach (var packet in packets) {
-            if (packet.From == null) {
+            if (packet.Connection == null) {
                 continue;
             }
-            if (packet.MinNeedState <= packet.From.State) {
+            if (packet.MinNeedState <= packet.Connection.NetworkState) {
                 packet.Handle(true);
             }
         }
@@ -249,7 +249,7 @@ public class ONetworkServer : INetEventListener {
     public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
     }
 
-    internal PlayerData GetPlayerByClient(Client client) {
+    internal PlayerData GetPlayerByClient(ClientSession client) {
         if (client == null) return null;
         var subsystemPlayers = GameManager.Project?.FindSubsystem<SubsystemPlayers>();
         if (subsystemPlayers != null) {

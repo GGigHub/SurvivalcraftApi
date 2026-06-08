@@ -14,13 +14,14 @@ namespace Game.Network;
 public static class NetworkService {
     public static ONetworkServer Server { get; private set; }
     public static ONetworkClient Client { get; private set; }
-    public static Client Self => Server?.Self ?? Client?.Self;
-    public static Dictionary<int, Client> Clients => Server != null ? Server.Clients : Client != null ? Client.Clients : [];
-    public static IEnumerable<Client> Peers => Server != null ? Server.Peers : Client != null ? Client.Clients.Values.Where(c => c != Client.Self) : [];
+    public static ClientSession Self => Server?.Self ?? Client?.Self;
+    public static Dictionary<int, ClientSession> Clients => Server != null ? Server.Clients : Client != null ? Client.Clients : [];
+    public static IEnumerable<ClientSession> Peers => Server != null ? Server.Peers : Client != null ? Client.Clients.Values.Where(c => c != Client.Self) : [];
     public static bool IsServer => Server != null && Server.NetManager.IsRunning;
     public static bool IsClient => Client != null && Client.NetManager.IsRunning;
     public static Guid NetworkGuid => Guid.Parse(SettingsManager.OnlineAccessToken);
-    public static NetworkState SelfState => Self.State;
+    public static NetworkState SelfState => Self.NetworkState;
+    public static int SenderPlayerIndex { get; set; } = -1; // Set by packet decoding
 
     public static ComponentPlayer MainPlayer {
         get {
@@ -108,23 +109,25 @@ public static class NetworkService {
         return outStream.ToArray();
     }
 
-    public static Client GetClientByGUID(Guid? guid) {
+    public static ClientSession GetClientByPlayerIndex(int playerIndex) {
+        if (Clients.TryGetValue(playerIndex, out ClientSession client)) {
+            return client;
+        }
+        return null;
+    }
+
+    public static ClientSession GetClientByGUID(Guid? guid) {
         if (Server != null) return Server.GetClientByGUID(guid);
         return Client != null ? Client.GetClientByGUID(guid) : null;
     }
 
-    public static PlayerData GetPlayerByClient(Client client) {
-        if (Server != null) return Server.GetPlayerByClient(client);
-        return Client != null ? Client.GetPlayerByClient(client) : null;
-    }
-
-    public static void AddClient(Client client) {
+    public static void AddClient(ClientSession client) {
         Server?.AddClient(client);
         Client?.AddClient(client);
     }
 
-    public static Client CreateClient(NetPeer peer, Guid guid, string dataId, string nickname) =>
-        Server.CreateClient(peer, guid, dataId, nickname);
+    public static ClientSession CreateClient(NetPeer peer, Guid guid, string dataId) =>
+        Server.CreateClient(peer, guid, dataId);
 
     public static void Stop() {
         Server?.Stop();

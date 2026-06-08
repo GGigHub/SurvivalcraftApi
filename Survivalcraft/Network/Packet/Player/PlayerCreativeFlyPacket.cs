@@ -8,11 +8,11 @@ public class PlayerCreativeFlyPacket : PlayerPacketBase {
     public bool m_isCreativeFly;
     public PlayerCreativeFlyPacket() { }
     public PlayerCreativeFlyPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerIndex = player.PlayerData.PlayerIndex;
         m_isCreativeFly = player.ComponentLocomotion.IsCreativeFlyEnabled;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Value(ref m_isCreativeFly);
     }
     public override void Handle(bool isServer) {
@@ -25,4 +25,5 @@ public class PlayerCreativeFlyPacket : PlayerPacketBase {
         QueuePlayerPacket(this, isServer);
     }
 }
+
 

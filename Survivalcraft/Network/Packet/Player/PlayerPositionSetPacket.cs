@@ -9,12 +9,12 @@ public class PlayerPositionSetPacket : PlayerPacketBase {
     public Vector3 Velocity;
     public PlayerPositionSetPacket() { }
     public PlayerPositionSetPacket(ComponentPlayer player) {
-        m_fromPlayerId = NetworkService.GetClientByGUID(player.PlayerData.NetworkGuid).ID;
+        m_fromPlayerIndex = player.PlayerData.PlayerIndex;
         Position = player.ComponentBody.Position;
         Velocity = player.ComponentBody.Velocity;
     }
     public override void Serialize(PacketSerializer archive) {
-        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerId) : null);
+        SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Value(ref Position);
         archive.Value(ref Velocity);
     }
@@ -24,4 +24,5 @@ public class PlayerPositionSetPacket : PlayerPacketBase {
         playerData.ComponentPlayer.ComponentBody.Velocity = Velocity;
     }
 }
+
 
