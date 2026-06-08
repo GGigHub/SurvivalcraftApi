@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Engine;
+using GameEntitySystem;
 
 namespace Game.Network;
 
@@ -310,5 +311,13 @@ public static class RootManager {
         };
         ComponentBody.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
         ComponentLocomotion.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
+        Project.EntityAdded += (_, arg) => {
+            if (NetworkService.IsServer)
+                NetworkService.QueuePacket(new EntityLoadPacket(arg.Entity));
+        };
+        Project.EntityRemoved += (_, arg) => {
+            if (NetworkService.IsServer)
+                NetworkService.QueuePacket(new EntityRemovePacket(arg.Entity.Id));
+        };
     }
 }

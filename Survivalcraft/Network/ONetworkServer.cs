@@ -85,7 +85,7 @@ public class ONetworkServer : INetEventListener {
         }
 
         if (Clients.ContainsKey(c.PlayerIndex)) {
-            NetworkService.QueuePacket(new ClientRemovePacket(c.PlayerIndex));
+            //NetworkService.QueuePacket(new ClientRemovePacket(c.PlayerIndex));
             c.NetworkState = NetworkState.NotConnected;
             OnNetworkStateChanged?.Invoke(c);
             Clients.Remove(c.PlayerIndex);

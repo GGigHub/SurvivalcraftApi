@@ -88,6 +88,7 @@ public class NetworkClient : INetEventListener {
     public void OnPeerConnected(NetPeer peer) {
         _serverPeer = peer;
         Log.Information($"Connected: {_serverAddress}");
+        Send(new ConnectPacket(NetworkManager.NetworkGuid));
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {

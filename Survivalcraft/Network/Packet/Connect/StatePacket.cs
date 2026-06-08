@@ -36,6 +36,7 @@ public class StatePacket : ClientPacketBase {
 
             switch (client.NetworkState) {
                 case NetworkState.Connected: {
+                        // 在未来弃用
                         byte[] textureData = null;
                         if (subsystemPlayers.MakePlayerOnline(client.NetworkGuid, out PlayerData playerData, out Entity entity)) {
                             if (entity != null) {
