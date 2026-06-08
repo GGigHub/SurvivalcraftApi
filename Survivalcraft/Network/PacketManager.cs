@@ -10,30 +10,11 @@ public abstract class Packet {
     public int ToPlayerIndex { get; set; } = -1;
     public int ExceptPlayerIndex { get; set; } = -1;
     public int SenderPlayerIndex { get; set; } = -1;
-    public ClientSession Connection { get; set; } // For network layer use only (e.g., login flow)
-    
+    public ClientSession Connection { get; set; }
+
     public ConnectionRequest Request { get; set; }
     public IPEndPoint IPPoint { get; set; }
-
-    [Obsolete("Use Connection instead")]
-    public ClientSession From {
-        get => Connection;
-        set => Connection = value;
-    }
-
-    [Obsolete("Use ToPlayerIndex instead")]
-    public ClientSession To {
-        get => NetworkService.GetClientByPlayerIndex(ToPlayerIndex);
-        set { ToPlayerIndex = value?.PlayerIndex ?? -1; }
-    }
-
-    [Obsolete("Use ExceptPlayerIndex instead")]
-    public ClientSession Except {
-        get => NetworkService.GetClientByPlayerIndex(ExceptPlayerIndex);
-        set { ExceptPlayerIndex = value?.PlayerIndex ?? -1; }
-    }
-
-    public abstract NetworkState MinNeedState { get; }
+    public virtual NetworkState MinNeedState => NetworkState.NotConnected;
 
     public abstract void Handle(bool isServer);
     public abstract void Serialize(PacketSerializer archive);
@@ -99,6 +80,7 @@ public enum PacketType : byte {
 
 public class PacketManager {
     public const byte VerifyByte = 0x88;
+    public const byte RelayVerifyByte = 0x89;
 
     private static readonly Func<Packet>[] m_factories = new Func<Packet>[256];
 
@@ -266,7 +248,7 @@ public class PacketManager {
 
     public static List<Packet> DecodePacketsFromPayload(IEnumerable<ClientSession> clients, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         ClientSession from = ResolveFrom(clients, netPeer, request, iPEndPoint);
-        List<Packet> packets = new List<Packet>();
+        List<Packet> packets = [];
         byte packetID = 99;
         if (payload == null || payload.Length == 0) {
             return packets;
@@ -283,13 +265,13 @@ public class PacketManager {
 
     public static List<Packet> DecodePackets(IEnumerable<ClientSession> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         ClientSession from = ResolveFrom(clients, netPeer, request, iPEndPoint);
-        List<Packet> packets = new List<Packet>();
+        List<Packet> packets = [];
         byte packetID = 99;
         if (reader.AvailableBytes == 0) {
             return packets;
         }
         try {
-            var preader = NetworkHelper.GetReader(reader);
+            PacketStreamReader preader = new(reader.GetBytesWithLength());
             return DecodePacketsFromReader(preader, from, ref packetID, request, iPEndPoint);
         }
         catch {
@@ -299,13 +281,13 @@ public class PacketManager {
     }
 
     public static List<Packet> DecodePackets(byte[] payload) {
-        List<Packet> packets = new();
-        byte packetID = 99;
+        List<Packet> packets = [];
+        byte packetID = 0;
         if (payload == null || payload.Length == 0) {
             return packets;
         }
         try {
-            var preader = new PacketStreamReader(payload);
+            PacketStreamReader preader = new(payload);
             return DecodePacketsFromReader(preader, null, ref packetID);
         }
         catch {
@@ -331,23 +313,42 @@ public class PacketManager {
     }
 
     private static List<Packet> DecodePacketsFromReader(PacketStreamReader preader, ClientSession from, ref byte packetID, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        List<Packet> packets = new List<Packet>();
+        List<Packet> packets = [];
         Packet last = null;
         while (preader.BaseStream.Position < preader.BaseStream.Length) {
             byte check = preader.ReadByte();
-            if (check != VerifyByte) {
+            if (check != VerifyByte && check != RelayVerifyByte) {
                 Log.Information("Packet verify failed, last packet: " + (last == null ? "null" : last.GetType().Name));
                 break;
             }
             byte ID = preader.ReadByte();
             packetID = ID;
+
+            int senderIndex = from?.PlayerIndex ?? -1;
+            if (check == RelayVerifyByte) {
+                int count = preader.ReadInt32();
+                for (int i = 0; i < count; i++) {
+                    int index = preader.ReadInt32();
+                    // 假设中继情况中只有一个sender
+                    if (i == 0) {
+                        senderIndex = index;
+                    }
+                }
+            }
+
             if (m_factories[ID] != null) {
                 Packet packet = m_factories[ID]();
                 last = packet;
-                packet.Connection = from;
+                
+                if (check == RelayVerifyByte && from == null) {
+                    packet.SenderPlayerIndex = senderIndex;
+                } else {
+                    packet.Connection = from;
+                }
+
                 packet.Request = request;
                 packet.IPPoint = iPEndPoint;
-                packet.SenderPlayerIndex = from?.PlayerIndex ?? -1;
+                packet.SenderPlayerIndex = senderIndex;
                 packet.Serialize(new PacketSerializer(preader));
                 packets.Add(packet);
             }

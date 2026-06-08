@@ -10,17 +10,6 @@ namespace Game.Network;
 
 public static class NetworkHelper {
 
-    public static string GetInnerIp() {
-        return NetworkInterface.GetAllNetworkInterfaces()
-            .SelectMany(n => n.GetIPProperties().UnicastAddresses)
-            .FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            ?.Address.ToString();
-    }
-
-    public static PacketStreamReader GetReader(NetDataReader reader) {
-        return new PacketStreamReader(reader.GetBytesWithLength());
-    }
-
     public static byte[] BuildOutgoingPayload(IEnumerable<Packet> packets) {
         PacketStreamWriter writer = new();
         foreach (var packet in packets) {
@@ -88,8 +77,8 @@ public static class NetworkHelper {
     public static byte[] BuildPayloadForClient(IEnumerable<Packet> pendingPackets, ClientSession client, bool respectMinState, bool isServer) {
         List<Packet> packets = new List<Packet>();
         foreach (Packet packet in pendingPackets) {
-            if (packet.To != null && packet.To != client) continue;
-            if (packet.Except != null && packet.Except == client) continue;
+            if (packet.ToPlayerIndex != -1 && packet.ToPlayerIndex != client.PlayerIndex) continue;
+            if (packet.ExceptPlayerIndex != -1 && packet.ExceptPlayerIndex == client.PlayerIndex) continue;
             if (respectMinState && client.NetworkState < packet.MinNeedState && isServer) continue;
             packets.Add(packet);
         }

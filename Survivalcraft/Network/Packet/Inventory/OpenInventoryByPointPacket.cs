@@ -27,7 +27,7 @@ public class OpenInventoryByPointPacket : Packet {
                 IInventory inventory = blockEntity.Entity.FindComponent<IInventory>(throwOnError: false);
                 if (inventory != null) {
                     OpenInventoryByIDPacket packet = new OpenInventoryByIDPacket(inventory);
-                    packet.To = From;
+                    packet.ToPlayerIndex = Connection?.PlayerIndex ?? -1;
                     NetworkService.QueuePacket(packet);
                 }
             }

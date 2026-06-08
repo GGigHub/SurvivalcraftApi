@@ -23,12 +23,12 @@ public class SubsystemTimePacket : Packet {
 
     public override void Handle(bool isServer) {
         var m_info = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
-        if (!isServer || (From?.GetPlayerData() != null && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode == GameMode.Creative)) {
+        if (!isServer || (Connection?.GetPlayerData() != null && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode == GameMode.Creative)) {
             m_info.TotalElapsedGameTime = m_time;
             m_info.TimeOfDay.TimeOfDayOffset = m_timeOfDayOffset;
         }
         else {
-            if (From.GetPlayerData() != null) Log.Information($"{From.GetPlayerData().Name} 打算在非创造模式下修改时间");
+            if (Connection?.GetPlayerData() != null) Log.Information($"{Connection.GetPlayerData().Name} 打算在非创造模式下修改时间");
         }
     }
 }

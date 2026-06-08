@@ -20,13 +20,13 @@ public class OpenInventoryByIDPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        if (From == null) return;
+        if (Connection == null) return;
         var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
         if (isServer) {
             IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
             if (inventory != null) {
                 OpenInventoryByIDPacket packet = new OpenInventoryByIDPacket(inventory);
-                packet.To = From;
+                packet.ToPlayerIndex = Connection?.PlayerIndex ?? -1;
                 NetworkService.QueuePacket(packet);
             }
         }

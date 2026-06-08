@@ -9,9 +9,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Include="Network\NetworkClient.cs" />
-      <Compile Include="Network\RelayHost.cs" />
-      <Compile Include="Network\NetworkServer.cs" />
+      <Compile Include="Network\New\NetworkClient.cs" />
+      <Compile Include="Network\New\RelayHost.cs" />
+      <Compile Include="Network\New\NetworkServer.cs" />
       <Compile Include="Network\ONetworkClient.cs" />
       <Compile Include="Network\NetworkService.cs" />
       <Compile Include="Network\ONetworkServer.cs" />
@@ -48,7 +48,6 @@
       <Compile Include="Network\Packet\Health\InjureEventPacket.cs" />
       <Compile Include="Network\Packet\Health\InjureRequestPacket.cs" />
       <Compile Include="Network\Packet\Health\VitalStatSyncPacket.cs" />
-      <Compile Include="Network\Packet\Helper\NetworkInterface.cs" />
       <Compile Include="Network\Packet\Helper\NetworkHelper.cs" />
       <Compile Include="Network\Packet\Helper\PacketFragment.cs" />
       <Compile Include="Network\Packet\Helper\PacketSerializer.cs" />

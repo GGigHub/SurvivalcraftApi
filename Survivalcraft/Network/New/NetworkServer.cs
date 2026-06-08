@@ -9,7 +9,7 @@ namespace Game.Network;
 public class NetworkServer : INetEventListener {
     private NetManager _netManager;
     private PacketFragment _packageFragment;
-    private Dictionary<NetPeer, ClientSession> _clientSessions = new();
+    private Dictionary<NetPeer, ClientSession> _clientSessions = [];
 
     public bool Start() {
         _netManager = new NetManager(this) {
@@ -73,20 +73,17 @@ public class NetworkServer : INetEventListener {
     }
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-        if (!_clientSessions.TryGetValue(peer, out ClientSession session)) return;
         if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
+                if (!_clientSessions.TryGetValue(peer, out ClientSession session)) return;
+                packet.Connection = session;
+                packet.SenderPlayerIndex = session.PlayerIndex;
                 packet.Handle(false);
             });
         }
     }
 
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
-        if (_packageFragment.TryProcessIncoming(reader, remoteEndPoint.ToString(), out byte[] payload)) {
-            PacketManager.DecodePackets(payload).ForEach((packet) => {
-                packet.Handle(false);
-            });
-        }
         Log.Information($"Unconnected receive by: {remoteEndPoint}");
     }
 

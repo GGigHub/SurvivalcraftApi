@@ -41,7 +41,7 @@ public class ClientSyncListPacket : ClientPacketBase {
         }
         foreach (var client in m_list) {
             if (client.PlayerIndex == 0) {
-                NetworkService.Client.Server = From;
+                NetworkService.Client.Server = Connection;
             }
             else if (client.NetworkGuid == NetworkService.Client.Self.NetworkGuid) {
                 NetworkService.Client.Self = client;

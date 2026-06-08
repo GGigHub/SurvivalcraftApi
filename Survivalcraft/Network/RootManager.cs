@@ -242,11 +242,11 @@ public static class RootManager {
         TerrainUpdater.OnTerrainPlayerLocationUpdate = (updater, location) =>
             NetworkService.QueuePacket(new PlayerUpdateLocationPacket(location));
         TerrainUpdater.OnTerrainReplyResult = (updater, playerGuid, chunks) =>
-            NetworkService.QueuePacket(new TerrainReplyResultPacket(chunks) { To = NetworkService.GetClientByGUID(playerGuid) });
+            NetworkService.QueuePacket(new TerrainReplyResultPacket(chunks) { ToPlayerIndex = NetworkService.GetClientByGUID(playerGuid)?.PlayerIndex ?? -1 });
         TerrainUpdater.OnTerrainRequestSyncChunks = (updater, chunks) =>
             NetworkService.QueuePacket(new TerrainRequestSyncChunksPacket(chunks));
         TerrainUpdater.OnTerrainSyncChunkList = (updater, playerGuid, chunks) =>
-            NetworkService.QueuePacket(new TerrainSyncChunkListPacket(chunks) { To = NetworkService.GetClientByGUID(playerGuid) });
+            NetworkService.QueuePacket(new TerrainSyncChunkListPacket(chunks) { ToPlayerIndex = NetworkService.GetClientByGUID(playerGuid)?.PlayerIndex ?? -1 });
         PlayerData.OnPlayerRestart = (playerData) => {
             if (NetworkService.IsClient && playerData.IsMainPlayer)
                 NetworkService.QueuePacket(new PlayerRestartPacket(playerData));
@@ -298,7 +298,7 @@ public static class RootManager {
         };
         ComponentPlayer.OnBodyUpdate = (player, isMainPlayer) => {
             if (NetworkService.IsServer && Time.PeriodicEvent(0.1f, 0.0))
-                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player) { Except = NetworkService.GetClientByGUID(player.NetworkGuid) });
+                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player) { ExceptPlayerIndex = NetworkService.GetClientByGUID(player.NetworkGuid)?.PlayerIndex ?? -1 });
             if (isMainPlayer && Time.PeriodicEvent(0.1f, 0.0))
                 NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player));
         };

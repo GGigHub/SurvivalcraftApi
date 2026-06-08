@@ -41,14 +41,14 @@ public class NetworkStateChangePacket : ClientPacketBase {
                             if (entity != null) {
                                 GameManager.Project.AddEntity(entity);
                             }
-                            NetworkService.QueuePacket(new PlayerAddPacket(playerData) { Except = client });
+                            NetworkService.QueuePacket(new PlayerAddPacket(playerData) { ExceptPlayerIndex = client?.PlayerIndex ?? -1 });
                         }
                         if (!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.BlocksTextureName)) {
                             using var s = Storage.OpenFile(BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName), OpenFileMode.Read);
                             textureData = ModsManager.StreamToBytes(s);
                         }
                         byte[] data = NetworkService.GetNowProject(GameManager.Project);
-                        NetworkService.QueuePacket(new ProjectPacket(textureData, data) { To = client });
+                        NetworkService.QueuePacket(new ProjectPacket(textureData, data) { ToPlayerIndex = client?.PlayerIndex ?? -1 });
                         break;
                     }
                 case NetworkState.NotConnected:
@@ -56,7 +56,7 @@ public class NetworkStateChangePacket : ClientPacketBase {
                     break;
                 case NetworkState.ProjectLoaded: {
                         List<Entity> sendList = [.. GameManager.Project.Entities];
-                        NetworkService.QueuePacket(new EntityLoadPacket(sendList) { To = client });
+                        NetworkService.QueuePacket(new EntityLoadPacket(sendList) { ToPlayerIndex = client?.PlayerIndex ?? -1 });
                         break;
                     }
                 case NetworkState.LoadTerrain:

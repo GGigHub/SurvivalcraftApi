@@ -41,7 +41,7 @@ public class EntitySyncRequestPacket : Packet {
         foreach (int e in m_entityIdList) {
             GameManager.Project.FindEntity(e, entity => el.Add(entity));
         }
-        NetworkService.QueuePacket(new EntityLoadPacket(el) { To = From });
+        NetworkService.QueuePacket(new EntityLoadPacket(el) { ToPlayerIndex = Connection?.PlayerIndex ?? -1 });
     }
 }
 

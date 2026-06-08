@@ -61,7 +61,7 @@ public class RelayHost : INetEventListener {
         });
 
         PacketStreamWriter writer = new();
-        writer.Write(PacketFragment.VerifyByte);
+        writer.Write(PacketFragment.RelayVerifyByte);
         writer.Write(packet.ID);
         writer.Write(indexs.Count);
         indexs.ForEach(writer.Write);
@@ -85,20 +85,18 @@ public class RelayHost : INetEventListener {
     }
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-        // 这里仍然需要权限检测
         if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
-                packet.Handle(false);
+                ClientSession clientSession = _clientSessions.FirstOrDefault(
+                    session => session.Value.PlayerIndex == packet.SenderPlayerIndex).Value;
+                packet.Connection = clientSession;
+                packet.SenderPlayerIndex = packet.SenderPlayerIndex;
+                packet.Handle(true);
             });
         }
     }
 
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
-        if (_packageFragment.TryProcessIncoming(reader, remoteEndPoint.ToString(), out byte[] payload)) {
-            PacketManager.DecodePackets(payload).ForEach((packet) => {
-                packet.Handle(false);
-            });
-        }
         Log.Information($"Unconnected receive by: {remoteEndPoint}");
     }
 

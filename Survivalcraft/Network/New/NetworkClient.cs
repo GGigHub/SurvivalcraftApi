@@ -7,6 +7,13 @@ using LiteNetLib.Utils;
 
 namespace Game.Network;
 
+public class ClientSession {
+    // 不是ClientIndex
+    public int PlayerIndex { get; set; }
+    public Guid NetworkGuid { get; set; }
+    public NetworkState NetworkState { get; set; }
+}
+
 public class NetworkClient : INetEventListener {
     private NetPeer _serverPeer;
     private NetManager _netManager;
@@ -75,11 +82,6 @@ public class NetworkClient : INetEventListener {
 
 
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
-        if (_packageFragment.TryProcessIncoming(reader, remoteEndPoint.ToString(), out byte[] payload)) {
-            PacketManager.DecodePackets(payload).ForEach((packet) => {
-                packet.Handle(false);
-            });
-        }
         Log.Information($"Unconnected receive by: {remoteEndPoint}");
     }
 

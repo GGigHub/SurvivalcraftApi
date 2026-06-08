@@ -9,6 +9,7 @@ namespace Game.Network;
 
 public sealed class PacketFragment {
     internal const byte VerifyByte = 0x88;
+    internal const byte RelayVerifyByte = 0x77;
     internal const uint ChunkMagic = 0x4E46434B;
     internal const byte ChunkVersion = 2;
     internal const int MinChunkSize = 256;
