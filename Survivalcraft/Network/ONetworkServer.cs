@@ -236,15 +236,15 @@ public class ONetworkServer : INetEventListener {
         Log.Information("Received connection request " + request.RemoteEndPoint);
 
         if (GameManager.Project == null) {
-            SendWriterFromPacket(new ConnectionRejectPacket("Please wait until server startup is complete before joining."), request, true);
+            //SendWriterFromPacket(new ConnectionRejectPacket("Please wait until server startup is complete before joining."), request, true);
         }
         else {
             try {
-                ConnectionRequestPacket requestPacket = PacketManager.DecodePacket<ConnectionRequestPacket>(Clients.Values, request.Data, null, request);
-                requestPacket.Handle(true);
+                //ConnectionRequestPacket requestPacket = PacketManager.DecodePacket<ConnectionRequestPacket>(Clients.Values, request.Data, null, request);
+                //requestPacket.Handle(true);
             }
             catch (Exception e) {
-                SendWriterFromPacket(new ConnectionRejectPacket($"Invalid connection request packet: {e.Message}"), request, true);
+                //SendWriterFromPacket(new ConnectionRejectPacket($"Invalid connection request packet: {e.Message}"), request, true);
                 Log.Information("ConnectionRequestEvent Error:" + e.StackTrace);
             }
         }

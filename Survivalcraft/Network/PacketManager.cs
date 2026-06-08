@@ -7,24 +7,20 @@ namespace Game.Network;
 
 public abstract class Packet {
     public abstract byte ID { get; }
+    public abstract void Handle(bool isServer);
+    public abstract void Serialize(PacketSerializer archive);
+
     public int ToPlayerIndex { get; set; } = -1;
     public int ExceptPlayerIndex { get; set; } = -1;
     public int SenderPlayerIndex { get; set; } = -1;
-    public ClientSession Connection { get; set; }
 
-    public ConnectionRequest Request { get; set; }
-    public IPEndPoint IPPoint { get; set; }
+    public ClientSession Connection { get; set; } = null;
     public virtual NetworkState MinNeedState => NetworkState.NotConnected;
-
-    public abstract void Handle(bool isServer);
-    public abstract void Serialize(PacketSerializer archive);
 }
 
 public enum PacketType : byte {
     // Connect
-    ConnectRequest = 0, ConnectReject = 1,
-    Project = 2,
-    ClientAdd = 52, ClientRemove = 53, ClientSyncList = 54, NetworkStateChange = 55,
+    ConnectInfo = 0, ProjectInfo = 1, StateInfo = 2,
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
@@ -88,13 +84,8 @@ public class PacketManager {
         Array.Clear(m_factories, 0, m_factories.Length);
 
         // Connect
-        RegisterPacket<ConnectionRequestPacket>();
-        RegisterPacket<ConnectionRejectPacket>();
         RegisterPacket<ProjectPacket>();
-        RegisterPacket<ClientAddPacket>();
-        RegisterPacket<ClientRemovePacket>();
-        RegisterPacket<NetworkStateChangePacket>();
-        RegisterPacket<ClientSyncListPacket>();
+        RegisterPacket<StatePacket>();
 
         // Entity
         RegisterPacket<ApplyImpulsePacket>();
@@ -339,15 +330,14 @@ public class PacketManager {
             if (m_factories[ID] != null) {
                 Packet packet = m_factories[ID]();
                 last = packet;
-                
+
                 if (check == RelayVerifyByte && from == null) {
                     packet.SenderPlayerIndex = senderIndex;
-                } else {
+                }
+                else {
                     packet.Connection = from;
                 }
 
-                packet.Request = request;
-                packet.IPPoint = iPEndPoint;
                 packet.SenderPlayerIndex = senderIndex;
                 packet.Serialize(new PacketSerializer(preader));
                 packets.Add(packet);

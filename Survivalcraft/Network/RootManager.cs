@@ -259,7 +259,7 @@ public static class RootManager {
             NetworkService.QueuePacket(new PlayerModifyPacket(playerData));
         GameLoadingScreen.OnPlayerStateChanged = (state) => {
             NetworkService.Self.NetworkState = state;
-            NetworkService.QueuePacket(new NetworkStateChangePacket(NetworkService.Self.PlayerIndex, state));
+            NetworkService.QueuePacket(new StatePacket(NetworkService.Self.PlayerIndex, state));
         };
         CrossbowWidget.OnCrossbowPull = (inventory, slotIndex) =>
             NetworkService.QueuePacket(new CrossbowPullPacket(inventory, slotIndex));
@@ -282,7 +282,7 @@ public static class RootManager {
         PlayerData.OnPlayerPlaying = (playerData) => {
             NetworkService.Self.NetworkState = NetworkState.Playing;
             if (NetworkService.IsClient)
-                NetworkService.QueuePacket(new NetworkStateChangePacket(NetworkService.Self.PlayerIndex, NetworkState.Playing));
+                NetworkService.QueuePacket(new StatePacket(NetworkService.Self.PlayerIndex, NetworkState.Playing));
         };
         ComponentSleep.OnSleepEvent = (sleep, allowManualWakeup) => {
             if (NetworkService.IsClient)

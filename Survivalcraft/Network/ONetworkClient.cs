@@ -45,7 +45,7 @@ public class ONetworkClient : INetEventListener {
             NetManager.Start();
             onlineAccessToken ??= SettingsManager.OnlineAccessToken;
             Self = new ClientSession { NetworkGuid = new Guid(onlineAccessToken), NetworkState = NetworkState.NotConnected };
-            SendWriterFromPacket(new ConnectionRequestPacket("ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
+            //SendWriterFromPacket(new ConnectionRequestPacket("ProjectNet.Server_Version", string.Empty, onlineAccessToken, passwd, ModsManager.ModList), ep, false);
         }
         catch {
             if (Self != null) Self.NetworkState = NetworkState.NotConnected;

@@ -21,12 +21,7 @@
       <Compile Include="Network\Packet\Base\PlayerPacketBase.cs" />
       <Compile Include="Network\Packet\Base\SkinPacketBase.cs" />
       <Compile Include="Network\Packet\Base\TerrainPacketBase.cs" />
-      <Compile Include="Network\Packet\Connect\ClientAddPacket.cs" />
-      <Compile Include="Network\Packet\Connect\ClientRemovePacket.cs" />
-      <Compile Include="Network\Packet\Connect\ClientStateChangePacket.cs" />
-      <Compile Include="Network\Packet\Connect\ClientSyncListPacket.cs" />
-      <Compile Include="Network\Packet\Connect\ConnectionRejectPacket.cs" />
-      <Compile Include="Network\Packet\Connect\ConnectionRequestPacket.cs" />
+      <Compile Include="Network\Packet\Connect\StatePacket.cs" />
       <Compile Include="Network\Packet\Connect\ProjectPacket.cs" />
       <Compile Include="Network\Packet\Entity\ApplyImpulsePacket.cs" />
       <Compile Include="Network\Packet\Entity\BodyCollisionPacket.cs" />

@@ -3,15 +3,15 @@ using GameEntitySystem;
 
 namespace Game.Network;
 
-public class NetworkStateChangePacket : ClientPacketBase {
-    public override byte ID => (byte)PacketType.NetworkStateChange;
+public class StatePacket : ClientPacketBase {
+    public override byte ID => (byte)PacketType.StateInfo;
     public override NetworkState MinNeedState => NetworkState.NotConnected;
     public int m_playerIndex;
     public NetworkState m_state;
 
-    public NetworkStateChangePacket() { }
+    public StatePacket() { }
 
-    public NetworkStateChangePacket(int playerIndex, NetworkState clientStage) {
+    public StatePacket(int playerIndex, NetworkState clientStage) {
         m_playerIndex = playerIndex;
         m_state = clientStage;
     }
@@ -32,7 +32,7 @@ public class NetworkStateChangePacket : ClientPacketBase {
             var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
             var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
 
-            NetworkService.QueuePacket(new NetworkStateChangePacket(client.PlayerIndex, client.NetworkState) { ExceptPlayerIndex = client.PlayerIndex });
+            NetworkService.QueuePacket(new StatePacket(client.PlayerIndex, client.NetworkState) { ExceptPlayerIndex = client.PlayerIndex });
 
             switch (client.NetworkState) {
                 case NetworkState.Connected: {
