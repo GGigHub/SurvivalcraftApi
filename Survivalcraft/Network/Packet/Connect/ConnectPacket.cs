@@ -25,7 +25,16 @@ public class ConnectPacket : Packet {
         if (isServer) {
             // 前置拦截如校验黑名单
             From.NetworkGuid = playerGuid;
-            // 向客户端发送project
+            SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
+            if (subsystemPlayers.MakePlayerOnline(From.NetworkGuid, out PlayerData playerData, out Entity entity)) {
+                if (entity != null) {
+                    GameManager.Project.AddEntity(entity);
+                }
+                From.PlayerIndex = playerData.PlayerIndex;
+                NetworkService.QueuePacket(new PlayerAddPacket(playerData) { Except = From });
+            }
+            byte[] data = NetworkService.GetNowProject(GameManager.Project);
+            NetworkService.QueuePacket(new ProjectPacket(data, From.PlayerIndex) { To = From });
         }
     }
 }

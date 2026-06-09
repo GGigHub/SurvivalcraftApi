@@ -4,30 +4,19 @@ public class ProjectPacket : Packet {
     public override byte ID => (byte)PacketType.ProjectInfo;
     public override NetworkState MinNeedState => NetworkState.NotConnected;
 
-    public bool hasTexture;
-    public byte[] m_textureData;
     public byte[] m_projectData;
+    public int m_playerIndex;
 
     public ProjectPacket() {
     }
 
-    public ProjectPacket(byte[] textureData, byte[] projectData) {
-        m_textureData = textureData;
-        hasTexture = m_textureData != null;
+    public ProjectPacket(byte[] projectData, int playerIndex = -1) {
         m_projectData = projectData;
+        m_playerIndex = playerIndex;
     }
 
     public override void Serialize(PacketSerializer archive) {
-        archive.Value(ref hasTexture);
-        if (hasTexture) {
-            int textureLength = archive.IsWriting ? m_textureData.Length : 0;
-            archive.Value(ref textureLength);
-            byte[] textureData = archive.IsWriting ? m_textureData : null;
-            archive.Raw(ref textureData, textureLength);
-            if (archive.IsReading) {
-                m_textureData = textureData;
-            }
-        }
+        archive.Value(ref m_playerIndex);
         int projectLength = archive.IsWriting ? m_projectData.Length : 0;
         archive.Value(ref projectLength);
         byte[] projectData = archive.IsWriting ? m_projectData : null;
@@ -41,8 +30,9 @@ public class ProjectPacket : Packet {
         if (isServer) {
             return;
         }
-        var s = ScreensManager.FindScreen<GameLoadingScreen>("GameLoading");
-        s.ReplyCall(m_projectData);
+        // NetworkClient.ClientSession.PlayerIndex = m_playerIndex;
+        // NetworkClient.ClientSession.NetworkStage = NetworkState.Connected;
+        ScreensManager.FindScreen<GameLoadingScreen>("GameLoading").ReplyCall(m_projectData);
     }
 }
 

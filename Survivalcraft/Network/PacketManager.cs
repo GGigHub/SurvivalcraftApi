@@ -82,6 +82,7 @@ public class PacketManager {
         Array.Clear(m_factories, 0, m_factories.Length);
 
         // Connect
+        RegisterPacket<ConnectPacket>();
         RegisterPacket<ProjectPacket>();
         RegisterPacket<StatePacket>();
 

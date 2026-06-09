@@ -359,6 +359,7 @@ namespace Game {
             Level = valuesDictionary.GetValue("Level", 1f);
             CharacterSkinName = valuesDictionary.GetValue("CharacterSkinName", CharacterSkinsManager.CharacterSkinsNames[0]);
             InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
+            PlayerIndex = valuesDictionary.GetValue("PlayerIndex", -1);
         }
 
         public void Save(ValuesDictionary valuesDictionary) {
@@ -372,6 +373,7 @@ namespace Game {
             valuesDictionary.SetValue("Level", Level);
             valuesDictionary.SetValue("CharacterSkinName", CharacterSkinName);
             valuesDictionary.SetValue("InputDevice", InputDevice);
+            valuesDictionary.SetValue("PlayerIndex", PlayerIndex);
         }
 
         public void WaitEntityAdded() {

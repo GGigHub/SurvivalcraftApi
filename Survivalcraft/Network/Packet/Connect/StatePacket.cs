@@ -49,7 +49,7 @@ public class StatePacket : ClientPacketBase {
                             textureData = ModsManager.StreamToBytes(s);
                         }
                         byte[] data = NetworkService.GetNowProject(GameManager.Project);
-                        NetworkService.QueuePacket(new ProjectPacket(textureData, data) { To = client });
+                        NetworkService.QueuePacket(new ProjectPacket(data) { To = client });
                         break;
                     }
                 case NetworkState.NotConnected:

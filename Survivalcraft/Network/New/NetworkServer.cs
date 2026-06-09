@@ -88,7 +88,7 @@ public class NetworkServer : INetEventListener {
 
     public void OnPeerConnected(NetPeer peer) {
         ClientSession session = new() {
-            PlayerIndex = 0,
+            PlayerIndex = -1,
             NetworkGuid = Guid.Empty,
             NetworkState = NetworkState.Connected
         };

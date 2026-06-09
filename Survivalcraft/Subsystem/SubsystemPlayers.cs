@@ -80,9 +80,13 @@ namespace Game {
         }
 
         public void FindUnusedIndex(PlayerData playerData) {
+            if (NetworkManager.IsNetworkMode) {
+                usedIndies[playerData.PlayerIndex] = playerData;
+                return;
+            }
+
             for (int i = 0; i < int.MaxValue; i++) {
-                if (!usedIndies.ContainsKey(i)) {
-                    usedIndies.Add(i, playerData);
+                if (usedIndies.TryAdd(i, playerData)) {
                     playerData.PlayerIndex = i;
                     return;
                 }
@@ -95,7 +99,7 @@ namespace Game {
             }
 
             m_playersData.Add(playerData);
-            
+
             FindUnusedIndex(playerData);
 
             PlayerAdded?.Invoke(playerData);
