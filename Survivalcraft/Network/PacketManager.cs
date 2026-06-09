@@ -10,10 +10,6 @@ public abstract class Packet {
     public abstract void Handle(bool isServer);
     public abstract void Serialize(PacketSerializer archive);
 
-    public int ToPlayerIndex { get; set; } = -1;
-    public int ExceptPlayerIndex { get; set; } = -1;
-    public int SenderPlayerIndex { get; set; } = -1;
-
     public ClientSession From { get; set; } = null;
     public ClientSession To { get; set; } = null;
     public ClientSession Except { get; set; } = null;
@@ -334,13 +330,12 @@ public class PacketManager {
                 last = packet;
 
                 if (check == RelayVerifyByte && from == null) {
-                    packet.SenderPlayerIndex = senderIndex;
+                    packet.From = NetworkService.GetClientByPlayerIndex(senderIndex);
                 }
                 else {
                     packet.From = from;
                 }
 
-                packet.SenderPlayerIndex = senderIndex;
                 packet.Serialize(new PacketSerializer(preader));
                 packets.Add(packet);
             }

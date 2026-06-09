@@ -21,7 +21,7 @@ public class EditSignPacket : Packet {
 
     public override void Handle(bool isServer) {
         if (isServer) {
-            ToPlayerIndex = From?.PlayerIndex ?? -1;
+            To = From;
             NetworkService.QueuePacket(this);
         }
         else {

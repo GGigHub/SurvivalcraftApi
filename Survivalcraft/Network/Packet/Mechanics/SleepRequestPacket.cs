@@ -31,7 +31,7 @@ public class SleepRequestPacket : Packet {
                     sleep.Sleep(allowManualWakeup);
                 }
                 else {
-                    NetworkService.QueuePacket(new SleepStatusPacket(sleep, allowManualWakeup, false, reason) { ToPlayerIndex = From?.PlayerIndex ?? -1 });
+                    NetworkService.QueuePacket(new SleepStatusPacket(sleep, allowManualWakeup, false, reason) { To = From });
                 }
             }
         });

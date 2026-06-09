@@ -38,7 +38,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
             }
             if (!IsSlotIndexValid(inventory, m_slotIndex)) {
                 if (isServer && From != null) {
-                    NetworkService.QueuePacket(new InventorySyncPacket(inventory) { ToPlayerIndex = From?.PlayerIndex ?? -1 });
+                    NetworkService.QueuePacket(new InventorySyncPacket(inventory) { To = From });
                 }
                 return;
             }

@@ -21,7 +21,6 @@ public static class NetworkService {
     public static bool IsClient => Client != null && Client.NetManager.IsRunning;
     public static Guid NetworkGuid => Guid.Parse(SettingsManager.OnlineAccessToken);
     public static NetworkState SelfState => Self.NetworkState;
-    public static int SenderPlayerIndex { get; set; } = -1; // Set by packet decoding
 
     public static ComponentPlayer MainPlayer {
         get {

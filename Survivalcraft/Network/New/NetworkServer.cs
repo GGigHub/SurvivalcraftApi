@@ -77,7 +77,6 @@ public class NetworkServer : INetEventListener {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (!_clientSessions.TryGetValue(peer, out ClientSession session)) return;
                 packet.From = session;
-                packet.SenderPlayerIndex = session.PlayerIndex;
                 packet.Handle(false);
             });
         }

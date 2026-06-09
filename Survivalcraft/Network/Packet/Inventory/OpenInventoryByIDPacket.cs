@@ -26,7 +26,7 @@ public class OpenInventoryByIDPacket : Packet {
             IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
             if (inventory != null) {
                 OpenInventoryByIDPacket packet = new OpenInventoryByIDPacket(inventory);
-                packet.ToPlayerIndex = From?.PlayerIndex ?? -1;
+                packet.To = From;
                 NetworkService.QueuePacket(packet);
             }
         }

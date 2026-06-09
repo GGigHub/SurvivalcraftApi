@@ -49,7 +49,7 @@ public abstract class PlayerPacketBase : Packet {
 
     public static void QueuePlayerPacket(Packet packet, bool isServer) {
         if (isServer) {
-            packet.ExceptPlayerIndex = packet.SenderPlayerIndex;
+            packet.Except = packet.From;
             NetworkService.QueuePacket(packet);
         }
     }
