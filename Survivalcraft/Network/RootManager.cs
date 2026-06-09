@@ -299,7 +299,7 @@ public static class RootManager {
         };
         ComponentPlayer.OnBodyUpdate = (player, isMainPlayer) => {
             if (NetworkService.IsServer && Time.PeriodicEvent(0.1f, 0.0))
-                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player) { Except = NetworkService.GetClientByGUID(player.NetworkGuid) });
+                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player) { /* Except = NetworkService.GetClientByGUID(player.NetworkGuid) */ });
             if (isMainPlayer && Time.PeriodicEvent(0.1f, 0.0))
                 NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player));
         };

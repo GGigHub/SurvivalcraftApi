@@ -154,9 +154,6 @@ namespace Game {
 
         public ComponentClothing ComponentClothing { get; set; }
 
-
-        public static Func<Guid> GetSelfNetworkGuid;
-
         public ComponentOuterClothingModel ComponentOuterClothingModel {
             // ReSharper disable UnusedAutoPropertyAccessor.Global
             get;
@@ -181,8 +178,6 @@ namespace Game {
         }
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
-
-        public Guid NetworkGuid { get; set; }
 
         public DragHostWidget m_dragHostWidget;
 
@@ -849,13 +844,11 @@ namespace Game {
             int playerIndex = valuesDictionary.GetValue<int>("PlayerIndex");
             SubsystemPlayers subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 
-            NetworkGuid = valuesDictionary.GetValue("NetworkGuid", NetworkManager.NetworkGuid);
-            PlayerData = subsystemPlayers.PlayersData.Find((PlayerData d) => d.NetworkGuid == NetworkGuid) ?? throw new Exception($"Player data not found for guid {NetworkGuid}");
+            PlayerData ??= subsystemPlayers.m_playersData.First(d => d.PlayerIndex == playerIndex);
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {
             base.Save(valuesDictionary, entityToIdMap);
-            valuesDictionary.SetValue("NetworkGuid", PlayerData.NetworkGuid);
             valuesDictionary.SetValue("PlayerIndex", PlayerData.PlayerIndex);
         }
 

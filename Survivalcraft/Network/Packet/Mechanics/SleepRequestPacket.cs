@@ -26,7 +26,7 @@ public class SleepRequestPacket : Packet {
         GameManager.Project.FindEntity(m_entityId, e => {
             ComponentSleep sleep = e.FindComponent<ComponentSleep>();
             ComponentPlayer player = e.FindComponent<ComponentPlayer>();
-            if (sleep != null && player != null && player.NetworkGuid == From?.NetworkGuid) {
+            if (sleep != null && player != null) {
                 if (sleep.CanSleep(out string reason)) {
                     sleep.Sleep(allowManualWakeup);
                 }

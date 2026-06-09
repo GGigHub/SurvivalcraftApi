@@ -80,8 +80,6 @@ namespace Game {
         }
 
         public void FindUnusedIndex(PlayerData playerData) {
-            if (NetworkManager.IsNetworkMode) return;
-
             for (int i = 0; i < int.MaxValue; i++) {
                 if (!usedIndies.ContainsKey(i)) {
                     usedIndies.Add(i, playerData);
