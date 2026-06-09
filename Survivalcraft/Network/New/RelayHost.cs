@@ -89,7 +89,7 @@ public class RelayHost : INetEventListener {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 ClientSession clientSession = _clientSessions.FirstOrDefault(
                     session => session.Value.PlayerIndex == packet.SenderPlayerIndex).Value;
-                packet.Connection = clientSession;
+                packet.From = clientSession;
                 packet.SenderPlayerIndex = packet.SenderPlayerIndex;
                 packet.Handle(true);
             });

@@ -28,7 +28,7 @@ public class ActiveSlotChangePacket : Packet {
         if (inventory != null) {
             inventory.ActiveSlotIndex = m_activeSlotIndex;
             if (isServer) {
-                ToPlayerIndex = Connection?.PlayerIndex ?? -1;
+                ToPlayerIndex = From?.PlayerIndex ?? -1;
                 NetworkService.QueuePacket(this);
             }
         }

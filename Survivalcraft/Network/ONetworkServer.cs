@@ -216,10 +216,10 @@ public class ONetworkServer : INetEventListener {
             return;
         }
         foreach (var packet in packets) {
-            if (packet.Connection == null) {
+            if (packet.From == null) {
                 continue;
             }
-            if (packet.MinNeedState <= packet.Connection.NetworkState) {
+            if (packet.MinNeedState <= packet.From.NetworkState) {
                 packet.Handle(true);
             }
         }

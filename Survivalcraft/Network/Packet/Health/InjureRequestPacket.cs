@@ -50,7 +50,7 @@ public class InjureRequestPacket : Packet {
             if (m_requestInjureType != RequestInjureType.Choke && m_requestInjureType != RequestInjureType.Fall) {
                 return;
             }
-            var selfHealth = Connection?.GetPlayerData()?.ComponentPlayer?.ComponentHealth;
+            var selfHealth = From?.GetPlayerData()?.ComponentPlayer?.ComponentHealth;
             if (m_attackerId == 0) {
                 selfHealth?.Injure(m_amount, null, m_ignoreInvulnerability, NormalizeCause(m_requestInjureType));
             }

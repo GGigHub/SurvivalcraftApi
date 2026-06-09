@@ -24,7 +24,7 @@ public class ConnectPacket : Packet {
     public override void Handle(bool isServer) {
         if (isServer) {
             // 前置拦截如校验黑名单
-            Connection.NetworkGuid = playerGuid;
+            From.NetworkGuid = playerGuid;
             // 向客户端发送project
         }
     }

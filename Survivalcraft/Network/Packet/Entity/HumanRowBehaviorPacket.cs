@@ -30,7 +30,7 @@ public class HumanRowBehaviorPacket : Packet {
                 Random random = new();
                 GameManager.Project.FindSubsystem<SubsystemAudio>().PlayRandomSound("Audio/Rowing", random.Float(0.4f, 0.6f), random.Float(-0.3f, 0.2f), humanModel.m_componentCreature.ComponentBody.Position, 3f, autoDelay: true);
                 if (isServer) {
-                    ExceptPlayerIndex = Connection?.PlayerIndex ?? -1;
+                    ExceptPlayerIndex = From?.PlayerIndex ?? -1;
                     NetworkService.QueuePacket(this);
                 }
             }

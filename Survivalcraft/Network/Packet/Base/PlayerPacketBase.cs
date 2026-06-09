@@ -63,7 +63,7 @@ public abstract class PlayerPacketBase : Packet {
 
     protected bool TryResolvePlayer(bool isServer, out PlayerData playerData) {
         playerData = ResolvePlayer(m_fromPlayerIndex);
-        if (isServer && !ValidateServerSender(playerData, Connection)) {
+        if (isServer && !ValidateServerSender(playerData, From)) {
             return false;
         }
         return playerData != null;

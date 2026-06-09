@@ -35,7 +35,7 @@ public class SetSlotItemPacket : Packet {
             inventory.RemoveSlotItems(m_slotIndex, inventory.GetSlotCount(m_slotIndex));
             inventory.AddSlotItems(m_slotIndex, m_value, m_count);
             if (isServer) {
-                ToPlayerIndex = Connection?.PlayerIndex ?? -1;
+                ToPlayerIndex = From?.PlayerIndex ?? -1;
                 NetworkService.QueuePacket(this);
             }
         }

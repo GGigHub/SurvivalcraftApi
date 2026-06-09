@@ -14,7 +14,9 @@ public abstract class Packet {
     public int ExceptPlayerIndex { get; set; } = -1;
     public int SenderPlayerIndex { get; set; } = -1;
 
-    public ClientSession Connection { get; set; } = null;
+    public ClientSession From { get; set; } = null;
+    public ClientSession To { get; set; } = null;
+    public ClientSession Except { get; set; } = null;
     public virtual NetworkState MinNeedState => NetworkState.NotConnected;
 }
 
@@ -335,7 +337,7 @@ public class PacketManager {
                     packet.SenderPlayerIndex = senderIndex;
                 }
                 else {
-                    packet.Connection = from;
+                    packet.From = from;
                 }
 
                 packet.SenderPlayerIndex = senderIndex;

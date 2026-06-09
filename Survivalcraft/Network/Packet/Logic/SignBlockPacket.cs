@@ -56,7 +56,7 @@ public class SignBlockPacket : Packet {
 
     public override void Handle(bool isServer) {
         if (isServer) {
-            if (Connection?.GetPlayerData() != null) {
+            if (From?.GetPlayerData() != null) {
                 GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>().SetSignData(m_point, m_signData.Lines, m_signData.Colors, m_signData.Url);
                 NetworkService.QueuePacket(this);
             }
