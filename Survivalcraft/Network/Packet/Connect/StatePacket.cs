@@ -38,7 +38,7 @@ public class StatePacket : ClientPacketBase {
                 case NetworkState.Connected: {
                         // 在未来弃用
                         byte[] textureData = null;
-                        if (subsystemPlayers.MakePlayerOnline(client.NetworkGuid, out PlayerData playerData, out Entity entity)) {
+                        if (subsystemPlayers.MakePlayerOnline(client.PlayerIndex, out PlayerData playerData, out Entity entity)) {
                             if (entity != null) {
                                 GameManager.Project.AddEntity(entity);
                             }
@@ -53,7 +53,7 @@ public class StatePacket : ClientPacketBase {
                         break;
                     }
                 case NetworkState.NotConnected:
-                    subsystemPlayers.MakePlayerOffline(client.NetworkGuid);
+                    subsystemPlayers.MakePlayerOffline(client.PlayerIndex);
                     break;
                 case NetworkState.ProjectLoaded: {
                         List<Entity> sendList = [.. GameManager.Project.Entities];

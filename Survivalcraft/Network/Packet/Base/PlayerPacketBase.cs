@@ -20,7 +20,7 @@ public abstract class PlayerPacketBase : Packet {
         SneakChange = 128
     }
 
-    private static readonly Dictionary<Guid, double> s_lastHitTimes = [];
+    private static readonly Dictionary<int, double> s_lastHitTimes = [];
     private const double ServerHitCooldown = 0.2;
 
     public static PlayerData ResolvePlayer(int playerIndex) {
@@ -39,11 +39,11 @@ public abstract class PlayerPacketBase : Packet {
             return false;
         }
         double time = GameManager.Project.FindSubsystem<SubsystemTime>().GameTime;
-        Guid guid = playerData.NetworkGuid;
-        if (s_lastHitTimes.TryGetValue(guid, out double last) && time - last < ServerHitCooldown) {
+        int pIndex = playerData.PlayerIndex;
+        if (s_lastHitTimes.TryGetValue(pIndex, out double last) && time - last < ServerHitCooldown) {
             return true;
         }
-        s_lastHitTimes[guid] = time;
+        s_lastHitTimes[pIndex] = time;
         return false;
     }
 

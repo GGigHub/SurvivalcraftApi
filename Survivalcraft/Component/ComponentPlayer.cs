@@ -870,7 +870,7 @@ namespace Game {
                         }
                         dict.SetValue("Entity", vdict);
                         dict.SetValue("Data", pdict);
-                        using (Stream stream = Storage.OpenFile(Storage.CombinePaths(entityFileDir, $"{PlayerData.NetworkGuid}.json"), OpenFileMode.Create)) {
+                        using (Stream stream = Storage.OpenFile(Storage.CombinePaths(entityFileDir, $"{PlayerData.PlayerIndex}.json"), OpenFileMode.Create)) {
                             StreamWriter streamWriter = new(stream);
                             streamWriter.Write(dict.ToJsonText());
                             streamWriter.Flush();

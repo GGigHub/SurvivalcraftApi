@@ -242,12 +242,12 @@ public static class RootManager {
             NetworkService.QueuePacket(new SubsystemWeatherPacket(startTime, endTime, intensity));
         TerrainUpdater.OnTerrainPlayerLocationUpdate = (updater, location) =>
             NetworkService.QueuePacket(new PlayerUpdateLocationPacket(location));
-        TerrainUpdater.OnTerrainReplyResult = (updater, playerGuid, chunks) =>
-            NetworkService.QueuePacket(new TerrainReplyResultPacket(chunks) { To = NetworkService.GetClientByGUID(playerGuid) });
+        TerrainUpdater.OnTerrainReplyResult = (updater, playerIndex, chunks) =>
+            NetworkService.QueuePacket(new TerrainReplyResultPacket(chunks) { To = NetworkService.GetClientByPlayerIndex(playerIndex) });
         TerrainUpdater.OnTerrainRequestSyncChunks = (updater, chunks) =>
             NetworkService.QueuePacket(new TerrainRequestSyncChunksPacket(chunks));
-        TerrainUpdater.OnTerrainSyncChunkList = (updater, playerGuid, chunks) =>
-            NetworkService.QueuePacket(new TerrainSyncChunkListPacket(chunks) { To = NetworkService.GetClientByGUID(playerGuid) });
+        TerrainUpdater.OnTerrainSyncChunkList = (updater, playerIndex, chunks) =>
+            NetworkService.QueuePacket(new TerrainSyncChunkListPacket(chunks) { To = NetworkService.GetClientByPlayerIndex(playerIndex) });
         PlayerData.OnPlayerRestart = (playerData) => {
             if (NetworkService.IsClient && playerData.IsMainPlayer)
                 NetworkService.QueuePacket(new PlayerRestartPacket(playerData));
@@ -299,13 +299,13 @@ public static class RootManager {
         };
         ComponentPlayer.OnBodyUpdate = (player, isMainPlayer) => {
             if (NetworkService.IsServer && Time.PeriodicEvent(0.1f, 0.0))
-                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player) { /* Except = NetworkService.GetClientByGUID(player.NetworkGuid) */ });
+                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player) { /* Except = NetworkService.GetClientByPlayerIndex(player.PlayerIndex) */ });
             if (isMainPlayer && Time.PeriodicEvent(0.1f, 0.0))
                 NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player));
         };
         PlayerData.PlayerFirstUpdated = (player) => {
             // 非本地主玩家且缺少对应网络客户端时，转为离线状态。
-            if (NetworkService.GetClientByGUID(player.NetworkGuid) == null) {
+            if (NetworkService.GetClientByPlayerIndex(player.PlayerIndex) == null && NetworkManager.IsNetworkMode) {
                 player.m_stateMachine.TransitionTo("MakePlayerOffline");
             }
         };

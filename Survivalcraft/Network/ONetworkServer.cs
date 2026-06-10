@@ -204,7 +204,7 @@ public class ONetworkServer : INetEventListener {
         if (client != null) {
             RemoveClient(client, disconnectInfo.Reason.ToString());
         }
-        GameManager.Project.FindSubsystem<SubsystemPlayers>().MakePlayerOffline(client?.NetworkGuid ?? Guid.Empty);
+        GameManager.Project.FindSubsystem<SubsystemPlayers>().MakePlayerOffline(client?.PlayerIndex ?? -1);
         Log.Information("Disconnect by " + disconnectInfo);
     }
 
@@ -258,7 +258,7 @@ public class ONetworkServer : INetEventListener {
         var subsystemPlayers = GameManager.Project?.FindSubsystem<SubsystemPlayers>();
         if (subsystemPlayers != null) {
             foreach (var playerData in subsystemPlayers.PlayersData) {
-                if (playerData.NetworkGuid == client.NetworkGuid) {
+                if (playerData.PlayerIndex == client.PlayerIndex) {
                     return playerData;
                 }
             }

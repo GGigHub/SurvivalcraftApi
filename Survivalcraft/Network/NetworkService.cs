@@ -25,7 +25,7 @@ public static class NetworkService {
     public static ComponentPlayer MainPlayer {
         get {
             if (GameManager.Project != null && Self != null) {
-                return GameManager.Project.FindSubsystem<SubsystemPlayers>().ComponentPlayers.FirstOrDefault(p => p.PlayerData.NetworkGuid == Self.NetworkGuid);
+                return GameManager.Project.FindSubsystem<SubsystemPlayers>().ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerIndex == Self.PlayerIndex);
             }
             return null;
         }

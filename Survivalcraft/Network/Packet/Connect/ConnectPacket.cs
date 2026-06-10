@@ -26,7 +26,7 @@ public class ConnectPacket : Packet {
             // 前置拦截如校验黑名单
             From.NetworkGuid = playerGuid;
             SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
-            if (subsystemPlayers.MakePlayerOnline(From.NetworkGuid, out PlayerData playerData, out Entity entity)) {
+            if (subsystemPlayers.MakePlayerOnline(From.PlayerIndex, out PlayerData playerData, out Entity entity)) {
                 if (entity != null) {
                     GameManager.Project.AddEntity(entity);
                 }
