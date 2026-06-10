@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Engine;
+using GameEntitySystem;
 
 namespace Game.Network;
 
@@ -220,8 +221,8 @@ public static class RootManager {
             NetworkService.QueuePacket(new TerrainReplyResultPacket(chunks) { ToPlayerIndex = NetworkService.GetClientByGUID(playerGuid)?.PlayerIndex ?? -1 });
         TerrainUpdater.OnTerrainRequestSyncChunks = (updater, chunks) =>
             NetworkService.QueuePacket(new TerrainRequestSyncChunksPacket(chunks));
-        TerrainUpdater.OnTerrainSyncChunkList = (updater, playerGuid, chunks) =>
-            NetworkService.QueuePacket(new TerrainSyncChunkListPacket(chunks) { ToPlayerIndex = NetworkService.GetClientByGUID(playerGuid)?.PlayerIndex ?? -1 });
+        TerrainUpdater.OnTerrainSyncChunkList = (updater, playerIndex, chunks) =>
+            NetworkService.QueuePacket(new TerrainSyncChunkListPacket(chunks) { To = NetworkService.GetClientByPlayerIndex(playerIndex) });
         PlayerData.OnPlayerRestart = (playerData) => {
             if (NetworkService.IsClient && playerData.IsMainPlayer)
                 NetworkService.QueuePacket(new PlayerRestartPacket(playerData));
@@ -273,13 +274,13 @@ public static class RootManager {
         };
         ComponentPlayer.OnBodyUpdate = (player, isMainPlayer) => {
             if (NetworkService.IsServer && Time.PeriodicEvent(0.1f, 0.0))
-                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player) { ExceptPlayerIndex = NetworkService.GetClientByGUID(player.NetworkGuid)?.PlayerIndex ?? -1 });
+                NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player) { /* Except = NetworkService.GetClientByPlayerIndex(player.PlayerIndex) */ });
             if (isMainPlayer && Time.PeriodicEvent(0.1f, 0.0))
                 NetworkService.QueuePacket(new PlayerBodyUpdatePacket(player));
         };
         PlayerData.PlayerFirstUpdated = (player) => {
             // 非本地主玩家且缺少对应网络客户端时，转为离线状态。
-            if (NetworkService.GetClientByGUID(player.NetworkGuid) == null) {
+            if (NetworkService.GetClientByPlayerIndex(player.PlayerIndex) == null && NetworkManager.IsNetworkMode) {
                 player.m_stateMachine.TransitionTo("MakePlayerOffline");
             }
         };
@@ -309,6 +310,14 @@ public static class RootManager {
         ComponentFurnace.OnFurnaceUpdate = (furnace) => {
             if (NetworkService.IsServer && Time.PeriodicEvent(2.0, 0.0))
                 NetworkService.QueuePacket(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
+        };
+        Project.EntityAdded += (_, arg) => {
+            if (NetworkService.IsServer)
+                NetworkService.QueuePacket(new EntityLoadPacket(arg.Entity));
+        };
+        Project.EntityRemoved += (_, arg) => {
+            if (NetworkService.IsServer)
+                NetworkService.QueuePacket(new EntityRemovePacket(arg.Entity.Id));
         };
     }
 }

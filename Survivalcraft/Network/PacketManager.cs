@@ -10,11 +10,9 @@ public abstract class Packet {
     public abstract void Handle(bool isServer);
     public abstract void Serialize(PacketSerializer archive);
 
-    public int ToPlayerIndex { get; set; } = -1;
-    public int ExceptPlayerIndex { get; set; } = -1;
-    public int SenderPlayerIndex { get; set; } = -1;
-
-    public ClientSession Connection { get; set; } = null;
+    public ClientSession From { get; set; } = null;
+    public ClientSession To { get; set; } = null;
+    public ClientSession Except { get; set; } = null;
     public virtual NetworkState MinNeedState => NetworkState.NotConnected;
 }
 
@@ -84,6 +82,7 @@ public class PacketManager {
         Array.Clear(m_factories, 0, m_factories.Length);
 
         // Connect
+        RegisterPacket<ConnectPacket>();
         RegisterPacket<ProjectPacket>();
         RegisterPacket<StatePacket>();
 
@@ -332,13 +331,12 @@ public class PacketManager {
                 last = packet;
 
                 if (check == RelayVerifyByte && from == null) {
-                    packet.SenderPlayerIndex = senderIndex;
+                    packet.From = NetworkService.GetClientByPlayerIndex(senderIndex);
                 }
                 else {
-                    packet.Connection = from;
+                    packet.From = from;
                 }
 
-                packet.SenderPlayerIndex = senderIndex;
                 packet.Serialize(new PacketSerializer(preader));
                 packets.Add(packet);
             }

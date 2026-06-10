@@ -29,7 +29,7 @@ public class SubsystemSkyPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        if (!isServer || (Connection?.GetPlayerData() != null && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode == GameMode.Creative)) {
+        if (!isServer || (From?.GetPlayerData() != null && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode == GameMode.Creative)) {
             SubsystemSky sky = GameManager.Project.FindSubsystem<SubsystemSky>();
             if (isRequest) {
                 GameManager.Project.FindSubsystem<SubsystemWeather>().ManualLightingStrike(LightningStrikePosition, m_direction);
@@ -40,7 +40,7 @@ public class SubsystemSkyPacket : Packet {
             }
         }
         else {
-            Log.Information($"{Connection?.GetPlayerData()?.Name ?? "Unknown"} 打算在非创造模式下使用闪电");
+            Log.Information($"{From?.GetPlayerData()?.Name ?? "Unknown"} 打算在非创造模式下使用闪电");
         }
     }
 }

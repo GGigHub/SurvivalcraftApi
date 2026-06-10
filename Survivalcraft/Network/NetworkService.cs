@@ -21,12 +21,11 @@ public static class NetworkService {
     public static bool IsClient => Client != null && Client.NetManager.IsRunning;
     public static Guid NetworkGuid => Guid.Parse(SettingsManager.OnlineAccessToken);
     public static NetworkState SelfState => Self.NetworkState;
-    public static int SenderPlayerIndex { get; set; } = -1; // Set by packet decoding
 
     public static ComponentPlayer MainPlayer {
         get {
             if (GameManager.Project != null && Self != null) {
-                return GameManager.Project.FindSubsystem<SubsystemPlayers>().ComponentPlayers.FirstOrDefault(p => p.PlayerData.NetworkGuid == Self.NetworkGuid);
+                return GameManager.Project.FindSubsystem<SubsystemPlayers>().ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerIndex == Self.PlayerIndex);
             }
             return null;
         }

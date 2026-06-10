@@ -222,7 +222,6 @@ public class BodyUpdatePacket : Packet {
         foreach (PlayerData playerData in subsystemPlayers.PlayersData) {
             if (playerData.IsMainPlayer) continue;
             // The sender should not send to the player who triggered the update, so we compare playerIndex
-            if (playerData.PlayerIndex == NetworkService.SenderPlayerIndex) continue;
             ClientSession client = NetworkService.GetClientByPlayerIndex(playerData.PlayerIndex);
             if (client == null || client.NetworkState == NetworkState.NotConnected || client.NetworkState < NetworkState.Playing) {
                 continue;
@@ -244,7 +243,7 @@ public class BodyUpdatePacket : Packet {
         if (NetworkService.IsServer) {
             foreach (KeyValuePair<ClientSession, List<ComponentBody>> pair in s_bodySyncLists) {
                 if (pair.Key.NetworkState != NetworkState.NotConnected && pair.Key.NetworkState >= NetworkState.Playing) {
-                    NetworkService.QueuePacket(new BodyUpdatePacket(pair.Value, pair.Key) { ToPlayerIndex = pair.Key.PlayerIndex });
+                    NetworkService.QueuePacket(new BodyUpdatePacket(pair.Value, pair.Key) { To = pair.Key });
                 }
             }
         }

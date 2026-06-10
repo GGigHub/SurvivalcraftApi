@@ -32,31 +32,32 @@ public class StatePacket : ClientPacketBase {
             var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
             var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
 
-            NetworkService.QueuePacket(new StatePacket(client.PlayerIndex, client.NetworkState) { ExceptPlayerIndex = client.PlayerIndex });
+            NetworkService.QueuePacket(new StatePacket(client.PlayerIndex, client.NetworkState) { Except = client });
 
             switch (client.NetworkState) {
                 case NetworkState.Connected: {
+                        // 在未来弃用
                         byte[] textureData = null;
-                        if (subsystemPlayers.MakePlayerOnline(client.NetworkGuid, out PlayerData playerData, out Entity entity)) {
+                        if (subsystemPlayers.MakePlayerOnline(client.PlayerIndex, out PlayerData playerData, out Entity entity)) {
                             if (entity != null) {
                                 GameManager.Project.AddEntity(entity);
                             }
-                            NetworkService.QueuePacket(new PlayerAddPacket(playerData) { ExceptPlayerIndex = client?.PlayerIndex ?? -1 });
+                            NetworkService.QueuePacket(new PlayerAddPacket(playerData) { Except = client });
                         }
                         if (!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.BlocksTextureName)) {
                             using var s = Storage.OpenFile(BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName), OpenFileMode.Read);
                             textureData = ModsManager.StreamToBytes(s);
                         }
                         byte[] data = NetworkService.GetNowProject(GameManager.Project);
-                        NetworkService.QueuePacket(new ProjectPacket(textureData, data) { ToPlayerIndex = client?.PlayerIndex ?? -1 });
+                        NetworkService.QueuePacket(new ProjectPacket(data) { To = client });
                         break;
                     }
                 case NetworkState.NotConnected:
-                    subsystemPlayers.MakePlayerOffline(client.NetworkGuid);
+                    subsystemPlayers.MakePlayerOffline(client.PlayerIndex);
                     break;
                 case NetworkState.ProjectLoaded: {
                         List<Entity> sendList = [.. GameManager.Project.Entities];
-                        NetworkService.QueuePacket(new EntityLoadPacket(sendList) { ToPlayerIndex = client?.PlayerIndex ?? -1 });
+                        NetworkService.QueuePacket(new EntityLoadPacket(sendList) { To = client });
                         break;
                     }
                 case NetworkState.LoadTerrain:

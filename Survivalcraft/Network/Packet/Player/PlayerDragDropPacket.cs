@@ -29,16 +29,16 @@ public class PlayerDragDropPacket : PlayerPacketBase {
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
         GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
-            if (inventory == null || IsOwnedByOtherPlayer(inventory, Connection, out _)) {
+            if (inventory == null || IsOwnedByOtherPlayer(inventory, From, out _)) {
                 return;
             }
             if (inventory is ComponentCreativeInventory && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode != GameMode.Creative) {
-                NetworkService.Server.RemoveClient(Connection, "行为异常");
+                NetworkService.Server.RemoveClient(From, "行为异常");
                 return;
             }
             if (!IsSlotIndexValid(inventory, m_slotIndex)) {
-                if (isServer && Connection != null) {
-                    NetworkService.QueuePacket(new InventorySyncPacket(inventory) { ToPlayerIndex = Connection?.PlayerIndex ?? -1 });
+                if (isServer && From != null) {
+                    NetworkService.QueuePacket(new InventorySyncPacket(inventory) { To = From });
                 }
                 return;
             }
@@ -51,7 +51,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
         if (inventory is Component component) {
             owner = component.Entity?.FindComponent<ComponentPlayer>();
             if (owner != null && from != null) {
-                return owner.NetworkGuid != from.NetworkGuid;
+                return false;
             }
         }
         return false;

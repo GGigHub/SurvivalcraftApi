@@ -76,8 +76,7 @@ public class NetworkServer : INetEventListener {
         if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (!_clientSessions.TryGetValue(peer, out ClientSession session)) return;
-                packet.Connection = session;
-                packet.SenderPlayerIndex = session.PlayerIndex;
+                packet.From = session;
                 packet.Handle(false);
             });
         }
@@ -89,7 +88,7 @@ public class NetworkServer : INetEventListener {
 
     public void OnPeerConnected(NetPeer peer) {
         ClientSession session = new() {
-            PlayerIndex = 0,
+            PlayerIndex = -1,
             NetworkGuid = Guid.Empty,
             NetworkState = NetworkState.Connected
         };

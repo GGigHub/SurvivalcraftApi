@@ -7,16 +7,16 @@ namespace Game.Network;
 public class PlayerKnownPacket : Packet {
     public override byte ID => (byte)PacketType.PlayerKnown;
     public override NetworkState MinNeedState => NetworkState.Connected;
-    public Guid m_playerGuid;
+    public int m_playerIndex;
 
     public PlayerKnownPacket() { }
 
-    public PlayerKnownPacket(Guid guid) {
-        m_playerGuid = guid;
+    public PlayerKnownPacket(int playerIndex) {
+        m_playerIndex = playerIndex;
     }
 
     public override void Serialize(PacketSerializer archive) {
-        archive.Value(ref m_playerGuid);
+        archive.Value(ref m_playerIndex);
     }
 
     public override void Handle(bool isServer) {
