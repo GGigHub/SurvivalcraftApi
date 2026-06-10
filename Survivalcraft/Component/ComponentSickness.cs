@@ -21,7 +21,7 @@ namespace Game {
         public const string fName = "ComponentSickness";
 
 
-        public static Action<ComponentSickness> OnSicknessUpdate;
+        public static Action<ComponentSickness> OnSicknessChange;
 
         public bool IsSick => m_sicknessDuration > 0f;
 
@@ -84,7 +84,7 @@ namespace Game {
                 m_sicknessDuration = MathUtils.Max(m_sicknessDuration - dt, 0f);
                 if (m_componentPlayer.ComponentHealth.Health > 0f && !m_componentPlayer.ComponentSleep.IsSleeping && m_subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) && (!m_lastNauseaTime.HasValue || m_subsystemTime.GameTime - m_lastNauseaTime > 15.0)) {
                     NauseaEffect();
-                    OnSicknessUpdate?.Invoke(this);
+                    OnSicknessChange?.Invoke(this);
                 }
             }
             if (m_pukeParticleSystem != null) {

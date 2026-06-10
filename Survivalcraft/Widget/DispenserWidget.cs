@@ -4,7 +4,7 @@ using Engine;
 
 namespace Game {
     public class DispenserWidget : CanvasWidget {
-        public static Action<Point3, byte> OnDispenserUpdate;
+        public static Action<Point3, byte> OnDispenserChicked;
         public SubsystemTerrain m_subsystemTerrain;
 
         public ComponentDispenser m_componentDispenser;
@@ -77,7 +77,7 @@ namespace Game {
             DispenserBlock.Mode mode = DispenserBlock.GetMode(data);
             if (flag && NetworkManager.IsNetworkMode) {
                 byte tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) | (DispenserBlock.GetAcceptsDrops(data) ? (1 << 1) : 0));
-                OnDispenserUpdate?.Invoke(m_componentBlockEntity.Coordinates, tmp);
+                OnDispenserChicked?.Invoke(m_componentBlockEntity.Coordinates, tmp);
             }
             m_dispenseButton.IsChecked = mode == DispenserBlock.Mode.Dispense;
             m_shootButton.IsChecked = mode == DispenserBlock.Mode.Shoot;

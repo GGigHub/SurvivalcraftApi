@@ -19,7 +19,6 @@ public static class RootManager {
             if (NetworkService.IsServer)
                 NetworkService.QueuePacket(new DamageSyncPacket(damage));
         };
-        ComponentBody.OnBodyUpdate = BodyUpdatePacket.CollectBodyForSync;
         ComponentDigInMudBehavior.OnIsDigInChanged = (behavior, isDigIn) => {
             if (NetworkService.IsServer)
                 NetworkService.QueuePacket(new DigInMudBehaviorPacket(behavior, isDigIn));
@@ -36,10 +35,6 @@ public static class RootManager {
             if (NetworkService.IsServer)
                 NetworkService.QueuePacket(new ComponentFluPacket(flu, ComponentFluPacket.EventType.FluEffect));
         };
-        ComponentFlu.OnFluUpdate = (flu) => {
-            if (NetworkService.IsServer && Time.PeriodicEvent(1.0, 0.5))
-                NetworkService.QueuePacket(new ComponentFluPacket(flu, ComponentFluPacket.EventType.SyncStat));
-        };
         ComponentFlu.OnSneezeEvent = (flu) => {
             if (NetworkService.IsServer)
                 NetworkService.QueuePacket(new ComponentFluPacket(flu, ComponentFluPacket.EventType.Sneeze));
@@ -48,15 +43,11 @@ public static class RootManager {
             if (NetworkService.IsServer)
                 NetworkService.QueuePacket(new ComponentFluPacket(flu, ComponentFluPacket.EventType.StartFlu));
         };
-        ComponentFurnace.OnFurnaceUpdate = (furnace) => {
-            if (NetworkService.IsServer)
-                NetworkService.QueuePacket(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
-        };
         ComponentGui.OnManualLightingStrike = (gui, position, direction) =>
             NetworkService.QueuePacket(new SubsystemSkyPacket(position, direction));
-        ComponentGui.OnManualTimeUpdate = (gui, totalElapsedGameTime, timeOfDayOffset) =>
+        ComponentGui.OnManualTimeChange = (gui, totalElapsedGameTime, timeOfDayOffset) =>
             NetworkService.QueuePacket(new SubsystemTimePacket(totalElapsedGameTime, timeOfDayOffset));
-        ComponentGui.OnManualWeatherUpdate = (gui, type) =>
+        ComponentGui.OnManualWeatherChange = (gui, type) =>
             NetworkService.QueuePacket(new SubsystemWeatherPacket(type));
         ComponentGui.OnPlayerCreativeFly = (gui, player) =>
             NetworkService.QueuePacket(new PlayerCreativeFlyPacket(player));
@@ -65,10 +56,6 @@ public static class RootManager {
                 NetworkService.QueuePacket(new HealthSyncPacket(health));
         };
         ComponentHealth.OnHealthFallDamage = InjureRequestPacket.SendFallDamage;
-        ComponentHealth.OnHealthHealUpdate = (health) => {
-            if (NetworkService.IsServer && Time.PeriodicEvent(2.0, 0.0))
-                NetworkService.QueuePacket(new HealthSyncPacket(health));
-        };
         ComponentHealth.OnHealthInjured = (health, injury, amount) => {
             if (NetworkService.IsServer && amount > 0f)
                 NetworkService.QueuePacket(new InjureEventPacket(health, injury.Attacker, amount, injury.Cause, injury.IgnoreInvulnerability));
@@ -117,13 +104,9 @@ public static class RootManager {
             NetworkService.QueuePacket(new ComponentMountPacket(rider, isRequest));
         ComponentRider.OnMounting = (rider, mount, isRequest) =>
             NetworkService.QueuePacket(new ComponentMountPacket(rider, mount, isRequest));
-        ComponentSickness.OnSicknessUpdate = (sickness) => {
+        ComponentSickness.OnSicknessChange = (sickness) => {
             if (NetworkService.IsServer)
                 NetworkService.QueuePacket(new ComponentSicknessPacket(sickness));
-        };
-        ComponentVitalStats.OnVitalStatsUpdate = (stats) => {
-            if (NetworkService.IsServer && Time.PeriodicEvent(1.0, 0.5))
-                NetworkService.QueuePacket(new VitalStatSyncPacket(stats));
         };
         SubsystemAdjustableDelayGateBlockBehavior.OnEditBlockDelay = (subsystem, cell, newDelay) => {
             if (NetworkService.IsClient)
@@ -165,12 +148,6 @@ public static class RootManager {
             NetworkService.QueuePacket(new FireBlockAddPacket(x, y, z, expandability));
         SubsystemFireBlockBehavior.OnFireBlockRemove = (x, y, z) =>
             NetworkService.QueuePacket(new FireBlockRemovePacket(x, y, z));
-        SubsystemFurnaceBlockBehavior.OnFurnacesUpdate = (subsystem, furnaces) => {
-            if (NetworkService.IsServer)
-                NetworkService.QueuePacket(new ComponentFurnacePacket(furnaces));
-        };
-        SubsystemGameInfo.OnTimeUpdate = (totalElapsedGameTime, timeOfDayOffset) =>
-            NetworkService.QueuePacket(new SubsystemTimePacket(totalElapsedGameTime, timeOfDayOffset));
         SubsystemMemoryBankBlockBehavior.OnEditBlockData = (subsystem, cell, data) => {
             if (NetworkService.IsClient)
                 NetworkService.QueuePacket(new MemoryBankDataPacket(cell, false, default, default, data));
@@ -235,12 +212,10 @@ public static class RootManager {
             if (!NetworkService.IsClient)
                 NetworkService.QueuePacket(new TruthTableDataPacket(default, true, inventoryId, -1, data));
         };
-        SubsystemWeather.OnFogUpdate = (startTime, rampTime, endTime) =>
+        SubsystemWeather.OnFogChange = (startTime, rampTime, endTime) =>
             NetworkService.QueuePacket(new SubsystemWeatherPacket(startTime, rampTime, endTime));
-        SubsystemWeather.OnPrecipitationUpdate = (startTime, endTime, intensity) =>
+        SubsystemWeather.OnPrecipitationChange = (startTime, endTime, intensity) =>
             NetworkService.QueuePacket(new SubsystemWeatherPacket(startTime, endTime, intensity));
-        TerrainUpdater.OnTerrainPlayerLocationUpdate = (updater, location) =>
-            NetworkService.QueuePacket(new PlayerUpdateLocationPacket(location));
         TerrainUpdater.OnTerrainReplyResult = (updater, playerGuid, chunks) =>
             NetworkService.QueuePacket(new TerrainReplyResultPacket(chunks) { ToPlayerIndex = NetworkService.GetClientByGUID(playerGuid)?.PlayerIndex ?? -1 });
         TerrainUpdater.OnTerrainRequestSyncChunks = (updater, chunks) =>
@@ -263,7 +238,7 @@ public static class RootManager {
         };
         CrossbowWidget.OnCrossbowPull = (inventory, slotIndex) =>
             NetworkService.QueuePacket(new CrossbowPullPacket(inventory, slotIndex));
-        DispenserWidget.OnDispenserUpdate = (position, data) =>
+        DispenserWidget.OnDispenserChicked = (position, data) =>
             NetworkService.QueuePacket(new DispenserPacket(position, data));
         InventorySlotWidget.OnDragDropItem = (sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly) =>
             NetworkService.QueuePacket(new DragDropItemPacket(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly));
@@ -310,5 +285,30 @@ public static class RootManager {
         };
         ComponentBody.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
         ComponentLocomotion.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
+        ComponentVitalStats.OnVitalStatsUpdate = (stats) => {
+            if (NetworkService.IsServer && Time.PeriodicEvent(1.0, 0.5))
+                NetworkService.QueuePacket(new VitalStatSyncPacket(stats));
+        };
+        ComponentBody.OnBodyUpdate = BodyUpdatePacket.CollectBodyForSync;
+        TerrainUpdater.OnTerrainPlayerLocationUpdate = (updater, location) =>
+            NetworkService.QueuePacket(new PlayerUpdateLocationPacket(location));
+        ComponentFlu.OnFluUpdate = (flu) => {
+            if (NetworkService.IsServer && Time.PeriodicEvent(1.0, 0.5))
+                NetworkService.QueuePacket(new ComponentFluPacket(flu, ComponentFluPacket.EventType.SyncStat));
+        };
+        ComponentHealth.OnHealthHealUpdate = (health) => {
+            if (NetworkService.IsServer && Time.PeriodicEvent(2.0, 0.0))
+                NetworkService.QueuePacket(new HealthSyncPacket(health));
+        };
+        SubsystemFurnaceBlockBehavior.OnFurnacesUpdate = (subsystem, furnaces) => {
+            if (NetworkService.IsServer)
+                NetworkService.QueuePacket(new ComponentFurnacePacket(furnaces));
+        };
+        SubsystemGameInfo.OnTimeUpdate = (totalElapsedGameTime, timeOfDayOffset) =>
+            NetworkService.QueuePacket(new SubsystemTimePacket(totalElapsedGameTime, timeOfDayOffset));
+        ComponentFurnace.OnFurnaceUpdate = (furnace) => {
+            if (NetworkService.IsServer && Time.PeriodicEvent(2.0, 0.0))
+                NetworkService.QueuePacket(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
+        };
     }
 }

@@ -152,9 +152,9 @@ namespace Game {
 
         public static Action<ComponentGui, Vector3, Vector3> OnManualLightingStrike;
 
-        public static Action<ComponentGui, int> OnManualWeatherUpdate;
+        public static Action<ComponentGui, int> OnManualWeatherChange;
 
-        public static Action<ComponentGui, double, double> OnManualTimeUpdate;
+        public static Action<ComponentGui, double, double> OnManualTimeChange;
 
         public Widget ModalPanelWidget {
             get {
@@ -694,7 +694,7 @@ namespace Game {
                 }
             }
             if (type.HasValue) {
-                OnManualWeatherUpdate?.Invoke(this, type.Value);
+                OnManualWeatherChange?.Invoke(this, type.Value);
             }
             if (m_timeOfDayButtonWidget.IsVisible
                 && (m_timeOfDayButtonWidget.IsClicked || playerInput.TimeOfDay)) {
@@ -725,7 +725,7 @@ namespace Game {
                     type1 = 3;
                 }
                 if (type1.HasValue) {
-                    OnManualTimeUpdate?.Invoke(this, m_subsystemTimeOfDay.m_subsystemGameInfo.TotalElapsedGameTime, m_subsystemTimeOfDay.TimeOfDayOffset);
+                    OnManualTimeChange?.Invoke(this, m_subsystemTimeOfDay.m_subsystemGameInfo.TotalElapsedGameTime, m_subsystemTimeOfDay.TimeOfDayOffset);
                 }
             }
             if (ModalPanelWidget != null) {
