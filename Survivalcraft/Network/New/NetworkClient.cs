@@ -18,6 +18,7 @@ public class NetworkClient : INetEventListener {
     private NetPeer _serverPeer;
     private NetManager _netManager;
     private IPEndPoint _serverAddress;
+    private ClientSession _clientSession;
     private PacketFragment _packageFragment;
 
     public NetPeer ServerPeer => _serverPeer;
