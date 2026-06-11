@@ -20,6 +20,10 @@ public class NetworkClient : INetEventListener {
     private IPEndPoint _serverAddress;
     private PacketFragment _packageFragment;
 
+    public NetPeer ServerPeer => _serverPeer;
+    public ClientSession MySession { get; set; }
+    public bool IsConnected => _netManager != null && _netManager.IsRunning;
+
     public bool Connect(IPEndPoint serverAddress) {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
@@ -80,7 +84,6 @@ public class NetworkClient : INetEventListener {
         }
     }
 
-
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
         Log.Information($"Unconnected receive by: {remoteEndPoint}");
     }
@@ -88,6 +91,13 @@ public class NetworkClient : INetEventListener {
     public void OnPeerConnected(NetPeer peer) {
         _serverPeer = peer;
         Log.Information($"Connected: {_serverAddress}");
+
+        MySession = new ClientSession {
+            PlayerIndex = -1,
+            NetworkGuid = NetworkManager.NetworkGuid,
+            NetworkState = NetworkState.NotConnected,
+        };
+        Send(new ConnectPacket(MySession.NetworkGuid));
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {

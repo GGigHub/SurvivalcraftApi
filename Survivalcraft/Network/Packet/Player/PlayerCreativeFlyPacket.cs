@@ -18,7 +18,7 @@ public class PlayerCreativeFlyPacket : PlayerPacketBase {
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
         if (isServer && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode != GameMode.Creative) {
-            NetworkService.Server.RemoveClient(Connection, "非法操作");
+            //NetworkManager.Server.RemoveClient(From, "非法操作");
             return;
         }
         playerData.ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled = m_isCreativeFly;

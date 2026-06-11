@@ -34,7 +34,7 @@ public class PistonDataPacket : EditableBlockPacketBase {
             int newValue = Terrain.ReplaceData(value, m_data);
             st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
         }
-        if (isServer) NetworkService.QueuePacket(this);
+        if (isServer) NetworkManager.Queue(this);
     }
 }
 

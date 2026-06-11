@@ -50,7 +50,7 @@ public class InjureRequestPacket : Packet {
             if (m_requestInjureType != RequestInjureType.Choke && m_requestInjureType != RequestInjureType.Fall) {
                 return;
             }
-            var selfHealth = Connection?.GetPlayerData()?.ComponentPlayer?.ComponentHealth;
+            var selfHealth = From?.GetPlayerData()?.ComponentPlayer?.ComponentHealth;
             if (m_attackerId == 0) {
                 selfHealth?.Injure(m_amount, null, m_ignoreInvulnerability, NormalizeCause(m_requestInjureType));
             }
@@ -76,13 +76,13 @@ public class InjureRequestPacket : Packet {
         bool flagMainPlayer = health.m_componentPlayer != null && health.m_componentPlayer.PlayerData.IsMainPlayer;
         bool flagNoRider = health.m_componentCreature.ComponentBody.ChildBodies.Count == 0;
 
-        if (NetworkService.IsServer) {
+        if (NetworkManager.IsServerMode) {
             if (flagMainPlayer || flagMainRider || flagNoRider) {
                 health.Injure(fallDamage, null, false, cause);
             }
         }
         else if (flagMainPlayer || flagMainRider) {
-            NetworkService.QueuePacket(
+            NetworkManager.Queue(
                 new InjureRequestPacket(health, null, fallDamage, cause, false, InjureRequestPacket.RequestInjureType.Fall)
             );
         }

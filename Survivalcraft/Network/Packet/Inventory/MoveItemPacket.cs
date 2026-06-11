@@ -41,8 +41,8 @@ public class MoveItemPacket : Packet {
             int actualCount = MathUtils.Min(count, from.GetSlotCount(fromSlotIndex));
             from.RemoveSlotItems(fromSlotIndex, actualCount);
             to.AddSlotItems(toSlotIndex, value, actualCount);
-            NetworkService.QueuePacket(new InventorySyncPacket(from));
-            NetworkService.QueuePacket(new InventorySyncPacket(to));
+            NetworkManager.Queue(new InventorySyncPacket(from));
+            NetworkManager.Queue(new InventorySyncPacket(to));
         }
     }
 }

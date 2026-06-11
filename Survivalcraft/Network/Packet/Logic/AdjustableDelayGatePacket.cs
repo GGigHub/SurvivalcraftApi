@@ -34,7 +34,7 @@ public class AdjustableDelayGatePacket : EditableBlockPacketBase {
             int newValue = Terrain.ReplaceData(value, AdjustableDelayGateBlock.SetDelay(Terrain.ExtractData(value), m_delay));
             st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
         }
-        if (isServer) NetworkService.QueuePacket(this);
+        if (isServer) NetworkManager.Queue(this);
     }
 }
 

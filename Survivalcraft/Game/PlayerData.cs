@@ -41,7 +41,6 @@ namespace Game {
 
         public float m_progress;
         public int PlayerIndex { get; set; }
-        public Guid NetworkGuid { get; set; } = NetworkManager.NetworkGuid;
 
         public static Action<PlayerData> OnPlayerPlaying;
         public static Action<PlayerData> OnPlayerRestart;
@@ -62,7 +61,7 @@ namespace Game {
             set;
         }
 
-        public bool IsMainPlayer => NetworkGuid == NetworkManager.NetworkGuid;
+        public bool IsMainPlayer => !NetworkManager.IsNetworkMode || PlayerIndex == NetworkManager.PlayerIndex;
 
         public SubsystemGameWidgets SubsystemGameWidgets { get; set; }
 
@@ -156,12 +155,12 @@ namespace Game {
                 }
                 else {
 #if DEBUG
-                    Log.Debug($"玩家实体尚未创建，准备进入生成流程。ID: {NetworkGuid}");
+                    Log.Debug($"玩家实体尚未创建，准备进入生成流程。ID: {PlayerIndex}");
 #endif
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
             }, null);
-            m_stateMachine.AddState("MakePlayerOffline", delegate { Dispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(NetworkGuid, false)); }, null, null);
+            m_stateMachine.AddState("MakePlayerOffline", delegate { Dispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(PlayerIndex, false)); }, null, null);
             m_stateMachine.AddState("PrepareSpawn", delegate {
                 if (SpawnPosition == Vector3.Zero) {
                     if (m_subsystemGameInfo.WorldSettings.RandomSpawnPosition) SubsystemPlayers.GlobalSpawnPosition = Vector3.Zero;
@@ -227,7 +226,7 @@ namespace Game {
                     float updateProgress = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, MathUtils.Min(SettingsManager.VisibilityRange, 64f), 0f);
                     UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
                     if ((updateProgress >= 1f && Time.FrameStartTime - m_terrainWaitStartTime > 2.0) || Time.FrameStartTime - m_terrainWaitStartTime >= 15.0) {
-                        if (ComponentPlayer == null || ComponentPlayer.PlayerData.NetworkGuid == Guid.Empty) {
+                        if (ComponentPlayer == null) {
                             if (!NetworkManager.IsNetworkMode) {
                                 SpawnPlayer(SpawnPosition, m_spawnMode);
                             }
@@ -354,7 +353,6 @@ namespace Game {
             LastSpawnTime = valuesDictionary.GetValue("LastSpawnTime", 0.0);
             SpawnsCount = valuesDictionary.GetValue("SpawnsCount", 0);
             Name = valuesDictionary.GetValue("Name", "Walter");
-            NetworkGuid = valuesDictionary.GetValue("NetworkGuid", NetworkManager.NetworkGuid);
             PlayerClass = valuesDictionary.GetValue("PlayerClass", PlayerClass.Male);
             Level = valuesDictionary.GetValue("Level", 1f);
             CharacterSkinName = valuesDictionary.GetValue("CharacterSkinName", CharacterSkinsManager.CharacterSkinsNames[0]);
@@ -368,7 +366,6 @@ namespace Game {
             valuesDictionary.SetValue("LastSpawnTime", LastSpawnTime);
             valuesDictionary.SetValue("SpawnsCount", SpawnsCount);
             valuesDictionary.SetValue("Name", Name);
-            valuesDictionary.SetValue("NetworkGuid", NetworkGuid);
             valuesDictionary.SetValue("PlayerClass", PlayerClass);
             valuesDictionary.SetValue("Level", Level);
             valuesDictionary.SetValue("CharacterSkinName", CharacterSkinName);
@@ -617,7 +614,7 @@ namespace Game {
                 value5 = m_subsystemGameInfo.WorldSettings.GameMode <= GameMode.Survival ? 1 : 0;
             }
             ValuesDictionary overrides = new() {
-                { "Player",new ValuesDictionary { { "PlayerIndex", PlayerIndex }, { "NetworkGuid", NetworkGuid  } } },
+                { "Player",new ValuesDictionary { { "PlayerIndex", PlayerIndex } } },
                 { "Intro", new ValuesDictionary { { "PlayIntro", spawnMode == SpawnMode.InitialIntro } } }, {
                     "Clothing",
                     new ValuesDictionary {

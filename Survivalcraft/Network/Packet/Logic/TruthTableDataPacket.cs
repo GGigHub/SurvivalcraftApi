@@ -57,7 +57,7 @@ public class TruthTableDataPacket : EditableBlockPacketBase {
         else {
             behavior.SetBlockData(m_cellFace.Point, data);
         }
-        if (isServer) NetworkService.QueuePacket(this);
+        if (isServer) NetworkManager.Queue(this);
     }
 }
 

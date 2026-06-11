@@ -21,11 +21,12 @@ public class EditSignPacket : Packet {
 
     public override void Handle(bool isServer) {
         if (isServer) {
-            ToPlayerIndex = Connection?.PlayerIndex ?? -1;
-            NetworkService.QueuePacket(this);
+            To = From;
+            NetworkManager.Queue(this);
         }
         else {
-            DialogsManager.ShowDialog(NetworkService.MainPlayer.GuiWidget, new EditSignDialog(GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>(), m_point3));
+            ComponentPlayer mainPlayer = GameManager.Project.FindSubsystem<SubsystemPlayers>()?.ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerIndex == NetworkManager.PlayerIndex);
+            DialogsManager.ShowDialog(mainPlayer.GuiWidget, new EditSignDialog(GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>(), m_point3));
         }
     }
 }

@@ -32,7 +32,7 @@ public class DispenserPacket : Packet {
             sut.ChangeCell(m_point.X, m_point.Y, m_point.Z, Terrain.ReplaceData(value, data));
         }
         if (isServer) {
-            NetworkService.QueuePacket(this);
+            NetworkManager.Queue(this);
         }
     }
 }

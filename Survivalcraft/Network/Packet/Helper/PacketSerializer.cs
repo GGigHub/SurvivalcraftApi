@@ -326,7 +326,7 @@ public sealed class PacketSerializer {
 
 public class PacketStreamReader : BinaryReader {
     public PacketStreamReader(byte[] CompressedData) : base(new MemoryStream()) {
-        byte[] data = NetworkService.Decompress(CompressedData);
+        byte[] data = PacketStreamHelper.Decompress(CompressedData);
         BaseStream.Write(data, 0, data.Length);
         BaseStream.Position = 0L;
     }
@@ -339,7 +339,24 @@ public class PacketStreamWriter : BinaryWriter {
     public byte[] Data() {
         Flush();
         BaseStream.Seek(0, SeekOrigin.Begin);
-        return NetworkService.Compress(BaseStream);
+        return PacketStreamHelper.Compress(BaseStream);
+    }
+}
+
+public class PacketStreamHelper {
+    public static byte[] Compress(Stream input) {
+        using MemoryStream output = new();
+        using (System.IO.Compression.DeflateStream dstream = new(output, System.IO.Compression.CompressionLevel.Fastest, true)) {
+            input.CopyTo(dstream);
+        }
+        return output.ToArray();
+    }
+    public static byte[] Decompress(byte[] input) {
+        using MemoryStream inputStream = new(input);
+        using System.IO.Compression.DeflateStream dstream = new(inputStream, System.IO.Compression.CompressionMode.Decompress);
+        using MemoryStream output = new();
+        dstream.CopyTo(output);
+        return output.ToArray();
     }
 }
 

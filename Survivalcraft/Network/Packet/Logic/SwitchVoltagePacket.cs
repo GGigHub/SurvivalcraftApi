@@ -34,7 +34,7 @@ public class SwitchVoltagePacket : EditableBlockPacketBase {
             int newValue = Terrain.ReplaceData(value, SwitchBlock.SetVoltageLevel(Terrain.ExtractData(value), m_voltage));
             st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
         }
-        if (isServer) NetworkService.QueuePacket(this);
+        if (isServer) NetworkManager.Queue(this);
     }
 }
 

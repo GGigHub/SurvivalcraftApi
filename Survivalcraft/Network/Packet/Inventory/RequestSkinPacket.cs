@@ -15,10 +15,10 @@ public class RequestSkinPacket : Packet {
     }
     public override void Handle(bool isServer) {
         if (CharacterSkinsManager.HasSkinRes(SkinName)) {
-            NetworkService.QueuePacket(new ReplySkinPacket(SkinName));
+            NetworkManager.Queue(new ReplySkinPacket(SkinName));
         }
         else if (!CharacterSkinsManager.waitReplyList.Contains(SkinName)) {
-            NetworkService.QueuePacket(new WhoHasSkinPacket(SkinName));
+            NetworkManager.Queue(new WhoHasSkinPacket(SkinName));
             CharacterSkinsManager.waitReplyList.Add(SkinName);
         }
     }

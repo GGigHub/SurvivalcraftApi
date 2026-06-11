@@ -22,41 +22,42 @@ public class StatePacket : ClientPacketBase {
     }
 
     public override void Handle(bool isServer) {
-        var clientKeyValuePair = NetworkService.Clients.FirstOrDefault(kv => kv.Value.PlayerIndex == m_playerIndex);
-        if (clientKeyValuePair.Value == null) {
+        var clientKeyValuePair = From;
+        if (clientKeyValuePair == null) {
             return;
         }
-        var client = clientKeyValuePair.Value;
+        var client = clientKeyValuePair;
         client.NetworkState = m_state;
         if (isServer) {
             var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
             var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
 
-            NetworkService.QueuePacket(new StatePacket(client.PlayerIndex, client.NetworkState) { ExceptPlayerIndex = client.PlayerIndex });
+            NetworkManager.Queue(new StatePacket(client.PlayerIndex, client.NetworkState) { Except = client });
 
             switch (client.NetworkState) {
                 case NetworkState.Connected: {
+                        // 在未来弃用
                         byte[] textureData = null;
-                        if (subsystemPlayers.MakePlayerOnline(client.NetworkGuid, out PlayerData playerData, out Entity entity)) {
+                        if (subsystemPlayers.MakePlayerOnline(client.PlayerIndex, out PlayerData playerData, out Entity entity)) {
                             if (entity != null) {
                                 GameManager.Project.AddEntity(entity);
                             }
-                            NetworkService.QueuePacket(new PlayerAddPacket(playerData) { ExceptPlayerIndex = client?.PlayerIndex ?? -1 });
+                            NetworkManager.Queue(new PlayerAddPacket(playerData) { Except = client });
                         }
                         if (!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.BlocksTextureName)) {
                             using var s = Storage.OpenFile(BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName), OpenFileMode.Read);
                             textureData = ModsManager.StreamToBytes(s);
                         }
-                        byte[] data = NetworkService.GetNowProject(GameManager.Project);
-                        NetworkService.QueuePacket(new ProjectPacket(textureData, data) { ToPlayerIndex = client?.PlayerIndex ?? -1 });
+                        //byte[] data = NetworkManager.GetNowProject(GameManager.Project);
+                        //NetworkManager.Queue(new ProjectPacket(data) { To = client });
                         break;
                     }
                 case NetworkState.NotConnected:
-                    subsystemPlayers.MakePlayerOffline(client.NetworkGuid);
+                    subsystemPlayers.MakePlayerOffline(client.PlayerIndex);
                     break;
                 case NetworkState.ProjectLoaded: {
                         List<Entity> sendList = [.. GameManager.Project.Entities];
-                        NetworkService.QueuePacket(new EntityLoadPacket(sendList) { ToPlayerIndex = client?.PlayerIndex ?? -1 });
+                        NetworkManager.Queue(new EntityLoadPacket(sendList) { To = client });
                         break;
                     }
                 case NetworkState.LoadTerrain:
@@ -67,7 +68,7 @@ public class StatePacket : ClientPacketBase {
                     break;
                 case NetworkState.Playing:
                     if (client.GetPlayerData() == null) {
-                        NetworkService.Server.RemoveClient(client, "错误:该Client没有对应PlayerData");
+                        //NetworkManager.Server.RemoveClient(client, "错误:该Client没有对应PlayerData");
                     }
                     else if (client.GetPlayerData().ComponentPlayer != null
                         && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {

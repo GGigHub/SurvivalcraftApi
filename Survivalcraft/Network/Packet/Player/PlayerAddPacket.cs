@@ -31,7 +31,7 @@ public class PlayerAddPacket : Packet {
         var playerData = new PlayerData(GameManager.Project);
         playerData.Load(m_vd);
         subsystemPlayers.AddPlayerData(playerData);
-        NetworkService.QueuePacket(new PlayerKnownPacket(playerData.NetworkGuid));
+        NetworkManager.Queue(new PlayerKnownPacket(playerData.PlayerIndex));
     }
 }
 

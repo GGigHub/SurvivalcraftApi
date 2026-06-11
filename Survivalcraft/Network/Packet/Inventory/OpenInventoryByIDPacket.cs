@@ -20,20 +20,20 @@ public class OpenInventoryByIDPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        if (Connection == null) return;
+        if (From == null) return;
         var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
         if (isServer) {
             IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
             if (inventory != null) {
                 OpenInventoryByIDPacket packet = new OpenInventoryByIDPacket(inventory);
-                packet.ToPlayerIndex = Connection?.PlayerIndex ?? -1;
-                NetworkService.QueuePacket(packet);
+                packet.To = From;
+                NetworkManager.Queue(packet);
             }
         }
         else {
             IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
             if (inventory != null) {
-                var player = NetworkService.MainPlayer;
+                var player = GameManager.Project.FindSubsystem<SubsystemPlayers>()?.ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerIndex == NetworkManager.PlayerIndex);
                 if (inventory is ComponentChest componentChest) {
                     player.ComponentGui.ModalPanelWidget = new ChestWidget(player.ComponentMiner.Inventory, componentChest);
                     AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);

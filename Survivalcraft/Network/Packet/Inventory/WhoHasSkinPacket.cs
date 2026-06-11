@@ -18,7 +18,7 @@ public class WhoHasSkinPacket : Packet {
 
     public override void Handle(bool isServer) {
         if (CharacterSkinsManager.HasSkinRes(SkinName)) {
-            NetworkService.QueuePacket(new WhoHasSkinReplyPacket(SkinName));
+            NetworkManager.Queue(new WhoHasSkinReplyPacket(SkinName));
         }
     }
 }

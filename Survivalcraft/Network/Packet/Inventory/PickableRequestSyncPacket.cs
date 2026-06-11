@@ -20,10 +20,10 @@ public class PickableRequestSyncPacket : Packet {
     public override void Handle(bool isServer) {
         SubsystemPickables subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>();
         bool found = subsystemPickables.PickableAction(m_id, pick => {
-            NetworkService.QueuePacket(new PickableCreatePacket(pick) { ToPlayerIndex = Connection?.PlayerIndex ?? -1 });
+            NetworkManager.Queue(new PickableCreatePacket(pick) { To = From });
         });
         if (!found) {
-            NetworkService.QueuePacket(new PickableDeletePacket(m_id) { ToPlayerIndex = Connection?.PlayerIndex ?? -1 });
+            NetworkManager.Queue(new PickableDeletePacket(m_id) { To = From });
         }
     }
 }

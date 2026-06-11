@@ -28,7 +28,7 @@ public class PlayerCountPacket : Packet {
             if (clientPlayerCount != m_playerCount) {
                 ScreensManager.SwitchScreen("NetPlay");
                 GameManager.DisposeProject();
-                NetworkService.Stop();
+                NetworkManager.Stop();
                 DialogsManager.ShowDialog(null, new MessageDialog("连接异常", "检测到玩家人数异常，请重新连接服务器", LanguageControl.Ok, null, btn => {
                 }));
             }

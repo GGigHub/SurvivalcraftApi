@@ -10,11 +10,9 @@ public abstract class Packet {
     public abstract void Handle(bool isServer);
     public abstract void Serialize(PacketSerializer archive);
 
-    public int ToPlayerIndex { get; set; } = -1;
-    public int ExceptPlayerIndex { get; set; } = -1;
-    public int SenderPlayerIndex { get; set; } = -1;
-
-    public ClientSession Connection { get; set; } = null;
+    public ClientSession From { get; set; } = null;
+    public ClientSession To { get; set; } = null;
+    public ClientSession Except { get; set; } = null;
     public virtual NetworkState MinNeedState => NetworkState.NotConnected;
 }
 
@@ -84,6 +82,7 @@ public class PacketManager {
         Array.Clear(m_factories, 0, m_factories.Length);
 
         // Connect
+        RegisterPacket<ConnectPacket>();
         RegisterPacket<ProjectPacket>();
         RegisterPacket<StatePacket>();
 
@@ -238,7 +237,6 @@ public class PacketManager {
     }
 
     public static List<Packet> DecodePacketsFromPayload(IEnumerable<ClientSession> clients, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        ClientSession from = ResolveFrom(clients, netPeer, request, iPEndPoint);
         List<Packet> packets = [];
         byte packetID = 99;
         if (payload == null || payload.Length == 0) {
@@ -246,7 +244,7 @@ public class PacketManager {
         }
         try {
             var preader = new PacketStreamReader(payload);
-            return DecodePacketsFromReader(preader, from, ref packetID, request, iPEndPoint);
+            return DecodePacketsFromReader(preader, ref packetID, request, iPEndPoint);
         }
         catch {
             Log.Information("接收到不规范的数据包:" + packetID);
@@ -255,7 +253,6 @@ public class PacketManager {
     }
 
     public static List<Packet> DecodePackets(IEnumerable<ClientSession> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        ClientSession from = ResolveFrom(clients, netPeer, request, iPEndPoint);
         List<Packet> packets = [];
         byte packetID = 99;
         if (reader.AvailableBytes == 0) {
@@ -263,7 +260,7 @@ public class PacketManager {
         }
         try {
             PacketStreamReader preader = new(reader.GetBytesWithLength());
-            return DecodePacketsFromReader(preader, from, ref packetID, request, iPEndPoint);
+            return DecodePacketsFromReader(preader, ref packetID, request, iPEndPoint);
         }
         catch {
             Log.Information("接收到不规范的数据包:" + packetID);
@@ -279,7 +276,7 @@ public class PacketManager {
         }
         try {
             PacketStreamReader preader = new(payload);
-            return DecodePacketsFromReader(preader, null, ref packetID);
+            return DecodePacketsFromReader(preader, ref packetID);
         }
         catch {
             Log.Information("接收到不规范的数据包:" + packetID);
@@ -287,25 +284,11 @@ public class PacketManager {
         }
     }
 
-    private static ClientSession ResolveFrom(IEnumerable<ClientSession> clients, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        if (netPeer != null && netPeer.Tag is ClientSession client) return client;
-
-        ClientSession from = null;
-        if (clients != null) {
-            from = clients.FirstOrDefault(c =>
-                (NetworkService.IsClient && NetworkService.Client?.ServerPeer != null && NetworkService.Client.ServerPeer == netPeer) ||
-                (!NetworkService.IsClient && NetworkService.Server != null && NetworkService.Server.ClientPeers.TryGetValue(c.PlayerIndex, out var p) && p == netPeer)
-            );
-        }
-        if (from == null) {
-            from = new ClientSession();
-        }
-        return from;
-    }
-
-    private static List<Packet> DecodePacketsFromReader(PacketStreamReader preader, ClientSession from, ref byte packetID, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+    private static List<Packet> DecodePacketsFromReader(PacketStreamReader preader, ref byte packetID, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         List<Packet> packets = [];
         Packet last = null;
+        ClientSession from = null;
+        if (from == null) throw new();
         while (preader.BaseStream.Position < preader.BaseStream.Length) {
             byte check = preader.ReadByte();
             if (check != VerifyByte && check != RelayVerifyByte) {
@@ -332,13 +315,13 @@ public class PacketManager {
                 last = packet;
 
                 if (check == RelayVerifyByte && from == null) {
-                    packet.SenderPlayerIndex = senderIndex;
+                    packet.From = Enumerable.FirstOrDefault(
+                        NetworkManager.NetworkServer?.ClientSessions.Values, c => c.PlayerIndex == senderIndex);
                 }
                 else {
-                    packet.Connection = from;
+                    packet.From = from;
                 }
 
-                packet.SenderPlayerIndex = senderIndex;
                 packet.Serialize(new PacketSerializer(preader));
                 packets.Add(packet);
             }

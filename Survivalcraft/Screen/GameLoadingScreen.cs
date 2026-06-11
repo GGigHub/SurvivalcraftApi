@@ -32,7 +32,7 @@ public class GameLoadingScreen : Screen {
                 if (string.IsNullOrEmpty(m_worldSnapshotName)) {
                     SetSpwanDialogMessage("连接服务器", 0.2f);
                     if (m_serverEndPoint != null) {
-                        NetworkManager.ConnectServer(m_serverEndPoint, m_password);
+                        NetworkManager.ConnectServer(m_serverEndPoint);
                         DialogsManager.ShowDialog(this, spawnDialog);
                         m_stateMachine.TransitionTo("WaitServerReply");
                     }
@@ -51,19 +51,19 @@ public class GameLoadingScreen : Screen {
         }, delegate {
             SetSpwanDialogMessage("等待服务器响应", 0.25f);
             // Fix me: 客户端中断连接后再次连接可能会卡住。
-            if (NetworkManager.IsNetworkMode && NetworkManager.SelfState == NetworkState.NotConnected) {
+            if (NetworkManager.IsNetworkMode && NetworkManager.MyState == NetworkState.NotConnected) {
                 if (timer.ElapsedMilliseconds >= 10000) {
                     NetworkManager.Stop();
                 }
             }
-            else if (NetworkManager.SelfState == NetworkState.Connected) {
+            else if (NetworkManager.MyState == NetworkState.Connected) {
                 m_stateMachine.TransitionTo("Loading");
             }
             else {
                 NetworkManager.Stop();
             }
         }, delegate {
-            if (NetworkManager.SelfState == NetworkState.Connected) {
+            if (NetworkManager.MyState == NetworkState.Connected) {
                 OnPlayerStateChanged?.Invoke(NetworkState.Connected);
             }
         });
@@ -74,7 +74,7 @@ public class GameLoadingScreen : Screen {
                 if (IsServerReply) {
                     m_stateMachine.TransitionTo("LoadServerReply");
                 }
-                if (NetworkManager.SelfState != NetworkState.Connected) {
+                if (NetworkManager.MyState != NetworkState.Connected) {
                     NetworkManager.Stop();
                 }
             }
@@ -92,7 +92,7 @@ public class GameLoadingScreen : Screen {
         });
         m_stateMachine.AddState("LoadServerReply", null, delegate {
             SetSpwanDialogMessage("加载服务器 Project", 0.6f);
-            if (NetworkManager.SelfState == NetworkState.Connected) {
+            if (NetworkManager.MyState == NetworkState.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
                 OnPlayerStateChanged?.Invoke(NetworkState.ProjectLoaded);
                 ScreensManager.SwitchScreen("Game");

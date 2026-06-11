@@ -12,15 +12,13 @@
       <Compile Include="Network\New\NetworkClient.cs" />
       <Compile Include="Network\New\RelayHost.cs" />
       <Compile Include="Network\New\NetworkServer.cs" />
-      <Compile Include="Network\ONetworkClient.cs" />
-      <Compile Include="Network\NetworkService.cs" />
-      <Compile Include="Network\ONetworkServer.cs" />
       <Compile Include="Network\PacketManager.cs" />
       <Compile Include="Network\Packet\Base\ClientPacketBase.cs" />
       <Compile Include="Network\Packet\Base\EditableBlockPacketBase.cs" />
       <Compile Include="Network\Packet\Base\PlayerPacketBase.cs" />
       <Compile Include="Network\Packet\Base\SkinPacketBase.cs" />
       <Compile Include="Network\Packet\Base\TerrainPacketBase.cs" />
+      <Compile Include="Network\Packet\Connect\ConnectPacket.cs" />
       <Compile Include="Network\Packet\Connect\StatePacket.cs" />
       <Compile Include="Network\Packet\Connect\ProjectPacket.cs" />
       <Compile Include="Network\Packet\Entity\ApplyImpulsePacket.cs" />

@@ -7,20 +7,20 @@ namespace Game.Network;
 public class PlayerBuglePacket : Packet {
     public override byte ID => (byte)PacketType.PlayerBugle;
     public override NetworkState MinNeedState => NetworkState.Connected;
-    public Guid m_playerGuid;
+    public int m_playerIndex;
     public string m_title;
     public string m_content;
 
     public PlayerBuglePacket() { }
 
-    public PlayerBuglePacket(Guid guid, string title, string content) {
-        m_playerGuid = guid;
+    public PlayerBuglePacket(int playerIndex, string title, string content) {
+        m_playerIndex = playerIndex;
         m_title = title;
         m_content = content;
     }
 
     public override void Serialize(PacketSerializer archive) {
-        archive.Value(ref m_playerGuid);
+        archive.Value(ref m_playerIndex);
         archive.Value(ref m_title);
         archive.Value(ref m_content);
     }
@@ -29,7 +29,7 @@ public class PlayerBuglePacket : Packet {
         if (isServer) return;
         ComponentPlayer mainPlayer = GameManager.Project.FindSubsystem<SubsystemPlayers>().MainPlayer;
         if (mainPlayer != null) {
-            if (m_playerGuid == Guid.Empty || (m_playerGuid != Guid.Empty && mainPlayer.PlayerData.NetworkGuid == m_playerGuid)) {
+            if (m_playerIndex < 0 || mainPlayer.PlayerData.PlayerIndex == m_playerIndex) {
                 DialogsManager.HideAllDialogs();
                 mainPlayer.ComponentHealth.IsInvulnerable = true;
                 string content = m_content.Replace("[n]", "\n").Replace("[e]", " ");

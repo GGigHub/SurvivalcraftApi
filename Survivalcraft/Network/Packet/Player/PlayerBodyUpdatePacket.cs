@@ -17,7 +17,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
         public bool IsCrouching;
     }
 
-    public static readonly Dictionary<Guid, PlayerBodySyncSnapshot> s_playerBodySyncSnapshots = [];
+    public static readonly Dictionary<int, PlayerBodySyncSnapshot> s_playerBodySyncSnapshots = [];
 
     public Vector3 Position;
     public Vector3 Velocity;
@@ -34,7 +34,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
         PlayerData playerData = player.PlayerData;
         changeFlag = ChangeFlag.None;
         ComponentBody body = player.ComponentBody.ParentBody;
-        s_playerBodySyncSnapshots.TryGetValue(playerData.NetworkGuid, out PlayerBodySyncSnapshot snapshot);
+        s_playerBodySyncSnapshots.TryGetValue(playerData.PlayerIndex, out PlayerBodySyncSnapshot snapshot);
         bool hasParentBody = body != null;
         if (body != null) {
             changeFlag |= ChangeFlag.ParentBodyChange;
@@ -75,7 +75,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
             Velocity = body.Velocity;
             changeFlag |= ChangeFlag.VelocityChange;
         }
-        s_playerBodySyncSnapshots[playerData.NetworkGuid] = CreateSnapshot(player, body, hasParentBody);
+        s_playerBodySyncSnapshots[playerData.PlayerIndex] = CreateSnapshot(player, body, hasParentBody);
         m_fromPlayerIndex = playerData.PlayerIndex;
     }
 

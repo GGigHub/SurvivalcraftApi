@@ -12,7 +12,7 @@ public class PlayerDeletePacket : Packet {
 
     public override void Handle(bool isServer) {
         if (isServer) {
-            NetworkService.Server.RemoveClient(Connection);
+            //NetworkManager.Server.RemoveClient(From);
         }
     }
 }

@@ -139,7 +139,7 @@ public class BodyUpdatePacket : Packet {
             }
         }
         if (ml.Count > 0) {
-            NetworkService.QueuePacket(new EntitySyncRequestPacket(ml));
+            NetworkManager.Queue(new EntitySyncRequestPacket(ml));
         }
         if (rl.Count > 0) {
             foreach (var b in rl) {
@@ -149,7 +149,7 @@ public class BodyUpdatePacket : Packet {
     }
 
     public static bool ShouldBeNetworkControlled(ComponentBody body) {
-        if (body == null || (!NetworkService.IsClient && !NetworkService.IsServer)) {
+        if (body == null || (!NetworkManager.IsNetworkMode && !NetworkManager.IsServerMode)) {
             return false;
         }
 
@@ -170,7 +170,7 @@ public class BodyUpdatePacket : Packet {
             }
         }
 
-        if (NetworkService.IsClient) {
+        if (NetworkManager.IsNetworkMode) {
             return (componentPlayer != null && !isMainPlayer && body.ParentBody == null)
                 || (componentPlayer == null && !hasChildPlayer)
                 || hasNonMainChildPlayer;
@@ -187,7 +187,7 @@ public class BodyUpdatePacket : Packet {
     public static bool s_bodySyncFlushQueued;
 
     public static void CollectBodyForSync(ComponentBody body, float dt) {
-        if (!NetworkService.IsServer || !Time.PeriodicEvent(0.1, 0.0) || !ShouldSyncBody(body)) {
+        if (!NetworkManager.IsServerMode || !Time.PeriodicEvent(0.1, 0.0) || !ShouldSyncBody(body)) {
             return;
         }
         if (s_bodySyncFrame != Time.FrameIndex) {
@@ -222,8 +222,8 @@ public class BodyUpdatePacket : Packet {
         foreach (PlayerData playerData in subsystemPlayers.PlayersData) {
             if (playerData.IsMainPlayer) continue;
             // The sender should not send to the player who triggered the update, so we compare playerIndex
-            if (playerData.PlayerIndex == NetworkService.SenderPlayerIndex) continue;
-            ClientSession client = NetworkService.GetClientByPlayerIndex(playerData.PlayerIndex);
+            ClientSession client = Enumerable.FirstOrDefault(
+                        NetworkManager.NetworkServer?.ClientSessions.Values, c => c.PlayerIndex == playerData.PlayerIndex);
             if (client == null || client.NetworkState == NetworkState.NotConnected || client.NetworkState < NetworkState.Playing) {
                 continue;
             }
@@ -241,10 +241,10 @@ public class BodyUpdatePacket : Packet {
     }
 
     public static void FlushBodySyncPackets() {
-        if (NetworkService.IsServer) {
+        if (NetworkManager.IsServerMode) {
             foreach (KeyValuePair<ClientSession, List<ComponentBody>> pair in s_bodySyncLists) {
                 if (pair.Key.NetworkState != NetworkState.NotConnected && pair.Key.NetworkState >= NetworkState.Playing) {
-                    NetworkService.QueuePacket(new BodyUpdatePacket(pair.Value, pair.Key) { ToPlayerIndex = pair.Key.PlayerIndex });
+                    NetworkManager.Queue(new BodyUpdatePacket(pair.Value, pair.Key) { To = pair.Key });
                 }
             }
         }

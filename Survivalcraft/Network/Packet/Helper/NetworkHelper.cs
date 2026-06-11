@@ -77,8 +77,8 @@ public static class NetworkHelper {
     public static byte[] BuildPayloadForClient(IEnumerable<Packet> pendingPackets, ClientSession client, bool respectMinState, bool isServer) {
         List<Packet> packets = new List<Packet>();
         foreach (Packet packet in pendingPackets) {
-            if (packet.ToPlayerIndex != -1 && packet.ToPlayerIndex != client.PlayerIndex) continue;
-            if (packet.ExceptPlayerIndex != -1 && packet.ExceptPlayerIndex == client.PlayerIndex) continue;
+            if (packet.To != null && packet.To != client) continue;
+            if (packet.Except != null && packet.Except == client) continue;
             if (respectMinState && client.NetworkState < packet.MinNeedState && isServer) continue;
             packets.Add(packet);
         }
