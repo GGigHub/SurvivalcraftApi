@@ -15,15 +15,15 @@ public enum NetworkState {
 }
 
 public static class NetworkManager {
-    public static NetworkClient NetworkClient { get; set; } = new();
-    public static NetworkServer NetworkServer { get; set; } = new();
+    public static NetworkClient NetworkClient { get; set; } = null;
+    public static NetworkServer NetworkServer { get; set; } = null;
 
-    public static bool IsServerMode => NetworkServer.IsRunning;
-    public static bool IsNetworkMode => NetworkClient.IsConnected;
+    public static bool IsServerMode => NetworkServer?.IsRunning ?? false;
+    public static bool IsNetworkMode => NetworkClient?.IsConnected ?? false;
 
-    public static int PlayerIndex => NetworkClient.MySession.PlayerIndex;
-    public static Guid NetworkGuid => NetworkClient.MySession.NetworkGuid;
-    public static NetworkState MyState => NetworkClient.MySession.NetworkState;
+    public static int PlayerIndex => NetworkClient?.MySession?.PlayerIndex ?? -1;
+    public static Guid NetworkGuid => NetworkClient?.MySession?.NetworkGuid ?? Guid.Empty;
+    public static NetworkState MyState => NetworkClient?.MySession?.NetworkState ?? NetworkState.NotConnected;
 
     public static void Initialize() {
         RootManager.Initialize();

@@ -48,20 +48,12 @@ namespace Game {
         public static Action<PlayerData> OnPlayerPlayingUpdate;
         public static Action<PlayerData> PlayerFirstUpdated;
 
-        public bool ServerManager { get; set; }
-
-        public Vector3? ClientCachePosition;
-
         public bool isSetStatus = false;
 
         public bool IsDead;
 
-        public GameMode PlayerGameMode {
-            get;
-            set;
-        }
-
-        public bool IsMainPlayer => !NetworkManager.IsNetworkMode || PlayerIndex == NetworkManager.PlayerIndex;
+        public bool IsMainPlayer => (!NetworkManager.IsNetworkMode && PlayerIndex == 0) 
+                || (NetworkManager.IsNetworkMode && PlayerIndex == NetworkManager.PlayerIndex);
 
         public SubsystemGameWidgets SubsystemGameWidgets { get; set; }
 
@@ -160,7 +152,6 @@ namespace Game {
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
             }, null);
-            m_stateMachine.AddState("MakePlayerOffline", delegate { Dispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(PlayerIndex, false)); }, null, null);
             m_stateMachine.AddState("PrepareSpawn", delegate {
                 if (SpawnPosition == Vector3.Zero) {
                     if (m_subsystemGameInfo.WorldSettings.RandomSpawnPosition) SubsystemPlayers.GlobalSpawnPosition = Vector3.Zero;
@@ -215,10 +206,6 @@ namespace Game {
             m_stateMachine.AddState("WaitForTerrain", delegate {
                 m_terrainWaitStartTime = Time.FrameStartTime;
                 Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
-                if (ClientCachePosition.HasValue) {
-                    center = ClientCachePosition.Value.XZ;
-                    ClientCachePosition = null;
-                }
                 // 根据当前中心点刷新地形可见范围，客户端的非主玩家不需要提交 updateLocation。
                 if (!(NetworkManager.IsNetworkMode && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
             }, delegate {

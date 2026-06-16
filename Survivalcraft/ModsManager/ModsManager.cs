@@ -70,6 +70,7 @@ public static class ModsManager {
 
     internal static ModEntity SurvivalCraftModEntity;
     internal static ModEntity FastDebugModEntity;
+    internal static ModEntity NetworkModEntity;
     internal static bool ConfigLoaded;
 
     public class ModSettings {
@@ -91,7 +92,6 @@ public static class ModsManager {
 
     static bool AllowContinue = true;
     public static Dictionary<string, string> Configs = [];
-    public static List<NetPlayScreen.Connect> SaveConnects = [];
     /// <summary>
     /// 所有模组，含禁用的
     /// </summary>
@@ -423,6 +423,8 @@ public static class ModsManager {
 #if !BROWSER
         FastDebugModEntity = new FastDebugModEntity();
         ModListAll.Add(FastDebugModEntity);
+        NetworkModEntity = new NetworkModEntity();
+        ModListAll.Add(NetworkModEntity);
         GetScmods(ModsPath);
         HashSet<ModEntity> toRemove = [];
         foreach (ModEntity modEntity in ModListAll) {

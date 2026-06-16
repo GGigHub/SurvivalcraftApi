@@ -40,23 +40,27 @@ public class NetworkServer : INetEventListener {
     }
 
     public void Board(Packet packet) {
+        if (packet.To != null) {
+            Send(packet, packet.To);
+            return;
+        }
         foreach (KeyValuePair<NetPeer, ClientSession> clientSession in ClientSessions) {
-            Send(packet, clientSession.Value.PlayerIndex);
+            if (clientSession.Value != packet.Except) {
+                Send(packet, clientSession.Value);
+            }
         }
     }
 
-    public void Send(Packet packet, int playerIndex) {
-        KeyValuePair<NetPeer, ClientSession> clientSession =
-            ClientSessions.FirstOrDefault(kvp => kvp.Value.PlayerIndex == playerIndex);
-
-        if (packet.MinNeedState <= clientSession.Value.NetworkState) {
+    public void Send(Packet packet, ClientSession session) {
+        if (packet.MinNeedState <= session.NetworkState) {
             PacketStreamWriter writer = new();
             writer.Write(PacketFragment.VerifyByte);
             writer.Write(packet.ID);
             packet.Serialize(new PacketSerializer(writer));
 
+            NetPeer peer = ClientSessions.FirstOrDefault(kvp => kvp.Value == session).Key;
             foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
-                clientSession.Key.Send(chunk, DeliveryMethod.ReliableOrdered);
+                peer.Send(chunk, DeliveryMethod.ReliableOrdered);
             }
         }
     }
@@ -78,8 +82,10 @@ public class NetworkServer : INetEventListener {
         if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (!ClientSessions.TryGetValue(peer, out ClientSession session)) return;
-                packet.From = session;
-                packet.Handle(false);
+                if (packet.MinNeedState <= session.NetworkState) {
+                    packet.From = session;
+                    packet.Handle(true);
+                }
             });
         }
     }
@@ -100,6 +106,11 @@ public class NetworkServer : INetEventListener {
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
+        if (ClientSessions.TryGetValue(peer, out ClientSession session)) {
+            GameManager.Project.FindSubsystem<SubsystemNetwork>().
+                    MakePlayerOffline(session);
+        }
+
         ClientSessions.Remove(peer);
         Log.Information($"Disconnected: {peer.Address}, {disconnectInfo}");
     }

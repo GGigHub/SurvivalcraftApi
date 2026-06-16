@@ -851,38 +851,6 @@ namespace Game {
             base.Save(valuesDictionary, entityToIdMap);
             valuesDictionary.SetValue("PlayerIndex", PlayerData.PlayerIndex);
         }
-
-        private static readonly object _saveLock = new();
-
-        public virtual void SavePlayerEntity() {
-            if (!NetworkManager.IsNetworkMode) {
-                lock (_saveLock) {
-                    try {
-                        var list = Project.SaveEntities([Entity]);
-                        var dict = new ValuesDictionary();
-                        var vdict = new ValuesDictionary();
-                        var pdict = new ValuesDictionary();
-                        list.EntitiesData[0].Save(vdict);
-                        PlayerData.Save(pdict);
-                        var entityFileDir = Storage.CombinePaths(m_subsystemGameInfo.DirectoryName, "PlayerEntities/");
-                        if (!Storage.DirectoryExists(entityFileDir)) {
-                            Storage.CreateDirectory(entityFileDir);
-                        }
-                        dict.SetValue("Entity", vdict);
-                        dict.SetValue("Data", pdict);
-                        using (Stream stream = Storage.OpenFile(Storage.CombinePaths(entityFileDir, $"{PlayerData.PlayerIndex}.json"), OpenFileMode.Create)) {
-                            StreamWriter streamWriter = new(stream);
-                            streamWriter.Write(dict.ToJsonText());
-                            streamWriter.Flush();
-                            streamWriter.Dispose();
-                        }
-                    }
-                    catch (Exception e) {
-                        Log.Warning("Persist player on death failed: " + e.Message);
-                    }
-                }
-            }
-        }
     }
 }
 

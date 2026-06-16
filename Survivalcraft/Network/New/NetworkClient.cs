@@ -18,10 +18,8 @@ public class NetworkClient : INetEventListener {
     private NetPeer _serverPeer;
     private NetManager _netManager;
     private IPEndPoint _serverAddress;
-    private ClientSession _clientSession;
     private PacketFragment _packageFragment;
 
-    public NetPeer ServerPeer => _serverPeer;
     public ClientSession MySession { get; set; }
     public bool IsConnected => _netManager != null && _netManager.IsRunning;
 
@@ -95,7 +93,7 @@ public class NetworkClient : INetEventListener {
 
         MySession = new ClientSession {
             PlayerIndex = -1,
-            NetworkGuid = NetworkManager.NetworkGuid,
+            NetworkGuid = Guid.Parse(SettingsManager.OnlineAccessToken),
             NetworkState = NetworkState.NotConnected,
         };
         Send(new ConnectPacket(MySession.NetworkGuid));
@@ -103,6 +101,6 @@ public class NetworkClient : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         _serverPeer = null;
-        Log.Information($"Disconnected: {_serverAddress}");
+        Log.Information($"Disconnected: {_serverAddress}, Reason: {disconnectInfo.Reason}");
     }
 }

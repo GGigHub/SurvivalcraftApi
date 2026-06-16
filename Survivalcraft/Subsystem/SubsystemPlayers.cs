@@ -35,7 +35,7 @@ namespace Game {
 
         public List<string> NoMsgPlayerGuidList = new List<string>();
 
-        private Dictionary<int, EntityData> m_offlinePlayerEntities = new Dictionary<int, EntityData>();
+        public Dictionary<int, EntityData> m_offlinePlayerEntities = new Dictionary<int, EntityData>();
 
         public PlayerData MainPlayerData {
             get {
@@ -94,7 +94,7 @@ namespace Game {
         }
 
         public void AddPlayerData(PlayerData playerData) {
-            if (m_playersData.Contains(playerData) || m_playersData.Any(pd => pd.PlayerIndex == playerData.PlayerIndex)) {
+            if (m_playersData.Contains(playerData)) {
                 throw new InvalidOperationException("Player already added.");
             }
 
@@ -131,8 +131,6 @@ namespace Game {
             m_subsystemTerrain?.TerrainUpdater?.SetLastChunksUpdateCenter(-1, null);
         }
 
-        List<PlayerData> toRemove = new List<PlayerData>();
-
         public virtual void Update(float dt) {
             if (m_playersData.Count == 0 || m_playersData.All(p => !p.IsMainPlayer)) {
                 ScreensManager.SwitchScreen("Player", PlayerScreen.Mode.Initial, Project);
@@ -140,10 +138,6 @@ namespace Game {
             foreach (PlayerData playersDatum in m_playersData) {
                 playersDatum.Update();
             }
-            foreach (PlayerData playerData in toRemove) {
-                MakePlayerOffline(playerData.PlayerIndex);
-            }
-            toRemove.Clear();
         }
 
         public override void Dispose() {
@@ -225,84 +219,6 @@ namespace Game {
                     m_componentPlayers.Add(playersDatum.ComponentPlayer);
                 }
             }
-        }
-
-        public void MakePlayerOffline(int PlayerIndex, bool showMsg = true) {
-            var pd = m_playersData.Find(p => p.PlayerIndex == PlayerIndex);
-            if (pd != null) {
-                var updater = m_subsystemTerrain.TerrainUpdater;
-                if (updater != null && updater.waitChunkList != null && updater.waitChunkList.ContainsKey(pd.PlayerIndex)) {
-                    updater.waitChunkList.Remove(pd.PlayerIndex);
-                }
-                var componentPlayer = pd.ComponentPlayer;
-                if (componentPlayer == null && m_offlinePlayerEntities.TryGetValue(PlayerIndex, out var entityDataPlayer)) {
-                    var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
-                    list.EntitiesData.Add(entityDataPlayer);
-                    m_offlinePlayerEntities.Remove(PlayerIndex);
-                    List<Entity> el = GameManager.Project.InitializeAndLoadEntities(list);
-                    GameManager.Project.AttachEntities(el, true);
-                    Entity e = el[0];
-                    componentPlayer = e.FindComponent<ComponentPlayer>();
-                }
-                if (componentPlayer != null) {
-                    Project.RemoveEntity(componentPlayer.Entity, true);
-                    if (!NetworkManager.IsNetworkMode) {
-                        componentPlayer.SavePlayerEntity();
-                    }
-                }
-                m_subsystemTerrain.TerrainUpdater.RemoveUpdateLocation(pd.PlayerIndex);
-                RemovePlayerData(pd, true);
-            }
-        }
-
-        public bool CheckPlayerDataExists(int PlayerIndex, out string entityFilePath) {
-            var entityFileDir = Storage.CombinePaths(m_subsystemGameInfo.DirectoryName, $"PlayerEntities/");
-            entityFilePath = Storage.CombinePaths(entityFileDir, $"{PlayerIndex}.json");
-            if (!Storage.FileExists(entityFilePath)) {
-                entityFilePath = Storage.CombinePaths(entityFileDir, $"{PlayerIndex}.dat");
-            }
-            return Storage.FileExists(entityFilePath);
-        }
-
-        public bool MakePlayerOnline(int PlayerIndex, out PlayerData playerData, out Entity entity) {
-            if (CheckPlayerDataExists(PlayerIndex, out string entityFilePath) && !NetworkManager.IsNetworkMode) {
-                playerData = new PlayerData(Project);
-                ValuesDictionary dict = new ValuesDictionary();
-                using (Stream s = Storage.OpenFile(entityFilePath, OpenFileMode.Read)) {
-                    if (entityFilePath.EndsWith(".json")) {
-                        StreamReader reader = new StreamReader(s);
-                        string jsonText = reader.ReadToEnd();
-                        reader.Dispose();
-                        dict.ApplyOverridesUseJson(jsonText, out byte[] data);
-                    }
-                    else if (entityFilePath.EndsWith(".dat")) {
-                        byte[] d = new byte[s.Length];
-                        s.Read(d, 0, d.Length);
-                        dict.ApplyOverridesUseMessagePack(d);
-                        Storage.DeleteFile(entityFilePath);
-                    }
-                }
-                var entityData = new EntityData(Project.GameDatabase, dict.GetValue<ValuesDictionary>("Entity"));
-                playerData.Load(dict.GetValue<ValuesDictionary>("Data"));
-                AddPlayerData(playerData);
-                playerData.WaitEntityAdded();
-                var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
-                list.EntitiesData.Add(entityData);
-                List<Entity> el = GameManager.Project.InitializeAndLoadEntities(list);
-                GameManager.Project.AttachEntities(el, true);
-                if (el.Count > 0) {
-                    entity = el[0];
-                    entity.Id = 0;
-                }
-                else {
-                    entity = null;
-                }
-                return true;
-            }
-
-            playerData = null;
-            entity = null;
-            return false;
         }
 
         public PlayerData FindPlayerData(Func<PlayerData, bool> f) {

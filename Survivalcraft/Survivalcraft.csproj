@@ -9,6 +9,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Include="ModsManager\NetworkModEntity.cs" />
       <Compile Include="Network\New\NetworkClient.cs" />
       <Compile Include="Network\New\RelayHost.cs" />
       <Compile Include="Network\New\NetworkServer.cs" />
@@ -19,6 +20,7 @@
       <Compile Include="Network\Packet\Base\SkinPacketBase.cs" />
       <Compile Include="Network\Packet\Base\TerrainPacketBase.cs" />
       <Compile Include="Network\Packet\Connect\ConnectPacket.cs" />
+      <Compile Include="Network\Packet\Connect\IndexPacket.cs" />
       <Compile Include="Network\Packet\Connect\StatePacket.cs" />
       <Compile Include="Network\Packet\Connect\ProjectPacket.cs" />
       <Compile Include="Network\Packet\Entity\ApplyImpulsePacket.cs" />
@@ -126,6 +128,7 @@
       <Compile Include="Network\Packet\Terrain\TerrainRequestSyncChunksPacket.cs" />
       <Compile Include="Network\Packet\Terrain\TerrainSyncChunkListPacket.cs" />
       <Compile Include="Network\RootManager.cs" />
+      <Compile Include="Network\SubsystemNetwork.cs" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />

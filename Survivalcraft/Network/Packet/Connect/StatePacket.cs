@@ -36,9 +36,10 @@ public class StatePacket : ClientPacketBase {
 
             switch (client.NetworkState) {
                 case NetworkState.Connected: {
-                        // 在未来弃用
+                        /*
                         byte[] textureData = null;
-                        if (subsystemPlayers.MakePlayerOnline(client.PlayerIndex, out PlayerData playerData, out Entity entity)) {
+                        SubsystemNetwork subsystemNetwork = GameManager.Project.FindSubsystem<SubsystemNetwork>();
+                        if (subsystemNetwork.MakePlayerOnline(client.NetworkGuid, out PlayerData playerData, out Entity entity)) {
                             if (entity != null) {
                                 GameManager.Project.AddEntity(entity);
                             }
@@ -48,12 +49,13 @@ public class StatePacket : ClientPacketBase {
                             using var s = Storage.OpenFile(BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName), OpenFileMode.Read);
                             textureData = ModsManager.StreamToBytes(s);
                         }
-                        //byte[] data = NetworkManager.GetNowProject(GameManager.Project);
-                        //NetworkManager.Queue(new ProjectPacket(data) { To = client });
+                        byte[] data = NetworkManager.GetNowProject(GameManager.Project);
+                        NetworkManager.Queue(new ProjectPacket(data) { To = client });
+                        */
                         break;
                     }
                 case NetworkState.NotConnected:
-                    subsystemPlayers.MakePlayerOffline(client.PlayerIndex);
+                    // GameManager.Project.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(client);
                     break;
                 case NetworkState.ProjectLoaded: {
                         List<Entity> sendList = [.. GameManager.Project.Entities];

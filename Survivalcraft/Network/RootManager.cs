@@ -314,11 +314,7 @@ public static class RootManager {
                 NetworkManager.Queue(new PlayerBodyUpdatePacket(player));
         };
         PlayerData.PlayerFirstUpdated = (player) => {
-            // 非本地主玩家且缺少对应网络客户端时，转为离线状态。
-            if (NetworkManager.IsNetworkMode && Enumerable.FirstOrDefault(
-                        NetworkManager.NetworkServer?.ClientSessions.Values, c => c.PlayerIndex == player.PlayerIndex) == null) {
-                player.m_stateMachine.TransitionTo("MakePlayerOffline");
-            }
+            // todo:非本地主玩家且缺少对应网络客户端时，转为离线状态
         };
         ComponentBody.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
         ComponentLocomotion.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;

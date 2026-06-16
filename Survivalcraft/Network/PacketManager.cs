@@ -18,7 +18,7 @@ public abstract class Packet {
 
 public enum PacketType : byte {
     // Connect
-    ConnectInfo = 0, ProjectInfo = 1, StateInfo = 2,
+    ConnectInfo = 0, IndexInfo = 1, ProjectInfo = 2, StateInfo = 3,
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
@@ -32,7 +32,7 @@ public enum PacketType : byte {
     VitalStatSync = 83,
 
     // Inventory
-    Furnace = 10,
+    Furnace = 12,
     Dispenser = 13,
     ActiveSlotChange = 36, InventorySync = 37, MoveItem = 38, DragDropItem = 39, SetSlotItem = 40,
     ClothingRequestSkin = 64, ClothingReplySkin = 65, ClothingWhoHas = 66, ClothingWhoHasReply = 67,
@@ -40,16 +40,16 @@ public enum PacketType : byte {
     PickableSetFlyToPosition = 97, PickableCreateList = 98, PickableDeleteList = 99, PickableSyncList = 100,
 
     // Logic
-    Electricity = 6,
-    SignBlock = 12,
+    Electricity = 7,
+    SignBlock = 109,
     EditSign = 18,
     EditableMemoryBank = 84, EditableTruthTable = 85, EditableAdjustableDelayGate = 86,
     EditableBattery = 87, EditablePiston = 88, EditableSwitch = 89, EditableButton = 90,
     MovingBlockAdd = 91, MovingBlockRemove = 92,
 
     // Mechanics
-    Mount = 7,
-    Sickness = 8, Flu = 9, Projectile = 11,
+    Mount = 8,
+    Sickness = 9, Flu = 10, Projectile = 11,
     OpenInventoryByID = 15, OpenInventoryByPoint = 16, CrossbowPull = 17,
     SleepRequest = 19, SleepStatus = 20, WakeupRequest = 21, WakeupStatus = 22,
     ExplosionSound = 23, ExplosionCell = 24,
@@ -64,8 +64,8 @@ public enum PacketType : byte {
     PlayerDragDrop = 80, PlayerStatSync = 81, PlayerPositionSet = 82,
 
     // Terrain
-    Time = 3, Sky = 4,
-    Weather = 5, Season = 14,
+    Time = 4, Sky = 5,
+    Weather = 6, Season = 14,
     TerrainRequestSyncChunks = 101, TerrainSyncChunkList = 102, TerrainReplyResult = 103,
     TerrainChangeCell = 104, TerrainRequestChangeCell = 105, TerrainChangeCellList = 106,
 
@@ -83,6 +83,7 @@ public class PacketManager {
 
         // Connect
         RegisterPacket<ConnectPacket>();
+        RegisterPacket<IndexPacket>();
         RegisterPacket<ProjectPacket>();
         RegisterPacket<StatePacket>();
 
@@ -231,43 +232,6 @@ public class PacketManager {
         UnRegisterPacket(packet.ID);
     }
 
-    public static T DecodePacket<T>(IEnumerable<ClientSession> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) where T : Packet {
-        var packets = DecodePackets(clients, reader, netPeer, request, iPEndPoint);
-        return (T)(packets.Count > 0 ? packets[0] : null);
-    }
-
-    public static List<Packet> DecodePacketsFromPayload(IEnumerable<ClientSession> clients, byte[] payload, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        List<Packet> packets = [];
-        byte packetID = 99;
-        if (payload == null || payload.Length == 0) {
-            return packets;
-        }
-        try {
-            var preader = new PacketStreamReader(payload);
-            return DecodePacketsFromReader(preader, ref packetID, request, iPEndPoint);
-        }
-        catch {
-            Log.Information("接收到不规范的数据包:" + packetID);
-            return packets;
-        }
-    }
-
-    public static List<Packet> DecodePackets(IEnumerable<ClientSession> clients, NetDataReader reader, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
-        List<Packet> packets = [];
-        byte packetID = 99;
-        if (reader.AvailableBytes == 0) {
-            return packets;
-        }
-        try {
-            PacketStreamReader preader = new(reader.GetBytesWithLength());
-            return DecodePacketsFromReader(preader, ref packetID, request, iPEndPoint);
-        }
-        catch {
-            Log.Information("接收到不规范的数据包:" + packetID);
-            return packets;
-        }
-    }
-
     public static List<Packet> DecodePackets(byte[] payload) {
         List<Packet> packets = [];
         byte packetID = 0;
@@ -284,11 +248,11 @@ public class PacketManager {
         }
     }
 
-    private static List<Packet> DecodePacketsFromReader(PacketStreamReader preader, ref byte packetID, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
+    private static List<Packet> DecodePacketsFromReader(PacketStreamReader preader, ref byte packetID, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {
         List<Packet> packets = [];
         Packet last = null;
         ClientSession from = null;
-        if (from == null) throw new();
+
         while (preader.BaseStream.Position < preader.BaseStream.Length) {
             byte check = preader.ReadByte();
             if (check != VerifyByte && check != RelayVerifyByte) {

@@ -5,18 +5,15 @@ public class ProjectPacket : Packet {
     public override NetworkState MinNeedState => NetworkState.NotConnected;
 
     public byte[] m_projectData;
-    public int m_playerIndex;
 
     public ProjectPacket() {
     }
 
-    public ProjectPacket(byte[] projectData, int playerIndex = -1) {
+    public ProjectPacket(byte[] projectData) {
         m_projectData = projectData;
-        m_playerIndex = playerIndex;
     }
 
     public override void Serialize(PacketSerializer archive) {
-        archive.Value(ref m_playerIndex);
         int projectLength = archive.IsWriting ? m_projectData.Length : 0;
         archive.Value(ref projectLength);
         byte[] projectData = archive.IsWriting ? m_projectData : null;
@@ -30,8 +27,7 @@ public class ProjectPacket : Packet {
         if (isServer) {
             return;
         }
-        // NetworkClient.ClientSession.PlayerIndex = m_playerIndex;
-        // NetworkClient.ClientSession.NetworkStage = NetworkState.Connected;
+        NetworkManager.NetworkClient.MySession.NetworkState = NetworkState.Connected;
         ScreensManager.FindScreen<GameLoadingScreen>("GameLoading").ReplyCall(m_projectData);
     }
 }

@@ -26,16 +26,17 @@ public class ConnectPacket : Packet {
         if (isServer) {
             // 前置拦截如校验黑名单
             From.NetworkGuid = playerGuid;
-            SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
-            if (subsystemPlayers.MakePlayerOnline(From.PlayerIndex, out PlayerData playerData, out Entity entity)) {
+            SubsystemNetwork subsystemNetwork = GameManager.Project.FindSubsystem<SubsystemNetwork>();
+            if (subsystemNetwork.MakePlayerOnline(From.NetworkGuid, out PlayerData playerData, out Entity entity)) {
                 if (entity != null) {
                     GameManager.Project.AddEntity(entity);
                 }
                 From.PlayerIndex = playerData.PlayerIndex;
                 NetworkManager.Queue(new PlayerAddPacket(playerData) { Except = From });
+                NetworkManager.Queue(new IndexPacket(From.PlayerIndex) { To = From });
             }
             byte[] data = GetNowProject(GameManager.Project);
-            NetworkManager.Queue(new ProjectPacket(data, From.PlayerIndex) { To = From });
+            NetworkManager.Queue(new ProjectPacket(data) { To = From });
         }
     }
 

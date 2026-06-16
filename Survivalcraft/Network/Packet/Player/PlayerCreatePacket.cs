@@ -33,5 +33,8 @@ public class PlayerCreatePacket : Packet {
         subsystemPlayers.AddPlayerData(playerData);
         // 服务端广播给所有客户端，添加玩家
         NetworkManager.Queue(new PlayerAddPacket(playerData));
+
+        From.PlayerIndex = playerData.PlayerIndex;
+        NetworkManager.Queue(new IndexPacket(From.PlayerIndex) { To = From });
     }
 }
