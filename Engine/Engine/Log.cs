@@ -11,6 +11,10 @@ namespace Engine {
             m_logSinks = [];
             AddLogSink(new ConsoleLogSink());
             MinimumLogType = LogType.Information;
+#if DEBUG
+            AddLogSink(new NetworkLogSink());
+            MinimumLogType = LogType.Verbose;
+#endif
         }
 
         public static void Write(LogType type, string message) {

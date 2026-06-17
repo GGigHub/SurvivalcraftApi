@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Engine\Engine.csproj" />
+    <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />
+    <ProjectReference Include="..\Survivalcraft.Windows\Survivalcraft.Windows.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Target Name="PackageMod" AfterTargets="Build">
+    <PropertyGroup>
+      <ModTempDir>$(IntermediateOutputPath)ModTemp\</ModTempDir>
+      <ModOutputPath>..\Survivalcraft.Test\bin\Debug\net10.0-windows\Mods\</ModOutputPath>
+    </PropertyGroup>
+    <RemoveDir Directories="$(ModTempDir)" />
+    <MakeDir Directories="$(ModTempDir)" />
+    <MakeDir Directories="$(ModOutputPath)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModTempDir)" />
+    <Copy SourceFiles="modinfo.json" DestinationFolder="$(ModTempDir)" />
+    <ZipDirectory SourceDirectory="$(ModTempDir)" DestinationFile="$(ModOutputPath)Survivalcraft.TestMod.A.scmod" Overwrite="true" />
+  </Target>
+
+</Project>
