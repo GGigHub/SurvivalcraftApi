@@ -1,7 +1,11 @@
 {
-  "PackageName": "Survivalcraft.TestMod.Server",
-  "Name": "Test Input Hijacker Mod Server",
+  "PackageName": "Survivalcraft.TestMod.A",
+  "Name": "Test Input Hijacker Mod A",
   "Version": "1.0",
   "Author": "Test",
+  "ApiVersion": "1.9.0.2",
+  "ScVersion": "2.4.0.0",
+  "Link": "",
+  "NonPersistentMod": true,
   "Description": "Hooks input and exposes UDP server for test automation"
 }

@@ -29,6 +29,38 @@ namespace Survivalcraft.Test {
             return context;
         }
 
+        public async Task<bool> WaitLogAsync(string message, GameProcessContext target,  int seconds = 1) {
+            using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(seconds));
+            return await WaitLogAsync(target, message, timeout.Token);
+        }
+
+        public async Task<bool> WaitLogAsync(GameProcessContext target, string message, CancellationToken cancellationToken) {
+            while (!cancellationToken.IsCancellationRequested) {
+                ThrowIfAnyContextHasError();
+
+                foreach (string logMessage in target.ReceivedMessages) {
+                    if (logMessage.Contains(message)) {
+                        return true;
+                    }
+                }
+
+                try {
+                    await Task.Delay(50, cancellationToken);
+                }
+                catch (OperationCanceledException) {
+                    break;
+                }
+            }
+
+            return false;
+        }
+
+        public void ThrowIfAnyContextHasError() {
+            foreach (GameProcessContext context in contexts) {
+                context.ThrowIfErrorLogReceived();
+            }
+        }
+
         public void Dispose() {
             for (int i = contexts.Count - 1; i >= 0; i--) {
                 contexts[i].Dispose();

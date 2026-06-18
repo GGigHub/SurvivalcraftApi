@@ -68,8 +68,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.Test", "Survi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.TestMod.A", "Survivalcraft.TestMod.A\Survivalcraft.TestMod.A.csproj", "{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.TestMod.B", "Survivalcraft.TestMod.B\Survivalcraft.TestMod.B.csproj", "{C9A66B3E-399B-4977-82EA-B312AC6B0C58}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -150,10 +148,6 @@ Global
 		{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C9A66B3E-399B-4977-82EA-B312AC6B0C58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C9A66B3E-399B-4977-82EA-B312AC6B0C58}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C9A66B3E-399B-4977-82EA-B312AC6B0C58}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C9A66B3E-399B-4977-82EA-B312AC6B0C58}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

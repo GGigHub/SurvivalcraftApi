@@ -8,20 +8,21 @@ namespace Game {
             int i = 0;
             foreach (ModEntity modEntity in ModsManager.ModList) {
                 if (modEntity is SurvivalCraftModEntity
-                    || modEntity is FastDebugModEntity) {
+                    || modEntity is FastDebugModEntity
+                    || modEntity is NetworkModEntity) {
                     continue;
                 }
                 if (modEntity.modInfo.NonPersistentMod) {
                     continue;
                 }
                 ValuesDictionary modInfoDict = new();
-                modInfoDict.SetValue("Name", modEntity.modInfo.Name);
-                modInfoDict.SetValue("Version", modEntity.modInfo.Version);
-                modInfoDict.SetValue("ApiVersion", modEntity.modInfo.ApiVersion);
-                modInfoDict.SetValue("ScVersion", modEntity.modInfo.ScVersion);
-                modInfoDict.SetValue("Author", modEntity.modInfo.Author);
-                modInfoDict.SetValue("Link", modEntity.modInfo.Link);
-                modInfoDict.SetValue("PackageName", modEntity.modInfo.PackageName);
+                modInfoDict.SetValue("Name", modEntity.modInfo.Name ?? string.Empty);
+                modInfoDict.SetValue("Version", modEntity.modInfo.Version ?? string.Empty);
+                modInfoDict.SetValue("ApiVersion", modEntity.modInfo.ApiVersion ?? string.Empty);
+                modInfoDict.SetValue("ScVersion", modEntity.modInfo.ScVersion ?? string.Empty);
+                modInfoDict.SetValue("Author", modEntity.modInfo.Author ?? string.Empty);
+                modInfoDict.SetValue("Link", modEntity.modInfo.Link ?? string.Empty);
+                modInfoDict.SetValue("PackageName", modEntity.modInfo.PackageName ?? string.Empty);
                 modsDict.SetValue(i.ToString(), modInfoDict);
                 i++;
             }

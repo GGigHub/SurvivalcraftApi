@@ -1,7 +1,0 @@
-{
-  "PackageName": "Survivalcraft.TestMod.B",
-  "Name": "Test Input Hijacker Mod Client",
-  "Version": "1.0",
-  "Author": "Test",
-  "Description": "Hooks input and exposes UDP server for test automation"
-}

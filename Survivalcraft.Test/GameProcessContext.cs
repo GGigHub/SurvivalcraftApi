@@ -93,11 +93,10 @@ public sealed class GameProcessContext : IDisposable {
 
     public async Task<bool> WaitLogAsync(string message, CancellationToken cancellationToken) {
         while (!cancellationToken.IsCancellationRequested) {
-            foreach (string msg in ReceivedMessages) {
-                if (msg.Contains("Error")) {
-                    throw new InvalidOperationException($"[{RoleName}] {msg}");
-                }
-                if (msg.Contains(message)) {
+            ThrowIfErrorLogReceived();
+
+            foreach (string logMessage in ReceivedMessages) {
+                if (logMessage.Contains(message)) {
                     return true;
                 }
             }
@@ -110,6 +109,24 @@ public sealed class GameProcessContext : IDisposable {
             }
         }
 
+        return false;
+    }
+
+    public void ThrowIfErrorLogReceived() {
+        if (TryGetErrorLog(out string? message)) {
+            throw new InvalidOperationException($"[{RoleName}] {message}");
+        }
+    }
+
+    public bool TryGetErrorLog(out string? message) {
+        foreach (string logMessage in ReceivedMessages) {
+            if (IsErrorLog(logMessage)) {
+                message = logMessage;
+                return true;
+            }
+        }
+
+        message = null;
         return false;
     }
 
@@ -172,6 +189,10 @@ public sealed class GameProcessContext : IDisposable {
         CmdPort.ToString(),
         .. arguments
     ];
+
+    private static bool IsErrorLog(string message) =>
+        message.Contains("] [Error]", StringComparison.OrdinalIgnoreCase)
+        || message.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase);
 
     private static void CopyRuntimeDirectory(string sourceDirectory, string destinationDirectory) {
         Directory.CreateDirectory(destinationDirectory);

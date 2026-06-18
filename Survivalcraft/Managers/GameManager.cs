@@ -44,7 +44,7 @@ namespace Game {
             m_project = new Project(DatabaseManager.GameDatabase, projectData);
             m_subsystemUpdate = m_project.FindSubsystem<SubsystemUpdate>(throwOnError: true);
             m_worldInfo = new WorldInfo();
-            Log.Information("加载NetProject");
+            Log.Information("Loading network project...");
             GC.Collect();
         }
 

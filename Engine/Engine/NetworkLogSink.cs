@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -24,6 +25,7 @@ public class NetworkLogSink : ILogSink, IDisposable {
     public void Log(LogType type, string message) {
         try {
             string logEntry = $"[{DateTime.Now:HH:mm:ss.fff}] [{type}] {message}\n";
+            if (type == LogType.Error) logEntry += new StackTrace().ToString();
             byte[] bytes = Encoding.UTF8.GetBytes(logEntry);
 
             _udpClient.SendAsync(bytes, bytes.Length, _remoteEndPoint);
