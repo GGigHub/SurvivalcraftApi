@@ -11,6 +11,12 @@ public class NetworkLogSink : ILogSink, IDisposable {
     private IPEndPoint _remoteEndPoint;
 
     public NetworkLogSink(string ipAddress = "127.0.0.1", int port = 23942) {
+        string[] args = Environment.GetCommandLineArgs();
+        for (int i = 0; i < args.Length; i++) {
+            if (args[i] == "--log-port" && i + 1 < args.Length && int.TryParse(args[i + 1], out int p)) {
+                port = p;
+            }
+        }
         _udpClient = new UdpClient();
         _remoteEndPoint = new IPEndPoint(IPAddress.Parse(ipAddress), port);
     }

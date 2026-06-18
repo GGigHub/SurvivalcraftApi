@@ -29,9 +29,16 @@ namespace Survivalcraft.TestMod.A {
         }
 
         private void StartUdpServer() {
+            int cmdPort = 23944;
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++) {
+                if (args[i] == "--cmd-port" && i + 1 < args.Length && int.TryParse(args[i + 1], out int p)) {
+                    cmdPort = p;
+                }
+            }
             try {
-                udpServer = new UdpClient(23944);
-                Log.Information("[Survivalcraft.TestMod.A] UDP Server listening on port 23944");
+                udpServer = new UdpClient(cmdPort);
+                Log.Information($"[Survivalcraft.TestMod.A] UDP Server listening on port {cmdPort}");
                 
                 Task.Run(async () => {
                     while (!cts.IsCancellationRequested) {

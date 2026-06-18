@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Game;
 using Xunit;
 
 namespace Survivalcraft.Test;
@@ -8,37 +9,55 @@ namespace Survivalcraft.Test;
 [TestCaseOrderer("Survivalcraft.Test.PriorityOrderer", "Survivalcraft.Test")]
 public sealed class GameStartupTest : IClassFixture<GameProcessFixture> {
     private readonly GameProcessFixture fixture;
+    private GameProcessContext server => fixture.Server;
+    private GameProcessContext client => fixture.Client;
+
 
     public GameStartupTest(GameProcessFixture fixture) {
         this.fixture = fixture;
     }
 
+    // 串行按顺序执行以下所有测试方法
     [Fact, TestOrder(Priority = 1)]
     public async Task TestGameEntersSuccessfully() {
-        CancellationTokenSource cts = new(TimeSpan.FromSeconds(5));
+        bool mainScreenEntered = await server.WaitLogAsync(
+            "Entered screen \"MainMenu\"", 5);
 
-        bool foundLog = await fixture.WaitLogAsync(
-            "Entered screen \"MainMenu\"", cts.Token);
-
-        Assert.True(foundLog,
+        Assert.True(mainScreenEntered,
             "Did not receive the target log message within the timeout period.");
     }
 
     [Fact, TestOrder(Priority = 2)]
     public async Task TestWorldCreation() {
-        await fixture.SendCommandAsync("CLICK_WIDGET Play");
-        bool playScreenEntered = await fixture.WaitLogAsync("Entered screen \"Play\"");
+        await server.PushCommandAsync("CLICK_WIDGET Play");
+        bool playScreenEntered = await server.WaitLogAsync("Entered screen \"Play\"");
         Assert.True(playScreenEntered, "Failed to enter the Play screen");
 
-        await fixture.SendCommandAsync("CLICK_WIDGET NewWorld");
-        bool newWorldScreenEntered = await fixture.WaitLogAsync("Entered screen \"NewWorld\"");
+        await server.PushCommandAsync("CLICK_WIDGET NewWorld");
+        bool newWorldScreenEntered = await server.WaitLogAsync("Entered screen \"NewWorld\"");
         Assert.True(newWorldScreenEntered, "Failed to enter the New World screen");
 
-        await fixture.SendCommandAsync("CLICK_WIDGET Play");
-        bool worldLoaded = await fixture.WaitLogAsync("Entered screen \"GameLoading\"");
-        Assert.True(worldLoaded, "Failed to load the new world");
+        await server.PushCommandAsync("CLICK_WIDGET Play");
+        bool playerScreen = await server.WaitLogAsync("Entered screen \"Player\"");
+        Assert.True(playerScreen, "Failed to load the Player screen");
 
-        bool gameEntered = await fixture.WaitLogAsync("Entered screen \"Game\"", 3);
+        await server.PushCommandAsync("CLICK_WIDGET PlayButton");
+        bool gameEntered = await server.WaitLogAsync("Entered screen \"Game\"");
         Assert.True(gameEntered, "Failed to enter the Game screen");
-    } 
+    }
+
+    [Fact, TestOrder(Priority = 3)]
+    public async Task TestServerConnection() {
+        client.Start("--join", "127.0.0.1:28887");
+
+        bool gameLoadingEntered = await client.WaitLogAsync(
+            "Entered screen \"GameLoading\"", 10);
+        Assert.True(gameLoadingEntered, "Client failed to enter the GameLoading screen.");
+
+        bool connected = await client.WaitLogAsync("Connected: 127.0.0.1:28887", 10);
+        Assert.True(connected, "Client failed to connect to the server.");
+
+        bool playerScreen = await client.WaitLogAsync("Entered screen \"Player\"");
+        Assert.True(playerScreen, "Failed to load the Player screen");
+    }
 }
