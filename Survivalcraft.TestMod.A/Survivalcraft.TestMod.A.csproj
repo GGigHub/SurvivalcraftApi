@@ -4,7 +4,12 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="5.3.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Engine\Engine.csproj" />
@@ -22,7 +27,13 @@
     <RemoveDir Directories="$(ModTempDir)" />
     <MakeDir Directories="$(ModTempDir)" />
     <MakeDir Directories="$(ModOutputPath)" />
+    <ItemGroup>
+      <ModDependencyFiles Include="$(TargetDir)Microsoft.CodeAnalysis*.dll" />
+      <ModDependencyFiles Include="$(TargetDir)System.Collections.Immutable*.dll" />
+      <ModDependencyFiles Include="$(TargetDir)System.Reflection.Metadata*.dll" />
+    </ItemGroup>
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModTempDir)" />
+    <Copy SourceFiles="@(ModDependencyFiles)" DestinationFolder="$(ModTempDir)" />
     <Copy SourceFiles="modinfo.json" DestinationFolder="$(ModTempDir)" />
     <ZipDirectory SourceDirectory="$(ModTempDir)" DestinationFile="$(ModOutputPath)Survivalcraft.TestMod.A.scmod" Overwrite="true" />
   </Target>

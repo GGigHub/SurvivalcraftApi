@@ -8,6 +8,8 @@ using Engine;
 using Engine.Input;
 using HarmonyLib;
 using Game;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 
 namespace Survivalcraft.TestMod.A {
     public class TestModLoader : ModLoader {
@@ -106,9 +108,28 @@ namespace Survivalcraft.TestMod.A {
                     pendingWidgetClicks.Enqueue(query);
                     Log.Information($"[Survivalcraft.TestMod.A] CLICK_WIDGET '{query}' QUEUED");
                 }
+                else if (action == "EXEC" && parts.Length >= 2) {
+                    string code = string.Join(" ", parts, 1, parts.Length - 1);
+                    Log.Information($"[Survivalcraft.TestMod.A] Executing C# code: {code}");
+                    ExecuteCommandScript(code);
+                }
             }
             catch (Exception ex) {
                 Log.Error($"[Survivalcraft.TestMod.A] Error processing command '{command}': {ex.Message}");
+            }
+        }
+
+        private static void ExecuteCommandScript(string code) {
+            try {
+                var options = ScriptOptions.Default
+                    .WithReferences(typeof(GameManager).Assembly, typeof(Vector3).Assembly)
+                    .WithImports("System", "System.Linq", "System.Collections.Generic", "Engine", "Game");
+
+                var result = CSharpScript.EvaluateAsync(code, options).GetAwaiter().GetResult();
+                Log.Information($"[Survivalcraft.TestMod.A] EXEC SUCCESS: {result ?? "null"}");
+            }
+            catch (Exception ex) {
+                Log.Error($"[Survivalcraft.TestMod.A] EXEC ERROR: {ex.Message}");
             }
         }
 

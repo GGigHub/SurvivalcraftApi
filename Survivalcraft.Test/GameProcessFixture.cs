@@ -5,66 +5,68 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Survivalcraft.Test {
-    public sealed class GameProcessFixture : IDisposable {
-        private readonly List<GameProcessContext> contexts = [];
-        private readonly string runRootDirectory;
+namespace Survivalcraft.Test;
 
-        public GameProcessContext Server { get; }
-        public GameProcessContext Client { get; }
+public sealed class GameProcessFixture : IDisposable {
+    private readonly List<GameProcessContext> contexts = [];
+    private readonly string runRootDirectory;
 
-        public GameProcessFixture() {
-            runRootDirectory = Path.Combine(
-                Path.GetTempPath(),
-                "Survivalcraft.Test",
-                DateTime.UtcNow.ToString("yyyyMMddHHmmssfff"));
-            Server = CreateContext("Server");
-            Client = CreateContext("Client");
-            Server.Start();
-        }
+    public GameProcessContext Server { get; }
+    public GameProcessContext Client { get; }
 
-        public GameProcessContext CreateContext(string roleName) {
-            GameProcessContext context = GameProcessContext.Create(roleName, runRootDirectory);
-            contexts.Add(context);
-            return context;
-        }
+    public GameProcessFixture() {
+        runRootDirectory = Path.Combine(
+            Path.GetTempPath(),
+            "Survivalcraft.Test",
+            DateTime.UtcNow.ToString("yyyyMMddHHmmssfff"));
+        Server = CreateContext("Server");
+        Client = CreateContext("Client");
+        Server.Start();
+    }
 
-        public async Task<bool> WaitLogAsync(string message, GameProcessContext target,  int seconds = 1) {
-            using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(seconds));
-            return await WaitLogAsync(target, message, timeout.Token);
-        }
+    public GameProcessContext CreateContext(string roleName) {
+        GameProcessContext context = GameProcessContext.Create(roleName, runRootDirectory);
+        contexts.Add(context);
+        return context;
+    }
 
-        public async Task<bool> WaitLogAsync(GameProcessContext target, string message, CancellationToken cancellationToken) {
-            while (!cancellationToken.IsCancellationRequested) {
-                ThrowIfAnyContextHasError();
+    public async Task<bool> WaitLogAsync(string message, GameProcessContext target, int seconds = 5) {
+        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(seconds));
+        var (success, _) = await WaitLogAsync(target, message, timeout.Token);
+        return success;
+    }
 
-                foreach (string logMessage in target.ReceivedMessages) {
-                    if (logMessage.Contains(message)) {
-                        return true;
-                    }
-                }
+    public async Task<(bool success, string matchedLog)> WaitLogAsync(GameProcessContext target, string message, CancellationToken cancellationToken) {
+        while (!cancellationToken.IsCancellationRequested) {
+            ThrowIfAnyContextHasError();
 
-                try {
-                    await Task.Delay(50, cancellationToken);
-                }
-                catch (OperationCanceledException) {
-                    break;
+            foreach (string logMessage in target.ReceivedMessages) {
+                if (logMessage.Contains(message)) {
+                    target.ReceivedMessages.Clear();
+                    return (true, logMessage);
                 }
             }
 
-            return false;
-        }
-
-        public void ThrowIfAnyContextHasError() {
-            foreach (GameProcessContext context in contexts) {
-                context.ThrowIfErrorLogReceived();
+            try {
+                await Task.Delay(50, cancellationToken);
+            }
+            catch (OperationCanceledException) {
+                break;
             }
         }
 
-        public void Dispose() {
-            for (int i = contexts.Count - 1; i >= 0; i--) {
-                contexts[i].Dispose();
-            }
+        return (false, string.Empty);
+    }
+
+    public void ThrowIfAnyContextHasError() {
+        foreach (GameProcessContext context in contexts) {
+            context.ThrowIfErrorLogReceived();
+        }
+    }
+
+    public void Dispose() {
+        for (int i = contexts.Count - 1; i >= 0; i--) {
+            contexts[i].Dispose();
         }
     }
 }

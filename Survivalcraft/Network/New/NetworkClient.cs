@@ -44,6 +44,7 @@ public class NetworkClient : INetEventListener {
     public void Disconnect() {
         _netManager.Stop();
         _serverPeer = null;
+        MySession?.NetworkState = NetworkState.NotConnected;
         Log.Information($"Disconnecting {_serverAddress}");
     }
 
@@ -78,6 +79,9 @@ public class NetworkClient : INetEventListener {
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
+                if (packet.MinNeedState >= NetworkState.ProjectLoaded && GameManager.Project == null) {
+                    return;
+                }
                 packet.Handle(false);
             });
         }

@@ -86,35 +86,9 @@ public sealed class GameProcessContext : IDisposable {
         await commandClient.SendAsync(cmdBytes, endpoint);
     }
 
-    public async Task<bool> WaitLogAsync(string message, int seconds = 1) {
-        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(seconds));
-        return await WaitLogAsync(message, timeout.Token);
-    }
-
-    public async Task<bool> WaitLogAsync(string message, CancellationToken cancellationToken) {
-        while (!cancellationToken.IsCancellationRequested) {
-            ThrowIfErrorLogReceived();
-
-            foreach (string logMessage in ReceivedMessages) {
-                if (logMessage.Contains(message)) {
-                    return true;
-                }
-            }
-
-            try {
-                await Task.Delay(50, cancellationToken);
-            }
-            catch (OperationCanceledException) {
-                break;
-            }
-        }
-
-        return false;
-    }
-
     public void ThrowIfErrorLogReceived() {
         if (TryGetErrorLog(out string? message)) {
-            throw new InvalidOperationException($"[{RoleName}] {message}");
+            throw new InvalidOperationException($"[{RoleName}] {message}{Environment.NewLine}{GetRecentLogText()}");
         }
     }
 
@@ -133,7 +107,7 @@ public sealed class GameProcessContext : IDisposable {
     public string GetRecentLogText(int maxLines = 80) {
         string[] messages = ReceivedMessages.ToArray();
         int start = Math.Max(0, messages.Length - maxLines);
-        return string.Join(Environment.NewLine, messages[start..]);
+        return string.Join(string.Empty, messages[start..]);
     }
 
     public void Dispose() {
