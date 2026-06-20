@@ -26,6 +26,14 @@ namespace Survivalcraft.TestMod.A {
             ModsManager.RegisterHook("BeforeWidgetUpdate", this);
             ModsManager.RegisterHook("AfterWidgetUpdate", this);
 
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++) {
+                if (args[i] == "--game-port" && i + 1 < args.Length && int.TryParse(args[i + 1], out int p)) {
+                    SettingsManager.ServerPort = p;
+                    Log.Information($"[Survivalcraft.TestMod.A] Set SettingsManager.ServerPort to {p}");
+                }
+            }
+
             // Start UDP Server
             StartUdpServer();
         }

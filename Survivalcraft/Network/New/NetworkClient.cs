@@ -43,8 +43,6 @@ public class NetworkClient : INetEventListener {
 
     public void Disconnect() {
         _netManager.Stop();
-        _serverPeer = null;
-        MySession?.NetworkState = NetworkState.NotConnected;
         Log.Information($"Disconnecting {_serverAddress}");
     }
 
@@ -105,6 +103,10 @@ public class NetworkClient : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         _serverPeer = null;
+        MySession.NetworkState = NetworkState.NotConnected;
+
+        ScreensManager.SwitchScreen("MainMenu");
+        DialogsManager.Alert("Disconnected", disconnectInfo.Reason.ToString());
         Log.Information($"Disconnected: {_serverAddress}, Reason: {disconnectInfo.Reason}");
     }
 }

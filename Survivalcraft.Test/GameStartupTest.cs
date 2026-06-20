@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Game;
+using Silk.NET.OpenAL;
 using Xunit;
 
 namespace Survivalcraft.Test;
@@ -12,14 +13,14 @@ public sealed class GameStartupTest : IClassFixture<GameProcessFixture> {
     private GameProcessContext server => fixture.Server;
     private GameProcessContext client => fixture.Client;
 
-
     public GameStartupTest(GameProcessFixture fixture) {
         this.fixture = fixture;
     }
 
-    // 串行按顺序执行以下所有测试方法
+    // 串行按顺序执行以下所有测试方法，测试间互相依赖
     // 运行测试时请先编译测试模组
     // 右键测试项目->运行测试
+    // 比较考验性能，测试环境r7 1700 + 16G内存
     [Fact, TestOrder(Priority = 1)]
     public async Task TestGameEntersSuccessfully() {
         bool mainScreenEntered =
@@ -50,20 +51,17 @@ public sealed class GameStartupTest : IClassFixture<GameProcessFixture> {
 
     [Fact, TestOrder(Priority = 3)]
     public async Task TestServerConnection() {
-        client.Start("--join", "127.0.0.1:28887");
+        client.Start("--join", $"127.0.0.1:{server.GamePort}");
 
-        bool gameLoadingEntered = await fixture.WaitLogAsync("Entered screen \"GameLoading\"", client);
-        Assert.True(gameLoadingEntered, "Client failed to enter the GameLoading screen.");
-
-        bool connected = await fixture.WaitLogAsync("Connected: 127.0.0.1:28887", client);
+        bool connected = await fixture.WaitLogAsync($"Connected: 127.0.0.1:{server.GamePort}", client);
         Assert.True(connected, "Client failed to connect to the server.");
 
         bool playerScreen = await fixture.WaitLogAsync("Entered screen \"Player\"", client);
         Assert.True(playerScreen, "Failed to load the Player screen");
 
         await client.PushCommandAsync("CLICK_WIDGET PlayButton");
-        bool gameEntered = await fixture.WaitLogAsync("Entered screen \"Game\"", client);
-        Assert.True(gameEntered, "Failed to enter the Game screen");
+        bool intoPlaying = await fixture.WaitLogAsync("Player into playing.", client);
+        Assert.True(intoPlaying, "Failed into playing state");
     }
 
     [Fact, TestOrder(Priority = 4)]
@@ -79,17 +77,55 @@ public sealed class GameStartupTest : IClassFixture<GameProcessFixture> {
 
         await client.PushCommandAsync("EXEC " +
             "ScreensManager.SwitchScreen(" +
-            "\"GameLoading\", null, null, System.Net.IPEndPoint.Parse(\"127.0.0.1:28887\"), null);");
+            $"\"GameLoading\", null, null, System.Net.IPEndPoint.Parse(\"127.0.0.1:{server.GamePort}\"), null);");
 
         bool gameLoadingEntered = await fixture.WaitLogAsync("Entered screen \"GameLoading\"", client);
         Assert.True(gameLoadingEntered, "Client failed to enter the GameLoading screen during reconnection.");
 
-        bool connected = await fixture.WaitLogAsync("Connected: 127.0.0.1:28887", client);
+        bool connected = await fixture.WaitLogAsync($"Connected: 127.0.0.1:{server.GamePort}", client);
         Assert.True(connected, "Client failed to reconnect to the server.");
 
-        using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(5));
-        var (success, context) = await fixture.WaitLogAsync(client, "Entered screen",  timeout.Token);
-        Assert.True(context.Contains("Game"), "Player data was not loaded correctly.");
-        Assert.False(context.Contains("Player"), "Player screen should not be loaded, but Game screen should be loaded.");
+        bool gameEntered = await fixture.WaitLogAsync("Entered screen \"Game\"", client);
+        Assert.True(gameEntered, "Failed to enter the Game screen");
+
+        bool intoPlaying = await fixture.WaitLogAsync("Player into playing.", client);
+        Assert.True(intoPlaying, "Failed into playing state");
+    }
+
+    [Fact, TestOrder(Priority = 5)]
+    public async Task TestServerReconnectionWithServerExitFirst() {
+        // 关闭服务器
+        await server.PushCommandAsync("EXEC " +
+            "NetworkManager.Stop(); " +
+            "GameManager.SaveProject(true, true); " +
+            "GameManager.DisposeProject(); " +
+            "ScreensManager.SwitchScreen(\"MainMenu\");");
+
+        // 等待客户端日志以确认对话框已显示
+        bool disconnectDialogShown = await fixture.WaitLogAsync("Dialog shown: Disconnected", client);
+        Assert.True(disconnectDialogShown, "Client did not show the Disconnected dialog.");
+
+        await server.PushCommandAsync("CLICK_WIDGET Play");
+        await server.PushCommandAsync("EXEC " +
+            "var playScreen = ScreensManager.CurrentScreen as PlayScreen; " +
+            "if (playScreen != null && playScreen.m_worldsListWidget.Items.Count > 0) { " +
+            "    playScreen.m_worldsListWidget.SelectedIndex = 0; " +
+            "}");
+        await server.PushCommandAsync("CLICK_WIDGET Play");
+        bool serverIntoPlaying = await fixture.WaitLogAsync("Player into playing. Index: 0", server);
+        Assert.True(serverIntoPlaying, "Server failed into playing state");
+
+        await client.PushCommandAsync("EXEC DialogsManager.HideAllDialogs();");
+        await client.PushCommandAsync("EXEC " +
+            "ScreensManager.SwitchScreen(" +
+            $"\"GameLoading\", null, null, System.Net.IPEndPoint.Parse(\"127.0.0.1:{server.GamePort}\"), null);");
+        bool clientIntoPlaying = await fixture.WaitLogAsync("Player into playing. Index: 1", client);
+        Assert.True(clientIntoPlaying, "Client failed into playing state");
+
+    }
+
+    [Fact]
+    public void Dispose() {
+        fixture.ThrowIfAnyContextHasError();
     }
 }

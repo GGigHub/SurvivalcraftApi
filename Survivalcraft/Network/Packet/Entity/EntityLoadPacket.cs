@@ -17,7 +17,9 @@ public class EntityLoadPacket : Packet {
     }
 
     public EntityLoadPacket(List<Entity> entities) {
-        entityDataList = entities.Count > 0 ? entities[0].Project.SaveEntities(entities) : new EntityDataList();
+        entityDataList = entities.Count > 0
+            ? entities[0].Project.SaveEntities(entities)
+            : new EntityDataList { EntitiesData = [], Entities = [] };
     }
 
     public override void Serialize(PacketSerializer archive) {

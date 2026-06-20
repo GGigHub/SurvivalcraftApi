@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Survivalcraft.Test;
@@ -21,6 +22,8 @@ public sealed class GameProcessContext : IDisposable {
 
     private Process? gameProcess;
     private bool disposed;
+    
+    private readonly ConcurrentQueue<string> recentLogs = new();
 
     public GameProcessContext(string roleName, string sourceDirectory, string runDirectory) {
         RoleName = roleName;
@@ -30,6 +33,7 @@ public sealed class GameProcessContext : IDisposable {
         LogServer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
         LogPort = ((IPEndPoint)LogServer.Client.LocalEndPoint!).Port;
         CmdPort = GetAvailableUdpPort();
+        GamePort = GetAvailableUdpPort();
         receiveTask = Task.Run(ReceiveMessagesAsync);
     }
 
@@ -39,13 +43,17 @@ public sealed class GameProcessContext : IDisposable {
     public CancellationTokenSource Cts { get; }
     public int LogPort { get; }
     public int CmdPort { get; }
+    public int GamePort { get; }
     public UdpClient LogServer { get; }
-    public ConcurrentQueue<string> ReceivedMessages { get; } = new();
+    public Channel<string> LogChannel { get; } = Channel.CreateUnbounded<string>();
     public bool IsStarted => gameProcess != null;
+    
+    public Exception? FatalException { get; private set; }
+    public event Action<GameProcessContext, Exception>? OnFatalError;
 
     public static GameProcessContext Create(string roleName, string? runRootDirectory = null) {
         string sourceDirectory = AppContext.BaseDirectory;
-        string runId = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
+        string runId = Guid.NewGuid().ToString("N")[..8];
         string rootDirectory = runRootDirectory
             ?? Path.Combine(Path.GetTempPath(), "Survivalcraft.Test", runId);
         string runDirectory = Path.Combine(rootDirectory, SanitizePathSegment(roleName));
@@ -86,26 +94,8 @@ public sealed class GameProcessContext : IDisposable {
         await commandClient.SendAsync(cmdBytes, endpoint);
     }
 
-    public void ThrowIfErrorLogReceived() {
-        if (TryGetErrorLog(out string? message)) {
-            throw new InvalidOperationException($"[{RoleName}] {message}{Environment.NewLine}{GetRecentLogText()}");
-        }
-    }
-
-    public bool TryGetErrorLog(out string? message) {
-        foreach (string logMessage in ReceivedMessages) {
-            if (IsErrorLog(logMessage)) {
-                message = logMessage;
-                return true;
-            }
-        }
-
-        message = null;
-        return false;
-    }
-
     public string GetRecentLogText(int maxLines = 80) {
-        string[] messages = ReceivedMessages.ToArray();
+        string[] messages = recentLogs.ToArray();
         int start = Math.Max(0, messages.Length - maxLines);
         return string.Join(string.Empty, messages[start..]);
     }
@@ -117,6 +107,7 @@ public sealed class GameProcessContext : IDisposable {
         disposed = true;
 
         Cts.Cancel();
+        LogChannel.Writer.TryComplete();
         LogServer.Dispose();
         commandClient.Dispose();
 
@@ -142,7 +133,18 @@ public sealed class GameProcessContext : IDisposable {
             try {
                 UdpReceiveResult receiveResult = await LogServer.ReceiveAsync(Cts.Token);
                 string message = Encoding.UTF8.GetString(receiveResult.Buffer);
-                ReceivedMessages.Enqueue(message);
+                
+                recentLogs.Enqueue(message);
+                if (recentLogs.Count > 1000) {
+                    recentLogs.TryDequeue(out _);
+                }
+                
+                LogChannel.Writer.TryWrite(message);
+
+                if (IsErrorLog(message) && FatalException == null) {
+                    FatalException = new InvalidOperationException($"[{RoleName}] {message}{Environment.NewLine}{GetRecentLogText()}");
+                    OnFatalError?.Invoke(this, FatalException);
+                }
             }
             catch (OperationCanceledException) {
                 break;
@@ -161,11 +163,13 @@ public sealed class GameProcessContext : IDisposable {
         LogPort.ToString(),
         "--cmd-port",
         CmdPort.ToString(),
+        "--game-port",
+        GamePort.ToString(),
         .. arguments
     ];
 
     private static bool IsErrorLog(string message) =>
-        message.Contains("] [Error]", StringComparison.OrdinalIgnoreCase)
+        message.Contains("error", StringComparison.OrdinalIgnoreCase)
         || message.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase);
 
     private static void CopyRuntimeDirectory(string sourceDirectory, string destinationDirectory) {

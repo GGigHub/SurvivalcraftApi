@@ -107,11 +107,11 @@ public class NetworkServer : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         if (ClientSessions.TryGetValue(peer, out ClientSession session)) {
-            GameManager.Project.FindSubsystem<SubsystemNetwork>().
-                    MakePlayerOffline(session);
+            GameManager.Project.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
         }
 
         ClientSessions.Remove(peer);
+        session.NetworkState = NetworkState.NotConnected;
         Log.Information($"Disconnected: {peer.Address}, {disconnectInfo}");
     }
 }

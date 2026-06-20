@@ -50,6 +50,11 @@ namespace Game {
             return false;
         }
 
+        public static void ShowDialog(ContainerWidget parentWidget, MessageDialog dialog) {
+            ShowDialog(parentWidget, (Dialog)dialog);
+            Log.Verbose($"Dialog shown: {dialog.m_largeLabelWidget.Text}");
+        }
+
         public static void ShowDialog(ContainerWidget parentWidget, Dialog dialog) {
             ModsManager.HookAction(
                 "OnShowDialog",

@@ -240,6 +240,7 @@ namespace Game {
                 if (NetworkManager.IsNetworkMode) {
                     OnPlayerPlaying?.Invoke(this);
                 }
+                Log.Verbose($"Player into playing. Index: {0}", PlayerIndex);
             }, delegate {
                 if (ComponentPlayer == null) {
                     m_stateMachine.TransitionTo("PrepareSpawn");
