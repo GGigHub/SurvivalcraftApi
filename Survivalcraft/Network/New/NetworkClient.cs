@@ -103,8 +103,8 @@ public class NetworkClient : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         _serverPeer = null;
-        MySession.NetworkState = NetworkState.NotConnected;
-
+        MySession?.NetworkState = NetworkState.NotConnected;
+        GameManager.DisposeProject();
         ScreensManager.SwitchScreen("MainMenu");
         DialogsManager.Alert("Disconnected", disconnectInfo.Reason.ToString());
         Log.Information($"Disconnected: {_serverAddress}, Reason: {disconnectInfo.Reason}");

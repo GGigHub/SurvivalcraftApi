@@ -95,7 +95,18 @@ namespace Survivalcraft.TestMod.A {
                 else if (action == "MOUSEMOVE" && parts.Length >= 3) {
                     int x = int.Parse(parts[1]);
                     int y = int.Parse(parts[2]);
-                    Mouse.ProcessMouseMove(new Point2(x, y));
+                    InputHijackState.IsInjectingMouseMove = true;
+                    try {
+                        Mouse.ProcessMouseMove(new Point2(x, y));
+                    }
+                    finally {
+                        InputHijackState.IsInjectingMouseMove = false;
+                    }
+                }
+                else if (action == "MOUSEDELTA" && parts.Length >= 3) {
+                    int x = int.Parse(parts[1]);
+                    int y = int.Parse(parts[2]);
+                    InputHijackState.QueuedMouseMovement = new Point2(x, y);
                 }
                 else if (action == "MOUSEDOWN" && parts.Length >= 4) {
                     if (Enum.TryParse<MouseButton>(parts[1], true, out MouseButton btn)) {

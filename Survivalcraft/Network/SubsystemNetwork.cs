@@ -18,6 +18,9 @@ public class SubsystemNetwork : Subsystem {
         m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
     }
 
+    public void MakeAllPlayersOffline() => 
+        NetworkManager.NetworkServer.ClientSessions.Values.ToList().ForEach(MakePlayerOffline);
+
     public void MakePlayerOffline(ClientSession session) {
         if (session == null || session.PlayerIndex < 0) {
             return;

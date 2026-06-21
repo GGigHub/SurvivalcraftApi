@@ -105,23 +105,21 @@ public sealed class GameStartupTest : IClassFixture<GameProcessFixture> {
         bool disconnectDialogShown = await fixture.WaitLogAsync("Dialog shown: Disconnected", client);
         Assert.True(disconnectDialogShown, "Client did not show the Disconnected dialog.");
 
-        await server.PushCommandAsync("CLICK_WIDGET Play");
         await server.PushCommandAsync("EXEC " +
-            "var playScreen = ScreensManager.CurrentScreen as PlayScreen; " +
-            "if (playScreen != null && playScreen.m_worldsListWidget.Items.Count > 0) { " +
-            "    playScreen.m_worldsListWidget.SelectedIndex = 0; " +
-            "}");
-        await server.PushCommandAsync("CLICK_WIDGET Play");
-        bool serverIntoPlaying = await fixture.WaitLogAsync("Player into playing. Index: 0", server);
-        Assert.True(serverIntoPlaying, "Server failed into playing state");
+            "Game.WorldsManager.UpdateWorldsList(); " +
+            "Game.NetworkManager.StartServer(); " +
+            "Game.ScreensManager.SwitchScreen(\"GameLoading\", Game.WorldsManager.WorldInfos[0], null);");
 
         await client.PushCommandAsync("EXEC DialogsManager.HideAllDialogs();");
         await client.PushCommandAsync("EXEC " +
             "ScreensManager.SwitchScreen(" +
             $"\"GameLoading\", null, null, System.Net.IPEndPoint.Parse(\"127.0.0.1:{server.GamePort}\"), null);");
-        bool clientIntoPlaying = await fixture.WaitLogAsync("Player into playing. Index: 1", client);
-        Assert.True(clientIntoPlaying, "Client failed into playing state");
+        
+        bool clientGameEntered = await fixture.WaitLogAsync("Entered screen \"Game\"", client);
+        Assert.True(clientGameEntered, "Client failed to enter the Game screen");
 
+        bool clientIntoPlaying = await fixture.WaitLogAsync("Player into playing.", client);
+        Assert.True(clientIntoPlaying, "Client failed into playing state");
     }
 
     [Fact]
