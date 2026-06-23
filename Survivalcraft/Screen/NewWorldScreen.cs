@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 
 
 namespace Game {
@@ -112,14 +112,7 @@ namespace Game {
                     m_worldSettings.ResetOptionsForNonCreativeMode(null);
                 }
                 WorldInfo worldInfo = WorldsManager.CreateWorld(m_worldSettings);
-                if (NetworkManager.StartServer()) {
-                    ScreensManager.SwitchScreen("GameLoading", worldInfo, null);
-                }
-                else {
-                    DialogsManager.ShowDialog(this, new MessageDialog("提示", "创建服务器失败，端口已被占用", "确定", null, (txt) => {
-                        NetworkManager.Stop(); DialogsManager.HideAllDialogs();
-                    }));
-                }
+                ScreensManager.SwitchScreen("GameLoading", worldInfo, null);
             }
             if (Input.Back
                 || Input.Cancel

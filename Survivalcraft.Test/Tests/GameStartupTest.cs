@@ -43,8 +43,9 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
 
     [Fact, TestOrder(Priority = 2)]
     public async Task TestServerConnection() {
-        await client.PushCommandAsync("EXEC ScreensManager.SwitchScreen(\"GameLoading\"," +
-            $" null, null, System.Net.IPEndPoint.Parse(\"127.0.0.1:{server.GamePort}\"), null);");
+        await client.PushCommandAsync("EXEC " + 
+            GameTools.ReadScript("GameStartup/SwitchToGameLoadingCode.cs")
+            .Replace("{0}", server.GamePort.ToString()));
 
         bool connected = await client.WaitLogAsync($"Connected: 127.0.0.1:{server.GamePort}");
         Assert.True(connected, "Client failed to connect to the server.");
@@ -59,18 +60,13 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
 
     [Fact, TestOrder(Priority = 3)]
     public async Task TestServerReconnection() {
-        await client.PushCommandAsync("EXEC " +
-            "NetworkManager.Stop(); " +
-            "GameManager.SaveProject(true, true); " +
-            "GameManager.DisposeProject(); " +
-            "ScreensManager.SwitchScreen(\"MainMenu\");");
+        await client.PushCommandAsync("EXEC " + 
+            GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
 
         bool mainMenuEntered = await client.WaitLogAsync("Entered screen \"MainMenu\"");
         Assert.True(mainMenuEntered, "Client failed to enter the MainMenu screen after quitting.");
 
-        await client.PushCommandAsync("EXEC " +
-            "ScreensManager.SwitchScreen(" +
-            $"\"GameLoading\", null, null, System.Net.IPEndPoint.Parse(\"127.0.0.1:{server.GamePort}\"), null);");
+        await client.PushCommandAsync("EXEC " + GameTools.ReadScript("GameStartup/SwitchToGameLoadingCode.cs").Replace("{0}", server.GamePort.ToString()));
 
         bool gameLoadingEntered = await client.WaitLogAsync("Entered screen \"GameLoading\"");
         Assert.True(gameLoadingEntered, "Client failed to enter the GameLoading screen during reconnection.");
@@ -88,25 +84,20 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
     [Fact, TestOrder(Priority = 4)]
     public async Task TestServerReconnectionWithServerExitFirst() {
         // 关闭服务器
-        await server.PushCommandAsync("EXEC " +
-            "NetworkManager.Stop(); " +
-            "GameManager.SaveProject(true, true); " +
-            "GameManager.DisposeProject(); " +
-            "ScreensManager.SwitchScreen(\"MainMenu\");");
+        await server.PushCommandAsync("EXEC " + 
+            GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
 
         // 等待客户端日志以确认对话框已显示
         bool disconnectDialogShown = await client.WaitLogAsync("Dialog shown: Disconnected");
         Assert.True(disconnectDialogShown, "Client did not show the Disconnected dialog.");
 
-        await server.PushCommandAsync("EXEC " +
-            "Game.WorldsManager.UpdateWorldsList(); " +
-            "Game.NetworkManager.StartServer(); " +
-            "Game.ScreensManager.SwitchScreen(\"GameLoading\", Game.WorldsManager.WorldInfos[0], null);");
-
-        await client.PushCommandAsync("EXEC DialogsManager.HideAllDialogs();");
-        await client.PushCommandAsync("EXEC " +
-            "ScreensManager.SwitchScreen(" +
-            $"\"GameLoading\", null, null, System.Net.IPEndPoint.Parse(\"127.0.0.1:{server.GamePort}\"), null);");
+        await server.PushCommandAsync("EXEC " + 
+            GameTools.ReadScript("GameStartup/ServerRestartCode.cs"));
+        await client.PushCommandAsync("EXEC " + 
+            GameTools.ReadScript("GameStartup/HideAllDialogsCode.cs"));
+        await client.PushCommandAsync("EXEC " + 
+            GameTools.ReadScript("GameStartup/SwitchToGameLoadingCode.cs")
+            .Replace("{0}", server.GamePort.ToString()));
         
         bool clientGameEntered = await client.WaitLogAsync("Entered screen \"Game\"");
         Assert.True(clientGameEntered, "Client failed to enter the Game screen");

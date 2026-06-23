@@ -293,8 +293,7 @@ namespace Game {
             }
             catch (Exception e) {
                 //ModsManager.AddException(e);
-                Log.Error("Game Running Error!");
-                Log.Error(e);
+                Log.Error($"Game Running Error! {e}");
                 try {
                     ScreensManager.SwitchScreen("MainMenu");
                     ViewGameLogDialog dialog = new();

@@ -25,8 +25,7 @@ public static class GameTools {
     }
 
     public static async Task ConnectTestServer(GameContext client, int serverPort) {
-        await client.PushCommandAsync("EXEC ScreensManager.SwitchScreen(\"GameLoading\"," +
-        $" null, null, System.Net.IPEndPoint.Parse(\"127.0.0.1:{serverPort}\"), null);");
+        await client.PushCommandAsync("EXEC " + ReadScript("GameStartup/SwitchToGameLoadingCode.cs").Replace("{0}", serverPort.ToString()));
 
         bool connected = await client.WaitLogAsync($"Connected: 127.0.0.1:{serverPort}");
         Assert.True(connected, "Client failed to connect to the server.");
@@ -38,5 +37,8 @@ public static class GameTools {
         bool intoPlaying = await client.WaitLogAsync("Player into playing.");
         Assert.True(intoPlaying, "Failed into playing state");
     }
-}
 
+    public static string ReadScript(string path) {
+        return System.IO.File.ReadAllText(System.IO.Path.Combine(AppContext.BaseDirectory, "Scripts", path));
+    }
+}

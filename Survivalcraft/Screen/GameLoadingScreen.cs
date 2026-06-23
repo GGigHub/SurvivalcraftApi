@@ -81,6 +81,7 @@ public class GameLoadingScreen : Screen {
             else {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
+                NetworkManager.StartServer();
                 if (IsAdventureRestart && NetworkManager.IsNetworkMode) {
                     // 需要注入主玩家的概念
                     OnPlayerIntoPlaying?.Invoke();

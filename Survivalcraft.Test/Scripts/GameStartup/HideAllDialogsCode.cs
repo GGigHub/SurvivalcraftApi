@@ -1,0 +1,1 @@
+DialogsManager.HideAllDialogs();
