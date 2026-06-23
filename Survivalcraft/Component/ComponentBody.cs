@@ -401,6 +401,9 @@ namespace Game {
                 return;
             }
             OnBodyUpdate?.Invoke(this, dt);
+            if (IsNetworkMode?.Invoke(this) == true) {
+                return;
+            }
             CollisionVelocityChange = Vector3.Zero;
             if (m_shakingStrength > 1f) {
                 Vector3 vector = default;

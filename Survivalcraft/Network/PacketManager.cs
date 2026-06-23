@@ -88,7 +88,6 @@ public class PacketManager {
         RegisterPacket<StatePacket>();
 
         // Entity
-        RegisterPacket<ApplyImpulsePacket>();
         RegisterPacket<BodyCollisionPacket>();
         RegisterPacket<BodyUpdatePacket>();
         RegisterPacket<ChaseBehaviorPacket>();

@@ -187,10 +187,13 @@ public class BodyUpdatePacket : Packet {
     public static bool s_bodySyncFlushQueued;
 
     public static void CollectBodyForSync(ComponentBody body, float dt) {
-        if (!NetworkManager.IsServerMode || !Time.PeriodicEvent(0.1, 0.0) || !ShouldSyncBody(body)) {
+        if (!NetworkManager.IsServerMode || !ShouldSyncBody(body)) {
             return;
         }
         if (s_bodySyncFrame != Time.FrameIndex) {
+            if (!Time.PeriodicEvent(0.1, 0.0)) {
+                return;
+            }
             BeginBodySyncFrame();
         }
         if (s_bodySyncLists.Count == 0) {

@@ -22,7 +22,6 @@ namespace Survivalcraft.TestMod.A {
             // Apply Harmony patches to hijack input
             var harmony = new Harmony("com.survivalcraft.testmod.a");
             harmony.PatchAll();
-            Log.Information("[Survivalcraft.TestMod.A] Harmony patches applied to Input successfully.");
             ModsManager.RegisterHook("BeforeWidgetUpdate", this);
             ModsManager.RegisterHook("AfterWidgetUpdate", this);
 
@@ -30,7 +29,6 @@ namespace Survivalcraft.TestMod.A {
             for (int i = 0; i < args.Length; i++) {
                 if (args[i] == "--game-port" && i + 1 < args.Length && int.TryParse(args[i + 1], out int p)) {
                     SettingsManager.ServerPort = p;
-                    Log.Information($"[Survivalcraft.TestMod.A] Set SettingsManager.ServerPort to {p}");
                 }
             }
 
@@ -48,24 +46,21 @@ namespace Survivalcraft.TestMod.A {
             }
             try {
                 udpServer = new UdpClient(cmdPort);
-                Log.Information($"[Survivalcraft.TestMod.A] UDP Server listening on port {cmdPort}");
-                
+
                 Task.Run(async () => {
                     while (!cts.IsCancellationRequested) {
                         try {
                             var receiveResult = await udpServer.ReceiveAsync(cts.Token);
                             string message = Encoding.UTF8.GetString(receiveResult.Buffer).Trim();
-                            
+                            var remoteEP = receiveResult.RemoteEndPoint;
+
                             // Process message on the main thread via Dispatcher
                             Dispatcher.Dispatch(() => {
-                                ProcessCommand(message);
+                                ProcessCommand(message, remoteEP);
                             });
                         }
                         catch (OperationCanceledException) {
                             break;
-                        }
-                        catch (Exception ex) {
-                            Log.Error($"[Survivalcraft.TestMod.A] UDP Error: {ex.Message}");
                         }
                     }
                 }, cts.Token);
@@ -75,8 +70,7 @@ namespace Survivalcraft.TestMod.A {
             }
         }
 
-        private void ProcessCommand(string command) {
-            Log.Information($"[Survivalcraft.TestMod.A] Received command: {command}");
+        private void ProcessCommand(string command, IPEndPoint remoteEP) {
             string[] parts = command.Split(' ');
             if (parts.Length == 0) return;
 
@@ -123,42 +117,50 @@ namespace Survivalcraft.TestMod.A {
                     }
                 }
                 else if (action == "CLICK_WIDGET" && parts.Length >= 2) {
-                    string query = string.Join(" ", parts, 1, parts.Length - 1);
-                    pendingWidgetClicks.Enqueue(query);
-                    Log.Information($"[Survivalcraft.TestMod.A] CLICK_WIDGET '{query}' QUEUED");
+                    pendingWidgetClicks.Enqueue(command);
+                    return;
+                }
+                else if (action == "FUNC" && parts.Length >= 2) {
+                    string code = string.Join(" ", parts, 1, parts.Length - 1);
+                    try {
+                        object result = ExecuteCommandScript(code);
+                        string json = System.Text.Json.JsonSerializer.Serialize(result);
+                        byte[] bytes = Encoding.UTF8.GetBytes("OK:" + json);
+                        udpServer.Send(bytes, bytes.Length, remoteEP);
+                    } catch (Exception ex) {
+                        byte[] bytes = Encoding.UTF8.GetBytes("ERROR:" + ex.Message);
+                        udpServer.Send(bytes, bytes.Length, remoteEP);
+                        throw;
+                    }
+                    Log.Information($"Command executed: {command}");
+                    return;
                 }
                 else if (action == "EXEC" && parts.Length >= 2) {
                     string code = string.Join(" ", parts, 1, parts.Length - 1);
-                    Log.Information($"[Survivalcraft.TestMod.A] Executing C# code: {code}");
                     ExecuteCommandScript(code);
                 }
+                Log.Information($"Command executed: {command}");
             }
             catch (Exception ex) {
                 Log.Error($"[Survivalcraft.TestMod.A] Error processing command '{command}': {ex.Message}");
             }
         }
 
-        private static void ExecuteCommandScript(string code) {
-            try {
-                var options = ScriptOptions.Default
-                    .WithReferences(typeof(GameManager).Assembly, typeof(Vector3).Assembly)
-                    .WithImports("System", "System.Linq", "System.Collections.Generic", "Engine", "Game");
+        private static object ExecuteCommandScript(string code) {
+            var options = ScriptOptions.Default
+                .WithReferences(typeof(GameManager).Assembly, typeof(Vector3).Assembly)
+                .WithImports("System", "System.Linq", "System.Collections.Generic", "Engine", "Game");
 
-                var result = CSharpScript.EvaluateAsync(code, options).GetAwaiter().GetResult();
-                Log.Information($"[Survivalcraft.TestMod.A] EXEC SUCCESS: {result ?? "null"}");
-            }
-            catch (Exception ex) {
-                Log.Error($"[Survivalcraft.TestMod.A] EXEC ERROR: {ex.Message}");
-            }
+            return CSharpScript.EvaluateAsync(code, options).GetAwaiter().GetResult();
         }
 
         private Widget FindWidgetByTextOrName(Widget root, string query) {
             if (root == null) return null;
-            
+
             if (string.Equals(root.Name, query, StringComparison.OrdinalIgnoreCase)) return root;
             if (root is ButtonWidget button && string.Equals(button.Text, query, StringComparison.OrdinalIgnoreCase)) return button;
             if (root is LabelWidget label && string.Equals(label.Text, query, StringComparison.OrdinalIgnoreCase)) return label;
-            
+
             if (root is ContainerWidget container) {
                 foreach (var child in container.Children) {
                     var found = FindWidgetByTextOrName(child, query);
@@ -175,7 +177,8 @@ namespace Survivalcraft.TestMod.A {
                 return;
             }
 
-            string query = pendingWidgetClicks.Peek();
+            string command = pendingWidgetClicks.Peek();
+            string query = command.Substring(command.IndexOf(' ') + 1);
             Widget target = FindWidgetByTextOrName(ScreensManager.CurrentScreen, query);
             if (target == null
                 || FindClickableWidget(target) != clickableWidget) {
@@ -185,7 +188,7 @@ namespace Survivalcraft.TestMod.A {
             InjectClick(clickableWidget);
             pendingWidgetClicks.Dequeue();
             lastWidgetClickInjectionFrame = Time.FrameIndex;
-            Log.Information($"[Survivalcraft.TestMod.A] CLICK_WIDGET '{query}' SUCCESS");
+            Log.Information($"Command executed: {command}");
         }
 
         public override void BeforeWidgetUpdate(Widget widget) {
@@ -195,22 +198,20 @@ namespace Survivalcraft.TestMod.A {
                 return;
             }
 
-            string query = pendingWidgetClicks.Peek();
+            string command = pendingWidgetClicks.Peek();
+            string query = command.Substring(command.IndexOf(' ') + 1);
             Widget target = FindWidgetByTextOrName(ScreensManager.CurrentScreen, query);
             if (target == null) {
                 pendingWidgetClicks.Dequeue();
-                Log.Warning($"[Survivalcraft.TestMod.A] CLICK_WIDGET '{query}' FAILED. Widget not found.");
+                Log.Information($"Command executed: {command} (Not Found)");
                 return;
             }
 
             if (FindClickableWidget(target) == null) {
                 pendingWidgetClicks.Dequeue();
-                Log.Warning($"[Survivalcraft.TestMod.A] CLICK_WIDGET '{query}' FAILED. Clickable widget not found.");
+                Log.Information($"Command executed: {command} (Not Clickable)");
                 return;
             }
-
-            pendingWidgetClicks.Dequeue();
-            Log.Warning($"[Survivalcraft.TestMod.A] CLICK_WIDGET '{query}' FAILED. Clickable widget was not updated.");
         }
 
         private static ClickableWidget FindClickableWidget(Widget widget) {

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Survivalcraft.Windows": {
+      "commandName": "Project",
+      "commandLineArgs": "--create"
+    }
+  }
+}

@@ -23,7 +23,6 @@
       <Compile Include="Network\Packet\Connect\IndexPacket.cs" />
       <Compile Include="Network\Packet\Connect\StatePacket.cs" />
       <Compile Include="Network\Packet\Connect\ProjectPacket.cs" />
-      <Compile Include="Network\Packet\Entity\ApplyImpulsePacket.cs" />
       <Compile Include="Network\Packet\Entity\BodyCollisionPacket.cs" />
       <Compile Include="Network\Packet\Entity\BodyUpdatePacket.cs" />
       <Compile Include="Network\Packet\Entity\ChaseBehaviorPacket.cs" />

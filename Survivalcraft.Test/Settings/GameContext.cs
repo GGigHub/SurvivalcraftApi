@@ -5,13 +5,14 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Survivalcraft.Test;
 
-public sealed class GameProcessContext : IDisposable {
+public sealed class GameContext : IDisposable {
     private static readonly string[] RuntimeDirectoryNames = [
         "Bugs",
         "doc",
@@ -22,10 +23,10 @@ public sealed class GameProcessContext : IDisposable {
 
     private Process? gameProcess;
     private bool disposed;
-    
+
     private readonly ConcurrentQueue<string> recentLogs = new();
 
-    public GameProcessContext(string roleName, string sourceDirectory, string runDirectory) {
+    public GameContext(string roleName, string sourceDirectory, string runDirectory) {
         RoleName = roleName;
         SourceDirectory = sourceDirectory;
         RunDirectory = runDirectory;
@@ -47,17 +48,17 @@ public sealed class GameProcessContext : IDisposable {
     public UdpClient LogServer { get; }
     public Channel<string> LogChannel { get; } = Channel.CreateUnbounded<string>();
     public bool IsStarted => gameProcess != null;
-    
-    public Exception? FatalException { get; private set; }
-    public event Action<GameProcessContext, Exception>? OnFatalError;
 
-    public static GameProcessContext Create(string roleName, string? runRootDirectory = null) {
+    public Exception? FatalException { get; private set; }
+    public event Action<GameContext, Exception>? OnFatalError;
+
+    public static GameContext Create(string roleName, string? runRootDirectory = null) {
         string sourceDirectory = AppContext.BaseDirectory;
         string runId = Guid.NewGuid().ToString("N")[..8];
         string rootDirectory = runRootDirectory
             ?? Path.Combine(Path.GetTempPath(), "Survivalcraft.Test", runId);
         string runDirectory = Path.Combine(rootDirectory, SanitizePathSegment(roleName));
-        return new GameProcessContext(roleName, sourceDirectory, runDirectory);
+        return new GameContext(roleName, sourceDirectory, runDirectory);
     }
 
     public void Start(params string[] arguments) {
@@ -88,10 +89,61 @@ public sealed class GameProcessContext : IDisposable {
             ?? throw new InvalidOperationException($"Failed to start the {RoleName} game process.");
     }
 
-    public async Task PushCommandAsync(string command) {
+    public object? PushCommand(string command) {
+        return PushCommandAsync(command).GetAwaiter().GetResult();
+    }
+
+    public bool WaitLog(string message, int seconds = 15) {
+        return WaitLogAsync(message, seconds).GetAwaiter().GetResult();
+    }
+
+    public async Task<object?> PushCommandAsync(string command) {
         byte[] cmdBytes = Encoding.UTF8.GetBytes(command);
         var endpoint = new IPEndPoint(IPAddress.Loopback, CmdPort);
         await commandClient.SendAsync(cmdBytes, endpoint);
+
+        if (command.StartsWith("FUNC ", StringComparison.OrdinalIgnoreCase)) {
+            using var cts = new CancellationTokenSource(15000);
+            try {
+                var result = await commandClient.ReceiveAsync(cts.Token);
+                string responseStr = Encoding.UTF8.GetString(result.Buffer);
+                if (responseStr.StartsWith("OK:")) {
+                    string json = responseStr.Substring(3);
+                    var el = JsonSerializer.Deserialize<JsonElement>(json);
+                    return el.ValueKind switch {
+                        JsonValueKind.Number => el.TryGetInt32(out int i) ? (object)i : el.GetDouble(),
+                        JsonValueKind.String => el.GetString(),
+                        JsonValueKind.True => true,
+                        JsonValueKind.False => false,
+                        JsonValueKind.Null => null,
+                        _ => el
+                    };
+                }
+                else if (responseStr.StartsWith("ERROR:")) {
+                    throw new InvalidOperationException($"FUNC command failed: {responseStr[6..]}");
+                }
+                return null;
+            }
+            catch (OperationCanceledException) {
+                throw new TimeoutException($"FUNC command timed out: {command}");
+            }
+        }
+        return null;
+    }
+
+    public async Task<bool> WaitLogAsync(string message, int seconds = 15) {
+        try {
+            using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(seconds));
+            await foreach (string logMessage in LogChannel.Reader.ReadAllAsync(timeout.Token)) {
+                if (logMessage.Contains(message)) {
+                    return true;
+                }
+            }
+        }
+        catch (OperationCanceledException) {
+            // Timeout reached
+        }
+        return false;
     }
 
     public string GetRecentLogText(int maxLines = 80) {
@@ -133,12 +185,12 @@ public sealed class GameProcessContext : IDisposable {
             try {
                 UdpReceiveResult receiveResult = await LogServer.ReceiveAsync(Cts.Token);
                 string message = Encoding.UTF8.GetString(receiveResult.Buffer);
-                
+
                 recentLogs.Enqueue(message);
                 if (recentLogs.Count > 1000) {
                     recentLogs.TryDequeue(out _);
                 }
-                
+
                 LogChannel.Writer.TryWrite(message);
 
                 if (IsErrorLog(message) && FatalException == null) {
