@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace Survivalcraft.Test;
+namespace Survivalcraft.Test; 
 
 public static class GameTools {
     public static async Task CreateTestWorld(GameContext server) {
@@ -39,6 +39,6 @@ public static class GameTools {
     }
 
     public static string ReadScript(string path) {
-        return System.IO.File.ReadAllText(System.IO.Path.Combine(AppContext.BaseDirectory, "Scripts", path));
+        return File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Scripts", path));
     }
 }

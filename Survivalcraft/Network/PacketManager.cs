@@ -23,6 +23,7 @@ public enum PacketType : byte {
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
     BodyUpdate = 33, ApplyImpulse = 34, BodyCollision = 35,
+    BehaviorLookAround = 54, BehaviorStubbornSteed = 55,
     BehaviorChase = 56, BehaviorRandomPeck = 57, BehaviorRandomFeed = 58, BehaviorEatPickable = 59,
     BehaviorHumanRow = 60, BehaviorCreatureSound = 61, BehaviorDigInMud = 62, BehaviorFishOutOfWater = 63,
     EntityOnFire = 68,
@@ -99,8 +100,10 @@ public class PacketManager {
         RegisterPacket<EntitySyncRequestPacket>();
         RegisterPacket<FishOutOfWaterBehaviorPacket>();
         RegisterPacket<HumanRowBehaviorPacket>();
+        RegisterPacket<LookAroundBehaviorPacket>();
         RegisterPacket<RandomFeedBehaviorPacket>();
         RegisterPacket<RandomPeckBehaviorPacket>();
+        RegisterPacket<StubbornSteedBehaviorPacket>();
 
         // Health
         RegisterPacket<DamageSyncPacket>();

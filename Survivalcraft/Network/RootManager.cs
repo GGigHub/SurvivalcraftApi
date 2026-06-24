@@ -32,6 +32,10 @@ public static class RootManager {
             if (!NetworkManager.IsNetworkMode)
                 NetworkManager.Queue(new FishOutOfWaterBehaviorPacket(behavior, isBend));
         };
+        ComponentLookAroundBehavior.OnIsLookRandomChanged = (behavior, isLookRandom) => {
+            if (!NetworkManager.IsNetworkMode)
+                NetworkManager.Queue(new LookAroundBehaviorPacket(behavior, isLookRandom));
+        };
         ComponentFlu.OnFluEffectEvent = (flu) => {
             if (!NetworkManager.IsNetworkMode)
                 NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.FluEffect));
@@ -120,6 +124,10 @@ public static class RootManager {
         ComponentSickness.OnSicknessChange = (sickness) => {
             if (!NetworkManager.IsNetworkMode)
                 NetworkManager.Queue(new ComponentSicknessPacket(sickness));
+        };
+        ComponentStubbornSteedBehavior.OnHeadShakeOrder = (behavior, headShakeOrder) => {
+            if (!NetworkManager.IsNetworkMode)
+                NetworkManager.Queue(new StubbornSteedBehaviorPacket(behavior, headShakeOrder));
         };
         ComponentVitalStats.OnVitalStatsUpdate = (stats) => {
             if (!NetworkManager.IsNetworkMode && Time.PeriodicEvent(1.0, 0.5))

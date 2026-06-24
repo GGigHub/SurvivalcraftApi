@@ -15,11 +15,31 @@ namespace Game {
 
         public float m_importanceLevel;
 
+        private bool m_isLookRandom;
+
+        public static Action<ComponentLookAroundBehavior, bool> OnIsLookRandomChanged;
+
+        public bool IsLookRandom {
+            get { return m_isLookRandom; }
+            set {
+                if (m_isLookRandom != value) {
+                    m_isLookRandom = value;
+                    OnIsLookRandomChanged?.Invoke(this, value);
+                }
+            }
+        }
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
+            if (NetworkManager.IsNetworkMode) {
+                if (IsLookRandom) {
+                    m_componentCreature.ComponentCreatureModel.LookRandomOrder = true;
+                }
+                return;
+            }
             m_stateMachine.Update();
         }
 
@@ -28,8 +48,12 @@ namespace Game {
             m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
             m_stateMachine.AddState(
                 "Inactive",
-                delegate { m_importanceLevel = m_random.Float(0f, 1f); },
                 delegate {
+                    IsLookRandom = false;
+                    m_importanceLevel = m_random.Float(0f, 1f);
+                },
+                delegate {
+                    IsLookRandom = false;
                     if (m_componentCreature.ComponentBody.StandingOnValue.HasValue
                         && m_random.Float(0f, 1f) < 0.05f * m_subsystemTime.GameTimeDelta) {
                         m_importanceLevel = m_random.Float(1f, 5f);
@@ -53,6 +77,7 @@ namespace Game {
                     else if (m_random.Float(0f, 1f) < 0.1f * m_subsystemTime.GameTimeDelta) {
                         m_componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
                     }
+                    IsLookRandom = true;
                     m_componentCreature.ComponentCreatureModel.LookRandomOrder = true;
                     m_lookAroundTime -= m_subsystemTime.GameTimeDelta;
                 },
