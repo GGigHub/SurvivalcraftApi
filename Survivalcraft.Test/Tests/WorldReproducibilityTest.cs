@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Silk.NET.OpenGLES;
 using Xunit;
 
+using System.Xml.Linq;
 namespace Survivalcraft.Test; 
 public class WorldReproducibilityTest : IClassFixture<GameFixture>{
     private readonly GameFixture fixture;
@@ -18,7 +19,7 @@ public class WorldReproducibilityTest : IClassFixture<GameFixture>{
 
     [Fact, TestOrder(Priority = 1)]
     public async Task WorldReproducibility() { 
-        await GameTools.CreateTestWorld(server);
+        await GameTools.CreateTestWorld(server, "test_world");
 
         await server.PushCommandAsync("EXEC " + GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
         bool serverMainMenu = await server.WaitLogAsync("Entered screen \"MainMenu\"");
@@ -41,7 +42,7 @@ public class WorldReproducibilityTest : IClassFixture<GameFixture>{
         Assert.True(await server.WaitLogAsync("Entered screen \"Game\""));
         Assert.True(await client.WaitLogAsync("Entered screen \"Game\""));
 
-        await Task.Delay(10000);
+        await Task.Delay(21000);
 
         await server.PushCommandAsync("EXEC " + GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
         await client.PushCommandAsync("EXEC " + GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
@@ -79,11 +80,19 @@ public class WorldReproducibilityTest : IClassFixture<GameFixture>{
         }
 
         foreach (var relative in commonFiles) {
-            if (relative.EndsWith("Project.xml", StringComparison.OrdinalIgnoreCase)) continue; // ignore Project.xml
-            if (relative.EndsWith("Project.bak", StringComparison.OrdinalIgnoreCase)) continue; // ignore Project.bak
-
             var path1 = Path.Combine(dir1, relative);
             var path2 = Path.Combine(dir2, relative);
+
+            if (relative.EndsWith("Project.xml", StringComparison.OrdinalIgnoreCase)) {
+                var xml1 = XDocument.Load(path1).Root;
+                var xml2 = XDocument.Load(path2).Root;
+                var diffs = CompareXml(xml1, xml2, "Project");
+                if (diffs.Count > 0) {
+                    throw new Exception($"Differences in {relative}:\n" + string.Join("\n", diffs.Take(50)) + (diffs.Count > 50 ? $"\n... and {diffs.Count - 50} more" : ""));
+                }
+                continue;
+            }
+            if (relative.EndsWith("Project.bak", StringComparison.OrdinalIgnoreCase)) continue; // ignore Project.bak
 
             var bytes1 = File.ReadAllBytes(path1);
             var bytes2 = File.ReadAllBytes(path2);
@@ -100,6 +109,46 @@ public class WorldReproducibilityTest : IClassFixture<GameFixture>{
         }
 
         return true;
+    }
+
+    private static List<string> CompareXml(XElement? el1, XElement? el2, string path) {
+        var diffs = new List<string>();
+        
+        if (el1.Name != el2.Name) {
+            diffs.Add($"{path}: Name {el1.Name} != {el2.Name}");
+        }
+        
+        var attrs1 = el1.Attributes().ToDictionary(a => a.Name);
+        var attrs2 = el2.Attributes().ToDictionary(a => a.Name);
+        
+        foreach (var a1 in attrs1.Values) {
+            if (!attrs2.TryGetValue(a1.Name, out var a2)) {
+                diffs.Add($"{path}/@{a1.Name}: missing in client");
+            } else if (a1.Value != a2.Value) {
+                diffs.Add($"{path}/@{a1.Name}: '{a1.Value}' != '{a2.Value}'");
+            }
+        }
+        foreach (var a2 in attrs2.Values) {
+            if (!attrs1.ContainsKey(a2.Name)) {
+                diffs.Add($"{path}/@{a2.Name}: missing in server");
+            }
+        }
+        
+        var children1 = el1.Elements().ToList();
+        var children2 = el2.Elements().ToList();
+        
+        for (int i = 0; i < Math.Max(children1.Count, children2.Count); i++) {
+            if (i >= children1.Count) {
+                diffs.Add($"{path}: extra child in client: {children2[i].Name}");
+            } else if (i >= children2.Count) {
+                diffs.Add($"{path}: extra child in server: {children1[i].Name}");
+            } else {
+                string childId = children1[i].Attribute("Name")?.Value ?? children1[i].Attribute("Id")?.Value ?? i.ToString();
+                diffs.AddRange(CompareXml(children1[i], children2[i], $"{path}/{children1[i].Name}[{childId}]"));
+            }
+        }
+        
+        return diffs;
     }
 
     [Fact]

@@ -10,6 +10,7 @@ namespace Survivalcraft.Test;
 public static class CreatureTools {
     public const float MovementEpsilonSquared = 0.0025f;
     public const float SyncedPositionEpsilonSquared = 0.04f;
+    public const bool BehaviorSyncOnly = false;
 
     public static string CreatureCountCode => "FUNC " + GameTools.ReadScript("CreatureSync/CreatureCountCode.cs");
 

@@ -6,7 +6,7 @@ using Xunit;
 namespace Survivalcraft.Test; 
 
 public static class GameTools {
-    public static async Task CreateTestWorld(GameContext server) {
+    public static async Task CreateTestWorld(GameContext server, string seed = "") {
         await server.PushCommandAsync("CLICK_WIDGET Play");
         bool playScreenEntered = await server.WaitLogAsync("Entered screen \"Play\"");
         Assert.True(playScreenEntered, "Failed to enter the Play screen");
@@ -15,6 +15,16 @@ public static class GameTools {
         bool newWorldScreenEntered = await server.WaitLogAsync("Entered screen \"NewWorld\"");
         Assert.True(newWorldScreenEntered, "Failed to enter the New World screen");
 
+        if (!string.IsNullOrEmpty(seed)) {
+            for (int i = 0; i < 50; i++) {
+                var isReady = await server.PushCommandAsync("FUNC return (ScreensManager.CurrentScreen as NewWorldScreen)?.m_worldSettings != null;");
+                if (isReady is bool b && b) {
+                    break;
+                }
+                await Task.Delay(100);
+            }
+            await server.PushCommandAsync($"EXEC (ScreensManager.CurrentScreen as NewWorldScreen).m_seedTextBox.Text = \"{seed}\";");
+        }
         await server.PushCommandAsync("CLICK_WIDGET Play");
         bool playerScreen = await server.WaitLogAsync("Entered screen \"Player\"");
         Assert.True(playerScreen, "Failed to load the Player screen");

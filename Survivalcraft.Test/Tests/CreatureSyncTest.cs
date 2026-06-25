@@ -125,6 +125,21 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
                 $"Client did not receive non-pathfinding behavior orders. Server={serverOrders}, Client={clientOrders}."));
     }
 
+    // 干预：所有播放了音频的组件行为
+    // 验证：生物是否播放了音频
+    // 不播放音频的组件行为有DigInMud/FishOutOfWater/SwimAround/SwimAway
+    // 因为这些行为除了m_componentPathfinding均没有可探测副作用，所以不为其额外编写测试代码
+    [Fact, TestOrder(Priority = 5)]
+    public async Task TestCreatureBehaviorSync3() {
+    }
+
+    // 干预：指定生物的LookAngles/FlyOrder/Position/Rotation/Velocity
+    // 验证：干预项是否被同步(BehaviorSyncOnly为true时不该被同步，反之亦然)
+    [Fact, TestOrder(Priority = 6)]
+    public async Task TestCreatureBodySync() {
+    }
+
+
     [Fact]
     public void Dispose() {
         fixture.ThrowIfAnyContextHasError();
