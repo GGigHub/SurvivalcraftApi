@@ -1,7 +1,7 @@
-var sub = Game.GameManager.Project.FindSubsystem<SubsystemCreatureSpawn>();
-foreach (var c in sub.Creatures) { 
-    int id = c.Entity.Id;
-    Game.GameManager.Project.RemoveEntity(c.Entity, true); 
-    return id;
+int targetId = __ENTITY_ID__;
+var entity = Game.GameManager.Project.FindEntity(targetId);
+if (entity != null) {
+    Game.GameManager.Project.RemoveEntity(entity, true);
+    return targetId;
 }
 return 0;

@@ -32,6 +32,10 @@ namespace Survivalcraft.TestMod.A {
                 }
             }
 
+            // 吵到我听歌了
+            SettingsManager.MusicVolume = 0;
+            SettingsManager.SoundsVolume = 0;
+
             // Start UDP Server
             StartUdpServer();
         }
@@ -127,7 +131,8 @@ namespace Survivalcraft.TestMod.A {
                         string json = System.Text.Json.JsonSerializer.Serialize(result);
                         byte[] bytes = Encoding.UTF8.GetBytes("OK:" + json);
                         udpServer.Send(bytes, bytes.Length, remoteEP);
-                    } catch (Exception ex) {
+                    }
+                    catch (Exception ex) {
                         byte[] bytes = Encoding.UTF8.GetBytes("ERROR:" + ex.Message);
                         udpServer.Send(bytes, bytes.Length, remoteEP);
                         throw;

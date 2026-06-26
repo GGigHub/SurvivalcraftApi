@@ -92,7 +92,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
     }
 
     public override void Handle(bool isServer) {
-        if (!TryResolvePlayer(isServer, out PlayerData playerData)) {
+        if (!TryResolvePlayer(isServer, out PlayerData playerData) || playerData.ComponentPlayer == null) {
             return;
         }
         ComponentPlayer player = playerData.ComponentPlayer;

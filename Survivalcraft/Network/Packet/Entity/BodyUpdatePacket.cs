@@ -110,7 +110,6 @@ public class BodyUpdatePacket : Packet {
         if (isServer) return;
         var bodies = GameManager.Project.FindSubsystem<SubsystemBodies>();
         List<int> ml = new List<int>();
-        List<ComponentBody> rl = new List<ComponentBody>();
         foreach (var item in m_bodyList) {
             bodies.FindBodyByCreatureID(item.CreatureId, body => {
                 if (item.changeFlag.HasFlag(ChangeFlag.PositionChange)) {
@@ -132,19 +131,8 @@ public class BodyUpdatePacket : Packet {
                 ml.Add(item.CreatureId);
             });
         }
-        foreach (var item2 in bodies.Bodies) {
-            if (item2.Entity.FindComponent<ComponentPlayer>() != null || item2.ChildBodies.Count > 0) continue;
-            if (!m_bodyList.Exists(x => x.CreatureId == item2.Entity.Id)) {
-                rl.Add(item2);
-            }
-        }
         if (ml.Count > 0) {
             NetworkManager.Queue(new EntitySyncRequestPacket(ml));
-        }
-        if (rl.Count > 0) {
-            foreach (var b in rl) {
-                GameManager.Project.RemoveEntity(b.Entity, true);
-            }
         }
     }
 
