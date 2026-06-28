@@ -461,6 +461,8 @@ namespace Game {
             set => CommunityServerManager.Info.FromString(value);
         }
 
+        public static bool LetRamdomStatic { get; set; }
+
         static string m_databaseClassSubstitutes;
 
         public static string DatabaseClassSubstitutes {
@@ -625,6 +627,7 @@ namespace Game {
                 FileAssociationEnabled = true;
                 SafeMode = false;
                 AdaptEdgeToEdgeDisplay = Window.HasWideNotch;
+                LetRamdomStatic = false;
                 InitializeKeyboardMappingSettings();
                 InitializeGamepadMappingSettings();
                 InitializeCameraManageSettings();

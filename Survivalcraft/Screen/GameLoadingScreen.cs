@@ -165,6 +165,10 @@ public class GameLoadingScreen : Screen {
             m_serverEndPoint = (IPEndPoint)parameters[2];
             if (parameters.Length == 4) m_password = (string)parameters[3];
         }
+        // 为什么要放在这里
+        if (SettingsManager.LetRamdomStatic) {
+            Random.Counter = 0;
+        }
         m_stateMachine.TransitionTo("WaitingForFadeIn");
         ProgressManager.UpdateProgress("Loading World", 0f);
     }

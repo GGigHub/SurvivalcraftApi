@@ -3,7 +3,7 @@ using Engine;
 
 namespace Game {
     public class Random {
-        public static int m_counter = (int)(Stopwatch.GetTimestamp() + DateTime.Now.Ticks);
+        public static int Counter = (int)(Stopwatch.GetTimestamp() + DateTime.Now.Ticks);
 
         public uint m_s0;
 
@@ -26,7 +26,7 @@ namespace Game {
         }
 
         public void Seed() {
-            Seed(m_counter++);
+            Seed(Counter++);
         }
 
         public void Seed(int seed) {
