@@ -21,6 +21,8 @@ namespace Game {
 
         public static List<Func<bool>> SyncDispatcher = [];
 
+        public static bool IsProjectAutoUpdateEnabled { get; set; } = true;
+
         public static event Action<Project> ProjectDisposed;
 
         public const string fName = "GameManager";
@@ -155,13 +157,34 @@ namespace Game {
             }
         }
 
-        public static void UpdateProject() {
+        public static void UpdateProjectFixed(int ticks, float dt) {
+            if (ticks < 0) {
+                throw new ArgumentOutOfRangeException(nameof(ticks));
+            }
+            if (dt < 0f) {
+                throw new ArgumentOutOfRangeException(nameof(dt));
+            }
+            for (int i = 0; i < ticks; i++) {
+                UpdateProject(dt);
+            }
+        }
+
+        public static void UpdateProject(float? fixedDt = null) {
+            if (fixedDt == null 
+                && !IsProjectAutoUpdateEnabled) {
+                return;
+            }
             if (SyncDispatcher.Count > 0
                 && SyncDispatcher[0].Invoke()) {
                 SyncDispatcher.RemoveAt(0);
             }
             if (m_project != null) {
-                m_subsystemUpdate.Update();
+                if (fixedDt.HasValue) {
+                    m_subsystemUpdate.UpdateFixedStep(fixedDt.Value);
+                }
+                else {
+                    m_subsystemUpdate.Update();
+                }
             }
         }
 

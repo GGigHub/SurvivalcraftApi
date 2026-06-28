@@ -44,92 +44,101 @@ namespace Game {
         public virtual void Update() {
             for (int i = 0; i < UpdatesPerFrame; i++) {
                 m_subsystemTime.NextFrame();
-                bool flag = false;
-                lock (m_toAddOrRemove) {
-                    foreach (KeyValuePair<IUpdateable, bool> item in m_toAddOrRemove) {
-                        bool skipVanilla = false;
-                        ModsManager.HookAction(
-                            "OnIUpdateableAddOrRemove",
-                            loader => {
-                                loader.OnIUpdateableAddOrRemove(this, item.Key, item.Value, skipVanilla, out bool skip);
-                                skipVanilla |= skip;
-                                return false;
-                            }
-                        );
-                        if (!skipVanilla) {
-                            if (item.Value) {
-                                m_updateables.Add(item.Key, new UpdateableInfo { FloatUpdateOrder = item.Key.FloatUpdateOrder });
-                                flag = true;
-                            }
-                            else {
-                                m_updateables.Remove(item.Key);
-                                flag = true;
-                            }
-                        }
-                    }
-                    m_toAddOrRemove.Clear();
-                }
-                foreach (KeyValuePair<IUpdateable, UpdateableInfo> updateable in m_updateables) {
-                    float updateOrder = updateable.Key.FloatUpdateOrder;
-                    if (updateOrder != updateable.Value.FloatUpdateOrder) {
-                        flag = true;
-                        updateable.Value.FloatUpdateOrder = updateOrder;
-                    }
-                }
-                if (flag) {
-                    m_sortedUpdateables.Clear();
-                    foreach (IUpdateable key in m_updateables.Keys) {
-                        m_sortedUpdateables.Add(key);
-                    }
-                    m_sortedUpdateables.Sort(Comparer.Instance);
-                }
-                float dt = m_subsystemTime.GameTimeDelta;
-                if (UpdateTimeDebug) {
-                    m_debugStopwatch.Start();
-                }
-                foreach (IUpdateable sortedUpdateable in m_sortedUpdateables) {
-                    long ticks = UpdateTimeDebug ? m_debugStopwatch.ElapsedTicks : 0;
-                    try {
-                        lock (sortedUpdateable) {
-                            sortedUpdateable.Update(dt);
-                        }
-                    }
-                    catch (Exception) {
-                        // ignored
-                    }
-                    finally {
-                        if (UpdateTimeDebug) {
-                            Type type = sortedUpdateable.GetType();
-                            long ticksCosted = m_debugStopwatch.ElapsedTicks - ticks;
-                            if (!m_debugInfos.TryGetValue(type, out DebugInfo info)) {
-                                info = new DebugInfo();
-                                m_debugInfos.Add(type, info);
-                            }
-                            info.Counter++;
-                            info.TotalTicksCosted += ticksCosted;
-                            if (ticksCosted > info.MaxTicksCosted1) {
-                                info.MaxTicksCosted1 = ticksCosted;
-                            }
-                            else if (ticksCosted > info.MaxTicksCosted2) {
-                                info.MaxTicksCosted2 = ticksCosted;
-                            }
-                        }
-                    }
-                }
-                if (UpdateTimeDebug) {
-                    m_debugStopwatch.Reset();
-                }
-                ModsManager.HookAction(
-                    "SubsystemUpdate",
-                    loader => {
-#pragma warning disable CS0618
-                        loader.SubsystemUpdate(dt);
-#pragma warning restore CS0618
-                        loader.SubsystemUpdate(this, dt);
-                        return false;
-                    }
-                );
+                UpdateInternal();
             }
+        }
+
+        public virtual void UpdateFixedStep(float dt) {
+            m_subsystemTime.NextFixedFrame(dt);
+            UpdateInternal();
+        }
+
+        private void UpdateInternal() {
+            bool flag = false;
+            lock (m_toAddOrRemove) {
+                foreach (KeyValuePair<IUpdateable, bool> item in m_toAddOrRemove) {
+                    bool skipVanilla = false;
+                    ModsManager.HookAction(
+                        "OnIUpdateableAddOrRemove",
+                        loader => {
+                            loader.OnIUpdateableAddOrRemove(this, item.Key, item.Value, skipVanilla, out bool skip);
+                            skipVanilla |= skip;
+                            return false;
+                        }
+                    );
+                    if (!skipVanilla) {
+                        if (item.Value) {
+                            m_updateables.Add(item.Key, new UpdateableInfo { FloatUpdateOrder = item.Key.FloatUpdateOrder });
+                            flag = true;
+                        }
+                        else {
+                            m_updateables.Remove(item.Key);
+                            flag = true;
+                        }
+                    }
+                }
+                m_toAddOrRemove.Clear();
+            }
+            foreach (KeyValuePair<IUpdateable, UpdateableInfo> updateable in m_updateables) {
+                float updateOrder = updateable.Key.FloatUpdateOrder;
+                if (updateOrder != updateable.Value.FloatUpdateOrder) {
+                    flag = true;
+                    updateable.Value.FloatUpdateOrder = updateOrder;
+                }
+            }
+            if (flag) {
+                m_sortedUpdateables.Clear();
+                foreach (IUpdateable key in m_updateables.Keys) {
+                    m_sortedUpdateables.Add(key);
+                }
+                m_sortedUpdateables.Sort(Comparer.Instance);
+            }
+            float dt = m_subsystemTime.GameTimeDelta;
+            if (UpdateTimeDebug) {
+                m_debugStopwatch.Start();
+            }
+            foreach (IUpdateable sortedUpdateable in m_sortedUpdateables) {
+                long ticks = UpdateTimeDebug ? m_debugStopwatch.ElapsedTicks : 0;
+                try {
+                    lock (sortedUpdateable) {
+                        sortedUpdateable.Update(dt);
+                    }
+                }
+                catch (Exception) {
+                    // ignored
+                }
+                finally {
+                    if (UpdateTimeDebug) {
+                        Type type = sortedUpdateable.GetType();
+                        long ticksCosted = m_debugStopwatch.ElapsedTicks - ticks;
+                        if (!m_debugInfos.TryGetValue(type, out DebugInfo info)) {
+                            info = new DebugInfo();
+                            m_debugInfos.Add(type, info);
+                        }
+                        info.Counter++;
+                        info.TotalTicksCosted += ticksCosted;
+                        if (ticksCosted > info.MaxTicksCosted1) {
+                            info.MaxTicksCosted1 = ticksCosted;
+                        }
+                        else if (ticksCosted > info.MaxTicksCosted2) {
+                            info.MaxTicksCosted2 = ticksCosted;
+                        }
+                    }
+                }
+            }
+            if (UpdateTimeDebug) {
+                m_debugStopwatch.Reset();
+            }
+            ModsManager.HookAction(
+                "SubsystemUpdate",
+                loader => {
+#pragma warning disable CS0618
+                    loader.SubsystemUpdate(dt);
+#pragma warning restore CS0618
+                    loader.SubsystemUpdate(this, dt);
+                    return false;
+                }
+            );
         }
 
         public void AddUpdateable(IUpdateable updateable) {

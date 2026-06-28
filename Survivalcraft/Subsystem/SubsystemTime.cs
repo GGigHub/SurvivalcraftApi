@@ -86,8 +86,16 @@ namespace Game {
         }
 
         public virtual void NextFrame() {
+            NextFrame(CalculateGameTimeDalta(), true);
+        }
+
+        public virtual void NextFixedFrame(float gameTimeDelta) {
+            NextFrame(Math.Max(gameTimeDelta, 0f), false);
+        }
+
+        private void NextFrame(float gameTimeDelta, bool applyFrameRules) {
             m_prevGameTimeDelta = m_gameTimeDelta;
-            m_gameTimeDelta = CalculateGameTimeDalta();
+            m_gameTimeDelta = gameTimeDelta;
             ModsManager.HookAction(
                 "ChangeGameTimeDelta",
                 loader => {
@@ -106,6 +114,9 @@ namespace Game {
             }
             foreach (DelayedExecutionRequest delayedExecutionRequest in toRemove) {
                 m_delayedExecutionsRequests.Remove(delayedExecutionRequest);
+            }
+            if (!applyFrameRules) {
+                return;
             }
             if (IsAllPlayerLivingSleeping()) {
                 if (SettingsManager.UseAPISleepTimeAcceleration) {

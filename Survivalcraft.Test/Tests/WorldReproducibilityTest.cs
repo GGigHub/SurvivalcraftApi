@@ -36,19 +36,13 @@ public class WorldReproducibilityTest : IClassFixture<GameFixture>{
 
         CopyDirectory(serverWorldDir, clientWorldDir);
 
-        await server.PushCommandAsync("EXEC WorldsManager.UpdateWorldsList(); ScreensManager.SwitchScreen(\"GameLoading\", WorldsManager.WorldInfos[0], null);");
-        await client.PushCommandAsync("EXEC WorldsManager.UpdateWorldsList(); ScreensManager.SwitchScreen(\"GameLoading\", WorldsManager.WorldInfos[0], null);");
+        string startScript = GameTools.ReadScript("WorldReproducibility/StartCode.cs");
 
-        Assert.True(await server.WaitLogAsync("Entered screen \"Game\""));
-        Assert.True(await client.WaitLogAsync("Entered screen \"Game\""));
+        await server.PushCommandAsync("EXEC " + startScript);
+        await client.PushCommandAsync("EXEC " + startScript);
 
-        await Task.Delay(21000);
-
-        await server.PushCommandAsync("EXEC " + GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
-        await client.PushCommandAsync("EXEC " + GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
-
-        Assert.True(await server.WaitLogAsync("Entered screen \"MainMenu\""));
-        Assert.True(await client.WaitLogAsync("Entered screen \"MainMenu\""));
+        Assert.True(await server.WaitLogAsync("Entered screen \"MainMenu\"", 120), server.GetRecentLogText());
+        Assert.True(await client.WaitLogAsync("Entered screen \"MainMenu\"", 120), client.GetRecentLogText());
 
         bool areIdentical = CompareDirectories(serverWorldDir, clientWorldDir);
         Assert.True(areIdentical, "Worlds are not identical after running independently!");
