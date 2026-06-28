@@ -37,6 +37,7 @@ namespace Survivalcraft.TestMod.A {
             SettingsManager.SoundsVolume = 0;
 
             SettingsManager.LetRamdomStatic = true;
+            SettingsManager.MultithreadedTerrainUpdate = false;
 
             // Start UDP Server
             StartUdpServer();

@@ -18,6 +18,10 @@ namespace Game {
                 if (num != 0) {
                     return Math.Sign(num);
                 }
+                int num2 = string.Compare(u1.GetType().Name, u2.GetType().Name, StringComparison.Ordinal);
+                if (num2 != 0) {
+                    return num2;
+                }
                 return u1.GetHashCode() - u2.GetHashCode();
             }
         }
