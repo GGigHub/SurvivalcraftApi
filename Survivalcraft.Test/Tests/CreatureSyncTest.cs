@@ -42,7 +42,7 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
 
     [Fact, TestOrder(Priority = 3)]
     public async Task TestCreatureRemoveSync() {
-        string getEntityCode = "FUNC var sub = Game.GameManager.Project.FindSubsystem<Game.SubsystemCreatureSpawn>(); foreach (var c in sub.Creatures) return c.Entity.Id; return 0;";
+        string getEntityCode = "FUNC var sub = Game.GameManager.Project.FindSubsystem<Game.SubsystemCreatureSpawn>(); foreach (var c in sub.Creatures) if (c.Entity.FindComponent<Game.ComponentPlayer>() == null) return c.Entity.Id; return 0;";
         int entityId = (int?)await server.PushCommandAsync(getEntityCode) ?? 0;
 
         Assert.True(entityId > 0, "Server does not have a creature entity to remove.");

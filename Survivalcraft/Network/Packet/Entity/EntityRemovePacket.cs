@@ -22,9 +22,15 @@ public class EntityRemovePacket : Packet {
 
     public override void Handle(bool isServer) {
         if (isServer) return;
-        GameManager.Project.FindEntity(m_entityId, entity => {
+        List<Entity> entitiesToRemove = [];
+        foreach (Entity entity in GameManager.Project.Entities) {
+            if (entity.Id == m_entityId) {
+                entitiesToRemove.Add(entity);
+            }
+        }
+        foreach (Entity entity in entitiesToRemove) {
             GameManager.Project.RemoveEntity(entity, true);
-        });
+        }
     }
 }
 

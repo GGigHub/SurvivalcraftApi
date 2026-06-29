@@ -29,7 +29,16 @@ public class EntityLoadPacket : Packet {
     public override void Handle(bool isServer) {
         if (isServer) return;
         List<Entity> el = GameManager.Project.InitializeAndLoadEntities(entityDataList);
-        GameManager.Project.AttachEntities(el, true);
+        List<Entity> entitiesToAttach = [];
+        HashSet<int> loadedIds = [];
+        foreach (Entity entity in el) {
+            if (entity.Id != 0) {
+                if (!loadedIds.Add(entity.Id) || GameManager.Project.FindEntity(entity.Id) != null) {
+                    continue;
+                }
+            }
+            entitiesToAttach.Add(entity);
+        }
+        GameManager.Project.AttachEntities(entitiesToAttach, true);
     }
 }
-

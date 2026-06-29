@@ -7,7 +7,8 @@ if (body == null) return FormattableString.Invariant($"{entityId}|missing_body_n
 
 var locomotion = entity.FindComponent<ComponentLocomotion>();
 Engine.Vector3 forcedPosition = body.Position + new Engine.Vector3(1.75f, 0.5f, -1.25f);
-Engine.Quaternion forcedRotation = Engine.Quaternion.CreateFromAxisAngle(Engine.Vector3.UnitY, 1.234f);
+Engine.Quaternion forcedRotation = Engine.Quaternion.Normalize(
+    body.Rotation * Engine.Quaternion.CreateFromAxisAngle(Engine.Vector3.UnitY, 1.5707964f));
 Engine.Vector3 forcedVelocity = new Engine.Vector3(0.37f, -0.12f, 0.29f);
 Engine.Vector2 forcedLookAngles = new Engine.Vector2(0.31f, -0.27f);
 Engine.Vector3 forcedFlyOrder = new Engine.Vector3(0.2f, 0.8f, -0.4f);
