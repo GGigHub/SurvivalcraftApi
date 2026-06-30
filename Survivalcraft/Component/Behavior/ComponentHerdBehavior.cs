@@ -125,7 +125,7 @@ namespace Game {
                 "Inactive",
                 null,
                 delegate {
-                    if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 1f * (GetHashCode() % 256 / 256f))) {
+                    if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 1f * (StableHash() % 256 / 256f))) {
                         Vector3? vector2 = FindHerdCenter();
                         if (vector2.HasValue) {
                             float num = Vector3.Distance(vector2.Value, m_componentCreature.ComponentBody.Position);

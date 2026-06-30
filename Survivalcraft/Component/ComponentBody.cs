@@ -427,7 +427,7 @@ namespace Game {
             else {
                 m_stoppedTime += dt;
                 if (m_stoppedTime > 0.5f
-                    && !Time.PeriodicEvent(0.25, 0.0)) {
+                    && !m_subsystemTime.PeriodicGameTimeEvent(0.25, 0.0)) {
                     return;
                 }
             }
@@ -495,7 +495,7 @@ namespace Game {
                 Vector3 vector2 = vector.HasValue ? new Vector3(vector.Value.X, 0f, vector.Value.Y) : Vector3.Zero;
                 float num4 = 1f;
                 if (ImmersionFluidBlock.FrictionFactor != 1f) {
-                    num4 = SimplexNoise.Noise((float)MathUtils.Remainder(6.0 * Time.FrameStartTime + GetHashCode() % 1000, 1000.0)) > 0.5f
+                    num4 = SimplexNoise.Noise((float)MathUtils.Remainder(6.0 * Time.FrameStartTime + StableHash() % 1000, 1000.0)) > 0.5f
                         ? ImmersionFluidBlock.FrictionFactor
                         : 1f;
                 }

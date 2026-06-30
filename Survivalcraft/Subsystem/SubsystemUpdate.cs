@@ -8,22 +8,8 @@ namespace Game {
     public class SubsystemUpdate : Subsystem {
         public class UpdateableInfo {
             public float FloatUpdateOrder;
-        }
 
-        public class Comparer : IComparer<IUpdateable> {
-            public static Comparer Instance = new();
-
-            public int Compare(IUpdateable u1, IUpdateable u2) {
-                float num = u1.FloatUpdateOrder - u2.FloatUpdateOrder;
-                if (num != 0) {
-                    return Math.Sign(num);
-                }
-                int num2 = string.Compare(u1.GetType().Name, u2.GetType().Name, StringComparison.Ordinal);
-                if (num2 != 0) {
-                    return num2;
-                }
-                return u1.GetHashCode() - u2.GetHashCode();
-            }
+            public int Sequence;
         }
 
         public SubsystemTime m_subsystemTime;
@@ -40,6 +26,7 @@ namespace Game {
         public Dictionary<Type, DebugInfo> m_debugInfos = [];
         public Stopwatch m_debugStopwatch = new();
         public bool UpdateTimeDebug = false;
+        int m_nextUpdateableSequence;
 
         public int UpdateablesCount => m_updateables.Count;
 
@@ -72,7 +59,13 @@ namespace Game {
                     );
                     if (!skipVanilla) {
                         if (item.Value) {
-                            m_updateables.Add(item.Key, new UpdateableInfo { FloatUpdateOrder = item.Key.FloatUpdateOrder });
+                            m_updateables.Add(
+                                item.Key,
+                                new UpdateableInfo {
+                                    FloatUpdateOrder = item.Key.FloatUpdateOrder,
+                                    Sequence = m_nextUpdateableSequence++
+                                }
+                            );
                             flag = true;
                         }
                         else {
@@ -95,7 +88,19 @@ namespace Game {
                 foreach (IUpdateable key in m_updateables.Keys) {
                     m_sortedUpdateables.Add(key);
                 }
-                m_sortedUpdateables.Sort(Comparer.Instance);
+                m_sortedUpdateables.Sort((u1, u2) => {
+                    UpdateableInfo i1 = m_updateables[u1];
+                    UpdateableInfo i2 = m_updateables[u2];
+                    float num = i1.FloatUpdateOrder - i2.FloatUpdateOrder;
+                    if (num != 0f) {
+                        return Math.Sign(num);
+                    }
+                    int num2 = string.Compare(u1.GetType().Name, u2.GetType().Name, StringComparison.Ordinal);
+                    if (num2 != 0) {
+                        return num2;
+                    }
+                    return i1.Sequence.CompareTo(i2.Sequence);
+                });
             }
             float dt = m_subsystemTime.GameTimeDelta;
             if (UpdateTimeDebug) {

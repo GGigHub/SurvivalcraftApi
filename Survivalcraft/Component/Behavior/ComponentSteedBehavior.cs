@@ -63,7 +63,7 @@ namespace Game {
             else {
                 WasOrderIssued = false;
             }
-            if (m_subsystemTime.PeriodicGameTimeEvent(1.0, GetHashCode() % 100 * 0.01f)) {
+            if (m_subsystemTime.PeriodicGameTimeEvent(1.0, StableHash() % 100 * 0.01f)) {
                 m_importanceLevel = 0f;
                 if (m_isEnabled) {
                     if (m_componentMount.Rider != null) {

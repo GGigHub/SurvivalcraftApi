@@ -181,7 +181,7 @@ namespace Game {
                     if (m_pickable != null) {
                         m_componentCreature.ComponentCreatureModel.LookAtOrder = m_pickable.Position;
                     }
-                    if (m_subsystemTime.PeriodicGameTimeEvent(0.25, GetHashCode() % 100 * 0.01)) {
+                    if (m_subsystemTime.PeriodicGameTimeEvent(0.25, StableHash() % 100 * 0.01)) {
                         m_stateMachine.TransitionTo("Move");
                     }
                 },

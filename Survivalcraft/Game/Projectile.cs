@@ -586,7 +586,7 @@ namespace Game {
             if (SubsystemProjectiles != null
                 && SubsystemAudio != null) {
                 if (!IsFireProof
-                    && SubsystemProjectiles.m_subsystemTime.PeriodicGameTimeEvent(1.0, GetHashCode() % 100 / 100.0)
+                    && SubsystemProjectiles.m_subsystemTime.PeriodicGameTimeEvent(1.0, StableHash() % 100 / 100.0)
                     && (SubsystemProjectiles.m_subsystemFireBlockBehavior.IsCellOnFire(
                             Terrain.ToCell(Position.X),
                             Terrain.ToCell(Position.Y + 0.1f),

@@ -33,6 +33,7 @@ namespace Game {
                     }
                 }
             }
+            SortBodies(result);
         }
 
         public void FindBodiesInArea(Vector2 corner1, Vector2 corner2, DynamicArray<ComponentBody> result) {
@@ -51,6 +52,7 @@ namespace Game {
                     }
                 }
             }
+            SortBodies(result);
         }
 
         public BodyRaycastResult? Raycast(Vector3 start, Vector3 end, float inflateAmount, Func<ComponentBody, float, bool> action) {
@@ -124,8 +126,13 @@ namespace Game {
         public SubsystemTerrain m_subsystemTerrain;
 
         public virtual void Update(float dt) {
+            m_componentBodies.Clear();
             foreach (ComponentBody body in Bodies) {
-                UpdateBody(body);
+                m_componentBodies.Add(body);
+            }
+            SortBodies(m_componentBodies);
+            for (int i = 0; i < m_componentBodies.Count; i++) {
+                UpdateBody(m_componentBodies.Array[i]);
             }
         }
 
@@ -181,6 +188,19 @@ namespace Game {
 
         public void ComponentBody_PositionChanged(ComponentFrame componentFrame) {
             UpdateBody((ComponentBody)componentFrame);
+        }
+
+        static void SortBodies(DynamicArray<ComponentBody> bodies) {
+            Array.Sort(
+                bodies.Array,
+                0,
+                bodies.Count,
+                Comparer<ComponentBody>.Create((b1, b2) => {
+                    int id1 = b1?.Entity?.Id ?? 0;
+                    int id2 = b2?.Entity?.Id ?? 0;
+                    return id1.CompareTo(id2);
+                })
+            );
         }
 
         public void FindBodyByCreatureID(int CreatureId, Action<ComponentBody> action, Action fail = null) {

@@ -380,7 +380,7 @@ namespace Game {
             //对于火焰的处理
             if (SubsystemPickables != null) {
                 if (!IsFireProof
-                    && SubsystemPickables.m_subsystemTime.PeriodicGameTimeEvent(1.0, GetHashCode() % 100 / 100.0)
+                    && SubsystemPickables.m_subsystemTime.PeriodicGameTimeEvent(1.0, StableHash(Id) % 100 / 100.0)
                     && (SubsystemTerrain.Terrain.GetCellContents(
                             Terrain.ToCell(Position.X),
                             Terrain.ToCell(Position.Y + 0.1f),

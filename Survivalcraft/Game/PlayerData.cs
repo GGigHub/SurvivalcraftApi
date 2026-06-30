@@ -180,12 +180,12 @@ namespace Game {
                 if (!(NetworkManager.IsNetworkMode && !IsMainPlayer)) {
                     m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, 0f, 64f);
                 }
-                m_terrainWaitStartTime = Time.FrameStartTime;
+                m_terrainWaitStartTime = m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime;
             }, delegate {
-                if (Time.PeriodicEvent(0.1, 0.0)) {
+                if (m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).PeriodicGameTimeEvent(0.1, 0.0)) {
                     float updateProgress2 = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, 0f, 64f);
                     UpdateSpawnDialog(null, null, 0.5f * updateProgress2, resetProgress: false);
-                    if (!(updateProgress2 < 1f) || !(Time.FrameStartTime - m_terrainWaitStartTime < 15.0)) {
+                    if (!(updateProgress2 < 1f) || !(m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime - m_terrainWaitStartTime < 15.0)) {
                         switch (m_spawnMode) {
                             case SpawnMode.InitialIntro:
                                 SpawnPosition = FindIntroSpawnPosition(SpawnPosition.XZ);
@@ -204,15 +204,15 @@ namespace Game {
                 }
             }, null);
             m_stateMachine.AddState("WaitForTerrain", delegate {
-                m_terrainWaitStartTime = Time.FrameStartTime;
+                m_terrainWaitStartTime = m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime;
                 Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 // 根据当前中心点刷新地形可见范围，客户端的非主玩家不需要提交 updateLocation。
                 if (!(NetworkManager.IsNetworkMode && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
             }, delegate {
-                if (Time.PeriodicEvent(0.1, 0.0)) {
+                if (m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).PeriodicGameTimeEvent(0.1, 0.0)) {
                     float updateProgress = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, MathUtils.Min(SettingsManager.VisibilityRange, 64f), 0f);
                     UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
-                    if ((updateProgress >= 1f && Time.FrameStartTime - m_terrainWaitStartTime > 2.0) || Time.FrameStartTime - m_terrainWaitStartTime >= 15.0) {
+                    if ((updateProgress >= 1f && m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime - m_terrainWaitStartTime > 2.0) || m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime - m_terrainWaitStartTime >= 15.0) {
                         if (ComponentPlayer == null) {
                             if (!NetworkManager.IsNetworkMode) {
                                 SpawnPlayer(SpawnPosition, m_spawnMode);
@@ -229,7 +229,7 @@ namespace Game {
             // 客户端等待服务端同步玩家实体，收到后再进入 Playing。
             m_stateMachine.AddState("WaitForPlayerEntity", null, delegate {
                 UpdateSpawnDialog("Waiting for player entity from server", null, 0f, false);
-                if (Time.PeriodicEvent(0.1, 0.0)) {
+                if (m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).PeriodicGameTimeEvent(0.1, 0.0)) {
                     if (ComponentPlayer != null) {
                         m_stateMachine.TransitionTo("Playing");
                     }

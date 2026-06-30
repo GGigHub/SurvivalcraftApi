@@ -233,7 +233,7 @@ namespace Game {
                 float num = MathF.Sin((float)Math.PI * 2f * MovementAnimationPhase);
                 position.Y += Bob;
                 vector.X += m_headingOffset;
-                float num2 = (float)MathUtils.Remainder(0.75 * m_subsystemGameInfo.TotalElapsedGameTime + (GetHashCode() & 0xFFFF), 10000.0);
+                float num2 = (float)MathUtils.Remainder(0.75 * m_subsystemGameInfo.TotalElapsedGameTime + (StableHash() & 0xFFFF), 10000.0);
                 float x = Math.Clamp(
                     MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.Noise(1.02f * num2 - 100f))
                     + m_componentCreature.ComponentLocomotion.LookAngles.X

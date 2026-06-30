@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using System.Reflection;
 using Engine;
 
 using GameEntitySystem;
@@ -165,6 +166,7 @@ namespace Game {
                 throw new ArgumentOutOfRangeException(nameof(dt));
             }
             for (int i = 0; i < ticks; i++) {
+                m_project?.FindSubsystem<SubsystemTerrain>()?.TerrainUpdater.UpdateFullySynchronously();
                 UpdateProject(dt);
             }
         }

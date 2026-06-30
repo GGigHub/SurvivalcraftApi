@@ -396,11 +396,11 @@ namespace Game {
                     m_pantingSound.Volume = 1f
                         * SettingsManager.SoundsVolume
                         * MathUtils.Saturate(1f * num4)
-                        * MathUtils.Lerp(0.8f, 1f, SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * Time.RealTime + 100.0, 1000.0)));
+                        * MathUtils.Lerp(0.8f, 1f, SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * m_subsystemTime.GameTime + 100.0, 1000.0)));
                     m_pantingSound.Pitch = AudioManager.ToEnginePitch(
                         num5
                         + MathUtils.Lerp(-0.15f, 0.05f, num4)
-                        * MathUtils.Lerp(0.8f, 1.2f, SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * Time.RealTime + 200.0, 1000.0)))
+                        * MathUtils.Lerp(0.8f, 1.2f, SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * m_subsystemTime.GameTime + 200.0, 1000.0)))
                     );
                     m_pantingSound.Play();
                 }
@@ -409,7 +409,7 @@ namespace Game {
                 }
                 float num6 = MathUtils.Saturate(3f * (0.33f - Stamina));
                 if (num6 > 0f
-                    && SimplexNoise.Noise((float)MathUtils.Remainder(Time.RealTime, 1000.0)) < num6) {
+                    && SimplexNoise.Noise((float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0)) < num6) {
                     ApplyDensityModifier(0.6f);
                 }
                 else {
@@ -527,7 +527,7 @@ namespace Game {
             string arg;
             ClothingSlot leastInsulatedSlot = m_componentPlayer.ComponentClothing.LeastInsulatedSlot;
             arg = leastInsulatedSlot?.MessageWhenLeastInsulated ?? string.Empty;
-            if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 1.0 * (GetHashCode() % 1000 / 1000.0))) {
+            if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 1.0 * (StableHash() % 1000 / 1000.0))) {
                 int x = Terrain.ToCell(m_componentPlayer.ComponentBody.Position.X);
                 int y = Terrain.ToCell(m_componentPlayer.ComponentBody.Position.Y + 0.1f);
                 int z = Terrain.ToCell(m_componentPlayer.ComponentBody.Position.Z);

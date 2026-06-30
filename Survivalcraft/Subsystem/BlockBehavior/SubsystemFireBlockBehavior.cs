@@ -112,6 +112,7 @@ namespace Game {
             if (m_firePointsCopy.Count == 0) {
                 m_firePointsCopy.Count += m_fireData.Count;
                 m_fireData.Keys.CopyTo(m_firePointsCopy.Array, 0);
+                Array.Sort(m_firePointsCopy.Array, 0, m_firePointsCopy.Count, Comparer<Point3>.Create(ComparePoints));
                 m_copyIndex = 0;
                 m_lastScanDuration = (float)(m_subsystemTime.GameTime - m_lastScanTime);
                 m_lastScanTime = m_subsystemTime.GameTime;
@@ -137,7 +138,7 @@ namespace Game {
                                 QueueBurnAway(x, y, z + 1, value.FireExpandability * 0.85f);
                             }
                             foreach (KeyValuePair<Point3, float> expansionProbability in m_expansionProbabilities) {
-                                if (m_random.Float(0f, 1f) < expansionProbability.Value * m_lastScanDuration * value.FireExpandability) {
+                                if (StableChance(value.Point, 0, expansionProbability.Key, expansionProbability.Value * m_lastScanDuration * value.FireExpandability)) {
                                     m_toExpand[new Point3(
                                         x + expansionProbability.Key.X,
                                         y + expansionProbability.Key.Y,
@@ -152,7 +153,7 @@ namespace Game {
                                 QueueBurnAway(x + 1, y, z, value.FireExpandability * 0.85f);
                             }
                             foreach (KeyValuePair<Point3, float> expansionProbability2 in m_expansionProbabilities) {
-                                if (m_random.Float(0f, 1f) < expansionProbability2.Value * m_lastScanDuration * value.FireExpandability) {
+                                if (StableChance(value.Point, 1, expansionProbability2.Key, expansionProbability2.Value * m_lastScanDuration * value.FireExpandability)) {
                                     m_toExpand[new Point3(
                                         x + 1 + expansionProbability2.Key.X,
                                         y + expansionProbability2.Key.Y,
@@ -167,7 +168,7 @@ namespace Game {
                                 QueueBurnAway(x, y, z - 1, value.FireExpandability * 0.85f);
                             }
                             foreach (KeyValuePair<Point3, float> expansionProbability3 in m_expansionProbabilities) {
-                                if (m_random.Float(0f, 1f) < expansionProbability3.Value * m_lastScanDuration * value.FireExpandability) {
+                                if (StableChance(value.Point, 2, expansionProbability3.Key, expansionProbability3.Value * m_lastScanDuration * value.FireExpandability)) {
                                     m_toExpand[new Point3(
                                         x + expansionProbability3.Key.X,
                                         y + expansionProbability3.Key.Y,
@@ -182,7 +183,7 @@ namespace Game {
                                 QueueBurnAway(x - 1, y, z, value.FireExpandability * 0.85f);
                             }
                             foreach (KeyValuePair<Point3, float> expansionProbability4 in m_expansionProbabilities) {
-                                if (m_random.Float(0f, 1f) < expansionProbability4.Value * m_lastScanDuration * value.FireExpandability) {
+                                if (StableChance(value.Point, 3, expansionProbability4.Key, expansionProbability4.Value * m_lastScanDuration * value.FireExpandability)) {
                                     m_toExpand[new Point3(
                                         x - 1 + expansionProbability4.Key.X,
                                         y + expansionProbability4.Key.Y,
@@ -209,7 +210,7 @@ namespace Game {
             if (m_subsystemTime.PeriodicGameTimeEvent(5.0, 0.0)) {
                 int num5 = 0;
                 int num6 = 0;
-                foreach (KeyValuePair<Point3, float> item in m_toBurnAway) {
+                foreach (KeyValuePair<Point3, float> item in m_toBurnAway.OrderBy(item => item.Key.X).ThenBy(item => item.Key.Y).ThenBy(item => item.Key.Z)) {
                     Point3 key = item.Key;
                     float value2 = item.Value;
                     SubsystemTerrain.ChangeCell(key.X, key.Y, key.Z, Terrain.ReplaceContents(0));
@@ -238,7 +239,7 @@ namespace Game {
                         num6++;
                     }
                 }
-                foreach (KeyValuePair<Point3, float> item2 in m_toExpand) {
+                foreach (KeyValuePair<Point3, float> item2 in m_toExpand.OrderBy(item => item.Key.X).ThenBy(item => item.Key.Y).ThenBy(item => item.Key.Z)) {
                     SetCellOnFire(item2.Key.X, item2.Key.Y, item2.Key.Z, item2.Value);
                 }
                 m_toBurnAway.Clear();
@@ -405,17 +406,47 @@ namespace Game {
             Block block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
             switch (face) {
                 case 4: break;
-                case 0: fireData.Time0 = block.GetFireDuration(cellValue) * m_random.Float(0.75f, 1.25f); break;
-                case 1: fireData.Time1 = block.GetFireDuration(cellValue) * m_random.Float(0.75f, 1.25f); break;
-                case 2: fireData.Time2 = block.GetFireDuration(cellValue) * m_random.Float(0.75f, 1.25f); break;
-                case 3: fireData.Time3 = block.GetFireDuration(cellValue) * m_random.Float(0.75f, 1.25f); break;
-                case 5: fireData.Time5 = block.GetFireDuration(cellValue) * m_random.Float(0.75f, 1.25f); break;
+                case 0: fireData.Time0 = block.GetFireDuration(cellValue) * StableFloat(fireData.Point, face, Point3.Zero, 0.75f, 1.25f); break;
+                case 1: fireData.Time1 = block.GetFireDuration(cellValue) * StableFloat(fireData.Point, face, Point3.Zero, 0.75f, 1.25f); break;
+                case 2: fireData.Time2 = block.GetFireDuration(cellValue) * StableFloat(fireData.Point, face, Point3.Zero, 0.75f, 1.25f); break;
+                case 3: fireData.Time3 = block.GetFireDuration(cellValue) * StableFloat(fireData.Point, face, Point3.Zero, 0.75f, 1.25f); break;
+                case 5: fireData.Time5 = block.GetFireDuration(cellValue) * StableFloat(fireData.Point, face, Point3.Zero, 0.75f, 1.25f); break;
             }
         }
 
         public void QueueBurnAway(int x, int y, int z, float expandability) {
             Point3 key = new(x, y, z);
             m_toBurnAway.TryAdd(key, expandability);
+        }
+
+        bool StableChance(Point3 point, int face, Point3 offset, float probability) =>
+            StableFloat(point, face, offset, 0f, 1f, (int)Math.Floor(m_subsystemTime.GameTime * 60.0)) < probability;
+
+        static float StableFloat(Point3 point, int face, Point3 offset, float min, float max, int salt = 0) {
+            unchecked {
+                int hash = (int)2166136261;
+                hash = (hash ^ point.X) * 16777619;
+                hash = (hash ^ point.Y) * 16777619;
+                hash = (hash ^ point.Z) * 16777619;
+                hash = (hash ^ face) * 16777619;
+                hash = (hash ^ offset.X) * 16777619;
+                hash = (hash ^ offset.Y) * 16777619;
+                hash = (hash ^ offset.Z) * 16777619;
+                hash = (hash ^ salt) * 16777619;
+                return MathUtils.Lerp(min, max, (hash & int.MaxValue) / (float)int.MaxValue);
+            }
+        }
+
+        static int ComparePoints(Point3 p1, Point3 p2) {
+            int result = p1.X.CompareTo(p2.X);
+            if (result != 0) {
+                return result;
+            }
+            result = p1.Y.CompareTo(p2.Y);
+            if (result != 0) {
+                return result;
+            }
+            return p1.Z.CompareTo(p2.Z);
         }
     }
 }

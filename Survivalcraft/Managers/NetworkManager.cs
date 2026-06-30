@@ -36,6 +36,8 @@ public static class NetworkManager {
     public static void Stop() {
         NetworkServer?.Stop();
         NetworkClient?.Disconnect();
+        NetworkServer = null;
+        NetworkClient = null;
     }
     public static bool StartServer() {
         NetworkServer = new();

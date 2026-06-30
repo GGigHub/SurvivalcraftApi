@@ -308,7 +308,7 @@ namespace GameEntitySystem {
                 }
             }
             projectData.NextEntityID = NextEntityID;
-            projectData.EntityDataList = SaveEntities(Entities);
+            projectData.EntityDataList = SaveEntities(Entities.OrderBy(entity => entity.Id));
             return projectData;
         }
 

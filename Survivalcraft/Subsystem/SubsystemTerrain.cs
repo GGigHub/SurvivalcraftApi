@@ -566,6 +566,8 @@ namespace Game {
         }
 
         public override void Save(ValuesDictionary valuesDictionary) {
+            AddDeterministicSaveUpdateLocations();
+            TerrainUpdater.UpdateFullySynchronously();
             TerrainUpdater.UpdateEvent.WaitOne();
             try {
                 TerrainChunk[] allocatedChunks = Terrain.AllocatedChunks;
@@ -575,6 +577,22 @@ namespace Game {
             }
             finally {
                 TerrainUpdater.UpdateEvent.Set();
+            }
+        }
+
+        void AddDeterministicSaveUpdateLocations() {
+            SubsystemPlayers subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>();
+            if (subsystemPlayers == null) {
+                return;
+            }
+            int locationIndex = -1000000;
+            TerrainUpdater.SetUpdateLocation(locationIndex++, subsystemPlayers.GlobalSpawnPosition.XZ, 0f, 96f);
+            foreach (PlayerData playerData in subsystemPlayers.PlayersData.OrderBy(playerData => playerData.PlayerIndex)) {
+                TerrainUpdater.SetUpdateLocation(locationIndex++, playerData.SpawnPosition.XZ, 0f, 96f);
+                Vector2 center = playerData.ComponentPlayer != null
+                    ? playerData.ComponentPlayer.ComponentBody.Position.XZ
+                    : playerData.SpawnPosition.XZ;
+                TerrainUpdater.SetUpdateLocation(locationIndex++, center, 0f, 96f);
             }
         }
 

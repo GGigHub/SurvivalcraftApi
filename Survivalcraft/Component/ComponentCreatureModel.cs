@@ -181,7 +181,7 @@ namespace Game {
                 HeadShakeOrder = MathUtils.Max(HeadShakeOrder - dt, 0f);
                 float num = 1f * MathUtils.Saturate(4f * HeadShakeOrder);
                 m_componentCreature.ComponentLocomotion.LookOrder = new Vector2(
-                        num * (float)Math.Sin(16.0 * m_subsystemTime.GameTime + 0.01f * GetHashCode()),
+                        num * (float)Math.Sin(16.0 * m_subsystemTime.GameTime + 0.01f * StableHash()),
                         0f
                     )
                     - m_componentCreature.ComponentLocomotion.LookAngles;

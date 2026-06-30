@@ -462,8 +462,8 @@ namespace Game {
                 || (isAutoChaseMask
                     && MathUtils.Remainder(
                         0.004999999888241291 * m_subsystemTime.GameTime
-                        + GetHashCode() % 1000 / 1000f
-                        + componentCreature.GetHashCode() % 1000 / 1000f,
+                        + StableHash() % 1000 / 1000f
+                        + componentCreature.Entity.Id % 1000 / 1000f,
                         1.0
                     )
                     < m_chaseNonPlayerProbability);

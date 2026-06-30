@@ -30,6 +30,19 @@ namespace Game {
         /// </summary>
         public ValuesDictionary DictionaryForOtherMods = new();
 
+        protected int StableHash(int salt = 0) {
+            unchecked {
+                int hash = (int)2166136261;
+                hash = (hash ^ salt) * 16777619;
+                hash = (hash ^ Value) * 16777619;
+                hash = (hash ^ (int)MathUtils.Remainder(CreationTime * 1000.0, int.MaxValue)) * 16777619;
+                hash = (hash ^ Terrain.ToCell(Position.X)) * 16777619;
+                hash = (hash ^ Terrain.ToCell(Position.Y)) * 16777619;
+                hash = (hash ^ Terrain.ToCell(Position.Z)) * 16777619;
+                return hash & int.MaxValue;
+            }
+        }
+
         public virtual void UnderExplosion(Vector3 impulse, float damage) { }
         public virtual void Load(ValuesDictionary valuesDictionary) { }
     }

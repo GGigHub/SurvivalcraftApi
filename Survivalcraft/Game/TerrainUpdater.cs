@@ -350,7 +350,7 @@ namespace Game {
                 m_terrain.SeasonHumidity = num2;
                 DowngradeAllChunksState(TerrainChunkState.InvalidVertices1, false);
             }
-            if (!SettingsManager.MultithreadedTerrainUpdate) {
+            if (!SettingsManager.MultithreadedTerrainUpdate || !GameManager.IsProjectAutoUpdateEnabled) {
                 if (m_task != null) {
                     m_quitUpdateThread = true;
                     UnpauseUpdateThread();
@@ -359,8 +359,9 @@ namespace Game {
                     m_task = null;
                 }
                 double realTime = Time.RealTime;
+                int steps = 0;
                 while (!SynchronousUpdateFunction()
-                    && Time.RealTime - realTime < 0.0099999997764825821) { }
+                    && (GameManager.IsProjectAutoUpdateEnabled ? Time.RealTime - realTime < 0.0099999997764825821 : ++steps < 8)) { }
             }
             else if (m_task == null) {
                 m_quitUpdateThread = false;
@@ -468,6 +469,39 @@ namespace Game {
                 waitChunkList.Remove(item);
             }
             waitChunkList_toRemove.Clear();
+        }
+
+        public virtual void UpdateFullySynchronously() {
+            if (m_task != null) {
+                m_quitUpdateThread = true;
+                UnpauseUpdateThread();
+                m_updateEvent.Set();
+                m_task.Wait();
+                m_task = null;
+            }
+            m_updateEvent.WaitOne();
+            try {
+                if (m_pendingLocations.Count > 0) {
+                    foreach (KeyValuePair<int, UpdateLocation?> pendingLocation in m_pendingLocations) {
+                        if (pendingLocation.Value.HasValue) {
+                            m_updateParameters.Locations[pendingLocation.Key] = pendingLocation.Value.Value;
+                        }
+                        else {
+                            m_updateParameters.Locations.Remove(pendingLocation.Key);
+                        }
+                    }
+                    if (AllocateAndFreeChunks(m_updateParameters.Locations.Values.ToArray())) {
+                        m_updateParameters.Chunks = m_terrain.AllocatedChunks;
+                    }
+                    m_pendingLocations.Clear();
+                }
+                while (!SynchronousUpdateFunction()) { }
+                SendReceiveChunkStatesThread();
+                SendReceiveChunkStates();
+            }
+            finally {
+                m_updateEvent.Set();
+            }
         }
 
         public virtual void PrepareForDrawing(Camera camera) {
@@ -657,11 +691,12 @@ namespace Game {
             TerrainChunk terrainChunk = FindBestChunkToUpdate(out TerrainChunkState desiredState);
             if (terrainChunk != null) {
                 double realTime = Time.RealTime;
+                int steps = 0;
                 do {
                     UpdateChunkSingleStep(terrainChunk, m_subsystemSky.SkyLightValue);
                 }
                 while (terrainChunk.ThreadState < desiredState
-                    && Time.RealTime - realTime < 0.01);
+                    && (GameManager.IsProjectAutoUpdateEnabled ? Time.RealTime - realTime < 0.01 : ++steps < 16));
                 return false;
             }
             if (LogTerrainUpdateStats) {

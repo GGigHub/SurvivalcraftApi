@@ -776,7 +776,7 @@ namespace Game {
             if ((m_componentHealth != null && !(m_componentHealth.Health > 0f))
                 || !(AutoInteractRate > 0f)
                 || !m_random.Bool(AutoInteractRate)
-                || !m_subsystemTime.PeriodicGameTimeEvent(1.0, GetHashCode() % 100 / 100f)) {
+                || !m_subsystemTime.PeriodicGameTimeEvent(1.0, StableHash() % 100 / 100f)) {
                 return;
             }
             ComponentCreatureModel componentCreatureModel = ComponentCreature.ComponentCreatureModel;

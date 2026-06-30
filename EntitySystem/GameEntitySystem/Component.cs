@@ -19,6 +19,19 @@ namespace GameEntitySystem {
 
         public virtual IEnumerable<Entity> GetOwnedEntities() => ReadOnlyList<Entity>.Empty;
 
+        protected int StableHash(int salt = 0) {
+            unchecked {
+                int hash = (int)2166136261;
+                hash = (hash ^ salt) * 16777619;
+                hash = (hash ^ (m_entity?.Id ?? 0)) * 16777619;
+                string componentName = m_valuesDictionary?.DatabaseObject?.Name ?? GetType().FullName;
+                for (int i = 0; i < componentName.Length; i++) {
+                    hash = (hash ^ componentName[i]) * 16777619;
+                }
+                return hash & int.MaxValue;
+            }
+        }
+
         public virtual void OnEntityAdded() { }
 
         public virtual void OnEntityRemoved() { }
