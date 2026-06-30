@@ -14,6 +14,7 @@ public class GameFixture : IDisposable {
 
     public GameContext Server { get; }
     public GameContext Client { get; }
+    public GameContext Spectator { get; }
     public CancellationTokenSource ErrorCts { get; } = new();
 
     public GameFixture() {
@@ -23,6 +24,7 @@ public class GameFixture : IDisposable {
             Guid.NewGuid().ToString("N")[..8]);
         Server = CreateContext("Server");
         Client = CreateContext("Client");
+        Spectator = CreateContext("Spectator");
         Server.Start();
         Client.Start();
         Server.WaitLog("Entered screen \"MainMenu\"");
