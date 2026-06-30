@@ -46,15 +46,13 @@ public class InjureRequestPacket : Packet {
 
     public override void Handle(bool isServer) {
         if (!isServer) return;
-        GameManager.Project.FindEntity(m_targetId, entity => {
-            if (m_requestInjureType != RequestInjureType.Choke && m_requestInjureType != RequestInjureType.Fall) {
-                return;
-            }
-            var selfHealth = From?.GetPlayerData()?.ComponentPlayer?.ComponentHealth;
-            if (m_attackerId == 0) {
-                selfHealth?.Injure(m_amount, null, m_ignoreInvulnerability, NormalizeCause(m_requestInjureType));
-            }
-        });
+        if (m_requestInjureType != RequestInjureType.Choke) {
+            return;
+        }
+        var selfHealth = From?.GetPlayerData()?.ComponentPlayer?.ComponentHealth;
+        if (m_attackerId == 0) {
+            selfHealth?.Injure(m_amount, null, m_ignoreInvulnerability, NormalizeCause(m_requestInjureType));
+        }
     }
 
     private static string NormalizeCause(RequestInjureType type) {
@@ -80,11 +78,6 @@ public class InjureRequestPacket : Packet {
             if (flagMainPlayer || flagMainRider || flagNoRider) {
                 health.Injure(fallDamage, null, false, cause);
             }
-        }
-        else if (flagMainPlayer || flagMainRider) {
-            NetworkManager.Queue(
-                new InjureRequestPacket(health, null, fallDamage, cause, false, InjureRequestPacket.RequestInjureType.Fall)
-            );
         }
     }
 }

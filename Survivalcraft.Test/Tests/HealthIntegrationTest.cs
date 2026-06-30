@@ -52,6 +52,116 @@ public sealed class HealthIntegrationTest : IClassFixture<GameFixture> {
         await WaitForCauseOfDeathAsync(client, entityId, "HealthIntegrationTest_Death");
     }
 
+    // 干预：服务端修正生物血量并广播健康同步包
+    // 验证：客户端接收 HealthSyncPacket 后更新为服务端血量
+    [Fact, TestOrder(Priority = 4)]
+    public async Task TestCreatureHealedHealthSync() {
+        int entityId = await SpawnHealthTestCreatureAsync(server);
+        Assert.True(entityId > 0, "Server did not create a health test creature.");
+        Assert.True(await WaitForEntityExistsAsync(client, entityId), $"Client did not receive creature entity {entityId}.");
+
+        double serverHealth = await SetAndSyncEntityHealthAsync(server, entityId, 0.5f);
+
+        Assert.InRange(serverHealth, 0.5d - HealthEpsilon, 0.5d + HealthEpsilon);
+        await WaitForHealthAsync(client, entityId, 0.5d);
+
+        serverHealth = await SetAndSyncEntityHealthAsync(server, entityId, 0.9f);
+
+        Assert.InRange(serverHealth, 0.9d - HealthEpsilon, 0.9d + HealthEpsilon);
+        await WaitForHealthAsync(client, entityId, 0.9d);
+    }
+
+    // 干预：服务端普通生物受到非致死伤害
+    // 验证：血量同步降低，但两端都不会写入死因
+    [Fact, TestOrder(Priority = 5)]
+    public async Task TestCreatureNonFatalInjuryDoesNotSetCauseOfDeath() {
+        int entityId = await SpawnHealthTestCreatureAsync(server);
+        Assert.True(entityId > 0, "Server did not create a health test creature.");
+        Assert.True(await WaitForEntityExistsAsync(client, entityId), $"Client did not receive creature entity {entityId}.");
+
+        double serverHealth = await InjureEntityAsync(server, entityId, 0.25f, "HealthIntegrationTest_NonFatal");
+
+        Assert.InRange(serverHealth, 0.75d - HealthEpsilon, 0.75d + HealthEpsilon);
+        await WaitForHealthAsync(client, entityId, 0.75d);
+        await WaitForCauseOfDeathAsync(server, entityId, "");
+        await WaitForCauseOfDeathAsync(client, entityId, "");
+    }
+
+    // 干预：服务端对低血量生物施加超过剩余血量的伤害
+    // 验证：两端血量都被钳制为 0，不会出现负血
+    [Fact, TestOrder(Priority = 6)]
+    public async Task TestCreatureOverkillDamageClampsHealthToZero() {
+        int entityId = await SpawnHealthTestCreatureAsync(server);
+        Assert.True(entityId > 0, "Server did not create a health test creature.");
+        Assert.True(await WaitForEntityExistsAsync(client, entityId), $"Client did not receive creature entity {entityId}.");
+        await SetEntityHealthAsync(server, entityId, 0.4f);
+
+        double serverHealth = await InjureExistingEntityAsync(server, entityId, 2f, "HealthIntegrationTest_Overkill");
+
+        Assert.InRange(serverHealth, 0d, HealthEpsilon);
+        await WaitForHealthAsync(client, entityId, 0d);
+        await WaitForCauseOfDeathAsync(server, entityId, "HealthIntegrationTest_Overkill");
+        await WaitForCauseOfDeathAsync(client, entityId, "HealthIntegrationTest_Overkill");
+    }
+
+    // 干预：生物死亡后再次收到伤害
+    // 验证：死亡后的伤害不会重新结算，也不会覆盖第一次死因
+    [Fact, TestOrder(Priority = 7)]
+    public async Task TestCreatureDeathCauseIsNotOverwrittenByLaterInjury() {
+        int entityId = await SpawnHealthTestCreatureAsync(server);
+        Assert.True(entityId > 0, "Server did not create a health test creature.");
+        Assert.True(await WaitForEntityExistsAsync(client, entityId), $"Client did not receive creature entity {entityId}.");
+
+        double serverHealth = await InjureEntityAsync(server, entityId, 1f, "HealthIntegrationTest_FirstDeath");
+        Assert.InRange(serverHealth, 0d, HealthEpsilon);
+        await WaitForHealthAsync(client, entityId, 0d);
+        await WaitForCauseOfDeathAsync(server, entityId, "HealthIntegrationTest_FirstDeath");
+        await WaitForCauseOfDeathAsync(client, entityId, "HealthIntegrationTest_FirstDeath");
+
+        serverHealth = await InjureExistingEntityAsync(server, entityId, 1f, "HealthIntegrationTest_SecondDeath");
+
+        Assert.InRange(serverHealth, 0d, HealthEpsilon);
+        await Task.Delay(500);
+        await WaitForCauseOfDeathAsync(server, entityId, "HealthIntegrationTest_FirstDeath");
+        await WaitForCauseOfDeathAsync(client, entityId, "HealthIntegrationTest_FirstDeath");
+    }
+
+    // 干预：客户端通过 InjureRequestPacket 请求窒息伤害
+    // 验证：服务端按连接对应玩家结算伤害，并同步回客户端
+    [Fact, TestOrder(Priority = 8)]
+    public async Task TestClientChokeRequestIsAppliedByServer() {
+        int playerIndex = await WaitForClientPlayerIndexAsync(client);
+        int serverPlayerEntityId = await EnsureServerPlayerEntityAsync(server, playerIndex);
+        Assert.True(serverPlayerEntityId > 0, $"Server player entity was not available for player {playerIndex}.");
+        Assert.True(await WaitForEntityExistsAsync(client, serverPlayerEntityId), $"Client did not receive player entity {serverPlayerEntityId}.");
+        await SetPlayerHealthAsync(server, playerIndex, 1f);
+        await SetPlayerHealthAsync(client, playerIndex, 1f);
+
+        await SendClientInjureRequestAsync(client, "Choke", 0.2f, "HealthIntegrationTest_ChokeRequest", true);
+
+        await WaitForPlayerHealthAsync(server, playerIndex, 0.8d);
+        await WaitForPlayerHealthAsync(client, playerIndex, 0.8d);
+    }
+
+    // 干预：客户端伪造 Fall 类型伤害请求
+    // 验证：坠落伤害由服务端权威结算，服务端拒绝客户端 Fall 请求
+    [Fact, TestOrder(Priority = 9)]
+    public async Task TestClientFallRequestDoesNotDamageServerPlayer() {
+        int playerIndex = await WaitForClientPlayerIndexAsync(client);
+        int serverPlayerEntityId = await EnsureServerPlayerEntityAsync(server, playerIndex);
+        Assert.True(serverPlayerEntityId > 0, $"Server player entity was not available for player {playerIndex}.");
+        Assert.True(await WaitForEntityExistsAsync(client, serverPlayerEntityId), $"Client did not receive player entity {serverPlayerEntityId}.");
+
+        await SetPlayerHealthAsync(server, playerIndex, 1f);
+        await SetPlayerHealthAsync(client, playerIndex, 1f);
+
+        await SendClientInjureRequestAsync(client, "Fall", 0.5f, "HealthIntegrationTest_ForgedFallRequest", true);
+        await Task.Delay(1500);
+
+        double serverHealth = await GetPlayerHealthAsync(server, playerIndex);
+        Assert.InRange(serverHealth, 1d - HealthEpsilon, 1d + HealthEpsilon);
+    }
+
     [Fact]
     public void Dispose() {
         fixture.ThrowIfAnyContextHasError();
@@ -66,6 +176,10 @@ public sealed class HealthIntegrationTest : IClassFixture<GameFixture> {
 
         bool playerScreen = await client.WaitLogAsync("Entered screen \"Player\"", 60);
         Assert.True(playerScreen, "Failed to load the Player screen.");
+
+        await client.PushCommandAsync("CLICK_WIDGET PlayButton");
+        int playerIndex = await WaitForClientPlayerIndexAsync(client);
+        Assert.True(playerIndex >= 0, "Client player index was not assigned.");
     }
 
     private static async Task<int> SpawnHealthTestCreatureAsync(GameContext context) {
@@ -123,6 +237,58 @@ public sealed class HealthIntegrationTest : IClassFixture<GameFixture> {
         return Convert.ToDouble(result);
     }
 
+    private static async Task<double> InjureExistingEntityAsync(GameContext context, int entityId, float amount, string cause) {
+        object? result = await context.PushCommandAsync(
+            $"""
+            FUNC var entity = Game.GameManager.Project.FindEntity({entityId});
+            var health = entity?.FindComponent<Game.ComponentHealth>();
+            if (health == null) return -1f;
+            health.IsInvulnerable = false;
+            health.m_regenerateLifeEnabled = false;
+            health.Injure({amount:R}f, null, true, "{cause}");
+            return health.Health;
+            """);
+
+        return Convert.ToDouble(result);
+    }
+
+    private static async Task<double> SetEntityHealthAsync(GameContext context, int entityId, float value) {
+        object? result = await context.PushCommandAsync(
+            $"""
+            FUNC var entity = Game.GameManager.Project.FindEntity({entityId});
+            var health = entity?.FindComponent<Game.ComponentHealth>();
+            if (health == null) return -1f;
+            health.IsInvulnerable = false;
+            health.m_regenerateLifeEnabled = false;
+            health.Health = {value:R}f;
+            health.m_lastHealth = {value:R}f;
+            health.CauseOfDeath = null;
+            health.DeathTime = null;
+            return health.Health;
+            """);
+
+        return Convert.ToDouble(result);
+    }
+
+    private static async Task<double> SetAndSyncEntityHealthAsync(GameContext context, int entityId, float value) {
+        object? result = await context.PushCommandAsync(
+            $"""
+            FUNC var entity = Game.GameManager.Project.FindEntity({entityId});
+            var health = entity?.FindComponent<Game.ComponentHealth>();
+            if (health == null) return -1f;
+            health.IsInvulnerable = false;
+            health.m_regenerateLifeEnabled = false;
+            health.Health = {value:R}f;
+            health.m_lastHealth = {value:R}f;
+            health.CauseOfDeath = null;
+            health.DeathTime = null;
+            Game.NetworkManager.Queue(new Game.Network.HealthSyncPacket(health));
+            return health.Health;
+            """);
+
+        return Convert.ToDouble(result);
+    }
+
     private static async Task<double> WaitForHealthAsync(GameContext context, int entityId, double expectedHealth) {
         for (int i = 0; i < 50; i++) {
             double health = await GetHealthAsync(context, entityId);
@@ -169,5 +335,111 @@ public sealed class HealthIntegrationTest : IClassFixture<GameFixture> {
             """);
 
         return result as string ?? string.Empty;
+    }
+
+    private static async Task<int> WaitForClientPlayerIndexAsync(GameContext context) {
+        for (int i = 0; i < 50; i++) {
+            object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
+            int playerIndex = result is int id ? id : Convert.ToInt32(result);
+            if (playerIndex >= 0) {
+                return playerIndex;
+            }
+            await Task.Delay(100);
+        }
+
+        throw new TimeoutException("Client player index was not assigned.");
+    }
+
+    private static async Task<int> EnsureServerPlayerEntityAsync(GameContext context, int playerIndex) {
+        object? result = await context.PushCommandAsync(
+            $$"""
+            FUNC var players = Game.GameManager.Project.FindSubsystem<Game.SubsystemPlayers>();
+            foreach (var playerData in players.PlayersData) {
+                if (playerData.PlayerIndex == {{playerIndex}}) {
+                    if (playerData.ComponentPlayer == null) {
+                        playerData.SpawnPlayer(
+                            players.GlobalSpawnPosition + new Engine.Vector3(4f, 0f, 4f),
+                            Game.PlayerData.SpawnMode.InitialNoIntro);
+                    }
+                    return playerData.ComponentPlayer?.Entity.Id ?? 0;
+                }
+            }
+            return 0;
+            """);
+
+        return result is int id ? id : Convert.ToInt32(result);
+    }
+
+    private static async Task<double> SetPlayerHealthAsync(GameContext context, int playerIndex, float value) {
+        object? result = await context.PushCommandAsync(
+            $$"""
+            FUNC var players = Game.GameManager.Project.FindSubsystem<Game.SubsystemPlayers>();
+            foreach (var playerData in players.PlayersData) {
+                if (playerData.PlayerIndex == {{playerIndex}} && playerData.ComponentPlayer != null) {
+                    var health = playerData.ComponentPlayer.ComponentHealth;
+                    health.IsInvulnerable = false;
+                    health.m_regenerateLifeEnabled = false;
+                    health.Health = {{value:R}}f;
+                    health.m_lastHealth = {{value:R}}f;
+                    health.CauseOfDeath = null;
+                    health.DeathTime = null;
+                    return health.Health;
+                }
+            }
+            return -1f;
+            """);
+
+        return Convert.ToDouble(result);
+    }
+
+    private static async Task<double> WaitForPlayerHealthAsync(GameContext context, int playerIndex, double expectedHealth) {
+        for (int i = 0; i < 50; i++) {
+            double health = await GetPlayerHealthAsync(context, playerIndex);
+            if (Math.Abs(health - expectedHealth) <= HealthEpsilon) {
+                return health;
+            }
+            await Task.Delay(100);
+        }
+
+        double actualHealth = await GetPlayerHealthAsync(context, playerIndex);
+        throw new TimeoutException($"Player {playerIndex} health did not reach {expectedHealth}. Actual={actualHealth}.");
+    }
+
+    private static async Task<double> GetPlayerHealthAsync(GameContext context, int playerIndex) {
+        object? result = await context.PushCommandAsync(
+            $$"""
+            FUNC var players = Game.GameManager.Project.FindSubsystem<Game.SubsystemPlayers>();
+            foreach (var playerData in players.PlayersData) {
+                if (playerData.PlayerIndex == {{playerIndex}} && playerData.ComponentPlayer != null) {
+                    return playerData.ComponentPlayer.ComponentHealth.Health;
+                }
+            }
+            return -1f;
+            """);
+
+        return Convert.ToDouble(result);
+    }
+
+    private static async Task SendClientInjureRequestAsync(
+        GameContext context,
+        string requestType,
+        float amount,
+        string cause,
+        bool ignoreInvulnerability) {
+        object? result = await context.PushCommandAsync(
+            $$"""
+            FUNC var packet = new Game.Network.InjureRequestPacket();
+            packet.m_targetId = 0;
+            packet.m_attackerId = 0;
+            packet.m_amount = {{amount:R}}f;
+            packet.m_health = 0f;
+            packet.m_ignoreInvulnerability = {{(ignoreInvulnerability ? "true" : "false")}};
+            packet.m_cause = "{{cause}}";
+            packet.m_requestInjureType = Game.Network.InjureRequestPacket.RequestInjureType.{{requestType}};
+            Game.NetworkManager.Queue(packet);
+            return "queued";
+            """);
+
+        Assert.Equal("queued", result as string);
     }
 }

@@ -107,7 +107,6 @@ public class PacketManager {
 
         // Health
         RegisterPacket<HealthSyncPacket>();
-        RegisterPacket<HitValuePacket>();
         RegisterPacket<InjureEventPacket>();
         RegisterPacket<InjureRequestPacket>();
         RegisterPacket<VitalStatSyncPacket>();
@@ -189,7 +188,7 @@ public class PacketManager {
         RegisterPacket<PlayerRestartPacket>();
         RegisterPacket<PlayerStatSyncPacket>();
         RegisterPacket<PlayerUpdateLocationPacket>();
-        RegisterPacket<ServerCloseTimePacket>();
+        RegisterPacket<HitValuePacket>();
 
         // Terrain
         RegisterPacket<SubsystemSeasonPacket>();

@@ -344,10 +344,6 @@ public static class RootManager {
             if (NetworkManager.IsNetworkMode && Time.PeriodicEvent(1.0, 0.5))
                 NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.SyncStat));
         };
-        ComponentHealth.OnHealthHealUpdate = (health) => {
-            if (NetworkManager.IsNetworkMode && Time.PeriodicEvent(2.0, 0.0))
-                NetworkManager.Queue(new HealthSyncPacket(health));
-        };
         SubsystemFurnaceBlockBehavior.OnFurnacesUpdate = (subsystem, furnaces) => {
             if (NetworkManager.IsNetworkMode)
                 NetworkManager.Queue(new ComponentFurnacePacket(furnaces));

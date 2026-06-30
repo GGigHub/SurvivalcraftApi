@@ -97,7 +97,7 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
     // 分别有FishOutOfWater/LookAround/StubbornSteed
     // 验证：被控制实体的BendOrder/LookRandomOrder/HeadShakeOrder
     // 这个测试不一定必须出现
-    [Fact, TestOrder(Priority = 4)]
+    [Fact, TestOrder(Priority = 5)]
     public async Task TestCreatureBehaviorSync2() {
         Dictionary<string, int> entityIds = CreatureTools.ParseBehaviorEntityIds(
             (string?)await server.PushCommandAsync(CreatureTools.AddNonPathfindingBehaviorEntitiesCode) ?? string.Empty);
@@ -135,7 +135,7 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
     // 干预：所有播放了音频的组件行为
     // 验证：生物是否播放了音频
     // 不播放音频的组件行为有DigInMud/FishOutOfWater/SwimAround/SwimAway
-    [Fact, TestOrder(Priority = 5)]
+    [Fact, TestOrder(Priority = 6)]
     public async Task TestCreatureBehaviorSync3() {
         Dictionary<string, int> entityIds = CreatureTools.ParseBehaviorEntityIds(
             (string?)await server.PushCommandAsync(CreatureTools.ForceCreatureSoundBehaviorCode) ?? string.Empty);
@@ -170,7 +170,7 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
     // 干预：ComponentChase/ComponentDigInMud/EatPickable/FishOutOfWater/HumanRow/
     // LookAround/RandomFeed/RandomPeck/StubbornSteed行为
     // 验证：行为是否被正确传输
-    [Fact, TestOrder(Priority = 6)]
+    [Fact, TestOrder(Priority = 7)]
     public async Task TestCreatureBehaviorSync4() {
         Dictionary<string, int> entityIds = CreatureTools.ParseBehaviorEntityIds(
             (string?)await server.PushCommandAsync(CreatureTools.AddFullBehaviorSyncEntitiesCode) ?? string.Empty);
@@ -225,7 +225,7 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
 
     // 干预：指定生物的LookAngles/FlyOrder/Position/Rotation/Velocity
     // 验证：干预项是否被同步(BehaviorSyncOnly为true时不该被同步，反之亦然)
-    [Fact, TestOrder(Priority = 7)]
+    [Fact, TestOrder(Priority = 8)]
     public async Task TestCreatureBodySync() {
         string addEntityCode = "FUNC " + GameTools.ReadScript("CreatureSync/AddEntityCode.cs");
         int entityId = (int?)await server.PushCommandAsync(addEntityCode) ?? 0;
