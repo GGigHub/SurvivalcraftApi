@@ -25,7 +25,7 @@ public class DamageSyncPacket : Packet {
         if (isServer) return;
         GameManager.Project.FindEntity(m_targetId, e => {
             ComponentDamage h = e.FindComponent<ComponentDamage>();
-            if (h != null) h.Hitpoints = m_health;
+            h?.Hitpoints = m_health;
         });
     }
 }

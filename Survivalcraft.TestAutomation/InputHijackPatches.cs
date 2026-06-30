@@ -4,7 +4,7 @@ using Engine;
 using Engine.Input;
 using HarmonyLib;
 
-namespace Survivalcraft.TestMod.A {
+namespace Survivalcraft.TestAutomation {
     public static class InputHijackState {
         private static readonly FieldInfo MouseMovementField =
             AccessTools.Field(typeof(Mouse), "<MouseMovement>k__BackingField");

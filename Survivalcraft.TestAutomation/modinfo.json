@@ -1,6 +1,6 @@
 {
-  "PackageName": "Survivalcraft.TestMod.A",
-  "Name": "Test Input Hijacker Mod A",
+  "PackageName": "Survivalcraft.TestAutomation",
+  "Name": "Survivalcraft Test Automation",
   "Version": "1.0",
   "Author": "Test",
   "ApiVersion": "1.9.0.2",

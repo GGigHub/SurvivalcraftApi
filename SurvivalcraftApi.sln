@@ -66,7 +66,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Survivalcraft.Windows", "Su
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.Test", "Survivalcraft.Test\Survivalcraft.Test.csproj", "{32200FA4-0137-43F5-A743-3D9398996AB1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.TestMod.A", "Survivalcraft.TestMod.A\Survivalcraft.TestMod.A.csproj", "{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.TestAutomation", "Survivalcraft.TestAutomation\Survivalcraft.TestAutomation.csproj", "{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

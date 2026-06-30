@@ -35,7 +35,7 @@
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModTempDir)" />
     <Copy SourceFiles="@(ModDependencyFiles)" DestinationFolder="$(ModTempDir)" />
     <Copy SourceFiles="modinfo.json" DestinationFolder="$(ModTempDir)" />
-    <ZipDirectory SourceDirectory="$(ModTempDir)" DestinationFile="$(ModOutputPath)Survivalcraft.TestMod.A.scmod" Overwrite="true" />
+    <ZipDirectory SourceDirectory="$(ModTempDir)" DestinationFile="$(ModOutputPath)Survivalcraft.TestAutomation.scmod" Overwrite="true" />
   </Target>
 
 </Project>

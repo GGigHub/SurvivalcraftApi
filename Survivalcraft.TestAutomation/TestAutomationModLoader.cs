@@ -11,8 +11,8 @@ using Game;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 
-namespace Survivalcraft.TestMod.A {
-    public class TestModLoader : ModLoader {
+namespace Survivalcraft.TestAutomation {
+    public class TestAutomationModLoader : ModLoader {
         private UdpClient udpServer;
         private CancellationTokenSource cts = new();
         private readonly Queue<string> pendingWidgetClicks = new();
@@ -20,7 +20,7 @@ namespace Survivalcraft.TestMod.A {
 
         public override void __ModInitialize() {
             // Apply Harmony patches to hijack input
-            var harmony = new Harmony("com.survivalcraft.testmod.a");
+            var harmony = new Harmony("com.survivalcraft.testautomation");
             harmony.PatchAll();
             ModsManager.RegisterHook("BeforeWidgetUpdate", this);
             ModsManager.RegisterHook("AfterWidgetUpdate", this);
@@ -73,7 +73,7 @@ namespace Survivalcraft.TestMod.A {
                 }, cts.Token);
             }
             catch (Exception ex) {
-                Log.Error($"[Survivalcraft.TestMod.A] Failed to start UDP Server: {ex.Message}");
+                Log.Error($"[Survivalcraft.TestAutomation] Failed to start UDP Server: {ex.Message}");
             }
         }
 
@@ -150,7 +150,7 @@ namespace Survivalcraft.TestMod.A {
                 Log.Information($"Command executed: {command}");
             }
             catch (Exception ex) {
-                Log.Error($"[Survivalcraft.TestMod.A] Error processing command '{command}': {ex.Message}");
+                Log.Error($"[Survivalcraft.TestAutomation] Error processing command '{command}': {ex.Message}");
             }
         }
 
