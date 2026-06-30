@@ -9,6 +9,7 @@ public class HitValuePacket : Packet {
     public Vector3 m_velocity;
     public Color m_color;
     public string m_text;
+    public bool m_velocityIsFinal;
 
     public HitValuePacket() {
     }
@@ -20,16 +21,21 @@ public class HitValuePacket : Packet {
         m_text = text;
     }
 
+    public HitValuePacket(Vector3 position, Vector3 velocity, Color color, string text, bool velocityIsFinal) : this(position, velocity, color, text) {
+        m_velocityIsFinal = velocityIsFinal;
+    }
+
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref m_position);
         archive.Value(ref m_velocity);
         archive.Value(ref m_color);
         archive.Value(ref m_text);
+        archive.TryValue(ref m_velocityIsFinal);
     }
 
     public override void Handle(bool isServer) {
         if (isServer) return;
-        HitValueParticleSystem particleSystem = new HitValueParticleSystem(m_position, m_velocity, m_color, m_text);
+        HitValueParticleSystem particleSystem = new HitValueParticleSystem(m_position, m_velocity, m_color, m_text, !m_velocityIsFinal);
         float pitch = new Random().Float(-0.2f, 0.2f);
         GameManager.Project.FindSubsystem<SubsystemParticles>(true).AddParticleSystem(particleSystem);
         GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Swoosh", 1f, pitch, m_position, 3f, false);

@@ -91,6 +91,13 @@ public static class RootManager {
             if (!NetworkManager.IsNetworkMode)
                 NetworkManager.Queue(new EntityOnFirePacket(onFire, attacker, duration));
         };
+        SubsystemParticles.OnParticleSystemAdded = particleSystem => {
+            if (NetworkManager.IsNetworkMode || particleSystem is not HitValueParticleSystem hitValueParticleSystem) {
+                return;
+            }
+            HitValueParticleSystem.Particle particle = hitValueParticleSystem.Particles[0];
+            NetworkManager.Queue(new HitValuePacket(particle.Position, particle.Velocity, particle.BaseColor, particle.Text, true));
+        };
         ComponentPickableGatherer.OnPickableAttract = (pickable) => {
             if (!NetworkManager.IsNetworkMode)
                 NetworkManager.Queue(new PickableSetFlyToPositionPacket(pickable));

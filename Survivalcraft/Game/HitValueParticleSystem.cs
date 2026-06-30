@@ -15,13 +15,15 @@ namespace Game {
 
         public FontBatch3D m_batch;
 
-        public HitValueParticleSystem(Vector3 position, Vector3 velocity, Color color, string text) : base(1) {
-            Random random = new();
+        public HitValueParticleSystem(Vector3 position, Vector3 velocity, Color color, string text) : this(position, velocity, color, text, true) {
+        }
+
+        public HitValueParticleSystem(Vector3 position, Vector3 velocity, Color color, string text, bool randomizeVelocity) : base(1) {
             Particle obj = Particles[0];
             obj.IsActive = true;
             obj.Position = position;
             obj.TimeToLive = 0.9f;
-            obj.Velocity = velocity + random.Vector3(0.75f) * new Vector3(1f, 0f, 1f) + 0.5f * Vector3.UnitY;
+            obj.Velocity = randomizeVelocity ? velocity + new Random().Vector3(0.75f) * new Vector3(1f, 0f, 1f) + 0.5f * Vector3.UnitY : velocity;
             obj.BaseColor = color;
             obj.Text = text;
         }
