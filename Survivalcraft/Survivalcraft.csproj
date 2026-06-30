@@ -36,7 +36,7 @@
       <Compile Include="Network\Packet\Entity\HumanRowBehaviorPacket.cs" />
       <Compile Include="Network\Packet\Entity\RandomFeedBehaviorPacket.cs" />
       <Compile Include="Network\Packet\Entity\RandomPeckBehaviorPacket.cs" />
-      <Compile Include="Network\Packet\Health\DamageSyncPacket.cs" />
+      <Compile Include="Network\Packet\Inventory\DamageSyncPacket.cs" />
       <Compile Include="Network\Packet\Health\HealthSyncPacket.cs" />
       <Compile Include="Network\Packet\Health\HitValuePacket.cs" />
       <Compile Include="Network\Packet\Health\InjureEventPacket.cs" />

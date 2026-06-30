@@ -35,6 +35,7 @@ namespace Survivalcraft.TestAutomation {
             // 吵到我听歌了
             SettingsManager.MusicVolume = 0;
             SettingsManager.SoundsVolume = 0;
+            SettingsManager.FileAssociationEnabled = false;
 
             SettingsManager.LetRamdomStatic = true;
             SettingsManager.MultithreadedTerrainUpdate = false;

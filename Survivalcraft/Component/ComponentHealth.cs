@@ -17,7 +17,7 @@ namespace Game {
         public ComponentFactors m_componentFactors;
 
         public static Action<ComponentHealth, Injury, float> OnHealthInjured;
-        public static Action<ComponentHealth> OnHealthDead;
+        public static Action<ComponentHealth> OnCreatureDied;
         public static Action<ComponentHealth> OnHealthHealUpdate;
         public static Action<ComponentHealth, float, string> OnHealthFallDamage;
 
@@ -199,7 +199,7 @@ namespace Game {
                 }
             );
             CauseOfDeath = injury?.Cause;
-            OnHealthDead?.Invoke(this);
+            OnCreatureDied?.Invoke(this);
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
                 m_componentCreature.PlayerStats.AddDeathRecord(
                     new PlayerStats.DeathRecord {

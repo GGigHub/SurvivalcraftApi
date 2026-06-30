@@ -64,7 +64,7 @@ public static class RootManager {
             NetworkManager.Queue(new SubsystemWeatherPacket(type));
         ComponentGui.OnPlayerCreativeFly = (gui, player) =>
             NetworkManager.Queue(new PlayerCreativeFlyPacket(player));
-        ComponentHealth.OnHealthDead = (health) => {
+        ComponentHealth.OnCreatureDied = (health) => {
             if (!NetworkManager.IsNetworkMode)
                 NetworkManager.Queue(new HealthSyncPacket(health));
         };

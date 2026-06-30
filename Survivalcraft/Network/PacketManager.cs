@@ -106,7 +106,6 @@ public class PacketManager {
         RegisterPacket<StubbornSteedBehaviorPacket>();
 
         // Health
-        RegisterPacket<DamageSyncPacket>();
         RegisterPacket<HealthSyncPacket>();
         RegisterPacket<HitValuePacket>();
         RegisterPacket<InjureEventPacket>();
@@ -135,6 +134,7 @@ public class PacketManager {
         RegisterPacket<SetSlotItemPacket>();
         RegisterPacket<WhoHasSkinPacket>();
         RegisterPacket<WhoHasSkinReplyPacket>();
+        RegisterPacket<DamageSyncPacket>();
 
         // Logic
         RegisterPacket<AdjustableDelayGatePacket>();
