@@ -53,7 +53,7 @@ public static class RootManager {
                 NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.StartFlu));
         };
         ComponentFurnace.OnFurnaceUpdate = (furnace) => {
-            if (!NetworkManager.IsNetworkMode)
+            if (NetworkManager.IsServerMode)
                 NetworkManager.Queue(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
         };
         ComponentGui.OnManualLightingStrike = (gui, position, direction) =>
@@ -182,7 +182,7 @@ public static class RootManager {
         SubsystemFireBlockBehavior.OnFireBlockRemove = (x, y, z) =>
             NetworkManager.Queue(new FireBlockRemovePacket(x, y, z));
         SubsystemFurnaceBlockBehavior.OnFurnacesUpdate = (subsystem, furnaces) => {
-            if (!NetworkManager.IsNetworkMode)
+            if (NetworkManager.IsServerMode)
                 NetworkManager.Queue(new ComponentFurnacePacket(furnaces));
         };
         SubsystemGameInfo.OnTimeUpdate = (totalElapsedGameTime, timeOfDayOffset) =>
@@ -348,13 +348,13 @@ public static class RootManager {
                 NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.SyncStat));
         };
         SubsystemFurnaceBlockBehavior.OnFurnacesUpdate = (subsystem, furnaces) => {
-            if (NetworkManager.IsNetworkMode)
+            if (NetworkManager.IsServerMode)
                 NetworkManager.Queue(new ComponentFurnacePacket(furnaces));
         };
         SubsystemGameInfo.OnTimeUpdate = (totalElapsedGameTime, timeOfDayOffset) =>
             NetworkManager.Queue(new SubsystemTimePacket(totalElapsedGameTime, timeOfDayOffset));
         ComponentFurnace.OnFurnaceUpdate = (furnace) => {
-            if (NetworkManager.IsNetworkMode && Time.PeriodicEvent(2.0, 0.0))
+            if (NetworkManager.IsServerMode && Time.PeriodicEvent(2.0, 0.0))
                 NetworkManager.Queue(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
         };
         Project.EntityAdded += (_, arg) => {

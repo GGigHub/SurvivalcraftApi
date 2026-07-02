@@ -38,9 +38,18 @@ public class MoveItemPacket : Packet {
         IInventory to = subsystemInventories.GetInventoryById(toInventoryId);
         if (from != null && to != null) {
             int value = from.GetSlotValue(fromSlotIndex);
-            int actualCount = MathUtils.Min(count, from.GetSlotCount(fromSlotIndex));
-            from.RemoveSlotItems(fromSlotIndex, actualCount);
-            to.AddSlotItems(toSlotIndex, value, actualCount);
+            int targetValue = to.GetSlotValue(toSlotIndex);
+            int sourceCount = from.GetSlotCount(fromSlotIndex);
+            int targetCount = to.GetSlotCount(toSlotIndex);
+            int targetCapacity = to.GetSlotCapacity(toSlotIndex, value);
+            int actualCount = 0;
+            if (targetCount == 0 || value == targetValue) {
+                actualCount = MathUtils.Min(targetCapacity - targetCount, sourceCount, count);
+            }
+            if (actualCount > 0) {
+                int removedCount = from.RemoveSlotItems(fromSlotIndex, actualCount);
+                to.AddSlotItems(toSlotIndex, value, removedCount);
+            }
             NetworkManager.Queue(new InventorySyncPacket(from));
             NetworkManager.Queue(new InventorySyncPacket(to));
         }

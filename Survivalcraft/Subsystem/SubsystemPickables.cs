@@ -221,6 +221,21 @@ namespace Game {
                     }
                 }
                 m_pickablesToRemove.Clear();
+                if (NetworkManager.IsServerMode
+                    && Time.PeriodicEvent(0.1, 0.0)
+                    && m_pickables.Count > 0) {
+                    List<Pickable> pickablesToUpdate = [];
+                    foreach (Pickable pickable in m_pickables) {
+                        if (!pickable.LastPosition.HasValue
+                            || Vector3.DistanceSquared(pickable.LastPosition.Value, pickable.Position) > 0.0001f) {
+                            pickablesToUpdate.Add(pickable);
+                            pickable.LastPosition = pickable.Position;
+                        }
+                    }
+                    if (pickablesToUpdate.Count > 0) {
+                        NetworkManager.Queue(new Network.PickableUpdatePacket(pickablesToUpdate));
+                    }
+                }
             }
         }
 

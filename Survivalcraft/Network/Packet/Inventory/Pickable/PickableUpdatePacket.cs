@@ -30,11 +30,5 @@ public class PickableUpdatePacket : Packet {
         foreach (Pickable pickable in m_pickables) {
             subsystemPickables.PickableAction(pickable.Id, current => current.Position = pickable.Position);
         }
-        foreach (Pickable existing in subsystemPickables.Pickables) {
-            if (m_pickables.Find(x => x.Id == existing.Id) == null) {
-                subsystemPickables.m_pickablesToRemove.Add(existing);
-            }
-        }
     }
 }
-

@@ -5,14 +5,14 @@ using Xunit;
 namespace Survivalcraft.Test;
 
 [TestCaseOrderer("Survivalcraft.Test.PriorityOrderer", "Survivalcraft.Test")]
-public sealed class HealthIntegrationTest : IClassFixture<GameFixture> {
+public sealed class HealthSyncTest : IClassFixture<GameFixture> {
     private const double HealthEpsilon = 0.001d;
 
     private readonly GameFixture fixture;
     private GameContext server => fixture.Server;
     private GameContext client => fixture.Client;
 
-    public HealthIntegrationTest(GameFixture fixture) {
+    public HealthSyncTest(GameFixture fixture) {
         this.fixture = fixture;
     }
 
@@ -153,8 +153,6 @@ public sealed class HealthIntegrationTest : IClassFixture<GameFixture> {
         Assert.True(serverPlayerEntityId > 0, $"Server player entity was not available for player {playerIndex}.");
         Assert.True(await WaitForEntityExistsAsync(client, serverPlayerEntityId), $"Client did not receive player entity {serverPlayerEntityId}.");
 
-        // The player might have taken natural fall damage upon spawning.
-        // Wait briefly for physics to settle and heal them to full before testing.
         await Task.Delay(2000);
         await SetEntityHealthAsync(server, serverPlayerEntityId, 1f);
 
@@ -166,7 +164,7 @@ public sealed class HealthIntegrationTest : IClassFixture<GameFixture> {
     }
 
     // 干预：服务端玩家的各类生存指标(VitalStats)发生变化
-    // 验证：客户端通过 VitalStatSyncPacket 同步接收到对应的变化
+    // 验证：客户端同步接收到对应的变化
     [Fact, TestOrder(Priority = 10)]
     public async Task TestPlayerVitalStatsSync() {
         int playerIndex = await WaitForClientPlayerIndexAsync(client);
@@ -174,8 +172,6 @@ public sealed class HealthIntegrationTest : IClassFixture<GameFixture> {
         Assert.True(serverPlayerEntityId > 0, $"Server player entity was not available for player {playerIndex}.");
         Assert.True(await WaitForEntityExistsAsync(client, serverPlayerEntityId), $"Client did not receive player entity {serverPlayerEntityId}.");
 
-        // Set Food and Sleep because they change very slowly over time.
-        // Other stats like Stamina and Wetness change rapidly in the simulation, making exact sync verification flaky.
         await SetPlayerVitalStatsAsync(server, playerIndex, 0.3f, 1f, 0.4f, 0f, 12f);
 
         float[] serverStats = await GetPlayerVitalStatsAsync(server, playerIndex);
