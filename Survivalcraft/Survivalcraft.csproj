@@ -36,7 +36,7 @@
       <Compile Include="Network\Packet\Entity\HumanRowBehaviorPacket.cs" />
       <Compile Include="Network\Packet\Entity\RandomFeedBehaviorPacket.cs" />
       <Compile Include="Network\Packet\Entity\RandomPeckBehaviorPacket.cs" />
-      <Compile Include="Network\Packet\Inventory\DamageSyncPacket.cs" />
+      <Compile Include="Network\Packet\Health\DamageSyncPacket.cs" />
       <Compile Include="Network\Packet\Health\HealthSyncPacket.cs" />
       <Compile Include="Network\Packet\Player\HitValuePacket.cs" />
       <Compile Include="Network\Packet\Health\InjureEventPacket.cs" />
@@ -58,11 +58,11 @@
       <Compile Include="Network\Packet\Inventory\Pickable\PickableDeleteListPacket.cs" />
       <Compile Include="Network\Packet\Inventory\Pickable\PickableRequestSyncPacket.cs" />
       <Compile Include="Network\Packet\Inventory\Pickable\PickableSyncListPacket.cs" />
-      <Compile Include="Network\Packet\Inventory\ReplySkinPacket.cs" />
-      <Compile Include="Network\Packet\Inventory\RequestSkinPacket.cs" />
+      <Compile Include="Network\Packet\Inventory\Skin\ReplySkinPacket.cs" />
+      <Compile Include="Network\Packet\Inventory\Skin\RequestSkinPacket.cs" />
       <Compile Include="Network\Packet\Inventory\SetSlotItemPacket.cs" />
-      <Compile Include="Network\Packet\Inventory\WhoHasSkinPacket.cs" />
-      <Compile Include="Network\Packet\Inventory\WhoHasSkinReplyPacket.cs" />
+      <Compile Include="Network\Packet\Inventory\Skin\WhoHasSkinPacket.cs" />
+      <Compile Include="Network\Packet\Inventory\Skin\WhoHasSkinReplyPacket.cs" />
       <Compile Include="Network\Packet\Logic\AdjustableDelayGatePacket.cs" />
       <Compile Include="Network\Packet\Logic\BatteryVoltagePacket.cs" />
       <Compile Include="Network\Packet\Logic\ButtonVoltagePacket.cs" />
@@ -94,7 +94,6 @@
       <Compile Include="Network\Packet\Player\PlayerAimPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerBodyUpdatePacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerBuglePacket.cs" />
-      <Compile Include="Network\Packet\Player\PlayerCountPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerCreatePacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerCreativeFlyPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerDeletePacket.cs" />

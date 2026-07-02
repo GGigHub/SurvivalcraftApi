@@ -129,16 +129,17 @@ public static class RootManager {
         ComponentRider.OnMounting = (rider, mount, isRequest) =>
             NetworkManager.Queue(new ComponentMountPacket(rider, mount, isRequest));
         ComponentSickness.OnSicknessChange = (sickness) => {
-            if (!NetworkManager.IsNetworkMode)
+            if (NetworkManager.IsServerMode)
                 NetworkManager.Queue(new ComponentSicknessPacket(sickness));
         };
         ComponentStubbornSteedBehavior.OnHeadShakeOrder = (behavior, headShakeOrder) => {
-            if (!NetworkManager.IsNetworkMode)
+            if (NetworkManager.IsServerMode)
                 NetworkManager.Queue(new StubbornSteedBehaviorPacket(behavior, headShakeOrder));
         };
         ComponentVitalStats.OnVitalStatsUpdate = (stats) => {
-            if (!NetworkManager.IsNetworkMode && Time.PeriodicEvent(1.0, 0.5))
+            if (NetworkManager.IsServerMode) {
                 NetworkManager.Queue(new VitalStatSyncPacket(stats));
+            }
         };
         SubsystemAdjustableDelayGateBlockBehavior.OnEditBlockDelay = (subsystem, cell, newDelay) => {
             if (NetworkManager.IsNetworkMode)
@@ -334,7 +335,7 @@ public static class RootManager {
         ComponentBody.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
         ComponentLocomotion.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
         ComponentVitalStats.OnVitalStatsUpdate = (stats) => {
-            if (NetworkManager.IsNetworkMode && Time.PeriodicEvent(1.0, 0.5))
+            if (NetworkManager.IsServerMode)
                 NetworkManager.Queue(new VitalStatSyncPacket(stats));
         };
         ComponentBody.OnBodyUpdate = BodyUpdatePacket.CollectBodyForSync;

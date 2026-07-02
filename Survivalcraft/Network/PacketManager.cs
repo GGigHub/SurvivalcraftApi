@@ -110,6 +110,7 @@ public class PacketManager {
         RegisterPacket<InjureEventPacket>();
         RegisterPacket<InjureRequestPacket>();
         RegisterPacket<VitalStatSyncPacket>();
+        RegisterPacket<DamageSyncPacket>();
 
         // Inventory
         RegisterPacket<ActiveSlotChangePacket>();
@@ -133,7 +134,6 @@ public class PacketManager {
         RegisterPacket<SetSlotItemPacket>();
         RegisterPacket<WhoHasSkinPacket>();
         RegisterPacket<WhoHasSkinReplyPacket>();
-        RegisterPacket<DamageSyncPacket>();
 
         // Logic
         RegisterPacket<AdjustableDelayGatePacket>();
@@ -171,7 +171,6 @@ public class PacketManager {
         RegisterPacket<PlayerAimPacket>();
         RegisterPacket<PlayerBodyUpdatePacket>();
         RegisterPacket<PlayerBuglePacket>();
-        RegisterPacket<PlayerCountPacket>();
         RegisterPacket<PlayerCreatePacket>();
         RegisterPacket<PlayerCreativeFlyPacket>();
         RegisterPacket<PlayerDeletePacket>();
