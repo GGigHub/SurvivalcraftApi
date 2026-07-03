@@ -165,6 +165,7 @@ namespace Survivalcraft.TestAutomation {
 
         private Widget FindWidgetByTextOrName(Widget root, string query) {
             if (root == null) return null;
+            if (!root.IsVisible || !root.IsEnabled) return null;
 
             if (string.Equals(root.Name, query, StringComparison.OrdinalIgnoreCase)) return root;
             if (root is ButtonWidget button && string.Equals(button.Text, query, StringComparison.OrdinalIgnoreCase)) return button;

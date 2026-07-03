@@ -10,7 +10,7 @@ using Xunit;
 namespace Survivalcraft.Test;
 
 public class GameFixture : IAsyncLifetime, IDisposable {
-    private const int MaxConcurrentGameFixtures = 2;
+    private const int MaxConcurrentGameFixtures = 4;
     private static readonly SemaphoreSlim GameFixtureGate = new(MaxConcurrentGameFixtures);
 
     private readonly List<GameContext> contexts = [];
@@ -37,6 +37,8 @@ public class GameFixture : IAsyncLifetime, IDisposable {
             Spectator = CreateContext("Spectator");
             Server.Start();
             Client.Start();
+            Server.WaitLog("Entered screen \"MainMenu\"");
+            Client.WaitLog("Entered screen \"MainMenu\"");
         }
         catch {
             Dispose();

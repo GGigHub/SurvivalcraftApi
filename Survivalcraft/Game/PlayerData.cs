@@ -22,6 +22,8 @@ namespace Game {
 
         public SubsystemSky m_subsystemSky;
 
+        public SubsystemUpdate m_subsystemUpdate;
+
         public GameWidget m_gameWidget;
 
         public StateMachine m_stateMachine = new();
@@ -34,7 +36,9 @@ namespace Game {
 
         public double? m_playerDeathTime;
 
-        public double m_terrainWaitStartTime;
+        public long m_loadingWaitStartTick;
+        public long m_loadingLastPollTick;
+
         public double TerrainMaxWaitTime { get; set; } = 15;
 
         public SpawnDialog m_spawnDialog;
@@ -119,9 +123,9 @@ namespace Game {
         public bool IsTimeReadyToSpawn {
             get {
                 if (m_spawnMode == SpawnMode.Respawn) {
-                    return Time.FrameStartTime - m_terrainWaitStartTime > m_respawnWaitTime;
+                    return HasLoadingWaitReached(m_respawnWaitTime);
                 }
-                return Time.FrameStartTime - m_terrainWaitStartTime > m_initialSpawnWaitTime;
+                return HasLoadingWaitReached(m_initialSpawnWaitTime);
             }
         }
 
@@ -132,6 +136,7 @@ namespace Game {
             m_subsystemTerrain = project.FindSubsystem<SubsystemTerrain>(throwOnError: true);
             m_subsystemGameInfo = project.FindSubsystem<SubsystemGameInfo>(throwOnError: true);
             m_subsystemSky = project.FindSubsystem<SubsystemSky>(throwOnError: true);
+            m_subsystemUpdate = project.FindSubsystem<SubsystemUpdate>(throwOnError: true);
             m_playerClass = PlayerClass.Male;
             Level = 1f;
             FirstSpawnTime = -1.0;
@@ -180,12 +185,12 @@ namespace Game {
                 if (!(NetworkManager.IsNetworkMode && !IsMainPlayer)) {
                     m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, 0f, 64f);
                 }
-                m_terrainWaitStartTime = m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime;
+                BeginLoadingWait();
             }, delegate {
-                if (m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).PeriodicGameTimeEvent(0.1, 0.0)) {
+                if (ShouldPollPeriodicState()) {
                     float updateProgress2 = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, 0f, 64f);
                     UpdateSpawnDialog(null, null, 0.5f * updateProgress2, resetProgress: false);
-                    if (!(updateProgress2 < 1f) || !(m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime - m_terrainWaitStartTime < 15.0)) {
+                    if (!(updateProgress2 < 1f) || HasLoadingWaitReached(TerrainMaxWaitTime)) {
                         switch (m_spawnMode) {
                             case SpawnMode.InitialIntro:
                                 SpawnPosition = FindIntroSpawnPosition(SpawnPosition.XZ);
@@ -204,15 +209,15 @@ namespace Game {
                 }
             }, null);
             m_stateMachine.AddState("WaitForTerrain", delegate {
-                m_terrainWaitStartTime = m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime;
+                BeginLoadingWait();
                 Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 // 根据当前中心点刷新地形可见范围，客户端的非主玩家不需要提交 updateLocation。
                 if (!(NetworkManager.IsNetworkMode && !IsMainPlayer)) m_subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center, MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
             }, delegate {
-                if (m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).PeriodicGameTimeEvent(0.1, 0.0)) {
+                if (ShouldPollPeriodicState()) {
                     float updateProgress = m_subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, MathUtils.Min(SettingsManager.VisibilityRange, 64f), 0f);
                     UpdateSpawnDialog(null, null, 0.5f + 0.5f * updateProgress, resetProgress: false);
-                    if ((updateProgress >= 1f && m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime - m_terrainWaitStartTime > 2.0) || m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).GameTime - m_terrainWaitStartTime >= 15.0) {
+                    if ((updateProgress >= 1f && HasLoadingWaitReached(2.0)) || HasLoadingWaitReached(TerrainMaxWaitTime)) {
                         if (ComponentPlayer == null) {
                             if (!NetworkManager.IsNetworkMode) {
                                 SpawnPlayer(SpawnPosition, m_spawnMode);
@@ -227,9 +232,11 @@ namespace Game {
                 }
             }, null);
             // 客户端等待服务端同步玩家实体，收到后再进入 Playing。
-            m_stateMachine.AddState("WaitForPlayerEntity", null, delegate {
+            m_stateMachine.AddState("WaitForPlayerEntity", delegate {
+                BeginLoadingWait();
+            }, delegate {
                 UpdateSpawnDialog("Waiting for player entity from server", null, 0f, false);
-                if (m_subsystemGameInfo.Project.FindSubsystem<SubsystemTime>(true).PeriodicGameTimeEvent(0.1, 0.0)) {
+                if (ShouldPollPeriodicState()) {
                     if (ComponentPlayer != null) {
                         m_stateMachine.TransitionTo("Playing");
                     }
@@ -333,6 +340,27 @@ namespace Game {
 
         public virtual void Update() {
             m_stateMachine.Update();
+        }
+
+        public void BeginLoadingWait() {
+            m_loadingWaitStartTick = m_subsystemUpdate.UpdateTick;
+            m_loadingLastPollTick = m_loadingWaitStartTick - 1;
+        }
+
+        public bool ShouldPollPeriodicState() {
+            if (m_subsystemUpdate.UpdateTick == m_loadingLastPollTick) {
+                return false;
+            }
+            m_loadingLastPollTick = m_subsystemUpdate.UpdateTick;
+            return true;
+        }
+
+        public bool HasLoadingWaitReached(double seconds) {
+            if (seconds <= 0.0) {
+                return true;
+            }
+            long requiredTicks = (long)Math.Ceiling(seconds / Math.Max(m_subsystemUpdate.DefaultFixedTimeStep, 0.001f));
+            return m_subsystemUpdate.UpdateTick - m_loadingWaitStartTick >= requiredTicks;
         }
 
         public void Load(ValuesDictionary valuesDictionary) {

@@ -15,7 +15,6 @@ namespace Game {
         public SubsystemTime m_subsystemTime;
 
         public float DefaultFixedTimeStep => m_subsystemTime.DefaultFixedTimeStep;
-
         public int DefaultFixedUpdateStep => m_subsystemTime.DefaultFixedUpdateStep;
 
         public Dictionary<IUpdateable, UpdateableInfo> m_updateables = [];
@@ -29,8 +28,8 @@ namespace Game {
         int m_nextUpdateableSequence;
 
         public int UpdateablesCount => m_updateables.Count;
-
         public int UpdatesPerFrame { get; set; }
+        public long UpdateTick { get; private set; }
 
         public virtual void Update() {
             for (int i = 0; i < UpdatesPerFrame; i++) {
@@ -45,6 +44,7 @@ namespace Game {
         }
 
         private void UpdateInternal() {
+            UpdateTick++;
             bool flag = false;
             lock (m_toAddOrRemove) {
                 foreach (KeyValuePair<IUpdateable, bool> item in m_toAddOrRemove) {
