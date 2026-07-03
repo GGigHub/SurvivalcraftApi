@@ -1,6 +1,5 @@
 #if ANDROID
 using Android.Content;
-using SC4Android;
 #elif BROWSER
 using System.Runtime.Versioning;
 using Engine.Browser;
@@ -202,8 +201,8 @@ namespace Game {
             SystemLanguage = CultureInfo.CurrentUICulture.Name;
 #endif
 #if ANDROID
-            if (MainActivity.m_startupParameters != null) {
-                foreach ((string key, string value) in MainActivity.m_startupParameters) {
+            if (EngineActivity.StartupParameters != null) {
+                foreach ((string key, string value) in EngineActivity.StartupParameters) {
                     StartupParameters.Add(key, value);
                 }
             }

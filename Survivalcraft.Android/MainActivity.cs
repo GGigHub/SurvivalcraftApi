@@ -10,7 +10,9 @@ using Android.Views.Animations;
 using Android.Widget;
 using Android.Window;
 using Engine;
-using Game;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using Environment = Android.OS.Environment;
 using Permission = Android.Content.PM.Permission;
 using Resource = _Microsoft.Android.Resource.Designer.Resource;
@@ -46,8 +48,6 @@ namespace SC4Android {
     public class MainActivity : EngineActivity {
         public static bool GraterThanAndroid11 { get; } = Build.VERSION.SdkInt >= BuildVersionCodes.R;
         public static bool GraterThanAndroid6 { get; } = Build.VERSION.SdkInt >= BuildVersionCodes.M;
-
-        public static Dictionary<string, string> m_startupParameters;
 
         public static bool CheckAndRequestPermission(Activity activity) {
             bool arePermissionsGranted = true;
@@ -93,23 +93,32 @@ namespace SC4Android {
         }
 
         protected override void OnRun() {
-            base.OnRun();
-            if (CheckAndRequestPermission(this)) {
-                RunRequired = true;
-            }
-            else {
-                while (true) {
-                    Thread.Sleep(100);
-                    if (RunRequired) {
-                        break;
-                    }
-                    RunRequired = IsPermissionGranted(this);
-                    if (RunRequired) {
-                        break;
+            AndroidGameLauncher.Trace("MainActivity.OnRun begin");
+            try {
+                base.OnRun();
+                if (CheckAndRequestPermission(this)) {
+                    RunRequired = true;
+                }
+                else {
+                    while (true) {
+                        Thread.Sleep(100);
+                        if (RunRequired) {
+                            break;
+                        }
+                        RunRequired = IsPermissionGranted(this);
+                        if (RunRequired) {
+                            break;
+                        }
                     }
                 }
+                AndroidGameLauncher.Trace("MainActivity.OnRun launching game");
+                AndroidGameLauncher.Run();
+                AndroidGameLauncher.Trace("MainActivity.OnRun returned");
             }
-            Program.EntryPoint();
+            catch (Exception ex) {
+                AndroidGameLauncher.Trace(ex.ToString());
+                throw;
+            }
         }
 
         static bool RunRequired { get; set; }
@@ -129,7 +138,13 @@ namespace SC4Android {
             }
         }
 
+        protected override void OnDestroy() {
+            AndroidGameLauncher.Trace("MainActivity.OnDestroy begin");
+            base.OnDestroy();
+        }
+
         protected override void OnCreate(Bundle savedInstanceState) {
+            AndroidGameLauncher.Trace("MainActivity.OnCreate begin");
             base.OnCreate(savedInstanceState);
             Window?.DecorView.ViewTreeObserver?.AddOnPreDrawListener(new ViewTreeObserverListener());
             if (Build.VERSION.SdkInt >= BuildVersionCodes.S) {
@@ -137,18 +152,19 @@ namespace SC4Android {
             }
             ICollection<string> keySet = Intent?.Extras?.KeySet();
             if (keySet != null && keySet.Count > 0) {
-                m_startupParameters = new Dictionary<string, string>(keySet.Count);
+                EngineActivity.StartupParameters = new Dictionary<string, string>(keySet.Count);
                 foreach (string key in keySet) {
                     string value = Intent?.Extras?.GetString(key);
                     if (value != null) {
-                        m_startupParameters.Add(key, value);
+                        EngineActivity.StartupParameters.Add(key, value);
                     }
                 }
             }
+            AndroidGameLauncher.Trace("MainActivity.OnCreate end");
         }
 
         public class ViewTreeObserverListener : Java.Lang.Object, ViewTreeObserver.IOnPreDrawListener {
-            public bool OnPreDraw() => Program.m_firstFramePrepared;
+            public bool OnPreDraw() => AndroidGameLauncher.IsFirstFramePrepared;
         }
 
         public class SplashScreenOnExitAnimationListener : Java.Lang.Object, ISplashScreenOnExitAnimationListener {
