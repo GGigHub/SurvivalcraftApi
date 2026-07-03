@@ -274,21 +274,6 @@ public sealed class HealthIntegrationTest : IClassFixture<GameFixture> {
         return Convert.ToDouble(result);
     }
 
-    private static async Task<double> InjureExistingEntityAsync(GameContext context, int entityId, float amount, string cause) {
-        object? result = await context.PushCommandAsync(
-            $"""
-            FUNC var entity = Game.GameManager.Project.FindEntity({entityId});
-            var health = entity?.FindComponent<Game.ComponentHealth>();
-            if (health == null) return -1f;
-            health.IsInvulnerable = false;
-            health.m_regenerateLifeEnabled = false;
-            health.Injure({amount:R}f, null, true, "{cause}");
-            return health.Health;
-            """);
-
-        return Convert.ToDouble(result);
-    }
-
     private static async Task<double> SetEntityHealthAsync(GameContext context, int entityId, float value) {
         object? result = await context.PushCommandAsync(
             $"""
