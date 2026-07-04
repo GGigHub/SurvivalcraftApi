@@ -292,7 +292,6 @@ public class GameWidget : CanvasWidget {
         IsVisible = PlayerData.IsMainPlayer;
         base.MeasureOverride(parentAvailableSize);
     }
-}
 
     public void RenderGuiToTexture() {
         if (m_vrWidgetInput != null && WidgetsHierarchyInput != null) {
@@ -405,4 +404,3 @@ public class GameWidget : CanvasWidget {
         m_vrGuiRoot?.Dispose();
     }
 }
->>>>>>> API_1.9.2.1

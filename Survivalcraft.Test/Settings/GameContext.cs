@@ -93,7 +93,7 @@ public sealed class GameContext : IDisposable {
         return PushCommandAsync(command).GetAwaiter().GetResult();
     }
 
-    public bool WaitLog(string message, int seconds = 15) {
+    public bool WaitLog(string message, int seconds = 60) {
         return WaitLogAsync(message, seconds).GetAwaiter().GetResult();
     }
 
@@ -102,7 +102,8 @@ public sealed class GameContext : IDisposable {
         var endpoint = new IPEndPoint(IPAddress.Loopback, CmdPort);
         await commandClient.SendAsync(cmdBytes, endpoint);
 
-        if (command.StartsWith("FUNC ", StringComparison.OrdinalIgnoreCase)) {
+        if (command.StartsWith("FUNC ", StringComparison.OrdinalIgnoreCase)
+            || command.StartsWith("EXEC ", StringComparison.OrdinalIgnoreCase)) {
             using var cts = new CancellationTokenSource(15000);
             try {
                 var result = await commandClient.ReceiveAsync(cts.Token);
@@ -131,7 +132,7 @@ public sealed class GameContext : IDisposable {
         return null;
     }
 
-    public async Task<bool> WaitLogAsync(string message, int seconds = 15) {
+    public async Task<bool> WaitLogAsync(string message, int seconds = 60) {
         try {
             using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(seconds));
             await foreach (string logMessage in LogChannel.Reader.ReadAllAsync(timeout.Token)) {

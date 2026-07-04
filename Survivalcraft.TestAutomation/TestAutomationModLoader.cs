@@ -147,6 +147,8 @@ namespace Survivalcraft.TestAutomation {
                 else if (action == "EXEC" && parts.Length >= 2) {
                     string code = string.Join(" ", parts, 1, parts.Length - 1);
                     ExecuteCommandScript(code);
+                    byte[] bytes = Encoding.UTF8.GetBytes("OK:null");
+                    udpServer.Send(bytes, bytes.Length, remoteEP);
                 }
                 Log.Information($"Command executed: {command}");
             }
@@ -190,8 +192,8 @@ namespace Survivalcraft.TestAutomation {
             string command = pendingWidgetClicks.Peek();
             string query = command.Substring(command.IndexOf(' ') + 1);
             Widget target = FindWidgetByTextOrName(ScreensManager.CurrentScreen, query);
-            if (target == null
-                || FindClickableWidget(target) != clickableWidget) {
+            ClickableWidget targetClickableWidget = FindClickableWidget(target);
+            if (targetClickableWidget != clickableWidget) {
                 return;
             }
 
@@ -210,18 +212,7 @@ namespace Survivalcraft.TestAutomation {
 
             string command = pendingWidgetClicks.Peek();
             string query = command.Substring(command.IndexOf(' ') + 1);
-            Widget target = FindWidgetByTextOrName(ScreensManager.CurrentScreen, query);
-            if (target == null) {
-                pendingWidgetClicks.Dequeue();
-                Log.Information($"Command executed: {command} (Not Found)");
-                return;
-            }
-
-            if (FindClickableWidget(target) == null) {
-                pendingWidgetClicks.Dequeue();
-                Log.Information($"Command executed: {command} (Not Clickable)");
-                return;
-            }
+            _ = FindWidgetByTextOrName(ScreensManager.CurrentScreen, query);
         }
 
         private static ClickableWidget FindClickableWidget(Widget widget) {
@@ -231,9 +222,17 @@ namespace Survivalcraft.TestAutomation {
             if (widget is BitmapButtonWidget bitmapButtonWidget) return bitmapButtonWidget.m_clickableWidget;
             if (widget is CheckboxWidget checkboxWidget) return checkboxWidget.m_clickableWidget;
             if (widget is LinkWidget linkWidget) return linkWidget.m_clickableWidget;
-            return widget is ContainerWidget containerWidget
-                ? containerWidget.Children.Find<ClickableWidget>(false)
-                : null;
+            if (widget is ContainerWidget containerWidget) {
+                ClickableWidget childClickableWidget = containerWidget.Children.Find<ClickableWidget>(false);
+                if (childClickableWidget != null) return childClickableWidget;
+            }
+            for (ContainerWidget parent = widget.ParentWidget; parent != null; parent = parent.ParentWidget) {
+                if (parent is BevelledButtonWidget parentBevelledButtonWidget) return parentBevelledButtonWidget.m_clickableWidget;
+                if (parent is BitmapButtonWidget parentBitmapButtonWidget) return parentBitmapButtonWidget.m_clickableWidget;
+                if (parent is CheckboxWidget parentCheckboxWidget) return parentCheckboxWidget.m_clickableWidget;
+                if (parent is LinkWidget parentLinkWidget) return parentLinkWidget.m_clickableWidget;
+            }
+            return null;
         }
 
         private static void InjectClick(ClickableWidget clickableWidget) {

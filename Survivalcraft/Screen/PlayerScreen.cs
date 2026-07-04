@@ -264,41 +264,6 @@ public class PlayerScreen : Screen {
             if (m_mode == Mode.Edit) {
                 OnPlayerModify?.Invoke(m_playerData);
             }
-            if ((Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back").IsClicked)
-                && VerifyName()) {
-                if (m_mode == Mode.Initial) {
-                    GameManager.SaveProject(true, true);
-                    GameManager.DisposeProject();
-                    ScreensManager.SwitchScreen("MainMenu");
-                }
-                else if (m_mode == Mode.Add
-                    || m_mode == Mode.Edit) {
-                    ScreensManager.SwitchScreen("Players", m_playerData.SubsystemPlayers);
-                }
-            }
-            m_nameWasInvalid = false;
-        }
-
-        public static string GetDeviceDisplayName(WidgetInputDevice device) {
-            switch (device) {
-                case WidgetInputDevice.Keyboard | WidgetInputDevice.Mouse: return LanguageControl.Get(fName, 4);
-                case WidgetInputDevice.GamePad1:
-                    return LanguageControl.Get(fName, 5)
-                        + (GamePad.IsConnected(0) ? "" : LanguageControl.Get(fName, 9));
-                case WidgetInputDevice.GamePad2:
-                    return LanguageControl.Get(fName, 6)
-                        + (GamePad.IsConnected(1) ? "" : LanguageControl.Get(fName, 9));
-                case WidgetInputDevice.GamePad3:
-                    return LanguageControl.Get(fName, 7)
-                        + (GamePad.IsConnected(2) ? "" : LanguageControl.Get(fName, 9));
-                case WidgetInputDevice.GamePad4:
-                    return LanguageControl.Get(fName, 8)
-                        + (GamePad.IsConnected(3) ? "" : LanguageControl.Get(fName, 9));
-                case WidgetInputDevice.VrControllers:
-                    return "Virtual Reality" + (VrManager.IsVrAvailable ? "" : " (not found)");
-                default: return LanguageControl.Get(fName, 10);
->>>>>>> API_1.9.2.1
-            }
         }
         m_nameWasInvalid = false;
     }
