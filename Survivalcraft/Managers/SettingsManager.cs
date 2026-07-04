@@ -265,7 +265,7 @@ namespace Game {
         public static float GamepadCursorSpeed { get; set; }
 
         /// <summary>
-        ///     鎵嬫焺鎵虫満瑙﹀彂闃堝€硷紝鑼冨洿0~1锛岄粯璁?.5銆傛壋鏈虹殑鎸夊帇骞呭害鍙湁瓒呰繃杩欎釜鏁版椂鎵嶄細琚涓衡€滄寜涓嬧€濈姸鎬侊紝瓒婂皬鍒欒秺瀹规槗瑙﹀彂銆?
+        ///     手柄扳机触发阈值，范围0~1，默认0.5。扳机的按压幅度只有超过这个数时才会被视为“按下”状态，越小则越容易触发。
         /// </summary>
         public static float GamepadTriggerThreshold { get; set; }
 
@@ -365,7 +365,7 @@ namespace Game {
         public static float MoveWidgetMarginX { get; set; }
         public static float MoveWidgetMarginY { get; set; }
 
-        [Obsolete("璇ュ彉閲忕洰鍓嶅皻鏈娇鐢紝鏈夊緟鍚庣画API鐗堟湰瀹屽杽銆傚悗缁畬鍠勫悗妯＄粍鍙兘鐢ㄥ埌锛屼负浜嗗悜鏈潵鍏煎鍒垹")]
+        [Obsolete("该变量目前尚未且未使用，有待后续API版本完善。后续完善后模组可能用到，为了向未来兼容别删")]
         public static float MoveWidgetSize { get; set; }
 
         public static int AnimatedTextureRefreshLimit { get; set; }
@@ -424,7 +424,7 @@ namespace Game {
             }
         }
 
-        //鍥犱负璧嬪€兼椂ModsManager杩樻病鍑嗗濂斤紝鎵€浠ヤ笉鍦ㄦ澶勭悊get鍜宻et
+        // 因为赋值时ModsManager还没准备好，所以不在此处理get和set
         public static string ModLoadAfters { get; set; }
 
         public static bool SafeMode { get; set; }
@@ -709,7 +709,7 @@ namespace Game {
             GamepadMappingSettings.SetValue("Back", GamePadButton.Back);
         }
 
-        public static void InitializeCameraManageSettings() { //閿〃绀烘憚鍍忔満鐨勭被鍚嶏紝鍊艰〃绀烘憚鍍忔満鐨勬帓搴忥紙灏忎簬0鍒欑鐢級
+        public static void InitializeCameraManageSettings() { // 键表示摄像机的类名，值表示摄像机的排序（小于0则禁用）
             CameraManageSettings = new ValuesDictionary();
             CameraManageSettings.SetValue("Game.FppCamera", 0);
             CameraManageSettings.SetValue("Game.TppCamera", 1);
@@ -844,10 +844,10 @@ namespace Game {
         }
 
         public static object GetKeyboardMapping(string keyName, bool throwIfNotFound = true) {
-            if (KeyboardMappingSettings.TryGetValue(keyName, out object result)) { //鍘熺増璁剧疆
+            if (KeyboardMappingSettings.TryGetValue(keyName, out object result)) { //原版设置
                 return result;
             }
-            foreach (ValuesDictionary item in ModSettingsManager.ModKeyboardMapSettings.Values) { //妯＄粍璁剧疆
+            foreach (ValuesDictionary item in ModSettingsManager.ModKeyboardMapSettings.Values) { //模组设置
                 if (item.TryGetValue(keyName, out object result2)) {
                     return result2;
                 }
@@ -856,10 +856,10 @@ namespace Game {
         }
 
         public static object GetGamepadMapping(string keyName, bool throwIfNotFound = true) {
-            if (GamepadMappingSettings.TryGetValue(keyName, out object result)) { //鍘熺増璁剧疆
+            if (GamepadMappingSettings.TryGetValue(keyName, out object result)) { //原版设置
                 return result;
             }
-            foreach (ValuesDictionary item in ModSettingsManager.ModGamepadMapSettings.Values) { //妯＄粍璁剧疆
+            foreach (ValuesDictionary item in ModSettingsManager.ModGamepadMapSettings.Values) { //模组设置
                 if (item.TryGetValue(keyName, out object result2)) {
                     return result2;
                 }
@@ -868,10 +868,10 @@ namespace Game {
         }
 
         public static int GetCameraManageSetting(string keyName, bool throwIfNotFound = true) {
-            if (CameraManageSettings.TryGetValue(keyName, out object result)) { //鍘熺増璁剧疆
+            if (CameraManageSettings.TryGetValue(keyName, out object result)) { //原版设置
                 return Convert.ToInt32(result);
             }
-            foreach (ValuesDictionary item in ModSettingsManager.ModCameraManageSettings.Values) { //妯＄粍璁剧疆
+            foreach (ValuesDictionary item in ModSettingsManager.ModCameraManageSettings.Values) { //模组设置
                 if (item.TryGetValue(keyName, out object result2)) {
                     return Convert.ToInt32(result2);
                 }
@@ -880,16 +880,16 @@ namespace Game {
         }
 
         /// <summary>
-        ///     浠呯敤浜庝慨鏀圭幇鏈夐敭鐩橀紶鏍囬敭浣嶏紝娣诲姞閿綅璇蜂娇鐢?see cref="ModLoader.GetKeyboardMappings" />
+        ///     仅用于修改现有键盘鼠标键位，添加键位请使用 <see cref="ModLoader.GetKeyboardMappings" />
         /// </summary>
         /// <param name="keyName"></param>
         /// <param name="value"></param>
         public static void SetKeyboardMapping(string keyName, object value) {
-            if (KeyboardMappingSettings.ContainsKey(keyName)) { //鍘熺増璁剧疆
+            if (KeyboardMappingSettings.ContainsKey(keyName)) { //原版设置
                 KeyboardMappingSettings[keyName] = value;
             }
             else {
-                foreach (ValuesDictionary item in ModSettingsManager.ModKeyboardMapSettings.Values) { //妯＄粍璁剧疆
+                foreach (ValuesDictionary item in ModSettingsManager.ModKeyboardMapSettings.Values) { //模组设置
                     if (item.ContainsKey(keyName)) {
                         item[keyName] = value;
                         break;
@@ -899,16 +899,16 @@ namespace Game {
         }
 
         /// <summary>
-        ///     浠呯敤浜庝慨鏀圭幇鏈夋墜鏌勯敭浣嶏紝娣诲姞閿綅璇蜂娇鐢?see cref="ModLoader.GetGamepadMappings" />
+        ///     仅用于修改现有手柄键位，添加键位请使用 <see cref="ModLoader.GetGamepadMappings" />
         /// </summary>
         /// <param name="keyName"></param>
         /// <param name="value"></param>
         public static void SetGamepadMapping(string keyName, object value) {
-            if (GamepadMappingSettings.ContainsKey(keyName)) { //鍘熺増璁剧疆
+            if (GamepadMappingSettings.ContainsKey(keyName)) { //原版设置
                 GamepadMappingSettings[keyName] = value;
             }
             else {
-                foreach (ValuesDictionary item in ModSettingsManager.ModGamepadMapSettings.Values) { //妯＄粍璁剧疆
+                foreach (ValuesDictionary item in ModSettingsManager.ModGamepadMapSettings.Values) { //模组设置
                     if (item.ContainsKey(keyName)) {
                         item[keyName] = value;
                         break;
@@ -918,16 +918,16 @@ namespace Game {
         }
 
         /// <summary>
-        ///     浠呯敤浜庝慨鏀圭幇鏈夌浉鏈洪厤缃紝娣诲姞鐩告満閰嶇疆璇蜂娇鐢?see cref="ModLoader.GetCameraList" />
+        ///     仅用于修改现有相机配置，添加相机配置请使用 <see cref="ModLoader.GetCameraList" />
         /// </summary>
         /// <param name="keyName"></param>
         /// <param name="value"></param>
         public static void SetCameraManageSetting(string keyName, int value) {
-            if (CameraManageSettings.ContainsKey(keyName)) { //鍘熺増璁剧疆
+            if (CameraManageSettings.ContainsKey(keyName)) { //原版设置
                 CameraManageSettings[keyName] = value;
             }
             else {
-                foreach (ValuesDictionary item in ModSettingsManager.ModCameraManageSettings.Values) { //妯＄粍璁剧疆
+                foreach (ValuesDictionary item in ModSettingsManager.ModCameraManageSettings.Values) { //模组设置
                     if (item.ContainsKey(keyName)) {
                         item[keyName] = value;
                         break;
@@ -937,16 +937,16 @@ namespace Game {
         }
 
         /// <summary>
-        ///     鏂囦欢瀛樺湪鍒欒鍙栧苟杩斿洖鐪熷惁鍒欒繑鍥炲亣
+        ///     文件存在则读取并返回真否则返回假
         /// </summary>
         public static bool LoadSettings() {
             ModsManager.LoadConfigs();
             try {
-                //鍔犺浇鍘熺敓璁剧疆
+                // 加载原生设置
                 if (Storage.FileExists(ModsManager.SettingPath)) {
                     using (Stream stream = Storage.OpenFile(ModsManager.SettingPath, OpenFileMode.Read)) {
                         XElement xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
-                        if (xElement.Elements("Configs").Any()) //寰€涓嬮€傞厤浣庣増鏈琒ettings.xml
+                        if (xElement.Elements("Configs").Any()) // 往下适配低版本Settings.xml
                         {
                             ModsManager.LoadConfigsFromXml(xElement);
                         }
@@ -1009,7 +1009,7 @@ namespace Game {
                     //ignore
                 }
                 ValuesDictionary settingsValuesDictionary = new();
-                //鍘熺敓璁剧疆
+                //原生设置
                 XElement xElement = new("Settings");
                 foreach (PropertyInfo item in from pi in typeof(SettingsManager).GetRuntimeProperties()
                                               where pi.GetMethod.IsStatic && pi.GetMethod.IsPublic && pi.SetMethod.IsPublic
@@ -1029,7 +1029,7 @@ namespace Game {
                 if (!Storage.DirectoryExists(ModsManager.DocPath)) {
                     Storage.CreateDirectory(ModsManager.DocPath);
                 }
-                //淇濆瓨
+                // 保存
                 using (Stream stream = Storage.OpenFile(ModsManager.SettingPath, OpenFileMode.Create)) {
                     XmlUtils.SaveXmlToStream(xElement, stream, Encoding.UTF8, true);
                 }

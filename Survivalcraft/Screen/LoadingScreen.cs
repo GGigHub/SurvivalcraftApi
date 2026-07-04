@@ -124,7 +124,7 @@ namespace Game {
             Task.Run(() => { _ = ContentManager.Get<Image>("Fonts/Pericles", ".webp"); });
         }
 
-        //鏃ュ織宸茬粡闄勫甫鐘舵€侊紝涓嶉渶瑕佹坊鍔犵姸鎬佸瓧绗︿覆
+        // 日志已经附带状态，不需要添加状态字符串
         public static void Error(string mesg) {
             Add(LogType.Error, mesg);
         }
@@ -163,7 +163,7 @@ namespace Game {
             bool isLoadSucceed = true;
             Exception exception = null;
             AddLoadAction(
-                delegate { //灏嗘墍鏈夌殑鏈夋晥鐨剆cmod璇诲彇涓篗odEntity锛屽苟鑷姩娣诲姞SurvivalCraftModEntity
+                delegate { // 将所有的有效的scmod读取为ModEntity，并自动添加SurvivalCraftModEntity
                     ContentManager.Initialize();
                     ModsManager.Initialize();
                 }
@@ -233,8 +233,8 @@ namespace Game {
                     }
                 }
                 );
-                //鍔犺浇 mod 绋嬪簭闆?.dll)鏂囦欢
-                //浣嗕笉杩涜澶勭悊鎿嶄綔(濡傛坊鍔燽lock绛?
+                // 加载 mod 程序集(.dll)文件
+                // 但不进行处理操作(如添加block等)
                 ModsManager.ModHooks.Clear();
                 ModsManager.m_tempModHooks.Clear();
                 ModsManager.ModListAllDo(modEntity => {
@@ -248,7 +248,7 @@ namespace Game {
                         }
                         catch (Exception e) {
                             exception = e;
-                            string separator = new('-', 10); //鐢熸垚10涓?'-' 杩炰竴璧风殑瀛楃涓?
+                            string separator = new('-', 10); // 生成10个'-'连一起的字符串
                             Log.Error($"{separator}Handle assembly failed{separator}");
                             Log.Error(
                                 $"Loaded assembly:\n{string.Join("\n", AppDomain.CurrentDomain.GetAssemblies().Select(x => x.FullName ?? x.GetName().FullName))}"
@@ -284,12 +284,12 @@ namespace Game {
                         )
                     );
                 }
-                //澶勭悊绋嬪簭闆?
+                // 处理程序集
             }
             );
             AddLoadAction(
-                delegate { //鍒濆鍖栨墍鏈塎odEntity鐨勮瑷€鍖?
-                    //>>>鍒濆鍖栬瑷€鍒楄〃
+                delegate { // 初始化所有ModEntity的语言包
+                    //>>>初始化语言列表
                     LanguageControl.LanguageTypes.Clear();
                     foreach (ContentInfo contentInfo in ContentManager.List("Lang")) {
                         string fileName = Path.GetFileNameWithoutExtension(contentInfo.Filename);
@@ -301,14 +301,14 @@ namespace Game {
                             LanguageControl.LanguageTypes.Add(fileName);
 #else
                             CultureInfo cultureInfo = new(fileName.EndsWith("-old") ? fileName.Substring(0, fileName.Length - 4) : fileName, false);
-                            LanguageControl.LanguageTypes.TryAdd(fileName, cultureInfo); //绗簩涓弬鏁板簲涓篊ultureInfo
+                            LanguageControl.LanguageTypes.TryAdd(fileName, cultureInfo); // 第二个参数应为CultureInfo
 #endif
                         }
                         catch (Exception) {
                             // ignore
                         }
                     }
-                    //<<<缁撴潫
+                    //<<<结束
 #if BROWSER
                     if (ModsManager.Configs.TryGetValue("Language", out string value)
                         && LanguageControl.LanguageTypes.Contains(value)) {
@@ -317,7 +317,7 @@ namespace Game {
                     else {
                         string systemLanguage = Program.SystemLanguage;
                         if (string.IsNullOrEmpty(systemLanguage)) {
-                            //濡傛灉涓嶆敮鎸佺郴缁熻瑷€锛岃嫳璇槸鏈€浣抽€夋嫨
+                            // 如果不支持系统语言，英语是最佳选择
                             LanguageControl.Initialize("en-US");
                             Log.Information("Language is not specified, and system language is not detected, en-US is loaded instead.");
                         }
@@ -373,7 +373,7 @@ namespace Game {
                     else {
                         string systemLanguage = Program.SystemLanguage;
                         if (string.IsNullOrEmpty(systemLanguage)) {
-                            //濡傛灉涓嶆敮鎸佺郴缁熻瑷€锛岃嫳璇槸鏈€浣抽€夋嫨
+                            // 如果不支持系统语言，英语是最佳选择
                             LanguageControl.Initialize("en-US");
                             Log.Information("Language is not specified, and system language is not detected, en-US is loaded instead.");
                         }
@@ -432,7 +432,7 @@ namespace Game {
             );
 #if !IOS && !BROWSER
             AddLoadAction(
-                delegate { //璇诲彇鎵€鏈夌殑ModEntity鐨凧avaScript
+                delegate { // 读取所有的ModEntity的JavaScript
                     JsInterface.Initiate();
                     ModsManager.ModListAllDo(modEntity => { modEntity.LoadJs(); });
                     JsInterface.RegisterEvent();
@@ -458,13 +458,13 @@ namespace Game {
             );
             AddLoadAction(ClothingSlot.Initialize);
             AddLoadAction(
-                delegate { //鍒濆鍖朤extureAtlas
+                delegate { // 初始化TextureAtlas
                     Info(LanguageControl.Get(fName, "2"));
                     TextureAtlasManager.Initialize();
                 }
             );
             AddLoadAction(
-                delegate { //鍒濆鍖朌atabase
+                delegate { // 初始化Database
                     try {
                         ModsManager.InitImportantDatabaseClasses();
                         DatabaseManager.Initialize();
@@ -490,14 +490,14 @@ namespace Game {
                 }
             );
             AddLoadAction(
-                delegate { //鍒濆鍖栨柟鍧楃鐞嗗櫒
+                delegate { // 初始化方块管理器
                     Stopwatch stopwatch = Stopwatch.StartNew();
                     BlocksManager.Initialize();
                     stopwatch.Stop();
                     Info($"{LanguageControl.Get(fName, "4")}({stopwatch.ElapsedMilliseconds}ms)");
                 }
             );
-            AddLoadAction(CraftingRecipesManager.Initialize); //鍒濆鍖栧悎鎴愯氨
+            AddLoadAction(CraftingRecipesManager.Initialize); // 初始化合成谱
             AddLoadAction(
                 delegate {
                     Info(LanguageControl.Get(fName, "7"));
@@ -545,7 +545,7 @@ namespace Game {
                     );
                 }
             );
-            AddLoadAction(KeyCompatibleGroupsManager.Initialize); //鍒濆鍖栨寜閿吋瀹圭粍
+            AddLoadAction(KeyCompatibleGroupsManager.Initialize); // 初始化按键兼容组
             AddLoadAction(
                 delegate {
                     if (Program.StartupParameters.TryGetValue("play", out string worldDirectory)) {
@@ -614,7 +614,7 @@ namespace Game {
         public override void Leave() {
             LogList?.ClearItems();
 #if ANDROID
-            // 褰撳墠Android绔疭DL涓嶆敮鎸佸崐鍨傜洿鍚屾
+            // 当前Android端SDL不支持半垂直同步
             if (SettingsManager.PresentationInterval > 1) {
                 SettingsManager.PresentationInterval = 1;
             }
@@ -701,7 +701,7 @@ namespace Game {
             /*
             Task.Run(() =>
             {
-                if(MessageBox.Show("Exit 閫€鍑?","", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                if(MessageBox.Show("Exit 退出?","", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     Window.Close();
                 }

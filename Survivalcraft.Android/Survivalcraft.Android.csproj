@@ -9,14 +9,14 @@
         <AndroidStoreUncompressedFileExtensions>.dll</AndroidStoreUncompressedFileExtensions>
         <AndroidPackageFormat>apk</AndroidPackageFormat>
         <AndroidUseDesignerAssembly>true</AndroidUseDesignerAssembly>
-        <!--绛惧悕-->
+        <!--签名-->
         <AndroidKeyStore>true</AndroidKeyStore>
         <AndroidSigningKeyAlias>androiddebugkey</AndroidSigningKeyAlias>
         <AndroidSigningKeyStore>Signing.keystore</AndroidSigningKeyStore>
         <AndroidSigningStorePass>android</AndroidSigningStorePass>
         <AndroidSigningKeyPass>android</AndroidSigningKeyPass>
-        <!--浼樺寲-->
-        <PublishTrimmed>false</PublishTrimmed><!--鍒囪涓嶈淇敼锛屽鏋滀慨鏀逛細瀵艰嚧杩愯鏃朵笉瀹屾暣-->
+        <!--优化-->
+        <PublishTrimmed>false</PublishTrimmed><!--切记不要修改，如果修改会导致运行时不完整-->
         <TrimMode>partial</TrimMode>
         <AndroidDexTool>d8</AndroidDexTool>
         <AndroidEnableSGenConcurrent>false</AndroidEnableSGenConcurrent>
