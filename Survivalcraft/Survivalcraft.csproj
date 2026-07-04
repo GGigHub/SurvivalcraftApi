@@ -9,6 +9,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Include="ModsManager\HotUpdateManager.cs" />
       <Compile Include="ModsManager\NetworkModEntity.cs" />
       <Compile Include="Network\New\NetworkClient.cs" />
       <Compile Include="Network\New\RelayHost.cs" />

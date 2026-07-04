@@ -10,6 +10,7 @@ namespace SC4Android {
     public static class AndroidGameLauncher {
         const string GameAssemblyName = "Survivalcraft";
         const string LogTag = "SC4Hotload";
+        const string UpdateDirectory = "data:Updates/current";
         static readonly object Sync = new();
         static Assembly s_gameAssembly;
         static FieldInfo s_firstFramePreparedField;
@@ -90,6 +91,6 @@ namespace SC4Android {
         }
 
         static string GetUpdateAssemblyPath(string assemblyName) =>
-            Storage.CombinePaths(EngineActivity.BasePath, "Updates", "current", $"{assemblyName}.dll");
+            Storage.CombinePaths(UpdateDirectory, $"{assemblyName}.dll");
     }
 }

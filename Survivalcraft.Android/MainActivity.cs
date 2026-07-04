@@ -93,7 +93,6 @@ namespace SC4Android {
         }
 
         protected override void OnRun() {
-            AndroidGameLauncher.Trace("MainActivity.OnRun begin");
             try {
                 base.OnRun();
                 if (CheckAndRequestPermission(this)) {
@@ -111,9 +110,7 @@ namespace SC4Android {
                         }
                     }
                 }
-                AndroidGameLauncher.Trace("MainActivity.OnRun launching game");
                 AndroidGameLauncher.Run();
-                AndroidGameLauncher.Trace("MainActivity.OnRun returned");
             }
             catch (Exception ex) {
                 AndroidGameLauncher.Trace(ex.ToString());
@@ -139,12 +136,10 @@ namespace SC4Android {
         }
 
         protected override void OnDestroy() {
-            AndroidGameLauncher.Trace("MainActivity.OnDestroy begin");
             base.OnDestroy();
         }
 
         protected override void OnCreate(Bundle savedInstanceState) {
-            AndroidGameLauncher.Trace("MainActivity.OnCreate begin");
             base.OnCreate(savedInstanceState);
             Window?.DecorView.ViewTreeObserver?.AddOnPreDrawListener(new ViewTreeObserverListener());
             if (Build.VERSION.SdkInt >= BuildVersionCodes.S) {
@@ -152,15 +147,14 @@ namespace SC4Android {
             }
             ICollection<string> keySet = Intent?.Extras?.KeySet();
             if (keySet != null && keySet.Count > 0) {
-                EngineActivity.StartupParameters = new Dictionary<string, string>(keySet.Count);
+                StartupParameters = new Dictionary<string, string>(keySet.Count);
                 foreach (string key in keySet) {
                     string value = Intent?.Extras?.GetString(key);
                     if (value != null) {
-                        EngineActivity.StartupParameters.Add(key, value);
+                        StartupParameters.Add(key, value);
                     }
                 }
             }
-            AndroidGameLauncher.Trace("MainActivity.OnCreate end");
         }
 
         public class ViewTreeObserverListener : Java.Lang.Object, ViewTreeObserver.IOnPreDrawListener {
