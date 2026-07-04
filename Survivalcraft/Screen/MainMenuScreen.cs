@@ -110,6 +110,12 @@ namespace Game {
             if (MotdManager.CanShowBulletin) {
                 MotdManager.ShowBulletin();
             }
+            if (!string.IsNullOrEmpty(SettingsManager.PendingHotUpdateReleaseNotes)) {
+                string releaseNotes = SettingsManager.PendingHotUpdateReleaseNotes;
+                SettingsManager.PendingHotUpdateReleaseNotes = string.Empty;
+                SettingsManager.SaveSettings();
+                DialogsManager.ShowDialog(null, new MessageDialog("更新内容", releaseNotes, LanguageControl.Ok, null, null));
+            }
             if (SettingsManager.SafeMode) {
                 m_disableSafeModeButton.IsVisible = true;
             }

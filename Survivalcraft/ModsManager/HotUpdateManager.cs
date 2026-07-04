@@ -148,6 +148,8 @@ namespace Game {
 #else
                 InstallUpdateWindows(tempFilePath);
 #endif
+                SettingsManager.PendingHotUpdateReleaseNotes = LatestManifest.ReleaseNotes ?? string.Empty;
+                SettingsManager.SaveSettings();
                 State = HotUpdateState.ReadyToRestart;
             }
             catch (Exception ex) {
