@@ -91,8 +91,12 @@ namespace Game {
             for (int l = 0; l < Subsets.Length; l++) {
                 Utilities.Dispose(ref Subsets[l]);
             }
-            foreach (TerrainGeometry terrainGeometry in Draws.Values) {
-                terrainGeometry?.Dispose();
+            if (Draws != null) {
+                foreach (TerrainGeometry terrainGeometry in Draws.Values) {
+                    if (terrainGeometry != this) {
+                        terrainGeometry?.Dispose();
+                    }
+                }
             }
         }
     }

@@ -39,10 +39,7 @@ namespace Game {
             set => m_kickPhase = value;
         }
 
-        public override float AttackFactor {
-            get => m_peckAnimationSpeed;
-            set => m_peckAnimationSpeed = value;
-        }
+        public override float AttackFactor { get; set; }
 
         public override void Update(float dt) {
             float num = Vector3.Dot(m_componentCreature.ComponentBody.Velocity, m_componentCreature.ComponentBody.Matrix.Forward);
@@ -85,7 +82,7 @@ namespace Game {
             FeedOrder = false;
             IsAttackHitMoment = false;
             if (AttackOrder) {
-                m_peckAnimationSpeed = MathUtils.Min(m_peckAnimationSpeed + 2f * dt, 1f);
+                AttackFactor = MathUtils.Min(AttackFactor + 2f * dt, 1f);
                 float kickPhase = m_kickPhase;
                 m_kickPhase = MathUtils.Remainder(m_kickPhase + dt * 2f, 1f);
                 if (kickPhase < 0.5f
@@ -94,7 +91,7 @@ namespace Game {
                 }
             }
             else {
-                m_peckAnimationSpeed = MathUtils.Max(m_peckAnimationSpeed - 2f * dt, 0f);
+                AttackFactor = MathUtils.Max(AttackFactor - 2f * dt, 0f);
                 if (m_kickPhase != 0f) {
                     if (m_kickPhase > 0.5f) {
                         m_kickPhase = MathUtils.Remainder(MathUtils.Min(m_kickPhase + dt * 2f, 1f), 1f);
@@ -108,74 +105,45 @@ namespace Game {
             base.Update(dt);
         }
 
+        /// <summary>
+        /// 同步动画参数到动画控制器
+        /// </summary>
+        public override void SyncAnimationParameters() {
+            base.SyncAnimationParameters();
+
+            var ctrl = AnimationController;
+            if (ctrl == null) return;
+
+            // 鸟类特有参数
+            ctrl.Parameters.SetFloat("MovementPhase", MovementAnimationPhase);
+            ctrl.Parameters.SetFloat("FlyPhase", FlyPhase);
+            ctrl.Parameters.SetFloat("Bob", Bob);
+            ctrl.Parameters.SetFloat("WalkBobHeight", m_walkBobHeight);
+
+            // 啄食和攻击参数
+            ctrl.Parameters.SetFloat("PeckPhase", m_peckPhase);
+            ctrl.Parameters.SetFloat("KickPhase", m_kickPhase);
+            ctrl.Parameters.SetFloat("AttackFactor", m_peckAnimationSpeed);
+
+            // 飞行状态
+            ctrl.Parameters.SetFloat("FlySpeed", m_componentCreature.ComponentLocomotion.FlySpeed);
+
+            // 头部追踪角度
+            var lookAngles = m_componentCreature.ComponentLocomotion.LookAngles;
+            ctrl.Parameters.SetFloat("LookAngleX", lookAngles.X);
+            ctrl.Parameters.SetFloat("LookAngleY", lookAngles.Y);
+
+            // 身体旋转（用于死亡动画）
+            var rotation = m_componentCreature.ComponentBody.Rotation.ToYawPitchRoll();
+            ctrl.Parameters.SetVector3("Rotation", rotation);
+        }
+
+        /// <summary>
+        /// 动画由 AnimationController 和驱动器处理，不再需要硬编码
+        /// </summary>
         public override void AnimateCreature() {
-            float num = 0f;
-            if (m_hasWings) {
-                num += 1.2f * MathF.Sin((float)Math.PI * 2f * (FlyPhase + 0.75f));
-                if (m_componentCreature.ComponentBody.StandingOnValue.HasValue) {
-                    num += 0.3f * MathF.Sin((float)Math.PI * 2f * MovementAnimationPhase);
-                }
-            }
-            float num2;
-            float num3;
-            if (m_componentCreature.ComponentBody.StandingOnValue.HasValue
-                || m_componentCreature.ComponentBody.ImmersionFactor > 0f
-                || m_componentCreature.ComponentLocomotion.FlySpeed == 0f) {
-                num2 = 0.6f * MathF.Sin((float)Math.PI * 2f * MovementAnimationPhase);
-                num3 = 0f - num2;
-            }
-            else {
-                num2 = num3 = 0f - MathUtils.DegToRad(60f);
-            }
-            Vector3 vector = m_componentCreature.ComponentBody.Rotation.ToYawPitchRoll();
-            if (m_componentCreature.ComponentHealth.Health > 0f) {
-                float yaw = m_componentCreature.ComponentLocomotion.LookAngles.X / 2f;
-                float yaw2 = m_componentCreature.ComponentLocomotion.LookAngles.X / 2f;
-                float num4 = 0f;
-                float num5 = 0f;
-                if (m_componentCreature.ComponentBody.StandingOnValue.HasValue
-                    || m_componentCreature.ComponentBody.ImmersionFactor > 0f) {
-                    num4 = 0.5f * MathF.Sin((float)Math.PI * 2f * MovementAnimationPhase / 2f);
-                    num5 = 0f - num4;
-                }
-                float num6 = MathF.Cos((float)Math.PI * 2f * m_kickPhase != 0 ? m_kickPhase : m_peckPhase);
-                num4 -= 1.25f * (1f - (num6 >= 0f ? num6 : -0.5f * num6));
-                num4 += m_componentCreature.ComponentLocomotion.LookAngles.Y;
-                SetBoneTransform(
-                    m_bodyBone.Index,
-                    Matrix.CreateFromYawPitchRoll(vector.X, 0f, 0f)
-                    * Matrix.CreateTranslation(m_componentCreature.ComponentBody.Position + new Vector3(0f, Bob, 0f))
-                );
-                SetBoneTransform(m_neckBone.Index, Matrix.CreateFromYawPitchRoll(yaw2, num4, 0f));
-                SetBoneTransform(
-                    m_headBone.Index,
-                    Matrix.CreateFromYawPitchRoll(yaw, num5 + Math.Clamp(vector.Y, -(float)Math.PI / 4f, (float)Math.PI / 4f), vector.Z)
-                );
-                if (m_hasWings) {
-                    SetBoneTransform(m_wing1Bone.Index, Matrix.CreateRotationY(num));
-                    SetBoneTransform(m_wing2Bone.Index, Matrix.CreateRotationY(0f - num));
-                }
-                SetBoneTransform(m_leg1Bone.Index, Matrix.CreateRotationX(num2));
-                SetBoneTransform(m_leg2Bone.Index, Matrix.CreateRotationX(num3));
-            }
-            else {
-                float num7 = 1f - DeathPhase;
-                float num8 = m_componentCreature.ComponentBody.BoundingBox.Max.Y - m_componentCreature.ComponentBody.BoundingBox.Min.Y;
-                Vector3 position = m_componentCreature.ComponentBody.Position
-                    + 0.5f * num8 * Vector3.Normalize(m_componentCreature.ComponentBody.Matrix.Forward * new Vector3(1f, 0f, 1f));
-                SetBoneTransform(
-                    m_bodyBone.Index,
-                    Matrix.CreateFromYawPitchRoll(vector.X, (float)Math.PI / 2f * DeathPhase, 0f) * Matrix.CreateTranslation(position)
-                );
-                SetBoneTransform(m_neckBone.Index, Matrix.Identity);
-                SetBoneTransform(m_headBone.Index, Matrix.Identity);
-                if (m_hasWings) {
-                    SetBoneTransform(m_wing1Bone.Index, Matrix.CreateRotationY(num * num7));
-                    SetBoneTransform(m_wing2Bone.Index, Matrix.CreateRotationY((0f - num) * num7));
-                }
-                SetBoneTransform(m_leg1Bone.Index, Matrix.CreateRotationX(num2 * num7));
-                SetBoneTransform(m_leg2Bone.Index, Matrix.CreateRotationX(num3 * num7));
-            }
+            // 空实现 - 动画由 AnimationController 处理
+            // 如果没有配置 AnimationController，生物将不会动画
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
@@ -192,11 +160,11 @@ namespace Game {
                 return;
             }
             if (Model != null) {
-                m_bodyBone = Model.FindBone("Body");
-                m_neckBone = Model.FindBone("Neck");
-                m_headBone = Model.FindBone("Head");
-                m_leg1Bone = Model.FindBone("Leg1");
-                m_leg2Bone = Model.FindBone("Leg2");
+                m_bodyBone = Model.FindBone("Body", false);
+                m_neckBone = Model.FindBone("Neck", false);
+                m_headBone = Model.FindBone("Head", false);
+                m_leg1Bone = Model.FindBone("Leg1", false);
+                m_leg2Bone = Model.FindBone("Leg2", false);
                 m_wing1Bone = Model.FindBone("Wing1", false);
                 m_wing2Bone = Model.FindBone("Wing2", false);
             }
@@ -210,6 +178,24 @@ namespace Game {
                 m_wing2Bone = null;
             }
             m_hasWings = m_wing1Bone != null && m_wing2Bone != null;
+
+            // 配置驱动器参数
+            if (AnimationController != null) {
+                // 把 Database.xml 中的参数传递给驱动器
+                AnimationController.Parameters.SetFloat("FlyAnimationSpeed", m_flyAnimationSpeed);
+                AnimationController.Parameters.SetFloat("WalkAnimationSpeed", m_walkAnimationSpeed);
+                AnimationController.Parameters.SetFloat("PeckAnimationSpeed", m_peckAnimationSpeed);
+                AnimationController.Parameters.SetFloat("WalkBobHeight", m_walkBobHeight);
+
+                // 运行时参数初始值
+                AnimationController.Parameters.SetFloat("MovementPhase", 0f);
+                AnimationController.Parameters.SetFloat("FlyPhase", 1f);
+                AnimationController.Parameters.SetFloat("PeckPhase", 0f);
+                AnimationController.Parameters.SetFloat("KickPhase", 0f);
+                AnimationController.Parameters.SetFloat("AttackFactor", 0f);
+                AnimationController.Parameters.SetFloat("Bob", 0f);
+                AnimationController.Parameters.SetBool("HasWings", m_hasWings);
+            }
         }
     }
 }

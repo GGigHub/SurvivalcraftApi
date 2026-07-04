@@ -19,10 +19,11 @@ namespace Game {
             Vector3 vector = GameWidget.Target?.ComponentBody.BoundingBox.Center() ?? m_position;
             m_bestPosition = FindBestCameraPosition(vector, 6f);
             SetupPerspectiveCamera(m_position, vector - m_position, Vector3.UnitY);
-            if (GameWidget.Target is ComponentPlayer
+            if (GameWidget.Target is ComponentPlayer player
+                && player.ComponentInput.IsControlledByVr
                 && m_bestPosition.HasValue) {
                 Vector3 vector2 = Matrix.CreateWorld(Vector3.Zero, vector - m_bestPosition.Value, Vector3.UnitY).ToYawPitchRoll();
-                m_vrDeltaYaw = vector2.X;
+                m_vrDeltaYaw = vector2.X - VrManager.HmdMatrixYpr.X;
             }
         }
 
@@ -34,7 +35,16 @@ namespace Game {
                 }
                 m_position += 1.5f * dt * (m_bestPosition.Value - m_position);
             }
-            SetupPerspectiveCamera(m_position, v - m_position, Vector3.UnitY);
+
+            if (!Eye.HasValue) {
+                SetupPerspectiveCamera(m_position, v - m_position, Vector3.UnitY);
+                return;
+            }
+
+            Matrix identity = Matrix.Identity;
+            identity.Translation = m_position;
+            identity.OrientationMatrix = VrManager.HmdMatrix * Matrix.CreateRotationY(m_vrDeltaYaw);
+            SetupPerspectiveCamera(identity.Translation, identity.Forward, identity.Up);
         }
 
         public Vector3 FindBestCameraPosition(Vector3 targetPosition, float distance) {

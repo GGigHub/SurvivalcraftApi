@@ -68,6 +68,8 @@ namespace Game {
         public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value) => m_collisionBoxes;
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
             generator.GenerateMeshVertices(
                 this,
                 x,
@@ -76,7 +78,7 @@ namespace Game {
                 m_mesh,
                 Color.White,
                 null,
-                geometry.SubsetOpaque
+                subsetOpaque
             );
         }
 
@@ -86,7 +88,13 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneMesh, color, size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneMesh, color, size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneMesh, texture, color, size, ref matrix, environmentData);
+            }
         }
 
         public override void GetDropValues(SubsystemTerrain subsystemTerrain,

@@ -5,13 +5,13 @@ using SixLabors.ImageSharp.Formats.Bmp;
 namespace Engine.Media {
     public static class Bmp {
         public enum Format {
-            RGBA8,
-            RGB8,
-            Pixel1,
-            Pixel16,
-            Pixel2,
-            Pixel4,
-            Pixel8
+            RGBA8 = 0,
+            RGB8 = 1,
+            Pixel1 = 2,
+            Pixel16 = 3,
+            Pixel2 = 4,
+            Pixel4 = 5,
+            Pixel8 = 6
         }
 
         public struct BmpInfo {

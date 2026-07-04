@@ -85,6 +85,7 @@ namespace Game {
             int face = GetFace(data);
             int subvariant = GetSubvariant(data);
             Color color = m_colors[subvariant];
+            Texture2D texture = GetDefaultTexture(value);
             generator.GenerateMeshVertices(
                 this,
                 x,
@@ -93,7 +94,7 @@ namespace Game {
                 m_blockMeshes[4 * face + subvariant],
                 color,
                 null,
-                geometry.SubsetOpaque
+                texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque
             );
             base.GenerateTerrainVertices(generator, geometry, value, x, y, z);
         }
@@ -104,14 +105,28 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawMeshBlock(
-                primitivesRenderer,
-                m_standaloneBlockMesh,
-                color * new Color(40, 40, 40),
-                3f * size,
-                ref matrix,
-                environmentData
-            );
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(
+                    primitivesRenderer,
+                    m_standaloneBlockMesh,
+                    color * new Color(40, 40, 40),
+                    3f * size,
+                    ref matrix,
+                    environmentData
+                );
+            }
+            else {
+                BlocksManager.DrawMeshBlock(
+                    primitivesRenderer,
+                    m_standaloneBlockMesh,
+                    texture,
+                    color * new Color(40, 40, 40),
+                    3f * size,
+                    ref matrix,
+                    environmentData
+                );
+            }
         }
 
         public override BlockDebrisParticleSystem CreateDebrisParticleSystem(SubsystemTerrain subsystemTerrain,

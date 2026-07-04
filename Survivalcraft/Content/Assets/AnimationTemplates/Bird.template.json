@@ -1,0 +1,36 @@
+{
+    "name": "Bird",
+    "layers": {
+        "Base": {
+            "index": 0,
+            "blendMode": "Override"
+        },
+        "Head": {
+            "index": 1,
+            "blendMode": "Override",
+            "boneMask": [ "Head", "Neck" ]
+        },
+        "Death": {
+            "index": 2,
+            "blendMode": "Override"
+        }
+    },
+    "stateTracks": {
+        "Locomotion": {
+            "type": "Enum",
+            "defaultValue": "Idle",
+            "enumValues": [ "Idle", "Walk", "Fly" ]
+        },
+        "Activity": {
+            "type": "Enum",
+            "defaultValue": "None",
+            "enumValues": [ "None", "Peck", "Attack" ]
+        },
+        "Death": {
+            "type": "Float",
+            "defaultValue": 0,
+            "minValue": 0,
+            "maxValue": 1
+        }
+    }
+}

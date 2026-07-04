@@ -8,6 +8,8 @@ namespace Engine.Graphics {
 
         public ModelBone ParentBone { get; set; }
 
+        public bool IsVisible { get; set; } = true;
+
         public BoundingBox BoundingBox {
             get => m_boundingBox;
             set => m_boundingBox = value;
@@ -23,7 +25,27 @@ namespace Engine.Graphics {
             IndexBuffer indexBuffer,
             int startIndex,
             int indicesCount,
-            BoundingBox boundingBox) {
+            BoundingBox boundingBox) => NewMeshPart(
+            vertexBuffer,
+            indexBuffer,
+            startIndex,
+            indicesCount,
+            boundingBox,
+            -1,
+            PrimitiveType.TriangleList,
+            null,
+            0
+        );
+
+        public ModelMeshPart NewMeshPart(VertexBuffer vertexBuffer,
+            IndexBuffer indexBuffer,
+            int startIndex,
+            int indicesCount,
+            BoundingBox boundingBox,
+            int materialIndex = -1,
+            PrimitiveType primitiveType = PrimitiveType.TriangleList,
+            System.Numerics.Matrix4x4[] instanceMatrices = null,
+            int instanceCount = 0) {
             ArgumentNullException.ThrowIfNull(vertexBuffer);
             ArgumentNullException.ThrowIfNull(indexBuffer);
             if (startIndex < 0
@@ -38,6 +60,10 @@ namespace Engine.Graphics {
             modelMeshPart.StartIndex = startIndex;
             modelMeshPart.IndicesCount = indicesCount;
             modelMeshPart.BoundingBox = boundingBox;
+            modelMeshPart.MaterialIndex = materialIndex;
+            modelMeshPart.PrimitiveType = primitiveType;
+            modelMeshPart.InstanceCount = instanceCount;
+            modelMeshPart.InstanceMatrices = instanceMatrices;
             return modelMeshPart;
         }
     }

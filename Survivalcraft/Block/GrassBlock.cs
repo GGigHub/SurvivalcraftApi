@@ -24,18 +24,34 @@ namespace Game {
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
             Color topColor = color * BlockColorsMap.Grass.Lookup(environmentData.Temperature, environmentData.Humidity);
-            BlocksManager.DrawCubeBlock(
-                primitivesRenderer,
-                value,
-                new Vector3(size),
-                ref matrix,
-                color,
-                topColor,
-                environmentData
-            );
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size),
+                    ref matrix,
+                    color,
+                    topColor,
+                    environmentData
+                );
+            }
+            else {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size),
+                    ref matrix,
+                    color,
+                    topColor,
+                    environmentData,
+                    texture
+                );
+            }
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
             Color topColor = BlockColorsMap.Grass.Lookup(generator.Terrain, x, y, z);
             Color topColor2 = BlockColorsMap.Grass.Lookup(generator.Terrain, x + 1, y, z);
             Color topColor3 = BlockColorsMap.Grass.Lookup(generator.Terrain, x + 1, y, z + 1);
@@ -56,7 +72,7 @@ namespace Game {
                 topColor3,
                 topColor4,
                 -1,
-                geometry.OpaqueSubsetsByFace
+                texture == null ? geometry.OpaqueSubsetsByFace : geometry.GetGeometry(texture).OpaqueSubsetsByFace
             );
         }
 

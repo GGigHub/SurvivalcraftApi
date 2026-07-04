@@ -102,6 +102,8 @@ namespace Game {
             int num = Terrain.ExtractData(value);
             if (num < m_blockMeshesByData.Length
                 && m_blockMeshesByData[num] != null) {
+                Texture2D texture = GetDefaultTexture(value);
+                TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
                 generator.GenerateShadedMeshVertices(
                     this,
                     x,
@@ -111,7 +113,7 @@ namespace Game {
                     Color.White,
                     null,
                     null,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
                 generator.GenerateWireVertices(
                     value,
@@ -121,7 +123,7 @@ namespace Game {
                     GetFace(value),
                     1f,
                     Vector2.Zero,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
             }
         }
@@ -132,7 +134,13 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 1f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 1f * size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color, 1f * size, ref matrix, environmentData);
+            }
         }
 
         public override ElectricElement CreateElectricElement(SubsystemElectricity subsystemElectricity, int value, int x, int y, int z) =>

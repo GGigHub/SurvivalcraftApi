@@ -75,6 +75,12 @@ namespace Game {
             int num = 0;
             num += m_design.Geometry.SubsetOpaqueByFace.Sum(b => b != null ? b.Indices.Count / 3 : 0);
             num += m_design.Geometry.SubsetAlphaTestByFace.Sum(b => b != null ? b.Indices.Count / 3 : 0);
+            if (m_design.Geometry.Draws != null) {
+                foreach (var kv in m_design.Geometry.Draws) {
+                    num += kv.Value.SubsetOpaqueByFace.Sum(b => b != null ? b.Indices.Count / 3 : 0);
+                    num += kv.Value.SubsetAlphaTestByFace.Sum(b => b != null ? b.Indices.Count / 3 : 0);
+                }
+            }
             m_isValid = num <= FurnitureDesign.MaxTriangles;
             m_statusLabel.Text = string.Format(
                 LanguageControl.Get(fName, 1),

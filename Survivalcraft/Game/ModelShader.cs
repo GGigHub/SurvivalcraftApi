@@ -38,6 +38,10 @@ namespace Game {
 
         public ShaderParameter m_worldUpParameter;
 
+        // Skinning support
+        public ShaderParameter m_jointMatricesParameter;
+        public int m_maxJointsCount;
+
         public int m_instancesCount;
 
         public Texture2D Texture {
@@ -111,6 +115,23 @@ namespace Game {
             }
         }
 
+        /// <summary>
+        /// Maximum number of joints supported by this shader
+        /// </summary>
+        public int MaxJointsCount => m_maxJointsCount;
+
+        /// <summary>
+        /// Set joint matrices for skeletal animation
+        /// </summary>
+        public Matrix[] JointMatrices {
+            set {
+                // Note: Will be silently ignored if maxJointsCount is 0 (skinning disabled)
+                if (m_jointMatricesParameter != null && value != null) {
+                    m_jointMatricesParameter.SetValue(value, Math.Min(value.Length, m_maxJointsCount));
+                }
+            }
+        }
+
         public ModelShader(string vsc, string psc, bool useAlphaThreshold, int maxInstancesCount = 1) : base(
             vsc,
             psc,
@@ -120,12 +141,32 @@ namespace Game {
             SetParameter();
         }
 
+        public ModelShader(string vsc, string psc, bool useAlphaThreshold, int maxInstancesCount = 1, int maxJointsCount = 0) : base(
+            vsc,
+            psc,
+            maxInstancesCount,
+            PrepareShaderMacros(useAlphaThreshold, maxInstancesCount, maxJointsCount)
+        ) {
+            m_maxJointsCount = maxJointsCount;
+            SetParameter();
+        }
+
         public ModelShader(string vsc, string psc, bool useAlphaThreshold, int maxInstancesCount = 1, ShaderMacro[] shaderMacros = null) : base(
             vsc,
             psc,
             maxInstancesCount,
             PrepareShaderMacros(useAlphaThreshold, maxInstancesCount, shaderMacros)
         ) {
+            SetParameter();
+        }
+
+        public ModelShader(string vsc, string psc, bool useAlphaThreshold, int maxInstancesCount = 1, int maxJointsCount = 0, ShaderMacro[] shaderMacros = null) : base(
+            vsc,
+            psc,
+            maxInstancesCount,
+            PrepareShaderMacros(useAlphaThreshold, maxInstancesCount, maxJointsCount, shaderMacros)
+        ) {
+            m_maxJointsCount = maxJointsCount;
             SetParameter();
         }
 
@@ -147,20 +188,31 @@ namespace Game {
             m_hazeStartDensityParameter = GetParameter("u_hazeStartDensity");
             m_fogYMultiplierParameter = GetParameter("u_fogYMultiplier");
             m_worldUpParameter = GetParameter("u_worldUp");
+            // Skinning parameter (may be null if not using skinning)
+            m_jointMatricesParameter = GetParameter("u_jointMatrices", true);
         }
 
         public override void PrepareForDrawingOverride() {
             Transforms.UpdateMatrices(m_instancesCount, false, false, true);
+
+            // SetValue 内部已有变更检测，只有值真正改变时才会更新 GPU
             m_worldViewProjectionMatrixParameter.SetValue(Transforms.WorldViewProjection, InstancesCount);
             m_worldMatrixParameter.SetValue(Transforms.World, InstancesCount);
         }
 
-        public static ShaderMacro[] PrepareShaderMacros(bool useAlphaThreshold, int maxInstancesCount, ShaderMacro[] shaderMacros = null) {
+        public static ShaderMacro[] PrepareShaderMacros(bool useAlphaThreshold, int maxInstancesCount, ShaderMacro[] shaderMacros = null) =>
+            PrepareShaderMacros(useAlphaThreshold, maxInstancesCount, 0, shaderMacros);
+
+        public static ShaderMacro[] PrepareShaderMacros(bool useAlphaThreshold, int maxInstancesCount, int maxJointsCount, ShaderMacro[] shaderMacros = null) {
             List<ShaderMacro> list = new();
             if (useAlphaThreshold) {
                 list.Add(new ShaderMacro("ALPHATESTED"));
             }
             list.Add(new ShaderMacro("MAX_INSTANCES_COUNT", maxInstancesCount.ToString(CultureInfo.InvariantCulture)));
+            if (maxJointsCount > 0) {
+                list.Add(new ShaderMacro("USE_SKINNING"));
+                list.Add(new ShaderMacro("MAX_JOINTS_COUNT", maxJointsCount.ToString(CultureInfo.InvariantCulture)));
+            }
             if (shaderMacros != null
                 && shaderMacros.Length > 0) {
                 foreach (ShaderMacro shaderMacro in shaderMacros) {

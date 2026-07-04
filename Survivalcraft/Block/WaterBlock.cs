@@ -1,4 +1,6 @@
 using Engine;
+using Engine.Graphics;
+
 namespace Game {
     public class WaterBlock : FluidBlock {
         public static int Index = 18;
@@ -8,6 +10,7 @@ namespace Game {
         public WaterBlock() : base(MaxLevel) => CanBeBuiltIntoFurniture = true;
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
             Color sideColor;
             Color color = sideColor = BlockColorsMap.Water.Lookup(generator.Terrain, x, y, z);
             sideColor.A = byte.MaxValue;
@@ -21,7 +24,7 @@ namespace Game {
                 z,
                 sideColor,
                 topColor,
-                geometry.TransparentSubsetsByFace
+                texture == null ? geometry.TransparentSubsetsByFace : geometry.GetGeometry(texture).TransparentSubsetsByFace
             );
         }
     }

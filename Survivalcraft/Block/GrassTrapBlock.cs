@@ -38,6 +38,8 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetAlphaTest = texture == null ? geometry.SubsetAlphaTest : geometry.GetGeometry(texture).SubsetAlphaTest;
             generator.GenerateShadedMeshVertices(
                 this,
                 x,
@@ -47,7 +49,7 @@ namespace Game {
                 BlockColorsMap.Grass.Lookup(generator.Terrain, x, y, z),
                 null,
                 null,
-                geometry.SubsetAlphaTest
+                subsetAlphaTest
             );
         }
 
@@ -57,7 +59,13 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color, size, ref matrix, environmentData);
+            }
         }
 
         public override BlockDebrisParticleSystem CreateDebrisParticleSystem(SubsystemTerrain subsystemTerrain,

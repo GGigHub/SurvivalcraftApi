@@ -258,6 +258,13 @@ namespace Game {
         public virtual int GetToolLevel(int value) => ToolLevel;
 
         public virtual bool IsCollidable_(int value) => IsCollidable;
+        /// <summary>
+        /// 用于判断身体组件与某特定方块是否可发生碰撞
+        /// </summary>
+        /// <param name="componentBody"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual bool GetIsCollidable(ComponentBody componentBody, int value) => IsCollidable_(value);
 
         public virtual bool IsTransparent_(int value) => IsTransparent;
 
@@ -585,5 +592,25 @@ namespace Game {
         public virtual RecipaediaDescriptionScreen GetBlockDescriptionScreen(int value) => RecipaediaDescriptionScreen.Default;
 
         public virtual RecipaediaRecipesScreen GetBlockRecipeScreen(int value) => RecipaediaRecipesScreen.Default;
+
+        /// <summary>
+        /// 获取默认纹理<br />
+        /// 如果返回 null，将使用 SubsystemAnimatedTextures.AnimatedBlocksTexture
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual Texture2D GetDefaultTexture(int value) => null;
+
+        /// <summary>
+        /// 家具中此方块的体素是否使用 alpha-test 渲染（透明镂空）。<br />
+        /// 返回 true 时写入 SubsetAlphaTestByFace，否则写入 SubsetOpaqueByFace。
+        /// </summary>
+        public virtual bool IsFurnitureAlphaTest(int value) => false;
+
+        /// <summary>
+        /// 家具中此方块是否为发光体素（如火把、灯）。<br />
+        /// 返回 true 时强制使用发光纹理槽 31。
+        /// </summary>
+        public virtual bool IsFurnitureEmissive(int value) => false;
     }
 }

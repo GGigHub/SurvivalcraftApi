@@ -4,8 +4,8 @@ using Engine.Graphics;
 namespace Game {
     public class PlayerModelWidget : CanvasWidget {
         public enum Shot {
-            Body,
-            Bust
+            Body = 0,
+            Bust = 1
         }
 
         public ModelWidget m_modelWidget;

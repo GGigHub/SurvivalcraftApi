@@ -258,7 +258,7 @@ namespace Game {
         }
 
         public virtual void UpdateMovableBlocks() {
-            foreach (IMovingBlockSet movingBlockSet in m_subsystemMovingBlocks.MovingBlockSets) {
+            foreach (IMovingBlockSet movingBlockSet in m_subsystemMovingBlocks.MovingBlockSetEnumerable) {
                 if (movingBlockSet.Id == "Piston") {
                     Point3 point = (Point3)movingBlockSet.Tag;
                     int cellValue = m_subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);

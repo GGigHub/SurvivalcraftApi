@@ -63,6 +63,16 @@ namespace Game {
 
         public static float UIScale { get; set; }
 
+        public static float VrGuiSize { get; set; }
+
+        public static bool VrGuiDockLeftHand { get; set; }
+
+        public static float VrEyeHeightOffset { get; set; }
+
+        public static VrLookControlMode VrLookControlMode { get; set; }
+
+        public static VrMoveControlMode VrMoveControlMode { get; set; }
+
         public static ResolutionMode ResolutionMode {
             get => m_resolutionMode;
             set {
@@ -425,6 +435,8 @@ namespace Game {
         public static ValuesDictionary KeyboardMappingSettings { get; set; }
         public static ValuesDictionary GamepadMappingSettings { get; set; }
         public static ValuesDictionary CameraManageSettings { get; set; }
+        public static ValuesDictionary VrMappingSettings { get; set; }
+        public static VrControllerType VrActiveControllerType { get; set; } = VrControllerType.Unknown;
 
         public static string CommunityServerUserInfos {
             get {
@@ -576,6 +588,8 @@ namespace Game {
                 UIScale = 0.75f;
                 AutoJump = false;
 #endif
+                VrGuiSize = 1f;
+                VrEyeHeightOffset = 0f;
                 MoveSensitivity = 0.5f;
                 LookSensitivity = 0.5f;
                 GamepadDeadZone = 0.16f;
@@ -630,6 +644,7 @@ namespace Game {
                 LetRamdomStatic = false;
                 InitializeKeyboardMappingSettings();
                 InitializeGamepadMappingSettings();
+                InitializeVrMappingSettings();
                 InitializeCameraManageSettings();
             }
             LoadSettings();
@@ -700,6 +715,132 @@ namespace Game {
             CameraManageSettings.SetValue("Game.TppCamera", 1);
             CameraManageSettings.SetValue("Game.OrbitCamera", 2);
             CameraManageSettings.SetValue("Game.FixedCamera", 3);
+        }
+
+        public static void InitializeVrMappingSettings() {
+            VrMappingSettings = new ValuesDictionary();
+        }
+
+        static ValuesDictionary GetActiveVrMappingDict() {
+            VrControllerType type = VrActiveControllerType;
+            if (type == VrControllerType.Unknown) type = VrControllerType.MetaQuestTouch;
+            string typeName = type.ToString();
+            if (!VrMappingSettings.TryGetValue(typeName, out object val) || val is not ValuesDictionary dict) {
+                dict = new ValuesDictionary();
+                VrMappingSettings.SetValue(typeName, dict);
+            }
+            return dict;
+        }
+
+        static void SetVrBinding(string name, VrController ctrl, VrControllerButton btn) {
+            var dict = GetActiveVrMappingDict();
+            if (btn == VrControllerButton.Null) {
+                dict.SetValue(name, VrControllerButton.Null);
+                return;
+            }
+            ValuesDictionary vd = [];
+            vd.SetValue("Controller", ctrl);
+            vd.SetValue("Button", btn);
+            dict.SetValue(name, vd);
+        }
+
+        public static (VrController Controller, VrControllerButton Button) GetVrMapping(string name) {
+            var dict = GetActiveVrMappingDict();
+            if (dict.TryGetValue(name, out object val)) {
+                if (val is VrControllerButton btn) return (VrController.Left, btn); // Null case
+                if (val is ValuesDictionary vd)
+                    return (vd.GetValue<VrController>("Controller"), vd.GetValue<VrControllerButton>("Button"));
+            }
+            return (VrController.Left, VrControllerButton.Null);
+        }
+
+        public static void SetVrMapping(string name, VrController ctrl, VrControllerButton btn) {
+            SetVrBinding(name, ctrl, btn);
+        }
+
+        public static void EnsureVrMappingDefaults(VrControllerType type) {
+            if (type == VrControllerType.Unknown) {
+                type = VrControllerType.MetaQuestTouch;
+            }
+            VrActiveControllerType = type;
+            string typeName = type.ToString();
+            if (VrMappingSettings.TryGetValue(typeName, out object val) && val is ValuesDictionary vd && vd.Count > 0) {
+                return; // Already has saved settings for this controller type
+            }
+            SetDefaultVrBindings();
+            ApplyControllerSpecificDefaults(type);
+        }
+
+        public static void ResetVrMappingDefaults() {
+            // Clear and recreate defaults for the active controller type
+            VrControllerType type = VrActiveControllerType;
+            if (type == VrControllerType.Unknown) type = VrControllerType.MetaQuestTouch;
+            string typeName = type.ToString();
+            // Replace sub-dict entirely
+            VrMappingSettings.SetValue(typeName, new ValuesDictionary());
+            SetDefaultVrBindings();
+            ApplyControllerSpecificDefaults(type);
+        }
+
+        static void SetDefaultVrBindings() {
+            // Left controller defaults (Quest-style)
+            SetVrBinding("VrInteract", VrController.Left, VrControllerButton.Trigger);
+            SetVrBinding("VrAim", VrController.Left, VrControllerButton.Trigger);
+            SetVrBinding("VrEditItem", VrController.Left, VrControllerButton.Grip);
+            SetVrBinding("VrToggleMount", VrController.Left, VrControllerButton.Secondary);
+            SetVrBinding("VrToggleCrouch", VrController.Left, VrControllerButton.Primary);
+            SetVrBinding("VrToggleInventory", VrController.Left, VrControllerButton.Thumbrest);
+            SetVrBinding("VrToggleClothing", VrController.Left, VrControllerButton.Null);
+            SetVrBinding("VrJump", VrController.Left, VrControllerButton.Trackpad);
+            // Right controller defaults
+            SetVrBinding("VrHit", VrController.Right, VrControllerButton.Trigger);
+            SetVrBinding("VrDig", VrController.Right, VrControllerButton.Trigger);
+            SetVrBinding("VrDrop", VrController.Right, VrControllerButton.Grip);
+            SetVrBinding("VrScrollLeft", VrController.Right, VrControllerButton.Secondary);
+            SetVrBinding("VrScrollRight", VrController.Right, VrControllerButton.Primary);
+            SetVrBinding("VrToggleFly", VrController.Right, VrControllerButton.Thumbrest);
+            SetVrBinding("VrSwitchCameraMode", VrController.Right, VrControllerButton.Null);
+        }
+
+        static readonly Dictionary<string, VrControllerButton> VrActionAlternatives = new() {
+            ["VrToggleMount"] = VrControllerButton.TrackpadUp,
+            ["VrToggleCrouch"] = VrControllerButton.TrackpadDown,
+            ["VrToggleInventory"] = VrControllerButton.Thumbrest,
+            ["VrScrollLeft"] = VrControllerButton.TrackpadLeft,
+            ["VrScrollRight"] = VrControllerButton.TrackpadRight,
+            ["VrToggleFly"] = VrControllerButton.TrackpadUp,
+        };
+
+        public static VrControllerButton? GetVrActionAlternative(string name) {
+            return VrActionAlternatives.TryGetValue(name, out var alt) ? alt : null;
+        }
+
+        public static void ApplyControllerSpecificDefaults(VrControllerType type) {
+            switch (type) {
+            case VrControllerType.HtcVive:
+            case VrControllerType.MicrosoftMRMotion:
+                SetVrBinding("VrToggleMount", VrController.Left, VrControllerButton.TrackpadUp);
+                SetVrBinding("VrToggleCrouch", VrController.Left, VrControllerButton.TrackpadDown);
+                SetVrBinding("VrToggleInventory", VrController.Left, VrControllerButton.TrackpadLeft);
+                SetVrBinding("VrToggleClothing", VrController.Left, VrControllerButton.TrackpadRight);
+                SetVrBinding("VrToggleFly", VrController.Right, VrControllerButton.TrackpadUp);
+                SetVrBinding("VrSwitchCameraMode", VrController.Right, VrControllerButton.TrackpadDown);
+                break;
+            case VrControllerType.ValveIndex:
+                SetVrBinding("VrToggleMount", VrController.Left, VrControllerButton.Primary);
+                SetVrBinding("VrToggleCrouch", VrController.Left, VrControllerButton.TrackpadDown);
+                SetVrBinding("VrToggleInventory", VrController.Left, VrControllerButton.TrackpadLeft);
+                SetVrBinding("VrToggleClothing", VrController.Left, VrControllerButton.TrackpadRight);
+                SetVrBinding("VrToggleFly", VrController.Right, VrControllerButton.TrackpadUp);
+                SetVrBinding("VrSwitchCameraMode", VrController.Right, VrControllerButton.TrackpadDown);
+                break;
+            case VrControllerType.PICO:
+                // PICO has no Thumbrest — disable actions that use it
+                SetVrBinding("VrToggleInventory", VrController.Left, VrControllerButton.Null);
+                SetVrBinding("VrToggleFly", VrController.Right, VrControllerButton.Null);
+                break;
+            // QuestTouch/ViveFocus3 use SetDefaultVrBindings defaults
+            }
         }
 
         public static object GetKeyboardMapping(string keyName, bool throwIfNotFound = true) {

@@ -4,6 +4,8 @@ namespace Game {
 
         public WickerLampBlock() => CanBeBuiltIntoFurniture = true;
 
+        public override bool IsFurnitureEmissive(int value) => true;
+
         public override int GetFaceTextureSlot(int face, int value) {
             if (face != 5) {
                 return DefaultTextureSlot;

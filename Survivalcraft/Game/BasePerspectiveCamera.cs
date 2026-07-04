@@ -39,11 +39,17 @@ namespace Game {
 
         public override Vector3 ViewRight => m_viewRight;
 
-        public override Matrix ViewMatrix //视图矩阵，包含观测的位置，方向，垂直Y方向
+        public override Matrix ViewMatrix
         {
             get {
                 if (!m_viewMatrix.HasValue) {
-                    m_viewMatrix = Matrix.CreateLookAt(m_viewPosition, m_viewPosition + m_viewDirection, m_viewUp);
+                    if (Eye == null) {
+                        m_viewMatrix = Matrix.CreateLookAt(m_viewPosition, m_viewPosition + m_viewDirection, m_viewUp);
+                    }
+                    else {
+                        Matrix eyeToHead = VrManager.GetEyeToHeadTransform(Eye.Value);
+                        m_viewMatrix = Matrix.CreateLookAt(m_viewPosition, m_viewPosition + m_viewDirection, m_viewUp) * Matrix.Invert(eyeToHead);
+                    }
                 }
                 return m_viewMatrix.Value;
             }
@@ -64,7 +70,7 @@ namespace Game {
                 if (!m_projectionMatrix.HasValue) {
                     m_projectionMatrix = CalculateBaseProjectionMatrix();
                     ViewWidget viewWidget = GameWidget.ViewWidget;
-                    if (!viewWidget.ScalingRenderTargetSize.HasValue) {
+                    if (!viewWidget.ScalingRenderTargetSize.HasValue && Eye == null) {
                         m_projectionMatrix *= MatrixUtils.CreateScaleTranslation(
                                 0.5f * viewWidget.ActualSize.X,
                                 -0.5f * viewWidget.ActualSize.Y,
@@ -82,17 +88,22 @@ namespace Game {
         public override Matrix ScreenProjectionMatrix {
             get {
                 if (!m_screenProjectionMatrix.HasValue) {
-                    Point2 size = Window.Size;
-                    ViewWidget viewWidget = GameWidget.ViewWidget;
-                    m_screenProjectionMatrix = CalculateBaseProjectionMatrix()
-                        * MatrixUtils.CreateScaleTranslation(
-                            0.5f * viewWidget.ActualSize.X,
-                            -0.5f * viewWidget.ActualSize.Y,
-                            viewWidget.ActualSize.X / 2f,
-                            viewWidget.ActualSize.Y / 2f
-                        )
-                        * viewWidget.GlobalTransform
-                        * MatrixUtils.CreateScaleTranslation(2f / size.X, -2f / size.Y, -1f, 1f);
+                    if (Eye == null) {
+                        Point2 size = Window.Size;
+                        ViewWidget viewWidget = GameWidget.ViewWidget;
+                        m_screenProjectionMatrix = CalculateBaseProjectionMatrix()
+                            * MatrixUtils.CreateScaleTranslation(
+                                0.5f * viewWidget.ActualSize.X,
+                                -0.5f * viewWidget.ActualSize.Y,
+                                viewWidget.ActualSize.X / 2f,
+                                viewWidget.ActualSize.Y / 2f
+                            )
+                            * viewWidget.GlobalTransform
+                            * MatrixUtils.CreateScaleTranslation(2f / size.X, -2f / size.Y, -1f, 1f);
+                    }
+                    else {
+                        m_screenProjectionMatrix = CalculateBaseProjectionMatrix();
+                    }
                 }
                 return m_screenProjectionMatrix.Value;
             }
@@ -126,13 +137,18 @@ namespace Game {
         public override Vector2 ViewportSize {
             get {
                 if (!m_viewportSize.HasValue) {
-                    ViewWidget viewWidget = GameWidget.ViewWidget;
-                    m_viewportSize = viewWidget.ScalingRenderTargetSize.HasValue
-                        ? new Vector2(viewWidget.ScalingRenderTargetSize.Value)
-                        : new Vector2(
-                            viewWidget.ActualSize.X * viewWidget.GlobalTransform.Right.Length(),
-                            viewWidget.ActualSize.Y * viewWidget.GlobalTransform.Up.Length()
-                        );
+                    if (Eye != null) {
+                        m_viewportSize = new Vector2(VrManager.SwapchainWidth, VrManager.SwapchainHeight);
+                    }
+                    else {
+                        ViewWidget viewWidget = GameWidget.ViewWidget;
+                        m_viewportSize = viewWidget.ScalingRenderTargetSize.HasValue
+                            ? new Vector2(viewWidget.ScalingRenderTargetSize.Value)
+                            : new Vector2(
+                                viewWidget.ActualSize.X * viewWidget.GlobalTransform.Right.Length(),
+                                viewWidget.ActualSize.Y * viewWidget.GlobalTransform.Up.Length()
+                            );
+                    }
                 }
                 return m_viewportSize.Value;
             }
@@ -141,17 +157,22 @@ namespace Game {
         public override Matrix ViewportMatrix {
             get {
                 if (!m_viewportMatrix.HasValue) {
-                    ViewWidget viewWidget = GameWidget.ViewWidget;
-                    if (viewWidget.ScalingRenderTargetSize.HasValue) {
+                    if (Eye != null) {
                         m_viewportMatrix = Matrix.Identity;
                     }
                     else {
-                        Matrix identity = Matrix.Identity;
-                        identity.Right = Vector3.Normalize(viewWidget.GlobalTransform.Right);
-                        identity.Up = Vector3.Normalize(viewWidget.GlobalTransform.Up);
-                        identity.Forward = viewWidget.GlobalTransform.Forward;
-                        identity.Translation = viewWidget.GlobalTransform.Translation;
-                        m_viewportMatrix = identity;
+                        ViewWidget viewWidget = GameWidget.ViewWidget;
+                        if (viewWidget.ScalingRenderTargetSize.HasValue) {
+                            m_viewportMatrix = Matrix.Identity;
+                        }
+                        else {
+                            Matrix identity = Matrix.Identity;
+                            identity.Right = Vector3.Normalize(viewWidget.GlobalTransform.Right);
+                            identity.Up = Vector3.Normalize(viewWidget.GlobalTransform.Up);
+                            identity.Forward = viewWidget.GlobalTransform.Forward;
+                            identity.Translation = viewWidget.GlobalTransform.Translation;
+                            m_viewportMatrix = identity;
+                        }
                     }
                 }
                 return m_viewportMatrix.Value;

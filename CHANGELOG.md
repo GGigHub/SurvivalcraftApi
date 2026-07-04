@@ -2,6 +2,104 @@
 
 > 说明：此更新日志和发布页的更新日志略有不同
 
+## API 1.9.2.1 (2026-06-13)
+
+### 修复
+
+* 修复 VR 控制器映射设置在启动时被重置的问题
+* 修复鸟类进食时不低头的问题
+* 安卓端重启应用只会退出，而不重启的问题
+* 来自 Fire Dragon 的西班牙语修正
+
+### 对于开发者
+
+* Block 新增多个属性：
+  * **GetDefaultTexture**: 获取默认使用的纹理。之前，你需要重写 GenerateTerrainVertices、DrawBlock 来实现使用外置纹理，现在只需要重写这个方法，返回要使用的外置纹理即可
+  * **IsFurnitureAlphaTest**: 家具中此方块的体素是否使用 alpha-test 渲染（透明镂空）
+  * **IsFurnitureEmissive**: 家具中此方块是否为发光体素
+* 恢复 Game.VrEye 来减少不兼容问题
+
+## API 1.9.2 (2026-06-03)
+
+### 新增
+
+* 支持虚拟现实（VR）
+  * 需要 OpenXR 运行环境，仅限 Windows、Android 平台
+  * Windows 平台第一次运行 VR，需要在`设置-图形`中手动启用`虚拟现实 (VR)`
+  * Android 平台会自动检测当前设备是否支持 OpenXR，并自动进入 VR 模式
+  * 相比较原版游戏自带的 VR 模式，添加了以下新特性：
+    * Windows 端支持多人游戏
+    * `设置-图形` 新增 `VR 视角高度调整` 滑块，方便坐姿游玩，对于高于角色身高的玩家，则能降低高度来提高游玩舒适度
+    * `设置-控制` 新增 `VR 移动控制方式` 选项，默认为 `连续`，可以切换为 `瞬移`：玩家在左手柄摇动摇杆/滑动触摸板时，会发出抛物线，松开即可传送到目标位置；向后摇/滑动则会使角色向后移动；非飞行模式时只能移动到可碰撞方块上面、梯子方块侧面；有持续 0.2 秒的黑屏，大幅避免眩晕
+    * `设置-控制` 新增 `VR 视角控制方式` 选项，默认为 `连续`，可以切换为 `瞬转`：玩家右手柄左右摇动摇杆/滑动触摸板时，会立即旋转 90 度；有 0.2 秒的黑屏，大幅避免眩晕
+    * `设置-控制` 新增 `VR 手柄按键映射` 界面入口，你可以在此自定义 VR 手柄按键的功能，还可以在进入游戏世界后的`游戏菜单-更多操作`中找到该界面的入口
+    * `设置-用户界面` 新增 `VR 界面大小` 滑块和 `VR 界面在左手停靠` 选项
+    * 改善手持物品显示效果
+
+### 修复
+
+* 修复蹲下能轻易透视的问题
+* 修复能滚动部件滚动过于灵敏的问题
+
+### 对于开发者
+
+* 给 PlayerData 所有方法添加 virtual 修饰符
+* 为支持 VR，`GameWidget`、`ComponentInput` 有较多调整，可能会导致兼容问题，欢迎反馈
+
+## API 1.9.1.3 (2026-05-22)
+
+### 修复
+
+* 修复在一些设备上无法正常绘制生物模型的问题
+* 修复生物不会播放 RareIdleSound 的问题
+* 修复四足生物脚步声过于频繁的问题
+* 修复 ComponentModel.ModelScale 无效的问题
+* 来自 JoãoCraft24 的葡萄牙语修正
+
+## API 1.9.1.2 (2026-05-20)
+
+### 修复
+
+* 修复多处模组兼容问题
+* 修复一处导致手机端严重掉帧的问题
+* 修复中文翻译中的“生病”为“恶心”
+
+## API 1.9.1 (2026-05-17)
+
+### 新增
+
+* 几乎完整的 glTF 格式模型支持。  
+几乎完整是因为游戏自带着色器限制，部分功能仅通过游戏本体无法展示，为此我们开发了一个配套模组 [ModelPbrShader](https://github.com/XiaofengdiZhu/ModelPbrShaderForSC)，推荐下载使用（需要设备支持 OpenGL ES 3.2）
+
+> 因为新的动画系统（兼容原版生物模型硬编码动画与 glTF 模型动画），现在第一次加载原版生物也会比之前慢的多，会偶尔产生非常轻微的卡顿
+
+### 改进
+
+* 如果有模组因非手动原因禁用，会在游戏启动时弹出提示
+* 模组详情对话框会显示哪些依赖模组缺失了
+* 采用来自JoãoCraft24的新西班牙语翻译
+* 删除旧中文语言包
+* 改进一些翻译
+
+### 修复
+
+* 修复一些界面打不开的问题
+* 修复窗口缩放计算错误导致 Linux 平台鼠标可能无法正常使用的问题
+* 修复 Linux 平台原生文件对话框库加载失败的问题
+* 修复一个可能导致玩家创建失败的问题
+* 修复一个导致导出的存档无法被原版导入的问题
+* 避免因移动日志文件失败而导致不将日志写入日志文件
+
+### 对于开发者
+
+* 对于新增的 glTF 格式模型支持，你可以参考 [SurvivalcraftTemplateModForAPI](https://github.com/XiaofengdiZhu/SurvivalcraftTemplateModForAPI) 和 [AdvancedGltfFoxMod](https://github.com/XiaofengdiZhu/AdvancedGltfFoxModForSC) 来添加模型、配置动画；通过前面两个示例模组项目来学习是最快的，你还可以选择阅读以下文档来学习：
+  * [glTF 生物模组开发教程](https://gitee.com/SC-SPM/SurvivalcraftApi/blob/SCAPI1.9/docs/GltfCreatureModTutorial.md)
+  * [动画配置 JSON 参考](https://gitee.com/SC-SPM/SurvivalcraftApi/blob/SCAPI1.9/docs/AnimationConfigReference.md)
+  * [动画系统高级主题](https://gitee.com/SC-SPM/SurvivalcraftApi/blob/SCAPI1.9/docs/AnimationAdvancedTopics.md)
+* 为方块添加可供重写的方法 `GetIsCollidable`，可判断身体组件与某特定方块是否可发生碰撞
+
+> 本次更新几乎完全由 [Claude Code](https://claude.com/product/claude-code) + [智谱 GLM-5.1](https://docs.bigmodel.cn/cn/guide/models/text/glm-5.1) 完成
+
 ## API 1.9.0.2 (2026-04-03)
 
 ### 修复

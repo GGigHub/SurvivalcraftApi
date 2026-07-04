@@ -2165,5 +2165,33 @@ namespace Game {
         /// </summary>
         /// <param name="dialog">将隐藏的对话框；设置为 null 将不进行隐藏</param>
         public virtual void OnHideDialog(ref Dialog dialog) { }
+
+        /// <summary>
+        /// 当生物脚步声事件触发时执行
+        /// </summary>
+        /// <param name="componentCreature">触发脚步声的生物</param>
+        /// <param name="parameter">事件参数（可自定义）</param>
+        public virtual void OnCreatureFootstep(ComponentCreature componentCreature, object parameter) { }
+
+        /// <summary>
+        /// 当生物攻击命中事件触发时执行
+        /// </summary>
+        /// <param name="componentCreature">攻击的生物</param>
+        /// <param name="parameter">事件参数（可自定义）</param>
+        public virtual void OnCreatureAttackHit(ComponentCreature componentCreature, object parameter) { }
+
+        /// <summary>
+        /// 当生物攻击开始事件触发时执行
+        /// </summary>
+        /// <param name="componentCreature">攻击的生物</param>
+        /// <param name="parameter">事件参数（可自定义）</param>
+        public virtual void OnCreatureAttackStart(ComponentCreature componentCreature, object parameter) { }
+
+        /// <summary>
+        /// 当生物攻击结束事件触发时执行
+        /// </summary>
+        /// <param name="componentCreature">攻击的生物</param>
+        /// <param name="parameter">事件参数（可自定义）</param>
+        public virtual void OnCreatureAttackEnd(ComponentCreature componentCreature, object parameter) { }
     }
 }

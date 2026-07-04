@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace TemplatesDatabase {
     public class DatabaseObject {
         public class StringBin {
-            int m_mask;
+            public int m_mask;
 
-            List<string> m_list = [];
+            public List<string> m_list = [];
 
             public bool Contains(string s) {
                 int num = Hash(s) & 0x1F;
@@ -30,27 +30,27 @@ namespace TemplatesDatabase {
             }
         }
 
-        internal Database m_database;
+        public Database m_database;
 
-        DatabaseObjectType m_databaseObjectType;
+        public DatabaseObjectType m_databaseObjectType;
 
-        Guid m_guid;
+        public Guid m_guid;
 
-        string m_name;
+        public string m_name;
 
-        object m_value;
+        public object m_value;
 
-        string m_description = string.Empty;
+        public string m_description = string.Empty;
 
 #pragma warning disable CS0649
         bool m_readOnly;
 #pragma warning restore CS0649
 
-        DatabaseObject m_explicitInheritanceParent;
+        public DatabaseObject m_explicitInheritanceParent;
 
-        DatabaseObject m_nestingParent;
+        public DatabaseObject m_nestingParent;
 
-        List<DatabaseObject> m_nestingChildren;
+        public List<DatabaseObject> m_nestingChildren;
 
         public Database Database => m_database;
 

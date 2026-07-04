@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Globalization;
 using Engine;
 using Engine.Graphics;
+using Silk.NET.OpenGLES;
 
 
 #if BROWSER
@@ -183,6 +184,16 @@ namespace Game {
         }
 #endif // !ANDROID
 
+        public static void DisableVrCameras() {
+            if (GameManager.Project == null) return;
+            SubsystemGameWidgets subsystemGameWidgets = GameManager.Project.FindSubsystem<SubsystemGameWidgets>(true);
+            foreach (GameWidget gameWidget in subsystemGameWidgets.GameWidgets) {
+                if (gameWidget.ActiveCamera is BasePerspectiveCamera camera) {
+                    camera.Eye = null;
+                }
+            }
+        }
+
         [STAThread]
         public static void EntryPoint() {
 #if BROWSER
@@ -254,6 +265,11 @@ namespace Game {
                 ScreensManager.Initialize();
                 APIUpdateManager.Initialize();
                 NetworkManager.Initialize();
+#if WINDOWS
+                VrManager.SetBackend(new Engine.VR.WindowsOpenXrVrBackend());
+#elif ANDROID
+                VrManager.SetBackend(new Engine.VR.AndroidOpenXrVrBackend());
+#endif
                 Log.Information("Program Initialize Success");
             }
             catch (Exception e) {
@@ -265,6 +281,7 @@ namespace Game {
             LastFrameTime = (float)(Time.RealTime - m_frameBeginTime);
             LastCpuFrameTime = (float)(m_cpuEndTime - m_frameBeginTime);
             m_frameBeginTime = Time.RealTime;
+            bool vrFrame = VrManager.IsVrStarted && VrManager.BeginFrame();
 #if !MOBILE && !BROWSER
             if (Keyboard.IsKeyDownOnce(Key.F11)) {
                 SettingsManager.WindowMode = SettingsManager.WindowMode == WindowMode.Fullscreen ? WindowMode.Resizable : WindowMode.Fullscreen;
@@ -341,6 +358,10 @@ namespace Game {
                     BrowserInterop.FirstFramePrepared();
                 }
 #endif
+                if (vrFrame) {
+                    VrManager.EndFrame();
+                    VrManager.Update();
+                }
             }
         }
 
@@ -348,7 +369,9 @@ namespace Game {
 #if ANDROID
 #pragma warning disable CA1416
             Intent intent = new Intent(Window.Activity, Window.Activity.Class);
-            Window.Activity.StartActivity(intent);
+            intent.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
+            Window.Activity.ApplicationContext.StartActivity(intent);
+            Java.Lang.JavaSystem.Exit(0);
 #elif !BROWSER
             Process current = Process.GetCurrentProcess();
             Process.Start(new ProcessStartInfo {

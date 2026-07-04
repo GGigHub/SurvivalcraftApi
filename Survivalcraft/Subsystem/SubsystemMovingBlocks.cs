@@ -143,7 +143,10 @@ namespace Game {
 
         public static int[] m_drawOrders = [10];
 
+        [Obsolete("Use MovingBlockSetEnumerable instead. This is slow and uses more memory.")]
         public List<IMovingBlockSet> MovingBlockSets => [.. m_movingBlockSets];
+
+        public IEnumerable<IMovingBlockSet> MovingBlockSetEnumerable => m_movingBlockSets;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

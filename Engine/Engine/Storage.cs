@@ -13,7 +13,10 @@ using System.Runtime.InteropServices.JavaScript;
 #elif WINDOWS || LINUX
 using System.Diagnostics;
 using NativeFileDialogCore;
+#if LINUX
+using System.Runtime.InteropServices;
 #endif
+#endif // WINDOWS || LINUX
 using System.Reflection;
 #endif // !ANDROID
 using System.Text;
@@ -28,7 +31,28 @@ namespace Engine {
         const bool m_isAndroidPlatform = true;
 #endif
 
+        /// <summary>
+        /// Content 加载回调
+        /// 参数：ContentManager 中绝对路径
+        /// </summary>
+        public static Func<string, Stream> LoadContentStreamCallback { get; set; }
+
         public static void Initialize() {
+#if LINUX
+            // NativeFileDialogCore on Linux uses DllImport("nfd64"), but the NuGet package
+            // provides the native library as libnfd.so. Map the name to resolve correctly.
+            NativeLibrary.SetDllImportResolver(
+                typeof(Dialog).Assembly,
+                (name, assembly, path) => {
+                    if (name == "nfd64") {
+                        if (NativeLibrary.TryLoad("libnfd", assembly, path, out nint handle)) {
+                            return handle;
+                        }
+                    }
+                    return nint.Zero;
+                }
+            );
+#endif
 #if BROWSER
             MountOPFS("/__root__");
 #endif

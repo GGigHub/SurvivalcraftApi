@@ -3,13 +3,15 @@ using TemplatesDatabase;
 
 namespace GameEntitySystem {
     public abstract class Subsystem : IDisposable {
-        Project m_project;
+        public Project m_project;
 
-        ValuesDictionary m_valuesDictionary;
+        public ValuesDictionary m_valuesDictionary;
 
         public Project Project => m_project;
 
         public ValuesDictionary ValuesDictionary => m_valuesDictionary;
+
+        public Subsystem() { }
 
         public virtual void OnEntityAdded(Entity entity) { }
 

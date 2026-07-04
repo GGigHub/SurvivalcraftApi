@@ -1,3 +1,4 @@
+using System.Text;
 using System.Xml.Linq;
 using Engine;
 using NuGet.Versioning;
@@ -102,7 +103,24 @@ namespace Game {
                     m_contentPanel.Children.Add(new CanvasWidget { Size = new Vector2(0f, 8f) });
                     m_contentPanel.Children.Add(new LabelWidget { Text = LanguageControl.Get(fName, "10") });
                     foreach (KeyValuePair<string, VersionRange> dependency in modInfo.DependencyRanges) {
-                        m_contentPanel.Children.Add(new LabelWidget { Text = $"    - {dependency.Key} {dependency.Value}" });
+                        StringBuilder sb = new StringBuilder();
+                        sb.AppendLine($"    - {dependency.Key}");
+                        sb.AppendLine($"      {dependency.Value}");
+                        bool valid = true;
+                        if (entity.IsDisabled
+                            && entity.DisableReason == ModDisableReason.DependencyError) {
+                            if (!ModsManager.ModListAll.Any(px => !px.IsDisabled
+                                    && px.modInfo != null
+                                    && px.modInfo.PackageName == dependency.Key
+                                    && ((px.modInfo.NuGetVersion != null && dependency.Value.Satisfies(px.modInfo.NuGetVersion))
+                                        || dependency.Value.Equals(VersionRange.All)
+                                        || px.modInfo.Version == dependency.Value.OriginalString)
+                                )) {
+                                valid = false;
+                                sb.AppendLine($"      {LanguageControl.Get(fName, "15")}");
+                            }
+                        }
+                        m_contentPanel.Children.Add(new LabelWidget { Text = sb.ToString(), Color = valid ? Color.White : Color.Red });
                     }
                 }
             }

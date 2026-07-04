@@ -4,12 +4,12 @@ using Engine;
 namespace Game {
     public class OriginalCommunityContentScreen : Screen {
         public enum Order {
-            ByRank,
-            ByTime,
-            ByDownloads,
-            BySize,
-            ByVersionNewest,
-            ByVersionOldest
+            ByRank = 0,
+            ByTime = 1,
+            ByDownloads = 2,
+            BySize = 3,
+            ByVersionNewest = 4,
+            ByVersionOldest = 5
         }
 
         public ListPanelWidget m_listPanel;

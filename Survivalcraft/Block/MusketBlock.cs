@@ -3,12 +3,11 @@ using Engine.Graphics;
 
 namespace Game {
     public class MusketBlock : Block {
-        [Flags]
         public enum LoadState {
-            Empty,
-            Gunpowder,
-            Wad,
-            Loaded
+            Empty = 0,
+            Gunpowder = 1,
+            Wad = 2,
+            Loaded = 3
         }
 
         public static int Index = 212;
@@ -70,11 +69,20 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
+            Texture2D texture = GetDefaultTexture(value);
             if (GetHammerState(Terrain.ExtractData(value))) {
-                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshLoaded, color, 2f * size, ref matrix, environmentData);
+                if (texture == null) {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshLoaded, color, 2f * size, ref matrix, environmentData);
+                } else {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshLoaded, texture, color, 2f * size, ref matrix, environmentData);
+                }
             }
             else {
-                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshUnloaded, color, 2f * size, ref matrix, environmentData);
+                if (texture == null) {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshUnloaded, color, 2f * size, ref matrix, environmentData);
+                } else {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshUnloaded, texture, color, 2f * size, ref matrix, environmentData);
+                }
             }
         }
 
@@ -97,7 +105,7 @@ namespace Game {
 
         public static LoadState GetLoadState(int data) => (LoadState)(data & 3);
 
-        public static int SetLoadState(int data, LoadState loadState) => (data & -4) | (int)(loadState & LoadState.Loaded);
+        public static int SetLoadState(int data, LoadState loadState) => (data & -4) | ((int)loadState & 3);
 
         public static bool GetHammerState(int data) => (data & 4) != 0;
 

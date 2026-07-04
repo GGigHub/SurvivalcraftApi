@@ -6,7 +6,8 @@ namespace Game {
         public static int Index = 104;
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
-            TerrainGeometrySubset[] alphaTestSubsetsByFace = geometry.AlphaTestSubsetsByFace;
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset[] alphaTestSubsetsByFace = texture == null ? geometry.AlphaTestSubsetsByFace : geometry.GetGeometry(texture).AlphaTestSubsetsByFace;
             int data = Terrain.ExtractData(value);
             int value2 = y + 1 < TerrainChunk.Height ? generator.Terrain.GetCellValueFast(x, y + 1, z) : 0;
             int num = Terrain.ExtractContents(value2);

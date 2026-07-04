@@ -37,7 +37,12 @@ namespace Game {
                             true,
                             false
                         );
-                        fileInfo.MoveTo(destination, true);
+                        try {
+                            fileInfo.MoveTo(destination, true);
+                        }
+                        catch {
+                            // ignore
+                        }
                         m_stream = Storage.OpenFile(path, OpenFileMode.CreateOrOpen);
                     }
                     else {

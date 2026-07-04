@@ -343,6 +343,12 @@ healthchecksdb
 
 # Local Netlify folder
 .netlify
+
 Survivalcraft.Browser/ContentFileInfo.g.cs
 /Engine.Browser/Properties/launchSettings.json
 /EntitySystem.Browser/Properties/launchSettings.json
+
+.claude/
+CLAUDE.md
+.mcp.json
+.code-review-graph/

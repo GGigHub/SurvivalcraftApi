@@ -1,8 +1,8 @@
 namespace Engine {
     public enum OpenFileMode {
-        Read,
-        ReadWrite,
-        Create,
-        CreateOrOpen
+        Read = 0,
+        ReadWrite = 1,
+        Create = 2,
+        CreateOrOpen = 3
     }
 }

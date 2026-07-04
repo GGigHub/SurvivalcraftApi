@@ -32,6 +32,16 @@
             <BevelledButtonWidget Name="LookControlMode" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
           </UniformSpacingPanelWidget>
 
+          <UniformSpacingPanelWidget Name="VrMoveControlModePanel" Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Text="[SettingsControlsScreen:31]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" />
+            <BevelledButtonWidget Name="VrMoveControlMode" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Name="VrLookControlModePanel" Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Text="[SettingsControlsScreen:30]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" />
+            <BevelledButtonWidget Name="VrLookControlMode" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
           <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
             <LabelWidget Text="[SettingsControlsScreen:3]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" />
             <BevelledButtonWidget Name="LeftHandedLayout" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
@@ -130,6 +140,11 @@
           <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
             <LabelWidget Text="[SettingsControlsScreen:28]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" />
             <BevelledButtonWidget Name="GamepadMappingEntry" Text ="[SettingsControlsScreen:22]" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Name="VrControllerMappingPanel" Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Text="[SettingsControlsScreen:29]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" />
+            <BevelledButtonWidget Name="VrControllerMappingEntry" Text ="[SettingsControlsScreen:22]" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
           </UniformSpacingPanelWidget>
 
           <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">

@@ -36,7 +36,8 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
-            TerrainGeometrySubset subsetAlphaTest = geometry.SubsetAlphaTest;
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetAlphaTest = texture == null ? geometry.SubsetAlphaTest : geometry.GetGeometry(texture).SubsetAlphaTest;
             DynamicArray<TerrainVertex> vertices = subsetAlphaTest.Vertices;
             TerrainGeometryDynamicArray<int> indices = subsetAlphaTest.Indices;
             int count = vertices.Count;
@@ -264,7 +265,7 @@ namespace Game {
                 value,
                 size,
                 ref matrix,
-                null,
+                GetDefaultTexture(value),
                 color,
                 false,
                 environmentData

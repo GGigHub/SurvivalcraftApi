@@ -183,7 +183,9 @@ namespace Game {
 
         public DragHostWidget DragHostWidget {
             get {
-                m_dragHostWidget ??= GameWidget?.Children.Find<DragHostWidget>(false);
+                if (m_dragHostWidget == null) {
+                    m_dragHostWidget = GameWidget?.FindChild<DragHostWidget>(false);
+                }
                 return m_dragHostWidget;
             }
         }
@@ -523,8 +525,7 @@ namespace Game {
                         terrainRaycastResult,
                         movingBlocksRaycastResult,
                         out flag
-                    );
-                    if (shouldSyncPlayerEvents
+                    );                    if (shouldSyncPlayerEvents
                         && terrainRaycastResult.HasValue
                         && priorityPlace >= priorityUse
                         && priorityPlace >= priorityInteract) {

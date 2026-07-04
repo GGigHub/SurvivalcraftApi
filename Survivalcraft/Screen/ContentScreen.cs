@@ -4,9 +4,9 @@ using Engine;
 namespace Game {
     public class ContentScreen : Screen {
         public enum CommunityType {
-            OriginalCommunity,
-            ChineseCommunity,
-            ChineseCommunityWebsite
+            OriginalCommunity = 0,
+            ChineseCommunity = 1,
+            ChineseCommunityWebsite = 2
         }
         public static string fName = "ContentScreen";
 

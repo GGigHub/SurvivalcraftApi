@@ -1,0 +1,36 @@
+{
+    "name": "FourLegged",
+    "layers": {
+        "Base": {
+            "index": 0,
+            "blendMode": "Override"
+        },
+        "Head": {
+            "index": 1,
+            "blendMode": "Override",
+            "boneMask": [ "Head", "Neck" ]
+        },
+        "Death": {
+            "index": 2,
+            "blendMode": "Override"
+        }
+    },
+    "stateTracks": {
+        "Gait": {
+            "type": "Enum",
+            "defaultValue": "Idle",
+            "enumValues": [ "Idle", "Walk", "Trot", "Canter" ]
+        },
+        "Activity": {
+            "type": "Enum",
+            "defaultValue": "None",
+            "enumValues": [ "None", "Feed", "Attack" ]
+        },
+        "Death": {
+            "type": "Float",
+            "defaultValue": 0,
+            "minValue": 0,
+            "maxValue": 1
+        }
+    }
+}

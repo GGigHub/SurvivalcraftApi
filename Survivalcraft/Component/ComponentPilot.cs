@@ -205,7 +205,7 @@ namespace Game {
                                     v + new Vector3(0f, 0.5f, 0f),
                                     false,
                                     true,
-                                    (value, _) => BlocksManager.Blocks[Terrain.ExtractContents(value)].IsCollidable_(value)
+                                    (value, _) => BlocksManager.Blocks[Terrain.ExtractContents(value)].GetIsCollidable(m_componentCreature.ComponentBody, value)
                                 )
                                 .HasValue) {
                                 Destination = null;
@@ -288,7 +288,7 @@ namespace Game {
                         if (ShouldAvoidBlock(block, cellValue)) {
                             return false;
                         }
-                        if (block.IsCollidable_(cellValue)) {
+                        if (block.GetIsCollidable(m_componentCreature.ComponentBody, cellValue)) {
                             break;
                         }
                     }
@@ -304,7 +304,7 @@ namespace Game {
                     Terrain.ToCell(vector2.Z)
                 );
                 Block block2 = BlocksManager.Blocks[Terrain.ExtractContents(cellValue2)];
-                if ((block2.IsCollidable_(cellValue2) || block2 is FluidBlock)
+                if ((block2.GetIsCollidable(m_componentCreature.ComponentBody, cellValue2) || block2 is FluidBlock)
                     && !ShouldAvoidBlock(block2, cellValue2)) {
                     isBlockBeneathDangerous = false;
                     break;

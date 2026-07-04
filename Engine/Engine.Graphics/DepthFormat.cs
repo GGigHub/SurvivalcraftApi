@@ -1,7 +1,7 @@
 namespace Engine.Graphics {
     public enum DepthFormat {
-        None,
-        Depth16,
-        Depth24Stencil8
+        None = 0,
+        Depth16 = 1,
+        Depth24Stencil8 = 2
     }
 }

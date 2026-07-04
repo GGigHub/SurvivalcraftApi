@@ -54,8 +54,15 @@ namespace Game {
             }
             Matrix matrix2 = matrix;
             Matrix matrix3 = Matrix.CreateRotationY(radians) * matrix;
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_caseMesh, color, size * 6f, ref matrix2, environmentData);
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_pointerMesh, color, size * 6f, ref matrix3, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_caseMesh, color, size * 6f, ref matrix2, environmentData);
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_pointerMesh, color, size * 6f, ref matrix3, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_caseMesh, texture, color, size * 6f, ref matrix2, environmentData);
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_pointerMesh, texture, color, size * 6f, ref matrix3, environmentData);
+            }
         }
     }
 }

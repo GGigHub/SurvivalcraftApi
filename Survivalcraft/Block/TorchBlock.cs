@@ -5,6 +5,8 @@ namespace Game {
     public class TorchBlock : Block {
         public static int Index = 31;
 
+        public override bool IsFurnitureEmissive(int value) => true;
+
         public BlockMesh m_standaloneBlockMesh = new();
 
         public BlockMesh[] m_blockMeshesByVariant = new BlockMesh[5];
@@ -143,6 +145,7 @@ namespace Game {
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
             int num = Terrain.ExtractData(value);
             if (num < m_blockMeshesByVariant.Length) {
+                Texture2D texture = GetDefaultTexture(value);
                 generator.GenerateMeshVertices(
                     this,
                     x,
@@ -151,7 +154,7 @@ namespace Game {
                     m_blockMeshesByVariant[num],
                     Color.White,
                     null,
-                    geometry.SubsetOpaque
+                    texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque
                 );
             }
         }
@@ -196,7 +199,13 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 2f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 2f * size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color, 2f * size, ref matrix, environmentData);
+            }
         }
     }
 }

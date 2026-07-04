@@ -1,4 +1,6 @@
 using Engine;
+using Engine.Graphics;
+
 namespace Game {
     public class MagmaBlock : FluidBlock {
         public static int Index = 92;
@@ -15,6 +17,7 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
             GenerateFluidTerrainVertices(
                 generator,
                 value,
@@ -23,7 +26,7 @@ namespace Game {
                 z,
                 Color.White,
                 Color.White,
-                geometry.OpaqueSubsetsByFace
+                texture == null ? geometry.OpaqueSubsetsByFace : geometry.GetGeometry(texture).OpaqueSubsetsByFace
             );
         }
 

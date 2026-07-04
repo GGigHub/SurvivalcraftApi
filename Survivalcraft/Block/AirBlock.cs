@@ -19,7 +19,7 @@ namespace Game {
                     111,
                     size,
                     ref matrix,
-                    null,
+                    GetDefaultTexture(value),
                     color,
                     false,
                     environmentData
@@ -29,6 +29,7 @@ namespace Game {
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
             if (Terrain.ExtractContents(value) != 0) {
+                Texture2D texture = GetDefaultTexture(value);
                 generator.GenerateCubeVertices(
                     BlocksManager.Blocks[111],
                     111,
@@ -36,7 +37,7 @@ namespace Game {
                     y,
                     z,
                     Color.Magenta,
-                    geometry.OpaqueSubsetsByFace
+                    texture == null ? geometry.OpaqueSubsetsByFace : geometry.GetGeometry(texture).OpaqueSubsetsByFace
                 );
             }
         }

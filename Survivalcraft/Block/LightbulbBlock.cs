@@ -160,6 +160,9 @@ namespace Game {
             int? color = GetColor(data);
             Color color2 = color.HasValue ? SubsystemPalette.GetColor(generator, color) : m_copperColor;
             if (mountingFace < m_bulbBlockMeshes.Length) {
+                Texture2D texture = GetDefaultTexture(value);
+                TerrainGeometrySubset subsetAlphaTest = texture == null ? geometry.SubsetAlphaTest : geometry.GetGeometry(texture).SubsetAlphaTest;
+                TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
                 if (lightIntensity <= 0) {
                     generator.GenerateMeshVertices(
                         this,
@@ -169,7 +172,7 @@ namespace Game {
                         m_bulbBlockMeshes[mountingFace],
                         Color.White,
                         null,
-                        geometry.SubsetAlphaTest
+                        subsetAlphaTest
                     );
                 }
                 else {
@@ -184,7 +187,7 @@ namespace Game {
                         m_bulbBlockMeshesLit[mountingFace],
                         new Color(r, g, b),
                         null,
-                        geometry.SubsetOpaque
+                        subsetOpaque
                     );
                 }
                 generator.GenerateMeshVertices(
@@ -195,7 +198,7 @@ namespace Game {
                     m_sidesBlockMeshes[mountingFace],
                     color2,
                     null,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
                 generator.GenerateWireVertices(
                     value,
@@ -205,7 +208,7 @@ namespace Game {
                     mountingFace,
                     0.875f,
                     Vector2.Zero,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
             }
         }
@@ -218,8 +221,15 @@ namespace Game {
             DrawBlockEnvironmentData environmentData) {
             int? color2 = GetColor(Terrain.ExtractData(value));
             Color c = color2.HasValue ? SubsystemPalette.GetColor(environmentData, color2) : m_copperColor;
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneSidesBlockMesh, color * c, 2f * size, ref matrix, environmentData);
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBulbBlockMesh, color, 2f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneSidesBlockMesh, color * c, 2f * size, ref matrix, environmentData);
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBulbBlockMesh, color, 2f * size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneSidesBlockMesh, texture, color * c, 2f * size, ref matrix, environmentData);
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBulbBlockMesh, texture, color, 2f * size, ref matrix, environmentData);
+            }
         }
 
         public int? GetPaintColor(int value) => GetColor(Terrain.ExtractData(value));

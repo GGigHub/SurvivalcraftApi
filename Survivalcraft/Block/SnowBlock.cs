@@ -12,6 +12,7 @@ namespace Game {
         public override bool IsFaceTransparent(SubsystemTerrain subsystemTerrain, int face, int value) => face != 5;
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
             generator.GenerateCubeVertices(
                 this,
                 value,
@@ -28,7 +29,7 @@ namespace Game {
                 Color.White,
                 Color.White,
                 -1,
-                geometry.OpaqueSubsetsByFace
+                texture == null ? geometry.OpaqueSubsetsByFace : geometry.GetGeometry(texture).OpaqueSubsetsByFace
             );
         }
 
@@ -38,16 +39,32 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawCubeBlock(
-                primitivesRenderer,
-                value,
-                new Vector3(size),
-                m_height,
-                ref matrix,
-                color,
-                color,
-                environmentData
-            );
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size),
+                    m_height,
+                    ref matrix,
+                    color,
+                    color,
+                    environmentData
+                );
+            }
+            else {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size),
+                    m_height,
+                    ref matrix,
+                    color,
+                    color,
+                    environmentData,
+                    texture
+                );
+            }
         }
 
         public override void GetDropValues(SubsystemTerrain subsystemTerrain,

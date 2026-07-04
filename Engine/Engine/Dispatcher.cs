@@ -8,9 +8,9 @@ namespace Engine {
 
         public static int? m_mainThreadId;
 
-        static List<ActionInfo> m_actionInfos = [];
+        public static List<ActionInfo> m_actionInfos = [];
 
-        static List<ActionInfo> m_currentActionInfos = [];
+        public static List<ActionInfo> m_currentActionInfos = [];
 
         public static int MainThreadId => m_mainThreadId ?? throw new InvalidOperationException("Dispatcher is not initialized.");
 

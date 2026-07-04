@@ -4,68 +4,68 @@ namespace Engine.Input {
         /// <summary>
         /// Default cursor.
         /// </summary>
-        Default,
+        Default = 0,
 
         /// <summary>
         /// Regular arrow cursor.
         /// </summary>
-        Arrow,
+        Arrow = 1,
 
         /// <summary>
         /// Text input I-beam cursor.
         /// </summary>
-        IBeam,
+        IBeam = 2,
 
         /// <summary>
         /// Crosshair cursor.
         /// </summary>
-        Crosshair,
+        Crosshair = 3,
 
         /// <summary>
         /// Hand cursor.
         /// </summary>
-        Hand,
+        Hand = 4,
 
         /// <summary>
         /// Horizontal resize arrow cursor.
         /// </summary>
-        HResize,
+        HResize = 5,
 
         /// <summary>
         /// Vertical resize arrow cursor.
         /// </summary>
-        VResize,
+        VResize = 6,
 
         /// <summary>
         /// Top-left to bottom-right diagonal resize/move arrow cursor.
         /// </summary>
-        NwseResize,
+        NwseResize = 7,
 
         /// <summary>
         /// Top-right to bottom-left diagonal resize/move arrow cursor.
         /// </summary>
-        NeswResize,
+        NeswResize = 8,
 
         /// <summary>
         /// Omni-directional resize/move cursor.
         /// </summary>
-        ResizeAll,
+        ResizeAll = 9,
 
         /// <summary>
         /// Operation not allowed cursor.
         /// </summary>
-        NotAllowed,
+        NotAllowed = 10,
 
         /// <summary>
         /// Hourglass/waiting cursor.
         /// </summary>
-        Wait,
+        Wait = 11,
 
         /// <summary>
         /// Regular arrow but with an hourglass/waiting icon cursor.
         /// </summary>
-        WaitArrow,
-        Grab,
-        Grabbing
+        WaitArrow = 12,
+        Grab = 13,
+        Grabbing = 14
     }
 }

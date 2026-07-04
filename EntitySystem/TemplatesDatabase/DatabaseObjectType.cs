@@ -5,31 +5,31 @@ using Engine;
 
 namespace TemplatesDatabase {
     public class DatabaseObjectType {
-        string m_name;
+        public string m_name;
 
-        string m_defaultInstanceName;
+        public string m_defaultInstanceName;
 
-        string m_iconName;
+        public string m_iconName;
 
-        int m_order;
+        public int m_order;
 
-        bool m_supportsValue;
+        public bool m_supportsValue;
 
-        bool m_mustInherit;
+        public bool m_mustInherit;
 
-        int m_nameLengthLimit;
+        public int m_nameLengthLimit;
 
-        bool m_saveStandalone;
+        public bool m_saveStandalone;
 
-        List<DatabaseObjectType> m_allowedNestingParents;
+        public List<DatabaseObjectType> m_allowedNestingParents;
 
-        List<DatabaseObjectType> m_allowedInheritanceParents;
+        public List<DatabaseObjectType> m_allowedInheritanceParents;
 
-        List<DatabaseObjectType> m_allowedNestingChildren = [];
+        public List<DatabaseObjectType> m_allowedNestingChildren = [];
 
-        List<DatabaseObjectType> m_allowedInheritanceChildren = [];
+        public List<DatabaseObjectType> m_allowedInheritanceChildren = [];
 
-        DatabaseObjectType m_nestedValueType;
+        public DatabaseObjectType m_nestedValueType;
 
         public bool IsInitialized => m_allowedNestingParents != null;
 

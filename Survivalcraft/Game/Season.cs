@@ -1,9 +1,8 @@
 namespace Game {
-    [Flags]
     public enum Season {
-        Summer,
-        Autumn,
-        Winter,
-        Spring
+        Summer = 0,
+        Autumn = 1,
+        Winter = 2,
+        Spring = 3
     }
 }

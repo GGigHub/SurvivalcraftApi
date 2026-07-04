@@ -1,8 +1,7 @@
 namespace Game {
-    [Flags]
     public enum PistonMode {
-        Pushing,
-        Pulling,
-        StrictPulling
+        Pushing = 0,
+        Pulling = 1,
+        StrictPulling = 2
     }
 }

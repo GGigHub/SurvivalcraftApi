@@ -50,6 +50,14 @@ namespace Engine.Input {
 
         public static bool IsKeyboardVisible { get; private set; }
 
+#if ANDROID
+        /// <summary>
+        /// Whether the native Android AlertDialog is safe to show.
+        /// False when VR is active (AlertDialog causes hang on VR headsets).
+        /// </summary>
+        public static bool IsAndroidDialogAvailable { get; set; } = true;
+#endif
+
         public static bool BackButtonQuitsApp { get; set; }
 
         public static event Action<Key> KeyDown;
@@ -76,6 +84,13 @@ namespace Engine.Input {
             ArgumentNullException.ThrowIfNull(title);
             ArgumentNullException.ThrowIfNull(description);
             ArgumentNullException.ThrowIfNull(defaultText);
+#if ANDROID
+            // VR headsets on Android cannot show native AlertDialog (causes hang).
+            if (!IsAndroidDialogAvailable) {
+                cancel?.Invoke();
+                return;
+            }
+#endif
             if (!IsKeyboardVisible) {
                 Clear();
                 Touch.Clear();

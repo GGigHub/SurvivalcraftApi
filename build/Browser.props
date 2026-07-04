@@ -17,6 +17,7 @@
         <WasmEnableSIMD>true</WasmEnableSIMD>
         <WasmEnableExceptionHandling>false</WasmEnableExceptionHandling>
         <WasmStripILAfterAOT>true</WasmStripILAfterAOT>
+        <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
         <!-- Normal,JustInterp,Full,FullInterp,Hybrid,LLVMOnly,LLVMOnlyInterp -->
         <!-- <AOTMode>LLVMOnly</AOTMode> -->
     </PropertyGroup>

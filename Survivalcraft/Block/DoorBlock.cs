@@ -62,6 +62,9 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetAlphaTest = texture == null ? geometry.SubsetAlphaTest : geometry.GetGeometry(texture).SubsetAlphaTest;
+            TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
             int num = Terrain.ExtractData(value);
             if (IsBottomPart(generator.Terrain, x, y, z)
                 && num < m_blockMeshesByData.Length) {
@@ -73,7 +76,7 @@ namespace Game {
                     m_blockMeshesByData[num],
                     Color.White,
                     null,
-                    geometry.SubsetAlphaTest
+                    subsetAlphaTest
                 );
             }
             Vector2 centerOffset = GetRightHanded(num) ? new Vector2(-0.45f, 0f) : new Vector2(0.45f, 0f);
@@ -85,7 +88,7 @@ namespace Game {
                 GetHingeFace(num),
                 0.01f,
                 centerOffset,
-                geometry.SubsetOpaque
+                subsetOpaque
             );
         }
 
@@ -95,7 +98,13 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 0.75f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 0.75f * size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color, 0.75f * size, ref matrix, environmentData);
+            }
         }
 
         public override int GetShadowStrength(int value) {

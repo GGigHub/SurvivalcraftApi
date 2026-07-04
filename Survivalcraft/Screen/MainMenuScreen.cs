@@ -8,6 +8,7 @@ namespace Game {
         public string m_versionString = string.Empty;
 
         public bool m_versionStringTrial;
+        public bool m_disabledModsNotShowed = true;
 
         public ButtonWidget m_disableSafeModeButton;
         public ButtonWidget m_showBulletinButton;
@@ -113,6 +114,10 @@ namespace Game {
             }
             m_leftBottomBar.MarginLeft = SettingsManager.AdaptEdgeToEdgeDisplay ? Window.DisplayCutoutInsets.X * ScreensManager.FinalUiScale : 0f;
             m_rightBottomBar.MarginRight = SettingsManager.AdaptEdgeToEdgeDisplay ? Window.DisplayCutoutInsets.Z * ScreensManager.FinalUiScale : 0f;
+            if (m_disabledModsNotShowed) {
+                m_disabledModsNotShowed = false;
+                ModsManager.ShowDisabledModsDialog();
+            }
         }
 
         public override void Leave() {

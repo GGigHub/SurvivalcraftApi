@@ -4101,6 +4101,8 @@
           <Parameter Name="WaterDrag" Description="[DescriptionAttribute:234]" Guid="6f110dcd-64e4-47a5-9416-f8f243875d41" Value="5,4" Type="Vector2" />
           <Parameter Name="Class" Guid="7347a83f-2d46-4fdf-bce2-52677de0b568" Value="Game.ComponentBody" Type="string" />
           <Parameter Name="WaterSwayAngle" Description="[DescriptionAttribute:235]" Guid="739cec60-7d40-429a-a36f-2e8d7f7ace47" Value="0.025" Type="float" />
+          <Parameter Name="WaterTurnAxis" Description="" Guid="b2c3d4e5-f6a7-8901-2345-678901234567" Value="0,1,0" Type="Vector3" />
+          <Parameter Name="WaterSwayAxis" Description="" Guid="87d0a834-c4aa-4169-a039-9a05102c6644" Value="1,0,0" Type="Vector3" />
           <Parameter Name="CanEmbedInIce" Description="[DescriptionAttribute:236]" Guid="7a09bf66-5f99-4732-a861-c8a43ec34307" Value="False" Type="bool" />
           <Parameter Name="BoxSize" Description="[DescriptionAttribute:237]" Guid="8cd981be-a456-44a2-a3d5-4f9657713159" Value="1,1,1" Type="Vector3" />
           <Parameter Name="ParentBodyRotationOffset" Description="[DescriptionAttribute:238]" Guid="8eaf3a25-96a7-45fc-a98b-ae304134d8e6" Value="0,0,0,1" Type="Quaternion" />
@@ -4237,6 +4239,7 @@
           <Parameter Name="WalkLegsAngle" Description="[DescriptionAttribute:323]" Guid="21eed3c6-cf56-4068-b79e-653fe740f495" Value="0.5" Type="float" />
           <Parameter Name="WalkBobHeight" Description="[DescriptionAttribute:324]" Guid="2929455d-85a4-445e-a101-e33b75eb8959" Value="0.05" Type="float" />
           <Parameter Name="Class" Guid="fde7895d-e080-4bb6-876a-36d582f5eda2" Value="Game.ComponentHumanModel" Type="string" />
+          <Parameter Name="AnimationConfigPath" Guid="d4e5f6a7-b8c9-0123-def0-234567890123" Value="Animations/Human" Type="string" />
         </ComponentTemplate>
         <ComponentTemplate Name="BirdModel" Description="[DescriptionAttribute:325]" Guid="0cf15b57-00ff-422e-bb97-9dab5354d83b" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
           <Parameter Name="BoundingSphereRadius" Guid="5f901b7b-9fab-475d-be36-6c66dc4b2b2f" Value="1" Type="float" />
@@ -4245,12 +4248,14 @@
           <Parameter Name="FlyAnimationSpeed" Description="[DescriptionAttribute:327]" Guid="a58ccff6-c391-45ce-815d-edd194717aed" Value="1" Type="float" />
           <Parameter Name="PeckAnimationSpeed" Description="[DescriptionAttribute:328]" Guid="ae7c2d6d-3377-4a42-9097-8231918f5265" Value="2" Type="float" />
           <Parameter Name="WalkBobHeight" Description="[DescriptionAttribute:329]" Guid="b2086e51-f5d8-40d9-9409-e2690bdb5270" Value="0" Type="float" />
+          <Parameter Name="AnimationConfigPath" Guid="b2c3d4e5-f6a7-8901-bcde-f12345678901" Value="Animations/Bird" Type="string" />
         </ComponentTemplate>
         <ComponentTemplate Name="FishModel" Description="[DescriptionAttribute:330]" Guid="210eecbb-7833-4a6b-b3d6-884e8baa6683" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
           <Parameter Name="HasVerticalTail" Description="[DescriptionAttribute:331]" Guid="1d6ef613-224a-4639-b461-750775e2ca75" Value="False" Type="bool" />
           <Parameter Name="Class" Guid="784d4fb2-8fbb-47ee-b066-b445e947834b" Value="Game.ComponentFishModel" Type="string" />
           <Parameter Name="SwimAnimationSpeed" Description="[DescriptionAttribute:332]" Guid="94b8c34f-0208-4a3d-8a21-a2d0480426f7" Value="1" Type="float" />
           <Parameter Name="BoundingSphereRadius" Guid="dfaddf0f-b94e-41b0-8ed5-5dabe3fdadd1" Value="1" Type="float" />
+          <Parameter Name="AnimationConfigPath" Guid="6b14a679-d602-45b5-8eda-a4149683139d" Value="Animations/Fish" Type="string" />
         </ComponentTemplate>
         <ComponentTemplate Name="BlockHighlight" Description="[DescriptionAttribute:333]" Guid="3a86f5a6-1d85-4f4c-8c3b-de5bdcbd1505" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
           <Parameter Name="Class" Guid="5103b421-e482-4625-9ae1-e9b9e61fdf38" Value="Game.ComponentBlockHighlight" Type="string" />
@@ -4277,6 +4282,7 @@
           <Parameter Name="CanTrot" Description="[DescriptionAttribute:345]" Guid="f0aa73f5-4105-4082-9948-dd827aa3c2ac" Value="False" Type="bool" />
           <Parameter Name="MoveLegWhenFeeding" Description="[DescriptionAttribute:346]" Guid="f13387d5-0487-4052-9ab5-54def3956e8a" Value="False" Type="bool" />
           <Parameter Name="Class" Guid="f99bcc68-0362-4509-aba1-29e68b44372a" Value="Game.ComponentFourLeggedModel" Type="string" />
+          <Parameter Name="AnimationConfigPath" Guid="20565284-eef1-4fc9-95a6-62957716c4c0" Value="Animations/FourLegged" Type="string" />
         </ComponentTemplate>
         <ComponentTemplate Name="Model" Description="[DescriptionAttribute:347]" Guid="79f776b5-94f4-4bce-b119-971a9cf6255c" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
           <Parameter Name="PrepareOrder" Description="[DescriptionAttribute:348]" Guid="0d918779-99d1-45de-aaf5-d1b706213853" Value="0" Type="int" />
@@ -4287,6 +4293,7 @@
           <Parameter Name="ModelName" Description="[DescriptionAttribute:350]" Guid="b218aefe-9a39-4dda-b3a7-20fd2488b70f" Value="" Type="string" />
           <Parameter Name="CastsShadow" Description="[DescriptionAttribute:351]" Guid="db4beb73-f071-49e3-9a46-8feb09c8f13d" Value="False" Type="bool" />
           <Parameter Name="TextureOverride" Description="[DescriptionAttribute:352]" Guid="e7a927a4-a52a-4cbf-8170-d5eed845cea8" Value="" Type="string" />
+          <Parameter Name="AnimationConfigPath" Guid="5c28f597-d678-47bc-b0a8-9fecf4736177" Value="" Type="string" />
         </ComponentTemplate>
         <ComponentTemplate Name="DiggingCracks" Description="[DescriptionAttribute:353]" Guid="7ea6062c-28be-4e76-8765-39b7a1f5be9b" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
           <Parameter Name="Class" Guid="239a3460-544e-49d1-832b-364f1fe2799c" Value="Game.ComponentDiggingCracks" Type="string" />
@@ -4311,6 +4318,7 @@
           <Parameter Name="WalkAnimationSpeed" Description="[DescriptionAttribute:362]" Guid="544396be-20d8-4f8b-8cf6-b1e48f35b40c" Value="1" Type="float" />
           <Parameter Name="WalkBobHeight" Description="[DescriptionAttribute:363]" Guid="ad1a0716-5ac5-4d32-ac26-204dd99ddbf6" Value="0.025" Type="float" />
           <Parameter Name="Class" Guid="d79645f5-0b54-4d68-ad53-228665b66dff" Value="Game.ComponentFlightlessBirdModel" Type="string" />
+          <Parameter Name="AnimationConfigPath" Guid="c3d4e5f6-a7b8-9012-cdef-123456789012" Value="Animations/FlightlessBird" Type="string" />
         </ComponentTemplate>
         <ComponentTemplate Name="VrHandsModel" Description="[DescriptionAttribute:364]" Guid="f887d193-4c25-41a7-9d3b-ea4acb462e8c" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
           <Parameter Name="VrHandModelName" Description="[DescriptionAttribute:365]" Guid="1134396a-490f-4bb2-9f01-9fa8212e25d4" Value="" Type="string" />

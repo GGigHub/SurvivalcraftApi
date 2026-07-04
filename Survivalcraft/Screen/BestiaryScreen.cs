@@ -178,7 +178,9 @@ namespace Game {
             bool autoAspect) {
             Model model = ContentManager.Get<Model>(modelName);
             SetModel(model, modelWidget);
-            modelWidget.Textures[model] = ContentManager.Get<Texture2D>(textureOverrideName);
+            if (!string.IsNullOrEmpty(textureOverrideName)) {
+                modelWidget.Textures[model] = ContentManager.Get<Texture2D>(textureOverrideName);
+            }
             Matrix[] absoluteTransforms = new Matrix[model.Bones.Count];
             model.CopyAbsoluteBoneTransformsTo(absoluteTransforms);
             BoundingBox boundingBox = model.CalculateAbsoluteBoundingBox(absoluteTransforms);

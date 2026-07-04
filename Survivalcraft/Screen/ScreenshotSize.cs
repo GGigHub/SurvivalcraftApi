@@ -1,7 +1,7 @@
 namespace Game {
     public enum ScreenshotSize {
-        ScreenSize,
-        FullHD,
-        Custom
+        ScreenSize = 0,
+        FullHD = 1,
+        Custom = 2
     }
 }

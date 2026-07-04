@@ -38,6 +38,10 @@ namespace SC4Android {
      IntentFilter(
          ["android.intent.action.VIEW"],
          Categories = ["android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"]
+     ),
+     IntentFilter(
+         ["android.intent.action.MAIN"],
+         Categories = ["android.intent.category.LAUNCHER", "org.khronos.openxr.intent.category.IMMERSIVE_HMD"]
      )]
     public class MainActivity : EngineActivity {
         public static bool GraterThanAndroid11 { get; } = Build.VERSION.SdkInt >= BuildVersionCodes.R;

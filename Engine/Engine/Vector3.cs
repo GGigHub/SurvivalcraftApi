@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Engine {
     public struct Vector3 : IEquatable<Vector3> {
         public float X;
@@ -322,6 +324,14 @@ namespace Engine {
             fixed (float* ptr = &X) {
                 return ptr;
             }
+        }
+
+        public static implicit operator System.Numerics.Vector3(Vector3 v) {
+            return Unsafe.As<Vector3, System.Numerics.Vector3>(ref v);
+        }
+
+        public static implicit operator Vector3(System.Numerics.Vector3 v) {
+            return Unsafe.As<System.Numerics.Vector3, Vector3>(ref v);
         }
     }
 }

@@ -1,4 +1,5 @@
 using Silk.NET.OpenGLES;
+using System.Text;
 using System.Xml.Linq;
 
 namespace Engine.Graphics {
@@ -74,6 +75,19 @@ namespace Engine.Graphics {
                 Dispose();
                 throw;
             }
+        }
+
+        public Shader() { }
+
+        /// <summary>
+        /// 从已链接的 program handle 创建 Shader（供 ShaderCache 使用）
+        /// </summary>
+        public Shader(uint programHandle) {
+            m_program = (int)programHandle;
+            m_vertexShader = 0;
+            m_pixelShader = 0;
+            CacheUniformParameters();
+            m_glymulParameter = GetParameter("u_glymul", true);
         }
 
         public Shader(string vertexShaderCode, string pixelShaderCode, params ShaderMacro[] shaderMacros) {
@@ -165,36 +179,77 @@ namespace Engine.Graphics {
             }
         }
 
+        /// <summary>
+        /// 提取着色器中的版本指令信息，跳过元数据注释
+        /// </summary>
+        static (int version, bool isEs, int versionLineIndex) ExtractVersionInfo(string shaderCode) {
+            string[] lines = shaderCode.Split('\n');
+            for (int i = 0; i < lines.Length; i++) {
+                string line = lines[i].Trim();
+                // 跳过元数据注释
+                if (line.StartsWith("// <")
+                    || line.StartsWith("//<")) {
+                    continue;
+                }
+                // 跳过普通注释和空行
+                if (line.StartsWith("//")
+                    || string.IsNullOrWhiteSpace(line)) {
+                    continue;
+                }
+                // 找到 #version 指令
+                if (line.StartsWith("#version ")) {
+                    string[] parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2) {
+                        int version = int.Parse(parts[1]);
+                        bool isEs = parts.Length >= 3 && parts[2] == "es";
+                        return (version, isEs, i);
+                    }
+                }
+                // 遇到非版本指令，停止搜索
+                break;
+            }
+            return (100, false, -1);
+        }
+
         public virtual string PrependShaderMacros(string shaderCode, ShaderMacro[] shaderMacros, bool isVertexShader) {
-            string str = "";
-            if (shaderCode.StartsWith("#version ")) {
-                string versioncode = shaderCode.Split(new[] { '\n' })[0];
-                string versionnum = versioncode.Split(new[] { ' ' })[1];
-                if (int.Parse(versionnum) >= 300
-                    || versioncode.EndsWith("es")) {
-                    str += $"#version {versionnum} es{Environment.NewLine}";
-                }
-                else {
-                    str += $"#version {versionnum}{Environment.NewLine}";
-                }
-                shaderCode = $"//{shaderCode}";
+            var (version, isEs, versionLineIndex) = ExtractVersionInfo(shaderCode);
+
+            StringBuilder str = new();
+
+            // 添加版本指令（必须在最前面）
+            if (version >= 300 || isEs) {
+                str.AppendLine($"#version {version} es");
             }
             else {
-                //[WARN] 未指定版本时，会主动加上最低的版本号
-                str += $"#version 100{Environment.NewLine}";
+                str.AppendLine($"#version {version}");
             }
-            str = $"{str}#define GLSL{Environment.NewLine}";
+
+            str.AppendLine("#define GLSL");
+
             if (isVertexShader) {
-                str = !Display.UseReducedZRange
-                    ? $"{str}#define OPENGL_POSITION_FIX gl_Position.y *= u_glymul; gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;{Environment.NewLine}"
-                    : $"{str}#define OPENGL_POSITION_FIX gl_Position.y *= u_glymul;{Environment.NewLine}";
-                str = $"{str}uniform float u_glymul;{Environment.NewLine}";
+                if (!Display.UseReducedZRange) {
+                    str.AppendLine("#define OPENGL_POSITION_FIX gl_Position.y *= u_glymul; gl_Position.z = 2.0 * gl_Position.z - gl_Position.w;");
+                }
+                else {
+                    str.AppendLine("#define OPENGL_POSITION_FIX gl_Position.y *= u_glymul;");
+                }
+                str.AppendLine("uniform float u_glymul;");
             }
+
             foreach (ShaderMacro shaderMacro in shaderMacros) {
-                str = $"{str}#define {shaderMacro.Name} {shaderMacro.Value}{Environment.NewLine}";
+                str.AppendLine($"#define {shaderMacro.Name} {shaderMacro.Value}");
             }
-            str = $"{str}#line 1{Environment.NewLine}";
-            return str + shaderCode;
+
+            str.AppendLine("#line 1");
+
+            // 移除原始的版本指令行
+            if (versionLineIndex >= 0) {
+                string[] lines = shaderCode.Split('\n');
+                lines[versionLineIndex] = "// " + lines[versionLineIndex];
+                shaderCode = string.Join("\n", lines);
+            }
+
+            return str.ToString() + shaderCode;
         }
 
         public override void HandleDeviceLost() {
@@ -280,7 +335,8 @@ namespace Engine.Graphics {
                 ShaderParameter shaderParameter = new(this, stringBuilder2, shaderParameterType, size2) { Location = uniformLocation };
                 dictionary3.Add(shaderParameter.Name, shaderParameter);
                 list.Add(shaderParameter);
-                if (shaderParameterType == ShaderParameterType.Texture2D) {
+                if (shaderParameterType == ShaderParameterType.Texture2D
+                    || shaderParameterType == ShaderParameterType.Texture2DArray) {
                     if (!dictionary2.TryGetValue(shaderParameter.Name, out string value2)) {
                         throw new InvalidOperationException($"Texture \"{shaderParameter.Name}\" has no sampler defined in shader metadata.");
                     }
@@ -304,10 +360,7 @@ namespace Engine.Graphics {
                 m_parameters = list.ToArray();
                 m_parametersByName = dictionary3;
             }
-            m_glymulParameter = GetParameter("u_glymul");
-            if (m_glymulParameter.Type != 0) {
-                throw new InvalidOperationException("u_glymul parameter has invalid type.");
-            }
+            m_glymulParameter = GetParameter("u_glymul", true);
         }
 
         public virtual void DeleteShaders() {
@@ -332,6 +385,50 @@ namespace Engine.Graphics {
                 GLWrapper.GL.DeleteShader(pixelShader);
                 m_pixelShader = 0;
             }
+        }
+
+        /// <summary>
+        /// 缓存所有 active uniform 参数（从 GL program 查询）
+        /// </summary>
+        internal void CacheUniformParameters() {
+            if (m_program == 0) {
+                return;
+            }
+
+            GLWrapper.GL.GetProgram((uint)m_program, ProgramPropertyARB.ActiveUniforms, out int uniformCount);
+
+            List<ShaderParameter> list = [];
+            Dictionary<string, ShaderParameter> dict = [];
+
+            for (uint i = 0; i < uniformCount; i++) {
+                GLWrapper.GL.GetActiveUniform(
+                    (uint)m_program,
+                    i,
+                    256u,
+                    out _,
+                    out int size,
+                    out UniformType type,
+                    out string name
+                );
+
+                int location = GLWrapper.GL.GetUniformLocation((uint)m_program, name);
+                ShaderParameterType paramType = GLWrapper.TranslateActiveUniformType(type);
+
+                // 处理数组 uniform
+                int bracketIndex = name.IndexOf('[');
+                if (bracketIndex > 0) {
+                    name = name.Substring(0, bracketIndex);
+                }
+
+                ShaderParameter param = new(this, name, paramType, size) { Location = location };
+                if (!dict.ContainsKey(name)) {
+                    dict.Add(name, param);
+                    list.Add(param);
+                }
+            }
+
+            m_parameters = list.ToArray();
+            m_parametersByName = dict;
         }
     }
 }

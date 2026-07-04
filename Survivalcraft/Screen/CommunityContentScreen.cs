@@ -11,16 +11,16 @@ using Color = Engine.Color;
 namespace Game {
     public class CommunityContentScreen : Screen {
         public enum Order {
-            ByRank,
-            ByTime,
-            ByBoutique,
-            ByHide
+            ByRank = 0,
+            ByTime = 1,
+            ByBoutique = 2,
+            ByHide = 3
         }
 
         public enum SearchType {
-            ByName,
-            ByAuthor,
-            ByUserId
+            ByName = 0,
+            ByAuthor = 1,
+            ByUserId = 2
         }
 
         public TreeViewWidget m_treePanel;
@@ -474,7 +474,7 @@ namespace Game {
                 text = "0";
             }
             string text2 = m_filter is string s ? s : string.Empty;
-            string text3 = m_filter is ExternalContentType ? LanguageControl.Get(fName, m_filter.ToString()) : string.Empty;
+            string text3 = m_filter is ExternalContentType ? m_filter.ToString() : string.Empty;
             string text4 = m_order.ToString();
             string cacheKey = $"{text2}\n{text3}\n{text4}\n{text}\n{m_inputKey.Text}";
             if (string.IsNullOrEmpty(cursor)

@@ -10,9 +10,37 @@ namespace Game {
 
         public override void Animate() {
             base.Animate();
-            if (Animated) {
+
+            // glTF 模型（有动画或有蒙皮）需要将实体变换应用到根骨骼
+            // DAE 模型通过 SetBoneTransform 处理，保持原有行为
+            bool isGltfModel = Model.HasSkin || Model.HasAnimations;
+
+            if (Animated && isGltfModel) {
+                // 获取实体的位置和旋转
+                Vector3 entityPosition = m_componentFrame.Position;
+                Quaternion entityRotation = m_componentFrame.Rotation;
+                Matrix entityTransform = Matrix.CreateFromQuaternion(entityRotation) * Matrix.CreateTranslation(entityPosition);
+
+                // 获取根骨骼变换（可能是动画采样的或原始的）
+                Matrix rootTransform;
+                if (m_boneTransforms[Model.RootBone.Index].HasValue) {
+                    rootTransform = m_boneTransforms[Model.RootBone.Index].Value;
+                } else {
+                    rootTransform = Model.RootBone.Transform;
+                }
+
+                // 应用根骨骼旋转修正（某些 glTF 模型的前方方向与游戏不一致）
+                if (AnimationController != null && AnimationController.RootBoneRotation != 0f) {
+                    Matrix correctionRotation = Matrix.CreateRotationY(AnimationController.RootBoneRotation);
+                    rootTransform = correctionRotation * rootTransform;
+                }
+
+                // 叠加实体变换
+                m_boneTransforms[Model.RootBone.Index] = rootTransform * entityTransform;
                 return;
             }
+
+            // DAE 模型或无动画的 glTF 模型
             if (m_componentSpawn != null) {
                 Opacity = m_componentSpawn.SpawnDuration > 0f
                     ? (float)MathUtils.Saturate(

@@ -1,7 +1,7 @@
 namespace Game {
     public enum ResolutionMode {
-        Low,
-        Medium,
-        High
+        Low = 0,
+        Medium = 1,
+        High = 2
     }
 }

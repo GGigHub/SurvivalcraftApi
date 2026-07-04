@@ -101,6 +101,8 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
             for (int i = 0; i < 6; i++) {
                 if (WireExistsOnFace(value, i)) {
                     generator.GenerateWireVertices(
@@ -111,7 +113,7 @@ namespace Game {
                         i,
                         0f,
                         Vector2.Zero,
-                        geometry.SubsetOpaque
+                        subsetOpaque
                     );
                 }
             }
@@ -125,7 +127,13 @@ namespace Game {
             DrawBlockEnvironmentData environmentData) {
             int? paintColor = GetPaintColor(value);
             Color color2 = paintColor.HasValue ? color * SubsystemPalette.GetColor(environmentData, paintColor) : 1.25f * WireColor * color;
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color2, 2f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color2, 2f * size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color2, 2f * size, ref matrix, environmentData);
+            }
         }
 
         public override BlockPlacementData GetPlacementValue(SubsystemTerrain subsystemTerrain,

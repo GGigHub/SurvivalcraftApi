@@ -73,9 +73,10 @@ namespace Game {
             float num = 50f;
             m_scrollAreaLength = CalculateScrollAreaLength();
             m_scrollBarAlpha = MathUtils.Max(m_scrollBarAlpha - 2f * Time.FrameDuration, 0f);
-            if (Input.Tap.HasValue
-                && HitTestPanel(Input.Tap.Value)) {
-                m_lastDragPosition = ScreenToWidget(Input.Tap.Value);
+            if (Input.Drag.HasValue
+                && !m_lastDragPosition.HasValue
+                && HitTestPanel(Input.Drag.Value)) {
+                m_lastDragPosition = ScreenToWidget(Input.Drag.Value);
             }
             if (m_lastDragPosition.HasValue) {
                 if (Input.Press.HasValue) {

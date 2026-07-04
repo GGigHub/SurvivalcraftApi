@@ -74,7 +74,12 @@ namespace Game {
             int data = Terrain.ExtractData(value);
             int draw = GetDraw(data);
             ArrowBlock.ArrowType? arrowType = GetArrowType(data);
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[draw], color, 2f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[draw], color, 2f * size, ref matrix, environmentData);
+            } else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[draw], texture, color, 2f * size, ref matrix, environmentData);
+            }
             if (arrowType.HasValue) {
                 float num = MathUtils.Lerp(0.14f, 0.68f, draw / 15f);
                 Matrix matrix2 = Matrix.CreateRotationX(-(float)Math.PI / 2f)

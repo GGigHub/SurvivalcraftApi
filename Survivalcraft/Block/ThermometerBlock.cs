@@ -110,6 +110,8 @@ namespace Game {
                     * Matrix.CreateScale(1f, y2, 1f)
                     * Matrix.CreateTranslation(0f, m_fluidBottomPosition, 0f)
                     * matrix;
+                Texture2D texture = GetDefaultTexture(value);
+                TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
                 generator.GenerateMeshVertices(
                     this,
                     x,
@@ -118,7 +120,7 @@ namespace Game {
                     m_caseMesh,
                     Color.White,
                     matrix,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
                 generator.GenerateMeshVertices(
                     this,
@@ -128,7 +130,7 @@ namespace Game {
                     m_fluidMesh,
                     Color.White,
                     value2,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
                 generator.GenerateWireVertices(
                     value,
@@ -138,7 +140,7 @@ namespace Game {
                     num & 3,
                     0.2f,
                     Vector2.Zero,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
             }
         }
@@ -150,14 +152,25 @@ namespace Game {
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
             Matrix matrix2 = Matrix.CreateScale(3f * size) * Matrix.CreateTranslation(0f, -0.15f, 0f) * matrix;
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_caseMesh, color, 1f, ref matrix2, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_caseMesh, color, 1f, ref matrix2, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_caseMesh, texture, color, 1f, ref matrix2, environmentData);
+            }
             if (environmentData.EnvironmentTemperature.HasValue) {
                 float y = MathUtils.Lerp(1.02f, 3.91f, MathUtils.Saturate(environmentData.EnvironmentTemperature.Value / 20f));
                 Matrix matrix3 = Matrix.CreateTranslation(0f, 0f - m_fluidBottomPosition, 0f)
                     * Matrix.CreateScale(1f, y, 1f)
                     * Matrix.CreateTranslation(0f, m_fluidBottomPosition, 0f)
                     * matrix2;
-                BlocksManager.DrawMeshBlock(primitivesRenderer, m_fluidMesh, color, 1f, ref matrix3, environmentData);
+                if (texture == null) {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_fluidMesh, color, 1f, ref matrix3, environmentData);
+                }
+                else {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_fluidMesh, texture, color, 1f, ref matrix3, environmentData);
+                }
             }
         }
     }

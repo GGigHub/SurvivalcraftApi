@@ -3,17 +3,16 @@ using Engine.Graphics;
 
 namespace Game {
     public class ArrowBlock : Block {
-        [Flags]
         public enum ArrowType {
-            WoodenArrow,
-            StoneArrow,
-            IronArrow,
-            DiamondArrow,
-            FireArrow,
-            IronBolt,
-            DiamondBolt,
-            ExplosiveBolt,
-            CopperArrow
+            WoodenArrow = 0,
+            StoneArrow = 1,
+            IronArrow = 2,
+            DiamondArrow = 3,
+            FireArrow = 4,
+            IronBolt = 5,
+            DiamondBolt = 6,
+            ExplosiveBolt = 7,
+            CopperArrow = 8
         }
 
         public static int Index = 192;
@@ -220,7 +219,12 @@ namespace Game {
             int arrowType = (int)GetArrowType(Terrain.ExtractData(value));
             if (arrowType >= 0
                 && arrowType < m_standaloneBlockMeshes.Count) {
-                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[arrowType], color, 2f * size, ref matrix, environmentData);
+                Texture2D texture = GetDefaultTexture(value);
+                if (texture == null) {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[arrowType], color, 2f * size, ref matrix, environmentData);
+                } else {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[arrowType], texture, color, 2f * size, ref matrix, environmentData);
+                }
             }
         }
 
@@ -271,6 +275,6 @@ namespace Game {
 
         public static ArrowType GetArrowType(int data) => (ArrowType)(data & 0xF);
 
-        public static int SetArrowType(int data, ArrowType arrowType) => (data & -16) | (int)(arrowType & (ArrowType)15);
+        public static int SetArrowType(int data, ArrowType arrowType) => (data & -16) | ((int)arrowType & 15);
     }
 }

@@ -66,6 +66,7 @@ namespace Engine.Graphics {
         public static bool GL_KHR_texture_compression_astc_ldr;
         public static int GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS;
         public static int GL_MAX_TEXTURE_SIZE;
+        public static int GL_MAX_VERTEX_UNIFORM_VECTORS;
 #if ANGLE
         public static bool UsingAngle = true;
 #else
@@ -152,6 +153,7 @@ namespace Engine.Graphics {
                 bits[i] = GL.GetInteger((GetPName)(i + 3410));
             }
             GL.GetInteger(GetPName.MaxTextureSize, out GL_MAX_TEXTURE_SIZE);
+            GL.GetInteger(GetPName.MaxVertexUniformVectors, out GL_MAX_VERTEX_UNIFORM_VECTORS);
             string OpenGLVendor = $"OpenGL ES, Vendor={GL.GetStringS(StringName.Vendor) ?? string.Empty}";
             Display.DeviceDescription =
                 $"{OpenGLVendor}, Renderer={GL.GetStringS(StringName.Renderer) ?? string.Empty}, Version={GL.GetStringS(StringName.Version) ?? string.Empty}, R={bits[0]} G={bits[1]} B={bits[2]} A={bits[3]}, D={bits[4]} S={bits[5]}, MaxTextureSize={GL_MAX_TEXTURE_SIZE}";
@@ -163,20 +165,99 @@ namespace Engine.Graphics {
             GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS = GL.GetInteger(GetPName.MaxCombinedTextureImageUnits);
         }
 
+#if ANGLE
+        /// <summary>
+        /// 初始化无头 OpenGL ES 上下文（用于测试和离屏渲染）
+        /// 使用 PBuffer Surface 代替 Window Surface，不需要窗口
+        /// </summary>
+        /// <param name="width">PBuffer 宽度（默认 256）</param>
+        /// <param name="height">PBuffer 高度（默认 256）</param>
+        public static void InitializeHeadless(int width = 256, int height = 256) {
+            m_eglDisplay = Egl.GetDisplay(IntPtr.Zero);
+            if (m_eglDisplay == IntPtr.Zero) {
+                throw new Exception("eglGetDisplay failed");
+            }
+            if (!Egl.Initialize(m_eglDisplay, out _, out _)) {
+                throw new Exception("eglInitialize failed");
+            }
+
+            // 使用 PBuffer Bit 而不是 Window Bit
+            int[] configAttribs = [
+                Egl.RedSize, 8,
+                Egl.GreenSize, 8,
+                Egl.BlueSize, 8,
+                Egl.AlphaSize, 8,
+                Egl.DepthSize, 24,
+                Egl.StencilSize, 8,
+                Egl.SurfaceType, Egl.PbufferBit,
+                Egl.RenderableType, Egl.OpenglEs3Bit,
+                Egl.None
+            ];
+
+            IntPtr[] configs = new IntPtr[1];
+            if (!Egl.ChooseConfig(m_eglDisplay, configAttribs, configs, 1, out int numConfigs)) {
+                throw new Exception("eglChooseConfig failed");
+            }
+            IntPtr config = configs[0];
+
+            // 创建 PBuffer Surface
+            int[] pbufferAttribs = [
+                Egl.Width, width,
+                Egl.Height, height,
+                Egl.None
+            ];
+            m_eglSurface = Egl.CreatePbufferSurface(m_eglDisplay, config, pbufferAttribs);
+            if (m_eglSurface == IntPtr.Zero) {
+                throw new Exception("eglCreatePbufferSurface failed");
+            }
+
+            // 创建 OpenGL ES 3.0 上下文
+            int[] contextAttribs = [Egl.ContextClientVersion, 3, Egl.None];
+            m_eglContext = Egl.CreateContext(m_eglDisplay, config, IntPtr.Zero, contextAttribs);
+            if (m_eglContext == IntPtr.Zero) {
+                throw new Exception("eglCreateContext failed");
+            }
+
+            if (!Egl.MakeCurrent(m_eglDisplay, m_eglSurface, m_eglSurface, m_eglContext)) {
+                throw new Exception("eglMakeCurrent failed");
+            }
+
+            GL = GL.GetApi(Egl.GetProcAddress);
+            m_mainFramebuffer = 0;
+
+#if DEBUG
+            unsafe {
+                GL.DebugMessageCallback(DebugMessageDelegate, IntPtr.Zero.ToPointer());
+                GL.Enable(EnableCap.DebugOutput);
+            }
+#endif
+
+            int[] bits = new int[6];
+            for (int i = 0; i < 6; i++) {
+                bits[i] = GL.GetInteger((GetPName)(i + 3410));
+            }
+            GL.GetInteger(GetPName.MaxTextureSize, out GL_MAX_TEXTURE_SIZE);
+            GL.GetInteger(GetPName.MaxVertexUniformVectors, out GL_MAX_VERTEX_UNIFORM_VECTORS);
+            Display.DeviceDescription =
+                $"OpenGL ES (Headless), Vendor={GL.GetStringS(StringName.Vendor) ?? string.Empty}, " +
+                $"Renderer={GL.GetStringS(StringName.Renderer) ?? string.Empty}, " +
+                $"Version={GL.GetStringS(StringName.Version) ?? string.Empty}";
+            Log.Information($"Initialized headless display device: {Display.DeviceDescription}");
+
+            string extensions = GL.GetStringS(StringName.Extensions);
+            GL_EXT_texture_filter_anisotropic = extensions?.Contains("GL_EXT_texture_filter_anisotropic") ?? false;
+            GL_OES_packed_depth_stencil = extensions?.Contains("GL_OES_packed_depth_stencil") ?? false;
+            GL_KHR_texture_compression_astc_ldr = extensions?.Contains("GL_KHR_texture_compression_astc_ldr") ?? false;
+            GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS = GL.GetInteger(GetPName.MaxCombinedTextureImageUnits);
+        }
+#endif
+
         public static void InitializeCache() {
             m_arrayBuffer = -1;
             m_elementArrayBuffer = -1;
             m_texture2D = -1;
-            m_activeTexturesByUnit = [
-                -1,
-                -1,
-                -1,
-                -1,
-                -1,
-                -1,
-                -1,
-                -1
-            ];
+            m_activeTexturesByUnit = new int[32];
+            Array.Fill(m_activeTexturesByUnit, -1);
             m_activeTextureUnit = (TextureUnit)(-1);
             m_program = -1;
             m_framebuffer = -1;
@@ -427,6 +508,8 @@ namespace Engine.Graphics {
             if (framebuffer != m_framebuffer) {
                 GL.BindFramebuffer(FramebufferTarget.Framebuffer, (uint)framebuffer);
                 m_framebuffer = framebuffer;
+                m_viewport = null;
+                m_scissorRectangle = null;
             }
         }
 
@@ -488,7 +571,7 @@ namespace Engine.Graphics {
                 || viewport.Y != m_viewport.Value.Y
                 || viewport.Width != m_viewport.Value.Width
                 || viewport.Height != m_viewport.Value.Height) {
-                int y = Display.RenderTarget == null ? Display.BackbufferSize.Y - viewport.Y - viewport.Height : viewport.Y;
+                int y = Display.RenderTarget == null && m_mainFramebuffer == 0 ? Display.BackbufferSize.Y - viewport.Y - viewport.Height : viewport.Y;
                 GL.Viewport(viewport.X, y, (uint)viewport.Width, (uint)viewport.Height);
             }
             if (!m_viewport.HasValue
@@ -507,7 +590,7 @@ namespace Engine.Graphics {
                     return;
                 }
             }
-            if (Display.RenderTarget == null) {
+            if (Display.RenderTarget == null && m_mainFramebuffer == 0) {
                 scissorRectangle.Top = Display.BackbufferSize.Y - scissorRectangle.Top - scissorRectangle.Height;
             }
             GL.Scissor(scissorRectangle.Left, scissorRectangle.Top, (uint)scissorRectangle.Width, (uint)scissorRectangle.Height);
@@ -686,9 +769,31 @@ namespace Engine.Graphics {
                             GL.UniformMatrix4(shaderParameter.Location, (uint)shaderParameter.Count, false, shaderParameter.Value);
                             shaderParameter.IsChanged = false;
                             break;
+                        case ShaderParameterType.Matrix3:
+                            GL.UniformMatrix3(shaderParameter.Location, (uint)shaderParameter.Count, false, shaderParameter.Value);
+                            shaderParameter.IsChanged = false;
+                            break;
+                        case ShaderParameterType.Int:
+                            GL.Uniform1(shaderParameter.Location, (uint)shaderParameter.Count, shaderParameter.IntValue);
+                            shaderParameter.IsChanged = false;
+                            break;
+                        case ShaderParameterType.IntVec2:
+                            GL.Uniform2(shaderParameter.Location, (uint)shaderParameter.Count, shaderParameter.IntValue);
+                            shaderParameter.IsChanged = false;
+                            break;
+                        case ShaderParameterType.IntVec3:
+                            GL.Uniform3(shaderParameter.Location, (uint)shaderParameter.Count, shaderParameter.IntValue);
+                            shaderParameter.IsChanged = false;
+                            break;
+                        case ShaderParameterType.IntVec4:
+                            GL.Uniform4(shaderParameter.Location, (uint)shaderParameter.Count, shaderParameter.IntValue);
+                            shaderParameter.IsChanged = false;
+                            break;
                         default: throw new InvalidOperationException("Unsupported shader parameter type.");
                         case ShaderParameterType.Texture2D:
-                        case ShaderParameterType.Sampler2D: break;
+                        case ShaderParameterType.Sampler2D:
+                        case ShaderParameterType.SamplerCube:
+                        case ShaderParameterType.Texture2DArray: break;
                     }
                 }
                 if (shaderParameter.Type == ShaderParameterType.Texture2D) {
@@ -748,6 +853,87 @@ namespace Engine.Graphics {
                     }
                     else if (m_activeTexturesByUnit[num] != 0) {
                         BindTexture(TextureTarget.Texture2D, 0, true);
+                    }
+                    num++;
+                    shaderParameter.IsChanged = false;
+                }
+                if (shaderParameter.Type == ShaderParameterType.Texture2DArray) {
+                    if (num >= GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS) {
+                        throw new InvalidOperationException("Too many simultaneous textures.");
+                    }
+                    ActiveTexture(TextureUnit.Texture0 + num);
+                    if (shaderParameter.IsChanged) {
+                        GL.Uniform1(shaderParameter.Location, num);
+                    }
+                    ShaderParameter samplerParam = shader.m_parameters[num2 + 1];
+                    Texture2D textureArray = (Texture2D)shaderParameter.Resource;
+                    SamplerState samplerState = (SamplerState)samplerParam.Resource;
+                    if (textureArray != null) {
+                        if (samplerState == null) {
+                            break;
+                        }
+                        if (m_activeTexturesByUnit[num] != textureArray.m_texture) {
+                            BindTexture(TextureTarget.Texture2DArray, textureArray.m_texture, true);
+                        }
+                        if (!m_textureSamplerStates.TryGetValue(textureArray.m_texture, out SamplerState value)
+                            || value != samplerState) {
+                            BindTexture(TextureTarget.Texture2DArray, textureArray.m_texture, false);
+                            if (GL_EXT_texture_filter_anisotropic) {
+                                GL.TexParameter(
+                                    TextureTarget.Texture2DArray,
+                                    TextureParameterName.TextureMaxAnisotropy,
+                                    samplerState.FilterMode == TextureFilterMode.Anisotropic ? samplerState.MaxAnisotropy : 1f
+                                );
+                            }
+                            GL.TexParameter(
+                                TextureTarget.Texture2DArray,
+                                TextureParameterName.TextureMinFilter,
+                                (int)TranslateTextureFilterModeMin(samplerState.FilterMode, textureArray.MipLevelsCount > 1)
+                            );
+                            GL.TexParameter(
+                                TextureTarget.Texture2DArray,
+                                TextureParameterName.TextureMagFilter,
+                                (int)TranslateTextureFilterModeMag(samplerState.FilterMode)
+                            );
+                            GL.TexParameter(
+                                TextureTarget.Texture2DArray,
+                                TextureParameterName.TextureWrapS,
+                                (int)TranslateTextureAddressMode(samplerState.AddressModeU)
+                            );
+                            GL.TexParameter(
+                                TextureTarget.Texture2DArray,
+                                TextureParameterName.TextureWrapT,
+                                (int)TranslateTextureAddressMode(samplerState.AddressModeV)
+                            );
+#if !MOBILE && !BROWSER
+                            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMinLod, samplerState.MinLod);
+                            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMaxLod, samplerState.MaxLod);
+#endif
+                            m_textureSamplerStates[textureArray.m_texture] = samplerState;
+                        }
+                    }
+                    else if (m_activeTexturesByUnit[num] != 0) {
+                        BindTexture(TextureTarget.Texture2DArray, 0, true);
+                    }
+                    num++;
+                    shaderParameter.IsChanged = false;
+                }
+                if (shaderParameter.Type == ShaderParameterType.SamplerCube) {
+                    if (num >= GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS) {
+                        throw new InvalidOperationException("Too many simultaneous textures.");
+                    }
+                    ActiveTexture(TextureUnit.Texture0 + num);
+                    if (shaderParameter.IsChanged) {
+                        GL.Uniform1(shaderParameter.Location, num);
+                    }
+                    CubemapTexture cubemapTexture = (CubemapTexture)shaderParameter.Resource;
+                    if (cubemapTexture != null) {
+                        if (m_activeTexturesByUnit[num] != cubemapTexture.m_texture) {
+                            BindTexture(TextureTarget.TextureCubeMap, cubemapTexture.m_texture, true);
+                        }
+                    }
+                    else if (m_activeTexturesByUnit[num] != 0) {
+                        BindTexture(TextureTarget.TextureCubeMap, 0, true);
                     }
                     num++;
                     shaderParameter.IsChanged = false;
@@ -869,8 +1055,15 @@ namespace Engine.Graphics {
                 UniformType.FloatVec2 => ShaderParameterType.Vector2,
                 UniformType.FloatVec3 => ShaderParameterType.Vector3,
                 UniformType.FloatVec4 => ShaderParameterType.Vector4,
+                UniformType.FloatMat3 => ShaderParameterType.Matrix3,
                 UniformType.FloatMat4 => ShaderParameterType.Matrix,
                 UniformType.Sampler2D => ShaderParameterType.Texture2D,
+                UniformType.SamplerCube => ShaderParameterType.SamplerCube,
+                UniformType.Int => ShaderParameterType.Int,
+                UniformType.IntVec2 => ShaderParameterType.IntVec2,
+                UniformType.IntVec3 => ShaderParameterType.IntVec3,
+                UniformType.IntVec4 => ShaderParameterType.IntVec4,
+                UniformType.Sampler2DArray => ShaderParameterType.Texture2DArray,
                 _ => throw new InvalidOperationException("Unsupported shader parameter type.")
             };
         }
@@ -958,7 +1151,8 @@ namespace Engine.Graphics {
             return addressMode switch {
                 TextureAddressMode.Clamp => TextureWrapMode.ClampToEdge,
                 TextureAddressMode.Wrap => TextureWrapMode.Repeat,
-                _ => throw new InvalidOperationException("Unsupported texture address mode.")
+                TextureAddressMode.MirrorWrap => TextureWrapMode.MirroredRepeat,
+                _ => TextureWrapMode.Repeat
             };
         }
 
@@ -1040,6 +1234,9 @@ namespace Engine.Graphics {
                 return;
             }
             string messageText = Marshal.PtrToStringAnsi(message, length);
+            if (messageText == "GL_INVALID_OPERATION error generated. Function glGetQueryObjectiv is deprecated and not available in preview contexts.") {
+                return;
+            }
             Console.WriteLine($"[{type.ToString().Substring(9)}] {messageText}");
             if (type == GLEnum.DebugTypeError) {
                 Debugger.Break();

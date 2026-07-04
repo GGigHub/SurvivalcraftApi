@@ -66,7 +66,7 @@ namespace Game {
                     num = MathUtils.Max(num, TestPoint(componentBody.Position + new Vector3(0f, 0.5f * componentBody.BoxSize.Y, 0f)));
                 }
             }
-            foreach (IMovingBlockSet movingBlockSet in m_subsystemMovingBlocks.MovingBlockSets) {
+            foreach (IMovingBlockSet movingBlockSet in m_subsystemMovingBlocks.MovingBlockSetEnumerable) {
                 if (movingBlockSet.CurrentVelocity.LengthSquared() < 0.0625f
                     || BoundingBox.Distance(movingBlockSet.BoundingBox(false), m_center) > 8f) {
                     continue;

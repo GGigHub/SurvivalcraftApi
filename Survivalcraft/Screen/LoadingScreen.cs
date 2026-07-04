@@ -5,7 +5,8 @@ using System.Reflection;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
-
+using Game.Animation;
+using NCalc;
 #if ANDROID
 using Android.App;
 #elif WINDOWS
@@ -15,10 +16,10 @@ using Android.App;
 namespace Game {
     public class LoadingScreen : Screen {
         public enum LogType {
-            Info,
-            Warning,
-            Error,
-            Advice
+            Info = 0,
+            Warning = 1,
+            Error = 2,
+            Advice = 3
         }
 
         class LogItem(LogType type, string log) {
@@ -168,8 +169,31 @@ namespace Game {
                 }
             );
             AddLoadAction(
-                delegate { //妫€鏌ユ墍鏈塎od渚濊禆椤?
-                    //鏍规嵁鍔犺浇椤哄簭鎺掑簭鍚庣殑缁撴灉
+                delegate {
+                    VrManager.Initialize();
+#if ANDROID
+                    // On Android VR headsets, force enable VR when available
+                    if (VrManager.IsVrAvailable && !SettingsManager.UseVr) {
+                        SettingsManager.UseVr = true;
+                    }
+#endif
+                    if (VrManager.IsVrAvailable && SettingsManager.UseVr) {
+                        try {
+                            VrManager.StartVr();
+                            if (!VrManager.IsVrStarted) {
+                                SettingsManager.UseVr = false;
+                            }
+                        }
+                        catch (Exception ex) {
+                            SettingsManager.UseVr = false;
+                            Log.Error($"VR start error: {ex}");
+                        }
+                    }
+                }
+            );
+            AddLoadAction(
+                delegate { //检查所有Mod依赖项
+                    //根据加载顺序排序后的结果
                     ModsManager.ModList.Clear();
                     foreach (ModEntity item in ModsManager.ModListAll) {
                         if (item.IsDependencyChecked || item.IsDisabled) {
@@ -495,6 +519,21 @@ namespace Game {
             );
             InitScreens();
             AddLoadAction(FileAssociationManager.Initialize);
+            AddLoadAction(() => {
+                    //NCalc Warmup
+                    Expression expression = new NCalc.Expression("[B] && [N] * 1.0 > 0.5");
+                    _ = expression.GetParameterNames();
+                    expression.Parameters.Add("B", true);
+                    expression.Parameters.Add("N", 0.5f);
+                    object expressionResult = expression.Evaluate();
+                    _ = Convert.ToBoolean(expressionResult);
+                }
+            );
+            AddLoadAction(() => {
+                    AnimationDriverRegistration.Register();
+                    AnimationTemplateRegistration.Register();
+                }
+            );
             AddLoadAction(
                 delegate {
                     ModsManager.ModListAllDo(modEntity => {
@@ -559,6 +598,7 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("Player", new PlayerScreen()); });
             AddLoadAction(delegate { AddScreen("KeyboardMapping", new KeyboardMappingScreen()); });
             AddLoadAction(delegate { AddScreen("GamepadMapping", new GamepadMappingScreen()); });
+            AddLoadAction(delegate { AddScreen("VrControllerMapping", new VrControllerMappingScreen()); });
             AddLoadAction(delegate { AddScreen("CameraManage", new CameraManageScreen()); });
             AddLoadAction(delegate { AddScreen("ManageClassSubstitutes", new ManageClassSubstitutesScreen()); });
         }

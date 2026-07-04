@@ -45,15 +45,32 @@ namespace Game {
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
             int color2 = GetColor(Terrain.ExtractData(value));
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBucketBlockMesh, color, 2f * size, ref matrix, environmentData);
-            BlocksManager.DrawMeshBlock(
-                primitivesRenderer,
-                m_standalonePaintBlockMesh,
-                color * SubsystemPalette.GetColor(environmentData, color2),
-                2f * size,
-                ref matrix,
-                environmentData
-            );
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBucketBlockMesh, color, 2f * size, ref matrix, environmentData);
+            } else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBucketBlockMesh, texture, color, 2f * size, ref matrix, environmentData);
+            }
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(
+                    primitivesRenderer,
+                    m_standalonePaintBlockMesh,
+                    color * SubsystemPalette.GetColor(environmentData, color2),
+                    2f * size,
+                    ref matrix,
+                    environmentData
+                );
+            } else {
+                BlocksManager.DrawMeshBlock(
+                    primitivesRenderer,
+                    m_standalonePaintBlockMesh,
+                    texture,
+                    color * SubsystemPalette.GetColor(environmentData, color2),
+                    2f * size,
+                    ref matrix,
+                    environmentData
+                );
+            }
         }
 
         public override IEnumerable<int> GetCreativeValues() {

@@ -32,6 +32,8 @@ namespace GameEntitySystem {
             }
         }
 
+        public Component() { }
+
         public virtual void OnEntityAdded() { }
 
         public virtual void OnEntityRemoved() { }

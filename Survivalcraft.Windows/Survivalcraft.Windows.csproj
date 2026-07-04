@@ -32,6 +32,10 @@
         <None Update="wrap_oal.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <!-- 来自 https://github.com/KhronosGroup/OpenXR-SDK/releases/tag/release-1.1.60 -->
+        <None Update="openxr_loader.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Include="..\README.md">
             <Link>Readme 请读我.md</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

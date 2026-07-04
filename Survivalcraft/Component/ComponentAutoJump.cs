@@ -106,9 +106,9 @@ namespace Game {
                             Block block5 = BlocksManager.Blocks[cellContents5];
                             Block block6 = BlocksManager.Blocks[cellContents6];
                             if (!block.NoAutoJump
-                                && ((block.IsCollidable_(cellValue) && !block4.IsCollidable_(cellValue4))
-                                    || (block2.IsCollidable_(cellValue2) && !block5.IsCollidable_(cellValue5))
-                                    || (block3.IsCollidable_(cellValue3) && !block6.IsCollidable_(cellValue6)))) {
+                                && ((block.GetIsCollidable(m_componentCreature.ComponentBody, cellValue) && !block4.GetIsCollidable(m_componentCreature.ComponentBody, cellValue4))
+                                    || (block2.GetIsCollidable(m_componentCreature.ComponentBody, cellValue2) && !block5.GetIsCollidable(m_componentCreature.ComponentBody, cellValue5))
+                                    || (block3.GetIsCollidable(m_componentCreature.ComponentBody, cellValue3) && !block6.GetIsCollidable(m_componentCreature.ComponentBody, cellValue6)))) {
                                 m_componentCreature.ComponentLocomotion.JumpOrder = MathUtils.Max(
                                     m_jumpStrength,
                                     m_componentCreature.ComponentLocomotion.JumpOrder

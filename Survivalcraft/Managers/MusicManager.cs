@@ -5,10 +5,10 @@ using Engine.Media;
 namespace Game {
     public static class MusicManager {
         public enum Mix {
-            None, //没有正在播放的音乐，停止音乐
-            Menu, //主菜单音乐
-            InGame, //游戏游玩时的音乐，由模组自定义(API1.72新增)
-            Other //其他，由模组自己来定义(API1.72新增)
+            None = 0, //没有正在播放的音乐，停止音乐
+            Menu = 1, //主菜单音乐
+            InGame = 2, //游戏游玩时的音乐，由模组自定义(API1.72新增)
+            Other = 3 //其他，由模组自己来定义(API1.72新增)
         }
 
         public static float m_fadeSpeed = 0.33f;

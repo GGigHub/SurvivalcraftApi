@@ -14,6 +14,11 @@ namespace Game {
 
         public PrimitivesRenderer2D PrimitivesRenderer2D = new();
 
+        Vector3 m_vrBaseHmdPosition;
+        float m_vrBaseHmdYaw;
+        float m_vrAccumulatedYaw;
+        bool m_vrInitialized;
+
         public override bool UsesMovementControls => true;
 
         public override bool IsEntityControlEnabled => true;
@@ -24,9 +29,73 @@ namespace Game {
             m_position = previousCamera.ViewPosition;
             m_direction = previousCamera.ViewDirection;
             SetupPerspectiveCamera(m_position, m_direction, Vector3.UnitY);
+            m_vrInitialized = false;
         }
 
         public override void Update(float dt) {
+            if (Eye.HasValue) {
+                UpdateVr(dt);
+            }
+            else {
+                UpdateNonVr(dt);
+            }
+        }
+
+        void UpdateVr(float dt) {
+            dt = MathUtils.Min(dt, 0.1f);
+
+            if (!m_vrInitialized) {
+                m_vrBaseHmdPosition = VrManager.HmdMatrix.Translation;
+                m_vrBaseHmdYaw = VrManager.HmdMatrixYpr.X;
+                // Derive initial accumulated yaw from current view direction
+                m_vrAccumulatedYaw = MathF.Atan2(m_direction.X, m_direction.Z) - m_vrBaseHmdYaw;
+                m_vrInitialized = true;
+            }
+
+            ComponentInput componentInput = GameWidget.PlayerData.ComponentPlayer?.ComponentInput;
+            Vector3 moveInput = Vector3.Zero;
+            Vector2 lookInput = Vector2.Zero;
+            if (componentInput != null) {
+                moveInput = componentInput.PlayerInput.CameraMove * new Vector3(1f, 0f, 1f);
+                lookInput = componentInput.PlayerInput.CameraLook;
+            }
+
+            bool shift = Keyboard.IsKeyDown(Key.Shift);
+            bool ctrl = Keyboard.IsKeyDown(Key.Control);
+            float speed = 8f;
+            if (shift) speed *= 10f;
+            if (ctrl) speed /= 10f;
+
+            // Comfort turn: right stick rotates accumulated yaw
+            m_vrAccumulatedYaw += -4f * lookInput.X * dt;
+            // Snap turn camera rotation
+            if (ComponentInput.VrSnapCameraRotation != 0f) {
+                m_vrAccumulatedYaw += ComponentInput.VrSnapCameraRotation;
+                ComponentInput.VrSnapCameraRotation = 0f;
+            }
+
+            // View direction from HMD + accumulated yaw
+            Matrix hmdRot = VrManager.HmdMatrix * Matrix.CreateRotationY(m_vrAccumulatedYaw);
+            m_direction = hmdRot.Forward;
+
+            // Movement relative to view direction
+            Vector3 right = Vector3.Normalize(Vector3.Cross(m_direction, Vector3.UnitY));
+            Vector3 velocity = Vector3.Zero;
+            velocity += speed * moveInput.X * right;
+            velocity += speed * moveInput.Y * Vector3.UnitY;
+            velocity += speed * moveInput.Z * m_direction;
+            m_position += velocity * dt;
+
+            // HMD drift
+            Vector3 hmdOffset = VrManager.HmdMatrix.Translation - m_vrBaseHmdPosition;
+            float yawCorrection = m_vrAccumulatedYaw;
+            Vector3 gameOffset = Vector3.TransformNormal(hmdOffset, Matrix.CreateRotationY(yawCorrection));
+            Vector3 cameraPos = m_position + gameOffset;
+
+            SetupPerspectiveCamera(cameraPos, m_direction, hmdRot.Up);
+        }
+
+        void UpdateNonVr(float dt) {
             dt = MathUtils.Min(dt, 0.1f);
             Vector3 zero = Vector3.Zero;
             Vector2 vector = Vector2.Zero;

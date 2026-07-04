@@ -12,6 +12,7 @@ namespace Game {
         public override bool IsFaceTransparent(SubsystemTerrain subsystemTerrain, int face, int value) => face != 5;
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
             int data = Terrain.ExtractData(value);
             Color fabricColor = SubsystemPalette.GetFabricColor(generator, GetColor(data));
             generator.GenerateCubeVertices(
@@ -30,7 +31,7 @@ namespace Game {
                 fabricColor,
                 fabricColor,
                 -1,
-                geometry.OpaqueSubsetsByFace
+                texture == null ? geometry.OpaqueSubsetsByFace : geometry.GetGeometry(texture).OpaqueSubsetsByFace
             );
         }
 
@@ -42,15 +43,30 @@ namespace Game {
             DrawBlockEnvironmentData environmentData) {
             int data = Terrain.ExtractData(value);
             color *= SubsystemPalette.GetFabricColor(environmentData, GetColor(data));
-            BlocksManager.DrawCubeBlock(
-                primitivesRenderer,
-                value,
-                new Vector3(size, 0.0625f * size, size),
-                ref matrix,
-                color,
-                color,
-                environmentData
-            );
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size, 0.0625f * size, size),
+                    ref matrix,
+                    color,
+                    color,
+                    environmentData
+                );
+            }
+            else {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size, 0.0625f * size, size),
+                    ref matrix,
+                    color,
+                    color,
+                    environmentData,
+                    texture
+                );
+            }
         }
 
         public override IEnumerable<int> GetCreativeValues() {

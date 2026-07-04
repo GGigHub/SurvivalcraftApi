@@ -4,16 +4,15 @@ using Engine.Graphics;
 
 namespace Game {
     public class FireworksBlock : Block {
-        [Flags]
         public enum Shape {
-            SmallBurst,
-            LargeBurst,
-            Circle,
-            Disc,
-            Ball,
-            ShortTrails,
-            LongTrails,
-            FlatTrails
+            SmallBurst = 0,
+            LargeBurst = 1,
+            Circle = 2,
+            Disc = 3,
+            Ball = 4,
+            ShortTrails = 5,
+            LongTrails = 6,
+            FlatTrails = 7
         }
 
         public static int Index = 215;
@@ -113,16 +112,37 @@ namespace Game {
             Shape shape = GetShape(data);
             int altitude = GetAltitude(data);
             bool flickering = GetFlickering(data);
-            BlocksManager.DrawMeshBlock(
-                primitivesRenderer,
-                m_headBlockMeshes[(int)shape * 8 + color2],
-                color,
-                2f * size,
-                ref matrix,
-                environmentData
-            );
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_bodyBlockMeshes[altitude], color, 2f * size, ref matrix, environmentData);
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_finsBlockMeshes[flickering ? 1 : 0], color, 2f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(
+                    primitivesRenderer,
+                    m_headBlockMeshes[(int)shape * 8 + color2],
+                    color,
+                    2f * size,
+                    ref matrix,
+                    environmentData
+                );
+            } else {
+                BlocksManager.DrawMeshBlock(
+                    primitivesRenderer,
+                    m_headBlockMeshes[(int)shape * 8 + color2],
+                    texture,
+                    color,
+                    2f * size,
+                    ref matrix,
+                    environmentData
+                );
+            }
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_bodyBlockMeshes[altitude], color, 2f * size, ref matrix, environmentData);
+            } else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_bodyBlockMeshes[altitude], texture, color, 2f * size, ref matrix, environmentData);
+            }
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_finsBlockMeshes[flickering ? 1 : 0], color, 2f * size, ref matrix, environmentData);
+            } else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_finsBlockMeshes[flickering ? 1 : 0], texture, color, 2f * size, ref matrix, environmentData);
+            }
         }
 
         public override string GetDisplayName(SubsystemTerrain subsystemTerrain, int value) {
@@ -255,6 +275,7 @@ namespace Game {
 
         public static Shape GetShape(int data) => (Shape)(data & 7);
 
+        // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
         public static int SetShape(int data, Shape shape) => (data & -8) | (int)(shape & Shape.FlatTrails);
 
         public static int GetAltitude(int data) => (data >> 3) & 1;

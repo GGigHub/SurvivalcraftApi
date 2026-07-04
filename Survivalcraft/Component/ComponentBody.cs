@@ -118,6 +118,16 @@ namespace Game {
 
         public virtual float WaterTurnSpeed { get; set; }
 
+        /// <summary>
+        /// 水中摇摆轴
+        /// </summary>
+        public virtual Vector3 WaterSwayAxis { get; set; }
+
+        /// <summary>
+        /// 水中转向轴
+        /// </summary>
+        public virtual Vector3 WaterTurnAxis { get; set; }
+
         public bool CanEmbedInIce { get; set; }
 
         public virtual float ImmersionDepth { get; set; }
@@ -348,6 +358,8 @@ namespace Game {
             WaterDrag = valuesDictionary.GetValue<Vector2>("WaterDrag");
             WaterSwayAngle = valuesDictionary.GetValue<float>("WaterSwayAngle");
             WaterTurnSpeed = valuesDictionary.GetValue<float>("WaterTurnSpeed");
+            WaterSwayAxis = valuesDictionary.GetValue<Vector3>("WaterSwayAxis", Vector3.UnitX);
+            WaterTurnAxis = valuesDictionary.GetValue<Vector3>("WaterTurnAxis", Vector3.UnitY);
             CanEmbedInIce = valuesDictionary.GetValue<bool>("CanEmbedInIce");
             Velocity = valuesDictionary.GetValue<Vector3>("Velocity").FixNaN();
             m_embeddedInIceCounter = valuesDictionary.GetValue("EmbeddedInIceCounter", 0);
@@ -510,11 +522,11 @@ namespace Game {
                     if (WaterTurnSpeed > 0f) {
                         float num5 = MathUtils.Saturate(MathUtils.Lerp(1f, 0f, m_velocity.Length()));
                         Vector2 vector3 = Vector2.Normalize(vector.Value) * num5;
-                        Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitY, WaterTurnSpeed * (-1f * vector3.X + 0.71f * vector3.Y) * dt);
+                        Rotation *= Quaternion.CreateFromAxisAngle(WaterTurnAxis, WaterTurnSpeed * (-1f * vector3.X + 0.71f * vector3.Y) * dt);
                     }
                     if (WaterSwayAngle > 0f) {
                         Rotation *= Quaternion.CreateFromAxisAngle(
-                            Vector3.UnitX,
+                            WaterSwayAxis,
                             WaterSwayAngle * (float)Math.Sin(200f / Mass * m_subsystemTime.GameTime)
                         );
                     }
@@ -530,10 +542,12 @@ namespace Game {
             StandingOnVelocity = Vector3.Zero;
             Vector3 velocity = m_velocity;
             float num6 = m_velocity.Length();
-            if (num6 > 0f
+            if ((num6 > 0f || m_directMove != Vector3.Zero)
                 && CrushedTime == 0f) {
                 Vector3 stanceBoxSize = StanceBoxSize;
-                float x = 0.45f * MathUtils.Min(stanceBoxSize.X, stanceBoxSize.Y, stanceBoxSize.Z) / num6;
+                float x = num6 > 0f
+                    ? 0.45f * MathUtils.Min(stanceBoxSize.X, stanceBoxSize.Y, stanceBoxSize.Z) / num6
+                    : dt;
                 float num7 = dt;
                 while (num7 > 0f) {
                     float num8 = MathUtils.Min(num7, x);
@@ -945,7 +959,7 @@ namespace Game {
                     MovingBlock movingBlock = movingBlockSet.Blocks[j];
                     int num = Terrain.ExtractContents(movingBlock.Value);
                     Block block = BlocksManager.Blocks[num];
-                    if (block.IsCollidable_(movingBlock.Value)) {
+                    if (block.GetIsCollidable(this, movingBlock.Value)) {
                         BoundingBox[] customCollisionBoxes = block.GetCustomCollisionBoxes(m_subsystemTerrain, movingBlock.Value);
                         Vector3 vector = new Vector3(movingBlock.Offset) + movingBlockSet.Position;
                         for (int k = 0; k < customCollisionBoxes.Length; k++) {
@@ -986,7 +1000,7 @@ namespace Game {
                         int num3 = Terrain.ExtractContents(cellValueFast);
                         if (num3 != 0) {
                             Block block = BlocksManager.Blocks[num3];
-                            if (block.IsCollidable_(cellValueFast) && TerrainCollidable) {
+                            if (block.GetIsCollidable(this, cellValueFast) && TerrainCollidable) {
                                 BoundingBox[] customCollisionBoxes = block.GetCustomCollisionBoxes(m_subsystemTerrain, cellValueFast);
                                 Vector3 vector = new(i, num2, j);
                                 for (int k = 0; k < customCollisionBoxes.Length; k++) {
@@ -1011,7 +1025,7 @@ namespace Game {
             int num2 = Terrain.ToCell(position.Y);
             int num3 = Terrain.ToCell(position.Z);
             if (BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3)]
-                .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3))) {
+                .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3))) {
                 return;
             }
             bool num4 = position.X < num + 0.5f;
@@ -1020,11 +1034,11 @@ namespace Game {
             if (num4) {
                 if (flag) {
                     bool isCollidable = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)]
-                        .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 - 1));
+                        .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 - 1));
                     bool isCollidable2 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)]
-                        .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3));
+                        .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3));
                     bool isCollidable3 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 - 1)]
-                        .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3 - 1));
+                        .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3 - 1));
                     if ((isCollidable && !isCollidable2)
                         || (!isCollidable && !isCollidable2 && isCollidable3)) {
                         item = new CollisionBox {
@@ -1051,11 +1065,11 @@ namespace Game {
                 }
                 else {
                     bool isCollidable4 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)]
-                        .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 + 1));
+                        .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 + 1));
                     bool isCollidable5 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)]
-                        .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3));
+                        .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3));
                     bool isCollidable6 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 + 1)]
-                        .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3 + 1));
+                        .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3 + 1));
                     if ((isCollidable4 && !isCollidable5)
                         || (!isCollidable4 && !isCollidable5 && isCollidable6)) {
                         item = new CollisionBox {
@@ -1083,11 +1097,11 @@ namespace Game {
             }
             else if (flag) {
                 bool isCollidable7 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)]
-                    .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 - 1));
+                    .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 - 1));
                 bool isCollidable8 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)]
-                    .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3));
+                    .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3));
                 bool isCollidable9 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 - 1)]
-                    .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3 - 1));
+                    .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3 - 1));
                 if ((isCollidable7 && !isCollidable8)
                     || (!isCollidable7 && !isCollidable8 && isCollidable9)) {
                     item = new CollisionBox {
@@ -1114,11 +1128,11 @@ namespace Game {
             }
             else {
                 bool isCollidable10 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)]
-                    .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 + 1));
+                    .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 + 1));
                 bool isCollidable11 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)]
-                    .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3));
+                    .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3));
                 bool isCollidable12 = BlocksManager.Blocks[m_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 + 1)]
-                    .IsCollidable_(m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3 + 1));
+                    .GetIsCollidable(this, m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3 + 1));
                 if ((isCollidable10 && !isCollidable11)
                     || (!isCollidable10 && !isCollidable11 && isCollidable12)) {
                     item = new CollisionBox {
@@ -1356,7 +1370,7 @@ namespace Game {
             int num2 = Terrain.ToCell(position.Y);
             int num3 = Terrain.ToCell(position.Z);
             int value = m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3);
-            if (BlocksManager.Blocks[Terrain.ExtractContents(value)].IsCollidable_(value)) {
+            if (BlocksManager.Blocks[Terrain.ExtractContents(value)].GetIsCollidable(this, value)) {
                 return;
             }
             bool num4 = position.X < num + 0.5f;
@@ -1367,9 +1381,9 @@ namespace Game {
                     int value1 = m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 - 1);
                     int value2 = m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3);
                     int value3 = m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3 - 1);
-                    bool isCollidable = BlocksManager.Blocks[Terrain.ExtractContents(value1)].IsCollidable_(value1);
-                    bool isCollidable2 = BlocksManager.Blocks[Terrain.ExtractContents(value2)].IsCollidable_(value2);
-                    bool isCollidable3 = BlocksManager.Blocks[Terrain.ExtractContents(value3)].IsCollidable_(value3);
+                    bool isCollidable = BlocksManager.Blocks[Terrain.ExtractContents(value1)].GetIsCollidable(this, value1);
+                    bool isCollidable2 = BlocksManager.Blocks[Terrain.ExtractContents(value2)].GetIsCollidable(this, value2);
+                    bool isCollidable3 = BlocksManager.Blocks[Terrain.ExtractContents(value3)].GetIsCollidable(this, value3);
                     if ((isCollidable && !isCollidable2)
                         || (!isCollidable && !isCollidable2) & isCollidable3) {
                         item = new CollisionBox {
@@ -1398,9 +1412,9 @@ namespace Game {
                     int value4 = m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 + 1);
                     int value5 = m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3);
                     int value6 = m_subsystemTerrain.Terrain.GetCellValue(num - 1, num2 - 1, num3 + 1);
-                    bool isCollidable4 = BlocksManager.Blocks[Terrain.ExtractContents(value4)].IsCollidable_(value4);
-                    bool isCollidable5 = BlocksManager.Blocks[Terrain.ExtractContents(value5)].IsCollidable_(value5);
-                    bool isCollidable6 = BlocksManager.Blocks[Terrain.ExtractContents(value6)].IsCollidable_(value6);
+                    bool isCollidable4 = BlocksManager.Blocks[Terrain.ExtractContents(value4)].GetIsCollidable(this, value4);
+                    bool isCollidable5 = BlocksManager.Blocks[Terrain.ExtractContents(value5)].GetIsCollidable(this, value5);
+                    bool isCollidable6 = BlocksManager.Blocks[Terrain.ExtractContents(value6)].GetIsCollidable(this, value6);
                     if ((isCollidable4 && !isCollidable5)
                         || (!isCollidable4 && !isCollidable5) & isCollidable6) {
                         item = new CollisionBox {
@@ -1430,9 +1444,9 @@ namespace Game {
                 int value7 = m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 - 1);
                 int value8 = m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3);
                 int value9 = m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3 - 1);
-                bool isCollidable7 = BlocksManager.Blocks[Terrain.ExtractContents(value7)].IsCollidable_(value7);
-                bool isCollidable8 = BlocksManager.Blocks[Terrain.ExtractContents(value8)].IsCollidable_(value8);
-                bool isCollidable9 = BlocksManager.Blocks[Terrain.ExtractContents(value9)].IsCollidable_(value9);
+                bool isCollidable7 = BlocksManager.Blocks[Terrain.ExtractContents(value7)].GetIsCollidable(this, value7);
+                bool isCollidable8 = BlocksManager.Blocks[Terrain.ExtractContents(value8)].GetIsCollidable(this, value8);
+                bool isCollidable9 = BlocksManager.Blocks[Terrain.ExtractContents(value9)].GetIsCollidable(this, value9);
                 if ((isCollidable7 && !isCollidable8)
                     || (!isCollidable7 && !isCollidable8) & isCollidable9) {
                     item = new CollisionBox {
@@ -1461,9 +1475,9 @@ namespace Game {
                 int value10 = m_subsystemTerrain.Terrain.GetCellValue(num, num2 - 1, num3 + 1);
                 int value11 = m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3);
                 int value12 = m_subsystemTerrain.Terrain.GetCellValue(num + 1, num2 - 1, num3 + 1);
-                bool isCollidable10 = BlocksManager.Blocks[Terrain.ExtractContents(value10)].IsCollidable_(value10);
-                bool isCollidable11 = BlocksManager.Blocks[Terrain.ExtractContents(value11)].IsCollidable_(value11);
-                bool isCollidable12 = BlocksManager.Blocks[Terrain.ExtractContents(value12)].IsCollidable_(value12);
+                bool isCollidable10 = BlocksManager.Blocks[Terrain.ExtractContents(value10)].GetIsCollidable(this, value10);
+                bool isCollidable11 = BlocksManager.Blocks[Terrain.ExtractContents(value11)].GetIsCollidable(this, value11);
+                bool isCollidable12 = BlocksManager.Blocks[Terrain.ExtractContents(value12)].GetIsCollidable(this, value12);
                 if ((isCollidable10 && !isCollidable11)
                     || (!isCollidable10 && !isCollidable11) & isCollidable12) {
                     item = new CollisionBox {

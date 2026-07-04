@@ -82,6 +82,24 @@ namespace Engine.Graphics {
             GLWrapper.GL.GenerateMipmap(TextureTarget.Texture2D);
         }
 
+        /// <summary>
+        /// 从 backbuffer blit 颜色内容到本 RenderTarget（支持格式转换如 RGBA8→RGBA16F）
+        /// </summary>
+        public void BlitFromBackbuffer(int screenWidth, int screenHeight) {
+            // READ framebuffer = backbuffer, DRAW framebuffer = this
+            GLWrapper.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, (uint)GLWrapper.m_mainFramebuffer);
+            GLWrapper.GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, (uint)m_frameBuffer);
+            GLWrapper.GL.BlitFramebuffer(
+                0, 0, (int)Math.Min(screenWidth, Width), (int)Math.Min(screenHeight, Height),
+                0, 0, Width, Height,
+                ClearBufferMask.ColorBufferBit,
+                BlitFramebufferFilter.Linear
+            );
+            // Raw GL 调用绕过了 GLWrapper 缓存，必须使缓存失效
+            GLWrapper.m_framebuffer = -1;
+            GLWrapper.BindFramebuffer(GLWrapper.m_mainFramebuffer);
+        }
+
         public override void HandleDeviceLost() {
             DeleteRenderTarget();
         }
@@ -90,7 +108,7 @@ namespace Engine.Graphics {
             AllocateRenderTarget();
         }
 
-        public void AllocateRenderTarget() {
+        public virtual void AllocateRenderTarget() {
             GLWrapper.GL.GenFramebuffers(1u, out uint frameBuffer);
             m_frameBuffer = (int)frameBuffer;
             GLWrapper.BindFramebuffer(m_frameBuffer);
@@ -144,7 +162,7 @@ namespace Engine.Graphics {
             }
         }
 
-        public void DeleteRenderTarget() {
+        public virtual void DeleteRenderTarget() {
             if (m_depthBuffer != 0) {
                 uint depthBuffer = (uint)m_depthBuffer;
                 GLWrapper.GL.DeleteRenderbuffers(1, in depthBuffer);

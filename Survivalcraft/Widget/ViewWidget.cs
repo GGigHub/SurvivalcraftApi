@@ -1,5 +1,6 @@
 using Engine;
 using Engine.Graphics;
+using Silk.NET.OpenGLES;
 
 
 namespace Game {
@@ -8,8 +9,8 @@ namespace Game {
         public SubsystemDrawing m_subsystemDrawing;
 
         public RenderTarget2D m_scalingRenderTarget;
-
         public static RenderTarget2D ScreenTexture = new(Window.Size.X, Window.Size.Y, 1, ColorFormat.Rgba8888, DepthFormat.Depth24Stencil8);
+        public PrimitivesRenderer2D m_vrFadePr2 = new();
 
         public GameWidget GameWidget { get; set; }
 
@@ -141,7 +142,14 @@ namespace Game {
         }
 
         public virtual void DrawToScreen(DrawContext dc) {
-            GameWidget.ActiveCamera.PrepareForDrawing();
+            if (VrManager.IsFrameActive
+                && (Input.Devices & WidgetInputDevice.VrControllers) != WidgetInputDevice.None
+                && GameWidget.ActiveCamera is BasePerspectiveCamera camera) {
+                DrawToScreenVr(camera);
+                return;
+            }
+            GameWidget.GuiWidget.IsDrawEnabled = true;
+            GameWidget.ActiveCamera.PrepareForDrawing(null);
             RenderTarget2D renderTarget = Display.RenderTarget;
             SetupScalingRenderTarget();
             try {
@@ -159,7 +167,95 @@ namespace Game {
                 }
             );
         }
+
+        void DrawToScreenVr(BasePerspectiveCamera camera) {
+#if WINDOWS
+            int desktopFbo = GLWrapper.m_mainFramebuffer;
+#endif
+
+            VrManager.RenderToEyes((vrEye, eyeFrame) => {
+                    camera.PrepareForDrawing(vrEye);
+                    m_subsystemDrawing.Draw(camera);
+
+                    GameWidget.DrawVrGui(eyeFrame);
+
+                    // Snap turn fade overlay
+                    float fadeAlpha = ComponentInput.VrFadeAlpha;
+                    if (fadeAlpha > 0.001f) {
+                        var flatBatch = m_vrFadePr2?.FlatBatch(0, null, null, null);
+                        flatBatch?.QueueQuad(
+                            Vector2.Zero, new Vector2(VrManager.SwapchainWidth, VrManager.SwapchainHeight),
+                            0f, new Color(0f, 0f, 0f, fadeAlpha));
+                        m_vrFadePr2?.Flush();
+                    }
+
+#if WINDOWS
+                    if (vrEye == VrEye.Left) {
+                        BlitVrEyeToDesktop(eyeFrame.Fbo, desktopFbo,
+                            VrManager.SwapchainWidth, VrManager.SwapchainHeight,
+                            GameWidget);
+                    }
+#endif
+                }
+            );
+
+            ModsManager.HookAction(
+                "DrawToScreen",
+                loader => {
+                    loader.DrawToScreen(this, null);
+                    return false;
+                }
+            );
+        }
+
+#if WINDOWS
+        static void BlitVrEyeToDesktop(int srcFbo, int dstFbo, int vrW, int vrH, GameWidget gameWidget) {
+            if (srcFbo == 0) return;
+
+            Vector2 origin = Vector2.Transform(Vector2.Zero, gameWidget.GlobalTransform);
+            Vector2 end = Vector2.Transform(gameWidget.ActualSize, gameWidget.GlobalTransform);
+            int x1 = Math.Max(0, (int)MathF.Min(origin.X, end.X));
+            int y1 = Math.Max(0, (int)MathF.Min(origin.Y, end.Y));
+            int x2 = Math.Min(Display.BackbufferSize.X, (int)MathF.Max(origin.X, end.X));
+            int y2 = Math.Min(Display.BackbufferSize.Y, (int)MathF.Max(origin.Y, end.Y));
+            if (x2 <= x1 || y2 <= y1) return;
+
+            GLWrapper.GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, (uint)dstFbo);
+            GLWrapper.ApplyViewportScissor(
+                new Viewport(0, 0, Display.BackbufferSize.X, Display.BackbufferSize.Y),
+                new Rectangle(x1, y1, x2 - x1, y2 - y1), true);
+            GLWrapper.Enable(EnableCap.ScissorTest);
+            GLWrapper.ClearColor(Vector4.Zero);
+            GLWrapper.GL.Clear(ClearBufferMask.ColorBufferBit);
+            GLWrapper.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, (uint)srcFbo);
+
+            float vrAspect = (float)vrW / vrH;
+            float regionW = x2 - x1;
+            float regionH = y2 - y1;
+            float regionAspect = regionW / regionH;
+
+            int drawW, drawH, offsetX, offsetY;
+            if (regionAspect > vrAspect) {
+                drawH = (int)regionH;
+                drawW = (int)(regionH * vrAspect);
+                offsetX = x1 + ((int)regionW - drawW) / 2;
+                offsetY = y1;
+            }
+            else {
+                drawW = (int)regionW;
+                drawH = (int)(regionW / vrAspect);
+                offsetX = x1;
+                offsetY = y1 + ((int)regionH - drawH) / 2;
+            }
+
+            GLWrapper.GL.BlitFramebuffer(
+                0, 0, vrW, vrH,
+                offsetX, offsetY, offsetX + drawW, offsetY + drawH,
+                ClearBufferMask.ColorBufferBit,
+                BlitFramebufferFilter.Linear);
+            GLWrapper.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, (uint)dstFbo);
+        }
+#endif
     }
 }
-
 

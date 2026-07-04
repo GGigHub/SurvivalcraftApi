@@ -6,6 +6,8 @@ namespace Game {
 
         public GlassBlock() => CanBeBuiltIntoFurniture = true;
 
+        public override bool IsFurnitureAlphaTest(int value) => true;
+
         public override bool ShouldGenerateFace(SubsystemTerrain subsystemTerrain,
             int face,
             int value,

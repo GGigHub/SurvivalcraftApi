@@ -1,4 +1,5 @@
 using Engine;
+using Engine.Graphics;
 
 namespace Game {
     public abstract class WoodBlock : CubeBlock {
@@ -12,6 +13,8 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset[] subsets = texture == null ? geometry.OpaqueSubsetsByFace : geometry.GetGeometry(texture).OpaqueSubsetsByFace;
             switch (GetCutFace(Terrain.ExtractData(value))) {
                 case 4:
                     generator.GenerateCubeVertices(
@@ -21,7 +24,7 @@ namespace Game {
                         y,
                         z,
                         Color.White,
-                        geometry.OpaqueSubsetsByFace
+                        subsets
                     ); break;
                 case 0:
                     generator.GenerateCubeVertices(
@@ -34,7 +37,7 @@ namespace Game {
                         0,
                         0,
                         Color.White,
-                        geometry.OpaqueSubsetsByFace
+                        subsets
                     ); break;
                 default:
                     generator.GenerateCubeVertices(
@@ -47,7 +50,7 @@ namespace Game {
                         1,
                         1,
                         Color.White,
-                        geometry.OpaqueSubsetsByFace
+                        subsets
                     ); break;
             }
         }

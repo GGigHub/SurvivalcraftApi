@@ -18,8 +18,11 @@ namespace Engine.Graphics {
         public const int RenderableType = 0x3040;
         public const int Samples = 0x3031;
         public const int WindowBit = 0x0004;
+        public const int PbufferBit = 0x0001;
         public const int OpenglEs2Bit = 0x0004;
         public const int OpenglEs3Bit = 0x00000040;
+        public const int Width = 0x3057;
+        public const int Height = 0x3056;
         public const int ContextClientVersion = 0x3098;
         public const int NoContext = 0x0;
         public const int NativeVisualId = 0x302E;
@@ -40,6 +43,12 @@ namespace Engine.Graphics {
         [DllImport(LibEgl, EntryPoint = "eglCreateWindowSurface", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.SafeDirectories)]
         public static extern IntPtr CreateWindowSurface(IntPtr dpy, IntPtr config, IntPtr nativeWindow, int[] attribList);
+
+#if ANGLE
+        [DllImport(LibEgl, EntryPoint = "eglCreatePbufferSurface", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.SafeDirectories)]
+        public static extern IntPtr CreatePbufferSurface(IntPtr dpy, IntPtr config, int[] attribList);
+#endif
 
         [DllImport(LibEgl, EntryPoint = "eglCreateContext", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.SafeDirectories)]

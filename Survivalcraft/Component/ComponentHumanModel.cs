@@ -221,13 +221,108 @@ namespace Game {
             base.Update(dt);
         }
 
+        /// <summary>
+        /// 同步动画参数到动画控制器
+        /// </summary>
+        public override void SyncAnimationParameters() {
+            base.SyncAnimationParameters();
+
+            var ctrl = AnimationController;
+            if (ctrl == null) return;
+
+            // 行走参数
+            ctrl.Parameters.SetFloat("WalkLegsAngle", m_walkLegsAngle);
+            ctrl.Parameters.SetFloat("WalkBobHeight", m_walkBobHeight);
+            ctrl.Parameters.SetFloat("HeadingOffset", m_headingOffset);
+            ctrl.Parameters.SetFloat("CrouchFactor", m_componentCreature.ComponentBody.CrouchFactor);
+            ctrl.Parameters.SetFloat("Bob", Bob);
+
+            // 蹲下因子
+            ctrl.Parameters.SetFloat("SneakFactor", m_sneakFactor);
+
+            // 躺下因子（模型用）
+            ctrl.Parameters.SetFloat("LieDownFactor", m_lieDownFactorModel);
+
+            // 攻击参数
+            ctrl.Parameters.SetFloat("PunchPhase", m_punchPhase);
+            ctrl.Parameters.SetFloat("PunchCounter", m_punchCounter);
+            ctrl.Parameters.SetFloat("PunchFactor", m_punchFactor);
+
+            // 瞄准参数
+            ctrl.Parameters.SetFloat("AimHandAngle", m_aimHandAngle);
+
+            // 挖掘参数
+            float pokingPhase = m_componentMiner?.PokingPhase ?? 0f;
+            int activeBlockValue = m_componentMiner?.ActiveBlockValue ?? 0;
+            ctrl.Parameters.SetFloat("PokingPhase", pokingPhase);
+            ctrl.Parameters.SetFloat("ActiveBlockValue", activeBlockValue);
+
+            // 骑乘参数
+            ComponentMount mount = m_componentRider?.Mount;
+            bool isRiding = mount != null;
+            ctrl.Parameters.SetBool("IsRiding", isRiding);
+            ctrl.Parameters.SetBool("IsBoat", isRiding && mount.Entity.ValuesDictionary.DatabaseObject.Name == "Boat");
+            ctrl.Parameters.SetBool("RowLeft", m_rowLeft);
+            ctrl.Parameters.SetBool("RowRight", m_rowRight);
+            ctrl.Parameters.SetFloat("MountBob", isRiding ? Bob : 0f);
+
+            // 身体前向向量（用于躺下动画）
+            var bodyMatrix = m_componentCreature.ComponentBody.Matrix;
+            var boundingBox = m_componentCreature.ComponentBody.BoundingBox;
+            ctrl.Parameters.SetVector3("BodyForward", bodyMatrix.Forward);
+            ctrl.Parameters.SetFloat("BodyHeight", boundingBox.Max.Y - boundingBox.Min.Y);
+            ctrl.Parameters.SetFloat("BodyDepth", m_componentCreature.ComponentBody.BoxSize.Z);
+
+            // 头部追踪角度（转换为弧度）
+            var lookAngles = m_componentCreature.ComponentLocomotion.LookAngles;
+            ctrl.Parameters.SetFloat("LookAngleX", lookAngles.X);
+            ctrl.Parameters.SetFloat("LookAngleY", lookAngles.Y);
+
+            // 转向指令（用于头部动画）
+            var lastTurnOrder = m_componentCreature.ComponentLocomotion.LastTurnOrder;
+            ctrl.Parameters.SetFloat("LastTurnOrderX", lastTurnOrder.X);
+
+            // 创造模式飞行
+            ctrl.Parameters.SetBool("IsCreativeFly", m_componentCreature.ComponentLocomotion.IsCreativeFlyEnabled);
+            ctrl.Parameters.SetFloat("VelocityXZ", m_componentCreature.ComponentBody.Velocity.XZ.Length());
+
+            // 实体哈希（用于噪声种子）
+            ctrl.Parameters.SetFloat("EntityHash", GetHashCode());
+
+            // 时间参数（用于噪声和插值）
+            // 原始代码使用 TotalElapsedGameTime 作为噪声时间基准
+            ctrl.Parameters.SetFloat("TotalElapsedGameTime", (float)m_subsystemGameInfo.TotalElapsedGameTime);
+            ctrl.Parameters.SetFloat("GameTimeDelta", m_subsystemTime.GameTimeDelta);
+            ctrl.Parameters.SetFloat("GameTime", (float)m_subsystemTime.GameTime);  // 用于划船动画
+
+            // 手持物品偏移和旋转
+            ctrl.Parameters.SetVector3("InHandItemOffset", m_inHandItemOffset);
+            ctrl.Parameters.SetVector3("InHandItemRotation", m_inHandItemRotation);
+        }
+
         public override void AnimateCreature() {
-            Vector3 position = m_componentCreature.ComponentBody.Position;
-            Vector3 vector = m_componentCreature.ComponentBody.Rotation.ToYawPitchRoll();
-            if (OnAnimate != null
-                && OnAnimate()) {
+            // 检查模组 hook（保持原有实现）
+            if (OnAnimate != null && OnAnimate()) {
                 return;
             }
+
+            // 如果使用 AnimationController，动画由驱动器处理
+            if (AnimationController != null) {
+                return;
+            }
+
+            // 后备方案：使用硬编码动画（当没有配置 AnimationController 时）
+            AnimateCreatureFallback();
+        }
+
+        /// <summary>
+        /// 硬编码动画后备方案（当没有 AnimationController 时使用）
+        /// 保持原有实现，确保向后兼容
+        /// </summary>
+        private void AnimateCreatureFallback() {
+            Vector3 position = m_componentCreature.ComponentBody.Position;
+            Vector3 vector = m_componentCreature.ComponentBody.Rotation.ToYawPitchRoll();
+
             if (m_lieDownFactorModel == 0f) {
                 ComponentMount componentMount = m_componentRider?.Mount;
                 float num = MathF.Sin((float)Math.PI * 2f * MovementAnimationPhase);
@@ -344,7 +439,6 @@ namespace Game {
                     m_legAngles2 *= 0.5f;
                 }
                 float f = MathUtils.Sigmoid(m_componentCreature.ComponentBody.CrouchFactor, 4f);
-                //Vector3 position2 = new(0f, MathUtils.Lerp(0f, 4f, f), MathUtils.Lerp(0f, -3.3f, f));
                 Vector3 position3 = new(position.X, position.Y - MathUtils.Lerp(0f, 0.7f, f), position.Z);
                 Vector3 position4 = new(0f, MathUtils.Lerp(0f, 7f, f), MathUtils.Lerp(0f, 28f, f));
                 Vector3 scale = new(1f, 1f, MathUtils.Lerp(1f, 0.5f, f));
@@ -461,12 +555,12 @@ namespace Game {
                 return;
             }
             if (Model != null) {
-                m_bodyBone = Model.FindBone("Body");
-                m_headBone = Model.FindBone("Head");
-                m_leg1Bone = Model.FindBone("Leg1");
-                m_leg2Bone = Model.FindBone("Leg2");
-                m_hand1Bone = Model.FindBone("Hand1");
-                m_hand2Bone = Model.FindBone("Hand2");
+                m_bodyBone = Model.FindBone("Body", false);
+                m_headBone = Model.FindBone("Head", false);
+                m_leg1Bone = Model.FindBone("Leg1", false);
+                m_leg2Bone = Model.FindBone("Leg2", false);
+                m_hand1Bone = Model.FindBone("Hand1", false);
+                m_hand2Bone = Model.FindBone("Hand2", false);
             }
             else {
                 m_bodyBone = null;
@@ -476,6 +570,36 @@ namespace Game {
                 m_hand1Bone = null;
                 m_hand2Bone = null;
             }
+
+            // 配置驱动器参数
+            if (AnimationController != null) {
+                AnimationController.Parameters.SetFloat("WalkAnimationSpeed", m_walkAnimationSpeed);
+                AnimationController.Parameters.SetFloat("WalkBobHeight", m_walkBobHeight);
+                AnimationController.Parameters.SetFloat("WalkLegsAngle", m_walkLegsAngle);
+
+                // 运行时参数初始值
+                AnimationController.Parameters.SetFloat("MovementPhase", 0f);
+                AnimationController.Parameters.SetFloat("Bob", 0f);
+                AnimationController.Parameters.SetFloat("HeadingOffset", 0f);
+                AnimationController.Parameters.SetFloat("CrouchFactor", 0f);
+                AnimationController.Parameters.SetFloat("SneakFactor", 0f);
+                AnimationController.Parameters.SetFloat("LieDownFactor", 0f);
+                AnimationController.Parameters.SetFloat("PunchPhase", 0f);
+                AnimationController.Parameters.SetFloat("PunchCounter", 0);
+                AnimationController.Parameters.SetFloat("PunchFactor", 0f);
+                AnimationController.Parameters.SetFloat("AimHandAngle", 0f);
+                AnimationController.Parameters.SetFloat("PokingPhase", 0f);
+                AnimationController.Parameters.SetFloat("ActiveBlockValue", 0);
+                AnimationController.Parameters.SetBool("IsRiding", false);
+                AnimationController.Parameters.SetBool("IsBoat", false);
+                AnimationController.Parameters.SetBool("RowLeft", false);
+                AnimationController.Parameters.SetBool("RowRight", false);
+                AnimationController.Parameters.SetFloat("MountBob", 0f);
+                AnimationController.Parameters.SetFloat("LastTurnOrderX", 0f);
+                AnimationController.Parameters.SetFloat("EntityHash", GetHashCode());
+                AnimationController.Parameters.SetBool("IsCreativeFly", false);
+                AnimationController.Parameters.SetFloat("VelocityXZ", 0f);
+            }
         }
 
         public override Vector3 CalculateEyePosition() {
@@ -484,7 +608,7 @@ namespace Game {
             float num2 = 0.875f * m_componentCreature.ComponentBody.BoxSize.Y;
             float num3 = MathUtils.Lerp(MathUtils.Lerp(num2, 0.45f * num2, num), 0.2f * num2, f);
             Matrix matrix = m_componentCreature.ComponentBody.Matrix;
-            Vector3 result = m_componentCreature.ComponentBody.Position + matrix.Up * (num3 + 2f * Bob) + matrix.Forward * -0.2f * num;
+            Vector3 result = m_componentCreature.ComponentBody.Position + matrix.Up * (num3 + 2f * Bob) + matrix.Forward * -0.09f * num;
             ModsManager.HookAction(
                 "RecalculateModelEyePosition",
                 loader => {
@@ -517,5 +641,4 @@ namespace Game {
         }
     }
 }
-
 

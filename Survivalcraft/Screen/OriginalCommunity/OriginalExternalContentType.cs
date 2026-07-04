@@ -1,10 +1,10 @@
 namespace Game {
     public enum OriginalExternalContentType {
-        Unknown,
-        Directory,
-        World,
-        BlocksTexture,
-        CharacterSkin,
-        FurniturePack
+        Unknown = 0,
+        Directory = 1,
+        World = 2,
+        BlocksTexture = 3,
+        CharacterSkin = 4,
+        FurniturePack = 5
     }
 }

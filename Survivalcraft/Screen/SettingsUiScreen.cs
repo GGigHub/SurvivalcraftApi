@@ -14,6 +14,12 @@ namespace Game {
 
         public SliderWidget m_uiScaleSlider;
 
+        public SliderWidget m_vrGuiSizeSlider;
+        public ContainerWidget m_vrGuiSizePanel;
+
+        public ButtonWidget m_vrGuiDockLeftHandButton;
+        public ContainerWidget m_vrGuiDockLeftHandPanel;
+
         public ButtonWidget m_upsideDownButton;
 
         public UniformSpacingPanelWidget m_adaptEdgeToEdgeDisplayContainer;
@@ -49,6 +55,10 @@ namespace Game {
             m_displayLogButton = Children.Find<ButtonWidget>("DisplayLogButton");
             m_windowModeButton = Children.Find<ButtonWidget>("WindowModeButton");
             m_uiScaleSlider = Children.Find<SliderWidget>("UIScaleSlider");
+            m_vrGuiSizeSlider = Children.Find<SliderWidget>("VrGuiSizeSlider");
+            m_vrGuiSizePanel = Children.Find<ContainerWidget>("VrGuiSizePanel");
+            m_vrGuiDockLeftHandButton = Children.Find<ButtonWidget>("VrGuiDockLeftHand");
+            m_vrGuiDockLeftHandPanel = Children.Find<ContainerWidget>("VrGuiDockLeftHandPanel");
             m_upsideDownButton = Children.Find<ButtonWidget>("UpsideDownButton");
             m_adaptEdgeToEdgeDisplayContainer = Children.Find<UniformSpacingPanelWidget>("AdaptEdgeToEdgeDisplayContainer");
             m_adaptEdgeToEdgeDisplay = Children.Find<ButtonWidget>("AdaptEdgeToEdgeDisplay");
@@ -91,6 +101,9 @@ namespace Game {
             if (m_uiScaleSlider.SlidingCompleted) {
                 SettingsManager.UIScale = m_uiScaleSlider.Value;
             }
+            if (m_vrGuiSizeSlider.SlidingCompleted) {
+                SettingsManager.VrGuiSize = m_vrGuiSizeSlider.Value;
+            }
             if (m_languageButton.IsClicked) {
                 LanguageControl.CreateLanguageSelectionDialog(null);
             }
@@ -101,6 +114,16 @@ namespace Game {
                 m_uiScaleSlider.Value = SettingsManager.UIScale;
             }
             m_uiScaleSlider.Text = $"{m_uiScaleSlider.Value * 100f:0}%";
+            if (!m_vrGuiSizeSlider.IsSliding) {
+                m_vrGuiSizeSlider.Value = SettingsManager.VrGuiSize;
+            }
+            m_vrGuiSizeSlider.Text = $"{m_vrGuiSizeSlider.Value * 100f:0}%";
+            m_vrGuiSizePanel.IsVisible = VrManager.IsVrAvailable;
+            if (m_vrGuiDockLeftHandButton.IsClicked) {
+                SettingsManager.VrGuiDockLeftHand = !SettingsManager.VrGuiDockLeftHand;
+            }
+            m_vrGuiDockLeftHandButton.Text = SettingsManager.VrGuiDockLeftHand ? LanguageControl.Yes : LanguageControl.No;
+            m_vrGuiDockLeftHandPanel.IsVisible = VrManager.IsVrAvailable;
             if (m_upsideDownButton.IsClicked) {
                 SettingsManager.UpsideDownLayout = !SettingsManager.UpsideDownLayout;
             }

@@ -41,7 +41,7 @@ namespace Game {
                 && m_componentPlayer.ComponentGui.ControlsContainerWidget.IsVisible) {
                 if (IsSightsVisible) {
                     Texture2D texture = ContentManager.Get<Texture2D>("Textures/Gui/Sights");
-                    float s = 8f;
+                    float s = camera.Eye == null ? 8f : 2.5f;
                     Vector3 v = m_sightsPosition + m_sightsDirection * 50f;
                     Vector3 vector = Vector3.Normalize(Vector3.Cross(m_sightsDirection, Vector3.UnitY));
                     Vector3 v2 = Vector3.Normalize(Vector3.Cross(m_sightsDirection, vector));
@@ -73,6 +73,7 @@ namespace Game {
                     }
                 );
                 if (isCrosshairVisible
+                    && camera.Eye == null
                     && !camera.UsesMovementControls
                     && !IsSightsVisible
                     && (SettingsManager.LookControlMode == LookControlMode.SplitTouch || !m_componentPlayer.ComponentInput.IsControlledByTouch)) {

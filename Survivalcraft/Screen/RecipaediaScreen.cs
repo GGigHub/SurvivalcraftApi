@@ -3,7 +3,7 @@ using Engine;
 
 namespace Game {
     public class RecipaediaScreen : Screen {
-        internal class Order {
+        public class Order {
             public Block block;
             public int order;
             public int value;

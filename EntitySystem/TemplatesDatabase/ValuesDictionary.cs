@@ -9,9 +9,9 @@ using XmlUtilities;
 
 namespace TemplatesDatabase {
     public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>> {
-        Dictionary<string, object> m_dictionary = [];
+        public Dictionary<string, object> m_dictionary = [];
 
-        DatabaseObject m_databaseObject;
+        public DatabaseObject m_databaseObject;
 
         public int Count => m_dictionary.Count;
 

@@ -14,7 +14,7 @@
 3. 进入此仓库，使用 [Visual Studio](https://visualstudio.microsoft.com/) 或 [Rider](https://www.jetbrains.com/zh-cn/rider/) 打开 `SurvivalcraftApi` 目录中的 `SurvivalCraftApi.sln`
 4. 如果只是在 Windows 系统上进行调试，请在 Windows 以外的文件夹上右键，点击 `卸载项目`，之后在 Windows 文件夹中的 `Survivalcraft.Windows` 项目上右键，点击 `构建所选项目`，最后启动调试即可
 
-## 构建
+## 构建游戏本体
 
 **Windows、Linux**：  
 直接构建相应的 `Survivalcraft.Windows`、`Survivalcraft.Linux` 项目即可
@@ -47,7 +47,7 @@
 
     ```xml
     <ItemGroup>
-      <PackageReference Include="SurvivalcraftAPI.Survivalcraft" Version="1.9.0.2"/>
+      <PackageReference Include="SurvivalcraftAPI.Survivalcraft" Version="1.9.2.1"/>
     </ItemGroup>
     ```
 

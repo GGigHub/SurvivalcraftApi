@@ -37,6 +37,7 @@ namespace Game {
         }
 
         public override void Update(float dt) {
+            // 游泳相位更新
             if (m_componentCreature.ComponentLocomotion.LastSwimOrder.HasValue
                 && m_componentCreature.ComponentLocomotion.LastSwimOrder.Value != Vector3.Zero) {
                 float num = m_componentCreature.ComponentLocomotion.LastSwimOrder.Value.LengthSquared() > 0.99f ? 1.75f : 1f;
@@ -45,6 +46,8 @@ namespace Game {
             else {
                 MovementAnimationPhase = MathUtils.Remainder(MovementAnimationPhase + 0.15f * m_swimAnimationSpeed * dt, 1000f);
             }
+
+            // 转向时的尾巴弯曲
             if (BendOrder.HasValue) {
                 if (m_hasVerticalTail) {
                     m_tailTurn.X = 0f;
@@ -59,6 +62,8 @@ namespace Game {
                 m_tailTurn.X += MathUtils.Saturate(2f * m_componentCreature.ComponentLocomotion.TurnSpeed * dt)
                     * (0f - m_componentCreature.ComponentLocomotion.LastTurnOrder.X - m_tailTurn.X);
             }
+
+            // 嵌入冰中动画
             if (DigInOrder > m_digInDepth) {
                 float num2 = (DigInOrder - m_digInDepth) * MathUtils.Min(1.5f * dt, 1f);
                 m_digInDepth += num2;
@@ -67,8 +72,16 @@ namespace Game {
             else if (DigInOrder < m_digInDepth) {
                 m_digInDepth += (DigInOrder - m_digInDepth) * MathUtils.Min(5f * dt, 1f);
             }
+
+            // 攻击/咬合动画
             float num3 = 0.33f * m_componentCreature.ComponentLocomotion.TurnSpeed;
             float num4 = 1f * m_componentCreature.ComponentLocomotion.TurnSpeed;
+
+            // 从配置读取攻击速度，默认使用原有值
+            float attackSpeed = AnimationController?.Parameters.GetFloat("AttackSpeed") ?? 1f;
+            num3 *= attackSpeed;
+            num4 *= attackSpeed;
+
             IsAttackHitMoment = false;
             if (AttackOrder || FeedOrder) {
                 if (AttackOrder) {
@@ -90,6 +103,7 @@ namespace Game {
                     m_bitingPhase = MathUtils.Remainder(MathUtils.Min(m_bitingPhase + num4 * dt, 1f), 1f);
                 }
             }
+
             AttackOrder = false;
             FeedOrder = false;
             BendOrder = null;
@@ -97,79 +111,34 @@ namespace Game {
             base.Update(dt);
         }
 
+        /// <summary>
+        /// 同步动画参数到动画控制器
+        /// </summary>
+        public override void SyncAnimationParameters() {
+            base.SyncAnimationParameters();
+
+            var ctrl = AnimationController;
+            if (ctrl == null) return;
+
+            // 鱼类特有参数
+            ctrl.Parameters.SetFloat("TailWagPhase", m_tailWagPhase);
+            ctrl.Parameters.SetFloat("TailTurnX", m_tailTurn.X);
+            ctrl.Parameters.SetFloat("TailTurnY", m_tailTurn.Y);
+            ctrl.Parameters.SetBool("HasVerticalTail", m_hasVerticalTail);
+            ctrl.Parameters.SetFloat("DigInDepth", m_digInDepth);
+            ctrl.Parameters.SetFloat("DigInTailPhase", m_digInTailPhase);
+            ctrl.Parameters.SetBool("IsEmbeddedInIce", m_componentCreature.ComponentBody.IsEmbeddedInIce);
+
+            // 咬合动画参数
+            ctrl.Parameters.SetFloat("BitingPhase", m_bitingPhase);
+        }
+
+        /// <summary>
+        /// 动画由 AnimationController 和驱动器处理，不再需要硬编码
+        /// </summary>
         public override void AnimateCreature() {
-            Vector3 vector = m_componentCreature.ComponentBody.Rotation.ToYawPitchRoll();
-            if (m_componentCreature.ComponentHealth.Health == 0f) {
-                float num = m_componentCreature.ComponentBody.BoundingBox.Max.Y - m_componentCreature.ComponentBody.BoundingBox.Min.Y;
-                Vector3 position = m_componentCreature.ComponentBody.Position + 1f * num * DeathPhase * Vector3.UnitY;
-                SetBoneTransform(
-                    m_bodyBone.Index,
-                    Matrix.CreateFromYawPitchRoll(vector.X, 0f, MathF.PI * DeathPhase) * Matrix.CreateTranslation(position)
-                );
-                SetBoneTransform(m_tail1Bone.Index, Matrix.Identity);
-                SetBoneTransform(m_tail2Bone.Index, Matrix.Identity);
-                if (m_jawBone != null) {
-                    SetBoneTransform(m_jawBone.Index, Matrix.Identity);
-                }
-                return;
-            }
-            if (m_componentCreature.ComponentBody.IsEmbeddedInIce) {
-                Matrix value = Matrix.CreateFromYawPitchRoll(vector.X, 0f, 0f)
-                    * Matrix.CreateTranslation(m_componentCreature.ComponentBody.Position + new Vector3(0f, 0f - m_digInDepth, 0f));
-                SetBoneTransform(m_bodyBone.Index, value);
-                return;
-            }
-            float num2 = m_digInTailPhase + m_tailWagPhase;
-            float num3;
-            float num4;
-            float num5;
-            float num6;
-            if (m_hasVerticalTail) {
-                num3 = MathUtils.DegToRad(25f) * Math.Clamp(0.5f * MathF.Sin(MathF.PI * 2f * num2) - m_tailTurn.X, -1f, 1f);
-                num4 = MathUtils.DegToRad(30f)
-                    * Math.Clamp(0.5f * MathF.Sin(2f * (MathF.PI * MathUtils.Max(num2 - 0.25f, 0f))) - m_tailTurn.X, -1f, 1f);
-                num5 = MathUtils.DegToRad(25f) * Math.Clamp(0.5f * MathF.Sin(MathF.PI * 2f * MovementAnimationPhase) - m_tailTurn.Y, -1f, 1f);
-                num6 = MathUtils.DegToRad(30f)
-                    * Math.Clamp(0.5f * MathF.Sin(MathF.PI * 2f * MathUtils.Max(MovementAnimationPhase - 0.25f, 0f)) - m_tailTurn.Y, -1f, 1f);
-            }
-            else {
-                num3 = MathUtils.DegToRad(25f)
-                    * Math.Clamp(0.5f * MathF.Sin(MathF.PI * 2f * (MovementAnimationPhase + num2)) - m_tailTurn.X, -1f, 1f);
-                num4 = MathUtils.DegToRad(30f)
-                    * Math.Clamp(
-                        0.5f * MathF.Sin(2f * (MathF.PI * MathUtils.Max(MovementAnimationPhase + num2 - 0.25f, 0f))) - m_tailTurn.X,
-                        -1f,
-                        1f
-                    );
-                num5 = MathUtils.DegToRad(25f) * Math.Clamp(0f - m_tailTurn.Y, -1f, 1f);
-                num6 = MathUtils.DegToRad(30f) * Math.Clamp(0f - m_tailTurn.Y, -1f, 1f);
-            }
-            float radians = 0f;
-            if (m_bitingPhase > 0f) {
-                radians = (0f - MathUtils.DegToRad(30f)) * MathF.Sin(MathF.PI * m_bitingPhase);
-            }
-            Matrix value2 = Matrix.CreateFromYawPitchRoll(vector.X, 0f, 0f)
-                * Matrix.CreateTranslation(m_componentCreature.ComponentBody.Position + new Vector3(0f, 0f - m_digInDepth, 0f));
-            SetBoneTransform(m_bodyBone.Index, value2);
-            Matrix identity = Matrix.Identity;
-            if (num3 != 0f) {
-                identity *= Matrix.CreateRotationZ(num3);
-            }
-            if (num5 != 0f) {
-                identity *= Matrix.CreateRotationX(num5);
-            }
-            Matrix identity2 = Matrix.Identity;
-            if (num4 != 0f) {
-                identity2 *= Matrix.CreateRotationZ(num4);
-            }
-            if (num6 != 0f) {
-                identity2 *= Matrix.CreateRotationX(num6);
-            }
-            SetBoneTransform(m_tail1Bone.Index, identity);
-            SetBoneTransform(m_tail2Bone.Index, identity2);
-            if (m_jawBone != null) {
-                SetBoneTransform(m_jawBone.Index, Matrix.CreateRotationX(radians));
-            }
+            // 空实现 - 动画由 AnimationController 处理
+            // 如果没有配置 AnimationController，生物将不会动画
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
@@ -184,9 +153,9 @@ namespace Game {
                 return;
             }
             if (Model != null) {
-                m_bodyBone = Model.FindBone("Body");
-                m_tail1Bone = Model.FindBone("Tail1");
-                m_tail2Bone = Model.FindBone("Tail2");
+                m_bodyBone = Model.FindBone("Body", false);
+                m_tail1Bone = Model.FindBone("Tail1", false);
+                m_tail2Bone = Model.FindBone("Tail2", false);
                 m_jawBone = Model.FindBone("Jaw", false);
             }
             else {
@@ -194,6 +163,22 @@ namespace Game {
                 m_tail1Bone = null;
                 m_tail2Bone = null;
                 m_jawBone = null;
+            }
+
+            // 配置驱动器参数
+            if (AnimationController != null) {
+                // 把 Database.xml 中的参数传递给驱动器
+                AnimationController.Parameters.SetFloat("SwimAnimationSpeed", m_swimAnimationSpeed);
+                AnimationController.Parameters.SetBool("HasVerticalTail", m_hasVerticalTail);
+
+                // 初始化运行时参数
+                AnimationController.Parameters.SetFloat("TailWagPhase", 0f);
+                AnimationController.Parameters.SetFloat("TailTurnX", 0f);
+                AnimationController.Parameters.SetFloat("TailTurnY", 0f);
+                AnimationController.Parameters.SetFloat("DigInDepth", 0f);
+                AnimationController.Parameters.SetFloat("DigInTailPhase", 0f);
+                AnimationController.Parameters.SetBool("IsEmbeddedInIce", false);
+                AnimationController.Parameters.SetFloat("BitingPhase", 0f);
             }
         }
 

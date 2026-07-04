@@ -58,6 +58,8 @@ namespace Game {
             Resources.Clear();
             Caches.Clear();
             Display.DeviceReset += Display_DeviceReset;
+            Storage.LoadContentStreamCallback = GetStream;
+            GltfLoader.LoadExternalStreamCallback = GetStream;
         }
 
         public static T Get<T>(string name) where T : class => Get(typeof(T), name, null, true) as T;
@@ -115,7 +117,7 @@ namespace Game {
                     //没有找到对应资源
                     return throwOnNotFound ? throw new Exception($"Not Found Res [{key}][{type.FullName}]") : null;
                 }
-                obj = reader.Get([.. contents]);
+                obj = reader.Get(contents.ToArray());
             }
             if (cacheList == null
                 && !Caches.TryGetValue(key, out cacheList)) {
@@ -125,6 +127,8 @@ namespace Game {
             cacheList.Add(obj);
             return obj;
         }
+
+        public static Stream GetStream(string path) => Resources.TryGetValue(path, out ContentInfo contentInfo) ? contentInfo.Duplicate() : null;
 
         public static void Add(ContentInfo contentInfo) {
             Resources.AddOrUpdate(contentInfo.AbsolutePath, contentInfo, (_, _) => contentInfo);

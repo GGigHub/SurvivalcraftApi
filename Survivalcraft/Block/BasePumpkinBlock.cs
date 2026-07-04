@@ -84,6 +84,9 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
+            TerrainGeometrySubset subsetAlphaTest = texture == null ? geometry.SubsetAlphaTest : geometry.GetGeometry(texture).SubsetAlphaTest;
             int data = Terrain.ExtractData(value);
             int size = GetSize(data);
             bool isDead = GetIsDead(data);
@@ -96,7 +99,7 @@ namespace Game {
                     m_blockMeshesBySize[size],
                     Color.White,
                     null,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
             }
             if (size == 0) {
@@ -108,7 +111,7 @@ namespace Game {
                     z,
                     new Color(160, 160, 160),
                     11,
-                    geometry.SubsetAlphaTest
+                    subsetAlphaTest
                 );
             }
             else if (size < 7
@@ -121,7 +124,7 @@ namespace Game {
                     z,
                     Color.White,
                     28,
-                    geometry.SubsetAlphaTest
+                    subsetAlphaTest
                 );
             }
         }
@@ -133,7 +136,13 @@ namespace Game {
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
             int size2 = GetSize(Terrain.ExtractData(value));
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshesBySize[size2], color, 2f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshesBySize[size2], color, 2f * size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshesBySize[size2], texture, color, 2f * size, ref matrix, environmentData);
+            }
         }
 
         public override int GetShadowStrength(int value) => GetSize(Terrain.ExtractData(value));

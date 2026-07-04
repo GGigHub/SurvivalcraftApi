@@ -67,6 +67,7 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
             Color color = GetHydration(Terrain.ExtractData(value)) ? new Color(180, 170, 150) : Color.White;
             generator.GenerateCubeVertices(
                 this,
@@ -84,7 +85,7 @@ namespace Game {
                 color,
                 color,
                 -1,
-                geometry.OpaqueSubsetsByFace
+                texture == null ? geometry.OpaqueSubsetsByFace : geometry.GetGeometry(texture).OpaqueSubsetsByFace
             );
         }
 

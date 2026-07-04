@@ -1,9 +1,9 @@
 namespace Game {
     public enum TimeOfDayMode {
-        Changing,
-        Day,
-        Night,
-        Sunrise,
-        Sunset
+        Changing = 0,
+        Day = 1,
+        Night = 2,
+        Sunrise = 3,
+        Sunset = 4
     }
 }

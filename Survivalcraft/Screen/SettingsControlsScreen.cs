@@ -29,6 +29,12 @@ namespace Game {
         public ButtonWidget m_keyboardMappingEntry;
         public ButtonWidget m_gamepadMappingEntry;
         public ButtonWidget m_CameraManageEntry;
+        public ButtonWidget m_vrControllerMappingEntry;
+        public ContainerWidget m_vrControllerMappingPanel;
+        public ButtonWidget m_vrLookControlModeButton;
+        public ContainerWidget m_vrLookControlModePanel;
+        public ButtonWidget m_vrMoveControlModeButton;
+        public ContainerWidget m_vrMoveControlModePanel;
 
         public const string fName = "SettingsControlsScreen";
 
@@ -61,6 +67,12 @@ namespace Game {
             m_keyboardMappingEntry = Children.Find<ButtonWidget>("KeyboardMappingEntry");
             m_gamepadMappingEntry = Children.Find<ButtonWidget>("GamepadMappingEntry");
             m_CameraManageEntry = Children.Find<ButtonWidget>("CameraManageEntry");
+            m_vrControllerMappingEntry = Children.Find<ButtonWidget>("VrControllerMappingEntry");
+            m_vrControllerMappingPanel = Children.Find<ContainerWidget>("VrControllerMappingPanel");
+            m_vrLookControlModeButton = Children.Find<ButtonWidget>("VrLookControlMode");
+            m_vrLookControlModePanel = Children.Find<ContainerWidget>("VrLookControlModePanel");
+            m_vrMoveControlModeButton = Children.Find<ButtonWidget>("VrMoveControlMode");
+            m_vrMoveControlModePanel = Children.Find<ContainerWidget>("VrMoveControlModePanel");
             m_horizontalCreativeFlightPanel.IsVisible = true;
         }
 
@@ -139,11 +151,26 @@ namespace Game {
             if (m_CameraManageEntry.IsClicked) {
                 ScreensManager.SwitchScreen("CameraManage");
             }
+            if (m_vrControllerMappingEntry.IsClicked) {
+                ScreensManager.SwitchScreen("VrControllerMapping");
+            }
+            if (m_vrLookControlModeButton.IsClicked) {
+                SettingsManager.VrLookControlMode = (VrLookControlMode)((int)(SettingsManager.VrLookControlMode + 1)
+                    % EnumUtils.GetEnumValues<VrLookControlMode>().Count);
+            }
+            if (m_vrMoveControlModeButton.IsClicked) {
+                SettingsManager.VrMoveControlMode = (VrMoveControlMode)((int)(SettingsManager.VrMoveControlMode + 1)
+                    % EnumUtils.GetEnumValues<VrMoveControlMode>().Count);
+            }
             if (m_AllowInitialIntro.IsClicked) {
                 SettingsManager.AllowInitialIntro = !SettingsManager.AllowInitialIntro;
             }
             m_moveControlModeButton.Text = LanguageControl.Get("MoveControlMode", SettingsManager.MoveControlMode.ToString());
             m_lookControlModeButton.Text = LanguageControl.Get("LookControlMode", SettingsManager.LookControlMode.ToString());
+            m_vrLookControlModeButton.Text = LanguageControl.Get("VrLookControlMode", SettingsManager.VrLookControlMode.ToString());
+            m_vrLookControlModePanel.IsVisible = VrManager.IsVrAvailable;
+            m_vrMoveControlModeButton.Text = LanguageControl.Get("VrMoveControlMode", SettingsManager.VrMoveControlMode.ToString());
+            m_vrMoveControlModePanel.IsVisible = VrManager.IsVrAvailable;
             m_leftHandedLayoutButton.Text = SettingsManager.LeftHandedLayout ? LanguageControl.On : LanguageControl.Off;
             m_flipVerticalAxisButton.Text = SettingsManager.FlipVerticalAxis ? LanguageControl.On : LanguageControl.Off;
             m_MemoryBankStyle.Text = SettingsManager.UsePrimaryMemoryBank
@@ -177,6 +204,8 @@ namespace Game {
             m_moveWidgetMarginXSlider.Text = $"{SettingsManager.MoveWidgetMarginX * 100f:F0}%";
             m_moveWidgetMarginYSlider.Value = SettingsManager.MoveWidgetMarginY;
             m_moveWidgetMarginYSlider.Text = $"{SettingsManager.MoveWidgetMarginY * 100f:F0}%";
+            m_vrControllerMappingPanel.IsVisible = VrManager.IsVrStarted
+                && (VrManager.IsControllerPresent(VrController.Left) || VrManager.IsControllerPresent(VrController.Right));
             if (Input.Back
                 || Input.Cancel
                 || Children.Find<ButtonWidget>("TopBar.Back").IsClicked) {

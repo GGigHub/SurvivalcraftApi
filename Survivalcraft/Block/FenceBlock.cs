@@ -310,6 +310,10 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subset = m_useAlphaTest
+                ? (texture == null ? geometry.SubsetAlphaTest : geometry.GetGeometry(texture).SubsetAlphaTest)
+                : (texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque);
             int data = Terrain.ExtractData(value);
             int variant = GetVariant(data);
             int? color = GetColor(data);
@@ -322,7 +326,7 @@ namespace Game {
                     m_coloredBlockMeshes[variant],
                     SubsystemPalette.GetColor(generator, color),
                     null,
-                    m_useAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque
+                    subset
                 );
             }
             else {
@@ -334,7 +338,7 @@ namespace Game {
                     m_blockMeshes[variant],
                     m_unpaintedColor,
                     null,
-                    m_useAlphaTest ? geometry.SubsetAlphaTest : geometry.SubsetOpaque
+                    subset
                 );
             }
         }
@@ -353,19 +357,38 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
+            Texture2D texture = GetDefaultTexture(value);
             int? color2 = GetColor(Terrain.ExtractData(value));
             if (color2.HasValue) {
-                BlocksManager.DrawMeshBlock(
-                    primitivesRenderer,
-                    m_standaloneColoredBlockMesh,
-                    color * SubsystemPalette.GetColor(environmentData, color2),
-                    size,
-                    ref matrix,
-                    environmentData
-                );
+                if (texture == null) {
+                    BlocksManager.DrawMeshBlock(
+                        primitivesRenderer,
+                        m_standaloneColoredBlockMesh,
+                        color * SubsystemPalette.GetColor(environmentData, color2),
+                        size,
+                        ref matrix,
+                        environmentData
+                    );
+                }
+                else {
+                    BlocksManager.DrawMeshBlock(
+                        primitivesRenderer,
+                        m_standaloneColoredBlockMesh,
+                        texture,
+                        color * SubsystemPalette.GetColor(environmentData, color2),
+                        size,
+                        ref matrix,
+                        environmentData
+                    );
+                }
             }
             else {
-                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color * m_unpaintedColor, size, ref matrix, environmentData);
+                if (texture == null) {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color * m_unpaintedColor, size, ref matrix, environmentData);
+                }
+                else {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color * m_unpaintedColor, size, ref matrix, environmentData);
+                }
             }
         }
 

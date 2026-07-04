@@ -103,6 +103,8 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
             int num = Terrain.ExtractData(value);
             if (num < m_matricesByData.Length) {
                 int humidity = generator.Terrain.GetHumidity(x, z);
@@ -117,7 +119,7 @@ namespace Game {
                     m_caseMesh,
                     Color.White,
                     matrix,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
                 generator.GenerateMeshVertices(
                     this,
@@ -127,7 +129,7 @@ namespace Game {
                     m_pointerMesh,
                     Color.White,
                     value2,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
                 generator.GenerateWireVertices(
                     value,
@@ -137,7 +139,7 @@ namespace Game {
                     num & 3,
                     0.25f,
                     Vector2.Zero,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
             }
         }
@@ -148,6 +150,7 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
+            Texture2D texture = GetDefaultTexture(value);
             float num = 8f;
             if (environmentData != null
                 && environmentData.SubsystemTerrain != null) {
@@ -167,8 +170,14 @@ namespace Game {
             float radians = MathUtils.Lerp(1.5f, -1.5f, num / 15f);
             Matrix matrix2 = Matrix.CreateScale(7f * size) * Matrix.CreateTranslation(0f, -0.1f, 0f) * matrix;
             Matrix matrix3 = m_invPointerMatrix * Matrix.CreateRotationX(radians) * m_pointerMatrix * matrix2;
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_caseMesh, color, 1f, ref matrix2, environmentData);
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_pointerMesh, color, 1f, ref matrix3, environmentData);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_caseMesh, color, 1f, ref matrix2, environmentData);
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_pointerMesh, color, 1f, ref matrix3, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_caseMesh, texture, color, 1f, ref matrix2, environmentData);
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_pointerMesh, texture, color, 1f, ref matrix3, environmentData);
+            }
         }
     }
 }

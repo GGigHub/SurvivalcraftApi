@@ -1,0 +1,45 @@
+{
+    "name": "Human",
+    "layers": {
+        "Base": {
+            "index": 0,
+            "blendMode": "Override"
+        },
+        "Activity": {
+            "index": 1,
+            "blendMode": "Additive",
+            "boneMask": [ "Hand1", "Hand2" ]
+        },
+        "Ride": {
+            "index": 2,
+            "blendMode": "Override"
+        },
+        "Death": {
+            "index": 3,
+            "blendMode": "Override"
+        }
+    },
+    "stateTracks": {
+        "Locomotion": {
+            "type": "Enum",
+            "defaultValue": "Idle",
+            "enumValues": [ "Idle", "Walk", "Fly" ]
+        },
+        "Activity": {
+            "type": "Enum",
+            "defaultValue": "None",
+            "enumValues": [ "None", "Attack", "Aim" ]
+        },
+        "Ride": {
+            "type": "Enum",
+            "defaultValue": "None",
+            "enumValues": [ "None", "Riding" ]
+        },
+        "Death": {
+            "type": "Float",
+            "defaultValue": 0,
+            "minValue": 0,
+            "maxValue": 1
+        }
+    }
+}

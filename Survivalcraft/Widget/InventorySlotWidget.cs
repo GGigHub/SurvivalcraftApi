@@ -87,6 +87,13 @@ namespace Game {
                             m_gameWidget = gameWidget;
                             break;
                         }
+                        // In VR mode GuiWidget is reparented to VrGuiRootWidget (detached
+                        // from GameWidget.Children), so walk up stops at VrGuiRootWidget
+                        // without finding GameWidget. Use the stored reference instead.
+                        if (parentWidget is VrGuiRootWidget vrRoot && vrRoot.OwnerGameWidget != null) {
+                            m_gameWidget = vrRoot.OwnerGameWidget;
+                            break;
+                        }
                     }
                 }
                 return m_gameWidget;
@@ -95,9 +102,7 @@ namespace Game {
 
         public virtual DragHostWidget DragHostWidget {
             get {
-                if (m_dragHostWidget == null) {
-                    m_dragHostWidget = GameWidget?.Children.Find<DragHostWidget>(false);
-                }
+                m_dragHostWidget ??= GameWidget?.FindChild<DragHostWidget>(false);
                 return m_dragHostWidget;
             }
         }

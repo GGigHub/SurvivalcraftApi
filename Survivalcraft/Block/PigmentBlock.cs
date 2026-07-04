@@ -17,7 +17,7 @@ namespace Game {
                 value,
                 size,
                 ref matrix,
-                null,
+                GetDefaultTexture(value),
                 color * SubsystemPalette.GetColor(environmentData, value2),
                 false,
                 environmentData

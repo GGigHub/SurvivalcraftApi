@@ -9,7 +9,7 @@ namespace Game {
         public static List<VersionConverter> m_versionConverters;
 
         public enum Platform {
-            Windows, Android, Linux, Other, Browser, IOS
+            Windows = 0, Android = 1, Linux = 2, Other = 3, Browser = 4, IOS = 5
         }
 
         public static string PlatformString => CurrentPlatform.ToString();

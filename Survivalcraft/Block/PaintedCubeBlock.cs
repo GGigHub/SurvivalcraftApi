@@ -15,6 +15,7 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
             int data = Terrain.ExtractData(value);
             Color color = SubsystemPalette.GetColor(generator, GetColor(data));
             generator.GenerateCubeVertices(
@@ -24,7 +25,7 @@ namespace Game {
                 y,
                 z,
                 color,
-                geometry.OpaqueSubsetsByFace
+                texture == null ? geometry.OpaqueSubsetsByFace : geometry.GetGeometry(texture).OpaqueSubsetsByFace
             );
         }
 
@@ -36,15 +37,30 @@ namespace Game {
             DrawBlockEnvironmentData environmentData) {
             int data = Terrain.ExtractData(value);
             color *= SubsystemPalette.GetColor(environmentData, GetColor(data));
-            BlocksManager.DrawCubeBlock(
-                primitivesRenderer,
-                value,
-                new Vector3(size),
-                ref matrix,
-                color,
-                color,
-                environmentData
-            );
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size),
+                    ref matrix,
+                    color,
+                    color,
+                    environmentData
+                );
+            }
+            else {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size),
+                    ref matrix,
+                    color,
+                    color,
+                    environmentData,
+                    texture
+                );
+            }
         }
 
         public override IEnumerable<int> GetCreativeValues() {

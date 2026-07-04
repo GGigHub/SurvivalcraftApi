@@ -56,6 +56,7 @@ namespace Game {
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
             int num = Terrain.ExtractData(value);
             if (num < m_blockMeshesByData.Length) {
+                Texture2D texture = GetDefaultTexture(value);
                 generator.GenerateShadedMeshVertices(
                     this,
                     x,
@@ -65,7 +66,7 @@ namespace Game {
                     Color.White,
                     null,
                     null,
-                    geometry.SubsetAlphaTest
+                    texture == null ? geometry.SubsetAlphaTest : geometry.GetGeometry(texture).SubsetAlphaTest
                 );
             }
         }
@@ -76,7 +77,13 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color, size, ref matrix, environmentData);
+            }
         }
 
         public override BlockPlacementData GetPlacementValue(SubsystemTerrain subsystemTerrain,

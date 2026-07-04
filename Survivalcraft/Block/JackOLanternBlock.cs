@@ -90,6 +90,8 @@ namespace Game {
         public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value) => m_collisionBoxes;
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetAlphaTest = texture == null ? geometry.SubsetAlphaTest : geometry.GetGeometry(texture).SubsetAlphaTest;
             int num = Terrain.ExtractData(value);
             if (num < m_blockMeshesByData.Length) {
                 generator.GenerateMeshVertices(
@@ -100,7 +102,7 @@ namespace Game {
                     m_blockMeshesByData[num],
                     Color.White,
                     null,
-                    geometry.SubsetAlphaTest
+                    subsetAlphaTest
                 );
             }
         }
@@ -111,7 +113,13 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 2f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 2f * size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color, 2f * size, ref matrix, environmentData);
+            }
         }
 
         public override bool IsMovableByPiston(int value, int pistonFace, int y, out bool isEnd) {

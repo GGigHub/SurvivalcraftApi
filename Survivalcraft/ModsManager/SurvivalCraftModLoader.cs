@@ -27,6 +27,9 @@ namespace Game {
             KeyCompatibleGroupsManager.AddKeyToCompatibleGroup("Group_Crouch", "ToggleCrouch", "MoveDown");
             KeyCompatibleGroupsManager.AddKeyToCompatibleGroup("Group_Action", "Dig", "Hit");
             KeyCompatibleGroupsManager.AddKeyToCompatibleGroup("Group_Interact", "Interact", "Aim");
+            // VR controller compatible groups
+            KeyCompatibleGroupsManager.AddKeyToCompatibleGroup("Group_VrInteract", "VrInteract", "VrAim");
+            KeyCompatibleGroupsManager.AddKeyToCompatibleGroup("Group_VrHit", "VrHit", "VrDig");
             //若需要添加一个使用鼠标左键但与挖掘、攻击兼容的按键Fire，将其添加至对应的组Group_Action即可。代码如下：
             //KeyCompatibleGroupsManager.AddKeyToCompatibleGroup("Group_Action","Fire");
         }

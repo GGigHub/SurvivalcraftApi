@@ -1,5 +1,6 @@
 using Engine;
 using Engine.Graphics;
+using Engine.Media;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -37,17 +38,47 @@ namespace Game {
 
         public static ModelShader ShaderAlphaTested;
 
+        // Skinned shaders for skeletal animation
+        public static ModelShader ShaderSkinnedOpaque;
+
+        public static ModelShader ShaderSkinnedAlphaTested;
+
         public ModelShader m_shaderOpaque;
 
         public ModelShader m_shaderAlphaTested;
 
-        public int MaxInstancesCount;
+        public ModelShader m_shaderSkinnedOpaque;
+
+        public ModelShader m_shaderSkinnedAlphaTested;
+
+        /// <summary>
+        /// 自定义渲染器实例（由模组设置）
+        /// </summary>
+        public ICustomModelRenderer CustomRenderer;
+
+        /// <summary>
+        /// 是否使用自定义渲染（由 Mod 设置）
+        /// </summary>
+        public bool UseCustomRendering;
+
+        /// <summary>
+        /// Maximum number of joints per model for GPU skinning (Uniform-based).
+        /// Determined by GL_MAX_VERTEX_UNIFORM_VECTORS at runtime.
+        /// </summary>
+        public static int MaxJointsCount { get; private set; } = 64;
+
+        public int MaxInstancesCount = 32;
 
         public Dictionary<ComponentModel, ModelData> m_componentModels = [];
 
         public List<ModelData> m_modelsToPrepare = [];
 
         public List<ModelData>[] m_modelsToDraw = [[], [], [], []];
+
+        // Pre-allocated buffers for skinning (avoid GC pressure)
+        public Matrix[] m_jointMatricesBuffer;
+        public readonly List<ModelData> m_nonSkinnedModelsBuffer = [];
+        public readonly List<ModelData> m_skinnedModelsBuffer = [];
 
         public static bool DisableDrawingModels = false;
 
@@ -87,9 +118,20 @@ namespace Game {
                         }
                     }
                     m_modelsToPrepare.Sort();
-                    foreach (ModelData item in m_modelsToPrepare) {
-                        PrepareModel(item, camera);
-                        m_modelsToDraw[(int)item.ComponentModel.RenderingMode].Add(item);
+                    if (UseCustomRendering && CustomRenderer != null) {
+                        // 自定义渲染：不走 m_modelsToDraw，自定义渲染器管理自己的队列
+                        foreach (ModelData item in m_modelsToPrepare) {
+                            PrepareModel(item, camera);
+                        }
+                        CustomRenderer.BeginFrame(camera, m_modelsToPrepare);
+                        ModelsDrawn += m_modelsToPrepare.Count;
+                    }
+                    else {
+                        // 标准路径
+                        foreach (ModelData item in m_modelsToPrepare) {
+                            PrepareModel(item, camera);
+                            m_modelsToDraw[(int)item.ComponentModel.RenderingMode].Add(item);
+                        }
                     }
                 }
             }
@@ -106,34 +148,51 @@ namespace Game {
                 if (!skipped) {
                     if (drawOrder == m_drawOrders[1]) //绘制类型为AlphaThreshold的Model
                     {
-                        Display.DepthStencilState = DepthStencilState.Default;
-                        Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
-                        Display.BlendState = BlendState.Opaque;
-                        DrawModels(camera, m_modelsToDraw[0], null);
-                        Display.RasterizerState = RasterizerState.CullNoneScissor;
-                        DrawModels(camera, m_modelsToDraw[1], 0f);
-                        Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
-                        m_primitivesRenderer.Flush(camera.ProjectionMatrix, true, 0);
+                        if (UseCustomRendering && CustomRenderer != null) {
+                            CustomRenderer.RenderOpaquePass();
+                        }
+                        else {
+                            Display.DepthStencilState = DepthStencilState.Default;
+                            Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
+                            Display.BlendState = BlendState.Opaque;
+                            DrawModels(camera, m_modelsToDraw[0], null);
+                            Display.RasterizerState = RasterizerState.CullNoneScissor;
+                            DrawModels(camera, m_modelsToDraw[1], 0f);
+                            Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
+                            m_primitivesRenderer.Flush(camera.ProjectionMatrix, true, 0);
+                        }
                     }
                     else if (drawOrder == m_drawOrders[2]) //绘制TransparentBeforeWater的Model
                     {
-                        Display.DepthStencilState = DepthStencilState.Default;
-                        Display.RasterizerState = RasterizerState.CullNoneScissor;
-                        Display.BlendState = BlendState.AlphaBlend;
-                        DrawModels(camera, m_modelsToDraw[2], null);
+                        if (UseCustomRendering && CustomRenderer != null) {
+                            // 自定义渲染在 drawOrders[3](201) 统一处理，此处跳过
+                        }
+                        else {
+                            Display.DepthStencilState = DepthStencilState.Default;
+                            Display.RasterizerState = RasterizerState.CullNoneScissor;
+                            Display.BlendState = BlendState.AlphaBlend;
+                            DrawModels(camera, m_modelsToDraw[2], null);
+                        }
                     }
                     else if (drawOrder == m_drawOrders[3]) //绘制TransparentAfterWater的Model
                     {
-                        Display.DepthStencilState = DepthStencilState.Default;
-                        Display.RasterizerState = RasterizerState.CullNoneScissor;
-                        Display.BlendState = BlendState.AlphaBlend;
-                        DrawModels(camera, m_modelsToDraw[3], null);
-                        if (ShaderOpaque != null
-                            && ShaderAlphaTested != null) {
+                        if (UseCustomRendering && CustomRenderer != null) {
+                            CustomRenderer.RenderTransparentPass(underwater: false);
+                            CustomRenderer.RenderTransparentPass(underwater: true);
                             m_primitivesRenderer.Flush(camera.ProjectionMatrix);
                         }
                         else {
-                            m_primitivesRenderer.Flush(camera.ProjectionMatrix);
+                            Display.DepthStencilState = DepthStencilState.Default;
+                            Display.RasterizerState = RasterizerState.CullNoneScissor;
+                            Display.BlendState = BlendState.AlphaBlend;
+                            DrawModels(camera, m_modelsToDraw[3], null);
+                            if (ShaderOpaque != null
+                                && ShaderAlphaTested != null) {
+                                m_primitivesRenderer.Flush(camera.ProjectionMatrix);
+                            }
+                            else {
+                                m_primitivesRenderer.Flush(camera.ProjectionMatrix);
+                            }
                         }
                     }
                 }
@@ -148,6 +207,17 @@ namespace Game {
             m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
             m_subsystemSky = Project.FindSubsystem<SubsystemSky>(true);
             m_subsystemShadows = Project.FindSubsystem<SubsystemShadows>(true);
+            // Dynamic uniform budget calculation
+            // Non-array vertex shader uniforms: 12 vec4 (material, lights, fog, glymul)
+            // Skinned shader has 8 extra vec4 (2 fixed mat4: world[1] + wvp[1])
+            // Safety margin: 4 vec4 for driver overhead
+            const int NonArrayOverhead = 12;
+            const int SkinnedExtraOverhead = 8;
+            const int SafetyMargin = 4;
+            int available = GLWrapper.GL_MAX_VERTEX_UNIFORM_VECTORS - NonArrayOverhead - SafetyMargin;
+            MaxInstancesCount = Math.Clamp(available / 8, 1, 64);
+            MaxJointsCount = Math.Clamp((available - SkinnedExtraOverhead) / 4, 1, 128);
+            m_jointMatricesBuffer = new Matrix[MaxJointsCount];
             ModsManager.HookAction(
                 "GetMaxInstancesCount",
                 modLoader => {
@@ -155,6 +225,7 @@ namespace Game {
                     return false;
                 }
             );
+            // Non-skinned shaders
             m_shaderOpaque = new ModelShader(
                 ShaderCodeManager.GetFast("Shaders/Model.vsh"),
                 ShaderCodeManager.GetFast("Shaders/Model.psh"),
@@ -166,6 +237,22 @@ namespace Game {
                 ShaderCodeManager.GetFast("Shaders/Model.psh"),
                 true,
                 MaxInstancesCount
+            );
+            // Skinned shaders: maxInstancesCount=1 because skinned models never batch
+            // This frees uniform space for more joints
+            m_shaderSkinnedOpaque = new ModelShader(
+                ShaderCodeManager.GetFast("Shaders/Model.vsh"),
+                ShaderCodeManager.GetFast("Shaders/Model.psh"),
+                false,
+                1,
+                MaxJointsCount
+            );
+            m_shaderSkinnedAlphaTested = new ModelShader(
+                ShaderCodeManager.GetFast("Shaders/Model.vsh"),
+                ShaderCodeManager.GetFast("Shaders/Model.psh"),
+                true,
+                1,
+                MaxJointsCount
             );
         }
 
@@ -202,7 +289,27 @@ namespace Game {
         }
 
         public virtual void DrawModels(Camera camera, List<ModelData> modelsData, float? alphaThreshold) {
-            DrawInstancedModels(camera, modelsData, alphaThreshold);
+            // Separate skinned and non-skinned models (use pre-allocated buffers)
+            m_nonSkinnedModelsBuffer.Clear();
+            m_skinnedModelsBuffer.Clear();
+
+            foreach (var modelData in modelsData) {
+                if (modelData.ComponentModel.Model?.HasSkin == true) {
+                    m_skinnedModelsBuffer.Add(modelData);
+                } else {
+                    m_nonSkinnedModelsBuffer.Add(modelData);
+                }
+            }
+
+            if (m_nonSkinnedModelsBuffer.Count > 0) {
+                DrawInstancedModels(camera, m_nonSkinnedModelsBuffer, alphaThreshold);
+            }
+            foreach (var skinnedModel in m_skinnedModelsBuffer) {
+                DrawSkinnedModel(camera, skinnedModel, alphaThreshold);
+            }
+
+
+            // Draw extras (shadows, etc.)
             DrawModelsExtras(camera, modelsData);
         }
 
@@ -222,7 +329,7 @@ namespace Game {
             modelShader.WorldUp = Vector3.TransformNormal(Vector3.UnitY, camera.ViewMatrix);
             modelShader.Transforms.View = Matrix.Identity;
             modelShader.Transforms.Projection = camera.ProjectionMatrix;
-            modelShader.SamplerState = SamplerState.PointClamp;
+            // SamplerState 会在每个模型绘制时根据模型类型设置
             if (alphaThreshold.HasValue) {
                 modelShader.AlphaThreshold = alphaThreshold.Value;
             }
@@ -252,35 +359,70 @@ namespace Game {
                 );
                 if (!skipDrawing) {
                     ComponentModel componentModel = modelsDatum.ComponentModel;
-                    if (componentModel.TextureOverride == null) {
-                        continue;
-                    }
-                    Vector3 v = componentModel.DiffuseColor ?? Vector3.One;
-                    float num = componentModel.Opacity ?? 1f;
+                    Model model = componentModel.Model;
+
+                    // 设置通用着色器参数
                     modelShader.InstancesCount = componentModel.AbsoluteBoneTransformsForCamera.Length;
-                    modelShader.MaterialColor = new Vector4(v * num, num);
                     modelShader.EmissionColor = componentModel.EmissionColor ?? Vector4.Zero;
                     modelShader.AmbientLightColor = new Vector3(LightingManager.LightAmbient * modelsDatum.Light);
                     modelShader.DiffuseLightColor1 = new Vector3(modelsDatum.Light);
                     modelShader.DiffuseLightColor2 = new Vector3(modelsDatum.Light);
-                    modelShader.Texture = componentModel.TextureOverride;
+
                     Array.Copy(
                         componentModel.AbsoluteBoneTransformsForCamera,
                         modelShader.Transforms.World,
                         componentModel.AbsoluteBoneTransformsForCamera.Length
                     );
-                    InstancedModelData instancedModelData = InstancedModelsManager.GetInstancedModelData(
-                        componentModel.Model,
+
+                    // 获取按材质分组的实例化数据
+                    Dictionary<int, InstancedModelData> dataByMaterial = InstancedModelsManager.GetInstancedModelDataByMaterial(
+                        model,
                         componentModel.MeshDrawOrders
                     );
-                    Display.DrawIndexed(
-                        PrimitiveType.TriangleList,
-                        modelShader,
-                        instancedModelData.VertexBuffer,
-                        instancedModelData.IndexBuffer,
-                        0,
-                        instancedModelData.IndexBuffer.IndicesCount
-                    );
+
+                    // 按材质分别绘制
+                    foreach (var kvp in dataByMaterial) {
+                        int materialIndex = kvp.Key;
+                        InstancedModelData instancedData = kvp.Value;
+                        ModelMaterial material = materialIndex >= 0 ? model.GetMaterial(materialIndex) : null;
+
+                        // 设置材质颜色
+                        Vector4 baseColor;
+                        if (componentModel.DiffuseColor.HasValue) {
+                            baseColor = new Vector4(componentModel.DiffuseColor.Value, 1f);
+                        } else if (material != null) {
+                            baseColor = material.BaseColorFactor;
+                        } else {
+                            baseColor = model?.GetDefaultBaseColorFactor() ?? Vector4.One;
+                        }
+                        float opacity = componentModel.Opacity ?? baseColor.W;
+                        modelShader.MaterialColor = new Vector4(new Vector3(baseColor.X, baseColor.Y, baseColor.Z) * opacity, opacity);
+
+                        // 设置纹理
+                        if (componentModel.TextureOverride != null) {
+                            modelShader.Texture = componentModel.TextureOverride;
+                            modelShader.SamplerState = SamplerState.PointClamp;
+                        } else {
+                            int texIndex = material?.BaseColorTexture?.TextureIndex ?? -1;
+                            if (texIndex >= 0) {
+                                Texture2D texture = model.GetTexture(texIndex);
+                                modelShader.Texture = texture;
+                                modelShader.SamplerState = texture.SamplerState;
+                            } else {
+                                modelShader.Texture = Model.DefaultWhiteTexture;
+                                modelShader.SamplerState = SamplerState.PointClamp;
+                            }
+                        }
+
+                        Display.DrawIndexed(
+                            PrimitiveType.TriangleList,
+                            modelShader,
+                            instancedData.VertexBuffer,
+                            instancedData.IndexBuffer,
+                            0,
+                            instancedData.IndexBuffer.IndicesCount
+                        );
+                    }
                     ModelsDrawn++;
                 }
                 //画名称
@@ -294,6 +436,105 @@ namespace Game {
             }
         }
 
+        /// <summary>
+        /// Draw a single skinned model with GPU skinning
+        /// </summary>
+        public virtual void DrawSkinnedModel(Camera camera, ModelData modelData, float? alphaThreshold) {
+            ComponentModel componentModel = modelData.ComponentModel;
+            Model model = componentModel.Model;
+
+            if (model?.Skin == null) return;
+
+            // Select skinned shader
+            ModelShader skinnedShader = ShaderSkinnedOpaque != null && ShaderSkinnedAlphaTested != null
+                ? alphaThreshold.HasValue ? ShaderSkinnedAlphaTested : ShaderSkinnedOpaque
+                : alphaThreshold.HasValue ? m_shaderSkinnedAlphaTested : m_shaderSkinnedOpaque;
+
+            // Set shader parameters
+            skinnedShader.LightDirection1 = -Vector3.TransformNormal(LightingManager.DirectionToLight1, camera.ViewMatrix);
+            skinnedShader.LightDirection2 = -Vector3.TransformNormal(LightingManager.DirectionToLight2, camera.ViewMatrix);
+            skinnedShader.FogColor = new Vector3(m_subsystemSky.ViewFogColor);
+            skinnedShader.FogBottomTopDensity = new Vector3(
+                m_subsystemSky.ViewFogBottom - camera.ViewPosition.Y,
+                m_subsystemSky.ViewFogTop - camera.ViewPosition.Y,
+                m_subsystemSky.ViewFogDensity
+            );
+            skinnedShader.HazeStartDensity = new Vector2(m_subsystemSky.ViewHazeStart, m_subsystemSky.ViewHazeDensity);
+            skinnedShader.FogYMultiplier = m_subsystemSky.VisibilityRangeYMultiplier;
+            skinnedShader.WorldUp = Vector3.TransformNormal(Vector3.UnitY, camera.ViewMatrix);
+            // 蒙皮模型：World[0] 设置为 ViewMatrix，View 设置为 Identity
+            // 这样 u_worldMatrix[0] 能将世界空间坐标转换到视图空间（用于雾效计算）
+            // 同时 WorldViewProjection = ViewMatrix * Projection 是正确的
+            skinnedShader.Transforms.World[0] = camera.ViewMatrix;
+            skinnedShader.Transforms.View = Matrix.Identity;
+            skinnedShader.Transforms.Projection = camera.ProjectionMatrix;
+
+            if (alphaThreshold.HasValue) {
+                skinnedShader.AlphaThreshold = alphaThreshold.Value;
+            }
+
+            skinnedShader.InstancesCount = 1; // Skinned models use single instance
+            skinnedShader.EmissionColor = componentModel.EmissionColor ?? Vector4.Zero;
+            skinnedShader.AmbientLightColor = new Vector3(LightingManager.LightAmbient * modelData.Light);
+            skinnedShader.DiffuseLightColor1 = new Vector3(modelData.Light);
+            skinnedShader.DiffuseLightColor2 = new Vector3(modelData.Light);
+
+            // Calculate joint matrices for GPU skinning
+            // Reference: Plan/GPUSkinningPitfalls.md
+            Matrix invertedView = camera.InvertedViewMatrix;
+            int jointCount = CalculateJointMatrices(componentModel, model, invertedView, m_jointMatricesBuffer);
+            skinnedShader.JointMatrices = m_jointMatricesBuffer;
+
+            // Draw model meshes directly (not using InstancedModelsManager which doesn't support skinned vertices)
+            foreach (int meshIndex in componentModel.MeshDrawOrders) {
+                ModelMesh mesh = model.Meshes[meshIndex];
+                foreach (ModelMeshPart meshPart in mesh.MeshParts) {
+                    if (meshPart.IndicesCount == 0) continue;
+
+                    // 获取该 mesh part 的材质
+                    int materialIndex = meshPart.MaterialIndex;
+                    ModelMaterial material = materialIndex >= 0 ? model.GetMaterial(materialIndex) : null;
+
+                    // 设置材质颜色
+                    Vector4 baseColor;
+                    if (componentModel.DiffuseColor.HasValue) {
+                        baseColor = new Vector4(componentModel.DiffuseColor.Value, 1f);
+                    } else if (material != null) {
+                        baseColor = material.BaseColorFactor;
+                    } else {
+                        baseColor = model.GetDefaultBaseColorFactor() ?? Vector4.One;
+                    }
+                    float opacity = componentModel.Opacity ?? baseColor.W;
+                    skinnedShader.MaterialColor = new Vector4(new Vector3(baseColor.X, baseColor.Y, baseColor.Z) * opacity, opacity);
+
+                    // 设置纹理
+                    if (componentModel.TextureOverride != null) {
+                        skinnedShader.Texture = componentModel.TextureOverride;
+                    } else {
+                        int texIndex = material?.BaseColorTexture?.TextureIndex ?? -1;
+                        if (texIndex >= 0) {
+                            skinnedShader.Texture = model.GetTexture(texIndex);
+                        } else {
+                            skinnedShader.Texture = Model.DefaultWhiteTexture;
+                        }
+                    }
+
+                    // 设置采样器
+                    skinnedShader.SamplerState = model.GetDefaultSamplerState() ?? SamplerState.LinearWrap;
+
+                    Display.DrawIndexed(
+                        PrimitiveType.TriangleList,
+                        skinnedShader,
+                        meshPart.VertexBuffer,
+                        meshPart.IndexBuffer,
+                        meshPart.StartIndex,
+                        meshPart.IndicesCount
+                    );
+                }
+            }
+            ModelsDrawn++;
+        }
+
         public virtual void DrawModelsExtras(Camera camera, List<ModelData> modelsData) {
             foreach (ModelData modelData in modelsData) {
                 if (modelData.ComponentBody != null
@@ -305,6 +546,52 @@ namespace Game {
                 }
                 modelData.ComponentModel.DrawExtras(camera);
             }
+        }
+
+        /// <summary>
+        /// 计算骨骼矩阵用于 GPU skinning
+        /// </summary>
+        /// <param name="componentModel">模型组件</param>
+        /// <param name="model">模型对象</param>
+        /// <param name="invertedView">反转的视图矩阵</param>
+        /// <param name="output">输出缓冲区</param>
+        /// <returns>实际计算的骨骼数量</returns>
+        public static int CalculateJointMatrices(ComponentModel componentModel, Model model, Matrix invertedView, Span<Matrix> output) {
+            ModelSkin skin = model.Skin;
+            int jointCount = Math.Min(skin.JointCount, output.Length);
+
+            if (skin.JointCount > output.Length) {
+                Log.Warning($"Model has {skin.JointCount} joints, but output buffer only fits {output.Length}. Visual artifacts may occur.");
+            }
+
+            // Get root bone transform (coordinate conversion) and its inverse
+            Matrix rootBoneTransform = model.RootBone.Transform;
+            Matrix invRootBoneTransform = Matrix.Invert(rootBoneTransform);
+
+            for (int i = 0; i < jointCount; i++) {
+                if (i < skin.Joints.Count && skin.Joints[i] != null) {
+                    ModelBone joint = skin.Joints[i];
+
+                    // Step 1: Get joint world transform (in game space, includes entity position)
+                    Matrix jointWorld = componentModel.AbsoluteBoneTransformsForCamera[joint.Index] * invertedView;
+
+                    // Step 2: Convert to glTF space (remove root bone's coordinate conversion)
+                    Matrix jointWorldGlTF = jointWorld * invRootBoneTransform;
+
+                    // Step 3: Get inverse bind matrix (in glTF space)
+                    Matrix inverseBind = i < skin.InverseBindMatrices?.Length
+                        ? skin.InverseBindMatrices[i]
+                        : Matrix.Identity;
+
+                    // Step 4: Calculate joint matrix
+                    // jointMatrix = inverseBind * jointWorldGlTF * rootBoneTransform
+                    output[i] = inverseBind * jointWorldGlTF * rootBoneTransform;
+                } else {
+                    output[i] = Matrix.Identity;
+                }
+            }
+
+            return jointCount;
         }
 
         public virtual float? CalculateModelLight(ModelData modelData) {

@@ -81,11 +81,19 @@ namespace Game {
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
-            BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 2f * size, ref matrix, environmentData);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 2f * size, ref matrix, environmentData);
+            }
+            else {
+                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color, 2f * size, ref matrix, environmentData);
+            }
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
             int num = Terrain.ExtractData(value) & 0x1F;
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
             generator.GenerateMeshVertices(
                 this,
                 x,
@@ -94,7 +102,7 @@ namespace Game {
                 m_blockMeshes[num],
                 Color.White,
                 null,
-                geometry.SubsetOpaque
+                subsetOpaque
             );
             generator.GenerateWireVertices(
                 value,
@@ -104,7 +112,7 @@ namespace Game {
                 GetFace(value),
                 m_centerBoxSize,
                 Vector2.Zero,
-                geometry.SubsetOpaque
+                subsetOpaque
             );
         }
 

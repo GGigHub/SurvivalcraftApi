@@ -109,6 +109,8 @@ namespace Engine {
             );
         }
 
+        public static Quaternion CreateFromYawPitchRoll(Vector3 vector3) => CreateFromYawPitchRoll(vector3.X, vector3.Y, vector3.Z);
+
         public static float Dot(Quaternion q1, Quaternion q2) => q1.X * q2.X + q1.Y * q2.Y + q1.Z * q2.Z + q1.W * q2.W;
 
         public static Quaternion Inverse(Quaternion q) {

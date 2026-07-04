@@ -19,6 +19,7 @@ namespace Game {
         public static RenderTarget2D m_uiRenderTarget;
         public static Vector3 m_vrQuadPosition;
         public static Matrix m_vrQuadMatrix;
+        static bool m_vrQuadInitialized;
         public static float DebugUiScale = 1f;
 
         public static ContainerWidget RootWidget { get; set; }
@@ -113,7 +114,58 @@ namespace Game {
 
         public static void Draw() {
             Utilities.Dispose(ref m_uiRenderTarget);
+
+            if (VrManager.IsFrameActive && CurrentScreen is not GameScreen) {
+                RenderVrMenu();
+#if ANDROID
+                return;
+#endif
+            }
             LayoutAndDrawWidgets();
+        }
+
+        static void RenderVrMenu() {
+            int vrW = VrManager.SwapchainWidth;
+            int vrH = VrManager.SwapchainHeight;
+#if WINDOWS
+            Point2 desktopSize = Display.BackbufferSize;
+#else
+            // Android VR: use fixed 1280x720 UI resolution
+            Point2 desktopSize = new(1280, 720);
+#endif
+            float desktopAspect = (float)desktopSize.X / desktopSize.Y;
+            float vrAspect = (float)vrW / vrH;
+            int rtW, rtH;
+            if (desktopAspect > vrAspect) {
+                rtW = vrW;
+                rtH = (int)MathF.Ceiling(vrW / desktopAspect);
+            }
+            else {
+                rtH = vrH;
+                rtW = (int)MathF.Ceiling(vrH * desktopAspect);
+            }
+
+            if (m_uiRenderTarget == null
+                || m_uiRenderTarget.Width != rtW
+                || m_uiRenderTarget.Height != rtH) {
+                Utilities.Dispose(ref m_uiRenderTarget);
+                m_uiRenderTarget = new RenderTarget2D(rtW, rtH, 1, ColorFormat.Rgba8888, DepthFormat.Depth24Stencil8);
+            }
+
+            Display.RenderTarget = m_uiRenderTarget;
+            Display.Clear(Color.Transparent, 1f, 0);
+            LayoutAndDrawWidgets();
+            Display.RenderTarget = null;
+
+            AnimateVrQuad();
+
+            if (!m_vrQuadInitialized) return;
+
+            VrManager.RenderToEyes((vrEye, eyeFrame) => {
+                DrawVrBackground();
+                DrawVrQuad();
+                m_pr3.Flush(eyeFrame.ViewMatrix * eyeFrame.ProjectionMatrix);
+            });
         }
 
         public static void UpdateAnimation() {
@@ -198,11 +250,14 @@ namespace Game {
         public static void AnimateVrQuad() {
             if (Time.FrameIndex >= 5) {
                 float num = 6f;
-                Matrix hmdMatrix = Matrix.Identity;
+                Matrix hmdMatrix = VrManager.HmdMatrix;
+                Vector3 hmdForward = hmdMatrix.Forward * new Vector3(1f, 0f, 1f);
+                if (hmdForward.LengthSquared() < 0.001f) return;
                 Vector3 vector = hmdMatrix.Translation
-                    + num * (Vector3.Normalize(hmdMatrix.Forward * new Vector3(1f, 0f, 1f)) + new Vector3(0f, 0.1f, 0f));
-                if (m_vrQuadPosition == Vector3.Zero) {
+                    + num * (Vector3.Normalize(hmdForward) + new Vector3(0f, 0.1f, 0f));
+                if (!m_vrQuadInitialized) {
                     m_vrQuadPosition = vector;
+                    m_vrQuadInitialized = true;
                 }
                 if (Vector3.Distance(m_vrQuadPosition, vector) > 0f) {
                     Vector3 v = vector * new Vector3(1f, 0f, 1f) - m_vrQuadPosition * new Vector3(1f, 0f, 1f);
@@ -242,7 +297,7 @@ namespace Game {
         }
 
         public static void DrawVrBackground() {
-            Matrix hmdMatrix = Matrix.Identity;
+            Matrix hmdMatrix = VrManager.HmdMatrix;
             TexturedBatch3D batch = m_pr3.TexturedBatch(ContentManager.Get<Texture2D>("Textures/Star"));
             Random.Seed(0);
             for (int i = 0; i < 1500; i++) {

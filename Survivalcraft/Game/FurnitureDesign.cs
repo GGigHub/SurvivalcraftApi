@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Engine;
+using Engine.Graphics;
 using TemplatesDatabase;
 
 namespace Game {
@@ -720,9 +721,13 @@ namespace Game {
                                 BlockMesh blockMesh3 = blockMesh;
                                 int num13 = Terrain.ExtractContents(value2);
                                 Block block = BlocksManager.Blocks[num13];
-                                int num14 = block.GetFaceTextureSlot(i, value2);
-                                bool isEmissive = false;
+                                int num14 = block.GetFaceTextureSlot(num, value2);
+                                bool isEmissive = block.IsFurnitureEmissive(value2);
+                                if (isEmissive) {
+                                    num14 = 31;
+                                }
                                 Color color = Color.White;
+                                bool isAlphaTest = block.IsFurnitureAlphaTest(value2);
                                 if (block is IPaintableBlock paintableBlock) {
                                     int? paintColor = paintableBlock.GetPaintColor(value2);
                                     color = SubsystemPalette.GetColor(m_subsystemTerrain, paintColor);
@@ -735,14 +740,6 @@ namespace Game {
                                     int color2 = CarpetBlock.GetColor(Terrain.ExtractData(value2));
                                     color = SubsystemPalette.GetFabricColor(m_subsystemTerrain, color2);
                                 }
-                                else if (block is TorchBlock
-                                    || block is WickerLampBlock) {
-                                    isEmissive = true;
-                                    num14 = 31;
-                                }
-                                else if (block is GlassBlock) {
-                                    blockMesh3 = blockMesh2;
-                                }
                                 ModsManager.HookAction(
                                     "SetFurnitureDesignColor",
                                     loader => {
@@ -750,15 +747,37 @@ namespace Game {
                                         return false;
                                     }
                                 );
-                                int num15 = num14 % 16;
-                                int num16 = num14 / 16;
+                                // 使用 GetTextureSlotCount 替代硬编码的 16 以支持自定义纹理图集
+                                int slotCount = block.GetTextureSlotCount(value2);
+                                // 按纹理分组：非 null 纹理路由到 Draws，null 纹理使用默认图集
+                                Texture2D texture = block.GetDefaultTexture(value2);
+                                if (texture != null) {
+                                    m_geometry.Draws ??= new();
+                                    if (!m_geometry.Draws.TryGetValue(texture, out FurnitureGeometry subGeo)) {
+                                        subGeo = new FurnitureGeometry();
+                                        m_geometry.Draws.Add(texture, subGeo);
+                                    }
+                                    if (isAlphaTest) {
+                                        subGeo.SubsetAlphaTestByFace[i] ??= new BlockMesh();
+                                        blockMesh3 = subGeo.SubsetAlphaTestByFace[i];
+                                    }
+                                    else {
+                                        subGeo.SubsetOpaqueByFace[i] ??= new BlockMesh();
+                                        blockMesh3 = subGeo.SubsetOpaqueByFace[i];
+                                    }
+                                }
+                                else if (isAlphaTest) {
+                                    blockMesh3 = blockMesh2;
+                                }
+                                int num15 = num14 % slotCount;
+                                int num16 = num14 / slotCount;
                                 int count = blockMesh3.Vertices.Count;
                                 blockMesh3.Vertices.Count += 4;
                                 BlockMeshVertex[] array2 = blockMesh3.Vertices.Array;
-                                float x5 = ((n + 0.01f) / m_resolution + num15) / 16f;
-                                float x6 = ((n + point6.X - 0.01f) / m_resolution + num15) / 16f;
-                                float y5 = ((m + 0.01f) / m_resolution + num16) / 16f;
-                                float y6 = ((m + point6.Y - 0.01f) / m_resolution + num16) / 16f;
+                                float x5 = ((n + 0.01f) / m_resolution + num15) / slotCount;
+                                float x6 = ((n + point6.X - 0.01f) / m_resolution + num15) / slotCount;
+                                float y5 = ((m + 0.01f) / m_resolution + num16) / slotCount;
+                                float y6 = ((m + point6.Y - 0.01f) / m_resolution + num16) / slotCount;
                                 array2[count] = new BlockMeshVertex {
                                     Position = new Vector3(x, y, z) / m_resolution,
                                     Color = color,
@@ -809,6 +828,20 @@ namespace Game {
                     blockMesh2.Trim();
                     blockMesh2.GenerateSidesData();
                     m_geometry.SubsetAlphaTestByFace[i] = blockMesh2;
+                }
+                if (m_geometry.Draws != null) {
+                    foreach (var kv in m_geometry.Draws) {
+                        BlockMesh opaqueMesh = kv.Value.SubsetOpaqueByFace[i];
+                        if (opaqueMesh != null && opaqueMesh.Indices.Count > 0) {
+                            opaqueMesh.Trim();
+                            opaqueMesh.GenerateSidesData();
+                        }
+                        BlockMesh alphaMesh = kv.Value.SubsetAlphaTestByFace[i];
+                        if (alphaMesh != null && alphaMesh.Indices.Count > 0) {
+                            alphaMesh.Trim();
+                            alphaMesh.GenerateSidesData();
+                        }
+                    }
                 }
             }
         }

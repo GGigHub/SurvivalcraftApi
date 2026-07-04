@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace GameEntitySystem {
     public class EntityToIdMap {
-        Dictionary<Entity, int> m_map;
+        public Dictionary<Entity, int> m_map;
 
         public EntityToIdMap(Dictionary<Entity, int> map) => m_map = map;
 

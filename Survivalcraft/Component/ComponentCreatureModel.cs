@@ -1,4 +1,6 @@
 using Engine;
+using Engine.Animation;
+using Engine.Graphics;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -19,6 +21,17 @@ namespace Game {
         public Vector3 m_randomLookPoint;
 
         public Random m_random = new();
+
+        /// <summary>
+        /// 脚步声计时器，用于防止频繁播放
+        /// </summary>
+        float m_footstepCooldown;
+
+        /// <summary>
+        /// 上次脚步声时间
+        /// </summary>
+        float m_lastFootstepTime;
+
         public float Bob { get; set; }
 
         public float MovementAnimationPhase { get; set; }
@@ -83,7 +96,38 @@ namespace Game {
         }
 
         public override void Animate() {
+            // 在动画更新前同步参数，确保状态规则评估时有正确的参数值
+            SyncAnimationParameters();
+
             base.Animate();
+
+            // glTF 模型（有动画或有蒙皮）需要将实体变换应用到根骨骼
+            // 这是 ComponentSimpleModel 中相同的逻辑，但 ComponentCreatureModel 之前遗漏了
+            bool isGltfModel = Model.HasSkin || Model.HasAnimations;
+            if (Animated && isGltfModel) {
+                // 获取实体的位置和旋转
+                Vector3 entityPosition = m_componentFrame.Position;
+                Quaternion entityRotation = m_componentFrame.Rotation;
+                Matrix entityTransform = Matrix.CreateFromQuaternion(entityRotation) * Matrix.CreateTranslation(entityPosition);
+
+                // 获取根骨骼变换（可能是动画采样的或原始的）
+                Matrix rootTransform;
+                if (m_boneTransforms[Model.RootBone.Index].HasValue) {
+                    rootTransform = m_boneTransforms[Model.RootBone.Index].Value;
+                } else {
+                    rootTransform = Model.RootBone.Transform;
+                }
+
+                // 应用根骨骼旋转修正（某些 glTF 模型的前方方向与游戏不一致）
+                if (AnimationController != null && AnimationController.RootBoneRotation != 0f) {
+                    Matrix correctionRotation = Matrix.CreateRotationY(AnimationController.RootBoneRotation);
+                    rootTransform = correctionRotation * rootTransform;
+                }
+
+                // 叠加实体变换
+                m_boneTransforms[Model.RootBone.Index] = rootTransform * entityTransform;
+            }
+
             if (!Animated) {
                 bool flag = false;
                 ModsManager.HookAction(
@@ -149,12 +193,129 @@ namespace Game {
             };
         }
 
+        public override void SetModel(Model model) {
+            // 取消旧控制器的订阅
+            if (AnimationController != null) {
+                AnimationController.OnAnimationEvent -= HandleAnimationEvent;
+            }
+
+            base.SetModel(model);
+
+            // 订阅新控制器的事件
+            if (AnimationController != null) {
+                AnimationController.OnAnimationEvent += HandleAnimationEvent;
+                SetupDefaultAnimationEvents();
+            }
+        }
+
+        /// <summary>
+        /// 设置默认动画事件
+        /// </summary>
+        public virtual void SetupDefaultAnimationEvents() {
+            // 子类可以覆盖此方法来添加特定事件
+        }
+
+        /// <summary>
+        /// 处理动画事件
+        /// </summary>
+        public virtual void HandleAnimationEvent(AnimationEvent animationEvent) {
+            if (animationEvent == null) return;
+
+            switch (animationEvent.Name) {
+                case "Footstep":
+                    OnFootstepEvent(animationEvent);
+                    break;
+                case "AttackHit":
+                    OnAttackHitEvent(animationEvent);
+                    break;
+                case "AttackStart":
+                    OnAttackStartEvent(animationEvent);
+                    break;
+                case "AttackEnd":
+                    OnAttackEndEvent(animationEvent);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 处理脚步声事件
+        /// </summary>
+        public virtual void OnFootstepEvent(AnimationEvent animationEvent) {
+            // 检查冷却时间，防止频繁触发
+            if (m_footstepCooldown > 0f) return;
+
+            // 检查是否在地面或水中
+            var body = m_componentCreature.ComponentBody;
+            if (body.StandingOnValue.HasValue || body.ImmersionFactor > 0.5f) {
+                // 触发布局音效系统（需要 Mod 扩展）
+                ModsManager.HookAction(
+                    "OnCreatureFootstep",
+                    loader => {
+                        loader.OnCreatureFootstep(m_componentCreature, animationEvent.Parameter);
+                        return false;
+                    }
+                );
+                m_footstepCooldown = 0.2f; // 200ms 冷却
+                m_lastFootstepTime = (float)m_subsystemTime.GameTime;
+            }
+        }
+
+        /// <summary>
+        /// 处理攻击命中事件
+        /// </summary>
+        public virtual void OnAttackHitEvent(AnimationEvent animationEvent) {
+            // 标记攻击命中帧
+            IsAttackHitMoment = true;
+
+            // 通知 Mod 系统
+            ModsManager.HookAction(
+                "OnCreatureAttackHit",
+                loader => {
+                    loader.OnCreatureAttackHit(m_componentCreature, animationEvent.Parameter);
+                    return false;
+                }
+            );
+        }
+
+        /// <summary>
+        /// 处理攻击开始事件
+        /// </summary>
+        public virtual void OnAttackStartEvent(AnimationEvent animationEvent) {
+            ModsManager.HookAction(
+                "OnCreatureAttackStart",
+                loader => {
+                    loader.OnCreatureAttackStart(m_componentCreature, animationEvent.Parameter);
+                    return false;
+                }
+            );
+        }
+
+        /// <summary>
+        /// 处理攻击结束事件
+        /// </summary>
+        public virtual void OnAttackEndEvent(AnimationEvent animationEvent) {
+            IsAttackHitMoment = false;
+
+            ModsManager.HookAction(
+                "OnCreatureAttackEnd",
+                loader => {
+                    loader.OnCreatureAttackEnd(m_componentCreature, animationEvent.Parameter);
+                    return false;
+                }
+            );
+        }
+
         public override void OnEntityAdded() {
             m_componentCreature.ComponentBody.PositionChanged += delegate { m_eyePosition = null; };
             m_componentCreature.ComponentBody.RotationChanged += delegate { m_eyeRotation = null; };
         }
 
         public virtual void Update(float dt) {
+            // 更新脚步声冷却时间
+            if (m_footstepCooldown > 0f) {
+                m_footstepCooldown -= dt;
+            }
+
             if (LookRandomOrder) {
                 Matrix matrix = m_componentCreature.ComponentBody.Matrix;
                 Vector3 v = Vector3.Normalize(m_randomLookPoint - m_componentCreature.ComponentCreatureModel.EyePosition);
@@ -187,12 +348,81 @@ namespace Game {
                     - m_componentCreature.ComponentLocomotion.LookAngles;
             }
             if (m_componentCreature.ComponentHealth.Health == 0f) {
-                DeathPhase = MathUtils.Min(DeathPhase + 3f * dt, 1f);
+                // 死亡速度从配置读取，默认 3f
+                float deathSpeed = AnimationController?.Parameters.GetFloat("DeathSpeed") ?? 3f;
+                DeathPhase = MathUtils.Min(DeathPhase + deathSpeed * dt, 1f);
             }
             m_eyePosition = null;
             m_eyeRotation = null;
             LookRandomOrder = false;
             LookAtOrder = null;
+        }
+
+        /// <summary>
+        /// 同步动画参数到动画控制器
+        /// </summary>
+        public virtual void SyncAnimationParameters() {
+            var ctrl = AnimationController;
+            if (ctrl == null) return;
+
+            // 运动参数
+            ctrl.Parameters.SetFloat("MovementPhase", MovementAnimationPhase);
+            ctrl.Parameters.SetFloat("DeathPhase", DeathPhase);
+            ctrl.Parameters.SetFloat("GameTime", (float)m_subsystemTime.GameTime);  // 用于进食噪声
+
+            // 死亡动画参数
+            ctrl.Parameters.SetVector3("DeathCauseOffset", DeathCauseOffset);
+            var boundingBox = m_componentCreature.ComponentBody.BoundingBox;
+            ctrl.Parameters.SetFloat("BodyHeight", boundingBox.Max.Y - boundingBox.Min.Y);
+
+            // ComponentBody 参数
+            var body = m_componentCreature.ComponentBody;
+            var velocity = body.Velocity;
+            var matrix = body.Matrix;
+
+            // 世界坐标（驱动器需要用来定位身体骨骼）
+            ctrl.Parameters.SetVector3("Position", body.Position);
+            ctrl.Parameters.SetVector3("Rotation", body.Rotation.ToYawPitchRoll());  // 完整旋转
+            ctrl.Parameters.SetFloat("RotationY", body.Rotation.ToYawPitchRoll().X);
+            ctrl.Parameters.SetVector3("BodyForward", matrix.Forward);  // 用于死亡方向计算
+            ctrl.Parameters.SetVector3("BodyRight", matrix.Right);
+
+            // 速度参数（优先使用 SlipSpeed，用于滑行时的动画同步）
+            // 原始代码: float num = SlipSpeed ?? Vector3.Dot(Velocity, Forward)
+            var locomotion = m_componentCreature.ComponentLocomotion;
+            float forwardSpeed = Vector3.Dot(velocity, matrix.Forward);
+            ctrl.Parameters.SetFloat("Speed", locomotion?.SlipSpeed ?? forwardSpeed);
+            ctrl.Parameters.SetFloat("SpeedAbs", velocity.Length());
+            ctrl.Parameters.SetBool("IsInWater", body.ImmersionFactor > 0);
+            ctrl.Parameters.SetBool("IsOnGround", body.StandingOnValue.HasValue);
+            ctrl.Parameters.SetFloat("ImmersionFactor", body.ImmersionFactor);
+
+            // ComponentLocomotion 参数
+            if (locomotion != null) {
+                ctrl.Parameters.SetBool("IsFlying", locomotion.m_flying);
+                ctrl.Parameters.SetBool("IsCreativeFly", locomotion.IsCreativeFlyEnabled);
+                ctrl.Parameters.SetFloat("WalkSpeed", locomotion.WalkSpeed);
+            }
+
+            // ComponentHealth 参数
+            var health = m_componentCreature.ComponentHealth;
+            if (health != null) {
+                ctrl.Parameters.SetFloat("Health", health.Health);
+                ctrl.Parameters.SetBool("IsDead", health.Health <= 0);
+            }
+
+            // 头部追踪
+            if (LookAtOrder.HasValue) {
+                Vector3 lookDir = LookAtOrder.Value - EyePosition;
+                float lookX = MathF.Atan2(lookDir.X, lookDir.Z);
+                float lookY = MathF.Asin(lookDir.Y / lookDir.Length());
+                ctrl.Parameters.SetFloat("LookAngleX", lookX);
+                ctrl.Parameters.SetFloat("LookAngleY", lookY);
+            }
+
+            // 活动状态
+            ctrl.Parameters.SetBool("IsAttacking", AttackOrder);
+            ctrl.Parameters.SetBool("IsFeeding", FeedOrder);
         }
 
         public virtual Vector3 CalculateEyePosition() {

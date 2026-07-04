@@ -294,12 +294,16 @@ namespace Game {
                 return;
             }
             clothingData.Texture ??= ContentManager.Get<Texture2D>(clothingData._textureName);
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                texture = clothingData.Texture;
+            }
             Matrix matrix2 = m_slotTransforms[(int)clothingData.Slot] * Matrix.CreateScale(size) * matrix;
             if (clothingData.IsOuter) {
                 BlocksManager.DrawMeshBlock(
                     primitivesRenderer,
                     m_outerMesh,
-                    clothingData.Texture,
+                    texture,
                     color * SubsystemPalette.GetFabricColor(environmentData, clothingColor),
                     1f,
                     ref matrix2,
@@ -310,7 +314,7 @@ namespace Game {
                 BlocksManager.DrawMeshBlock(
                     primitivesRenderer,
                     m_innerMesh,
-                    clothingData.Texture,
+                    texture,
                     color * SubsystemPalette.GetFabricColor(environmentData, clothingColor),
                     1f,
                     ref matrix2,

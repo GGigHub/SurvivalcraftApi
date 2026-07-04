@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
 using Engine;
+using Engine.Graphics;
 using Engine.Serialization;
 using Game;
 using Game.IContentReader;
@@ -16,9 +17,9 @@ using XmlUtilities;
 using ZipArchive = Game.ZipArchive;
 public static class ModsManager {
     public static string ModSuffix = ".scmod";
-    public static string APIVersionString = "1.9.0.2";
+    public static string APIVersionString = "1.9.2.1";
     public static string ShortAPIVersionString = "1.9";
-    public static NuGetVersion APINuGetVersion = new(1, 9, 0, 2);
+    public static NuGetVersion APINuGetVersion = new(1, 9, 2, 1);
     public static string GameVersion = "2.4.0.0";
     public static string ShortGameVersion = "2.4";
     public static string ReportLink = "https://gitee.com/SC-SPM/SurvivalcraftApi/issues";
@@ -413,6 +414,7 @@ public static class ModsManager {
         if (!Storage.DirectoryExists(ModsPath)) {
             Storage.CreateDirectory(ModsPath);
         }
+        ShaderCache.CacheDirectory = Storage.CombinePaths(DocPath, "ShaderCaches");
         ModHooks.Clear();
         ModListAll.Clear();
         ModList.Clear();
@@ -855,9 +857,8 @@ public static class ModsManager {
                 databaseObjects.Descendants("EntityTemplate").Attributes("Guid").Select(a => a.Value),
                 StringComparer.OrdinalIgnoreCase
             );
-
-            // 只遍历根元素的直接子元素（与原代码 toCombineRoot.Elements() 行为一致）
-            foreach (XElement entity in toCombineRoot.Elements().Where(e => e.Name.LocalName == "EntityTemplate")) {
+            //不能只遍历根元素，否则无法识别到嵌套在folder里的EntityTemplate
+            foreach (XElement entity in toCombineRoot.Descendants("EntityTemplate")) {
                 XAttribute guidAttr = entity.Attribute("Guid");
                 bool isNewEntity = guidAttr == null || !existingGuids.Contains(guidAttr.Value);
                 if (isNewEntity) {
@@ -869,6 +870,7 @@ public static class ModsManager {
                         parameterElement.SetAttributeValue("Value", ModPacketName);
                         parameterElement.SetAttributeValue("Type", "string");
                         entity.Add(parameterElement);
+                        existingGuids.Add(guidAttr.Value);//防止同一批次的同guid后续元素被误判为新元素
                     }
                 }
             }
@@ -1154,7 +1156,7 @@ public static class ModsManager {
                 k++;
             }
         }
-        string newPath = $"{path.Substring(0, path.LastIndexOf('.'))}({LanguageControl.Get(fName, 63)}).scmod";
+        string newPath = $"{path.Substring(0, path.LastIndexOf('.'))}({LanguageControl.Get("ModsManageContentScreen", 63)}).scmod";
         FileStream fileStream = new(Storage.GetSystemPath(newPath), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
         fileStream.Write(buff2, 0, buff2.Length);
         fileStream.Flush();
@@ -1241,4 +1243,31 @@ public static class ModsManager {
         return result.ToString();
     }
 #endif
+
+    public static void ShowDisabledModsDialog() {
+        StringBuilder sb = new();
+        foreach (ModEntity entity in ModListAll) {
+            if (entity.IsDisabled
+                && entity.DisableReason >= ModDisableReason.NoModInfo) {
+                sb.AppendLine(Storage.GetFileName(entity.ModFilePath));
+            }
+        }
+        if (sb.Length > 0) {
+            sb.Insert(0, $"{LanguageControl.Get(fName, "7")}\n");
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageControl.Warning,
+                    sb.ToString(),
+                    LanguageControl.Yes,
+                    LanguageControl.No,
+                    button => {
+                        if (button == MessageDialogButton.Button1) {
+                            ScreensManager.SwitchScreen("ModsManageContent");
+                        }
+                    }
+                )
+            );
+        }
+    }
 }

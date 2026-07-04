@@ -38,6 +38,9 @@ namespace Engine.Media {
         public Color[] m_pixels;
         public bool m_shouldUpdatePixelsCache = true;
 
+        /// <summary>
+        /// 获取图像的像素数据，只读，写入无效。
+        /// </summary>
         public Color[] Pixels {
             get {
                 if (m_pixels == null || m_shouldUpdatePixelsCache) {

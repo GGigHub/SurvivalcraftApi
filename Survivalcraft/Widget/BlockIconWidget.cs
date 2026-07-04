@@ -62,9 +62,6 @@ namespace Game {
 
         public override void Draw(DrawContext dc) {
             Block obj = BlocksManager.Blocks[Contents];
-            _ = DrawBlockEnvironmentData.SubsystemTerrain != null
-                ? DrawBlockEnvironmentData.SubsystemTerrain.SubsystemAnimatedTextures.AnimatedBlocksTexture
-                : BlocksTexturesManager.DefaultBlocksTexture;
             Viewport viewport = Display.Viewport;
             float num = MathUtils.Min(ActualSize.X, ActualSize.Y) * Scale;
             Matrix m = Matrix.CreateOrthographic(3.6f, 3.6f, -10f - 1f * Depth, 10f - 1f * Depth);

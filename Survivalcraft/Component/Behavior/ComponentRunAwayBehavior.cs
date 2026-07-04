@@ -155,7 +155,7 @@ namespace Game {
                 int num3 = Terrain.ToCell(position.Z + m_random.Float(-25f, 25f));
                 for (int num4 = 255; num4 >= 0; num4--) {
                     int cellValue = m_subsystemTerrain.Terrain.GetCellValue(num2, num4, num3);
-                    if (BlocksManager.Blocks[Terrain.ExtractContents(cellValue)].IsCollidable_(cellValue)
+                    if (BlocksManager.Blocks[Terrain.ExtractContents(cellValue)].GetIsCollidable(m_componentCreature.ComponentBody, cellValue)
                         || Terrain.ExtractContents(cellValue) == 18) {
                         Vector3 vector = new(num2 + 0.5f, num4 + 1.1f, num3 + 0.5f);
                         float num5 = ScoreSafePlace(position, vector, herdPosition, m_lastNoiseSourcePosition, Terrain.ExtractContents(cellValue));

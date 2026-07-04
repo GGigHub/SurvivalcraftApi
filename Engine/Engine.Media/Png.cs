@@ -4,11 +4,11 @@ using SixLabors.ImageSharp.Formats.Png;
 namespace Engine.Media {
     public static class Png {
         public enum Format {
-            RGBA8,
-            RGB8,
-            L8,
-            LA8,
-            Indexed
+            RGBA8 = 0,
+            RGB8 = 1,
+            L8 = 2,
+            LA8 = 3,
+            Indexed = 4
         }
 
         public struct PngInfo {

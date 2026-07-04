@@ -13,11 +13,15 @@ namespace Game {
 
         public Model m_vrHandModel;
 
+        public int m_value;
+
+        public float m_swapAnimationTime;
+
+        public float m_pokeAnimationTime;
+
         public Vector3 m_itemOffset;
 
         public Vector3 m_itemRotation;
-
-        public float m_pokeAnimationTime;
 
         public double m_nextHandLightTime;
 
@@ -37,6 +41,11 @@ namespace Game {
 
         public Vector3 ItemRotationOrder { get; set; }
 
+        /// <summary>
+        /// 强制只绘制手部模型（即使有物品也不绘制）
+        /// </summary>
+        public bool ForceDrawHandOnly { get; set; }
+
         public int[] DrawOrders => m_drawOrders;
 
         public UpdateOrder UpdateOrder => UpdateOrder.FirstPersonModels;
@@ -47,36 +56,57 @@ namespace Game {
                 || !m_componentPlayer.ComponentInput.IsControlledByVr) {
                 return;
             }
+            if (!VrManager.IsControllerPresent(VrController.Right)) {
+                return;
+            }
             Vector3 eyePosition = m_componentPlayer.ComponentCreatureModel.EyePosition;
             int x = Terrain.ToCell(eyePosition.X);
             int num = Terrain.ToCell(eyePosition.Y);
             int z = Terrain.ToCell(eyePosition.Z);
-            int activeBlockValue = m_componentMiner.ActiveBlockValue;
-            if (Time.FrameStartTime >= m_nextHandLightTime) {
-                float? num2 = LightingManager.CalculateSmoothLight(m_subsystemTerrain, eyePosition);
-                if (num2.HasValue) {
-                    m_nextHandLightTime = Time.FrameStartTime + 0.1;
-                    m_handLight = num2.Value;
+
+            // 根据绘制内容分别计算光照
+            if (m_value != 0 && !ForceDrawHandOnly) {
+                if (num >= 0
+                    && num <= 255) {
+                    TerrainChunk chunkAtCell = m_subsystemTerrain.Terrain.GetChunkAtCell(x, z);
+                    if (chunkAtCell != null
+                        && chunkAtCell.State >= TerrainChunkState.InvalidVertices1) {
+                        m_itemLight = m_subsystemTerrain.Terrain.GetCellLightFast(x, num, z);
+                    }
                 }
             }
+            else {
+                if (Time.FrameStartTime >= m_nextHandLightTime) {
+                    float? num2 = LightingManager.CalculateSmoothLight(m_subsystemTerrain, eyePosition);
+                    if (num2.HasValue) {
+                        m_nextHandLightTime = Time.FrameStartTime + 0.1;
+                        m_handLight = num2.Value;
+                    }
+                }
+            }
+
             Matrix identity = Matrix.Identity;
+            // 切换动画
+            if (m_swapAnimationTime > 0f) {
+                float num3 = MathF.Pow(MathF.Sin(m_swapAnimationTime * (float)Math.PI), 3f);
+                identity *= Matrix.CreateTranslation(0f, -0.8f * num3, 0.2f * num3);
+            }
+            // 戳击动画
             if (m_pokeAnimationTime > 0f) {
-                float num3 = MathF.Sin(MathF.Sqrt(m_pokeAnimationTime) * (float)Math.PI);
-                if (activeBlockValue != 0) {
-                    identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(90f)) * num3);
+                float num4 = MathF.Sin(MathF.Sqrt(m_pokeAnimationTime) * (float)Math.PI);
+                if (m_value != 0 && !ForceDrawHandOnly) {
+                    identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(90f)) * num4);
                 }
                 else {
-                    identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(45f)) * num3);
+                    identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(45f)) * num4);
                 }
-            }
-            if (!VrManager.IsControllerPresent(VrController.Right)) {
-                return;
             }
             Matrix matrix = VrManager.HmdMatrixInverted
                 * Matrix.CreateWorld(camera.ViewPosition, camera.ViewDirection, camera.ViewUp)
                 * camera.ViewMatrix;
             Matrix controllerMatrix = VrManager.GetControllerMatrix(VrController.Right);
-            if (activeBlockValue == 0) {
+            if (m_value == 0 || ForceDrawHandOnly) {
+                // 空手时绘制手部模型
                 Display.DepthStencilState = DepthStencilState.Default;
                 Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
                 m_shader.Texture = m_componentPlayer.ComponentCreatureModel.TextureOverride;
@@ -104,19 +134,12 @@ namespace Game {
                 }
             }
             else {
-                if (num >= 0
-                    && num <= 255) {
-                    TerrainChunk chunkAtCell = m_subsystemTerrain.Terrain.GetChunkAtCell(x, z);
-                    if (chunkAtCell != null
-                        && chunkAtCell.State >= TerrainChunkState.InvalidVertices1) {
-                        m_itemLight = m_subsystemTerrain.Terrain.GetCellLightFast(x, num, z);
-                    }
-                }
-                int num4 = Terrain.ExtractContents(activeBlockValue);
-                Block block = BlocksManager.Blocks[num4];
-                Vector3 vector = block.InHandRotation * ((float)Math.PI / 180f) + m_itemRotation;
+                // 手持物品时绘制方块图标
+                int num5 = Terrain.ExtractContents(m_value);
+                Block block = BlocksManager.Blocks[num5];
+                Vector3 vector = block.GetInHandRotation(m_value) * ((float)Math.PI / 180f) + m_itemRotation;
                 Matrix matrix2 = Matrix.CreateFromYawPitchRoll(vector.Y, vector.X, vector.Z)
-                    * Matrix.CreateTranslation(block.InHandOffset)
+                    * Matrix.CreateTranslation(block.GetInHandOffset(m_value))
                     * identity
                     * Matrix.CreateTranslation(m_itemOffset)
                     * controllerMatrix
@@ -124,17 +147,39 @@ namespace Game {
                 m_drawBlockEnvironmentData.DrawBlockMode = DrawBlockMode.FirstPerson;
                 m_drawBlockEnvironmentData.SubsystemTerrain = m_subsystemTerrain;
                 m_drawBlockEnvironmentData.InWorldMatrix = matrix2;
-                m_drawBlockEnvironmentData.Humidity = m_subsystemTerrain.Terrain.GetHumidity(x, z);
+                m_drawBlockEnvironmentData.Light = m_itemLight;
+                m_drawBlockEnvironmentData.Humidity = m_subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 m_drawBlockEnvironmentData.Temperature = m_subsystemTerrain.Terrain.GetSeasonalTemperature(x, z)
                     + SubsystemWeather.GetTemperatureAdjustmentAtHeight(num);
-                m_drawBlockEnvironmentData.Light = m_itemLight;
                 m_drawBlockEnvironmentData.EnvironmentTemperature = m_componentPlayer.ComponentVitalStats.EnvironmentTemperature;
-                block.DrawBlock(m_primitivesRenderer, activeBlockValue, Color.White, block.InHandScale, ref matrix2, m_drawBlockEnvironmentData);
+                m_drawBlockEnvironmentData.Owner = m_entity;
+                block.DrawBlock(m_primitivesRenderer, m_value, Color.White, block.GetInHandScale(m_value), ref matrix2, m_drawBlockEnvironmentData);
             }
             m_primitivesRenderer.Flush(camera.ProjectionMatrix);
         }
 
         public virtual void Update(float dt) {
+            int activeBlockValue = m_componentMiner.ActiveBlockValue;
+            if (m_swapAnimationTime == 0f
+                && activeBlockValue != m_value) {
+                if (BlocksManager.Blocks[Terrain.ExtractContents(activeBlockValue)].IsSwapAnimationNeeded(m_value, activeBlockValue)) {
+                    m_swapAnimationTime = 0.0001f;
+                }
+                else {
+                    m_value = activeBlockValue;
+                }
+            }
+            if (m_swapAnimationTime > 0f) {
+                float swapAnimationTime = m_swapAnimationTime;
+                m_swapAnimationTime += 2f * dt;
+                if (swapAnimationTime < 0.5f
+                    && m_swapAnimationTime >= 0.5f) {
+                    m_value = activeBlockValue;
+                }
+                if (m_swapAnimationTime > 1f) {
+                    m_swapAnimationTime = 0f;
+                }
+            }
             m_pokeAnimationTime = m_componentMiner.PokingPhase;
             m_itemOffset = Vector3.Lerp(m_itemOffset, ItemOffsetOrder, MathUtils.Saturate(10f * dt));
             m_itemRotation = Vector3.Lerp(m_itemRotation, ItemRotationOrder, MathUtils.Saturate(10f * dt));

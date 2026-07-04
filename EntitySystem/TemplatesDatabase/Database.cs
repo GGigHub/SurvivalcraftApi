@@ -5,9 +5,9 @@ using Engine;
 
 namespace TemplatesDatabase {
     public class Database {
-        DatabaseObject m_root;
+        public DatabaseObject m_root;
 
-        ReadOnlyList<DatabaseObjectType> m_databaseObjectTypes;
+        public ReadOnlyList<DatabaseObjectType> m_databaseObjectTypes;
 
         public Dictionary<Guid, DatabaseObject> m_databaseObjectsByGuid = [];
 

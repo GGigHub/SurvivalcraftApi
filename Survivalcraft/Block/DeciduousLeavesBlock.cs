@@ -247,7 +247,7 @@ namespace Game {
 
         public static Season GetSeason(int data) => (Season)((data >> 3) & 3);
 
-        public static int SetSeason(int data, Season season) => (data & -25) | ((int)(season & Season.Spring) << 3);
+        public static int SetSeason(int data, Season season) => (data & -25) | (((int)season & 3) << 3);
 
         public static float GetTimeOfSeason(int data) => (data & 7) / 7f;
 

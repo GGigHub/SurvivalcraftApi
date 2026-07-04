@@ -5,6 +5,10 @@ using TemplatesDatabase;
 
 namespace Game {
     public class ComponentInput : Component, IUpdateable {
+        public static volatile float VrFadeAlpha;
+        public static float VrSnapBodyRotation;
+        public static float VrSnapCameraRotation;
+
         public SubsystemTime m_subsystemTime;
 
         public ComponentGui m_componentGui;
@@ -18,20 +22,25 @@ namespace Game {
         public double m_lastJumpTime;
 
         public Vector2 m_vrSmoothLook;
+        public bool m_vrSnapTurning;
+        public float m_vrSnapFadeTimer;
+
+        public SubsystemTerrain m_subsystemTerrain;
+        public Vector3? m_vrTeleportTarget;
+        public List<Vector3> m_vrTeleportArcPoints = new();
+        public bool m_vrTeleportValid;
+        public bool m_vrTeleportForceCrouch;
+        public bool m_vrTeleportStickActive;
+        public bool m_vrTeleportSuppressAfterBackward;
+        public int m_vrTeleportHitFace;
 
         public bool ToggleFlyInDoubleJump { get; set; } = true;
         public PlayerInput PlayerInput => m_playerInput;
 
         public bool IsControlledByTouch { get; set; } = Touch.IsTouched;
 
-        public bool IsControlledByVr {
-            get {
-                if (VrManager.IsVrStarted) {
-                    return (m_componentPlayer.GameWidget.Input.Devices & WidgetInputDevice.VrControllers) != 0;
-                }
-                return false;
-            }
-        }
+        public bool IsControlledByVr => VrManager.IsFrameActive
+            && (m_componentPlayer.GameWidget.Input.Devices & WidgetInputDevice.VrControllers) != WidgetInputDevice.None;
 
         public bool AllowHandleInput { get; set; } = true;
 
@@ -48,7 +57,16 @@ namespace Game {
             SplitSourceSlotIndex = slotIndex;
         }
 
-        public virtual Ray3? CalculateVrHandRay() => null;
+        public virtual Ray3? CalculateVrHandRay() {
+            if (VrManager.IsControllerPresent(VrController.Right)) {
+                Camera activeCamera = m_componentPlayer.GameWidget.ActiveCamera;
+                Matrix matrix = VrManager.HmdMatrixInverted
+                    * Matrix.CreateWorld(activeCamera.ViewPosition, activeCamera.ViewDirection, activeCamera.ViewUp);
+                Matrix matrix2 = VrManager.GetControllerMatrix(VrController.Right) * matrix;
+                return new Ray3(matrix2.Translation + matrix2.Forward * 0.078125f, matrix2.Forward);
+            }
+            return null;
+        }
 
         public virtual void Update(float dt) {
             m_playerInput = default;
@@ -110,6 +128,7 @@ namespace Game {
             m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
             m_componentGui = Entity.FindComponent<ComponentGui>(true);
             m_componentPlayer = Entity.FindComponent<ComponentPlayer>(true);
+            m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
         }
 
         public virtual void UpdateInputFromMouseAndKeyboard(WidgetInput input) {
@@ -285,6 +304,13 @@ namespace Game {
                 return;
             }
             IsControlledByTouch = false;
+            // HMD head tracking always runs regardless of modal/dialog state
+            Vector3 hmdMatrixYpr = VrManager.HmdMatrixYpr;
+            Vector3 hmdLastMatrixYpr = VrManager.HmdLastMatrixYpr;
+            Vector3 vector2 = hmdMatrixYpr - hmdLastMatrixYpr;
+            if (m_componentPlayer.GameWidget.ActiveCamera is FppCamera) {
+                m_playerInput.VrLook = new Vector2(vector2.X, hmdMatrixYpr.Y);
+            }
             if (m_componentGui.ModalPanelWidget != null
                 || DialogsManager.HasDialogs(m_componentPlayer.GuiWidget)) {
                 if (!input.IsVrCursorVisible) {
@@ -304,31 +330,68 @@ namespace Game {
                 Vector2 xZ = Vector3.TransformNormal(new Vector3(VrManager.WalkingVelocity.X, 0f, VrManager.WalkingVelocity.Y), m).XZ;
                 Vector3 value = Vector3.TransformNormal(new Vector3(VrManager.HeadMove.X, 0f, VrManager.HeadMove.Y), m);
                 Vector3 zero = Vector3.Zero;
-                zero += 0.5f * new Vector3(Vector2.Dot(xZ, v), 0f, Vector2.Dot(xZ, v2));
+                if (m_componentPlayer.GameWidget.ActiveCamera is FppCamera) {
+                    zero += 0.5f * new Vector3(Vector2.Dot(xZ, v), 0f, Vector2.Dot(xZ, v2));
+                }
                 zero += new Vector3(2f * vrStickPosition.X, 2f * vrStickPosition2.Y, 2f * vrStickPosition.Y);
+                // Teleport mode: suppress left stick forward/strafe
+                // (but force Smooth when on ladder or mounted — teleport makes no sense there)
+                bool isTeleportMode = SettingsManager.VrMoveControlMode == VrMoveControlMode.Teleport
+                    && !m_componentPlayer.ComponentLocomotion.LadderValue.HasValue
+                    && m_componentPlayer.ComponentRider.Mount == null;
+                if (isTeleportMode) {
+                    zero.X -= 2f * vrStickPosition.X;
+                    // Only suppress forward, allow backward smooth movement
+                    if (vrStickPosition.Y > 0f)
+                        zero.Z -= 2f * vrStickPosition.Y;
+                }
                 m_playerInput.Move += zero;
                 m_playerInput.CrouchMove += zero;
                 m_playerInput.VrMove = value;
                 TouchInput? touchInput = VrManager.GetTouchInput(VrController.Left);
-                if (touchInput.HasValue
-                    && num3 > 0f) {
-                    if (touchInput.Value.InputType == TouchInputType.Move) {
-                        Vector2 move = touchInput.Value.Move;
-                        Vector2 vector = 10f * num / num3 * new Vector2(0.5f) * move * MathF.Pow(move.LengthSquared(), 0.175f);
-                        m_playerInput.CrouchMove.X += vector.X;
-                        m_playerInput.CrouchMove.Z += vector.Y;
-                        m_playerInput.Move.X += ProcessInputValue(touchInput.Value.TotalMoveLimited.X, 0.1f, 1f);
-                        m_playerInput.Move.Z += ProcessInputValue(touchInput.Value.TotalMoveLimited.Y, 0.1f, 1f);
-                    }
-                    else if (touchInput.Value.InputType == TouchInputType.Tap) {
+                // Jump: special handling for Trackpad (tap gesture) vs other buttons
+                var (jumpCtrl, jumpBtn) = SettingsManager.GetVrMapping("VrJump");
+                if (jumpBtn == VrControllerButton.Trackpad) {
+                    // Only check the controller specified by the user's mapping
+                    TouchInput? jumpTouch = jumpCtrl == VrController.Right
+                        ? VrManager.GetTouchInput(VrController.Right)
+                        : touchInput;
+                    if (jumpTouch.HasValue && num3 > 0f && jumpTouch.Value.InputType == TouchInputType.Tap)
                         m_playerInput.Jump = true;
+                }
+                else if (jumpBtn != VrControllerButton.Null) {
+                    m_playerInput.Jump |= VrManager.IsButtonDownOnce(jumpCtrl, jumpBtn);
+                }
+                // Touchpad move gestures remain for movement (analog, not remappable)
+                // Ignore touchpad when stick is active (dual-input controllers)
+                bool leftStickActive = vrStickPosition.LengthSquared() > 0.04f;
+                if (touchInput.HasValue
+                    && num3 > 0f
+                    && !leftStickActive) {
+                    if (touchInput.Value.InputType == TouchInputType.Move) {
+                        if (isTeleportMode) {
+                            // Teleport mode: allow backward touchpad movement, suppress forward/sideways
+                            if (touchInput.Value.Move.Y < 0f) {
+                                Vector2 move = touchInput.Value.Move;
+                                Vector2 vector = 10f * num / num3 * new Vector2(0.5f) * move * MathF.Pow(move.LengthSquared(), 0.175f);
+                                m_playerInput.CrouchMove.X += vector.X;
+                                m_playerInput.CrouchMove.Z += vector.Y;
+                                m_playerInput.Move.Z += ProcessInputValue(touchInput.Value.TotalMoveLimited.Y, 0.1f, 1f);
+                            }
+                        }
+                        else {
+                            Vector2 move = touchInput.Value.Move;
+                            Vector2 vector = 10f * num / num3 * new Vector2(0.5f) * move * MathF.Pow(move.LengthSquared(), 0.175f);
+                            m_playerInput.CrouchMove.X += vector.X;
+                            m_playerInput.CrouchMove.Z += vector.Y;
+                            m_playerInput.Move.X += ProcessInputValue(touchInput.Value.TotalMoveLimited.X, 0.1f, 1f);
+                            m_playerInput.Move.Z += ProcessInputValue(touchInput.Value.TotalMoveLimited.Y, 0.1f, 1f);
+                        }
                     }
                 }
-                m_playerInput.Look += 0.5f * vrStickPosition2 * MathF.Pow(vrStickPosition2.LengthSquared(), 0.25f);
-                Vector3 hmdMatrixYpr = VrManager.HmdMatrixYpr;
-                Vector3 hmdLastMatrixYpr = VrManager.HmdLastMatrixYpr;
-                Vector3 vector2 = hmdMatrixYpr - hmdLastMatrixYpr;
-                m_playerInput.VrLook = new Vector2(vector2.X, hmdMatrixYpr.Y);
+                if (SettingsManager.VrLookControlMode == VrLookControlMode.Smooth) {
+                    m_playerInput.Look += 0.5f * vrStickPosition2 * MathF.Pow(vrStickPosition2.LengthSquared(), 0.25f);
+                }
                 TouchInput? touchInput2 = VrManager.GetTouchInput(VrController.Right);
                 Vector2 zero2 = Vector2.Zero;
                 if (touchInput2.HasValue) {
@@ -336,42 +399,150 @@ namespace Game {
                         zero2.X = touchInput2.Value.Move.X;
                         m_playerInput.Move.Y += ProcessInputValue(touchInput2.Value.TotalMoveLimited.Y, 0.1f, 1f);
                     }
-                    else if (touchInput2.Value.InputType == TouchInputType.Tap) {
-                        m_playerInput.Jump = true;
+                }
+                // Snap turn or smooth turn for VR look
+                if (SettingsManager.VrLookControlMode == VrLookControlMode.Snap) {
+                    // Combine right stick X and touchpad X for snap input
+                    float snapInput = vrStickPosition2.X;
+                    if (touchInput2.HasValue && touchInput2.Value.InputType == TouchInputType.Move)
+                        snapInput += zero2.X;
+                    if (!m_vrSnapTurning) {
+                        float snapAngle = 0f;
+                        if (snapInput > 0.5f) snapAngle = -MathF.PI / 2f;
+                        else if (snapInput < -0.5f) snapAngle = MathF.PI / 2f;
+                        if (snapAngle != 0f) {
+                            if (m_playerInput.VrLook.HasValue) {
+                                // FppCamera: use VrLook path (body + pitch)
+                                m_playerInput.VrLook = new Vector2(
+                                    m_playerInput.VrLook.Value.X + snapAngle,
+                                    m_playerInput.VrLook.Value.Y);
+                            }
+                            else if (m_componentPlayer.GameWidget.ActiveCamera.UsesMovementControls) {
+                                // OrbitCamera/DebugCamera: route to camera rotation
+                                VrSnapCameraRotation += snapAngle;
+                            }
+                            else {
+                                // TppCamera/FixedCamera: route to body rotation
+                                VrSnapBodyRotation += snapAngle;
+                            }
+                            m_vrSnapTurning = true;
+                            m_vrSnapFadeTimer = 0.2f;
+                        }
+                    }
+                    else if (MathF.Abs(snapInput) < 0.2f) {
+                        m_vrSnapTurning = false;
                     }
                 }
-                if (num3 > 0f) {
-                    m_vrSmoothLook = Vector2.Lerp(m_vrSmoothLook, zero2, 14f * num3);
-                    m_playerInput.Look += num2 / num3 * new Vector2(0.25f) * m_vrSmoothLook * MathF.Pow(m_vrSmoothLook.LengthSquared(), 0.3f);
+                else {
+                    if (num3 > 0f) {
+                        m_vrSmoothLook = Vector2.Lerp(m_vrSmoothLook, zero2, 14f * num3);
+                        m_playerInput.Look += num2 / num3 * new Vector2(0.25f) * m_vrSmoothLook * MathF.Pow(m_vrSmoothLook.LengthSquared(), 0.3f);
+                    }
+                }
+                // Update snap turn fade
+                if (m_vrSnapFadeTimer > 0f) {
+                    m_vrSnapFadeTimer = MathF.Max(0f, m_vrSnapFadeTimer - num3);
+                    // Fade in/out: first half black, second half fade out
+                    float halfFade = 0.1f;
+                    if (m_vrSnapFadeTimer > halfFade)
+                        VrFadeAlpha = 1f;
+                    else
+                        VrFadeAlpha = m_vrSnapFadeTimer / halfFade;
+                }
+                else {
+                    VrFadeAlpha = 0f;
+                }
+                // Teleport mode: track left stick/touchpad, compute arc, execute on release
+                if (isTeleportMode) {
+                    bool touchpadMove = touchInput.HasValue && touchInput.Value.InputType == TouchInputType.Move
+                        && !leftStickActive; // Ignore touchpad when stick is active
+                    // Activation threshold (high) vs hold threshold (low) — hysteresis
+                    bool stickForward = vrStickPosition.Y >= 0f && vrStickPosition.LengthSquared() > 0.25f;
+                    bool touchpadForward = touchpadMove && touchInput.Value.Move.Y >= 0f;
+                    bool stickHeld = vrStickPosition.Y >= 0f && vrStickPosition.LengthSquared() > 0.04f;
+                    // Suppress activation after backward until fully centered (prevents touchpad dual-report from triggering)
+                    if (vrStickPosition.Y < 0f && vrStickPosition.LengthSquared() > 0.04f) {
+                        m_vrTeleportSuppressAfterBackward = true;
+                    }
+                    if (vrStickPosition.LengthSquared() < 0.01f) {
+                        m_vrTeleportSuppressAfterBackward = false;
+                    }
+
+                    if ((stickForward || touchpadForward) && !m_vrTeleportStickActive && !m_vrTeleportSuppressAfterBackward) {
+                        m_vrTeleportStickActive = true;
+                    }
+                    if (m_vrTeleportStickActive) {
+                        if (stickHeld || touchpadForward) {
+                            ComputeTeleportArc();
+                        }
+                        else if (vrStickPosition.LengthSquared() < 0.04f && !touchpadMove) {
+                            // Stick returned to center — execute teleport if valid
+                            m_vrTeleportStickActive = false;
+                            if (m_vrTeleportValid && m_vrTeleportTarget.HasValue) {
+                                ExecuteTeleport(m_vrTeleportTarget.Value, m_vrTeleportForceCrouch);
+                            }
+                            m_vrTeleportArcPoints.Clear();
+                            m_vrTeleportTarget = null;
+                            m_vrTeleportValid = false;
+                        }
+                        else {
+                            // Stick pulled backward — cancel teleport without executing
+                            m_vrTeleportStickActive = false;
+                            m_vrTeleportArcPoints.Clear();
+                            m_vrTeleportTarget = null;
+                            m_vrTeleportValid = false;
+                        }
+                    }
+                }
+                else {
+                    m_vrTeleportArcPoints.Clear();
+                    m_vrTeleportTarget = null;
+                    m_vrTeleportValid = false;
+                    m_vrTeleportStickActive = false;
+                    m_vrTeleportSuppressAfterBackward = false;
                 }
                 if (VrManager.IsControllerPresent(VrController.Right)) {
-                    m_playerInput.Dig = VrManager.IsButtonDown(VrController.Right, VrControllerButton.Trigger)
-                        ? CalculateVrHandRay()
-                        : m_playerInput.Dig;
-                    m_playerInput.Hit = VrManager.IsButtonDownOnce(VrController.Right, VrControllerButton.Trigger)
-                        ? CalculateVrHandRay()
-                        : m_playerInput.Hit;
-                    m_playerInput.Aim = VrManager.IsButtonDown(VrController.Left, VrControllerButton.Trigger)
-                        ? CalculateVrHandRay()
-                        : m_playerInput.Aim;
-                    m_playerInput.Interact = VrManager.IsButtonDownOnce(VrController.Left, VrControllerButton.Trigger)
-                        ? CalculateVrHandRay()
-                        : m_playerInput.Interact;
+                    var (hitCtrl, hitBtn) = SettingsManager.GetVrMapping("VrHit");
+                    var (digCtrl, digBtn) = SettingsManager.GetVrMapping("VrDig");
+                    var (aimCtrl, aimBtn) = SettingsManager.GetVrMapping("VrAim");
+                    var (interactCtrl, interactBtn) = SettingsManager.GetVrMapping("VrInteract");
+                    if (digBtn != VrControllerButton.Null)
+                        m_playerInput.Dig = VrManager.IsButtonDown(digCtrl, digBtn)
+                            ? CalculateVrHandRay()
+                            : m_playerInput.Dig;
+                    if (hitBtn != VrControllerButton.Null)
+                        m_playerInput.Hit = VrManager.IsButtonDownOnce(hitCtrl, hitBtn)
+                            ? CalculateVrHandRay()
+                            : m_playerInput.Hit;
+                    if (aimBtn != VrControllerButton.Null)
+                        m_playerInput.Aim = VrManager.IsButtonDown(aimCtrl, aimBtn)
+                            ? CalculateVrHandRay()
+                            : m_playerInput.Aim;
+                    if (interactBtn != VrControllerButton.Null)
+                        m_playerInput.Interact = VrManager.IsButtonDownOnce(interactCtrl, interactBtn)
+                            ? CalculateVrHandRay()
+                            : m_playerInput.Interact;
                 }
-                m_playerInput.ToggleMount |= input.IsVrButtonDownOnce(VrController.Left, VrControllerButton.TouchpadUp);
-                m_playerInput.ToggleCrouch |= input.IsVrButtonDownOnce(VrController.Left, VrControllerButton.TouchpadDown);
-                m_playerInput.EditItem |= input.IsVrButtonDownOnce(VrController.Left, VrControllerButton.Grip);
-                m_playerInput.ToggleCreativeFly |= input.IsVrButtonDownOnce(VrController.Right, VrControllerButton.TouchpadUp);
-                if (input.IsVrButtonDownOnce(VrController.Right, VrControllerButton.TouchpadLeft)) {
+                m_playerInput.ToggleMount |= IsVrActionDownOnce("VrToggleMount");
+                m_playerInput.ToggleCrouch |= IsVrActionDownOnce("VrToggleCrouch");
+                m_playerInput.EditItem |= IsVrActionDownOnce("VrEditItem");
+                m_playerInput.ToggleCreativeFly |= IsVrActionDownOnce("VrToggleFly");
+                if (IsVrActionDownOnce("VrScrollLeft")) {
                     m_playerInput.ScrollInventory--;
                 }
-                if (input.IsVrButtonDownOnce(VrController.Right, VrControllerButton.TouchpadRight)) {
+                if (IsVrActionDownOnce("VrScrollRight")) {
                     m_playerInput.ScrollInventory++;
                 }
-                m_playerInput.Drop |= input.IsVrButtonDownOnce(VrController.Right, VrControllerButton.Grip);
+                m_playerInput.Drop |= IsVrActionDownOnce("VrDrop");
+                m_playerInput.SwitchCameraMode |= IsVrActionDownOnce("VrSwitchCameraMode");
             }
-            if (!DialogsManager.HasDialogs(m_componentPlayer.GuiWidget)) {
-                m_playerInput.ToggleInventory |= input.IsVrButtonDownOnce(VrController.Right, VrControllerButton.Menu);
+            if (!DialogsManager.HasDialogsOrAnimations(m_componentPlayer.GuiWidget)) {
+                if (input.IsVrButtonDownOnce(VrController.Right, VrControllerButton.Menu)
+                    || input.IsVrButtonDownOnce(VrController.Left, VrControllerButton.Menu)) {
+                    input.Back = true;
+                }
+                m_playerInput.ToggleInventory |= IsVrActionDownOnce("VrToggleInventory");
+                m_playerInput.ToggleClothing |= IsVrActionDownOnce("VrToggleClothing");
             }
         }
 
@@ -489,5 +660,159 @@ namespace Game {
 
         public static float ProcessInputValue(float value, float deadZone, float saturationZone) =>
             MathF.Sign(value) * Math.Clamp((MathF.Abs(value) - deadZone) / (saturationZone - deadZone), 0f, 1f);
+
+        static bool IsVrActionDown(string action) {
+            var (ctrl, btn) = SettingsManager.GetVrMapping(action);
+            if (btn == VrControllerButton.Null) return false;
+            if (VrManager.IsButtonDown(ctrl, btn)) return true;
+            if (SettingsManager.GetVrActionAlternative(action) is VrControllerButton alt)
+                return VrManager.IsButtonDown(ctrl, alt);
+            return false;
+        }
+
+        static bool IsVrActionDownOnce(string action) {
+            var (ctrl, btn) = SettingsManager.GetVrMapping(action);
+            if (btn == VrControllerButton.Null) return false;
+            if (VrManager.IsButtonDownOnce(ctrl, btn)) return true;
+            if (SettingsManager.GetVrActionAlternative(action) is VrControllerButton alt)
+                return VrManager.IsButtonDownOnce(ctrl, alt);
+            return false;
+        }
+
+        void ComputeTeleportArc() {
+            m_vrTeleportTarget = null;
+            m_vrTeleportValid = false;
+            m_vrTeleportForceCrouch = false;
+
+            // Get left controller world position and direction
+            Camera activeCamera = m_componentPlayer.GameWidget.ActiveCamera;
+            Matrix worldMatrix = VrManager.HmdMatrixInverted
+                * Matrix.CreateWorld(activeCamera.ViewPosition, activeCamera.ViewDirection, activeCamera.ViewUp);
+            Matrix controllerMatrix = VrManager.GetControllerMatrix(VrController.Left) * worldMatrix;
+
+            Vector3 origin = controllerMatrix.Translation;
+            Vector3 direction = controllerMatrix.Forward;
+
+            bool isCreativeFlyEnabled = m_componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled;
+            float initialSpeed = isCreativeFlyEnabled ? 16f : 8f;
+            int numPoints = isCreativeFlyEnabled ? 60 : 30;
+            float maxRange = isCreativeFlyEnabled ? float.PositiveInfinity : 20f;
+            const float gravity = 10f;
+            const float timeStep = 0.05f;
+
+            m_vrTeleportArcPoints.Clear();
+            m_vrTeleportArcPoints.Add(origin);
+            m_vrTeleportHitFace = 4;
+
+            Vector3 velocity = direction * initialSpeed;
+            Vector3 pos = origin;
+
+            for (int i = 1; i <= numPoints; i++) {
+                Vector3 newPos = pos + velocity * timeStep;
+                velocity.Y -= gravity * timeStep;
+
+                // Raycast between consecutive points — only accept collidable blocks
+                TerrainRaycastResult? hit = m_subsystemTerrain.Raycast(pos, newPos, false, true,
+                    (value, _) => BlocksManager.Blocks[Terrain.ExtractContents(value)].IsCollidable_(value));
+                if (hit.HasValue) {
+                    m_vrTeleportArcPoints.Add(hit.Value.HitPoint());
+                    ValidateTeleportLanding(hit.Value);
+                    return;
+                }
+
+                if (Vector3.Distance(origin, newPos) > maxRange) {
+                    m_vrTeleportArcPoints.Add(newPos);
+                    return;
+                }
+
+                m_vrTeleportArcPoints.Add(newPos);
+                pos = newPos;
+            }
+        }
+
+        int CountClearance(int cellX, int cellY, int cellZ) {
+            int clearance = 0;
+            for (int y = Math.Max(cellY, 0); y <= cellY + 1 && y < 255; y++) {
+                int value = m_subsystemTerrain.Terrain.GetCellValue(cellX, y, cellZ);
+                Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
+                if (block is LadderBlock || !block.IsCollidable_(value))
+                    clearance++;
+                else break;
+            }
+            return clearance;
+        }
+
+        void ApplyTeleportResult(Vector3 target) {
+            int cellX = Terrain.ToCell(target.X);
+            int cellY = Terrain.ToCell(target.Y);
+            int cellZ = Terrain.ToCell(target.Z);
+            int clearance = CountClearance(cellX, cellY, cellZ);
+            if (clearance >= 2) {
+                m_vrTeleportTarget = target;
+                m_vrTeleportValid = true;
+            }
+            else if (clearance == 1) {
+                m_vrTeleportTarget = target;
+                m_vrTeleportValid = true;
+                m_vrTeleportForceCrouch = true;
+            }
+        }
+
+        void ValidateTeleportLanding(TerrainRaycastResult hit) {
+            int face = hit.CellFace.Face;
+            bool isCreativeFly = m_componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled;
+            if (face == 5
+                && !isCreativeFly) {
+                return;
+            }
+            m_vrTeleportHitFace = face;
+            Block block = BlocksManager.Blocks[Terrain.ExtractContents(hit.Value)];
+
+            // Wall hit (face 0-3): only allow if creative fly or LadderBlock
+            if (face >= 0 && face <= 3) {
+                if (isCreativeFly || block is LadderBlock) {
+                    Vector3 hitPoint = hit.HitPoint();
+                    Vector3 normal = CellFace.FaceToVector3(face);
+                    // Offset slightly into the space in front of the wall
+                    Vector3 playerPos = hitPoint + normal * 0.5f;
+                    ApplyTeleportResult(playerPos);
+                }
+                return;
+            }
+
+            // Floor hit (face 4 = top): land above the block
+            // Ceiling hit (face 5 = bottom): land below the block (fly mode)
+            Vector3 landingPoint = hit.HitPoint();
+            int standY = face == 5 ? hit.CellFace.Y - 1 : hit.CellFace.Y + 1;
+            Vector3 target = new Vector3(landingPoint.X, standY, landingPoint.Z);
+            ApplyTeleportResult(target);
+        }
+
+        void ExecuteTeleport(Vector3 target, bool forceCrouch) {
+            if (m_componentPlayer.ComponentRider.Mount != null) return;
+            if (m_componentPlayer.ComponentHealth.Health <= 0f) return;
+            if (m_componentGui.ModalPanelWidget != null
+                || DialogsManager.HasDialogs(m_componentPlayer.GuiWidget)) return;
+
+            // Re-validate clearance at target (terrain may have changed)
+            int cellX = Terrain.ToCell(target.X);
+            int cellY = Terrain.ToCell(target.Y);
+            int cellZ = Terrain.ToCell(target.Z);
+            if (CountClearance(cellX, cellY, cellZ) == 0) return;
+
+            ComponentBody body = m_componentPlayer.ComponentBody;
+            body.Position = target;
+            body.Velocity = Vector3.Zero;
+
+            if (forceCrouch) {
+                body.IsCrouching = true;
+                body.CrouchFactor = 1f;
+            }
+            else {
+                body.TargetCrouchFactor = 0f;
+            }
+
+            m_vrSnapFadeTimer = 0.2f;
+        }
     }
 }

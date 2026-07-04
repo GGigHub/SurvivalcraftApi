@@ -49,5 +49,10 @@ namespace Game {
 
         public abstract void Update(float dt);
         public virtual void PrepareForDrawing() { }
+
+        public virtual void PrepareForDrawing(VrEye? eye) {
+            Eye = eye;
+            PrepareForDrawing();
+        }
     }
 }

@@ -2,7 +2,7 @@ using System;
 
 namespace GameEntitySystem {
     public class EntityAddRemoveEventArgs : EventArgs {
-        Entity m_entity;
+        public Entity m_entity;
 
         public Entity Entity => m_entity;
 

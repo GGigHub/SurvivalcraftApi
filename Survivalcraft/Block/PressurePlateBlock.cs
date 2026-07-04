@@ -134,6 +134,8 @@ namespace Game {
             int num = Terrain.ExtractData(value);
             if (num < m_blockMeshesByData.Length
                 && m_blockMeshesByData[num] != null) {
+                Texture2D texture = GetDefaultTexture(value);
+                TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
                 generator.GenerateMeshVertices(
                     this,
                     x,
@@ -142,7 +144,7 @@ namespace Game {
                     m_blockMeshesByData[num],
                     Color.White,
                     null,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
                 generator.GenerateWireVertices(
                     value,
@@ -152,7 +154,7 @@ namespace Game {
                     GetFace(value),
                     0.8125f,
                     Vector2.Zero,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
             }
         }
@@ -164,14 +166,28 @@ namespace Game {
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
             int material = GetMaterial(Terrain.ExtractData(value));
-            BlocksManager.DrawMeshBlock(
-                primitivesRenderer,
-                m_standaloneBlockMeshesByMaterial[material],
-                color,
-                2f * size,
-                ref matrix,
-                environmentData
-            );
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawMeshBlock(
+                    primitivesRenderer,
+                    m_standaloneBlockMeshesByMaterial[material],
+                    color,
+                    2f * size,
+                    ref matrix,
+                    environmentData
+                );
+            }
+            else {
+                BlocksManager.DrawMeshBlock(
+                    primitivesRenderer,
+                    m_standaloneBlockMeshesByMaterial[material],
+                    texture,
+                    color,
+                    2f * size,
+                    ref matrix,
+                    environmentData
+                );
+            }
         }
 
         public override ElectricElement CreateElectricElement(SubsystemElectricity subsystemElectricity, int value, int x, int y, int z) =>

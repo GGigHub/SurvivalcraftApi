@@ -231,7 +231,14 @@ namespace Game {
                 Block block = BlocksManager.Blocks[num];
                 LookAngles += LookSpeed * LookOrder * dt;
                 if (VrLookOrder.HasValue) {
-                    LookAngles = new Vector2(LookAngles.X, VrLookOrder.Value.Y);
+                    if (m_componentCreature.ComponentBody.ParentBody != null) {
+                        // Mounted: body rotation locked to mount, route VR yaw to eye rotation.
+                        // Negated because CalculateEyeRotation applies -LookAngles.X.
+                        LookAngles = new Vector2(LookAngles.X - VrLookOrder.Value.X, VrLookOrder.Value.Y);
+                    }
+                    else {
+                        LookAngles = new Vector2(LookAngles.X, VrLookOrder.Value.Y);
+                    }
                 }
                 if (!m_componentCreature.ComponentBody.IsEmbeddedInIce) {
                     Quaternion rotation = m_componentCreature.ComponentBody.Rotation;
@@ -240,8 +247,14 @@ namespace Game {
                         1f - 2f * rotation.Y * rotation.Y - 2f * rotation.Z * rotation.Z
                     );
                     num2 += (0f - TurnSpeed) * TurnOrder.X * dt;
-                    if (VrLookOrder.HasValue) {
+                    // VR yaw only applies to body rotation when unmounted
+                    if (VrLookOrder.HasValue && m_componentCreature.ComponentBody.ParentBody == null) {
                         num2 += VrLookOrder.Value.X;
+                    }
+                    // Snap turn body rotation (TppCamera/FixedCamera)
+                    if (ComponentInput.VrSnapBodyRotation != 0f) {
+                        num2 += ComponentInput.VrSnapBodyRotation;
+                        ComponentInput.VrSnapBodyRotation = 0f;
                     }
                     m_componentCreature.ComponentBody.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, num2);
                     if (LadderSpeed > 0f
@@ -262,7 +275,11 @@ namespace Game {
                         }
                     }
                     if (VrMoveOrder.HasValue) {
-                        m_componentCreature.ComponentBody.ApplyDirectMove(VrMoveOrder.Value);
+                        // When mounted, apply room-scale movement to the mount's body
+                        // (player position is locked to mount by ComponentBody)
+                        ComponentBody targetBody = m_componentCreature.ComponentBody.ParentBody
+                            ?? m_componentCreature.ComponentBody;
+                        targetBody.ApplyDirectMove(VrMoveOrder.Value);
                     }
                     if (LadderValue.HasValue) {
                         LadderMovement(dt, cellValue);

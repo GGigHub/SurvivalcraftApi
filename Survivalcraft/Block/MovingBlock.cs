@@ -23,7 +23,7 @@ namespace Game {
 
         public static MovingBlock LoadFromPositionAndOffset(Project project, Vector3 movingBlocksPosition, Point3 offset, bool throwOnError = true) {
             SubsystemMovingBlocks subsystemMovingBlocks = project.FindSubsystem<SubsystemMovingBlocks>();
-            IMovingBlockSet movingBlockSet = subsystemMovingBlocks.MovingBlockSets.FirstOrDefault(
+            IMovingBlockSet movingBlockSet = subsystemMovingBlocks.MovingBlockSetEnumerable.FirstOrDefault(
                 set => set.Position.ToString() == movingBlocksPosition.ToString(),
                 null
             );

@@ -10,6 +10,7 @@ namespace Game {
         public abstract Color GetLeavesItemColor(int value, DrawBlockEnvironmentData environmentData);
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
             Color leavesBlockColor = GetLeavesBlockColor(value, generator.Terrain, x, y, z);
             generator.GenerateCubeVertices(
                 this,
@@ -18,7 +19,7 @@ namespace Game {
                 y,
                 z,
                 leavesBlockColor,
-                geometry.AlphaTestSubsetsByFace
+                texture == null ? geometry.AlphaTestSubsetsByFace : geometry.GetGeometry(texture).AlphaTestSubsetsByFace
             );
         }
 
@@ -29,15 +30,30 @@ namespace Game {
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
             color *= GetLeavesItemColor(value, environmentData);
-            BlocksManager.DrawCubeBlock(
-                primitivesRenderer,
-                value,
-                new Vector3(size),
-                ref matrix,
-                color,
-                color,
-                environmentData
-            );
+            Texture2D texture = GetDefaultTexture(value);
+            if (texture == null) {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size),
+                    ref matrix,
+                    color,
+                    color,
+                    environmentData
+                );
+            }
+            else {
+                BlocksManager.DrawCubeBlock(
+                    primitivesRenderer,
+                    value,
+                    new Vector3(size),
+                    ref matrix,
+                    color,
+                    color,
+                    environmentData,
+                    texture
+                );
+            }
         }
 
         public override BlockDebrisParticleSystem CreateDebrisParticleSystem(SubsystemTerrain subsystemTerrain,

@@ -23,7 +23,7 @@ namespace Game {
                 value,
                 size,
                 ref matrix,
-                null,
+                GetDefaultTexture(value),
                 color * BlockColorsMap.Kelp.Lookup(environmentData.Temperature, environmentData.Humidity),
                 false,
                 environmentData
@@ -31,6 +31,7 @@ namespace Game {
         }
 
         public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z) {
+            Texture2D texture = GetDefaultTexture(value);
             Color color = BlockColorsMap.Kelp.Lookup(generator.Terrain, x, y, z);
             generator.GenerateCrossfaceVertices(
                 this,
@@ -40,7 +41,7 @@ namespace Game {
                 z,
                 color,
                 GetFaceTextureSlot(-1, value),
-                geometry.SubsetAlphaTest
+                texture == null ? geometry.SubsetAlphaTest : geometry.GetGeometry(texture).SubsetAlphaTest
             );
             base.GenerateTerrainVertices(generator, geometry, value, x, y, z);
         }

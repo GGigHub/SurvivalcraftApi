@@ -75,6 +75,43 @@ namespace Game {
                     );
                 }
             }
+            if (geometry2.Draws != null) {
+                foreach (var kv in geometry2.Draws) {
+                    TerrainGeometry targetGeo = geometry.GetGeometry(kv.Key);
+                    FurnitureGeometry subGeo = kv.Value;
+                    for (int i = 0; i < 6; i++) {
+                        int num = CellFace.OppositeFace(i < 4 ? (i + rotation) % 4 : i);
+                        byte b = (byte)(LightingManager.LightIntensityByLightValueAndFace[15 + 16 * num] * 255f);
+                        Color color = new(b, b, b);
+                        if (subGeo.SubsetOpaqueByFace[i] != null) {
+                            generator.GenerateShadedMeshVertices(
+                                this,
+                                x,
+                                y,
+                                z,
+                                subGeo.SubsetOpaqueByFace[i],
+                                color,
+                                m_matrices[rotation],
+                                m_facesMaps[rotation],
+                                targetGeo.OpaqueSubsetsByFace[num]
+                            );
+                        }
+                        if (subGeo.SubsetAlphaTestByFace[i] != null) {
+                            generator.GenerateShadedMeshVertices(
+                                this,
+                                x,
+                                y,
+                                z,
+                                subGeo.SubsetAlphaTestByFace[i],
+                                color,
+                                m_matrices[rotation],
+                                m_facesMaps[rotation],
+                                targetGeo.AlphaTestSubsetsByFace[num]
+                            );
+                        }
+                    }
+                }
+            }
         }
 
         public override void DrawBlock(PrimitivesRenderer3D primitivesRenderer,
@@ -105,6 +142,22 @@ namespace Game {
                 }
                 if (geometry.SubsetAlphaTestByFace[i] != null) {
                     BlocksManager.DrawMeshBlock(primitivesRenderer, geometry.SubsetAlphaTestByFace[i], color2, size, ref matrix2, environmentData);
+                }
+            }
+            if (geometry.Draws != null) {
+                foreach (var kv in geometry.Draws) {
+                    Texture2D tex = kv.Key;
+                    FurnitureGeometry subGeo = kv.Value;
+                    for (int i = 0; i < 6; i++) {
+                        float s = LightingManager.LightIntensityByLightValueAndFace[environmentData.Light + 16 * CellFace.OppositeFace(i)];
+                        Color color2 = Color.MultiplyColorOnly(color, s);
+                        if (subGeo.SubsetOpaqueByFace[i] != null) {
+                            BlocksManager.DrawMeshBlock(primitivesRenderer, subGeo.SubsetOpaqueByFace[i], tex, color2, size, ref matrix2, environmentData);
+                        }
+                        if (subGeo.SubsetAlphaTestByFace[i] != null) {
+                            BlocksManager.DrawMeshBlock(primitivesRenderer, subGeo.SubsetAlphaTestByFace[i], tex, color2, size, ref matrix2, environmentData);
+                        }
+                    }
                 }
             }
         }

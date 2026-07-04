@@ -30,7 +30,7 @@
   },
   "CommunityContentManager": {
     "1": "No hay conexión a Internet.",
-    "2": "No se pueden publicar links en modo de prueba.",
+    "2": "No se pueden publicar enlcaes en modo de prueba.",
     "3": "Comentario duplicado.",
     "4": "Falló al cargar la caché de contenido de la comunidad.",
     "5": "Falló al guardar la caché de contenido de la comunidad."
@@ -143,7 +143,7 @@
     "75": "Error al cargar la información del mod desde modinfo.json de {0}. Motivo: {1}",
     "76": "Este mod es para la versión de plugin {0} y puede no funcionar en la versión actual del plugin",
     "77": "Página del Mod",
-    "78": "Este mod no tiene link de página principal configurado.",
+    "78": "Este mod no tiene enlace de página principal configurado.",
     "79": "Versión del Mod: {0}  Versión API: {1}  Autor: {2}  Tamaño: {3}",
     "80": "Detalles",
     "81": "*Requiere Reinicio"
@@ -422,7 +422,7 @@
     "2": "Lineal"
   },
   "ViewGameLogDialog": {
-    "1": "Limpiar",
+    "1": "Borrar",
     "2": "Por favor, inicia sesión y envía el registro",
     "3": "Inicia Sesion",
     "4": "Aceptar",
@@ -501,7 +501,7 @@
     "5": "Cerrar sesión",
     "6": "Iniciar sesión",
     "7": "Seleccionar Fuente de Contenido",
-    "8": "Creando Link",
+    "8": "Creando Enlace",
     "9": "Recuperando Directorio",
     "10": "Descargando",
     "11": " | (descargado)",
@@ -711,8 +711,8 @@
     "2": "Obteniendo Contenido",
     "3": "Eliminando {0}",
     "4": "¿Estás seguro?",
-    "5": "El link se eliminará del servidor.",
-    "6": "Link Eliminado",
+    "5": "El enlace se eliminará del servidor.",
+    "6": "Enlace Eliminado",
     "7": "Dejará de aparecer en los listados en unos minutos.",
     "8": "Solo Mis Objetos",
     "9": "Todos los Objetos",
@@ -871,9 +871,11 @@
   "EggBlock": {
     "1": "Huevo Cocido de ",
     "2": "Huevo Puesto de ",
-    "3": "spawn ",
-    "4": "Cocina un huevo para aumentar su valor nutricional"
-  },
+    "3": "Generador de ",
+    "4": "Cocina un huevo para aumentar su valor nutricional",
+    "5": "Huevo Cocido de {0}",
+    "6": "Huevo Puesto de {0}"
+},
   "CreativeInventoryWidget": {
     "1": "Muebles",
     "2": "Usuario"
@@ -1344,8 +1346,8 @@
       "Description": ""
     },
     "BedrockBlock:0": {
-      "DisplayName": "Bedrock",
-      "Description": ""
+      "DisplayName": "Piedra Madre",
+      "Description": "Piedra encontrada en lo mas profundo de la tierra. Imposible de romper."
     },
     "DirtBlock:0": {
       "DisplayName": "Tierra",
@@ -1993,8 +1995,8 @@
       "CRDescription:0": "Haz un imán para establecer un punto de atracción para la brújula"
     },
     "FurBlock:0": {
-      "DisplayName": "Piel",
-      "Description": "La piel se puede obtener matando animales peludos como los osos. Es un material resistente con buenas propiedades aislantes, perfecto para hacer ropa de invierno."
+      "DisplayName": "Pelaje",
+      "Description": "La pelaje se puede obtener matando animales peludos como los osos. Es un material resistente con buenas propiedades aislantes, perfecto para hacer ropa de invierno."
     },
     "LeatherBlock:0": {
       "DisplayName": "Cuero",
@@ -2612,19 +2614,19 @@
       "CRDescription:0": "Haz botas de caballería con cuero y tablones"
     },
     "ClothingBlock:18": {
-      "DisplayName": "Gorro de Piel",
-      "Description": "Gorro grueso y cálido hecho de piel. Protección débil. Buen aislamiento.",
-      "CRDescription:0": "Confecciona un gorro con piel"
+      "DisplayName": "Gorro de Pelaje",
+      "Description": "Gorro grueso y cálido hecho de Pelaje. Protección débil. Buen aislamiento.",
+      "CRDescription:0": "Confecciona un gorro con Pelaje"
     },
     "ClothingBlock:6": {
-      "DisplayName": "Abrigo de Piel",
-      "Description": "Abrigo grueso y cálido hecho de piel. Protección débil. Buen aislamiento. Te ralentiza.",
-      "CRDescription:0": "Confecciona un abrigo con piel"
+      "DisplayName": "Abrigo de Pelaje",
+      "Description": "Abrigo grueso y cálido hecho de Pelaje. Protección débil. Buen aislamiento. Te ralentiza.",
+      "CRDescription:0": "Confecciona un abrigo con Pelaje"
     },
     "ClothingBlock:7": {
-      "DisplayName": "Polainas de Piel",
-      "Description": "Polainas gruesas y cálidas hechas de piel. Protección débil. Buen aislamiento. Te ralentizan.",
-      "CRDescription:0": "Confecciona polainas con piel"
+      "DisplayName": "Polainas de Pelaje",
+      "Description": "Polainas gruesas y cálidas hechas de Pelaje. Protección débil. Buen aislamiento. Te ralentizan.",
+      "CRDescription:0": "Confecciona polainas con Pelaje"
     },
     "ClothingBlock:23": {
       "DisplayName": "Pechera de Madera",
@@ -3018,7 +3020,7 @@
     "37": {
       "value": "\\n A veces, cuando estás atascado, la única opción es forzar la reaparición en tu último lugar de sueño.\\n \\n\\n\\n Para hacerlo, abre la pantalla del cuerpo y presiona repetidamente el botón de la calavera y huesos.\\n ",
       "Name": "ForceRespawn",
-      "Title": "Forzar Respawn"
+      "Title": "Forzar regeneración"
     },
     "38": {
       "value": "\\n El juego utiliza el servicio de Dropbox para permitirte descargar y subir datos a\/desde tu dispositivo.\\n \\n\\n\\n A través de Dropbox, puedes hacer copias de seguridad y compartir mundos con otros.\\n También puedes descargar texturas de bloques personalizadas, skins de personajes y paquetes de muebles.\\n \\n\\n\\n Para iniciar sesión en Dropbox, haz clic en el botón de inicio de sesión en la pantalla de Dropbox.\\n Si aún no tienes una cuenta de Dropbox, podrás configurar una durante el inicio de sesión.\\n \\n\\n\\n Una vez que inicies sesión, la pantalla de Dropbox te mostrará el contenido de tus carpetas de Dropbox en línea y te permitirá descargar los archivos a tu dispositivo.\\n \\n\\n\\n Visita el sitio web https:\/\/dropbox.com para más detalles.\\n ",
@@ -3151,9 +3153,9 @@
       "4": "Accede al contenido público creado por la comunidad",
       "5": "Comunidad",
       "6": "Descarga un archivo a través de un enlace web (usa copiar/pegar)",
-      "7": "Por Link",
+      "7": "Por Enlace",
       "8": "Administrar contenido descargado",
-      "9": "Administrar Contenido",
+      "9": "Administrar",
       "10": "Accede al contenido público creado por la comunidad Original",
       "11": "Comunidad Original",
       "12": "Administrar mods descargado",
@@ -3163,11 +3165,11 @@
     },
     "ExternalContentScreen": {
       "1": "",
-      "2": "-",
+      "2": "ExternalContentScreen 1",
       "3": "...",
-      "4": "-",
-      "5": "-",
-      "6": "Copiar Link"
+      "4": "ExternalContentScreen 2",
+      "5": "ExternalContentScreen 3",
+      "6": "Copiar Enlace"
     },
     "GameLoadingScreen": {
       "1": "Cargando Mundo"
@@ -3176,7 +3178,7 @@
       "1": "Temas de Ayuda",
       "2": "Bestiario",
       "3": "Recetas",
-      "4": "Reportar Bug"
+      "4": "Reportar Error"
     },
     "HelpTopicScreen": {
       "1": "Temas de Ayuda"
@@ -3188,7 +3190,7 @@
       "4": "Configuración",
       "5": "Ayuda",
       "6": "Versión Completa...",
-      "7": "Copyright 2011-2025 Candy Rufus Games",
+      "7": "© 2011-2026 Candy Rufus Games",
       "8": "Visite ",
       "9": "kaalus.wordpress.com",
       "10": " para mas información.",
@@ -3200,7 +3202,7 @@
       "1": "Administrar Contenido",
       "2": "(Descarga más usando Contenido de la Comunidad)",
       "3": "Eliminar",
-      "4": "Subir",
+      "4": "Cargar",
       "5": "..."
     },
     "ModifyWorldScreen": {
@@ -3212,7 +3214,7 @@
       "6": "Opciones...",
       "7": "Nombre de mundo inválido",
       "8": "Eliminar",
-      "9": "Subir",
+      "9": "Cargar",
       "10": "Aplicar Cambios"
     },
     "NagScreen": {
@@ -3243,7 +3245,7 @@
       "1": "Mundos Existentes",
       "2": "Jugar Mundo",
       "3": "Nuevo Mundo",
-      "4": "...",
+      "4": "Opciones",
       "5": "Escaneando Mundos",
       "6": "Mundos Existentes ({0})",
       "7": "Demasiados mundos",
@@ -3286,7 +3288,7 @@
       "Recetas"
     ],
     "RespawningScreen": {
-      "1": "Reapareciendo...",
+      "1": "Regenerando...",
       "2": "Tus objetos permanecerán por un corto tiempo en el lugar de la muerte."
     },
     "SettingsAudioScreen": {
@@ -3304,7 +3306,7 @@
       "7": "...",
       "8": "Restablecer a Valores Predeterminados:",
       "9": "Restablecer",
-      "10": "Reportar Bug API",
+      "10": "Reportar Error de API",
       "11": "Registro del Juego:",
       "12": "Ver Registro",
       "13": "Abrir Registro",
@@ -3337,7 +3339,7 @@
       "Desplazamiento del Joystick Táctil:",
       "Desplazamiento X del Joystick Táctil:",
       "Desplazamiento Y del Joystick Táctil:",
-      "Config. teclas",
+      "Configurar",
       "Lista de Cámaras:",
       "Administrar",
       "Umbral del Gatillo del Mando:",
@@ -3351,16 +3353,16 @@
       "Enabled": "Activado",
       "Disabled": "Desactivado",
       "Tip": "Administra el orden en que cambias las perspectivas. Las perspectivas de cámara desactivadas se omiten. Activa al menos dos cámaras",
-      "Reset": "Reset todo",
-      "ResetTitle": "Reset Todas las Cámaras",
+      "Reset": "Restablecer",
+      "ResetTitle": "Restablecer Todas las Cámaras",
       "ResetText": "¿Estás seguro?\nEsto restablecerá la lista de cámaras a la configuración predeterminada."
     },
     "KeyboardMappingScreen": {
       "SetKey": "Configurar tecla",
       "DisableKey": "Desactivar tecla",
-      "Reset": "Restablecer Todo",
-      "ResetTitle": "Reset Todas Teclas",
-      "ResetText": "¿Estás seguro?\nEsto restablecerá todas las teclas a la configuración predeterminada.",
+      "Reset": "Restablecer",
+      "ResetTitle": "Restablecer todo",
+      "ResetText": "¿Estás seguro?\nEsto restablecerá todas las teclas y/o botones a la configuración predeterminada.",
       "GameHelp": "Ayuda del Juego"
     },
     "SettingsGraphicsScreen": {
@@ -3621,7 +3623,7 @@
     },
     "EditMemoryBankDialogAPI": [
       "Editar Banco De Memoria",
-      "Limpiar",
+      "Borrar",
       "Transposición",
       "Entrada Completa:",
       "Guardar",
@@ -3639,9 +3641,9 @@
       "1": "Cancelar"
     },
     "DownloadContentFromLinkDialog": {
-      "1": "Ingresar Link a un Archivo",
+      "1": "Ingresar Enlace a un Archivo",
       "2": "El nombre y el tipo se completarán automáticamente desde el enlace si es posible; de lo contrario, debes especificarlos manualmente.",
-      "3": "Link:",
+      "3": "Enlace:",
       "4": "Nombre:",
       "5": "Tipo de Contenido:",
       "6": "...",
@@ -3735,7 +3737,7 @@
       "22": "Cancelar"
     },
     "ExternalContentLinkDialog": {
-      "1": "Link Copiado al Portapapeles",
+      "1": "Enlace Copiado al Portapapeles",
       "2": "Aceptar"
     },
     "GameMenuDialog": {
@@ -3858,13 +3860,13 @@
       "6": "ID de Usuario:",
       "7": "-",
       "8": "Copiar",
-      "9": "Publicar Link",
+      "9": "Publicar Enlace",
       "10": "Cerrar"
     },
     "PublishCommunityLinkDialog": {
-      "1": "Publicar Link a un Archivo",
-      "2": "Publicar un link no sube el archivo vinculado al servidor. Solo los links se almacenan en el servidor. Eres responsable de mantener tu archivo accesible a través del link publicado.",
-      "3": "Link:",
+      "1": "Publicar Enlace a un Archivo",
+      "2": "Publicar un Enlace no sube el archivo vinculado al servidor. Solo los enlaces se almacenan en el servidor. Eres responsable de mantener tu archivo accesible a través del enlace publicado.",
+      "3": "Enlace:",
       "4": "Nombre:",
       "5": "Tipo de Contenido:",
       "6": "...",
@@ -3889,10 +3891,10 @@
       "2": "Cancelar"
     },
     "ViewGameLogDialog": [
-      "Limpiar",
+      "Borrar",
       "Copiar",
       "Cerrar",
-      "Subir"
+      "Cargar"
     ],
     "RunJsDialog": {
       "1": "Ejecutar",
@@ -4361,7 +4363,7 @@
       "202": "Maneja la generación y desgeneración de la entidad criatura",
       "203": "Si la entidad debe ser desgenerada automáticamente",
       "204": "Momento de inicio de desgeneración, o -1 si no se está desgenerando",
-      "205": "Momento de spawn, o -1 si aún no se ha generado",
+      "205": "Momento de regeneración, o -1 si aún no se ha generado",
       "206": "Un cofre donde puedes almacenar objetos",
       "207": "Toma las entradas del jugador y controla una criatura con ellas",
       "208": "Índice del jugador",

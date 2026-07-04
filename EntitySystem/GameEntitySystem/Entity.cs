@@ -9,7 +9,7 @@ using TemplatesDatabase;
 namespace GameEntitySystem {
     public class Entity : IDisposable {
         public struct FilteredComponentsEnumerable<T> : IEnumerable<T> where T : class {
-            Entity m_entity;
+            public Entity m_entity;
 
             public FilteredComponentsEnumerable(Entity entity) => m_entity = entity;
 
@@ -21,11 +21,11 @@ namespace GameEntitySystem {
         }
 
         public struct FilteredComponentsEnumerator<T> : IEnumerator<T> where T : class {
-            Entity m_entity;
+            public Entity m_entity;
 
-            int m_index;
+            public int m_index;
 
-            T m_current;
+            public T m_current;
 
             public T Current => m_current;
 
@@ -56,11 +56,11 @@ namespace GameEntitySystem {
             }
         }
 
-        Project m_project;
+        public Project m_project;
 
-        ValuesDictionary m_valuesDictionary;
+        public ValuesDictionary m_valuesDictionary;
 
-        List<Component> m_components;
+        public List<Component> m_components;
 
         public bool m_isAddedToProject;
 
@@ -77,6 +77,8 @@ namespace GameEntitySystem {
         public event EventHandler EntityRemoved;
 
         public int Id;
+
+        public Entity() { }
 
         public Entity(Project project, ValuesDictionary valuesDictionary, int id) : this(project, valuesDictionary) => Id = id;
 

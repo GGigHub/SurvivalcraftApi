@@ -41,7 +41,8 @@
     "3": "Change Enabled",
     "4": "Change Disabled",
     "5": "Mod Downloaded Successfully",
-    "6": "Do you want to switch to Manage Mod screen to enable it manually?"
+    "6": "Do you want to switch to Manage Mod screen to enable it manually?",
+    "7": "The mod files below are disabled because of non-manually reason. Do you want to view the details?"
   },
   "AndroidSdCardExternalContentProvider": {
     "1": "SD Card"
@@ -260,7 +261,7 @@
   },
   "BlocksTexturesManager": {
     "1": "Could not find blocks texture \"{0}\".",
-    "2": "Could not load blocks texture \"{0}\". Reason: {1}.",
+    "2": "Could not load blocks texture \"{0}\". Reason: {1}",
     "3": "Unable to delete blocks texture \"{0}\"",
     "4": "Blocks texture is larger than 65536x65536 pixels (size={0}x{1})",
     "5": "Blocks texture does not have power-of-two size (size={0}x{1})"
@@ -648,6 +649,7 @@
     "103": "Spawn Location",
     "104": "Toggle Fullscreen",
     "105": "Highest Mod Impact Level",
+    "106": "VR Controls",
     "ServerInfo": "Server Information",
     "ServerIP": "Server IP",
     "ServerMode": "Server Mode",
@@ -668,7 +670,8 @@
     "11": "Are you sure to delete?",
     "12": "\"{0}\" will be deleted.",
     "13": "Failed to delete \"{0}\". Reason: {1}",
-    "14": "Delete \"{0}\" Successfully."
+    "14": "Delete \"{0}\" Successfully.",
+    "15": "Not Found / Not Enabled"
   },
   "BlocksManager": {
     "1": "Block class \"{0}\" is not found in all loaded assemblies.",
@@ -755,6 +758,8 @@
     "FurniturePack": "FurniturePack",
     "ByRank": "ByRank",
     "ByTime": "ByTime",
+    "ByBoutique": "Boutique",
+    "ByHide": "Hide",
     "Order Type": "Order Type",
     "Filter": "Filter"
   },
@@ -840,6 +845,14 @@
     "EntireScreen": "EntireScreen",
     "SplitTouch": "SplitTouch"
   },
+  "VrLookControlMode": {
+    "Smooth": "Smooth",
+    "Snap": "Snap"
+  },
+  "VrMoveControlMode": {
+    "Smooth": "Smooth",
+    "Teleport": "Teleport"
+  },
   "SettingsUiScreen": {
     "1": "Message",
     "2": "Do you want apply this setting?"
@@ -877,7 +890,9 @@
     "1": "Cooked",
     "2": "Laid",
     "3": "spawn ",
-    "4": "Cook an egg to increase its nutritional value"
+    "4": "Cook an egg to increase its nutritional value",
+    "5": "Cooked {0}",
+    "6": "Laid {0}"
   },
   "CreativeInventoryWidget": {
     "1": "Furniture",
@@ -1118,6 +1133,29 @@
     "DPadUp": "↑",
     "DPadDown": "↓"
   },
+  "VrControllerMappingScreenKeys": {
+    "LeftController": "Left Controller",
+    "RightController": "Right Controller",
+    "Trigger": "Trigger",
+    "Grip": "Grip",
+    "Menu": "Menu",
+    "X": "X",
+    "Y": "Y",
+    "A": "A",
+    "B": "B",
+    "Thumbrest": "Thumbrest",
+    "Trackpad": "Trackpad/Thumbstick Press",
+    "TrackpadCenter": "Trackpad Center Press",
+    "TrackpadLeft": "Trackpad Left (Touch)",
+    "TrackpadRight": "Trackpad Right (Touch)",
+    "TrackpadUp": "Trackpad Up (Touch)",
+    "TrackpadDown": "Trackpad Down (Touch)",
+    "Null": ""
+  },
+  "VrControllerMappingScreenActions": {
+    "VrScrollLeft": "Scroll Left",
+    "VrScrollRight": "Scroll Right"
+  },
   "ComponentSickness": {
     "1": "Sickness",
     "2": "You feel nauseous"
@@ -1320,7 +1358,7 @@
     "Unknown": "Unknown",
     "Manually": "Manually",
     "NoModInfo": "No modinfo.json file in this mod, or it is broken.",
-    "DependencyError": "Dependency Error. Check game log.",
+    "DependencyError": "Dependency Error",
     "Duplicated": "The mod is duplicated.",
     "InvalidPackageName": "The package name of this mod contains \";\""
   },
@@ -3343,7 +3381,10 @@
       "Gamepad Trigger Threshold:",
       "Short Inventory Looping:",
       "Keyboard Mapping:",
-      "Gamepad Mapping:"
+      "Gamepad Mapping:",
+      "VR Controller Mapping:",
+      "VR Look Control:",
+      "VR Move Control:"
     ],
     "CameraManageScreen": {
       "Enable": "Enable",
@@ -3367,7 +3408,8 @@
       "1": "Adjust Graphics Settings",
       "2": "Virtual Reality:",
       "3": "Dark Areas Brightness:",
-      "4": "Camera View Angle:"
+      "4": "Camera View Angle:",
+      "5": "VR Eye Height Offset:"
     },
     "SettingsPerformanceScreen": {
       "1": "Adjust Performance Settings",
@@ -3410,7 +3452,9 @@
       "Hide Crosshair:",
       "Custom screenshot width",
       "Custom screenshot aspect ratio",
-      "Adapt edge to edge display"
+      "Adapt edge to edge display",
+      "VR GUI Size:",
+      "VR GUI Dock to Left Hand:"
     ],
     "TrialEndedScreen": {
       "1": "The day has ended",

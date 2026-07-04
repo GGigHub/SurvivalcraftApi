@@ -47,7 +47,7 @@ namespace Game {
                     items2.Add(item);
                 }
             }
-            foreach (IMovingBlockSet movingBlockSet in Project.FindSubsystem<SubsystemMovingBlocks>(true).MovingBlockSets) {
+            foreach (IMovingBlockSet movingBlockSet in Project.FindSubsystem<SubsystemMovingBlocks>(true).MovingBlockSetEnumerable) {
                 for (int i = 0; i < movingBlockSet.Blocks.Count; i++) {
                     List<ScannedItemData> items3 = m_items;
                     item = new ScannedItemData {

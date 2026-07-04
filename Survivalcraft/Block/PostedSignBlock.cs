@@ -179,6 +179,8 @@ namespace Game {
             int data = Terrain.ExtractData(value);
             int variant = GetVariant(data);
             int? color = GetColor(data);
+            Texture2D texture = GetDefaultTexture(value);
+            TerrainGeometrySubset subsetOpaque = texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque;
             if (color.HasValue) {
                 generator.GenerateMeshVertices(
                     this,
@@ -188,7 +190,7 @@ namespace Game {
                     m_coloredBlockMeshes[variant],
                     SubsystemPalette.GetColor(generator, color),
                     null,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
             }
             else {
@@ -200,7 +202,7 @@ namespace Game {
                     m_blockMeshes[variant],
                     Color.White,
                     null,
-                    geometry.SubsetOpaque
+                    subsetOpaque
                 );
             }
             generator.GenerateWireVertices(
@@ -211,7 +213,7 @@ namespace Game {
                 GetHanging(data) ? 5 : 4,
                 0.01f,
                 Vector2.Zero,
-                geometry.SubsetOpaque
+                subsetOpaque
             );
         }
 
@@ -222,18 +224,37 @@ namespace Game {
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
             int? color2 = GetColor(Terrain.ExtractData(value));
+            Texture2D texture = GetDefaultTexture(value);
             if (color2.HasValue) {
-                BlocksManager.DrawMeshBlock(
-                    primitivesRenderer,
-                    m_standaloneColoredBlockMesh,
-                    color * SubsystemPalette.GetColor(environmentData, color2),
-                    1.25f * size,
-                    ref matrix,
-                    environmentData
-                );
+                if (texture == null) {
+                    BlocksManager.DrawMeshBlock(
+                        primitivesRenderer,
+                        m_standaloneColoredBlockMesh,
+                        color * SubsystemPalette.GetColor(environmentData, color2),
+                        1.25f * size,
+                        ref matrix,
+                        environmentData
+                    );
+                }
+                else {
+                    BlocksManager.DrawMeshBlock(
+                        primitivesRenderer,
+                        m_standaloneColoredBlockMesh,
+                        texture,
+                        color * SubsystemPalette.GetColor(environmentData, color2),
+                        1.25f * size,
+                        ref matrix,
+                        environmentData
+                    );
+                }
             }
             else {
-                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 1.25f * size, ref matrix, environmentData);
+                if (texture == null) {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, color, 1.25f * size, ref matrix, environmentData);
+                }
+                else {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMesh, texture, color, 1.25f * size, ref matrix, environmentData);
+                }
             }
         }
 

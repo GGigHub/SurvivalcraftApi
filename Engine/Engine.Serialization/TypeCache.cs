@@ -81,7 +81,7 @@ namespace Engine.Serialization {
             if (text.Contains("89845dcd8080cc91")) {
                 return true;
             }
-            return text.Contains("opentk") || text.Contains("sharpdx");
+            return text.Contains("opentk") || text.Contains("sharpdx") || text.Contains("silk");
         }
 
         public static Type FindType(string typeName, bool skipSystemAssemblies, bool throwIfNotFound) {

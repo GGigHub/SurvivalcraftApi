@@ -315,6 +315,9 @@
     "0": "Puxe a besta primeiro",
     "1": "Carregue um dardo primeiro"
   },
+  "SubsystemPalette": {
+    "1": "{1} {0}"
+  },
   "MusketWidget": {
     "0": "Carregue pólvora",
     "1": "Carregue algodão",
@@ -535,7 +538,7 @@
     "1": "Faça displays de 7 segmentos com cobre, vidro e tinta"
   },
   "PaintBucketBlock": {
-    "1": "Fazer {0} tinta"
+    "1": "Fazer tinta {0}"
   },
   "PumpkinSoupBucketBlock": {
     "1": "Preparar sopa de abóbora"
@@ -614,7 +617,7 @@
     "71": "Ficou Doente",
     "72": "Outras Estatísticas",
     "73": "Foi Atingido por Raios",
-    "74": "Modo de Jogo Mais Fácil Usado",
+    "74": "Mundo Criado No Modo De Jogo",
     "75": "Registro de Morte",
     "76": "Manhã de",
     "77": "Tarde de",
@@ -1231,8 +1234,8 @@
     "error": "Erro",
     "on": "Ligado",
     "off": "Desligado",
-    "enable": "Ativar",
-    "disable": "Desativar",
+    "enable": "Ativado",
+    "disable": "Desativado",
     "back": "Voltar",
     "warning": "Aviso",
     "cancel": "Cancelar",
@@ -1290,10 +1293,10 @@
     "Pistão de Tração Rígida"
   ],
   "DeciduousLeavesBlock": [
-    "Verão {0}",
-    "Outono {0}",
-    "Inverno {0}",
-    "Primavera {0}"
+    "{0} do Verão",
+    "{0} do Outono",
+    "{0} do Inverno",
+    "{0} do Primavera"
   ],
   "SubsystemSeasons": [
     "Início do Verão",

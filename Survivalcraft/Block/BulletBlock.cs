@@ -3,11 +3,10 @@ using Engine.Graphics;
 
 namespace Game {
     public class BulletBlock : FlatBlock {
-        [Flags]
         public enum BulletType {
-            MusketBall,
-            Buckshot,
-            BuckshotBall
+            MusketBall = 0,
+            Buckshot = 1,
+            BuckshotBall = 2
         }
 
         public static int Index = 214;
@@ -35,7 +34,7 @@ namespace Game {
                 value,
                 size2,
                 ref matrix,
-                null,
+                GetDefaultTexture(value),
                 color,
                 false,
                 environmentData
@@ -86,6 +85,6 @@ namespace Game {
 
         public static BulletType GetBulletType(int data) => (BulletType)(data & 0xF);
 
-        public static int SetBulletType(int data, BulletType bulletType) => (data & -16) | (int)(bulletType & (BulletType)15);
+        public static int SetBulletType(int data, BulletType bulletType) => (data & -16) | ((int)bulletType & 15);
     }
 }

@@ -4,6 +4,8 @@ namespace Engine.Media {
 
         public int ParentBoneIndex;
 
+        public bool IsVisible = true;
+
         public List<ModelMeshPartData> MeshParts = [];
 
         public BoundingBox BoundingBox;

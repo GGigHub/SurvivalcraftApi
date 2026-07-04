@@ -340,7 +340,7 @@ namespace Game {
                             || IsBlockPlacingAllowed(ComponentCreature.ComponentBody)
                             || m_subsystemGameInfo.WorldSettings.GameMode <= GameMode.Survival)) {
                         bool flag = false;
-                        if (block.IsCollidable_(value)) {
+                        if (block.GetIsCollidable(ComponentCreature.ComponentBody, value)) {
                             BoundingBox boundingBox = ComponentCreature.ComponentBody.BoundingBox;
                             boundingBox.Min += new Vector3(0.2f);
                             boundingBox.Max -= new Vector3(0.2f);

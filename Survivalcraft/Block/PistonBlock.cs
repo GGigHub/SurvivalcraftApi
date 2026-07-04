@@ -89,6 +89,7 @@ namespace Game {
             int num = Terrain.ExtractData(value) & 0x3F;
             if (num < m_blockMeshesByData.Length
                 && m_blockMeshesByData[num] != null) {
+                Texture2D texture = GetDefaultTexture(value);
                 generator.GenerateShadedMeshVertices(
                     this,
                     x,
@@ -98,7 +99,7 @@ namespace Game {
                     Color.White,
                     null,
                     null,
-                    geometry.SubsetOpaque
+                    texture == null ? geometry.SubsetOpaque : geometry.GetGeometry(texture).SubsetOpaque
                 );
             }
         }
@@ -112,7 +113,13 @@ namespace Game {
             int mode = (int)GetMode(Terrain.ExtractData(value));
             if (mode < m_standaloneBlockMeshes.Length
                 && m_standaloneBlockMeshes[mode] != null) {
-                BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[mode], color, 1f * size, ref matrix, environmentData);
+                Texture2D texture = GetDefaultTexture(value);
+                if (texture == null) {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[mode], color, 1f * size, ref matrix, environmentData);
+                }
+                else {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[mode], texture, color, 1f * size, ref matrix, environmentData);
+                }
             }
         }
 
@@ -176,7 +183,7 @@ namespace Game {
 
         public static PistonMode GetMode(int data) => (PistonMode)((data >> 1) & 3);
 
-        public static int SetMode(int data, PistonMode mode) => (data & -7) | ((int)(mode & (PistonMode)3) << 1);
+        public static int SetMode(int data, PistonMode mode) => (data & -7) | (((int)mode & 3) << 1);
 
         public static int GetFace(int data) => (data >> 3) & 7;
 
