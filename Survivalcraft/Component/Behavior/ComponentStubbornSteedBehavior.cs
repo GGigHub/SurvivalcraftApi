@@ -23,7 +23,7 @@ namespace Game {
 
         public Random m_random = new();
 
-        public static Action<ComponentStubbornSteedBehavior, float> OnHeadShakeOrder;
+        public static event Action<ComponentStubbornSteedBehavior, float> OnHeadShakeOrder;
 
         public float m_periodicEventOffset;
 

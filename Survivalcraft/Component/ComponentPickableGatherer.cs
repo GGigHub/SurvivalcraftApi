@@ -18,7 +18,7 @@ namespace Game {
 
         public SubsystemGameInfo m_subsystemGameInfo;
 
-        public static Action<Pickable> OnPickableAttract;
+        public static event Action<Pickable> OnPickableAttract;
 
         public virtual bool IsPickableInAttractRange(Pickable pickable, float distanceToTargetSquare) {
             if (pickable.StuckMatrix.HasValue) {

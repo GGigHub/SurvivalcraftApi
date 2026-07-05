@@ -46,11 +46,11 @@ namespace Game {
         public float m_progress;
         public int PlayerIndex { get; set; }
 
-        public static Action<PlayerData> OnPlayerPlaying;
-        public static Action<PlayerData> OnPlayerRestart;
+        public static event Action<PlayerData> OnPlayerPlaying;
+        public static event Action<PlayerData> OnPlayerRestart;
         public static Action OnPlayerDisconnected;
-        public static Action<PlayerData> OnPlayerPlayingUpdate;
-        public static Action<PlayerData> PlayerFirstUpdated;
+        public static event Action<PlayerData> OnPlayerPlayingUpdate;
+        public static event Action<PlayerData> PlayerFirstUpdated;
 
         public bool isSetStatus = false;
 

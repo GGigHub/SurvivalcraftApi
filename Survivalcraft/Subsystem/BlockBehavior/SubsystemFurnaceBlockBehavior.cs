@@ -8,7 +8,7 @@ namespace Game {
         public SubsystemParticles m_subsystemParticles;
         public SubsystemBlockEntities m_subsystemBlockEntities;
         public Dictionary<Point3, FireParticleSystem> m_particleSystemsByCell = [];
-        public static Action<SubsystemFurnaceBlockBehavior, List<ComponentFurnace>> OnFurnacesUpdate;
+        public static event Action<SubsystemFurnaceBlockBehavior, List<ComponentFurnace>> OnFurnacesUpdate;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

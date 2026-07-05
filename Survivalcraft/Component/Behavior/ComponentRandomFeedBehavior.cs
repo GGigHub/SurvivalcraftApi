@@ -29,7 +29,7 @@ namespace Game {
 
         private bool m_isFeed;
 
-        public static Action<ComponentRandomFeedBehavior, bool> OnIsFeedChanged;
+        public static event Action<ComponentRandomFeedBehavior, bool> OnIsFeedChanged;
 
         public bool IsFeed {
             get { return m_isFeed; }

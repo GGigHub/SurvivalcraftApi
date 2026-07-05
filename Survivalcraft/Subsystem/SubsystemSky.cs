@@ -50,7 +50,7 @@ namespace Game {
             public Color Color;
         }
 
-        public static Action<Vector3> OnSkyLightning;
+        public static event Action<Vector3> OnSkyLightning;
 
         public SubsystemTimeOfDay m_subsystemTimeOfDay;
 

@@ -64,11 +64,11 @@ namespace Game {
 
         public Vector3 m_velocity;
 
-        public static Action<ComponentBody, float> OnBodyUpdate;
+        public static event Action<ComponentBody, float> OnBodyUpdate;
 
-        public static Action<ComponentBody, float> OnNetworkBodyUpdate;
+        public static event Action<ComponentBody, float> OnNetworkBodyUpdate;
 
-        public static Action<ComponentBody> OnBodyRemoved;
+        public static event Action<ComponentBody> OnBodyRemoved;
 
         public float m_crouchFactor;
 

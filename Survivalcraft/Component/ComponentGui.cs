@@ -148,13 +148,13 @@ namespace Game {
 
         public int CloseTime;
 
-        public static Action<ComponentGui, ComponentPlayer> OnPlayerCreativeFly;
+        public static event Action<ComponentGui, ComponentPlayer> OnPlayerCreativeFly;
 
-        public static Action<ComponentGui, Vector3, Vector3> OnManualLightingStrike;
+        public static event Action<ComponentGui, Vector3, Vector3> OnManualLightingStrike;
 
-        public static Action<ComponentGui, int> OnManualWeatherChange;
+        public static event Action<ComponentGui, int> OnManualWeatherChange;
 
-        public static Action<ComponentGui, double, double> OnManualTimeChange;
+        public static event Action<ComponentGui, double, double> OnManualTimeChange;
 
         public Widget ModalPanelWidget {
             get {

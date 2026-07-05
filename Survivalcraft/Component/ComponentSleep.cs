@@ -34,8 +34,8 @@ namespace Game {
         public float m_messageFactor;
 
 
-        public static Action<ComponentSleep, bool> OnSleepEvent;
-        public static Action<ComponentSleep> OnWakeUpEvent;
+        public static event Action<ComponentSleep, bool> OnSleepEvent;
+        public static event Action<ComponentSleep> OnWakeUpEvent;
 
         public bool IsSleeping => m_sleepStartTime.HasValue;
 

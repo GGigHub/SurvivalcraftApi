@@ -34,7 +34,7 @@ namespace Game {
             OnSlotChanged?.Invoke(this, slotIndex);
         }
 
-        public static Action<IInventory, int> OnSlotChanged;
+        public static event Action<IInventory, int> OnSlotChanged;
 
         public virtual void SetSlotValue(int slotIndex, object obj) {
         }

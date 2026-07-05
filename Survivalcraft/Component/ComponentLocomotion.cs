@@ -155,7 +155,7 @@ namespace Game {
         public bool AllowShoesWarning = true;
 
 
-        public static Action<ComponentLocomotion, float> OnLocomotionUpdate;
+        public static event Action<ComponentLocomotion, float> OnLocomotionUpdate;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Locomotion;
 

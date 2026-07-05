@@ -37,7 +37,7 @@ namespace Game {
 
         public ComponentCreature Attacker { get; set; }
 
-        public static Action<ComponentOnFire, ComponentCreature, float> OnSetOnFire;
+        public static event Action<ComponentOnFire, ComponentCreature, float> OnSetOnFire;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

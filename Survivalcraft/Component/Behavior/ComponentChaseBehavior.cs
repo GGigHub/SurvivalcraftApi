@@ -110,7 +110,7 @@ namespace Game {
 
         public ComponentCreature Target => m_target;
 
-        public static Action<ComponentChaseBehavior, bool> OnIsAttackChanged;
+        public static event Action<ComponentChaseBehavior, bool> OnIsAttackChanged;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

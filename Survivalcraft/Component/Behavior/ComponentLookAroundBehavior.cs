@@ -17,7 +17,7 @@ namespace Game {
 
         private bool m_isLookRandom;
 
-        public static Action<ComponentLookAroundBehavior, bool> OnIsLookRandomChanged;
+        public static event Action<ComponentLookAroundBehavior, bool> OnIsLookRandomChanged;
 
         public bool IsLookRandom {
             get { return m_isLookRandom; }

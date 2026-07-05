@@ -7,7 +7,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemElectricity : Subsystem, IUpdateable {
-        public static Action<SubsystemElectricity, List<NetSimulate>> OnElectricityPersistentVoltageChanged;
+        public static event Action<SubsystemElectricity, List<NetSimulate>> OnElectricityPersistentVoltageChanged;
         public class NetSimulate {
             public int StartStep;
 

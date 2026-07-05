@@ -53,7 +53,7 @@ namespace Game {
 
         public double m_lastPukeSoundTime = -1000.0;
 
-        public static Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
+        public static event Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
 
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed, bool fromNetwork = false) {
             if (NetworkManager.IsNetworkMode && !fromNetwork) return;

@@ -5,7 +5,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemBodies : Subsystem, IUpdateable {
-        public static Action<ComponentBody> OnBodyUpdate;
+        public static event Action<ComponentBody> OnBodyUpdate;
 
         public const float m_areaSize = 8f;
 

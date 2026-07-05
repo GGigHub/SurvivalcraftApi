@@ -70,7 +70,7 @@ namespace Game {
 
         public virtual float SmeltingProgress => m_smeltingProgress;
 
-        public static Action<ComponentFurnace> OnFurnaceUpdate;
+        public static event Action<ComponentFurnace> OnFurnaceUpdate;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

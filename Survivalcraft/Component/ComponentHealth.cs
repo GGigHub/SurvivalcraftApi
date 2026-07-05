@@ -16,10 +16,10 @@ namespace Game {
         public ComponentOnFire m_componentOnFire;
         public ComponentFactors m_componentFactors;
 
-        public static Action<ComponentHealth, Injury, float> OnHealthInjured;
-        public static Action<ComponentHealth> OnCreatureDied;
-        public static Action<ComponentHealth> OnHealthHealUpdate;
-        public static Action<ComponentHealth, float, string> OnHealthFallDamage;
+        public static event Action<ComponentHealth, Injury, float> OnHealthInjured;
+        public static event Action<ComponentHealth> OnCreatureDied;
+        public static event Action<ComponentHealth> OnHealthHealUpdate;
+        public static event Action<ComponentHealth, float, string> OnHealthFallDamage;
 
         //public Block ExperienceOrbBlock;
 

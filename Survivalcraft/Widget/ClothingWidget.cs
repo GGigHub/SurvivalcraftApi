@@ -3,7 +3,7 @@ using Engine;
 
 namespace Game {
     public class ClothingWidget : CanvasWidget {
-        public static Action<ComponentSleep, bool> OnSleepRequest;
+        public static event Action<ComponentSleep, bool> OnSleepRequest;
         public GridPanelWidget m_inventoryGrid;
 
         public StackPanelWidget m_clothingStack;

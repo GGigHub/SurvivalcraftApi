@@ -81,9 +81,9 @@ namespace Game {
         public ClothingSlot LeastInsulatedSlot { get; set; }
         public float SteedMovementSpeedFactor { get; set; }
 
-        public static Action<IInventory, int> OnSlotChanged;
+        public static event Action<IInventory, int> OnSlotChanged;
 
-        public static Action<ComponentClothing, string> OnRequestSkin;
+        public static event Action<ComponentClothing, string> OnRequestSkin;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

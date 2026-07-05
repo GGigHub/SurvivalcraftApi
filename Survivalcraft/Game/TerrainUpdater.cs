@@ -216,13 +216,13 @@ namespace Game {
         public static bool LogTerrainUpdateStats = false;
 
 
-        public static Action<TerrainUpdater, List<Point2>> OnTerrainRequestSyncChunks;
+        public static event Action<TerrainUpdater, List<Point2>> OnTerrainRequestSyncChunks;
 
-        public static Action<TerrainUpdater, int, List<TerrainChunk>> OnTerrainSyncChunkList;
+        public static event Action<TerrainUpdater, int, List<TerrainChunk>> OnTerrainSyncChunkList;
 
-        public static Action<TerrainUpdater, int, List<Point2>> OnTerrainReplyResult;
+        public static event Action<TerrainUpdater, int, List<Point2>> OnTerrainReplyResult;
 
-        public static Action<TerrainUpdater, UpdateLocation> OnTerrainPlayerLocationUpdate;
+        public static event Action<TerrainUpdater, UpdateLocation> OnTerrainPlayerLocationUpdate;
 
         public AutoResetEvent UpdateEvent => m_updateEvent;
 

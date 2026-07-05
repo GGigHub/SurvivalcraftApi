@@ -37,7 +37,7 @@ namespace Game {
         public SubsystemBlockBehaviors m_subsystemBlockBehaviors;
 
 
-        public static Action<SubsystemTerrain, int, int, int, int> OnTerrainChangeCell;
+        public static event Action<SubsystemTerrain, int, int, int, int> OnTerrainChangeCell;
 
         public List<BlockDropValue> m_dropValues = [];
 

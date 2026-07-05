@@ -9,7 +9,7 @@ using Engine.Media;
 namespace Game;
 
 public class GameLoadingScreen : Screen {
-    public static Action<NetworkState> OnPlayerStateChanged;
+    public static event Action<NetworkState> OnPlayerStateChanged;
     public static Action OnPlayerIntoPlaying;
 
     public WorldInfo m_worldInfo;

@@ -4,7 +4,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemGameInfo : Subsystem, IUpdateable {
-        public static Action<double, double> OnTimeUpdate;
+        public static event Action<double, double> OnTimeUpdate;
 
         public double? m_lastTotalElapsedGameTime;
 

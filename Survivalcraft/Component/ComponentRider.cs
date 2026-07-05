@@ -28,9 +28,9 @@ namespace Game {
         
         public float DetectSurroundingMountRange = 2.5f;
 
-        public static Action<ComponentRider, ComponentMount, bool> OnMounting;
+        public static event Action<ComponentRider, ComponentMount, bool> OnMounting;
 
-        public static Action<ComponentRider, bool> OnDismounting;
+        public static event Action<ComponentRider, bool> OnDismounting;
 
         public ComponentCreature ComponentCreature { get; set; }
 

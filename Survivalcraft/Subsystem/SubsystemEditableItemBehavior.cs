@@ -5,7 +5,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public abstract class SubsystemEditableItemBehavior<T> : SubsystemBlockBehavior where T : IEditableItemData, new() {
-        public static Action<int, T> OnItemDataHarvested;
+        public static event Action<int, T> OnItemDataHarvested;
 
         public SubsystemItemsScanner m_subsystemItemsScanner;
 

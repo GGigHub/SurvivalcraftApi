@@ -6,8 +6,8 @@ using GameEntitySystem;
 
 namespace Game {
     public class InventorySlotWidget : CanvasWidget, IDragTargetWidget {
-        public static Action<IInventory, int, IInventory, int, int> OnMoveItem;
-        public static Action<IInventory, int, DragMode, IInventory, int, bool> OnDragDropItem;
+        public static event Action<IInventory, int, IInventory, int, int> OnMoveItem;
+        public static event Action<IInventory, int, DragMode, IInventory, int, bool> OnDragDropItem;
         public BevelledRectangleWidget m_rectangleWidget;
 
         public RectangleWidget m_highlightWidget;

@@ -79,7 +79,7 @@ namespace Game {
 
         public bool hasData = false;
 
-        public static Action<ComponentHumanModel> OnRow;
+        public static event Action<ComponentHumanModel> OnRow;
 
         public override float AttackPhase {
             get => m_punchPhase;

@@ -49,7 +49,7 @@ namespace Game {
         public const float FemaleSpeedFactor = 1.03f;
         public const float FemaleHungerFactor = 0.7f;
 
-        public static Action<ComponentLevel, int, bool> OnAddExperience;
+        public static event Action<ComponentLevel, int, bool> OnAddExperience;
 
         public virtual void AddExperience(int count, bool playSound, bool fromNetwork = false) {
             if (NetworkManager.IsNetworkMode && !fromNetwork) return;

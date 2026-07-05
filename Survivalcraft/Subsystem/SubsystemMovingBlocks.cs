@@ -108,9 +108,9 @@ namespace Game {
             }
         }
 
-        public static Action<IMovingBlockSet> OnMovingBlockAdd;
+        public static event Action<IMovingBlockSet> OnMovingBlockAdd;
 
-        public static Action<IMovingBlockSet, bool> OnMovingBlockRemove;
+        public static event Action<IMovingBlockSet, bool> OnMovingBlockRemove;
 
         public event Action<IMovingBlockSet, Point3> CollidedWithTerrain;
 

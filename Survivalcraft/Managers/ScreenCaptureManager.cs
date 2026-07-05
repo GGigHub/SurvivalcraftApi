@@ -13,7 +13,7 @@ namespace Game {
 
         public static Action m_successHandler;
 
-        public static Action<Exception> m_failureHandler;
+        public static event Action<Exception> m_failureHandler;
 
         public static void Run() {
             if (m_captureRequested) {

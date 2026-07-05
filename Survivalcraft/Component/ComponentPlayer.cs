@@ -37,17 +37,17 @@ namespace Game {
 
         public double? m_aimStartTime;
 
-        public static Action<ComponentPlayer> OnActiveSlotChanged;
+        public static event Action<ComponentPlayer> OnActiveSlotChanged;
 
-        public static Action<ComponentPlayer, bool> OnBodyUpdate;
+        public static event Action<ComponentPlayer, bool> OnBodyUpdate;
 
-        public static Action<ComponentPlayer, ComponentBody, Vector3, Vector3> OnHit;
+        public static event Action<ComponentPlayer, ComponentBody, Vector3, Vector3> OnHit;
 
-        public static Action<ComponentPlayer> OnDigEvent;
+        public static event Action<ComponentPlayer> OnDigEvent;
 
-        public static Action<ComponentPlayer> OnInteractEvent;
+        public static event Action<ComponentPlayer> OnInteractEvent;
 
-        public static Action<ComponentPlayer> OnAimEvent;
+        public static event Action<ComponentPlayer> OnAimEvent;
 
         public double AimDuration {
             get {

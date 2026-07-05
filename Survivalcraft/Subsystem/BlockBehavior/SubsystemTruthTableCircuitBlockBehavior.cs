@@ -7,9 +7,9 @@ namespace Game {
 
         public SubsystemTruthTableCircuitBlockBehavior() : base(188) { }
 
-        public static Action<SubsystemTruthTableCircuitBlockBehavior, int, int, TruthTableData> OnEditItemData;
+        public static event Action<SubsystemTruthTableCircuitBlockBehavior, int, int, TruthTableData> OnEditItemData;
 
-        public static Action<SubsystemTruthTableCircuitBlockBehavior, CellFace, TruthTableData> OnEditBlockData;
+        public static event Action<SubsystemTruthTableCircuitBlockBehavior, CellFace, TruthTableData> OnEditBlockData;
 
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {

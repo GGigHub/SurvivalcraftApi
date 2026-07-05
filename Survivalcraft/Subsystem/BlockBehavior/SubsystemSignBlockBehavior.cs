@@ -81,9 +81,9 @@ namespace Game {
 
         public int[] DrawOrders => m_drawOrders;
 
-        public static Action<SubsystemSignBlockBehavior, Point3> OnEditSignRequest;
+        public static event Action<SubsystemSignBlockBehavior, Point3> OnEditSignRequest;
 
-        public static Action<SubsystemSignBlockBehavior, Point3, string[], Color[], string> OnSignDataChanged;
+        public static event Action<SubsystemSignBlockBehavior, Point3, string[], Color[], string> OnSignDataChanged;
 
         public SignData GetSignData(Point3 point) {
             if (m_textsByPoint.TryGetValue(point, out TextData value)) {

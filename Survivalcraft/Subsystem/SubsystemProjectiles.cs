@@ -8,7 +8,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable {
-        public static Action<Projectile> OnProjectileFire;
+        public static event Action<Projectile> OnProjectileFire;
 
         public SubsystemAudio m_subsystemAudio;
 

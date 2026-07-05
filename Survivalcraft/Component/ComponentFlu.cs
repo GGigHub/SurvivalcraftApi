@@ -38,10 +38,10 @@ namespace Game {
 
         public double m_lastMessageTime = -1000.0;
 
-        public static Action<ComponentFlu> OnFluUpdate;
-        public static Action<ComponentFlu> OnFluEffectEvent;
-        public static Action<ComponentFlu> OnStartFluEvent;
-        public static Action<ComponentFlu> OnSneezeEvent;
+        public static event Action<ComponentFlu> OnFluUpdate;
+        public static event Action<ComponentFlu> OnFluEffectEvent;
+        public static event Action<ComponentFlu> OnStartFluEvent;
+        public static event Action<ComponentFlu> OnSneezeEvent;
 
 
         public bool HasFlu => m_fluDuration > 0f;
