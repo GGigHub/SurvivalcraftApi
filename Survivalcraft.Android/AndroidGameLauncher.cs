@@ -10,7 +10,7 @@ namespace SC4Android {
     public static class AndroidGameLauncher {
         const string GameAssemblyName = "Survivalcraft";
         const string LogTag = "SC4Hotload";
-        const string UpdateDirectory = "data:Updates/current";
+        const string UpdateDirectory = "data:updates/current";
         static readonly object Sync = new();
         static Assembly s_gameAssembly;
         static FieldInfo s_firstFramePreparedField;

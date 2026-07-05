@@ -35,7 +35,7 @@ namespace Game {
 
             if (HotUpdateManager.State == HotUpdateState.Downloading) {
                 float progress = HotUpdateManager.DownloadProgress * 100f;
-                m_smallLabelWidget.Text = $"进度: {progress:0.1}%";
+                m_smallLabelWidget.Text = $"正在下载更新: {progress:0}%";
             }
             else if (HotUpdateManager.State == HotUpdateState.ReadyToRestart) {
                 m_smallLabelWidget.Text = "更新完成，正在重启...";

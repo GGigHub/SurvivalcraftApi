@@ -125,7 +125,7 @@ namespace Game {
 
                     long? totalBytes = response.Content.Headers.ContentLength;
                     using (Stream contentStream = await response.Content.ReadAsStreamAsync())
-                    using (FileStream fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true)) {
+                    using (Stream fileStream = Storage.OpenFile(tempFilePath, OpenFileMode.Create)) {
                         byte[] buffer = new byte[8192];
                         long totalRead = 0;
                         int read;
