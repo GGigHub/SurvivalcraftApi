@@ -66,6 +66,10 @@ namespace Game {
 
         public static Action<ComponentBody, float> OnBodyUpdate;
 
+        public static Action<ComponentBody, float> OnNetworkBodyUpdate;
+
+        public static Action<ComponentBody> OnBodyRemoved;
+
         public float m_crouchFactor;
 
         public int m_embeddedInIceCounter;
@@ -392,6 +396,7 @@ namespace Game {
         }
 
         public override void OnEntityRemoved() {
+            OnBodyRemoved?.Invoke(this);
             ParentBody = null;
             ComponentBody[] array = ChildBodies.ToArray();
             for (int i = 0; i < array.Length; i++) {
@@ -414,6 +419,7 @@ namespace Game {
             }
             OnBodyUpdate?.Invoke(this, dt);
             if (IsNetworkMode?.Invoke(this) == true) {
+                OnNetworkBodyUpdate?.Invoke(this, dt);
                 return;
             }
             CollisionVelocityChange = Vector3.Zero;

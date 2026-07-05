@@ -334,6 +334,8 @@ public static class RootManager {
         };
         ComponentBody.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
         ComponentLocomotion.IsNetworkMode = BodyUpdatePacket.ShouldBeNetworkControlled;
+        ComponentBody.OnNetworkBodyUpdate = NetworkBodySmoothing.Update;
+        ComponentBody.OnBodyRemoved = NetworkBodySmoothing.RemoveTarget;
         ComponentVitalStats.OnVitalStatsUpdate = (stats) => {
             if (NetworkManager.IsServerMode)
                 NetworkManager.Queue(new VitalStatSyncPacket(stats));

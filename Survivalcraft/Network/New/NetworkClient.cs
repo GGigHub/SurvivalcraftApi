@@ -43,6 +43,7 @@ public class NetworkClient : INetEventListener {
 
     public void Disconnect() {
         _netManager.Stop();
+        NetworkBodySmoothing.Clear();
         Log.Information($"Disconnecting {_serverAddress}");
     }
 

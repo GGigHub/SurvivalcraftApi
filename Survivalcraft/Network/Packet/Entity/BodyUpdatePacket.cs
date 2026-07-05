@@ -112,15 +112,15 @@ public class BodyUpdatePacket : Packet {
         List<int> ml = new List<int>();
         foreach (var item in m_bodyList) {
             bodies.FindBodyByCreatureID(item.CreatureId, body => {
-                if (item.changeFlag.HasFlag(ChangeFlag.PositionChange)) {
-                    body.Position = item.Position;
-                }
-                if (item.changeFlag.HasFlag(ChangeFlag.RotationChange)) {
-                    body.Rotation = item.Rotation;
-                }
-                if (item.changeFlag.HasFlag(ChangeFlag.VelocityChange)) {
-                    body.Velocity = item.Velocity;
-                }
+                NetworkBodySmoothing.SetTarget(
+                    body,
+                    item.changeFlag.HasFlag(ChangeFlag.PositionChange),
+                    item.Position,
+                    item.changeFlag.HasFlag(ChangeFlag.RotationChange),
+                    item.Rotation,
+                    item.changeFlag.HasFlag(ChangeFlag.VelocityChange),
+                    item.Velocity,
+                    true);
                 if (body.Locomotion != null) {
                     if (item.changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) {
                         body.Locomotion.LookAngles = item.LookAngles;

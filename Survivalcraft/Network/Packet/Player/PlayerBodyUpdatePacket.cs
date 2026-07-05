@@ -116,17 +116,18 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
                 player.ComponentLocomotion.LookAngles = LookAngles;
             }
         }
-        if (changeFlag.HasFlag(ChangeFlag.VelocityChange)) {
-            body.Velocity = Velocity;
-        }
+        bool smoothBody = !isServer && !playerData.IsMainPlayer;
+        NetworkBodySmoothing.SetTarget(
+            body,
+            changeFlag.HasFlag(ChangeFlag.PositionChange),
+            Position,
+            changeFlag.HasFlag(ChangeFlag.RotationChange),
+            Rotation,
+            changeFlag.HasFlag(ChangeFlag.VelocityChange),
+            Velocity,
+            smoothBody);
         if (body.Locomotion != null) {
             body.Locomotion.LadderValue = changeFlag.HasFlag(ChangeFlag.LadderChange) ? m_ladderValue : null;
-        }
-        if (changeFlag.HasFlag(ChangeFlag.PositionChange)) {
-            body.Position = Position;
-        }
-        if (changeFlag.HasFlag(ChangeFlag.RotationChange)) {
-            body.Rotation = Rotation;
         }
         if (changeFlag.HasFlag(ChangeFlag.SneakChange)) {
             body.IsSneaking = m_sneaking;

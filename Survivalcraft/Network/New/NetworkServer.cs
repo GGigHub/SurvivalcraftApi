@@ -32,6 +32,7 @@ public class NetworkServer : INetEventListener {
     public void Stop() {
         _netManager.Stop(true);
         GameManager.Project.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
+        Log.Information("Server stopped");
     }
 
     public void Update() {
