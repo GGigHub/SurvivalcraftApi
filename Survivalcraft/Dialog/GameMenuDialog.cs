@@ -498,11 +498,11 @@ namespace Game {
                 DialogsManager.HideDialog(this);
             }
             if (Children.Find<ButtonWidget>("Quit").IsClicked) {
+                NetworkManager.Stop();
                 DialogsManager.HideDialog(this);
                 GameManager.SaveProject(true, true);
                 GameManager.DisposeProject();
                 ScreensManager.SwitchScreen("MainMenu");
-                NetworkManager.Stop();
             }
         }
 

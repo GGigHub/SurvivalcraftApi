@@ -65,7 +65,7 @@ namespace Game {
                 LatestManifest = JsonSerializer.Deserialize(json, HotUpdateManifestJsonContext.Default.HotUpdateManifest);
 
                 if (LatestManifest == null) {
-                    throw new Exception("解析 manifest.json 失败");
+                    return false;
                 }
 
                 if (APIUpdateManager.CompareVersion(ModsManager.APIVersionString, LatestManifest.Version) == -1) {
@@ -79,7 +79,6 @@ namespace Game {
             catch (Exception ex) {
                 LastError = ex;
                 State = HotUpdateState.Error;
-                Log.Error($"HotUpdate Check Error: {ex.Message}");
                 return false;
             }
         }
