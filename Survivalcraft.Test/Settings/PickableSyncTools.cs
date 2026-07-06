@@ -100,7 +100,7 @@ public static class PickableSyncTools {
     public static bool PositionsMatch(PickableState expected, PickableState actual) =>
         expected.Exists
         && actual.Exists
-        && Vector3Dto.DistanceSquared(expected.Position, actual.Position) <= SyncedPositionEpsilonSquared;
+        && PickableVector3Dto.DistanceSquared(expected.Position, actual.Position) <= SyncedPositionEpsilonSquared;
 
     public static PickableState ParsePickableState(string value) {
         if (string.IsNullOrWhiteSpace(value)
@@ -132,16 +132,28 @@ public static class PickableSyncTools {
             ? result
             : 0;
 
-    public static Vector3Dto ParseVector3(string value) {
+    public static PickableVector3Dto ParseVector3(string value) {
         string[] parts = value.Split(',', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 3
             && float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
             && float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
             && float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) {
-            return new Vector3Dto(x, y, z);
+            return new PickableVector3Dto(x, y, z);
         }
         throw new InvalidOperationException($"Invalid Vector3 value: '{value}'.");
     }
+}
+
+public readonly record struct PickableVector3Dto(float X, float Y, float Z) {
+    public static float DistanceSquared(PickableVector3Dto v1, PickableVector3Dto v2) {
+        float x = v1.X - v2.X;
+        float y = v1.Y - v2.Y;
+        float z = v1.Z - v2.Z;
+        return x * x + y * y + z * z;
+    }
+
+    public override string ToString() =>
+        string.Create(CultureInfo.InvariantCulture, $"({X:R}, {Y:R}, {Z:R})");
 }
 
 public readonly record struct PickableState(
@@ -149,8 +161,8 @@ public readonly record struct PickableState(
     int Id,
     int Value,
     int Count,
-    Vector3Dto Position,
-    Vector3Dto? FlyToPosition,
+    PickableVector3Dto Position,
+    PickableVector3Dto? FlyToPosition,
     string Raw) {
     public override string ToString() =>
         string.Create(
