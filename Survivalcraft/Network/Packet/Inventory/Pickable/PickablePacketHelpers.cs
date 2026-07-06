@@ -10,12 +10,14 @@ public static class PickablePacketHelpers {
         Vector3 position = archive.IsWriting ? pickable.Position : default;
         Vector3 velocity = archive.IsWriting ? pickable.Velocity : default;
         Matrix? matrix = archive.IsWriting ? pickable.StuckMatrix : null;
+        Vector3? flyToPosition = archive.IsWriting ? pickable.FlyToPosition : null;
         archive.Value(ref id);
         archive.Value(ref count);
         archive.Value(ref value);
         archive.Value(ref position);
         archive.Value(ref velocity);
         archive.Value(ref matrix);
+        archive.Value(ref flyToPosition);
         if (archive.IsReading) {
             pickable.Id = id;
             pickable.Count = count;
@@ -23,17 +25,21 @@ public static class PickablePacketHelpers {
             pickable.Position = position;
             pickable.Velocity = velocity;
             pickable.StuckMatrix = matrix;
+            pickable.FlyToPosition = flyToPosition;
         }
     }
 
     public static void SerializeUpdatePickable(PacketSerializer archive, Pickable pickable) {
         int id = pickable.Id;
         Vector3 position = archive.IsWriting ? pickable.Position : default;
+        Vector3? flyToPosition = archive.IsWriting ? pickable.FlyToPosition : null;
         archive.Value(ref id);
         archive.Value(ref position);
+        archive.Value(ref flyToPosition);
         if (archive.IsReading) {
             pickable.Id = id;
             pickable.Position = position;
+            pickable.FlyToPosition = flyToPosition;
         }
     }
 
@@ -74,6 +80,7 @@ public static class PickablePacketHelpers {
             existing.Position = source.Position;
             existing.Velocity = source.Velocity;
             existing.StuckMatrix = source.StuckMatrix;
+            existing.FlyToPosition = source.FlyToPosition;
         }
         else {
             Pickable created = subsystemPickables.CreatePickable(source.Id, source.Value, source.Count, source.Position, source.Velocity, source.StuckMatrix, null);

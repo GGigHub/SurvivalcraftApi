@@ -52,9 +52,7 @@ if (locomotion != null) {
     locomotion.LastFlyOrder = null;
 }
 
-var previousOnLocomotionUpdate = ComponentLocomotion.OnLocomotionUpdate;
-ComponentLocomotion.OnLocomotionUpdate = (locomotionComponent, dt) => {
-    previousOnLocomotionUpdate?.Invoke(locomotionComponent, dt);
+System.Action<ComponentLocomotion, float> onLocomotionUpdate = (locomotionComponent, dt) => {
     if (locomotionComponent.Entity?.Id != entityId) return;
     Engine.Vector3? flyOrder = locomotionComponent.LastFlyOrder ?? locomotionComponent.FlyOrder;
     if (flyOrder.HasValue) {
@@ -64,5 +62,6 @@ ComponentLocomotion.OnLocomotionUpdate = (locomotionComponent, dt) => {
             FormattableString.Invariant($"{value.X:R},{value.Y:R},{value.Z:R}"));
     }
 };
+ComponentLocomotion.OnLocomotionUpdate += onLocomotionUpdate;
 
 return string.Empty;

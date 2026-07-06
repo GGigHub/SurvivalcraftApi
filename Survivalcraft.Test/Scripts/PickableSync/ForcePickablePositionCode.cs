@@ -1,0 +1,13 @@
+var project = Game.GameManager.Project;
+            var players = project.FindSubsystem<Game.SubsystemPlayers>();
+            var player = players.ComponentPlayers.FirstOrDefault();
+            var basePosition = player?.ComponentBody.Position ?? players.GlobalSpawnPosition;
+            if (basePosition == Engine.Vector3.Zero) basePosition = new Engine.Vector3(0f, 80f, 0f);
+            var sub = project.FindSubsystem<Game.SubsystemPickables>();
+            var pickable = sub.Pickables.FirstOrDefault(p => p.Id == __PICKABLE_ID__);
+            if (pickable == null) return "missing";
+            pickable.Position = basePosition + new Engine.Vector3(__X_OFFSET__f, __Y_OFFSET__f, __Z_OFFSET__f);
+            pickable.Velocity = Engine.Vector3.Zero;
+            pickable.FlyToPosition = null;
+            pickable.MaxTimeExist = 9999f;
+            return string.Format(System.Globalization.CultureInfo.InvariantCulture, "id={0};value={1};count={2};pos={3:R},{4:R},{5:R};fly=null", pickable.Id, pickable.Value, pickable.Count, pickable.Position.X, pickable.Position.Y, pickable.Position.Z);

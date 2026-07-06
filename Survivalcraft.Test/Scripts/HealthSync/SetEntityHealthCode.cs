@@ -1,0 +1,10 @@
+var entity = Game.GameManager.Project.FindEntity({entityId});
+            var health = entity?.FindComponent<Game.ComponentHealth>();
+            if (health == null) return -1f;
+            health.IsInvulnerable = false;
+            health.m_regenerateLifeEnabled = false;
+            health.Health = {value:R}f;
+            health.m_lastHealth = {value:R}f;
+            health.CauseOfDeath = null;
+            health.DeathTime = null;
+            return health.Health;

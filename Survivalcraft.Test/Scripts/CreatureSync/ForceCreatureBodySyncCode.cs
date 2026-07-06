@@ -62,13 +62,12 @@ void ApplyForcedState() {
     }
 }
 
-var previousOnBodyUpdate = ComponentBody.OnBodyUpdate;
-ComponentBody.OnBodyUpdate = (bodyComponent, dt) => {
+System.Action<ComponentBody, float> onBodyUpdate = (bodyComponent, dt) => {
     if (bodyComponent.Entity?.Id == entityId) {
         ApplyForcedState();
     }
-    previousOnBodyUpdate?.Invoke(bodyComponent, dt);
 };
+ComponentBody.OnBodyUpdate += onBodyUpdate;
 
 ApplyForcedState();
 for (int i = 1; i <= 240; i++) {

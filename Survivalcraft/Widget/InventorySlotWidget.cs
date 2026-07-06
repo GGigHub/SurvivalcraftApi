@@ -542,7 +542,8 @@ namespace Game {
             int sourceSlotIndex,
             IInventory targetInventory,
             int targetSlotIndex,
-            int count) {
+            int count,
+            bool notifyNetwork = true) {
             bool moved_ = false;
             ModsManager.HookAction(
                 "HandleMoveInventoryItem",
@@ -560,12 +561,20 @@ namespace Game {
                     return false;
                 }
             );
+            if (count <= 0
+                || sourceSlotIndex < 0
+                || sourceSlotIndex >= sourceInventory.SlotsCount
+                || targetSlotIndex < 0
+                || targetSlotIndex >= targetInventory.SlotsCount) {
+                return moved_;
+            }
+
             int slotValue = sourceInventory.GetSlotValue(sourceSlotIndex);
             int slotValue2 = targetInventory.GetSlotValue(targetSlotIndex);
             int slotCount = sourceInventory.GetSlotCount(sourceSlotIndex);
             int slotCount2 = targetInventory.GetSlotCount(targetSlotIndex);
 
-            if (NetworkManager.IsNetworkMode) {
+            if (notifyNetwork && NetworkManager.IsNetworkMode) {
                 OnMoveItem?.Invoke(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count);
             }
             if (slotCount2 == 0
@@ -658,7 +667,7 @@ namespace Game {
                     if ((targetSlotCount == 0 || sourceSlotValue == targetSlotValue)
                         && targetSlotCount < targetSlotCapacity) {
                         int num2 = MathUtils.Min(targetSlotCapacity - targetSlotCount, dragCount);
-                        bool handleMove = HandleMoveItem(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, num2);
+                        bool handleMove = HandleMoveItem(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, num2, false);
                         if (handleMove) {
                             flag = true;
                         }

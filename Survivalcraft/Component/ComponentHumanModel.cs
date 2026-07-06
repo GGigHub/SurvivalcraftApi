@@ -79,6 +79,8 @@ namespace Game {
 
         public bool hasData = false;
 
+        public double m_rowHoldEndTime;
+
         public static event Action<ComponentHumanModel> OnRow;
 
         public override float AttackPhase {
@@ -181,7 +183,7 @@ namespace Game {
                 m_rowLeft = RowLeftOrder;
                 m_rowRight = RowRightOrder;
             }
-            else if (Time.PeriodicEvent(1.0, 0.9)) {
+            else if (m_subsystemGameInfo.TotalElapsedGameTime >= m_rowHoldEndTime) {
                 hasData = false;
             }
             if ((m_rowLeft || m_rowRight)

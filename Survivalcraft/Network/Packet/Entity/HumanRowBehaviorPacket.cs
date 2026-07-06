@@ -35,6 +35,7 @@ public class HumanRowBehaviorPacket : Packet {
 
     public void ApplyRow(ComponentHumanModel humanModel) {
         humanModel.hasData = true;
+        humanModel.m_rowHoldEndTime = GameManager.Project.FindSubsystem<SubsystemGameInfo>().TotalElapsedGameTime + 0.75;
         humanModel.m_rowLeft = m_rowLeft;
         humanModel.m_rowRight = m_rowRight;
         humanModel.RowLeftOrder = m_rowLeft;

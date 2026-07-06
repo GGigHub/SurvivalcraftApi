@@ -1,0 +1,13 @@
+var project = Game.GameManager.Project;
+            var sub = project.FindSubsystem<Game.SubsystemPickables>();
+            var players = project.FindSubsystem<Game.SubsystemPlayers>();
+            var player = players.ComponentPlayers.FirstOrDefault();
+            var gatherer = player?.Entity.FindComponent<Game.ComponentPickableGathererPlayer>();
+            if (player == null || gatherer == null) return "missing";
+            var gathererPosition = player.ComponentBody.Position + new Engine.Vector3(0f, 0.75f, 0f);
+            var position = gathererPosition + new Engine.Vector3(3f, 0f, 0f);
+            var pickable = sub.AddPickable(Game.Terrain.MakeBlockValue(__CONTENTS__), 1, position, Engine.Vector3.Zero, null);
+            pickable.MaxTimeExist = 9999f;
+            pickable.FlyToPosition = null;
+            var fly = pickable.FlyToPosition.HasValue ? string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:R},{1:R},{2:R}", pickable.FlyToPosition.Value.X, pickable.FlyToPosition.Value.Y, pickable.FlyToPosition.Value.Z) : "null";
+            return string.Format(System.Globalization.CultureInfo.InvariantCulture, "id={0};value={1};count={2};pos={3:R},{4:R},{5:R};fly={6}", pickable.Id, pickable.Value, pickable.Count, pickable.Position.X, pickable.Position.Y, pickable.Position.Z, fly);

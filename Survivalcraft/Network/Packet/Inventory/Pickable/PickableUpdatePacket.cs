@@ -28,7 +28,10 @@ public class PickableUpdatePacket : Packet {
         }
         SubsystemPickables subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>();
         foreach (Pickable pickable in m_pickables) {
-            subsystemPickables.PickableAction(pickable.Id, current => current.Position = pickable.Position);
+            subsystemPickables.PickableAction(pickable.Id, current => {
+                current.Position = pickable.Position;
+                current.FlyToPosition = pickable.FlyToPosition;
+            });
         }
     }
 }

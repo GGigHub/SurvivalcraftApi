@@ -37,6 +37,14 @@ public class MoveItemPacket : Packet {
         IInventory from = subsystemInventories.GetInventoryById(fromInventoryId);
         IInventory to = subsystemInventories.GetInventoryById(toInventoryId);
         if (from != null && to != null) {
+            if (count <= 0
+                || fromSlotIndex < 0
+                || fromSlotIndex >= from.SlotsCount
+                || toSlotIndex < 0
+                || toSlotIndex >= to.SlotsCount) {
+                return;
+            }
+
             int value = from.GetSlotValue(fromSlotIndex);
             int targetValue = to.GetSlotValue(toSlotIndex);
             int sourceCount = from.GetSlotCount(fromSlotIndex);

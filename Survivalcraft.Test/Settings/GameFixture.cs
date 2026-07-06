@@ -10,7 +10,7 @@ using Xunit;
 namespace Survivalcraft.Test;
 
 public class GameFixture : IAsyncLifetime, IDisposable {
-    private const int MaxConcurrentGameFixtures = 4;
+    private const int MaxConcurrentGameFixtures = 1;
     private static readonly SemaphoreSlim GameFixtureGate = new(MaxConcurrentGameFixtures);
 
     private readonly List<GameContext> contexts = [];

@@ -131,12 +131,26 @@ if (fishOutOfWaterEntity != null) {
 var humanRowEntity = project.FindEntity(__HUMAN_ROW_ID__);
 if (humanRowEntity != null) {
     var model = humanRowEntity.FindComponent<ComponentHumanModel>();
-    if (model != null) {
+    var rider = humanRowEntity.FindComponent<ComponentRider>();
+    var body = humanRowEntity.FindComponent<ComponentBody>();
+    if (model != null && rider != null && body != null) {
+        var boat = DatabaseManager.CreateEntity(project, "Boat", true);
+        var boatBody = boat.FindComponent<ComponentBody>();
+        if (boatBody != null) {
+            boatBody.Position = body.Position;
+            boatBody.Rotation = body.Rotation;
+            boatBody.ImmersionFactor = 1f;
+            project.AddEntity(boat);
+            body.ParentBody = boatBody;
+            body.ParentBodyPositionOffset = Engine.Vector3.Zero;
+            body.ParentBodyRotationOffset = Engine.Quaternion.Identity;
+        }
+        model.m_subsystemTime.m_gameTime = 1.0;
+        model.m_subsystemTime.m_gameTimeDelta = 0.2f;
         model.hasData = false;
         model.RowLeftOrder = true;
         model.RowRightOrder = true;
         UpdateModel(model, 0.1f);
-        ComponentHumanModel.OnRow?.Invoke(model);
     }
 }
 

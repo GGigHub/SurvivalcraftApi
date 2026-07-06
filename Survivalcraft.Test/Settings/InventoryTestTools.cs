@@ -91,12 +91,12 @@ public static class InventoryTestTools {
         var playerData = players.PlayersData.FirstOrDefault(p => p.PlayerIndex == {{playerIndex}});
         var inventory = playerData?.ComponentPlayer?.ComponentMiner?.Inventory;
         if (inventory == null) return "missing";
-        if (Game.InventorySlotWidget.OnMoveItem == null) return "missing-hook";
-        Game.InventorySlotWidget.OnMoveItem(inventory, {{fromSlot}}, inventory, {{toSlot}}, {{count}});
-        return "queued";
+        var widget = new Game.InventorySlotWidget();
+        bool moved = widget.HandleMoveItem(inventory, {{fromSlot}}, inventory, {{toSlot}}, {{count}});
+        return "queued:" + moved.ToString(System.Globalization.CultureInfo.InvariantCulture);
         """) ?? string.Empty;
 
-        if (result != "queued") {
+        if (!result.StartsWith("queued:", StringComparison.Ordinal)) {
             throw new InvalidOperationException($"Move action was not queued on {context.RoleName}. Result={result}.");
         }
     }
@@ -107,18 +107,18 @@ public static class InventoryTestTools {
         var playerData = players.PlayersData.FirstOrDefault(p => p.PlayerIndex == {{playerIndex}});
         var inventory = playerData?.ComponentPlayer?.ComponentMiner?.Inventory;
         if (inventory == null) return "missing";
-        if (Game.InventorySlotWidget.OnDragDropItem == null) return "missing-hook";
-        Game.InventorySlotWidget.OnDragDropItem(
+        var widget = new Game.InventorySlotWidget();
+        bool moved = widget.HandleDragDrop(
             inventory,
             {{fromSlot}},
             Game.DragMode.{{dragMode}},
             inventory,
             {{toSlot}},
             {{(processingOnly ? "true" : "false")}});
-        return "queued";
+        return "queued:" + moved.ToString(System.Globalization.CultureInfo.InvariantCulture);
         """) ?? string.Empty;
 
-        if (result != "queued") {
+        if (!result.StartsWith("queued:", StringComparison.Ordinal)) {
             throw new InvalidOperationException($"DragDrop action was not queued on {context.RoleName}. Result={result}.");
         }
     }
@@ -130,9 +130,8 @@ public static class InventoryTestTools {
         var player = playerData?.ComponentPlayer;
         var inventory = player?.ComponentMiner?.Inventory;
         if (player == null || inventory == null) return "missing";
-        if (Game.ComponentPlayer.OnActiveSlotChanged == null) return "missing-hook";
         inventory.ActiveSlotIndex = {{slotIndex}};
-        Game.ComponentPlayer.OnActiveSlotChanged(player);
+        player.Update(0f);
         return "queued";
         """) ?? string.Empty;
 

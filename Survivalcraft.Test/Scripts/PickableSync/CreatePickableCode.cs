@@ -1,0 +1,10 @@
+var project = Game.GameManager.Project;
+            var players = project.FindSubsystem<Game.SubsystemPlayers>();
+            var player = players.ComponentPlayers.FirstOrDefault();
+            var basePosition = player?.ComponentBody.Position ?? players.GlobalSpawnPosition;
+            if (basePosition == Engine.Vector3.Zero) basePosition = new Engine.Vector3(0f, 80f, 0f);
+            var sub = project.FindSubsystem<Game.SubsystemPickables>();
+            var position = basePosition + new Engine.Vector3(__X_OFFSET__f, __Y_OFFSET__f, __Z_OFFSET__f);
+            var pickable = sub.AddPickable(Game.Terrain.MakeBlockValue(__CONTENTS__), __COUNT__, position, Engine.Vector3.Zero, null);
+            pickable.MaxTimeExist = 9999f;
+            return pickable.Id;

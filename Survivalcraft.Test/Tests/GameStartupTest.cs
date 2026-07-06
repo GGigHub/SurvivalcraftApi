@@ -43,7 +43,7 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
 
     [Fact, TestOrder(Priority = 2)]
     public async Task TestServerConnection() {
-        await client.PushCommandAsync("EXEC " + 
+        await client.PushCommandAsync("EXEC " +
             GameTools.ReadScript("GameStartup/SwitchToGameLoadingCode.cs")
             .Replace("{0}", server.GamePort.ToString()));
 
@@ -60,7 +60,7 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
 
     [Fact, TestOrder(Priority = 3)]
     public async Task TestServerReconnection() {
-        await client.PushCommandAsync("EXEC " + 
+        await client.PushCommandAsync("EXEC " +
             GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
 
         bool mainMenuEntered = await client.WaitLogAsync("Entered screen \"MainMenu\"");
@@ -84,21 +84,21 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
     [Fact, TestOrder(Priority = 4)]
     public async Task TestServerReconnectionWithServerExitFirst() {
         // 关闭服务器
-        await server.PushCommandAsync("EXEC " + 
+        await server.PushCommandAsync("EXEC " +
             GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
 
         // 等待客户端日志以确认对话框已显示
         bool disconnectDialogShown = await client.WaitLogAsync("Dialog shown: Disconnected");
         Assert.True(disconnectDialogShown, "Client did not show the Disconnected dialog.");
 
-        await server.PushCommandAsync("EXEC " + 
+        await server.PushCommandAsync("EXEC " +
             GameTools.ReadScript("GameStartup/ServerRestartCode.cs"));
-        await client.PushCommandAsync("EXEC " + 
+        await client.PushCommandAsync("EXEC " +
             GameTools.ReadScript("GameStartup/HideAllDialogsCode.cs"));
-        await client.PushCommandAsync("EXEC " + 
+        await client.PushCommandAsync("EXEC " +
             GameTools.ReadScript("GameStartup/SwitchToGameLoadingCode.cs")
             .Replace("{0}", server.GamePort.ToString()));
-        
+
         bool clientGameEntered = await client.WaitLogAsync("Entered screen \"Game\"");
         Assert.True(clientGameEntered, "Client failed to enter the Game screen");
 
