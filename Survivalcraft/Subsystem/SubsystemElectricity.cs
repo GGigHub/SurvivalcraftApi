@@ -407,6 +407,7 @@ namespace Game {
                 FrameStartCircuitStep = CircuitStep;
                 while (m_remainingSimulationTime >= 0.01f) {
                     UpdateElectricElements();
+                    RemoveInvalidPersistentVoltages();
                     m_nextStepSimulateList = null;
                     if (list.Count > 0 && CircuitStep <= list[0].StartStep) {
                         if (list[0].StartStep == CircuitStep) {
@@ -504,6 +505,22 @@ namespace Game {
             }
             if (DebugDrawElectrics) {
                 DebugDraw();
+            }
+        }
+
+        public void RemoveInvalidPersistentVoltages() {
+            foreach (Point3 point in m_persistentElementsVoltages.Keys.ToArray()) {
+                TerrainChunk chunk = SubsystemTerrain.Terrain.GetChunkAtCell(point.X, point.Z);
+                if (chunk == null) {
+                    continue;
+                }
+
+                int contents = Terrain.ExtractContents(SubsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z));
+                if (contents != CounterBlock.Index
+                    && contents != SRLatchBlock.Index
+                    && contents != RandomGeneratorBlock.Index) {
+                    m_persistentElementsVoltages.Remove(point);
+                }
             }
         }
 

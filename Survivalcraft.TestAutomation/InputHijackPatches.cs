@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using Engine;
 using Engine.Input;
+using Game;
 using HarmonyLib;
 
 namespace Survivalcraft.TestAutomation {
@@ -13,8 +14,27 @@ namespace Survivalcraft.TestAutomation {
 
         public static Point2? QueuedMouseMovement { get; set; }
 
+        public static Vector3 HeldMoveInput { get; private set; }
+
+        public static int HeldMoveInputEndFrame { get; private set; } = -1;
+
         public static void SetMouseMovement(Point2 movement) {
             MouseMovementField.SetValue(null, movement);
+        }
+
+        public static void HoldMoveInput(Vector3 move, int frameCount) {
+            HeldMoveInput = move;
+            HeldMoveInputEndFrame = Time.FrameIndex + Math.Max(1, frameCount);
+        }
+
+        public static bool TryGetHeldMoveInput(out Vector3 move) {
+            if (Time.FrameIndex < HeldMoveInputEndFrame) {
+                move = HeldMoveInput;
+                return true;
+            }
+
+            move = Vector3.Zero;
+            return false;
         }
     }
 
@@ -65,6 +85,21 @@ namespace Survivalcraft.TestAutomation {
     public static class Mouse_MouseUpHandler_Patch {
         public static bool Prefix() {
             return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(ComponentInput), "Update")]
+    public static class ComponentInput_Update_Patch {
+        public static void Postfix(ComponentInput __instance) {
+            if (__instance.m_componentPlayer?.PlayerData?.IsMainPlayer != true
+                || !InputHijackState.TryGetHeldMoveInput(out Vector3 move)) {
+                return;
+            }
+
+            __instance.m_playerInput.Move = move;
+            __instance.m_playerInput.CrouchMove = move;
+            __instance.m_playerInput.CameraMove = move;
+            __instance.m_playerInput.CameraCrouchMove = move;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -109,6 +110,13 @@ namespace Survivalcraft.TestAutomation {
                     int x = int.Parse(parts[1]);
                     int y = int.Parse(parts[2]);
                     InputHijackState.QueuedMouseMovement = new Point2(x, y);
+                }
+                else if (action == "MOVE_INPUT" && parts.Length >= 5) {
+                    float x = float.Parse(parts[1], CultureInfo.InvariantCulture);
+                    float y = float.Parse(parts[2], CultureInfo.InvariantCulture);
+                    float z = float.Parse(parts[3], CultureInfo.InvariantCulture);
+                    int frameCount = int.Parse(parts[4], CultureInfo.InvariantCulture);
+                    InputHijackState.HoldMoveInput(new Vector3(x, y, z), frameCount);
                 }
                 else if (action == "MOUSEDOWN" && parts.Length >= 4) {
                     if (Enum.TryParse<MouseButton>(parts[1], true, out MouseButton btn)) {

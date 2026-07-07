@@ -13,6 +13,8 @@ public class MovingBlockAddPacket : Packet {
     public float m_addDrag;
     public Vector2 m_addSmoothness;
     public string m_addId;
+    public bool m_hasTag;
+    public Point3 m_tagPosition;
     public readonly List<MovingBlockData> m_addBlocks = [];
 
     public struct MovingBlockData {
@@ -30,6 +32,10 @@ public class MovingBlockAddPacket : Packet {
         m_addDrag = movingSet.Drag;
         m_addSmoothness = movingSet.Smoothness;
         m_addId = movingSet.Id;
+        if (movingSet.Tag is Point3 tagPosition) {
+            m_hasTag = true;
+            m_tagPosition = tagPosition;
+        }
         foreach (MovingBlock block in movingSet.Blocks) {
             m_addBlocks.Add(new MovingBlockData {
                 Offset = block.Offset,
@@ -46,6 +52,10 @@ public class MovingBlockAddPacket : Packet {
         archive.Value(ref m_addDrag);
         archive.Value(ref m_addSmoothness);
         archive.Value(ref m_addId);
+        archive.Value(ref m_hasTag);
+        if (m_hasTag) {
+            archive.Value(ref m_tagPosition);
+        }
         SerializeBlockList(archive, m_addBlocks);
     }
 
@@ -61,7 +71,8 @@ public class MovingBlockAddPacket : Packet {
                 Value = block.Value
             });
         }
-        var movingSet = subsystemMovingBlocks.AddMovingBlockSet(m_addPosition, m_addTargetPosition, m_addSpeed, m_addAcceleration, m_addDrag, m_addSmoothness, blocks, m_addId, null, false) as SubsystemMovingBlocks.MovingBlockSet;
+        object tag = m_hasTag ? m_tagPosition : null;
+        var movingSet = subsystemMovingBlocks.AddMovingBlockSet(m_addPosition, m_addTargetPosition, m_addSpeed, m_addAcceleration, m_addDrag, m_addSmoothness, blocks, m_addId, tag, false) as SubsystemMovingBlocks.MovingBlockSet;
         if (movingSet != null && movingSet.Id == SubsystemPistonBlockBehavior.IdString) {
             GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Piston", 1f, 0f, movingSet.Position, 2f, autoDelay: true);
         }

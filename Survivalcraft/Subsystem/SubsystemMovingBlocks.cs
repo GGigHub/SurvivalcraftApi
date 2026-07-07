@@ -205,8 +205,8 @@ namespace Game {
             m_movingBlockSets.Add(movingBlockSet);
             if (!NetworkManager.IsNetworkMode) {
                 m_movingBlockSets.Add(movingBlockSet);
-                OnMovingBlockAdd?.Invoke(movingBlockSet);
             }
+            OnMovingBlockAdd?.Invoke(movingBlockSet);
             return movingBlockSet;
         }
 
