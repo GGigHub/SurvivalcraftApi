@@ -6,6 +6,7 @@ var entity = Game.DatabaseManager.CreateEntity(project, "Boat", true);
 var body = entity.FindComponent<Game.ComponentBody>(true);
 body.Position = basePosition + new Engine.Vector3(__X_OFFSET__f, __Y_OFFSET__f, __Z_OFFSET__f);
 body.Rotation = Engine.Quaternion.Identity;
+body.IsGravityEnabled = false;
 var damage = entity.FindComponent<Game.ComponentDamage>(true);
 damage.Hitpoints = 1f;
 damage.m_lastHitpoints = 1f;

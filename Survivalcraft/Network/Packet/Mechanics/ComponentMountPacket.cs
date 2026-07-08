@@ -51,7 +51,10 @@ public class ComponentMountPacket : Packet {
             case EventType.DismountRequest:
                 GameManager.Project.FindEntity(m_fromId, entity => {
                     var rider = entity.FindComponent<ComponentRider>();
-                    rider?.StartDismounting();
+                    if (rider != null) {
+                        rider.StartDismounting(true);
+                        NetworkManager.Queue(new ComponentMountPacket(rider));
+                    }
                 });
                 break;
             case EventType.Mount:
@@ -71,7 +74,8 @@ public class ComponentMountPacket : Packet {
                     GameManager.Project.FindEntity(m_targetId, entity2 => {
                         var mount = entity2.FindComponent<ComponentMount>();
                         if (mount != null && rider != null) {
-                            rider.StartMounting(mount);
+                            rider.StartMounting(mount, true);
+                            NetworkManager.Queue(new ComponentMountPacket(rider, mount));
                         }
                     });
                 });

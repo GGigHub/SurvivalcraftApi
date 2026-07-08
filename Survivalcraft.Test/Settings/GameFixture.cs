@@ -60,6 +60,15 @@ public class GameFixture : IAsyncLifetime, IDisposable {
         return context;
     }
 
+    public void StartSpectator() {
+        if (Spectator.IsStarted) {
+            return;
+        }
+
+        Spectator.Start();
+        Spectator.WaitLog("Entered screen \"MainMenu\"");
+    }
+
     public void ThrowIfAnyContextHasError() {
         foreach (GameContext context in contexts) {
             if (context.FatalException != null) {

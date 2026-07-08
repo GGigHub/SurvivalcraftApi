@@ -27,24 +27,29 @@ public class PlayerHitPacket : PlayerPacketBase {
             return;
         }
         ComponentPlayer player = playerData.ComponentPlayer;
+        player.ComponentCreatureModel.Update(0f);
         Vector3 eye = player.ComponentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
         Vector3 dir = m_hitDirection;
         if (dir.LengthSquared() < 1E-06f) {
             dir = player.ComponentMiner.ComponentCreature.ComponentBody.Matrix.Forward;
         }
         dir = Vector3.Normalize(dir);
-        Ray3 serverRay = new(eye, dir);
-        BodyRaycastResult? bodyHit = player.ComponentMiner.Raycast<BodyRaycastResult>(serverRay, RaycastMode.Interaction);
-        if (bodyHit.HasValue) {
-            BodyRaycastResult hit = bodyHit.Value;
-            if (Vector3.Distance(hit.HitPoint(), eye) <= 6f && hit.ComponentBody?.Entity?.Id == bodyId) {
-                GameManager.Project.FindEntity(bodyId, entity => {
-                    ComponentBody body = entity.FindComponent<ComponentBody>();
-                    player.ComponentMiner.Hit(body, hit.HitPoint(), dir);
-                    QueuePlayerPacket(this, isServer);
-                });
+        GameManager.Project.FindEntity(bodyId, entity => {
+            ComponentBody body = entity.FindComponent<ComponentBody>();
+            if (body == null || Vector3.Distance(m_hitPosition, eye) > 6f) {
+                return;
             }
-        }
+            BoundingBox box = body.BoundingBox;
+            box.Min -= new Vector3(0.5f);
+            box.Max += new Vector3(0.5f);
+            if (m_hitPosition.X < box.Min.X || m_hitPosition.X > box.Max.X
+                || m_hitPosition.Y < box.Min.Y || m_hitPosition.Y > box.Max.Y
+                || m_hitPosition.Z < box.Min.Z || m_hitPosition.Z > box.Max.Z) {
+                return;
+            }
+            player.ComponentMiner.Hit(body, m_hitPosition, dir);
+            QueuePlayerPacket(this, isServer);
+        });
     }
 }
 

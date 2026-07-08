@@ -28,7 +28,8 @@ public class SleepRequestPacket : Packet {
             ComponentPlayer player = e.FindComponent<ComponentPlayer>();
             if (sleep != null && player != null) {
                 if (sleep.CanSleep(out string reason)) {
-                    sleep.Sleep(allowManualWakeup);
+                    sleep.Sleep(allowManualWakeup, true);
+                    NetworkManager.Queue(new SleepStatusPacket(sleep, allowManualWakeup, true));
                 }
                 else {
                     NetworkManager.Queue(new SleepStatusPacket(sleep, allowManualWakeup, false, reason) { To = From });

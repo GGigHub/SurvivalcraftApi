@@ -32,6 +32,7 @@ public class PlayerModifyPacket : Packet {
         var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
         var playerData = subsystemPlayers.FindPlayerData(p => p.PlayerIndex == m_playerIndex);
         if (playerData != null) {
+            playerData.Name = m_playerName;
             playerData.CharacterSkinName = m_skinName;
             playerData.m_playerClass = m_playerClass;
             if (isServer) {

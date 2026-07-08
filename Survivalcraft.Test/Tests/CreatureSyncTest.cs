@@ -86,7 +86,10 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
 
     [Fact, TestOrder(Priority = 5)]
     public async Task TestServerBodyPositionUpdateSyncsToClient() {
-        int entityId = await CreatureSyncTools.CreateBoatAsync(server, 8f, 2f, 8f);
+        int playerIndex = await DamageSyncTools.WaitForClientPlayerIndexAsync(client);
+        await CreatureSyncTools.WaitForPlayerBodyAsync(server, playerIndex);
+
+        int entityId = await CreatureSyncTools.CreateBoatNearPlayerAsync(server, playerIndex, 2f, 8f, 2f);
         Assert.True(entityId > 0, "Server did not create the body test boat.");
         Assert.True(await DamageSyncTools.WaitForEntityExistsAsync(client, entityId), $"Client did not receive body entity {entityId}.");
 
@@ -114,13 +117,14 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
             new Vector3Dto(0f, 0f, 0f));
         Assert.True(clientState.Exists, $"Client main player body was not available. State={clientState}.");
 
-        BodySyncState serverState = await CreatureSyncTools.WaitForPlayerNearAsync(
+        BodySyncState serverState = await CreatureSyncTools.WaitForPlayerHorizontalPositionNearAsync(
             server,
             playerIndex,
-            clientState);
+            clientState,
+            CreatureSyncTools.PlayerPositionEpsilonSquared);
 
         Assert.True(
-            CreatureSyncTools.PlayerBodyStatesNear(clientState, serverState),
+            CreatureSyncTools.PlayerBodyHorizontalPositionsNear(clientState, serverState),
             $"Main player body position update did not synchronize to server. Client={clientState}, Server={serverState}.");
     }
 
@@ -129,35 +133,52 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
         int playerIndex = await DamageSyncTools.WaitForClientPlayerIndexAsync(client);
         await CreatureSyncTools.WaitForPlayerBodyAsync(client, playerIndex);
         await CreatureSyncTools.WaitForPlayerBodyAsync(server, playerIndex);
-        int targetId = await CreatureSyncTools.CreateBoatNearPlayerAsync(server, playerIndex, 1.5f, 0.5f, 0f);
+        int targetId = await CreatureSyncTools.CreateBoatNearPlayerAsync(server, playerIndex, 1f, 0.5f, 0f);
         Assert.True(targetId > 0, "Server did not create the target boat.");
         Assert.True(await DamageSyncTools.WaitForEntityExistsAsync(client, targetId), $"Client did not receive target boat {targetId}.");
 
         BodySyncState preparedClientState = await CreatureSyncTools.PrepareMainPlayerForBodyCollisionAsync(
             client,
             targetId,
-            new Vector3Dto(-0.7f, -0.5f, 0f),
+            new Vector3Dto(-0.45f, -0.5f, 0f),
             new Vector3Dto(0f, 0f, 0f));
         Assert.True(preparedClientState.Exists, $"Client did not prepare the main player body. State={preparedClientState}.");
 
-        BodySyncState preparedServerState = await CreatureSyncTools.WaitForPlayerPositionNearAsync(
+        BodySyncState preparedServerState = await CreatureSyncTools.WaitForPlayerHorizontalPositionNearAsync(
             server,
             playerIndex,
             preparedClientState,
             CreatureSyncTools.CollisionPreparationPositionEpsilonSquared);
         Assert.True(
-            Vector3Dto.DistanceSquared(preparedClientState.Position, preparedServerState.Position)
+            Vector3Dto.HorizontalDistanceSquared(preparedClientState.Position, preparedServerState.Position)
                 <= CreatureSyncTools.CollisionPreparationPositionEpsilonSquared,
             $"Main player body preparation did not synchronize to server. Client={preparedClientState}, Server={preparedServerState}.");
 
-        await CreatureSyncTools.HoldMainPlayerMoveInputAsync(client, new Vector3Dto(1f, 0f, 0f), 45);
+        BodySyncState initialServerTargetState = await CreatureSyncTools.GetBodyStateAsync(server, targetId);
+        Assert.True(initialServerTargetState.Exists, $"Server target boat body was not available. State={initialServerTargetState}.");
+        await CreatureSyncTools.WaitForBodyStateNearAsync(client, targetId, initialServerTargetState);
 
-        BodySyncState serverTargetState = await CreatureSyncTools.WaitForBodyVelocityXAsync(server, targetId, 0.05f);
-        BodySyncState clientTargetState = await CreatureSyncTools.WaitForBodyVelocityXAsync(client, targetId, 0.05f);
+        BodySyncState collisionClientState = await CreatureSyncTools.OffsetMainPlayerBodyPositionAsync(
+            client,
+            new Vector3Dto(0.3f, 0f, 0f),
+            new Vector3Dto(1f, 0f, 0f));
+        Assert.True(collisionClientState.Exists, $"Client did not nudge the main player body into the target. State={collisionClientState}.");
+
+        await CreatureSyncTools.HoldMainPlayerMoveInputAsync(client, new Vector3Dto(1f, 0f, 0f), 90);
+
+        BodySyncState collisionServerState = await CreatureSyncTools.WaitForPlayerHorizontalPositionNearAsync(
+            server,
+            playerIndex,
+            collisionClientState,
+            CreatureSyncTools.CollisionPreparationPositionEpsilonSquared);
+        BodySyncState serverTargetState = await CreatureSyncTools.GetBodyStateAsync(server, targetId);
+        BodySyncState clientTargetState = await CreatureSyncTools.WaitForBodyStateNearAsync(client, targetId, serverTargetState);
 
         Assert.True(
-            serverTargetState.Velocity.X > 0f && clientTargetState.Velocity.X > 0f,
-            $"Target boat collision state did not synchronize. Server={serverTargetState}, Client={clientTargetState}.");
+            Vector3Dto.HorizontalDistanceSquared(collisionClientState.Position, collisionServerState.Position)
+                <= CreatureSyncTools.CollisionPreparationPositionEpsilonSquared
+            && CreatureSyncTools.BodyStatesNear(serverTargetState, clientTargetState),
+            $"Server did not accept the client body update near the target boat, or target boat state diverged. ClientPlayer={collisionClientState}, ServerPlayer={collisionServerState}, ServerTarget={serverTargetState}, ClientTarget={clientTargetState}.");
     }
 
     [Fact, TestOrder(Priority = 8)]

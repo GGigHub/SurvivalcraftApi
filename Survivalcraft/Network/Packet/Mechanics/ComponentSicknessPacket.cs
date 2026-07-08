@@ -19,13 +19,15 @@ public class ComponentSicknessPacket : Packet {
     public ComponentSicknessPacket() {
     }
 
-    public ComponentSicknessPacket(ComponentSickness sickness) {
+    public ComponentSicknessPacket(ComponentSickness sickness, EventType eventType = EventType.SyncStat) {
         entityId = sickness.Entity.Id;
+        m_eventType = eventType;
         m_sicknessDuration = sickness.m_sicknessDuration;
     }
 
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref entityId);
+        archive.Enum(ref m_eventType);
         archive.Value(ref m_sicknessDuration);
     }
 
@@ -37,8 +39,8 @@ public class ComponentSicknessPacket : Packet {
             var sickness = entity.FindComponent<ComponentSickness>();
             if (sickness != null) {
                 sickness.m_sicknessDuration = m_sicknessDuration;
-                if (m_sicknessDuration > 0f) {
-                    sickness.NauseaEffect();
+                if (m_eventType == EventType.NauseaEffect) {
+                    sickness.NauseaEffect(true);
                 }
             }
         });

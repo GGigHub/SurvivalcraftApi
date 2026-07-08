@@ -2,6 +2,7 @@ using Engine;
 
 using GameEntitySystem;
 using System;
+using Game.Network;
 using TemplatesDatabase;
 
 namespace Game {
@@ -48,6 +49,8 @@ namespace Game {
         public static event Action<ComponentPlayer> OnInteractEvent;
 
         public static event Action<ComponentPlayer> OnAimEvent;
+
+        public static event Action<ComponentPlayer> OnDropEvent;
 
         public double AimDuration {
             get {
@@ -173,7 +176,16 @@ namespace Game {
                     + new Vector3(0f, ComponentBody.StanceBoxSize.Y * 0.66f, 0f)
                     + 0.25f * ComponentBody.Matrix.Forward;
                 Vector3 velocity = 8f * Matrix.CreateFromQuaternion(ComponentCreatureModel.EyeRotation).Forward;
-                m_subsystemPickables.AddPickable(slotValue, num3, position, velocity, null, Entity);
+                if (NetworkManager.IsServerMode) {
+                    Pickable pickable = m_subsystemPickables.CreatePickable(slotValue, num3, position, velocity, null, Entity);
+                    if (pickable != null) {
+                        m_subsystemPickables.AddPickable(pickable);
+                        NetworkManager.Queue(new PickableCreatePacket(pickable));
+                    }
+                }
+                else {
+                    m_subsystemPickables.AddPickable(slotValue, num3, position, velocity, null, Entity);
+                }
             }
         }
 
@@ -736,21 +748,12 @@ namespace Game {
                         return false;
                     }
                 );
+                if (PlayerData.IsMainPlayer && NetworkManager.IsNetworkMode) {
+                    OnDropEvent?.Invoke(this);
+                    skipVanilla_ = true;
+                }
                 if (!skipVanilla_) {
-                    IInventory inventory = ComponentMiner.Inventory;
-                    int slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
-                    int num3 = inventory.RemoveSlotItems(
-                        count: inventory.GetSlotCount(inventory.ActiveSlotIndex),
-                        slotIndex: inventory.ActiveSlotIndex
-                    );
-                    if (slotValue != 0
-                        && num3 != 0) {
-                        Vector3 position = ComponentBody.Position
-                            + new Vector3(0f, ComponentBody.StanceBoxSize.Y * 0.66f, 0f)
-                            + 0.25f * ComponentBody.Matrix.Forward;
-                        Vector3 value2 = 8f * Matrix.CreateFromQuaternion(ComponentCreatureModel.EyeRotation).Forward;
-                        m_subsystemPickables.AddPickable(slotValue, num3, position, value2, null, Entity);
-                    }
+                    DoDrop();
                 }
             }
             if (!playerInput.PickBlockType.HasValue || flag) {

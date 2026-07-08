@@ -28,11 +28,14 @@ public class CrossbowPullPacket : Packet {
             IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
             if (inventory != null) {
                 int theItemValue = inventory.GetSlotValue(m_slotIndex);
-                if (Terrain.ExtractContents(theItemValue) == 200) { // Crossbow
+                if (Terrain.ExtractContents(theItemValue) == CrossbowBlock.Index) {
                     int data = Terrain.ExtractData(theItemValue);
-                    int value = Terrain.MakeBlockValue(200, 0, CrossbowBlock.SetDraw(data, 15));
-                    inventory.RemoveSlotItems(m_slotIndex, 1);
-                    inventory.AddSlotItems(m_slotIndex, value, 1);
+                    int value = Terrain.MakeBlockValue(CrossbowBlock.Index, 0, CrossbowBlock.SetDraw(data, 15));
+                    inventory.SetSlotValue(m_slotIndex, new ComponentInventoryBase.Slot {
+                        Value = value,
+                        Count = inventory.GetSlotCount(m_slotIndex)
+                    });
+                    NetworkManager.Queue(new InventorySyncPacket(inventory));
                 }
             }
         }

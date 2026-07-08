@@ -1,0 +1,12 @@
+var project = Game.GameManager.Project;
+var players = project.FindSubsystem<Game.SubsystemPlayers>();
+var player = players.ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerIndex == __PLAYER_INDEX__);
+var basePosition = player?.ComponentBody.Position ?? players.GlobalSpawnPosition;
+int x = Game.Terrain.ToCell(basePosition.X) + 8;
+int y = Game.Terrain.ToCell(basePosition.Y) + 1;
+int z = Game.Terrain.ToCell(basePosition.Z) + 8;
+var terrain = project.FindSubsystem<Game.SubsystemTerrain>();
+terrain.ChangeCell(x, y, z, Game.Terrain.MakeBlockValue(Game.PlanksBlock.Index));
+var fire = project.FindSubsystem<Game.SubsystemFireBlockBehavior>();
+fire.SetCellOnFire(x, y, z, 1f);
+return string.Format(System.Globalization.CultureInfo.InvariantCulture, "x={0};y={1};z={2};onFire={3}", x, y, z, fire.IsCellOnFire(x, y, z) ? 1 : 0);

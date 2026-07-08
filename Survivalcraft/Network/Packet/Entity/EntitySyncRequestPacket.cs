@@ -38,8 +38,11 @@ public class EntitySyncRequestPacket : Packet {
     public override void Handle(bool isServer) {
         if (!isServer) return;
         List<Entity> el = new List<Entity>();
+        HashSet<int> seenEntityIds = [];
         foreach (int e in m_entityIdList) {
-            GameManager.Project.FindEntity(e, entity => el.Add(entity));
+            if (seenEntityIds.Add(e)) {
+                GameManager.Project.FindEntity(e, entity => el.Add(entity));
+            }
         }
         NetworkManager.Queue(new EntityLoadPacket(el) { To = From });
     }

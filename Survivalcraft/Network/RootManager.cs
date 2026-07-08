@@ -116,6 +116,8 @@ public static class RootManager {
         };
         ComponentPlayer.OnInteractEvent += (player) =>
             NetworkManager.Queue(new PlayerInteractPacket(player));
+        ComponentPlayer.OnDropEvent += (player) =>
+            NetworkManager.Queue(new PlayerDropPacket(player));
         ComponentRandomFeedBehavior.OnIsFeedChanged += (behavior, isFeed) => {
             if (!NetworkManager.IsNetworkMode)
                 NetworkManager.Queue(new RandomFeedBehaviorPacket(behavior, isFeed));
@@ -130,7 +132,11 @@ public static class RootManager {
             NetworkManager.Queue(new ComponentMountPacket(rider, mount, isRequest));
         ComponentSickness.OnSicknessChange += (sickness) => {
             if (NetworkManager.IsServerMode)
-                NetworkManager.Queue(new ComponentSicknessPacket(sickness));
+                NetworkManager.Queue(new ComponentSicknessPacket(sickness, ComponentSicknessPacket.EventType.SyncStat));
+        };
+        ComponentSickness.OnNauseaEffect += (sickness) => {
+            if (NetworkManager.IsServerMode)
+                NetworkManager.Queue(new ComponentSicknessPacket(sickness, ComponentSicknessPacket.EventType.NauseaEffect));
         };
         ComponentStubbornSteedBehavior.OnHeadShakeOrder += (behavior, headShakeOrder) => {
             if (NetworkManager.IsServerMode)

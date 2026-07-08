@@ -37,6 +37,7 @@ namespace GameEntitySystem {
                 ValuesDictionary.ApplyOverrides(overrides);
             }
             ValuesDictionary Entities = rootNode.GetValue<ValuesDictionary>("Entities", new ValuesDictionary());
+            NextEntityID = rootNode.GetValue("NextEntityID", 1000001);
             if (Entities.Count > 0) {
                 EntityDataList = new EntityDataList(gameDatabase, Entities, ignoreInvalidEntities);
             }
@@ -99,10 +100,9 @@ namespace GameEntitySystem {
             rootNode.SetValue("Guid", ValuesDictionary.DatabaseObject.Guid);
             rootNode.SetValue("Name", ValuesDictionary.DatabaseObject.Name);
             rootNode.SetValue("Subsystems", ValuesDictionary);
+            rootNode.SetValue("NextEntityID", NextEntityID);
             rootNode.SetValue("Entities", entityList);
-            if (EntityDataList != null) {
-                EntityDataList.Save(entityList);
-            }
+            EntityDataList?.Save(entityList);
         }
     }
 }

@@ -14,6 +14,8 @@ public class InventorySyncPacket : Packet {
     public override byte ID => (byte)PacketType.InventorySync;
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_inventoryId;
+    public int m_entityId;
+    public string m_inventoryComponentTypeName = string.Empty;
     public List<InventorySlot> m_slots = new List<InventorySlot>();
 
     public InventorySyncPacket() {
@@ -21,6 +23,10 @@ public class InventorySyncPacket : Packet {
 
     public InventorySyncPacket(IInventory inventory) {
         m_inventoryId = inventory.Id;
+        if (inventory is Component component) {
+            m_entityId = component.Entity.Id;
+            m_inventoryComponentTypeName = component.GetType().FullName ?? string.Empty;
+        }
         for (int i = 0; i < inventory.SlotsCount; i++) {
             m_slots.Add(new InventorySlot {
                 inventoryId = m_inventoryId,
@@ -33,6 +39,8 @@ public class InventorySyncPacket : Packet {
 
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref m_inventoryId);
+        archive.Value(ref m_entityId);
+        archive.Value(ref m_inventoryComponentTypeName);
         int count = archive.IsWriting ? m_slots.Count : 0;
         archive.Value(ref count);
         if (archive.IsReading) {
@@ -56,14 +64,31 @@ public class InventorySyncPacket : Packet {
 
     public override void Handle(bool isServer) {
         if (isServer) return;
-        var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
-        IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
+        IInventory inventory = ResolveInventory();
         if (inventory != null) {
             foreach (var slot in m_slots) {
+                if (slot.slotIndex < 0 || slot.slotIndex >= inventory.SlotsCount) {
+                    continue;
+                }
                 inventory.RemoveSlotItems(slot.slotIndex, inventory.GetSlotCount(slot.slotIndex));
                 inventory.AddSlotItems(slot.slotIndex, slot.value, slot.count);
             }
         }
+    }
+
+    IInventory ResolveInventory() {
+        if (m_entityId != 0 && !string.IsNullOrEmpty(m_inventoryComponentTypeName)) {
+            Entity entity = GameManager.Project.FindEntity(m_entityId);
+            if (entity != null) {
+                foreach (IInventory inventory in entity.FindComponents<IInventory>()) {
+                    if (inventory.GetType().FullName == m_inventoryComponentTypeName) {
+                        return inventory;
+                    }
+                }
+            }
+        }
+        var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
+        return subsystemInventories.GetInventoryById(m_inventoryId);
     }
 }
 

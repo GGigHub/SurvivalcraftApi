@@ -22,6 +22,7 @@ namespace Game {
 
 
         public static event Action<ComponentSickness> OnSicknessChange;
+        public static event Action<ComponentSickness> OnNauseaEffect;
 
         public bool IsSick => m_sicknessDuration > 0f;
 
@@ -35,9 +36,10 @@ namespace Game {
                 m_componentPlayer.PlayerStats.TimesWasSick++;
             }
             m_sicknessDuration = 900f;
+            if (!fromNetwork) OnSicknessChange?.Invoke(this);
         }
 
-        public virtual void NauseaEffect() {
+        public virtual void NauseaEffect(bool fromNetwork = false) {
             m_lastNauseaTime = m_subsystemTime.GameTime;
             m_componentPlayer.ComponentCreatureSounds.PlayMoanSound();
             float injury = MathUtils.Min(0.1f, m_componentPlayer.ComponentHealth.Health - 0.075f);
@@ -70,6 +72,7 @@ namespace Game {
                     );
                 }
             }
+            if (!fromNetwork) OnNauseaEffect?.Invoke(this);
         }
 
         public virtual void Update(float dt) {

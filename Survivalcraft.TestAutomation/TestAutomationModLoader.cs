@@ -118,6 +118,47 @@ namespace Survivalcraft.TestAutomation {
                     int frameCount = int.Parse(parts[4], CultureInfo.InvariantCulture);
                     InputHijackState.HoldMoveInput(new Vector3(x, y, z), frameCount);
                 }
+                else if (action == "INTERACT_RAY" && parts.Length >= 7) {
+                    float px = float.Parse(parts[1], CultureInfo.InvariantCulture);
+                    float py = float.Parse(parts[2], CultureInfo.InvariantCulture);
+                    float pz = float.Parse(parts[3], CultureInfo.InvariantCulture);
+                    float dx = float.Parse(parts[4], CultureInfo.InvariantCulture);
+                    float dy = float.Parse(parts[5], CultureInfo.InvariantCulture);
+                    float dz = float.Parse(parts[6], CultureInfo.InvariantCulture);
+                    InputHijackState.QueueInteractRay(new Ray3(new Vector3(px, py, pz), new Vector3(dx, dy, dz)));
+                }
+                else if (action == "HIT_RAY" && parts.Length >= 7) {
+                    float px = float.Parse(parts[1], CultureInfo.InvariantCulture);
+                    float py = float.Parse(parts[2], CultureInfo.InvariantCulture);
+                    float pz = float.Parse(parts[3], CultureInfo.InvariantCulture);
+                    float dx = float.Parse(parts[4], CultureInfo.InvariantCulture);
+                    float dy = float.Parse(parts[5], CultureInfo.InvariantCulture);
+                    float dz = float.Parse(parts[6], CultureInfo.InvariantCulture);
+                    InputHijackState.QueueHitRay(new Ray3(new Vector3(px, py, pz), new Vector3(dx, dy, dz)));
+                }
+                else if (action == "DIG_RAY" && parts.Length >= 8) {
+                    float px = float.Parse(parts[1], CultureInfo.InvariantCulture);
+                    float py = float.Parse(parts[2], CultureInfo.InvariantCulture);
+                    float pz = float.Parse(parts[3], CultureInfo.InvariantCulture);
+                    float dx = float.Parse(parts[4], CultureInfo.InvariantCulture);
+                    float dy = float.Parse(parts[5], CultureInfo.InvariantCulture);
+                    float dz = float.Parse(parts[6], CultureInfo.InvariantCulture);
+                    int frameCount = int.Parse(parts[7], CultureInfo.InvariantCulture);
+                    InputHijackState.HoldDigRay(new Ray3(new Vector3(px, py, pz), new Vector3(dx, dy, dz)), frameCount);
+                }
+                else if (action == "AIM_RAY" && parts.Length >= 8) {
+                    float px = float.Parse(parts[1], CultureInfo.InvariantCulture);
+                    float py = float.Parse(parts[2], CultureInfo.InvariantCulture);
+                    float pz = float.Parse(parts[3], CultureInfo.InvariantCulture);
+                    float dx = float.Parse(parts[4], CultureInfo.InvariantCulture);
+                    float dy = float.Parse(parts[5], CultureInfo.InvariantCulture);
+                    float dz = float.Parse(parts[6], CultureInfo.InvariantCulture);
+                    int frameCount = int.Parse(parts[7], CultureInfo.InvariantCulture);
+                    InputHijackState.HoldAimRay(new Ray3(new Vector3(px, py, pz), new Vector3(dx, dy, dz)), frameCount);
+                }
+                else if (action == "DROP_ONCE") {
+                    InputHijackState.QueueDrop();
+                }
                 else if (action == "MOUSEDOWN" && parts.Length >= 4) {
                     if (Enum.TryParse<MouseButton>(parts[1], true, out MouseButton btn)) {
                         int x = int.Parse(parts[2]);

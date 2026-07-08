@@ -17,8 +17,15 @@ public class EntityLoadPacket : Packet {
     }
 
     public EntityLoadPacket(List<Entity> entities) {
-        entityDataList = entities.Count > 0
-            ? entities[0].Project.SaveEntities(entities)
+        List<Entity> uniqueEntities = [];
+        HashSet<Entity> seenEntities = [];
+        foreach (Entity entity in entities) {
+            if (entity != null && seenEntities.Add(entity)) {
+                uniqueEntities.Add(entity);
+            }
+        }
+        entityDataList = uniqueEntities.Count > 0
+            ? uniqueEntities[0].Project.SaveEntities(uniqueEntities)
             : new EntityDataList { EntitiesData = [], Entities = [] };
     }
 
@@ -33,8 +40,15 @@ public class EntityLoadPacket : Packet {
         HashSet<int> loadedIds = [];
         foreach (Entity entity in el) {
             if (entity.Id != 0) {
-                if (!loadedIds.Add(entity.Id) || GameManager.Project.FindEntity(entity.Id) != null) {
+                if (!loadedIds.Add(entity.Id)) {
                     continue;
+                }
+                Entity existingEntity = GameManager.Project.FindEntity(entity.Id);
+                if (existingEntity != null) {
+                    if (existingEntity.FindComponent<ComponentPlayer>() != null) {
+                        continue;
+                    }
+                    GameManager.Project.RemoveEntity(existingEntity, true);
                 }
             }
             entitiesToAttach.Add(entity);

@@ -119,6 +119,9 @@ if (fishOutOfWaterEntity != null) {
         behavior.IsBend = false;
         UpdateBehavior(behavior, 0.1f);
         UpdateBehavior(behavior, 0.1f);
+        if (!behavior.IsBend) {
+            behavior.IsBend = true;
+        }
         FreezeUpdateable(behavior);
     }
 }

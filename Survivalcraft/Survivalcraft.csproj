@@ -99,6 +99,7 @@
       <Compile Include="Network\Packet\Player\PlayerCreativeFlyPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerDeletePacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerDigPacket.cs" />
+      <Compile Include="Network\Packet\Player\PlayerDropPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerDragDropPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerHitPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerInteractPacket.cs" />
@@ -111,14 +112,12 @@
       <Compile Include="Network\Packet\Player\PlayerRestartPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerStatSyncPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerUpdateLocationPacket.cs" />
-      <Compile Include="Network\Packet\Terrain\SubsystemSeasonPacket.cs" />
       <Compile Include="Network\Packet\Terrain\SubsystemSkyPacket.cs" />
       <Compile Include="Network\Packet\Terrain\SubsystemTimePacket.cs" />
       <Compile Include="Network\Packet\Terrain\SubsystemWeatherPacket.cs" />
       <Compile Include="Network\Packet\Terrain\TerrainChangeCellListPacket.cs" />
       <Compile Include="Network\Packet\Terrain\TerrainChangeCellPacket.cs" />
       <Compile Include="Network\Packet\Terrain\TerrainReplyResultPacket.cs" />
-      <Compile Include="Network\Packet\Terrain\TerrainRequestChangeCellPacket.cs" />
       <Compile Include="Network\Packet\Terrain\TerrainRequestSyncChunksPacket.cs" />
       <Compile Include="Network\Packet\Terrain\TerrainSyncChunkListPacket.cs" />
       <Compile Include="Network\RootManager.cs" />

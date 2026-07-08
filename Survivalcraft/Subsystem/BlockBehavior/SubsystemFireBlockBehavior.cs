@@ -377,6 +377,9 @@ namespace Game {
                 InitializeFireDataTimes(fireData);
                 m_fireData[point] = fireData;
             }
+            if (!NetworkManager.IsNetworkMode && !fromNetwork) {
+                OnFireBlockAdd?.Invoke(x, y, z, expandability);
+            }
         }
 
         public void RemoveFire(int x, int y, int z, bool fromNetwork = false) {
@@ -387,6 +390,9 @@ namespace Game {
 
             Point3 key = new(x, y, z);
             m_fireData.Remove(key);
+            if (!NetworkManager.IsNetworkMode && !fromNetwork) {
+                OnFireBlockRemove?.Invoke(x, y, z);
+            }
         }
 
         public void InitializeFireDataTimes(FireData fireData) {

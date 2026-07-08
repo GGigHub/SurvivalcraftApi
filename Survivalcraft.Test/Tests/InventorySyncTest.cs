@@ -207,6 +207,62 @@ public sealed class InventorySyncTest : IClassFixture<GameFixture> {
         await InventoryTestTools.AssertActiveSlotEventuallyAsync(client, playerIndex, 2);
     }
 
+    [Fact, TestOrder(Priority = 16)]
+    public async Task TestClientInteractOpensChestInventoryAtPoint() {
+        int playerIndex = await GetReadyPlayerIndexAsync();
+        int serverPlayerEntityId = await InventorySyncTools.EnsureServerPlayerEntityAsync(server, playerIndex);
+        Assert.True(serverPlayerEntityId > 0, $"Server player entity was not available for player {playerIndex}.");
+        Assert.True(await InventorySyncTools.WaitForMainPlayerAsync(client), "Client main player was not ready.");
+
+        InventorySyncTools.ChestTarget target = await InventorySyncTools.CreateChestAsync(server);
+        Assert.True(target.InventoryId > 0, $"Server did not create a chest inventory. Target={target}.");
+
+        Assert.True(
+            await InventorySyncTools.WaitForChestInventoryAsync(client, target),
+            $"Client did not receive chest inventory at {target}. Recent logs:{Environment.NewLine}{client.GetRecentLogText()}");
+
+        Assert.True(await InventorySyncTools.InteractWithChestAsync(client, target), $"Client player did not interact with chest at {target}.");
+
+        InventorySyncTools.OpenChestState state = await InventorySyncTools.WaitForOpenChestAsync(client, target);
+
+        Assert.True(state.Opened, $"Client did not open the chest widget. State={state.Raw}");
+        Assert.Equal(target.InventoryId, state.InventoryId);
+        Assert.Equal(target.Slot0Value, state.Slot0Value);
+        Assert.Equal(target.Slot0Count, state.Slot0Count);
+    }
+
+    [Fact, TestOrder(Priority = 17)]
+    public async Task TestFurnaceUpdateSync() {
+        await EnsureWorldConnectedAsync();
+        int entityId = await InventorySyncTools.CreateFurnaceAsync(server);
+        Assert.True(entityId > 0, "Server did not create a furnace entity.");
+
+        Assert.True(await InventorySyncTools.WaitForEntityExistsAsync(client, entityId), $"Client did not receive furnace entity {entityId}.");
+
+        await InventorySyncTools.StartFurnaceSmeltingAsync(server, entityId);
+
+        await InventorySyncTools.WaitForActiveFurnaceStateAsync(client, entityId);
+
+        InventorySyncTools.FurnaceState serverState = default;
+        InventorySyncTools.FurnaceState clientState = default;
+        string mismatch = string.Empty;
+        bool synced = false;
+        for (int i = 0; i < 80; i++) {
+            serverState = await InventorySyncTools.GetFurnaceStateAsync(server, entityId);
+            clientState = await InventorySyncTools.GetFurnaceStateAsync(client, entityId);
+            if (InventorySyncTools.FurnaceStatesMatch(serverState, clientState, out mismatch)) {
+                synced = true;
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        Assert.True(
+            synced,
+            $"Furnace state was not synchronized. {mismatch} Server={serverState}, Client={clientState}.");
+    }
+
     [Fact]
     public void Dispose() {
         fixture.ThrowIfAnyContextHasError();

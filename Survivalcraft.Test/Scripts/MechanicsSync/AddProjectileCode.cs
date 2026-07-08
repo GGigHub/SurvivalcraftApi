@@ -1,0 +1,10 @@
+var project = Game.GameManager.Project;
+var players = project.FindSubsystem<Game.SubsystemPlayers>();
+var player = players.ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerIndex == __PLAYER_INDEX__);
+var basePosition = player?.ComponentBody.Position ?? players.GlobalSpawnPosition;
+var owner = player?.Entity.FindComponent<Game.ComponentCreature>();
+var subsystem = project.FindSubsystem<Game.SubsystemProjectiles>();
+int value = Game.Terrain.MakeBlockValue(Game.ArrowBlock.Index);
+var projectile = subsystem.AddProjectile(value, basePosition + new Engine.Vector3(0f, 4f, 0f), new Engine.Vector3(0.01f, 0f, 0f), Engine.Vector3.Zero, owner);
+int count = subsystem.Projectiles.Count(p => p.Value == value);
+return string.Format(System.Globalization.CultureInfo.InvariantCulture, "count={0};value={1}", count, projectile?.Value ?? value);

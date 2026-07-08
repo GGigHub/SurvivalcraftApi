@@ -18,6 +18,20 @@ namespace Survivalcraft.TestAutomation {
 
         public static int HeldMoveInputEndFrame { get; private set; } = -1;
 
+        public static Ray3? QueuedInteractRay { get; private set; }
+
+        public static Ray3? QueuedHitRay { get; private set; }
+
+        public static Ray3? HeldDigRay { get; private set; }
+
+        public static int HeldDigRayEndFrame { get; private set; } = -1;
+
+        public static Ray3? HeldAimRay { get; private set; }
+
+        public static int HeldAimRayEndFrame { get; private set; } = -1;
+
+        public static bool QueuedDrop { get; private set; }
+
         public static void SetMouseMovement(Point2 movement) {
             MouseMovementField.SetValue(null, movement);
         }
@@ -25,6 +39,28 @@ namespace Survivalcraft.TestAutomation {
         public static void HoldMoveInput(Vector3 move, int frameCount) {
             HeldMoveInput = move;
             HeldMoveInputEndFrame = Time.FrameIndex + Math.Max(1, frameCount);
+        }
+
+        public static void QueueInteractRay(Ray3 ray) {
+            QueuedInteractRay = ray;
+        }
+
+        public static void QueueHitRay(Ray3 ray) {
+            QueuedHitRay = ray;
+        }
+
+        public static void HoldDigRay(Ray3 ray, int frameCount) {
+            HeldDigRay = ray;
+            HeldDigRayEndFrame = Time.FrameIndex + Math.Max(1, frameCount);
+        }
+
+        public static void HoldAimRay(Ray3 ray, int frameCount) {
+            HeldAimRay = ray;
+            HeldAimRayEndFrame = Time.FrameIndex + Math.Max(1, frameCount);
+        }
+
+        public static void QueueDrop() {
+            QueuedDrop = true;
         }
 
         public static bool TryGetHeldMoveInput(out Vector3 move) {
@@ -35,6 +71,59 @@ namespace Survivalcraft.TestAutomation {
 
             move = Vector3.Zero;
             return false;
+        }
+
+        public static bool TryConsumeInteractRay(out Ray3 ray) {
+            if (QueuedInteractRay.HasValue) {
+                ray = QueuedInteractRay.Value;
+                QueuedInteractRay = null;
+                return true;
+            }
+
+            ray = default;
+            return false;
+        }
+
+        public static bool TryConsumeHitRay(out Ray3 ray) {
+            if (QueuedHitRay.HasValue) {
+                ray = QueuedHitRay.Value;
+                QueuedHitRay = null;
+                return true;
+            }
+
+            ray = default;
+            return false;
+        }
+
+        public static bool TryGetHeldDigRay(out Ray3 ray) {
+            if (HeldDigRay.HasValue && Time.FrameIndex < HeldDigRayEndFrame) {
+                ray = HeldDigRay.Value;
+                return true;
+            }
+
+            HeldDigRay = null;
+            ray = default;
+            return false;
+        }
+
+        public static bool TryGetHeldAimRay(out Ray3 ray) {
+            if (HeldAimRay.HasValue && Time.FrameIndex < HeldAimRayEndFrame) {
+                ray = HeldAimRay.Value;
+                return true;
+            }
+
+            HeldAimRay = null;
+            ray = default;
+            return false;
+        }
+
+        public static bool TryConsumeDrop() {
+            if (!QueuedDrop) {
+                return false;
+            }
+
+            QueuedDrop = false;
+            return true;
         }
     }
 
@@ -91,15 +180,32 @@ namespace Survivalcraft.TestAutomation {
     [HarmonyPatch(typeof(ComponentInput), "Update")]
     public static class ComponentInput_Update_Patch {
         public static void Postfix(ComponentInput __instance) {
-            if (__instance.m_componentPlayer?.PlayerData?.IsMainPlayer != true
-                || !InputHijackState.TryGetHeldMoveInput(out Vector3 move)) {
+            if (__instance.m_componentPlayer?.PlayerData?.IsMainPlayer != true) {
                 return;
             }
 
-            __instance.m_playerInput.Move = move;
-            __instance.m_playerInput.CrouchMove = move;
-            __instance.m_playerInput.CameraMove = move;
-            __instance.m_playerInput.CameraCrouchMove = move;
+            if (InputHijackState.TryGetHeldMoveInput(out Vector3 move)) {
+                __instance.m_playerInput.Move = move;
+                __instance.m_playerInput.CrouchMove = move;
+                __instance.m_playerInput.CameraMove = move;
+                __instance.m_playerInput.CameraCrouchMove = move;
+            }
+
+            if (InputHijackState.TryConsumeInteractRay(out Ray3 interactRay)) {
+                __instance.m_playerInput.Interact = interactRay;
+            }
+            if (InputHijackState.TryConsumeHitRay(out Ray3 hitRay)) {
+                __instance.m_playerInput.Hit = hitRay;
+            }
+            if (InputHijackState.TryGetHeldDigRay(out Ray3 digRay)) {
+                __instance.m_playerInput.Dig = digRay;
+            }
+            if (InputHijackState.TryGetHeldAimRay(out Ray3 aimRay)) {
+                __instance.m_playerInput.Aim = aimRay;
+            }
+            if (InputHijackState.TryConsumeDrop()) {
+                __instance.m_playerInput.Drop = true;
+            }
         }
     }
 }

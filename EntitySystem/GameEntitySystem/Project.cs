@@ -200,6 +200,9 @@ namespace GameEntitySystem {
                     entity.Id = NextEntityID;
                     NextEntityID++;
                 }
+                else if (entity.Id >= NextEntityID) {
+                    NextEntityID = entity.Id + 1;
+                }
                 entity.m_isAddedToProject = true;
                 if (!PostponeFireEntityAddedEvents) {
                     FireEntityAddedEvents(entity);

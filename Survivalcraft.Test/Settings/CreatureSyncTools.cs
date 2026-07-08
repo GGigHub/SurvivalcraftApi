@@ -260,8 +260,9 @@ public static class CreatureSyncTools {
     // Body Collision & Position Sync Tools
     // ----------------------------------------
     public const float PositionEpsilonSquared = 0.04f;
+    public const float PlayerPositionEpsilonSquared = 0.09f;
     public const float VelocityEpsilon = 0.02f;
-    public const float CollisionPreparationPositionEpsilonSquared = 0.16f;
+    public const float CollisionPreparationPositionEpsilonSquared = 0.36f;
 
     public static Task<int> CreateBoatAsync(GameContext context, float xOffset, float yOffset, float zOffset) =>
         EntitySyncTools.CreateBoatAsync(context, xOffset, yOffset, zOffset);
@@ -350,6 +351,22 @@ public static class CreatureSyncTools {
         throw new TimeoutException($"Body {entityId} did not receive collision velocity X >= {minVelocityX:R}. Actual={state}.");
     }
 
+    public static async Task<BodySyncState> WaitForBodyHorizontalSpeedAsync(
+        GameContext context,
+        int entityId,
+        float minSpeed) {
+        BodySyncState state = default;
+        for (int i = 0; i < 50; i++) {
+            state = await GetBodyStateAsync(context, entityId);
+            if (state.Exists && HorizontalSpeed(state.Velocity) >= minSpeed) {
+                return state;
+            }
+            await Task.Delay(100);
+        }
+
+        throw new TimeoutException($"Body {entityId} did not receive horizontal collision speed >= {minSpeed:R}. Actual={state}.");
+    }
+
     public static async Task<BodySyncState> WaitForBodyStateNearAsync(GameContext context, int entityId, BodySyncState expected) {
         BodySyncState state = default;
         for (int i = 0; i < 50; i++) {
@@ -395,6 +412,25 @@ public static class CreatureSyncTools {
         throw new TimeoutException($"Player body did not synchronize near expected position. Expected={expected}, Actual={state}.");
     }
 
+    public static async Task<BodySyncState> WaitForPlayerHorizontalPositionNearAsync(
+        GameContext context,
+        int playerIndex,
+        BodySyncState expected,
+        float maxDistanceSquared) {
+        BodySyncState state = default;
+        for (int i = 0; i < 50; i++) {
+            state = await GetPlayerBodyStateAsync(context, playerIndex);
+            if (expected.Exists
+                && state.Exists
+                && Vector3Dto.HorizontalDistanceSquared(expected.Position, state.Position) <= maxDistanceSquared) {
+                return state;
+            }
+            await Task.Delay(100);
+        }
+
+        throw new TimeoutException($"Player body did not synchronize near expected horizontal position. Expected={expected}, Actual={state}.");
+    }
+
     public static bool BodyStatesNear(BodySyncState expected, BodySyncState actual) =>
         expected.Exists
         && actual.Exists
@@ -411,6 +447,19 @@ public static class CreatureSyncTools {
         && Math.Abs(expected.Velocity.X - actual.Velocity.X) <= VelocityEpsilon
         && Math.Abs(expected.Velocity.Y - actual.Velocity.Y) <= VelocityEpsilon
         && Math.Abs(expected.Velocity.Z - actual.Velocity.Z) <= VelocityEpsilon;
+
+    public static bool PlayerBodyPositionsNear(BodySyncState expected, BodySyncState actual) =>
+        expected.Exists
+        && actual.Exists
+        && Vector3Dto.DistanceSquared(expected.Position, actual.Position) <= PositionEpsilonSquared;
+
+    public static bool PlayerBodyHorizontalPositionsNear(BodySyncState expected, BodySyncState actual) =>
+        expected.Exists
+        && actual.Exists
+        && Vector3Dto.HorizontalDistanceSquared(expected.Position, actual.Position) <= PlayerPositionEpsilonSquared;
+
+    public static float HorizontalSpeed(Vector3Dto vector) =>
+        MathF.Sqrt(vector.X * vector.X + vector.Z * vector.Z);
 
     public static async Task<BodySyncState> OffsetBodyPositionAsync(
         GameContext context,

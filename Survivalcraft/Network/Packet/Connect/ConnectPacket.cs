@@ -42,6 +42,7 @@ public class ConnectPacket : Packet {
 
     public static byte[] GetNowProject(Project project) {
         ProjectData projectData = new ProjectData {
+            NextEntityID = project.NextEntityID,
             ValuesDictionary = new ValuesDictionary {
                 DatabaseObject = project.m_projectTemplate
             }

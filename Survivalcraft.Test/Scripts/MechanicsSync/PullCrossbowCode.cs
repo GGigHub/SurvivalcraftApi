@@ -1,0 +1,11 @@
+var players = Game.GameManager.Project.FindSubsystem<Game.SubsystemPlayers>();
+var player = players.ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerIndex == __PLAYER_INDEX__);
+var inventory = player?.ComponentMiner?.Inventory;
+if (inventory == null) return "missing";
+inventory.ActiveSlotIndex = 0;
+var widget = new Game.CrossbowWidget(inventory, 0);
+widget.m_dragStartOffset = 0f;
+widget.SetDraw(15);
+widget.Update();
+int data = Game.Terrain.ExtractData(inventory.GetSlotValue(0));
+return string.Format(System.Globalization.CultureInfo.InvariantCulture, "value={0};draw={1}", inventory.GetSlotValue(0), Game.CrossbowBlock.GetDraw(data));

@@ -1,0 +1,13 @@
+var entity = Game.GameManager.Project.FindEntity(__ENTITY_ID__);
+if (entity == null) return "missing";
+var damage = entity.FindComponent<Game.ComponentDamage>();
+var body = entity.FindComponent<Game.ComponentBody>();
+if (damage == null || body == null) return "missing";
+damage.Hitpoints = 1f;
+damage.m_lastHitpoints = 1f;
+var attack = new Game.Attackment(entity, null, body.Position + Engine.Vector3.UnitY, Engine.Vector3.UnitY, 1f);
+attack.ProcessAttackment();
+var particles = Game.GameManager.Project.FindSubsystem<Game.SubsystemParticles>();
+var hit = particles.m_particleSystems.Keys.OfType<Game.HitValueParticleSystem>().LastOrDefault();
+string text = hit?.Particles[0].Text ?? "";
+return string.Format(System.Globalization.CultureInfo.InvariantCulture, "exists={0};text={1}", hit != null ? 1 : 0, text);

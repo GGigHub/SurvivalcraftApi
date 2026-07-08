@@ -24,7 +24,8 @@ public class WakeupRequestPacket : Packet {
             ComponentSleep sleep = e.FindComponent<ComponentSleep>();
             ComponentPlayer player = e.FindComponent<ComponentPlayer>();
             if (sleep != null && player != null) {
-                sleep.WakeUp();
+                sleep.WakeUp(true);
+                NetworkManager.Queue(new WakeupStatusPacket(sleep));
             }
         });
     }

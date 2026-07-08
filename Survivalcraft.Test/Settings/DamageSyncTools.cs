@@ -192,6 +192,19 @@ public static class DamageSyncTools {
         throw new TimeoutException($"Boat density did not reach {expectedDensity} for entity {entityId}. Actual={state}.");
     }
 
+    public static async Task<DamageEntityState> WaitForHitpointsAtMostAsync(GameContext context, int entityId, float expectedMaxHitpoints) {
+        DamageEntityState state = default;
+        for (int i = 0; i < 50; i++) {
+            state = await GetDamageEntityStateAsync(context, entityId);
+            if (state.Exists && state.Hitpoints <= expectedMaxHitpoints + HitpointsEpsilon) {
+                return state;
+            }
+            await Task.Delay(100);
+        }
+
+        throw new TimeoutException($"ComponentDamage hitpoints did not fall to {expectedMaxHitpoints} or lower for entity {entityId}. Actual={state}.");
+    }
+
     public static async Task<DamageEntityState> GetDamageEntityStateAsync(GameContext context, int entityId) {
         string raw = (string?)await context.PushCommandAsync(
             "FUNC " + GameTools.ReadScript("DamageSync/GetDamageEntityStateCode.cs").Replace("{0}", entityId.ToString(CultureInfo.InvariantCulture))) ?? "missing";

@@ -130,7 +130,9 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
             body.Locomotion.LadderValue = changeFlag.HasFlag(ChangeFlag.LadderChange) ? m_ladderValue : null;
         }
         if (changeFlag.HasFlag(ChangeFlag.SneakChange)) {
-            body.IsSneaking = m_sneaking;
+            float crouchFactor = m_sneaking ? 1f : 0f;
+            body.TargetCrouchFactor = crouchFactor;
+            body.CrouchFactor = crouchFactor;
         }
     }
 

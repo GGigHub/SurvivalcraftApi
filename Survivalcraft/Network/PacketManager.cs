@@ -62,13 +62,13 @@ public enum PacketType : byte {
     PlayerNoMsgAdd = 50, PlayerNoMsgRemove = 51,
     PlayerBodyUpdate = 71, PlayerInteract = 72, PlayerAim = 73, PlayerDig = 74, PlayerHit = 75,
     PlayerCreativeFly = 76, PlayerIntoPlaying = 77, PlayerRestart = 78, PlayerAddExperience = 79,
-    PlayerDragDrop = 80, PlayerStatSync = 81, PlayerPositionSet = 82,
+    PlayerDragDrop = 80, PlayerStatSync = 81, PlayerPositionSet = 82, PlayerDrop = 107,
 
     // Terrain
     Time = 4, Sky = 5,
     Weather = 6, Season = 14,
     TerrainRequestSyncChunks = 101, TerrainSyncChunkList = 102, TerrainReplyResult = 103,
-    TerrainChangeCell = 104, TerrainRequestChangeCell = 105, TerrainChangeCellList = 106,
+    TerrainChangeCell = 104, TerrainChangeCellList = 105,
 
     ModPacket = 255
 }
@@ -175,6 +175,7 @@ public class PacketManager {
         RegisterPacket<PlayerCreativeFlyPacket>();
         RegisterPacket<PlayerDeletePacket>();
         RegisterPacket<PlayerDigPacket>();
+        RegisterPacket<PlayerDropPacket>();
         RegisterPacket<PlayerDragDropPacket>();
         RegisterPacket<PlayerHitPacket>();
         RegisterPacket<PlayerInteractPacket>();
@@ -190,14 +191,12 @@ public class PacketManager {
         RegisterPacket<HitValuePacket>();
 
         // Terrain
-        RegisterPacket<SubsystemSeasonPacket>();
         RegisterPacket<SubsystemSkyPacket>();
         RegisterPacket<SubsystemTimePacket>();
         RegisterPacket<SubsystemWeatherPacket>();
         RegisterPacket<TerrainChangeCellListPacket>();
         RegisterPacket<TerrainChangeCellPacket>();
         RegisterPacket<TerrainReplyResultPacket>();
-        RegisterPacket<TerrainRequestChangeCellPacket>();
         RegisterPacket<TerrainRequestSyncChunksPacket>();
         RegisterPacket<TerrainSyncChunkListPacket>();
     }

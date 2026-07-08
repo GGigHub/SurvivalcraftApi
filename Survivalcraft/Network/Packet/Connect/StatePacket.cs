@@ -76,6 +76,11 @@ public class StatePacket : ClientPacketBase {
                         && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
                         client.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = false;
                     }
+                    foreach (Entity entity in GameManager.Project.Entities) {
+                        foreach (IInventory inventory in entity.FindComponents<IInventory>()) {
+                            NetworkManager.Queue(new InventorySyncPacket(inventory) { To = client });
+                        }
+                    }
                     break;
             }
         }

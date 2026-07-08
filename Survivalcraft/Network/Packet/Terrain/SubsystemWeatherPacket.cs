@@ -76,6 +76,10 @@ public class SubsystemWeatherPacket : Packet {
                     weather.ManualFogStart();
                     break;
             }
+            if (isServer) {
+                Except = From;
+                NetworkManager.Queue(this);
+            }
             return;
         }
         weather.m_precipitationStartTime = m_precipitationStartTime;
