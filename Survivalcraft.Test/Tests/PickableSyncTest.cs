@@ -49,30 +49,21 @@ public sealed class PickableSyncTest : IClassFixture<GameFixture> {
     public async Task TestPickableUpdateSyncIsAutomaticAndIncremental() {
         int movingId = await PickableSyncTools.CreatePickableAsync(server, 1, 6f, 2f, 4f);
         int unchangedId = await PickableSyncTools.CreatePickableAsync(server, 1, 8f, 2f, 4f);
-        PickableState initialMovingClientState = await PickableSyncTools.WaitForPickableStateAsync(client, movingId);
+        (_, PickableState initialMovingClientState) =
+            await PickableSyncTools.WaitForPickableStatesMatchAsync(server, client, movingId);
         Assert.True(await PickableSyncTools.WaitForPickableExistsAsync(client, unchangedId), $"Client did not receive unchanged pickable {unchangedId}.");
 
-        await Task.Delay(300);
         PickableState forcedServerState = await PickableSyncTools.ForcePickablePositionAsync(server, movingId, 12f, 4f, 12f);
 
-        PickableState finalServerState = default;
-        PickableState finalClientState = default;
-        bool synced = false;
-        for (int i = 0; i < 50; i++) {
-            await Task.Delay(100);
-            finalServerState = await PickableSyncTools.GetPickableStateAsync(server, movingId);
-            finalClientState = await PickableSyncTools.GetPickableStateAsync(client, movingId);
-            if (finalClientState.Exists
-                && PickableVector3Dto.DistanceSquared(initialMovingClientState.Position, finalClientState.Position) > 16f
-                && PickableSyncTools.PositionsMatch(finalServerState, finalClientState)) {
-                synced = true;
-                break;
-            }
-        }
-
-        Assert.True(
-            synced,
-            $"Client did not receive automatic pickable update. Forced={forcedServerState}, Server={finalServerState}, Client={finalClientState}.");
+        (PickableState finalServerState, PickableState finalClientState) = await TestWaiter.UntilAsync(
+            async () => (
+                ServerState: await PickableSyncTools.GetPickableStateAsync(server, movingId),
+                ClientState: await PickableSyncTools.GetPickableStateAsync(client, movingId)),
+            states => states.ClientState.Exists
+                && PickableVector3Dto.DistanceSquared(initialMovingClientState.Position, states.ClientState.Position) > 16f
+                && PickableSyncTools.PositionsMatch(states.ServerState, states.ClientState),
+            TestTimeouts.DefaultEventually,
+            $"Client did not receive automatic pickable update. Forced={forcedServerState}.");
         Assert.True(
             await PickableSyncTools.WaitForPickableExistsAsync(client, unchangedId),
             "Incremental removed a pickable that was not present in the update payload.");
@@ -82,38 +73,19 @@ public sealed class PickableSyncTest : IClassFixture<GameFixture> {
     public async Task TestPickableSetFlyToPositionSync() {
         PickableState createdState = await PickableSyncTools.CreateAttractablePickableAsync(server);
         Assert.True(createdState.Exists, $"Server did not create an attractable pickable. State={createdState}.");
-        PickableState createdServerState = createdState;
-        PickableState createdClientState = default;
-        bool createdSynced = false;
-        for (int i = 0; i < 50; i++) {
-            await Task.Delay(100);
-            createdServerState = await PickableSyncTools.GetPickableStateAsync(server, createdState.Id);
-            createdClientState = await PickableSyncTools.GetPickableStateAsync(client, createdState.Id);
-            if (PickableSyncTools.PositionsMatch(createdServerState, createdClientState)) {
-                createdSynced = true;
-                break;
-            }
-        }
-        Assert.True(createdSynced, $"Client did not receive pickable {createdState.Id} before attraction. Server={createdServerState}, Client={createdClientState}.");
+        await PickableSyncTools.WaitForPickableStatesMatchAsync(server, client, createdState.Id);
         await PickableSyncTools.DelayPickableAutoPickupAsync(client, createdState.Id);
 
         PickableState serverState = await PickableSyncTools.AttractPickableAsync(server, createdState.Id);
         Assert.True(serverState.Exists && serverState.FlyToPosition.HasValue, $"Server did not attract the pickable. State={serverState}.");
 
-        PickableState clientState = default;
-        bool synced = false;
-        for (int i = 0; i < 50; i++) {
-            await Task.Delay(100);
-            clientState = await PickableSyncTools.GetPickableStateAsync(client, serverState.Id);
-            if (clientState.Exists
-                && clientState.FlyToPosition.HasValue
-                && PickableVector3Dto.DistanceSquared(serverState.FlyToPosition.Value, clientState.FlyToPosition.Value) <= PickableSyncTools.SyncedPositionEpsilonSquared) {
-                synced = true;
-                break;
-            }
-        }
-
-        Assert.True(synced, $"Client did not receive PickableSetFlyToPosition sync. Server={serverState}, Client={clientState}.");
+        PickableState clientState = await TestWaiter.UntilAsync(
+            () => PickableSyncTools.GetPickableStateAsync(client, serverState.Id),
+            state => state.Exists
+                && state.FlyToPosition.HasValue
+                && PickableVector3Dto.DistanceSquared(serverState.FlyToPosition.Value, state.FlyToPosition.Value) <= PickableSyncTools.SyncedPositionEpsilonSquared,
+            TestTimeouts.DefaultEventually,
+            $"Client did not receive PickableSetFlyToPosition sync. Server={serverState}.");
     }
 
     [Fact]

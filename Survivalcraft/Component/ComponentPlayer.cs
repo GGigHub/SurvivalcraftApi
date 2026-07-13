@@ -2,7 +2,6 @@ using Engine;
 
 using GameEntitySystem;
 using System;
-using Game.Network;
 using TemplatesDatabase;
 
 namespace Game {
@@ -176,16 +175,7 @@ namespace Game {
                     + new Vector3(0f, ComponentBody.StanceBoxSize.Y * 0.66f, 0f)
                     + 0.25f * ComponentBody.Matrix.Forward;
                 Vector3 velocity = 8f * Matrix.CreateFromQuaternion(ComponentCreatureModel.EyeRotation).Forward;
-                if (NetworkManager.IsServerMode) {
-                    Pickable pickable = m_subsystemPickables.CreatePickable(slotValue, num3, position, velocity, null, Entity);
-                    if (pickable != null) {
-                        m_subsystemPickables.AddPickable(pickable);
-                        NetworkManager.Queue(new PickableCreatePacket(pickable));
-                    }
-                }
-                else {
-                    m_subsystemPickables.AddPickable(slotValue, num3, position, velocity, null, Entity);
-                }
+                m_subsystemPickables.AddPickable(slotValue, num3, position, velocity, null, Entity);
             }
         }
 

@@ -14,10 +14,10 @@ public static class DamageSyncTools {
         await context.PushCommandAsync(
             "EXEC " + GameTools.ReadScript("GameStartup/SwitchToGameLoadingCode.cs").Replace("{0}", serverPort.ToString(CultureInfo.InvariantCulture)));
 
-        bool connected = await context.WaitLogAsync($"Connected: 127.0.0.1:{serverPort}", 60);
+        bool connected = await context.WaitLogAsync($"Connected: 127.0.0.1:{serverPort}");
         Assert.True(connected, "Client failed to connect to the server.");
 
-        bool playerScreen = await context.WaitLogAsync("Entered screen \"Player\"", 60);
+        bool playerScreen = await context.WaitLogAsync("Entered screen \"Player\"");
         Assert.True(playerScreen, $"Failed to load the Player screen. Recent logs:{Environment.NewLine}{context.GetRecentLogText()}");
 
         await context.PushCommandAsync("CLICK_WIDGET PlayButton");
@@ -26,16 +26,14 @@ public static class DamageSyncTools {
     }
 
     public static async Task<int> WaitForClientPlayerIndexAsync(GameContext context) {
-        for (int i = 0; i < 50; i++) {
-            object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
-            int playerIndex = result is int id ? id : Convert.ToInt32(result, CultureInfo.InvariantCulture);
-            if (playerIndex >= 0) {
-                return playerIndex;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException("Client player index was not assigned.");
+        return await TestWaiter.UntilAsync(
+            async () => {
+                object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
+                return result is int id ? id : Convert.ToInt32(result, CultureInfo.InvariantCulture);
+            },
+            playerIndex => playerIndex >= 0,
+            TestTimeouts.DefaultEventually,
+            "Client player index was not assigned.");
     }
 
     public static async Task<int> EnsureServerPlayerEntityAsync(GameContext context, int playerIndex) {
@@ -46,21 +44,34 @@ public static class DamageSyncTools {
     }
 
     public static async Task<bool> WaitForPlayerInventoryAsync(GameContext context, int playerIndex) {
-        for (int i = 0; i < 50; i++) {
-            object? result = await context.PushCommandAsync(
-                "FUNC " + GameTools.ReadScript("DamageSync/WaitForPlayerInventoryCode.cs").Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture)));
-            if (result is bool exists && exists) {
-                return true;
-            }
-            await Task.Delay(100);
-        }
-
-        return false;
+        WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                object? value = await context.PushCommandAsync(
+                    "FUNC " + GameTools.ReadScript("DamageSync/WaitForPlayerInventoryCode.cs").Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture)));
+                return value is bool exists && exists;
+            },
+            exists => exists,
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
     public static async Task<ToolSlotState> GiveAndDamageActiveToolAsync(GameContext context, int playerIndex, int damageCount) {
         string raw = (string?)await context.PushCommandAsync(
             "FUNC " + GameTools.ReadScript("DamageSync/GiveAndDamageActiveToolCode.cs").Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture)).Replace("__DAMAGE_COUNT__", damageCount.ToString(CultureInfo.InvariantCulture))) ?? "missing";
+
+        return ParseToolSlotState(raw);
+    }
+
+    public static async Task<ToolSlotState> GiveActiveToolAsync(GameContext context, int playerIndex) {
+        string raw = (string?)await context.PushCommandAsync(
+            "FUNC " + GameTools.ReadScript("DamageSync/GiveActiveToolCode.cs").Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture))) ?? "missing";
+
+        return ParseToolSlotState(raw);
+    }
+
+    public static async Task<ToolSlotState> BreakActiveToolAsync(GameContext context, int playerIndex) {
+        string raw = (string?)await context.PushCommandAsync(
+            "FUNC " + GameTools.ReadScript("DamageSync/BreakActiveToolCode.cs").Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture))) ?? "missing";
 
         return ParseToolSlotState(raw);
     }
@@ -73,19 +84,14 @@ public static class DamageSyncTools {
     }
 
     public static async Task<ToolSlotState> WaitForToolSlotStateAsync(GameContext context, int playerIndex, ToolSlotState expected) {
-        ToolSlotState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetToolSlotStateAsync(context, playerIndex);
-            if (state.Exists
+        return await TestWaiter.UntilAsync(
+            () => GetToolSlotStateAsync(context, playerIndex),
+            state => state.Exists
                 && state.Value == expected.Value
                 && state.Count == expected.Count
-                && state.Damage == expected.Damage) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Tool slot did not synchronize for player {playerIndex}. Expected={expected}, Actual={state}.");
+                && state.Damage == expected.Damage,
+            TestTimeouts.DefaultEventually,
+            $"Tool slot did not synchronize for player {playerIndex}. Expected={expected}");
     }
 
     public static async Task<ToolSlotState> GetToolSlotStateAsync(GameContext context, int playerIndex) {
@@ -143,66 +149,49 @@ public static class DamageSyncTools {
     }
 
     public static async Task<bool> WaitForEntityExistsAsync(GameContext context, int entityId) {
-        for (int i = 0; i < 50; i++) {
-            object? result = await context.PushCommandAsync($"FUNC return Game.GameManager.Project.FindEntity({entityId}) != null;");
-            if (result is bool exists && exists) {
-                return true;
-            }
-            await Task.Delay(100);
-        }
-
-        return false;
+        WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                object? value = await context.PushCommandAsync($"FUNC return Game.GameManager.Project.FindEntity({entityId}) != null;");
+                return value is bool exists && exists;
+            },
+            exists => exists,
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
     public static async Task<bool> WaitForEntityMissingAsync(GameContext context, int entityId) {
-        for (int i = 0; i < 50; i++) {
-            object? result = await context.PushCommandAsync($"FUNC return Game.GameManager.Project.FindEntity({entityId}) == null;");
-            if (result is bool missing && missing) {
-                return true;
-            }
-            await Task.Delay(100);
-        }
-
-        return false;
+        WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                object? value = await context.PushCommandAsync($"FUNC return Game.GameManager.Project.FindEntity({entityId}) == null;");
+                return value is bool missing && missing;
+            },
+            missing => missing,
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
     public static async Task<DamageEntityState> WaitForDamageEntityStateAsync(GameContext context, int entityId, float expectedHitpoints) {
-        DamageEntityState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetDamageEntityStateAsync(context, entityId);
-            if (state.Exists && Math.Abs(state.Hitpoints - expectedHitpoints) <= HitpointsEpsilon) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"ComponentDamage hitpoints did not synchronize for entity {entityId}. Expected={expectedHitpoints}, Actual={state}.");
+        return await TestWaiter.UntilAsync(
+            () => GetDamageEntityStateAsync(context, entityId),
+            state => state.Exists && Math.Abs(state.Hitpoints - expectedHitpoints) <= HitpointsEpsilon,
+            TestTimeouts.DefaultEventually,
+            $"ComponentDamage hitpoints did not synchronize for entity {entityId}. Expected={expectedHitpoints}");
     }
 
     public static async Task<DamageEntityState> WaitForBoatDensityAsync(GameContext context, int entityId, float expectedDensity) {
-        DamageEntityState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await UpdateAndGetDamageEntityStateAsync(context, entityId);
-            if (state.Exists && Math.Abs(state.Density - expectedDensity) <= DensityEpsilon) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Boat density did not reach {expectedDensity} for entity {entityId}. Actual={state}.");
+        return await TestWaiter.UntilAsync(
+            () => UpdateAndGetDamageEntityStateAsync(context, entityId),
+            state => state.Exists && Math.Abs(state.Density - expectedDensity) <= DensityEpsilon,
+            TestTimeouts.DefaultEventually,
+            $"Boat density did not reach {expectedDensity} for entity {entityId}.");
     }
 
     public static async Task<DamageEntityState> WaitForHitpointsAtMostAsync(GameContext context, int entityId, float expectedMaxHitpoints) {
-        DamageEntityState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetDamageEntityStateAsync(context, entityId);
-            if (state.Exists && state.Hitpoints <= expectedMaxHitpoints + HitpointsEpsilon) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"ComponentDamage hitpoints did not fall to {expectedMaxHitpoints} or lower for entity {entityId}. Actual={state}.");
+        return await TestWaiter.UntilAsync(
+            () => GetDamageEntityStateAsync(context, entityId),
+            state => state.Exists && state.Hitpoints <= expectedMaxHitpoints + HitpointsEpsilon,
+            TestTimeouts.DefaultEventually,
+            $"ComponentDamage hitpoints did not fall to {expectedMaxHitpoints} or lower for entity {entityId}.");
     }
 
     public static async Task<DamageEntityState> GetDamageEntityStateAsync(GameContext context, int entityId) {

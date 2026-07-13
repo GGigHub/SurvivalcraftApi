@@ -39,57 +39,60 @@ public static class PickableSyncTools {
         context.PushCommandAsync("EXEC " + GameTools.ReadScript("PickableSync/DelayPickableAutoPickupCode.cs").Replace("__PICKABLE_ID__", pickableId.ToString(CultureInfo.InvariantCulture)));
 
     public static async Task<bool> WaitForPickableExistsAsync(GameContext context, int pickableId) {
-        for (int i = 0; i < 50; i++) {
-            if ((await GetPickableStateAsync(context, pickableId)).Exists) {
-                return true;
-            }
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<PickableState> result = await TestWaiter.TryUntilAsync(
+            () => GetPickableStateAsync(context, pickableId),
+            state => state.Exists,
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
     public static async Task ConnectTestServerForPickableTest(GameContext client, int serverPort) {
         await client.PushCommandAsync("EXEC " + GameTools.ReadScript("GameStartup/SwitchToGameLoadingCode.cs").Replace("{0}", serverPort.ToString(CultureInfo.InvariantCulture)));
 
-        bool connected = await client.WaitLogAsync($"Connected: 127.0.0.1:{serverPort}", 45);
+        bool connected = await client.WaitLogAsync($"Connected: 127.0.0.1:{serverPort}");
         Assert.True(connected, "Client failed to connect to the server.");
 
-        bool playerScreen = await client.WaitLogAsync("Entered screen \"Player\"", 45);
+        bool playerScreen = await client.WaitLogAsync("Entered screen \"Player\"");
         Assert.True(playerScreen, "Failed to load the Player screen");
 
         await client.PushCommandAsync("CLICK_WIDGET PlayButton");
-        for (int i = 0; i < 450; i++) {
-            bool gameReady = (bool?)await client.PushCommandAsync(
-                "FUNC return Game.GameManager.Project != null && ScreensManager.CurrentScreen?.GetType().Name == \"GameScreen\";") ?? false;
-            if (gameReady) {
-                return;
-            }
-            await Task.Delay(100);
-        }
-
-        Assert.Fail("Client did not enter the game screen after pressing PlayButton.");
+        await TestWaiter.UntilAsync(
+            async () => (bool?)await client.PushCommandAsync(
+                "FUNC return Game.GameManager.Project != null && ScreensManager.CurrentScreen?.GetType().Name == \"GameScreen\";") ?? false,
+            gameReady => gameReady,
+            TestTimeouts.DefaultEventually,
+            "Client did not enter the game screen after pressing PlayButton.");
     }
 
     public static async Task<PickableState> WaitForPickableStateAsync(GameContext context, int pickableId) {
-        PickableState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetPickableStateAsync(context, pickableId);
-            if (state.Exists) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-        return state;
+        WaitResult<PickableState> result = await TestWaiter.TryUntilAsync(
+            () => GetPickableStateAsync(context, pickableId),
+            state => state.Exists,
+            TestTimeouts.DefaultEventually);
+        return result.Last;
     }
 
+    public static Task<(PickableState ServerState, PickableState ClientState)> WaitForPickableStatesMatchAsync(
+        GameContext server,
+        GameContext client,
+        int pickableId) =>
+
+        TestWaiter.UntilAsync(
+            async () => (
+                ServerState: await GetPickableStateAsync(server, pickableId),
+                ClientState: await GetPickableStateAsync(client, pickableId)),
+            states => states.ServerState.Exists
+                && states.ClientState.Exists
+                && PositionsMatch(states.ServerState, states.ClientState),
+            TestTimeouts.DefaultEventually,
+            $"Pickable {pickableId} did not synchronize between server and client.");
+
     public static async Task<bool> WaitForPickableMissingAsync(GameContext context, int pickableId) {
-        for (int i = 0; i < 50; i++) {
-            if (!(await GetPickableStateAsync(context, pickableId)).Exists) {
-                return true;
-            }
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<PickableState> result = await TestWaiter.TryUntilAsync(
+            () => GetPickableStateAsync(context, pickableId),
+            state => !state.Exists,
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
     public static async Task<PickableState> GetPickableStateAsync(GameContext context, int pickableId) {

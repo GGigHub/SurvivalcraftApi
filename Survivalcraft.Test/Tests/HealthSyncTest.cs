@@ -122,9 +122,18 @@ public sealed class HealthSyncTest : IClassFixture<GameFixture> {
         serverHealth = await HealthSyncTools.InjureExistingEntityAsync(server, entityId, 1f, "HealthIntegrationTest_SecondDeath");
 
         Assert.InRange(serverHealth, 0d, HealthEpsilon);
-        await Task.Delay(500);
-        await HealthSyncTools.WaitForCauseOfDeathAsync(server, entityId, "HealthIntegrationTest_FirstDeath");
-        await HealthSyncTools.WaitForCauseOfDeathAsync(client, entityId, "HealthIntegrationTest_FirstDeath");
+
+        await TestWaiter.AssertRemainsAsync(
+            () => HealthSyncTools.GetCauseOfDeathAsync(server, entityId),
+            cause => cause == "HealthIntegrationTest_FirstDeath",
+            TestTimeouts.ShortObservation,
+            $"Server cause of death was overwritten for entity {entityId}.");
+
+        await TestWaiter.AssertRemainsAsync(
+            () => HealthSyncTools.GetCauseOfDeathAsync(client, entityId),
+            cause => cause == "HealthIntegrationTest_FirstDeath",
+            TestTimeouts.ShortObservation,
+            $"Client cause of death was overwritten for entity {entityId}.");
     }
 
     // 干预：客户端点击自杀(Choke)按钮
@@ -153,14 +162,18 @@ public sealed class HealthSyncTest : IClassFixture<GameFixture> {
         Assert.True(serverPlayerEntityId > 0, $"Server player entity was not available for player {playerIndex}.");
         Assert.True(await HealthSyncTools.WaitForEntityExistsAsync(client, serverPlayerEntityId), $"Client did not receive player entity {serverPlayerEntityId}.");
 
-        await Task.Delay(2000);
-        await HealthSyncTools.SetEntityHealthAsync(server, serverPlayerEntityId, 1f);
+        await CreatureSyncTools.WaitForPlayerBodyAsync(server, playerIndex);
+        await CreatureSyncTools.WaitForPlayerBodyAsync(client, playerIndex);
+        double resetHealth = await HealthSyncTools.SetEntityHealthAsync(server, serverPlayerEntityId, 1f);
+        Assert.InRange(resetHealth, 1d - HealthEpsilon, 1d + HealthEpsilon);
 
         await HealthSyncTools.SimulateForgedClientFallAsync(client, playerIndex);
-        await Task.Delay(1500);
 
-        double serverHealth = await HealthSyncTools.GetPlayerHealthAsync(server, playerIndex);
-        Assert.InRange(serverHealth, 1d - HealthEpsilon, 1d + HealthEpsilon);
+        await TestWaiter.AssertRemainsAsync(
+            () => HealthSyncTools.GetPlayerHealthAsync(server, playerIndex),
+            health => Math.Abs(health - 1d) <= HealthEpsilon,
+            TestTimeouts.DefaultEventually,
+            $"Server accepted forged fall damage for player {playerIndex}.");
     }
 
     // 干预：服务端玩家的各类生存指标(VitalStats)发生变化

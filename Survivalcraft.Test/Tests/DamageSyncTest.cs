@@ -10,8 +10,6 @@ namespace Survivalcraft.Test;
 [TestCaseOrderer("Survivalcraft.Test.PriorityOrderer", "Survivalcraft.Test")]
 public sealed class DamageSyncTest : IClassFixture<GameFixture> {
 
-
-
     private readonly GameFixture fixture;
     private GameContext server => fixture.Server;
     private GameContext client => fixture.Client;
@@ -78,11 +76,15 @@ public sealed class DamageSyncTest : IClassFixture<GameFixture> {
 
         DamageSyncTools.DamageEntityState initialServerState = await DamageSyncTools.GetDamageEntityStateAsync(server, boatId);
         DamageSyncTools.DamageEntityState clientAttemptState = await DamageSyncTools.DamageBoatAsync(client, boatId, 0.25f);
-        await Task.Delay(500);
-        DamageSyncTools.DamageEntityState finalServerState = await DamageSyncTools.GetDamageEntityStateAsync(server, boatId);
 
         Assert.True(clientAttemptState.Exists, $"Client boat was missing during local damage attempt. State={clientAttemptState}.");
-        Assert.InRange(finalServerState.Hitpoints, initialServerState.Hitpoints - DamageSyncTools.HitpointsEpsilon, initialServerState.Hitpoints + DamageSyncTools.HitpointsEpsilon);
+
+        await TestWaiter.AssertRemainsAsync(
+            () => DamageSyncTools.GetDamageEntityStateAsync(server, boatId),
+            state => state.Exists
+                && Math.Abs(state.Hitpoints - initialServerState.Hitpoints) <= DamageSyncTools.HitpointsEpsilon,
+            TestTimeouts.ShortObservation,
+            $"Server hitpoints changed after client-local damage attempt. Initial={initialServerState}");
     }
 
     [Fact, TestOrder(Priority = 6)]
@@ -112,7 +114,16 @@ public sealed class DamageSyncTest : IClassFixture<GameFixture> {
         Assert.True(serverPlayerEntityId > 0, $"Server player entity was not available for player {playerIndex}.");
         Assert.True(await DamageSyncTools.WaitForPlayerInventoryAsync(client, playerIndex), $"Client player inventory was not available for player {playerIndex}.");
 
-        DamageSyncTools.ToolSlotState serverState = await DamageSyncTools.GiveAndBreakActiveToolAsync(server, playerIndex);
+        DamageSyncTools.ToolSlotState equippedState = await DamageSyncTools.GiveActiveToolAsync(server, playerIndex);
+        Assert.True(equippedState.Exists, $"Server did not produce an equipped tool state. State={equippedState}.");
+        Assert.True(equippedState.Value != 0, $"Server equipped tool value mismatch. State={equippedState}.");
+        Assert.True(equippedState.Count == 1, $"Server equipped tool count mismatch. State={equippedState}.");
+
+        DamageSyncTools.ToolSlotState equippedClientState = await DamageSyncTools.WaitForToolSlotStateAsync(client, playerIndex, equippedState);
+        Assert.Equal(equippedState.Value, equippedClientState.Value);
+        Assert.Equal(equippedState.Count, equippedClientState.Count);
+
+        DamageSyncTools.ToolSlotState serverState = await DamageSyncTools.BreakActiveToolAsync(server, playerIndex);
         Assert.True(serverState.Exists, $"Server did not produce a broken tool state. State={serverState}.");
         Assert.True(serverState.Value == 0, $"Server broken tool value mismatch. State={serverState}.");
         Assert.True(serverState.Count == 0, $"Server broken tool count mismatch. State={serverState}.");

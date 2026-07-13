@@ -47,70 +47,60 @@ public static class EntitySyncTools {
     }
 
     public static async Task<EntitySyncState> WaitForEntityStateAsync(GameContext context, int entityId) {
-        EntitySyncState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetEntityStateAsync(context, entityId);
-            if (state.Exists) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        return state;
+        WaitResult<EntitySyncState> result = await TestWaiter.TryUntilAsync(
+            () => GetEntityStateAsync(context, entityId),
+            state => state.Exists,
+            TestTimeouts.DefaultEventually);
+        return result.Last;
     }
 
     public static async Task<bool> WaitForEntityMissingAsync(GameContext context, int entityId) {
-        for (int i = 0; i < 50; i++) {
-            EntitySyncState state = await GetEntityStateAsync(context, entityId);
-            if (!state.Exists) {
-                return true;
-            }
-            await Task.Delay(100);
-        }
-
-        return false;
+        WaitResult<EntitySyncState> result = await TestWaiter.TryUntilAsync(
+            () => GetEntityStateAsync(context, entityId),
+            state => !state.Exists,
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
-    public static async Task<bool> EntityStaysMissingAsync(GameContext context, int entityId, int probes = 20) {
-        for (int i = 0; i < probes; i++) {
-            EntitySyncState state = await GetEntityStateAsync(context, entityId);
-            if (state.Exists) {
-                return false;
-            }
-            await Task.Delay(100);
+    public static async Task<bool> EntityStaysMissingAsync(GameContext context, int entityId) {
+        try {
+            await TestWaiter.AssertRemainsAsync(
+                () => GetEntityStateAsync(context, entityId),
+                state => !state.Exists,
+                TestTimeouts.DefaultEventually,
+                $"Entity {entityId} did not stay missing.");
+            return true;
         }
-
-        return true;
+        catch (TimeoutException) {
+            return false;
+        }
     }
 
-    public static async Task<bool> EntityStaysMissingOrNotBoatAsync(GameContext context, int entityId, int probes = 20) {
-        for (int i = 0; i < probes; i++) {
-            EntitySyncState state = await GetEntityStateAsync(context, entityId);
-            if (state.Exists && state.HasBoat) {
-                return false;
-            }
-            await Task.Delay(100);
+    public static async Task<bool> EntityStaysMissingOrNotBoatAsync(GameContext context, int entityId) {
+        try {
+            await TestWaiter.AssertRemainsAsync(
+                () => GetEntityStateAsync(context, entityId),
+                state => !state.Exists || !state.HasBoat,
+                TestTimeouts.DefaultEventually,
+                $"Entity {entityId} did not stay missing or non-boat.");
+            return true;
         }
-
-        return true;
+        catch (TimeoutException) {
+            return false;
+        }
     }
 
     public static async Task<(EntitySyncState ServerState, EntitySyncState ClientState)> WaitForEntityStatesMatchAsync(
         GameContext server,
         GameContext client,
         int entityId) {
-        EntitySyncState serverState = default;
-        EntitySyncState clientState = default;
-        for (int i = 0; i < 50; i++) {
-            serverState = await GetEntityStateAsync(server, entityId);
-            clientState = await GetEntityStateAsync(client, entityId);
-            if (StatesMatch(serverState, clientState)) {
-                return (serverState, clientState);
-            }
-            await Task.Delay(100);
-        }
-
-        return (serverState, clientState);
+        WaitResult<(EntitySyncState ServerState, EntitySyncState ClientState)> result = await TestWaiter.TryUntilAsync(
+            async () => (
+                ServerState: await GetEntityStateAsync(server, entityId),
+                ClientState: await GetEntityStateAsync(client, entityId)),
+            states => StatesMatch(states.ServerState, states.ClientState),
+            TestTimeouts.DefaultEventually);
+        return result.Last;
     }
 
     public static bool StatesMatch(EntitySyncState expected, EntitySyncState actual) =>

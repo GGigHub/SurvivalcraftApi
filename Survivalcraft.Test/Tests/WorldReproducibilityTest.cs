@@ -42,8 +42,8 @@ public class WorldReproducibilityTest : IClassFixture<GameFixture> {
         await server.PushCommandAsync("EXEC " + startScript);
         await client.PushCommandAsync("EXEC " + startScript);
 
-        Assert.True(await server.WaitLogAsync("Entered screen \"MainMenu\"", 120), server.GetRecentLogText());
-        Assert.True(await client.WaitLogAsync("Entered screen \"MainMenu\"", 120), client.GetRecentLogText());
+        Assert.True(await server.WaitLogAsync("Entered screen \"MainMenu\""), server.GetRecentLogText());
+        Assert.True(await client.WaitLogAsync("Entered screen \"MainMenu\""), client.GetRecentLogText());
 
         bool areIdentical = CompareDirectories(serverWorldDir, clientWorldDir);
         Assert.True(areIdentical, "Worlds are not identical after running independently!");

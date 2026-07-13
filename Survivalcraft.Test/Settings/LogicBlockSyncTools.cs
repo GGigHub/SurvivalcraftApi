@@ -49,17 +49,15 @@ public static class LogicBlockSyncTools {
         GameTools.ConnectTestServer(context, serverPort);
 
     public static async Task<bool> WaitForMainPlayerAsync(GameContext context) {
-        for (int i = 0; i < 120; i++) {
-            object? result = await context.PushCommandAsync(
-                "FUNC return Game.GameManager.Project.FindSubsystem<Game.SubsystemPlayers>().ComponentPlayers.FirstOrDefault(p => p.PlayerData.IsMainPlayer)?.ComponentMiner != null;");
-            if (result is bool ready && ready) {
-                return true;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return false;
+        WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                object? value = await context.PushCommandAsync(
+                    "FUNC return Game.GameManager.Project.FindSubsystem<Game.SubsystemPlayers>().ComponentPlayers.FirstOrDefault(p => p.PlayerData.IsMainPlayer)?.ComponentMiner != null;");
+                return value is bool ready && ready;
+            },
+            ready => ready,
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
     public static async Task<LogicBlockState> CreateLogicBlockAsync(GameContext context, LogicBlockCase testCase) {
@@ -232,187 +230,111 @@ public static class LogicBlockSyncTools {
         LogicBlockState target,
         int expectedContents,
         int expectedData) {
-        LogicBlockState state = default;
-        for (int i = 0; i < 100; i++) {
-            state = await GetLogicBlockStateAsync(context, target);
-            if (state.Contents == expectedContents
-                && state.Data == expectedData) {
-                return state;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return state;
+        return await WaitForStateOrLastAsync(
+            () => GetLogicBlockStateAsync(context, target),
+            state => state.Contents == expectedContents
+                && state.Data == expectedData);
     }
 
     public static async Task<StructuredBlockState> WaitForStructuredBlockStateAsync(
         GameContext context,
         LogicBlockState target,
         StructuredBlockCase testCase) {
-        StructuredBlockState state = default;
-        for (int i = 0; i < 100; i++) {
-            state = await GetStructuredBlockStateAsync(context, target);
-            if (StructuredBlockStatesMatch(state, testCase)) {
-                return state;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return state;
+        return await WaitForStateOrLastAsync(
+            () => GetStructuredBlockStateAsync(context, target),
+            state => StructuredBlockStatesMatch(state, testCase));
     }
 
     public static async Task<MechanicalBlockState> WaitForPistonMovingAsync(GameContext context, LogicBlockState target) {
-        MechanicalBlockState state = default;
-        for (int i = 0; i < 80; i++) {
-            state = await GetMechanicalBlockStateAsync(context, target);
-            if (state.PistonMoving > 0) {
-                return state;
-            }
-
-            await Task.Delay(50);
-        }
-
-        return state;
+        return await WaitForStateOrLastAsync(
+            () => GetMechanicalBlockStateAsync(context, target),
+            state => state.PistonMoving > 0,
+            timeout: TestTimeouts.DefaultEventually);
     }
 
     public static async Task<MechanicalBlockState> WaitForNoPistonMovingAsync(GameContext context, LogicBlockState target) {
-        MechanicalBlockState state = default;
-        for (int i = 0; i < 80; i++) {
-            state = await GetMechanicalBlockStateAsync(context, target);
-            if (state.PistonMoving == 0) {
-                return state;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return state;
+        return await WaitForStateOrLastAsync(
+            () => GetMechanicalBlockStateAsync(context, target),
+            state => state.PistonMoving == 0);
     }
 
     public static async Task<MechanicalBlockState> WaitForDispenserStateAsync(GameContext context, LogicBlockState target, int expectedData) {
-        MechanicalBlockState state = default;
-        for (int i = 0; i < 100; i++) {
-            state = await GetMechanicalBlockStateAsync(context, target);
-            if (state.Contents == DispenserSettingsCase.BlockIndex
+        return await WaitForStateOrLastAsync(
+            () => GetMechanicalBlockStateAsync(context, target),
+            state => state.Contents == DispenserSettingsCase.BlockIndex
                 && state.Data == expectedData
-                && state.DispenserEntity) {
-                return state;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return state;
+                && state.DispenserEntity);
     }
 
     public static async Task<VoltageState> WaitForVoltageStateAsync(GameContext context, VoltageState target) {
-        VoltageState state = default;
-        for (int i = 0; i < 100; i++) {
-            state = await GetVoltageStateAsync(context, target);
-            if (state.Contents == CounterBlockIndex) {
-                return state;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return state;
+        return await WaitForStateOrLastAsync(
+            () => GetVoltageStateAsync(context, target),
+            state => state.Contents == CounterBlockIndex);
     }
 
     public static async Task<VoltageState> WaitForCounterVoltageAsync(GameContext context, VoltageState target, int expectedCounter) {
-        VoltageState state = default;
-        for (int i = 0; i < 120; i++) {
-            state = await GetVoltageStateAsync(context, target);
-            if (state.Contents == CounterBlockIndex
+        return await WaitForStateOrLastAsync(
+            () => GetVoltageStateAsync(context, target),
+            state => state.Contents == CounterBlockIndex
                 && state.Counter == expectedCounter
                 && state.HasPersistent
-                && VoltageEquals(state.PersistentVoltage, expectedCounter / 15f)) {
-                return state;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return state;
+                && VoltageEquals(state.PersistentVoltage, expectedCounter / 15f));
     }
 
     public static async Task<VoltageState> WaitForCounterReadyForPulseAsync(GameContext context, VoltageState target, int expectedCounter) {
-        VoltageState state = default;
-        for (int i = 0; i < 80; i++) {
-            state = await GetVoltageStateAsync(context, target);
-            if (state.Contents == CounterBlockIndex
+        return await WaitForStateOrLastAsync(
+            () => GetVoltageStateAsync(context, target),
+            state => state.Contents == CounterBlockIndex
                 && state.SourceContents == 0
                 && state.Counter == expectedCounter
-                && state.PlusAllowed) {
-                return state;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return state;
+                && state.PlusAllowed);
     }
 
     public static async Task<VoltageState> WaitForPersistentVoltageAsync(GameContext context, VoltageState target, int expectedCounter) {
-        VoltageState state = default;
-        for (int i = 0; i < 120; i++) {
-            state = await GetVoltageStateAsync(context, target);
-            if (state.Contents == CounterBlockIndex
+        return await WaitForStateOrLastAsync(
+            () => GetVoltageStateAsync(context, target),
+            state => state.Contents == CounterBlockIndex
                 && state.HasPersistent
-                && VoltageEquals(state.PersistentVoltage, expectedCounter / 15f)) {
-                return state;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return state;
+                && VoltageEquals(state.PersistentVoltage, expectedCounter / 15f));
     }
 
     public static async Task<VoltageState> WaitForVoltageRemovedAsync(GameContext context, VoltageState target) {
-        VoltageState state = default;
-        for (int i = 0; i < 120; i++) {
-            state = await GetVoltageStateAsync(context, target);
-            if (state.Contents != CounterBlockIndex
+        return await WaitForStateOrLastAsync(
+            () => GetVoltageStateAsync(context, target),
+            state => state.Contents != CounterBlockIndex
                 && state.SourceContents == 0
-                && !state.HasPersistent) {
-                return state;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return state;
+                && !state.HasPersistent);
     }
 
     public static async Task<bool> WaitForScreenAsync(GameContext context, string screenTypeName) {
-        for (int i = 0; i < 600; i++) {
-            object? result = await context.PushCommandAsync(
-                "FUNC return Game.ScreensManager.CurrentScreen?.GetType().Name ?? \"\";");
-            if (string.Equals(result as string, screenTypeName, StringComparison.Ordinal)) {
-                return true;
-            }
-
-            await Task.Delay(100);
-        }
-
-        return false;
+        WaitResult<string> result = await TestWaiter.TryUntilAsync(
+            async () => (string?)await context.PushCommandAsync(
+                "FUNC return Game.ScreensManager.CurrentScreen?.GetType().Name ?? \"\";") ?? string.Empty,
+            screen => string.Equals(screen, screenTypeName, StringComparison.Ordinal),
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
     public static async Task<int> WaitForClientPlayerIndexAsync(GameContext context) {
-        for (int i = 0; i < 80; i++) {
-            object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
-            int playerIndex = result is int id ? id : Convert.ToInt32(result, CultureInfo.InvariantCulture);
-            if (playerIndex >= 0) {
-                return playerIndex;
-            }
+        WaitResult<int> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                object? value = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
+                return value is int id ? id : Convert.ToInt32(value, CultureInfo.InvariantCulture);
+            },
+            playerIndex => playerIndex >= 0,
+            TestTimeouts.DefaultEventually);
+        return result.Matched ? result.Last : -1;
+    }
 
-            await Task.Delay(100);
-        }
-
-        return -1;
+    private static async Task<T> WaitForStateOrLastAsync<T>(
+        Func<Task<T>> probe,
+        Func<T, bool> predicate,
+        TimeSpan? timeout = null) {
+        WaitResult<T> result = await TestWaiter.TryUntilAsync(
+            probe,
+            predicate,
+            timeout ?? TestTimeouts.DefaultEventually);
+        return result.Last;
     }
 
     public static LogicBlockState ParseLogicBlockState(string value) {
