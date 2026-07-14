@@ -75,6 +75,7 @@ public static class PlayerSyncTools {
     }
 
     public static async Task CreateCreativeTestWorldAsync(GameContext server, string seed) {
+        await GameTools.DisablePlayWithFriendsPrompt(server);
         await server.PushCommandAsync("CLICK_WIDGET Play");
         bool playScreenEntered = await server.WaitLogAsync("Entered screen \"Play\"");
         Assert.True(playScreenEntered, "Failed to enter the Play screen");

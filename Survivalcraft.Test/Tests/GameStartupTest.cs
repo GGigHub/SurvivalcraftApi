@@ -24,6 +24,7 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
     // 比较考验性能，测试环境r7 1700 + 16G内存
     [Fact, TestOrder(Priority = 1)]
     public async Task TestWorldCreation() {
+        await GameTools.DisablePlayWithFriendsPrompt(server);
         await server.PushCommandAsync("CLICK_WIDGET Play");
         bool playScreenEntered = await server.WaitLogAsync("Entered screen \"Play\"");
         Assert.True(playScreenEntered, "Failed to enter the Play screen");

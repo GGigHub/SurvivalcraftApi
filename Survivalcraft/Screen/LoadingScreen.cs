@@ -577,6 +577,7 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("SettingsPerformance", new SettingsPerformanceScreen()); });
             AddLoadAction(delegate { AddScreen("SettingsGraphics", new SettingsGraphicsScreen()); });
             AddLoadAction(delegate { AddScreen("SettingsUi", new SettingsUiScreen()); });
+            AddLoadAction(delegate { AddScreen("SettingsMultiplayer", new SettingsMultiplayerScreen()); });
             AddLoadAction(delegate { AddScreen("SettingsCompatibility", new SettingsCompatibilityScreen()); });
             AddLoadAction(delegate { AddScreen("SettingsAudio", new SettingsAudioScreen()); });
             AddLoadAction(delegate { AddScreen("SettingsControls", new SettingsControlsScreen()); });

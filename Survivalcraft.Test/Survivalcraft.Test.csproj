@@ -5,6 +5,7 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +23,17 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
+
+  <Target Name="BuildAndCopyRelayServer" BeforeTargets="Build">
+    <MSBuild Projects="..\Survivalcraft.RelayServer\Survivalcraft.RelayServer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+    <MSBuild Projects="..\Survivalcraft.CenterServer\Survivalcraft.CenterServer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+    <ItemGroup>
+      <RelayServerOutput Include="..\Survivalcraft.RelayServer\bin\$(Configuration)\net10.0\Survivalcraft.RelayServer.*" />
+      <CenterServerOutput Include="..\Survivalcraft.CenterServer\bin\$(Configuration)\net10.0\Survivalcraft.CenterServer.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RelayServerOutput)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(CenterServerOutput)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
 
   <ItemGroup>
     <Compile Remove="Scripts\**\*.cs" />

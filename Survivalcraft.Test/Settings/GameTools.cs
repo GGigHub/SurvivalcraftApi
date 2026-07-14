@@ -6,7 +6,11 @@ using Xunit;
 namespace Survivalcraft.Test; 
 
 public static class GameTools {
+    public static Task DisablePlayWithFriendsPrompt(GameContext context) =>
+        context.PushCommandAsync("EXEC SettingsManager.ShowPlayWithFriendsDialog = false; SettingsManager.PlayWithFriendsEnabled = false; SettingsManager.SaveSettings();");
+
     public static async Task CreateTestWorld(GameContext server, string seed = "") {
+        await DisablePlayWithFriendsPrompt(server);
         await server.PushCommandAsync("CLICK_WIDGET Play");
         bool playScreenEntered = await server.WaitLogAsync("Entered screen \"Play\"");
         Assert.True(playScreenEntered, "Failed to enter the Play screen");

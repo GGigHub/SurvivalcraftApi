@@ -34,6 +34,9 @@ namespace Game {
         public static string OnlineAccessToken { get; set; }
 
         public static bool AllowLanConnection { get; set; }
+        public static string CenterServerUrl { get; set; }
+        public static bool PlayWithFriendsEnabled { get; set; }
+        public static bool ShowPlayWithFriendsDialog { get; set; }
 
         public static bool IsPublicServer { get; set; }
 
@@ -560,6 +563,9 @@ namespace Game {
                 ServerPort = 28887;
                 NetworkChunkSize = 4096;
                 AllowLanConnection = true;
+                CenterServerUrl = "https://api.trk34.top";
+                PlayWithFriendsEnabled = false;
+                ShowPlayWithFriendsDialog = true;
                 m_resolutionMode = ResolutionMode.High;
                 VisibilityRange = 128;
                 ViewAngle = 1f;

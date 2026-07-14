@@ -16,6 +16,7 @@
 						<BevelledButtonWidget Name="Performance" Text="[SettingsScreen:2]" Style="{Styles/ButtonStyle_310x60}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 5" />
 						<BevelledButtonWidget Name="Graphics" Text="[SettingsScreen:3]" Style="{Styles/ButtonStyle_310x60}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 5" />
 						<BevelledButtonWidget Name="Ui" Text="[SettingsScreen:4]" Style="{Styles/ButtonStyle_310x60}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 5" />
+                        <BevelledButtonWidget Name="Multiplayer" Text="[SettingsScreen:8]" Style="{Styles/ButtonStyle_310x60}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 5" />
 					</StackPanelWidget>
 					<StackPanelWidget Name="RightStack" Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="8, 0">
 						<BevelledButtonWidget Name="Audio" Text="[SettingsScreen:5]" Style="{Styles/ButtonStyle_310x60}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 5" />

@@ -68,12 +68,20 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.Test", "Survi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.TestAutomation", "Survivalcraft.TestAutomation\Survivalcraft.TestAutomation.csproj", "{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.RelayServer", "Survivalcraft.RelayServer\Survivalcraft.RelayServer.csproj", "{D8B054BA-4B38-4FA5-A3EB-66176F9C85A2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Survivalcraft.CenterServer", "Survivalcraft.CenterServer\Survivalcraft.CenterServer.csproj", "{3C2A59BB-D9F2-4E22-8909-1200FF889511}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D8B054BA-4B38-4FA5-A3EB-66176F9C85A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8B054BA-4B38-4FA5-A3EB-66176F9C85A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8B054BA-4B38-4FA5-A3EB-66176F9C85A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8B054BA-4B38-4FA5-A3EB-66176F9C85A2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0F3ABA55-EDCA-4613-9651-8B3D11808D22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0F3ABA55-EDCA-4613-9651-8B3D11808D22}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F3ABA55-EDCA-4613-9651-8B3D11808D22}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -148,6 +156,10 @@ Global
 		{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{63F18E45-8CC2-4D8B-8B36-F50A10FFD1EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C2A59BB-D9F2-4E22-8909-1200FF889511}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C2A59BB-D9F2-4E22-8909-1200FF889511}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C2A59BB-D9F2-4E22-8909-1200FF889511}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C2A59BB-D9F2-4E22-8909-1200FF889511}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

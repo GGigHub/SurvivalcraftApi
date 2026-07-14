@@ -34,6 +34,11 @@ namespace Game {
             set => m_labelWidget.Font = value;
         }
 
+        public float FontScale {
+            get => m_labelWidget.FontScale;
+            set => m_labelWidget.FontScale = value;
+        }
+
         public Subtexture TickSubtexture {
             get => m_tickWidget.Subtexture;
             set => m_tickWidget.Subtexture = value;

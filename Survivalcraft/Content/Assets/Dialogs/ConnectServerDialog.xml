@@ -5,7 +5,7 @@
     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
       <LabelWidget Name="ConnectServerDialog.Title" Text="连接玩家..." Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5"/>
       <CanvasWidget Size="0, 10" />
-      <LabelWidget Name="ConnectServerDialog.IpLabel" Text="请输入IP地址:" Color="255, 255, 255" HorizontalAlignment="Near" Margin="10, 10"/>
+      <LabelWidget Name="ConnectServerDialog.IpLabel" Text="请输入IP或者联机码..." Color="255, 255, 255" HorizontalAlignment="Near" Margin="10, 10"/>
       <CanvasWidget Margin="10, 0">
         <BevelledRectangleWidget Size="Infinity, 40" Style="{Styles/TextBoxArea}" />
         <TextBoxWidget Name="ConnectServerDialog.IpTextBox" Color="255, 255, 255" Margin="4, 0" VerticalAlignment="Center" HorizontalAlignment="Stretch" />

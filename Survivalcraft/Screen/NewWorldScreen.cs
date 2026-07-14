@@ -112,7 +112,9 @@ namespace Game {
                     m_worldSettings.ResetOptionsForNonCreativeMode(null);
                 }
                 WorldInfo worldInfo = WorldsManager.CreateWorld(m_worldSettings);
-                ScreensManager.SwitchScreen("GameLoading", worldInfo, null);
+                PlayWithFriendsDialog.ShowIfNeeded(playWithFriends => {
+                    ScreensManager.SwitchScreen("GameLoading", worldInfo, null, playWithFriends);
+                });
             }
             if (Input.Back
                 || Input.Cancel

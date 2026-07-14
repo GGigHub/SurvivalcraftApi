@@ -62,6 +62,8 @@
         <BitmapButtonWidget Name="InventoryButton" Size="64, 64" NormalSubtexture="{Textures/Atlas/InventoryButton}" ClickedSubtexture="{Textures/Atlas/InventoryButton_Pressed}" Margin="0, 3" IsAutoCheckingEnabled="true"/>
       </StackPanelWidget>
 
+      <NetworkStatusWidget Name="RelayCodeLabel" Text="" Color="255, 255, 255" DropShadow="true" HorizontalAlignment="Far" VerticalAlignment="Near" Margin="10, 10"/>
+
       <StackPanelWidget Name="RightControlsContainer" Direction="Vertical" HorizontalAlignment="Far" VerticalAlignment="Near" IsHitTestVisible="false">
         <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Far">
           <StackPanelWidget Name="MoreContents" Direction="Horizontal" HorizontalAlignment="Far" IsVisible="false" Margin="4, 3">

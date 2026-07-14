@@ -1,5 +1,8 @@
 using System.Net;
+using System.Threading.Tasks;
 using System.Xml.Linq;
+using Engine;
+using Game.Network;
 
 
 namespace Game {
@@ -13,6 +16,7 @@ namespace Game {
         private ButtonWidget m_connectButtonWidget;
 
         private ButtonWidget m_cancelButtonWidget;
+        private bool m_isResolvingGlobalCode;
 
         public bool AutoHide {
             get;
@@ -54,6 +58,7 @@ namespace Game {
         }
 
         public void ConnectToServer() {
+            if (m_isResolvingGlobalCode) return;
             string ipAddress = m_ipTextBoxWidget.Text?.Trim();
 
             if (string.IsNullOrEmpty(ipAddress)) {
@@ -61,6 +66,23 @@ namespace Game {
                     "错误",
                     "请输入服务器地址",
                     LanguageControl.Ok, null, null));
+                return;
+            }
+
+            // 中转格式：relay@IP:端口#房间码
+            if (ipAddress.StartsWith("relay@", System.StringComparison.OrdinalIgnoreCase)) {
+                string[] relayParts = ipAddress[6..].Split('#', 2);
+                if (relayParts.Length != 2 || string.IsNullOrWhiteSpace(relayParts[1]) || !TryParseEndPoint(relayParts[0], 28888, out IPEndPoint relayEndPoint)) {
+                    DialogsManager.ShowDialog(null, new MessageDialog("错误", "中转地址格式应为 relay@IP:端口#房间码", LanguageControl.Ok, null, null));
+                    return;
+                }
+                ScreensManager.SwitchScreen("GameLoading", null, null, new RelayJoinInfo(relayEndPoint, relayParts[1]), null);
+                Dismiss();
+                return;
+            }
+
+            if (LooksLikeGlobalCode(ipAddress)) {
+                ResolveAndConnectGlobalCode(ipAddress);
                 return;
             }
 
@@ -89,6 +111,50 @@ namespace Game {
 
             ScreensManager.SwitchScreen("GameLoading", null, null, IPEndPoint.Parse(ip + ":" + port), null);
             Dismiss();
+        }
+
+        private static bool TryParseEndPoint(string text, int defaultPort, out IPEndPoint endPoint) {
+            endPoint = null;
+            string[] parts = text.Split(':');
+            int port = defaultPort;
+            if (parts.Length > 2 || !IPAddress.TryParse(parts[0], out IPAddress address)) return false;
+            if (parts.Length == 2 && (!int.TryParse(parts[1], out port) || port < 1 || port > 65535)) return false;
+            endPoint = new IPEndPoint(address, port);
+            return true;
+        }
+
+        private void ResolveAndConnectGlobalCode(string globalCode) {
+            m_isResolvingGlobalCode = true;
+            m_connectButtonWidget.IsEnabled = false;
+            Task.Run(async () => {
+                try {
+                    RelayJoinInfo joinInfo = await CenterServerClient.ResolveRelayJoinInfoAsync(globalCode);
+                    Dispatcher.Dispatch(delegate {
+                        m_isResolvingGlobalCode = false;
+                        m_connectButtonWidget.IsEnabled = true;
+                        ScreensManager.SwitchScreen("GameLoading", null, null, joinInfo, null);
+                        Dismiss();
+                    });
+                }
+                catch (System.Exception ex) {
+                    Dispatcher.Dispatch(delegate {
+                        m_isResolvingGlobalCode = false;
+                        m_connectButtonWidget.IsEnabled = true;
+                        DialogsManager.ShowDialog(null, new MessageDialog("错误", $"联机码解析失败：{ex.Message}", LanguageControl.Ok, null, null));
+                    });
+                }
+            });
+        }
+
+        private static bool LooksLikeGlobalCode(string text) {
+            if (string.IsNullOrWhiteSpace(text) || text.Contains(':') || text.Contains('@') || text.Contains('/') || text.Contains('.')) return false;
+            int count = 0;
+            foreach (char c in text) {
+                if (c is '-' or ' ') continue;
+                if (!char.IsDigit(c)) return false;
+                count++;
+            }
+            return count == 4;
         }
 
         public void Dismiss() {

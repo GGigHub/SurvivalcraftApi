@@ -284,8 +284,11 @@ namespace Game {
                 }
             );
             var modInfos = new List<ModInfo>();
-            ScreensManager.SwitchScreen("GameLoading", item, null);
-            m_worldsListWidget.SelectedItem = null;
+            object loadItem = item;
+            PlayWithFriendsDialog.ShowIfNeeded(playWithFriends => {
+                ScreensManager.SwitchScreen("GameLoading", loadItem, null, playWithFriends);
+                m_worldsListWidget.SelectedItem = null;
+            });
         }
 
         public bool ShowTips(object item) {

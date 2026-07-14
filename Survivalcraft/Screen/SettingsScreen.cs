@@ -18,6 +18,8 @@ namespace Game {
 
         public ButtonWidget m_controlsButton;
 
+        public ButtonWidget m_multiplayerButton;
+
         public StackPanelWidget m_leftStack, m_rightPanel;
         readonly Dictionary<ButtonWidget, Action> m_buttonActions = new();
 
@@ -30,6 +32,7 @@ namespace Game {
             m_compatibilityButton = Children.Find<ButtonWidget>("Compatibility");
             m_audioButton = Children.Find<ButtonWidget>("Audio");
             m_controlsButton = Children.Find<ButtonWidget>("Controls");
+            m_multiplayerButton = Children.Find<ButtonWidget>("Multiplayer");
             m_leftStack = Children.Find<StackPanelWidget>("LeftStack");
             m_rightPanel = Children.Find<StackPanelWidget>("RightStack");
             ModsManager.HookAction(
@@ -70,6 +73,9 @@ namespace Game {
             }
             if (m_controlsButton.IsClicked) {
                 ScreensManager.SwitchScreen("SettingsControls");
+            }
+            if (m_multiplayerButton.IsClicked) {
+                ScreensManager.SwitchScreen("SettingsMultiplayer");
             }
             foreach (KeyValuePair<ButtonWidget, Action> buttonAction in m_buttonActions) {
                 if (buttonAction.Key.IsClicked) {

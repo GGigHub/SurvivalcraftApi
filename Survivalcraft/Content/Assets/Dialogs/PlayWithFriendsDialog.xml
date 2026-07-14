@@ -1,0 +1,15 @@
+<CanvasWidget xmlns="runtime-namespace:Game" Size="620, 200" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Near" Margin="18, 14">
+    <LabelWidget Name="PlayWithFriendsDialog.Title" Text="启用联机模式？" Color="255, 255, 255" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="0, 4"/>
+    <LabelWidget Name="PlayWithFriendsDialog.Message" Text="确认后会自动创建联机房间，并显示联机码给朋友加入" Color="180, 180, 180" HorizontalAlignment="Center" VerticalAlignment="Near" TextAnchor="HorizontalCenter" WordWrap="true" Margin="28, 8"/>
+  </StackPanelWidget>
+
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Far" Margin="44, 8">
+    <CheckboxWidget Name="PlayWithFriendsDialog.DoNotAskAgain" Text="不再显示此对话框 (可在设置中调整)" FontScale="0.8" Color="180, 180, 180" CheckboxSize="28, 28" HorizontalAlignment="Near" VerticalAlignment="Center" Margin="28, 0, 0, 6" />
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 4">
+      <BevelledButtonWidget Name="PlayWithFriendsDialog.Yes" Text="确认" Style="{Styles/ButtonStyle_160x60}" Margin="32, 0"/>
+      <BevelledButtonWidget Name="PlayWithFriendsDialog.No" Text="取消" Style="{Styles/ButtonStyle_160x60}" Margin="32, 0"/>
+    </StackPanelWidget>
+  </StackPanelWidget>
+</CanvasWidget>

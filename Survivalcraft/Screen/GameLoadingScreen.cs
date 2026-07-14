@@ -3,8 +3,6 @@ using System.Net;
 using System.Text;
 using System.Xml.Linq;
 using Engine;
-using Engine.Graphics;
-using Engine.Media;
 
 namespace Game;
 
@@ -18,10 +16,12 @@ public class GameLoadingScreen : Screen {
     public static string fName = "GameLoadingScreen";
     public UnSeasonSpawnDialog spawnDialog = new UnSeasonSpawnDialog();
     private IPEndPoint m_serverEndPoint;
+    private RelayJoinInfo m_relayJoinInfo;
     public byte[] m_projectXmlData;
     public bool IsServerReply;
     private string m_password;
     private bool IsAdventureRestart;
+    private bool m_startRelayHostWithCenter;
     private Stopwatch timer;
 
     public GameLoadingScreen() {
@@ -31,8 +31,9 @@ public class GameLoadingScreen : Screen {
             if (!ScreensManager.IsAnimating) {
                 if (string.IsNullOrEmpty(m_worldSnapshotName)) {
                     SetSpwanDialogMessage("连接服务器", 0.2f);
-                    if (m_serverEndPoint != null) {
-                        NetworkManager.ConnectServer(m_serverEndPoint);
+                    if (m_serverEndPoint != null || m_relayJoinInfo != null) {
+                        if (m_relayJoinInfo != null) NetworkManager.ConnectRelay(m_relayJoinInfo.EndPoint, m_relayJoinInfo.RoomCode);
+                        else NetworkManager.ConnectServer(m_serverEndPoint);
                         DialogsManager.ShowDialog(this, spawnDialog);
                         m_stateMachine.TransitionTo("WaitServerReply");
                     }
@@ -51,13 +52,13 @@ public class GameLoadingScreen : Screen {
         }, delegate {
             SetSpwanDialogMessage("等待服务器响应", 0.25f);
             // Fix me: 客户端中断连接后再次连接可能会卡住。
-            if (NetworkManager.IsClientRunning && NetworkManager.MyState == NetworkState.NotConnected) {
+            if (NetworkManager.MyState == NetworkState.Connected) {
+                m_stateMachine.TransitionTo("Loading");
+            }
+            else if (NetworkManager.IsClientStarting && NetworkManager.MyState == NetworkState.NotConnected) {
                 if (timer.ElapsedMilliseconds >= 10000) {
                     NetworkManager.Stop();
                 }
-            }
-            else if (NetworkManager.MyState == NetworkState.Connected) {
-                m_stateMachine.TransitionTo("Loading");
             }
             else {
                 NetworkManager.Stop();
@@ -69,7 +70,7 @@ public class GameLoadingScreen : Screen {
         });
         m_stateMachine.AddState("Loading", null,
         delegate {
-            if (m_serverEndPoint != null) {
+            if (m_serverEndPoint != null || m_relayJoinInfo != null) {
                 SetSpwanDialogMessage("等待Project和材质", 0.4f);
                 if (IsServerReply) {
                     m_stateMachine.TransitionTo("LoadServerReply");
@@ -82,6 +83,11 @@ public class GameLoadingScreen : Screen {
                 ContainerWidget gamesWidget = ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
                 NetworkManager.StartServer();
+                if (m_startRelayHostWithCenter) {
+                    Task.Run(async () => {
+                        await NetworkManager.StartRelayHostAsync();
+                    });
+                }
                 if (IsAdventureRestart && NetworkManager.IsClientRunning) {
                     // 需要注入主玩家的概念
                     OnPlayerIntoPlaying?.Invoke();
@@ -154,15 +160,19 @@ public class GameLoadingScreen : Screen {
     }
 
     public override void Enter(object[] parameters) {
-        if (parameters.Length < 3) {
+        m_startRelayHostWithCenter = false;
+        if (parameters.Length >= 1 && parameters[0] is WorldInfo) {
             m_worldInfo = (WorldInfo)parameters[0];
             m_worldSnapshotName = (string)parameters[1];
             m_serverEndPoint = null;
+            m_relayJoinInfo = null;
+            m_startRelayHostWithCenter = parameters.Length > 2 && parameters[2] is bool startRelayHostWithCenter && startRelayHostWithCenter;
             IsAdventureRestart = m_worldSnapshotName == "AdventureRestart";
         }
         else {
             m_worldSnapshotName = null;
-            m_serverEndPoint = (IPEndPoint)parameters[2];
+            if (parameters[2] is RelayJoinInfo relayJoinInfo) m_relayJoinInfo = relayJoinInfo;
+            else m_serverEndPoint = (IPEndPoint)parameters[2];
             if (parameters.Length == 4) m_password = (string)parameters[3];
         }
         // 为什么要放在这里
