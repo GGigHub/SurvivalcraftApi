@@ -15,7 +15,7 @@ public class IndexPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        NetworkManager.NetworkClient.MySession.PlayerIndex = Index;
+        NetworkManager.SetPlayerIndex(Index);
     }
 
     public override void Serialize(PacketSerializer archive) {

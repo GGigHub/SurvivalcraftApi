@@ -574,7 +574,7 @@ namespace Game {
             int slotCount = sourceInventory.GetSlotCount(sourceSlotIndex);
             int slotCount2 = targetInventory.GetSlotCount(targetSlotIndex);
 
-            if (notifyNetwork && NetworkManager.IsNetworkMode) {
+            if (notifyNetwork && NetworkManager.IsClientRunning) {
                 OnMoveItem?.Invoke(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count);
             }
             if (slotCount2 == 0
@@ -605,7 +605,7 @@ namespace Game {
 
             dragCount = CalculateSplitCount(dragCount, dragMode);
 
-            if (NetworkManager.IsNetworkMode) {
+            if (NetworkManager.IsClientRunning) {
                 OnDragDropItem?.Invoke(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly);
             }
 

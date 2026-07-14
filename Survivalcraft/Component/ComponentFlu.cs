@@ -141,7 +141,7 @@ namespace Game {
                     Math.Clamp(num3 - m_componentPlayer.ComponentLocomotion.LookAngles.Y, -3f, 3f)
                 );
                 if (m_random.Bool(2f * dt)) {
-                    if (!NetworkManager.IsNetworkMode) {
+                    if (!NetworkManager.IsClientRunning) {
                         m_componentPlayer.ComponentBody.ApplyImpulse(-1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector());
                     }
                 }

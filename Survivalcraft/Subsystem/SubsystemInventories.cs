@@ -23,7 +23,7 @@ public class SubsystemInventories : Subsystem {
             return inventory.Id;
         }
         else {
-            if (NetworkManager.IsNetworkMode) {
+            if (NetworkManager.IsClientRunning) {
                 inventories[inventory.Id] = inventory;
                 return inventory.Id;
             }

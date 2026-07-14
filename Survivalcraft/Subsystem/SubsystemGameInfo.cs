@@ -122,7 +122,7 @@ namespace Game {
                 }
             }
             //客户端禁用时间计算
-            if (!NetworkManager.IsNetworkMode) {
+            if (!NetworkManager.IsClientRunning) {
                 if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) OnTimeUpdate?.Invoke(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset);
             }
         }

@@ -129,7 +129,7 @@ public class PlayerScreen : Screen {
             m_addAnotherButton.IsVisible = false;
         }
         m_addAnotherButton.IsVisible &= false;
-        m_deleteButton.IsVisible &= !NetworkManager.IsNetworkMode;
+        m_deleteButton.IsVisible &= !NetworkManager.IsClientRunning;
     }
 
     public override void Leave() {
@@ -141,7 +141,7 @@ public class PlayerScreen : Screen {
         if (m_mode == Mode.Edit && GameManager.Project != null) {
             GameManager.UpdateProject();
         }
-        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.IsNetworkMode) {
+        if (Engine.Time.RealTime - EnterTime > 120 && NetworkManager.IsClientRunning) {
             //客户端卡在新增玩家界面两分钟自动中断连接
             NetworkManager.Stop();
         }
@@ -217,13 +217,13 @@ public class PlayerScreen : Screen {
             DialogsManager.Alert("不可进行操作");
         }
         if (m_deleteButton.IsClicked) {
-            if (!NetworkManager.IsNetworkMode) {
+            if (!NetworkManager.IsClientRunning) {
                 DialogsManager.Confirm("你确定要踢出这个玩家吗", btn => {
 					if (btn == MessageDialogButton.Button1) OnPlayerDeleted?.Invoke(m_playerData);
 					else DialogsManager.HideAllDialogs();
                 });
             }
-            else if (NetworkManager.IsNetworkMode) {
+            else if (NetworkManager.IsClientRunning) {
                 DialogsManager.Alert("不可进行操作");
             }
             else {
@@ -237,7 +237,7 @@ public class PlayerScreen : Screen {
         }
         if (m_playButton.IsClicked && VerifyName()) {
             if (m_mode == Mode.Initial) {
-                if (NetworkManager.IsNetworkMode) {
+                if (NetworkManager.IsClientRunning) {
                     OnPlayerCreate?.Invoke(m_playerData);
                     DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
                 }

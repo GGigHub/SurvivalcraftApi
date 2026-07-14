@@ -74,7 +74,7 @@ public class InjureRequestPacket : Packet {
         bool flagMainPlayer = health.m_componentPlayer != null && health.m_componentPlayer.PlayerData.IsMainPlayer;
         bool flagNoRider = health.m_componentCreature.ComponentBody.ChildBodies.Count == 0;
 
-        if (NetworkManager.IsServerMode) {
+        if (NetworkManager.IsServerRunning) {
             if (flagMainPlayer || flagMainRider || flagNoRider) {
                 health.Injure(fallDamage, null, false, cause);
             }

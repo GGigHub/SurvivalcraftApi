@@ -42,7 +42,7 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Damage(float amount) {
-            if (NetworkManager.IsNetworkMode) {
+            if (NetworkManager.IsClientRunning) {
                 return;
             }
 

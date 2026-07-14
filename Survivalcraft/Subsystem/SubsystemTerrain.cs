@@ -371,7 +371,7 @@ namespace Game {
             if (pass) {
                 return;
             }
-            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+            if (NetworkManager.IsClientRunning && !fromNetwork) {
                 OnTerrainChangeCell?.Invoke(this, x, y, z, value);
                 return;
             }
@@ -514,7 +514,7 @@ namespace Game {
             Terrain = new Terrain();
             TerrainRenderer = new TerrainRenderer(this);
             TerrainUpdater = new TerrainUpdater(this);
-            if (!NetworkManager.IsNetworkMode) {
+            if (!NetworkManager.IsClientRunning) {
                 TerrainSerializer = new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             else {

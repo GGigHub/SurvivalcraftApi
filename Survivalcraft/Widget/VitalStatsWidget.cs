@@ -196,7 +196,7 @@ namespace Game {
                 );
             }
             if (m_chokeButton.IsClicked) {
-                if (NetworkManager.IsNetworkMode) {
+                if (NetworkManager.IsClientRunning) {
                     OnChokeRequest?.Invoke(
                         m_componentPlayer.ComponentHealth,
                         null,

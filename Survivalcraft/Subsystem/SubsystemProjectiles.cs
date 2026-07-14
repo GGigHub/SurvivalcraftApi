@@ -89,7 +89,7 @@ namespace Game {
         }
 
         public virtual Projectile AddProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork = false) {
-            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+            if (NetworkManager.IsClientRunning && !fromNetwork) {
                 return null;
             }
             Projectile projectile = AddProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
@@ -136,7 +136,7 @@ namespace Game {
         }
 
         public virtual Projectile FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork = false) {
-            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+            if (NetworkManager.IsClientRunning && !fromNetwork) {
                 return null;
             }
             Projectile projectile = FireProjectile<Projectile>(value, position, velocity, angularVelocity, owner);

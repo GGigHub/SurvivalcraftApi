@@ -25,7 +25,7 @@ namespace Game {
                 new EditTruthTableDialog(
                     truthTableData,
                     delegate {
-                        if (!NetworkManager.IsNetworkMode) {
+                        if (!NetworkManager.IsClientRunning) {
                             int data = StoreItemDataAtUniqueId(truthTableData);
                             int value2 = Terrain.ReplaceData(value, data);
                             inventory.RemoveSlotItems(slotIndex, count);
@@ -47,7 +47,7 @@ namespace Game {
                     delegate {
                         int face = ((TruthTableCircuitBlock)BlocksManager.Blocks[188]).GetFace(value);
                         var cell = new CellFace(x, y, z, face);
-                        if (!NetworkManager.IsNetworkMode) {
+                        if (!NetworkManager.IsClientRunning) {
                             SetBlockData(new Point3(x, y, z), truthTableData);
                             SubsystemElectricity subsystemElectricity = SubsystemTerrain.Project.FindSubsystem<SubsystemElectricity>(true);
                             ElectricElement electricElement = subsystemElectricity.GetElectricElement(x, y, z, face);

@@ -69,7 +69,7 @@ namespace Game {
         }
 
         public virtual void Sleep(bool allowManualWakeup, bool fromNetwork = false) {
-            if (!NetworkManager.IsNetworkMode || fromNetwork) {
+            if (!NetworkManager.IsClientRunning || fromNetwork) {
                 if (!IsSleeping) {
                     m_sleepStartTime = m_subsystemGameInfo.TotalElapsedGameTime;
                     m_allowManualWakeUp = allowManualWakeup;
@@ -84,7 +84,7 @@ namespace Game {
         }
 
         public virtual void WakeUp(bool fromNetwork = false) {
-            if (!NetworkManager.IsNetworkMode || fromNetwork) {
+            if (!NetworkManager.IsClientRunning || fromNetwork) {
                 if (m_sleepStartTime.HasValue) {
                     m_sleepStartTime = null;
                     m_componentPlayer.PlayerData.SpawnPosition = m_componentPlayer.ComponentBody.Position + new Vector3(0f, 0.1f, 0f);

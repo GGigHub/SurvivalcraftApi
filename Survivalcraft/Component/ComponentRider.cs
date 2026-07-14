@@ -69,7 +69,7 @@ namespace Game {
         public virtual void StartMounting(ComponentMount componentMount, bool fromNetwork = false) {
             if (!m_isAnimating
                 && Mount == null) {
-                if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                if (NetworkManager.IsClientRunning && !fromNetwork) {
                     OnMounting?.Invoke(this, componentMount, true);
                     return;
                 }
@@ -94,7 +94,7 @@ namespace Game {
         public virtual void StartDismounting(bool fromNetwork = false) {
             if (!m_isAnimating
                 && Mount != null) {
-                if (NetworkManager.IsNetworkMode && !fromNetwork) {
+                if (NetworkManager.IsClientRunning && !fromNetwork) {
                     OnDismounting?.Invoke(this, true);
                     return;
                 }

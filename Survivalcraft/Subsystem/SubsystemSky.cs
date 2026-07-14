@@ -190,7 +190,7 @@ namespace Game {
         public static bool DrawGalaxyEnabled = true;
 
         public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual, bool fromNetwork = false) {
-            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+            if (NetworkManager.IsClientRunning && !fromNetwork) {
                 OnSkyLightning?.Invoke(targetPosition);
                 return;
             }

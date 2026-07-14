@@ -30,7 +30,7 @@ namespace Game {
 
         public override void OnBlockAdded(int value, int oldValue, int x, int y, int z) {
             if (m_subsystemBlockEntities.GetBlockEntity(x, y, z) != null) {
-                if (NetworkManager.IsNetworkMode) {
+                if (NetworkManager.IsClientRunning) {
                     return;
                 }
                 Log.Error("A blockEntity already exists. The new entity does not add.");

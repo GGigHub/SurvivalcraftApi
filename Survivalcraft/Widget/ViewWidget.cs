@@ -51,7 +51,7 @@ namespace Game {
         }
 
         public virtual void DragDrop(Vector3 hitPosition, InventoryDragData inventoryDragData, int count, bool fromNetwork = false) {
-            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+            if (NetworkManager.IsClientRunning && !fromNetwork) {
                 OnPlayerDragDrop?.Invoke(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, hitPosition, count);
                 return;
             }

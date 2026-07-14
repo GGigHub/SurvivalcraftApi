@@ -26,7 +26,7 @@ namespace Game {
             LoadContents(this, node);
             m_statsPanel = Children.Find<StackPanelWidget>("StatsPanel");
             m_componentPlayer = componentPlayer;
-            if (!NetworkManager.IsNetworkMode && GameManager.WorldInfo != null)
+            if (!NetworkManager.IsClientRunning && GameManager.WorldInfo != null)
                 m_adventureRestartExists = WorldsManager.SnapshotExists(GameManager.WorldInfo.DirectoryName, "AdventureRestart");
             if (!m_increaseDetailDialogShown
                 && PerformanceManager.LongTermAverageFrameTime.HasValue

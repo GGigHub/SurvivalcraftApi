@@ -42,7 +42,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.IsNetworkMode) {
+            if (NetworkManager.IsClientRunning) {
                 if (IsBend) {
                     m_componentFishModel.BendOrder = 2f * (2f * MathUtils.Saturate(SimplexNoise.OctavedNoise(
                         (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0),

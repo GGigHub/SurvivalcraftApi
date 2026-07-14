@@ -203,7 +203,7 @@ namespace Game {
                 GenerateGeometry(movingBlockSet);
             }
             m_movingBlockSets.Add(movingBlockSet);
-            if (!NetworkManager.IsNetworkMode) {
+            if (!NetworkManager.IsClientRunning) {
                 m_movingBlockSets.Add(movingBlockSet);
             }
             OnMovingBlockAdd?.Invoke(movingBlockSet);
@@ -211,7 +211,7 @@ namespace Game {
         }
 
         public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet, bool fromNetwork = false) {
-            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+            if (NetworkManager.IsClientRunning && !fromNetwork) {
                 OnMovingBlockRemove?.Invoke(movingBlockSet, false);
                 return;
             }
@@ -426,7 +426,7 @@ namespace Game {
             foreach (MovingBlockSet item in m_stopped) {
                 Stopped?.Invoke(item);
             }
-            if (!NetworkManager.IsNetworkMode) {
+            if (!NetworkManager.IsClientRunning) {
                 foreach (MovingBlockSet item in m_stopped) {
                     DoStop(item);
                     OnMovingBlockRemove?.Invoke(item, true);

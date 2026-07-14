@@ -297,7 +297,7 @@ namespace Game {
                                     componentMiner.ComponentCreature.PlayerStats.FurnitureItemsMade += num3;
                                 }
                             }
-                            if (!NetworkManager.IsNetworkMode) {
+                            if (!NetworkManager.IsClientRunning) {
                                 CreateDesign(componentMiner, design, valuesDictionary, start, startValue);
                             }
                         }
@@ -585,7 +585,7 @@ namespace Game {
         }
 
         public void GarbageCollectDesigns(ReadOnlyList<ScannedItemData> allExistingItems) {
-            if (NetworkManager.IsNetworkMode) return;
+            if (NetworkManager.IsClientRunning) return;
             for (int i = 0; i < m_furnitureDesigns.Length; i++) {
                 if (m_furnitureDesigns[i] != null) {
                     m_furnitureDesigns[i].m_gcUsed = m_furnitureDesigns[i].m_terrainUseCount > 0;

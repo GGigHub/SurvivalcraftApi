@@ -279,7 +279,7 @@ public class PacketManager {
 
                 if (check == RelayVerifyByte && from == null) {
                     packet.From = Enumerable.FirstOrDefault(
-                        NetworkManager.NetworkServer?.ClientSessions.Values, c => c.PlayerIndex == senderIndex);
+                        NetworkManager.ServerSessions, c => c.PlayerIndex == senderIndex);
                 }
                 else {
                     packet.From = from;

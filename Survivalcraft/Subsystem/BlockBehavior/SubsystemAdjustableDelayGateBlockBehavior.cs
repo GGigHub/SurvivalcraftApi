@@ -20,7 +20,7 @@ namespace Game {
                     delegate (int newDelay) {
                         int data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                         int num = Terrain.ReplaceData(value, data2);
-                        if (!NetworkManager.IsNetworkMode) {
+                        if (!NetworkManager.IsClientRunning) {
                             inventory.RemoveSlotItems(slotIndex, count);
                             inventory.AddSlotItems(slotIndex, num, count);
                         }
@@ -43,7 +43,7 @@ namespace Game {
                         if (num != data) {
                             int face = ((AdjustableDelayGateBlock)BlocksManager.Blocks[AdjustableDelayGateBlock.Index]).GetFace(value);
                             var cell = new CellFace(x, y, z, face);
-                            if (!NetworkManager.IsNetworkMode) {
+                            if (!NetworkManager.IsClientRunning) {
                                 int newValue = Terrain.ReplaceData(value, num);
                                 SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }

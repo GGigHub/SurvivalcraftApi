@@ -75,7 +75,7 @@ namespace Game {
                 flag = true;
             }
             DispenserBlock.Mode mode = DispenserBlock.GetMode(data);
-            if (flag && NetworkManager.IsNetworkMode) {
+            if (flag && NetworkManager.IsClientRunning) {
                 byte tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) | (DispenserBlock.GetAcceptsDrops(data) ? (1 << 1) : 0));
                 OnDispenserChicked?.Invoke(m_componentBlockEntity.Coordinates, tmp);
             }

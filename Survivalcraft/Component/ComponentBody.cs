@@ -930,7 +930,7 @@ namespace Game {
                 }
                 CollidedWithBody?.Invoke(componentBody);
                 componentBody.CollidedWithBody?.Invoke(this);
-                if (NetworkManager.IsNetworkMode
+                if (NetworkManager.IsClientRunning
                     && Player?.PlayerData?.IsMainPlayer == true) {
                     NetworkManager.Queue(new BodyCollisionPacket(this, axis, move));
                 }

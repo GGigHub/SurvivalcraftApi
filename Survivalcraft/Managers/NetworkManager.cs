@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Linq;
@@ -18,12 +19,17 @@ public static class NetworkManager {
     public static NetworkClient NetworkClient { get; set; } = null;
     public static NetworkServer NetworkServer { get; set; } = null;
 
-    public static bool IsServerMode => NetworkServer?.IsRunning ?? false;
-    public static bool IsNetworkMode => NetworkClient?.IsConnected ?? false;
+    public static bool IsServerRunning => NetworkServer?.IsRunning ?? false;
+    public static bool IsClientRunning => NetworkClient?.IsConnected ?? false;
 
-    public static int PlayerIndex => NetworkClient?.MySession?.PlayerIndex ?? -1;
-    public static Guid NetworkGuid => NetworkClient?.MySession?.NetworkGuid ?? Guid.Empty;
-    public static NetworkState MyState => NetworkClient?.MySession?.NetworkState ?? NetworkState.NotConnected;
+    public static ClientSession MySession => NetworkClient?.MySession;
+    public static int PlayerIndex => MySession?.PlayerIndex ?? -1;
+    public static Guid NetworkGuid => MySession?.NetworkGuid ?? Guid.Empty;
+    public static NetworkState MyState => MySession?.NetworkState ?? NetworkState.NotConnected;
+    public static void SetPlayerIndex(int index) { if (MySession != null) MySession.PlayerIndex = index; }
+    public static void SetState(NetworkState state) { if (MySession != null) MySession.NetworkState = state; }
+    public static IEnumerable<ClientSession> ServerSessions =>
+        NetworkServer?.ClientSessions.Values ?? Enumerable.Empty<ClientSession>();
 
     public static void Initialize() {
         RootManager.Initialize();

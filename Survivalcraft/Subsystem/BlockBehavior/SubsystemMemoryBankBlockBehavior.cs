@@ -27,7 +27,7 @@ namespace Game {
                     new EditMemoryBankDialog(
                         memoryBankData,
                         () => {
-                            if (!NetworkManager.IsNetworkMode) {
+                            if (!NetworkManager.IsClientRunning) {
                                 int data = StoreItemDataAtUniqueId(memoryBankData);
                                 int value2 = Terrain.ReplaceData(value, data);
                                 inventory.RemoveSlotItems(slotIndex, count);
@@ -65,7 +65,7 @@ namespace Game {
                         () => {
                             int face = ((MemoryBankBlock)BlocksManager.Blocks[186]).GetFace(value);
                             var cell = new CellFace(x, y, z, face);
-                            if (!NetworkManager.IsNetworkMode) {
+                            if (!NetworkManager.IsClientRunning) {
                                 SetBlockData(new Point3(x, y, z), memoryBankData);
                                 SubsystemElectricity subsystemElectricity = SubsystemTerrain.Project.FindSubsystem<SubsystemElectricity>(true);
                                 ElectricElement electricElement = subsystemElectricity.GetElectricElement(x, y, z, face);

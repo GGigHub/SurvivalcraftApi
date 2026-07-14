@@ -52,7 +52,7 @@ namespace Game {
         public static event Action<ComponentLevel, int, bool> OnAddExperience;
 
         public virtual void AddExperience(int count, bool playSound, bool fromNetwork = false) {
-            if (NetworkManager.IsNetworkMode && !fromNetwork) return;
+            if (NetworkManager.IsClientRunning && !fromNetwork) return;
             if (playSound) {
                 m_subsystemAudio.PlaySound("Audio/ExperienceCollected", 0.2f, m_random.Float(-0.1f, 0.4f), 0f, 0f);
             }

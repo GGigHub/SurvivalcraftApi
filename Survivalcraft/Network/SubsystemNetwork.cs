@@ -19,7 +19,7 @@ public class SubsystemNetwork : Subsystem {
     }
 
     public void MakeAllPlayersOffline() => 
-        NetworkManager.NetworkServer.ClientSessions.Values.ToList().ForEach(MakePlayerOffline);
+        NetworkManager.ServerSessions.ToList().ForEach(MakePlayerOffline);
 
     public void MakePlayerOffline(ClientSession session) {
         if (session == null || session.PlayerIndex < 0) {
@@ -45,7 +45,7 @@ public class SubsystemNetwork : Subsystem {
             }
             if (componentPlayer != null) {
                 Project.RemoveEntity(componentPlayer.Entity, true);
-                if (!NetworkManager.IsNetworkMode) {
+                if (!NetworkManager.IsClientRunning) {
                     SavePlayerEntity(componentPlayer, guid);
                 }
             }
@@ -64,7 +64,7 @@ public class SubsystemNetwork : Subsystem {
     }
 
     public bool MakePlayerOnline(Guid guid, out PlayerData playerData, out Entity entity) {
-        if (CheckPlayerDataExists(guid, out string entityFilePath) && !NetworkManager.IsNetworkMode) {
+        if (CheckPlayerDataExists(guid, out string entityFilePath) && !NetworkManager.IsClientRunning) {
             playerData = new PlayerData(Project);
             ValuesDictionary dict = new ValuesDictionary();
             using (Stream s = Storage.OpenFile(entityFilePath, OpenFileMode.Read)) {

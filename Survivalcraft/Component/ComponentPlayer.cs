@@ -176,7 +176,7 @@ namespace Game {
                     + new Vector3(0f, ComponentBody.StanceBoxSize.Y * 0.66f, 0f)
                     + 0.25f * ComponentBody.Matrix.Forward;
                 Vector3 velocity = 8f * Matrix.CreateFromQuaternion(ComponentCreatureModel.EyeRotation).Forward;
-                if (NetworkManager.IsServerMode) {
+                if (NetworkManager.IsServerRunning) {
                     Pickable pickable = m_subsystemPickables.CreatePickable(slotValue, num3, position, velocity, null, Entity);
                     if (pickable != null) {
                         m_subsystemPickables.AddPickable(pickable);
@@ -748,7 +748,7 @@ namespace Game {
                         return false;
                     }
                 );
-                if (PlayerData.IsMainPlayer && NetworkManager.IsNetworkMode) {
+                if (PlayerData.IsMainPlayer && NetworkManager.IsClientRunning) {
                     OnDropEvent?.Invoke(this);
                     skipVanilla_ = true;
                 }

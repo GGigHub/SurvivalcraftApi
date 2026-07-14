@@ -42,7 +42,7 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void SetOnFire(ComponentCreature attacker, float duration, bool fromNetwork = false) {
-            if (NetworkManager.IsNetworkMode && !fromNetwork) {
+            if (NetworkManager.IsClientRunning && !fromNetwork) {
                 OnSetOnFire?.Invoke(this, attacker, duration);
                 return;
             }

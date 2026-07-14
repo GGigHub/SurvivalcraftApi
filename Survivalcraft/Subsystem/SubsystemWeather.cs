@@ -227,7 +227,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (!NetworkManager.IsNetworkMode) {
+            if (!NetworkManager.IsClientRunning) {
                 UpdatePrecipitation(dt);
                 UpdateLightning(dt);
                 UpdateFog(dt);

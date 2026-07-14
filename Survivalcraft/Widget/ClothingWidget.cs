@@ -75,7 +75,7 @@ namespace Game {
             }
             if (m_sleepButton.IsClicked
                 && m_componentPlayer != null) {
-                if (NetworkManager.IsNetworkMode) {
+                if (NetworkManager.IsClientRunning) {
                     OnSleepRequest?.Invoke(m_componentPlayer.ComponentSleep, true);
                 }
                 else {

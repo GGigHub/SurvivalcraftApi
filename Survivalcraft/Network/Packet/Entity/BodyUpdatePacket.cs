@@ -137,7 +137,7 @@ public class BodyUpdatePacket : Packet {
     }
 
     public static bool ShouldBeNetworkControlled(ComponentBody body) {
-        if (body == null || (!NetworkManager.IsNetworkMode && !NetworkManager.IsServerMode)) {
+        if (body == null || (!NetworkManager.IsClientRunning && !NetworkManager.IsServerRunning)) {
             return false;
         }
 
@@ -158,7 +158,7 @@ public class BodyUpdatePacket : Packet {
             }
         }
 
-        if (NetworkManager.IsNetworkMode) {
+        if (NetworkManager.IsClientRunning) {
             return (componentPlayer != null && !isMainPlayer && body.ParentBody == null)
                 || (componentPlayer == null && !hasChildPlayer)
                 || hasNonMainChildPlayer;
@@ -175,7 +175,7 @@ public class BodyUpdatePacket : Packet {
     public static bool s_bodySyncFlushQueued;
 
     public static void CollectBodyForSync(ComponentBody body, float dt) {
-        if (!NetworkManager.IsServerMode || !ShouldSyncBody(body)) {
+        if (!NetworkManager.IsServerRunning || !ShouldSyncBody(body)) {
             return;
         }
         if (s_bodySyncFrame != Time.FrameIndex) {
@@ -214,7 +214,7 @@ public class BodyUpdatePacket : Packet {
             if (playerData.IsMainPlayer) continue;
             // The sender should not send to the player who triggered the update, so we compare playerIndex
             ClientSession client = Enumerable.FirstOrDefault(
-                        NetworkManager.NetworkServer?.ClientSessions.Values, c => c.PlayerIndex == playerData.PlayerIndex);
+                        NetworkManager.ServerSessions, c => c.PlayerIndex == playerData.PlayerIndex);
             if (client == null || client.NetworkState == NetworkState.NotConnected || client.NetworkState < NetworkState.Playing) {
                 continue;
             }
@@ -232,7 +232,7 @@ public class BodyUpdatePacket : Packet {
     }
 
     public static void FlushBodySyncPackets() {
-        if (NetworkManager.IsServerMode) {
+        if (NetworkManager.IsServerRunning) {
             foreach (KeyValuePair<ClientSession, List<ComponentBody>> pair in s_bodySyncLists) {
                 if (pair.Key.NetworkState != NetworkState.NotConnected && pair.Key.NetworkState >= NetworkState.Playing) {
                     NetworkManager.Queue(new BodyUpdatePacket(pair.Value, pair.Key) { To = pair.Key });

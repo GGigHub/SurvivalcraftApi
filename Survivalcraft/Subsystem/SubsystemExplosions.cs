@@ -297,7 +297,7 @@ namespace Game {
                 m_pressureByPoint = null;
                 m_surroundingPressureByPoint = null;
             }
-            if (!NetworkManager.IsNetworkMode) {
+            if (!NetworkManager.IsClientRunning) {
                 OnExplosionCell?.Invoke(m_explosionCells);
                 //清空爆炸点
                 m_explosionCells.Clear();
@@ -759,7 +759,7 @@ namespace Game {
                 float num4 = 0.001f * MathF.Pow(pressure, 0.5f);
                 float num5 = MathUtils.Saturate(item.Value / 15f - num4) * m_random.Float(0.2f, 1f);
                 if (num5 > 0.1f) {
-                    if (!NetworkManager.IsNetworkMode) {
+                    if (!NetworkManager.IsClientRunning) {
                         var chunk = new Point2(item.Key.X >> 4, item.Key.Z >> 4);
                         if (!m_explosionCells.ContainsKey(chunk)) {
                             m_explosionCells.Add(chunk, new List<(Point3, float)>());
@@ -823,7 +823,7 @@ namespace Game {
             }
             Vector3 position = new(point.X, point.Y, point.Z);
             float delay = m_subsystemAudio.CalculateDelay(num);
-            if (!NetworkManager.IsNetworkMode) {
+            if (!NetworkManager.IsClientRunning) {
                 PlayExplosionSound(position, pressure, delay, playExplosionSound);
                 if (playExplosionSound) {
                     OnExplosionSound?.Invoke(position, pressure, delay);

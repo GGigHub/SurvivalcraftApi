@@ -75,7 +75,7 @@ namespace Game {
                     delegate (int newData) {
                         int num = Terrain.ReplaceData(value, newData);
                         if (num != value) {
-                            if (!NetworkManager.IsNetworkMode) {
+                            if (!NetworkManager.IsClientRunning) {
                                 inventory.RemoveSlotItems(slotIndex, count);
                                 inventory.AddSlotItems(slotIndex, num, count);
                             }
@@ -98,7 +98,7 @@ namespace Game {
                         if (newData != data
                             && SubsystemTerrain.Terrain.GetCellContents(x, y, z) == contents) {
                             var cell = new CellFace(x, y, z, 0);
-                            if (!NetworkManager.IsNetworkMode) {
+                            if (!NetworkManager.IsClientRunning) {
                                 int newValue = Terrain.ReplaceData(value, newData);
                                 SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }

@@ -61,7 +61,7 @@ namespace Game {
                 }
             }
             if (requestSync
-                && NetworkManager.IsNetworkMode) {
+                && NetworkManager.IsClientRunning) {
                 OnPickableRequestSync?.Invoke(id);
             }
             return false;
@@ -108,7 +108,7 @@ namespace Game {
                 m_pickables.Add(pickable);
             }
             PickableAdded?.Invoke(pickable);
-            if (!NetworkManager.IsNetworkMode) {
+            if (!NetworkManager.IsClientRunning) {
                 OnPickableCreate?.Invoke(pickable);
             }
             return pickable;
@@ -118,7 +118,7 @@ namespace Game {
             AddPickable(value, count, position, velocity, stuckMatrix, null);
 
         public virtual Pickable AddPickable(int value, int count, Vector3 position, Vector3? velocity, Matrix? stuckMatrix, Entity owner) {
-            if (NetworkManager.IsNetworkMode) {
+            if (NetworkManager.IsClientRunning) {
                 return null;
             }
             return AddPickable<Pickable>(value, count, position, velocity, stuckMatrix, owner);
@@ -216,12 +216,12 @@ namespace Game {
                     m_pickables.Remove(item);
                     useMaps.Remove(item.Id);
                     PickableRemoved?.Invoke(item);
-                    if (!NetworkManager.IsNetworkMode) {
+                    if (!NetworkManager.IsClientRunning) {
                         OnPickableDelete?.Invoke(item);
                     }
                 }
                 m_pickablesToRemove.Clear();
-                if (NetworkManager.IsServerMode
+                if (NetworkManager.IsServerRunning
                     && Time.PeriodicEvent(0.1, 0.0)
                     && m_pickables.Count > 0) {
                     List<Pickable> pickablesToUpdate = [];

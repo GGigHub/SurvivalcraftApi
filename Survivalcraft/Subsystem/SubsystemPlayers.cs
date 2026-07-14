@@ -80,7 +80,7 @@ namespace Game {
         }
 
         public void FindUnusedIndex(PlayerData playerData) {
-            if (NetworkManager.IsNetworkMode) {
+            if (NetworkManager.IsClientRunning) {
                 usedIndies[playerData.PlayerIndex] = playerData;
                 return;
             }

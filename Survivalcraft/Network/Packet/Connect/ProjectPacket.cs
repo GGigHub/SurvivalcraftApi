@@ -27,7 +27,7 @@ public class ProjectPacket : Packet {
         if (isServer) {
             return;
         }
-        NetworkManager.NetworkClient.MySession.NetworkState = NetworkState.Connected;
+        NetworkManager.SetState(NetworkState.Connected);
         ScreensManager.FindScreen<GameLoadingScreen>("GameLoading").ReplyCall(m_projectData);
     }
 }

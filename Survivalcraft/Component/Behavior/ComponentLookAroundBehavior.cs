@@ -34,7 +34,7 @@ namespace Game {
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
-            if (NetworkManager.IsNetworkMode) {
+            if (NetworkManager.IsClientRunning) {
                 if (IsLookRandom) {
                     m_componentCreature.ComponentCreatureModel.LookRandomOrder = true;
                 }
