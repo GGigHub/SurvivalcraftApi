@@ -39,6 +39,7 @@
       <Compile Include="Network\Packet\Entity\RandomPeckBehaviorPacket.cs" />
       <Compile Include="Network\Packet\Health\DamageSyncPacket.cs" />
       <Compile Include="Network\Packet\Health\HealthSyncPacket.cs" />
+      <Compile Include="Network\Packet\Helper\LatencyProbe.cs" />
       <Compile Include="Network\Packet\Player\HitValuePacket.cs" />
       <Compile Include="Network\Packet\Health\InjureEventPacket.cs" />
       <Compile Include="Network\Packet\Health\InjureRequestPacket.cs" />

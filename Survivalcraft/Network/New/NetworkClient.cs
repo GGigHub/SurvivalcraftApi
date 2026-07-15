@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using Engine;
 using LiteNetLib;
 using LiteNetLib.Utils;
+using static Game.StateMachine;
 
 namespace Game.Network;
 
@@ -18,12 +19,12 @@ public class NetworkClient : INetEventListener {
     private NetPeer _serverPeer;
     private NetManager _netManager;
     private IPEndPoint _serverAddress;
-    private PacketFragment _packageFragment;
 
     public ClientSession MySession { get; set; }
-    public bool IsConnected => _netManager != null && _netManager.IsRunning;
+    public bool IsConnected { get; set; }
+    public bool IsRunning => _netManager?.IsRunning == true;
 
-    public bool Connect(IPEndPoint serverAddress) {
+    public void Connect(IPEndPoint serverAddress) {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
@@ -31,25 +32,25 @@ public class NetworkClient : INetEventListener {
             UpdateTime = 25,
             ReuseAddress = true
         };
-        _netManager.Start();
-        _packageFragment = new PacketFragment();
+        if (!_netManager.Start()) {
+            throw new InvalidOperationException("Failed to start client transport.");
+        }
 
         _serverAddress = serverAddress;
         _netManager.Connect(_serverAddress, "x26.06.01");
 
         Log.Information($"Connecting {_serverAddress}");
-        return _netManager.IsRunning;
     }
 
     public void Disconnect() {
         _netManager.Stop();
-        NetworkBodySmoothing.Clear();
+        LatencyProbe.Reset();
         Log.Information($"Disconnecting {_serverAddress}");
     }
 
     public void Update() {
+        LatencyProbe.Update();
         _netManager.PollEvents();
-        _packageFragment.CleanupStates();
     }
 
     public void Send(Packet packet) {
@@ -72,11 +73,11 @@ public class NetworkClient : INetEventListener {
     }
 
     public void OnNetworkLatencyUpdate(NetPeer peer, int latency) {
-        // 可以用来计算延迟
+        // 可以用来计算网络延迟
     }
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-        if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
+        if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (packet.MinNeedState >= NetworkState.ProjectLoaded && GameManager.Project == null) {
                     return;
@@ -99,11 +100,13 @@ public class NetworkClient : INetEventListener {
             NetworkGuid = Guid.Parse(SettingsManager.OnlineAccessToken),
             NetworkState = NetworkState.NotConnected,
         };
+        IsConnected = true;
         Send(new ConnectPacket(MySession.NetworkGuid));
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         _serverPeer = null;
+        IsConnected = false;
         MySession?.NetworkState = NetworkState.NotConnected;
         GameManager.DisposeProject();
         ScreensManager.SwitchScreen("MainMenu");

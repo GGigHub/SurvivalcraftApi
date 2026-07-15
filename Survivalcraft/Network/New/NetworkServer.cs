@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -8,12 +9,10 @@ namespace Game.Network;
 
 public class NetworkServer : INetEventListener {
     private NetManager _netManager;
-    private PacketFragment _packageFragment;
-
-    public bool IsRunning => _netManager != null && _netManager.IsRunning;
+    public bool IsRunning { get; private set; } = false;
     public Dictionary<NetPeer, ClientSession> ClientSessions { get; set; } = [];
 
-    public bool Start() {
+    public void Start() {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
@@ -21,15 +20,17 @@ public class NetworkServer : INetEventListener {
             UpdateTime = 25,
             ReuseAddress = true
         };
-        _packageFragment = new PacketFragment();
 
-        _netManager.Start(SettingsManager.ServerPort);
+        if (!_netManager.Start(SettingsManager.ServerPort)) {
+            throw new InvalidOperationException($"Failed to start server on port {SettingsManager.ServerPort}.");
+        }
 
+        IsRunning = true;
         Log.Information("Server started");
-        return _netManager.IsRunning;
     }
 
     public void Stop() {
+        IsRunning = false;
         _netManager.Stop(true);
         GameManager.Project.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
         Log.Information("Server stopped");
@@ -37,7 +38,6 @@ public class NetworkServer : INetEventListener {
 
     public void Update() {
         _netManager.PollEvents();
-        _packageFragment.CleanupStates();
     }
 
     public void Board(Packet packet) {
@@ -60,6 +60,7 @@ public class NetworkServer : INetEventListener {
             packet.Serialize(new PacketSerializer(writer));
 
             NetPeer peer = ClientSessions.FirstOrDefault(kvp => kvp.Value == session).Key;
+            if (peer == null) return;
             foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
                 peer.Send(chunk, DeliveryMethod.ReliableOrdered);
             }
@@ -80,7 +81,7 @@ public class NetworkServer : INetEventListener {
     }
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-        if (_packageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
+        if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (!ClientSessions.TryGetValue(peer, out ClientSession session)) return;
                 if (packet.MinNeedState <= session.NetworkState) {

@@ -18,7 +18,7 @@ public abstract class Packet {
 
 public enum PacketType : byte {
     // Connect
-    ConnectInfo = 0, IndexInfo = 1, ProjectInfo = 2, StateInfo = 3,
+    ConnectInfo = 0, IndexInfo = 1, ProjectInfo = 2, StateInfo = 3, LatencyProbe = 108,
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
@@ -75,7 +75,6 @@ public enum PacketType : byte {
 
 public class PacketManager {
     public const byte VerifyByte = 0x88;
-    public const byte RelayVerifyByte = 0x89;
 
     private static readonly Func<Packet>[] m_factories = new Func<Packet>[256];
 
@@ -85,6 +84,7 @@ public class PacketManager {
         // Connect
         RegisterPacket<ConnectPacket>();
         RegisterPacket<IndexPacket>();
+        RegisterPacket<LatencyProbePacket>();
         RegisterPacket<ProjectPacket>();
         RegisterPacket<StatePacket>();
 
@@ -254,36 +254,17 @@ public class PacketManager {
 
         while (preader.BaseStream.Position < preader.BaseStream.Length) {
             byte check = preader.ReadByte();
-            if (check != VerifyByte && check != RelayVerifyByte) {
+            if (check != VerifyByte) {
                 Log.Information("Packet verify failed, last packet: " + (last == null ? "null" : last.GetType().Name));
                 break;
             }
             byte ID = preader.ReadByte();
             packetID = ID;
 
-            int senderIndex = from?.PlayerIndex ?? -1;
-            if (check == RelayVerifyByte) {
-                int count = preader.ReadInt32();
-                for (int i = 0; i < count; i++) {
-                    int index = preader.ReadInt32();
-                    // 假设中继情况中只有一个sender
-                    if (i == 0) {
-                        senderIndex = index;
-                    }
-                }
-            }
-
             if (m_factories[ID] != null) {
                 Packet packet = m_factories[ID]();
                 last = packet;
-
-                if (check == RelayVerifyByte && from == null) {
-                    packet.From = Enumerable.FirstOrDefault(
-                        NetworkManager.ServerSessions, c => c.PlayerIndex == senderIndex);
-                }
-                else {
-                    packet.From = from;
-                }
+                packet.From = from;
 
                 packet.Serialize(new PacketSerializer(preader));
                 packets.Add(packet);

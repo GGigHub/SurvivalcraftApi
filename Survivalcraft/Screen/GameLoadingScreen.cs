@@ -84,9 +84,7 @@ public class GameLoadingScreen : Screen {
                 GameManager.LoadProject(m_worldInfo, gamesWidget);
                 NetworkManager.StartServer();
                 if (m_startRelayHostWithCenter) {
-                    Task.Run(async () => {
-                        await NetworkManager.StartRelayHostAsync();
-                    });
+                    _ = NetworkManager.StartRelayHostAsync();
                 }
                 if (IsAdventureRestart && NetworkManager.IsClientRunning) {
                     // 需要注入主玩家的概念
