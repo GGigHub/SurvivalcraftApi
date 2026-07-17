@@ -83,7 +83,8 @@ public class SubsystemNetwork : Subsystem {
             }
             var entityData = new EntityData(Project.GameDatabase, dict.GetValue<ValuesDictionary>("Entity"));
             playerData.Load(dict.GetValue<ValuesDictionary>("Data"));
-            m_subsystemPlayers.AddPlayerData(playerData);
+            RemoveStalePlayerData(playerData.PlayerIndex);
+            m_subsystemPlayers.AddPlayerData(playerData, true);
             playerData.WaitEntityAdded();
             var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
             list.EntitiesData.Add(entityData);
@@ -102,6 +103,26 @@ public class SubsystemNetwork : Subsystem {
         playerData = null;
         entity = null;
         return false;
+    }
+
+    public void RemoveStalePlayerData(int playerIndex) {
+        if (playerIndex < 0) {
+            return;
+        }
+        List<PlayerData> stalePlayers = m_subsystemPlayers.m_playersData
+            .Where(playerData => playerData.PlayerIndex == playerIndex
+                && !playerData.IsMainPlayer
+                && !NetworkManager.ServerSessions.Any(session => session.PlayerIndex == playerData.PlayerIndex))
+            .ToList();
+        foreach (PlayerData playerData in stalePlayers) {
+            int stalePlayerIndex = playerData.PlayerIndex;
+            Log.Warning($"Removing stale network player data. PlayerIndex={stalePlayerIndex}, Name={playerData.Name}");
+            m_subsystemTerrain.TerrainUpdater.RemoveUpdateLocation(stalePlayerIndex);
+            if (m_subsystemPlayers.m_offlinePlayerEntities.ContainsKey(stalePlayerIndex)) {
+                m_subsystemPlayers.m_offlinePlayerEntities.Remove(stalePlayerIndex);
+            }
+            m_subsystemPlayers.RemovePlayerData(playerData, true);
+        }
     }
 
     public virtual void SavePlayerEntity(ComponentPlayer componentPlayer, Guid guid) {

@@ -83,6 +83,10 @@ public static class RootManager {
             if (!NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new InventorySyncPacket(inventory));
         };
+        ComponentClothing.OnSlotChanged += (inventory, slotIndex) => {
+            if (!NetworkManager.IsClientRunning && inventory is ComponentClothing clothing && clothing.Id > 0)
+                NetworkManager.Queue(new ClothingSyncPacket(clothing));
+        };
         ComponentLevel.OnAddExperience += (level, count, playSound) => {
             if (!NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new PlayerAddExperiencePacket(level.m_componentPlayer.PlayerData, count, playSound, level.m_componentPlayer.PlayerData.Level));

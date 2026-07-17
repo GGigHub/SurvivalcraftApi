@@ -1,8 +1,8 @@
 using Engine;
+using Game.Network;
 
 using GameEntitySystem;
 using System;
-using Game.Network;
 using TemplatesDatabase;
 
 namespace Game {
@@ -543,7 +543,7 @@ namespace Game {
                         && priorityPlace >= priorityInteract) {
                         interactEvent.interactEvent = InteractEvent.Place;
                     }
-                    m_lastActionTime = timeIntervalLastActionTime;
+                    m_lastActionTime = m_subsystemTime.GameTime;
                 }
             }
             float timeIntervalAim = m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ? 0.1f : 1.4f;

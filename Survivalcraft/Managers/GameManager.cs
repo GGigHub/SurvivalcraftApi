@@ -24,6 +24,10 @@ namespace Game {
 
         public static bool IsProjectAutoUpdateEnabled { get; set; } = true;
 
+        public static bool IsSavingProjectToStorage { get; private set; }
+
+        public static bool IsNetworkProject { get; private set; }
+
         public static event Action<Project> ProjectDisposed;
 
         public const string fName = "GameManager";
@@ -35,6 +39,7 @@ namespace Game {
 
         public static void LoadProject(byte[] messagePackData, ContainerWidget gamesWidget, bool useNetProj = true) {
             DisposeProject();
+            IsNetworkProject = true;
             var valuesDictionary = new ValuesDictionary();
             var valuesDictionary2 = new ValuesDictionary();
             valuesDictionary.SetValue("GameInfo", valuesDictionary2);
@@ -53,6 +58,7 @@ namespace Game {
 
         public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, bool useNetProj = true) {
             DisposeProject();
+            IsNetworkProject = false;
             WorldsManager.RepairWorldIfNeeded(worldInfo.DirectoryName);
             VersionsManager.UpgradeWorld(worldInfo.DirectoryName);
             BlocksManager.LoadBlocksStaticly = string.IsNullOrEmpty(worldInfo.APIVersion);
@@ -93,9 +99,17 @@ namespace Game {
         }
 
         public static void SaveProject(bool waitForCompletion, bool showErrorDialog) {
-            if (m_project != null && !NetworkManager.IsClientRunning) {
+            if (m_project != null && !IsNetworkProject && !NetworkManager.IsClientRunning) {
                 double realTime = Time.RealTime;
-                ProjectData projectData = m_project.Save();
+                ProjectData projectData;
+                IsSavingProjectToStorage = true;
+                try {
+                    projectData = m_project.Save();
+                    RemoveRemotePlayerEntitiesFromStorageSave(projectData);
+                }
+                finally {
+                    IsSavingProjectToStorage = false;
+                }
                 m_saveCompleted.WaitOne();
                 m_saveCompleted.Reset();
                 SubsystemGameInfo subsystemGameInfo = m_project.FindSubsystem<SubsystemGameInfo>(true);
@@ -158,6 +172,25 @@ namespace Game {
             }
         }
 
+        public static void RemoveRemotePlayerEntitiesFromStorageSave(ProjectData projectData) {
+            if (!NetworkManager.IsServerRunning || projectData?.EntityDataList?.EntitiesData == null || m_project == null) {
+                return;
+            }
+            SubsystemPlayers subsystemPlayers = m_project.FindSubsystem<SubsystemPlayers>();
+            HashSet<int> localPlayerIndexes = subsystemPlayers.PlayersData
+                .Where(playerData => playerData.IsMainPlayer)
+                .Select(playerData => playerData.PlayerIndex)
+                .ToHashSet();
+            projectData.EntityDataList.EntitiesData.RemoveAll(entityData => {
+                ValuesDictionary playerComponentValues = entityData.ValuesDictionary.GetValue<ValuesDictionary>("Player", null);
+                if (playerComponentValues == null) {
+                    return false;
+                }
+                int playerIndex = playerComponentValues.GetValue("PlayerIndex", -1);
+                return playerIndex >= 0 && !localPlayerIndexes.Contains(playerIndex);
+            });
+        }
+
         public static void UpdateProjectFixed(int ticks, float dt) {
             if (ticks < 0) {
                 throw new ArgumentOutOfRangeException(nameof(ticks));
@@ -197,6 +230,7 @@ namespace Game {
                 m_project = null;
                 m_subsystemUpdate = null;
                 m_worldInfo = null;
+                IsNetworkProject = false;
                 ModsManager.HookAction(
                     "OnProjectDisposed",
                     loader => {

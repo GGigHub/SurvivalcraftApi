@@ -20,13 +20,11 @@ public static class GameTools {
         Assert.True(newWorldScreenEntered, "Failed to enter the New World screen");
 
         if (!string.IsNullOrEmpty(seed)) {
-            for (int i = 0; i < 50; i++) {
-                var isReady = await server.PushCommandAsync("FUNC return (ScreensManager.CurrentScreen as NewWorldScreen)?.m_worldSettings != null;");
-                if (isReady is bool b && b) {
-                    break;
-                }
-                await Task.Delay(100);
-            }
+            await TestWaiter.UntilAsync(
+                async () => await server.PushCommandAsync("FUNC return (ScreensManager.CurrentScreen as NewWorldScreen)?.m_worldSettings != null;") is bool ready && ready,
+                ready => ready,
+                TestTimeouts.DefaultEventually,
+                "NewWorldScreen world settings were not ready.");
             await server.PushCommandAsync($"EXEC (ScreensManager.CurrentScreen as NewWorldScreen).m_seedTextBox.Text = \"{seed}\";");
         }
         await server.PushCommandAsync("CLICK_WIDGET Play");

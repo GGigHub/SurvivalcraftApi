@@ -362,27 +362,6 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         return gameLogTask.IsCompleted && await gameLogTask;
     }
 
-    private static async Task<int> ConnectRelayClientByGlobalCodeAsync(GameContext client, string centerUrl, string globalCode) {
-        await ConfigurePlayWithFriendsAsync(client, centerUrl, askBeforeEntering: false, enabled: false);
-        await client.PushCommandAsync(
-            "EXEC " +
-            $"var joinInfo = Game.Network.CenterServerClient.ResolveRelayJoinInfoAsync(\"{EscapeScriptString(globalCode)}\").GetAwaiter().GetResult();" +
-            "ScreensManager.SwitchScreen(\"GameLoading\", null, null, joinInfo, null);");
-
-        Assert.True(await client.WaitLogAsync("Entered screen \"Player\"", 60),
-            $"Relay client did not receive and load Project data by global code. Logs:{client.GetRecentLogText()}");
-        await ClickPlayerPlayButtonAsync(client);
-        Assert.True(await WaitForClientPlayingAsync(client, seconds: 60),
-            $"Relay client did not enter playing state by global code. Logs:{client.GetRecentLogText()}");
-
-        RelayClientPlayingState playingState = await WaitForClientPlayingStateAsync(client);
-        Assert.True(playingState.IsPlaying,
-            $"Relay client did not reach a concrete playing runtime state by global code. State={playingState.Raw}. Logs:{client.GetRecentLogText()}");
-        await AssertClientHostLatencyAsync(client, "by global code");
-
-        return playingState.PlayerIndex;
-    }
-
     private GameContext StartExtraContext(string roleName) {
         GameContext context = fixture.CreateContext($"{roleName}-{Guid.NewGuid():N}");
         context.Start();
@@ -586,7 +565,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
             "return string.Format(System.Globalization.CultureInfo.InvariantCulture, \"screen={0};room={1};display={2};labelVisible={3};labelText={4}\"," +
             "ScreensManager.CurrentScreen?.GetType().Name ?? \"null\"," +
             "relay?.RoomCode ?? string.Empty," +
-            "relay?.DisplayCode ?? string.Empty," +
+            "relay?.GlobalCode ?? string.Empty," +
             "label?.IsVisible ?? false," +
             "(label?.Text ?? string.Empty).Replace(\";\", \",\"));")
             ?? string.Empty;

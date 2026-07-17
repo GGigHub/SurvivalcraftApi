@@ -11,10 +11,10 @@ public static class HealthSyncTools {
         await client.PushCommandAsync(
             "EXEC " + GameTools.ReadScript("GameStartup/SwitchToGameLoadingCode.cs").Replace("{0}", serverPort.ToString()));
 
-        bool connected = await client.WaitLogAsync($"Connected: 127.0.0.1:{serverPort}", 60);
+        bool connected = await client.WaitLogAsync($"Connected: 127.0.0.1:{serverPort}");
         Assert.True(connected, "Client failed to connect to the server.");
 
-        bool playerScreen = await client.WaitLogAsync("Entered screen \"Player\"", 60);
+        bool playerScreen = await client.WaitLogAsync("Entered screen \"Player\"");
         Assert.True(playerScreen, "Failed to load the Player screen.");
 
         await client.PushCommandAsync("CLICK_WIDGET PlayButton");
@@ -30,16 +30,15 @@ public static class HealthSyncTools {
     }
 
     public static async Task<bool> WaitForEntityExistsAsync(GameContext context, int entityId) {
-        for (int i = 0; i < 50; i++) {
-            object? result = await context.PushCommandAsync(
-                $"FUNC return Game.GameManager.Project.FindEntity({entityId}) != null;");
-            if (result is bool exists && exists) {
-                return true;
-            }
-            await Task.Delay(100);
-        }
-
-        return false;
+        WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                object? value = await context.PushCommandAsync(
+                    $"FUNC return Game.GameManager.Project.FindEntity({entityId}) != null;");
+                return value is bool exists && exists;
+            },
+            exists => exists,
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
     public static async Task<double> InjureEntityAsync(GameContext context, int entityId, float amount, string cause) {
@@ -72,16 +71,11 @@ public static class HealthSyncTools {
     }
 
     public static async Task<double> WaitForHealthToExceedAsync(GameContext context, int entityId, double expectedMinHealth) {
-        for (int i = 0; i < 100; i++) {
-            double health = await GetHealthAsync(context, entityId);
-            if (health >= expectedMinHealth) {
-                return health;
-            }
-            await Task.Delay(100);
-        }
-
-        double actualHealth = await GetHealthAsync(context, entityId);
-        throw new TimeoutException($"Health did not exceed {expectedMinHealth} for entity {entityId}. Actual={actualHealth}.");
+        return await TestWaiter.UntilAsync(
+            () => GetHealthAsync(context, entityId),
+            health => health >= expectedMinHealth,
+            TestTimeouts.DefaultEventually,
+            $"Health did not exceed {expectedMinHealth} for entity {entityId}.");
     }
 
     public static async Task EnableEntityNaturalHealingAsync(GameContext context, int entityId) {
@@ -90,29 +84,19 @@ public static class HealthSyncTools {
     }
 
     public static async Task<double> WaitForHealthAsync(GameContext context, int entityId, double expectedHealth) {
-        for (int i = 0; i < 50; i++) {
-            double health = await GetHealthAsync(context, entityId);
-            if (Math.Abs(health - expectedHealth) <= HealthEpsilon) {
-                return health;
-            }
-            await Task.Delay(100);
-        }
-
-        double actualHealth = await GetHealthAsync(context, entityId);
-        throw new TimeoutException($"Health did not reach {expectedHealth} for entity {entityId}. Actual={actualHealth}.");
+        return await TestWaiter.UntilAsync(
+            () => GetHealthAsync(context, entityId),
+            health => Math.Abs(health - expectedHealth) <= HealthEpsilon,
+            TestTimeouts.DefaultEventually,
+            $"Health did not reach {expectedHealth} for entity {entityId}.");
     }
 
     public static async Task<double> WaitForHealthAtMostAsync(GameContext context, int entityId, double expectedMaxHealth) {
-        for (int i = 0; i < 50; i++) {
-            double health = await GetHealthAsync(context, entityId);
-            if (health <= expectedMaxHealth + HealthEpsilon) {
-                return health;
-            }
-            await Task.Delay(100);
-        }
-
-        double actualHealth = await GetHealthAsync(context, entityId);
-        throw new TimeoutException($"Health did not fall to {expectedMaxHealth} or lower for entity {entityId}. Actual={actualHealth}.");
+        return await TestWaiter.UntilAsync(
+            () => GetHealthAsync(context, entityId),
+            health => health <= expectedMaxHealth + HealthEpsilon,
+            TestTimeouts.DefaultEventually,
+            $"Health did not fall to {expectedMaxHealth} or lower for entity {entityId}.");
     }
 
     public static async Task<double> GetHealthAsync(GameContext context, int entityId) {
@@ -124,16 +108,11 @@ public static class HealthSyncTools {
     }
 
     public static async Task<string> WaitForCauseOfDeathAsync(GameContext context, int entityId, string expectedCause) {
-        for (int i = 0; i < 50; i++) {
-            string cause = await GetCauseOfDeathAsync(context, entityId);
-            if (cause == expectedCause) {
-                return cause;
-            }
-            await Task.Delay(100);
-        }
-
-        string actualCause = await GetCauseOfDeathAsync(context, entityId);
-        throw new TimeoutException($"CauseOfDeath did not reach \"{expectedCause}\" for entity {entityId}. Actual=\"{actualCause}\".");
+        return await TestWaiter.UntilAsync(
+            () => GetCauseOfDeathAsync(context, entityId),
+            cause => cause == expectedCause,
+            TestTimeouts.DefaultEventually,
+            $"CauseOfDeath did not reach \"{expectedCause}\" for entity {entityId}.");
     }
 
     public static async Task<string> GetCauseOfDeathAsync(GameContext context, int entityId) {
@@ -145,16 +124,14 @@ public static class HealthSyncTools {
     }
 
     public static async Task<int> WaitForClientPlayerIndexAsync(GameContext context) {
-        for (int i = 0; i < 50; i++) {
-            object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
-            int playerIndex = result is int id ? id : Convert.ToInt32(result);
-            if (playerIndex >= 0) {
-                return playerIndex;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException("Client player index was not assigned.");
+        return await TestWaiter.UntilAsync(
+            async () => {
+                object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
+                return result is int id ? id : Convert.ToInt32(result);
+            },
+            playerIndex => playerIndex >= 0,
+            TestTimeouts.DefaultEventually,
+            "Client player index was not assigned.");
     }
 
     public static async Task<int> EnsureServerPlayerEntityAsync(GameContext context, int playerIndex) {
@@ -172,16 +149,11 @@ public static class HealthSyncTools {
     }
 
     public static async Task<double> WaitForPlayerHealthAsync(GameContext context, int playerIndex, double expectedHealth) {
-        for (int i = 0; i < 50; i++) {
-            double health = await GetPlayerHealthAsync(context, playerIndex);
-            if (Math.Abs(health - expectedHealth) <= HealthEpsilon) {
-                return health;
-            }
-            await Task.Delay(100);
-        }
-
-        double actualHealth = await GetPlayerHealthAsync(context, playerIndex);
-        throw new TimeoutException($"Player {playerIndex} health did not reach {expectedHealth}. Actual={actualHealth}.");
+        return await TestWaiter.UntilAsync(
+            () => GetPlayerHealthAsync(context, playerIndex),
+            health => Math.Abs(health - expectedHealth) <= HealthEpsilon,
+            TestTimeouts.DefaultEventually,
+            $"Player {playerIndex} health did not reach {expectedHealth}.");
     }
 
     public static async Task<double> GetPlayerHealthAsync(GameContext context, int playerIndex) {
@@ -227,31 +199,32 @@ public static class HealthSyncTools {
     }
 
     public static async Task WaitForPlayerVitalStatsAsync(GameContext context, int playerIndex, float food, float stamina, float sleep, float wetness, float temperature) {
-        for (int i = 0; i < 100; i++) {
-            float[] stats = await GetPlayerVitalStatsAsync(context, playerIndex);
-            if (stats.Length == 5) {
+        await TestWaiter.UntilAsync(
+            () => GetPlayerVitalStatsAsync(context, playerIndex),
+            stats => {
+                if (stats.Length == 5) {
                 // Only strictly verify food and sleep because they change very slowly.
                 // Stamina, wetness, and temperature simulate too quickly towards their target values to assert exact limits after a network delay.
-                if (Math.Abs(stats[0] - food) <= 0.1f &&
-                    Math.Abs(stats[2] - sleep) <= 0.1f) {
-                    return;
+                    if (Math.Abs(stats[0] - food) <= 0.1f &&
+                        Math.Abs(stats[2] - sleep) <= 0.1f) {
+                        return true;
+                    }
                 }
-            }
-            await Task.Delay(100);
-        }
-
-        float[] actualStats = await GetPlayerVitalStatsAsync(context, playerIndex);
-        throw new TimeoutException($"Player {playerIndex} vital stats did not reach {food:R}, {stamina:R}, {sleep:R}, {wetness:R}, {temperature:R}. Actual={FormatVitalStats(actualStats)}.");
+                return false;
+            },
+            TestTimeouts.DefaultEventually,
+            $"Player {playerIndex} vital stats did not reach {food:R}, {stamina:R}, {sleep:R}, {wetness:R}, {temperature:R}.");
     }
 
     public static async Task ClickWidgetAndWaitAsync(GameContext context, string widgetName, Func<GameContext, Task<bool>> waitUntil) {
         for (int i = 0; i < 20; i++) {
             await context.PushCommandAsync($"CLICK_WIDGET {widgetName}");
-            for (int j = 0; j < 10; j++) {
-                if (await waitUntil(context)) {
-                    return;
-                }
-                await Task.Delay(100);
+            WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+                () => waitUntil(context),
+                matched => matched,
+                TestTimeouts.DefaultEventually);
+            if (result.Matched) {
+                return;
             }
         }
 

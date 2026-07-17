@@ -35,7 +35,7 @@ public enum PacketType : byte {
     // Inventory
     Furnace = 12,
     Dispenser = 13,
-    ActiveSlotChange = 36, InventorySync = 37, MoveItem = 38, DragDropItem = 39, SetSlotItem = 40,
+    ActiveSlotChange = 36, InventorySync = 37, MoveItem = 38, DragDropItem = 39, SetSlotItem = 40, ClothingSync = 110,
     ClothingRequestSkin = 64, ClothingReplySkin = 65, ClothingWhoHas = 66, ClothingWhoHasReply = 67,
     PickableCreate = 93, PickableUpdate = 94, PickableDelete = 95, PickableRequestSync = 96,
     PickableSetFlyToPosition = 97, PickableCreateList = 98, PickableDeleteList = 99, PickableSyncList = 100,
@@ -117,6 +117,7 @@ public class PacketManager {
         RegisterPacket<ComponentFurnacePacket>();
         RegisterPacket<DispenserPacket>();
         RegisterPacket<DragDropItemPacket>();
+        RegisterPacket<ClothingSyncPacket>();
         RegisterPacket<InventorySyncPacket>();
         RegisterPacket<MoveItemPacket>();
         RegisterPacket<OpenInventoryByIDPacket>();

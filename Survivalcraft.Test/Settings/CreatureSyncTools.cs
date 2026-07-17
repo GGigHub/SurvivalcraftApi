@@ -20,16 +20,12 @@ public static class CreatureSyncTools {
     }
 
     public static async Task<bool> WaitForEntityExistsAsync(GameContext context, int entityId) {
-        for (int i = 0; i < 50; i++) {
-            bool exists = (bool?)await context.PushCommandAsync(
-                string.Create(CultureInfo.InvariantCulture, $"FUNC return Game.GameManager.Project.FindEntity({entityId}) != null;")) ?? false;
-            if (exists) {
-                return true;
-            }
-            await Task.Delay(100);
-        }
-
-        return false;
+        WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+            async () => (bool?)await context.PushCommandAsync(
+                string.Create(CultureInfo.InvariantCulture, $"FUNC return Game.GameManager.Project.FindEntity({entityId}) != null;")) ?? false,
+            exists => exists,
+            TestTimeouts.DefaultEventually);
+        return result.Matched;
     }
 
     public static async Task WaitForEntitiesAsync(GameContext context, IEnumerable<int> entityIds) {
@@ -90,16 +86,11 @@ public static class CreatureSyncTools {
     }
 
     public static async Task<CreatureSoundState> WaitForCreatureSoundPlayedAsync(GameContext context, int entityId, CreatureSoundType soundType) {
-        CreatureSoundState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetCreatureSoundStateAsync(context, entityId, soundType);
-            if (state.Played) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        return state;
+        WaitResult<CreatureSoundState> result = await TestWaiter.TryUntilAsync(
+            () => GetCreatureSoundStateAsync(context, entityId, soundType),
+            state => state.Played,
+            TestTimeouts.DefaultEventually);
+        return result.Last;
     }
 
     public static async Task<BehaviorSyncState> ForceBehaviorSyncStateAsync(GameContext context, IReadOnlyDictionary<string, int> entityIds) {
@@ -114,15 +105,14 @@ public static class CreatureSyncTools {
 
     public static async Task<BehaviorSyncState> WaitForBehaviorSyncStateAsync(GameContext context, IReadOnlyDictionary<string, int> entityIds) {
         BehaviorSyncState merged = default;
-        for (int i = 0; i < 50; i++) {
-            merged = MergeBehaviorSyncStates(merged, await GetBehaviorSyncStateAsync(context, entityIds));
-            if (HasExpectedBehaviorSyncState(merged)) {
+        WaitResult<BehaviorSyncState> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                merged = MergeBehaviorSyncStates(merged, await GetBehaviorSyncStateAsync(context, entityIds));
                 return merged;
-            }
-            await Task.Delay(100);
-        }
-
-        return merged;
+            },
+            HasExpectedBehaviorSyncState,
+            TestTimeouts.DefaultEventually);
+        return result.Last;
     }
 
     public static Dictionary<string, int> ParseBehaviorEntityIds(string value) {
@@ -323,32 +313,22 @@ public static class CreatureSyncTools {
             $"MOVE_INPUT {move.X} {move.Y} {move.Z} {frameCount}"));
 
     public static async Task<BodySyncState> WaitForPlayerBodyAsync(GameContext context, int playerIndex) {
-        BodySyncState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetPlayerBodyStateAsync(context, playerIndex);
-            if (state.Exists) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Player body was not available for player {playerIndex}. Actual={state}.");
+        return await TestWaiter.UntilAsync(
+            () => GetPlayerBodyStateAsync(context, playerIndex),
+            state => state.Exists,
+            TestTimeouts.DefaultEventually,
+            $"Player body was not available for player {playerIndex}.");
     }
 
     public static async Task<BodySyncState> WaitForBodyVelocityXAsync(
         GameContext context,
         int entityId,
         float minVelocityX) {
-        BodySyncState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetBodyStateAsync(context, entityId);
-            if (state.Exists && state.Velocity.X >= minVelocityX) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Body {entityId} did not receive collision velocity X >= {minVelocityX:R}. Actual={state}.");
+        return await TestWaiter.UntilAsync(
+            () => GetBodyStateAsync(context, entityId),
+            state => state.Exists && state.Velocity.X >= minVelocityX,
+            TestTimeouts.DefaultEventually,
+            $"Body {entityId} did not receive collision velocity X >= {minVelocityX:R}.");
     }
 
     public static async Task<BodySyncState> WaitForBodyHorizontalSpeedAsync(
@@ -368,29 +348,19 @@ public static class CreatureSyncTools {
     }
 
     public static async Task<BodySyncState> WaitForBodyStateNearAsync(GameContext context, int entityId, BodySyncState expected) {
-        BodySyncState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetBodyStateAsync(context, entityId);
-            if (BodyStatesNear(expected, state)) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Body {entityId} did not synchronize near expected state. Expected={expected}, Actual={state}.");
+        return await TestWaiter.UntilAsync(
+            () => GetBodyStateAsync(context, entityId),
+            state => BodyStatesNear(expected, state),
+            TestTimeouts.DefaultEventually,
+            $"Body {entityId} did not synchronize near expected state. Expected={expected}");
     }
 
     public static async Task<BodySyncState> WaitForPlayerNearAsync(GameContext context, int playerIndex, BodySyncState expected) {
-        BodySyncState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetPlayerBodyStateAsync(context, playerIndex);
-            if (PlayerBodyStatesNear(expected, state)) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Player body did not synchronize near expected state. Expected={expected}, Actual={state}.");
+        return await TestWaiter.UntilAsync(
+            () => GetPlayerBodyStateAsync(context, playerIndex),
+            state => PlayerBodyStatesNear(expected, state),
+            TestTimeouts.DefaultEventually,
+            $"Player body did not synchronize near expected state. Expected={expected}");
     }
 
     public static async Task<BodySyncState> WaitForPlayerPositionNearAsync(
@@ -398,18 +368,13 @@ public static class CreatureSyncTools {
         int playerIndex,
         BodySyncState expected,
         float maxDistanceSquared) {
-        BodySyncState state = default;
-        for (int i = 0; i < 50; i++) {
-            state = await GetPlayerBodyStateAsync(context, playerIndex);
-            if (expected.Exists
+        return await TestWaiter.UntilAsync(
+            () => GetPlayerBodyStateAsync(context, playerIndex),
+            state => expected.Exists
                 && state.Exists
-                && Vector3Dto.DistanceSquared(expected.Position, state.Position) <= maxDistanceSquared) {
-                return state;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Player body did not synchronize near expected position. Expected={expected}, Actual={state}.");
+                && Vector3Dto.DistanceSquared(expected.Position, state.Position) <= maxDistanceSquared,
+            TestTimeouts.DefaultEventually,
+            $"Player body did not synchronize near expected position. Expected={expected}");
     }
 
     public static async Task<BodySyncState> WaitForPlayerHorizontalPositionNearAsync(

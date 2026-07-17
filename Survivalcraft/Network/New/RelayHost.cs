@@ -25,7 +25,6 @@ public sealed class RelayHost : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
-            UpdateTime = 25
         };
 
         if (!_netManager.Start()) {
@@ -45,7 +44,7 @@ public sealed class RelayHost : INetEventListener {
         _netManager.Stop();
         IsConnected = false;
         IsDisconnected = true;
-        GameManager.Project.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
+        GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
     }
 
     public void Board(Packet packet) {
@@ -102,7 +101,6 @@ public sealed class RelayHost : INetEventListener {
         }
         else if (type == RelayMessageType.DataToHost) {
             int id = reader.GetInt();
-            Log.Information($"Relay data received from connection={id}");
             // PeerJoined and the peer's first payload travel over different UDP
             // connections and can therefore be observed in either order.
             if (!_sessions.TryGetValue(id, out ClientSession session)) {

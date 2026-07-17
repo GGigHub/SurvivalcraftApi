@@ -20,7 +20,6 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
-            UpdateTime = 25
         };
 
         if (!_netManager.Start()) {
@@ -97,6 +96,11 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         _relayPeer = null;
         IsConnected = false;
         MySession?.NetworkState = NetworkState.NotConnected;
+
+        GameManager.DisposeProject();
+        ScreensManager.SwitchScreen("MainMenu");
+        DialogsManager.Alert("Disconnected", disconnectInfo.Reason.ToString());
+        Log.Information($"Relay disconnected: {peer.Address}, Reason: {disconnectInfo.Reason}");
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {

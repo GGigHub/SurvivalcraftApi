@@ -1,5 +1,6 @@
 using Engine;
 
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -94,13 +95,25 @@ namespace Game {
         }
 
         public void AddPlayerData(PlayerData playerData) {
+            AddPlayerData(playerData, false);
+        }
+
+        public void AddPlayerData(PlayerData playerData, bool preservePlayerIndex) {
             if (m_playersData.Contains(playerData)) {
                 throw new InvalidOperationException("Player already added.");
             }
 
             m_playersData.Add(playerData);
 
-            FindUnusedIndex(playerData);
+            if (preservePlayerIndex
+                && !NetworkManager.IsClientRunning
+                && playerData.PlayerIndex >= 0
+                && !usedIndies.ContainsKey(playerData.PlayerIndex)) {
+                usedIndies[playerData.PlayerIndex] = playerData;
+            }
+            else {
+                FindUnusedIndex(playerData);
+            }
 
             PlayerAdded?.Invoke(playerData);
 
@@ -176,8 +189,25 @@ namespace Game {
 
         public override void Save(ValuesDictionary valuesDictionary) {
             var OnlinePlayersListVD = new ValuesDictionary();
+            bool isStorageServerSave = GameManager.IsSavingProjectToStorage && NetworkManager.IsServerRunning;
+            SubsystemNetwork subsystemNetwork = isStorageServerSave ? Project.FindSubsystem<SubsystemNetwork>() : null;
+            Dictionary<int, ClientSession> sessionsByPlayerIndex = isStorageServerSave
+                ? NetworkManager.ServerSessions
+                    .Where(s => s != null && s.PlayerIndex >= 0)
+                    .GroupBy(s => s.PlayerIndex)
+                    .ToDictionary(g => g.Key, g => g.First())
+                : null;
             int num = 0;
             foreach (PlayerData playersDatum in m_playersData) {
+                if (isStorageServerSave && !playersDatum.IsMainPlayer) {
+                    if (playersDatum.ComponentPlayer != null
+                        && sessionsByPlayerIndex != null
+                        && sessionsByPlayerIndex.TryGetValue(playersDatum.PlayerIndex, out ClientSession session)
+                        && session.NetworkGuid != Guid.Empty) {
+                        subsystemNetwork?.SavePlayerEntity(playersDatum.ComponentPlayer, session.NetworkGuid);
+                    }
+                    continue;
+                }
                 var valuesDictionary3 = new ValuesDictionary();
                 playersDatum.Save(valuesDictionary3);
                 OnlinePlayersListVD.SetValue(num++.ToString(), valuesDictionary3);

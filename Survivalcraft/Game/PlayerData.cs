@@ -34,10 +34,11 @@ namespace Game {
 
         public SpawnMode m_spawnMode;
 
-        public double? m_playerDeathTime;
+        public long? m_playerDeathTick;
 
         public long m_loadingWaitStartTick;
         public long m_loadingLastPollTick;
+        public long m_lastPlayerEntityRequestTick;
 
         public double TerrainMaxWaitTime { get; set; } = 15;
 
@@ -236,6 +237,7 @@ namespace Game {
             // 客户端等待服务端同步玩家实体，收到后再进入 Playing。
             m_stateMachine.AddState("WaitForPlayerEntity", delegate {
                 BeginLoadingWait();
+                m_lastPlayerEntityRequestTick = m_subsystemUpdate.UpdateTick - GetTicksForSeconds(1.0);
             }, delegate {
                 UpdateSpawnDialog("Waiting for player entity from server", null, 0f, false);
                 if (ShouldPollPeriodicState()) {
@@ -254,11 +256,11 @@ namespace Game {
                 if (ComponentPlayer == null) {
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
-                else if (m_playerDeathTime.HasValue) {
+                else if (m_playerDeathTick.HasValue) {
                     m_stateMachine.TransitionTo("PlayerDead");
                 }
                 else if (ComponentPlayer.ComponentHealth.Health <= 0f) {
-                    m_playerDeathTime = Time.RealTime;
+                    m_playerDeathTick = m_subsystemUpdate.UpdateTick;
                 }
                 OnPlayerPlayingUpdate?.Invoke(this);
             }, null);
@@ -284,7 +286,7 @@ namespace Game {
                         m_stateMachine.TransitionTo("PrepareSpawn");
                     }
                 }
-                else if ((IsMainPlayer && Time.RealTime - m_playerDeathTime.Value > 1.5 && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any) || readyToRestart) {
+                else if ((IsMainPlayer && m_playerDeathTick.HasValue && m_subsystemUpdate.UpdateTick - m_playerDeathTick.Value >= GetTicksForSeconds(1.5) && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any) || readyToRestart) {
                     if (NetworkManager.IsClientRunning && IsMainPlayer) {
                         OnPlayerRestart?.Invoke(this);
                     }
@@ -361,8 +363,12 @@ namespace Game {
             if (seconds <= 0.0) {
                 return true;
             }
-            long requiredTicks = (long)Math.Ceiling(seconds / Math.Max(m_subsystemUpdate.DefaultFixedTimeStep, 0.001f));
+            long requiredTicks = GetTicksForSeconds(seconds);
             return m_subsystemUpdate.UpdateTick - m_loadingWaitStartTick >= requiredTicks;
+        }
+
+        public long GetTicksForSeconds(double seconds) {
+            return (long)Math.Ceiling(seconds / Math.Max(m_subsystemUpdate.DefaultFixedTimeStep, 0.001f));
         }
 
         public virtual void Load(ValuesDictionary valuesDictionary) {
@@ -415,7 +421,7 @@ namespace Game {
         public virtual void OnEntityRemoved(Entity entity) {
             if (ComponentPlayer != null && entity == ComponentPlayer.Entity) {
                 ComponentPlayer = null;
-                m_playerDeathTime = null;
+                m_playerDeathTick = null;
             }
         }
 
@@ -556,7 +562,7 @@ namespace Game {
             if (LastDeadPlayer != null) {
                 m_project.RemoveEntity(LastDeadPlayer, false);
             }
-            m_playerDeathTime = null;
+            m_playerDeathTick = null;
             ComponentMount componentMount = null;
             if (spawnMode != SpawnMode.Respawn
                 && CheckIsPointInWater(Terrain.ToCell(position))) {

@@ -29,7 +29,6 @@ public class NetworkClient : INetEventListener {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
             UnconnectedMessagesEnabled = true,
-            UpdateTime = 25,
             ReuseAddress = true
         };
         if (!_netManager.Start()) {
@@ -108,6 +107,7 @@ public class NetworkClient : INetEventListener {
         _serverPeer = null;
         IsConnected = false;
         MySession?.NetworkState = NetworkState.NotConnected;
+
         GameManager.DisposeProject();
         ScreensManager.SwitchScreen("MainMenu");
         DialogsManager.Alert("Disconnected", disconnectInfo.Reason.ToString());

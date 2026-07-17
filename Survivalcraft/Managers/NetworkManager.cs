@@ -121,6 +121,10 @@ public static class NetworkManager {
         }
         return false;
     }
+    public static void StartRelayHost(IPEndPoint relayEndPoint) {
+        RelayHost = new();
+        RelayHost.Start(relayEndPoint);
+    }
     public static void ConnectRelay(IPEndPoint relayEndPoint, string roomCode) {
         RelayClient = new(roomCode);
         RelayClient.Connect(relayEndPoint);

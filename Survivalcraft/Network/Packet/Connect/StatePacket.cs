@@ -78,7 +78,12 @@ public class StatePacket : ClientPacketBase {
                     }
                     foreach (Entity entity in GameManager.Project.Entities) {
                         foreach (IInventory inventory in entity.FindComponents<IInventory>()) {
-                            NetworkManager.Queue(new InventorySyncPacket(inventory) { To = client });
+                            if (inventory is ComponentClothing clothing) {
+                                NetworkManager.Queue(new ClothingSyncPacket(clothing) { To = client });
+                            }
+                            else {
+                                NetworkManager.Queue(new InventorySyncPacket(inventory) { To = client });
+                            }
                         }
                     }
                     break;

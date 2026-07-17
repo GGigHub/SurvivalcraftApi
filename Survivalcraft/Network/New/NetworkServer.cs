@@ -17,7 +17,6 @@ public class NetworkServer : INetEventListener {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
             UnconnectedMessagesEnabled = true,
-            UpdateTime = 25,
             ReuseAddress = true
         };
 
@@ -32,7 +31,7 @@ public class NetworkServer : INetEventListener {
     public void Stop() {
         IsRunning = false;
         _netManager.Stop(true);
-        GameManager.Project.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
+        GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
         Log.Information("Server stopped");
     }
 

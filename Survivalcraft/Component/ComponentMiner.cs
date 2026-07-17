@@ -1,5 +1,6 @@
 using System.Globalization;
 using Engine;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -204,14 +205,16 @@ namespace Game {
                         Poke(true);
                     }
                     BlockPlacementData digValue = cellBlock.GetDigValue(m_subsystemTerrain, this, cellValue, activeBlockValue, raycastResult);
+                    bool isClientPredictedDig = NetworkManager.IsClientRunning && ComponentPlayer?.PlayerData?.IsMainPlayer == true;
                     m_subsystemTerrain.DestroyCell(
                         activeBlock.GetToolLevel(activeBlockValue),
                         digValue.CellFace.X,
                         digValue.CellFace.Y,
                         digValue.CellFace.Z,
                         digValue.Value,
+                        isClientPredictedDig,
                         false,
-                        false
+                        forceLocalChange: isClientPredictedDig
                     );
                     int durabilityReduction = 1;
                     int playerDataAdd = 1;
@@ -361,14 +364,16 @@ namespace Game {
                             for (int i = 0; i < blockBehaviors.Length; i++) {
                                 blockBehaviors[i].OnItemPlaced(num2, num3, num4, ref placementData, value);
                             }
+                            bool isClientPredictedPlace = NetworkManager.IsClientRunning && ComponentPlayer?.PlayerData?.IsMainPlayer == true;
                             m_subsystemTerrain.DestroyCell(
                                 0,
                                 num2,
                                 num3,
                                 num4,
                                 placementData.Value,
+                                isClientPredictedPlace,
                                 false,
-                                false
+                                forceLocalChange: isClientPredictedPlace
                             );
                             m_subsystemAudio.PlaySound(
                                 "Audio/BlockPlaced",

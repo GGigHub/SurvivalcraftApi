@@ -238,7 +238,7 @@ public sealed class LogicBlockSyncTest : IClassFixture<GameFixture> {
     private async Task EnsureSpectatorConnectedAsync() {
         if (!spectator.IsStarted) {
             spectator.Start();
-            bool mainMenu = await spectator.WaitLogAsync("Entered screen \"MainMenu\"", 60);
+            bool mainMenu = await spectator.WaitLogAsync("Entered screen \"MainMenu\"");
             Assert.True(mainMenu, $"Spectator did not enter MainMenu. Recent logs:{Environment.NewLine}{spectator.GetRecentLogText()}");
         }
 

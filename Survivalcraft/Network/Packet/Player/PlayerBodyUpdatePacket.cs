@@ -116,7 +116,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
                 player.ComponentLocomotion.LookAngles = LookAngles;
             }
         }
-        bool smoothBody = !isServer && !playerData.IsMainPlayer;
+        bool smoothBody = !playerData.IsMainPlayer;
         NetworkBodySmoothing.SetTarget(
             body,
             changeFlag.HasFlag(ChangeFlag.PositionChange),

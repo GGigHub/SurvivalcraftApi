@@ -7,10 +7,6 @@ using Game.Network;
 
 namespace Game {
     public class ConnectServerDialog : Dialog {
-        private LabelWidget m_titleWidget;
-
-        private LabelWidget m_ipLabelWidget;
-
         private TextBoxWidget m_ipTextBoxWidget;
 
         private ButtonWidget m_connectButtonWidget;
@@ -26,8 +22,6 @@ namespace Game {
         public ConnectServerDialog() {
             XElement node = ContentManager.Get<XElement>("Dialogs/ConnectServerDialog");
             LoadContents(this, node);
-            m_titleWidget = Children.Find<LabelWidget>("ConnectServerDialog.Title");
-            m_ipLabelWidget = Children.Find<LabelWidget>("ConnectServerDialog.IpLabel");
             m_ipTextBoxWidget = Children.Find<TextBoxWidget>("ConnectServerDialog.IpTextBox");
             m_connectButtonWidget = Children.Find<ButtonWidget>("ConnectServerDialog.ConnectButton");
             m_cancelButtonWidget = Children.Find<ButtonWidget>("ConnectServerDialog.CancelButton");
@@ -70,7 +64,7 @@ namespace Game {
             }
 
             // 中转格式：relay@IP:端口#房间码
-            if (ipAddress.StartsWith("relay@", System.StringComparison.OrdinalIgnoreCase)) {
+            if (ipAddress.StartsWith("relay@", StringComparison.OrdinalIgnoreCase)) {
                 string[] relayParts = ipAddress[6..].Split('#', 2);
                 if (relayParts.Length != 2 || string.IsNullOrWhiteSpace(relayParts[1]) || !TryParseEndPoint(relayParts[0], 28888, out IPEndPoint relayEndPoint)) {
                     DialogsManager.ShowDialog(null, new MessageDialog("错误", "中转地址格式应为 relay@IP:端口#房间码", LanguageControl.Ok, null, null));
@@ -136,7 +130,7 @@ namespace Game {
                         Dismiss();
                     });
                 }
-                catch (System.Exception ex) {
+                catch (Exception ex) {
                     Dispatcher.Dispatch(delegate {
                         m_isResolvingGlobalCode = false;
                         m_connectButtonWidget.IsEnabled = true;

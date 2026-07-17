@@ -442,7 +442,8 @@ namespace Game {
             int newValue,
             bool noDrop,
             bool noParticleSystem,
-            MovingBlock movingBlock = null) {
+            MovingBlock movingBlock = null,
+            bool forceLocalChange = false) {
             int cellValue = Terrain.GetCellValue(x, y, z);
             int num = Terrain.ExtractContents(cellValue);
             Block block = BlocksManager.Blocks[num];
@@ -475,7 +476,7 @@ namespace Game {
                     );
                 }
             }
-            ChangeCell(x, y, z, newValue, true, movingBlock);
+            ChangeCell(x, y, z, newValue, true, movingBlock, forceLocalChange);
         }
 
         public virtual void Draw(Camera camera, int drawOrder) {

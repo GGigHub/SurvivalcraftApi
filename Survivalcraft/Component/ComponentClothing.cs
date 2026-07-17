@@ -150,9 +150,11 @@ namespace Game {
 
         public virtual void SetClothes(ClothingSlot slot, IEnumerable<int> clothes) {
             IEnumerable<int> enumerable = clothes as List<int> ?? clothes.ToList();
+            bool changed = false;
             if (!m_clothes[slot].SequenceEqual(enumerable)) {
                 m_clothes[slot].Clear();
                 m_clothes[slot].AddRange(enumerable);
+                changed = true;
                 m_clothedTexturesValid = false;
                 float densityModiferAppliedBefore = m_densityModifierApplied;
                 m_densityModifierApplied = 0f;
@@ -170,6 +172,9 @@ namespace Game {
                 float num2 = m_densityModifierApplied - densityModiferAppliedBefore;
                 m_componentBody.Density += num2;
                 CalculateInsulationFromSlots();
+            }
+            if (changed) {
+                OnSlotChange((int)slot);
             }
             ModsManager.HookAction(
                 "SetClothes",
@@ -593,7 +598,6 @@ namespace Game {
 
         public virtual int RemoveSlotItems(int slotIndex, int count) {
             count = RemoveNetSlotItems(slotIndex, count);
-            OnSlotChange(slotIndex);
             return count;
         }
 

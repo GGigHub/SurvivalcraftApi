@@ -11,28 +11,22 @@ public static class InventoryTestTools {
     public const int CobblestoneContents = 5;
 
     public static async Task<int> WaitForClientPlayerIndexAsync(GameContext context) {
-        for (int i = 0; i < 50; i++) {
-            object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
-            int playerIndex = result is int id ? id : Convert.ToInt32(result, CultureInfo.InvariantCulture);
-            if (playerIndex >= 0) {
-                return playerIndex;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException("Client player index was not assigned.");
+        return await TestWaiter.UntilAsync(
+            async () => {
+                object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
+                return result is int id ? id : Convert.ToInt32(result, CultureInfo.InvariantCulture);
+            },
+            playerIndex => playerIndex >= 0,
+            TestTimeouts.DefaultEventually,
+            "Client player index was not assigned.");
     }
 
     public static async Task WaitForPlayerInventoryAsync(GameContext context, int playerIndex) {
-        for (int i = 0; i < 50; i++) {
-            InventorySnapshot snapshot = await GetInventorySnapshotAsync(context, playerIndex);
-            if (snapshot.Exists) {
-                return;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException($"Player {playerIndex} inventory was not available on {context.RoleName}.");
+        await TestWaiter.UntilAsync(
+            () => GetInventorySnapshotAsync(context, playerIndex),
+            snapshot => snapshot.Exists,
+            TestTimeouts.DefaultEventually,
+            $"Player {playerIndex} inventory was not available on {context.RoleName}.");
     }
 
     public static async Task<int> EnsureServerPlayerEntityAsync(GameContext context, int playerIndex) {
@@ -163,46 +157,28 @@ public static class InventoryTestTools {
     }
 
     public static async Task AssertPickableEventuallyAsync(GameContext context, int pickableId, int contents, int count) {
-        PickableSnapshot snapshot = default;
-        for (int i = 0; i < 50; i++) {
-            snapshot = await GetPickableSnapshotAsync(context, pickableId);
-            if (snapshot.Exists && snapshot.Contents == contents && snapshot.Count == count) {
-                return;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException(
-            $"Pickable {pickableId} did not reach expected state on {context.RoleName}. Expected={contents}:{count}. Actual={snapshot}.");
+        await TestWaiter.UntilAsync(
+            () => GetPickableSnapshotAsync(context, pickableId),
+            snapshot => snapshot.Exists && snapshot.Contents == contents && snapshot.Count == count,
+            TestTimeouts.DefaultEventually,
+            $"Pickable {pickableId} did not reach expected state on {context.RoleName}. Expected={contents}:{count}.");
     }
 
     public static async Task AssertInventoryEventuallyAsync(GameContext context, int playerIndex, string expectedSlotSpec) {
         InventoryExpectation expectation = InventoryExpectation.Parse(expectedSlotSpec);
-        InventorySnapshot snapshot = default;
-        for (int i = 0; i < 50; i++) {
-            snapshot = await GetInventorySnapshotAsync(context, playerIndex);
-            if (expectation.Matches(snapshot)) {
-                return;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException(
-            $"Inventory did not reach expected state on {context.RoleName}. Expected={expectedSlotSpec}. Actual={snapshot}.");
+        await TestWaiter.UntilAsync(
+            () => GetInventorySnapshotAsync(context, playerIndex),
+            expectation.Matches,
+            TestTimeouts.DefaultEventually,
+            $"Inventory did not reach expected state on {context.RoleName}. Expected={expectedSlotSpec}.");
     }
 
     public static async Task AssertActiveSlotEventuallyAsync(GameContext context, int playerIndex, int expectedSlotIndex) {
-        InventorySnapshot snapshot = default;
-        for (int i = 0; i < 50; i++) {
-            snapshot = await GetInventorySnapshotAsync(context, playerIndex);
-            if (snapshot.Exists && snapshot.ActiveSlotIndex == expectedSlotIndex) {
-                return;
-            }
-            await Task.Delay(100);
-        }
-
-        throw new TimeoutException(
-            $"Active slot did not reach {expectedSlotIndex} on {context.RoleName}. Actual={snapshot}.");
+        await TestWaiter.UntilAsync(
+            () => GetInventorySnapshotAsync(context, playerIndex),
+            snapshot => snapshot.Exists && snapshot.ActiveSlotIndex == expectedSlotIndex,
+            TestTimeouts.DefaultEventually,
+            $"Active slot did not reach {expectedSlotIndex} on {context.RoleName}.");
     }
 
     public static async Task<InventorySnapshot> GetInventorySnapshotAsync(GameContext context, int playerIndex) {
