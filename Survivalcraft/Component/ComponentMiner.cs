@@ -214,7 +214,8 @@ namespace Game {
                         digValue.Value,
                         isClientPredictedDig,
                         false,
-                        forceLocalChange: isClientPredictedDig
+                        forceLocalChange: isClientPredictedDig,
+                        suppressBehavior: isClientPredictedDig
                     );
                     int durabilityReduction = 1;
                     int playerDataAdd = 1;

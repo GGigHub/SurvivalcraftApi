@@ -37,11 +37,14 @@ public class MoveItemPacket : Packet {
         IInventory from = subsystemInventories.GetInventoryById(fromInventoryId);
         IInventory to = subsystemInventories.GetInventoryById(toInventoryId);
         if (from != null && to != null) {
+            if (PlayerDragDropPacket.IsOwnedByOtherPlayer(from, From, out _)
+                || PlayerDragDropPacket.IsOwnedByOtherPlayer(to, From, out _)) {
+                return;
+            }
             if (count <= 0
-                || fromSlotIndex < 0
-                || fromSlotIndex >= from.SlotsCount
-                || toSlotIndex < 0
-                || toSlotIndex >= to.SlotsCount) {
+                || !InventoryPacketHelpers.IsSlotIndexValid(from, fromSlotIndex)
+                || !InventoryPacketHelpers.IsSlotIndexValid(to, toSlotIndex)) {
+                InventoryPacketHelpers.QueueInventorySync(from, to, From);
                 return;
             }
 
@@ -58,8 +61,7 @@ public class MoveItemPacket : Packet {
                 int removedCount = from.RemoveSlotItems(fromSlotIndex, actualCount);
                 to.AddSlotItems(toSlotIndex, value, removedCount);
             }
-            NetworkManager.Queue(new InventorySyncPacket(from));
-            NetworkManager.Queue(new InventorySyncPacket(to));
+            InventoryPacketHelpers.QueueInventorySync(from, to);
         }
     }
 }

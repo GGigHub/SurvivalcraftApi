@@ -38,7 +38,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
             }
             if (!IsSlotIndexValid(inventory, m_slotIndex)) {
                 if (isServer && From != null) {
-                    NetworkManager.Queue(new InventorySyncPacket(inventory) { To = From });
+                    InventoryPacketHelpers.QueueInventorySync(inventory, From);
                 }
                 return;
             }
@@ -50,15 +50,15 @@ public class PlayerDragDropPacket : PlayerPacketBase {
         owner = null;
         if (inventory is Component component) {
             owner = component.Entity?.FindComponent<ComponentPlayer>();
-            if (owner != null && from != null) {
-                return false;
+            if (owner?.PlayerData != null && from != null) {
+                return owner.PlayerData.PlayerIndex != from.PlayerIndex;
             }
         }
         return false;
     }
 
     public static bool IsSlotIndexValid(IInventory inventory, int index) {
-        return inventory != null && index >= 0 && index < inventory.SlotsCount;
+        return InventoryPacketHelpers.IsSlotIndexValid(inventory, index);
     }
 }
 

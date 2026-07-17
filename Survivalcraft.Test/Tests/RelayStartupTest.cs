@@ -13,6 +13,8 @@ namespace Survivalcraft.Test;
 
 [TestCaseOrderer("Survivalcraft.Test.PriorityOrderer", "Survivalcraft.Test")]
 public sealed class RelayStartupTest : IClassFixture<GameFixture> {
+    private static readonly TimeSpan RelayPollInterval = TimeSpan.FromMilliseconds(100);
+
     private readonly GameFixture fixture;
 
     public RelayStartupTest(GameFixture fixture) {
@@ -24,7 +26,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         GameContext server = StartExtraContext("RelayServerGame");
         GameContext client = StartExtraContext("RelayClient");
         int relayPort = GetAvailableUdpPort();
-        using Process relay = StartRelayServer(relayPort);
+        using Process relay = await StartRelayServerAsync(relayPort);
         try {
             await StartRelayHostAsync(server, relayPort, "relay-e2e");
             int playerIndex = await ConnectRelayClientAsync(client, relayPort, await WaitForRoomCodeAsync(server));
@@ -58,7 +60,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         GameContext server = StartExtraContext("RelayServerGame");
         GameContext client = StartExtraContext("RelayClient");
         int relayPort = GetAvailableUdpPort();
-        using Process relay = StartRelayServer(relayPort);
+        using Process relay = await StartRelayServerAsync(relayPort);
         try {
             string roomCode = await StartRelayHostAsync(server, relayPort, "relay-host-disconnect");
             int playerIndex = await ConnectRelayClientAsync(client, relayPort, roomCode);
@@ -66,7 +68,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
                 "Host did not retain the relay player before disconnect.");
 
             relay.Kill(true);
-            Assert.True(relay.WaitForExit(5000), "Relay process did not exit after being killed.");
+            Assert.True(relay.WaitForExit(TestTimeouts.DefaultEventually), "Relay process did not exit after being killed.");
 
             Assert.True(await WaitForRelayClientDisconnectedAsync(client),
                 $"Client relay state did not become disconnected. Logs:{client.GetRecentLogText()}");
@@ -87,7 +89,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         GameContext server = StartExtraContext("RelayServerGame");
         GameContext client = StartExtraContext("RelayClient");
         int relayPort = GetAvailableUdpPort();
-        using Process relay = StartRelayServer(relayPort);
+        using Process relay = await StartRelayServerAsync(relayPort);
         try {
             string roomCode = await StartRelayHostAsync(server, relayPort, "relay-client-disconnect");
             int playerIndex = await ConnectRelayClientAsync(client, relayPort, roomCode);
@@ -114,7 +116,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         GameContext client = StartExtraContext("RelayClient");
         GameContext spectator = StartExtraContext("RelaySpectator");
         int relayPort = GetAvailableUdpPort();
-        using Process relay = StartRelayServer(relayPort);
+        using Process relay = await StartRelayServerAsync(relayPort);
         try {
             string roomCode = await StartRelayHostAsync(server, relayPort, "relay-two-clients");
             int clientIndex = await ConnectRelayClientAsync(client, relayPort, roomCode);
@@ -152,7 +154,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         GameContext client = StartExtraContext("RelayClient");
         GameContext spectator = StartExtraContext("RelaySpectator");
         int relayPort = GetAvailableUdpPort();
-        using Process relay = StartRelayServer(relayPort);
+        using Process relay = await StartRelayServerAsync(relayPort);
         try {
             string roomCode = await StartRelayHostAsync(server, relayPort, "relay-target-route");
             int clientIndex = await ConnectRelayClientAsync(client, relayPort, roomCode);
@@ -167,9 +169,12 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
 
             Assert.True(await WaitForPlayerIndexAsync(client, probeIndex),
                 "Target client did not receive the directed relay packet.");
-            await Task.Delay(1000);
-            int spectatorAfter = await DamageSyncTools.WaitForClientPlayerIndexAsync(spectator);
-            Assert.Equal(spectatorIndex, spectatorAfter);
+            await TestWaiter.AssertRemainsAsync(
+                () => ReadPlayerIndexAsync(spectator),
+                index => index == spectatorIndex,
+                TestTimeouts.ShortObservation,
+                "Spectator received a directed relay packet intended for another peer.",
+                TestTimeouts.PollInterval);
         }
         finally {
             if (!relay.HasExited) relay.Kill(true);
@@ -186,7 +191,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
     public async Task RelayHostRecreatesSessionWhenPayloadArrivesBeforePeerJoined() {
         GameContext server = StartExtraContext("RelayServerGame");
         int relayPort = GetAvailableUdpPort();
-        using Process relay = StartRelayServer(relayPort);
+        using Process relay = await StartRelayServerAsync(relayPort);
         try {
             string roomCode = await StartRelayHostAsync(server, relayPort, "relay-first-payload");
 
@@ -219,7 +224,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         GameContext server = StartExtraContext("RelayServerGame");
         GameContext client = StartExtraContext("RelayClient");
         int relayPort = GetAvailableUdpPort();
-        using Process relay = StartRelayServer(relayPort);
+        using Process relay = await StartRelayServerAsync(relayPort);
         try {
             using RelayProbe hostProbe = await RelayProbe.ConnectAsync(relayPort);
             hostProbe.Send(RelayMessageType.CreateRoom);
@@ -231,8 +236,12 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
 
             peerProbe.SendInvalidHeader();
             peerProbe.SendOversizedDataToHost();
-            await Task.Delay(500);
-            Assert.False(relay.HasExited, "Relay server exited after invalid protocol frames.");
+            await TestWaiter.AssertRemainsAsync(
+                () => Task.FromResult(relay.HasExited),
+                exited => !exited,
+                TestTimeouts.ShortObservation,
+                "Relay server exited after invalid protocol frames.",
+                RelayPollInterval);
 
             string roomCode = await StartRelayHostAsync(server, relayPort, "relay-invalid-frames");
             int playerIndex = await ConnectRelayClientAsync(client, relayPort, roomCode);
@@ -257,7 +266,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         string relayId = $"relay-e2e-{Guid.NewGuid():N}";
 
         using Process center = await StartCenterServerAsync(centerPort);
-        using Process relay = StartRelayServer(relayPort, centerUrl, relayId);
+        using Process relay = await StartRelayServerAsync(relayPort, centerUrl, relayId);
         try {
             Assert.True(await WaitForRelayCandidateAsync(centerUrl, relayId),
                 $"Center server did not expose the relay candidate. Center={centerUrl}, RelayId={relayId}");
@@ -328,38 +337,35 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         Assert.True(await WaitForPlayWithFriendsDialogAsync(server),
             $"Play-with-friends dialog did not appear. Logs:{server.GetRecentLogText()}");
         await server.PushCommandAsync("CLICK_WIDGET PlayWithFriendsDialog.Yes");
-        Assert.True(await WaitForGameScreenAsync(server, seconds: 120),
+        Assert.True(await WaitForGameScreenAsync(server),
             $"Host did not enter Game after choosing play-with-friends. Logs:{server.GetRecentLogText()}");
     }
 
     private static async Task WaitForNewWorldSettingsAsync(GameContext context) {
-        for (int i = 0; i < 100; i++) {
-            object? ready = await context.PushCommandAsync("FUNC return (ScreensManager.CurrentScreen as NewWorldScreen)?.m_worldSettings != null;");
-            if (ready is true) return;
-            await Task.Delay(100);
-        }
-        throw new TimeoutException($"NewWorld settings were not ready. Logs:{context.GetRecentLogText()}");
+        await TestWaiter.UntilAsync(
+            () => context.PushCommandAsync("FUNC return (ScreensManager.CurrentScreen as NewWorldScreen)?.m_worldSettings != null;"),
+            ready => ready is true,
+            TestTimeouts.LongEventually,
+            $"NewWorld settings were not ready. Logs:{context.GetRecentLogText()}",
+            TestTimeouts.PollInterval);
     }
 
     private static async Task<bool> WaitForPlayWithFriendsDialogAsync(GameContext context) {
-        for (int i = 0; i < 100; i++) {
-            object? shown = await context.PushCommandAsync("FUNC return DialogsManager.Dialogs.Any(d => d is PlayWithFriendsDialog);");
-            if (shown is true) return true;
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<object?> result = await TestWaiter.TryUntilAsync(
+            () => context.PushCommandAsync("FUNC return DialogsManager.Dialogs.Any(d => d is PlayWithFriendsDialog);"),
+            shown => shown is true,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Matched;
     }
 
-    private static async Task<bool> WaitForGameScreenAsync(GameContext context, int seconds) {
-        Task<bool> gameLogTask = context.WaitLogAsync("Entered screen \"Game\"", seconds);
-        for (int i = 0; i < seconds * 2; i++) {
-            if (gameLogTask.IsCompleted && await gameLogTask) return true;
-            object? ready = await context.PushCommandAsync(
-                "FUNC return ScreensManager.CurrentScreen is GameScreen && GameManager.Project != null;");
-            if (ready is true) return true;
-            await Task.Delay(500);
-        }
-        return gameLogTask.IsCompleted && await gameLogTask;
+    private static async Task<bool> WaitForGameScreenAsync(GameContext context) {
+        WaitResult<object?> result = await TestWaiter.TryUntilAsync(
+            () => context.PushCommandAsync("FUNC return ScreensManager.CurrentScreen is GameScreen && GameManager.Project != null;"),
+            ready => ready is true,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Matched;
     }
 
     private GameContext StartExtraContext(string roleName) {
@@ -379,7 +385,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         Assert.True(await client.WaitLogAsync("Entered screen \"Player\""),
             $"Relay client did not receive and load Project data. Client logs:{client.GetRecentLogText()}");
         await ClickPlayerPlayButtonAsync(client);
-        Assert.True(await WaitForClientPlayingAsync(client, seconds: 60),
+        Assert.True(await WaitForClientPlayingAsync(client),
             $"Relay client did not enter playing state. Logs:{client.GetRecentLogText()}");
 
         RelayClientPlayingState playingState = await WaitForClientPlayingStateAsync(client);
@@ -402,42 +408,42 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
     }
 
     private static async Task<string> WaitForRoomCodeAsync(GameContext server) {
-        for (int i = 0; i < 100; i++) {
-            object? result = await server.PushCommandAsync("FUNC return Game.NetworkManager.RelayHost?.RoomCode;");
-            if (result is string code && !string.IsNullOrWhiteSpace(code)) return code;
-            await Task.Delay(100);
-        }
-        return string.Empty;
+        return await TestWaiter.UntilAsync(
+            async () => (string?)await server.PushCommandAsync("FUNC return Game.NetworkManager.RelayHost?.RoomCode;") ?? string.Empty,
+            code => !string.IsNullOrWhiteSpace(code),
+            TestTimeouts.LongEventually,
+            $"Relay did not allocate a room code. Logs:{server.GetRecentLogText()}",
+            TestTimeouts.PollInterval);
     }
 
     private static async Task<bool> WaitForRelayClientDisconnectedAsync(GameContext client) {
-        for (int i = 0; i < 100; i++) {
-            object? result = await client.PushCommandAsync(
-                "FUNC return Game.NetworkManager.RelayClient == null || !Game.NetworkManager.RelayClient.IsConnected || Game.NetworkManager.MyState == Game.NetworkState.NotConnected;");
-            if (result is true) return true;
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<object?> result = await TestWaiter.TryUntilAsync(
+            () => client.PushCommandAsync(
+                "FUNC return Game.NetworkManager.RelayClient == null || !Game.NetworkManager.RelayClient.IsConnected || Game.NetworkManager.MyState == Game.NetworkState.NotConnected;"),
+            result => result is true,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Matched;
     }
 
     private static async Task<bool> WaitForRelaySessionAsync(GameContext server, int playerIndex) {
-        for (int i = 0; i < 100; i++) {
-            object? result = await server.PushCommandAsync(
-                $"FUNC return Game.NetworkManager.ServerSessions.Any(s => s.PlayerIndex == {playerIndex.ToString(CultureInfo.InvariantCulture)});");
-            if (result is true) return true;
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<object?> result = await TestWaiter.TryUntilAsync(
+            () => server.PushCommandAsync(
+                $"FUNC return Game.NetworkManager.ServerSessions.Any(s => s.PlayerIndex == {playerIndex.ToString(CultureInfo.InvariantCulture)});"),
+            exists => exists is true,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Matched;
     }
 
     private static async Task<bool> WaitForRelaySessionMissingAsync(GameContext server, int playerIndex) {
-        for (int i = 0; i < 100; i++) {
-            object? result = await server.PushCommandAsync(
-                $"FUNC return !Game.NetworkManager.ServerSessions.Any(s => s.PlayerIndex == {playerIndex.ToString(CultureInfo.InvariantCulture)});");
-            if (result is true) return true;
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<object?> result = await TestWaiter.TryUntilAsync(
+            () => server.PushCommandAsync(
+                $"FUNC return !Game.NetworkManager.ServerSessions.Any(s => s.PlayerIndex == {playerIndex.ToString(CultureInfo.InvariantCulture)});"),
+            missing => missing is true,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Matched;
     }
 
     private static Task<bool> WaitForRelaySessionCountAsync(GameContext server, int expected) =>
@@ -447,113 +453,116 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         WaitForRelaySessionCountAsync(server, count => count >= expectedMinimum);
 
     private static async Task<bool> WaitForRelaySessionCountAsync(GameContext server, Func<int, bool> predicate) {
-        for (int i = 0; i < 100; i++) {
-            object? result = await server.PushCommandAsync("FUNC return Game.NetworkManager.RelayHost?.Sessions.Count() ?? 0;");
-            if (result is int count && predicate(count)) return true;
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<int> result = await TestWaiter.TryUntilAsync(
+            async () => Convert.ToInt32(await server.PushCommandAsync("FUNC return Game.NetworkManager.RelayHost?.Sessions.Count() ?? 0;"), CultureInfo.InvariantCulture),
+            predicate,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Matched;
     }
 
     private static async Task AssertClientHostLatencyAsync(GameContext client, string connectionDescription) {
-        int latency = await WaitForClientHostLatencyAsync(client, seconds: 10);
+        int latency = await WaitForClientHostLatencyAsync(client);
         Assert.True(latency >= 0,
             $"Relay client did not receive host latency {connectionDescription}. Last latency={latency}. Logs:{client.GetRecentLogText()}");
     }
 
-    private static async Task<int> WaitForClientHostLatencyAsync(GameContext client, int seconds) {
-        int attempts = Math.Max(1, seconds * 10);
-        for (int i = 0; i < attempts; i++) {
-            object? result = await client.PushCommandAsync("FUNC return Game.NetworkManager.ClientLatency;");
-            int latency = result is int value ? value : Convert.ToInt32(result, CultureInfo.InvariantCulture);
-            if (latency >= 0) return latency;
-            await Task.Delay(100);
-        }
-        return -1;
+    private static async Task<int> WaitForClientHostLatencyAsync(GameContext client) {
+        WaitResult<int> result = await TestWaiter.TryUntilAsync(
+            () => ReadClientHostLatencyAsync(client),
+            latency => latency >= 0,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Matched ? result.Last : -1;
     }
 
     private static async Task<bool> WaitForPlayerIndexAsync(GameContext context, int expected) {
-        for (int i = 0; i < 100; i++) {
-            object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
-            int playerIndex = result is int id ? id : Convert.ToInt32(result, CultureInfo.InvariantCulture);
-            if (playerIndex == expected) {
-                return true;
-            }
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<int> result = await TestWaiter.TryUntilAsync(
+            () => ReadPlayerIndexAsync(context),
+            playerIndex => playerIndex == expected,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Matched;
+    }
+
+    private static async Task<int> ReadPlayerIndexAsync(GameContext context) {
+        object? result = await context.PushCommandAsync("FUNC return Game.NetworkManager.PlayerIndex;");
+        return result is int id ? id : Convert.ToInt32(result, CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<int> ReadClientHostLatencyAsync(GameContext client) {
+        object? result = await client.PushCommandAsync("FUNC return Game.NetworkManager.ClientLatency;");
+        return result is int value ? value : Convert.ToInt32(result, CultureInfo.InvariantCulture);
     }
 
     private static async Task ClickPlayerPlayButtonAsync(GameContext context) {
-        for (int i = 0; i < 100; i++) {
-            object? state = await context.PushCommandAsync(
+        WaitResult<string> state = await TestWaiter.TryUntilAsync(
+            async () => (string?)await context.PushCommandAsync(
                 "FUNC if (ScreensManager.CurrentScreen is GameScreen) return \"game\";" +
                 "var screen = ScreensManager.CurrentScreen as PlayerScreen;" +
-                "return screen != null && screen.m_playerData != null && screen.m_playButton.IsVisible && screen.m_playButton.IsEnabled ? \"ready\" : \"wait\";");
-            if (state is string text && string.Equals(text, "game", StringComparison.Ordinal)) return;
-            if (state is string text2 && string.Equals(text2, "ready", StringComparison.Ordinal)) break;
-            await Task.Delay(100);
+                "return screen != null && screen.m_playerData != null && screen.m_playButton.IsVisible && screen.m_playButton.IsEnabled ? \"ready\" : \"wait\";")
+                ?? "wait",
+            text => string.Equals(text, "game", StringComparison.Ordinal) || string.Equals(text, "ready", StringComparison.Ordinal),
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        if (string.Equals(state.Last, "game", StringComparison.Ordinal)) {
+            return;
         }
 
         for (int attempt = 0; attempt < 3; attempt++) {
             await context.PushCommandAsync("CLICK_WIDGET PlayButton");
-            for (int i = 0; i < 20; i++) {
-                object? accepted = await context.PushCommandAsync(
-                    "FUNC return ScreensManager.CurrentScreen is GameScreen || DialogsManager.Dialogs.Any(d => d is BusyDialog);");
-                if (accepted is true) return;
-                await Task.Delay(100);
+            WaitResult<object?> accepted = await TestWaiter.TryUntilAsync(
+                () => context.PushCommandAsync(
+                    "FUNC return ScreensManager.CurrentScreen is GameScreen || DialogsManager.Dialogs.Any(d => d is BusyDialog);"),
+                value => value is true,
+                TestTimeouts.ShortObservation,
+                TestTimeouts.PollInterval);
+            if (accepted.Matched) {
+                return;
             }
         }
     }
 
     private static async Task ClickPlayerPlayButtonIfShownAsync(GameContext context) {
-        bool sawGameScreen = false;
-        for (int i = 0; i < 200; i++) {
-            object? state = await context.PushCommandAsync(
+        WaitResult<string> result = await TestWaiter.TryUntilAsync(
+            async () => (string?)await context.PushCommandAsync(
                 "FUNC if (ScreensManager.CurrentScreen is GameScreen) return \"game\";" +
                 "var screen = ScreensManager.CurrentScreen as PlayerScreen;" +
                 "if (screen == null) return ScreensManager.CurrentScreen?.GetType().Name ?? \"null\";" +
-                "return screen.m_playerData != null && screen.m_playButton.IsVisible && screen.m_playButton.IsEnabled ? \"ready\" : \"player\";");
-            if (state is string text && string.Equals(text, "ready", StringComparison.Ordinal)) {
-                await ClickPlayerPlayButtonAsync(context);
-                await WaitForGameScreenAsync(context, seconds: 60);
-                return;
-            }
-            if (state is string text2 && string.Equals(text2, "game", StringComparison.Ordinal)) {
-                sawGameScreen = true;
-                if (i >= 50) return;
-            }
-            await Task.Delay(100);
+                "return screen.m_playerData != null && screen.m_playButton.IsVisible && screen.m_playButton.IsEnabled ? \"ready\" : \"player\";")
+                ?? "null",
+            state => string.Equals(state, "ready", StringComparison.Ordinal) || string.Equals(state, "game", StringComparison.Ordinal),
+            TimeSpan.FromSeconds(20),
+            RelayPollInterval);
+
+        if (string.Equals(result.Last, "ready", StringComparison.Ordinal)) {
+            await ClickPlayerPlayButtonAsync(context);
+            await WaitForGameScreenAsync(context);
+            return;
         }
-        if (!sawGameScreen) {
+
+        if (!string.Equals(result.Last, "game", StringComparison.Ordinal)) {
             throw new TimeoutException($"Player screen did not become ready. Logs:{context.GetRecentLogText()}");
         }
     }
 
-    private static async Task<bool> WaitForClientPlayingAsync(GameContext context, int seconds) {
-        Task<bool> playingLogTask = context.WaitLogAsync("Player into playing.", seconds);
-        int attempts = Math.Max(1, seconds * 2);
-        for (int i = 0; i < attempts; i++) {
-            if (playingLogTask.IsCompleted && await playingLogTask) {
-                return true;
-            }
-
-            object? result = await context.PushCommandAsync(
-                "FUNC return Game.NetworkManager.PlayerIndex >= 0 && Game.NetworkManager.MyState == Game.NetworkState.Playing;");
-            if (result is true) return true;
-            await Task.Delay(500);
-        }
-        return playingLogTask.IsCompleted && await playingLogTask;
+    private static async Task<bool> WaitForClientPlayingAsync(GameContext context) {
+        WaitResult<object?> result = await TestWaiter.TryUntilAsync(
+            () => context.PushCommandAsync(
+                "FUNC return Game.NetworkManager.PlayerIndex >= 0 && Game.NetworkManager.MyState == Game.NetworkState.Playing;"),
+            playing => playing is true,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Matched;
     }
 
     private static async Task<RelayDisplayState> WaitForRelayDisplayStateAsync(GameContext context, Func<RelayDisplayState, bool> predicate) {
-        RelayDisplayState state = default;
-        for (int i = 0; i < 200; i++) {
-            state = await GetRelayDisplayStateAsync(context);
-            if (predicate(state)) return state;
-            await Task.Delay(100);
-        }
-        return state;
+        WaitResult<RelayDisplayState> result = await TestWaiter.TryUntilAsync(
+            () => GetRelayDisplayStateAsync(context),
+            predicate,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Last;
     }
 
     private static async Task<RelayDisplayState> GetRelayDisplayStateAsync(GameContext context) {
@@ -585,9 +594,9 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
     }
 
     private static async Task<RelayClientPlayingState> WaitForClientPlayingStateAsync(GameContext context) {
-        RelayClientPlayingState state = default;
-        for (int i = 0; i < 120; i++) {
-            string raw = (string?)await context.PushCommandAsync(
+        WaitResult<RelayClientPlayingState> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                string raw = (string?)await context.PushCommandAsync(
                 "FUNC var screen = ScreensManager.CurrentScreen?.GetType().Name ?? \"null\";" +
                 "var projectLoaded = GameManager.Project != null;" +
                 "var playerIndex = Game.NetworkManager.PlayerIndex;" +
@@ -601,11 +610,12 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
                 "var playerSummaries = players == null ? string.Empty : string.Join(\"|\", players.PlayersData.Select(p => string.Format(System.Globalization.CultureInfo.InvariantCulture, \"idx:{0},main:{1},hasPlayer:{2},miner:{3},state:{4}\", p.PlayerIndex, p.IsMainPlayer, p.ComponentPlayer != null, p.ComponentPlayer?.ComponentMiner != null, p.m_stateMachine.CurrentState ?? string.Empty)));" +
                 "return string.Format(System.Globalization.CultureInfo.InvariantCulture, \"screen={0};project={1};playerIndex={2};componentPlayerReady={3};componentMinerReady={4};componentGuiReady={5};componentBodyReady={6};state={7};players={8}\", screen, projectLoaded, playerIndex, componentPlayerReady, componentMinerReady, componentGuiReady, componentBodyReady, Game.NetworkManager.MyState, playerSummaries);")
                 ?? string.Empty;
-            state = RelayClientPlayingState.Parse(raw);
-            if (state.IsPlaying) return state;
-            await Task.Delay(100);
-        }
-        return state;
+                return RelayClientPlayingState.Parse(raw);
+            },
+            state => state.IsPlaying,
+            TestTimeouts.LongEventually,
+            TestTimeouts.PollInterval);
+        return result.Last;
     }
 
     private readonly record struct RelayClientPlayingState(
@@ -675,7 +685,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         }
     }
 
-    private static Process StartRelayServer(int port, string? centerUrl = null, string? relayId = null) {
+    private static async Task<Process> StartRelayServerAsync(int port, string? centerUrl = null, string? relayId = null) {
         string relayAssembly = Path.Combine(AppContext.BaseDirectory, "Survivalcraft.RelayServer.dll");
         Assert.True(File.Exists(relayAssembly), $"Relay server assembly was not copied to test output: {relayAssembly}");
         ProcessStartInfo info = new("dotnet") {
@@ -692,29 +702,37 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
             info.Environment["SC_RELAY_ID"] = relayId ?? $"127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}";
         }
         Process process = Process.Start(info) ?? throw new InvalidOperationException("Failed to start relay server process.");
-        Thread.Sleep(300);
-        Assert.False(process.HasExited, "Relay server exited during startup.");
+        await TestWaiter.AssertRemainsAsync(
+            () => Task.FromResult(process.HasExited),
+            exited => !exited,
+            TestTimeouts.ShortObservation,
+            "Relay server exited during startup.",
+            RelayPollInterval);
         return process;
     }
 
     private static async Task<bool> WaitForRelayCandidateAsync(string centerUrl, string relayId) {
-        for (int i = 0; i < 100; i++) {
-            try {
-                using HttpClient client = new() { Timeout = TimeSpan.FromSeconds(2) };
-                string json = await client.GetStringAsync($"{centerUrl}/api/v1/relays/candidates");
-                if (json.Contains(relayId, StringComparison.OrdinalIgnoreCase)) return true;
-            }
-            catch {
-                // Retry until the center and relay heartbeat are both visible.
-            }
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                try {
+                    using HttpClient client = new() { Timeout = TimeSpan.FromSeconds(2) };
+                    string json = await client.GetStringAsync($"{centerUrl}/api/v1/relays/candidates");
+                    return json.Contains(relayId, StringComparison.OrdinalIgnoreCase);
+                }
+                catch {
+                    // Retry until the center and relay heartbeat are both visible.
+                    return false;
+                }
+            },
+            found => found,
+            TestTimeouts.PollInterval,
+            RelayPollInterval);
+        return result.Matched;
     }
 
     private static async Task<bool> CenterRoomLookupContainsAsync(string centerUrl, string globalCode, string relayId, string relayRoomCode) {
         try {
-            using HttpClient client = new() { Timeout = TimeSpan.FromSeconds(5) };
+            using HttpClient client = new() { Timeout = TestTimeouts.DefaultEventually };
             string json = await client.GetStringAsync($"{centerUrl}/api/v1/rooms/{Uri.EscapeDataString(globalCode)}");
             return json.Contains(relayId, StringComparison.OrdinalIgnoreCase)
                 && json.Contains(relayRoomCode, StringComparison.OrdinalIgnoreCase);
@@ -725,18 +743,22 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
     }
 
     private static async Task<bool> WaitForHttpOkAsync(string url) {
-        for (int i = 0; i < 100; i++) {
-            try {
-                using HttpClient client = new() { Timeout = TimeSpan.FromSeconds(2) };
-                using HttpResponseMessage response = await client.GetAsync(url);
-                if (response.IsSuccessStatusCode) return true;
-            }
-            catch {
-                // Retry until process startup finishes.
-            }
-            await Task.Delay(100);
-        }
-        return false;
+        WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+            async () => {
+                try {
+                    using HttpClient client = new() { Timeout = TimeSpan.FromSeconds(2) };
+                    using HttpResponseMessage response = await client.GetAsync(url);
+                    return response.IsSuccessStatusCode;
+                }
+                catch {
+                    // Retry until process startup finishes.
+                    return false;
+                }
+            },
+            ok => ok,
+            TestTimeouts.PollInterval,
+            RelayPollInterval);
+        return result.Matched;
     }
 
     private static int GetAvailableUdpPort() {
@@ -829,12 +851,15 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
         }
 
         private async Task<bool> WaitUntilAsync(Func<bool> predicate) {
-            for (int i = 0; i < 500; i++) {
-                manager.PollEvents();
-                if (predicate()) return true;
-                await Task.Delay(10);
-            }
-            return false;
+            WaitResult<bool> result = await TestWaiter.TryUntilAsync(
+                () => {
+                    manager.PollEvents();
+                    return Task.FromResult(predicate());
+                },
+                matched => matched,
+                TestTimeouts.DefaultEventually,
+                TestTimeouts.PollInterval);
+            return result.Matched;
         }
     }
 }

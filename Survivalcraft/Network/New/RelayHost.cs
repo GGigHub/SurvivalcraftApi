@@ -115,7 +115,6 @@ public sealed class RelayHost : INetEventListener {
             NetDataReader inner = new(data);
             if (NetworkManager.PackageFragment.TryProcessIncoming(inner, $"relay-{id}", out byte[] payload)) {
                 foreach (Packet packet in PacketManager.DecodePackets(payload)) {
-                    Log.Information($"Relay decoded packet {packet.ID} from connection={id}");
                     if (packet.MinNeedState <= session.NetworkState) {
                         packet.From = session;
                         packet.Handle(true);

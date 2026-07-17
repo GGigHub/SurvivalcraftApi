@@ -42,8 +42,8 @@ namespace Game {
     }
 
     public static class HotUpdateManager {
-        public const string ManifestUrl = "https://api.trk34.top/hotupdate/manifest.json";
-        public const string AndroidUpdateDirectory = "data:updates/current";
+        public static string ManifestUrl = SettingsManager.CenterServerUrl + "/hotupdate/manifest.json";
+        public static string AndroidUpdateDirectory = "data:updates/current";
 
         public static HotUpdateState State { get; private set; } = HotUpdateState.Idle;
         public static HotUpdateManifest LatestManifest { get; private set; }

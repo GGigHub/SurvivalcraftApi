@@ -66,6 +66,9 @@ public class InventorySyncPacket : Packet {
         if (isServer) return;
         IInventory inventory = ResolveInventory();
         if (inventory != null) {
+            if (inventory is ComponentClothing) {
+                return;
+            }
             foreach (var slot in m_slots) {
                 if (slot.slotIndex < 0 || slot.slotIndex >= inventory.SlotsCount) {
                     continue;

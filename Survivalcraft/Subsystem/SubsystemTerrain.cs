@@ -356,7 +356,15 @@ namespace Game {
             return null;
         }
 
-        public virtual void ChangeCell(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null, bool fromNetwork = false) {
+        public virtual void ChangeCell(
+            int x,
+            int y,
+            int z,
+            int value,
+            bool updateModificationCounter = true,
+            MovingBlock movingBlock = null,
+            bool fromNetwork = false,
+            bool suppressBehavior = false) {
             bool pass = false;
             ModsManager.HookAction(
                 "TerrainChangeCell",
@@ -392,12 +400,14 @@ namespace Game {
                 }
                 TerrainUpdater.DowngradeChunkNeighborhoodState(chunkAtCell.Coords, 1, TerrainChunkState.InvalidLight, false);
             }
-            m_modifiedCells[new Point3(x, y, z)] = true;
-            try {
-                ChangeCellToBehavior(x, y, z, cellValueFast, value, movingBlock);
-            }
-            catch (Exception e) {
-                Log.Error($"Block behavior on terrain change execute error: {e}");
+            if (!suppressBehavior) {
+                m_modifiedCells[new Point3(x, y, z)] = true;
+                try {
+                    ChangeCellToBehavior(x, y, z, cellValueFast, value, movingBlock);
+                }
+                catch (Exception e) {
+                    Log.Error($"Block behavior on terrain change execute error: {e}");
+                }
             }
             if (!fromNetwork) OnTerrainChangeCell?.Invoke(this, x, y, z, value);
         }
@@ -443,7 +453,8 @@ namespace Game {
             bool noDrop,
             bool noParticleSystem,
             MovingBlock movingBlock = null,
-            bool forceLocalChange = false) {
+            bool forceLocalChange = false,
+            bool suppressBehavior = false) {
             int cellValue = Terrain.GetCellValue(x, y, z);
             int num = Terrain.ExtractContents(cellValue);
             Block block = BlocksManager.Blocks[num];
@@ -476,7 +487,7 @@ namespace Game {
                     );
                 }
             }
-            ChangeCell(x, y, z, newValue, true, movingBlock, forceLocalChange);
+            ChangeCell(x, y, z, newValue, true, movingBlock, forceLocalChange, suppressBehavior);
         }
 
         public virtual void Draw(Camera camera, int drawOrder) {

@@ -24,6 +24,7 @@
         <TrimMode>partial</TrimMode>
         <AndroidDexTool>d8</AndroidDexTool>
         <AndroidEnableSGenConcurrent>false</AndroidEnableSGenConcurrent>
+        <AndroidEnableMarshalMethods>false</AndroidEnableMarshalMethods>
         <AndroidLinkMode>None</AndroidLinkMode>
         <AndroidLintEnabled>false</AndroidLintEnabled>
         <AndroidStripILAfterAOT>false</AndroidStripILAfterAOT>
