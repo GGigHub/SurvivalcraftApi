@@ -4,7 +4,6 @@ using System.Net.Sockets;
 using Engine;
 using LiteNetLib;
 using LiteNetLib.Utils;
-using static Game.StateMachine;
 
 namespace Game.Network;
 
@@ -19,6 +18,7 @@ public class NetworkClient : INetEventListener {
     private NetPeer _serverPeer;
     private NetManager _netManager;
     private IPEndPoint _serverAddress;
+    private bool _disconnectByUser;
 
     public ClientSession MySession { get; set; }
     public bool IsConnected { get; set; }
@@ -42,9 +42,10 @@ public class NetworkClient : INetEventListener {
     }
 
     public void Disconnect() {
+        _disconnectByUser = true;
+        _netManager.DisconnectAll();
+        _netManager.PollEvents();
         _netManager.Stop();
-        LatencyProbe.Reset();
-        Log.Information($"Disconnecting {_serverAddress}");
     }
 
     public void Update() {
@@ -76,7 +77,7 @@ public class NetworkClient : INetEventListener {
     }
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-        if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
+        if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (packet.MinNeedState >= NetworkState.ProjectLoaded && GameManager.Project == null) {
                     return;
@@ -104,13 +105,16 @@ public class NetworkClient : INetEventListener {
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-        _serverPeer = null;
         IsConnected = false;
-        MySession?.NetworkState = NetworkState.NotConnected;
+        MySession.NetworkState = NetworkState.NotConnected;
 
-        GameManager.DisposeProject();
-        ScreensManager.SwitchScreen("MainMenu");
-        DialogsManager.Alert("Disconnected", disconnectInfo.Reason.ToString());
+        LatencyProbe.Reset();
         Log.Information($"Disconnected: {_serverAddress}, Reason: {disconnectInfo.Reason}");
+
+        if (!_disconnectByUser) {
+            GameManager.DisposeProject();
+            ScreensManager.SwitchScreen("MainMenu");
+            DialogsManager.Alert("Disconnected", disconnectInfo.Reason.ToString());
+        }
     }
 }

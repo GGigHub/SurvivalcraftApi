@@ -45,6 +45,20 @@ public static class CenterServerClient {
         return address ?? throw new InvalidOperationException($"Could not resolve relay host: {host}");
     }
 
+    public static async Task<IPEndPoint> GetBestRelayEndPointAsync() {
+        RelayCandidateInfo candidate = (await GetRelayCandidatesAsync())
+            .Where(c => !c.IsBusy)
+            .OrderBy(c => c.Priority)
+            .ThenBy(c => c.RoomCount)
+            .ThenBy(c => c.PeerCount)
+            .ThenBy(c => c.LastSeenSecondsAgo)
+            .FirstOrDefault()
+            ?? throw new InvalidOperationException("Center server did not return an active relay.");
+
+        IPAddress address = await ResolveAddressAsync(candidate.Host);
+        return new IPEndPoint(address, candidate.UdpPort);
+    }
+
     private static string NormalizeCenterUrl(string url) => string.IsNullOrWhiteSpace(url) ? string.Empty : url.Trim().TrimEnd('/');
 
     private static string NormalizeCode(string code) => code.Trim().Replace("-", string.Empty).Replace(" ", string.Empty).ToUpperInvariant();

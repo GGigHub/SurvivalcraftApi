@@ -20,6 +20,15 @@ public class MovingBlockAddPacket : Packet {
     public struct MovingBlockData {
         public Point3 Offset;
         public int Value;
+        public bool HasSignData;
+        public Point3 SignPoint;
+        public string[] SignLines;
+        public Color[] SignColors;
+        public string SignUrl;
+        public bool HasMemoryBankData;
+        public string MemoryBankData;
+        public bool HasTruthTableData;
+        public string TruthTableData;
     }
 
     public MovingBlockAddPacket() { }
@@ -36,11 +45,32 @@ public class MovingBlockAddPacket : Packet {
             m_hasTag = true;
             m_tagPosition = tagPosition;
         }
+        SubsystemSignBlockBehavior subsystemSigns = GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>();
+        SubsystemMemoryBankBlockBehavior subsystemMemoryBanks = GameManager.Project.FindSubsystem<SubsystemMemoryBankBlockBehavior>();
+        SubsystemTruthTableCircuitBlockBehavior subsystemTruthTables = GameManager.Project.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>();
         foreach (MovingBlock block in movingSet.Blocks) {
-            m_addBlocks.Add(new MovingBlockData {
+            MovingBlockData data = new() {
                 Offset = block.Offset,
                 Value = block.Value
-            });
+            };
+            if (subsystemSigns.m_textsByMovingBlock.TryGetValue(block, out SubsystemSignBlockBehavior.TextData signData)) {
+                data.HasSignData = true;
+                data.SignPoint = signData.Point;
+                data.SignLines = signData.Lines.ToArray();
+                data.SignColors = signData.Colors.ToArray();
+                data.SignUrl = signData.Url;
+            }
+            MemoryBankData memoryBankData = subsystemMemoryBanks.GetBlockData(block);
+            if (memoryBankData != null) {
+                data.HasMemoryBankData = true;
+                data.MemoryBankData = memoryBankData.SaveString();
+            }
+            TruthTableData truthTableData = subsystemTruthTables.GetBlockData(block);
+            if (truthTableData != null) {
+                data.HasTruthTableData = true;
+                data.TruthTableData = truthTableData.SaveString();
+            }
+            m_addBlocks.Add(data);
         }
     }
 
@@ -73,8 +103,34 @@ public class MovingBlockAddPacket : Packet {
         }
         object tag = m_hasTag ? m_tagPosition : null;
         var movingSet = subsystemMovingBlocks.AddMovingBlockSet(m_addPosition, m_addTargetPosition, m_addSpeed, m_addAcceleration, m_addDrag, m_addSmoothness, blocks, m_addId, tag, false) as SubsystemMovingBlocks.MovingBlockSet;
+        if (movingSet != null) {
+            ApplyMovingBlockData(movingSet);
+        }
         if (movingSet != null && movingSet.Id == SubsystemPistonBlockBehavior.IdString) {
             GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Piston", 1f, 0f, movingSet.Position, 2f, autoDelay: true);
+        }
+    }
+
+    private void ApplyMovingBlockData(SubsystemMovingBlocks.MovingBlockSet movingSet) {
+        SubsystemSignBlockBehavior subsystemSigns = GameManager.Project.FindSubsystem<SubsystemSignBlockBehavior>();
+        SubsystemMemoryBankBlockBehavior subsystemMemoryBanks = GameManager.Project.FindSubsystem<SubsystemMemoryBankBlockBehavior>();
+        SubsystemTruthTableCircuitBlockBehavior subsystemTruthTables = GameManager.Project.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>();
+        for (int i = 0; i < m_addBlocks.Count && i < movingSet.Blocks.Count; i++) {
+            MovingBlockData data = m_addBlocks[i];
+            MovingBlock movingBlock = movingSet.Blocks[i];
+            if (data.HasSignData) {
+                subsystemSigns.SetSignData(data.SignPoint, data.SignLines, data.SignColors, data.SignUrl, movingBlock);
+            }
+            if (data.HasMemoryBankData) {
+                MemoryBankData memoryBankData = new();
+                memoryBankData.LoadString(data.MemoryBankData);
+                subsystemMemoryBanks.SetBlockData(movingBlock, memoryBankData);
+            }
+            if (data.HasTruthTableData) {
+                TruthTableData truthTableData = new();
+                truthTableData.LoadString(data.TruthTableData);
+                subsystemTruthTables.SetBlockData(movingBlock, truthTableData);
+            }
         }
     }
 
@@ -90,6 +146,7 @@ public class MovingBlockAddPacket : Packet {
                 MovingBlockAddPacket.MovingBlockData data = new();
                 archive.Value(ref data.Offset);
                 archive.Value(ref data.Value);
+                SerializeMovingBlockData(archive, ref data);
                 blocks.Add(data);
             }
         }
@@ -98,6 +155,55 @@ public class MovingBlockAddPacket : Packet {
                 MovingBlockAddPacket.MovingBlockData data = blocks[i];
                 archive.Value(ref data.Offset);
                 archive.Value(ref data.Value);
+                SerializeMovingBlockData(archive, ref data);
+            }
+        }
+    }
+
+    private static void SerializeMovingBlockData(PacketSerializer archive, ref MovingBlockAddPacket.MovingBlockData data) {
+        archive.Value(ref data.HasSignData);
+        if (data.HasSignData) {
+            archive.Value(ref data.SignPoint);
+            SerializeStringArray(archive, ref data.SignLines);
+            SerializeColorArray(archive, ref data.SignColors);
+            archive.Value(ref data.SignUrl);
+        }
+        archive.Value(ref data.HasMemoryBankData);
+        if (data.HasMemoryBankData) {
+            archive.Value(ref data.MemoryBankData);
+        }
+        archive.Value(ref data.HasTruthTableData);
+        if (data.HasTruthTableData) {
+            archive.Value(ref data.TruthTableData);
+        }
+    }
+
+    private static void SerializeStringArray(PacketSerializer archive, ref string[] values) {
+        byte count = archive.IsWriting ? (byte)values.Length : (byte)0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            values = new string[count];
+        }
+        for (int i = 0; i < count; i++) {
+            string value = archive.IsWriting ? values[i] : string.Empty;
+            archive.Value(ref value);
+            if (archive.IsReading) {
+                values[i] = value;
+            }
+        }
+    }
+
+    private static void SerializeColorArray(PacketSerializer archive, ref Color[] values) {
+        byte count = archive.IsWriting ? (byte)values.Length : (byte)0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            values = new Color[count];
+        }
+        for (int i = 0; i < count; i++) {
+            Color value = archive.IsWriting ? values[i] : default;
+            archive.Value(ref value);
+            if (archive.IsReading) {
+                values[i] = value;
             }
         }
     }

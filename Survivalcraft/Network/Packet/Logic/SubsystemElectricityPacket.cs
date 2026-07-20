@@ -16,14 +16,14 @@ public class SubsystemElectricityPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        byte count = archive.IsWriting ? (byte)NetSimulates.Count : (byte)0;
+        int count = archive.IsWriting ? NetSimulates.Count : 0;
         archive.Value(ref count);
         if (archive.IsReading) {
             NetSimulates.Clear();
-            for (byte i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++) {
                 SubsystemElectricity.NetSimulate netSimulate = new SubsystemElectricity.NetSimulate();
                 archive.Value(ref netSimulate.StartStep);
-                ushort electricsCount = 0;
+                int electricsCount = 0;
                 archive.Value(ref electricsCount);
                 for (int p = 0; p < electricsCount; p++) {
                     Point3 point = default;
@@ -39,7 +39,7 @@ public class SubsystemElectricityPacket : Packet {
             foreach (var netSimulate in NetSimulates) {
                 int startStep = netSimulate.StartStep;
                 archive.Value(ref startStep);
-                ushort electricsCount = (ushort)netSimulate.SaveData.Count;
+                int electricsCount = netSimulate.SaveData.Count;
                 archive.Value(ref electricsCount);
                 foreach (var item in netSimulate.SaveData) {
                     Point3 point = item.Key;

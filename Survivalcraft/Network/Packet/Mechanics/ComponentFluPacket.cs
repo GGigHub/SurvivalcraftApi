@@ -10,7 +10,8 @@ public class ComponentFluPacket : Packet {
         SyncStat,
         FluEffect,
         StartFlu,
-        Sneeze
+        Sneeze,
+        Impulse
     }
 
     public float m_fluDuration;
@@ -35,6 +36,10 @@ public class ComponentFluPacket : Packet {
         m_sneezeDuration = flu.m_sneezeDuration;
     }
 
+    public ComponentFluPacket(ComponentFlu flu, Engine.Vector3 impulse) : this(flu, EventType.Impulse) {
+        m_Impulse = impulse;
+    }
+
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref entityId);
         archive.Enum(ref m_eventType);
@@ -42,6 +47,7 @@ public class ComponentFluPacket : Packet {
         archive.Value(ref m_fluDuration);
         archive.Value(ref m_coughDuration);
         archive.Value(ref m_sneezeDuration);
+        archive.Value(ref m_Impulse);
     }
 
     public override void Handle(bool isServer) {
@@ -93,6 +99,20 @@ public class ComponentFluPacket : Packet {
                         flu.m_coughDuration = m_coughDuration;
                         flu.m_fluDuration = m_fluDuration;
                         flu.Sneeze();
+                    }
+                });
+                break;
+            case EventType.Impulse:
+                GameManager.Project.FindEntity(entityId, entity => {
+                    var flu = entity.FindComponent<ComponentFlu>();
+                    if (flu != null) {
+                        flu.m_fluOnset = m_fluOnset;
+                        flu.m_sneezeDuration = m_sneezeDuration;
+                        flu.m_coughDuration = m_coughDuration;
+                        flu.m_fluDuration = m_fluDuration;
+                        if (m_Impulse.LengthSquared() > 0f) {
+                            flu.m_componentPlayer.ComponentBody.ApplyImpulse(m_Impulse);
+                        }
                     }
                 });
                 break;

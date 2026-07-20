@@ -14,6 +14,11 @@ public class ReplySkinPacket : SkinPacketBase {
         m_skinData = LoadSkinData(skinName);
     }
 
+    public ReplySkinPacket(string skinName, byte[] skinData) {
+        SkinName = skinName;
+        m_skinData = skinData;
+    }
+
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref SkinName);
         SerializeSkinData(archive, ref m_skinData);

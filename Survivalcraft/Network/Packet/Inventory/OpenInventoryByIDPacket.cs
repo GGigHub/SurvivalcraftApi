@@ -20,13 +20,13 @@ public class OpenInventoryByIDPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        if (From == null) return;
         var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
-        if (isServer) {
+        if (isServer && From != null) {
             IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
             if (inventory != null) {
-                OpenInventoryByIDPacket packet = new OpenInventoryByIDPacket(inventory);
-                packet.To = From;
+                OpenInventoryByIDPacket packet = new(inventory) {
+                    To = From
+                };
                 NetworkManager.Queue(packet);
             }
         }
@@ -34,6 +34,9 @@ public class OpenInventoryByIDPacket : Packet {
             IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
             if (inventory != null) {
                 var player = GameManager.Project.FindSubsystem<SubsystemPlayers>()?.ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerIndex == NetworkManager.PlayerIndex);
+                if (player?.ComponentGui == null || player.ComponentMiner?.Inventory == null) {
+                    return;
+                }
                 if (inventory is ComponentChest componentChest) {
                     player.ComponentGui.ModalPanelWidget = new ChestWidget(player.ComponentMiner.Inventory, componentChest);
                     AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);

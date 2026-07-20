@@ -22,19 +22,14 @@ public class StatePacket : ClientPacketBase {
     }
 
     public override void Handle(bool isServer) {
-        var clientKeyValuePair = From;
-        if (clientKeyValuePair == null) {
-            return;
-        }
-        var client = clientKeyValuePair;
-        client.NetworkState = m_state;
-        if (isServer) {
+        From.NetworkState = m_state;
+        if (isServer && From != null) {
             var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
             var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
 
-            NetworkManager.Queue(new StatePacket(client.PlayerIndex, client.NetworkState) { Except = client });
+            NetworkManager.Queue(new StatePacket(From.PlayerIndex, From.NetworkState) { Except = From });
 
-            switch (client.NetworkState) {
+            switch (From.NetworkState) {
                 case NetworkState.Connected: {
                         /*
                         byte[] textureData = null;
@@ -59,30 +54,30 @@ public class StatePacket : ClientPacketBase {
                     break;
                 case NetworkState.ProjectLoaded: {
                         List<Entity> sendList = [.. GameManager.Project.Entities];
-                        NetworkManager.Queue(new EntityLoadPacket(sendList) { To = client });
+                        NetworkManager.Queue(new EntityLoadPacket(sendList) { To = From });
                         break;
                     }
                 case NetworkState.LoadTerrain:
-                    if (client.GetPlayerData()?.ComponentPlayer != null
+                    if (From.GetPlayerData()?.ComponentPlayer != null
                         && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
-                        client.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = true;
+                        From.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = true;
                     }
                     break;
                 case NetworkState.Playing:
-                    if (client.GetPlayerData() == null) {
-                        //NetworkManager.Server.RemoveClient(client, "错误:该Client没有对应PlayerData");
+                    if (From.GetPlayerData() == null) {
+                        //NetworkManager.Server.RemoveClient(From, "错误:该Client没有对应PlayerData");
                     }
-                    else if (client.GetPlayerData().ComponentPlayer != null
+                    else if (From.GetPlayerData().ComponentPlayer != null
                         && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
-                        client.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = false;
+                        From.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = false;
                     }
                     foreach (Entity entity in GameManager.Project.Entities) {
                         foreach (IInventory inventory in entity.FindComponents<IInventory>()) {
                             if (inventory is ComponentClothing clothing) {
-                                NetworkManager.Queue(new ClothingSyncPacket(clothing) { To = client });
+                                NetworkManager.Queue(new ClothingSyncPacket(clothing) { To = From });
                             }
                             else {
-                                NetworkManager.Queue(new InventorySyncPacket(inventory) { To = client });
+                                NetworkManager.Queue(new InventorySyncPacket(inventory) { To = From });
                             }
                         }
                     }

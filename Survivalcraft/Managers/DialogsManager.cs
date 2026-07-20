@@ -20,6 +20,8 @@ namespace Game {
 
         public static ReadOnlyList<Dialog> Dialogs => new(m_dialogs);
 
+        public static event Action<Dialog> DialogHidden;
+
         public static void Confirm(string msg, Action<MessageDialogButton> clickEvent, ContainerWidget parentWidget = null) {
             MessageDialog dialog = null;
             dialog = new MessageDialog("提示", msg, LanguageControl.Yes, LanguageControl.No, e => {
@@ -117,6 +119,7 @@ namespace Game {
                         dialog.WidgetsHierarchyInput = new WidgetInput(WidgetInputDevice.None);
                         m_dialogs.Remove(dialog);
                         m_animationData[dialog].Direction = -1;
+                        DialogHidden?.Invoke(dialog);
                     }
                 }
             );

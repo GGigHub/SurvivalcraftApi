@@ -57,8 +57,17 @@ public class MemoryBankDataPacket : EditableBlockPacketBase {
         }
         else {
             behavior.SetBlockData(m_cellFace.Point, data);
+            QueueElectricElement(m_cellFace);
         }
         if (isServer) NetworkManager.Queue(this);
+    }
+
+    private static void QueueElectricElement(CellFace cellFace) {
+        SubsystemElectricity subsystemElectricity = GameManager.Project.FindSubsystem<SubsystemElectricity>(true);
+        ElectricElement electricElement = subsystemElectricity.GetElectricElement(cellFace.X, cellFace.Y, cellFace.Z, cellFace.Face);
+        if (electricElement != null) {
+            subsystemElectricity.QueueElectricElementForSimulation(electricElement, subsystemElectricity.CircuitStep + 1);
+        }
     }
 }
 

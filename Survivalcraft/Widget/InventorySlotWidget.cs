@@ -7,7 +7,7 @@ using GameEntitySystem;
 namespace Game {
     public class InventorySlotWidget : CanvasWidget, IDragTargetWidget {
         public static event Action<IInventory, int, IInventory, int, int> OnMoveItem;
-        public static event Action<IInventory, int, DragMode, IInventory, int, bool> OnDragDropItem;
+        public static event Action<IInventory, int, DragMode, IInventory, int, bool, int> OnDragDropItem;
         public BevelledRectangleWidget m_rectangleWidget;
 
         public RectangleWidget m_highlightWidget;
@@ -606,7 +606,7 @@ namespace Game {
             dragCount = CalculateSplitCount(dragCount, dragMode);
 
             if (NetworkManager.IsClientRunning) {
-                OnDragDropItem?.Invoke(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly);
+                OnDragDropItem?.Invoke(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly, dragCount);
             }
 
             bool flag = false;

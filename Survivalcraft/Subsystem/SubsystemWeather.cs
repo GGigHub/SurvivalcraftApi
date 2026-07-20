@@ -6,7 +6,7 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemWeather : Subsystem, IDrawable, IUpdateable {
-        public static event Action<double, double, float> OnPrecipitationChange;
+        public static event Action<double, double, float, float> OnPrecipitationChange;
 
         public static event Action<double, float, double> OnFogChange;
 
@@ -341,7 +341,7 @@ namespace Game {
                 }
                 m_precipitationEndTime = m_precipitationStartTime + 60f * m_random.Float(3f, 6f);
                 m_precipitationRampTime = m_random.Float(10f, 30f);
-                OnPrecipitationChange?.Invoke(m_precipitationStartTime, m_precipitationEndTime, m_lightningIntensity);
+                OnPrecipitationChange?.Invoke(m_precipitationStartTime, m_precipitationEndTime, m_lightningIntensity, m_precipitationRampTime);
             }
             if (m_subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled) {
                 if (IsPrecipitationStarted) {

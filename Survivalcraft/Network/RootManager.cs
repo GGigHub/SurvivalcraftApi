@@ -52,8 +52,12 @@ public static class RootManager {
             if (!NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.StartFlu));
         };
+        ComponentFlu.OnFluImpulseEvent += (flu, impulse) => {
+            if (!NetworkManager.IsClientRunning)
+                NetworkManager.Queue(new ComponentFluPacket(flu, impulse));
+        };
         ComponentFurnace.OnFurnaceUpdate += (furnace) => {
-            if (NetworkManager.IsServerRunning)
+            if (NetworkManager.IsServerRunning && Time.PeriodicEvent(2.0, 0.0))
                 NetworkManager.Queue(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
         };
         ComponentGui.OnManualLightingStrike += (gui, position, direction) =>
@@ -205,9 +209,9 @@ public static class RootManager {
             if (NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new MemoryBankDataPacket(default, true, inventoryId, slotIndex, data));
         };
-        SubsystemMemoryBankBlockBehavior.OnItemDataHarvested += (inventoryId, data) => {
+        SubsystemMemoryBankBlockBehavior.OnItemDataHarvested += (id, data) => {
             if (!NetworkManager.IsClientRunning)
-                NetworkManager.Queue(new MemoryBankDataPacket(default, true, inventoryId, -1, data));
+                NetworkManager.Queue(new MemoryBankDataPacket(id, data));
         };
         SubsystemMovingBlocks.OnMovingBlockAdd += (movingBlockSet) =>
             NetworkManager.Queue(new MovingBlockAddPacket((SubsystemMovingBlocks.MovingBlockSet)movingBlockSet));
@@ -227,8 +231,8 @@ public static class RootManager {
             if (NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new PistonDataPacket(default, true, inventoryId, slotIndex, data));
         };
-        SubsystemProjectiles.OnProjectileFire += (projectile) =>
-            NetworkManager.Queue(new ProjectilePacket(projectile));
+        SubsystemProjectiles.OnProjectileFire += (projectile, isFireProjectile) =>
+            NetworkManager.Queue(new ProjectilePacket(projectile, isFireProjectile));
         SubsystemSignBlockBehavior.OnEditSignRequest += (subsystem, point) => {
             if (NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new EditSignPacket(point));
@@ -257,14 +261,14 @@ public static class RootManager {
             if (NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new TruthTableDataPacket(default, true, inventoryId, slotIndex, data));
         };
-        SubsystemTruthTableCircuitBlockBehavior.OnItemDataHarvested += (inventoryId, data) => {
+        SubsystemTruthTableCircuitBlockBehavior.OnItemDataHarvested += (id, data) => {
             if (!NetworkManager.IsClientRunning)
-                NetworkManager.Queue(new TruthTableDataPacket(default, true, inventoryId, -1, data));
+                NetworkManager.Queue(new TruthTableDataPacket(id, data));
         };
         SubsystemWeather.OnFogChange += (startTime, rampTime, endTime) =>
             NetworkManager.Queue(new SubsystemWeatherPacket(startTime, rampTime, endTime));
-        SubsystemWeather.OnPrecipitationChange += (startTime, endTime, intensity) =>
-            NetworkManager.Queue(new SubsystemWeatherPacket(startTime, endTime, intensity));
+        SubsystemWeather.OnPrecipitationChange += (startTime, endTime, intensity, rampTime) =>
+            NetworkManager.Queue(new SubsystemWeatherPacket(startTime, endTime, intensity, rampTime));
         TerrainUpdater.OnTerrainPlayerLocationUpdate += (updater, location) =>
             NetworkManager.Queue(new PlayerUpdateLocationPacket(location));
         TerrainUpdater.OnTerrainReplyResult += (updater, playerIndex, chunks) =>
@@ -299,8 +303,8 @@ public static class RootManager {
             NetworkManager.Queue(new CrossbowPullPacket(inventory, slotIndex));
         DispenserWidget.OnDispenserChicked += (position, data) =>
             NetworkManager.Queue(new DispenserPacket(position, data));
-        InventorySlotWidget.OnDragDropItem += (sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly) =>
-            NetworkManager.Queue(new DragDropItemPacket(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly));
+        InventorySlotWidget.OnDragDropItem += (sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly, dragCount) =>
+            NetworkManager.Queue(new DragDropItemPacket(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly, dragCount));
         InventorySlotWidget.OnMoveItem += (sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count) =>
             NetworkManager.Queue(new MoveItemPacket(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count));
         ViewWidget.OnPlayerDragDrop += (playerData, inventoryId, slotIndex, worldPos, count) =>
@@ -346,27 +350,7 @@ public static class RootManager {
         ComponentLocomotion.IsNetworkMode += BodyUpdatePacket.ShouldBeNetworkControlled;
         ComponentBody.OnNetworkBodyUpdate += NetworkBodySmoothing.Update;
         ComponentBody.OnBodyRemoved += NetworkBodySmoothing.RemoveTarget;
-        ComponentVitalStats.OnVitalStatsUpdate += (stats) => {
-            if (NetworkManager.IsServerRunning)
-                NetworkManager.Queue(new VitalStatSyncPacket(stats));
-        };
         ComponentBody.OnBodyUpdate += BodyUpdatePacket.CollectBodyForSync;
-        TerrainUpdater.OnTerrainPlayerLocationUpdate += (updater, location) =>
-            NetworkManager.Queue(new PlayerUpdateLocationPacket(location));
-        ComponentFlu.OnFluUpdate += (flu) => {
-            if (NetworkManager.IsClientRunning && Time.PeriodicEvent(1.0, 0.5))
-                NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.SyncStat));
-        };
-        SubsystemFurnaceBlockBehavior.OnFurnacesUpdate += (subsystem, furnaces) => {
-            if (NetworkManager.IsServerRunning)
-                NetworkManager.Queue(new ComponentFurnacePacket(furnaces));
-        };
-        SubsystemGameInfo.OnTimeUpdate += (totalElapsedGameTime, timeOfDayOffset) =>
-            NetworkManager.Queue(new SubsystemTimePacket(totalElapsedGameTime, timeOfDayOffset));
-        ComponentFurnace.OnFurnaceUpdate += (furnace) => {
-            if (NetworkManager.IsServerRunning && Time.PeriodicEvent(2.0, 0.0))
-                NetworkManager.Queue(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
-        };
         Project.EntityAdded += (_, arg) => {
             if (!NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new EntityLoadPacket(arg.Entity));

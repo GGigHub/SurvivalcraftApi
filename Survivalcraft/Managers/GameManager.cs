@@ -40,6 +40,7 @@ namespace Game {
         public static void LoadProject(byte[] messagePackData, ContainerWidget gamesWidget, bool useNetProj = true) {
             DisposeProject();
             IsNetworkProject = true;
+            if (SettingsManager.LetRamdomStatic) Random.Counter = 0;
             var valuesDictionary = new ValuesDictionary();
             var valuesDictionary2 = new ValuesDictionary();
             valuesDictionary.SetValue("GameInfo", valuesDictionary2);
@@ -59,6 +60,7 @@ namespace Game {
         public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, bool useNetProj = true) {
             DisposeProject();
             IsNetworkProject = false;
+            if (SettingsManager.LetRamdomStatic) Random.Counter = 0;
             WorldsManager.RepairWorldIfNeeded(worldInfo.DirectoryName);
             VersionsManager.UpgradeWorld(worldInfo.DirectoryName);
             BlocksManager.LoadBlocksStaticly = string.IsNullOrEmpty(worldInfo.APIVersion);
@@ -99,7 +101,7 @@ namespace Game {
         }
 
         public static void SaveProject(bool waitForCompletion, bool showErrorDialog) {
-            if (m_project != null && !IsNetworkProject && !NetworkManager.IsClientRunning) {
+            if (m_project != null && !IsNetworkProject) {
                 double realTime = Time.RealTime;
                 ProjectData projectData;
                 IsSavingProjectToStorage = true;

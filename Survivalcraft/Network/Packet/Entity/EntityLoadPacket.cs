@@ -29,6 +29,19 @@ public class EntityLoadPacket : Packet {
     public override void Handle(bool isServer) {
         if (isServer) return;
         List<Entity> el = GameManager.Project.InitializeAndLoadEntities(entityDataList);
+        List<Entity> entitiesToRemove = [];
+        foreach (Entity entity in el) {
+            if (entity.Id == 0) {
+                continue;
+            }
+            Entity existingEntity = GameManager.Project.FindEntity(entity.Id);
+            if (existingEntity != null) {
+                entitiesToRemove.Add(existingEntity);
+            }
+        }
+        foreach (Entity entity in entitiesToRemove) {
+            GameManager.Project.RemoveEntity(entity, true);
+        }
         GameManager.Project.AttachEntities(el, true);
     }
 }

@@ -5,7 +5,7 @@ namespace Game.Network;
 public static class PickablePacketHelpers {
     public static void SerializeFullPickable(PacketSerializer archive, Pickable pickable) {
         int id = pickable.Id;
-        byte count = archive.IsWriting ? (byte)pickable.Count : (byte)0;
+        int count = archive.IsWriting ? pickable.Count : 0;
         int value = archive.IsWriting ? pickable.Value : 0;
         Vector3 position = archive.IsWriting ? pickable.Position : default;
         Vector3 velocity = archive.IsWriting ? pickable.Velocity : default;
@@ -84,6 +84,10 @@ public static class PickablePacketHelpers {
         }
         else {
             Pickable created = subsystemPickables.CreatePickable(source.Id, source.Value, source.Count, source.Position, source.Velocity, source.StuckMatrix, null);
+            if (created == null) {
+                return;
+            }
+            created.FlyToPosition = source.FlyToPosition;
             subsystemPickables.AddPickable(created);
         }
     }

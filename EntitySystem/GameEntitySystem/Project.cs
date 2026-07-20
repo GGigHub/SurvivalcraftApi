@@ -194,6 +194,12 @@ namespace GameEntitySystem {
                 throw new Exception("Entity does not belong to this project.");
             }
             if (!entity.IsAddedToProject) {
+                if (entity.Id != 0) {
+                    Entity existingEntity = FindEntity(entity.Id);
+                    if (existingEntity != null && existingEntity != entity) {
+                        throw new InvalidOperationException($"Entity ID {entity.Id} is already added to this project.");
+                    }
+                }
                 BeforeEntityAdded?.Invoke(this, new EntityAddRemoveEventArgs(entity));
                 m_entities.Add(entity, true);
                 if (entity.Id == 0) {

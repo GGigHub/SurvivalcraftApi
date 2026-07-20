@@ -8,7 +8,8 @@ using LiteNetLib.Utils;
 namespace Game.Network;
 
 public sealed class RelayClient(string roomCode) : INetEventListener {
-    private readonly string _roomCode = roomCode?.Trim().ToUpperInvariant();
+    private readonly string _roomCode = roomCode.Trim().ToUpperInvariant();
+    private bool _disconnectByUser;
     private NetManager _netManager;
     private NetPeer _relayPeer;
 
@@ -31,15 +32,14 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
 
     public void Update() {
         LatencyProbe.Update();
-        _netManager?.PollEvents();
+        _netManager.PollEvents();
     }
 
     public void Disconnect() {
-        IsConnected = false;
-        _netManager?.Stop();
-        _relayPeer = null;
-        LatencyProbe.Reset();
-        MySession?.NetworkState = NetworkState.NotConnected;
+        _disconnectByUser = true;
+        _netManager.DisconnectAll();
+        _netManager.PollEvents();
+        _netManager.Stop();
     }
 
     public void Send(Packet packet) {
@@ -78,7 +78,9 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         else if (type == RelayMessageType.JoinRejected) {
             Log.Warning($"Relay room rejected: {_roomCode}");
             DialogsManager.Alert("Relay", reader.GetString());
-            Disconnect();
+            // 用户：不是我拒绝的
+            _disconnectByUser = true;
+            NetworkManager.Stop();
         }
         else if (type == RelayMessageType.DataToPeer) {
             byte[] data = reader.GetBytesWithLength();
@@ -93,14 +95,17 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-        _relayPeer = null;
         IsConnected = false;
-        MySession?.NetworkState = NetworkState.NotConnected;
+        MySession.NetworkState = NetworkState.NotConnected;
 
-        GameManager.DisposeProject();
-        ScreensManager.SwitchScreen("MainMenu");
-        DialogsManager.Alert("Disconnected", disconnectInfo.Reason.ToString());
+        LatencyProbe.Reset();
         Log.Information($"Relay disconnected: {peer.Address}, Reason: {disconnectInfo.Reason}");
+
+        if (!_disconnectByUser) {
+            GameManager.DisposeProject();
+            ScreensManager.SwitchScreen("MainMenu");
+            DialogsManager.Alert($"Relay disconnected: {peer.Address}", $"Reason: {disconnectInfo.Reason}");
+        }
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {

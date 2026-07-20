@@ -16,6 +16,7 @@ public class PickableCreatePacket : Packet {
         m_pickable.Position = pickable.Position;
         m_pickable.Velocity = pickable.Velocity;
         m_pickable.StuckMatrix = pickable.StuckMatrix;
+        m_pickable.FlyToPosition = pickable.FlyToPosition;
     }
 
     public override void Serialize(PacketSerializer archive) {

@@ -23,7 +23,7 @@ namespace Game {
             }
             Text = NetworkManager.RelayHostCodeStatus switch {
                 RelayHostCodeStatus.Creating => "联机码：正在创建...",
-                RelayHostCodeStatus.Ready => $"联机码：{NetworkManager.RelayHost?.GlobalCode}",
+                RelayHostCodeStatus.Ready => GetRelayHostCodeText(),
                 RelayHostCodeStatus.Failed => "联机码：创建失败",
                 _ => string.Empty
             };
@@ -50,6 +50,18 @@ namespace Game {
 
             float hiddenWidth = MathUtils.Max(rightControlsContainerWidget.RenderTransform.M41, 0f);
             return MathUtils.Max(width - hiddenWidth, 0f);
+        }
+
+        private static string GetRelayHostCodeText() {
+            string globalCode = NetworkManager.RelayHost?.GlobalCode;
+            if (!string.IsNullOrWhiteSpace(globalCode)) {
+                return $"联机码：{globalCode}";
+            }
+            string roomCode = NetworkManager.RelayHost?.RoomCode;
+            if (!string.IsNullOrWhiteSpace(roomCode)) {
+                return $"房间码：{roomCode}";
+            }
+            return "联机码：--";
         }
     }
 }

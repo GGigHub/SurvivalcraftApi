@@ -13,6 +13,7 @@ namespace Game.Network;
 
 public sealed class RelayHost : INetEventListener {
     private readonly Dictionary<int, ClientSession> _sessions = [];
+    private bool _disconnectByUser;
     private NetManager _netManager;
     private NetPeer _relayPeer;
     public bool IsConnected { get; private set; }
@@ -39,12 +40,10 @@ public sealed class RelayHost : INetEventListener {
     }
 
     public void Disconnect() {
-        _sessions.Clear();
-        _relayPeer = null;
+        _disconnectByUser = true;
+        _netManager.DisconnectAll();
+        _netManager.PollEvents();
         _netManager.Stop();
-        IsConnected = false;
-        IsDisconnected = true;
-        GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
     }
 
     public void Board(Packet packet) {
@@ -97,7 +96,7 @@ public sealed class RelayHost : INetEventListener {
         else if (type == RelayMessageType.PeerLeft) {
             int id = reader.GetInt();
             if (_sessions.Remove(id, out ClientSession session) && GameManager.Project != null)
-                GameManager.Project.FindSubsystem<SubsystemNetwork>()?.MakePlayerOffline(session);
+                GameManager.Project.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
         }
         else if (type == RelayMessageType.DataToHost) {
             int id = reader.GetInt();
@@ -125,10 +124,14 @@ public sealed class RelayHost : INetEventListener {
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-        _relayPeer = null;
-        _sessions.Clear();
         IsConnected = false;
         IsDisconnected = true;
+
+        _sessions.Clear();
+        GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
+
+        NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Failed;
+        Log.Information($"Relay disconnected: {peer.Address}, Reason: {disconnectInfo.Reason}");
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {

@@ -24,13 +24,14 @@ public class ProjectilePacket : Packet {
     public ProjectilePacket() {
     }
 
-    public ProjectilePacket(Projectile projectile) {
+    public ProjectilePacket(Projectile projectile, bool isFireProjectile) {
         m_value = projectile.Value;
         m_position = projectile.Position;
         m_velocity = projectile.Velocity;
         m_trailOfffset = projectile.TrailOffset;
         m_angularVelocity = projectile.AngularVelocity;
         m_ownerId = projectile.Owner == null ? 0 : projectile.Owner.Entity.Id;
+        m_isFireProjectile = isFireProjectile;
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -54,9 +55,12 @@ public class ProjectilePacket : Packet {
                 creature = entity.FindComponent<ComponentCreature>();
             });
         }
-        _ = m_isFireProjectile
+        Projectile projectile = m_isFireProjectile
             ? subsystem.FireProjectile(m_value, m_position, m_velocity, m_angularVelocity, creature, true)
             : subsystem.AddProjectile(m_value, m_position, m_velocity, m_angularVelocity, creature, true);
+        if (projectile != null) {
+            projectile.TrailOffset = m_trailOfffset;
+        }
     }
 }
 

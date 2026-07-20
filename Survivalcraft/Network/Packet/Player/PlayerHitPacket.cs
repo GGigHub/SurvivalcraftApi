@@ -36,16 +36,21 @@ public class PlayerHitPacket : PlayerPacketBase {
         dir = Vector3.Normalize(dir);
         GameManager.Project.FindEntity(bodyId, entity => {
             ComponentBody body = entity.FindComponent<ComponentBody>();
-            if (body == null || Vector3.Distance(m_hitPosition, eye) > 6f) {
+            if (body == null) {
                 return;
             }
-            BoundingBox box = body.BoundingBox;
-            box.Min -= new Vector3(0.5f);
-            box.Max += new Vector3(0.5f);
-            if (m_hitPosition.X < box.Min.X || m_hitPosition.X > box.Max.X
-                || m_hitPosition.Y < box.Min.Y || m_hitPosition.Y > box.Max.Y
-                || m_hitPosition.Z < box.Min.Z || m_hitPosition.Z > box.Max.Z) {
-                return;
+            if (isServer) {
+                if (Vector3.Distance(m_hitPosition, eye) > 6f) {
+                    return;
+                }
+                BoundingBox box = body.BoundingBox;
+                box.Min -= new Vector3(0.5f);
+                box.Max += new Vector3(0.5f);
+                if (m_hitPosition.X < box.Min.X || m_hitPosition.X > box.Max.X
+                    || m_hitPosition.Y < box.Min.Y || m_hitPosition.Y > box.Max.Y
+                    || m_hitPosition.Z < box.Min.Z || m_hitPosition.Z > box.Max.Z) {
+                    return;
+                }
             }
             player.ComponentMiner.Hit(body, m_hitPosition, dir);
             QueuePlayerPacket(this, isServer);

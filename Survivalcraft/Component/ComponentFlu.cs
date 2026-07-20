@@ -42,6 +42,7 @@ namespace Game {
         public static event Action<ComponentFlu> OnFluEffectEvent;
         public static event Action<ComponentFlu> OnStartFluEvent;
         public static event Action<ComponentFlu> OnSneezeEvent;
+        public static event Action<ComponentFlu, Vector3> OnFluImpulseEvent;
 
 
         public bool HasFlu => m_fluDuration > 0f;
@@ -142,7 +143,9 @@ namespace Game {
                 );
                 if (m_random.Bool(2f * dt)) {
                     if (!NetworkManager.IsClientRunning) {
-                        m_componentPlayer.ComponentBody.ApplyImpulse(-1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector());
+                        Vector3 impulse = -1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector();
+                        m_componentPlayer.ComponentBody.ApplyImpulse(impulse);
+                        OnFluImpulseEvent?.Invoke(this, impulse);
                     }
                 }
             }

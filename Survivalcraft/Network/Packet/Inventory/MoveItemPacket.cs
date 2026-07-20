@@ -36,9 +36,14 @@ public class MoveItemPacket : Packet {
         var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
         IInventory from = subsystemInventories.GetInventoryById(fromInventoryId);
         IInventory to = subsystemInventories.GetInventoryById(toInventoryId);
+        if (from == null || to == null) {
+            InventoryPacketHelpers.QueueInventorySync(from, to, From);
+            return;
+        }
         if (from != null && to != null) {
             if (PlayerDragDropPacket.IsOwnedByOtherPlayer(from, From, out _)
                 || PlayerDragDropPacket.IsOwnedByOtherPlayer(to, From, out _)) {
+                InventoryPacketHelpers.QueueInventorySync(from, to, From);
                 return;
             }
             if (count <= 0

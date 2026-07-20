@@ -33,10 +33,24 @@ public class PlayerBuglePacket : Packet {
                 DialogsManager.HideAllDialogs();
                 mainPlayer.ComponentHealth.IsInvulnerable = true;
                 string content = m_content.Replace("[n]", "\n").Replace("[e]", " ");
-                DialogsManager.ShowDialog(null, new MessageDialog(m_title, content, LanguageControl.Ok, null, btn => {
+                MessageDialog dialog = null;
+                void RestoreInvulnerability() {
+                    if (mainPlayer.ComponentHealth != null) {
+                        mainPlayer.ComponentHealth.IsInvulnerable = false;
+                    }
+                    DialogsManager.DialogHidden -= OnDialogHidden;
+                }
+                void OnDialogHidden(Dialog hiddenDialog) {
+                    if (hiddenDialog == dialog) {
+                        RestoreInvulnerability();
+                    }
+                }
+                dialog = new MessageDialog(m_title, content, LanguageControl.Ok, null, btn => {
                     DialogsManager.HideAllDialogs();
-                    mainPlayer.ComponentHealth.IsInvulnerable = false;
-                }));
+                    RestoreInvulnerability();
+                });
+                DialogsManager.DialogHidden += OnDialogHidden;
+                DialogsManager.ShowDialog(null, dialog);
             }
         }
     }

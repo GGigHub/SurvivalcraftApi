@@ -31,6 +31,10 @@ public class SubsystemTimePacket : Packet {
         if (canApplyTime) {
             m_info.TotalElapsedGameTime = m_time;
             m_info.TimeOfDay.TimeOfDayOffset = m_timeOfDayOffset;
+            SubsystemTime subsystemTime = GameManager.Project.FindSubsystem<SubsystemTime>();
+            if (subsystemTime != null) {
+                subsystemTime.m_gameTime = m_time;
+            }
         }
         else {
             if (From?.GetPlayerData() != null) Log.Information($"{From.GetPlayerData().Name} 打算在非创造模式下修改时间");

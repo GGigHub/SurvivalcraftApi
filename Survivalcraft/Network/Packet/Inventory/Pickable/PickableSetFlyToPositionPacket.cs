@@ -17,10 +17,14 @@ public class PickableSetFlyToPositionPacket : Packet {
 
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref m_id);
+        bool hasFlyToPosition = archive.IsWriting && m_flyToPosition.HasValue;
+        archive.Value(ref hasFlyToPosition);
         Vector3 flyTo = m_flyToPosition ?? default;
-        archive.Value(ref flyTo);
+        if (hasFlyToPosition) {
+            archive.Value(ref flyTo);
+        }
         if (archive.IsReading) {
-            m_flyToPosition = flyTo;
+            m_flyToPosition = hasFlyToPosition ? flyTo : null;
         }
     }
 

@@ -39,6 +39,7 @@ public class SubsystemNetwork : Subsystem {
                 list.EntitiesData.Add(entityDataPlayer);
                 m_subsystemPlayers.m_offlinePlayerEntities.Remove(pd.PlayerIndex);
                 List<Entity> el = GameManager.Project.InitializeAndLoadEntities(list);
+                RemoveExistingEntitiesWithSameIds(el);
                 GameManager.Project.AttachEntities(el, true);
                 Entity e = el[0];
                 componentPlayer = e.FindComponent<ComponentPlayer>();
@@ -89,6 +90,7 @@ public class SubsystemNetwork : Subsystem {
             var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
             list.EntitiesData.Add(entityData);
             List<Entity> el = GameManager.Project.InitializeAndLoadEntities(list);
+            RemoveExistingEntitiesWithSameIds(el);
             GameManager.Project.AttachEntities(el, true);
             if (el.Count > 0) {
                 entity = el[0];
@@ -103,6 +105,22 @@ public class SubsystemNetwork : Subsystem {
         playerData = null;
         entity = null;
         return false;
+    }
+
+    public static void RemoveExistingEntitiesWithSameIds(IEnumerable<Entity> entities) {
+        List<Entity> entitiesToRemove = [];
+        foreach (Entity entity in entities) {
+            if (entity.Id == 0) {
+                continue;
+            }
+            Entity existingEntity = GameManager.Project.FindEntity(entity.Id);
+            if (existingEntity != null) {
+                entitiesToRemove.Add(existingEntity);
+            }
+        }
+        foreach (Entity entity in entitiesToRemove) {
+            GameManager.Project.RemoveEntity(entity, true);
+        }
     }
 
     public void RemoveStalePlayerData(int playerIndex) {

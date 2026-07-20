@@ -33,10 +33,8 @@ public static class NetworkManager {
     public static PacketFragment PackageFragment { get; } = new();
     public static RelayHostCodeStatus RelayHostCodeStatus { get; set; } = RelayHostCodeStatus.Inactive;
 
-    public static CancellationTokenSource RelayCancelToken { get; private set; }
     public static bool IsServerRunning => (NetworkServer?.IsRunning ?? false) || (RelayHost?.IsConnected ?? false);
     public static bool IsClientRunning => (NetworkClient?.IsConnected ?? false) || (RelayClient?.IsConnected ?? false);
-    public static bool IsClientStarting => (NetworkClient?.IsRunning ?? false) || (RelayClient?.IsRunning ?? false);
     public static int ClientLatency => IsClientRunning ? LatencyProbe.Latency : -1;
     public static ClientSession MySession => NetworkClient?.MySession ?? RelayClient?.MySession;
     public static int PlayerIndex => MySession?.PlayerIndex ?? -1;
@@ -68,7 +66,6 @@ public static class NetworkManager {
         NetworkClient = null;
         RelayHost = null;
         RelayClient = null;
-        RelayCancelToken?.Cancel();
         NetworkBodySmoothing.Clear();
         RelayHostCodeStatus = RelayHostCodeStatus.Inactive;
     }
@@ -80,46 +77,18 @@ public static class NetworkManager {
         NetworkClient = new();
         NetworkClient.Connect(iPEndPoint);
     }
-    public static async Task<bool> StartRelayHostAsync() {
+
+    public static async Task StartRelayHostAsync() {
         try {
             RelayHostCodeStatus = RelayHostCodeStatus.Creating;
-            CancellationTokenSource cts = new();
-            RelayCancelToken = cts;
-
-            RelayCandidateInfo[] candidates = await CenterServerClient.GetRelayCandidatesAsync();
-            foreach (RelayCandidateInfo candidate in candidates
-              .OrderBy(c => c.IsBusy).ThenBy(c => c.Priority).ThenBy(c => c.RoomCount).ThenBy(c => c.PeerCount).Take(3)) {
-                try {
-                    IPAddress address = await NetworkHelper.TryGetIPAddress(candidate.Host);
-                    if (address == null) continue;
-
-                    RelayHost relayHost = new();
-                    relayHost.Start(new IPEndPoint(address, candidate.UdpPort));
-                    for (int i = 0; i < 200; i++) {
-                        if (relayHost?.IsDisconnected == true) break;
-                        if (relayHost?.IsConnected == true) return true;
-                        if (cts.IsCancellationRequested == true) {
-                            RelayHostCodeStatus = RelayHostCodeStatus.Inactive;
-                            relayHost?.Disconnect();
-                            return false;
-                        }
-                        relayHost.Update();
-                        await Task.Delay(50);
-                    }
-                    relayHost?.Disconnect();
-                }
-                catch (Exception ex) {
-                    Log.Warning($"Failed to start relay host through candidate {candidate.RelayId}: {ex.Message}");
-                }
-            }
+            IPEndPoint endPoint = await CenterServerClient.GetBestRelayEndPointAsync();
+            RelayHost = new RelayHost();
+            RelayHost.Start(endPoint);
         }
         catch (Exception ex) {
-            Log.Warning($"Failed to get relay candidates from center server: {ex.Message}");
-        }
-        if (RelayHostCodeStatus == RelayHostCodeStatus.Creating) {
+            Log.Warning($"Failed to start relay host: {ex.Message}");
             RelayHostCodeStatus = RelayHostCodeStatus.Failed;
         }
-        return false;
     }
     public static void StartRelayHost(IPEndPoint relayEndPoint) {
         RelayHost = new();

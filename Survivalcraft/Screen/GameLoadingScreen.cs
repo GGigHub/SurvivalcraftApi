@@ -22,7 +22,6 @@ public class GameLoadingScreen : Screen {
     private string m_password;
     private bool IsAdventureRestart;
     private bool m_startRelayHostWithCenter;
-    private Stopwatch timer;
 
     public GameLoadingScreen() {
         XElement node = ContentManager.Get<XElement>("Screens/GameLoadingScreen");
@@ -48,20 +47,10 @@ public class GameLoadingScreen : Screen {
         }, null);
 
         m_stateMachine.AddState("WaitServerReply", delegate {
-            timer = Stopwatch.StartNew();
         }, delegate {
             SetSpwanDialogMessage("等待服务器响应", 0.25f);
-            // Fix me: 客户端中断连接后再次连接可能会卡住。
             if (NetworkManager.MyState == NetworkState.Connected) {
                 m_stateMachine.TransitionTo("Loading");
-            }
-            else if (NetworkManager.IsClientStarting && NetworkManager.MyState == NetworkState.NotConnected) {
-                if (timer.ElapsedMilliseconds >= 10000) {
-                    NetworkManager.Stop();
-                }
-            }
-            else {
-                NetworkManager.Stop();
             }
         }, delegate {
             if (NetworkManager.MyState == NetworkState.Connected) {
@@ -141,7 +130,12 @@ public class GameLoadingScreen : Screen {
         spawnDialog.Progress = Progress;
     }
     public override void Update() {
-        if (Input.Back || Input.Cancel) ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
+        if (Input.Back || Input.Cancel) { 
+            ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
+            NetworkManager.Stop();
+            GameManager.DisposeProject();
+            return;
+        }
         try {
             GameManager.UpdateProject();
             m_stateMachine.Update();
@@ -149,11 +143,12 @@ public class GameLoadingScreen : Screen {
         catch (Exception e) {
             Log.Error(e);
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
+            NetworkManager.Stop();
+            GameManager.DisposeProject();
             DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get(fName, 1), ExceptionManager.MakeFullErrorMessage(e), LanguageControl.Get("Usual", "ok"), null, null));
         }
     }
     public override void Leave() {
-        //if (m_serverEndPoint != null && CommonLib.GetCurrentWorkType() == Network.WorkType.Local) CommonLib.Net.StopImmediate();
         DialogsManager.HideDialog(spawnDialog);
     }
 
@@ -172,10 +167,6 @@ public class GameLoadingScreen : Screen {
             if (parameters[2] is RelayJoinInfo relayJoinInfo) m_relayJoinInfo = relayJoinInfo;
             else m_serverEndPoint = (IPEndPoint)parameters[2];
             if (parameters.Length == 4) m_password = (string)parameters[3];
-        }
-        // 为什么要放在这里
-        if (SettingsManager.LetRamdomStatic) {
-            Random.Counter = 0;
         }
         m_stateMachine.TransitionTo("WaitingForFadeIn");
         ProgressManager.UpdateProgress("Loading World", 0f);

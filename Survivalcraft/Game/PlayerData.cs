@@ -254,6 +254,9 @@ namespace Game {
                 Log.Verbose($"Player into playing. Index: {0}", PlayerIndex);
             }, delegate {
                 if (ComponentPlayer == null) {
+                    if (NetworkManager.IsClientRunning && !IsMainPlayer) {
+                        return;
+                    }
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
                 else if (m_playerDeathTick.HasValue) {
@@ -276,8 +279,13 @@ namespace Game {
                     Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
                 }
                 if (NetworkManager.IsClientRunning && !IsMainPlayer) {
-                    Restart();
-                    m_stateMachine.TransitionTo("PrepareSpawn");
+                    if (ComponentPlayer != null && ComponentPlayer.ComponentHealth.Health > 0f) {
+                        m_playerDeathTick = null;
+                        IsDead = false;
+                        readyToRestart = false;
+                        m_stateMachine.TransitionTo("Playing");
+                    }
+                    return;
                 }
                 else if (ComponentPlayer == null) {
                     if (IsDead && readyToRestart) {

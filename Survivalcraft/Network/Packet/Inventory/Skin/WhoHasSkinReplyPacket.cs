@@ -21,6 +21,9 @@ public class WhoHasSkinReplyPacket : SkinPacketBase {
 
     public override void Handle(bool isServer) {
         SaveSkin(SkinName, m_skinData);
+        if (isServer) {
+            RequestSkinPacket.ReplyPendingSessions(SkinName, m_skinData, From);
+        }
     }
 }
 

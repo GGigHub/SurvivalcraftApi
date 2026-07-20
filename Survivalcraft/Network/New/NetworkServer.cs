@@ -9,6 +9,7 @@ namespace Game.Network;
 
 public class NetworkServer : INetEventListener {
     private NetManager _netManager;
+    private bool _disconnectByUser;
     public bool IsRunning { get; private set; } = false;
     public Dictionary<NetPeer, ClientSession> ClientSessions { get; set; } = [];
 
@@ -29,10 +30,13 @@ public class NetworkServer : INetEventListener {
     }
 
     public void Stop() {
+        _disconnectByUser = true;
+        _netManager.DisconnectAll();
+        _netManager.PollEvents();
+        _netManager.Stop();
+
         IsRunning = false;
-        _netManager.Stop(true);
-        GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
-        Log.Information("Server stopped");
+        Log.Information("Server stopped.");
     }
 
     public void Update() {
@@ -80,7 +84,7 @@ public class NetworkServer : INetEventListener {
     }
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-        if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.Address.ToString(), out byte[] payload)) {
+        if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (!ClientSessions.TryGetValue(peer, out ClientSession session)) return;
                 if (packet.MinNeedState <= session.NetworkState) {
@@ -103,16 +107,19 @@ public class NetworkServer : INetEventListener {
         };
         ClientSessions[peer] = session;
 
-        Log.Information($"Connected: {peer.Address}");
+        Log.Information($"Connected: {peer}");
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         if (ClientSessions.TryGetValue(peer, out ClientSession session)) {
-            GameManager.Project.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
+            GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
         }
 
         ClientSessions.Remove(peer);
         session.NetworkState = NetworkState.NotConnected;
-        Log.Information($"Disconnected: {peer.Address}, {disconnectInfo}");
+
+        if (!_disconnectByUser) {
+            Log.Information($"Disconnected: {peer}, {disconnectInfo}");
+        }
     }
 }
