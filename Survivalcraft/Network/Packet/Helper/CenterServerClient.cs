@@ -45,18 +45,25 @@ public static class CenterServerClient {
         return address ?? throw new InvalidOperationException($"Could not resolve relay host: {host}");
     }
 
-    public static async Task<IPEndPoint> GetBestRelayEndPointAsync() {
-        RelayCandidateInfo candidate = (await GetRelayCandidatesAsync())
+    public static async Task<IPEndPoint> GetBestRelayEndPointAsync(int bestRank = 1) {
+        RelayCandidateInfo candidate = await GetBestRelayCandidateAsync(bestRank);
+        IPAddress address = await ResolveAddressAsync(candidate.Host);
+        return new IPEndPoint(address, candidate.UdpPort);
+    }
+
+    public static async Task<RelayCandidateInfo> GetBestRelayCandidateAsync(int bestRank = 1) {
+        if (bestRank < 1)
+            throw new ArgumentOutOfRangeException(nameof(bestRank), "Relay rank is 1-based.");
+
+        return (await GetRelayCandidatesAsync())
             .Where(c => !c.IsBusy)
             .OrderBy(c => c.Priority)
             .ThenBy(c => c.RoomCount)
             .ThenBy(c => c.PeerCount)
             .ThenBy(c => c.LastSeenSecondsAgo)
+            .Skip(bestRank - 1)
             .FirstOrDefault()
-            ?? throw new InvalidOperationException("Center server did not return an active relay.");
-
-        IPAddress address = await ResolveAddressAsync(candidate.Host);
-        return new IPEndPoint(address, candidate.UdpPort);
+            ?? throw new InvalidOperationException($"Center server did not return relay candidate rank {bestRank}.");
     }
 
     private static string NormalizeCenterUrl(string url) => string.IsNullOrWhiteSpace(url) ? string.Empty : url.Trim().TrimEnd('/');

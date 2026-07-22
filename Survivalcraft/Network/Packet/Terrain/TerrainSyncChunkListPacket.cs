@@ -6,6 +6,7 @@ public class TerrainSyncChunkListPacket : TerrainPacketBase {
     public override byte ID => (byte)PacketType.TerrainSyncChunkList;
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public List<TerrainChunk> Chunks = [];
+    public List<TerrainChunkSyncData> SyncData = [];
 
     public TerrainSyncChunkListPacket() { }
 
@@ -14,7 +15,7 @@ public class TerrainSyncChunkListPacket : TerrainPacketBase {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        SerializeChunkList(archive, ref Chunks);
+        SerializeChunkSyncDataList(archive, ref Chunks, ref SyncData);
     }
 
     public override void Handle(bool isServer) {
@@ -22,9 +23,8 @@ public class TerrainSyncChunkListPacket : TerrainPacketBase {
             return;
         }
         SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
-        foreach (TerrainChunk chunk in Chunks) {
-            ApplyOneChunk(subsystemTerrain, chunk);
+        foreach (TerrainChunkSyncData data in SyncData) {
+            ApplyOneChunkSyncData(subsystemTerrain, data);
         }
     }
 }
-

@@ -52,7 +52,7 @@ public class PlayerHitPacket : PlayerPacketBase {
                     return;
                 }
             }
-            player.ComponentMiner.Hit(body, m_hitPosition, dir);
+            player.ComponentMiner.Hit(body, m_hitPosition, dir, !isServer, isServer);
             QueuePlayerPacket(this, isServer);
         });
     }

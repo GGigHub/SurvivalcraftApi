@@ -194,19 +194,10 @@ namespace GameEntitySystem {
                 throw new Exception("Entity does not belong to this project.");
             }
             if (!entity.IsAddedToProject) {
-                if (entity.Id != 0) {
-                    Entity existingEntity = FindEntity(entity.Id);
-                    if (existingEntity != null && existingEntity != entity) {
-                        throw new InvalidOperationException($"Entity ID {entity.Id} is already added to this project.");
-                    }
-                }
+                EnsureEntityHasUniqueId(entity);
                 BeforeEntityAdded?.Invoke(this, new EntityAddRemoveEventArgs(entity));
                 m_entities.Add(entity, true);
-                if (entity.Id == 0) {
-                    entity.Id = NextEntityID;
-                    NextEntityID++;
-                }
-                else if (entity.Id >= NextEntityID) {
+                if (entity.Id >= NextEntityID) {
                     NextEntityID = entity.Id + 1;
                 }
                 entity.m_isAddedToProject = true;
@@ -214,6 +205,36 @@ namespace GameEntitySystem {
                     FireEntityAddedEvents(entity);
                 }
             }
+        }
+
+        private void EnsureEntityHasUniqueId(Entity entity) {
+            if (entity.Id == 0) {
+                entity.Id = AllocateEntityId();
+                return;
+            }
+
+            Entity existingEntity = FindEntity(entity.Id);
+            if (existingEntity == null || existingEntity == entity) {
+                return;
+            }
+
+            int oldId = entity.Id;
+            entity.Id = AllocateEntityId();
+            Log.Warning(
+                "Entity ID collision while adding entity. Reassigned ID {0} -> {1}. EntityTemplate={2}, ExistingTemplate={3}.",
+                oldId,
+                entity.Id,
+                entity.ValuesDictionary?.DatabaseObject?.Name ?? "unknown",
+                existingEntity.ValuesDictionary?.DatabaseObject?.Name ?? "unknown");
+        }
+
+        private int AllocateEntityId() {
+            int id = Math.Max(1, NextEntityID);
+            while (FindEntity(id) != null) {
+                id++;
+            }
+            NextEntityID = id + 1;
+            return id;
         }
 
         public virtual void RemoveEntity(Entity entity, bool disposeEntity) {

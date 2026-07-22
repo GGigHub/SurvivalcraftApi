@@ -6,6 +6,22 @@ using Engine;
 namespace Game.Network;
 
 public abstract class TerrainPacketBase : Packet {
+    public class TerrainChunkSyncData {
+        public Point2 Coords;
+        public List<CellValueChange> CellChanges = [];
+        public List<ShaftValueChange> ShaftChanges = [];
+    }
+
+    public struct CellValueChange {
+        public ushort Index;
+        public int Value;
+    }
+
+    public struct ShaftValueChange {
+        public ushort Index;
+        public int Value;
+    }
+
     public static void SerializePoint2List(PacketSerializer archive, ref List<Point2> points, bool useUShort) {
         int count = archive.IsWriting ? points.Count : 0;
         if (useUShort) {
@@ -48,6 +64,30 @@ public abstract class TerrainPacketBase : Packet {
         }
     }
 
+    public static void SerializeChunkSyncDataList(PacketSerializer archive, ref List<TerrainChunk> chunks, ref List<TerrainChunkSyncData> syncData) {
+        ushort count = archive.IsWriting ? (ushort)chunks.Count : (ushort)0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            syncData = new List<TerrainChunkSyncData>(count);
+            for (int i = 0; i < count; i++) {
+                TerrainChunkSyncData data = new();
+                archive.Value(ref data.Coords);
+                SerializeCellValueChanges(archive, ref data.CellChanges);
+                SerializeShaftValueChanges(archive, ref data.ShaftChanges);
+                syncData.Add(data);
+            }
+        }
+        else {
+            SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
+            foreach (TerrainChunk chunk in chunks) {
+                TerrainChunkSyncData data = CreateChunkSyncData(subsystemTerrain, chunk);
+                archive.Value(ref data.Coords);
+                SerializeCellValueChanges(archive, ref data.CellChanges);
+                SerializeShaftValueChanges(archive, ref data.ShaftChanges);
+            }
+        }
+    }
+
     public static void SerializeCellChangeList(PacketSerializer archive, ref List<CellChange> cellChanges) {
         int count = archive.IsWriting ? cellChanges.Count : 0;
         archive.Value(ref count);
@@ -80,16 +120,47 @@ public abstract class TerrainPacketBase : Packet {
         if (targetChunk != null) {
             targetChunk.Cells = chunk.Cells;
             targetChunk.Shafts = chunk.Shafts;
+            targetChunk.State = TerrainChunkState.InvalidLight;
             targetChunk.ThreadState = TerrainChunkState.InvalidLight;
-            targetChunk.IsRequested = false;
             targetChunk.IsLoaded = true;
+            targetChunk.WasDowngraded = false;
+            targetChunk.DowngradedState = null;
+            targetChunk.UpgradedState = TerrainChunkState.InvalidLight;
             targetChunk.WasUpgraded = true;
+            subsystemTerrain.TerrainUpdater.DowngradeChunkNeighborhoodState(targetChunk.Coords, 1, TerrainChunkState.InvalidLight, false);
         }
+    }
+
+    public static void ApplyOneChunkSyncData(SubsystemTerrain subsystemTerrain, TerrainChunkSyncData data) {
+        TerrainChunk targetChunk = subsystemTerrain.Terrain.GetChunkAtCoords(data.Coords.X, data.Coords.Y)
+            ?? subsystemTerrain.Terrain.AllocateChunk(data.Coords.X, data.Coords.Y);
+        if (targetChunk == null) {
+            return;
+        }
+        GenerateChunkBaseContents(subsystemTerrain, targetChunk);
+        foreach (CellValueChange change in data.CellChanges) {
+            targetChunk.Cells[change.Index] = change.Value;
+        }
+        foreach (ShaftValueChange change in data.ShaftChanges) {
+            targetChunk.Shafts[change.Index] = change.Value;
+        }
+        targetChunk.State = TerrainChunkState.InvalidLight;
+        targetChunk.ThreadState = TerrainChunkState.InvalidLight;
+        targetChunk.IsLoaded = true;
+        targetChunk.WasDowngraded = false;
+        targetChunk.DowngradedState = null;
+        targetChunk.UpgradedState = TerrainChunkState.InvalidLight;
+        targetChunk.WasUpgraded = true;
+        subsystemTerrain.TerrainUpdater.DowngradeChunkNeighborhoodState(targetChunk.Coords, 1, TerrainChunkState.InvalidLight, false);
     }
 
     private static void WriteChunk(PacketSerializer archive, TerrainChunk chunk) {
         Point2 coords = chunk.Coords;
         archive.Value(ref coords);
+        WriteChunkContents(archive, chunk);
+    }
+
+    private static void WriteChunkContents(PacketSerializer archive, TerrainChunk chunk) {
         for (int i = 0; i < chunk.Cells.Length; i++) {
             int value = chunk.Cells[i];
             archive.Value(ref value);
@@ -103,6 +174,10 @@ public abstract class TerrainPacketBase : Packet {
     private static void ReadChunk(PacketSerializer archive, List<TerrainChunk> chunks) {
         Point2 coords = default;
         archive.Value(ref coords);
+        chunks.Add(ReadChunkContents(archive, coords));
+    }
+
+    private static TerrainChunk ReadChunkContents(PacketSerializer archive, Point2 coords) {
         TerrainChunk chunk = new(null, coords.X, coords.Y);
         for (int i = 0; i < 65536; i++) {
             archive.Value(ref chunk.Cells[i]);
@@ -110,6 +185,96 @@ public abstract class TerrainPacketBase : Packet {
         for (int i = 0; i < 256; i++) {
             archive.Value(ref chunk.Shafts[i]);
         }
-        chunks.Add(chunk);
+        return chunk;
+    }
+
+    private static TerrainChunkSyncData CreateChunkSyncData(SubsystemTerrain subsystemTerrain, TerrainChunk chunk) {
+        TerrainChunk baseChunk = new(subsystemTerrain.Terrain, chunk.Coords.X, chunk.Coords.Y);
+        try {
+            GenerateChunkBaseContents(subsystemTerrain, baseChunk);
+            TerrainChunkSyncData data = new() {
+                Coords = chunk.Coords
+            };
+            for (int i = 0; i < chunk.Cells.Length; i++) {
+                int value = NormalizeCellValueForDelta(chunk.Cells[i]);
+                if (value != NormalizeCellValueForDelta(baseChunk.Cells[i])) {
+                    data.CellChanges.Add(new CellValueChange {
+                        Index = (ushort)i,
+                        Value = value
+                    });
+                }
+            }
+            for (int i = 0; i < chunk.Shafts.Length; i++) {
+                int value = NormalizeShaftValueForDelta(chunk.Shafts[i]);
+                if (value != NormalizeShaftValueForDelta(baseChunk.Shafts[i])) {
+                    data.ShaftChanges.Add(new ShaftValueChange {
+                        Index = (ushort)i,
+                        Value = value
+                    });
+                }
+            }
+            return data;
+        }
+        finally {
+            baseChunk.Dispose();
+        }
+    }
+
+    private static void GenerateChunkBaseContents(SubsystemTerrain subsystemTerrain, TerrainChunk chunk) {
+        subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass1(chunk);
+        subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass2(chunk);
+        subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass3(chunk);
+        subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass4(chunk);
+    }
+
+    private static int NormalizeCellValueForDelta(int value) => Terrain.ReplaceLight(value, 0);
+
+    private static int NormalizeShaftValueForDelta(int value) {
+        int result = 0;
+        result = Terrain.ReplaceTemperature(result, Terrain.ExtractTemperature(value));
+        result = Terrain.ReplaceHumidity(result, Terrain.ExtractHumidity(value));
+        return result;
+    }
+
+    private static void SerializeCellValueChanges(PacketSerializer archive, ref List<CellValueChange> changes) {
+        int count = archive.IsWriting ? changes.Count : 0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            changes = new List<CellValueChange>(count);
+            for (int i = 0; i < count; i++) {
+                CellValueChange change = default;
+                archive.Value(ref change.Index);
+                archive.Value(ref change.Value);
+                changes.Add(change);
+            }
+        }
+        else {
+            for (int i = 0; i < changes.Count; i++) {
+                CellValueChange change = changes[i];
+                archive.Value(ref change.Index);
+                archive.Value(ref change.Value);
+            }
+        }
+    }
+
+    private static void SerializeShaftValueChanges(PacketSerializer archive, ref List<ShaftValueChange> changes) {
+        ushort count = archive.IsWriting ? (ushort)changes.Count : (ushort)0;
+        archive.Value(ref count);
+        if (archive.IsReading) {
+            changes = new List<ShaftValueChange>(count);
+            for (int i = 0; i < count; i++) {
+                ShaftValueChange change = default;
+                archive.Value(ref change.Index);
+                archive.Value(ref change.Value);
+                changes.Add(change);
+            }
+        }
+        else {
+            for (int i = 0; i < changes.Count; i++) {
+                ShaftValueChange change = changes[i];
+                archive.Value(ref change.Index);
+                archive.Value(ref change.Value);
+            }
+        }
     }
 }

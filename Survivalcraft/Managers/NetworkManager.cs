@@ -66,7 +66,8 @@ public static class NetworkManager {
         NetworkClient = null;
         RelayHost = null;
         RelayClient = null;
-        NetworkBodySmoothing.Clear();
+        NetworkBodyInterpolation.Clear();
+        PlayerBodyUpdatePacket.ClearSnapshots();
         RelayHostCodeStatus = RelayHostCodeStatus.Inactive;
     }
     public static void StartServer() {

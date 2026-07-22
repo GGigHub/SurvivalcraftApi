@@ -356,15 +356,7 @@ namespace Game {
             return null;
         }
 
-        public virtual void ChangeCell(
-            int x,
-            int y,
-            int z,
-            int value,
-            bool updateModificationCounter = true,
-            MovingBlock movingBlock = null,
-            bool fromNetwork = false,
-            bool suppressBehavior = false) {
+        public virtual void ChangeCell(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null, bool fromNetwork = false) {
             bool pass = false;
             ModsManager.HookAction(
                 "TerrainChangeCell",
@@ -377,10 +369,6 @@ namespace Game {
                 }
             );
             if (pass) {
-                return;
-            }
-            if (NetworkManager.IsClientRunning && !fromNetwork) {
-                OnTerrainChangeCell?.Invoke(this, x, y, z, value);
                 return;
             }
             if (!Terrain.IsCellValid(x, y, z)) {
@@ -400,14 +388,12 @@ namespace Game {
                 }
                 TerrainUpdater.DowngradeChunkNeighborhoodState(chunkAtCell.Coords, 1, TerrainChunkState.InvalidLight, false);
             }
-            if (!suppressBehavior) {
-                m_modifiedCells[new Point3(x, y, z)] = true;
-                try {
-                    ChangeCellToBehavior(x, y, z, cellValueFast, value, movingBlock);
-                }
-                catch (Exception e) {
-                    Log.Error($"Block behavior on terrain change execute error: {e}");
-                }
+            m_modifiedCells[new Point3(x, y, z)] = true;
+            try {
+                ChangeCellToBehavior(x, y, z, cellValueFast, value, movingBlock);
+            }
+            catch (Exception e) {
+                Log.Error($"Block behavior on terrain change execute error: {e}");
             }
             if (!fromNetwork) OnTerrainChangeCell?.Invoke(this, x, y, z, value);
         }
@@ -452,9 +438,7 @@ namespace Game {
             int newValue,
             bool noDrop,
             bool noParticleSystem,
-            MovingBlock movingBlock = null,
-            bool forceLocalChange = false,
-            bool suppressBehavior = false) {
+            MovingBlock movingBlock = null) {
             int cellValue = Terrain.GetCellValue(x, y, z);
             int num = Terrain.ExtractContents(cellValue);
             Block block = BlocksManager.Blocks[num];
@@ -487,7 +471,7 @@ namespace Game {
                     );
                 }
             }
-            ChangeCell(x, y, z, newValue, true, movingBlock, forceLocalChange, suppressBehavior);
+            ChangeCell(x, y, z, newValue, true, movingBlock);
         }
 
         public virtual void Draw(Camera camera, int drawOrder) {

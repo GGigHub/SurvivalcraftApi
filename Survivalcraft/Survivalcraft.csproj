@@ -25,7 +25,6 @@
       <Compile Include="Network\Packet\Connect\StatePacket.cs" />
       <Compile Include="Network\Packet\Connect\ProjectPacket.cs" />
       <Compile Include="Network\Packet\Entity\BodyCollisionPacket.cs" />
-      <Compile Include="Network\Packet\Entity\BodyUpdatePacket.cs" />
       <Compile Include="Network\Packet\Entity\ChaseBehaviorPacket.cs" />
       <Compile Include="Network\Packet\Entity\CreatureSoundPacket.cs" />
       <Compile Include="Network\Packet\Entity\DigInMudBehaviorPacket.cs" />
@@ -112,14 +111,11 @@
       <Compile Include="Network\Packet\Player\PlayerPositionSetPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerRestartPacket.cs" />
       <Compile Include="Network\Packet\Player\PlayerStatSyncPacket.cs" />
-      <Compile Include="Network\Packet\Player\PlayerUpdateLocationPacket.cs" />
       <Compile Include="Network\Packet\Terrain\SubsystemSkyPacket.cs" />
       <Compile Include="Network\Packet\Terrain\SubsystemTimePacket.cs" />
       <Compile Include="Network\Packet\Terrain\SubsystemWeatherPacket.cs" />
       <Compile Include="Network\Packet\Terrain\TerrainChangeCellListPacket.cs" />
       <Compile Include="Network\Packet\Terrain\TerrainChangeCellPacket.cs" />
-      <Compile Include="Network\Packet\Terrain\TerrainReplyResultPacket.cs" />
-      <Compile Include="Network\Packet\Terrain\TerrainRequestSyncChunksPacket.cs" />
       <Compile Include="Network\Packet\Terrain\TerrainSyncChunkListPacket.cs" />
       <Compile Include="Network\RootManager.cs" />
       <Compile Include="Network\SubsystemNetwork.cs" />

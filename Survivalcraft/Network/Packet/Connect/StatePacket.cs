@@ -22,6 +22,9 @@ public class StatePacket : ClientPacketBase {
     }
 
     public override void Handle(bool isServer) {
+        if (!isServer || From == null) {
+            return;
+        }
         From.NetworkState = m_state;
         if (isServer && From != null) {
             var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
@@ -34,10 +37,7 @@ public class StatePacket : ClientPacketBase {
                         /*
                         byte[] textureData = null;
                         SubsystemNetwork subsystemNetwork = GameManager.Project.FindSubsystem<SubsystemNetwork>();
-                        if (subsystemNetwork.MakePlayerOnline(client.NetworkGuid, out PlayerData playerData, out Entity entity)) {
-                            if (entity != null) {
-                                GameManager.Project.AddEntity(entity);
-                            }
+                        if (subsystemNetwork.MakePlayerOnline(client.NetworkGuid, out PlayerData playerData)) {
                             NetworkManager.Queue(new PlayerAddPacket(playerData) { Except = client });
                         }
                         if (!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.BlocksTextureName)) {
@@ -55,6 +55,8 @@ public class StatePacket : ClientPacketBase {
                 case NetworkState.ProjectLoaded: {
                         List<Entity> sendList = [.. GameManager.Project.Entities];
                         NetworkManager.Queue(new EntityLoadPacket(sendList) { To = From });
+                        SubsystemNetwork subsystemNetwork = GameManager.Project.FindSubsystem<SubsystemNetwork>();
+                        subsystemNetwork.MakePlayerEntityOnline(From, out _);
                         break;
                     }
                 case NetworkState.LoadTerrain:

@@ -216,11 +216,7 @@ namespace Game {
         public static bool LogTerrainUpdateStats = false;
 
 
-        public static event Action<TerrainUpdater, List<Point2>> OnTerrainRequestSyncChunks;
-
         public static event Action<TerrainUpdater, int, List<TerrainChunk>> OnTerrainSyncChunkList;
-
-        public static event Action<TerrainUpdater, int, List<Point2>> OnTerrainReplyResult;
 
         public static event Action<TerrainUpdater, UpdateLocation> OnTerrainPlayerLocationUpdate;
 
@@ -335,8 +331,6 @@ namespace Game {
             return 0f;
         }
 
-        private List<Point2> RequestSyncChunkList = new List<Point2>();
-
         public virtual void Update() {
             if (m_subsystemSky.SkyLightValue != m_lastSkylightValue) {
                 m_lastSkylightValue = m_subsystemSky.SkyLightValue;
@@ -403,70 +397,38 @@ namespace Game {
                 }
             }
             foreach (TerrainChunk terrainChunk in m_terrain.AllocatedChunks) {
-                if (NetworkManager.IsClientRunning) {
-                    if (terrainChunk.ThreadState == TerrainChunkState.NotLoaded) {
-                        if (!terrainChunk.IsRequested) {
-                            terrainChunk.IsRequested = true;
-                            lock (RequestSyncChunkList) {
-                                RequestSyncChunkList.Add(terrainChunk.Coords);
-                            }
-                        }
-                    }
-                }
-
                 if (terrainChunk.State >= TerrainChunkState.InvalidVertices1 && !terrainChunk.AreBehaviorsNotified) {
                     terrainChunk.AreBehaviorsNotified = true;
                     NotifyBlockBehaviors(terrainChunk);
                 }
             }
-            lock (RequestSyncChunkList) {
-                if (RequestSyncChunkList.Count > 0 && Time.PeriodicEvent(0.5, 0.0)) {
-                    OnTerrainRequestSyncChunks?.Invoke(this, RequestSyncChunkList);
-                    RequestSyncChunkList.Clear();
-                }
-            }
-            foreach (var item in waitChunkList) {
-                List<Point2> toRemove = new List<Point2>();
-                List<Point2> toDeal = new List<Point2>();
-                List<Point2> result = new List<Point2>();
+            foreach (KeyValuePair<int, Queue<Point2>> item in waitChunkList) {
                 if (Time.PeriodicEvent(1, 0.6)) {
                     List<TerrainChunk> toSendList = new List<TerrainChunk>();
                     int sc = Math.Min(item.Value.Count, 100);
                     for (int i = 0; i < sc; i++) {
-                        var coord = item.Value[i];
+                        Point2 coord = item.Value.Dequeue();
                         TerrainChunk chunk = m_subsystemTerrain.Terrain.GetChunkAtCoords(coord.X, coord.Y);
-                        if (chunk != null) {
-                            if (chunk.ThreadState > TerrainChunkState.InvalidContents4) {
-                                toSendList.Add(chunk);
-                                toRemove.Add(coord);
-                            }
-                            else {
-                                //回复客户端加载失败，让客户端重新请求
-                                result.Add(new Point2(coord.X, coord.Y));
-                                toRemove.Add(coord);
-                            }
+                        if (chunk != null && chunk.ThreadState > TerrainChunkState.InvalidContents4) {
+                            toSendList.Add(chunk);
+                            waitChunkSetList[item.Key].Remove(coord);
+                            sentChunkSetList[item.Key].Add(coord);
                         }
                         else {
-                            //回复客户端加载失败，让客户端重新请求
-                            result.Add(new Point2(coord.X, coord.Y));
-                            toRemove.Add(coord);
+                            // Keep the request until the server finishes generating the chunk.
+                            // Rotating it to the back prevents an unready chunk from starving later requests.
+                            item.Value.Enqueue(coord);
                         }
-
                     }
                     if (toSendList.Count > 0) {
                         OnTerrainSyncChunkList?.Invoke(this, item.Key, toSendList);
                     }
-                    if (result.Count > 0) {
-                        OnTerrainReplyResult?.Invoke(this, item.Key, result);
-                    }
-                }
-                foreach (var item2 in toRemove) {
-                    item.Value.Remove(item2);
                 }
                 if (item.Value.Count == 0) waitChunkList_toRemove.Add(item.Key);
             }
             foreach (var item in waitChunkList_toRemove) {
                 waitChunkList.Remove(item);
+                waitChunkSetList.Remove(item);
             }
             waitChunkList_toRemove.Clear();
         }
@@ -765,8 +727,96 @@ namespace Game {
             return list;
         }
 
-        public Dictionary<int, List<Point2>> waitChunkList = new Dictionary<int, List<Point2>>();
+        // Server-owned terrain streaming state, derived solely from TerrainViewDistance.
+        public Dictionary<int, Queue<Point2>> waitChunkList = [];
+        public Dictionary<int, HashSet<Point2>> waitChunkSetList = [];
+        public Dictionary<int, HashSet<Point2>> sentChunkSetList = [];
         public List<int> waitChunkList_toRemove = new List<int>();
+
+        public void SetPlayerChunkSyncLocation(int playerIndex, Vector2 center, float contentDistance) {
+            if (contentDistance <= 0f) {
+                RemovePlayerChunkSendState(playerIndex);
+                return;
+            }
+
+            if (!sentChunkSetList.TryGetValue(playerIndex, out HashSet<Point2> sentCoordinates)) {
+                sentCoordinates = [];
+                sentChunkSetList[playerIndex] = sentCoordinates;
+            }
+
+            PruneChunkCoordinates(sentCoordinates, center, contentDistance);
+            PrunePlayerChunkSyncRequests(playerIndex, center, contentDistance);
+
+            Point2 minCoordinates = Terrain.ToChunk(center - new Vector2(contentDistance));
+            Point2 maxCoordinates = Terrain.ToChunk(center + new Vector2(contentDistance));
+            float contentDistanceSquared = contentDistance * contentDistance;
+            for (int x = minCoordinates.X; x <= maxCoordinates.X; x++) {
+                for (int z = minCoordinates.Y; z <= maxCoordinates.Y; z++) {
+                    Point2 coordinates = new(x, z);
+                    Vector2 chunkCenter = new((x + 0.5f) * TerrainChunk.Size, (z + 0.5f) * TerrainChunk.Size);
+                    if (Vector2.DistanceSquared(chunkCenter, center) <= contentDistanceSquared && !sentCoordinates.Contains(coordinates)) {
+                        QueuePlayerChunkSync(playerIndex, coordinates);
+                    }
+                }
+            }
+        }
+
+        private void QueuePlayerChunkSync(int playerIndex, Point2 coordinates) {
+            if (!waitChunkList.TryGetValue(playerIndex, out Queue<Point2> queue)) {
+                queue = [];
+                waitChunkList[playerIndex] = queue;
+            }
+            if (!waitChunkSetList.TryGetValue(playerIndex, out HashSet<Point2> queuedCoordinates)) {
+                queuedCoordinates = [];
+                waitChunkSetList[playerIndex] = queuedCoordinates;
+            }
+
+            if (queuedCoordinates.Add(coordinates)) {
+                queue.Enqueue(coordinates);
+            }
+        }
+
+        private void PrunePlayerChunkSyncRequests(int playerIndex, Vector2 center, float contentDistance) {
+            if (contentDistance <= 0f || !waitChunkList.TryGetValue(playerIndex, out Queue<Point2> queue)) {
+                return;
+            }
+
+            Queue<Point2> retainedQueue = [];
+            HashSet<Point2> retainedCoordinates = [];
+            while (queue.Count > 0) {
+                Point2 coordinates = queue.Dequeue();
+                if (IsChunkInRange(coordinates, center, contentDistance)) {
+                    retainedQueue.Enqueue(coordinates);
+                    retainedCoordinates.Add(coordinates);
+                }
+            }
+
+            if (retainedQueue.Count > 0) {
+                waitChunkList[playerIndex] = retainedQueue;
+                waitChunkSetList[playerIndex] = retainedCoordinates;
+            }
+            else {
+                waitChunkList.Remove(playerIndex);
+                waitChunkSetList.Remove(playerIndex);
+            }
+        }
+
+        private static void PruneChunkCoordinates(HashSet<Point2> coordinates, Vector2 center, float contentDistance) {
+            foreach (Point2 coordinate in coordinates.Where(coordinate => !IsChunkInRange(coordinate, center, contentDistance)).ToArray()) {
+                coordinates.Remove(coordinate);
+            }
+        }
+
+        private static bool IsChunkInRange(Point2 coordinates, Vector2 center, float contentDistance) {
+            Vector2 chunkCenter = new((coordinates.X + 0.5f) * TerrainChunk.Size, (coordinates.Y + 0.5f) * TerrainChunk.Size);
+            return Vector2.DistanceSquared(chunkCenter, center) <= contentDistance * contentDistance;
+        }
+
+        public void RemovePlayerChunkSendState(int playerIndex) {
+            waitChunkList.Remove(playerIndex);
+            waitChunkSetList.Remove(playerIndex);
+            sentChunkSetList.Remove(playerIndex);
+        }
 
         public virtual void UpdateChunkSingleStep(TerrainChunk chunk, int skylightValue) {
             switch (chunk.ThreadState) {

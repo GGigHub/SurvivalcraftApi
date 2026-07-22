@@ -16,6 +16,7 @@ public sealed class RelayHost : INetEventListener {
     private bool _disconnectByUser;
     private NetManager _netManager;
     private NetPeer _relayPeer;
+    private bool _isRetryed;
     public bool IsConnected { get; private set; }
     public bool IsDisconnected { get; private set; }
     public string RoomCode { get; set; }
@@ -95,8 +96,10 @@ public sealed class RelayHost : INetEventListener {
         }
         else if (type == RelayMessageType.PeerLeft) {
             int id = reader.GetInt();
-            if (_sessions.Remove(id, out ClientSession session) && GameManager.Project != null)
-                GameManager.Project.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
+            if (_sessions.Remove(id, out ClientSession session)) {
+                PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
+                GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
+            }
         }
         else if (type == RelayMessageType.DataToHost) {
             int id = reader.GetInt();
@@ -127,11 +130,23 @@ public sealed class RelayHost : INetEventListener {
         IsConnected = false;
         IsDisconnected = true;
 
+        PlayerBodyUpdatePacket.ClearSnapshots();
         _sessions.Clear();
         GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
 
         NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Failed;
         Log.Information($"Relay disconnected: {peer.Address}, Reason: {disconnectInfo.Reason}");
+
+        if (!_isRetryed && !_disconnectByUser) {
+            _isRetryed = true;
+            Log.Information("Attempting to retry to create relay host.");
+            NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Creating;
+
+            Task.Run(async () => {
+                IPEndPoint endPoint = await CenterServerClient.GetBestRelayEndPointAsync(2);
+                Dispatcher.Dispatch(() => Start(endPoint));
+            });
+        }
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {

@@ -37,8 +37,12 @@ public class GameFixture : IAsyncLifetime, IDisposable {
             Spectator = CreateContext("Spectator");
             Server.Start();
             Client.Start();
-            Server.WaitLog("Entered screen \"MainMenu\"");
-            Client.WaitLog("Entered screen \"MainMenu\"");
+            bool serverMainMenuEntered = Server.WaitLog("Entered screen \"MainMenu\"", 60);
+            bool clientMainMenuEntered = Client.WaitLog("Entered screen \"MainMenu\"", 60);
+            if (!serverMainMenuEntered || !clientMainMenuEntered) {
+                throw new TimeoutException(
+                    $"Game contexts did not enter MainMenu. Server={serverMainMenuEntered}; Client={clientMainMenuEntered}.");
+            }
         }
         catch {
             Dispose();

@@ -5,6 +5,7 @@ namespace Game.Network;
 
 public class PlayerBodyUpdatePacket : PlayerPacketBase {
     public override byte ID => (byte)PacketType.PlayerBodyUpdate;
+    public override NetworkState MinNeedState => NetworkState.Playing;
     public struct PlayerBodySyncSnapshot {
         public bool Initialized;
         public bool HasParentBody;
@@ -17,7 +18,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
         public bool IsCrouching;
     }
 
-    public static readonly Dictionary<int, PlayerBodySyncSnapshot> s_playerBodySyncSnapshots = [];
+    public static readonly Dictionary<SnapshotKey, PlayerBodySyncSnapshot> s_playerBodySyncSnapshots = [];
 
     public Vector3 Position;
     public Vector3 Velocity;
@@ -27,30 +28,35 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
     public ChangeFlag changeFlag;
     public int m_ladderValue;
     public bool m_sneaking;
+    public double SendTime;
 
     public PlayerBodyUpdatePacket() { }
 
-    public PlayerBodyUpdatePacket(ComponentPlayer player) {
+    public readonly record struct SnapshotKey(ClientSession Session, int PlayerIndex);
+
+    public PlayerBodyUpdatePacket(ComponentPlayer player, ClientSession targetSession = null, bool forceFull = false) {
+        SendTime = Engine.Time.RealTime;
         PlayerData playerData = player.PlayerData;
         changeFlag = ChangeFlag.None;
         ComponentBody body = player.ComponentBody.ParentBody;
-        s_playerBodySyncSnapshots.TryGetValue(playerData.PlayerIndex, out PlayerBodySyncSnapshot snapshot);
+        SnapshotKey snapshotKey = new(targetSession, playerData.PlayerIndex);
+        s_playerBodySyncSnapshots.TryGetValue(snapshotKey, out PlayerBodySyncSnapshot snapshot);
         bool hasParentBody = body != null;
         if (body != null) {
             changeFlag |= ChangeFlag.ParentBodyChange;
             Vector2 lookAngles = body.Locomotion?.LookAngles ?? Vector2.Zero;
-            if (!snapshot.Initialized || !snapshot.HasParentBody || BodyUpdatePacket.HasVector2Changed(lookAngles, snapshot.LookAngles, BodyUpdatePacket.LookAnglesEpsilonSquared)) {
+            if (forceFull || !snapshot.Initialized || !snapshot.HasParentBody || NetworkBodySyncHelpers.HasVector2Changed(lookAngles, snapshot.LookAngles, NetworkBodySyncHelpers.LookAnglesEpsilonSquared)) {
                 changeFlag |= ChangeFlag.LookAnglesChange;
                 LookAngles = lookAngles;
             }
-            if (!snapshot.Initialized || !snapshot.HasParentBody || BodyUpdatePacket.HasVector2Changed(player.ComponentLocomotion.LookAngles, snapshot.ChildLookAngles, BodyUpdatePacket.LookAnglesEpsilonSquared)) {
+            if (forceFull || !snapshot.Initialized || !snapshot.HasParentBody || NetworkBodySyncHelpers.HasVector2Changed(player.ComponentLocomotion.LookAngles, snapshot.ChildLookAngles, NetworkBodySyncHelpers.LookAnglesEpsilonSquared)) {
                 changeFlag |= ChangeFlag.ChildLookAnglesChange;
                 ChildLookAngles = player.ComponentLocomotion.LookAngles;
             }
         }
         else {
             body = player.ComponentBody;
-            if (!snapshot.Initialized || snapshot.HasParentBody || BodyUpdatePacket.HasVector2Changed(player.ComponentLocomotion.LookAngles, snapshot.LookAngles, BodyUpdatePacket.LookAnglesEpsilonSquared)) {
+            if (forceFull || !snapshot.Initialized || snapshot.HasParentBody || NetworkBodySyncHelpers.HasVector2Changed(player.ComponentLocomotion.LookAngles, snapshot.LookAngles, NetworkBodySyncHelpers.LookAnglesEpsilonSquared)) {
                 changeFlag |= ChangeFlag.LookAnglesChange;
                 LookAngles = player.ComponentLocomotion.LookAngles;
             }
@@ -58,30 +64,31 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
                 changeFlag |= ChangeFlag.LadderChange;
                 m_ladderValue = player.ComponentLocomotion.LadderValue.Value;
             }
-            if (body.CanCrouch && (!snapshot.Initialized || body.IsCrouching != snapshot.IsCrouching)) {
+            if (body.CanCrouch && (forceFull || !snapshot.Initialized || body.IsCrouching != snapshot.IsCrouching)) {
                 changeFlag |= ChangeFlag.SneakChange;
                 m_sneaking = body.IsCrouching;
             }
         }
-        if (!snapshot.Initialized || BodyUpdatePacket.HasVector3Changed(body.Position, snapshot.Position, BodyUpdatePacket.PositionEpsilonSquared)) {
+        if (forceFull || !snapshot.Initialized || NetworkBodySyncHelpers.HasVector3Changed(body.Position, snapshot.Position, NetworkBodySyncHelpers.PositionEpsilonSquared)) {
             Position = body.Position;
             changeFlag |= ChangeFlag.PositionChange;
         }
-        if (!snapshot.Initialized || BodyUpdatePacket.HasRotationChanged(body.Rotation, snapshot.Rotation)) {
+        if (forceFull || !snapshot.Initialized || NetworkBodySyncHelpers.HasRotationChanged(body.Rotation, snapshot.Rotation)) {
             Rotation = body.Rotation;
             changeFlag |= ChangeFlag.RotationChange;
         }
-        if (!snapshot.Initialized || BodyUpdatePacket.HasVector3Changed(body.Velocity, snapshot.Velocity, BodyUpdatePacket.VelocityEpsilonSquared)) {
+        if (forceFull || !snapshot.Initialized || NetworkBodySyncHelpers.HasVector3Changed(body.Velocity, snapshot.Velocity, NetworkBodySyncHelpers.VelocityEpsilonSquared)) {
             Velocity = body.Velocity;
             changeFlag |= ChangeFlag.VelocityChange;
         }
-        s_playerBodySyncSnapshots[playerData.PlayerIndex] = CreateSnapshot(player, body, hasParentBody);
+        s_playerBodySyncSnapshots[snapshotKey] = CreateSnapshot(player, body, hasParentBody);
         m_fromPlayerIndex = playerData.PlayerIndex;
     }
 
     public override void Serialize(PacketSerializer archive) {
         SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Enum(ref changeFlag);
+        archive.Value(ref SendTime);
         if (changeFlag.HasFlag(ChangeFlag.LookAnglesChange)) archive.Value(ref LookAngles);
         if (changeFlag.HasFlag(ChangeFlag.ChildLookAnglesChange)) archive.Value(ref ChildLookAngles);
         if (changeFlag.HasFlag(ChangeFlag.PositionChange)) archive.Value(ref Position);
@@ -116,23 +123,69 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
                 player.ComponentLocomotion.LookAngles = LookAngles;
             }
         }
-        bool smoothBody = !playerData.IsMainPlayer;
-        NetworkBodySmoothing.SetTarget(
-            body,
-            changeFlag.HasFlag(ChangeFlag.PositionChange),
-            Position,
-            changeFlag.HasFlag(ChangeFlag.RotationChange),
-            Rotation,
-            changeFlag.HasFlag(ChangeFlag.VelocityChange),
-            Velocity,
-            smoothBody);
+        bool snapStoppedRemoteBody = !isServer
+            && !playerData.IsMainPlayer
+            && changeFlag.HasFlag(ChangeFlag.PositionChange)
+            && changeFlag.HasFlag(ChangeFlag.VelocityChange)
+            && Velocity.LengthSquared() <= NetworkBodySyncHelpers.VelocityEpsilonSquared;
+        bool interpolateBody = !isServer && !playerData.IsMainPlayer && !snapStoppedRemoteBody;
+        if (snapStoppedRemoteBody) {
+            NetworkBodyInterpolation.RemoveTarget(body);
+        }
+        if (interpolateBody) {
+            NetworkBodyInterpolation.PushSnapshot(
+                body,
+                changeFlag.HasFlag(ChangeFlag.PositionChange),
+                Position,
+                changeFlag.HasFlag(ChangeFlag.RotationChange),
+                Rotation,
+                changeFlag.HasFlag(ChangeFlag.VelocityChange),
+                Velocity,
+                SendTime,
+                NetworkBodyInterpolation.RemotePlayerDelay);
+        }
+        else if (changeFlag.HasFlag(ChangeFlag.VelocityChange)) {
+            body.Velocity = Velocity;
+        }
         if (body.Locomotion != null) {
             body.Locomotion.LadderValue = changeFlag.HasFlag(ChangeFlag.LadderChange) ? m_ladderValue : null;
+        }
+        if (!interpolateBody && changeFlag.HasFlag(ChangeFlag.PositionChange)) {
+            body.Position = Position;
+        }
+        if (!interpolateBody && changeFlag.HasFlag(ChangeFlag.RotationChange)) {
+            body.Rotation = Rotation;
         }
         if (changeFlag.HasFlag(ChangeFlag.SneakChange)) {
             float crouchFactor = m_sneaking ? 1f : 0f;
             body.TargetCrouchFactor = crouchFactor;
             body.CrouchFactor = crouchFactor;
+        }
+        if (isServer && HasRelayableChange()) {
+            QueueBodyUpdateToObservers(player);
+        }
+    }
+
+    private bool HasRelayableChange() {
+        const ChangeFlag relayableChanges =
+            ChangeFlag.LookAnglesChange
+            | ChangeFlag.ChildLookAnglesChange
+            | ChangeFlag.PositionChange
+            | ChangeFlag.RotationChange
+            | ChangeFlag.VelocityChange
+            | ChangeFlag.LadderChange
+            | ChangeFlag.SneakChange;
+        return (changeFlag & relayableChanges) != ChangeFlag.None;
+    }
+
+    private static void QueueBodyUpdateToObservers(ComponentPlayer player) {
+        foreach (ClientSession session in NetworkManager.ServerSessions) {
+            if (session == null
+                || session.NetworkState < NetworkState.Playing
+                || session.PlayerIndex == player.PlayerData.PlayerIndex) {
+                continue;
+            }
+            NetworkManager.Queue(new PlayerBodyUpdatePacket(player, session, forceFull: true) { To = session });
         }
     }
 
@@ -148,6 +201,22 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
             LadderValue = hasParentBody ? null : player.ComponentLocomotion.LadderValue,
             IsCrouching = body.IsCrouching
         };
+    }
+
+    public static void RemoveSnapshotsForSession(ClientSession session) {
+        if (session == null) {
+            return;
+        }
+
+        foreach (SnapshotKey key in s_playerBodySyncSnapshots.Keys.ToArray()) {
+            if (key.Session == session) {
+                s_playerBodySyncSnapshots.Remove(key);
+            }
+        }
+    }
+
+    public static void ClearSnapshots() {
+        s_playerBodySyncSnapshots.Clear();
     }
 }
 

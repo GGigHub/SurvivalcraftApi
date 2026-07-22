@@ -33,9 +33,10 @@ public sealed class TerrainSyncTest : IClassFixture<GameFixture> {
         (TerrainSyncTools.TerrainChunkFingerprint expectedFingerprint, TerrainSyncTools.TerrainChunkFingerprint clientFingerprint) =
             await TerrainSyncTools.WaitForMatchingChunkFingerprintAsync(server, client, target);
 
-        Assert.True(
-            TerrainSyncTools.FingerprintsMatch(expectedFingerprint, clientFingerprint),
-            $"Initial chunk snapshot did not sync. Server={expectedFingerprint.Raw}, Client={clientFingerprint.Raw}");
+        if (!TerrainSyncTools.FingerprintsMatch(expectedFingerprint, clientFingerprint)) {
+            string diagnostics = await TerrainSyncTools.BuildTerrainSyncDiagnosticsReportAsync(server, client, target);
+            Assert.Fail($"Initial chunk snapshot did not sync. Server={expectedFingerprint.Raw}, Client={clientFingerprint.Raw}{Environment.NewLine}{diagnostics}");
+        }
     }
 
     [Fact, TestOrder(Priority = 2)]
@@ -52,9 +53,10 @@ public sealed class TerrainSyncTest : IClassFixture<GameFixture> {
         TerrainSyncTools.TerrainChunkFingerprint clientFingerprint =
             await TerrainSyncTools.WaitForChunkCellSamplesAsync(client, target, serverFingerprint);
 
-        Assert.True(
-            TerrainSyncTools.CellSamplesMatch(serverFingerprint, clientFingerprint),
-            $"Incremental cell change did not sync. Server={serverFingerprint.Raw}, Client={clientFingerprint.Raw}");
+        if (!TerrainSyncTools.CellSamplesMatch(serverFingerprint, clientFingerprint)) {
+            string diagnostics = await TerrainSyncTools.BuildTerrainSyncDiagnosticsReportAsync(server, client, target);
+            Assert.Fail($"Incremental cell change did not sync. Server={serverFingerprint.Raw}, Client={clientFingerprint.Raw}{Environment.NewLine}{diagnostics}");
+        }
     }
 
     [Fact, TestOrder(Priority = 3)]
@@ -70,9 +72,10 @@ public sealed class TerrainSyncTest : IClassFixture<GameFixture> {
         TerrainSyncTools.TerrainChunkFingerprint spectatorFingerprint =
             await TerrainSyncTools.WaitForChunkFingerprintAsync(spectator, target, serverFingerprint);
 
-        Assert.True(
-            TerrainSyncTools.FingerprintsMatch(serverFingerprint, spectatorFingerprint),
-            $"Late joiner did not receive the modified chunk snapshot. Server={serverFingerprint.Raw}, Spectator={spectatorFingerprint.Raw}");
+        if (!TerrainSyncTools.FingerprintsMatch(serverFingerprint, spectatorFingerprint)) {
+            string diagnostics = await TerrainSyncTools.BuildTerrainSyncDiagnosticsReportAsync(server, client, target, spectator);
+            Assert.Fail($"Late joiner did not receive the modified chunk snapshot. Server={serverFingerprint.Raw}, Spectator={spectatorFingerprint.Raw}{Environment.NewLine}{diagnostics}");
+        }
     }
 
     [Fact]

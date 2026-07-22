@@ -15,6 +15,8 @@ namespace Game {
 
         public FontBatch3D m_batch;
 
+        public int AttackerPlayerIndex = -1;
+
         public HitValueParticleSystem(Vector3 position, Vector3 velocity, Color color, string text) : this(position, velocity, color, text, true) {
         }
 

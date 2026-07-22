@@ -10,6 +10,7 @@ public class HitValuePacket : Packet {
     public Color m_color;
     public string m_text;
     public bool m_velocityIsFinal;
+    public int m_attackerPlayerIndex = -1;
 
     public HitValuePacket() {
     }
@@ -25,20 +26,50 @@ public class HitValuePacket : Packet {
         m_velocityIsFinal = velocityIsFinal;
     }
 
+    public HitValuePacket(Vector3 position, Vector3 velocity, Color color, string text, bool velocityIsFinal, int attackerPlayerIndex) : this(
+        position,
+        velocity,
+        color,
+        text,
+        velocityIsFinal
+    ) {
+        m_attackerPlayerIndex = attackerPlayerIndex;
+    }
+
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref m_position);
         archive.Value(ref m_velocity);
         archive.Value(ref m_color);
         archive.Value(ref m_text);
         archive.TryValue(ref m_velocityIsFinal);
+        archive.TryValue(ref m_attackerPlayerIndex);
     }
 
     public override void Handle(bool isServer) {
         if (isServer) return;
+        if (IsOwnServerEcho()) {
+            return;
+        }
         HitValueParticleSystem particleSystem = new HitValueParticleSystem(m_position, m_velocity, m_color, m_text, !m_velocityIsFinal);
         float pitch = new Random().Float(-0.2f, 0.2f);
         GameManager.Project.FindSubsystem<SubsystemParticles>(true).AddParticleSystem(particleSystem);
         GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Swoosh", 1f, pitch, m_position, 3f, false);
+    }
+
+    private bool IsOwnServerEcho() {
+        if (m_attackerPlayerIndex < 0 || GameManager.Project == null) {
+            return false;
+        }
+        SubsystemPlayers subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
+        if (subsystemPlayers == null) {
+            return false;
+        }
+        foreach (PlayerData playerData in subsystemPlayers.PlayersData) {
+            if (playerData.IsMainPlayer && playerData.PlayerIndex == m_attackerPlayerIndex) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

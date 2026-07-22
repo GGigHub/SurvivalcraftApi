@@ -411,13 +411,10 @@ namespace Game {
                 ctrl.Parameters.SetBool("IsDead", health.Health <= 0);
             }
 
-            // 头部追踪
-            if (LookAtOrder.HasValue) {
-                Vector3 lookDir = LookAtOrder.Value - EyePosition;
-                float lookX = MathF.Atan2(lookDir.X, lookDir.Z);
-                float lookY = MathF.Asin(lookDir.Y / lookDir.Length());
-                ctrl.Parameters.SetFloat("LookAngleX", lookX);
-                ctrl.Parameters.SetFloat("LookAngleY", lookY);
+            // 头部追踪使用本地 locomotion 状态，避免网络同步角度和本地表现互相覆盖。
+            if (locomotion != null) {
+                ctrl.Parameters.SetFloat("LookAngleX", locomotion.LookAngles.X);
+                ctrl.Parameters.SetFloat("LookAngleY", locomotion.LookAngles.Y);
             }
 
             // 活动状态

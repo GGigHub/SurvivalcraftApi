@@ -30,9 +30,7 @@ public class SubsystemNetwork : Subsystem {
         var pd = m_subsystemPlayers.m_playersData.Find(p => p.PlayerIndex == index);
         if (pd != null) {
             var updater = m_subsystemTerrain.TerrainUpdater;
-            if (updater != null && updater.waitChunkList != null && updater.waitChunkList.ContainsKey(pd.PlayerIndex)) {
-                updater.waitChunkList.Remove(pd.PlayerIndex);
-            }
+            updater?.RemovePlayerChunkSendState(pd.PlayerIndex);
             var componentPlayer = pd.ComponentPlayer;
             if (componentPlayer == null && m_subsystemPlayers.m_offlinePlayerEntities.TryGetValue(pd.PlayerIndex, out var entityDataPlayer)) {
                 var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
@@ -64,47 +62,72 @@ public class SubsystemNetwork : Subsystem {
         return Storage.FileExists(entityFilePath);
     }
 
-    public bool MakePlayerOnline(Guid guid, out PlayerData playerData, out Entity entity) {
+    public bool MakePlayerOnline(Guid guid, out PlayerData playerData) {
         if (CheckPlayerDataExists(guid, out string entityFilePath) && !NetworkManager.IsClientRunning) {
             playerData = new PlayerData(Project);
-            ValuesDictionary dict = new ValuesDictionary();
-            using (Stream s = Storage.OpenFile(entityFilePath, OpenFileMode.Read)) {
-                if (entityFilePath.EndsWith(".json")) {
-                    StreamReader reader = new StreamReader(s);
-                    string jsonText = reader.ReadToEnd();
-                    reader.Dispose();
-                    dict.ApplyOverridesUseJson(jsonText, out byte[] data);
-                }
-                else if (entityFilePath.EndsWith(".dat")) {
-                    byte[] d = new byte[s.Length];
-                    s.ReadExactly(d, 0, d.Length);
-                    dict.ApplyOverridesUseMessagePack(d);
-                    Storage.DeleteFile(entityFilePath);
-                }
-            }
-            var entityData = new EntityData(Project.GameDatabase, dict.GetValue<ValuesDictionary>("Entity"));
+            ValuesDictionary dict = LoadSavedPlayerDictionary(entityFilePath);
             playerData.Load(dict.GetValue<ValuesDictionary>("Data"));
             RemoveStalePlayerData(playerData.PlayerIndex);
             m_subsystemPlayers.AddPlayerData(playerData, true);
             playerData.WaitEntityAdded();
-            var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
-            list.EntitiesData.Add(entityData);
-            List<Entity> el = GameManager.Project.InitializeAndLoadEntities(list);
-            RemoveExistingEntitiesWithSameIds(el);
-            GameManager.Project.AttachEntities(el, true);
-            if (el.Count > 0) {
-                entity = el[0];
-                entity.Id = 0;
-            }
-            else {
-                entity = null;
-            }
             return true;
         }
 
         playerData = null;
-        entity = null;
         return false;
+    }
+
+    public bool MakePlayerEntityOnline(ClientSession session, out Entity entity) {
+        entity = null;
+        if (session == null
+            || session.PlayerIndex < 0
+            || NetworkManager.IsClientRunning
+            || !CheckPlayerDataExists(session.NetworkGuid, out string entityFilePath)) {
+            return false;
+        }
+
+        PlayerData playerData = session.GetPlayerData();
+        if (playerData == null || playerData.ComponentPlayer != null) {
+            return false;
+        }
+
+        ValuesDictionary dict = LoadSavedPlayerDictionary(entityFilePath);
+        var entityData = new EntityData(Project.GameDatabase, dict.GetValue<ValuesDictionary>("Entity"));
+        if (entityFilePath.EndsWith(".dat")) {
+            Storage.DeleteFile(entityFilePath);
+        }
+
+        var list = new EntityDataList { EntitiesData = new List<EntityData>(1) };
+        list.EntitiesData.Add(entityData);
+        List<Entity> el = GameManager.Project.InitializeAndLoadEntities(list);
+        if (el.Count == 0) {
+            return false;
+        }
+
+        foreach (Entity loadedEntity in el) {
+            loadedEntity.Id = 0;
+        }
+        GameManager.Project.AttachEntities(el, true);
+        entity = el[0];
+        return true;
+    }
+
+    public ValuesDictionary LoadSavedPlayerDictionary(string entityFilePath) {
+        ValuesDictionary dict = new ValuesDictionary();
+        using (Stream s = Storage.OpenFile(entityFilePath, OpenFileMode.Read)) {
+            if (entityFilePath.EndsWith(".json")) {
+                StreamReader reader = new StreamReader(s);
+                string jsonText = reader.ReadToEnd();
+                reader.Dispose();
+                dict.ApplyOverridesUseJson(jsonText, out byte[] data);
+            }
+            else if (entityFilePath.EndsWith(".dat")) {
+                byte[] d = new byte[s.Length];
+                s.ReadExactly(d, 0, d.Length);
+                dict.ApplyOverridesUseMessagePack(d);
+            }
+        }
+        return dict;
     }
 
     public static void RemoveExistingEntitiesWithSameIds(IEnumerable<Entity> entities) {

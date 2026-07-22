@@ -543,7 +543,7 @@ namespace Game {
                         && priorityPlace >= priorityInteract) {
                         interactEvent.interactEvent = InteractEvent.Place;
                     }
-                    m_lastActionTime = m_subsystemTime.GameTime;
+                    m_lastActionTime = timeIntervalLastActionTime;
                 }
             }
             float timeIntervalAim = m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ? 0.1f : 1.4f;
@@ -664,7 +664,8 @@ namespace Game {
                             ComponentMiner.Hit(
                                 bodyRaycastResult.Value.ComponentBody,
                                 bodyRaycastResult.Value.HitPoint(),
-                                playerInput.Hit.Value.Direction
+                                playerInput.Hit.Value.Direction,
+                                NetworkManager.IsClientRunning
                             );
                             OnHit?.Invoke(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction);
                         }

@@ -32,6 +32,54 @@ public static class TerrainSyncTools {
         return ParseFingerprint(raw);
     }
 
+    public static async Task<TerrainSyncDiagnostics> GetTerrainSyncDiagnosticsAsync(
+        GameContext context,
+        TerrainChunkTarget target,
+        int playerIndex = -1) {
+        string script = GameTools.ReadScript("TerrainSync/GetTerrainSyncDiagnosticsCode.cs")
+            .Replace("__CHUNK_X__", target.ChunkX.ToString(CultureInfo.InvariantCulture))
+            .Replace("__CHUNK_Z__", target.ChunkZ.ToString(CultureInfo.InvariantCulture))
+            .Replace("__SAMPLE_Y__", target.SampleY.ToString(CultureInfo.InvariantCulture))
+            .Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture));
+
+        string raw = (string?)await context.PushCommandAsync("FUNC " + script) ?? string.Empty;
+        Dictionary<string, string> values = ParseKeyValuePairs(raw);
+        return new TerrainSyncDiagnostics(ParseInt(values, "playerIndex"), raw);
+    }
+
+    public static async Task<string> BuildTerrainSyncDiagnosticsReportAsync(
+        GameContext server,
+        GameContext client,
+        TerrainChunkTarget target,
+        GameContext? extraClient = null) {
+        TerrainSyncDiagnostics clientDiagnostics = await GetTerrainSyncDiagnosticsAsync(client, target);
+        TerrainSyncDiagnostics serverDiagnostics = await GetTerrainSyncDiagnosticsAsync(
+            server,
+            target,
+            clientDiagnostics.PlayerIndex);
+
+        string report = string.Join(
+            Environment.NewLine,
+            "Terrain sync diagnostics:",
+            $"Server: {serverDiagnostics.Raw}",
+            $"Client: {clientDiagnostics.Raw}");
+
+        if (extraClient != null) {
+            TerrainSyncDiagnostics extraClientDiagnostics = await GetTerrainSyncDiagnosticsAsync(extraClient, target);
+            TerrainSyncDiagnostics extraServerDiagnostics = await GetTerrainSyncDiagnosticsAsync(
+                server,
+                target,
+                extraClientDiagnostics.PlayerIndex);
+            report = string.Join(
+                Environment.NewLine,
+                report,
+                $"ExtraClient: {extraClientDiagnostics.Raw}",
+                $"ServerForExtraClient: {extraServerDiagnostics.Raw}");
+        }
+
+        return report;
+    }
+
     public static Task RequestChunkSyncAsync(GameContext context, TerrainChunkTarget target) {
         string script = GameTools.ReadScript("TerrainSync/RequestChunkSyncCode.cs")
             .Replace("__CHUNK_X__", target.ChunkX.ToString(CultureInfo.InvariantCulture))
@@ -247,6 +295,8 @@ public static class TerrainSyncTools {
     public readonly record struct TerrainChunkTarget(int ChunkX, int ChunkZ, int SampleY, string Raw);
 
     public readonly record struct TerrainCellState(int Value, int Contents, int Data, string Raw);
+
+    public readonly record struct TerrainSyncDiagnostics(int PlayerIndex, string Raw);
 
     public readonly record struct TerrainChunkFingerprint(
         int ChunkX,

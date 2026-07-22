@@ -1,6 +1,4 @@
 using Engine;
-
-using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -930,10 +928,6 @@ namespace Game {
                 }
                 CollidedWithBody?.Invoke(componentBody);
                 componentBody.CollidedWithBody?.Invoke(this);
-                if (NetworkManager.IsClientRunning
-                    && Player?.PlayerData?.IsMainPlayer == true) {
-                    NetworkManager.Queue(new BodyCollisionPacket(this, axis, move));
-                }
             }
         }
 

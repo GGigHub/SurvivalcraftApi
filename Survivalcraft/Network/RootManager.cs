@@ -104,7 +104,13 @@ public static class RootManager {
                 return;
             }
             HitValueParticleSystem.Particle particle = hitValueParticleSystem.Particles[0];
-            NetworkManager.Queue(new HitValuePacket(particle.Position, particle.Velocity, particle.BaseColor, particle.Text, true));
+            NetworkManager.Queue(new HitValuePacket(
+                particle.Position,
+                particle.Velocity,
+                particle.BaseColor,
+                particle.Text,
+                true,
+                hitValueParticleSystem.AttackerPlayerIndex));
         };
         ComponentPickableGatherer.OnPickableAttract += (pickable) => {
             if (!NetworkManager.IsClientRunning)
@@ -213,8 +219,11 @@ public static class RootManager {
             if (!NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new MemoryBankDataPacket(id, data));
         };
-        SubsystemMovingBlocks.OnMovingBlockAdd += (movingBlockSet) =>
-            NetworkManager.Queue(new MovingBlockAddPacket((SubsystemMovingBlocks.MovingBlockSet)movingBlockSet));
+        SubsystemMovingBlocks.OnMovingBlockAdd += (movingBlockSet) => {
+            if (!NetworkManager.IsClientRunning) {
+                NetworkManager.Queue(new MovingBlockAddPacket((SubsystemMovingBlocks.MovingBlockSet)movingBlockSet));
+            }
+        };
         SubsystemMovingBlocks.OnMovingBlockRemove += (movingBlockSet, isCrash) =>
             NetworkManager.Queue(new MovingBlockRemovePacket(movingBlockSet, isCrash));
         SubsystemPickables.OnPickableCreate += (pickable) =>
@@ -269,15 +278,6 @@ public static class RootManager {
             NetworkManager.Queue(new SubsystemWeatherPacket(startTime, rampTime, endTime));
         SubsystemWeather.OnPrecipitationChange += (startTime, endTime, intensity, rampTime) =>
             NetworkManager.Queue(new SubsystemWeatherPacket(startTime, endTime, intensity, rampTime));
-        TerrainUpdater.OnTerrainPlayerLocationUpdate += (updater, location) =>
-            NetworkManager.Queue(new PlayerUpdateLocationPacket(location));
-        TerrainUpdater.OnTerrainReplyResult += (updater, playerIndex, chunks) =>
-            NetworkManager.Queue(new TerrainReplyResultPacket(chunks) {
-                To = Enumerable.FirstOrDefault(
-                        NetworkManager.ServerSessions, c => c.PlayerIndex == playerIndex)
-            });
-        TerrainUpdater.OnTerrainRequestSyncChunks += (updater, chunks) =>
-            NetworkManager.Queue(new TerrainRequestSyncChunksPacket(chunks));
         TerrainUpdater.OnTerrainSyncChunkList += (updater, playerIndex, chunks) =>
             NetworkManager.Queue(new TerrainSyncChunkListPacket(chunks) {
                 To = Enumerable.FirstOrDefault(
@@ -335,22 +335,31 @@ public static class RootManager {
                 NetworkManager.Queue(new WakeupStatusPacket(sleep));
         };
         ComponentPlayer.OnBodyUpdate += (player, isMainPlayer) => {
-            if (!NetworkManager.IsClientRunning && Time.PeriodicEvent(0.1f, 0.0))
-                NetworkManager.Queue(new PlayerBodyUpdatePacket(player) {
-                    Except = Enumerable.FirstOrDefault(
-                        NetworkManager.ServerSessions, c => c.PlayerIndex == player.PlayerData.PlayerIndex)
-                });
-            if (isMainPlayer && Time.PeriodicEvent(0.1f, 0.0))
+            if (!NetworkManager.IsClientRunning && Time.PeriodicEvent(0.2f, 0.0)) {
+                foreach (ClientSession session in NetworkManager.ServerSessions) {
+                    if (session.NetworkState < NetworkState.Playing
+                        || session.PlayerIndex == player.PlayerData.PlayerIndex) {
+                        continue;
+                    }
+                    NetworkManager.Queue(new PlayerBodyUpdatePacket(player, session) { To = session });
+                }
+            }
+            if (isMainPlayer && Time.PeriodicEvent(0.2f, 0.0))
                 NetworkManager.Queue(new PlayerBodyUpdatePacket(player));
         };
         PlayerData.PlayerFirstUpdated += (player) => {
             // todo:非本地主玩家且缺少对应网络客户端时，转为离线状态
         };
-        ComponentBody.IsNetworkMode += BodyUpdatePacket.ShouldBeNetworkControlled;
-        ComponentLocomotion.IsNetworkMode += BodyUpdatePacket.ShouldBeNetworkControlled;
-        ComponentBody.OnNetworkBodyUpdate += NetworkBodySmoothing.Update;
-        ComponentBody.OnBodyRemoved += NetworkBodySmoothing.RemoveTarget;
-        ComponentBody.OnBodyUpdate += BodyUpdatePacket.CollectBodyForSync;
+        TerrainUpdater.OnTerrainPlayerLocationUpdate += (updater, location) => {
+            if (NetworkManager.IsClientRunning && NetworkManager.PlayerIndex >= 0) {
+                NetworkManager.Queue(new TerrainViewDistancePacket(location));
+            }
+        };
+        ComponentBody.IsNetworkMode += NetworkBodySyncHelpers.ShouldBeNetworkControlled;
+        ComponentLocomotion.IsNetworkMode += NetworkBodySyncHelpers.ShouldBeNetworkControlled;
+        ComponentBody.OnNetworkBodyUpdate += NetworkBodyInterpolation.Update;
+        ComponentBody.OnBodyRemoved += NetworkBodyInterpolation.RemoveTarget;
+        ComponentBody.OnBodyUpdate += BehaviorSyncPacket.CollectBehaviorForSync;
         Project.EntityAdded += (_, arg) => {
             if (!NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new EntityLoadPacket(arg.Entity));

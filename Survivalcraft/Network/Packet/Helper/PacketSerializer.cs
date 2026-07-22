@@ -318,6 +318,20 @@ public sealed class PacketSerializer {
         }
     }
 
+    public bool TryValue(ref int value) {
+        if (IsWriting) {
+            m_writer.Write(value);
+            return true;
+        }
+        try {
+            value = m_reader.ReadInt32();
+            return true;
+        }
+        catch {
+            return false;
+        }
+    }
+
     public void Enum<T>(ref T value) where T : struct {
         if (IsWriting) m_writer.Write(Convert.ToByte(value));
         else value = (T)System.Enum.ToObject(typeof(T), (int)m_reader.ReadByte());

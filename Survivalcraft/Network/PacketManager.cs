@@ -22,11 +22,11 @@ public enum PacketType : byte {
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
-    BodyUpdate = 33, ApplyImpulse = 34, BodyCollision = 35,
+    ApplyImpulse = 34, BodyCollision = 35,
     BehaviorLookAround = 54, BehaviorStubbornSteed = 55,
     BehaviorChase = 56, BehaviorRandomPeck = 57, BehaviorRandomFeed = 58, BehaviorEatPickable = 59,
     BehaviorHumanRow = 60, BehaviorCreatureSound = 61, BehaviorDigInMud = 62, BehaviorFishOutOfWater = 63,
-    EntityOnFire = 68,
+    EntityOnFire = 68, BehaviorSync = 112,
 
     // Health
     HealthSync = 28, InjureEvent = 29, InjureRequest = 30, HitResult = 31, DamageSync = 32,
@@ -58,7 +58,7 @@ public enum PacketType : byte {
 
     // Player
     PlayerCreate = 41, PlayerModify = 42, PlayerDelete = 43, PlayerAdd = 44, PlayerKnown = 45,
-    PlayerUpdateLocation = 46, ServerCloseTime = 47, PlayerBugle = 48, PlayerCount = 49,
+    ServerCloseTime = 47, PlayerBugle = 48, PlayerCount = 49,
     PlayerNoMsgAdd = 50, PlayerNoMsgRemove = 51,
     PlayerBodyUpdate = 71, PlayerInteract = 72, PlayerAim = 73, PlayerDig = 74, PlayerHit = 75,
     PlayerCreativeFly = 76, PlayerIntoPlaying = 77, PlayerRestart = 78, PlayerAddExperience = 79,
@@ -67,7 +67,8 @@ public enum PacketType : byte {
     // Terrain
     Time = 4, Sky = 5,
     Weather = 6, Season = 14,
-    TerrainRequestSyncChunks = 101, TerrainSyncChunkList = 102, TerrainReplyResult = 103,
+    TerrainSyncChunkList = 102,
+    TerrainViewDistance = 103,
     TerrainChangeCell = 104, TerrainChangeCellList = 105,
 
     ModPacket = 255
@@ -89,8 +90,8 @@ public class PacketManager {
         RegisterPacket<StatePacket>();
 
         // Entity
+        RegisterPacket<BehaviorSyncPacket>();
         RegisterPacket<BodyCollisionPacket>();
-        RegisterPacket<BodyUpdatePacket>();
         RegisterPacket<ChaseBehaviorPacket>();
         RegisterPacket<CreatureSoundPacket>();
         RegisterPacket<DigInMudBehaviorPacket>();
@@ -188,7 +189,6 @@ public class PacketManager {
         RegisterPacket<PlayerPositionSetPacket>();
         RegisterPacket<PlayerRestartPacket>();
         RegisterPacket<PlayerStatSyncPacket>();
-        RegisterPacket<PlayerUpdateLocationPacket>();
         RegisterPacket<HitValuePacket>();
 
         // Terrain
@@ -197,9 +197,8 @@ public class PacketManager {
         RegisterPacket<SubsystemWeatherPacket>();
         RegisterPacket<TerrainChangeCellListPacket>();
         RegisterPacket<TerrainChangeCellPacket>();
-        RegisterPacket<TerrainReplyResultPacket>();
-        RegisterPacket<TerrainRequestSyncChunksPacket>();
         RegisterPacket<TerrainSyncChunkListPacket>();
+        RegisterPacket<TerrainViewDistancePacket>();
     }
 
     public static void RegisterPacket<T>() where T : Packet, new() {

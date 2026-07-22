@@ -1,6 +1,5 @@
 using System.Globalization;
 using Engine;
-using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -205,17 +204,14 @@ namespace Game {
                         Poke(true);
                     }
                     BlockPlacementData digValue = cellBlock.GetDigValue(m_subsystemTerrain, this, cellValue, activeBlockValue, raycastResult);
-                    bool isClientPredictedDig = NetworkManager.IsClientRunning && ComponentPlayer?.PlayerData?.IsMainPlayer == true;
                     m_subsystemTerrain.DestroyCell(
                         activeBlock.GetToolLevel(activeBlockValue),
                         digValue.CellFace.X,
                         digValue.CellFace.Y,
                         digValue.CellFace.Z,
                         digValue.Value,
-                        isClientPredictedDig,
                         false,
-                        forceLocalChange: isClientPredictedDig,
-                        suppressBehavior: isClientPredictedDig
+                        false
                     );
                     int durabilityReduction = 1;
                     int playerDataAdd = 1;
@@ -365,16 +361,14 @@ namespace Game {
                             for (int i = 0; i < blockBehaviors.Length; i++) {
                                 blockBehaviors[i].OnItemPlaced(num2, num3, num4, ref placementData, value);
                             }
-                            bool isClientPredictedPlace = NetworkManager.IsClientRunning && ComponentPlayer?.PlayerData?.IsMainPlayer == true;
                             m_subsystemTerrain.DestroyCell(
                                 0,
                                 num2,
                                 num3,
                                 num4,
                                 placementData.Value,
-                                isClientPredictedPlace,
                                 false,
-                                forceLocalChange: isClientPredictedPlace
+                                false
                             );
                             m_subsystemAudio.PlaySound(
                                 "Audio/BlockPlaced",
@@ -457,7 +451,10 @@ namespace Game {
             return false;
         }
 
-        public void Hit(ComponentBody componentBody, Vector3 hitPoint, Vector3 hitDirection) {
+        public void Hit(ComponentBody componentBody, Vector3 hitPoint, Vector3 hitDirection, bool predictionOnly = false, bool showHitValue = true) {
+            if (NetworkManager.IsClientRunning) {
+                predictionOnly = true;
+            }
             double hitInterval = HitInterval;
             ModsManager.HookAction(
                 "SetHitInterval",
@@ -534,16 +531,27 @@ namespace Game {
                         return false;
                     }
                 );
+                if (predictionOnly) {
+                    attackment.EnableTargetDamage = false;
+                    attackment.EnableAttackedEvent = false;
+                    attackment.EnableArmorProtection = false;
+                }
+                attackment.EnableHitValueParticleSystem = showHitValue;
                 AttackBody(attackment);
-                DamageActiveTool(durabilityReduction);
+                if (!predictionOnly) {
+                    DamageActiveTool(durabilityReduction);
+                }
             }
-            else if (ComponentCreature is ComponentPlayer) {
+            else if (ComponentCreature is ComponentPlayer && showHitValue) {
                 HitValueParticleSystem particleSystem = new(
                     hitPoint + 0.75f * hitDirection,
                     1f * hitDirection + ComponentCreature.ComponentBody.Velocity,
                     Color.White,
                     LanguageControl.Get(fName, 2)
                 );
+                if (ComponentPlayer != null) {
+                    particleSystem.AttackerPlayerIndex = ComponentPlayer.PlayerData.PlayerIndex;
+                }
                 ModsManager.HookAction(
                     "SetHitValueParticleSystem",
                     modLoader => {
@@ -553,7 +561,7 @@ namespace Game {
                 );
                 Project.FindSubsystem<SubsystemParticles>(true).AddParticleSystem(particleSystem);
             }
-            if (ComponentCreature.PlayerStats != null) {
+            if (!predictionOnly && ComponentCreature.PlayerStats != null) {
                 ComponentCreature.PlayerStats.MeleeAttacks++;
                 if (flag) {
                     ComponentCreature.PlayerStats.MeleeHits++;
