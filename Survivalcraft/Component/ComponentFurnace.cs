@@ -106,42 +106,46 @@ namespace Game {
                     m_heatLevel = 0f;
                 }
             }
-            if (m_updateSmeltingRecipe) {
-                UpdateSmeltingRecipe();
-            }
-            if (m_smeltingRecipe == null) //没有配方，处理空烧
-            {
-                if (StopFuelWhenNoRecipeIsActive) {
-                    StopSmelting(true);
+            OnFurnaceUpdate?.Invoke(this);
+            if (!NetworkManager.IsClientRunning) {
+                if (m_updateSmeltingRecipe) {
+                    UpdateSmeltingRecipe();
                 }
-            }
-            if (m_smeltingRecipe != null
-                && m_fireTimeRemaining <= 0f) {
-                UseFuel();
-            }
-            if (m_fireTimeRemaining <= 0f) {
-                m_smeltingRecipe = null;
-                m_smeltingProgress = MathUtils.Max(0, m_smeltingProgress - dt * SmeltProgressReductionSpeed);
-            }
-            if (m_smeltingRecipe != null) {
-                OnFurnaceUpdate?.Invoke(this);
-                m_smeltingProgress = MathUtils.Min(m_smeltingProgress + SmeltSpeed * dt, 1f);
-                if (m_smeltingProgress >= 1f) {
-                    for (int i = 0; i < m_furnaceSize; i++) {
-                        if (m_slots[i].Count > 0) {
-                            m_slots[i].Count--;
-                        }
+                if (m_smeltingRecipe == null) //没有配方，处理空烧
+                {
+                    if (StopFuelWhenNoRecipeIsActive) {
+                        StopSmelting(true);
                     }
-                    m_slots[ResultSlotIndex].Value = m_smeltingRecipe.ResultValue;
-                    m_slots[ResultSlotIndex].Count += m_smeltingRecipe.ResultCount;
-                    if (m_smeltingRecipe.RemainsValue != 0
-                        && m_smeltingRecipe.RemainsCount > 0) {
-                        m_slots[RemainsSlotIndex].Value = m_smeltingRecipe.RemainsValue;
-                        m_slots[RemainsSlotIndex].Count += m_smeltingRecipe.RemainsCount;
-                    }
+                }
+                if (m_smeltingRecipe != null
+                    && m_fireTimeRemaining <= 0f) {
+                    UseFuel();
+                }
+
+                if (m_fireTimeRemaining <= 0f) {
                     m_smeltingRecipe = null;
-                    m_smeltingProgress = 0f;
-                    m_updateSmeltingRecipe = true;
+                    m_smeltingProgress = MathUtils.Max(0, m_smeltingProgress - dt * SmeltProgressReductionSpeed);
+                }
+
+                if (m_smeltingRecipe != null) {
+                    m_smeltingProgress = MathUtils.Min(m_smeltingProgress + SmeltSpeed * dt, 1f);
+                    if (m_smeltingProgress >= 1f) {
+                        for (int i = 0; i < m_furnaceSize; i++) {
+                            if (m_slots[i].Count > 0) {
+                                m_slots[i].Count--;
+                            }
+                        }
+                        m_slots[ResultSlotIndex].Value = m_smeltingRecipe.ResultValue;
+                        m_slots[ResultSlotIndex].Count += m_smeltingRecipe.ResultCount;
+                        if (m_smeltingRecipe.RemainsValue != 0
+                            && m_smeltingRecipe.RemainsCount > 0) {
+                            m_slots[RemainsSlotIndex].Value = m_smeltingRecipe.RemainsValue;
+                            m_slots[RemainsSlotIndex].Count += m_smeltingRecipe.RemainsCount;
+                        }
+                        m_smeltingRecipe = null;
+                        m_smeltingProgress = 0f;
+                        m_updateSmeltingRecipe = true;
+                    }
                 }
             }
             //根据熔炉燃烧状态调整方块值

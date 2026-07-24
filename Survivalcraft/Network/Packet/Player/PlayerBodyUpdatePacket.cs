@@ -128,7 +128,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
             && changeFlag.HasFlag(ChangeFlag.PositionChange)
             && changeFlag.HasFlag(ChangeFlag.VelocityChange)
             && Velocity.LengthSquared() <= NetworkBodySyncHelpers.VelocityEpsilonSquared;
-        bool interpolateBody = !isServer && !playerData.IsMainPlayer && !snapStoppedRemoteBody;
+        bool interpolateBody = !playerData.IsMainPlayer && !snapStoppedRemoteBody;
         if (snapStoppedRemoteBody) {
             NetworkBodyInterpolation.RemoveTarget(body);
         }

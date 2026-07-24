@@ -40,9 +40,6 @@ public class PlayerHitPacket : PlayerPacketBase {
                 return;
             }
             if (isServer) {
-                if (Vector3.Distance(m_hitPosition, eye) > 6f) {
-                    return;
-                }
                 BoundingBox box = body.BoundingBox;
                 box.Min -= new Vector3(0.5f);
                 box.Max += new Vector3(0.5f);

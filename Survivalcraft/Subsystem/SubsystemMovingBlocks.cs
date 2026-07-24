@@ -203,9 +203,6 @@ namespace Game {
                 GenerateGeometry(movingBlockSet);
             }
             m_movingBlockSets.Add(movingBlockSet);
-            if (!NetworkManager.IsClientRunning) {
-                m_movingBlockSets.Add(movingBlockSet);
-            }
             OnMovingBlockAdd?.Invoke(movingBlockSet);
             return movingBlockSet;
         }
@@ -231,7 +228,10 @@ namespace Game {
         }
 
         public void DoStop(MovingBlockSet item) {
-            item.Stop = true;
+            if (item != null) {
+                item.Stop = true;
+                RemoveMovingBlockSet(item, true);
+            }
         }
 
         public IMovingBlockSet LoadAndAddMovingItem(ValuesDictionary value9) {

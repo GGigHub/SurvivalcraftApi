@@ -272,7 +272,11 @@ namespace Game {
             contentDistance = MathUtils.Max(contentDistance, visibilityDistance);
             m_updateParameters.Locations.TryGetValue(locationIndex, out UpdateLocation value);
             //如果这里一直执行会阻塞地形更新
-            if (contentDistance != value.ContentDistance || visibilityDistance != value.VisibilityDistance || !value.LastChunksUpdateCenter.HasValue || Vector2.DistanceSquared(center, value.LastChunksUpdateCenter.Value) > 64f) {
+            if (contentDistance != value.ContentDistance
+            || visibilityDistance != value.VisibilityDistance
+            || !value.LastChunksUpdateCenter.HasValue 
+            || Vector2.DistanceSquared(center, value.LastChunksUpdateCenter.Value) > 64f
+            || (NetworkManager.IsClientRunning && Time.PeriodicEvent(2.0, 0.0))) {
                 value.Center = center;
                 value.VisibilityDistance = visibilityDistance;
                 value.ContentDistance = contentDistance;
@@ -477,7 +481,11 @@ namespace Game {
                         SendReceiveChunkStatesThread();
                         foreach (TerrainChunk item in list) {
                             while (item.ThreadState < TerrainChunkState.Valid) {
+                                TerrainChunkState previousState = item.ThreadState;
                                 UpdateChunkSingleStep(item, m_subsystemSky.SkyLightValue);
+                                if (item.ThreadState <= previousState) {
+                                    break;
+                                }
                             }
                         }
                         SendReceiveChunkStatesThread();

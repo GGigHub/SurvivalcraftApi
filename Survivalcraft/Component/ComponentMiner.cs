@@ -97,6 +97,10 @@ namespace Game {
 
         public CellFace? DigCellFace { get; set; }
 
+        // Set when a local mining attempt acquires a different terrain cell. The
+        // player event synchronizer uses this to refresh an in-progress dig ray.
+        public bool DigCellFaceChanged { get; set; }
+
         public float DigTime {
             get {
                 if (!DigCellFace.HasValue) {
@@ -141,6 +145,7 @@ namespace Game {
                 || DigCellFace.Value.Z != cellFace.Z) {
                 m_digStartTime = m_subsystemTime.GameTime;
                 DigCellFace = cellFace;
+                DigCellFaceChanged = true;
             }
             float digTimeWithActiveTool = CalculateDigTime(cellValue, activeBlockValue);
             m_digProgress = digTimeWithActiveTool > 0f

@@ -70,6 +70,7 @@ namespace Game {
 
         public virtual void Update(float dt) {
             m_playerInput = default;
+            if (!m_componentPlayer.PlayerData.IsMainPlayer) return;
             UpdateInputFromMouseAndKeyboard(m_componentPlayer.GameWidget.Input);
             UpdateInputFromGamepad(m_componentPlayer.GameWidget.Input);
             UpdateInputFromVrControllers(m_componentPlayer.GameWidget.Input);

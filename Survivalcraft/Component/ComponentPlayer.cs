@@ -257,6 +257,11 @@ namespace Game {
             flag = false;
         }
 
+        TerrainRaycastResult? RaycastAuthoritativeTerrain(Ray3 requestedRay, RaycastMode mode) {
+            Vector3 direction = requestedRay.Direction == Vector3.Zero ? ComponentBody.Matrix.Forward : requestedRay.Direction;
+            return ComponentMiner.Raycast<TerrainRaycastResult>(new Ray3(ComponentCreatureModel.EyePosition, direction), mode);
+        }
+
         public virtual void Update(float dt) {
             if (PlayerData.IsMainPlayer && ComponentMiner?.Inventory != null && LastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex) {
                 LastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
@@ -393,11 +398,9 @@ namespace Game {
                     digEvents.RemoveAt(0);
                 }
                 if (digEvent.digEvent == DigEvent.Start) {
-                    if (digEvent.NetDigRay.HasValue) {
-                        TerrainRaycastResult? serverRaycast = ComponentMiner.Raycast<TerrainRaycastResult>(digEvent.NetDigRay.Value, RaycastMode.Digging);
-                        if (serverRaycast.HasValue) {
-                            ComponentMiner.Dig(serverRaycast.Value);
-                        }
+                    if (NetworkManager.IsServerRunning && digEvent.NetDigRay.HasValue) {
+                        TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(digEvent.NetDigRay.Value, RaycastMode.Digging);
+                        if (raycast.HasValue) ComponentMiner.Dig(raycast.Value);
                     }
                 }
                 else if (digEvent.digEvent == DigEvent.Cancel) {
@@ -408,12 +411,10 @@ namespace Game {
                     ComponentMiner.m_digProgress = 0f;
                 }
                 else if (digEvent.digEvent == DigEvent.End) {
-                    if (digEvent.NetDigRay.HasValue) {
+                    if (NetworkManager.IsServerRunning && digEvent.NetDigRay.HasValue) {
                         ComponentMiner.m_digProgress = 1f;
-                        TerrainRaycastResult? serverRaycast = ComponentMiner.Raycast<TerrainRaycastResult>(digEvent.NetDigRay.Value, RaycastMode.Digging);
-                        if (serverRaycast.HasValue) {
-                            ComponentMiner.Dig(serverRaycast.Value);
-                        }
+                        TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(digEvent.NetDigRay.Value, RaycastMode.Digging);
+                        if (raycast.HasValue) ComponentMiner.Dig(raycast.Value);
                     }
                     digEvent = default;
                     digEvent.NetDigRaycast = null;
@@ -451,22 +452,17 @@ namespace Game {
                     interactEvents.RemoveAt(0);
                 }
                 if (interactEvent.interactEvent == InteractEvent.Start) {
-                    if (!ComponentMiner.Use(interactEvent.NetInteractRay)) {
-                        TerrainRaycastResult? serverRaycast = ComponentMiner.Raycast<TerrainRaycastResult>(interactEvent.NetInteractRay, RaycastMode.Interaction);
-                        if (serverRaycast.HasValue && !ComponentMiner.Interact(serverRaycast.Value)) {
-                            ComponentMiner.Place(serverRaycast.Value);
-                        }
+                    Vector3 direction = interactEvent.NetInteractRay.Direction == Vector3.Zero ? ComponentBody.Matrix.Forward : interactEvent.NetInteractRay.Direction;
+                    if (NetworkManager.IsServerRunning && !ComponentMiner.Use(new Ray3(ComponentCreatureModel.EyePosition, direction))) {
+                        TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(interactEvent.NetInteractRay, RaycastMode.Interaction);
+                        if (raycast.HasValue && !ComponentMiner.Interact(raycast.Value)) ComponentMiner.Place(raycast.Value);
                     }
                     interactEvent = default;
                 }
                 else if (interactEvent.interactEvent == InteractEvent.Place) {
-                    Ray3 placeRay = interactEvent.NetInteractRay;
-                    if (placeRay.Direction == Vector3.Zero) {
-                        placeRay = new Ray3(ComponentCreatureModel.EyePosition, ComponentBody.Matrix.Forward);
-                    }
-                    TerrainRaycastResult? serverRaycast = ComponentMiner.Raycast<TerrainRaycastResult>(placeRay, RaycastMode.Interaction);
-                    if (serverRaycast.HasValue) {
-                        ComponentMiner.Place(serverRaycast.Value);
+                    if (NetworkManager.IsServerRunning) {
+                        TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(interactEvent.NetInteractRay, RaycastMode.Interaction);
+                        if (raycast.HasValue) ComponentMiner.Place(raycast.Value);
                     }
                     interactEvent = default;
                 }
@@ -537,13 +533,13 @@ namespace Game {
                         terrainRaycastResult,
                         movingBlocksRaycastResult,
                         out flag
-                    );                    if (shouldSyncPlayerEvents
+                    ); if (shouldSyncPlayerEvents
                         && terrainRaycastResult.HasValue
                         && priorityPlace >= priorityUse
                         && priorityPlace >= priorityInteract) {
                         interactEvent.interactEvent = InteractEvent.Place;
                     }
-                    m_lastActionTime = timeIntervalLastActionTime;
+                    m_lastActionTime = m_subsystemTime.GameTime;
                 }
             }
             float timeIntervalAim = m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ? 0.1f : 1.4f;
@@ -725,7 +721,8 @@ namespace Game {
                 digEvent.digEvent = DigEvent.Cancel;
             }
             if (shouldSyncPlayerEvents) {
-                if (last_digEvent.digEvent != digEvent.digEvent) {
+                if (last_digEvent.digEvent != digEvent.digEvent || ComponentMiner.DigCellFaceChanged) {
+                    ComponentMiner.DigCellFaceChanged = false;
                     last_digEvent = digEvent;
                     OnDigEvent?.Invoke(this);
                 }
