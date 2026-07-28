@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,8 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Engine\Engine.csproj" />
-    <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />
+    <ProjectReference Include="..\Engine\Engine.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\EntitySystem\EntitySystem.csproj">
+      <Private>false</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Survivalcraft.Windows\Survivalcraft.Windows.csproj">
       <Private>false</Private>
     </ProjectReference>
@@ -22,7 +27,7 @@
   <Target Name="PackageMod" AfterTargets="Build">
     <PropertyGroup>
       <ModTempDir>$(IntermediateOutputPath)ModTemp\</ModTempDir>
-      <ModOutputPath>..\Survivalcraft.Test\bin\Debug\net10.0-windows\Mods\</ModOutputPath>
+      <ModOutputPath>..\Survivalcraft.Test\bin\$(Configuration)\net10.0-windows\win-x64\Mods\</ModOutputPath>
     </PropertyGroup>
     <RemoveDir Directories="$(ModTempDir)" />
     <MakeDir Directories="$(ModTempDir)" />

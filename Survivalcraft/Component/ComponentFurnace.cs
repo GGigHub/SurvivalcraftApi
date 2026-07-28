@@ -70,8 +70,6 @@ namespace Game {
 
         public virtual float SmeltingProgress => m_smeltingProgress;
 
-        public static event Action<ComponentFurnace> OnFurnaceUpdate;
-
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override int GetSlotCapacity(int slotIndex, int value) {
@@ -106,7 +104,7 @@ namespace Game {
                     m_heatLevel = 0f;
                 }
             }
-            OnFurnaceUpdate?.Invoke(this);
+            ModsManager.HookAction("OnNetworkFurnaceUpdate", loader => loader.OnNetworkFurnaceUpdate(this));
             if (!NetworkManager.IsClientRunning) {
                 if (m_updateSmeltingRecipe) {
                     UpdateSmeltingRecipe();

@@ -207,8 +207,35 @@ namespace Survivalcraft.TestAutomation {
         }
 
         private static object ExecuteCommandScript(string code) {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+                .Concat(ModsManager.Dlls.Values)
+                .Concat(ModsManager.ModLoaders.Select(l => l.GetType().Assembly))
+                .Concat(ModsManager.ModList.SelectMany(m => m.GetAssemblies()))
+                .Where(a => !a.IsDynamic)
+                .Distinct();
+
+            var references = new List<Microsoft.CodeAnalysis.MetadataReference>();
+            foreach (var assembly in assemblies) {
+                try {
+                    if (!string.IsNullOrEmpty(assembly.Location)) {
+                        references.Add(Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(assembly.Location));
+                    }
+                    else {
+                        unsafe {
+                            if (System.Reflection.Metadata.AssemblyExtensions.TryGetRawMetadata(assembly, out byte* blob, out int length)) {
+                                var moduleMetadata = Microsoft.CodeAnalysis.ModuleMetadata.CreateFromMetadata((IntPtr)blob, length);
+                                references.Add(Microsoft.CodeAnalysis.AssemblyMetadata.Create(moduleMetadata).GetReference());
+                            }
+                        }
+                    }
+                }
+                catch {
+                    // ignore unresolvable assemblies
+                }
+            }
+
             var options = ScriptOptions.Default
-                .WithReferences(typeof(GameManager).Assembly, typeof(Vector3).Assembly)
+                .WithReferences(references)
                 .WithImports("System", "System.Linq", "System.Collections.Generic", "Engine", "Game");
 
             return CSharpScript.EvaluateAsync(code, options).GetAwaiter().GetResult();

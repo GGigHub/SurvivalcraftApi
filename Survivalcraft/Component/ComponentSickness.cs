@@ -20,10 +20,6 @@ namespace Game {
         public double? m_lastPukeTime;
         public const string fName = "ComponentSickness";
 
-
-        public static event Action<ComponentSickness> OnSicknessChange;
-        public static event Action<ComponentSickness> OnNauseaEffect;
-
         public bool IsSick => m_sicknessDuration > 0f;
 
         public bool IsPuking => m_pukeParticleSystem != null;
@@ -36,7 +32,7 @@ namespace Game {
                 m_componentPlayer.PlayerStats.TimesWasSick++;
             }
             m_sicknessDuration = 900f;
-            if (!fromNetwork) OnSicknessChange?.Invoke(this);
+            if (!fromNetwork) ModsManager.HookAction("OnNetworkSicknessChanged", loader => loader.OnNetworkSicknessChanged(this));
         }
 
         public virtual void NauseaEffect(bool fromNetwork = false) {
@@ -72,7 +68,7 @@ namespace Game {
                     );
                 }
             }
-            if (!fromNetwork) OnNauseaEffect?.Invoke(this);
+            if (!fromNetwork) ModsManager.HookAction("OnNetworkNauseaEffect", loader => loader.OnNetworkNauseaEffect(this));
         }
 
         public virtual void Update(float dt) {
@@ -87,7 +83,7 @@ namespace Game {
                 m_sicknessDuration = MathUtils.Max(m_sicknessDuration - dt, 0f);
                 if (m_componentPlayer.ComponentHealth.Health > 0f && !m_componentPlayer.ComponentSleep.IsSleeping && m_subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) && (!m_lastNauseaTime.HasValue || m_subsystemTime.GameTime - m_lastNauseaTime > 15.0)) {
                     NauseaEffect();
-                    OnSicknessChange?.Invoke(this);
+                    ModsManager.HookAction("OnNetworkSicknessChanged", loader => loader.OnNetworkSicknessChanged(this));
                 }
             }
             if (m_pukeParticleSystem != null) {

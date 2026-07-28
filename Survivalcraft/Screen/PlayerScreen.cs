@@ -8,9 +8,6 @@ using TemplatesDatabase;
 namespace Game;
 
 public class PlayerScreen : Screen {
-    public static event Action<PlayerData> OnPlayerCreate;
-    public static event Action<PlayerData> OnPlayerModify;
-	public static event Action<PlayerData> OnPlayerDeleted;
 
     public enum Mode {
         Initial,
@@ -219,8 +216,13 @@ public class PlayerScreen : Screen {
         if (m_deleteButton.IsClicked) {
             if (!NetworkManager.IsClientRunning) {
                 DialogsManager.Confirm("你确定要踢出这个玩家吗", btn => {
-					if (btn == MessageDialogButton.Button1) OnPlayerDeleted?.Invoke(m_playerData);
-					else DialogsManager.HideAllDialogs();
+                    if (btn == MessageDialogButton.Button1) {
+                        m_playerData.SubsystemPlayers.RemovePlayerData(m_playerData);
+                        ScreensManager.SwitchScreen("Players", m_playerData.SubsystemPlayers);
+                    }
+                    else {
+                        DialogsManager.HideAllDialogs();
+                    }
                 });
             }
             else if (NetworkManager.IsClientRunning) {
@@ -238,7 +240,7 @@ public class PlayerScreen : Screen {
         if (m_playButton.IsClicked && VerifyName()) {
             if (m_mode == Mode.Initial) {
                 if (NetworkManager.IsClientRunning) {
-                    OnPlayerCreate?.Invoke(m_playerData);
+                    ModsManager.HookAction("OnNetworkPlayerCreate", loader => loader.OnNetworkPlayerCreate(m_playerData));
                     DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
                 }
                 else {
@@ -262,7 +264,7 @@ public class PlayerScreen : Screen {
                 ScreensManager.SwitchScreen("Players", m_playerData.SubsystemPlayers);
             }
             if (m_mode == Mode.Edit) {
-                OnPlayerModify?.Invoke(m_playerData);
+                ModsManager.HookAction("OnNetworkPlayerModify", loader => loader.OnNetworkPlayerModify(m_playerData));
             }
         }
         m_nameWasInvalid = false;

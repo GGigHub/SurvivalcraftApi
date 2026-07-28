@@ -8,7 +8,6 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable {
-        public static event Action<Projectile, bool> OnProjectileFire;
 
         public SubsystemAudio m_subsystemAudio;
 
@@ -94,7 +93,7 @@ namespace Game {
             }
             Projectile projectile = AddProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
             if (projectile != null && !fromNetwork) {
-                OnProjectileFire?.Invoke(projectile, false);
+                ModsManager.HookAction("OnNetworkProjectileFired", loader => loader.OnNetworkProjectileFired(projectile, false));
             }
             return projectile;
         }
@@ -141,7 +140,7 @@ namespace Game {
             }
             Projectile projectile = FireProjectile<Projectile>(value, position, velocity, angularVelocity, owner);
             if (projectile != null && !fromNetwork) {
-                OnProjectileFire?.Invoke(projectile, true);
+                ModsManager.HookAction("OnNetworkProjectileFired", loader => loader.OnNetworkProjectileFired(projectile, true));
             }
             return projectile;
         }

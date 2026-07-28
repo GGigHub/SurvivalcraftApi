@@ -33,10 +33,6 @@ namespace Game {
 
         public float m_messageFactor;
 
-
-        public static event Action<ComponentSleep, bool> OnSleepEvent;
-        public static event Action<ComponentSleep> OnWakeUpEvent;
-
         public bool IsSleeping => m_sleepStartTime.HasValue;
 
         public float SleepFactor => m_sleepFactor;
@@ -80,7 +76,7 @@ namespace Game {
                     }
                 }
             }
-            if (!fromNetwork) OnSleepEvent?.Invoke(this, allowManualWakeup);
+            if (!fromNetwork) ModsManager.HookAction("OnNetworkSleep", loader => loader.OnNetworkSleep(this, allowManualWakeup));
         }
 
         public virtual void WakeUp(bool fromNetwork = false) {
@@ -90,7 +86,7 @@ namespace Game {
                     m_componentPlayer.PlayerData.SpawnPosition = m_componentPlayer.ComponentBody.Position + new Vector3(0f, 0.1f, 0f);
                 }
             }
-            if (!fromNetwork) OnWakeUpEvent?.Invoke(this);
+            if (!fromNetwork) ModsManager.HookAction("OnNetworkWakeUp", loader => loader.OnNetworkWakeUp(this));
         }
 
         public virtual void Update(float dt) {

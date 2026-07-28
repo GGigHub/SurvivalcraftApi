@@ -4,9 +4,6 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable {
-        public static event Action<int, int, int, float> OnFireBlockAdd;
-
-        public static event Action<int, int, int> OnFireBlockRemove;
 
         public class FireData {
             public Point3 Point;
@@ -367,7 +364,7 @@ namespace Game {
 
         public void AddFire(int x, int y, int z, float expandability, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
-                OnFireBlockAdd?.Invoke(x, y, z, expandability);
+                ModsManager.HookAction("OnNetworkFireBlockAdded", loader => loader.OnNetworkFireBlockAdded(x, y, z, expandability));
                 return;
             }
 
@@ -378,20 +375,20 @@ namespace Game {
                 m_fireData[point] = fireData;
             }
             if (!NetworkManager.IsClientRunning && !fromNetwork) {
-                OnFireBlockAdd?.Invoke(x, y, z, expandability);
+                ModsManager.HookAction("OnNetworkFireBlockAdded", loader => loader.OnNetworkFireBlockAdded(x, y, z, expandability));
             }
         }
 
         public void RemoveFire(int x, int y, int z, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
-                OnFireBlockRemove?.Invoke(x, y, z);
+                ModsManager.HookAction("OnNetworkFireBlockRemoved", loader => loader.OnNetworkFireBlockRemoved(x, y, z));
                 return;
             }
 
             Point3 key = new(x, y, z);
             m_fireData.Remove(key);
             if (!NetworkManager.IsClientRunning && !fromNetwork) {
-                OnFireBlockRemove?.Invoke(x, y, z);
+                ModsManager.HookAction("OnNetworkFireBlockRemoved", loader => loader.OnNetworkFireBlockRemoved(x, y, z));
             }
         }
 

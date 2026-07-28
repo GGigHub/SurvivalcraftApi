@@ -91,14 +91,14 @@ Add("allocatedInRange", allocatedInRange);
 Add("readyInRange", readyInRange);
 Add("notReadyInRange", notReadyInRange);
 
-bool hasPendingQueue = updater.m_pendingChunkSendsByPlayer.TryGetValue(playerIndex, out System.Collections.Generic.List<Engine.Point2> pendingChunks);
-bool hasSentSet = updater.m_sentChunksByPlayer.TryGetValue(playerIndex, out System.Collections.Generic.HashSet<Engine.Point2> sentChunks);
+bool hasPendingQueue = updater.waitChunkSetList.TryGetValue(playerIndex, out System.Collections.Generic.HashSet<Engine.Point2> pendingChunks);
+bool hasSentSet = updater.sentChunkSetList.TryGetValue(playerIndex, out System.Collections.Generic.HashSet<Engine.Point2> sentChunks);
 Add("hasPendingQueue", hasPendingQueue);
 Add("pendingCount", pendingChunks?.Count ?? 0);
-Add("targetPending", pendingChunks?.Any(point => point.X == chunkX && point.Y == chunkZ) ?? false);
+Add("targetPending", pendingChunks?.Contains(new Engine.Point2(chunkX, chunkZ)) ?? false);
 Add("hasSentSet", hasSentSet);
 Add("sentCount", sentChunks?.Count ?? 0);
-Add("targetSent", sentChunks?.Any(point => point.X == chunkX && point.Y == chunkZ) ?? false);
+Add("targetSent", sentChunks?.Contains(new Engine.Point2(chunkX, chunkZ)) ?? false);
 
 int cellX = (chunkX << Game.TerrainChunk.SizeBits) + 1;
 int cellZ = (chunkZ << Game.TerrainChunk.SizeBits) + 1;

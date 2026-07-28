@@ -43,14 +43,12 @@ namespace Game {
 
         private bool m_isFeed;
 
-        public static event Action<ComponentEatPickableBehavior, bool> OnIsFeedChanged;
-
         public bool IsFeed {
             get { return m_isFeed; }
             set {
                 if (m_isFeed != value) {
                     m_isFeed = value;
-                    OnIsFeedChanged?.Invoke(this, value);
+                    ModsManager.HookAction("OnNetworkEatPickableBehaviorChanged", loader => loader.OnNetworkEatPickableBehaviorChanged(this, value));
                 }
             }
         }

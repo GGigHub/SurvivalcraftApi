@@ -5,7 +5,6 @@ using Silk.NET.OpenGLES;
 
 namespace Game {
     public class ViewWidget : TouchInputWidget, IDragTargetWidget {
-        public static event Action<PlayerData, int, int, Vector3, int> OnPlayerDragDrop;
         public SubsystemDrawing m_subsystemDrawing;
 
         public RenderTarget2D m_scalingRenderTarget;
@@ -52,7 +51,7 @@ namespace Game {
 
         public virtual void DragDrop(Vector3 hitPosition, InventoryDragData inventoryDragData, int count, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
-                OnPlayerDragDrop?.Invoke(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, hitPosition, count);
+                ModsManager.HookAction("OnNetworkPlayerDragDrop", loader => loader.OnNetworkPlayerDragDrop(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, hitPosition, count));
                 return;
             }
             if (inventoryDragData != null

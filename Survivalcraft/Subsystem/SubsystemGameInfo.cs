@@ -4,7 +4,6 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemGameInfo : Subsystem, IUpdateable {
-        public static event Action<double, double> OnTimeUpdate;
 
         public double? m_lastTotalElapsedGameTime;
 
@@ -123,7 +122,7 @@ namespace Game {
             }
             //客户端禁用时间计算
             if (!NetworkManager.IsClientRunning) {
-                if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) OnTimeUpdate?.Invoke(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset);
+                if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)) ModsManager.HookAction("OnNetworkTimeUpdate", loader => loader.OnNetworkTimeUpdate(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset));
             }
         }
     }

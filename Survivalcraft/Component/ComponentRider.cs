@@ -28,10 +28,6 @@ namespace Game {
         
         public float DetectSurroundingMountRange = 2.5f;
 
-        public static event Action<ComponentRider, ComponentMount, bool> OnMounting;
-
-        public static event Action<ComponentRider, bool> OnDismounting;
-
         public ComponentCreature ComponentCreature { get; set; }
 
         public ComponentMount Mount {
@@ -70,7 +66,7 @@ namespace Game {
             if (!m_isAnimating
                 && Mount == null) {
                 if (NetworkManager.IsClientRunning && !fromNetwork) {
-                    OnMounting?.Invoke(this, componentMount, true);
+                    ModsManager.HookAction("OnNetworkRiderMounting", loader => loader.OnNetworkRiderMounting(this, componentMount, true));
                     return;
                 }
                 m_isAnimating = true;
@@ -87,7 +83,7 @@ namespace Game {
                 m_targetRotationOffset = Quaternion.Identity;
                 ComponentCreature.ComponentLocomotion.IsCreativeFlyEnabled = false;
 
-                if (!fromNetwork) OnMounting?.Invoke(this, componentMount, false);
+                if (!fromNetwork) ModsManager.HookAction("OnNetworkRiderMounting", loader => loader.OnNetworkRiderMounting(this, componentMount, false));
             }
         }
 
@@ -95,7 +91,7 @@ namespace Game {
             if (!m_isAnimating
                 && Mount != null) {
                 if (NetworkManager.IsClientRunning && !fromNetwork) {
-                    OnDismounting?.Invoke(this, true);
+                    ModsManager.HookAction("OnNetworkRiderDismounting", loader => loader.OnNetworkRiderDismounting(this, true));
                     return;
                 }
 
@@ -129,7 +125,7 @@ namespace Game {
                 m_targetPositionOffset = Mount.MountOffset + m_riderOffset + new Vector3(x, Mount.DismountOffset.Y, Mount.DismountOffset.Z);
                 m_targetRotationOffset = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.Sign(x) * MathUtils.DegToRad(60f));
 
-                if (!fromNetwork) OnDismounting?.Invoke(this, false);
+                if (!fromNetwork) ModsManager.HookAction("OnNetworkRiderDismounting", loader => loader.OnNetworkRiderDismounting(this, false));
             }
         }
 

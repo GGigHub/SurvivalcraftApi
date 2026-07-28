@@ -25,16 +25,12 @@ namespace Game {
 
         public int[] DrawOrders => m_drawOrders;
 
-        public static event Action<ParticleSystemBase> OnParticleSystemAdded;
-
-        public static event Action<ParticleSystemBase> OnParticleSystemRemoved;
-
         public void AddParticleSystem(ParticleSystemBase particleSystem, bool throwOnAlreadyAdded = false) {
             if (particleSystem.SubsystemParticles == null) {
                 m_particleSystems.Add(particleSystem, true);
                 particleSystem.SubsystemParticles = this;
                 particleSystem.OnAdded();
-                OnParticleSystemAdded?.Invoke(particleSystem);
+                ModsManager.HookAction("OnNetworkParticleSystemAdded", loader => loader.OnNetworkParticleSystemAdded(particleSystem));
                 return;
             }
             if (throwOnAlreadyAdded) {
@@ -47,7 +43,7 @@ namespace Game {
                 particleSystem.OnRemoved();
                 m_particleSystems.Remove(particleSystem);
                 particleSystem.SubsystemParticles = null;
-                OnParticleSystemRemoved?.Invoke(particleSystem);
+
                 return;
             }
             if (throwOnNotFound) {

@@ -65,8 +65,6 @@ namespace Game {
 
         public bool EnableGravityOnDeathOrStun = true;
 
-        public static Func<ComponentBody, bool> IsNetworkMode;
-
         public Vector2 LookAngles {
             get => m_lookAngles;
             set {
@@ -154,9 +152,6 @@ namespace Game {
 
         public bool AllowShoesWarning = true;
 
-
-        public static event Action<ComponentLocomotion, float> OnLocomotionUpdate;
-
         public UpdateOrder UpdateOrder => UpdateOrder.Locomotion;
 
         public ComponentPlayer componentPlayer;
@@ -168,8 +163,10 @@ namespace Game {
             {
                 IsCreativeFlyEnabled = false;
             }*/
-            OnLocomotionUpdate?.Invoke(this, dt);
-            if (IsNetworkMode?.Invoke(m_componentCreature.ComponentBody) == true) {
+
+            bool isNetworkMode = false;
+            ModsManager.HookAction("IsNetworkMode", loader => isNetworkMode |= loader.IsNetworkMode(m_componentCreature.ComponentBody));
+            if (isNetworkMode) {
                 NormalMovement(dt);
                 return;
             }

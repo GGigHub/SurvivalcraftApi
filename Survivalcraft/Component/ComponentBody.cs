@@ -63,12 +63,6 @@ namespace Game {
 
         public Vector3 m_velocity;
 
-        public static event Action<ComponentBody, float> OnBodyUpdate;
-
-        public static event Action<ComponentBody, float> OnNetworkBodyUpdate;
-
-        public static event Action<ComponentBody> OnBodyRemoved;
-
         public float m_crouchFactor;
 
         public int m_embeddedInIceCounter;
@@ -146,8 +140,6 @@ namespace Game {
         public virtual ComponentBody StandingOnBody { get; set; }
 
         public virtual Vector3 StandingOnVelocity { get; set; }
-
-        public static Func<ComponentBody, bool> IsNetworkMode;
 
         [Obsolete("Use IsCrouching")]
         public virtual bool IsSneaking {
@@ -395,7 +387,7 @@ namespace Game {
         }
 
         public override void OnEntityRemoved() {
-            OnBodyRemoved?.Invoke(this);
+            ModsManager.HookAction("OnNetworkBodyRemoved", loader => loader.OnNetworkBodyRemoved(this));
             ParentBody = null;
             ComponentBody[] array = ChildBodies.ToArray();
             for (int i = 0; i < array.Length; i++) {
@@ -416,9 +408,11 @@ namespace Game {
             if (skipVanilla_) {
                 return;
             }
-            OnBodyUpdate?.Invoke(this, dt);
-            if (IsNetworkMode?.Invoke(this) == true) {
-                OnNetworkBodyUpdate?.Invoke(this, dt);
+            ModsManager.HookAction("OnNetworkBodyUpdated", loader => loader.OnNetworkBodyUpdated(this, dt));
+            bool isNetworkMode = false;
+            ModsManager.HookAction("IsNetworkMode", loader => isNetworkMode |= loader.IsNetworkMode(this));
+            if (isNetworkMode) {
+                ModsManager.HookAction("OnNetworkBodyUpdate", loader => loader.OnNetworkBodyUpdate(this, dt));
                 return;
             }
             CollisionVelocityChange = Vector3.Zero;

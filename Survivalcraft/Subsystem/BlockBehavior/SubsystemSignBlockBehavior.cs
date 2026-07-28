@@ -81,10 +81,6 @@ namespace Game {
 
         public int[] DrawOrders => m_drawOrders;
 
-        public static event Action<SubsystemSignBlockBehavior, Point3> OnEditSignRequest;
-
-        public static event Action<SubsystemSignBlockBehavior, Point3, string[], Color[], string> OnSignDataChanged;
-
         public SignData GetSignData(Point3 point) {
             if (m_textsByPoint.TryGetValue(point, out TextData value)) {
                 return new SignData { Lines = value.Lines.ToArray(), Colors = value.Colors.ToArray(), Url = value.Url };
@@ -108,7 +104,7 @@ namespace Game {
             }
             m_lastUpdatePositions.Clear();
             if (sync) {
-                OnSignDataChanged?.Invoke(this, point, lines, colors, url);
+                ModsManager.HookAction("OnNetworkSignDataChanged", loader => loader.OnNetworkSignDataChanged(this, point, lines, colors, url));
             }
         }
 
@@ -166,7 +162,7 @@ namespace Game {
             }
             else if (componentMiner.ComponentPlayer != null) {
                 if (NetworkManager.IsClientRunning && IsMainPlayer?.Invoke(componentMiner.ComponentPlayer) == true) {
-                    OnEditSignRequest?.Invoke(this, point);
+                    ModsManager.HookAction("OnNetworkSignEditRequested", loader => loader.OnNetworkSignEditRequested(this, point));
                     return true;
                 }
                 if (componentMiner.ComponentPlayer.PlayerData.IsMainPlayer) {

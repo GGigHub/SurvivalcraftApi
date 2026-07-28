@@ -16,11 +16,6 @@ namespace Game {
         public ComponentOnFire m_componentOnFire;
         public ComponentFactors m_componentFactors;
 
-        public static event Action<ComponentHealth, Injury, float> OnHealthInjured;
-        public static event Action<ComponentHealth> OnCreatureDied;
-        public static event Action<ComponentHealth> OnHealthHealUpdate;
-        public static event Action<ComponentHealth, float, string> OnHealthFallDamage;
-
         //public Block ExperienceOrbBlock;
 
         public int ExperienceOrbBlockIndex = 8;
@@ -167,7 +162,7 @@ namespace Game {
                     float healthBefore = Health;
                     injury.Process();
                     float injuryAmount = MathUtils.Max(healthBefore - Health, 0f);
-                    if (!fromNetwork) OnHealthInjured?.Invoke(this, injury, injuryAmount);
+                    if (!fromNetwork) ModsManager.HookAction("OnNetworkHealthInjured", loader => loader.OnNetworkHealthInjured(this, injury, injuryAmount));
                     if (Health <= 0f) {
                         ModsManager.HookAction(
                             "OnCreatureDying",
@@ -199,7 +194,7 @@ namespace Game {
                 }
             );
             CauseOfDeath = injury?.Cause;
-            OnCreatureDied?.Invoke(this);
+            ModsManager.HookAction("OnNetworkCreatureDied", loader => loader.OnNetworkCreatureDied(this));
             if (m_componentCreature.PlayerStats != null && calculateInKill) {
                 m_componentCreature.PlayerStats.AddDeathRecord(
                     new PlayerStats.DeathRecord {
@@ -267,7 +262,7 @@ namespace Game {
                 if (m_regenerateLifeEnabled
                     && Health > 0f
                     && Health < 1f) {
-                    OnHealthHealUpdate?.Invoke(this);
+                    ModsManager.HookAction("OnNetworkHealthHealUpdate", loader => loader.OnNetworkHealthHealUpdate(this));
                     float num = 0f;
 
                     if (m_componentPlayer != null) {
@@ -327,7 +322,7 @@ namespace Game {
                 );
                 if (fallDamage > 0f) {
                     string cause = LanguageControl.Get(fName, 2);
-                    OnHealthFallDamage?.Invoke(this, fallDamage, cause);
+                    ModsManager.HookAction("OnNetworkHealthFallDamage", loader => loader.OnNetworkHealthFallDamage(this, fallDamage, cause));
                 }
                 m_wasStanding = m_componentCreature.ComponentBody.StandingOnValue.HasValue
                     || m_componentCreature.ComponentBody.StandingOnBody != null;

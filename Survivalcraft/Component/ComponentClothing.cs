@@ -81,10 +81,6 @@ namespace Game {
         public ClothingSlot LeastInsulatedSlot { get; set; }
         public float SteedMovementSpeedFactor { get; set; }
 
-        public static event Action<IInventory, int> OnSlotChanged;
-
-        public static event Action<ComponentClothing, string> OnRequestSkin;
-
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         Project IInventory.Project => Project;
@@ -102,7 +98,7 @@ namespace Game {
         }
 
         public virtual void OnSlotChange(int slotIndex) {
-            OnSlotChanged?.Invoke(this, slotIndex);
+            ModsManager.HookAction("OnNetworkClothingSlotChanged", loader => loader.OnNetworkClothingSlotChanged(this, slotIndex));
         }
 
         public virtual void SetSlotValue(int slotIndex, object obj) {
@@ -649,7 +645,7 @@ namespace Game {
                     Utilities.Dispose(ref m_outerClothedTexture);
                 }
                 else {
-                    OnRequestSkin?.Invoke(this, m_componentPlayer.PlayerData.CharacterSkinName);
+                    ModsManager.HookAction("OnNetworkRequestSkin", loader => loader.OnNetworkRequestSkin(this, m_componentPlayer.PlayerData.CharacterSkinName));
                 }
             }
             if (m_skinTexture == null) {

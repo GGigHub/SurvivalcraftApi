@@ -49,8 +49,6 @@ namespace Game {
         public const float FemaleSpeedFactor = 1.03f;
         public const float FemaleHungerFactor = 0.7f;
 
-        public static event Action<ComponentLevel, int, bool> OnAddExperience;
-
         public virtual void AddExperience(int count, bool playSound, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) return;
             if (playSound) {
@@ -90,7 +88,7 @@ namespace Game {
                 }
                 m_componentPlayer.PlayerData.Level += num;
             }
-            if (!fromNetwork) OnAddExperience?.Invoke(this, count, playSound);
+            if (!fromNetwork) ModsManager.HookAction("OnNetworkLevelExperience", loader => loader.OnNetworkLevelExperience(this, count, playSound));
         }
 
         /// <summary>

@@ -215,11 +215,6 @@ namespace Game {
 
         public static bool LogTerrainUpdateStats = false;
 
-
-        public static event Action<TerrainUpdater, int, List<TerrainChunk>> OnTerrainSyncChunkList;
-
-        public static event Action<TerrainUpdater, UpdateLocation> OnTerrainPlayerLocationUpdate;
-
         public AutoResetEvent UpdateEvent => m_updateEvent;
 
         public event Action<TerrainChunk> ChunkInitialized;
@@ -283,7 +278,7 @@ namespace Game {
                 value.LastChunksUpdateCenter = center;
                 m_pendingLocations[locationIndex] = value;
                 if (NetworkManager.IsClientRunning) {
-                    OnTerrainPlayerLocationUpdate?.Invoke(this, value);
+                    ModsManager.HookAction("OnNetworkTerrainPlayerLocationUpdate", loader => loader.OnNetworkTerrainPlayerLocationUpdate(this, value));
                 }
             }
         }
@@ -425,7 +420,7 @@ namespace Game {
                         }
                     }
                     if (toSendList.Count > 0) {
-                        OnTerrainSyncChunkList?.Invoke(this, item.Key, toSendList);
+                        ModsManager.HookAction("OnNetworkTerrainSyncChunkList", loader => loader.OnNetworkTerrainSyncChunkList(this, item.Key, toSendList));
                     }
                 }
                 if (item.Value.Count == 0) waitChunkList_toRemove.Add(item.Key);

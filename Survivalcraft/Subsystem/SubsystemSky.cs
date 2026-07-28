@@ -50,8 +50,6 @@ namespace Game {
             public Color Color;
         }
 
-        public static event Action<Vector3> OnSkyLightning;
-
         public SubsystemTimeOfDay m_subsystemTimeOfDay;
 
         public SubsystemSeasons m_subsystemSeasons;
@@ -191,7 +189,7 @@ namespace Game {
 
         public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
-                OnSkyLightning?.Invoke(targetPosition);
+                ModsManager.HookAction("OnNetworkSkyLightning", loader => loader.OnNetworkSkyLightning(targetPosition));
                 return;
             }
 
@@ -228,7 +226,7 @@ namespace Game {
             }
             
             if (!fromNetwork) {
-                OnSkyLightning?.Invoke(targetPosition);
+                ModsManager.HookAction("OnNetworkSkyLightning", loader => loader.OnNetworkSkyLightning(targetPosition));
             }
 
             if (m_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != 0) {

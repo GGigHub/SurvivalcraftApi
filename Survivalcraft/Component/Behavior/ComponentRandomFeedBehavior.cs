@@ -29,14 +29,12 @@ namespace Game {
 
         private bool m_isFeed;
 
-        public static event Action<ComponentRandomFeedBehavior, bool> OnIsFeedChanged;
-
         public bool IsFeed {
             get { return m_isFeed; }
             set {
                 if (m_isFeed != value) {
                     m_isFeed = value;
-                    OnIsFeedChanged?.Invoke(this, value);
+                    ModsManager.HookAction("OnNetworkRandomFeedBehaviorChanged", loader => loader.OnNetworkRandomFeedBehaviorChanged(this, value));
                 }
             }
         }

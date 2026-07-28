@@ -25,14 +25,12 @@ namespace Game {
 
         private bool m_isBend;
 
-        public static event Action<ComponentFishOutOfWaterBehavior, bool> OnIsBendChanged;
-
         public bool IsBend {
             get { return m_isBend; }
             set {
                 if (m_isBend != value) {
                     m_isBend = value;
-                    OnIsBendChanged?.Invoke(this, value);
+                    ModsManager.HookAction("OnNetworkFishOutOfWaterBehaviorChanged", loader => loader.OnNetworkFishOutOfWaterBehaviorChanged(this, value));
                 }
             }
         }

@@ -2,7 +2,6 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Engine;
-using Game.Network;
 
 
 namespace Game {
@@ -135,7 +134,7 @@ namespace Game {
             m_connectButtonWidget.IsEnabled = false;
             Task.Run(async () => {
                 try {
-                    IPAddress address = await NetworkHelper.TryGetIPAddress(endPointParts.Host);
+                    IPAddress address = await NetworkManager.TryGetIPAddress(endPointParts.Host);
                     if (address == null) {
                         throw new InvalidOperationException("未找到可用地址");
                     }
@@ -162,7 +161,7 @@ namespace Game {
             m_connectButtonWidget.IsEnabled = false;
             Task.Run(async () => {
                 try {
-                    RelayJoinInfo joinInfo = await CenterServerClient.ResolveRelayJoinInfoAsync(globalCode);
+                    RelayJoinInfo joinInfo = await NetworkManager.ResolveRelayJoinInfoAsync(globalCode);
                     Dispatcher.Dispatch(delegate {
                         m_isResolvingAddress = false;
                         m_connectButtonWidget.IsEnabled = true;

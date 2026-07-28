@@ -148,14 +148,6 @@ namespace Game {
 
         public int CloseTime;
 
-        public static event Action<ComponentGui, ComponentPlayer> OnPlayerCreativeFly;
-
-        public static event Action<ComponentGui, Vector3, Vector3> OnManualLightingStrike;
-
-        public static event Action<ComponentGui, int> OnManualWeatherChange;
-
-        public static event Action<ComponentGui, double, double> OnManualTimeChange;
-
         public Widget ModalPanelWidget {
             get {
                 if (m_modalPanelContainerWidget == null
@@ -638,7 +630,7 @@ namespace Game {
                         DisplaySmallMessage(LanguageControl.Get(fName, 8), Color.White, false, false);
                     }
                 }
-                OnPlayerCreativeFly?.Invoke(this, m_componentPlayer);
+                ModsManager.HookAction("OnNetworkPlayerCreativeFly", loader => loader.OnNetworkPlayerCreativeFly(this, m_componentPlayer));
             }
             if (m_cameraButtonWidget.IsClicked
                 || playerInput.SwitchCameraMode) {
@@ -663,7 +655,7 @@ namespace Game {
                 if (!NetworkManager.IsClientRunning) {
                     m_subsystemWeather.ManualLightingStrike(m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
                 }
-                else OnManualLightingStrike?.Invoke(this, m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
+                else ModsManager.HookAction("OnNetworkManualLightingStrike", loader => loader.OnNetworkManualLightingStrike(this, m_componentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward));
             }
             int? type = null;
             if (m_precipitationButtonWidget.IsVisible
@@ -693,7 +685,7 @@ namespace Game {
                 }
             }
             if (type.HasValue) {
-                OnManualWeatherChange?.Invoke(this, type.Value);
+                ModsManager.HookAction("OnNetworkManualWeatherChange", loader => loader.OnNetworkManualWeatherChange(this, type.Value));
             }
             if (m_timeOfDayButtonWidget.IsVisible
                 && (m_timeOfDayButtonWidget.IsClicked || playerInput.TimeOfDay)) {
@@ -724,7 +716,7 @@ namespace Game {
                     type1 = 3;
                 }
                 if (type1.HasValue) {
-                    OnManualTimeChange?.Invoke(this, m_subsystemTimeOfDay.m_subsystemGameInfo.TotalElapsedGameTime, m_subsystemTimeOfDay.TimeOfDayOffset);
+                    ModsManager.HookAction("OnNetworkManualTimeChange", loader => loader.OnNetworkManualTimeChange(this, m_subsystemTimeOfDay.m_subsystemGameInfo.TotalElapsedGameTime, m_subsystemTimeOfDay.TimeOfDayOffset));
                 }
             }
             if (ModalPanelWidget != null) {

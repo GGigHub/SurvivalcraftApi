@@ -1,13 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
 using System.Linq;
-using Engine.Graphics;
-using Game;
-using Game.Network;
-using GameEntitySystem;
-using TemplatesDatabase;
+using System.Net;
+using System.Threading.Tasks;
 using Engine;
 
 namespace Game;
@@ -25,84 +20,123 @@ public class RelayJoinInfo(IPEndPoint endPoint, string roomCode) {
     public string RoomCode { get; } = roomCode;
 }
 
+public class ClientSession {
+    public int PlayerIndex { get; set; }
+    public Guid NetworkGuid { get; set; }
+    public NetworkState NetworkState { get; set; }
+}
+
 public static class NetworkManager {
-    public static NetworkClient NetworkClient { get; set; } = null;
-    public static NetworkServer NetworkServer { get; set; } = null;
-    public static RelayClient RelayClient { get; set; } = null;
-    public static RelayHost RelayHost { get; set; } = null;
-    public static PacketFragment PackageFragment { get; } = new();
+    public static object NetworkClient { get; set; }
+    public static object NetworkServer { get; set; }
+    public static object RelayClient { get; set; }
+    public static object RelayHost { get; set; }
     public static RelayHostCodeStatus RelayHostCodeStatus { get; set; } = RelayHostCodeStatus.Inactive;
 
-    public static bool IsServerRunning => (NetworkServer?.IsRunning ?? false) || (RelayHost?.IsConnected ?? false);
-    public static bool IsClientRunning => (NetworkClient?.IsConnected ?? false) || (RelayClient?.IsConnected ?? false);
-    public static int ClientLatency => IsClientRunning ? LatencyProbe.Latency : -1;
-    public static ClientSession MySession => NetworkClient?.MySession ?? RelayClient?.MySession;
+    public static Func<bool> IsServerRunningFunc { get; set; }
+    public static Func<bool> IsClientRunningFunc { get; set; }
+    public static Func<int> ClientLatencyFunc { get; set; }
+    public static Func<ClientSession> MySessionFunc { get; set; }
+    public static Func<IEnumerable<ClientSession>> ServerSessionsFunc { get; set; }
+    public static Func<string> RelayGlobalCodeFunc { get; set; }
+    public static Func<string> RelayRoomCodeFunc { get; set; }
+    public static Func<string, Task<RelayJoinInfo>> ResolveRelayJoinInfoAsyncFunc { get; set; }
+    public static Func<TerrainSerializer23> CreateTerrainSerializerNetFunc { get; set; }
+
+    public static Action InitializeAction { get; set; }
+    public static Action UpdateAction { get; set; }
+    public static Action StopAction { get; set; }
+    public static Action StartServerAction { get; set; }
+    public static Action<IPEndPoint> ConnectServerAction { get; set; }
+    public static Func<Task> StartRelayHostAsyncFunc { get; set; }
+    public static Action<IPEndPoint> StartRelayHostAction { get; set; }
+    public static Action<IPEndPoint, string> ConnectRelayAction { get; set; }
+    public static Action<object> QueueAction { get; set; }
+    public static Action<Pickable> QueuePickableCreateAction { get; set; }
+    public static Action<List<Pickable>> QueuePickableUpdateAction { get; set; }
+    public static Action<ComponentPlayer, Guid> SavePlayerEntityAction { get; set; }
+
+    public static bool IsServerRunning => IsServerRunningFunc != null ? IsServerRunningFunc() : false;
+    public static bool IsClientRunning => IsClientRunningFunc != null ? IsClientRunningFunc() : false;
+    public static int ClientLatency => ClientLatencyFunc != null ? ClientLatencyFunc() : -1;
+    public static ClientSession MySession => MySessionFunc != null ? MySessionFunc() : null;
     public static int PlayerIndex => MySession?.PlayerIndex ?? -1;
     public static Guid NetworkGuid => MySession?.NetworkGuid ?? Guid.Empty;
     public static NetworkState MyState => MySession?.NetworkState ?? NetworkState.NotConnected;
-    public static void SetPlayerIndex(int index) => MySession?.PlayerIndex = index;
-    public static void SetState(NetworkState state) => MySession?.NetworkState = state;
-    public static IEnumerable<ClientSession> ServerSessions =>
-        (NetworkServer?.ClientSessions.Values as IEnumerable<ClientSession> ?? [])
-        .Concat(RelayHost?.Sessions ?? []);
+    public static string RelayGlobalCode => RelayGlobalCodeFunc?.Invoke();
+    public static string RelayRoomCode => RelayRoomCodeFunc?.Invoke();
+    public static void SetPlayerIndex(int index) { if (MySession != null) MySession.PlayerIndex = index; }
+    public static void SetState(NetworkState state) { if (MySession != null) MySession.NetworkState = state; }
+    public static IEnumerable<ClientSession> ServerSessions => ServerSessionsFunc != null ? ServerSessionsFunc() : Array.Empty<ClientSession>();
 
     public static void Initialize() {
-        RootManager.Initialize();
-        PacketManager.Initialize();
+        InitializeAction?.Invoke();
     }
+
     public static void Update() {
-        NetworkServer?.Update();
-        NetworkClient?.Update();
-        RelayHost?.Update();
-        RelayClient?.Update();
-        PackageFragment.CleanupStates();
+        UpdateAction?.Invoke();
     }
+
     public static void Stop() {
-        NetworkServer?.Stop();
-        NetworkClient?.Disconnect();
-        RelayHost?.Disconnect();
-        RelayClient?.Disconnect();
-        NetworkServer = null;
-        NetworkClient = null;
-        RelayHost = null;
-        RelayClient = null;
-        NetworkBodyInterpolation.Clear();
-        PlayerBodyUpdatePacket.ClearSnapshots();
+        StopAction?.Invoke();
         RelayHostCodeStatus = RelayHostCodeStatus.Inactive;
     }
+
     public static void StartServer() {
-        NetworkServer = new();
-        NetworkServer.Start();
+        StartServerAction?.Invoke();
     }
+
     public static void ConnectServer(IPEndPoint iPEndPoint) {
-        NetworkClient = new();
-        NetworkClient.Connect(iPEndPoint);
+        ConnectServerAction?.Invoke(iPEndPoint);
     }
 
     public static async Task StartRelayHostAsync() {
-        try {
-            RelayHostCodeStatus = RelayHostCodeStatus.Creating;
-            IPEndPoint endPoint = await CenterServerClient.GetBestRelayEndPointAsync();
-            RelayHost = new RelayHost();
-            RelayHost.Start(endPoint);
-        }
-        catch (Exception ex) {
-            Log.Warning($"Failed to start relay host: {ex.Message}");
-            RelayHostCodeStatus = RelayHostCodeStatus.Failed;
+        if (StartRelayHostAsyncFunc != null) {
+            await StartRelayHostAsyncFunc();
         }
     }
+
     public static void StartRelayHost(IPEndPoint relayEndPoint) {
-        RelayHost = new();
-        RelayHost.Start(relayEndPoint);
+        StartRelayHostAction?.Invoke(relayEndPoint);
     }
+
     public static void ConnectRelay(IPEndPoint relayEndPoint, string roomCode) {
-        RelayClient = new(roomCode);
-        RelayClient.Connect(relayEndPoint);
+        ConnectRelayAction?.Invoke(relayEndPoint, roomCode);
     }
-    public static void Queue(Packet packet) {
-        NetworkClient?.Send(packet);
-        NetworkServer?.Board(packet);
-        RelayClient?.Send(packet);
-        RelayHost?.Board(packet);
+
+    public static void Queue(object packet) {
+        QueueAction?.Invoke(packet);
+    }
+
+    public static void QueuePickableCreate(Pickable pickable) {
+        QueuePickableCreateAction?.Invoke(pickable);
+    }
+
+    public static void QueuePickableUpdate(List<Pickable> pickables) {
+        QueuePickableUpdateAction?.Invoke(pickables);
+    }
+
+    public static void SavePlayerEntity(ComponentPlayer player, Guid networkGuid) {
+        SavePlayerEntityAction?.Invoke(player, networkGuid);
+    }
+
+    public static TerrainSerializer23 CreateTerrainSerializerNet() {
+        return CreateTerrainSerializerNetFunc?.Invoke();
+    }
+
+    public static async Task<RelayJoinInfo> ResolveRelayJoinInfoAsync(string globalCode) {
+        if (ResolveRelayJoinInfoAsyncFunc != null) {
+            return await ResolveRelayJoinInfoAsyncFunc(globalCode);
+        }
+        return null;
+    }
+
+    public static async Task<IPAddress> TryGetIPAddress(string host) {
+        if (!IPAddress.TryParse(host, out IPAddress address)) {
+            IPAddress[] addresses = await Dns.GetHostAddressesAsync(host);
+            address = addresses.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                ?? addresses.FirstOrDefault();
+        }
+        return address;
     }
 }

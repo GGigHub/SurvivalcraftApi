@@ -18,8 +18,6 @@ namespace Game {
 
         public SubsystemGameInfo m_subsystemGameInfo;
 
-        public static event Action<Pickable> OnPickableAttract;
-
         public virtual bool IsPickableInAttractRange(Pickable pickable, float distanceToTargetSquare) {
             if (pickable.StuckMatrix.HasValue) {
                 return false;
@@ -60,7 +58,7 @@ namespace Game {
                         lock (pickable) {
                             pickable.FlyToPosition = Position + 0.1f * MathF.Sqrt(distanceToTargetSquare) * m_componentBody.Velocity;
                             pickable.FlyToGatherer = this;
-                            OnPickableAttract?.Invoke(pickable);
+                            ModsManager.HookAction("OnNetworkPickableAttract", loader => loader.OnNetworkPickableAttract(pickable));
                         }
                     }
                 }

@@ -4,10 +4,6 @@ namespace Game {
     public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior {
         public override int[] HandledBlocks => [224];
 
-        public static event Action<SubsystemAdjustableDelayGateBlockBehavior, int, int, int> OnEditItemDelay;
-
-        public static event Action<SubsystemAdjustableDelayGateBlockBehavior, CellFace, int> OnEditBlockDelay;
-
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             int value = inventory.GetSlotValue(slotIndex);
             int count = inventory.GetSlotCount(slotIndex);
@@ -24,7 +20,7 @@ namespace Game {
                             inventory.RemoveSlotItems(slotIndex, count);
                             inventory.AddSlotItems(slotIndex, num, count);
                         }
-                        OnEditItemDelay?.Invoke(this, inventory.Id, slotIndex, newDelay);
+                        ModsManager.HookAction("OnNetworkAdjustableDelayGateItemEdited", loader => loader.OnNetworkAdjustableDelayGateItemEdited(this, inventory.Id, slotIndex, newDelay));
                     }
                 )
             );
@@ -47,7 +43,7 @@ namespace Game {
                                 int newValue = Terrain.ReplaceData(value, num);
                                 SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }
-                            OnEditBlockDelay?.Invoke(this, cell, newDelay);
+                            ModsManager.HookAction("OnNetworkAdjustableDelayGateBlockEdited", loader => loader.OnNetworkAdjustableDelayGateBlockEdited(this, cell, newDelay));
                         }
                     }
                 )

@@ -1,5 +1,4 @@
 using Engine;
-using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -35,9 +34,6 @@ namespace Game {
         public SubsystemPickables m_subsystemPickables;
 
         public SubsystemBlockBehaviors m_subsystemBlockBehaviors;
-
-
-        public static event Action<SubsystemTerrain, int, int, int, int> OnTerrainChangeCell;
 
         public List<BlockDropValue> m_dropValues = [];
 
@@ -395,7 +391,7 @@ namespace Game {
             catch (Exception e) {
                 Log.Error($"Block behavior on terrain change execute error: {e}");
             }
-            if (!fromNetwork) OnTerrainChangeCell?.Invoke(this, x, y, z, value);
+            if (!fromNetwork) ModsManager.HookAction("OnNetworkTerrainCellChanged", loader => loader.OnNetworkTerrainCellChanged(this, x, y, z, value));
         }
 
         public virtual void ChangeCellToBehavior(int x, int y, int z, int oldValue, int newValue, MovingBlock movingBlock) {
@@ -514,7 +510,7 @@ namespace Game {
                 TerrainSerializer = new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             else {
-                TerrainSerializer = new TerrainSerializerNet();
+                TerrainSerializer = NetworkManager.CreateTerrainSerializerNet() ?? new TerrainSerializer23(SubsystemGameInfo.DirectoryName);
             }
             BlockGeometryGenerator = new BlockGeometryGenerator(
                 Terrain,

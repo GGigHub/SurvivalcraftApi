@@ -57,10 +57,6 @@ namespace Game {
             UpdateMovableBlocks();
         }
 
-        public static event Action<SubsystemPistonBlockBehavior, int, int, int> OnEditItemData;
-
-        public static event Action<SubsystemPistonBlockBehavior, CellFace, int> OnEditBlockData;
-
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
                 return false;
@@ -79,7 +75,7 @@ namespace Game {
                                 inventory.RemoveSlotItems(slotIndex, count);
                                 inventory.AddSlotItems(slotIndex, num, count);
                             }
-                            OnEditItemData?.Invoke(this, inventory.Id, slotIndex, newData);
+                            ModsManager.HookAction("OnNetworkPistonItemEdited", loader => loader.OnNetworkPistonItemEdited(this, inventory.Id, slotIndex, newData));
                         }
                     }
                 )
@@ -102,7 +98,7 @@ namespace Game {
                                 int newValue = Terrain.ReplaceData(value, newData);
                                 SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }
-                            OnEditBlockData?.Invoke(this, cell, newData);
+                            ModsManager.HookAction("OnNetworkPistonBlockEdited", loader => loader.OnNetworkPistonBlockEdited(this, cell, newData));
                         }
                     }
                 )

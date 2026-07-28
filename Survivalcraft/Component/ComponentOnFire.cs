@@ -37,20 +37,18 @@ namespace Game {
 
         public ComponentCreature Attacker { get; set; }
 
-        public static event Action<ComponentOnFire, ComponentCreature, float> OnSetOnFire;
-
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void SetOnFire(ComponentCreature attacker, float duration, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
-                OnSetOnFire?.Invoke(this, attacker, duration);
+                ModsManager.HookAction("OnNetworkSetOnFire", loader => loader.OnNetworkSetOnFire(this, attacker, duration));
                 return;
             }
             if (!IsOnFire) {
                 Attacker = attacker;
             }
             m_fireDuration = MathUtils.Max(m_fireDuration, duration);
-            if (!fromNetwork) OnSetOnFire?.Invoke(this, attacker, duration);
+            if (!fromNetwork) ModsManager.HookAction("OnNetworkSetOnFire", loader => loader.OnNetworkSetOnFire(this, attacker, duration));
         }
 
         public virtual void Extinguish() {

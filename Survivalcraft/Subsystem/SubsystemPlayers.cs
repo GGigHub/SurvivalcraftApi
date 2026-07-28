@@ -1,6 +1,5 @@
 using Engine;
 
-using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -190,7 +189,6 @@ namespace Game {
         public override void Save(ValuesDictionary valuesDictionary) {
             var OnlinePlayersListVD = new ValuesDictionary();
             bool isStorageServerSave = GameManager.IsSavingProjectToStorage && NetworkManager.IsServerRunning;
-            SubsystemNetwork subsystemNetwork = isStorageServerSave ? Project.FindSubsystem<SubsystemNetwork>() : null;
             Dictionary<int, ClientSession> sessionsByPlayerIndex = isStorageServerSave
                 ? NetworkManager.ServerSessions
                     .Where(s => s != null && s.PlayerIndex >= 0)
@@ -204,7 +202,7 @@ namespace Game {
                         && sessionsByPlayerIndex != null
                         && sessionsByPlayerIndex.TryGetValue(playersDatum.PlayerIndex, out ClientSession session)
                         && session.NetworkGuid != Guid.Empty) {
-                        subsystemNetwork?.SavePlayerEntity(playersDatum.ComponentPlayer, session.NetworkGuid);
+                        NetworkManager.SavePlayerEntity(playersDatum.ComponentPlayer, session.NetworkGuid);
                     }
                     continue;
                 }

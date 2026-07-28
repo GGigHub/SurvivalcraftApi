@@ -7,10 +7,6 @@ namespace Game {
 
         public SubsystemTruthTableCircuitBlockBehavior() : base(188) { }
 
-        public static event Action<SubsystemTruthTableCircuitBlockBehavior, int, int, TruthTableData> OnEditItemData;
-
-        public static event Action<SubsystemTruthTableCircuitBlockBehavior, CellFace, TruthTableData> OnEditBlockData;
-
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
                 return false;
@@ -31,7 +27,7 @@ namespace Game {
                             inventory.RemoveSlotItems(slotIndex, count);
                             inventory.AddSlotItems(slotIndex, value2, count);
                         }
-                        OnEditItemData?.Invoke(this, inventory.Id, slotIndex, truthTableData);
+                        ModsManager.HookAction("OnNetworkTruthTableItemEdited", loader => loader.OnNetworkTruthTableItemEdited(this, inventory.Id, slotIndex, truthTableData));
                     }
                 )
             );
@@ -55,7 +51,7 @@ namespace Game {
                                 subsystemElectricity.QueueElectricElementForSimulation(electricElement, subsystemElectricity.CircuitStep + 1);
                             }
                         }
-                        OnEditBlockData?.Invoke(this, cell, truthTableData);
+                        ModsManager.HookAction("OnNetworkTruthTableBlockEdited", loader => loader.OnNetworkTruthTableBlockEdited(this, cell, truthTableData));
                     }
                 )
             );
