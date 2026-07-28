@@ -14,6 +14,10 @@ public class TerrainSyncChunkListPacket : TerrainPacketBase {
         Chunks = [.. chunks];
     }
 
+    internal TerrainSyncChunkListPacket(IEnumerable<TerrainChunkSyncData> syncData) {
+        SyncData = [.. syncData];
+    }
+
     public override void Serialize(PacketSerializer archive) {
         SerializeChunkSyncDataList(archive, ref Chunks, ref SyncData);
     }

@@ -9,14 +9,16 @@ public class TerrainChangeCellPacket : Packet {
     public byte m_Y;
     public int m_Z;
     public int m_value;
+    public long m_revision;
 
     public TerrainChangeCellPacket() { }
 
-    public TerrainChangeCellPacket(int x, int y, int z, int value) {
+    public TerrainChangeCellPacket(int x, int y, int z, int value, long revision) {
         m_X = x;
         m_Y = (byte)y;
         m_Z = z;
         m_value = value;
+        m_revision = revision;
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -24,6 +26,7 @@ public class TerrainChangeCellPacket : Packet {
         archive.Value(ref m_Y);
         archive.Value(ref m_Z);
         archive.Value(ref m_value);
+        archive.Value(ref m_revision);
     }
 
     public override void Handle(bool isServer) {
@@ -31,12 +34,13 @@ public class TerrainChangeCellPacket : Packet {
             return;
         }
         SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
-        int chunkX = m_X >> 4;
-        int chunkZ = m_Z >> 4;
-        TerrainChunk chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
-        if (chunk != null) {
-            subsystemTerrain.ChangeCell(m_X, m_Y, m_Z, m_value, true, fromNetwork: true);
-        }
+        TerrainPacketBase.ApplyRevisionedCellChange(
+            subsystemTerrain,
+            m_X,
+            m_Y,
+            m_Z,
+            m_value,
+            m_revision);
     }
 }
 

@@ -508,4 +508,19 @@ Survivalcraft.TestAutomation/
 - `ScenarioReplayV2` 严格记录并校验五个动作的角色、命令顺序、强类型载荷与网络故障配置；Direct 与 Relay 产物均已完整回放；
 - `PlayerMotionMultiplayerScenarioTest`、覆盖清单和 PowerShell 的 `motion-direct`、`motion-relay`、`motion` 入口把完整矩阵纳入无窗口自动门禁。
 
-`player.motion-look-crouch` 现已标记为 `covered`。下一条核心开发主线可以进入 `terrain.streaming-and-revisions`，同时保留创飞生命周期补全作为独立小任务。
+`player.motion-look-crouch` 现已标记为 `covered`。创飞生命周期补全继续保留为独立小任务。
+
+## 24. 地形流送与单调修订完整覆盖实施记录
+
+本切片把真实区块 loadedness、视距移动和地形包乱序恢复纳入同一条可回放生产链：
+
+- wire protocol 提升到 revision 3；`TerrainSyncChunkListPacket`、单格与批量改单包携带服务端每区块单调 revision，客户端以有界 revision window 应用连续改单、缓存缺口，并忽略重复或旧快照；
+- Snapshot v2 的地形格新增 `revision` 与 `chunkState`，streaming 投影暴露 update locations、allocated/ready/pending/sent chunk 数，以及快照、改单、旧包、未加载改单、缓冲和溢出指标；旧 revision 与正常视距外丢弃分别计数，修订比较为显式选项，使 Project 重载后的合法 revision 重建仍可单独断言；
+- 强类型 `fixture.terrain.prepareRegion` 在服务端建立远端探针、actor 边界和 observer 已加载视图，`fixture.terrain.applyView` 只设置客户端前置视图；actor 初始探针必须 unallocated，observer 与 server 必须已加载同值同 revision；
+- `player.move` 仍从 `ComponentInput` 驱动真实身体。无窗口执行跳过绘制阶段，适配器仅在身体实际跨过原生 8 格滞回后补做生产相机交接，随后由 `TerrainUpdater.SetUpdateLocation -> TerrainViewDistancePacket` 驱动服务端真实区块流送，不直接分配客户端区块；
+- 服务端 `terrain.runRevisionBurst` 通过真实 `SubsystemTerrain.ChangeCell` 连续产生三次 revision，并额外排入改变前的旧全量区块快照；固定故障配置对所有节点施加 18 ms 延迟、4 ms 抖动、100% 复制和 50% 重排，初始客户端必须收敛到最高 revision、记录旧包被忽略且 revision 缓冲归零；
+- client-c late join 直接取得最高 revision；client-a 断线后以稳定 PlayerIndex 重连并恢复相同 baseline；保存重载后方块值继续存在，而 per-Project revision tracker 清空并以 revision 0 重建；
+- 两动作 `actions.json` 严格限定为 client-a `player.move`、server `terrain.runRevisionBurst`，Direct 与 Relay 的原运行和完整回放均真实无窗口通过；
+- `TerrainStreamingMultiplayerScenarioTest`、覆盖清单和 PowerShell 的 `streaming-direct`、`streaming-relay`、`streaming` 入口将这条矩阵纳入门禁。
+
+`terrain.streaming-and-revisions` 现已标记为 `covered`。后续核心主线可以进入实体/生物生命周期与物理，复用本切片的 revision window 和 loadedness 断言模式。

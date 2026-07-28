@@ -204,6 +204,72 @@ public sealed class SnapshotV2Tests {
 
     [Fact]
     [Trait("Layer", "L0")]
+    public void TerrainRevisionComparisonIsExplicitlyOptIn() {
+        TerrainCellSnapshotV2 expectedCell = new(
+            10, 64, 20, 5, 5, 0, true, Revision: 7, ChunkState: "Valid");
+        TerrainCellSnapshotV2 actualCell = expectedCell with { Revision = 8 };
+        StateSnapshotV2 expected = Snapshot([], [], [expectedCell]);
+        StateSnapshotV2 actual = Snapshot([], [], [actualCell]);
+
+        Assert.True(SnapshotV2Comparer.CompareTerrainCells(expected, actual).Equal);
+        SnapshotV2Diff revisionDifference = SnapshotV2Comparer.CompareTerrainCells(
+            expected,
+            actual,
+            new SnapshotV2TerrainComparisonOptions(CompareRevision: true));
+
+        SnapshotDifference difference = Assert.Single(revisionDifference.Differences);
+        Assert.Equal("$.terrainCells[x=10,y=64,z=20].revision", difference.Path);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void TerrainStreamingProjectionCanonicalizesLocationsAndPreservesMetrics() {
+        StateSnapshotV2 snapshot = Snapshot([], []) with {
+            TerrainStreaming = new TerrainStreamingSnapshotV2(
+                [
+                    new TerrainUpdateLocationSnapshotV2(
+                        2,
+                        new Vector2State(2.1234567, 3.7654321),
+                        48.1234567,
+                        64.7654321,
+                        3,
+                        4),
+                    new TerrainUpdateLocationSnapshotV2(
+                        1,
+                        new Vector2State(1, 2),
+                        32,
+                        48,
+                        1,
+                        2)
+                ],
+                10,
+                9,
+                4,
+                6,
+                0,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17)
+        };
+
+        TerrainStreamingSnapshotV2 normalized = Assert.IsType<TerrainStreamingSnapshotV2>(
+            SnapshotV2Canonicalizer.Normalize(snapshot, decimalPlaces: 5).TerrainStreaming);
+
+        Assert.Equal(new[] { 1, 2 }, normalized.Locations.Select(item => item.PlayerIndex));
+        Assert.Equal(new Vector2State(2.12346, 3.76543), normalized.Locations[1].Center);
+        Assert.Equal(48.12346, normalized.Locations[1].VisibilityDistance);
+        Assert.Equal(64.76543, normalized.Locations[1].ContentDistance);
+        Assert.Equal(14, normalized.IgnoredUnloadedChanges);
+        Assert.Equal(17, normalized.PendingRevisionChanges);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void TerrainLoadednessIsScopedToSnapshotV2() {
         string legacyJson = JsonSerializer.Serialize(
             new TerrainCellState(10, 64, 20, 0, 0, 0),

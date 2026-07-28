@@ -35,6 +35,11 @@ public sealed class PacketSerializer {
         else value = m_reader.ReadInt32();
     }
 
+    public void Value(ref long value) {
+        if (IsWriting) m_writer.Write(value);
+        else value = m_reader.ReadInt64();
+    }
+
     public void Value(ref float value) {
         if (IsWriting) m_writer.Write(value);
         else value = m_reader.ReadSingle();

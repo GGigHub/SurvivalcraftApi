@@ -263,6 +263,7 @@ public partial class TestAutomationModLoader {
     }
 
     private void HandleTypedBodyUpdate(ComponentPlayer player, bool isMainPlayer) {
+        HandleTerrainStreamingMoveTrigger(player, isMainPlayer);
         PendingPlayerMotionAction? pending = pendingPlayerMotionAction;
         if (pending == null
             || !isMainPlayer

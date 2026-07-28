@@ -54,7 +54,21 @@ public static class SnapshotV2Canonicalizer {
                 .OrderBy(item => item.Sequence)
                 .Select(item => item with { Data = ToSortedDictionary(item.Data) })
                 .ToArray(),
-            Diagnostics = ToSortedDictionary(snapshot.Diagnostics)
+            Diagnostics = ToSortedDictionary(snapshot.Diagnostics),
+            TerrainStreaming = snapshot.TerrainStreaming == null
+                ? null
+                : snapshot.TerrainStreaming with {
+                    Locations = snapshot.TerrainStreaming.Locations
+                        .Select(location => location with {
+                            Center = Normalize(location.Center, decimalPlaces),
+                            VisibilityDistance = Round(
+                                location.VisibilityDistance,
+                                decimalPlaces),
+                            ContentDistance = Round(location.ContentDistance, decimalPlaces)
+                        })
+                        .OrderBy(location => location.PlayerIndex)
+                        .ToArray()
+                }
         };
     }
 

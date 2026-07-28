@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "full")]
+    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "full")]
     [string]$Mode = "fast",
 
     [ValidateSet("Debug", "Release")]
@@ -99,6 +99,24 @@ $motionRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
 }
 elseif ($Mode -eq "motion" -or $Mode -eq "full") {
     Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "player-motion-lifecycle-relay"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$streamingDirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\terrain-streaming-revisions-direct-$runStamp"
+}
+elseif ($Mode -eq "streaming" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "terrain-streaming-revisions-direct"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$streamingRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\terrain-streaming-revisions-relay-$runStamp"
+}
+elseif ($Mode -eq "streaming" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "terrain-streaming-revisions-relay"
 }
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
@@ -250,6 +268,26 @@ function Run-PlayerMotionScenario {
     )
 }
 
+function Run-TerrainStreamingScenario {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("direct", "relay")]
+        [string]$Transport,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ArtifactDirectory
+    )
+
+    Build-CoreRuntime
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "run", "terrain-streaming-multiplayer",
+        "--transport", $Transport,
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $ArtifactDirectory
+    )
+}
+
 Push-Location $repositoryRoot
 try {
     switch ($Mode) {
@@ -298,6 +336,16 @@ try {
             Run-PlayerMotionScenario -Transport "direct" -ArtifactDirectory $motionDirectArtifactDirectory
             Run-PlayerMotionScenario -Transport "relay" -ArtifactDirectory $motionRelayArtifactDirectory
         }
+        "streaming-direct" {
+            Run-TerrainStreamingScenario -Transport "direct" -ArtifactDirectory $streamingDirectArtifactDirectory
+        }
+        "streaming-relay" {
+            Run-TerrainStreamingScenario -Transport "relay" -ArtifactDirectory $streamingRelayArtifactDirectory
+        }
+        "streaming" {
+            Run-TerrainStreamingScenario -Transport "direct" -ArtifactDirectory $streamingDirectArtifactDirectory
+            Run-TerrainStreamingScenario -Transport "relay" -ArtifactDirectory $streamingRelayArtifactDirectory
+        }
         "full" {
             Run-FastTests
             Run-Doctor
@@ -310,6 +358,8 @@ try {
             Run-M1TerrainInteractionScenario -Transport "relay" -ArtifactDirectory $m1RelayArtifactDirectory
             Run-PlayerMotionScenario -Transport "direct" -ArtifactDirectory $motionDirectArtifactDirectory
             Run-PlayerMotionScenario -Transport "relay" -ArtifactDirectory $motionRelayArtifactDirectory
+            Run-TerrainStreamingScenario -Transport "direct" -ArtifactDirectory $streamingDirectArtifactDirectory
+            Run-TerrainStreamingScenario -Transport "relay" -ArtifactDirectory $streamingRelayArtifactDirectory
             $legacyTestArguments = @(
                 "test", $gameTestProject, "--nologo", "-c", $Configuration,
                 "--filter", "Layer!=L2&Layer!=L0&Layer!=L1",

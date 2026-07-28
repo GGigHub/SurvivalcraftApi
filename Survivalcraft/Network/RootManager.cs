@@ -261,8 +261,13 @@ public static class RootManager {
                 NetworkManager.Queue(new SwitchVoltagePacket(default, true, inventoryId, slotIndex, newVoltageLevel));
         };
         SubsystemTerrain.OnTerrainChangeCell += (subsystem, x, y, z, value) => {
-            if (!NetworkManager.IsClientRunning)
-                NetworkManager.Queue(new TerrainChangeCellPacket(x, y, z, value));
+            if (!NetworkManager.IsClientRunning) {
+                long revision = TerrainRevisionTracker.AdvanceAuthoritativeRevision(
+                    subsystem,
+                    x >> 4,
+                    z >> 4);
+                NetworkManager.Queue(new TerrainChangeCellPacket(x, y, z, value, revision));
+            }
         };
         SubsystemTruthTableCircuitBlockBehavior.OnEditBlockData += (subsystem, cell, data) => {
             if (NetworkManager.IsClientRunning)

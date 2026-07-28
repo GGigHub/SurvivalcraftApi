@@ -188,6 +188,36 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             QueuePlayerDig);
+        router.Register<PrepareTerrainStreamingFixtureCommand, TerrainStreamingFixture>(
+            Metadata(
+                ControlCommandNames.PrepareTerrainStreamingFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareTerrainStreamingFixture(command));
+        router.Register<ApplyTerrainStreamingViewCommand, ControlAck>(
+            Metadata(
+                ControlCommandNames.ApplyTerrainStreamingView,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => ApplyTerrainStreamingView(command));
+        router.Register<RunTerrainRevisionBurstCommand, TerrainRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunTerrainRevisionBurst,
+                AutomationCommandDomain.Terrain,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunTerrainRevisionBurst);
         router.Register<SetClockCommand, ClockState>(
             Metadata(ControlCommandNames.SetClock, AutomationCommandDomain.Time, true),
             (_, command) => SetClock(command));
@@ -328,12 +358,25 @@ public partial class TestAutomationModLoader {
             ? (command.TerrainCells ?? [])
                 .Distinct()
                 .Select(cell => {
-                    bool isLoaded = subsystemTerrain.Terrain.GetChunkAtCoords(
+                    TerrainChunk? chunk = subsystemTerrain.Terrain.GetChunkAtCoords(
                         cell.X >> 4,
-                        cell.Z >> 4) != null;
+                        cell.Z >> 4);
+                    bool isLoaded = chunk != null
+                        && chunk.ThreadState > TerrainChunkState.InvalidContents4;
                     int value = isLoaded
                         ? subsystemTerrain.Terrain.GetCellValue(cell.X, cell.Y, cell.Z)
                         : 0;
+                    long revision = !isLoaded
+                        ? -1
+                        : NetworkManager.IsClientRunning
+                            ? TerrainRevisionTracker.GetAppliedRevision(
+                                subsystemTerrain,
+                                cell.X >> 4,
+                                cell.Z >> 4)
+                            : TerrainRevisionTracker.GetAuthoritativeRevision(
+                                subsystemTerrain,
+                                cell.X >> 4,
+                                cell.Z >> 4);
                     return new TerrainCellSnapshotV2(
                         cell.X,
                         cell.Y,
@@ -341,13 +384,19 @@ public partial class TestAutomationModLoader {
                         Terrain.ReplaceLight(value, 0),
                         Terrain.ExtractContents(value),
                         Terrain.ExtractData(value),
-                        isLoaded);
+                        isLoaded,
+                        revision,
+                        chunk?.ThreadState.ToString() ?? "unallocated");
                 })
                 .OrderBy(cell => cell.X)
                 .ThenBy(cell => cell.Y)
                 .ThenBy(cell => cell.Z)
                 .ToArray()
             : [];
+        TerrainStreamingSnapshotV2? terrainStreaming = domains.Contains(SnapshotDomain.Terrain)
+            && subsystemTerrain != null
+                ? BuildTerrainStreamingSnapshotV2(subsystemTerrain)
+                : null;
         ActionEventRecord[] events = domains.Contains(SnapshotDomain.Events)
             ? actionEventJournal.Query(new GetEventsCommand(
                 command.EventAfterSequence,
@@ -374,7 +423,44 @@ public partial class TestAutomationModLoader {
             players,
             terrainCells,
             events,
-            diagnostics);
+            diagnostics,
+            terrainStreaming);
+    }
+
+    private static TerrainStreamingSnapshotV2 BuildTerrainStreamingSnapshotV2(
+        SubsystemTerrain terrain) {
+        TerrainUpdater updater = terrain.TerrainUpdater;
+        TerrainRevisionMetrics revisions = TerrainRevisionTracker.GetMetrics(terrain);
+        TerrainUpdateLocationSnapshotV2[] locations = updater.UpdateLocations
+            .OrderBy(item => item.Key)
+            .Select(item => new TerrainUpdateLocationSnapshotV2(
+                item.Key,
+                ToVector(item.Value.Center),
+                item.Value.VisibilityDistance,
+                item.Value.ContentDistance,
+                updater.waitChunkList.TryGetValue(item.Key, out Queue<Point2>? pending)
+                    ? pending.Count
+                    : 0,
+                updater.sentChunkSetList.TryGetValue(item.Key, out HashSet<Point2>? sent)
+                    ? sent.Count
+                    : 0))
+            .ToArray();
+        TerrainChunk[] chunks = terrain.Terrain.AllocatedChunks;
+        return new TerrainStreamingSnapshotV2(
+            locations,
+            chunks.Length,
+            chunks.Count(chunk => chunk.ThreadState > TerrainChunkState.InvalidContents4),
+            updater.waitChunkList.Values.Sum(queue => queue.Count),
+            updater.sentChunkSetList.Values.Sum(set => set.Count),
+            revisions.AuthoritativeTrackedChunks,
+            revisions.ClientTrackedChunks,
+            revisions.AppliedSnapshots,
+            revisions.AppliedChanges,
+            revisions.IgnoredStalePackets,
+            revisions.IgnoredUnloadedChanges,
+            revisions.BufferedChanges,
+            revisions.BufferOverflows,
+            revisions.PendingChanges);
     }
 
     private static NetworkSnapshotV2 BuildNetworkSnapshotV2() {

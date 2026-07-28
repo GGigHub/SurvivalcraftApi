@@ -8,6 +8,7 @@ namespace Game.Network;
 public abstract class TerrainPacketBase : Packet {
     public class TerrainChunkSyncData {
         public Point2 Coords;
+        public long Revision;
         public List<CellValueChange> CellChanges = [];
         public List<ShaftValueChange> ShaftChanges = [];
     }
@@ -65,27 +66,43 @@ public abstract class TerrainPacketBase : Packet {
     }
 
     public static void SerializeChunkSyncDataList(PacketSerializer archive, ref List<TerrainChunk> chunks, ref List<TerrainChunkSyncData> syncData) {
-        ushort count = archive.IsWriting ? (ushort)chunks.Count : (ushort)0;
+        ushort count = archive.IsWriting
+            ? checked((ushort)(chunks.Count > 0 ? chunks.Count : syncData.Count))
+            : (ushort)0;
         archive.Value(ref count);
         if (archive.IsReading) {
             syncData = new List<TerrainChunkSyncData>(count);
             for (int i = 0; i < count; i++) {
                 TerrainChunkSyncData data = new();
                 archive.Value(ref data.Coords);
+                archive.Value(ref data.Revision);
                 SerializeCellValueChanges(archive, ref data.CellChanges);
                 SerializeShaftValueChanges(archive, ref data.ShaftChanges);
                 syncData.Add(data);
             }
         }
         else {
-            SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
-            foreach (TerrainChunk chunk in chunks) {
-                TerrainChunkSyncData data = CreateChunkSyncData(subsystemTerrain, chunk);
-                archive.Value(ref data.Coords);
-                SerializeCellValueChanges(archive, ref data.CellChanges);
-                SerializeShaftValueChanges(archive, ref data.ShaftChanges);
+            if (chunks.Count > 0) {
+                SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
+                foreach (TerrainChunk chunk in chunks) {
+                    WriteChunkSyncData(archive, CreateChunkSyncData(subsystemTerrain, chunk));
+                }
+            }
+            else {
+                foreach (TerrainChunkSyncData data in syncData) {
+                    WriteChunkSyncData(archive, data);
+                }
             }
         }
+    }
+
+    private static void WriteChunkSyncData(
+        PacketSerializer archive,
+        TerrainChunkSyncData data) {
+        archive.Value(ref data.Coords);
+        archive.Value(ref data.Revision);
+        SerializeCellValueChanges(archive, ref data.CellChanges);
+        SerializeShaftValueChanges(archive, ref data.ShaftChanges);
     }
 
     public static void SerializeCellChangeList(PacketSerializer archive, ref List<CellChange> cellChanges) {
@@ -99,6 +116,7 @@ public abstract class TerrainPacketBase : Packet {
                 archive.Value(ref cellChange.Y);
                 archive.Value(ref cellChange.Z);
                 archive.Value(ref cellChange.Value);
+                archive.Value(ref cellChange.Revision);
                 cellChanges.Add(cellChange);
             }
         }
@@ -109,6 +127,7 @@ public abstract class TerrainPacketBase : Packet {
                 archive.Value(ref cellChange.Y);
                 archive.Value(ref cellChange.Z);
                 archive.Value(ref cellChange.Value);
+                archive.Value(ref cellChange.Revision);
             }
         }
     }
@@ -132,6 +151,48 @@ public abstract class TerrainPacketBase : Packet {
     }
 
     public static void ApplyOneChunkSyncData(SubsystemTerrain subsystemTerrain, TerrainChunkSyncData data) {
+        TerrainChunk existingChunk = subsystemTerrain.Terrain.GetChunkAtCoords(
+            data.Coords.X,
+            data.Coords.Y);
+        bool forceRefresh = existingChunk == null
+            || !existingChunk.IsLoaded
+            || existingChunk.ThreadState <= TerrainChunkState.InvalidContents4;
+        TerrainRevisionApplyPlan<TerrainRevisionCellChange> plan =
+            TerrainRevisionTracker.ReceiveSnapshot(
+                subsystemTerrain,
+                data.Coords.X,
+                data.Coords.Y,
+                data.Revision,
+                forceRefresh);
+        if (!plan.ApplySnapshot) {
+            return;
+        }
+
+        ApplyOneChunkSyncDataContents(subsystemTerrain, data);
+        foreach (TerrainRevisionCellChange change in plan.Changes) {
+            ApplyCellChangeContents(subsystemTerrain, change);
+        }
+    }
+
+    public static void ApplyRevisionedCellChange(
+        SubsystemTerrain subsystemTerrain,
+        int x,
+        int y,
+        int z,
+        int value,
+        long revision) {
+        TerrainRevisionApplyPlan<TerrainRevisionCellChange> plan =
+            TerrainRevisionTracker.ReceiveChange(
+                subsystemTerrain,
+                new TerrainRevisionCellChange(x, y, z, value, revision));
+        foreach (TerrainRevisionCellChange change in plan.Changes) {
+            ApplyCellChangeContents(subsystemTerrain, change);
+        }
+    }
+
+    private static void ApplyOneChunkSyncDataContents(
+        SubsystemTerrain subsystemTerrain,
+        TerrainChunkSyncData data) {
         TerrainChunk targetChunk = subsystemTerrain.Terrain.GetChunkAtCoords(data.Coords.X, data.Coords.Y)
             ?? subsystemTerrain.Terrain.AllocateChunk(data.Coords.X, data.Coords.Y);
         if (targetChunk == null) {
@@ -152,6 +213,19 @@ public abstract class TerrainPacketBase : Packet {
         targetChunk.UpgradedState = TerrainChunkState.InvalidLight;
         targetChunk.WasUpgraded = true;
         subsystemTerrain.TerrainUpdater.DowngradeChunkNeighborhoodState(targetChunk.Coords, 1, TerrainChunkState.InvalidLight, false);
+    }
+
+    private static void ApplyCellChangeContents(
+        SubsystemTerrain subsystemTerrain,
+        TerrainRevisionCellChange change) {
+        subsystemTerrain.ChangeCell(
+            change.X,
+            change.Y,
+            change.Z,
+            change.Value,
+            updateModificationCounter: true,
+            movingBlock: null,
+            fromNetwork: true);
     }
 
     private static void WriteChunk(PacketSerializer archive, TerrainChunk chunk) {
@@ -188,12 +262,16 @@ public abstract class TerrainPacketBase : Packet {
         return chunk;
     }
 
-    private static TerrainChunkSyncData CreateChunkSyncData(SubsystemTerrain subsystemTerrain, TerrainChunk chunk) {
+    internal static TerrainChunkSyncData CreateChunkSyncData(SubsystemTerrain subsystemTerrain, TerrainChunk chunk) {
         TerrainChunk baseChunk = new(subsystemTerrain.Terrain, chunk.Coords.X, chunk.Coords.Y);
         try {
             GenerateChunkBaseContents(subsystemTerrain, baseChunk);
             TerrainChunkSyncData data = new() {
-                Coords = chunk.Coords
+                Coords = chunk.Coords,
+                Revision = TerrainRevisionTracker.GetAuthoritativeRevision(
+                    subsystemTerrain,
+                    chunk.Coords.X,
+                    chunk.Coords.Y)
             };
             for (int i = 0; i < chunk.Cells.Length; i++) {
                 int value = NormalizeCellValueForDelta(chunk.Cells[i]);

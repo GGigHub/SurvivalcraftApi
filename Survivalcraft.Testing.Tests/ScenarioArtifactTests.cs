@@ -291,6 +291,61 @@ public sealed class ScenarioArtifactTests {
 
     [Fact]
     [Trait("Layer", "L0")]
+    public void TerrainStreamingReplayParserPreservesMoveAndRevisionBurst() {
+        PlayerMoveCommand move = new(7, new Vector3State(0, 0, 0.75), HoldFrames: 45);
+        RunTerrainRevisionBurstCommand burst = new(
+            new TerrainCellCoordinate(24, 70, -8),
+            [2, 3, 4],
+            SendStaleSnapshot: true);
+        ScenarioActionRecordV2[] records = [
+            TerrainActionRecord("move", ControlCommandNames.PlayerMove, move),
+            new ScenarioActionRecordV2(
+                "server",
+                ControlCommandNames.RunTerrainRevisionBurst,
+                JsonSerializer.SerializeToElement(burst, ControlProtocol.JsonOptions),
+                new ActionReceipt("burst", true, 2, -1, "stale_snapshot_queued"))
+        ];
+
+        TerrainStreamingReplayPlan replay =
+            TerrainStreamingMultiplayerScenario.ParseReplayActions(records);
+
+        Assert.Equal(move, replay.Move);
+        Assert.Equal(burst.Cell, replay.RevisionBurst.Cell);
+        Assert.Equal(burst.Values, replay.RevisionBurst.Values);
+        Assert.Equal(burst.SendStaleSnapshot, replay.RevisionBurst.SendStaleSnapshot);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void TerrainStreamingReplayParserRejectsWrongOrderAndMissingStaleProbe() {
+        PlayerMoveCommand move = new(1, new Vector3State(0, 0, 0.75));
+        RunTerrainRevisionBurstCommand burst = new(
+            new TerrainCellCoordinate(1, 64, 1),
+            [2, 3],
+            SendStaleSnapshot: true);
+        ScenarioActionRecordV2 moveRecord =
+            TerrainActionRecord("move", ControlCommandNames.PlayerMove, move);
+        ScenarioActionRecordV2 burstRecord = new(
+            "server",
+            ControlCommandNames.RunTerrainRevisionBurst,
+            JsonSerializer.SerializeToElement(burst, ControlProtocol.JsonOptions),
+            new ActionReceipt("burst", true, 2, -1, "stale_snapshot_queued"));
+
+        Assert.Throws<InvalidDataException>(() =>
+            TerrainStreamingMultiplayerScenario.ParseReplayActions([burstRecord, moveRecord]));
+        Assert.Throws<InvalidDataException>(() =>
+            TerrainStreamingMultiplayerScenario.ParseReplayActions([
+                moveRecord,
+                burstRecord with {
+                    Payload = JsonSerializer.SerializeToElement(
+                        burst with { SendStaleSnapshot = false },
+                        ControlProtocol.JsonOptions)
+                }
+            ]));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void PlayerMotionReplayParserRejectsWrongRoleOrderAndTransientNoOp() {
         ScenarioActionRecordV2[] records = [
             TerrainActionRecord(

@@ -145,6 +145,9 @@ public static class ControlCommandNames {
     public const string PlayerUse = "player.use";
     public const string PlayerPlace = "player.place";
     public const string PlayerDig = "player.dig";
+    public const string PrepareTerrainStreamingFixture = "fixture.terrain.prepareRegion";
+    public const string ApplyTerrainStreamingView = "fixture.terrain.applyView";
+    public const string RunTerrainRevisionBurst = "terrain.runRevisionBurst";
     public const string SetClock = "time.setClock";
     public const string AdvanceTicks = "time.advanceTicks";
     public const string SetNetworkFaults = "network.setFaults";

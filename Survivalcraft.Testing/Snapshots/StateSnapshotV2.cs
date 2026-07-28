@@ -27,7 +27,8 @@ public sealed record StateSnapshotV2(
     PlayerSnapshotV2[] Players,
     TerrainCellSnapshotV2[] TerrainCells,
     ActionEventRecord[] RecentEvents,
-    IReadOnlyDictionary<string, string> Diagnostics);
+    IReadOnlyDictionary<string, string> Diagnostics,
+    TerrainStreamingSnapshotV2? TerrainStreaming = null);
 
 public sealed record TerrainCellSnapshotV2(
     int X,
@@ -36,7 +37,33 @@ public sealed record TerrainCellSnapshotV2(
     int Value,
     int Contents,
     int Data,
-    bool IsLoaded);
+    bool IsLoaded,
+    long Revision = -1,
+    string? ChunkState = null);
+
+public sealed record TerrainStreamingSnapshotV2(
+    TerrainUpdateLocationSnapshotV2[] Locations,
+    int AllocatedChunkCount,
+    int ReadyChunkCount,
+    int PendingChunkCount,
+    int SentChunkCount,
+    int AuthoritativeTrackedChunks,
+    int ClientTrackedChunks,
+    long AppliedSnapshots,
+    long AppliedChanges,
+    long IgnoredStalePackets,
+    long IgnoredUnloadedChanges,
+    long BufferedChanges,
+    long BufferOverflows,
+    int PendingRevisionChanges);
+
+public sealed record TerrainUpdateLocationSnapshotV2(
+    int PlayerIndex,
+    Vector2State Center,
+    double VisibilityDistance,
+    double ContentDistance,
+    int PendingChunks,
+    int SentChunks);
 
 public sealed record NodeSnapshotV2(
     string Role,

@@ -36,6 +36,16 @@ public sealed class CoverageManifestTests {
             && feature.AuthorityTest != null
             && feature.FaultTest != null
             && feature.PersistenceTest != null);
+        Assert.Contains(manifest.Features, feature =>
+            feature.FeatureId == "terrain.streaming-and-revisions"
+            && feature.Status == "covered"
+            && feature.DirectTest != null
+            && feature.RelayTest != null
+            && feature.LateJoinTest != null
+            && feature.ReconnectTest != null
+            && feature.AuthorityTest != null
+            && feature.FaultTest != null
+            && feature.PersistenceTest != null);
     }
 
     [Fact]

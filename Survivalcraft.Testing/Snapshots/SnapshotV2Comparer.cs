@@ -8,6 +8,9 @@ public sealed record SnapshotV2PlayerComparisonOptions(
     double LookAngleTolerance = 0.02,
     double RotationAngleTolerance = 0.03);
 
+public sealed record SnapshotV2TerrainComparisonOptions(
+    bool CompareRevision = false);
+
 public sealed record SnapshotV2Diff(
     bool Equal,
     SnapshotDifference[] Differences);
@@ -15,9 +18,11 @@ public sealed record SnapshotV2Diff(
 public static class SnapshotV2Comparer {
     public static SnapshotV2Diff CompareTerrainCells(
         StateSnapshotV2 expected,
-        StateSnapshotV2 actual) {
+        StateSnapshotV2 actual,
+        SnapshotV2TerrainComparisonOptions? options = null) {
         ArgumentNullException.ThrowIfNull(expected);
         ArgumentNullException.ThrowIfNull(actual);
+        options ??= new SnapshotV2TerrainComparisonOptions();
         List<SnapshotDifference> differences = [];
         Dictionary<(int X, int Y, int Z), TerrainCellSnapshotV2> remaining = actual.TerrainCells
             .ToDictionary(cell => (cell.X, cell.Y, cell.Z));
@@ -36,6 +41,9 @@ public static class SnapshotV2Comparer {
             CompareValue(path + ".value", expectedCell.Value, actualCell.Value, differences);
             CompareValue(path + ".contents", expectedCell.Contents, actualCell.Contents, differences);
             CompareValue(path + ".data", expectedCell.Data, actualCell.Data, differences);
+            if (options.CompareRevision) {
+                CompareValue(path + ".revision", expectedCell.Revision, actualCell.Revision, differences);
+            }
         }
         foreach (TerrainCellSnapshotV2 extra in remaining.Values
                      .OrderBy(cell => cell.X)

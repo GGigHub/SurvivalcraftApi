@@ -7,6 +7,7 @@ public struct CellChange {
     public int Y;
     public int Z;
     public int Value;
+    public long Revision;
 }
 
 
@@ -31,12 +32,13 @@ public class TerrainChangeCellListPacket : TerrainPacketBase {
         }
         SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
         foreach (CellChange cellChange in cellChanges) {
-            int chunkX = cellChange.X >> 4;
-            int chunkZ = cellChange.Z >> 4;
-            TerrainChunk chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
-            if (chunk != null) {
-                subsystemTerrain.ChangeCell(cellChange.X, cellChange.Y, cellChange.Z, cellChange.Value, true, fromNetwork: true);
-            }
+            ApplyRevisionedCellChange(
+                subsystemTerrain,
+                cellChange.X,
+                cellChange.Y,
+                cellChange.Z,
+                cellChange.Value,
+                cellChange.Revision);
         }
     }
 }
