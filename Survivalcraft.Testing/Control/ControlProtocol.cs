@@ -130,6 +130,8 @@ public static class ControlCommandNames {
     public const string SetClock = "time.setClock";
     public const string AdvanceTicks = "time.advanceTicks";
     public const string SetNetworkFaults = "network.setFaults";
+    public const string ConfigureCompatibility = "network.configureCompatibility";
+    public const string GetCompatibility = "network.getCompatibility";
     public const string ClickWidget = "ui.clickWidget";
     public const string ExecuteLegacyScript = "legacy.executeScript";
 }
@@ -214,6 +216,37 @@ public sealed record NetworkFaultState(
     long Duplicated,
     int Pending);
 
+public sealed record CompatibilityModDescriptor(
+    string PackageName,
+    string Version,
+    string ApiVersion);
+
+public sealed record ConfigureCompatibilityCommand(
+    bool ClearOverride = false,
+    int? ProtocolRevision = null,
+    string? ApiVersion = null,
+    int? Capabilities = null,
+    CompatibilityModDescriptor[]? Mods = null);
+
+public sealed record CompatibilityIssueState(
+    string Code,
+    string PackageName,
+    string Expected,
+    string Actual,
+    string Message);
+
+public sealed record CompatibilityStatus(
+    string State,
+    bool OverrideActive,
+    int ProtocolRevision,
+    string ApiVersion,
+    int Capabilities,
+    CompatibilityModDescriptor[] Mods,
+    bool? Accepted,
+    string? PrimaryCode,
+    string? Summary,
+    CompatibilityIssueState[] Issues);
+
 public sealed record ClickWidgetCommand(string NameOrText);
 public sealed record ExecuteLegacyScriptCommand(string Code, bool ReturnValue);
 
@@ -231,4 +264,6 @@ public sealed record NodeStatus(
     bool MainPlayerReady,
     long FrameIndex,
     double TimeSeconds,
-    NetworkFaultState NetworkFaults);
+    NetworkFaultState NetworkFaults,
+    string CompatibilityState,
+    string? CompatibilityCode);

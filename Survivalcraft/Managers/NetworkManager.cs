@@ -57,20 +57,35 @@ public static class NetworkManager {
         RelayHost?.Update();
         RelayClient?.Update();
         PackageFragment.CleanupStates();
+        NetworkCompatibilityRuntime.UpdateClientHandshake(MySession);
+        if (NetworkCompatibilityRuntime.TryTakePendingClientRejection(
+                out NetworkCompatibilityResult rejection)) {
+            StopClient();
+            GameManager.DisposeProject();
+            ScreensManager.SwitchScreen("MainMenu");
+            DialogsManager.Alert(
+                "Incompatible multiplayer",
+                rejection.ToDisplayMessage());
+        }
     }
     public static void Stop() {
         NetworkServer?.Stop();
-        NetworkClient?.Disconnect();
         RelayHost?.Disconnect();
-        RelayClient?.Disconnect();
         NetworkServer = null;
-        NetworkClient = null;
         RelayHost = null;
-        RelayClient = null;
+        StopClient();
         NetworkBodyInterpolation.Clear();
         PlayerBodyUpdatePacket.ClearSnapshots();
         RelayHostCodeStatus = RelayHostCodeStatus.Inactive;
         NetworkFaultInjector.ClearPending();
+    }
+
+    public static void StopClient() {
+        NetworkClient?.Disconnect();
+        RelayClient?.Disconnect();
+        NetworkClient = null;
+        RelayClient = null;
+        LatencyProbe.Reset();
     }
     public static void StartServer() {
         NetworkServer = new();

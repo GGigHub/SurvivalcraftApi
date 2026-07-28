@@ -19,6 +19,7 @@ public abstract class Packet {
 public enum PacketType : byte {
     // Connect
     ConnectInfo = 0, IndexInfo = 1, ProjectInfo = 2, StateInfo = 3, LatencyProbe = 111,
+    CompatibilityHello = 113, CompatibilityResult = 114,
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
@@ -84,6 +85,8 @@ public class PacketManager {
 
         // Connect
         RegisterPacket<ConnectPacket>();
+        RegisterPacket<CompatibilityHelloPacket>();
+        RegisterPacket<CompatibilityResultPacket>();
         RegisterPacket<IndexPacket>();
         RegisterPacket<LatencyProbePacket>();
         RegisterPacket<ProjectPacket>();

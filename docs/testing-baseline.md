@@ -22,28 +22,36 @@
 
 这些问题不代表既有测试无价值；它们适合作为功能资产逐步迁移，但不适合作为每次 AI 修改后的唯一反馈环。
 
-## 新框架验收数据
+## API 联机里程碑验收数据
 
-同一机器、Debug 配置下首次完成：
+在 `codex/api-mp-integration` 上合入 SCAPI 1.9.3 并完成兼容握手后，同一机器、Debug 配置下的最新结果为：
 
 | 验证 | 结果 | 时间 |
 | --- | --- | --- |
-| `Survivalcraft.Testing.Tests` | 10/10 通过 | 测试总时间 0.7005 秒 |
-| TestHost doctor | 通过 | 进程命令总时间约 6.63 秒 |
-| TestHost 双进程核心场景 | 通过 | 场景内部 11.079 秒 |
-| 标准 xUnit L2 门禁 | 1/1 通过 | 测试 12 秒，总时间 13.0719 秒 |
+| L0/L1 `Survivalcraft.Testing.Tests` | 20/20 通过 | 秒级 |
+| TestHost doctor | 模组、控制通道与 `Survivalcraft.Networking.dll` 均通过检查 | 未单独计时 |
+| 五类兼容矩阵 | 5/5 通过 | 场景内部 23.475 秒 |
+| 双进程核心场景 | 15/15 步通过 | 场景内部 11.576 秒 |
+| 标准 xUnit L2 门禁 | 2/2 通过 | 总时间 36.1497 秒 |
+| 真实中继纵向用例 | 1/1 通过，结束后零残留进程 | 测试总时间 32.1473 秒 |
 
-核心场景的 15 个步骤全部通过，并验证玻璃方块值 `15` 在服务端、首次客户端、重连客户端和保存后重载服务端之间一致。持久化差异为零。
+核心场景验证玻璃方块值 `15` 在服务端、首次客户端、重连客户端和保存后重载服务端之间一致，持久化差异为零。兼容矩阵分别稳定返回 `ProtocolMismatch`、`ApiVersionMismatch`、`MissingCapabilities`、`ExtraClientMod` 和 `HandshakeTimeout`，清除故障后可以在同一进程对中恢复联机。中继用例覆盖房间连接、兼容握手、项目传输、玩家进入、初次地形与后续服务端权威地形变更。
+
+所有真实游戏进程均通过 `--headless`、`CreateNoWindow=true` 和独立 `--data-dir` 在后台运行，不弹出游戏窗口，也不复用用户日常世界、设置、日志或缓存目录。
+
+历史测试集合在迁移审计中仍发现若干与本里程碑无关的脆弱断言，包括 UI 操作链、日志文本和动态生物位置容差。已修复旧中继脚本命名空间、地形诊断字段和离线世界重载空引用；尚未迁移的历史用例不计入当前稳定门禁，后续按业务域逐批替换为强类型状态断言。
 
 ## 当前可重复命令
 
 ```powershell
 ./scripts/Test-Multiplayer.ps1 -Mode fast
 ./scripts/Test-Multiplayer.ps1 -Mode doctor
+./scripts/Test-Multiplayer.ps1 -Mode compatibility
 ./scripts/Test-Multiplayer.ps1 -Mode core
+./scripts/Test-Multiplayer.ps1 -Mode full
 ```
 
-成功标准：命令退出码为 0；L0/L1 全绿；doctor 到达 `MainMenuScreen`；L2 的 `outcome.json` 为 `passed` 且 `state.diff.json` 的 `equal` 为 `true`。
+稳定门禁的成功标准：命令退出码为 0；L0/L1 全绿；doctor 到达 `MainMenuScreen`；兼容矩阵五类结果与预期一致；核心 L2 的 `outcome.json` 为 `passed` 且 `state.diff.json` 的 `equal` 为 `true`。`full` 当前用于历史迁移审计，不等同于全绿承诺。
 
 ## 后续迁移指标
 

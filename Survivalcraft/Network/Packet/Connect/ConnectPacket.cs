@@ -24,6 +24,11 @@ public class ConnectPacket : Packet {
 
     public override void Handle(bool isServer) {
         if (isServer) {
+            if (From == null
+                || From.CompatibilityState != NetworkCompatibilityState.Accepted) {
+                NetworkCompatibilityRuntime.RejectPrematurePacket(From, this);
+                return;
+            }
             // 前置拦截如校验黑名单
             From.NetworkGuid = playerGuid;
             SubsystemNetwork subsystemNetwork = GameManager.Project.FindSubsystem<SubsystemNetwork>();

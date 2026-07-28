@@ -235,17 +235,8 @@ public class PlayerScreen : Screen {
                 });
             }
         }
-        if (m_playButton.IsClicked && VerifyName()) {
-            if (m_mode == Mode.Initial) {
-                if (NetworkManager.IsClientRunning) {
-                    OnPlayerCreate?.Invoke(m_playerData);
-                    DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
-                }
-                else {
-                    m_playerData.SubsystemPlayers.AddPlayerData(m_playerData);
-                    ScreensManager.SwitchScreen("Game");
-                }
-            }
+        if (m_playButton.IsClicked) {
+            TryEnterWorld();
         }
         if (m_addAnotherButton.IsClicked && VerifyName()) {
             m_playerData.SubsystemPlayers.AddPlayerData(m_playerData);
@@ -266,6 +257,21 @@ public class PlayerScreen : Screen {
             }
         }
         m_nameWasInvalid = false;
+    }
+
+    public bool TryEnterWorld() {
+        if (m_mode != Mode.Initial || !VerifyName()) {
+            return false;
+        }
+        if (NetworkManager.IsClientRunning) {
+            OnPlayerCreate?.Invoke(m_playerData);
+            DialogsManager.ShowDialog(this, m_fetchingPlayerDialog);
+        }
+        else {
+            m_playerData.SubsystemPlayers.AddPlayerData(m_playerData);
+            ScreensManager.SwitchScreen("Game");
+        }
+        return true;
     }
 
     public static string GetDeviceDisplayName(WidgetInputDevice device) {

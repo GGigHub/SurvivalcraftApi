@@ -28,8 +28,8 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-Multiplayer.ps1 -Mode fast
 
-  core-multiplayer:
-    name: L2 real-process multiplayer
+  api-multiplayer:
+    name: L2 API multiplayer and compatibility
     needs: deterministic-tests
     runs-on: windows-latest
     timeout-minutes: 15
@@ -49,19 +49,19 @@ jobs:
       - name: Verify headless runtime and control channel
         shell: pwsh
         run: dotnet run --project ./Survivalcraft.TestHost/Survivalcraft.TestHost.csproj --no-build -c Debug -- doctor --startup-timeout 120
-      - name: Run core multiplayer acceptance test
+      - name: Run compatibility matrix and core multiplayer acceptance tests
         shell: pwsh
         run: >-
           dotnet test ./Survivalcraft.Test/Survivalcraft.Test.csproj
           --nologo -c Debug --no-build
           --filter "Layer=L2"
-          --logger "trx;LogFileName=core-multiplayer.trx"
+          --logger "trx;LogFileName=api-multiplayer-l2.trx"
           --results-directory ./TestResults/trx
       - name: Upload replayable diagnostics
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: core-multiplayer-${{ github.run_id }}-${{ github.run_attempt }}
+          name: api-multiplayer-l2-${{ github.run_id }}-${{ github.run_attempt }}
           path: TestResults
           if-no-files-found: warn
           retention-days: 14

@@ -33,6 +33,8 @@ public sealed class GameContext : IDisposable {
         RoleName = roleName;
         SourceDirectory = sourceDirectory;
         RunDirectory = runDirectory;
+        DataDirectory = Path.Combine(runDirectory, "data");
+        InstanceId = $"legacy-{SanitizePathSegment(roleName)}-{Guid.NewGuid():N}";
         Cts = new CancellationTokenSource();
         LogServer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
         LogPort = ((IPEndPoint)LogServer.Client.LocalEndPoint!).Port;
@@ -46,6 +48,8 @@ public sealed class GameContext : IDisposable {
     public string RoleName { get; }
     public string SourceDirectory { get; }
     public string RunDirectory { get; }
+    public string DataDirectory { get; }
+    public string InstanceId { get; }
     public CancellationTokenSource Cts { get; }
     public int LogPort { get; }
     public int CmdPort { get; }
@@ -231,6 +235,11 @@ public sealed class GameContext : IDisposable {
     }
 
     private string[] BuildProcessArguments(string[] arguments) => [
+        "--headless",
+        "--instance-id",
+        InstanceId,
+        "--data-dir",
+        DataDirectory,
         "--log-port",
         LogPort.ToString(),
         "--cmd-port",

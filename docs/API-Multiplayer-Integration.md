@@ -53,12 +53,14 @@ transport connected
 
 The server must reject a `ConnectPacket` received before compatibility acceptance. Compatibility failures must be observable through the automated control channel; relying on a generic transport disconnect reason is insufficient.
 
+The implemented wire contract uses protocol revision `1`, packet IDs `113`/`114`, and bounded payloads. `ApiModManifest` and `StructuredCompatibilityResult` are mandatory capabilities; `ModPacketChannel` advertises the API's dynamic packet registration path. The client gives the application handshake 15 seconds before producing `HandshakeTimeout`; a direct server removes any non-accepted transport session after 20 seconds. Until acceptance, both client receive paths and server send paths admit compatibility traffic only, with `ConnectPacket` retaining an explicit defensive check.
+
 ## Automated quality gates
 
 The integration line uses progressively broader gates:
 
 - L0: pure tests for canonicalization, duplicate detection, deterministic ordering, version rules, and mismatch diagnostics.
-- L1: in-process packet serialization and handshake state-machine tests.
+- L1: bounded wire-codec round trips and malformed/truncated payload rejection.
 - L2: real server/client processes for accepted compatibility, protocol mismatch, API mismatch, mod mismatch, reconnect, terrain synchronization, and persistence.
 - Fault/replay: each failed scenario retains process logs, control transcripts, state snapshots, seeds, ports, and launch arguments under `TestResults`.
 
@@ -75,3 +77,7 @@ The first complete API multiplayer milestone requires all of the following:
 - Failures produce enough artifacts for an AI developer to reproduce and diagnose them without watching the UI.
 
 This milestone establishes a safe development mainline. It does not claim that every third-party mod is multiplayer-correct; mod-defined state replication remains a separate capability that must be declared and tested.
+
+## Implemented first milestone
+
+The API 1.9.3 merge, compatibility handshake, typed diagnostics, real-process mismatch matrix, accepted connection, reconnect, terrain synchronization, and persistence checks are implemented on this branch. Promotion requires the stable `fast`, `doctor`, `compatibility`, and `core` gates. The legacy non-L2 collection is retained as a headless migration audit while its remaining UI/log assertions are converted to typed state checks.

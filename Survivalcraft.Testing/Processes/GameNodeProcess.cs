@@ -11,7 +11,6 @@ public sealed record GameNodeOptions(
     string Role,
     string RuntimeDirectory,
     string DataDirectory,
-    bool Headless = true,
     string ExecutableName = "Survivalcraft.exe",
     TimeSpan? StartupTimeout = null,
     IReadOnlyDictionary<string, string>? AdditionalArguments = null);
@@ -91,9 +90,7 @@ public sealed class GameNodeProcess : IAsyncDisposable {
         AddArgument(startInfo, "--instance-id", InstanceId);
         AddArgument(startInfo, "--data-dir", DataDirectory);
         AddArgument(startInfo, "--role", Role);
-        if (options.Headless) {
-            startInfo.ArgumentList.Add("--headless");
-        }
+        startInfo.ArgumentList.Add("--headless");
         if (options.AdditionalArguments != null) {
             foreach ((string key, string value) in options.AdditionalArguments) {
                 AddArgument(startInfo, "--" + key.TrimStart('-'), value);

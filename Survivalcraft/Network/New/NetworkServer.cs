@@ -41,6 +41,16 @@ public class NetworkServer : INetEventListener {
 
     public void Update() {
         _netManager.PollEvents();
+        DateTime now = DateTime.UtcNow;
+        foreach (KeyValuePair<NetPeer, ClientSession> item in ClientSessions.ToArray()) {
+            ClientSession session = item.Value;
+            if (session.CompatibilityState != NetworkCompatibilityState.Accepted
+                && session.CompatibilityStartedUtc != default
+                && now - session.CompatibilityStartedUtc >= NetworkCompatibilityRuntime.ServerHandshakeTimeout) {
+                Log.Warning($"Disconnecting {item.Key}: compatibility handshake timed out.");
+                item.Key.Disconnect();
+            }
+        }
     }
 
     public void Board(Packet packet) {
@@ -56,7 +66,9 @@ public class NetworkServer : INetEventListener {
     }
 
     public void Send(Packet packet, ClientSession session) {
-        if (packet.MinNeedState <= session.NetworkState) {
+        if (packet.MinNeedState <= session.NetworkState
+            && (session.CompatibilityState == NetworkCompatibilityState.Accepted
+                || packet is CompatibilityResultPacket)) {
             PacketStreamWriter writer = new();
             writer.Write(PacketFragment.VerifyByte);
             writer.Write(packet.ID);
@@ -90,6 +102,12 @@ public class NetworkServer : INetEventListener {
         if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (!ClientSessions.TryGetValue(peer, out ClientSession session)) return;
+                if (session.CompatibilityState != NetworkCompatibilityState.Accepted
+                    && packet is not CompatibilityHelloPacket
+                    && packet is not ConnectPacket) {
+                    NetworkCompatibilityRuntime.RejectPrematurePacket(session, packet);
+                    return;
+                }
                 if (packet.MinNeedState <= session.NetworkState) {
                     packet.From = session;
                     packet.Handle(true);
@@ -106,7 +124,9 @@ public class NetworkServer : INetEventListener {
         ClientSession session = new() {
             PlayerIndex = -1,
             NetworkGuid = Guid.Empty,
-            NetworkState = NetworkState.Connected
+            NetworkState = NetworkState.Connected,
+            CompatibilityState = NetworkCompatibilityState.AwaitingHello,
+            CompatibilityStartedUtc = DateTime.UtcNow
         };
         ClientSessions[peer] = session;
 
@@ -120,7 +140,9 @@ public class NetworkServer : INetEventListener {
         }
 
         ClientSessions.Remove(peer);
-        session.NetworkState = NetworkState.NotConnected;
+        if (session != null) {
+            session.NetworkState = NetworkState.NotConnected;
+        }
 
         if (!_disconnectByUser) {
             Log.Information($"Disconnected: {peer}, {disconnectInfo}");

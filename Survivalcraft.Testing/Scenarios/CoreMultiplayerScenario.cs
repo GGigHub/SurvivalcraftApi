@@ -665,6 +665,7 @@ public sealed class CoreMultiplayerScenario {
         string[] required = [
             "Survivalcraft.exe",
             "Survivalcraft.dll",
+            "Survivalcraft.Networking.dll",
             "Content.zip",
             Path.Combine("Mods", "Survivalcraft.TestAutomation.scmod")
         ];

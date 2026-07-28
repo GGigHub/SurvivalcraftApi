@@ -91,8 +91,8 @@ Add("allocatedInRange", allocatedInRange);
 Add("readyInRange", readyInRange);
 Add("notReadyInRange", notReadyInRange);
 
-bool hasPendingQueue = updater.m_pendingChunkSendsByPlayer.TryGetValue(playerIndex, out System.Collections.Generic.List<Engine.Point2> pendingChunks);
-bool hasSentSet = updater.m_sentChunksByPlayer.TryGetValue(playerIndex, out System.Collections.Generic.HashSet<Engine.Point2> sentChunks);
+bool hasPendingQueue = updater.waitChunkList.TryGetValue(playerIndex, out System.Collections.Generic.Queue<Engine.Point2> pendingChunks);
+bool hasSentSet = updater.sentChunkSetList.TryGetValue(playerIndex, out System.Collections.Generic.HashSet<Engine.Point2> sentChunks);
 Add("hasPendingQueue", hasPendingQueue);
 Add("pendingCount", pendingChunks?.Count ?? 0);
 Add("targetPending", pendingChunks?.Any(point => point.X == chunkX && point.Y == chunkZ) ?? false);

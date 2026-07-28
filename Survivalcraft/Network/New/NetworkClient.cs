@@ -12,6 +12,9 @@ public class ClientSession {
     public int PlayerIndex { get; set; }
     public Guid NetworkGuid { get; set; }
     public NetworkState NetworkState { get; set; }
+    public NetworkCompatibilityState CompatibilityState { get; set; }
+    public NetworkCompatibilityResult CompatibilityResult { get; set; }
+    public DateTime CompatibilityStartedUtc { get; set; }
 }
 
 public class NetworkClient : INetEventListener {
@@ -54,6 +57,11 @@ public class NetworkClient : INetEventListener {
     }
 
     public void Send(Packet packet) {
+        if (MySession != null
+            && MySession.CompatibilityState != NetworkCompatibilityState.Accepted
+            && packet is not CompatibilityHelloPacket) {
+            return;
+        }
         PacketStreamWriter writer = new();
         writer.Write(PacketFragment.VerifyByte);
         writer.Write(packet.ID);
@@ -84,6 +92,10 @@ public class NetworkClient : INetEventListener {
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
+                if (MySession?.CompatibilityState != NetworkCompatibilityState.Accepted
+                    && packet is not CompatibilityResultPacket) {
+                    return;
+                }
                 if (packet.MinNeedState >= NetworkState.ProjectLoaded && GameManager.Project == null) {
                     return;
                 }
@@ -104,14 +116,18 @@ public class NetworkClient : INetEventListener {
             PlayerIndex = -1,
             NetworkGuid = Guid.Parse(SettingsManager.OnlineAccessToken),
             NetworkState = NetworkState.NotConnected,
+            CompatibilityState = NetworkCompatibilityState.AwaitingHello
         };
         IsConnected = true;
-        Send(new ConnectPacket(MySession.NetworkGuid));
+        NetworkCompatibilityManifest manifest = NetworkCompatibilityRuntime.BeginClientHandshake(MySession);
+        Send(new CompatibilityHelloPacket(manifest));
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
-        MySession.NetworkState = NetworkState.NotConnected;
+        if (MySession != null) {
+            MySession.NetworkState = NetworkState.NotConnected;
+        }
 
         LatencyProbe.Reset();
         Log.Information($"Disconnected: {_serverAddress}, Reason: {disconnectInfo.Reason}");

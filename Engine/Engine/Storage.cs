@@ -32,6 +32,18 @@ namespace Engine {
         const bool m_isAndroidPlatform = true;
 #endif
 
+        public static bool IsDataDirectoryOverridden {
+            get {
+#if !ANDROID && !IOS && !BROWSER
+                lock (m_dataDirectoryCreationLock) {
+                    return !string.IsNullOrEmpty(m_dataDirectoryOverride);
+                }
+#else
+                return false;
+#endif
+            }
+        }
+
         /// <summary>
         /// Content 加载回调
         /// 参数：ContentManager 中绝对路径

@@ -135,6 +135,15 @@ public partial class TestAutomationModLoader {
                 request,
                 SetNetworkFaults(request.DeserializePayload<SetNetworkFaultsCommand>()),
                 sequence),
+            ControlCommandNames.ConfigureCompatibility => ControlProtocol.Success(
+                request,
+                ConfigureCompatibility(
+                    request.DeserializePayload<ConfigureCompatibilityCommand>()),
+                sequence),
+            ControlCommandNames.GetCompatibility => ControlProtocol.Success(
+                request,
+                BuildCompatibilityStatus(),
+                sequence),
             ControlCommandNames.ClickWidget => ControlProtocol.Success(
                 request,
                 QueueTypedWidgetClick(request.DeserializePayload<ClickWidgetCommand>()),
@@ -170,6 +179,7 @@ public partial class TestAutomationModLoader {
         if (command.FixedRandom) {
             global::Game.Random.Counter = command.Seed;
         }
+        NetworkCompatibilityRuntime.ClearLocalManifestOverride();
         return new ControlAck(true, $"Configured role '{nodeRole}' with seed {command.Seed}.");
     }
 
@@ -248,7 +258,9 @@ public partial class TestAutomationModLoader {
         if (!playerScreen.m_playButton.IsVisible || !playerScreen.m_playButton.IsEnabled) {
             throw new InvalidOperationException("Player screen Play button is not ready.");
         }
-        pendingWidgetClicks.Enqueue("CLICK_WIDGET PlayButton");
+        if (!playerScreen.TryEnterWorld()) {
+            throw new InvalidOperationException("Player screen rejected the enter-world request.");
+        }
         return new ControlAck(true, $"Entering world as '{command.PlayerName}'.");
     }
 
@@ -332,7 +344,10 @@ public partial class TestAutomationModLoader {
             ["fault.sent"] = metrics.Sent.ToString(),
             ["fault.dropped"] = metrics.Dropped.ToString(),
             ["fault.duplicated"] = metrics.Duplicated.ToString(),
-            ["fault.pending"] = metrics.Pending.ToString()
+            ["fault.pending"] = metrics.Pending.ToString(),
+            ["compatibility.state"] = BuildCompatibilityStateName(),
+            ["compatibility.code"] = NetworkCompatibilityRuntime.LastClientResult?.PrimaryCode.ToString() ?? string.Empty,
+            ["compatibility.summary"] = NetworkCompatibilityRuntime.LastClientResult?.Summary ?? string.Empty
         };
 
         return new StateSnapshot(
@@ -390,6 +405,73 @@ public partial class TestAutomationModLoader {
         return BuildNetworkFaultState();
     }
 
+    private CompatibilityStatus ConfigureCompatibility(
+        ConfigureCompatibilityCommand command) {
+        if (command.ClearOverride) {
+            NetworkCompatibilityRuntime.ClearLocalManifestOverride();
+            return BuildCompatibilityStatus();
+        }
+
+        NetworkCompatibilityManifest loaded =
+            NetworkCompatibilityRuntime.CreateLoadedManifest();
+        IEnumerable<NetworkModIdentity> mods = command.Mods == null
+            ? loaded.Mods
+            : command.Mods.Select(mod => new NetworkModIdentity(
+                mod.PackageName,
+                mod.Version,
+                mod.ApiVersion));
+        NetworkCompatibilityManifest manifest = new(
+            command.ProtocolRevision ?? loaded.ProtocolRevision,
+            command.ApiVersion ?? loaded.ApiVersion,
+            command.Capabilities.HasValue
+                ? (NetworkCapabilities)command.Capabilities.Value
+                : loaded.Capabilities,
+            mods);
+        NetworkCompatibilityRuntime.SetLocalManifestOverride(manifest);
+        return BuildCompatibilityStatus();
+    }
+
+    private CompatibilityStatus BuildCompatibilityStatus() {
+        NetworkCompatibilityManifest manifest =
+            NetworkCompatibilityRuntime.GetLocalManifest();
+        NetworkCompatibilityResult? result =
+            NetworkCompatibilityRuntime.LastClientResult;
+        return new CompatibilityStatus(
+            BuildCompatibilityStateName(),
+            NetworkCompatibilityRuntime.HasLocalManifestOverride,
+            manifest.ProtocolRevision,
+            manifest.ApiVersion ?? string.Empty,
+            (int)manifest.Capabilities,
+            (manifest.Mods ?? []).Select(mod => new CompatibilityModDescriptor(
+                mod.PackageName ?? string.Empty,
+                mod.Version ?? string.Empty,
+                mod.ApiVersion ?? string.Empty)).ToArray(),
+            result?.Accepted,
+            result?.PrimaryCode.ToString(),
+            result?.Summary,
+            (result?.Issues ?? []).Select(issue => new CompatibilityIssueState(
+                issue.Code.ToString(),
+                issue.PackageName ?? string.Empty,
+                issue.Expected ?? string.Empty,
+                issue.Actual ?? string.Empty,
+                issue.Message ?? string.Empty)).ToArray());
+    }
+
+    private static string BuildCompatibilityStateName() {
+        ClientSession? session = NetworkManager.MySession;
+        if (session != null) {
+            return session.CompatibilityState.ToString();
+        }
+        NetworkCompatibilityResult? result =
+            NetworkCompatibilityRuntime.LastClientResult;
+        if (result != null) {
+            return result.Accepted
+                ? NetworkCompatibilityState.Accepted.ToString()
+                : NetworkCompatibilityState.Rejected.ToString();
+        }
+        return NetworkCompatibilityState.NotStarted.ToString();
+    }
+
     private ControlAck QueueTypedWidgetClick(ClickWidgetCommand command) {
         pendingWidgetClicks.Enqueue("CLICK_WIDGET " + command.NameOrText);
         return new ControlAck(true, command.NameOrText);
@@ -418,7 +500,9 @@ public partial class TestAutomationModLoader {
             mainPlayer?.IsReadyForPlaying == true && mainPlayer.ComponentPlayer != null,
             Time.FrameIndex,
             Time.RealTime,
-            BuildNetworkFaultState());
+            BuildNetworkFaultState(),
+            BuildCompatibilityStateName(),
+            NetworkCompatibilityRuntime.LastClientResult?.PrimaryCode.ToString());
     }
 
     private NetworkFaultState BuildNetworkFaultState() {

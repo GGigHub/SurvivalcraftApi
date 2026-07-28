@@ -23,6 +23,7 @@
         <Compile Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Windows\Server\**\*.cs" Exclude="$(MSBuildThisFileDirectory)..\Survivalcraft.Windows\obj\**\*.cs" />
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Networking\Survivalcraft.Networking.csproj" />
         <PackageReference Include="LiteNetLib" Version="2.0.1" />
     </ItemGroup>
 </Project>

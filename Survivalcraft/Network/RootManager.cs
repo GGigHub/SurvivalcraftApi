@@ -220,7 +220,9 @@ public static class RootManager {
                 NetworkManager.Queue(new MemoryBankDataPacket(id, data));
         };
         SubsystemMovingBlocks.OnMovingBlockAdd += (movingBlockSet) => {
-            if (!NetworkManager.IsClientRunning) {
+            if (NetworkManager.IsServerRunning
+                && !NetworkManager.IsClientRunning
+                && GameManager.Project != null) {
                 NetworkManager.Queue(new MovingBlockAddPacket((SubsystemMovingBlocks.MovingBlockSet)movingBlockSet));
             }
         };

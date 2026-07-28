@@ -53,7 +53,9 @@ public sealed class RelayHost : INetEventListener {
     }
 
     public void Send(Packet packet, ClientSession session) {
-        if (packet.MinNeedState > session.NetworkState) return;
+        if (packet.MinNeedState > session.NetworkState
+            || (session.CompatibilityState != NetworkCompatibilityState.Accepted
+                && packet is not CompatibilityResultPacket)) return;
         int connectionId = _sessions.FirstOrDefault(p => p.Value == session).Key;
         if (connectionId == 0) return;
         PacketStreamWriter payload = new();
@@ -91,7 +93,9 @@ public sealed class RelayHost : INetEventListener {
             _sessions[id] = new ClientSession {
                 PlayerIndex = -1,
                 NetworkGuid = Guid.Empty,
-                NetworkState = NetworkState.Connected
+                NetworkState = NetworkState.Connected,
+                CompatibilityState = NetworkCompatibilityState.AwaitingHello,
+                CompatibilityStartedUtc = DateTime.UtcNow
             };
         }
         else if (type == RelayMessageType.PeerLeft) {
@@ -109,7 +113,9 @@ public sealed class RelayHost : INetEventListener {
                 session = new ClientSession {
                     PlayerIndex = -1,
                     NetworkGuid = Guid.Empty,
-                    NetworkState = NetworkState.Connected
+                    NetworkState = NetworkState.Connected,
+                    CompatibilityState = NetworkCompatibilityState.AwaitingHello,
+                    CompatibilityStartedUtc = DateTime.UtcNow
                 };
                 _sessions[id] = session;
             }
@@ -117,6 +123,12 @@ public sealed class RelayHost : INetEventListener {
             NetDataReader inner = new(data);
             if (NetworkManager.PackageFragment.TryProcessIncoming(inner, $"relay-{id}", out byte[] payload)) {
                 foreach (Packet packet in PacketManager.DecodePackets(payload)) {
+                    if (session.CompatibilityState != NetworkCompatibilityState.Accepted
+                        && packet is not CompatibilityHelloPacket
+                        && packet is not ConnectPacket) {
+                        NetworkCompatibilityRuntime.RejectPrematurePacket(session, packet);
+                        continue;
+                    }
                     if (packet.MinNeedState <= session.NetworkState) {
                         packet.From = session;
                         packet.Handle(true);

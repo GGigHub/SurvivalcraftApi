@@ -78,6 +78,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.Testing.Tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.TestHost", "Survivalcraft.TestHost\Survivalcraft.TestHost.csproj", "{0C1192E4-E346-4DA3-AF2B-DABE01134D0D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.Networking", "Survivalcraft.Networking\Survivalcraft.Networking.csproj", "{B6A5C4D3-E2F1-4A09-8B7C-6D5E4F3A2B1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -179,6 +181,10 @@ Global
 		{0C1192E4-E346-4DA3-AF2B-DABE01134D0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C1192E4-E346-4DA3-AF2B-DABE01134D0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C1192E4-E346-4DA3-AF2B-DABE01134D0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6A5C4D3-E2F1-4A09-8B7C-6D5E4F3A2B1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6A5C4D3-E2F1-4A09-8B7C-6D5E4F3A2B1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6A5C4D3-E2F1-4A09-8B7C-6D5E4F3A2B1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6A5C4D3-E2F1-4A09-8B7C-6D5E4F3A2B1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

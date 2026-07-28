@@ -41,6 +41,20 @@ internal static class Program {
                 return 0;
             }
 
+            if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase)
+                && args.Length >= 2
+                && args[1].Equals(CompatibilityMatrixScenario.ScenarioName, StringComparison.OrdinalIgnoreCase)) {
+                Dictionary<string, string?> options = ParseOptions(args, 2);
+                CompatibilityMatrixScenarioOptions scenarioOptions =
+                    BuildCompatibilityScenarioOptions(repositoryRoot, options, replay: null);
+                CompatibilityMatrixScenarioResult result =
+                    await new CompatibilityMatrixScenario()
+                        .RunAsync(scenarioOptions)
+                        .ConfigureAwait(false);
+                PrintResult(result);
+                return 0;
+            }
+
             if (args[0].Equals("replay", StringComparison.OrdinalIgnoreCase)) {
                 if (args.Length < 2 || args[1].StartsWith("--", StringComparison.Ordinal)) {
                     throw new ArgumentException("replay requires the source artifact directory.");
@@ -49,27 +63,44 @@ internal static class Program {
                 Dictionary<string, string?> options = ParseOptions(args, 2);
                 ScenarioReplay replay = await ScenarioArtifactWriter.ReadReplayAsync(
                     sourceArtifactDirectory).ConfigureAwait(false);
-                if (!replay.Scenario.Equals(
-                    CoreMultiplayerScenario.ScenarioName,
-                    StringComparison.Ordinal)) {
-                    throw new InvalidDataException(
-                        $"Replay scenario '{replay.Scenario}' is not supported by this host.");
+                if (replay.Scenario.Equals(
+                        CoreMultiplayerScenario.ScenarioName,
+                        StringComparison.Ordinal)) {
+                    CoreMultiplayerScenarioOptions scenarioOptions = BuildScenarioOptions(
+                        repositoryRoot,
+                        options,
+                        replay);
+                    CoreMultiplayerScenarioResult result = await new CoreMultiplayerScenario()
+                        .RunAsync(scenarioOptions)
+                        .ConfigureAwait(false);
+                    PrintResult(result);
+                    return 0;
                 }
-                CoreMultiplayerScenarioOptions scenarioOptions = BuildScenarioOptions(
-                    repositoryRoot,
-                    options,
-                    replay);
-                CoreMultiplayerScenarioResult result = await new CoreMultiplayerScenario()
-                    .RunAsync(scenarioOptions)
-                    .ConfigureAwait(false);
-                PrintResult(result);
-                return 0;
+                if (replay.Scenario.Equals(
+                        CompatibilityMatrixScenario.ScenarioName,
+                        StringComparison.Ordinal)) {
+                    CompatibilityMatrixScenarioOptions scenarioOptions =
+                        BuildCompatibilityScenarioOptions(repositoryRoot, options, replay);
+                    CompatibilityMatrixScenarioResult result =
+                        await new CompatibilityMatrixScenario()
+                            .RunAsync(scenarioOptions)
+                            .ConfigureAwait(false);
+                    PrintResult(result);
+                    return 0;
+                }
+                throw new InvalidDataException(
+                    $"Replay scenario '{replay.Scenario}' is not supported by this host.");
             }
 
             throw new ArgumentException(
                 $"Unknown command '{string.Join(' ', args.Take(Math.Min(args.Length, 2)))}'.");
         }
         catch (CoreMultiplayerScenarioException exception) {
+            Console.Error.WriteLine($"FAILED: {exception.Message}");
+            Console.Error.WriteLine(exception.InnerException);
+            return 1;
+        }
+        catch (CompatibilityMatrixScenarioException exception) {
             Console.Error.WriteLine($"FAILED: {exception.Message}");
             Console.Error.WriteLine(exception.InnerException);
             return 1;
@@ -149,6 +180,38 @@ internal static class Program {
             KeepData: GetFlag(options, "keep-data"));
     }
 
+    private static CompatibilityMatrixScenarioOptions BuildCompatibilityScenarioOptions(
+        string repositoryRoot,
+        IReadOnlyDictionary<string, string?> options,
+        ScenarioReplay? replay) {
+        int seed = GetInt32(options, "seed", replay?.Seed ?? 20260728);
+        string runtime = options.TryGetValue("runtime", out string? runtimeValue)
+            && !string.IsNullOrWhiteSpace(runtimeValue)
+                ? Path.GetFullPath(runtimeValue)
+                : replay?.RuntimeDirectory ?? ResolveRuntime(repositoryRoot, options);
+        string artifactDirectory = options.TryGetValue("artifacts", out string? artifactValue)
+            && !string.IsNullOrWhiteSpace(artifactValue)
+                ? Path.GetFullPath(artifactValue)
+                : Path.Combine(
+                    repositoryRoot,
+                    "TestResults",
+                    replay == null
+                        ? $"compatibility-matrix-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}"
+                        : $"compatibility-matrix-replay-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}");
+        string? workDirectory = options.TryGetValue("work-dir", out string? workValue)
+            && !string.IsNullOrWhiteSpace(workValue)
+                ? Path.GetFullPath(workValue)
+                : null;
+        return new CompatibilityMatrixScenarioOptions(
+            runtime,
+            artifactDirectory,
+            seed,
+            StepTimeout: GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(60)),
+            ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(5)),
+            WorkDirectory: workDirectory,
+            KeepData: GetFlag(options, "keep-data"));
+    }
+
     private static async Task RunDoctorAsync(
         string runtimeDirectory,
         TimeSpan startupTimeout,
@@ -157,6 +220,7 @@ internal static class Program {
         string[] requiredFiles = [
             "Survivalcraft.exe",
             "Survivalcraft.dll",
+            "Survivalcraft.Networking.dll",
             "Content.zip",
             Path.Combine("Mods", "Survivalcraft.TestAutomation.scmod")
         ];
@@ -252,6 +316,15 @@ internal static class Program {
         Console.WriteLine(
             $"cell=({result.VerifiedCell.X},{result.VerifiedCell.Y},{result.VerifiedCell.Z}) "
             + $"value={result.VerifiedCell.Value}");
+        Console.WriteLine($"elapsed={result.Elapsed}");
+    }
+
+    private static void PrintResult(CompatibilityMatrixScenarioResult result) {
+        Console.WriteLine("SCENARIO PASSED");
+        Console.WriteLine($"artifacts={result.ArtifactDirectory}");
+        foreach ((string name, string code) in result.RejectionCodes) {
+            Console.WriteLine($"rejection.{name}={code}");
+        }
         Console.WriteLine($"elapsed={result.Elapsed}");
     }
 
@@ -372,6 +445,7 @@ internal static class Program {
         Console.WriteLine("Commands:");
         Console.WriteLine("  doctor [--runtime PATH] [--static-only]");
         Console.WriteLine("  run core-multiplayer [options]");
+        Console.WriteLine("  run compatibility-matrix [options]");
         Console.WriteLine("  replay ARTIFACT_DIRECTORY [options]");
         Console.WriteLine();
         Console.WriteLine("Common options:");

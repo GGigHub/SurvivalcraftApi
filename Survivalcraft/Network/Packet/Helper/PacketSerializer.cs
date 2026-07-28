@@ -181,14 +181,33 @@ public sealed class PacketSerializer {
     }
 
     public void Buffer(ref byte[] value) {
+        Buffer(ref value, int.MaxValue);
+    }
+
+    public void Buffer(ref byte[] value, int maximumLength) {
+        if (maximumLength < 0) {
+            throw new ArgumentOutOfRangeException(nameof(maximumLength));
+        }
         if (IsWriting) {
             byte[] buff = value ?? [];
+            if (buff.Length > maximumLength) {
+                throw new InvalidOperationException(
+                    $"Buffer length {buff.Length} exceeds maximum {maximumLength}.");
+            }
             m_writer.Write(buff.Length);
             m_writer.Write(buff);
         }
         else {
             int buffSize = m_reader.ReadInt32();
+            if (buffSize < 0 || buffSize > maximumLength) {
+                throw new InvalidOperationException(
+                    $"Buffer length {buffSize} is outside 0..{maximumLength}.");
+            }
             value = m_reader.ReadBytes(buffSize);
+            if (value.Length != buffSize) {
+                throw new EndOfStreamException(
+                    $"Expected {buffSize} buffer bytes, received {value.Length}.");
+            }
         }
     }
 

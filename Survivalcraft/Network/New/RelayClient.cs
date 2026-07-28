@@ -43,6 +43,11 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
     }
 
     public void Send(Packet packet) {
+        if (MySession != null
+            && MySession.CompatibilityState != NetworkCompatibilityState.Accepted
+            && packet is not CompatibilityHelloPacket) {
+            return;
+        }
         PacketStreamWriter payload = new();
         payload.Write(PacketFragment.VerifyByte);
         payload.Write(packet.ID);
@@ -70,10 +75,13 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
             MySession = new ClientSession {
                 PlayerIndex = -1,
                 NetworkGuid = Guid.Parse(SettingsManager.OnlineAccessToken),
-                NetworkState = NetworkState.NotConnected
+                NetworkState = NetworkState.NotConnected,
+                CompatibilityState = NetworkCompatibilityState.AwaitingHello,
+                CompatibilityStartedUtc = DateTime.UtcNow
             };
             IsConnected = true;
-            Send(new ConnectPacket(MySession.NetworkGuid));
+            NetworkCompatibilityManifest manifest = NetworkCompatibilityRuntime.BeginClientHandshake(MySession);
+            Send(new CompatibilityHelloPacket(manifest));
         }
         else if (type == RelayMessageType.JoinRejected) {
             Log.Warning($"Relay room rejected: {_roomCode}");
@@ -87,6 +95,10 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
             NetDataReader inner = new(data);
             if (NetworkManager.PackageFragment.TryProcessIncoming(inner, "relay-host", out byte[] payload)) {
                 foreach (Packet packet in PacketManager.DecodePackets(payload)) {
+                    if (MySession?.CompatibilityState != NetworkCompatibilityState.Accepted
+                        && packet is not CompatibilityResultPacket) {
+                        continue;
+                    }
                     if (packet.MinNeedState < NetworkState.ProjectLoaded || GameManager.Project != null)
                         packet.Handle(false);
                 }
@@ -96,7 +108,9 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
-        MySession.NetworkState = NetworkState.NotConnected;
+        if (MySession != null) {
+            MySession.NetworkState = NetworkState.NotConnected;
+        }
 
         LatencyProbe.Reset();
         Log.Information($"Relay disconnected: {peer.Address}, Reason: {disconnectInfo.Reason}");

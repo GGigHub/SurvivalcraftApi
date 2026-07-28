@@ -37,17 +37,17 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
             Assert.True(TerrainSyncTools.FingerprintsMatch(expected, actual),
                 $"Terrain data did not cross the relay. Server={expected.Raw}, Client={actual.Raw}");
 
-            TerrainSyncTools.TerrainCellState changed = await TerrainSyncTools.ChangePatternCellAsync(client, target);
-            TerrainSyncTools.TerrainChunkFingerprint clientAfter = await TerrainSyncTools.GetChunkFingerprintAsync(client, target);
-            TerrainSyncTools.TerrainChunkFingerprint serverAfter =
-                await TerrainSyncTools.WaitForChunkCellSamplesAsync(server, target, clientAfter);
-            Assert.True(TerrainSyncTools.CellSamplesMatch(clientAfter, serverAfter),
-                $"Client terrain mutation did not return through relay. Changed={changed.Raw}, Client={clientAfter.Raw}, Server={serverAfter.Raw}");
+            TerrainSyncTools.TerrainCellState changed = await TerrainSyncTools.ChangePatternCellAsync(server, target);
+            TerrainSyncTools.TerrainChunkFingerprint serverAfter = await TerrainSyncTools.GetChunkFingerprintAsync(server, target);
+            TerrainSyncTools.TerrainChunkFingerprint clientAfter =
+                await TerrainSyncTools.WaitForChunkCellSamplesAsync(client, target, serverAfter);
+            Assert.True(TerrainSyncTools.CellSamplesMatch(serverAfter, clientAfter),
+                $"Authoritative terrain mutation did not cross the relay. Changed={changed.Raw}, Server={serverAfter.Raw}, Client={clientAfter.Raw}");
 
             fixture.ThrowIfAnyContextHasError();
         }
         finally {
-            if (!relay.HasExited) relay.Kill(true);
+            TerminateProcess(relay);
             await StopGameAsync(client);
             client.Dispose();
             await StopGameAsync(server);
@@ -76,7 +76,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
                 "Host relay sessions were not cleared after relay disconnect.");
         }
         finally {
-            if (!relay.HasExited) relay.Kill(true);
+            TerminateProcess(relay);
             await StopGameAsync(client);
             client.Dispose();
             await StopGameAsync(server);
@@ -102,7 +102,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
                 "Host did not remove the relay player session after client disconnect.");
         }
         finally {
-            if (!relay.HasExited) relay.Kill(true);
+            TerminateProcess(relay);
             await StopGameAsync(client);
             client.Dispose();
             await StopGameAsync(server);
@@ -138,7 +138,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
                 $"Spectator did not receive terrain through relay. Server={expected.Raw}, Spectator={spectatorActual.Raw}");
         }
         finally {
-            if (!relay.HasExited) relay.Kill(true);
+            TerminateProcess(relay);
             await StopGameAsync(spectator);
             spectator.Dispose();
             await StopGameAsync(client);
@@ -177,7 +177,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
                 TestTimeouts.PollInterval);
         }
         finally {
-            if (!relay.HasExited) relay.Kill(true);
+            TerminateProcess(relay);
             await StopGameAsync(spectator);
             spectator.Dispose();
             await StopGameAsync(client);
@@ -213,7 +213,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
                 "Host did not recreate a relay session from an incoming payload.");
         }
         finally {
-            if (!relay.HasExited) relay.Kill(true);
+            TerminateProcess(relay);
             await StopGameAsync(server);
             server.Dispose();
         }
@@ -249,7 +249,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
                 "Relay server did not remain usable after invalid protocol frames.");
         }
         finally {
-            if (!relay.HasExited) relay.Kill(true);
+            TerminateProcess(relay);
             await StopGameAsync(client);
             client.Dispose();
             await StopGameAsync(server);
@@ -294,8 +294,8 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
                 $"Host did not retain a peer that joined the displayed relay room. Host={hostDisplay.Raw}");
         }
         finally {
-            if (!relay.HasExited) relay.Kill(true);
-            if (!center.HasExited) center.Kill(true);
+            TerminateProcess(relay);
+            TerminateProcess(center);
             await StopGameAsync(server);
         }
     }
@@ -679,7 +679,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
             return process;
         }
         catch {
-            if (!process.HasExited) process.Kill(true);
+            TerminateProcess(process);
             process.Dispose();
             throw;
         }
@@ -709,6 +709,18 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
             "Relay server exited during startup.",
             RelayPollInterval);
         return process;
+    }
+
+    private static void TerminateProcess(Process process) {
+        try {
+            if (!process.HasExited) {
+                process.Kill(entireProcessTree: true);
+            }
+            _ = process.WaitForExit(TestTimeouts.DefaultEventually);
+        }
+        catch (InvalidOperationException) {
+            // The process exited between the state check and termination request.
+        }
     }
 
     private static async Task<bool> WaitForRelayCandidateAsync(string centerUrl, string relayId) {

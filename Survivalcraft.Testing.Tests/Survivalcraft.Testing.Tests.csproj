@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Survivalcraft.Networking\Survivalcraft.Networking.csproj" />
     <ProjectReference Include="..\Survivalcraft.Testing\Survivalcraft.Testing.csproj" />
   </ItemGroup>
 

@@ -1,6 +1,6 @@
 # 联机自动化测试
 
-本分支已经具备一条不需要鼠标、键盘或人工观察日志的核心联机验收链路。它会启动两个真实的 Survivalcraft 进程，完成建服、进入世界、客户端连接、地形同步、断线重连、保存和重载，并把可回放的诊断材料写入 `TestResults`。
+本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会启动两个真实的 Survivalcraft 进程：核心场景完成建服、兼容握手、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、超时与恢复。两类场景都会把可回放的诊断材料写入 `TestResults`。
 
 ## 一键运行
 
@@ -10,12 +10,15 @@
 ./scripts/Test-Multiplayer.ps1 -Mode fast
 ./scripts/Test-Multiplayer.ps1 -Mode doctor
 ./scripts/Test-Multiplayer.ps1 -Mode core
+./scripts/Test-Multiplayer.ps1 -Mode compatibility
+./scripts/Test-Multiplayer.ps1 -Mode full
 ```
 
 - `fast`：运行不启动游戏的 L0/L1 测试，适合每次 AI 修改后立即执行。
-- `doctor`：构建运行时，启动一个隐藏窗口实例，验证模组加载与控制通道。
+- `doctor`：构建运行时，以无界面后台实例验证模组加载与控制通道。
 - `core`：运行完整双进程核心联机场景，并保存诊断产物。
-- `full`：依次执行 fast、core 和原有非 L2 测试；原有测试数量多、耗时长，仅在合并前或定时任务中使用。
+- `compatibility`：运行协议、API、能力、模组和握手超时矩阵，并验证匹配配置可以恢复联机。
+- `full`：依次执行 fast、compatibility、core 和原有非 L2 测试；原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
 - `-UseAngle`：构建 Windows ANGLE 兼容运行时，适合没有完整 OpenGL 驱动的 CI 机器。
 - `-NoBuild`：复用已构建的二进制文件。
 
@@ -32,7 +35,7 @@ dotnet test ./Survivalcraft.Test/Survivalcraft.Test.csproj `
 | --- | --- | --- | --- |
 | L0 | 协议编解码、规范化快照、精确差异 | 否 | 秒级以内 |
 | L1 | 手动时钟、确定性调度器、模拟网络、产物写入 | 否 | 秒级以内 |
-| L2 | 两个真实进程的核心纵向联机场景 | 是 | 当前约 12 秒 |
+| L2 | 两个真实进程的兼容矩阵与核心纵向场景 | 是（强制无界面） | 当前约 40 秒 |
 | Legacy/full | 历史功能和复现场景集合 | 是 | 分钟到更长 |
 
 AI 开发循环应先跑 L0/L1；涉及加载、ECS、网络包或持久化的改动再跑 L2；准备合并时跑 full。这样能够让高频修改尽快失败，同时保留真实进程验收。
@@ -52,7 +55,9 @@ flowchart LR
 
 `GameNodeProcess` 从一份只读构建目录启动多个实例。每个实例都有唯一的 `--instance-id`、端口、命名管道和 `--data-dir`，因此不再为每个角色复制约 49 MiB 的完整运行时，也不会共享世界、设置或存档。
 
-当前的 `--headless` 是“64×64 不可见窗口 + 跳过绘制提交”，仍然创建图形上下文以满足内容和纹理初始化；它不是完全没有图形设备的纯服务器。因此 Windows 机器仍需可用的 OpenGL ES 或 ANGLE/D3D 环境。CI 使用 `UseAngle=true` 降低对显卡驱动的依赖。
+所有自动测试中的游戏启动器都强制追加 `--headless`。新框架的 `GameNodeProcess` 和历史测试的 `GameContext` 同时使用 `UseShellExecute=false`、`CreateNoWindow=true` 与独立 `--data-dir`，所以 `doctor`、L2 和 legacy/full 都不会弹出或抢占前台游戏窗口。测试世界、设置、日志和缓存也不会写入开发者日常游戏目录；中继与中心服务进程同样使用无窗口启动并在用例结束时等待回收。
+
+当前的 `--headless` 是“64×64 不可见窗口 + 跳过绘制提交”，仍然创建图形上下文以满足内容和纹理初始化；它不是完全没有图形设备的纯服务器。因此 Windows 机器仍需可用的 OpenGL ES 或 ANGLE/D3D 环境。CI 使用 `UseAngle=true` 降低对显卡驱动的依赖，但整个测试过程不会显示游戏界面。
 
 ## 强类型控制协议
 
@@ -60,7 +65,7 @@ flowchart LR
 
 - 节点：`system.ping`、`node.getStatus`、`node.configure`
 - 世界：`world.create`、`world.save`、`world.reload`
-- 联机：`network.connect`、`network.disconnect`、`network.setFaults`
+- 联机：`network.connect`、`network.disconnect`、`network.setFaults`、`network.configureCompatibility`、`network.getCompatibility`
 - 玩家和地形：`player.enterWorld`、`terrain.changeCell`
 - 可观测性：`state.getSnapshot`
 - 确定性：`time.setClock`、`time.advanceTicks`
@@ -82,7 +87,7 @@ flowchart LR
 
 1. 两个隔离实例加载到主菜单；
 2. 服务端直接创建固定种子世界并进入游戏；
-3. 客户端连接并创建玩家，双方达到可玩状态；
+3. 客户端完成 API/模组兼容握手、连接并创建玩家，双方达到可玩状态；
 4. 启用可复现网络延迟，在服务端修改一个玻璃方块；
 5. 客户端快照观察到完全相同的方块值；
 6. 客户端主动断线，服务端清理会话；
@@ -92,12 +97,25 @@ flowchart LR
 
 每一步都有独立超时，不包含固定的“睡几秒然后猜测成功”。等待逻辑轮询结构化状态，通常每 50 ms 检查一次。
 
+## 兼容性矩阵
+
+`CompatibilityMatrixScenario` 在同一对真实进程中依次验证：
+
+1. 协议修订号不一致返回 `ProtocolMismatch`；
+2. API 版本不一致返回 `ApiVersionMismatch`；
+3. 缺少必要能力返回 `MissingCapabilities`；
+4. 客户端多出模组返回 `ExtraClientMod`；
+5. 服务端到客户端的握手结果被确定性丢弃时，客户端在 15 秒后返回 `HandshakeTimeout` 并清理会话；
+6. 清除测试覆盖并恢复无故障网络后，匹配清单能够完成握手和项目加载。
+
+每个拒绝均断言客户端未加载服务端项目、传输已停止且服务端会话数回到零。结果包含稳定错误码、逐项差异、状态快照和丢包指标。
+
 ## 失败产物与回放
 
 成功和失败都会生成同一套目录：
 
 ```text
-TestResults/core-multiplayer-*/
+TestResults/{core-multiplayer,compatibility-matrix}-*/
 ├── outcome.json
 ├── scenario.json
 ├── replay.json
@@ -135,6 +153,6 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## CI
 
-`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor 和 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
+`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor、兼容矩阵和核心 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
 
 当前远端位于 CNB，而 GitHub Workflow 只有在仓库镜像到 GitHub 后才会自动执行。CNB 支持由组织启用的 Windows 自托管构建节点，启用后可把脚本中的同样命令接入 `.cnb.yml`；在节点尚未配置前不提交一个必然排队或失败的 CNB 任务。测试框架和 PowerShell 入口本身不依赖 GitHub API。参见 [CNB 构建节点文档](https://docs.cnb.cool/zh/build/build-node.html)。
