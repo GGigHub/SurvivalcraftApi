@@ -272,6 +272,9 @@ namespace Game {
                 m_playerInput.Interact = input.IsGamepadDownOnce("Interact") ? new Ray3(viewPosition, viewDirection) : m_playerInput.Interact;
                 m_playerInput.ToggleMount |= input.IsGamepadDownOnce("ToggleMount");
                 m_playerInput.ToggleCrouch |= input.IsGamepadDownOnce("ToggleCrouch");
+                m_playerInput.PickBlockType = input.IsGamepadDownOnce("PickBlockType")
+                    ? new Ray3(viewPosition, viewDirection)
+                    : m_playerInput.PickBlockType;
                 if (input.IsPadButtonDownRepeat(GamePadButton.DPadLeft)) {
                     m_playerInput.ScrollInventory--;
                 }

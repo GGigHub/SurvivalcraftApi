@@ -20,7 +20,7 @@
     <ItemGroup>
         <PackageReference Include="NVorbis" Version="0.10.5" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" /><!--An powerful and popular audio libaury-->
-        <PackageReference Include="NLayer.NAudioSupport" Version="1.4.0" /><!--MP3 support-->
+        <PackageReference Include="NLayer.NAudioSupport" Version="2.0.1" /><!--MP3 support-->
         <PackageReference Include="NAudio.Flac.Unknown.Mod" Version="1.0.4" PrivateAssets="all" /><!--Source: https://github.com/XiaofengdiZhu/NAudio.Flac/ -->
         <PackageReference Include="NAudio.Core" Version="2.3.0" /><!--Resolve reference confliction between NLayer.NAudioSupport and NAudio.Flac.Unknown.Mod-->
         <PackageReference Include="Silk.NET.Windowing" Version="2.23.0" />
@@ -28,15 +28,15 @@
         <PackageReference Include="Silk.NET.OpenAL" Version="2.23.0" />
         <PackageReference Include="Silk.NET.Input" Version="2.23.0" />
         <!--SharpGLTF for glTF model loading-->
-        <PackageReference Include="SharpGLTF.Core" Version="1.0.*" />
-        <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.*" />
+        <PackageReference Include="SharpGLTF.Core" Version="1.0.6" />
+        <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.6" />
         <!--Belows are for solving the warning of implicit useing the old version of these packages-->
-        <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.8" />
+        <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.10" />
         <PackageReference Include="System.Net.Http" Version="4.3.4" />
         <PackageReference Include="System.Private.Uri" Version="4.3.2" />
         <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
         <!--NCalc for animation expression evaluation-->
-        <PackageReference Include="NCalcSync" Version="5.13.0" />
+        <PackageReference Include="NCalcSync" Version="6.4.0" />
     </ItemGroup>
     <ItemGroup>
         <Compile Remove="$(MSBuildThisFileDirectory)Engine.Graphics\EGL.cs" />

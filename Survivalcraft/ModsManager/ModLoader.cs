@@ -9,13 +9,19 @@ namespace Game {
         public ModEntity Entity;
 
         /// <summary>
+        /// 同一个模组有多个 ModLoader 时，该值越小，越先执行；最小的将成为主要 ModLoader，部分钩子只有主要 ModLoader 的会执行
+        /// </summary>
+        public virtual int Priority => 0;
+
+        /// <summary>
         ///     当ModLoader类被实例化时执行
         /// </summary>
         public virtual void __ModInitialize() { }
 
         /// <summary>
-        ///     在加载本模组的资源时触发。
-        ///     注意：模组的dll只能由原版逻辑加载
+        ///     在加载本模组的资源时触发。<br/>
+        ///     只有模组中的主要 ModLoader 的该方法才会被执行。<br/>
+        ///     注意：模组的 dll 只能由原版逻辑加载
         /// </summary>
         /// <param name="extension">准备调用的文件的扩展名</param>
         /// <param name="action">执行的操作</param>
@@ -38,7 +44,8 @@ namespace Game {
         }
 
         /// <summary>
-        ///     在加载存档前，比较当前模组的版本和存档上次使用模组的版本
+        ///     在加载存档前，比较当前模组的版本和存档上次使用模组的版本<br/>
+        ///     只有模组中的主要 ModLoader 的该方法才会被执行。<br/>
         ///     仅比较本模组
         /// </summary>
         /// <param name="currentVersion">当前模组的版本</param>
@@ -1871,6 +1878,12 @@ namespace Game {
         public virtual void OnSettingsScreenCreated(SettingsScreen settingsScreen, out Dictionary<ButtonWidget, Action> buttonsToAdd) {
             buttonsToAdd = [];
         }
+
+        /// <summary>
+        /// 数据驱动设置项值变更通知。idPath = 完整 path 去掉第一段 packageName。
+        /// 模组用于"值变了要立即处理"（如改 PBR 着色器质量要重建）。常规读取用 ModSettingsManager.Get&lt;T&gt;、TryGet&lt;T&gt;。
+        /// </summary>
+        public virtual void OnModSettingChanged(string[] idPath, object value) { }
 
         /// <summary>
         ///     对单条日志消息进行判定以修改其显示颜色

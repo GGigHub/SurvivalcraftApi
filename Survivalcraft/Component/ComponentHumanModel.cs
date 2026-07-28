@@ -83,6 +83,10 @@ namespace Game {
 
         public static event Action<ComponentHumanModel> OnRow;
 
+        public Vector3 m_baseInhandItemOffset;
+
+        public Vector3 m_baseInhandItemRotation;
+
         public override float AttackPhase {
             get => m_punchPhase;
             set => m_punchPhase = value;
@@ -189,8 +193,8 @@ namespace Game {
             if ((m_rowLeft || m_rowRight)
                 && componentMount != null
                 && componentMount.ComponentBody.ImmersionFactor > 0f
-                && Math.Floor(1.1000000238418579 * m_subsystemTime.GameTime)
-                != Math.Floor(1.1000000238418579 * (m_subsystemTime.GameTime - m_subsystemTime.GameTimeDelta))) {
+                && Math.Floor(1.1 * m_subsystemTime.GameTime)
+                != Math.Floor(1.1 * (m_subsystemTime.GameTime - m_subsystemTime.GameTimeDelta))) {
                 OnRow?.Invoke(this);
                 m_subsystemAudio.PlayRandomSound(
                     "Audio/Rowing",
@@ -287,6 +291,10 @@ namespace Game {
             // 创造模式飞行
             ctrl.Parameters.SetBool("IsCreativeFly", m_componentCreature.ComponentLocomotion.IsCreativeFlyEnabled);
             ctrl.Parameters.SetFloat("VelocityXZ", m_componentCreature.ComponentBody.Velocity.XZ.Length());
+            ctrl.Parameters.SetFloat("VelocityY", m_componentCreature.ComponentBody.Velocity.Y);
+
+            // 在梯子上爬行
+            ctrl.Parameters.SetBool("IsOnLadder", m_componentCreature.ComponentLocomotion.LadderValue.HasValue);
 
             // 实体哈希（用于噪声种子）
             ctrl.Parameters.SetFloat("EntityHash", GetHashCode());
@@ -304,7 +312,9 @@ namespace Game {
 
         public override void AnimateCreature() {
             // 检查模组 hook（保持原有实现）
+#pragma warning disable CS0618 // 类型或成员已过时
             if (OnAnimate != null && OnAnimate()) {
+#pragma warning restore CS0618 // 类型或成员已过时
                 return;
             }
 
@@ -321,7 +331,7 @@ namespace Game {
         /// 硬编码动画后备方案（当没有 AnimationController 时使用）
         /// 保持原有实现，确保向后兼容
         /// </summary>
-        private void AnimateCreatureFallback() {
+        public void AnimateCreatureFallback() {
             Vector3 position = m_componentCreature.ComponentBody.Position;
             Vector3 vector = m_componentCreature.ComponentBody.Rotation.ToYawPitchRoll();
 
@@ -442,7 +452,8 @@ namespace Game {
                 }
                 float f = MathUtils.Sigmoid(m_componentCreature.ComponentBody.CrouchFactor, 4f);
                 Vector3 position3 = new(position.X, position.Y - MathUtils.Lerp(0f, 0.7f, f), position.Z);
-                Vector3 position4 = new(0f, MathUtils.Lerp(0f, 7f, f), MathUtils.Lerp(0f, 28f, f));
+                Vector3 bodyBoneScale = m_bodyBone.Transform.Scale;
+                Vector3 position4 = new(0f, MathUtils.Lerp(0f, 0.16891f / bodyBoneScale.Y, f), MathUtils.Lerp(0f, 0.67564f / bodyBoneScale.Z, f));
                 Vector3 scale = new(1f, 1f, MathUtils.Lerp(1f, 0.5f, f));
                 SetBoneTransform(m_bodyBone.Index, Matrix.CreateRotationY(vector.X) * Matrix.CreateTranslation(position3));
                 SetBoneTransform(m_headBone.Index, Matrix.CreateRotationX(m_headAngles.Y) * Matrix.CreateRotationZ(0f - m_headAngles.X));
@@ -506,11 +517,20 @@ namespace Game {
                 m.Up = Vector3.Normalize(m.Up);
                 m.Forward = Vector3.Normalize(m.Forward);
                 Vector3 InhandRotation = block.GetInHandRotation(m_componentMiner.ActiveBlockValue);
-                Matrix matrix = Matrix.CreateRotationY(MathUtils.DegToRad(InhandRotation.Y) + m_inHandItemRotation.Y)
-                    * Matrix.CreateRotationZ(MathUtils.DegToRad(InhandRotation.Z) + m_inHandItemRotation.Z)
-                    * Matrix.CreateRotationX(MathUtils.DegToRad(InhandRotation.X) + m_inHandItemRotation.X)
-                    * Matrix.CreateTranslation(block.GetInHandOffset(m_componentMiner.ActiveBlockValue) + m_inHandItemOffset)
-                    * Matrix.CreateTranslation(new Vector3(0.05f, 0.05f, -0.56f) * (m_componentCreature.ComponentBody.BoxSize.Y / 1.77f))
+                // 偏移经基础旋转对齐手骨朝向：旋转部分由 baseInhandItemRotation 修正几何朝向（在 R_total 内），
+                // 但偏移在 R_total 之后、手骨变换之前应用，不经 baseInhandItemRotation，仅经手骨旋转。
+                // 当模型手骨朝向与默认人体模型（Hand2）不同时，偏移方向会随手骨局部坐标偏（如 +Y 由握柄方向变为四指方向）。
+                // 预乘 baseRotation 使偏移与几何朝向一样对齐。base=0 时 baseRotation=Identity，行为同原版。
+                Matrix baseRotation = Matrix.CreateRotationY(MathUtils.DegToRad(m_baseInhandItemRotation.Y))
+                    * Matrix.CreateRotationZ(MathUtils.DegToRad(m_baseInhandItemRotation.Z))
+                    * Matrix.CreateRotationX(MathUtils.DegToRad(m_baseInhandItemRotation.X));
+                Vector3 alignedOffset = Vector3.Transform(
+                    block.GetInHandOffset(m_componentMiner.ActiveBlockValue) + m_inHandItemOffset, baseRotation);
+                Matrix matrix = Matrix.CreateRotationY(MathUtils.DegToRad(InhandRotation.Y) + m_inHandItemRotation.Y + MathUtils.DegToRad(m_baseInhandItemRotation.Y))
+                    * Matrix.CreateRotationZ(MathUtils.DegToRad(InhandRotation.Z) + m_inHandItemRotation.Z + MathUtils.DegToRad(m_baseInhandItemRotation.Z))
+                    * Matrix.CreateRotationX(MathUtils.DegToRad(InhandRotation.X) + m_inHandItemRotation.X + MathUtils.DegToRad(m_baseInhandItemRotation.X))
+                    * Matrix.CreateTranslation(alignedOffset)
+                    * Matrix.CreateTranslation(m_baseInhandItemOffset * (m_componentCreature.ComponentBody.BoxSize.Y / 1.77f))
                     * m;
                 int x = Terrain.ToCell(matrix.Translation.X);
                 int y = Terrain.ToCell(matrix.Translation.Y);
@@ -549,6 +569,8 @@ namespace Game {
             m_walkAnimationSpeed = valuesDictionary.GetValue<float>("WalkAnimationSpeed");
             m_walkBobHeight = valuesDictionary.GetValue<float>("WalkBobHeight");
             m_walkLegsAngle = valuesDictionary.GetValue<float>("WalkLegsAngle");
+            m_baseInhandItemOffset = valuesDictionary.GetValue<Vector3>("BaseInhandItemOffset", new Vector3(0.05f, 0.05f, -0.56f));
+            m_baseInhandItemRotation = valuesDictionary.GetValue<Vector3>("BaseInhandItemRotation", Vector3.Zero);
         }
 
         public override void SetModel(Model model) {

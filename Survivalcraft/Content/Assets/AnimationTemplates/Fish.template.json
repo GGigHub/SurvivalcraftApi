@@ -14,22 +14,5 @@
             "index": 2,
             "blendMode": "Override"
         }
-    },
-    "stateTracks": {
-        "Swim": {
-            "type": "Float",
-            "defaultValue": 0
-        },
-        "Activity": {
-            "type": "Enum",
-            "defaultValue": "None",
-            "enumValues": [ "None", "Bite" ]
-        },
-        "Death": {
-            "type": "Float",
-            "defaultValue": 0,
-            "minValue": 0,
-            "maxValue": 1
-        }
     }
 }

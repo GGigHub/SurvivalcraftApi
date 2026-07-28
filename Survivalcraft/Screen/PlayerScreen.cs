@@ -189,7 +189,7 @@ public class PlayerScreen : Screen {
                 var obj = (ContainerWidget)LoadWidget(this, node, null);
                 Texture2D texture = m_characterSkinsCache.GetTexture((string)item);
                 obj.Children.Find<LabelWidget>("CharacterSkinItem.Text").Text = CharacterSkinsManager.GetDisplayName((string)item);
-                obj.Children.Find<LabelWidget>("CharacterSkinItem.Details").Text = $"{texture.Width}x{texture.Height}";
+                obj.Children.Find<LabelWidget>("CharacterSkinItem.Details").Text = $"{texture?.Width ?? 0}x{texture?.Height ?? 0}";
                 PlayerModelWidget playerModelWidget = obj.Children.Find<PlayerModelWidget>("CharacterSkinItem.Model");
                 playerModelWidget.PlayerClass = m_playerData.PlayerClass;
                 playerModelWidget.CharacterSkinTexture = texture;

@@ -14,11 +14,6 @@ namespace Engine.Animation {
         public Dictionary<string, TemplateLayerConfig> Layers { get; set; }
 
         /// <summary>
-        /// 状态轨道配置字典（key 为轨道名）
-        /// </summary>
-        public Dictionary<string, TemplateStateTrackConfig> StateTracks { get; set; }
-
-        /// <summary>
         /// 必需骨骼名称列表
         /// </summary>
         public List<string> RequiredBones { get; set; }
@@ -39,38 +34,20 @@ namespace Engine.Animation {
         public string BlendMode { get; set; } = "Override";
 
         /// <summary>
-        /// 骨骼遮罩（仅影响指定的骨骼）
+        /// 骨骼遮罩（按子树展开：含该骨 + 全部后代）
         /// </summary>
         public List<string> BoneMask { get; set; }
+
+        /// <summary>
+        /// 骨骼遮罩排除（同子树语义，从结果集中扣除）
+        /// </summary>
+        public List<string> BoneMaskExclude { get; set; }
+
+        /// <summary>
+        /// 层权重（0-1）。null 或 ≤0 表示未设，回退默认 1。
+        /// Override 层控制对下层的覆盖强度；Additive 层控制叠加强度。
+        /// </summary>
+        public float? Weight { get; set; }
     }
 
-    /// <summary>
-    /// 模板状态轨道配置
-    /// </summary>
-    public class TemplateStateTrackConfig {
-        /// <summary>
-        /// 轨道类型：Enum、Bool 或 Float
-        /// </summary>
-        public string Type { get; set; } = "Float";
-
-        /// <summary>
-        /// 默认值
-        /// </summary>
-        public object DefaultValue { get; set; }
-
-        /// <summary>
-        /// 枚举值列表（Type 为 Enum 时使用）
-        /// </summary>
-        public List<string> EnumValues { get; set; }
-
-        /// <summary>
-        /// 最小值（Type 为 Float 时使用）
-        /// </summary>
-        public float MinValue { get; set; }
-
-        /// <summary>
-        /// 最大值（Type 为 Float 时使用）
-        /// </summary>
-        public float MaxValue { get; set; }
-    }
 }

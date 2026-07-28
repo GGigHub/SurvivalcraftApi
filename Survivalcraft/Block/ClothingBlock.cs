@@ -62,7 +62,7 @@ namespace Game {
             XElement xElement = null;
             ModsManager.ModListAllDo(modEntity => { modEntity.LoadClo(this, ref xElement); });
             LoadClothingData(xElement);
-            Model playerModel = CharacterSkinsManager.GetPlayerModel(PlayerClass.Male);
+            Model playerModel = CharacterSkinsManager.GetPlayerModel(PlayerClass.Male, true);
             Matrix[] array = new Matrix[playerModel.Bones.Count];
             playerModel.CopyAbsoluteBoneTransformsTo(array);
             int index = playerModel.FindBone("Hand1").Index;

@@ -23,12 +23,16 @@
 
 ### 访问 Controller
 
-在自定义 `ComponentCreatureModel` 子类中通过属性访问：
+`AnimationController` 由 `ComponentModel.SetModel()` 自动创建并订阅事件。访问方式取决于扩展点：
+
+- **`ComponentCreatureModel` 子类**：通过属性 `AnimationController` 访问。
+- **`ComponentAnimationParticipant` 子类**：钩子方法直接收到 `controller` 参数（`OnControllerCreated` / `SyncAnimationParameters` / `HandleAnimationEvent`），无需每帧查找。
 
 ```csharp
-var controller = AnimationController;
-if (controller != null)
+// 参与者方式（推荐，独立组件）
+public override void SyncAnimationParameters(AnimationController controller)
 {
+    if (controller == null) return;
     // 使用 API ...
 }
 ```
@@ -39,8 +43,6 @@ if (controller != null)
 |-----|------|
 | `Update(float deltaTime)` | 每帧更新（由系统自动调用） |
 | `ComputeBoneTransforms(Matrix?[] boneTransforms)` | 计算骨骼变换（由系统自动调用） |
-| `SetState(string trackName, object value)` | 设置状态轨道值 |
-| `GetState(string trackName)` | 获取状态轨道值 |
 | `PlayAnimation(...)` | 手动播放动画 |
 | `ReleaseManualControl(...)` | 释放手动控制 |
 | `RegisterAndBuildIKChain(...)` | 注册 IK 链 |
@@ -51,14 +53,14 @@ if (controller != null)
 ### 生命周期
 
 ```
-每帧：
-  1. SyncAnimationParameters()  → 开发者同步参数
-  2. AnimationController.Update(deltaTime)
+每帧（由 ComponentModel.Animate 驱动）：
+  0. SyncAnimationParameters()          → 自身 virtual（生物子类 override 链）+ 转发给所有 ComponentAnimationParticipant
+  1. AnimationController.Update(deltaTime)
      - 评估状态规则
      - 更新各层动画
      - 应用 Root Motion
-     - 检查完成事件
-  3. AnimationController.ComputeBoneTransforms(boneTransforms)
+     - 检查完成事件（事件经 OnAnimationEvent → HandleAnimationEvent → 转发参与者）
+  2. AnimationController.ComputeBoneTransforms(boneTransforms)
      - 层混合
      - IK 求解
      - Morph Target
@@ -131,6 +133,25 @@ p.SetDirty();    // 强制标记为脏
 | `BodyRight` | float | 身体右侧方向 | `SyncAnimationParameters()` |
 
 参数名没有硬编码限制——配置文件和 C# 代码使用相同的参数名即可通信。
+
+### 参数驱动的 source（动态切换动画）
+
+状态规则的 `source` 支持 `[paramName]` 形式——从 string 参数取值作为实际 source（格式与行为见[动画配置 JSON 参考 · 参数插值](AnimationConfigReference.md#参数插值)）。让你用一条规则 + 一个参数播放任意多个动画，无需为每个动画单独写规则。
+
+典型用途：随机待机动作池——参数存当前选中的 clip 名，规则 `"source": "[RandomIdleEvent]"` 即播放该 clip。
+
+```csharp
+// C# 侧按状态机逻辑设参数
+controller.Parameters.SetString("RandomIdleEvent", selectedClip);  // 播 selectedClip
+controller.Parameters.SetString("RandomIdleEvent", "");            // 清空 → 回 idle
+```
+
+机制：引擎每帧解析 `[param]` source 取参数值。规则匹配路径不变时本会跳过重切（去重优化），但 `[param]` source 解析后的实际动画名变了会打破去重、强制层重新切换并从起始相位播放。因此改参数值即换动画。
+
+注意：
+
+- 仅 string 参数，用 `SetString` 设值，`parameters` 默认值声明为字符串。
+- 参数为空串时规则不停用层（维持上一帧输出），靠 `condition` 判空控制是否进入该规则。
 
 ---
 
@@ -227,39 +248,36 @@ controller.StopAnimation("UpperBodyAction");
 
 ## 4. 动画事件处理
 
-### 订阅事件
+### 处理事件
 
-在模型组件中订阅 AnimationController 的事件：
+`AnimationController.OnAnimationEvent` 由 `ComponentModel.SetModel()` 自动订阅到 `HandleAnimationEvent`，无需手动订阅。事件处理有两条路径：
+
+- **参与者方式（推荐）**：继承 `ComponentAnimationParticipant`，override `HandleAnimationEvent(controller, evt)`。`ComponentModel` 会自动把事件转发给所有参与者。
+- **模型组件方式**：继承 `ComponentCreatureModel`，override `HandleAnimationEvent(evt)`（先调 `base` 转发参与者 + 处理内置事件）。
 
 ```csharp
-public override void OnModelLoaded()
+// 参与者方式
+public class ComponentYourEventParticipant : ComponentAnimationParticipant
 {
-    base.OnModelLoaded();
-    if (AnimationController != null)
+    public override void HandleAnimationEvent(AnimationController controller, AnimationEvent evt)
     {
-        AnimationController.OnAnimationEvent += OnAnimationEvent;
-    }
-}
-
-private void OnAnimationEvent(AnimationEvent evt)
-{
-    switch (evt.Name)
-    {
-        case "AttackHit":
-            // 在动画指定时间点执行攻击判定
-            PerformAttack();
-            break;
-        case "PlaySound":
-            // 播放音效
-            SubsystemAudio.PlaySound((string)evt.Parameter, ...);
-            break;
-        case "JumpLandRecoveryComplete":
-            // 跳跃恢复结束
-            m_jumpState = JumpState.None;
-            break;
+        switch (evt.Name)
+        {
+            case "AttackHit":
+                PerformAttack();               // 动画指定时间点执行攻击判定
+                break;
+            case "PlaySound":
+                SubsystemAudio.PlaySound((string)evt.Parameter, ...);
+                break;
+            case "JumpLandRecoveryComplete":
+                m_jumpState = JumpState.None;   // 跳跃恢复结束
+                break;
+        }
     }
 }
 ```
+
+> 生物模型 `ComponentCreatureModel.HandleAnimationEvent` 先调 `base`（转发参与者）再**无条件**处理内置事件（`AttackHit`、`Footstep`、`AttackStart`、`AttackEnd`）。参与者无法阻止内置处理——它只是追加逻辑。若确需抑制内置事件，须用模型组件子类 override `HandleAnimationEvent` 且**不调 base**（代价：同时失去参与者转发，需自行复刻）。一般无需如此。
 
 ### AnimationEvent 结构
 
@@ -271,27 +289,29 @@ private void OnAnimationEvent(AnimationEvent evt)
 
 ### OnComplete 自动动作
 
-非循环动画完成时可自动触发状态变更，无需 C# 代码：
+非循环动画完成时可自动触发事件，无需 C# 代码：
 
 ```json
 {
   "source": "Bark",
   "loop": false,
   "onComplete": {
-    "type": "setState",
-    "state": "Activity",
-    "value": "None"
+    "type": "trigger",
+    "name": "BarkComplete",
+    "data": null
   }
 }
 ```
 
-在 C# 中监听：
+在 C# 中监听（参与者方式，`onComplete type="trigger"` 经 `OnAnimationEvent` 触发并由 `ComponentModel` 转发）：
 
 ```csharp
-// onComplete type="trigger" 会通过 OnAnimationEvent 触发
-private void OnAnimationEvent(AnimationEvent evt)
+public class ComponentYourParticipant : ComponentAnimationParticipant
 {
-    if (evt.Name == "BarkComplete") { ... }
+    public override void HandleAnimationEvent(AnimationController controller, AnimationEvent evt)
+    {
+        if (evt.Name == "BarkComplete") { ... }
+    }
 }
 ```
 
@@ -311,16 +331,15 @@ IK 作为动画混合之后的后处理步骤运行。流程：
 
 ### 注册 IK 链
 
-在模型加载后注册 IK 链：
+在 `AnimationController` 就绪后注册 IK 链。参与者用 `OnControllerCreated` 钩子（每次 controller 创建/重建都会收到通知，内部已去重，幂等安全）：
 
 ```csharp
-public override void OnModelLoaded()
+public class ComponentYourIKParticipant : ComponentAnimationParticipant
 {
-    base.OnModelLoaded();
-    if (AnimationController != null)
+    public override void OnControllerCreated(AnimationController controller)
     {
         // 注册从根到头部的 IK 链，使用 SingleBoneIK 算法
-        AnimationController.RegisterAndBuildIKChain(
+        controller.RegisterAndBuildIKChain(
             name: "Head",
             endBoneName: "b_Head_05",
             algorithmName: "SingleBoneIK",
@@ -330,6 +349,8 @@ public override void OnModelLoaded()
 }
 ```
 
+> IK 链注册内部去重：同名链重复注册不会叠加。`OnControllerCreated` 在 `OnEntityAdded`（补发）和每次换模型 `SetModel` 时都会触发，可安全地在其中注册。换模型后 controller 是新对象，旧 IK 链不残留——必须重注册，这正是用 `OnControllerCreated` 而非 `Load` 的原因。
+
 参数说明：
 - `name`：IK 链名称，后续通过此名称设置目标
 - `endBoneName`：末端骨骼名称。系统自动从该骨骼向上回溯构建链
@@ -338,16 +359,11 @@ public override void OnModelLoaded()
 
 ### 设置 IK 目标
 
-每帧更新 IK 目标：
+每帧更新 IK 目标。在参与者中用 `SyncAnimationParameters` 钩子（每帧、`controller.Update` 之前调用）：
 
 ```csharp
-public override void SyncAnimationParameters()
+public override void SyncAnimationParameters(AnimationController controller)
 {
-    base.SyncAnimationParameters();
-
-    var controller = AnimationController;
-    if (controller == null) return;
-
     // 方向约束：让头部朝向目标方向
     Vector3 aimDirection = CalculateAimDirection();
     float weight = CalculateIKWeight(); // 0-1，通常随距离衰减
@@ -357,6 +373,8 @@ public override void SyncAnimationParameters()
     // controller.SetIKTarget("Hand", targetPosition, weight);
 }
 ```
+
+> 也可在 `IUpdateable.Update(dt)` 中设置 IK 目标（如行为组件需要按状态机逻辑更新）。`SetIKAim`/`SetIKTarget` 在每帧 IK 求解前读取，调用时机不限。
 
 ### 清除 IK 目标
 
@@ -377,7 +395,7 @@ controller.ClearIKTarget("Head");
 ```csharp
 var target = IKTarget.CombinedTarget(
     position: targetPos,       // 目标位置
-    aimDirection: aimDir,      // 目标方向
+    direction: aimDir,         // 目标方向
     positionWeight: 1.0f,      // 位置权重
     aimWeight: 0.8f            // 方向权重
 );
@@ -425,42 +443,67 @@ chain.UnreachableStrategy = UnreachableStrategy.ExtendTowardTarget;
 
 ### 完整示例：头部追踪
 
+行为组件（`ComponentStareBehavior` 子类）需要按状态机逻辑更新 IK 目标，但行为组件不是模型组件、不持有 `AnimationController`。两种集成方式：
+
+**方式 A：行为组件自行注册（轮询 controller 就绪）**
+
+`AnimationController` 在 `SetModel` 后才存在（晚于 `Load`），行为组件在 `Update` 中轮询直到非空再注册一次：
+
 ```csharp
 public class ComponentFoxStareBehavior : ComponentStareBehavior
 {
     private const string HeadIKChain = "Head";
+    private AnimationController m_controller;
+    private bool m_ikRegistered;
 
-    public override void OnModelLoaded()
+    public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
-        base.OnModelLoaded();
-        var controller = ComponentCreatureModel?.AnimationController;
-        if (controller != null)
-        {
-            controller.RegisterAndBuildIKChain(
-                HeadIKChain,
-                "b_Head_05",
-                "SingleBoneIK",
-                maxChainLength: 3
-            );
-        }
+        base.Load(valuesDictionary, idToEntityMap);
+        // 依赖自取（不依赖基类缓存）
     }
 
     public override void Update(float dt)
     {
         base.Update(dt);
-        var controller = ComponentCreatureModel?.AnimationController;
-        if (controller == null || m_stareTarget == null) return;
 
-        // 计算朝向目标的方向
-        Vector3 modelDir = WorldToModelDirection(m_stareTarget.Value);
+        // 轮询直到 controller 就绪，注册一次（RegisterAndBuildIKChain 内部去重）
+        if (m_controller == null)
+            m_controller = m_componentCreature.Entity.FindComponent<ComponentCreatureModel>()?.AnimationController;
+        if (m_controller != null && !m_ikRegistered)
+        {
+            m_controller.RegisterAndBuildIKChain(HeadIKChain, "b_Head_05", "SingleBoneIK", maxChainLength: 2);
+            m_ikRegistered = true;
+        }
+        if (m_controller == null || m_target == null) return;
 
-        // 权重随距离衰减
-        float dist = Vector3.Distance(Position, m_stareTarget.Value);
+        Vector3 myEye = m_componentCreature.ComponentCreatureModel.EyePosition;
+        Vector3 modelDir = TransformWorldToModel(m_target.ComponentBody.Position - myEye);
+        float dist = Vector3.Distance(m_componentCreature.ComponentBody.Position, m_target.ComponentBody.Position);
         float weight = MathHelper.Clamp(1.0f - (dist - MinRange) / (MaxRange - MinRange), 0.3f, 1.0f);
 
-        controller.SetIKAim(HeadIKChain, modelDir, weight);
+        m_controller.SetIKAim(HeadIKChain, modelDir, weight);
     }
 }
+```
+
+> 上例为示意：`TransformWorldToModel`（世界方向→模型空间，需考虑实体旋转与 `RootBoneRotation` 修正）、角度限制、权重衰减等辅助方法需自行实现（可参考 AdvancedGltfFoxMod 的 `ComponentFoxStareBehavior`）。注意换模型后 `m_controller` 是新对象、`m_ikRegistered` 仍为 true 会漏注册——如需支持换模型，重置标记或改用方式 B。
+
+**方式 B：参与者负责注册，行为组件只设目标（推荐）**
+
+把 IK 链注册放到一个 `ComponentAnimationParticipant` 子类的 `OnControllerCreated`（每次 controller 创建/重建都重注册，换模型安全），行为组件只调 `SetIKAim`：
+
+```csharp
+// 注册（参与者，换模型自动重注册）
+public class ComponentFoxHeadIK : ComponentAnimationParticipant
+{
+    public override void OnControllerCreated(AnimationController controller)
+    {
+        controller.RegisterAndBuildIKChain("Head", "b_Head_05", "SingleBoneIK", maxChainLength: 2);
+    }
+}
+
+// 设目标（行为组件，Update 中调）
+controller.SetIKAim("Head", modelDir, weight);
 ```
 
 ---
@@ -480,15 +523,26 @@ Root Motion 允许动画中的根骨骼运动驱动生物的实际物理移动�
 
 ### C# 中使用 Root Motion
 
-Controller 需要关联速度向量，Root Motion 才能生效：
+每帧 `ComponentModel.Animate` 在 `controller.Update` 之前**无条件**关联物理体速度/旋转到控制器，更新后**仅当 `HasRootMotion`** 才把冲量/速度写回物理体——mod 无需手动关联这两项。馈送之所以不依赖 `HasRootMotion`：`controller.Update` 内状态规则可能切换 RootMotion 配置（如剑击突进切到 AddImpulse），切换帧 `HasRootMotion` 仍读旧值（false），若馈送受其控制则首帧冲量会丢失：
 
 ```csharp
-// 在 OnModelLoaded 中关联
-controller.Velocity = ref componentBody.Velocity;
-controller.EntityRotation = componentBody.Rotation;
-controller.SetCollisionBox = (size) => componentBody.BoxSize = size;
-controller.DefaultCollisionSize = originalBoxSize;
+// 引擎内部已做（无需 mod 手动关联）：
+//   更新前无条件：AnimationController.Velocity = body.Velocity; EntityRotation = body.Rotation;
+//   更新后仅当 HasRootMotion && Velocity.HasValue：body.Velocity = AnimationController.Velocity;
 ```
+
+碰撞盒动态调整（如蹲下/起身缩放碰撞盒）需 mod 手动配置回调，在 `OnControllerCreated` 中设置：
+
+```csharp
+// 参与者方式
+public override void OnControllerCreated(AnimationController controller)
+{
+    controller.SetCollisionBox = size => componentBody.BoxSize = size;  // 碰撞盒尺寸设置回调
+    controller.DefaultCollisionSize = originalBoxSize;                  // 默认碰撞盒尺寸
+}
+```
+
+Root Motion 行为（脉冲相位、混合方法、速度掩码等）通过动画配置的 `rootMotion` 字段定义，无需 C# 代码。运行时切换配置用 `controller.SetRootMotionConfig(...)`（见下文）。
 
 ### AddImpulse 模式详解
 
@@ -498,6 +552,19 @@ AddImpulse 模式在动画的指定相位点提取速度并作为脉冲施加：
 2. 系统计算该点附近的峰值/平均速度
 3. 速度乘以 `impulseScale` 并通过 `velocityMask` 过滤
 4. 结果脉冲施加到生物的速度向量
+
+**手动覆盖脉冲**：若不想从动画位移推导（无位移数据，或需精确方向控制），可直接指定脉冲向量（body-local，由物理体旋转转世界），跳过上述 2-3 步：
+
+```json
+"translation": {
+  "mode": "AddImpulse",
+  "impulsePhase": 0.02,
+  "impulseSpeedOverride": [0, 2, -6]
+}
+```
+
+- `impulseOverride` / `impulseSpeedOverride` 二者同为 body-local 向量，区别仅在语义命名；优先级 `impulseOverride` > `impulseSpeedOverride` > 动画数据计算。
+- 上例 `[0, 2, -6]` = 前 6 + 上 2：前向突进 + 上扬分量令本体瞬时轻微浮空，缩短地面阻力作用时间（剑击突进常用）。
 
 ```json
 "jump": {

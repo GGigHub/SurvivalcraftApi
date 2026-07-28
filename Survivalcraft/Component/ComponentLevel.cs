@@ -43,11 +43,10 @@ namespace Game {
         public string m_cachedPlayerClassName;
         public string m_cachedGameModeString;
 
-
-        public const float FemaleStrengthFactor = 0.8f;
-        public const float FemaleResilienceFactor = 0.8f;
-        public const float FemaleSpeedFactor = 1.03f;
-        public const float FemaleHungerFactor = 0.7f;
+        public static float FemaleStrengthFactor = 0.8f;
+        public static float FemaleResilienceFactor = 0.8f;
+        public static float FemaleSpeedFactor = 1.03f;
+        public static float FemaleHungerFactor = 0.7f;
 
         public static event Action<ComponentLevel, int, bool> OnAddExperience;
 
@@ -101,7 +100,7 @@ namespace Game {
             m_strengthFactors.Add(
                 new Factor {
                     Name = "PlayerClass",
-                    Value = m_componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.8f : 1f,
+                    Value = m_componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? FemaleStrengthFactor : 1f,
                     Description = m_cachedPlayerClassName
                 }
             );
@@ -165,7 +164,7 @@ namespace Game {
             m_resilienceFactors.Add(
                 new Factor {
                     Name = "PlayerClass",
-                    Value = m_componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.8f : 1f,
+                    Value = m_componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? FemaleResilienceFactor : 1f,
                     Description = m_cachedPlayerClassName
                 }
             );
@@ -219,7 +218,7 @@ namespace Game {
             m_speedFactors.Add(
                 new Factor {
                     Name = "PlayerClass",
-                    Value = m_componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 1.03f : 1f,
+                    Value = m_componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? FemaleSpeedFactor : 1f,
                     Description = m_cachedPlayerClassName
                 }
             );
@@ -280,7 +279,7 @@ namespace Game {
             m_hungerFactors.Add(
                 new Factor {
                     Name = "PlayerClass",
-                    Value = m_componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.7f : 1f,
+                    Value = m_componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? FemaleHungerFactor : 1f,
                     Description = m_componentPlayer.PlayerData.PlayerClass.ToString()
                 }
             );

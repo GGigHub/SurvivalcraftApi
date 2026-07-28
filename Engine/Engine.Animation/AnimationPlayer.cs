@@ -288,6 +288,18 @@ namespace Engine.Animation {
             // 计算边界
             float minTime = Math.Min(startTime, endTime);
             float maxTime = Math.Max(startTime, endTime);
+            // 无相位范围（StartPhase==EndPhase，单帧姿势动画）：
+            // 此时 minTime==maxTime，非循环反向分支 m_time+=dt 后 m_time(>0)<=minTime(0) 永不成立 → 永不停
+            // → IsPlaying 永 true → onComplete 永不触发。取该相位帧并立即停止，使完成链正常。
+            // 注：loop=true 单帧也走此分支即停（循环单帧语义退化，保持姿势无播放意义）；
+            // 且 return 在 CheckEvents 前，单帧姿势的播放器级 AnimationEvent 不触发
+            //（完成靠 controller 层 OnComplete，非 player event，当前无影响）。
+            if (maxTime <= minTime) {
+                m_time = startTime;
+                m_playing = false;
+                m_wrapOvershoot = 0f;
+                return;
+            }
             if (m_looping) {
                 // 循环模式
                 if (ActualDirection > 0) {

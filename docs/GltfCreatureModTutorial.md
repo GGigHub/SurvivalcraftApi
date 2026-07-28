@@ -75,7 +75,7 @@ YourMod/
 {
   "Name": "YourCreatureMod",
   "Version": "1.0.0",
-  "ApiVersion": "1.9.2.1",
+  "ApiVersion": "1.9.3",
   "Description": "Adds a creature using glTF model",
   "ScVersion": "2.4",
   "GameplayImpactLevel": "Cosmetic",
@@ -318,14 +318,14 @@ YourMod/
 
 ### 选择模板
 
-| 模板 | 适用生物 | 预设层级 | 预设状态轨道 |
-|------|----------|----------|-------------|
-| `Simple` | 简单实体 | Base | Gait (Idle) |
-| `FourLegged` | 四足动物 | Base, Head, Death | Gait, Activity, Death |
-| `Human` | 人形 | Base, Activity, Ride, Death | Locomotion, Activity, Ride, Death |
-| `Bird` | 鸟类 | Base, Head, Death | Locomotion, Activity, Death |
-| `FlightlessBird` | 不会飞的鸟 | Base, Head, Death | Locomotion, Activity, Death |
-| `Fish` | 鱼类 | Base, Head, Death | Swim, Activity, Death |
+| 模板 | 适用生物 | 预设层级 |
+|------|----------|----------|
+| `Simple` | 简单实体 | Base |
+| `FourLegged` | 四足动物 | Base, Head, Death |
+| `Human` | 人形 | Base, Activity, Ride, Death |
+| `Bird` | 鸟类 | Base, Head, Death |
+| `FlightlessBird` | 不会飞的鸟 | Base, Head, Death |
+| `Fish` | 鱼类 | Base, Head, Death |
 
 详细的模板内容和 JSON 格式参见 [AnimationConfigReference.md](AnimationConfigReference.md)。
 
@@ -348,11 +348,12 @@ YourMod/
 
 ## 7. 添加自定义行为（C# 代码）
 
-当纯数据驱动不够灵活时，可以编写 C# 组件实现自定义行为。这需要：
+当纯数据驱动不够灵活时，可以编写 C# 组件实现自定义行为。同步动画参数/处理动画事件有两种方式：
 
-1. 创建自定义的 `ComponentCreatureModel` 子类来同步动画参数
-2. 创建行为组件来实现复杂的游戏逻辑
-3. 在数据库模板中注册自定义组件
+- **动画参与者（推荐）**：继承 `ComponentAnimationParticipant`，override `SyncAnimationParameters`/`HandleAnimationEvent`/`OnControllerCreated`。挂在实体上即可参与动画，**不替换模型组件类**，组合式扩展，可挂多个互不干扰。适合只需追加少量参数同步或事件处理的场景。
+- **自定义模型组件**：继承 `ComponentCreatureModel`，override 同名方法。替换模型组件 `Class`，侵入性强，单继承。适合需要大量改写模型渲染逻辑的场景。
+
+两者最终都把参数写入同一个 `AnimationController.Parameters`，状态规则据此切换动画。下面先讲推荐方式（参与者），再讲重量级方式（自定义模型组件）。
 
 ### 7.1 项目配置
 
@@ -381,7 +382,99 @@ YourMod/
 </Project>
 ```
 
-### 7.2 自定义模型组件
+### 7.2 动画参与者（推荐方式）
+
+继承 `ComponentAnimationParticipant`，挂在实体上即可参与动画。`OnControllerCreated`/`SyncAnimationParameters`/`HandleAnimationEvent` 三个钩子均带 `AnimationController` 参数（独立组件无该属性，由 `ComponentModel` 传入，避免每帧 `FindComponent` 开销）；`ShouldApplyTo` 带 `ComponentModel` 参数用于多 model 过滤。依赖在 `Load` 里自取，不要缓存到基类没提供的字段。
+
+```csharp
+using Engine.Animation;
+using GameEntitySystem;
+using TemplatesDatabase;
+
+namespace Game;
+
+/// <summary>跳跃相位状态机参与者：维护 JumpPhase 参数驱动三段滞空动画。</summary>
+public class ComponentYourJumpController : ComponentAnimationParticipant
+{
+    private ComponentCreature m_creature;
+
+    public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
+    {
+        base.Load(valuesDictionary, idToEntityMap);
+        m_creature = Entity.FindComponent<ComponentCreature>(true); // 依赖自取
+    }
+
+    // 多 model 过滤：仅参与有 controller 的 model（服装 model 无 controller 自动排除）
+    public override bool ShouldApplyTo(ComponentModel componentModel)
+        => componentModel.AnimationController != null;
+
+    // 控制器就绪：设置状态机初始参数（规则首帧评估前需已存在）
+    public override void OnControllerCreated(AnimationController controller)
+    {
+        controller.Parameters.SetString("JumpPhase", "Ground");
+    }
+
+    // 每帧同步：写参数驱动状态规则（须在 controller.Update 之前，系统已保证）
+    public override void SyncAnimationParameters(AnimationController controller)
+    {
+        var body = m_creature.ComponentBody;
+        // ... 根据游戏状态计算 JumpPhase ...
+        controller.Parameters.SetString("JumpPhase", jumpPhase);
+    }
+
+    // 事件转发：响应 onComplete trigger 等
+    public override void HandleAnimationEvent(AnimationController controller, AnimationEvent evt)
+    {
+        switch (evt.Name)
+        {
+            case "JumpStartComplete": /* 推进相位 */ break;
+            case "JumpLandComplete": /* 重置相位 */ break;
+        }
+    }
+}
+```
+
+**生命周期**（由 `ComponentModel` 驱动，无需手动订阅事件）：
+
+| 钩子 | 触发时机 | 用途 |
+|------|----------|------|
+| `ShouldApplyTo` | `OnEntityAdded` 收集时（每个 model 各一次） | 决定是否纳入该 model；多 model 实体限定目标 |
+| `OnControllerCreated` | `OnEntityAdded`（补发）+ 每次换模型 `SetModel` | 设状态机初值、注册 IK 链、缓存 controller |
+| `SyncAnimationParameters` | 每帧 `Animate` 内、`controller.Update` 之前 | 同步参数 |
+| `HandleAnimationEvent` | `AnimationController.OnAnimationEvent` 触发时 | 响应事件 |
+
+> `OnControllerCreated` 会触发两次（首次 `OnEntityAdded` 补发 + 换模型重发）。实现须**幂等**——重复设初值/重复注册 IK 应无害（IK 链注册内部去重）。
+
+> **多 model 实体必读**：每个 `ComponentModel` 独立收集参与者，默认全部纳入 → 参与者每帧被它的每个 model 调一次。若 `SyncAnimationParameters` 有状态推进（如本例 `m_prevOnGround` 边沿检测），被多个 model 调用会一帧推进多次 → 相位机错乱。**必须 override `ShouldApplyTo` 限定到单一 model**（如 `=> componentModel.AnimationController != null`），这样每帧只调一次。单 model 实体无需 override。
+
+#### 在数据库模板挂载参与者
+
+参与者无需替换模型组件 `Class`，直接 `MemberComponentTemplate` 新增一个组件：
+
+```xml
+<EntityTemplate Name="YourCreature" Guid="..." InheritanceParent="...">
+
+  <!-- 模型组件保持原样，只追加 AnimationConfigPath -->
+  <MemberComponentTemplate Name="FourLeggedModel" Guid="...">
+    <Parameter Name="ModelName" Value="Models/YourCreature/Creature" Type="string" />
+    <Parameter Name="AnimationConfigPath" Value="Animations/YourCreature" Type="string" />
+  </MemberComponentTemplate>
+
+  <!-- 新增参与者组件 -->
+  <MemberComponentTemplate Name="YourJumpController" Guid="..."
+                           InheritanceParent="your-component-template-guid" />
+</EntityTemplate>
+
+<!-- 参与者的 ComponentTemplate（定义 Class），放在 Gameplay 文件夹合并引用处 -->
+<ComponentTemplate Name="ComponentYourJumpController" Guid="your-component-template-guid"
+                   InheritanceParent="root-component-template-guid">
+  <Parameter Name="Class" Guid="..." Value="Game.ComponentYourJumpController" Type="string" />
+</ComponentTemplate>
+```
+
+`InheritanceParent` 指向根 `Component` 模板（纯定义 `Class`，不带模型/动画参数）。无需 `LoadOrder`——收集发生在 `OnEntityAdded`（所有组件 `Load` 完成后），与加载顺序无关。
+
+### 7.3 自定义模型组件（替代方案）
 
 自定义模型组件负责同步游戏状态到 AnimationController 的参数：
 
@@ -402,7 +495,7 @@ public class ComponentYourCreatureModel : ComponentCreatureModel
         if (controller == null) return;
 
         // 添加模组自定义参数（基类不提供的）
-        // 通过 Parameters.SetString 设置状态轨道值，触发状态规则评估
+        // 通过 Parameters.SetString 设置参数值，触发状态规则评估
         var locomotion = m_componentCreature.ComponentLocomotion;
         float speed = Vector3.Dot(
             m_componentCreature.ComponentBody.Velocity,
@@ -418,11 +511,11 @@ public class ComponentYourCreatureModel : ComponentCreatureModel
 
 **`SyncAnimationParameters()`** 是关键方法。每帧调用，负责将游戏状态写入 AnimationController 的参数系统。
 
-> **重要**：必须调用 `base.SyncAnimationParameters()`。基类同步了大量内置参数（Speed, SpeedAbs, DeathPhase, IsDead, WalkSpeed, LookAngleX/Y, BodyHeight 等），不调用会导致基础功能异常。
+> **重要**：必须调用 `base.SyncAnimationParameters()`。`base` 是 `ComponentCreatureModel.SyncAnimationParameters`，它同步了大量内置生物参数（Speed, SpeedAbs, DeathPhase, IsDead, WalkSpeed, LookAngleX/Y, BodyHeight 等），不调用会导致基础功能异常。（该方法本身又调 `ComponentModel.SyncAnimationParameters` 空 virtual——基类为未来公共逻辑预留扩展点。）
 
-设置状态轨道值使用 `Parameters.SetString("Gait", "Run")` 或 `Parameters.SetBool("Death", true)`，而非 `SetState()`。参数变化通过状态规则的条件表达式间接驱动动画切换。
+设置参数值使用 `Parameters.SetString("Gait", "Run")` 或 `Parameters.SetBool("Death", true)`。参数变化通过状态规则的条件表达式间接驱动动画切换。
 
-### 7.3 手动动画控制
+### 7.4 手动动画控制
 
 对于攻击等特殊动作，可以使用手动动画控制 API：
 
@@ -437,7 +530,7 @@ AnimationController.ReleaseManualControl("UpperBodyAction");
 bool isManual = AnimationController.IsManualControl("UpperBodyAction");
 ```
 
-### 7.4 动画事件处理
+### 7.5 动画事件处理
 
 在动画配置中定义事件，在 C# 中处理：
 
@@ -454,13 +547,13 @@ bool isManual = AnimationController.IsManualControl("UpperBodyAction");
 ```csharp
 public class ComponentYourCreatureModel : ComponentCreatureModel
 {
-    // 基类 ComponentCreatureModel.SetModel() 已自动订阅
+    // 基类 ComponentModel.SetModel() 已自动订阅
     // AnimationController.OnAnimationEvent 到 HandleAnimationEvent。
     // 只需 override 此方法即可处理事件。
 
     public override void HandleAnimationEvent(AnimationEvent animationEvent)
     {
-        // 先调用基类处理内置事件（Footstep、AttackHit 等）
+        // 先调用基类：转发给参与者 + 处理内置事件（Footstep、AttackHit 等）
         base.HandleAnimationEvent(animationEvent);
 
         switch (animationEvent.Name)
@@ -474,9 +567,11 @@ public class ComponentYourCreatureModel : ComponentCreatureModel
 }
 ```
 
-> `ComponentCreatureModel.SetModel()` 已自动将 `AnimationController.OnAnimationEvent` 订阅到 `HandleAnimationEvent`。子类只需 override `HandleAnimationEvent` 即可，不要手动订阅。基类已处理 `AttackHit`、`Footstep`、`AttackStart`、`AttackEnd` 等内置事件。
+> `ComponentModel.SetModel()` 已自动将 `AnimationController.OnAnimationEvent` 订阅到 `HandleAnimationEvent`（订阅/取消订阅统一在基类处理，生物模型子类不再 override `SetModel`）。`ComponentModel.HandleAnimationEvent` 默认把事件转发给所有参与者；`ComponentCreatureModel` override 时先调 `base`（转发参与者）再处理内置事件。子类只需 override `HandleAnimationEvent`，不要手动订阅。
+>
+> 若用**参与者方式**（7.2），事件由 `ComponentModel` 转发到 `ComponentAnimationParticipant.HandleAnimationEvent(controller, evt)`，无需继承模型组件。
 
-### 7.5 在数据库中注册自定义组件
+### 7.6 在数据库中注册自定义模型组件
 
 ```xml
 <!-- 定义组件模板 -->

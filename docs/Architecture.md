@@ -39,6 +39,7 @@ graph TB
 /workspace/
 ├── Engine/                      # 引擎核心代码（跨平台共享）
 │   ├── Engine/                  # 核心模块：Window、Display、Log 等
+│   ├── Engine.Animation/        # 3D 模型动画
 │   ├── Engine.Audio/            # 音频播放
 │   ├── Engine.Graphics/         # 图形渲染、着色器、纹理等
 │   ├── Engine.Input/            # 键盘、鼠标、手柄、触摸屏输入
@@ -78,6 +79,7 @@ graph TB
 │   │   ├── NewWorldNames.txt    # 新世界名称列表
 │   │   └── RecoveryProject.xml  # 存档损坏后，用于尝试恢复的文件
 │   │
+│   ├── Animation/               # 3D 模型动画帮助类和内置驱动
 │   ├── Block/                   # 全部方块定义
 │   ├── Component/               # 实体组件实现
 │   ├── ContentProvider/         # 内容提供器

@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
@@ -20,10 +21,16 @@ namespace Game {
         public static HashSet<string> InvalidDllNames = ["Survivalcraft.dll", "Engine.dll", "EntitySystem.dll"];
         public const string fName = "ModEntity";
 
+        /// <summary>
+        /// 获取和设置模组的主要 ModLoader
+        /// </summary>
         public ModLoader Loader {
             get => ModLoader_;
             set => ModLoader_ = value;
         }
+        public List<ModLoader> Loaders {
+            get; set;
+        } = [];
 
         ModLoader ModLoader_;
 
@@ -172,6 +179,20 @@ namespace Game {
                         Log.Error($"Deserialize modinfo.json from [{Storage.GetFileName(ModFilePath)}] failed: {e}");
                     }
                 });
+            // modsettings.json 优先级高于 modinfo.json 的 Settings 字段；不存在或不合法时沿用 modinfo.json 的 RawSettings。
+            // 必须在 SafeMode 释放 ModArchive 之前读取（ParseAllModSettings 阶段归档可能已释放）。
+            GetFile("modsettings.json",
+                stream => {
+                    try {
+                        JsonElement settings = ModsManager.TryDeserializeSettingsArray(ModsManager.StreamToString(stream));
+                        if (settings.ValueKind == JsonValueKind.Array) {
+                            modInfo.RawSettings = settings;
+                        }
+                    }
+                    catch (Exception e) {
+                        Log.Error($"Deserialize modsettings.json from [{Storage.GetFileName(ModFilePath)}] failed: {e}");
+                    }
+                });
             if (SettingsManager.SafeMode && this is not SurvivalCraftModEntity) {
                 ModFiles.Clear();
                 ModArchive?.ZipFileStream.Dispose();
@@ -262,7 +283,8 @@ namespace Game {
                     ModsManager.CombineDataBase(element, stream, modInfo.PackageName);
                 }
             );
-            Loader?.OnXdbLoad(xElement);
+            foreach(ModLoader item in Loaders)
+                item.OnXdbLoad(xElement);
         }
 
         /// <summary>
@@ -334,21 +356,20 @@ namespace Game {
         }
 
         public virtual void HandleAssembly(Assembly assembly) {
-            List<Type> blockTypes = new();
+            List<Type> blockTypes = [];
 #pragma warning disable IL2026
             Type[] types = assembly.GetTypes();
 #pragma warning restore IL2026
-            for (int i = 0; i < types.Length; i++) {
-                Type type = types[i];
+            foreach (Type type in types) {
                 if (type.IsSubclassOf(typeof(ModLoader))
                     && !type.IsAbstract) {
 #pragma warning disable IL2062
-                    if (Activator.CreateInstance(types[i]) is ModLoader modLoader) {
+                    if (Activator.CreateInstance(type) is ModLoader modLoader) {
 #pragma warning disable IL2062
                         modLoader.Entity = this;
-                        Loader = modLoader;
                         modLoader.__ModInitialize();
                         ModsManager.ModLoaders.Add(modLoader);
+                        Loaders.Add(modLoader);
                     }
                 }
                 else if (type.IsSubclassOf(typeof(IContentReader.IContentReader))
@@ -368,6 +389,8 @@ namespace Game {
                 }
             }
             BlockTypes.AddRange(blockTypes);
+            Loaders.Sort((x, y) => x.Priority.CompareTo(y.Priority));
+            Loader = Loaders.FirstOrDefault();
         }
 
         public virtual void LoadJs() {
@@ -438,7 +461,7 @@ namespace Game {
         /// </summary>
         /// <param name="xElement"></param>
         public virtual void SaveSettings(XElement xElement) {
-            Loader?.SaveSettings(xElement);
+            Loaders.ForEach(item => item.SaveSettings(xElement));
         }
 
         /// <summary>
@@ -446,7 +469,7 @@ namespace Game {
         /// </summary>
         /// <param name="xElement"></param>
         public virtual void LoadSettings(XElement xElement) {
-            Loader?.LoadSettings(xElement);
+            Loaders.ForEach(item => item.LoadSettings(xElement));
         }
 
         /// <summary>
@@ -454,13 +477,13 @@ namespace Game {
         /// </summary>
         // <param name="categories"></param>
         public virtual void OnBlocksInitalized() {
-            Loader?.BlocksInitalized();
+            Loaders.ForEach(item => item.BlocksInitalized());
         }
 
         //释放资源
         public virtual void Dispose() {
             try {
-                Loader?.ModDispose();
+                Loaders.ForEach(item => item.ModDispose());
             }
             catch {
                 // ignored

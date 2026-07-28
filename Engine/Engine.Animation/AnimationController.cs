@@ -10,7 +10,6 @@ namespace Engine.Animation {
         public readonly Model m_model;
         public readonly AnimationTemplate m_template;
         public readonly AnimationLayer[] m_layers;
-        public readonly Dictionary<string, StateTrack> m_stateTracks = new();
         public readonly AnimationParameters m_parameters = new();
         public readonly AnimationBlender m_blender = new();
         public readonly StateRuleEvaluator m_ruleEvaluator = new();
@@ -27,9 +26,13 @@ namespace Engine.Animation {
         public readonly Dictionary<string, RootMotionCache> m_rootMotionCaches = new();
         public readonly Dictionary<string, RootScaleCache> m_rootScaleCaches = new();
 
-        // 当前 Base 层的动画名称和根运动配置
+        // 当前 Base 层的动画名称
         public string m_currentAnimationName;
-        public RootMotionConfig m_currentRootMotionConfig;
+
+        /// <summary>Base 层访问器（root motion 仅 Base 层参与）</summary>
+        AnimationLayer BaseLayer => m_layers?.FirstOrDefault(layer => layer.Index == 0);
+        /// <summary>当前 Base 层根运动配置（读点：ApplyRootMotion/HasRootMotion；写须走 SetRootMotionConfig）</summary>
+        public RootMotionConfig m_currentRootMotionConfig => BaseLayer?.m_rootMotionConfig;
 
         /// <summary>
         /// 是否有活动的根运动配置
@@ -41,10 +44,14 @@ namespace Engine.Animation {
         public Quaternion m_parentChainRotation = Quaternion.Identity;
 
         // 状态规则配置（从动画配置文件加载）
-        public Dictionary<string, StateTrackConfig> m_stateConfigs;
+        public Dictionary<string, StateLayerConfig> m_stateConfigs;
 
-        // 记录每个状态轨道当前匹配的规则索引（用于避免重复切换）
-        public readonly Dictionary<string, int> m_lastMatchedRuleIndex = new();
+        // 记录每个状态层当前匹配的规则索引（用于避免重复切换）
+        public readonly Dictionary<string, int[]> m_lastMatchedRuleIndex = new();
+
+        // 记录每个状态层当前规则解析后的 source 名（[param] 插值后）。path 相同时比较 source 名变 → 重切，
+        // 支持 source: "[param]" 动态换动画（字面量 source 恒同 → 天然不重切）。
+        readonly Dictionary<string, string> m_lastResolvedSource = new();
 
         // 动画引用配置（用于获取 OnComplete 动作）
         public Dictionary<string, AnimationReference> m_animationReferences = new();
@@ -94,6 +101,30 @@ namespace Engine.Animation {
         /// 某些 glTF 模型的前方方向可能与游戏不一致，需要旋转修正
         /// </summary>
         public float RootBoneRotation { get; set; } = 0f;
+
+        // ===== 根骨骼变换（rotation Vector3 扩展 + translation + 每动画覆盖混合） =====
+        // 顶层配置目标
+        Quaternion? m_configRootRotation;
+        Vector3 m_configRootTranslation;
+        bool m_hasConfigTranslation;
+
+        // 当前有效值（ComponentModel / root motion 读取）
+        Quaternion m_effectiveRootRotation = Quaternion.Identity;
+        Vector3 m_effectiveRootTranslation = Vector3.Zero;
+
+        // 活动混合（from → to）
+        Quaternion m_rootRotFrom = Quaternion.Identity;
+        Quaternion m_rootRotTo = Quaternion.Identity;
+        Vector3 m_rootTransFrom = Vector3.Zero;
+        Vector3 m_rootTransTo = Vector3.Zero;
+        float m_rootBlendElapsed;
+        float m_rootBlendDuration;
+        bool m_rootBlending;
+
+        /// <summary>当前有效根骨骼旋转（已混合）。ComponentModel 与 root motion 读取。</summary>
+        public Quaternion EffectiveRootRotation => m_effectiveRootRotation;
+        /// <summary>当前有效根骨骼平移（已混合）。</summary>
+        public Vector3 EffectiveRootTranslation => m_effectiveRootTranslation;
 
         /// <summary>
         /// 模型缩放比例
@@ -153,16 +184,13 @@ namespace Engine.Animation {
             m_layers = new AnimationLayer[m_template.Layers.Count];
             int layerIndex = 0;
             foreach ((string name, LayerDefinition layerDef) in m_template.Layers.OrderBy(kvp => kvp.Value.Index)) {
-                m_layers[layerIndex] = new AnimationLayer(name, layerDef.Index, layerDef.BlendMode, layerDef.BoneMask);
+                m_layers[layerIndex] = new AnimationLayer(name, layerDef.Index, layerDef.BlendMode, layerDef.BoneMask, layerDef.BoneMaskExclude);
+                m_layers[layerIndex].Weight = layerDef.Weight; // 应用配置权重（默认 1）
+                m_layers[layerIndex].m_configuredWeight = layerDef.Weight; // 同步配置权重（权重渐入/中断恢复目标）
 
                 // 订阅层的动画事件（通过层的事件接口，统一处理主播放器和过渡播放器）
                 m_layers[layerIndex].OnAnimationEvent += ForwardAnimationEvent;
                 layerIndex++;
-            }
-
-            // 初始化状态轨道
-            foreach ((string name, StateTrackDefinition trackDef) in m_template.StateTracks) {
-                m_stateTracks[name] = new StateTrack(name, trackDef);
             }
         }
 
@@ -209,71 +237,6 @@ namespace Engine.Animation {
         }
 
         /// <summary>
-        /// 设置状态值
-        /// </summary>
-        public void SetState(string trackName, object value) {
-            if (m_stateTracks.TryGetValue(trackName, out StateTrack track)) {
-                track.SetValue(value);
-                OnStateChanged(trackName, value);
-            }
-        }
-
-        /// <summary>
-        /// 获取状态值
-        /// </summary>
-        public object GetState(string trackName) {
-            if (m_stateTracks.TryGetValue(trackName, out StateTrack track)) {
-                return track.Value;
-            }
-            return null;
-        }
-
-        public void OnStateChanged(string trackName, object value) {
-            // 根据状态切换动画
-            switch (trackName) {
-                case "Gait": PlayGaitAnimation(value?.ToString()); break;
-                case "Activity": PlayActivityAnimation(value?.ToString()); break;
-            }
-        }
-
-        public void PlayGaitAnimation(string gait) {
-            if (string.IsNullOrEmpty(gait)) {
-                return;
-            }
-            AnimationLayer baseLayer = m_layers.FirstOrDefault(l => l.Name == "Base");
-            if (baseLayer == null) {
-                return;
-            }
-
-            // 查找对应动画
-            ModelAnimation animation = m_model.Animations.FirstOrDefault(a => a.Name.Equals(gait, StringComparison.OrdinalIgnoreCase)
-                || a.Name.Contains(gait, StringComparison.OrdinalIgnoreCase)
-            );
-            if (animation != null) {
-                baseLayer.PlayAnimation(m_model, animation);
-            }
-        }
-
-        public void PlayActivityAnimation(string activity) {
-            AnimationLayer upperBodyLayer = m_layers.FirstOrDefault(l => l.Name == "UpperBody");
-            if (upperBodyLayer == null) {
-                return;
-            }
-            if (string.IsNullOrEmpty(activity)
-                || activity == "None") {
-                // 停止上半身动画
-                upperBodyLayer.StopAnimation();
-                return;
-            }
-            ModelAnimation animation = m_model.Animations.FirstOrDefault(a => a.Name.Equals(activity, StringComparison.OrdinalIgnoreCase)
-                || a.Name.Contains(activity, StringComparison.OrdinalIgnoreCase)
-            );
-            if (animation != null) {
-                upperBodyLayer.PlayAnimation(m_model, animation);
-            }
-        }
-
-        /// <summary>
         /// 更新控制器
         /// </summary>
         public void Update(float deltaTime) {
@@ -294,10 +257,13 @@ namespace Engine.Animation {
                 layer.Update(deltaTime, m_parameters);
             }
 
-            // 5. 应用根运动（仅 Base 层）
+            // 5. 推进根骨骼变换混合（须在根运动前，根运动读 EffectiveRootRotation）
+            AdvanceRootBlend(deltaTime);
+
+            // 6. 应用根运动（仅 Base 层）
             ApplyRootMotion(deltaTime);
 
-            // 6. 检查动画完成事件
+            // 7. 检查动画完成事件
             CheckAnimationCompletion();
         }
 
@@ -399,8 +365,9 @@ namespace Engine.Animation {
             TranslationConfig translationConfig = rootMotionConfig.Translation;
             if (translationConfig.Mode != TranslationMode.None) {
                 if (translationConfig.Mode == TranslationMode.AddImpulse) {
-                    // ImpulseOverride 不依赖动画位移数据
+                    // ImpulseOverride / ImpulseSpeedOverride 不依赖动画位移数据
                     bool hasData = translationConfig.ImpulseOverride.HasValue
+                        || translationConfig.ImpulseSpeedOverride.HasValue
                         || rootMotionCache.HasTranslationData;
                     if (hasData) {
                         // ImpulsePhase: 绝对动画相位，-1 表示自动（正播用 endPhase，反播用 startPhase）
@@ -450,10 +417,7 @@ namespace Engine.Animation {
                     // 动画局部空间 → 模型空间 → 实体空间
                     velocity = Vector3.Transform(velocity, m_parentChainRotation);
                     velocity *= ModelScale;
-                    if (RootBoneRotation != 0f) {
-                        Quaternion rootRot = Quaternion.CreateFromAxisAngle(Vector3.UnitY, RootBoneRotation);
-                        velocity = Vector3.Transform(velocity, rootRot);
-                    }
+                    velocity = Vector3.Transform(velocity, m_effectiveRootRotation);
                 }
             }
             Vector3? scale = null;
@@ -499,6 +463,10 @@ namespace Engine.Animation {
             if (config.ImpulseOverride.HasValue) {
                 return config.ImpulseOverride.Value;
             }
+            // 冲量速度向量：body-local，由 TranslationApplier 经 body.Rotation 转世界
+            if (config.ImpulseSpeedOverride.HasValue) {
+                return config.ImpulseSpeedOverride.Value;
+            }
             // 从动画数据计算：使用 impulsePhase → endPhase 范围
             float measureStart = impulsePhase > startPhase ? impulsePhase : startPhase;
             Vector3 localImpulse = config.ImpulseMethod switch {
@@ -509,10 +477,7 @@ namespace Engine.Animation {
             // 动画局部空间 → 模型空间 → 实体空间
             localImpulse = Vector3.Transform(localImpulse, m_parentChainRotation);
             localImpulse *= ModelScale;
-            if (RootBoneRotation != 0f) {
-                Quaternion rootRot = Quaternion.CreateFromAxisAngle(Vector3.UnitY, RootBoneRotation);
-                localImpulse = Vector3.Transform(localImpulse, rootRot);
-            }
+            localImpulse = Vector3.Transform(localImpulse, m_effectiveRootRotation);
             return localImpulse;
         }
 
@@ -540,10 +505,128 @@ namespace Engine.Animation {
         /// 设置当前根运动配置
         /// </summary>
         public void SetRootMotionConfig(RootMotionConfig config) {
-            m_currentRootMotionConfig = config;
+            if (BaseLayer != null) {
+                BaseLayer.SetRootMotionConfig(config, m_model, RootBoneName);
+            }
             m_currentAnimationName = null; // 重置动画名称，触发缓存更新
             m_parentChainRotation = Quaternion.Identity;
             m_translationApplier.Reset();
+        }
+
+        /// <summary>
+        /// 设置顶层根骨骼旋转配置（度）。同步更新 legacy float RootBoneRotation（Y 弧度，向后兼容）。
+        /// </summary>
+        public void SetRootRotationConfig(Vector3? eulerDegrees) {
+            m_configRootRotation = eulerDegrees.HasValue
+                ? EulerDegreesToQuaternion(eulerDegrees.Value)
+                : (Quaternion?)null;
+            RootBoneRotation = eulerDegrees.HasValue
+                ? eulerDegrees.Value.Y * MathF.PI / 180f
+                : 0f;
+        }
+
+        /// <summary>
+        /// 设置顶层根骨骼平移配置。
+        /// </summary>
+        public void SetRootTranslationConfig(Vector3? translation) {
+            m_hasConfigTranslation = translation.HasValue;
+            m_configRootTranslation = translation ?? Vector3.Zero;
+        }
+
+        /// <summary>
+        /// 将 effective snap 到顶层配置目标（CreateController 初始化用，避免启动混合）。
+        /// </summary>
+        public void SnapRootTransformToConfig() {
+            m_effectiveRootRotation = m_configRootRotation ?? Quaternion.Identity;
+            m_effectiveRootTranslation = m_hasConfigTranslation ? m_configRootTranslation : Vector3.Zero;
+            m_rootBlending = false;
+            m_rootBlendElapsed = 0f;
+        }
+
+        /// <summary>
+        /// 解析动画引用的根骨骼变换目标并启动混合。
+        /// 由 ApplyAnimationToLayer 在合并 caller+alias 后调用。
+        /// </summary>
+        public void SetRootTransformTargetFromAnimation(AnimationReference animRef, float blendDuration) {
+            Quaternion rotTarget = ResolveRotationTarget(animRef);
+            Vector3 transTarget = ResolveTranslationTarget(animRef);
+            SetRootTransformTarget(rotTarget, transTarget, blendDuration);
+        }
+
+        /// <summary>
+        /// 启动根骨骼变换混合（从当前有效值出发，中断安全）。duration≤0 立即 snap。
+        /// </summary>
+        public void SetRootTransformTarget(Quaternion rotation, Vector3 translation, float duration) {
+            m_rootRotFrom = m_effectiveRootRotation;
+            m_rootRotTo = rotation;
+            m_rootTransFrom = m_effectiveRootTranslation;
+            m_rootTransTo = translation;
+            if (duration <= 0f) {
+                m_effectiveRootRotation = rotation;
+                m_effectiveRootTranslation = translation;
+                m_rootBlending = false;
+                m_rootBlendElapsed = 0f;
+                m_rootBlendDuration = 0f;
+                return;
+            }
+            m_rootBlendDuration = duration;
+            m_rootBlendElapsed = 0f;
+            m_rootBlending = true;
+        }
+
+        /// <summary>
+        /// 推进根骨骼变换混合。Update 每帧调用。
+        /// </summary>
+        public void AdvanceRootBlend(float deltaTime) {
+            if (!m_rootBlending) {
+                return;
+            }
+            m_rootBlendElapsed += deltaTime;
+            float raw = m_rootBlendDuration > 0f
+                ? m_rootBlendElapsed / m_rootBlendDuration
+                : 1f;
+            float t = Math.Clamp(raw, 0f, 1f);
+            float s = t * t * (3f - 2f * t); // smoothstep
+            m_effectiveRootRotation = Quaternion.Slerp(m_rootRotFrom, m_rootRotTo, s);
+            m_effectiveRootTranslation = Vector3.Lerp(m_rootTransFrom, m_rootTransTo, s);
+            if (t >= 1f) {
+                m_effectiveRootRotation = m_rootRotTo;
+                m_effectiveRootTranslation = m_rootTransTo;
+                m_rootBlending = false;
+            }
+        }
+
+        Quaternion ResolveRotationTarget(AnimationReference animRef) {
+            if (animRef != null && animRef.HasRootBoneRotation) {
+                return RootRotationValueToQuaternion(animRef.RootBoneRotationValue);
+            }
+            return m_configRootRotation ?? Quaternion.Identity;
+        }
+
+        Vector3 ResolveTranslationTarget(AnimationReference animRef) {
+            if (animRef != null
+                && animRef.HasRootBoneTranslation
+                && animRef.RootBoneTranslation.HasValue) {
+                return animRef.RootBoneTranslation.Value;
+            }
+            return m_hasConfigTranslation ? m_configRootTranslation : Vector3.Zero;
+        }
+
+        static Quaternion EulerDegreesToQuaternion(Vector3 eulerDegrees) {
+            float yaw = eulerDegrees.Y * MathF.PI / 180f;
+            float pitch = eulerDegrees.X * MathF.PI / 180f;
+            float roll = eulerDegrees.Z * MathF.PI / 180f;
+            return Quaternion.CreateFromYawPitchRoll(yaw, pitch, roll);
+        }
+
+        static Quaternion RootRotationValueToQuaternion(object value) {
+            switch (value) {
+                case float f: return EulerDegreesToQuaternion(new Vector3(0f, f, 0f));
+                case int i: return EulerDegreesToQuaternion(new Vector3(0f, i, 0f));
+                case double d: return EulerDegreesToQuaternion(new Vector3(0f, (float)d, 0f));
+                case Vector3 v: return EulerDegreesToQuaternion(v);
+                default: return Quaternion.Identity;
+            }
         }
 
         /// <summary>
@@ -593,8 +676,16 @@ namespace Engine.Animation {
                 bool wasPlaying = m_layerWasPlaying.GetValueOrDefault(layerName, false);
                 bool isLooping = m_layerLooping.GetValueOrDefault(layerName, true);
 
+                // 过渡/权重渐入期不判完成：blend 期层未真正接管目标动画，
+                // endPhase≤startPhase 的姿势动画（如 attacked 仅取首帧后倾）目标 player 首帧即 IsPlaying=false，
+                // 若不跳过会在此 blend 期误触发 OnComplete，动画刚切入就被切回。
+                // 正常非循环动画（jump/climbup/wakeup/pickup）过渡/渐入期 IsPlaying=true，跳过无副作用；
+                // 仅姿势动画受益——blend 完成后才判完成。
+                bool blending = layer.Transition != null || layer.m_activating;
+
                 // 检测非循环动画完成：之前在播放，现在停止了，且不是循环动画
-                if (wasPlaying
+                if (!blending
+                    && wasPlaying
                     && !isPlaying
                     && !isLooping) {
                     // 动画完成，执行 OnComplete 动作
@@ -604,8 +695,35 @@ namespace Engine.Animation {
                     }
                 }
 
-                // 更新播放状态记录
-                m_layerWasPlaying[layerName] = isPlaying;
+                // 更新播放状态记录（blend 期保持 wasPlaying=true，让 blend 完成后下帧仍能检测到完成）
+                if (!blending) {
+                    m_layerWasPlaying[layerName] = isPlaying;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 检测层的当前动画是否被打断（非循环动画仍在播放即被切换/停用），是则触发其 OnInterrupt trigger。
+        /// 在 ApplyAnimationToLayer 开头（切到新动画前）和 EvaluateStateRules 停用分支（DeactivateAndClear 前）调用。
+        /// 判据与 CheckAnimationCompletion 的完成判据互补：
+        /// - 完成（OnComplete）：wasPlaying 且 !isPlaying 且 !isLooping（自然播到末尾停止）
+        /// - 打断（OnInterrupt）：wasPlaying 且 isPlaying 且 !isLooping（仍在播放即被切走，未到末尾）
+        /// 两者互斥：自然播完 isPlaying=false 走完成；被切走 isPlaying=true 走打断。
+        /// 复用 ExecuteOnCompleteAction 触发 trigger（type=trigger 语义通用）。
+        /// </summary>
+        void TriggerOnInterruptIfActive(AnimationLayer layer, string layerName) {
+            if (layer == null) {
+                return;
+            }
+            if (!m_layerAnimationRef.TryGetValue(layerName, out AnimationReference oldRef)
+                || oldRef?.OnInterrupt == null) {
+                return;
+            }
+            bool isLooping = m_layerLooping.GetValueOrDefault(layerName, true);
+            bool wasPlaying = m_layerWasPlaying.GetValueOrDefault(layerName, false);
+            bool isPlaying = layer.AnimationPlayer?.IsPlaying ?? false;
+            if (wasPlaying && isPlaying && !isLooping) {
+                ExecuteOnCompleteAction(oldRef.OnInterrupt);
             }
         }
 
@@ -617,12 +735,6 @@ namespace Engine.Animation {
                 return;
             }
             switch (action.Type?.ToLowerInvariant()) {
-                case "setstate":
-                    // 设置状态轨道的值
-                    if (!string.IsNullOrEmpty(action.State)) {
-                        SetState(action.State, action.Value);
-                    }
-                    break;
                 case "trigger":
                     // 触发自定义事件
                     if (!string.IsNullOrEmpty(action.Name)) {
@@ -643,7 +755,7 @@ namespace Engine.Animation {
         /// <summary>
         /// 设置状态规则配置
         /// </summary>
-        public void SetStateConfigs(Dictionary<string, StateTrackConfig> configs) {
+        public void SetStateConfigs(Dictionary<string, StateLayerConfig> configs) {
             m_stateConfigs = configs;
         }
 
@@ -660,76 +772,180 @@ namespace Engine.Animation {
                 && m_manualOverrideLayers.Count >= m_layers.Length) {
                 return;
             }
-            foreach ((string trackName, StateTrackConfig trackConfig) in m_stateConfigs) {
-                if (string.IsNullOrEmpty(trackConfig.Layer)) {
+            foreach ((string stateName, StateLayerConfig layerConfig) in m_stateConfigs) {
+                if (string.IsNullOrEmpty(layerConfig.Layer)) {
                     continue;
                 }
-                if (!m_layers.Any(l => l.Name == trackConfig.Layer)) {
+                if (!m_layers.Any(l => l.Name == layerConfig.Layer)) {
                     continue;
                 }
 
                 // 跳过被手动控制的层
-                if (m_manualOverrideLayers.Contains(trackConfig.Layer)) {
+                if (m_manualOverrideLayers.Contains(layerConfig.Layer)) {
                     continue;
                 }
-                if (trackConfig.Rules == null
-                    || trackConfig.Rules.Count == 0) {
+                if (layerConfig.Rules == null
+                    || layerConfig.Rules.Count == 0) {
                     continue;
                 }
 
-                // 找到匹配的规则
-                int matchedIndex = -1;
-                StateRuleConfig matchedRule = null;
-                for (int i = 0; i < trackConfig.Rules.Count; i++) {
-                    StateRuleConfig rule = trackConfig.Rules[i];
-                    bool result = m_ruleEvaluator.EvaluateCondition(rule.Condition, m_parameters);
-                    if (result) {
-                        matchedIndex = i;
-                        matchedRule = rule;
-                        break;
+                // 递归匹配规则（支持嵌套 rules 决策树），path 累积匹配索引路径
+                List<int> path = new();
+                if (!TryMatchRule(layerConfig.Rules, path, out StateRuleConfig matchedRule)) {
+                    continue; // 无匹配，保持当前状态
+                }
+
+                // path 变化检测（路径 = 外层 idx → 内层 idx → ...）
+                bool pathChanged = !m_lastMatchedRuleIndex.TryGetValue(stateName, out int[] lastPath)
+                                || lastPath == null || !lastPath.SequenceEqual(path);
+                // source 名变化检测（支持 source: "[param]" 动态换动画）：path 相同时比较解析后 source 名。
+                // 字面量 source 恒同 → 不重切；[param] source 随参数值变 → 重切播新动画。
+                string resolvedSource = ResolveSource(matchedRule.Animation) ?? string.Empty;
+                if (!pathChanged) {
+                    if (m_lastResolvedSource.TryGetValue(stateName, out string lastSrc)
+                        && lastSrc == resolvedSource) {
+                        continue;  // path + source 都同 → 跳过
                     }
-                }
-
-                // 如果没有匹配任何规则，保持当前状态
-                if (matchedRule == null) {
-                    continue;
-                }
-
-                // 检查是否与上次匹配相同
-                if (m_lastMatchedRuleIndex.TryGetValue(trackName, out int lastIndex)
-                    && lastIndex == matchedIndex) {
-                    continue; // 规则未变化，跳过
-                }
-
-                // 更新匹配记录
-                m_lastMatchedRuleIndex[trackName] = matchedIndex;
-
-                // 切换动画
-                if (matchedRule.Animation != null) {
-                    ApplyAnimationToLayer(trackConfig.Layer, matchedRule.Animation);
                 }
                 else {
-                    // animation: null 表示该层不激活，让下层输出可见
-                    AnimationLayer layer = m_layers.FirstOrDefault(l => l.Name == trackConfig.Layer);
+                    m_lastMatchedRuleIndex[stateName] = path.ToArray();
+                }
+                m_lastResolvedSource[stateName] = resolvedSource;
+
+                // 切换动画。
+                // Source 为空（含 {"source":null} 与整个 animation:null）= 该层无内容 → 停用，让下层输出可见。
+                // 不能直接调 ApplyAnimationToLayer：它对空 Source early-return（944-947），既不播新也不停旧，
+                // 旧动画会滞留（条件不再满足时该层动画继续播放，无法停止）。
+                if (matchedRule.Animation != null
+                    && !string.IsNullOrEmpty(matchedRule.Animation.Source)) {
+                    ApplyAnimationToLayer(layerConfig.Layer, matchedRule.Animation);
+                }
+                else {
+                    // animation:null 或 source:null → 停用层。
+                    AnimationLayer layer = m_layers.FirstOrDefault(l => l.Name == layerConfig.Layer);
                     if (layer != null) {
-                        // 检查层是否正在播放动画，如果是则使用过渡停用
-                        if (layer.IsActive
-                            && layer.AnimationPlayer?.IsPlaying == true) {
-                            // 使用过渡停用，实现平滑淡出
-                            layer.DeactivateWithBlend(0.2f);
+                        // 停用前：若旧动画是非循环且仍在播放，视为被打断 → 触发 OnInterrupt。
+                        TriggerOnInterruptIfActive(layer, layerConfig.Layer);
+                        // 清该层动画跟踪：DeactivateAndClear 渐降期保留采样（IsPlaying 仍 true），渐降完 ClearAnimation
+                        // 使 IsPlaying=false，此时 CheckAnimationCompletion 读残留 oldRef（wasPlaying=true、!isLooping）
+                        // 会误触发 OnComplete——与上面 OnInterrupt 冲突破坏互斥；未配 OnInterrupt 的非循环动画
+                        // 被停用同样误触发。重置为"无活跃非循环动画"态：OnComplete 三判据全失效。
+                        m_layerAnimationRef[layerConfig.Layer] = null;
+                        m_layerLooping[layerConfig.Layer] = true;
+                        m_layerWasPlaying[layerConfig.Layer] = false;
+                        // driver 层（如鱼 Head/FishAttack）用旧 Deactivate：保留 Weight、置 m_active=false。
+                        // driver 再激活走 Activate()+SetDriver()，不走 PlayAnimationWithTransition 权重渐入，
+                        // 不会恢复 Weight。若改用 DeactivateAndClear（清 Weight=0 + 保持 active），driver 层会卡在
+                        // Weight=0：AnimationBlender 首骨骼在 Weight<1 分支写入 rest（非 null），非蒙皮模型
+                        // ProcessBoneHierarchy 的旋转叠加分支会损坏该骨骼（鱼下颚前移错位），且咬合动画不可见。
+                        // 片段层（无 driver）保留 DeactivateAndClear，修复其重启硬切（见该提交说明）。
+                        if (layer.Driver != null) {
+                            layer.Deactivate();
                         }
                         else {
-                            // 没有活动动画，直接停用
-                            layer.Deactivate();
+                            layer.DeactivateAndClear(0.2f);
                         }
                     }
 
-                    // Base 层停用时清除根运动配置
-                    if (trackConfig.Layer == "Base") {
+                    // Base 层停用时清除根运动配置，根骨骼变换回退顶层
+                    if (layerConfig.Layer == "Base") {
                         SetRootMotionConfig(null);
+                        SetRootTransformTarget(
+                            m_configRootRotation ?? Quaternion.Identity,
+                            m_configRootTranslation,
+                            0.2f);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 递归匹配状态规则（支持嵌套 rules 决策树）。
+        /// 分组节点（Rules 非空）匹配 Condition 后递归子 rules；叶子节点（Rules 空）直接返回。
+        /// 外层 Condition 失败时短路整组（不评估子 rules）。
+        /// path 累积匹配索引路径（外层→内层），用于变化检测触发 transition。
+        /// </summary>
+        bool TryMatchRule(List<StateRuleConfig> rules, List<int> path, out StateRuleConfig leaf) {
+            leaf = null;
+            for (int i = 0; i < rules.Count; i++) {
+                StateRuleConfig rule = rules[i];
+                bool result = !string.IsNullOrEmpty(rule.Condition)
+                    && (rule.Condition == "true"
+                        || m_ruleEvaluator.EvaluateCondition(rule.Condition, m_parameters));
+                if (!result) {
+                    continue;
+                }
+                path.Add(i);
+                if (rule.HasRules) {
+                    // 分组：递归子 rules。子全无匹配则回溯 path，继续同层下一 rule。
+                    if (!TryMatchRule(rule.Rules, path, out leaf)) {
+                        path.RemoveAt(path.Count - 1);
+                        continue;
+                    }
+                }
+                else {
+                    leaf = rule;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 将 caller（状态规则/手动 API）的动画引用与别名配置合并。
+        /// 语义：alias = 模板默认，caller = 覆盖层（只覆盖显式设置的字段）；
+        /// Source 永远取 alias（alias 才持有真实动画名）。
+        /// 动态字段（speed/loop/phase/blendDuration/preservePose）按 HasXxx 判断 caller 是否显式设置；
+        /// 引用类型字段（driverArgs/events/onComplete/rootMotion）按 null 判断。
+        /// </summary>
+        private static AnimationReference MergeWithAlias(AnimationReference caller, AnimationReference alias) {
+            return new AnimationReference {
+                Source = alias.Source,
+                SpeedValue = caller.HasSpeed ? caller.SpeedValue : alias.SpeedValue,
+                LoopValue = caller.HasLoop ? caller.LoopValue : alias.LoopValue,
+                StartPhaseValue = caller.HasStartPhase ? caller.StartPhaseValue : alias.StartPhaseValue,
+                EndPhaseValue = caller.HasEndPhase ? caller.EndPhaseValue : alias.EndPhaseValue,
+                BlendDurationValue = caller.HasBlendDuration ? caller.BlendDurationValue : alias.BlendDurationValue,
+                PreservePose = caller.HasPreservePose ? caller.PreservePose : alias.PreservePose,
+                DriverArgs = caller.DriverArgs ?? alias.DriverArgs,
+                Events = caller.Events ?? alias.Events,
+                OnComplete = caller.OnComplete ?? alias.OnComplete,
+                OnInterrupt = caller.OnInterrupt ?? alias.OnInterrupt,
+                RootBoneRotationValue = caller.HasRootBoneRotation ? caller.RootBoneRotationValue : alias.RootBoneRotationValue,
+                RootBoneTranslation = caller.HasRootBoneTranslation ? caller.RootBoneTranslation : alias.RootBoneTranslation,
+                HasRootBoneRotation = caller.HasRootBoneRotation || alias.HasRootBoneRotation,
+                HasRootBoneTranslation = caller.HasRootBoneTranslation || alias.HasRootBoneTranslation,
+                RootMotion = caller.RootMotion ?? alias.RootMotion
+            };
+        }
+
+        /// <summary>
+        /// 按名称精确查找模型动画（大小写不敏感）。
+        /// 不做模糊包含——短名误命中太坑（如 "Idle_Loop" 命中 "Crouch_Idle_Loop"）。
+        /// </summary>
+        private ModelAnimation FindAnimation(string name) {
+            if (string.IsNullOrEmpty(name)) {
+                return null;
+            }
+            foreach (ModelAnimation a in m_model.Animations) {
+                if (a.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) {
+                    return a;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 解析动画 source：source 形如 "[paramName]" 时从 Parameters 取 string 值（配置方须保证该 param 为 string），
+        /// 支持规则 source 由参数动态驱动（如 "[RandomIdleEvent]"）；否则原样返回字面量。纯字符串取值，不走表达式计算。
+        /// </summary>
+        string ResolveSource(AnimationReference animRef) {
+            string source = animRef?.Source;
+            if (!string.IsNullOrEmpty(source) && source.Length > 2
+                && source[0] == '[' && source[source.Length - 1] == ']') {
+                return m_parameters.GetString(source.Substring(1, source.Length - 2));
+            }
+            return source;
         }
 
         /// <summary>
@@ -741,28 +957,23 @@ namespace Engine.Animation {
             if (layer == null) {
                 return false;
             }
-            string source = animRef?.Source;
+            // 切到新动画前：若旧动画是非循环且仍在播放（未自然播完），视为被打断 → 触发其 OnInterrupt。
+            // 须在下方覆盖 m_layerAnimationRef[layerName] = 新 animRef 之前检测。
+            TriggerOnInterruptIfActive(layer, layerName);
+            string source = ResolveSource(animRef);
+            // source 解析为空（含 {"source":null}、整个 animation:null、"[param]" 参数未注册或被设空）：
+            // early-return false —— 不播新动画也不停旧，该层维持上一帧输出。设计：source 空=该规则"无内容"，
+            // 参数空（如 [RandomIdleEvent] 事件未激活）= 维持现状而非停用。停用语义由 EvaluateStateRules 的空 Source
+            // 分支（DeactivateAndClear）处理，不走这里。
             if (string.IsNullOrEmpty(source)) {
                 return false;
             }
 
             // 检查 source 是否是动画别名（在 animations 部分定义）
             if (m_animationReferences.TryGetValue(source, out AnimationReference aliasRef)) {
-                // 使用别名解析后的配置（别名配置优先，因为状态规则通常只指定 source）
-                // 保留动态属性值
-                animRef = new AnimationReference {
-                    Source = aliasRef.Source,
-                    SpeedValue = aliasRef.SpeedValue,
-                    LoopValue = aliasRef.LoopValue,
-                    StartPhaseValue = aliasRef.StartPhaseValue,
-                    EndPhaseValue = aliasRef.EndPhaseValue,
-                    PreservePose = aliasRef.PreservePose,
-                    BlendDurationValue = aliasRef.BlendDurationValue,
-                    DriverArgs = aliasRef.DriverArgs,
-                    Events = aliasRef.Events,
-                    OnComplete = aliasRef.OnComplete,
-                    RootMotion = aliasRef.RootMotion
-                };
+                // alias 作为模板默认，caller（状态规则）显式设置的字段覆盖 alias。
+                // 修复：之前整体用 alias 替换 caller，导致 caller 的 speed 表达式等动态属性丢失。
+                animRef = MergeWithAlias(animRef, aliasRef);
                 source = animRef.Source;
             }
 
@@ -771,12 +982,19 @@ namespace Engine.Animation {
             bool loop = animRef.GetLoopProperty().IsExpression ? true : animRef.GetLoopProperty().StaticValue;
             float blendDuration = animRef.GetBlendDurationProperty().IsExpression ? 0.3f : animRef.GetBlendDurationProperty().StaticValue;
 
+            // 解析根骨骼变换目标（每动画覆盖 → 顶层回退），启动混合（时长=blendDuration，与姿态过渡同步）
+            SetRootTransformTargetFromAnimation(animRef, blendDuration);
+
             // 处理 driver: 语法
             if (source.StartsWith("driver:")) {
                 string driverType = source.Substring(7);
 
                 // 激活层
                 layer.Activate();
+                // 恢复 Weight 到配置权重 m_configuredWeight（与渐入/中断恢复目标一致，非硬编码 1）。
+                // 被状态规则停用过的层（Death/Activity，活著时 condition:true→animation:null 停用清零）
+                // 切回 driver 时若不恢复，Weight 残留 0 → 按 0 混合动画不显示。
+                layer.Weight = layer.m_configuredWeight;
 
                 // 检查层是否有预配置的驱动器，且类型匹配
                 if (layer.Driver != null
@@ -865,9 +1083,7 @@ namespace Engine.Animation {
             }
             // 处理动画名（模型内置动画）
             else {
-                ModelAnimation animation = m_model.Animations.FirstOrDefault(a => a.Name.Equals(source, StringComparison.OrdinalIgnoreCase)
-                    || a.Name.Contains(source, StringComparison.OrdinalIgnoreCase)
-                );
+                ModelAnimation animation = FindAnimation(source);
                 if (animation == null) {
                     return false;
                 }
@@ -1030,54 +1246,24 @@ namespace Engine.Animation {
         /// 计算最终骨骼变换
         /// </summary>
         public void ComputeBoneTransforms(Matrix?[] boneTransforms) {
-            // 1. 层混合
+            // 1. 层混合（各层在采样点已按 RootStripInfo 剥根，无需全局后处理）
             m_blender.BlendLayers(m_layers, boneTransforms, m_model);
 
-            // 2. 根运动位移剥离
-            // AddImpulse 模式：不剥离。冲量将动画峰值速度转为实体速度，
-            // 动画和物理轨迹接近，剥离反而阻止自然动画姿态（如收腿）。
-            // Blend/Override 模式：仍需剥离，防止动画位移叠加物理位移。
-            bool isAddImpulse = m_currentRootMotionConfig != null
-                && m_currentRootMotionConfig.Translation.Mode == TranslationMode.AddImpulse;
-            if (m_currentRootMotionConfig != null
-                && m_currentRootMotionConfig.Translation.Mode != TranslationMode.None
-                && !isAddImpulse) {
-                string sourceBoneName = !string.IsNullOrEmpty(m_currentRootMotionConfig.SourceBone)
-                    ? m_currentRootMotionConfig.SourceBone
-                    : RootBoneName;
-                ModelBone foundBone = !string.IsNullOrEmpty(sourceBoneName)
-                    ? m_model.FindBone(sourceBoneName, throwIfNotFound: false)
-                    : null;
-                ModelBone sourceBone = foundBone ?? m_model.RootBone;
-
-                ModelBone cur = sourceBone;
-                while (cur != null) {
-                    if (boneTransforms[cur.Index].HasValue) {
-                        Matrix t = boneTransforms[cur.Index].Value;
-                        t.Decompose(out _, out Quaternion rot, out _);
-                        Vector3 restTrans = cur.Transform.Translation;
-                        boneTransforms[cur.Index] = Matrix.CreateFromQuaternion(rot) * Matrix.CreateTranslation(restTrans);
-                    }
-                    if (cur == m_model.RootBone) break;
-                    cur = cur.ParentBone;
-                }
-            }
-
-            // 3. KHR_animation_pointer 采样（材质/纹理属性动画）
+            // 2. KHR_animation_pointer 采样（材质/纹理属性动画）
             for (int i = 0; i < m_layers.Length; i++) {
                 if (m_layers[i].IsActive) {
                     m_layers[i].AnimationPlayer?.SamplePointerTargets(m_model);
                 }
             }
 
-            // 4. Morph target 权重采样
+            // 3. Morph target 权重采样
             for (int i = 0; i < m_layers.Length; i++) {
                 if (m_layers[i].IsActive) {
                     m_layers[i].AnimationPlayer?.SampleMorphWeights(m_model);
                 }
             }
 
-            // 5. IK 后处理（在层混合后应用）
+            // 4. IK 后处理（在层混合后应用）
             m_ikSolver?.Solve(boneTransforms, m_model);
         }
 
@@ -1148,22 +1334,19 @@ namespace Engine.Animation {
             }
 
             // 1. 检查是否是别名
-            AnimationReference animRef = null;
+            AnimationReference animRef;
             if (m_animationReferences.TryGetValue(animationNameOrAlias, out AnimationReference aliasRef)) {
-                // 使用别名配置，但覆盖循环和过渡时长（如果显式指定）
-                animRef = new AnimationReference {
-                    Source = aliasRef.Source,
-                    SpeedValue = aliasRef.SpeedValue,
-                    LoopValue = loop, // 使用参数值
-                    StartPhaseValue = aliasRef.StartPhaseValue,
-                    EndPhaseValue = aliasRef.EndPhaseValue,
-                    PreservePose = aliasRef.PreservePose,
-                    BlendDurationValue = blendDuration, // 使用参数值
-                    DriverArgs = aliasRef.DriverArgs,
-                    Events = aliasRef.Events,
-                    OnComplete = aliasRef.OnComplete,
-                    RootMotion = aliasRef.RootMotion
+                // caller 仅强制覆盖 loop/blendDuration（参数显式传入），其余字段继承 alias。
+                // 修复：之前整体用 alias 替换，导致 alias 的 rootMotion/events/onComplete 等虽能继承，
+                // 但语义不统一；现统一走 MergeWithAlias。
+                AnimationReference caller = new() {
+                    Source = animationNameOrAlias,
+                    LoopValue = loop,
+                    BlendDurationValue = blendDuration,
+                    HasLoop = true,
+                    HasBlendDuration = true
                 };
+                animRef = MergeWithAlias(caller, aliasRef);
             }
             else {
                 // 2. 创建临时引用（直接使用动画名）
@@ -1250,6 +1433,7 @@ namespace Engine.Animation {
                 m_manualOverrideLayers.Clear();
                 // 清除所有规则匹配缓存，强制重新评估
                 m_lastMatchedRuleIndex.Clear();
+                m_lastResolvedSource.Clear();
             }
             else {
                 // 清除指定层的保持姿态状态
@@ -1257,12 +1441,13 @@ namespace Engine.Animation {
                 layer?.SetHoldPose(false);
                 m_manualOverrideLayers.Remove(layerName);
 
-                // 清除该层相关状态轨道的规则匹配缓存
-                // 通过遍历状态配置找到该层对应的轨道
+                // 清除该层相关状态层的规则匹配缓存
+                // 通过遍历状态配置找到该层对应的状态层
                 if (m_stateConfigs != null) {
-                    foreach ((string trackName, StateTrackConfig trackConfig) in m_stateConfigs) {
-                        if (trackConfig.Layer == layerName) {
-                            m_lastMatchedRuleIndex.Remove(trackName);
+                    foreach ((string stateName, StateLayerConfig layerConfig) in m_stateConfigs) {
+                        if (layerConfig.Layer == layerName) {
+                            m_lastMatchedRuleIndex.Remove(stateName);
+                            m_lastResolvedSource.Remove(stateName);
                         }
                     }
                 }

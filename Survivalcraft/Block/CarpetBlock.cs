@@ -178,5 +178,7 @@ namespace Game {
         public static int GetColor(int data) => data & 0xF;
 
         public static int SetColor(int data, int color) => (data & -16) | (color & 0xF);
+
+        public override Color GetFurnitureColor(int value, SubsystemPalette subsystemPalette) => subsystemPalette?.GetFabricColor(GetColor(Terrain.ExtractData(value))) ?? Color.White;
     }
 }

@@ -5,12 +5,5 @@
             "index": 0,
             "blendMode": "Override"
         }
-    },
-    "stateTracks": {
-        "Gait": {
-            "type": "Enum",
-            "defaultValue": "Idle",
-            "enumValues": [ "Idle" ]
-        }
     }
 }

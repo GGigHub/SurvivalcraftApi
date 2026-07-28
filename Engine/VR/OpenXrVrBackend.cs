@@ -233,7 +233,7 @@ namespace Engine {
 
                 Result result = m_xr.CreateInstance(ref createInfo, ref m_instance);
                 if (result != Result.Success) {
-                    Log.Error($"xrCreateInstance failed: {result}");
+                    Log.Information($"xrCreateInstance failed: {result}, OpenXR will not work");
                     return;
                 }
             }

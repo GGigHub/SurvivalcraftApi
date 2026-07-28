@@ -112,7 +112,7 @@ public class ModsManageContentScreen : Screen {
                     : entity.modInfo.PackageName is not "survivalcraft" and not "fastdebug";
                 m_triggerEnableButton.Text = LanguageControl.Get(fName, GetTrigger(entity) ? "19" : "18");
                 m_openHomepageButton.IsEnabled = true;
-                UpdateMoveUpAndDownEnable(ModsManager.ModListAll.IndexOf(entity));
+                UpdateMoveUpAndDownEnable(ModsManager.ModListAll.FindIndex(x => ReferenceEquals(x, entity)));
             }
         };
         m_modsContentList.SelectionChanged += () => {
@@ -278,7 +278,8 @@ public class ModsManageContentScreen : Screen {
     }
 
     public void MoveUp(ModEntity entity) {
-        int index = ModsManager.ModListAll.IndexOf(entity);
+        // ModEntity 重写了 Equals（基于包名+版本），同包名同版本的重复模组会撞键，因此必须按引用定位
+        int index = ModsManager.ModListAll.FindIndex(x => ReferenceEquals(x, entity));
         if (index <= m_fixedModsCount) {
             return;
         }
@@ -299,7 +300,8 @@ public class ModsManageContentScreen : Screen {
     }
 
     public void MoveDown(ModEntity entity) {
-        int index = ModsManager.ModListAll.IndexOf(entity);
+        // ModEntity 重写了 Equals（基于包名+版本），同包名同版本的重复模组会撞键，因此必须按引用定位
+        int index = ModsManager.ModListAll.FindIndex(x => ReferenceEquals(x, entity));
         if (index < m_fixedModsCount || index >= ModsManager.ModListAll.Count - 1) {
             return;
         }

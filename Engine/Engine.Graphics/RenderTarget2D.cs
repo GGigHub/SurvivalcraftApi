@@ -100,6 +100,28 @@ namespace Engine.Graphics {
             GLWrapper.BindFramebuffer(GLWrapper.m_mainFramebuffer);
         }
 
+        /// <summary>
+        /// Blits a color rectangle from another render target into this target.
+        /// </summary>
+        public void BlitFromRenderTarget(RenderTarget2D source, Rectangle sourceRectangle) {
+            ArgumentNullException.ThrowIfNull(source);
+            GLWrapper.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, (uint)source.m_frameBuffer);
+            GLWrapper.GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, (uint)m_frameBuffer);
+            GLWrapper.GL.BlitFramebuffer(
+                sourceRectangle.Left,
+                sourceRectangle.Top,
+                sourceRectangle.Right,
+                sourceRectangle.Bottom,
+                0,
+                0,
+                Width,
+                Height,
+                ClearBufferMask.ColorBufferBit,
+                BlitFramebufferFilter.Linear
+            );
+            GLWrapper.m_framebuffer = -1;
+        }
+
         public override void HandleDeviceLost() {
             DeleteRenderTarget();
         }

@@ -3,8 +3,18 @@
     "Name": "Tiếng Việt"
   },
   "DiskExternalContentProvider": {
-    "DisplayName": "Ổ dĩa",
+    "DisplayName": "Ổ đĩa",
     "Description": "Không cần đăng nhập; Lưu vào ổ đĩa"
+  },
+  "DropboxExternalContentProvider": {
+    "1": "Đã đăng nhập",
+    "2": "Chưa đăng nhập",
+    "3": "Đang tiến hành đăng nhập.",
+    "4": "Mất kết nối Internet.",
+    "5": "Nhập mã xác thực Dropbox",
+    "6": "Không lấy được token truy cập Dropbox.",
+    "7": "Chưa đăng nhập Dropbox trong ứng dụng này.",
+    "8": "Không tìm thấy thông tin chia sẻ."
   },
   "FurnitureBlock": [
     "Kết hợp đồ nội thất thành thiết kế tương tác",
@@ -31,7 +41,8 @@
     "3": "Đã Bật Thay đổi",
     "4": "Đã Tắt Thay đổi",
     "5": "Tải Mod Thành công",
-    "6": "Bạn có muốn chuyển sang Màn hình Quản lý Mod để cài đặt thủ công không?"
+    "6": "Bạn có muốn chuyển sang Màn hình Quản lý Mod để cài đặt thủ công không?",
+    "7": "Các tệp mod dưới đây đã bị vô hiệu hóa do nguyên nhân không phải từ thao tác thủ công. Bạn có muốn xem chi tiết không?"
   },
   "AndroidSdCardExternalContentProvider": {
     "1": "Thẻ SD"
@@ -52,8 +63,7 @@
     },
     "CommunityType": {
       "OriginalCommunity": "Cộng Đồng Gốc",
-      "ChineseCommunity": "Cộng Đồng TQ",
-      "ChineseCommunityWebsite": "Cộng Đồng TQ (Trang Web)"
+      "ChineseCommunity": "Cộng Đồng TQ"
     }
   },
   "ModsManageContentScreen": {
@@ -199,6 +209,7 @@
     "18": "Nhập thành công: \"{0}\"",
     "19": "Nhập thất bại: \"{0}\", lý do: {1}",
     "20": "Hoàn tất",
+    "21": "Đường dẫn: ",
     "Directory": "Thư mục",
     "World": "Thế giới",
     "Blocks Texture": "Texture khối",
@@ -303,6 +314,9 @@
   "SubsystemCrossbowBlockBehavior": {
     "0": "Hãy kéo nỏ trước",
     "1": "Hãy nạp tên trước"
+  },
+  "SubsystemPalette": {
+    "1": "{0} {1}"
   },
   "MusketWidget": {
     "0": "Nạp thuốc súng",
@@ -435,6 +449,10 @@
     "1": "(không có)",
     "2": "(True seed đã được chỉnh sửa)",
     "3": "True seed phải là số nguyên từ -2147483648 đến 2147483647"
+  },
+  "SelectClassSubstituteDialog": {
+    "1": "API",
+    "2": "Có {0} mod nhằm thay thế {1} ({2})"
   },
   "FurnitureDesignWidget": [
     "Trước",
@@ -628,7 +646,10 @@
     "100": "Địa hình {0}, Mùa {1}, Môi trường {2}, Cuối {3}",
     "101": "Độ ẩm",
     "102": "Địa hình {0}, Mùa {1}, Cuối {2}",
-    "103": "Vị trí xuất hiện"
+    "103": "Vị trí xuất hiện",
+    "104": "Bật/Tắt chế độ toàn màn hình",
+    "105": "Mức độ ảnh hưởng của mod cao nhất",
+    "106": "Điều khiển VR"
   },
   "ModDetailsDialog": {
     "1": "Lý do bị vô hiệu hóa: ",
@@ -644,7 +665,8 @@
     "11": "Bạn có chắc muốn xóa?",
     "12": "\"{0}\" sẽ bị xóa.",
     "13": "Không thể xóa \"{0}\". Lý do: {1}",
-    "14": "Xóa \"{0}\" thành công."
+    "14": "Xóa \"{0}\" thành công.",
+    "15": "Không tìm thấy / Chưa bật"
   },
   "BlocksManager": {
     "1": "Không tìm thấy block với loại {0} trong tất cả assembly đã tải.",
@@ -653,6 +675,9 @@
     "4": "Dữ liệu cho block \"{0}\" được chỉ định nhiều hơn một lần trong BlocksData.",
     "5": "Trường \"{0}\" không tồn tại hoặc không thể truy cập trong BlocksData.",
     "6": "Block tham chiếu \"{0}\" không tìm thấy trong BlocksData.",
+    "7": " (Dòng đầu tiên: {0} cột. Dòng hiện tại: {1} cột.)",
+    "8": "Không thể gán giá trị cho trường \"{0}\" của lớp \"{1}\" vì lớp khối không có trường bắt buộc.",
+    "9": "Không thể gán giá trị cho trường \"{2}\" của lớp \"{1}\" vì không tìm thấy lớp khối tham chiếu \"{0}\" trong tất cả các assembly đã tải.",
     "Terrain": "Địa hình",
     "Minerals": "Khoáng sản",
     "Plants": "Thực vật",
@@ -728,6 +753,8 @@
     "FurniturePack": "Gói nội thất",
     "ByRank": "TheoXếpHạng",
     "ByTime": "TheoThờiGian",
+    "ByBoutique": "Theo Boutique",
+    "ByHide": "Ẩn",
     "Order Type": "Kiểu sắp xếp",
     "Filter": "Bộ lọc"
   },
@@ -813,6 +840,14 @@
     "EntireScreen": "Toàn màn hình",
     "SplitTouch": "Chia chạm"
   },
+  "VrLookControlMode": {
+    "Smooth": "Xoay mượt",
+    "Snap": "Xoay theo nấc"
+  },
+  "VrMoveControlMode": {
+    "Smooth": "Di chuyển mượt",
+    "Teleport": "Dịch chuyển"
+  },
   "SettingsUiScreen": {
     "1": "Thông báo",
     "2": "Bạn có muốn áp dụng cài đặt này không?"
@@ -836,6 +871,13 @@
     "Adventure": "Phiêu lưu",
     "Cruel": "Khắc nghiệt"
   },
+  "GameplayImpactLevel": {
+    "0": "Thẩm mỹ",
+    "1": "Hỗ trợ",
+    "2": "Turbo",
+    "3": "Phá vỡ",
+    "4": "Chế độ thần thánh"
+  },
   "ComponentLocomotion": {
     "1": "Chạy chân trần sẽ chậm, hãy mang giày"
   },
@@ -843,7 +885,9 @@
     "1": "Đã nấu",
     "2": "Đã đẻ",
     "3": "sinh ra ",
-    "4": "Nấu trứng để tăng giá trị dinh dưỡng"
+    "4": "Nấu trứng để tăng giá trị dinh dưỡng",
+    "5": "Đã Nấu {0}",
+    "6": "Đã đẻ {0}"
   },
   "CreativeInventoryWidget": {
     "1": "Nội thất",
@@ -879,6 +923,8 @@
     "18": "(khuyến nghị 32GB RAM và\nthiết bị cực nhanh)"
   },
   "RecipaediaDescriptionScreen": {
+    "1": "Có (tối đa {0})",
+    "2": "{0} ngày",
     "Luminosity": "Độ phát sáng",
     "Fuel Value": "Giá trị nhiên liệu",
     "Is Stackable": "Có thể xếp chồng",
@@ -903,9 +949,7 @@
     "Insulation": "Cách nhiệt",
     "Movement Speed": "Tốc độ di chuyển",
     "Dynamic Index": "Nội dung khối động",
-    "Block Data": "Dữ liệu khối",
-    "1": "Có (tối đa {0})",
-    "2": "{0} ngày"
+    "Block Data": "Dữ liệu khối"
   },
   "ComponentVitalStats": {
     "1": "Bạn quá bệnh để ăn cái này",
@@ -944,7 +988,7 @@
     "34": "Quá nóng, hãy chạy đi!",
     "35": "Quá nhiệt",
     "36": "Bạn cảm thấy nóng",
-    "37": "Ugh...",
+    "37": "Ực...",
     "38": "Bạn bị ướt hoàn toàn",
     "39": "Bạn đang bị ướt",
     "40": "Bạn không còn bị ướt nữa",
@@ -1084,6 +1128,29 @@
     "DPadUp": "↑",
     "DPadDown": "↓"
   },
+  "VrControllerMappingScreenKeys": {
+    "LeftController": "Tay cầm trái",
+    "RightController": "Tay cầm phải",
+    "Trigger": "Cò",
+    "Grip": "Nút Grip",
+    "Menu": "Menu",
+    "X": "Nút X",
+    "Y": "Nút Y",
+    "A": "Nút A",
+    "B": "Nút B",
+    "Thumbrest": "Điểm tựa ngón cái",
+    "Trackpad": "Nhấn bàn di chuột/Cần điều khiển",
+    "TrackpadCenter": "Nhấn giữa bàn di chuột",
+    "TrackpadLeft": "Chạm bên trái bàn di chuột",
+    "TrackpadRight": "Chạm bên phải bàn di chuột",
+    "TrackpadUp": "Chạm phía trên bàn di chuột",
+    "TrackpadDown": "Chạm phía dưới bàn di chuột",
+    "Null": ""
+  },
+  "VrControllerMappingScreenActions": {
+    "VrScrollLeft": "Cuộn Sang Trái",
+    "VrScrollRight": "Cuộn Sang Phải"
+  },
   "ComponentSickness": {
     "1": "Bệnh",
     "2": "Bạn cảm thấy buồn nôn"
@@ -1138,8 +1205,6 @@
     "1": "Bóng đèn"
   },
   "PlayerScreen": {
-    "Male": "Nam",
-    "Female": "Nữ",
     "1": "Chọn skin nhân vật",
     "2": "Chọn thiết bị nhập",
     "3": "Người chơi sẽ bị xóa khỏi thế giới vĩnh viễn. Tất cả vật phẩm trong túi và thống kê sẽ mất.",
@@ -1151,7 +1216,9 @@
     "9": "(không tìm thấy)",
     "10": "Màn hình cảm ứng",
     "11": "Thực tế ảo",
-    "12": "Tên người chơi không hợp lệ. Phải có ít nhất một ký tự."
+    "12": "Tên người chơi không hợp lệ. Phải có ít nhất một ký tự.",
+    "Male": "Nam",
+    "Female": "Nữ"
   },
   "ModifyWorldScreen": {
     "1": "Bạn có chắc không?",
@@ -1172,7 +1239,8 @@
     "8": "Thiếu mod",
     "9": "{0} thế giới, {1}",
     "10": "{0} thế giới, {1}",
-    "11": "Không có thế giới"
+    "11": "Không có thế giới",
+    "12": "Không tìm thấy thư mục được chỉ định:\n{0}"
   },
   "NewWorldScreen": {
     "1": "Để trống để dùng seed ngẫu nhiên",
@@ -1223,8 +1291,7 @@
     "1": "Hãy làm cào gỗ thay vào đó"
   },
   "GameLogSink": {
-    "1": "File log có thể đang bị chương trình khác sử dụng nên tải thất bại.",
-    "2": "Log nằm trong Console của DevTools trình duyệt."
+    "1": "File log có thể đang bị chương trình khác sử dụng nên tải thất bại."
   },
   "BasePumpkinBlock": {
     "1": "Bí ngô",
@@ -1299,6 +1366,11 @@
     "Male": "Nam",
     "Female": "Nữ"
   },
+  "OtherCauseOfDeath": {
+    "Cactus": "Bị gai bởi cây xương rồng",
+    "SeaCreature": "Bị sinh vật biển tấn công",
+    "Trap": "Bị mắc bẫy"
+  },
   "Blocks": {
     "AirBlock:0": {
       "DisplayName": "Không Khí",
@@ -1322,7 +1394,8 @@
     },
     "GraniteBlock:0": {
       "DisplayName": "Đá Granite",
-      "Description": "Một loại đá cứng tạo nên phần lớn vỏ Trái Đất. Bên trong nó, bạn có thể tìm thấy các mạch quặng đồng và than gần bề mặt, và quặng Germanium ở sâu hơn. Có thể được sơn."
+      "Description": "Một loại đá cứng tạo nên phần lớn vỏ Trái Đất. Bên trong nó, bạn có thể tìm thấy các mạch quặng đồng và than gần bề mặt, và quặng Germanium ở sâu hơn. Có thể được sơn.",
+      "CRDescription:0": "Biến đá cuội thành đá granit bằng cách nấu chảy"
     },
     "BasaltBlock:0": {
       "DisplayName": "Đá Bazan",
@@ -1348,20 +1421,12 @@
       "DisplayName": "Cỏ",
       "Description": "Ra ngoài chạm cỏ đi bro. Cỏ sẽ tự nhiên phát triển trên đất khi có đủ ánh sáng. Theo thời gian, nó sẽ lan sang các khối đất lân cận. Tất cả các loại thực vật và cây phát triển trên cỏ. Vào ban đêm, cỏ sẽ hơi phát sáng."
     },
-    "GrassDestroyed:0": {
-      "DisplayName": "Cỏ Khô",
-      "Description": "Cỏ đã chết khô do thiếu điều kiện sống."
-    },
     "WaterBlock:0": {
       "DisplayName": "Nước",
       "Description": "Nước có thể được thu thập trong xô và uống để giải khát. Nó làm chậm chuyển động của bạn, nên cẩn thận khi bơi vì bạn có thể bị đuối nước. Nước lạnh cũng tăng tốc độ làm lạnh cơ thể bạn, có thể dẫn đến hạ thân nhiệt."
     },
-    "SeaWaterBlock:0": {
-      "DisplayName": "Nước Biển",
-      "Description": "Nước biển chứa nhiều muối nên không thể uống được. Tuy nhiên, bạn có thể dùng nó để tưới cây trồng hoặc làm lạnh các vật thể."
-    },
     "MagmaBlock:0": {
-      "DisplayName": "Magma",
+      "DisplayName": "Dung nham",
       "Description": "Đá nóng chảy thỉnh thoảng được tìm thấy trong các hồ sâu dưới lòng đất trong đá bazan. Nó cực kỳ nóng và sẽ làm cháy bất cứ thứ gì dễ cháy ngay khi chạm vào. Nó cũng sẽ nhanh chóng giết chết bất kỳ sinh vật nào vô tình rơi vào. Xô có thể được sử dụng để vận chuyển nó đi khỏi nguồn."
     },
     "SnowBlock:0": {
@@ -1572,8 +1637,7 @@
     },
     "CobblestoneBlock:0": {
       "DisplayName": "Đá Cuội",
-      "Description": "Đá cuội là loại đá thu được bằng cách khai thác đá granite. Nó là một vật liệu cứng, chắc chắn, hoạt động tốt khi được sử dụng trong xây dựng tường và sàn. Bằng cách nấu chảy nó trong lò nung, bạn có thể thu được đá granite tinh khiết. Có thể sơn.",
-      "CRDescription:0": ""
+      "Description": "Đá cuội là loại đá thu được bằng cách khai thác đá granite. Nó là một vật liệu cứng, chắc chắn, hoạt động tốt khi được sử dụng trong xây dựng tường và sàn. Bằng cách nấu chảy nó trong lò nung, bạn có thể thu được đá granite tinh khiết. Có thể sơn."
     },
     "StoneBrickBlock:0": {
       "DisplayName": "Gạch Đá",
@@ -2294,8 +2358,7 @@
     },
     "PumpkinSoupBucketBlock:0": {
       "DisplayName": "Súp Bí Ngô",
-      "Description": "Súp bí ngô, ngon và bổ dưỡng. Có thể làm bằng cách nấu bí ngô sống trong một xô nước.",
-      "CRDescription:0": "Nấu bí ngô trong xô nước để làm súp bí ngô"
+      "Description": "Súp bí ngô, ngon và bổ dưỡng. Có thể làm bằng cách nấu bí ngô sống trong một xô nước."
     },
     "RottenPumpkinSoupBucketBlock:0": {
       "DisplayName": "Súp Bí Ngô Thối",
@@ -2422,9 +2485,8 @@
       "CRDescription:0": "Chế tạo máy dò chuyển động từ đồng, kính và đá cẩm thạch"
     },
     "PistonBlock:0": {
-      "DisplayName": "Piston",
-      "Description": "Piston có thể được sử dụng để đẩy và kéo các khối. Độ mở rộng của piston được điều khiển bởi điện áp đặt vào nó. 0.8V sẽ làm piston mở rộng ra một khối, 0.9V ra hai khối, v.v. 1.5V sẽ mở rộng piston tối đa 8 khối. Piston cũng có thể được chỉnh sửa để giới hạn độ mở rộng tối đa xuống các giá trị thấp hơn. Nếu piston là piston kéo, nó cũng sẽ kéo các khối lại khi rút lại. Nếu piston là piston kéo nghiêm ngặt, nó sẽ không rút lại trừ khi nó đang kéo đủ số khối. Số lượng khối kéo có thể được điều chỉnh bằng cách chỉnh sửa tối đa 8.",
-      "CRDescription:0": "Sử dụng ván, chất bán dẫn và đồng để tạo piston"
+      "DisplayName": "Pít-tông",
+      "Description": "Piston có thể được sử dụng để đẩy và kéo các khối. Độ mở rộng của piston được điều khiển bởi điện áp đặt vào nó. 0.8V sẽ làm piston mở rộng ra một khối, 0.9V ra hai khối, v.v. 1.5V sẽ mở rộng piston tối đa 8 khối. Piston cũng có thể được chỉnh sửa để giới hạn độ mở rộng tối đa xuống các giá trị thấp hơn. Nếu piston là piston kéo, nó cũng sẽ kéo các khối lại khi rút lại. Nếu piston là piston kéo nghiêm ngặt, nó sẽ không rút lại trừ khi nó đang kéo đủ số khối. Số lượng khối kéo có thể được điều chỉnh bằng cách chỉnh sửa tối đa 8."
     },
     "PistonHeadBlock:0": {
       "DisplayName": "Đầu Piston",
@@ -2457,28 +2519,23 @@
     },
     "LedBlock:0": {
       "DisplayName": "LED Trắng",
-      "Description": "Điốt phát quang (LED). Khi kết nối với nguồn điện, phát ra ánh sáng màu yếu. Ánh sáng quá yếu để chiếu sáng xung quanh, nhưng dễ nhìn thấy. Nó có đầu vào ở tất cả các mặt để dễ dàng kết nối và có thể đặt trên bất kỳ bề mặt nào.",
-      "CRDescription:0": "Làm đèn LED màu từ đồng, kính và sơn"
+      "Description": "Điốt phát quang (LED). Khi kết nối với nguồn điện, phát ra ánh sáng màu yếu. Ánh sáng quá yếu để chiếu sáng xung quanh, nhưng dễ nhìn thấy. Nó có đầu vào ở tất cả các mặt để dễ dàng kết nối và có thể đặt trên bất kỳ bề mặt nào."
     },
     "FourLedBlock:0": {
       "DisplayName": "4-LED Trắng",
-      "Description": "Một bộ 4 điốt phát quang hình vuông. Khi kết nối với nguồn điện, đèn LED phát ra ánh sáng màu yếu. Phần tử chia tín hiệu tương tự thành 4 bit để xác định đèn LED nào trong số 4 đèn nên sáng. Ánh sáng quá yếu để chiếu sáng xung quanh, nhưng dễ nhìn thấy. Hữu ích để tạo màn hình độ phân giải cao. Nó có đầu vào ở tất cả các mặt để dễ dàng kết nối và có thể đặt trên bất kỳ bề mặt nào.",
-      "CRDescription:0": "Làm đèn LED 4 bóng màu từ đồng, kính và sơn"
+      "Description": "Một bộ 4 điốt phát quang hình vuông. Khi kết nối với nguồn điện, đèn LED phát ra ánh sáng màu yếu. Phần tử chia tín hiệu tương tự thành 4 bit để xác định đèn LED nào trong số 4 đèn nên sáng. Ánh sáng quá yếu để chiếu sáng xung quanh, nhưng dễ nhìn thấy. Hữu ích để tạo màn hình độ phân giải cao. Nó có đầu vào ở tất cả các mặt để dễ dàng kết nối và có thể đặt trên bất kỳ bề mặt nào."
     },
     "SevenSegmentDisplayBlock:0": {
       "DisplayName": "Màn Hình 7 Đoạn Trắng",
-      "Description": "Màn hình 7 đoạn. Hiển thị một trong 16 ký tự thập lục phân: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F dựa trên một tín hiệu tương tự duy nhất được cung cấp cho nó. Giá trị đầu vào được chuyển đổi thành dạng kỹ thuật số 4-bit và được sử dụng làm ký tự thập lục phân để hiển thị. Có thể đặt trên bất kỳ bề mặt thẳng đứng nào.",
-      "CRDescription:0": "Làm màn hình 7 đoạn từ đồng, kính và sơn"
+      "Description": "Màn hình 7 đoạn. Hiển thị một trong 16 ký tự thập lục phân: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F dựa trên một tín hiệu tương tự duy nhất được cung cấp cho nó. Giá trị đầu vào được chuyển đổi thành dạng kỹ thuật số 4-bit và được sử dụng làm ký tự thập lục phân để hiển thị. Có thể đặt trên bất kỳ bề mặt thẳng đứng nào."
     },
     "MulticoloredLedBlock:0": {
       "DisplayName": "LED Nhiều Màu",
-      "Description": "Điốt phát quang. Khi kết nối với nguồn điện, phát ra ánh sáng màu yếu. Màu sắc của ánh sáng phụ thuộc vào giá trị tín hiệu áp dụng cho điốt. 0.8V trở lên tạo ra ánh sáng có 8 màu khác nhau. Ánh sáng quá yếu để chiếu sáng xung quanh, nhưng dễ nhìn thấy. Hữu ích để tạo đèn trạng thái. Nó có đầu vào ở tất cả các mặt để dễ dàng kết nối và có thể đặt trên bất kỳ bề mặt nào.",
-      "CRDescription:0": "Làm đèn LED nhiều màu từ đồng, kính và dây điện"
+      "Description": "Điốt phát quang. Khi kết nối với nguồn điện, phát ra ánh sáng màu yếu. Màu sắc của ánh sáng phụ thuộc vào giá trị tín hiệu áp dụng cho điốt. 0.8V trở lên tạo ra ánh sáng có 8 màu khác nhau. Ánh sáng quá yếu để chiếu sáng xung quanh, nhưng dễ nhìn thấy. Hữu ích để tạo đèn trạng thái. Nó có đầu vào ở tất cả các mặt để dễ dàng kết nối và có thể đặt trên bất kỳ bề mặt nào."
     },
     "OneLedBlock:0": {
       "DisplayName": "1-LED Trắng",
-      "Description": "Điốt phát quang hình vuông lớn. Khi kết nối với nguồn điện, đèn LED phát ra ánh sáng màu yếu. Màu sắc của ánh sáng phụ thuộc vào giá trị tín hiệu áp dụng cho điốt. 0.8V trở lên tạo ra ánh sáng có 8 màu khác nhau. Ánh sáng quá yếu để chiếu sáng xung quanh, nhưng dễ nhìn thấy. Hữu ích để tạo màn hình màu. Nó có đầu vào ở tất cả các mặt để dễ dàng kết nối và có thể đặt trên bất kỳ bề mặt nào.",
-      "CRDescription:0": "Làm đèn LED 1 bóng màu từ đồng, kính và sơn"
+      "Description": "Điốt phát quang hình vuông lớn. Khi kết nối với nguồn điện, đèn LED phát ra ánh sáng màu yếu. Màu sắc của ánh sáng phụ thuộc vào giá trị tín hiệu áp dụng cho điốt. 0.8V trở lên tạo ra ánh sáng có 8 màu khác nhau. Ánh sáng quá yếu để chiếu sáng xung quanh, nhưng dễ nhìn thấy. Hữu ích để tạo màn hình màu. Nó có đầu vào ở tất cả các mặt để dễ dàng kết nối và có thể đặt trên bất kỳ bề mặt nào."
     },
     "PhotodiodeBlock:0": {
       "DisplayName": "Điốt Quang",
@@ -2779,15 +2836,12 @@
       "CRDescription:0": "Chế tạo tấm áp suất điện từ đồng và đá cuội"
     },
     "PistonBlock:448": {
-      "DisplayName": "Piston Đẩy",
       "CRDescription:0": "Sử dụng ván, chất bán dẫn và đồng để tạo piston đẩy"
     },
     "PistonBlock:450": {
-      "DisplayName": "Piston Kéo",
       "CRDescription:0": "Thêm móc sắt vào piston để tạo piston kéo"
     },
     "PistonBlock:452": {
-      "DisplayName": "Piston Kéo Nghiêm ngặt",
       "CRDescription:0": "Thêm móc đồng vào piston để tạo piston kéo nghiêm ngặt"
     },
     "DirtStairsBlock:0": {
@@ -2814,189 +2868,189 @@
     }
   },
   "Help": {
-  "1": {
-    "value": "",
-    "Name": "Gamepad",
-    "Title": "Điều khiển bằng tay cầm"
-  },
-  "2": {
-    "value": "",
-    "Name": "Bàn phím",
-    "Title": "Điều khiển bằng bàn phím"
-  },
-  "3": {
-    "value": "\\n Sử dụng bàn điều khiển cảm ứng ở góc dưới bên trái màn hình để di chuyển.\\n Chạm một lần để nhảy.\\n Bạn cũng có thể cấu hình dùng các nút hướng thay cho bàn cảm ứng.\\n \\n\\n\\n Sử dụng bàn cảm ứng ở góc dưới bên phải màn hình để nhìn xung quanh.\\n Chạm một lần để nhảy.\\n Bạn cũng có thể kéo ngón tay trên bất kỳ vị trí nào của màn hình để nhìn.\\n \\n\\n\\n Bạn có thể chỉnh sơ đồ điều khiển trong phần Cài đặt Điều khiển và Độ nhạy.\\n Hãy thử các tùy chọn khác nhau, ví dụ bạn có thể thích dùng nút thay vì bàn cảm ứng, hoặc điều khiển tách đôi với tâm ngắm.\\n Điều khiển game góc nhìn thứ nhất trên màn hình nhỏ có thể khó lúc đầu, nhưng khi quen thì không khác nhiều so với tay cầm hay chuột.\\n Vì bạn có thể chạm vào bất kỳ phần nào của màn hình bất cứ lúc nào, một số hành động như đào hoặc đặt khối thậm chí còn dễ hơn.\\n \\n\\n\\n Một số thiết bị rẻ hoặc cũ có màn hình cảm ứng kém hoặc driver lỗi.\\n Chúng có thể bị mất điểm chạm hoặc nhầm lẫn khi chạm nhiều điểm cùng lúc.\\n Tốt nhất nên tránh các thiết bị này vì chơi sẽ rất khó chịu.\\n ",
-    "Name": "Màn hình cảm ứng",
-    "Title": "Điều khiển màn hình cảm ứng"
-  },
-  "4": {
-    "value": "\\n Đi lén rất hữu ích nếu bạn muốn di chuyển chậm và cẩn thận, ví dụ để tránh rơi khi đứng gần mép vực sâu.\\n \\n\\n\\n Để bật/tắt chế độ đi lén, nhấn nút đi lén ở bên phải màn hình.\\n Khi bật chế độ này, nhân vật sẽ không rơi khỏi mép.\\n \\n\\n\\n Đi lén cũng làm tiếng động di chuyển nhỏ hơn, giúp bạn tiếp cận động vật mà không làm chúng sợ.\\n Ví dụ bạn có thể lén lại gần một con chim.\\n Nhưng đừng đi từ phía trước vì nó sẽ thấy bạn và bay đi.\\n ",
-    "Name": "Đi lén",
-    "Title": "Đi lén"
-  },
-  "5": {
-    "value": "\\n Bay chỉ có trong Chế độ Sáng tạo.\\n Nhấn nút bay ở bên phải màn hình để bật/tắt.\\n Nhảy hai lần nhanh cũng bật/tắt chế độ bay.\\n \\n\\n\\n Bay nhanh hơn đi bộ rất nhiều và giúp bạn tới những nơi khó tiếp cận.\\n ",
-    "Name": "Bay",
-    "Title": "Bay"
-  },
-  "6": {
-    "value": "\\n Thang có thể được chế tạo từ que gỗ.\\n Khi đặt lên tường, bạn có thể leo lên dễ dàng.\\n \\n\\n\\n Leo thang an toàn nhất khi quay mặt về phía thang.\\n Điều này đúng cả khi leo lên và leo xuống.\\n \\n\\n\\n Vì vậy cách tốt nhất để leo xuống là quay lưng lại như ngoài đời.\\n \\n\\n\\n Bạn có thể nhảy khỏi thang bất cứ lúc nào.\\n ",
-    "Name": "Thang",
-    "Title": "Leo thang"
-  },
-  "7": {
-    "value": "\\n Thanh máu hiển thị bằng các trái tim nhỏ trên màn hình.\\n Nó thể hiện lượng sinh mạng còn lại của người chơi.\\n Khi về 0, người chơi sẽ chết.\\n \\n\\n\\n Máu sẽ hồi từ từ khi bạn không đói và hồi nhanh hơn khi ngủ.\\n Hãy cẩn thận khi máu thấp, chỉ một chấn thương nhỏ cũng có thể giết bạn.\\n \\n\\n\\n Khi người chơi bị bệnh, trái tim sẽ chuyển màu xanh bẩn.\\n Đừng ăn thức ăn hỏng để tránh bị bệnh.\\n Khi bị cúm, trái tim sẽ chuyển màu xanh dương.\\n Đừng để cơ thể bị lạnh quá lâu để tránh cúm.\\n ",
-    "Name": "Máu",
-    "Title": "Máu"
-  },
-  "8": {
-    "value": "\\n Khi bạn ăn thịt sống, trứng chưa nấu hoặc thức ăn bị thối, người chơi có thể bị bệnh.\\n \\n\\n\\n Bệnh là trạng thái rất khó chịu.\\n Máu sẽ giảm dần xuống còn một trái tim khiến bạn rất yếu.\\n Hoạt động sẽ bị gián đoạn bởi nôn mửa và buồn nôn.\\n Bạn di chuyển chậm, yếu và dễ mệt.\\n Bạn cũng không thể ăn một số loại thức ăn.\\n \\n\\n\\n Tốt nhất là ngủ để hồi phục, có thể sáng hôm sau bạn sẽ đỡ hơn.\\n ",
-    "Name": "Bệnh",
-    "Title": "Bệnh"
-  },
-  "9": {
-    "value": "\\n Khi nhiệt độ cơ thể thấp lâu, người chơi sẽ bắt đầu hắt hơi.\\n Đây là dấu hiệu bạn sắp bị cúm.\\n Hãy làm ấm cơ thể ngay.\\n \\n\\n\\n Cúm là trạng thái nguy hiểm.\\n Máu sẽ giảm dần xuống còn hai trái tim.\\n Hoạt động sẽ bị gián đoạn bởi các cơn ho.\\n Bạn di chuyển chậm, yếu và dễ mệt.\\n Bạn cũng sẽ rất buồn ngủ.\\n \\n\\n\\n Tốt nhất hãy đến nơi ấm áp và ngủ để khỏi cúm.\\n Cúm rất khó chữa khi bạn đang lạnh.\\n ",
-    "Name": "Cúm",
-    "Title": "Cúm"
-  },
-  "10": {
-    "value": "\\n Thanh đói hiển thị bằng các con cá nhỏ trên màn hình.\\n Nếu không ăn lâu, nhân vật sẽ bắt đầu phàn nàn và cuối cùng mất máu cho đến khi chết.\\n Khi đói bạn cũng không hồi máu.\\n \\n\\n\\n Để ăn, kéo thức ăn vào nhân vật trong bảng cơ thể.\\n Nhân vật sẽ cho biết bạn còn đói hay không.\\n \\n\\n\\n Thức ăn có thể lấy từ nhiều nguồn.\\n Ví dụ như săn động vật như bò, chim, lợn rừng.\\n Nhưng săn bắn có thể nguy hiểm và động vật sẽ dần cạn ở khu vực gần.\\n \\n\\n\\n Một lựa chọn khác là trồng trọt.\\n Trồng trọt tạo nguồn thức ăn bền vững nhưng cần nhiều công chuẩn bị.\\n ",
-    "Name": "Đói",
-    "Title": "Đói"
-  },
+    "1": {
+      "value": "",
+      "Name": "Gamepad",
+      "Title": "Điều khiển bằng tay cầm"
+    },
+    "2": {
+      "value": "",
+      "Name": "Bàn phím",
+      "Title": "Điều khiển bằng bàn phím"
+    },
+    "3": {
+      "value": "\\n Sử dụng bàn điều khiển cảm ứng ở góc dưới bên trái màn hình để di chuyển.\\n Chạm một lần để nhảy.\\n Bạn cũng có thể cấu hình dùng các nút hướng thay cho bàn cảm ứng.\\n \\n\\n\\n Sử dụng bàn cảm ứng ở góc dưới bên phải màn hình để nhìn xung quanh.\\n Chạm một lần để nhảy.\\n Bạn cũng có thể kéo ngón tay trên bất kỳ vị trí nào của màn hình để nhìn.\\n \\n\\n\\n Bạn có thể chỉnh sơ đồ điều khiển trong phần Cài đặt Điều khiển và Độ nhạy.\\n Hãy thử các tùy chọn khác nhau, ví dụ bạn có thể thích dùng nút thay vì bàn cảm ứng, hoặc điều khiển tách đôi với tâm ngắm.\\n Điều khiển game góc nhìn thứ nhất trên màn hình nhỏ có thể khó lúc đầu, nhưng khi quen thì không khác nhiều so với tay cầm hay chuột.\\n Vì bạn có thể chạm vào bất kỳ phần nào của màn hình bất cứ lúc nào, một số hành động như đào hoặc đặt khối thậm chí còn dễ hơn.\\n \\n\\n\\n Một số thiết bị rẻ hoặc cũ có màn hình cảm ứng kém hoặc driver lỗi.\\n Chúng có thể bị mất điểm chạm hoặc nhầm lẫn khi chạm nhiều điểm cùng lúc.\\n Tốt nhất nên tránh các thiết bị này vì chơi sẽ rất khó chịu.\\n ",
+      "Name": "Màn hình cảm ứng",
+      "Title": "Điều khiển màn hình cảm ứng"
+    },
+    "4": {
+      "value": "\\n Đi lén rất hữu ích nếu bạn muốn di chuyển chậm và cẩn thận, ví dụ để tránh rơi khi đứng gần mép vực sâu.\\n \\n\\n\\n Để bật/tắt chế độ đi lén, nhấn nút đi lén ở bên phải màn hình.\\n Khi bật chế độ này, nhân vật sẽ không rơi khỏi mép.\\n \\n\\n\\n Đi lén cũng làm tiếng động di chuyển nhỏ hơn, giúp bạn tiếp cận động vật mà không làm chúng sợ.\\n Ví dụ bạn có thể lén lại gần một con chim.\\n Nhưng đừng đi từ phía trước vì nó sẽ thấy bạn và bay đi.\\n ",
+      "Name": "Đi lén",
+      "Title": "Đi lén"
+    },
+    "5": {
+      "value": "\\n Bay chỉ có trong Chế độ Sáng tạo.\\n Nhấn nút bay ở bên phải màn hình để bật/tắt.\\n Nhảy hai lần nhanh cũng bật/tắt chế độ bay.\\n \\n\\n\\n Bay nhanh hơn đi bộ rất nhiều và giúp bạn tới những nơi khó tiếp cận.\\n ",
+      "Name": "Bay",
+      "Title": "Bay"
+    },
+    "6": {
+      "value": "\\n Thang có thể được chế tạo từ que gỗ.\\n Khi đặt lên tường, bạn có thể leo lên dễ dàng.\\n \\n\\n\\n Leo thang an toàn nhất khi quay mặt về phía thang.\\n Điều này đúng cả khi leo lên và leo xuống.\\n \\n\\n\\n Vì vậy cách tốt nhất để leo xuống là quay lưng lại như ngoài đời.\\n \\n\\n\\n Bạn có thể nhảy khỏi thang bất cứ lúc nào.\\n ",
+      "Name": "Thang",
+      "Title": "Leo thang"
+    },
+    "7": {
+      "value": "\\n Thanh máu hiển thị bằng các trái tim nhỏ trên màn hình.\\n Nó thể hiện lượng sinh mạng còn lại của người chơi.\\n Khi về 0, người chơi sẽ chết.\\n \\n\\n\\n Máu sẽ hồi từ từ khi bạn không đói và hồi nhanh hơn khi ngủ.\\n Hãy cẩn thận khi máu thấp, chỉ một chấn thương nhỏ cũng có thể giết bạn.\\n \\n\\n\\n Khi người chơi bị bệnh, trái tim sẽ chuyển màu xanh bẩn.\\n Đừng ăn thức ăn hỏng để tránh bị bệnh.\\n Khi bị cúm, trái tim sẽ chuyển màu xanh dương.\\n Đừng để cơ thể bị lạnh quá lâu để tránh cúm.\\n ",
+      "Name": "Máu",
+      "Title": "Máu"
+    },
+    "8": {
+      "value": "\\n Khi bạn ăn thịt sống, trứng chưa nấu hoặc thức ăn bị thối, người chơi có thể bị bệnh.\\n \\n\\n\\n Bệnh là trạng thái rất khó chịu.\\n Máu sẽ giảm dần xuống còn một trái tim khiến bạn rất yếu.\\n Hoạt động sẽ bị gián đoạn bởi nôn mửa và buồn nôn.\\n Bạn di chuyển chậm, yếu và dễ mệt.\\n Bạn cũng không thể ăn một số loại thức ăn.\\n \\n\\n\\n Tốt nhất là ngủ để hồi phục, có thể sáng hôm sau bạn sẽ đỡ hơn.\\n ",
+      "Name": "Bệnh",
+      "Title": "Bệnh"
+    },
+    "9": {
+      "value": "\\n Khi nhiệt độ cơ thể thấp lâu, người chơi sẽ bắt đầu hắt hơi.\\n Đây là dấu hiệu bạn sắp bị cúm.\\n Hãy làm ấm cơ thể ngay.\\n \\n\\n\\n Cúm là trạng thái nguy hiểm.\\n Máu sẽ giảm dần xuống còn hai trái tim.\\n Hoạt động sẽ bị gián đoạn bởi các cơn ho.\\n Bạn di chuyển chậm, yếu và dễ mệt.\\n Bạn cũng sẽ rất buồn ngủ.\\n \\n\\n\\n Tốt nhất hãy đến nơi ấm áp và ngủ để khỏi cúm.\\n Cúm rất khó chữa khi bạn đang lạnh.\\n ",
+      "Name": "Cúm",
+      "Title": "Cúm"
+    },
+    "10": {
+      "value": "\\n Thanh đói hiển thị bằng các con cá nhỏ trên màn hình.\\n Nếu không ăn lâu, nhân vật sẽ bắt đầu phàn nàn và cuối cùng mất máu cho đến khi chết.\\n Khi đói bạn cũng không hồi máu.\\n \\n\\n\\n Để ăn, kéo thức ăn vào nhân vật trong bảng cơ thể.\\n Nhân vật sẽ cho biết bạn còn đói hay không.\\n \\n\\n\\n Thức ăn có thể lấy từ nhiều nguồn.\\n Ví dụ như săn động vật như bò, chim, lợn rừng.\\n Nhưng săn bắn có thể nguy hiểm và động vật sẽ dần cạn ở khu vực gần.\\n \\n\\n\\n Một lựa chọn khác là trồng trọt.\\n Trồng trọt tạo nguồn thức ăn bền vững nhưng cần nhiều công chuẩn bị.\\n ",
+      "Name": "Đói",
+      "Title": "Đói"
+    },
     "11": {
       "value": "\\n Thể lực là thước đo mức độ mệt mỏi của nhân vật của bạn, hiển thị qua thanh màu xanh lam.\\n Khi bạn thực hiện một hành động mệt mỏi trong thời gian dài không nghỉ (chạy, nhảy, bơi, đào, chiến đấu), thanh thể lực sẽ giảm và bạn sẽ bắt đầu thở hổn hển.\\n \\n\\n\\n Khi bạn đang thở hổn hển (thanh thể lực thấp), hiệu suất của bạn thấp hơn khi bạn đã nghỉ ngơi.\\n Bạn sẽ di chuyển và đào chậm hơn, và bạn sẽ không thể thực hiện nhảy.\\n \\n\\n\\n Rất nguy hiểm khi bị mệt khi bạn đang ở trong nước, vì bạn không thể nghỉ ngơi trong khi bơi và sẽ bắt đầu mất máu (đuối nước).\\n Theo dõi thanh thể lực, và ra khỏi nước ngay lập tức khi nó xuống thấp.\\n Khi bạn kiệt sức trong khi ở trong nước, bạn sẽ chết đuối trừ khi bờ rất gần.\\n \\n\\n\\n Hãy cẩn thận, rất dễ bị mệt khi chạy trốn khỏi động vật nguy hiểm.\\n ",
-      "Name": "Stamina",
+      "Name": "Sự bền bỉ",
       "Title": "Thể lực (Stamina)"
     },
     "12": {
       "value": "\\n Ngủ sẽ giúp phục hồi máu của bạn và vượt qua những giờ đêm khi quá tối hoặc nguy hiểm để làm việc.\\n \\n\\n\\n Ngay cả khi bạn không bị thương, bạn vẫn cần ngủ thỉnh thoảng (thanh Ngủ sẽ giảm).\\n Nếu bạn bỏ qua nó, nhân vật của bạn sẽ bắt đầu có những cơn ngất ngắn khi thanh ngủ cạn kiệt.\\n Nếu bạn vẫn hoạt động bất chấp cảnh báo này, các cơn ngất sẽ kéo dài hơn và cuối cùng bạn sẽ bất tỉnh.\\n Bất tỉnh rất nguy hiểm, vì động vật săn mồi sẽ nhanh chóng ngửi thấy bạn và ăn thịt bạn khi không được bảo vệ.\\n \\n\\n\\n Mặc dù bạn không cần giường, bạn chỉ có thể ngủ ở một nơi ấm cúng, khô ráo và thoải mái.\\n Mặt đất không thể quá cứng và khu vực không thể quá lộ thiên hoặc quá nguy hiểm.\\n \\n\\n\\n Điểm hồi sinh của bạn được đặt tại nơi bạn ngủ lần cuối.\\n Để ngủ, mở màn hình Cơ thể/Thức ăn và nhấn nút ngủ (hình mặt trăng).\\n ",
-      "Name": "Sleep",
+      "Name": "Ngủ",
       "Title": "Ngủ (Sleep)"
     },
     "13": {
       "value": "\\n Khi bạn ở ngoài trời lạnh mà không có quần áo phù hợp, nhiệt độ cơ thể của bạn sẽ giảm (biểu tượng nhiệt kế chuyển sang màu xanh và giảm xuống).\\n Tầm nhìn của bạn sẽ bắt đầu đóng băng và bạn sẽ bắt đầu mất máu.\\n Tìm một nơi ấm hơn hoặc đến gần lửa để sưởi ấm và làm khô người.\\n Nếu bạn bị lạnh trong thời gian dài, bạn sẽ bắt đầu hắt hơi và có thể bị cúm.\\n \\n\\n\\n Quá nhiều nhiệt cũng không tốt cho bạn, đứng quá gần một đám lửa lớn hoặc ở sa mạc nóng bức sẽ khiến bạn bị quá nóng (biểu tượng nhiệt kế chuyển sang màu đỏ và tăng lên). Điều này cũng làm mất máu.\\n \\n\\n\\n Khu vực có mái che ấm hơn bên ngoài. Bịt kín tất cả các lỗ và khóa cửa sẽ làm cho nơi trú ẩn ấm hơn nữa.\\n Đốt lửa bên trong nơi trú ẩn của bạn để làm cho nó ấm áp.\\n \\n\\n\\n Bị ướt làm tăng đáng kể khả năng bị lạnh của bạn, tìm một nơi ấm áp để làm khô nhanh hơn.\\n \\n\\n\\n Cách tốt nhất để đối phó với lạnh là mặc nhiều lớp quần áo dày, khô có chỉ số cách nhiệt tốt.\\n Bạn cần che phủ toàn bộ cơ thể (đầu, ngực, chân, bàn chân).\\n Quần áo làm từ lông thú động vật cách nhiệt tốt nhất.\\n ",
-      "Name": "Temperature",
+      "Name": "Nhiệt độ",
       "Title": "Nhiệt độ Cơ thể (Body Heat)"
     },
     "14": {
       "value": "\\n Nhân vật của bạn có thể bị ướt khi ở ngoài trời mưa hoặc rơi xuống nước (thanh Độ ẩm tăng lên).\\n Độ ướt làm giảm mạnh khả năng cách nhiệt của quần áo, vì vậy rất dễ bị đóng băng ở vùng khí hậu lạnh hơn.\\n Nhân vật của bạn sẽ khô nhanh hơn ở nơi ấm áp.\\n ",
-      "Name": "Wetness",
+      "Name": "Độ ẩm",
       "Title": "Độ ướt (Wetness)"
     },
     "15": {
       "value": "\\n Tất cả các vật phẩm thức ăn sẽ bị thối sau một thời gian.\\n Biểu tượng thức ăn (ví dụ: miếng thịt) bên cạnh vật phẩm sẽ chuyển sang màu nâu để chỉ ra rằng quá trình thối rữa đang bắt đầu. Thời gian bảo quản được ghi trong Recipaedia.\\n Một thời gian sau đó, vật phẩm thức ăn sẽ bị thối hoàn toàn và có tên 'Thối'.\\n \\n\\n\\n Thức ăn sống sẽ thối rất nhanh.\\n Nấu thức ăn sẽ kéo dài tuổi thọ của nó.\\n \\n\\n\\n Thức ăn thối vẫn hấp dẫn động vật và thậm chí có thể được ăn bởi người chơi, nhưng có khả năng cao gây bệnh (xem mục Bệnh tật).\\n \\n\\n\\n Khi người chơi bị bệnh, họ rất chậm, yếu và sẽ dừng lại để nôn định kỳ.\\n Tốt nhất là đi ngủ và đợi cho bệnh qua đi.\\n \\n\\n\\n Hầu hết thức ăn thối cuối cùng sẽ biến thành phân ủ (Compost), một nguồn tài nguyên trồng trọt có thể được sử dụng thay cho đất thường.\\n Phân ủ ẩm có thể thay thế đất canh tác ẩm.\\n ",
-      "Name": "FoodRot",
+      "Name": "Thối thức ăn",
       "Title": "Thức ăn Thối (Food Rot)"
     },
     "16": {
       "value": "\\n Nhân vật của bạn trở nên có kinh nghiệm hơn theo thời gian.\\n Kinh nghiệm được thể hiện bằng những quả cầu vàng nhỏ có thể nhặt được.\\n Chúng xuất hiện khi bạn khai thác khoáng sản, thu hoạch mùa màng, chế tạo vật phẩm hoặc săn động vật. Đài kỷ niệm trên núi chứa rất nhiều kinh nghiệm.\\n Thu thập chúng bằng cách đến gần.\\n \\n\\n\\n Thanh kinh nghiệm màu tím ở dưới cùng sẽ đầy lên.\\n Khi đầy, nhân vật của bạn sẽ tiến lên cấp độ tiếp theo.\\n Sức mạnh, Tốc độ và Sức bền của bạn sẽ tăng và nhu cầu thức ăn (Đói) của bạn sẽ giảm.\\n Bạn cũng sẽ có thể sử dụng các công cụ, vũ khí và áo giáp tiên tiến hơn (yêu cầu cấp độ được ghi trong Recipaedia).\\n \\n\\n\\n Khi bạn chết và hồi sinh (trong chế độ Sinh tồn hoặc Thử thách), cấp độ của bạn sẽ giảm xuống một giá trị thấp hơn nhiều.\\n Sẽ mất rất nhiều thời gian để lấy lại kinh nghiệm đã mất.\\n ",
-      "Name": "Levels",
+      "Name": "Cấp độ",
       "Title": "Cấp độ và Kinh nghiệm (Level and Experience)"
     },
     "17": {
       "value": "\\n Bạn có thể cưỡi một số động vật, như ngựa, lạc đà hoặc lừa.\\n Cưỡi động vật cho phép bạn di chuyển nhanh hơn và nhìn thế giới từ một điểm cao hơn.\\n \\n\\n\\n Để cưỡi một con vật, đến gần nó và đợi nó dừng lại.\\n Nút rón rén sẽ chuyển thành nút cưỡi (hình yên ngựa).\\n Nhấn nó để cưỡi/xuống.\\n Bạn cũng có thể cưỡi thuyền theo cách tương tự.\\n \\n\\n\\n Để cưỡi động vật thành công, bạn cần một yên ngựa, có thể được chế tạo từ da thuộc và gậy gỗ.\\n Trang bị yên ngựa cho con vật bằng cách dùng yên ngựa tương tác với nó.\\n Khi con vật được đặt yên, hành vi của nó thay đổi và nó trở nên thân thiện hơn với bạn.\\n Đừng cố cưỡi một con vật không có yên, nó sẽ không thích điều đó và có thể hất bạn ngã.\\n \\n\\n\\n Một cái còi sẽ triệu tập bất kỳ con vật nào đã đặt yên ở gần đó.\\n Tốt nhất là mang theo một cái còi khi bạn đang cưỡi.\\n \\n\\n\\n Một số loại ủng (Ủng Kỵ Binh) giúp thú cưỡi chạy nhanh hơn.",
-      "Name": "Riding",
+      "Name": "Cưỡi",
       "Title": "Cưỡi Động vật (Riding Animals)"
     },
     "18": {
       "value": "\\n Trong Survivalcraft, gần như mọi khối đều có thể bị phá hủy (trừ Đá nền).\\n \\n\\n\\n Để đào một khối, nhấn và giữ vào khối đó.\\n Vết nứt sẽ xuất hiện và lan rộng khi khối đang được đào.\\n Khi vết nứt lan hết, khối sẽ vỡ ra và rơi vật phẩm (nếu có).\\n \\n\\n\\n Một số khối mất rất nhiều thời gian để đào mà không có công cụ thích hợp (ví dụ: đào đá bằng tay). Recipaedia cho biết phương pháp đào (Xẻng, Cuốc chim, Rìu/Khác) và độ bền khai thác.\\n Sử dụng công cụ phù hợp sẽ tăng tốc độ đào.\\n Công cụ làm từ vật liệu tốt hơn (Đồng < Sắt < Kim cương) sẽ đào nhanh hơn và bền hơn.\\n \\n\\n\\n Đào một số khối, như kính, sẽ phá hủy chúng hoàn toàn mà không rơi ra vật phẩm.\\n Khai thác quặng bằng công cụ không phù hợp hoặc cấp thấp cũng có thể làm mất khoáng sản.\\n ",
-      "Name": "Digging",
+      "Name": "Đào",
       "Title": "Đào Khối (Digging Blocks)"
     },
     "19": {
       "value": "\\n Để đặt một khối, chọn nó từ thanh túi đồ nhanh hoặc túi đồ chính để bạn đang cầm nó trong tay.\\n Sau đó chạm vào mặt của một khối hiện có, nơi bạn muốn khối mới được gắn vào.\\n Khối sẽ được đặt ở đó ngay lập tức, trừ khi không thể (ví dụ: đặt khối vào vị trí của người chơi).\\n \\n\\n\\n Một số vật phẩm có hành vi khác nhau nếu được gắn vào các phần khác nhau của một khối hiện có.\\n Ví dụ, cửa sập có thể được gắn vào phần trên hoặc dưới với kết quả khác nhau (mở lên trên hoặc xuống dưới).\\n Cầu thang có thể đặt xuôi hoặc ngược.\\n Đuốc có thể đặt trên sàn hoặc gắn vào tường.\\n ",
-      "Name": "Placing",
+      "Name": "Đặt",
       "Title": "Đặt Khối (Placing Blocks)"
     },
     "20": {
       "value": "\\n Một số khối có thể tương tác khi chạm vào.\\n Ví dụ: cửa, cổng, cửa sập, rương, bàn chế tạo, lò nung, nút bấm, công tắc, thùng thuốc súng (dùng diêm), lửa trại (thêm nhiên liệu), khối nội thất tương tác.\\n \\n\\n\\n Để tương tác với một khối, chỉ cần chạm vào nó một lần.\\n Hành động tương ứng sẽ được kích hoạt.\\n \\n\\n\\n Ví dụ, chạm vào một cánh cửa đóng sẽ mở nó, chạm vào lò nung sẽ mở giao diện lò nung, chạm vào nút bấm sẽ kích hoạt tín hiệu điện tạm thời.\\n Tương tác với khối nội thất có thể bật/tắt đèn, mở/đóng cửa tủ, v.v., tùy thuộc vào thiết kế nội thất.\\n ",
-      "Name": "Interacting",
+      "Name": "Tương tác",
       "Title": "Tương tác Với Khối (Interacting With Blocks)"
     },
     "21": {
       "value": "\\n Một số khối (block) có thể chỉnh sửa được.\\n Ví dụ về các khối có thể chỉnh sửa: nỏ (crossbow), băng nhớ (memory bank), súng hỏa mai (musket), bảng chân lý (truth table).\\n \\n\\n\\n Các khối có thể chỉnh sửa được đánh dấu bằng biểu tượng chỉnh sửa trong túi đồ của bạn.\\n \\n\\n\\n Để chỉnh sửa một khối trong túi đồ, hãy chọn nó để bạn cầm trên tay.\\n Nếu khối được chọn có thể chỉnh sửa, nút ngồi xổm (sneak) sẽ chuyển thành nút chỉnh sửa (edit).\\n \\n\\n\\n Để chỉnh sửa một khối đã được đặt trên mặt đất, hãy đứng gần nó và chỉ tâm màn hình vào khối đó.\\n Nếu khối trước mặt bạn có thể chỉnh sửa, nó sẽ nổi bật lên và nút ngồi xổm sẽ chuyển thành nút chỉnh sửa.\\n \\n\\n\\n Chỉnh sửa cho phép bạn thay đổi các thuộc tính nâng cao của khối.\\n Ví dụ: chỉnh sửa một chiếc nỏ sẽ cho phép bạn kéo dây và nạp mũi tên.\\n Chỉnh sửa bảng chân lý cho phép bạn xem và thiết lập các giá trị nhị phân.\\n Để khám phá vật phẩm nào có thể chỉnh sửa, hãy chú ý đến biểu tượng chỉnh sửa trên vật phẩm trong túi đồ.\\n \\n\\n\\n Nếu bạn vừa cầm một vật phẩm có thể chỉnh sửa trên tay, vừa nhìn vào một khối có thể chỉnh sửa trên địa hình, vật phẩm trên địa hình sẽ được ưu tiên hơn.\\n ",
-      "Name": "Editing",
+      "Name": "Chỉnh sửa",
       "Title": "Chỉnh sửa Khối (Edit)"
     },
     "22": {
       "value": "\\n Một số vật phẩm nhất định có thể ném được.\\n Một vài ví dụ về vật phẩm có thể ném: cục đá, giáo, gạch, quả cầu tuyết.\\n \\n\\n\\n Để ném một vật phẩm, hãy chọn nó trong túi đồ của bạn để cầm nó trên tay.\\n Nhấn và giữ một điểm trên màn hình nơi bạn muốn ném tới.\\n Tâm ngắm ném sẽ xuất hiện.\\n \\n\\n\\n Bạn có thể di chuyển tâm ngắm để tinh chỉnh hướng ném.\\n Khi bạn thả ngón tay ra, vật phẩm sẽ được ném đi.\\n Để hủy ném, hãy di chuyển tâm ngắm ra rìa màn hình.\\n \\n\\n\\n Giáo là vũ khí ném uy lực, gây ra lượng sát thương lớn khi trúng mục tiêu.\\n ",
-      "Name": "Throwing",
+      "Name": "Ném",
       "Title": "Ném Vật phẩm (Throw)"
     },
     "23": {
       "value": "\\n Tất cả vật phẩm và khối đều có thể vứt bỏ nếu bạn không còn cần chúng nữa.\\n \\n\\n\\n Để vứt một vật phẩm hoặc khối, hãy kéo nó từ ô túi đồ và thả lên màn hình.\\n Vật phẩm sẽ bay đi một khoảng ngắn và rơi xuống đất.\\n \\n\\n\\n Hãy cẩn thận, nếu bạn đứng quá gần, bạn sẽ ngay lập tức nhặt lại vật phẩm vừa vứt.\\n \\n\\n\\n Vứt vật phẩm vào lửa hoặc dung nham sẽ phá hủy chúng.\\n ",
-      "Name": "Dropping",
+      "Name": "Đánh rơi",
       "Title": "Vứt Vật phẩm (Drop)"
     },
     "24": {
       "value": "\\n Chế tạo là quá trình tạo ra các vật phẩm phức tạp hơn từ những thứ đơn giản, sử dụng bàn chế tạo (workbench) hoặc khu vực chế tạo.\\n \\n\\n\\n Để chế tạo, bạn cần đặt các nguyên liệu vào các ô chế tạo theo một khuôn mẫu cụ thể của vật phẩm đang làm.\\n Tất cả các công thức chế tạo đều có trong RECIPAEDIA (Từ điển công thức).\\n \\n\\n\\n Có hai kích thước khu vực chế tạo: 2x2 và 3x3.\\n Khu vực nhỏ hơn luôn có sẵn và có thể mở bằng cách nhấn vào nút chế tạo.\\n Để chế tạo các vật phẩm phức tạp hơn trên khu vực 3x3, bạn cần làm một cái bàn chế tạo, đặt nó ở đâu đó trong thế giới và nhấn vào nó.\\n ",
-      "Name": "Crafting",
+      "Name": "Chế tạo",
       "Title": "Chế tạo (Crafting)"
     },
     "25": {
       "value": "\\n Nung chảy là quá trình xử lý nhiệt các chất trong lò nung (furnace).\\n Có thể đặt tối đa 2 chất vào lò nung cùng một lúc.\\n \\n\\n\\n Lò nung cần nhiên liệu để hoạt động.\\n Bạn có thể sử dụng bất cứ thứ gì dễ cháy làm nhiên liệu, nhưng một số nhiên liệu sẽ tốt hơn (cháy lâu hơn) so với những loại khác.\\n Nhiên liệu tốt nhất là than đá (coal).\\n \\n\\n\\n Bạn có thể rời khỏi lò nung trong khi nó đang hoạt động. Quá trình nung sẽ tiếp tục khi bạn đi vắng.\\n Tất cả các công thức nung đều có trong RECIPAEDIA.\\n ",
-      "Name": "Smelting",
+      "Name": "luyện kim",
       "Title": "Nung chảy (Smelting)"
     },
     "26": {
       "value": "\\n Nhấn và giữ ô chứa ngăn xếp (stack) bạn muốn chia nhỏ trong khoảng 1 giây.\\n Một viền đỏ sẽ xuất hiện xung quanh nó.\\n Ô này hiện đang ở chế độ chia nhỏ.\\n Chạm vào bất kỳ ô trống nào khác, và một vật phẩm sẽ được lấy từ ô đang đánh dấu và đặt vào ô vừa chạm.\\n \\n\\n\\n Kỹ thuật này cũng có thể được sử dụng để nhanh chóng phân bổ vật phẩm từ một ngăn xếp sang nhiều ô khác, ví dụ như trên bàn chế tạo.\\n ",
-      "Name": "Splitting",
+      "Name": "Tách",
       "Title": "Chia nhỏ vật phẩm (Splitting)"
     },
     "27": {
       "value": "\\n Bạn cần khai thác để thu thập các tài nguyên cần thiết cho việc chế tạo và nung chảy.\\n Khai thác có thể đơn giản như việc đào bới ở một nơi ngẫu nhiên bằng tay không.\\n Tuy nhiên, bạn sẽ sớm nhận ra rằng đó không phải là cách khai thác hiệu quả, vì việc đào đá cứng bằng tay mất rất nhiều thời gian.\\n \\n\\n\\n Trước tiên, bạn cần chế tạo các công cụ khai thác như xẻng và cúp.\\n Bạn cũng cần đào ở nhiều nơi khác nhau để tìm các tài nguyên cụ thể.\\n Các hang động là một điểm khởi đầu tốt, vì chúng cho bạn thấy miễn phí một mặt cắt ngang lớn qua địa hình.\\n \\n\\n\\n Cần lưu ý rằng một số tài nguyên, chẳng hạn như kim cương hoặc đá khổng tước (malachite), yêu cầu công cụ làm bằng vật liệu cứng mới có thể khai thác được.\\n ",
-      "Name": "Mining",
+      "Name": "Khai thác mỏ",
       "Title": "Khai thác (Mining)"
     },
     "28": {
       "value": "\\n Trồng trọt cho phép bạn gieo trồng nhiều loại cây cho mục đích trang trí hoặc làm lương thực.\\n Để trồng cây, bạn cần có hạt giống của nó, thường lấy từ một mẫu cây đã trưởng thành hoàn toàn.\\n \\n\\n\\n Một số cây sẽ rớt ra hạt giống ngay khi thu hoạch, một số khác yêu cầu chế tạo để tách hạt.\\n Một số hạt giống sẽ chịu đựng được đất cằn cỗi, như đất thường hoặc cỏ.\\n Những loại khác, như lúa mạch đen (rye) hoặc bí ngô, yêu cầu đất cày cuốc chất lượng cao, có độ ẩm và đã được bón phân bằng diêm tiêu (saltpeter).\\n Để đảm bảo đất có độ ẩm, hãy dùng xô để tạo các rãnh nước cách đó không quá vài khối.\\n Đất ẩm có màu sẫm hơn đất khô.\\n Để cải thiện chất lượng đất hơn nữa, hãy rắc diêm tiêu (nguồn cung cấp nitơ) lên đó.\\n \\n\\n\\n Bạn cũng có thể để một số thực phẩm phân hủy, điều này sẽ tạo ra phân trộn (compost). Phân trộn đã chứa sẵn nitơ và có thể dùng thay đất để trồng cây.\\n \\n\\n\\n Cây cối có thể mất một thời gian dài để phát triển, hãy kiên nhẫn.\\n ",
-      "Name": "Farming",
+      "Name": "nông nghiệp",
       "Title": "Trồng trọt (Farming)"
     },
     "29": {
       "value": "\\n Xô được dùng để vận chuyển chất lỏng, chẳng hạn như nước hoặc dung nham.\\n Để làm đầy xô rỗng bằng chất lỏng, bạn cần tìm một khối nguồn của chất lỏng đó.\\n Ví dụ: tất cả các khối đại dương đều là khối nguồn của nước.\\n \\n\\n\\n Cầm xô rỗng trên tay, chạm vào khối nguồn để thu thập nó.\\n Khối đó sẽ bị xóa khỏi thế giới và được đặt vào trong xô.\\n \\n\\n\\n Để đổ chất lỏng ra khỏi xô, hãy chạm vào địa hình.\\n Một khối nguồn chất lỏng mới sẽ được tạo ra, và chất lỏng sẽ lan rộng từ đó.\\n Bạn có thể dùng xô rỗng để thu thập lại khối nguồn đã đặt.\\n ",
-      "Name": "Buckets",
+      "Name": "Xô",
       "Title": "Cái xô (Bucket)"
     },
     "30": {
       "value": "\\n Một số khối và vật phẩm có thể được nhuộm hoặc sơn.\\n \\n\\n\\n Để sơn gạch, đá, gỗ hoặc các khối khác, hãy làm một thùng sơn có màu thích hợp và sử dụng nó lên vật phẩm bạn muốn sơn.\\n Một thùng sơn đủ để sơn vài chục khối, sau đó nó sẽ cạn.\\n \\n\\n\\n Chất tẩy sơn (Paint stripper) có thể được dùng để tẩy sơn và khôi phục các khối về hình dạng ban đầu.\\n \\n\\n\\n Để nhuộm quần áo, hãy đặt một món đồ cùng với một thùng đầy sơn vào lò nung.\\n Bạn có thể nhuộm quần áo nhiều lần, kết hợp các màu sắc với nhau.\\n \\n\\n\\n Bạn cũng có thể nhuộm thảm theo cách tương tự.\\n \\n\\n\\n Các màu sơn có sẵn (bảng màu) có thể được tùy chỉnh trong màn hình tùy chọn thế giới.\\n Bạn cũng có thể tùy chỉnh tên của các màu.\\n Tổng số màu luôn là 16, vì vậy để tạo một màu mới, bạn cần phải hy sinh một trong những màu hiện có.\\n Việc tùy chỉnh màu sắc cũng ảnh hưởng đến quần áo, thuốc nhuộm và đồ nội thất.\\n ",
-      "Name": "Dyeing",
+      "Name": "Nhuộm",
       "Title": "Nhuộm và Sơn (Dye)"
     },
     "31": {
       "value": "\\n Điện là một cơ chế mạnh mẽ trong trò chơi, có thể được dùng để điều khiển hoạt động của một số khối nhất định.\\n Ví dụ: một bóng đèn sẽ phát sáng khi được kết nối với nguồn điện, cửa sẽ mở hoặc đóng nếu được kích hoạt bằng tín hiệu điện, và nhiều thứ khác nữa.\\n \\n\\n\\n Nếu bạn biết một chút về điện tử trong thế giới thực, bạn sẽ cảm thấy quen thuộc trong Survivalcraft.\\n Tất cả các thiết bị quen thuộc, chẳng hạn như cổng logic (AND, OR, NOT, v.v.) đều có mặt và tín hiệu được đặc trưng bởi điện áp.\\n Bạn có thể kết hợp các cổng logic để xây dựng các mạch phức tạp, thậm chí cả máy tính hoặc trò chơi điện tử (hãy xem Nội dung Cộng đồng để biết những công trình tuyệt vời của các bậc thầy thợ điện).\\n Ngoài ra còn có các cảm biến, chẳng hạn như đĩa áp lực (pressure plate), đi-ốt quang (photodiode), v.v. tạo ra các tín hiệu thay đổi tùy theo điều kiện xung quanh chúng.\\n \\n\\n\\n Để xem mô tả về tất cả các thiết bị điện có sẵn, hãy xem RECIPAEDIA.\\n \\n\\n\\n Tín hiệu điện trong trò chơi được truyền qua dây đồng và có điện áp từ 0V đến 1.5V, tăng theo từng mức 0.1V.\\n Điều này tạo ra 16 giá trị điện áp khác nhau.\\n \\n\\n\\n Các thiết bị kỹ thuật số (Digital), chẳng hạn như nút bấm, công tắc hoặc cửa chỉ hoạt động với tín hiệu kỹ thuật số có hai giá trị: thấp (0, false, tắt, không) và cao (1, true, bật, có).\\n Trong trường hợp này, điện áp dưới 0.8V biểu thị mức thấp, từ 0.8V trở lên biểu thị mức cao.\\n Thông thường nhất, tín hiệu kỹ thuật số có điện áp 0V cho mức thấp và 1.5V cho mức cao, nhưng bất kỳ giá trị nào dưới 0.8V sẽ được hiểu là mức thấp.\\n \\n\\n\\n Các thiết bị tương tự (Analog), chẳng hạn như đĩa áp lực, máy phát hiện chuyển động hoặc bóng đèn hoạt động với tín hiệu tương tự.\\n Chúng sẽ phản ứng với từng giá trị điện áp khác nhau giữa 0 và 1.5V, chứ không chỉ trạng thái thấp và cao.\\n Ví dụ: đầu vào âm lượng và cao độ của máy phát âm thanh được điều khiển bằng điện áp tương tự.\\n Âm lượng và cao độ sẽ tăng đều đặn khi điện áp cao hơn.\\n \\n\\n\\n Hãy nhớ rằng cả tín hiệu tương tự và kỹ thuật số thực chất đều giống nhau khi truyền qua dây dẫn, là một mức điện áp từ 0V đến 1.5V.\\n Chỉ có cách thiết bị diễn giải điện áp tín hiệu mới quyết định đó là tín hiệu kỹ thuật số hay tương tự.\\n \\n\\n\\n Điện áp cũng có thể được hiểu là một con số, với 0V đại diện cho 0 và 1.5V đại diện cho 15.\\n Một số thiết bị, chẳng hạn như màn hình hiển thị, bộ chuyển đổi DAC/ADC hoặc bộ đếm sử dụng cách diễn giải này.\\n \\n\\n\\n Tất cả các thiết bị điện đều có các điểm kết nối (đầu vào và đầu ra) ở các cạnh, và đôi khi ở mặt sau (mặt dính vào tường).\\n Trên các thiết bị phức tạp, chúng được biểu thị bằng các dấu chấm màu xanh dương và màu đỏ trên các cạnh của bộ phận.\\n Màu xanh dương nghĩa là đầu vào, màu đỏ nghĩa là đầu ra.\\n Số lượng dấu chấm tương đương với số thứ tự của kết nối.\\n Các thiết bị đơn giản như nút bấm, công tắc hoặc bóng đèn không có các dấu chấm này, vì chúng chỉ dùng một đầu vào/đầu ra duy nhất và có thể kết nối từ bất kỳ phía nào.\\n \\n\\n\\n Các thiết bị điện có thể được đặt trên tường, trên sàn/trần nhà (với một số ngoại lệ).\\n Khi đã đặt, chúng có thể được xoay để dễ dàng kết nối các đầu vào và đầu ra phù hợp với nhau bằng dây dẫn.\\n \\n\\n\\n Có một loại khối đặc biệt trong trò chơi, gọi là khối xuyên dây (wire-through-block), là một khối bình thường được khoan một lỗ và có đường dây điện luồn qua đó.\\n Nó rất hữu ích khi bạn muốn giấu dây điện, luồn dây xuyên qua tường, hoặc ngăn chúng kết nối với các dây khác.\\n Đó cũng là cách duy nhất để tiếp cận kết nối \"mặt sau\" của các thiết bị có tính năng này.\\n \\n\\n\\n Điện trong Survivalcraft được xử lý ở tần số 100Hz.\\n Có nghĩa là điện áp truyền từ thiết bị này sang thiết bị khác trong 0.01 giây, bất kể chiều dài của dây dẫn.\\n Nếu cần làm trễ tín hiệu, bạn có thể đặt một số phần tử trung tính trên đường đi của nó (ví dụ: cổng OR hoặc một cặp cổng NOT).\\n Mỗi phần tử thêm vào trên đường truyền sẽ làm trễ tín hiệu đi 0.01 giây.\\n Để có độ trễ lâu hơn, hãy sử dụng Cổng Trễ Có Thể Điều Chỉnh (Adjustable Delay Gate), có thể tạo ra độ trễ lên tới 2.55 giây.\\n \\n\\n\\n Điện là một chủ đề phức tạp và việc tạo ra các cỗ máy lớn hoạt động được đòi hỏi phải học hỏi, nhưng sẽ rất thỏa mãn.\\n Tuy nhiên, ai cũng có thể chế tạo các thiết bị đơn giản.\\n Ví dụ: hãy thử đặt một nút bấm cạnh bản lề của một cánh cửa.\\n Bạn sẽ thấy một sợi dây điện xuất hiện, việc bấm nút giờ đây sẽ điều khiển cánh cửa!\\n Tất cả những lời giải thích nghe có vẻ đáng sợ về điện áp, tín hiệu, kỹ thuật số và tương tự, nhưng trên thực tế nó lại đơn giản đến vậy.\\n \\n\\n\\n Một công trình dễ làm khác có thể là công tắc đèn.\\n Đặt một bóng đèn trên trần nhà và một công tắc (không phải nút bấm) trên tường.\\n Sau đó nối chúng lại bằng một sợi dây.\\n Công tắc lúc này sẽ điều khiển đèn, giống y hệt như trong một căn phòng thực sự!\\n \\n\\n\\n Survivalcraft hướng đến sự chân thực nhiều hơn các trò chơi cùng thể loại, và điện cũng không ngoại lệ.\\n Những gì bạn học được ở đây có thể vô giá khi bạn được học những điều này ở trường, hoặc phải dùng nó để kiếm sống.\\n \\n\\n\\n Hãy khám phá và vui chơi nhé!\\n ",
-      "Name": "Electricity",
+      "Name": "Điện",
       "Title": "Điện (Electric)"
     },
     "32": {
       "value": "\\n Trong Survivalcraft, bạn có thể thiết kế và sử dụng các khối nội thất (furniture) tùy chỉnh.\\n \\n\\n\\n Các khối nội thất được tạo hình từ tối đa 256x256x256 các khối phụ (sub-blocks) nhỏ hơn.\\n Các khối phụ trong một khối nội thất có thể được làm từ các vật liệu khác nhau và sơn thành các màu khác nhau.\\n Thông qua việc chế tạo, các khối nội thất có thể được kết hợp, làm thành dạng tương tác hoặc kết nối để hoạt động bằng điện.\\n Các thiết kế nội thất có thể được kết hợp thành các gói, chia sẻ giữa các thế giới và tải lên Nội dung Cộng đồng.\\n \\n\\n\\n Để thiết kế và tạo nội thất, hãy dùng công cụ búa.\\n Bạn cần xây dựng thiết kế từ các khối thông thường trong thế giới, sau đó dùng búa gõ vào cấu trúc thu được để thu nhỏ nó lại.\\n Cửa sổ thiết kế nội thất sẽ xuất hiện, nơi bạn có thể tinh chỉnh bằng cách di chuyển, xoay và thay đổi độ phân giải (từ 2x2x2 đến 256x256x256).\\n Khi đã hài lòng với thiết kế, bạn có thể xác nhận.\\n \\n\\n\\n Trong chế độ sáng tạo, thiết kế sẽ biến thành một khối nội thất duy nhất, và các khối nguồn ban đầu tạo nên thiết kế đó sẽ vẫn còn trong thế giới.\\n Trong chế độ sinh tồn, thiết kế sẽ biến thành nhiều bản sao của khối nội thất (số lượng tùy thuộc vào độ phân giải) và các khối nguồn sẽ bị tiêu thụ.\\n Khối nội thất có thể đặt trong thế giới theo 4 hướng, tương tự như lò nung hoặc cái thang.\\n \\n\\n\\n Không phải khối nào cũng dùng được cho thiết kế nội thất.\\n Ví dụ: đất hoặc cỏ sẽ bị công cụ búa bỏ qua.\\n Các vật liệu được phép bao gồm: ván gỗ, đá granite, đá bazan, cát, đất sét, đá cuội, gạch đá, sa thạch, đá cẩm thạch, gạch, than đá, đá khổng tước, kim cương, đồng, sắt, kính, thảm, đuốc, đèn liễu gai, nước, dung nham.\\n Các khối nguồn của thiết kế có thể được sơn hoặc nhuộm để làm cho món đồ nhiều màu sắc hơn.\\n Nội thất hoàn thiện cũng có thể được sơn, nó sẽ bao phủ đè lên bất kỳ màu sắc nào của các khối nguồn ban đầu.\\n \\n\\n\\n Một số khối nguồn có chức năng đặc biệt.\\n Ví dụ, khối đuốc/đèn sẽ khiến món đồ nội thất có ngọn lửa bám vào ngay tại vị trí đặt khối đó.\\n Thiết kế đó cũng sẽ phát ra ánh sáng.\\n \\n\\n\\n Bạn phải cẩn thận khi cấu trúc đồ nội thất để tránh đặt thiết kế trên một nền làm bằng vật liệu được cho phép (ví dụ như cát).\\n Công cụ búa sẽ không phân biệt được đâu là khối bạn đặt và đâu là khối nền, và sẽ cố gắng gộp luôn phần nền vào thiết kế.\\n Điều này rất có thể gây ra lỗi \"thiết kế quá lớn\" (design too large), bởi vì kích thước tối đa của một thiết kế ở bất kỳ chiều nào là 256 khối.\\n \\n\\n\\n Khi khối nội thất đã được tạo, bạn có thể dùng bàn chế tạo để kết hợp nó với các khối khác theo nhiều cách.\\n Các cách kết hợp sau đây là khả thi:\\n \\n\\n\\n * Kết hợp nhiều món nội thất thành một để tạo ra nội thất tương tác.\\n Nội thất tương tác sẽ chuyển đổi qua lại giữa các thiết kế cấu thành nó khi bạn nhấn vào hoặc có tín hiệu điện.\\n Bạn có thể tạo cửa đóng mở, đèn bật tắt, bệ nâng, v.v.\\n Có thể kết hợp tối đa 9 món nội thất (sức chứa tối đa của bàn chế tạo).\\n \\n\\n\\n * Kết hợp chính xác một thiết kế nội thất với một nút bấm điện để tạo thành nút bấm tùy chỉnh.\\n Món đồ nội thất tạo ra sẽ hoạt động y như một nút bấm.\\n \\n\\n\\n * Kết hợp chính xác hai thiết kế nội thất với một công tắc điện để tạo thành công tắc tùy chỉnh.\\n Món đồ nội thất tạo ra sẽ hoạt động y như một công tắc, với hai món nội thất đóng vai trò là hai trạng thái của công tắc đó.\\n \\n\\n\\n * Kết hợp nhiều món nội thất bằng một đường dây điện để tạo ra nội thất tương tác được kết nối.\\n Món đồ này sẽ hoạt động giống như nội thất tương tác, nhưng việc chuyển đổi trạng thái của nó cũng sẽ chuyển đổi tất cả các món đồ nội thất tương tác lân cận được kết nối với nó.\\n Bạn có thể tạo ra các cấu trúc nhiều khối có khả năng chuyển đổi trạng thái, ví dụ như những cánh cửa lớn.\\n \\n\\n\\n Tại bảng nội thất trong túi đồ sáng tạo, bạn có thể xem và sắp xếp các thiết kế của mình.\\n Bạn hãy tạo các bộ nội thất được đặt tên để phân loại chúng.\\n Các thiết kế mới tạo sẽ được đưa vào bộ \"Chưa phân loại\" (Uncategorized). Bộ này có một chức năng đặc biệt.\\n Bất kỳ thiết kế nào nằm trong bộ này, nếu không tồn tại ở đâu khác trong thế giới (không có dưới dạng vật phẩm hay khối đã đặt) sẽ tự động bị tái chế.\\n Hãy cẩn thận và di chuyển các thiết kế có giá trị sang các bộ nội thất được đặt tên để tránh vô tình làm mất chúng.\\n Mỗi bộ nội thất đã đặt tên có thể chuyển thành một gói nội thất và xuất ra khỏi thế giới.\\n Sau này bạn có thể nhập nó vào các thế giới khác hoặc tải lên Dropbox/Thẻ SD để chia sẻ với mọi người.\\n Các gói nội thất cũng có thể được tải lên nội dung cộng đồng.\\n \\n\\n\\n Hệ thống nội thất có những hạn chế nhất định:\\n \\n\\n\\n * Một khối nội thất có thể được làm từ tối đa 256x256x256 khối phụ.\\n \\n\\n\\n * Khối lượng hình học cho một thiết kế không được vượt quá 65535 hình tam giác.\\n Trò chơi sử dụng một thuật toán chia lưới thông minh giúp tối ưu hóa hình học, nên 65535 hình tam giác là quá đủ cho các thiết kế khá phức tạp, trừ khi bạn thực sự làm quá tay.\\n Để giảm số lượng hình tam giác, bạn có thể giảm bớt các chi tiết nhỏ, giảm số khối được sơn và lấp đầy các lỗ hổng bên trong thiết kế.\\n \\n\\n\\n * Bạn chỉ có thể lưu giữ tối đa 8192 thiết kế nội thất độc nhất trong thế giới.\\n Mỗi khi bạn sơn một món nội thất hoặc kết hợp nó với món khác, bạn đang tạo ra những thiết kế mới được tính vào tổng số đó.\\n Những thiết kế không được sử dụng (không tồn tại trong thế giới dưới dạng vật phẩm hoặc khối, và đang nằm trong bộ \"chưa phân loại\" ở túi đồ) sẽ tự động bị tái chế.\\n ",
-      "Name": "Furniture",
+      "Name": "Nội thất",
       "Title": "Đồ nội thất (Furniture)"
     },
     "33": {
       "value": "\\n Pít-tông (Pistons) là các khối có thể đẩy hoặc kéo các khối khác. \\n Pít-tông sẽ vươn ra hoặc co lại tùy thuộc vào điện áp truyền cho chúng.\\n Chúng có thể được đặt hướng về bất kỳ phía nào.\\n \\n\\n\\n Có 3 loại pít-tông: pít-tông đẩy (push piston), pít-tông kéo (pull piston) và pít-tông kéo nghiêm ngặt (strict pull piston).\\n \\n\\n\\n Pít-tông đẩy có thể đẩy tối đa 8 khối khi vươn ra, nhưng chúng không kéo các khối đó lại khi co vào.\\n \\n\\n\\n Pít-tông kéo hoạt động giống pít-tông đẩy, nhưng ngoài ra chúng còn kéo tối đa 8 khối ngược trở lại khi co vào.\\n \\n\\n\\n Pít-tông kéo nghiêm ngặt hoạt động giống pít-tông kéo bình thường, nhưng chúng sẽ không co vào trừ khi kéo đủ số lượng khối.\\n \\n\\n\\n Điện áp truyền cho pít-tông quyết định độ dài vươn ra.\\n Bất kỳ điện áp nào dưới 0.8V pít-tông sẽ co lại. 0.8V là vươn ra một khối, 0.9V là hai khối, v.v.\\n 1.5V tương đương với việc vươn ra tối đa 8 khối.\\n Pít-tông sẽ chỉ phản ứng với sự thay đổi điện áp khi nó không di chuyển.\\n Nó sẽ luôn hoàn thành bước di chuyển hiện tại trước khi bắt đầu một lệnh di chuyển khác.\\n \\n\\n\\n Pít-tông có thể được chỉnh sửa.\\n Bạn có thể điều chỉnh độ vươn tối đa, số lượng khối được kéo và tốc độ di chuyển.\\n \\n\\n\\n Một số khối nhất định không thể bị pít-tông dịch chuyển.\\n Chúng bao gồm khối kim cương và bất kỳ pít-tông nào đang vươn ra.\\n\\n Trong phiên bản API, các khối chứa túi đồ (như rương, bàn chế tạo, lò nung, v.v.) hiện đã có thể bị pít-tông đẩy.\\n Tuy nhiên, pít-tông đang co lại có thể bị các pít-tông khác dịch chuyển.\\n Điều này mở ra một thế giới đầy tiềm năng với những cỗ máy phức tạp, nơi pít-tông di chuyển các pít-tông khác.\\n Pít-tông cũng sẽ chặn chất lỏng khi vươn ra, vì vậy bạn có thể dùng chúng để làm van.\\n \\n\\n\\n Hãy dùng pít-tông để làm cửa, thang máy, bệ di động và đủ loại máy móc tinh xảo khác.\\n ",
-      "Name": "Pistons",
+      "Name": "Piston",
       "Title": "Pít-tông (Pistons)"
     },
     "34": {
       "value": "\\n Mặc quần áo giúp giữ ấm ở vùng khí hậu lạnh và tăng cường áo giáp bảo vệ khi chiến đấu.\\n Bạn cần quần áo dày để sống sót trong bất kỳ khoảng thời gian nào ở các khu vực lạnh giá trên thế giới.\\n \\n\\n\\n Mức độ cách nhiệt được đo bằng đơn vị CLO.\\n Ví dụ: 0.0 CLO là cơ thể trần truồng, 1.0 CLO là quần áo mỏng, 3.0 CLO là cách nhiệt mạnh.\\n \\n\\n\\n Bạn có thể mở giao diện quần áo bằng nút Quần áo (Clothing).\\n Có 4 ô quần áo trên cơ thể bạn: đầu, thân, chân và bàn chân.\\n Mỗi ô có thể mặc nhiều món đồ, xếp chồng lên nhau.\\n Hiệu quả của nhiều món quần áo sẽ được cộng dồn lại.\\n \\n\\n\\n Không phải thứ gì cũng có thể mặc đè lên nhau, ví dụ bạn không thể mặc một chiếc áo thun bên ngoài một chiếc áo khoác lông thú.\\n \\n\\n\\n Mặc quần áo dày ở một vị trí nhưng lại để trần ở vị trí khác sẽ không mang lại nhiều hiệu quả cách nhiệt.\\n Bắt buộc phải che kín toàn bộ cơ thể để thực sự nhận được lợi ích từ quần áo.\\n Món đồ mỏng nhất trên người chính là thứ quyết định lượng nhiệt mà nhân vật sẽ mất đi.\\n ",
-      "Name": "Clothing",
+      "Name": "Quần áo",
       "Title": "Quần áo (Clothing)"
     },
     "35": {
       "value": "\\n Mặc áo giáp hoặc quần áo dày sẽ giảm bớt hoặc thậm chí loại bỏ hoàn toàn các chấn thương khi chiến đấu.\\n Áo giáp sẽ hấp thụ các đòn đánh, sao cho chúng làm hỏng áo giáp thay vì làm thân thể bạn bị thương.\\n Khi áo giáp chịu quá nhiều sát thương, nó sẽ vỡ vụn.\\n \\n\\n\\n Khi bị tấn công, bạn sẽ nhận một đòn đánh ngẫu nhiên vào một trong bốn vị trí trên cơ thể: đầu, thân, chân hoặc bàn chân.\\n Nếu không có áo giáp ở vị trí đó, bạn sẽ phải chịu toàn bộ sát thương, bất kể bạn có mặc bao nhiêu áo giáp ở chỗ khác.\\n Vị trí có nguy cơ bị trúng đòn cao nhất là phần thân, tiếp theo là chân.\\n Mặc giáp phần thân sẽ chặn được 60% đòn đánh, kết hợp cả thân và chân sẽ chặn được 80%.\\n Giáp đầu và bàn chân ít quan trọng hơn, trừ khi bạn muốn an toàn tuyệt đối 100%.\\n \\n\\n\\n Áo giáp mạnh nhất được làm từ sắt và kim cương.\\n Giai đoạn đầu game, bạn có thể chế tạo áo giáp thân bằng gỗ từ que gỗ và sợi chỉ.\\n Nó không chắc chắn lắm nhưng sẽ chịu được vài đòn đánh, có khả năng cứu mạng bạn.\\n \\n\\n\\n Ngay cả quần áo thường cũng có chỉ số giáp nhất định, đặc biệt là loại dày làm từ da và lông thú.\\n Chúng không ngăn chặn được mọi đòn đánh mà chỉ giảm bớt một phần sát thương.\\n \\n\\n\\n Mặc áo giáp nặng sẽ làm bạn chìm xuống đáy và chết đuối, hãy cẩn thận khi ở gần vùng nước sâu.\\n ",
-      "Name": "Armor",
+      "Name": "Giáp",
       "Title": "Áo giáp (Armor)"
     },
     "36": {
       "value": "\\n Thuyền có thể được dùng để di chuyển qua các vùng nước lớn một cách nhanh chóng và an toàn.\\n \\n\\n\\n Nếu không có thuyền, bạn có nguy cơ chết đuối do kiệt sức hoặc bị tấn công bởi những sinh vật nguy hiểm dưới nước.\\n \\n\\n\\n Để chế tạo thuyền, bạn cần rất nhiều gỗ và một cái bàn chế tạo.\\n Sau khi thuyền được chế tạo, nó có thể được đặt trên bờ và bạn có thể leo lên giống y hệt như cưỡi ngựa.\\n \\n\\n\\n Bạn chỉ có thể điều khiển thuyền khi nó ở dưới nước.\\n ",
-      "Name": "Boats",
+      "Name": "Thuyền",
       "Title": "Thuyền (Boat)"
     },
     "37": {
       "value": "\\n Đôi khi bạn bị mắc kẹt, lựa chọn duy nhất là buộc hồi sinh (force respawn) tại chỗ ngủ cuối cùng của bạn.\\n \\n\\n\\n Để làm điều đó, hãy mở màn hình cơ thể và nhấn liên tục vào nút hình hộp sọ và xương chéo.\\n ",
-      "Name": "ForceRespawn",
+      "Name": "Buộc hồi sinh",
       "Title": "Buộc Hồi sinh (Force Respawn)"
     },
     "38": {
@@ -3006,13 +3060,13 @@
     },
     "39": {
       "value": "\\n Trò chơi cho phép bạn nhập và xuất các thế giới vào Thẻ SD với mục đích chia sẻ và sao lưu.\\n \\n\\n\\n Nếu thiết bị của bạn không có Thẻ SD, thư mục lưu trữ ngoài chung sẽ được sử dụng.\\n Vị trí của dữ liệu trên thiết bị thường nằm tại /sdcard/Survivalcraft2.4_API1.8\\n ",
-      "Name": "SDCard",
+      "Name": "Thẻ SD",
       "Title": "Thẻ SD (SDCard)",
       "DisabledPlatforms": "Ios, Windows81, WindowsPhone81, Desktop"
     },
     "40": {
       "value": "\\n Trò chơi cho phép bạn duyệt qua danh sách các thế giới, kết cấu khối và các vật phẩm khác được chia sẻ bởi những thành viên khác trong cộng đồng Survivalcraft, và tải chúng xuống.\\n \\n\\n\\n Khi bạn tạo ra được thứ gì đó thú vị, bạn cũng có thể xuất bản nó thông qua dịch vụ này, và nó sẽ hiện lên trong danh sách để bất kỳ ai cũng có thể tải về.\\n \\n\\n\\n Để xuất bản thứ gì đó, trước tiên bạn cần đưa nó lên mạng để mọi người đều có thể truy cập.\\n Nơi dễ sử dụng nhất là Dropbox, mặc dù bạn có thể dùng bất kỳ nhà cung cấp nào khác.\\n Sau khi hoàn tất, bạn có thể xuất bản liên kết tải thông qua hộp thoại \"Xuất bản Liên kết\" (Publish Link) trong trò chơi.\\n \\n\\n\\n Lưu ý: máy chủ không lưu trữ nội dung của bạn, chỉ lưu liên kết.\\n Nó hoạt động giống y như một công cụ tìm kiếm.\\n Bạn chịu trách nhiệm duy trì dữ liệu để người khác có thể truy cập thông qua liên kết đã xuất bản.\\n Hãy cẩn trọng về việc vượt quá giới hạn băng thông của nhà cung cấp, vì việc có một liên kết nằm gần đầu danh sách sẽ khiến nội dung của bạn nhận được hàng nghìn lượt tải chỉ trong thời gian ngắn.\\n ",
-      "Name": "Community",
+      "Name": "Cộng đồng",
       "Title": "Nội dung Cộng đồng (Community)"
     }
   },
@@ -3167,12 +3221,12 @@
       "4": "Cài đặt",
       "5": "Trợ giúp",
       "6": "Phiên bản Đầy đủ...",
-      "7": "Bản quyền 2011-2025 Candy Rufus Games.",
+      "7": "Bản quyền 2011-2026 Candy Rufus Games.",
       "8": "Truy cập ",
       "9": "kaalus.wordpress.com",
       "10": " để biết thêm thông tin.",
       "11": "Xem Thông báo",
-      "12": "API Home Page: ",
+      "12": "Trang chủ API: ",
       "13": "Tắt chế độ an toàn"
     },
     "ManageContentScreen": {
@@ -3289,7 +3343,9 @@
       "13": "Tệp tin nhật ký",
       "14": "Liên kết tệp",
       "15": "Chia sẻ tệp nhật ký",
-      "16": "Chế độ An toàn"
+      "16": "Chế độ an toàn",
+      "17": "Tương Thích Mod:",
+      "18": "Quản lý lớp thay thế"
     },
     "SettingsControlsScreen": [
       "Điều chỉnh Cài đặt Điều khiển",
@@ -3320,30 +3376,35 @@
       "Ngưỡng kích hoạt tay cầm:",
       "Vòng lặp kho ngắn:",
       "Gán phím bàn phím:",
-      "Gán nút tay cầm:"
+      "Gán nút tay cầm:",
+      "Gán phím điều khiển Vr:",
+      "Điều khiển nhìn VR:",
+      "Điều khiển di chuyển VR:"
     ],
     "CameraManageScreen": {
-    "Enable": "Bật",
-    "Disable": "Tắt",
-    "Enabled": "Bật",
-    "Disabled": "Tắt",
-    "Tip": "Quản lý thứ tự chuyển đổi góc nhìn. Các camera bị tắt sẽ bị bỏ qua. Bật ít nhất hai camera.",
-    "Reset": "Đặt lại",
-    "ResetTitle": "Đặt Lại Tất Cả Camera",
-    "ResetText": "Bạn chắc chứ?\nThao tác này sẽ đặt lại danh sách camera về mặc định."
-   },
-   "KeyboardMappingScreen": {
-     "SetKey": "Đặt phím",
-     "DisableKey": "Tắt phím",
-     "Reset": "Đặt lại",
-     "ResetTitle": "Đặt lại tất cả phím",
-     "ResetText": "Bạn chắc chứ?\nThao tác này sẽ đặt tất cả các phím về mặt định."
-  },
+      "Enable": "Bật",
+      "Disable": "Tắt",
+      "Enabled": "Bật",
+      "Disabled": "Tắt",
+      "Tip": "Quản lý thứ tự chuyển đổi góc nhìn. Các camera bị tắt sẽ bị bỏ qua. Bật ít nhất hai camera.",
+      "Reset": "Đặt lại",
+      "ResetTitle": "Đặt Lại Tất Cả Camera",
+      "ResetText": "Bạn chắc chứ?\nThao tác này sẽ đặt lại danh sách camera về mặc định."
+    },
+    "KeyboardMappingScreen": {
+      "SetKey": "Đặt phím",
+      "DisableKey": "Tắt phím",
+      "Reset": "Đặt lại",
+      "ResetTitle": "Đặt lại tất cả phím",
+      "ResetText": "Bạn chắc chứ?\nThao tác này sẽ đặt tất cả các phím về mặt định.",
+      "GameHelp": "Trợ giúp trò chơi"
+    },
     "SettingsGraphicsScreen": {
       "1": "Điều chỉnh Cài đặt Đồ họa",
       "2": "Thực tế Ảo:",
       "3": "Độ sáng Vùng tối:",
-      "4": "Góc nhìn Camera:"
+      "4": "Góc nhìn Camera:",
+      "5": "Độ lệch chiều cao mắt VR:"
     },
     "SettingsPerformanceScreen": {
       "1": "Điều chỉnh Cài đặt Hiệu năng",
@@ -3386,7 +3447,9 @@
       "Giấu Crosshair:",
       "Chiều cao ảnh chụp",
       "Tỷ lệ ảnh chụp",
-      "Hiển thị tràn viền"
+      "Hiển thị tràn viền",
+      "Kích thước UI VR:",
+      "Gắn UI VR vào tay trái:"
     ],
     "TrialEndedScreen": {
       "1": "Ngày đã kết thúc",
@@ -3438,6 +3501,9 @@
       "5": " (Hiện tại)",
       "6": " (Mới nhất)",
       "20": "Lỗi khi lấy danh sách phiên bản {0}. Lý do:\n{1}"
+    },
+    "ManageClassSubstitutesScreen": {
+      "1": "Quản lý thay thế lớp"
     },
     "BestiaryItem": {
       "1": "",
@@ -3686,7 +3752,7 @@
     "EditTruthTableDialog": {
       "1": "Chỉnh sửa Bảng Chân lý",
       "2": "Bảng chân lý xác định giá trị đầu ra cho tất cả các kết hợp đầu vào có thể.",
-      "3": "    In4   In3   In2   In1        Out",
+      "3": "    Vào4   Vào3   Vào2   Vào1        Ra",
       "4": " 0 0 0 0",
       "5": " 0 0 0 1",
       "6": " 0 0 1 0",
@@ -3734,7 +3800,7 @@
       "15": "D-Pad Xuống",
       "16": "D-Pad Trái/Phải",
       "17": "D-Pad Lên/Xuống",
-      "18": "Back/Select/Pause",
+      "18": "Quay lại/Chọn/Tạm dừng",
       "19": "L2/LT + A",
       "20": "2x A",
       "21": "A / R1/RB",
@@ -3898,6 +3964,28 @@
       "5": "Cài lại",
       "6": "OK",
       "7": "Hủy"
+    },
+    "SelectCommunityServerDialog": {
+      "1": "Chọn máy chủ cộng đồng",
+      "2": "Mở",
+      "3": "Thêm",
+      "4": "Sửa"
+    },
+    "EditCommunityServerInfoDialog": {
+      "1": "Sửa máy chủ",
+      "2": "Loại*: ",
+      "3": "Gốc",
+      "4": "Trung Quốc",
+      "5": "Tên*: ",
+      "6": "URL API*: ",
+      "7": "URL trang web: ",
+      "8": "OK",
+      "9": "Xóa",
+      "10": "Hủy"
+    },
+    "SelectClassSubstituteDialog": {
+      "1": "Chọn lớp nào để dùng",
+      "2": "Lưu ý: Một trong hai tùy chọn có thể khiến trò chơi bị lỗi."
     }
   },
   "FireworksBlock": {
@@ -3927,9 +4015,12 @@
       "3": " (Thấp)",
       "4": " (Cao)"
     },
-    "CRDescription": "Make fireworks"
+    "CRDescription": "Làm pháo hoa"
   },
   "WorldPalette": {
+    "0": "Màu không hợp lệ.",
+    "1": "Tên màu không hợp lệ.",
+    "2": "Tên màu không hợp lệ.",
     "Colors": [
       "Trắng",
       "Xanh Lơ Nhạt",
@@ -3947,10 +4038,7 @@
       "Xanh Lá",
       "Đỏ",
       "Đen"
-    ],
-    "0": "Màu không hợp lệ.",
-    "1": "Tên màu không hợp lệ.",
-    "2": "Tên màu không hợp lệ."
+    ]
   },
   "Database": {
     "DisplayName": {
@@ -4106,6 +4194,381 @@
       "45": "",
       "46": "Loài chim nhỏ sống ở vùng ôn đới. Thỉnh thoảng đẻ trứng nhỏ, ăn được. Không ăn được.",
       "47": "Loài chim nhỏ bé sống ở vùng ôn đới. Thỉnh thoảng đẻ trứng rất nhỏ nhưng ăn được. Không ăn được."
+    },
+    "DescriptionAttribute": {
+      "1": "Chứa dữ liệu về trứng sinh vật",
+      "2": "Có hoán đổi UV tọa độ kết cấu hay không, xoay ánh xạ 90 độ",
+      "3": "Chỉ mục khe kết cấu để sử dụng trong kết cấu trứng",
+      "4": "Liệu trứng có sẵn trong khoảng không quảng cáo hay không",
+      "5": "Màu sắc của trứng",
+      "6": "Giá trị dinh dưỡng của trứng chưa nấu chín",
+      "7": "Tỷ lệ áp dụng cho tọa độ UV",
+      "8": "Tên hiển thị của mặt hàng trứng",
+      "9": "Quy mô của trứng",
+      "10": "Chỉ số của trứng hoặc -1 nếu sinh vật không có trứng",
+      "11": "Chứa văn bản ký hiệu",
+      "12": "Chứa dữ liệu cây non",
+      "13": "Danh sách các vị trí lá cần kiểm tra độ sâu",
+      "14": "Chứa thông tin về bộ đồ nội thất",
+      "15": "Chứa thông tin về thiết kế nội thất",
+      "16": "Danh sách các vị trí nam châm trên thế giới",
+      "17": "Chứa chất nổ tích cực",
+      "18": "Chứa dữ liệu khối thu gọn",
+      "19": "Cho phép tìm kiếm các thực thể theo tên",
+      "20": "Cho phép truy cập vào màu sắc và tên của bảng màu thế giới",
+      "21": "Sinh sản và hồi sinh người chơi, quản lý vị trí sinh sản",
+      "22": "Chứa dữ liệu người chơi",
+      "23": "Chỉ mục người chơi tiếp theo sẽ sử dụng khi thêm người chơi mới",
+      "24": "Vị trí sinh sản chung cho tất cả người chơi hoặc 0,0,0 nếu chưa được đặt",
+      "25": "Xếp hàng đợi cập nhật ô và áp dụng chúng theo định kỳ để tránh cập nhật từng đoạn liên tục",
+      "26": "Tìm đường đi qua địa hình",
+      "27": "Quản lý các vật phẩm có thể chọn (các vật phẩm được tạo khi thu hoạch một khối)",
+      "28": "Chứa các mục có thể chọn, mỗi mục có một bộ thông số riêng biệt",
+      "29": "Định kỳ quét tất cả các vật phẩm trên toàn thế giới và kích hoạt một sự kiện với danh sách",
+      "30": "Tự động sinh ra và loại bỏ các thực thể xung quanh vị trí xem",
+      "31": "Chứa dữ liệu của các thực thể bị loại bỏ",
+      "32": "Quản lý mưa và tuyết",
+      "33": "Cường độ sét của thời tiết hiện tại, 0 đến 1",
+      "34": "Thời điểm mà thời tiết sẽ kết thúc",
+      "35": "Thời điểm thời tiết bắt đầu hoặc sẽ bắt đầu",
+      "36": "Thời điểm sương mù sẽ tan",
+      "37": "Thời điểm sương mù bắt đầu hoặc sẽ bắt đầu",
+      "38": "Quản lý thời gian trò chơi không liên tục",
+      "39": "Gọi Update() trên IUpdateables",
+      "40": "Quản lý tiếng ồn được AI sử dụng",
+      "41": "Xử lý kết xuất, cập nhật, tuần tự hóa và va chạm địa hình",
+      "42": "Định kỳ quét tất cả các khối trong địa hình và gọi hàm Poll",
+      "43": "Danh mục thẻ thăm dò địa hình",
+      "44": "Điểm bỏ phiếu chunk hiện tại",
+      "45": "Tọa độ đoạn bỏ phiếu hiện tại",
+      "46": "Quản lý thời gian trong ngày",
+      "47": "Bù trừ thời gian trong ngày, tính bằng ngày",
+      "48": "Giữ thông tin trò chơi, chẳng hạn như tổng thời gian đã trôi qua, hạt giống và tên thế giới",
+      "49": "Chế độ trò chơi của thế giới",
+      "50": "Chế độ hành vi môi trường của thế giới",
+      "51": "Chế độ thời gian trong ngày của thế giới",
+      "52": "Cấp độ tạo địa hình, tính bằng khối",
+      "53": "Tổng thời gian dành cho trò chơi, tính bằng giây",
+      "54": "Hạt giống thế giới",
+      "55": "Chế độ trò chơi của thế giới",
+      "56": "Hiệu ứng thời tiết có được bật hay không",
+      "57": "Tên của thế giới",
+      "58": "Chuỗi hạt giống của thế giới",
+      "59": "Sinh ra các sinh vật xung quanh vị trí xem",
+      "60": "Xử lý các khối di chuyển",
+      "61": "Quản lý các cơ thể vật lý và cho phép truy vấn không gian và truyền sóng",
+      "62": "Hiển thị bầu trời và các thiên thể",
+      "63": "Quản lý số liệu thống kê người chơi",
+      "64": "Quản lý các thực thể được liên kết với các khối địa hình",
+      "65": "Quản lý đạn",
+      "66": "Chứa các đường đạn, mỗi đường đạn nằm trong một bộ tham số riêng",
+      "67": "Quản lý các phần tử điện và dây điện",
+      "68": "Danh sách các điện áp của các phần tử điện, theo tế bào. Dấu chấm phẩy được phân tách.",
+      "69": "Quản lý các mùa",
+      "70": "Phát âm thanh và quản lý tắc nghẽn âm thanh",
+      "71": "Phát âm thanh và quản lý tắc nghẽn âm thanh",
+      "72": "Hiển thị họa tiết hoạt hình",
+      "73": "Hiển thị bóng của vật thể",
+      "74": "Quản lý GameViewWidget và máy ảnh",
+      "75": "Hiển thị tất cả các ComponentModels trong dự án",
+      "76": "Áp dụng các hiệu ứng xử lý hậu kỳ",
+      "77": "Tên của bộ xử lý hậu kỳ sẽ sử dụng hoặc chuỗi trống nếu không có",
+      "78": "Quản lý kết cấu khối",
+      "79": "Gọi Draw() trên IDrawables, lưu trữ các tham số vị trí, hướng và hình chiếu của chế độ xem",
+      "80": "Tạo, vẽ và cập nhật hệ thống hạt",
+      "81": "Hiển thị bóng của vật thể",
+      "82": "Phát âm thanh và quản lý tắc nghẽn âm thanh",
+      "83": "Phát âm thanh xung quanh",
+      "84": "Phát âm thanh dựa trên vật liệu",
+      "85": "Thư mục âm thanh để phát khi sinh vật đang đi trên các loại bề mặt khác nhau",
+      "86": "Chứa các ngân hàng bộ nhớ liên kết với các mục",
+      "87": "Chứa các ngân hàng bộ nhớ liên kết với các khối",
+      "88": "Hành vi khiến sinh vật tuân theo mệnh lệnh của người cưỡi",
+      "89": "Hành vi loại bỏ một tay đua không mong muốn",
+      "90": "Hành vi khiến một sinh vật chạy cùng với các động vật khác để phản ứng với tiếng ồn",
+      "91": "Hành vi khiến chim bay vòng tròn",
+      "92": "Tìm đường đến đích và sử dụng Pilot để đến đích",
+      "93": "Hành vi khiến cá tránh xa kẻ tấn công hoặc nguy hiểm",
+      "94": "Chạy trốn khi sức khỏe của nó thấp hơn giá trị",
+      "95": "Hành vi khiến sinh vật đuổi theo kẻ xâm nhập",
+      "96": "Xác suất sinh vật đó sẽ đuổi theo khi bị tấn công",
+      "97": "Thời gian rượt đuổi khi sinh vật bắt đầu rượt đuổi trong đêm, tính bằng giây",
+      "98": "Phạm vi khi sinh vật bắt đầu rượt đuổi trong ngày",
+      "99": "Sinh vật có nên đuổi theo nếu bị sinh vật AutoChaseMask chạm vào không",
+      "100": "Thời gian rượt đuổi khi sinh vật bắt đầu rượt đuổi trong ngày, tính bằng giây",
+      "101": "Phạm vi khi sinh vật bắt đầu đuổi theo trong đêm",
+      "102": "Các loại sinh vật để đuổi theo",
+      "103": "Xác suất sinh vật đuổi theo mục tiêu không phải của người chơi khi ở trong phạm vi, 0 đến 1",
+      "104": "Hành vi khiến sinh vật di chuyển xa hơn khỏi người chơi",
+      "105": "Hành vi khiến sinh vật ăn ngẫu nhiên",
+      "106": "Nếu đúng, sinh vật sẽ tự kiếm ăn ngẫu nhiên",
+      "107": "Hành vi khiến cá nhảy xung quanh",
+      "108": "Hành vi khiến sinh vật tiến gần hơn đến người chơi",
+      "109": "Chọn hành vi hoạt động dựa trên giá trị quan trọng",
+      "110": "Hành vi bơi cá ngẫu nhiên",
+      "111": "Xác định vị trí đích và điều khiển sinh vật tiếp cận vị trí đó",
+      "112": "Hành vi khiến chim bay về nơi an toàn",
+      "113": "Thành phần cơ bản cho mọi hành vi",
+      "114": "Hành vi khiến sinh vật tránh xa lửa",
+      "115": "Hành vi khiến sinh vật tìm đến người triệu hồi",
+      "116": "Việc triệu tập có được kích hoạt hay không",
+      "117": "Hành vi khiến chim đẻ trứng gần đó",
+      "118": "Tần suất đẻ trứng gần đúng, tính bằng 1/s",
+      "119": "Hành vi đi dạo một sinh vật một cách ngẫu nhiên",
+      "120": "Hành vi khiến sinh vật chạy trốn khỏi kẻ tấn công hoặc nguy hiểm",
+      "121": "Chạy trốn khi sức khỏe của nó thấp hơn giá trị",
+      "122": "Hành vi đào cá trong bùn",
+      "123": "Tên khối nơi sinh vật có thể đào vào hoặc trống để không đào vào",
+      "124": "Độ sâu đào tối đa",
+      "125": "Hành vi khiến sinh vật tuân theo mệnh lệnh của người cưỡi",
+      "126": "Xác suất ngựa trở nên bướng bỉnh khi ở trạng thái yên ngựa, 1/s",
+      "127": "Đã đến lúc chấm dứt sự bướng bỉnh",
+      "128": "Hành vi khiến sói hú",
+      "129": "Tên thư mục tiếng hú",
+      "130": "Hành vi khiến một sinh vật ở gần những sinh vật tương tự",
+      "131": "Nếu đúng, khi một sinh vật ở gần cùng đàn bị tấn công sẽ tự động tấn công kẻ tấn công nó",
+      "132": "Mã định danh được sử dụng để tìm các thành viên cùng loài cho mục đích chăn nuôi",
+      "133": "Khoảng cách tối đa để tìm kiếm thành viên trong đàn khi xác định trung tâm đàn",
+      "134": "Hành vi khiến chim mổ và di chuyển khoảng cách nhỏ một cách ngẫu nhiên",
+      "135": "Hành vi nhìn chằm chằm vào các sinh vật gần đó",
+      "136": "Phạm vi tối đa để nhìn chằm chằm vào mục tiêu",
+      "137": "Hành vi làm cá nổi lên và thở",
+      "138": "Hành vi khiến sinh vật di chuyển xa hơn khỏi người chơi",
+      "139": "Hành vi khiến sinh vật ăn một số đồ vật có thể nhặt được",
+      "140": "Bao nhiêu sinh vật thích trái cây và rau quả, từ 0 đến vô cùng",
+      "141": "Bao nhiêu sinh vật thích cá, từ 0 đến vô cùng",
+      "142": "Bao nhiêu sinh vật thích thịt, từ 0 đến vô cùng",
+      "143": "Hum nhiều sinh vật thích bánh mì, từ 0 đến vô cùng",
+      "144": "Bao nhiêu sinh vật thích cỏ hoa, từ 0 đến vô cùng",
+      "145": "Hành vi khiến sinh vật nhìn xung quanh một cách ngẫu nhiên",
+      "146": "Biểu thị một thực thể là một phần của địa hình dưới dạng một khối duy nhất",
+      "147": "Khối tọa độ của thực thể",
+      "148": "Quản lý giao diện người dùng trên màn hình cho trò chơi",
+      "149": "Thông báo trợ giúp về gamepad có được hiển thị hay không",
+      "150": "Thông báo trợ giúp bàn phím có được hiển thị hay không",
+      "151": "Xử lý tổn thương cơ thể",
+      "152": "Khả năng đàn hồi của cơ thể khi rơi, trong m/s. Bất kỳ sự sụt giảm nào dưới tốc độ đó sẽ không gây ra thiệt hại.",
+      "153": "Giá trị điểm trúng đích, 0 đến 1",
+      "154": "Chỉ mục khe kết cấu được sử dụng để phá hủy các mảnh vụn",
+      "155": "Khả năng phục hồi của cơ thể để tấn công. Sát thương = sức mạnh vũ khí/khả năng phục hồi",
+      "156": "Tên âm thanh hủy diệt",
+      "157": "Khả năng phục hồi của cơ thể với lửa. Sát thương mỗi giây = 1/khả năng phục hồi",
+      "158": "Sức mạnh của mảnh vỡ hủy diệt",
+      "159": "Quy mô mảnh vụn hủy diệt",
+      "160": "Xử lý các công cụ sáng tạo",
+      "161": "Xử lý trạng thái ngủ của thực thể sinh vật",
+      "162": "Thời gian sinh vật đi ngủ hoặc 0 nếu không ngủ",
+      "163": "Có cho phép đánh thức thủ công hay không",
+      "164": "Xử lý vắt sữa",
+      "165": "Thời gian tái tạo sữa sau khi vắt, tính bằng giây",
+      "166": "Lần vắt sữa cuối cùng của bầu vú, hoặc -1 nếu chưa vắt sữa",
+      "167": "Xử lý các chỉ số quan trọng của sinh vật, chẳng hạn như cơn đói",
+      "168": "Chứa cảm giác no cho từng chỉ số mặt hàng thực phẩm",
+      "169": "Mức độ sức chịu đựng, 0 đến 1",
+      "170": "Độ ẩm, 0 đến 1",
+      "171": "Lượng thức ăn, 0 đến 1",
+      "172": "Mức độ ngủ, 0 đến 1",
+      "173": "Nhiệt độ cơ thể, đơn vị nhiệt độ thế giới",
+      "174": "Nhận thông tin đầu vào của người chơi và điều khiển một sinh vật cùng với chúng",
+      "175": "Một bàn làm việc",
+      "176": "Có tham chiếu đến các thành phần khác tạo nên thực thể sinh vật",
+      "177": "Mô tả sinh vật",
+      "178": "Tên sinh vật",
+      "179": "Liệu sinh vật có được sinh ra bằng cơ chế sinh sản liên tục hay không",
+      "180": "Động từ được phân cách bằng dấu phẩy được sử dụng làm nguyên nhân giết người khi bị động vật tấn công",
+      "181": "Chơi trình tự giới thiệu khi bắt đầu trò chơi",
+      "182": "Có nên chơi phần giới thiệu không",
+      "183": "Quản lý âm thanh phát ra từ một sinh vật",
+      "184": "Thư mục âm thanh tùy chỉnh để phát khi sinh vật đi trên các loại bề mặt khác nhau",
+      "185": "Thư mục âm thanh để phát khi sinh vật nôn mửa hoặc để trống nếu không có",
+      "186": "Thư mục âm thanh để phát khi sinh vật bị đau hoặc trống nếu không có",
+      "187": "Tâm niệm về âm thanh đau đớn",
+      "188": "Tâm niệm về âm thanh nhàn rỗi",
+      "189": "Thư mục âm thanh để phát khi sinh vật rên rỉ hoặc để trống nếu không có",
+      "190": "Thư mục âm thanh để phát khi sinh vật ho hoặc để trống nếu không có",
+      "191": "Tâm niệm về âm thanh nhàn rỗi hiếm hoi",
+      "192": "Tâm niệm về âm thanh nôn mửa",
+      "193": "Thư mục âm thanh để phát khi sinh vật hắt hơi hoặc để trống nếu không có",
+      "194": "Tâm niệm về tiếng rên rỉ",
+      "195": "Tâm niệm tiếng hắt hơi",
+      "196": "Thư mục âm thanh sẽ phát để phát ra âm thanh nhàn rỗi hiếm hoi của sinh vật hoặc trống nếu không có",
+      "197": "Niệm tiếng ho",
+      "198": "Thư mục âm thanh sẽ phát để phát ra âm thanh nhàn rỗi của sinh vật hoặc trống nếu không có",
+      "199": "Thư mục âm thanh để phát khi sinh vật tấn công hoặc để trống nếu không có",
+      "200": "Tâm trí của âm thanh tấn công",
+      "201": "Xác suất phát ra âm thanh nhàn rỗi hiếm hoi thay vì nhàn rỗi bình thường",
+      "202": "Xử lý việc sinh sản và biến mất của thực thể sinh vật",
+      "203": "Liệu thực thể có được tự động xuất hiện hay không",
+      "204": "Thời gian bắt đầu xuất hiện hoặc -1 nếu không xuất hiện",
+      "205": "Thời gian xuất hiện hoặc -1 nếu chưa xuất hiện",
+      "206": "Một chiếc rương mà bạn có thể cất giữ các vật phẩm trong đó",
+      "207": "Nhận thông tin đầu vào của người chơi và điều khiển một sinh vật cùng với chúng",
+      "208": "Chỉ số người chơi",
+      "209": "Thu thập đầu vào cho người chơi",
+      "210": "Kho đồ của người chơi ở chế độ sáng tạo",
+      "211": "Chỉ số của khe hoạt động",
+      "212": "Chỉ mục danh mục hoạt động của khoảng không quảng cáo",
+      "213": "Số lượng khe mở",
+      "214": "Trang hoạt động của khoảng không quảng cáo",
+      "215": "Thành phần cơ sở cho tất cả các thành phần chứa khoảng không quảng cáo",
+      "216": "Chứa nội dung vị trí khoảng không quảng cáo, một tham số được đặt cho mỗi vị trí",
+      "217": "Số lượng vị trí hàng tồn kho",
+      "218": "Xác định những vật phẩm rơi ra khi bạn giết một sinh vật",
+      "219": "Giống như Loot, nhưng được sử dụng khi thực thể bốc cháy",
+      "220": "Chứa các tham số ở định dạng &quot;ItemName;MinCount;MaxCount;[Probability]&quot;, ví dụ: &quot;Bẩn;1;3;0.1&quot;",
+      "221": "Liệu chiến lợi phẩm đã bị rơi hay chưa",
+      "222": "Tay cầm cưỡi trên động vật",
+      "223": "Độ lệch vị trí thân người lái so với vị trí gắn kết",
+      "224": "Xử lý việc đào, đặt, tương tác và đánh",
+      "225": "Trung bình bao nhiêu lần mỗi giây, công cụ khai thác tự động tương tác với các khối xung quanh",
+      "226": "Sức tấn công khi không sử dụng vũ khí",
+      "227": "Khoảng thời gian tấn công",
+      "228": "Cơ thể vật lý, xử lý các va chạm, trọng lực, lực cản, sức nổi, sự gắn kết",
+      "229": "Liệu một cơ thể có thể cúi xuống để giảm chiều cao hộp va chạm của nó hay không",
+      "230": "Khối lượng của vật, tính bằng kg, dùng để va chạm",
+      "231": "Chiều cao tối đa của sự gia tăng trơn tru",
+      "232": "Độ cong của một vật do dòng điện gây ra khi ngâm trong nước, tính bằng radian/s",
+      "233": "Vận tốc của cơ thể",
+      "234": "Hệ số cản của nước, tính bằng 1/s, riêng biệt cho chuyển động ngang và chuyển động thẳng đứng",
+      "235": "Một vật lắc lư bao nhiêu khi ngâm trong nước, tính bằng radian",
+      "236": "Cơ thể có thể bị nhúng trong băng",
+      "237": "Kích thước hộp va chạm của thân xe",
+      "238": "Phần bù xoay của phần đính kèm thân máy",
+      "239": "Mật độ, tính bằng g/cm^3, được sử dụng để tính toán độ nổi (mật độ nước là 1)",
+      "240": "Độ lệch vị trí gắn trên thân máy",
+      "241": "Tham chiếu tới phần thân mà phần thân này được đính kèm hoặc không có giá trị nếu không được đính kèm",
+      "242": "Hệ số cản không khí, tính bằng 1/s, riêng biệt cho chuyển động ngang và chuyển động thẳng đứng",
+      "243": "Xử lý việc biến hình thành một thực thể sinh vật khác",
+      "244": "Tên của mẫu thực thể để chuyển sang trong đêm hoặc chuỗi trống để không chuyển đổi",
+      "245": "Tên mẫu thực thể để chuyển sang trong ngày hoặc chuỗi trống để không chuyển đổi",
+      "246": "Xác suất kích hoạt tính năng biến hình cho thực thể này (được đánh giá một lần khi xuất hiện)",
+      "247": "Cho phép thực thể được đốt cháy",
+      "248": "Thời gian cháy còn lại tính bằng giây hoặc 0 nếu không cháy",
+      "249": "Con tàu hiển thị trong phần giới thiệu",
+      "250": "Tiêu đề của tàu",
+      "251": "Xử lý bệnh tật của sinh vật",
+      "252": "Thời gian ốm còn lại, tính bằng giây",
+      "253": "Xử lý quần áo và da của người chơi",
+      "254": "Chứa quần áo được mặc bởi sinh vật",
+      "255": "Danh sách quần áo chân",
+      "256": "Danh sách quần áo chân",
+      "257": "Danh sách quần áo thân",
+      "258": "Danh sách quần áo đầu",
+      "259": "Lưu trữ tên",
+      "260": "Xử lý các yếu tố hiệu suất sinh vật",
+      "261": "Xử lý các yếu tố hiệu suất và cấp độ sinh vật",
+      "262": "Kho đồ nội thất",
+      "263": "Bộ nội thất chọn lọc",
+      "264": "Một cái lò",
+      "265": "Thời gian cháy còn lại, tính bằng giây",
+      "266": "Mức nhiệt hiện tại trong lò",
+      "267": "Tay cầm cưỡi ngựa",
+      "268": "Độ lệch vị trí tháo khỏi vị trí lắp, trục X được phản chiếu sang cả hai bên",
+      "269": "Độ lệch của điểm gắn kết",
+      "270": "Xử lý bệnh cúm sinh vật",
+      "271": "Thời gian còn lại của bệnh cúm, tính bằng giây",
+      "272": "Khởi phát bệnh cúm, tính bằng giây",
+      "273": "Xử lý sức khỏe sinh vật",
+      "274": "Giá trị sức khỏe, 0 đến 1",
+      "275": "Thời gian chết hoặc -1 nếu chưa chết",
+      "276": "Khả năng phục hồi của sinh vật để tấn công. Chấn thương = sức mạnh vũ khí/khả năng phục hồi",
+      "277": "Khả năng phục hồi của sinh vật khi rơi xuống, trong m/s. Bất kỳ cú ngã nào dưới tốc độ đó sẽ không gây thương tích.",
+      "278": "Thời gian sau đó xác chết biến mất hoặc 0 đến không bao giờ biến mất",
+      "279": "Lượng không khí, 0 đến 1",
+      "280": "Chế độ thở của sinh vật",
+      "281": "Liệu sinh vật có chịu sát thương khi ở trên đất liền không",
+      "282": "Khả năng phục hồi của sinh vật trước lửa. Chấn thương mỗi giây = 1/khả năng phục hồi",
+      "283": "Nguyên nhân cái chết của sinh vật",
+      "284": "Thời gian một sinh vật có thể tồn tại trong một hơi thở, tính bằng giây",
+      "285": "Tốc độ chữa lành của một sinh vật",
+      "286": "Kiểm soát sát thương gây ra khi vị trí của sinh vật quá cao hoặc quá thấp",
+      "287": "Đến lúc chết khi sinh vật không thể thở",
+      "288": "Đã đến lúc chết khi sinh vật ở trong magma",
+      "289": "kiểm soát sát thương nhận được khi sinh vật bị nghiền nát",
+      "290": "Kiểm soát sát thương gây ra khi sinh vật bị gai, xương rồng và nhím biển đâm vào",
+      "291": "Kiểm soát sát thương nhận được khi sinh vật phát nổ",
+      "292": "Chứa vị trí và góc quay Quaternion để định hướng thực thể trên thế giới",
+      "293": "Xoay khung",
+      "294": "Vị trí của khung",
+      "295": "Kho đồ của người chơi",
+      "296": "Chỉ số của khe hoạt động",
+      "297": "Làm cho sinh vật nhảy lên khi gặp chướng ngại vật có thể nhảy được",
+      "298": "Sức mạnh của bước nhảy để thực hiện",
+      "299": "Tính năng tự động nhảy luôn được bật hay sử dụng giá trị từ cài đặt",
+      "300": "Xử lý chuyển động của sinh vật",
+      "301": "Tốc độ bay, tính bằng m/s hoặc 0 nếu sinh vật không thể bay",
+      "302": "Tốc độ buộc sinh vật phải bước đi khi rẽ, hoặc 0 để không buộc",
+      "303": "Góc nhìn dọc có được tự động cân bằng hay không",
+      "304": "Cuộn, tính bằng radian",
+      "305": "Góc nhìn ngang có nên được tự động cân bằng hay không",
+      "306": "Tốc độ di chuyển của thang hoặc 0 để vô hiệu hóa mục nhập thang, trong m/s",
+      "307": "Hệ số ma sát tối thiểu, không phân biệt địa hình",
+      "308": "Tốc độ bơi, tính bằng m/s hoặc 0 nếu sinh vật không thể bơi",
+      "309": "Tiêu đề, tính bằng radian",
+      "310": "Tốc độ tìm kiếm, tính bằng rad/s",
+      "311": "Mức độ một sinh vật có thể kiểm soát chuyển động của mình bằng cách đi bộ khi ở trên không (1 - giống như đi bộ bình thường)",
+      "312": "Tốc độ đi bộ tối đa, tính bằng m/s",
+      "313": "Tốc độ quay, tính bằng rad/s",
+      "314": "Cao độ, tính bằng radian",
+      "315": "Liệu chuyến bay ở chế độ sáng tạo có được bật cho sinh vật hay không",
+      "316": "Tốc độ bay ở chế độ sáng tạo, tính bằng m/s hoặc 0 nếu không thể bay sáng tạo",
+      "317": "Hệ số tăng tốc cho mọi loại chuyển động, con người là 1",
+      "318": "Tốc độ nhảy, tính bằng m/s",
+      "319": "Một bộ phân phối phân phối các mặt hàng",
+      "320": "Thành phần điều khiển người chơi để có thể chọn được",
+      "321": "Hành vi và hoạt hình mô hình con người",
+      "322": "Tốc độ hoạt ảnh đi bộ, tính bằng chu kỳ trên mét",
+      "323": "Góc hoạt hình của chân, tính bằng radian",
+      "324": "Chiều cao lắc lư khi sinh vật bước đi, tính bằng mét",
+      "325": "Hành vi và hoạt hình của mô hình chim",
+      "326": "Tốc độ hoạt ảnh đi bộ, tính bằng chu kỳ/mét",
+      "327": "Tốc độ hoạt hình bay",
+      "328": "Tốc độ hoạt ảnh đang phân tích, theo chu kỳ/giây",
+      "329": "Chiều cao lắc lư khi sinh vật bước đi, tính bằng mét",
+      "330": "Hành vi và hoạt hình của mô hình cá",
+      "331": "Liệu cá có đuôi đập theo chiều dọc hay không",
+      "332": "Tốc độ hoạt hình bơi lội",
+      "333": "Vẽ khối nổi bật khi người chơi chỉ vào nó",
+      "334": "Mô hình người chơi thứ nhất (vật phẩm cầm tay và cầm tay)",
+      "335": "Tên mẫu tay",
+      "336": "Vẽ các điểm ngắm",
+      "337": "Thành phần cơ bản cho tất cả các mô hình sinh vật",
+      "338": "Hoạt hình và hành vi của mô hình bốn chân",
+      "339": "Liệu một sinh vật có thể chạy được không",
+      "340": "Nên sử dụng âm thanh canter hay âm thanh bước bình thường khi canter",
+      "341": "Góc hoạt hình của chân trước, tính bằng radian",
+      "342": "Góc hoạt hình của chân sau, tính bằng radian",
+      "343": "Chiều cao lắc lư khi sinh vật bước đi, tính bằng mét",
+      "344": "Tốc độ hoạt ảnh đi bộ, tính bằng chu kỳ/mét",
+      "345": "Liệu một sinh vật có thể chạy nước kiệu",
+      "346": "Người mẫu có nên di chuyển chân trước khi cho ăn không",
+      "347": "Quản lý mô hình 3D và cho phép tạo hoạt ảnh bằng cách thay đổi ma trận xương (mô hình được vẽ bởi SubsystemModelsRenderer)",
+      "348": "Thứ tự các mô hình sẽ được chuẩn bị để vẽ",
+      "349": "Bán kính của hình cầu giới hạn được sử dụng để loại bỏ tầm nhìn",
+      "350": "Tên mẫu",
+      "351": "Liệu mô hình có tạo bóng trên địa hình hay không (ComponentBody cũng phải có trong thực thể)",
+      "352": "Kết cấu để sử dụng trên mô hình hoặc chuỗi trống để sử dụng kết cấu mô hình",
+      "353": "Vẽ các vết nứt khi thợ mỏ đang đào",
+      "354": "Hiển thị lớp phủ màn hình",
+      "355": "Vẽ đôi mắt phát sáng cho một sinh vật",
+      "356": "Đôi mắt sáng lấp lánh trên đầu",
+      "357": "Màu mắt phát sáng hoặc trong suốt nếu không có mắt phát sáng",
+      "358": "Vẽ mô hình quần áo bên ngoài cho con người",
+      "359": "Mô hình lấy sự chuyển đổi xương gốc từ khung đính kèm",
+      "360": "Hoạt hình và hành vi của mô hình chim không biết bay",
+      "361": "Góc hoạt hình của chân, tính bằng radian",
+      "362": "Tốc độ hoạt ảnh đi bộ, tính bằng chu kỳ/mét",
+      "363": "Chiều cao lắc lư khi sinh vật bước đi, tính bằng mét",
+      "364": "Mô hình người chơi thứ nhất (vật phẩm cầm tay và cầm tay)",
+      "365": "Tên mẫu tay",
+      "366": "Tay VR của người chơi (và vật phẩm đang cầm)",
+      "367": "Nếu đúng, loại hệ thống con không nhất thiết phải xuất hiện khi tạo dự án",
+      "368": "Tên lớp .NET dùng để tạo hệ thống con",
+      "369": "Tên các hệ thống con phải được tải trước hệ thống con này, cách nhau bằng dấu phẩy",
+      "370": "Các thành phần có thứ tự tải thấp hơn sẽ được tải trước các thành phần có thứ tự tải cao hơn",
+      "371": "Nếu đúng, loại thành phần không nhất thiết phải có trong mã khi tạo thực thể",
+      "372": "Tên lớp .NET dùng để tạo thành phần",
+      "373": "Không có tác dụng. Chỉ để thay thế một thành phần này."
     }
   }
 }

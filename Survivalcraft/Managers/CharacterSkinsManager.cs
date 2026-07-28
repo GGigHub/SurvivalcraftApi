@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
@@ -6,10 +7,12 @@ using TemplatesDatabase;
 namespace Game {
     public static class CharacterSkinsManager {
         public static List<string> m_characterSkinNames = [];
-
         public static Dictionary<PlayerClass, Model> m_playerModels = [];
-
+        public static Dictionary<PlayerClass, Model> m_playerModelsForClothing = [];
         public static Dictionary<PlayerClass, Model> m_outerClothingModels = [];
+        public static bool AddEmptySkin;
+        public static bool UseEmptySkinAsDefault;
+        public const string fName = "CharacterSkinsManager";
 
         public static List<string> waitReplyList = [];
 
@@ -49,28 +52,15 @@ namespace Game {
 
         public static string GetDisplayName(string name) {
             if (IsBuiltIn(name)) {
-                if (name.Contains("Female")) {
-                    if (name.Contains("1")) {
-                        return "Doris";
-                    }
-                    if (name.Contains("2")) {
-                        return "Mabel";
-                    }
-                    if (name.Contains("3")) {
-                        return "Ada";
-                    }
-                    return "Shirley";
+                if (name == "$Empty") {
+                    return LanguageControl.Get(fName, "SkinName", "Empty");
                 }
-                if (name.Contains("1")) {
-                    return "Walter";
+                if (name.StartsWith("$Female")) {
+                    return LanguageControl.Get(fName, "SkinName", "Female", name.Substring(7));
                 }
-                if (name.Contains("2")) {
-                    return "Basil";
+                if (name.StartsWith("$Male")) {
+                    return LanguageControl.Get(fName, "SkinName", "Male", name.Substring(5));
                 }
-                if (name.Contains("3")) {
-                    return "Geoffrey";
-                }
-                return "Zachary";
             }
             return Storage.GetFileNameWithoutExtension(name);
         }
@@ -89,6 +79,9 @@ namespace Game {
         }
 
         public static Texture2D LoadTexture(string name) {
+            if (string.IsNullOrEmpty(name)) {
+                return null;
+            }
             Texture2D texture2D = null;
             try {
                 string fileName = GetFileName(name);
@@ -99,12 +92,15 @@ namespace Game {
                         texture2D = Texture2D.Load(stream);
                     }
                 }
+                else if (name == "$Empty") {
+                    return null;
+                }
                 else {
                     texture2D = ContentManager.Get<Texture2D>($"Textures/Creatures/Human{name.Substring(1).Replace(" ", "")}");
                 }
             }
             catch (Exception ex) {
-                Log.Warning($"Could not load character skin \"{name}\". Reason: {ex.Message}.");
+                Log.Warning(string.Format(LanguageControl.Get(fName, "1"), name, ex.Message));
             }
             if (texture2D == null) {
                 texture2D = ContentManager.Get<Texture2D>("Textures/Creatures/HumanMale1");
@@ -151,6 +147,9 @@ namespace Game {
             m_characterSkinNames.Add("$Female2");
             m_characterSkinNames.Add("$Female3");
             m_characterSkinNames.Add("$Female4");
+            if (AddEmptySkin) {
+                m_characterSkinNames.Add("$Empty");
+            }
             foreach (string item in Storage.ListFileNames(CharacterSkinsDirectoryName)) {
                 if (Storage.GetExtension(item).ToLower() == ".scskin") {
                     m_characterSkinNames.Add(item);
@@ -158,18 +157,57 @@ namespace Game {
             }
         }
 
-        public static Model GetPlayerModel(PlayerClass playerClass) {
-            if (!m_playerModels.TryGetValue(playerClass, out Model value)) {
-                ValuesDictionary valuesDictionary;
+        public static Model GetPlayerModel(PlayerClass playerClass) => GetPlayerModel(playerClass, false);
+
+        public static Model GetPlayerModel(PlayerClass playerClass, bool forClothing) {
+            ValuesDictionary humanModelValueDictionary = null;
+            if (forClothing) {
+                if (m_playerModelsForClothing.TryGetValue(playerClass, out Model modelForClothing)) {
+                    return modelForClothing;
+                }
+                ValuesDictionary playerValuesDictionary;
                 switch (playerClass) {
-                    case PlayerClass.Male: valuesDictionary = DatabaseManager.FindEntityValuesDictionary("MalePlayer", true); break;
-                    case PlayerClass.Female: valuesDictionary = DatabaseManager.FindEntityValuesDictionary("FemalePlayer", true); break;
+                    case PlayerClass.Male: playerValuesDictionary = DatabaseManager.FindEntityValuesDictionary("MalePlayer", true); break;
+                    case PlayerClass.Female: playerValuesDictionary = DatabaseManager.FindEntityValuesDictionary("FemalePlayer", true); break;
                     default: throw new InvalidOperationException("Unknown player class.");
                 }
-                value = ContentManager.Get<Model>(valuesDictionary.GetValue<ValuesDictionary>("HumanModel").GetValue<string>("ModelName"));
-                m_playerModels.Add(playerClass, value);
+                humanModelValueDictionary = playerValuesDictionary.GetValue<ValuesDictionary>("HumanModel");
+                string modelNameForClothing = humanModelValueDictionary.GetValue<string>("ModelNameForClothing", null);
+                if (!string.IsNullOrEmpty(modelNameForClothing)) {
+                    modelForClothing = ContentManager.Get<Model>(modelNameForClothing);
+                    m_playerModelsForClothing.Add(playerClass, modelForClothing);
+                    return modelForClothing;
+                }
             }
-            return value;
+            if (!m_playerModels.TryGetValue(playerClass, out Model model)) {
+                if (humanModelValueDictionary == null) {
+                    ValuesDictionary playerValuesDictionary;
+                    switch (playerClass) {
+                        case PlayerClass.Male: playerValuesDictionary = DatabaseManager.FindEntityValuesDictionary("MalePlayer", true); break;
+                        case PlayerClass.Female: playerValuesDictionary = DatabaseManager.FindEntityValuesDictionary("FemalePlayer", true); break;
+                        default: throw new InvalidOperationException("Unknown player class.");
+                    }
+                    humanModelValueDictionary = playerValuesDictionary.GetValue<ValuesDictionary>("HumanModel");
+                }
+                model = ContentManager.Get<Model>(humanModelValueDictionary.GetValue<string>("ModelName"));
+                // 应用骨骼别名表：此路径在 ClothingBlock.Initialize / PlayerModelWidget 等“方块/UI 上下文”中加载玩家模型，
+                // 它们会用旧硬编码骨骼名（Hand1/Leg1/...）调用 throwing FindBone。glTF 玩家模型没有这些骨骼，
+                // 必须在这里（模型加载并缓存时）把 AnimationConfig.boneAliases 写入 Model.BoneAliases，
+                // 与 ComponentModel.SetModel 的运行时路径保持一致，否则这些 throwing 调用会崩溃。
+                string animationConfigPath = humanModelValueDictionary.GetValue("AnimationConfigPath", "");
+                if (!string.IsNullOrEmpty(animationConfigPath)) {
+                    string configJson = ContentManager.Get<string>(animationConfigPath, ".json");
+                    // 注意：这里只反序列化提取 boneAliases，不调用 LoadFromJsonNode/ValidateConfig。
+                    // 原因：ClothingBlock.Initialize 在方块加载阶段运行（LoadingScreen 第 489 行），早于
+                    // AnimationTemplateRegistration.Register（第 528 行），此时 Human 模板尚未注册，
+                    // ValidateConfig 会因 "Unknown template" 抛异常。这里不需要控制器/状态规则，只需别名。
+                    var config = System.Text.Json.Nodes.JsonNode.Parse(configJson)
+                        .Deserialize<Engine.Animation.AnimationConfig>(Engine.Animation.AnimationConfigLoader.s_jsonOptions);
+                    model.BoneAliases = config?.BoneAliases;
+                }
+                m_playerModels.Add(playerClass, model);
+            }
+            return model;
         }
 
         public static Model GetOuterClothingModel(PlayerClass playerClass) {

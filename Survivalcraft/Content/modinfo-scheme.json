@@ -6,6 +6,76 @@
       "type": "string",
       "description": "Nuget 或 SemVer 风格的版本范围校验",
       "pattern": "^(([\\d\\.]+)(-.*)?|[\\(\\[][\\d\\.]*,[\\d\\.]*[\\)\\]]|[=><!^~]=?[\\d\\.]+.*)$"
+    },
+    "settingItem": {
+      "type": "object",
+      "description": "模组设置项（叶子节点）",
+      "properties": {
+        "Id": {
+          "type": "string",
+          "description": "Id used to retrieve the setting value (required) \n用于获取设置值，必须有"
+        },
+        "Name": {
+          "type": "string",
+          "description": "Display name (i18n supported). Falls back to LanguageControl.Get(\"ModSettings\", PackageName, id-path, \"Name\"); defaults to Id if not found. \n显示名称（支持国际化）。省略时自动尝试从 LanguageControl.Get(\"ModSettings\", PackageName, Id 链, \"Name\") 获取；获取失败默认为 Id"
+        },
+        "Description": {
+          "type": "string",
+          "description": "Description (i18n supported). Same fallback rule as Name; defaults to empty string. \n描述（支持国际化）。省略时同 Name 的回退规则，默认空字符串"
+        },
+        "Type": {
+          "type": "string",
+          "description": "Value type. Primitive types or types in the Game namespace use the class name directly; other types require the full type name. \n值类型。基本类型或 Game 命名空间内的类型可直接写类名；Game 命名空间之外的类型需写完整类名"
+        },
+        "Default": {
+          "description": "Default value; its type should match Type. \n默认值，类型应与 Type 一致"
+        },
+        "Widget": {
+          "type": "string",
+          "description": "Must be the class name of a class implementing IModSettingItemWidget and deriving from Widget. \n必须为实现了 IModSettingItemWidget 接口且继承自 Widget 类的类名"
+        },
+        "WidgetProperties": {
+          "type": "object",
+          "description": "Extra properties read by the Widget, e.g. MinValue/MaxValue/Granularity for NumberSliderSettingWidget. \n供 Widget 读取的附加属性，如 NumberSliderSettingWidget 的 MinValue/MaxValue/Granularity"
+        }
+      },
+      "required": ["Id", "Type"]
+    },
+    "settingContainer": {
+      "type": "object",
+      "description": "模组设置入口按钮或子组（容器节点，可嵌套）",
+      "properties": {
+        "Id": {
+          "type": "string",
+          "description": "Id used to build the setting id-path (required) \n用于构建设置项的 Id 链，必须有"
+        },
+        "Name": {
+          "type": "string",
+          "description": "Entry button display name (i18n supported). Same fallback rule as settingItem.Name when omitted. \n入口按钮的显示名称（支持国际化）。省略时回退规则同 settingItem.Name"
+        },
+        "Title": {
+          "type": "string",
+          "description": "Sidebar title shown after opening the entry (i18n supported). Same fallback rule as settingItem.Name when omitted. \n点开按钮后在左侧边栏显示的标题（支持国际化）。省略时回退规则同 settingItem.Name"
+        },
+        "Items": {
+          "type": "array",
+          "description": "Child items; each can be a setting item (leaf) or a subgroup (container). Nesting is supported. \n子项列表，元素可以是设置项（叶子）或子组（容器），支持嵌套",
+          "items": {
+            "$ref": "#/definitions/settingNode"
+          }
+        }
+      },
+      "required": ["Id", "Items"]
+    },
+    "settingNode": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/settingContainer"
+        },
+        {
+          "$ref": "#/definitions/settingItem"
+        }
+      ]
     }
   },
   "description": "生存战争模组信息配置文件",
@@ -83,6 +153,13 @@
           "description": "旧写法：字符串数组，格式为“包名:版本号”。例如：[\"PackageNameOfModA:1.2\"]"
         }
       ]
+    },
+    "Settings": {
+      "type": "array",
+      "description": "Mod settings. Available from API 1.9.3. After being added, players can adjust them in Settings - Mod Settings in-game. Note: Settings take effect only after language string initialization completes. \n模组设置，从 API 1.9.3 开始可用。添加后玩家能在游戏 设置-模组设置 中调整。注意：Settings 在语言字符串初始化完成后才会生效。详见：\nhttps://gitee.com/SC-SPM/SurvivalcraftApi/blob/SCAPI1.9/docs/ModInfoConfig.md",
+      "items": {
+        "$ref": "#/definitions/settingContainer"
+      }
     }
   },
   "required": [

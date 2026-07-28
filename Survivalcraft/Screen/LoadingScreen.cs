@@ -434,6 +434,7 @@ namespace Game {
 #endif
                 }
             );
+            AddLoadAction(ModsManager.ParseAllModSettings); //语言已加载（日志可国际化）+ 模组 dll 已加载（类型可解析）
 #if !IOS && !BROWSER
             AddLoadAction(
                 delegate { // 读取所有的ModEntity的JavaScript
@@ -541,12 +542,11 @@ namespace Game {
             AddLoadAction(
                 delegate {
                     ModsManager.ModListAllDo(modEntity => {
-                        if (modEntity.Loader != null) {
+                        if (modEntity.Loaders.Count > 0) {//modEntity.Loader不为空表示至少设置过一次，即Loaders长度不为0
                             Info($"[{modEntity.modInfo?.Name}] {LanguageControl.Get(fName, "6")}");
-                            modEntity.Loader.OnLoadingFinished(ModLoadingActoins);
+                            modEntity.Loaders.ForEach(item => item.OnLoadingFinished(ModLoadingActoins));
                         }
-                    }
-                    );
+                    });
                 }
             );
             AddLoadAction(KeyCompatibleGroupsManager.Initialize); // 初始化按键兼容组
@@ -606,6 +606,7 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("VrControllerMapping", new VrControllerMappingScreen()); });
             AddLoadAction(delegate { AddScreen("CameraManage", new CameraManageScreen()); });
             AddLoadAction(delegate { AddScreen("ManageClassSubstitutes", new ManageClassSubstitutesScreen()); });
+            AddLoadAction(delegate { AddScreen("ModSettings", new ModSettingsScreen()); });
         }
 
         public void AddScreen(string name, Screen screen) {

@@ -2,6 +2,87 @@
 
 > 说明：此更新日志和发布页的更新日志略有不同
 
+## API 1.9.3 (2026-07-16)
+
+### 新增
+
+* 主界面-设置，新增模组设置入口（有模组使用时显示）
+
+### 改进
+
+* 改进模组管理界面，现在可以管理包名重复的模组
+* 家具支持半透明（Alpha Blend）渲染通道，半透明方块在家具中的表现更自然
+* 国际化内置玩家皮肤名称
+* 来自 Tue_ 的越南语更新
+
+### 修复
+
+* 修复第三人称视角无法击中生物的问题
+* 修复骑乘时手臂、腿姿势不正确的问题
+* 修复缩放与原版人类模型不同的人类模型，蹲下时腿飞走的问题
+* 修复手柄在创造模式下无法创造模式选取方块的问题
+* 修复生物蛋相关语言错误
+
+### 对于开发者
+
+#### 模组设置（ModSettings）
+
+* `modinfo.json` 新增 `Settings` 字段，具体配置方法详见 [docs/ModInfoConfig.md](docs/ModInfoConfig.md)
+* `ModSettingsManager` 新增 `Get`、`TryGet` 方法来获取通过上述方法配置的设置
+* `ModLoader` 新增 `OnSettingChanged` 虚方法，设置项变更时回调
+
+#### 模型动画系统
+
+* ⚠️ **不兼容变更**：
+  * 删除 `StateTrack` 子系统（无用）
+  * `StateTrackConfig` 重命名为 `StateLayerConfig`（旧名称误导）
+  * 动画名改为精确匹配（删除 `Contains` 模糊查找）
+* `template.json` 模板配置文件更新
+  * `boneMask` 支持子树展开，并新增 `boneMaskExclude` 字段
+  * `layer` 新增 `weight` 字段
+* `json` 配置文件更新
+  * 新增 `boneAliases` 字段，可用于把 glTF 模型的骨骼名映射到原版生物骨骼名
+  * `rules` 支持嵌套 `rules` 决策树，可表达更复杂的状态判定逻辑
+  * `animation` 新增根骨骼平移、旋转（`rootBoneTranslation`、`rootBoneRotation`）字段
+  * `animation` 新增 `onInterrupt` 事件，被打断时触发
+  * `animation` 的 `source` 字段支持 `[param]` 动态选取要播放的动画
+  * `animation` 字段支持字符串直接写动画别名（`"animation": { "source": "xxx"}` -> `"animation": "xxx"`）
+  * `rootMotion` 的 `translation` 新增 `ImpulseSpeedOverride` 字段，支持覆写冲量速度
+  * 修复 `animation` 的 `source` 使用别名时，`speed` 等字段不生效的问题
+* 新增组件 `ComponentAnimationParticipant` 动画参与者机制，便于多方协作驱动模型动画
+* 修复了非蒙皮骨骼错位、停用层动画滞留、切回 driver 时 `Weight` 残留致动画不显示等问题
+* Root Motion 剥离逻辑下沉到 *per-source 采样点*，新增 `RootStripInfo` / `RootMotionStrip` 剥离原语；Root Motion 的物理副作用改为**数据驱动**
+* `ModelWidget` 支持 `AnimationController` / `AnimationPlayer` 驱动骨骼动画
+* 单帧姿势动画（即 `StartPhase == EndPhase`）取该相位帧即停，使 `onComplete` 正常触发
+* `ComponentModel` 新增 `DisableAnimation` 属性，用于禁止该组件的模型动画
+
+#### ComponentMiner 全动作延迟支持
+
+* 新增 `PendingAction` 枚举：`Attack` / `Place` / `Use` / `Interact` / `Aim`，其中 `Aim` 是指瞄准后的发射，而不是瞄准这一行为本身
+* 通过 `RequiresPending` / `SetRequiresPending` / `ClearRequiresPending` 配置哪些动作走 Pending（延迟执行）
+* 通过 `IsPending` / `AnyIsPending` / `ClearIsPending` / `ClearAllIsPending` 查询与清除运行时状态，AnyIsPending 期间无法执行其他动作
+* 新增 `ExecuteHit` / `ExecutePlace` / `ExecuteUse` / `ExecuteInteract` / `ExecuteAim` 方法，将在执行后清除对应的 `IsPending`
+
+#### 人形模型相关
+
+* `ComponentHumanModel` 第三人称手持物品的基础偏移/旋转参数化（`BaseInhandItemOffset`、`BaseInhandItemRotation`），以支持自定义模型适配
+* `ComponentModel` 新增 `DisableDrawing` 属性；衣物使用的人类模型允许从数据库读取 `ModelNameForClothing`
+* `ComponentClothing` 新增 `ShowClothedTexture`、`DrawClothedTexture` 字段
+* `CharacterSkinsManager` 新增 `AddEmptySkin` 字段，模组可通过设置该字段为 true，让玩家能选择留空的皮肤，从而让模型内置纹理得以被使用；还新增了 `UseEmptySkinAsDefault` 字段，默认即使用前述留空的皮肤
+
+#### 模组框架
+
+* 改进单模组多 ModLoader 的支持
+* `ModEntity` 的相等判断改为指针是否相同
+
+#### 其他
+
+* ⚠️ **不兼容变更**：删除 `IsFurnitureAlphaTest`，改为重写 `GetFurnitureSubsetType(int value)` 返回 `GeometrySubsetType`（如 `Opaque`、`AlphaTest`），配合新的家具半透明渲染通道。注意 `IsFurnitureAlphaTest` 是 1.9.2.1 刚引入的，若你已重写它，请迁移到 `GetFurnitureSubsetType`
+* `Block` 新增 `DefaultIsUseable`，由 `SubsystemBlockBehaviors` 在加载时设置，如需手动设置，需要在它之后设置
+* 方块网格（`BlockMesh`）支持 glTF 蒙皮顶点
+* 修复 `ModelMesh.IsVisible` 在实例化/蒙皮模型上不生效的问题
+* 修复 `ModLoader.OnAnimateModel` 钩子中 `Animated` 标志没有生效的问题
+
 ## API 1.9.2.1 (2026-06-13)
 
 ### 修复

@@ -1,3 +1,4 @@
+using System.Reflection;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -31,7 +32,18 @@ namespace Game {
                 }
             }
             for (int k = 0; k < m_blockBehaviorsByContents.Length; k++) {
-                m_blockBehaviorsByContents[k] = dictionary[k].ToArray();
+                SubsystemBlockBehavior[] behaviors = dictionary[k].ToArray();
+                m_blockBehaviorsByContents[k] = behaviors;
+                // 聚合：任一 behavior override 了 OnUse（DeclaringType 非基类）→ 该方块可 Use（GetPriorityUse 返 PriorityUse）。
+                // 反射自动识别（含旧模组 override OnUse 的 behavior），无需子类显式声明 HasUseAction，也不依赖 BlocksData 列。
+                // 假定所有 behavior 在本 Load 前注册（SC mod 加载时序固定 behavior 列表于 Load 前）；Load 后动态注册的 behavior 不被识别。
+                foreach (SubsystemBlockBehavior behavior in behaviors) {
+                    MethodInfo onUse = behavior.GetType().GetMethod(nameof(SubsystemBlockBehavior.OnUse));
+                    if (onUse != null && onUse.DeclaringType != typeof(SubsystemBlockBehavior)) {
+                        BlocksManager.Blocks[k].DefaultIsUseable = true;
+                        break;
+                    }
+                }
             }
         }
     }

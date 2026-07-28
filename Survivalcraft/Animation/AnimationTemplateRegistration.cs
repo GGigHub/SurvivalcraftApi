@@ -192,8 +192,7 @@ namespace Game.Animation {
                 "Simple",
                 new AnimationTemplate(
                     "Simple",
-                    new Dictionary<string, LayerDefinition> { ["Base"] = new(0, AnimationBlendMode.Override) },
-                    new Dictionary<string, StateTrackDefinition> { ["Gait"] = new(StateTrackType.Enum, "Idle") { EnumValues = new[] { "Idle" } } }
+                    new Dictionary<string, LayerDefinition> { ["Base"] = new(0, AnimationBlendMode.Override) }
                 )
             );
         }

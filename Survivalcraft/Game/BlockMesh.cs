@@ -305,17 +305,10 @@ namespace Game {
             }
             VertexBuffer vertexBuffer = meshPart.VertexBuffer;
             IndexBuffer indexBuffer = meshPart.IndexBuffer;
-            ReadOnlyList<VertexElement> vertexElements = vertexBuffer.VertexDeclaration.VertexElements;
-            if (vertexElements.Count != 3
-                || vertexElements[0].Offset != 0
-                || vertexElements[0].Semantic != VertexElementSemantic.Position.GetSemanticString()
-                || vertexElements[1].Offset != 12
-                || vertexElements[1].Semantic != VertexElementSemantic.Normal.GetSemanticString()
-                || vertexElements[2].Offset != 24
-                || vertexElements[2].Semantic != VertexElementSemantic.TextureCoordinate.GetSemanticString()) {
+            InternalVertex[] vertexData = ReadInternalVertices(vertexBuffer);
+            if (vertexData == null) {
                 throw new InvalidOperationException("Wrong vertex format for a block mesh.");
             }
-            InternalVertex[] vertexData = GetVertexData<InternalVertex>(vertexBuffer);
             int[] indexData = GetIndexData<int>(indexBuffer);
             Dictionary<int, int> dictionary = new();
             for (int i = meshPart.StartIndex; i < meshPart.StartIndex + meshPart.IndicesCount; i++) {
@@ -361,6 +354,77 @@ namespace Game {
                 }
             }
             Trim();
+        }
+
+        /// <summary>
+        /// 读取顶点缓冲为 InternalVertex[]（仅 Position/Normal/TextureCoordinate）。
+        /// 支持两种情况：
+        /// 1. 精确的 3 元素布局（Position@0, Normal@12, TexCoord@24，即旧 dae/方块模型）：走快速 reinterpret 路径，字节级与原逻辑一致。
+        /// 2. 其它带额外属性（如 glTF 蒙皮顶点的 Joints/Weights/TexCoord1）的布局：按 VertexDeclaration 的偏移逐字段提取，
+        ///    忽略多余属性（仿照 InstancedModelsManager.CreateInstancedModelDataForParts 的处理方式）。
+        /// 返回 null 表示顶点声明缺少 Position/Normal/TexCoord 中的任意一个。
+        /// </summary>
+        static InternalVertex[] ReadInternalVertices(VertexBuffer vertexBuffer) {
+            ReadOnlyList<VertexElement> vertexElements = vertexBuffer.VertexDeclaration.VertexElements;
+            // 快速路径：精确 3 元素布局，直接 reinterpret（原 AppendModelMeshPart 的逻辑，字节级不变）
+            if (vertexElements.Count == 3
+                && vertexElements[0].Offset == 0
+                && vertexElements[0].Semantic == VertexElementSemantic.Position.GetSemanticString()
+                && vertexElements[1].Offset == 12
+                && vertexElements[1].Semantic == VertexElementSemantic.Normal.GetSemanticString()
+                && vertexElements[2].Offset == 24
+                && vertexElements[2].Semantic == VertexElementSemantic.TextureCoordinate.GetSemanticString()) {
+                return GetVertexData<InternalVertex>(vertexBuffer);
+            }
+            // 通用路径：按偏移提取 Position/Normal/TexCoord，忽略其它属性
+            int positionOffset = -1, normalOffset = -1, uvOffset = -1;
+            string texCoordSemantic = VertexElementSemantic.TextureCoordinate.GetSemanticString();
+            foreach (VertexElement elem in vertexElements) {
+                if (elem.Semantic == VertexElementSemantic.Position.GetSemanticString()) {
+                    positionOffset = elem.Offset;
+                }
+                else if (elem.Semantic == VertexElementSemantic.Normal.GetSemanticString()) {
+                    normalOffset = elem.Offset;
+                }
+                else if (uvOffset < 0 && elem.SemanticName == texCoordSemantic) {
+                    uvOffset = elem.Offset;
+                }
+            }
+            if (positionOffset < 0 || normalOffset < 0 || uvOffset < 0) {
+                return null;
+            }
+            if (vertexBuffer.Tag is not byte[] rawData) {
+                return null;
+            }
+            int stride = vertexBuffer.VertexDeclaration.VertexStride;
+            int vertexCount = rawData.Length / stride;
+            InternalVertex[] result = new InternalVertex[vertexCount];
+            for (int i = 0; i < vertexCount; i++) {
+                int baseOff = i * stride;
+                // 边界检查：确保所有读取都在 rawData 范围内。
+                // 注意：这里返回 null（最终抛异常）而非像 InstancedModelsManager.ExtractVertices 那样 continue 跳过该顶点，
+                // 因为 AppendModelMeshPart 的索引循环按索引直接访问 vertexData[num]，无法容忍缺失项，失败比输出坏数据更安全。
+                int maxReadEnd = baseOff + Math.Max(
+                    positionOffset + 12,
+                    Math.Max(normalOffset + 12, uvOffset + 8));
+                if (maxReadEnd > rawData.Length) {
+                    return null;
+                }
+                result[i] = new InternalVertex {
+                    Position = new Vector3(
+                        BitConverter.ToSingle(rawData, baseOff + positionOffset),
+                        BitConverter.ToSingle(rawData, baseOff + positionOffset + 4),
+                        BitConverter.ToSingle(rawData, baseOff + positionOffset + 8)),
+                    Normal = new Vector3(
+                        BitConverter.ToSingle(rawData, baseOff + normalOffset),
+                        BitConverter.ToSingle(rawData, baseOff + normalOffset + 4),
+                        BitConverter.ToSingle(rawData, baseOff + normalOffset + 8)),
+                    TextureCoordinate = new Vector2(
+                        BitConverter.ToSingle(rawData, baseOff + uvOffset),
+                        BitConverter.ToSingle(rawData, baseOff + uvOffset + 4))
+                };
+            }
+            return result;
         }
 
         public virtual void AppendBlockMesh(BlockMesh blockMesh) {

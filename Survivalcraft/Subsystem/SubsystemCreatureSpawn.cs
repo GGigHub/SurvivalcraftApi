@@ -19,9 +19,9 @@ namespace Game {
 
             public CreatureType() { }
 
-            // ReSharper disable UnusedParameter.Local
             // 要实现类似 StandardCreatureSpawnRule 的从 XML 读取生成规则的类，需要具体实现此方法
-            public CreatureType(SubsystemCreatureSpawn subsystem, ValuesDictionary valuesDictionary) { }
+            // ReSharper disable UnusedParameter.Local
+            public CreatureType(SubsystemCreatureSpawn subsystem, ValuesDictionary valuesDictionary) {}
             // ReSharper restore UnusedParameter.Local
 
             public CreatureType(string name, SpawnLocationType spawnLocationType, bool randomSpawn, bool constantSpawn) {

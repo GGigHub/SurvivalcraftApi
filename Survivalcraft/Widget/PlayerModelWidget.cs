@@ -18,6 +18,8 @@ namespace Game {
 
         public float m_rotation;
 
+        public bool m_modelsDirty = true; // 首帧需加载；PlayerClass 变化时 setter 置 true
+
         public CharacterSkinsCache CharacterSkinsCache {
             get => m_characterSkinsCache;
             set {
@@ -39,7 +41,17 @@ namespace Game {
 
         public bool OuterClothing { get; set; }
 
-        public PlayerClass PlayerClass { get; set; }
+        public PlayerClass m_playerClass;
+        public PlayerClass PlayerClass {
+            get => m_playerClass;
+            set {
+                if (m_playerClass == value) {
+                    return;
+                }
+                m_playerClass = value;
+                m_modelsDirty = true; // 值真变才 swap（多处每帧赋同值，如 PlayerScreen.Update）
+            }
+        }
 
         public PlayerData PlayerData { //目前仅赋值，游戏里没有使用该属性，但勿删，模组可能会用到
             get;
@@ -91,12 +103,15 @@ namespace Game {
             if (OuterClothing) {
                 return;
             }
-            m_modelWidget.RemoveModel(PlayerModel);
-            m_modelWidget.RemoveModel(OuterClothingModel);
-            OuterClothingModel = CharacterSkinsManager.GetOuterClothingModel(PlayerClass);
-            PlayerModel = CharacterSkinsManager.GetPlayerModel(PlayerClass);
-            m_modelWidget.AddModel(PlayerModel);
-            m_modelWidget.AddModel(OuterClothingModel);
+            if (m_modelsDirty) {
+                m_modelWidget.RemoveModel(PlayerModel);
+                m_modelWidget.RemoveModel(OuterClothingModel);
+                OuterClothingModel = CharacterSkinsManager.GetOuterClothingModel(PlayerClass);
+                PlayerModel = CharacterSkinsManager.GetPlayerModel(PlayerClass);
+                m_modelWidget.AddModel(PlayerModel);
+                m_modelWidget.AddModel(OuterClothingModel);
+                m_modelsDirty = false;
+            }
             if (CameraShot == Shot.Body) {
                 m_modelWidget.ViewPosition = PlayerClass == PlayerClass.Male ? new Vector3(0f, 1.46f, -3.2f) : new Vector3(0f, 1.39f, -3.04f);
                 m_modelWidget.ViewTarget = PlayerClass == PlayerClass.Male ? new Vector3(0f, 0.9f, 0f) : new Vector3(0f, 0.86f, 0f);

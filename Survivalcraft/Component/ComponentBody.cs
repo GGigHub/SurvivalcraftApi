@@ -4,6 +4,23 @@ using TemplatesDatabase;
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 
 namespace Game {
+    /// <summary>
+    /// 物理效果禁用位掩码。在物理应用点（非设定点）查询，
+    /// 故 NormalMovement 每帧重置 IsGravityEnabled=true 不影响（flag 独立于 boolean 属性）。
+    /// </summary>
+    [System.Flags]
+    public enum PhysicalEffects {
+        None = 0,
+        /// <summary>禁用重力积分（ComponentBody 重力应用点）</summary>
+        Gravity = 1,
+        /// <summary>禁用空气阻力（ComponentBody AirDrag 应用点）</summary>
+        AirDrag = 2,
+        /// <summary>禁用水阻力（ComponentBody WaterDrag 应用点）</summary>
+        WaterDrag = 4,
+        /// <summary>禁用地面阻力（ComponentBody GroundDrag 应用点）</summary>
+        GroundDrag = 8,
+    }
+
     public class ComponentBody : ComponentFrame, IUpdateable {
         public struct CollisionBox {
             public CollisionBox() { }
@@ -96,6 +113,13 @@ namespace Game {
         public bool CanCrouch;
 
         public bool TerrainCollidable = true;
+
+        /// <summary>
+        /// 被禁用的物理效果位掩码。由 root motion 物理副作用（ComponentModel.ApplyRootMotionPhysics）设置，
+        /// 切出 RM 时由 RestoreRootMotionPhysics 清除全部 RM 相关位（Gravity/AirDrag/WaterDrag/GroundDrag）。
+        /// 当前为 RM 物理副作用专用 bitmask；其他特性（buff/状态效果）请用独立机制，勿共享此字段以免 Restore 误清。
+        /// </summary>
+        public PhysicalEffects DisabledPhysicalEffects;
 
         public bool BodyCollidable = true;
 
@@ -487,7 +511,7 @@ namespace Game {
                 FindMovingBlocksCollisionBoxes(position, m_movingBlocksCollisionBoxes);
             }
             MoveToFreeSpace(dt);
-            if (IsGravityEnabled) {
+            if (IsGravityEnabled && (DisabledPhysicalEffects & PhysicalEffects.Gravity) == 0) {
                 m_velocity.Y -= 10f * dt;
                 if (ImmersionFactor > 0f && FluidCollidable) {
                     float num = ImmersionFactor
@@ -495,12 +519,15 @@ namespace Game {
                     m_velocity.Y += 10f * (1f / Density * num) * dt;
                 }
             }
-            float num2 = MathUtils.Saturate(AirDrag.X * dt);
-            float num3 = MathUtils.Saturate(AirDrag.Y * dt);
-            m_velocity.X *= 1f - num2;
-            m_velocity.Y *= 1f - num3;
-            m_velocity.Z *= 1f - num2;
+            if ((DisabledPhysicalEffects & PhysicalEffects.AirDrag) == 0) {
+                float num2 = MathUtils.Saturate(AirDrag.X * dt);
+                float num3 = MathUtils.Saturate(AirDrag.Y * dt);
+                m_velocity.X *= 1f - num2;
+                m_velocity.Y *= 1f - num3;
+                m_velocity.Z *= 1f - num2;
+            }
             if (IsWaterDragEnabled
+                && (DisabledPhysicalEffects & PhysicalEffects.WaterDrag) == 0
                 && ImmersionFactor > 0f
                 && ImmersionFluidBlock != null
                 && FluidCollidable) {
@@ -567,7 +594,7 @@ namespace Game {
             else {
                 CollisionVelocityChange = m_velocity - velocity;
             }
-            if (IsGroundDragEnabled && StandingOnValue.HasValue) {
+            if (IsGroundDragEnabled && StandingOnValue.HasValue && (DisabledPhysicalEffects & PhysicalEffects.GroundDrag) == 0) {
                 m_velocity = Vector3.Lerp(m_velocity, StandingOnVelocity, 6f * dt);
             }
             UpdateImmersionData();

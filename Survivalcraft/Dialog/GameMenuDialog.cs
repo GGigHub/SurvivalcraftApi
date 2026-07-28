@@ -456,6 +456,12 @@ namespace Game {
                     )
                 );
                 list.Add(new Tuple<string, Action>(LanguageControl.Get(fName, 88), delegate { ScreensManager.SwitchScreen("Settings"); }));
+                list.Add(
+                    new Tuple<string, Action>(
+                        LanguageControl.Get("ContentWidgets", "SettingsScreen", "8"),
+                        () => ScreensManager.SwitchScreen("ModSettings")
+                    )
+                );
                 list.Add(new Tuple<string, Action>(LanguageControl.Get(fName, 89), delegate { ScreensManager.SwitchScreen("Help"); }));
                 if ((Input.Devices & (WidgetInputDevice.Keyboard | WidgetInputDevice.Mouse)) != 0) {
                     list.Add(new Tuple<string, Action>(LanguageControl.Get(fName, 90), delegate { ScreensManager.SwitchScreen("KeyboardMapping"); }));

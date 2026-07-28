@@ -281,7 +281,28 @@
     "6": "Saved mod settings",
     "7": "Reset mod keyboard mapping settings",
     "8": "Reset mod camera manage settings",
-    "9": "Reset mod gamepad mapping settings"
+    "9": "Reset mod gamepad mapping settings",
+    "10": "OnSettingChanged error, loader={0}: {1}",
+    "11": "Persisted value parse failed, path={0}, using default: {1}",
+    "12": "Settings parse failed for mod '{0}', using empty settings: {1}"
+  },
+  "ModSettingsParser": {
+    "PageInvalidId": "Mod '{0}' page missing valid Id or contains '/', skipped",
+    "ItemInvalidId": "Setting item missing valid Id or contains '/', skipped",
+    "TypeResolveFailed": "Type '{0}' of setting '{1}' could not be resolved, skipped",
+    "DefaultParseFailed": "Default parse failed, using default({0}): {1}",
+    "WidgetResolveFailed": "Widget '{0}' not found or not an IModSettingItemWidget, falling back to default"
+  },
+  "SettingsItemWidgetFactory": {
+    "WidgetFallback": "Setting '{0}' widget unsupported, fell back to default '{1}'.",
+    "WidgetNone": "Setting '{0}' has no usable widget (type {1}), skipped.",
+    "WidgetCreateFailed": "Widget '{0}' instantiation failed: {1}"
+  },
+  "ModSettingsScreen": {
+    "1": "Adjust Mod Settings",
+    "2": "You can adjust mod settings here.",
+    "3": "There is no setting from mods.",
+    "4": "Setting '{0}' widget '{1}' does not derive from Widget, cannot render, skipped."
   },
   "SettingsManager": {
     "1": "There's no keyboard mapping setting named \"{0}\"!",
@@ -309,6 +330,24 @@
       ".scfpack": "Survivalcraft Furniture Pack",
       ".scmod": "Survivalcraft API Mod",
       ".scmodList": "Survivalcraft API Mod List"
+    }
+  },
+  "CharacterSkinsManager": {
+    "1": "Could not load character skin \"{0}\". Reason: {1}.",
+    "SkinName": {
+      "Empty": "Empty",
+      "Female": {
+        "1": "Doris",
+        "2": "Mabel",
+        "3": "Ada",
+        "4": "Shirley"
+      },
+      "Male": {
+        "1": "Walter",
+        "2": "Basil",
+        "3": "Geoffrey",
+        "4": "Zachary"
+      }
     }
   },
   "SubsystemCrossbowBlockBehavior": {
@@ -671,7 +710,8 @@
     "12": "\"{0}\" will be deleted.",
     "13": "Failed to delete \"{0}\". Reason: {1}",
     "14": "Delete \"{0}\" Successfully.",
-    "15": "Not Found / Not Enabled"
+    "15": "Not Found / Not Enabled",
+    "16": "Found Version: "
   },
   "BlocksManager": {
     "1": "Block class \"{0}\" is not found in all loaded assemblies.",
@@ -3434,7 +3474,8 @@
       "5": "Audio",
       "6": "Controls",
       "7": "Compatibility",
-      "8": "Multiplayer"
+      "8": "Multiplayer",
+      "9": "Mod Settings"
     },
     "SettingsUiScreen": [
       "Adjust User Interface Settings",

@@ -209,6 +209,9 @@ namespace Game {
             TerrainRaycastResult? terrainRaycastResult,
             MovingBlocksRaycastResult? movingBlocksRaycastResult,
             out bool flag) {
+            // pending 机制说明：ComponentMiner.Place/Use/Interact 存 pending 后 return false（语义=已暂存待执行，非"未处理"），
+            // 分发循环据此继续迭代。但 ComponentMiner 各入口的 AnyIsPending 锁保证一次按键最多存一个 pending——
+            // 首个存 pending 的动作返回后，后续 Place/Use/Interact 入口见 AnyIsPending=true 直接 return false，不重复存也不执行 vanilla 动作。
             bool dealed = false;
             for (int t = 0; t < 3 && !dealed; t++) {
                 int maxPriority = -1;

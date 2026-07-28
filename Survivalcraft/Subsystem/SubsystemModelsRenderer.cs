@@ -488,6 +488,9 @@ namespace Game {
             // Draw model meshes directly (not using InstancedModelsManager which doesn't support skinned vertices)
             foreach (int meshIndex in componentModel.MeshDrawOrders) {
                 ModelMesh mesh = model.Meshes[meshIndex];
+                if (!mesh.IsVisible) {
+                    continue;
+                }
                 foreach (ModelMeshPart meshPart in mesh.MeshParts) {
                     if (meshPart.IndicesCount == 0) continue;
 

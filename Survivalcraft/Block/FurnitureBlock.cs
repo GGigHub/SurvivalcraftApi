@@ -61,6 +61,19 @@ namespace Game {
                         geometry.AlphaTestSubsetsByFace[num]
                     );
                 }
+                if (geometry2.SubsetTransparentByFace[i] != null) {
+                    generator.GenerateShadedMeshVertices(
+                        this,
+                        x,
+                        y,
+                        z,
+                        geometry2.SubsetTransparentByFace[i],
+                        color,
+                        m_matrices[rotation],
+                        m_facesMaps[rotation],
+                        geometry.TransparentSubsetsByFace[num]
+                    );
+                }
                 int num2 = CellFace.OppositeFace(i < 4 ? (i - rotation + 4) % 4 : i);
                 if ((mountingFacesMask & (1 << num2)) != 0) {
                     generator.GenerateWireVertices(
@@ -109,6 +122,19 @@ namespace Game {
                                 targetGeo.AlphaTestSubsetsByFace[num]
                             );
                         }
+                        if (subGeo.SubsetTransparentByFace[i] != null) {
+                            generator.GenerateShadedMeshVertices(
+                                this,
+                                x,
+                                y,
+                                z,
+                                subGeo.SubsetTransparentByFace[i],
+                                color,
+                                m_matrices[rotation],
+                                m_facesMaps[rotation],
+                                targetGeo.TransparentSubsetsByFace[num]
+                            );
+                        }
                     }
                 }
             }
@@ -143,6 +169,9 @@ namespace Game {
                 if (geometry.SubsetAlphaTestByFace[i] != null) {
                     BlocksManager.DrawMeshBlock(primitivesRenderer, geometry.SubsetAlphaTestByFace[i], color2, size, ref matrix2, environmentData);
                 }
+                if (geometry.SubsetTransparentByFace[i] != null) {
+                    BlocksManager.DrawMeshBlock(primitivesRenderer, geometry.SubsetTransparentByFace[i], color2, size, ref matrix2, environmentData, GeometrySubsetType.Transparent);
+                }
             }
             if (geometry.Draws != null) {
                 foreach (var kv in geometry.Draws) {
@@ -156,6 +185,9 @@ namespace Game {
                         }
                         if (subGeo.SubsetAlphaTestByFace[i] != null) {
                             BlocksManager.DrawMeshBlock(primitivesRenderer, subGeo.SubsetAlphaTestByFace[i], tex, color2, size, ref matrix2, environmentData);
+                        }
+                        if (subGeo.SubsetTransparentByFace[i] != null) {
+                            BlocksManager.DrawMeshBlock(primitivesRenderer, subGeo.SubsetTransparentByFace[i], tex, color2, size, ref matrix2, environmentData, GeometrySubsetType.Transparent);
                         }
                     }
                 }

@@ -3308,6 +3308,7 @@
             <MemberComponentTemplate Name="HumanModel" Guid="9b17451e-4ad2-46b8-b6df-b558552ddf4b">
               <Parameter Name="TextureOverride" Guid="60e811db-aca9-412a-b247-fc212de2efeb" Value="Textures/Creatures/HumanFemale1" Type="string" />
               <Parameter Name="ModelName" Guid="d5347e2f-8cab-4df8-a8b0-29aea1c69c18" Value="Models/HumanFemale" Type="string" />
+              <Parameter Name="ModelNameForClothing" Guid="6c854005-56a4-4dcf-9c80-6200fdd71137" Value="" Type="string" /><!-- 留空来同样使用 ModelName -->
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="Body" Guid="a6e602f4-1377-4d79-84c7-b92e1250f61e">
               <Parameter Name="Mass" Guid="1e10c9e7-a354-45a7-af84-f22b46b00619" Value="55" Type="float" />
@@ -3342,6 +3343,7 @@
             <MemberComponentTemplate Name="HumanModel" Guid="e474ee74-90d9-432e-b302-8381399ffb04">
               <Parameter Name="TextureOverride" Guid="1b0a2639-c2df-4eda-8beb-2bd51e21c16a" Value="Textures/Creatures/HumanMale1" Type="string" />
               <Parameter Name="ModelName" Guid="74de5cab-670e-4b90-ab35-8bb9c569d83e" Value="Models/HumanMale" Type="string" />
+              <Parameter Name="ModelNameForClothing" Guid="ea03f385-5e39-4ad3-a51b-126231ebad45" Value="" Type="string" /><!-- 留空来同样使用 ModelName -->
             </MemberComponentTemplate>
           </EntityTemplate>
         </Folder>
@@ -4136,6 +4138,8 @@
             <Parameter Name="Torso" Description="[DescriptionAttribute:257]" Guid="d2e513e4-c3ab-419d-9168-ced1f8abc775" Value="" Type="string" />
             <Parameter Name="Head" Description="[DescriptionAttribute:258]" Guid="d2e8538f-51c0-42f9-8e34-8f31ffef9b0d" Value="" Type="string" />
           </ParameterSet>
+          <Parameter Name="ShowClothedTexture" Guid="fe23f225-45b9-40c3-8d15-ae6f30669c5c" Value="True" Type="bool" />
+          <Parameter Name="DrawClothedTexture" Guid="c713cfc8-9cd4-4900-8385-8b99541e284e" Value="True" Type="bool" />
           <Parameter Name="Class" Guid="1df4e627-c959-4e6a-bfa2-b7ee3ef08c99" Value="Game.ComponentClothing" Type="string" />
         </ComponentTemplate>
         <ComponentTemplate Name="Name" Description="[DescriptionAttribute:259]" Guid="be9d5f51-94da-4d6f-b14d-fb96061584da" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
@@ -4240,6 +4244,8 @@
           <Parameter Name="WalkBobHeight" Description="[DescriptionAttribute:324]" Guid="2929455d-85a4-445e-a101-e33b75eb8959" Value="0.05" Type="float" />
           <Parameter Name="Class" Guid="fde7895d-e080-4bb6-876a-36d582f5eda2" Value="Game.ComponentHumanModel" Type="string" />
           <Parameter Name="AnimationConfigPath" Guid="d4e5f6a7-b8c9-0123-def0-234567890123" Value="Animations/Human" Type="string" />
+          <Parameter Name="BaseInhandItemOffset" Guid="4db49451-6168-4558-b210-2ad8dadf8f18" Value="0.05, 0.05, -0.56" Type="Vector3" />
+          <Parameter Name="BaseInhandItemRotation" Guid="9ff645c2-5b41-4631-99c5-2fc94a644cd3" Value="0, 0, 0" Type="Vector3" />
         </ComponentTemplate>
         <ComponentTemplate Name="BirdModel" Description="[DescriptionAttribute:325]" Guid="0cf15b57-00ff-422e-bb97-9dab5354d83b" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
           <Parameter Name="BoundingSphereRadius" Guid="5f901b7b-9fab-475d-be36-6c66dc4b2b2f" Value="1" Type="float" />
@@ -4294,6 +4300,9 @@
           <Parameter Name="CastsShadow" Description="[DescriptionAttribute:351]" Guid="db4beb73-f071-49e3-9a46-8feb09c8f13d" Value="False" Type="bool" />
           <Parameter Name="TextureOverride" Description="[DescriptionAttribute:352]" Guid="e7a927a4-a52a-4cbf-8170-d5eed845cea8" Value="" Type="string" />
           <Parameter Name="AnimationConfigPath" Guid="5c28f597-d678-47bc-b0a8-9fecf4736177" Value="" Type="string" />
+          <Parameter Name="DisableAnimation" Guid="f8201a75-a1d4-46a0-857c-ad86dfb8bd98" Value="False" Type="bool" />
+          <Parameter Name="DisableDrawing" Guid="ee7cb5a0-58d0-4f72-bd97-e64a94016041" Value="False" Type="bool" />
+          <Parameter Name="VisibleInFppCamera" Guid="ac0039f5-2498-45db-ae2a-975ac9fbc48b" Value="False" Type="bool" />
         </ComponentTemplate>
         <ComponentTemplate Name="DiggingCracks" Description="[DescriptionAttribute:353]" Guid="7ea6062c-28be-4e76-8765-39b7a1f5be9b" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
           <Parameter Name="Class" Guid="239a3460-544e-49d1-832b-364f1fe2799c" Value="Game.ComponentDiggingCracks" Type="string" />

@@ -7,16 +7,12 @@ namespace Game {
         public Screen m_previousScreen;
 
         public ButtonWidget m_performanceButton;
-
         public ButtonWidget m_graphicsButton;
-
         public ButtonWidget m_uiButton;
-
         public ButtonWidget m_compatibilityButton;
-
         public ButtonWidget m_audioButton;
-
         public ButtonWidget m_controlsButton;
+        public ButtonWidget m_modSettingsButton;
 
         public ButtonWidget m_multiplayerButton;
 
@@ -33,6 +29,7 @@ namespace Game {
             m_audioButton = Children.Find<ButtonWidget>("Audio");
             m_controlsButton = Children.Find<ButtonWidget>("Controls");
             m_multiplayerButton = Children.Find<ButtonWidget>("Multiplayer");
+            m_modSettingsButton = Children.Find<ButtonWidget>("ModSettings");
             m_leftStack = Children.Find<StackPanelWidget>("LeftStack");
             m_rightPanel = Children.Find<StackPanelWidget>("RightStack");
             ModsManager.HookAction(
@@ -77,6 +74,9 @@ namespace Game {
             if (m_multiplayerButton.IsClicked) {
                 ScreensManager.SwitchScreen("SettingsMultiplayer");
             }
+            if (m_modSettingsButton.IsClicked) {
+                ScreensManager.SwitchScreen("ModSettings");
+            }
             foreach (KeyValuePair<ButtonWidget, Action> buttonAction in m_buttonActions) {
                 if (buttonAction.Key.IsClicked) {
                     buttonAction.Value?.Invoke();
@@ -104,10 +104,10 @@ namespace Game {
             }
             int index = m_buttonActions.Count - 1;
             if (index % 2 == 0) {
-                m_leftStack.Children.Add(button);
+                m_rightPanel.Children.Add(button);
             }
             else {
-                m_rightPanel.Children.Add(button);
+                m_leftStack.Children.Add(button);
             }
         }
 
