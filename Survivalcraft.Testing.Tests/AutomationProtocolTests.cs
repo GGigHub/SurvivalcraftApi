@@ -183,6 +183,37 @@ public sealed class AutomationProtocolTests {
         Assert.Equal(target, fixture.TargetCell);
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void PlayerMotionActionsRoundTripThroughTypedWireContract() {
+        Vector3State start = new(12.5, 65.01, 24.5);
+        Vector3State move = new(0.25, 0, 0.75);
+        Vector2State look = new(0.5, -0.25);
+        ControlRequest fixtureRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PreparePlayerMotionFixture,
+            new PreparePlayerMotionFixtureCommand(7, start));
+        ControlRequest moveRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PlayerMove,
+            new PlayerMoveCommand(7, move, HoldFrames: 60));
+        ControlRequest lookRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PlayerLook,
+            new PlayerLookCommand(7, look, HoldFrames: 12));
+        ControlRequest crouchRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PlayerSetCrouch,
+            new PlayerSetCrouchCommand(7, true));
+
+        Assert.Equal(
+            start,
+            fixtureRequest.DeserializePayload<PreparePlayerMotionFixtureCommand>().StartPosition);
+        PlayerMoveCommand decodedMove = moveRequest.DeserializePayload<PlayerMoveCommand>();
+        Assert.Equal(move, decodedMove.Input);
+        Assert.Equal(60, decodedMove.HoldFrames);
+        PlayerLookCommand decodedLook = lookRequest.DeserializePayload<PlayerLookCommand>();
+        Assert.Equal(look, decodedLook.Input);
+        Assert.Equal(12, decodedLook.HoldFrames);
+        Assert.True(crouchRequest.DeserializePayload<PlayerSetCrouchCommand>().Enabled);
+    }
+
     private static AutomationCommandDescriptor Descriptor(string name) =>
         new(
             name,

@@ -18,6 +18,12 @@ namespace Survivalcraft.TestAutomation {
 
         public static int HeldMoveInputEndFrame { get; private set; } = -1;
 
+        public static Vector2 HeldLookInput { get; private set; }
+
+        public static int HeldLookInputEndFrame { get; private set; } = -1;
+
+        public static bool QueuedToggleCrouch { get; private set; }
+
         public static Ray3? QueuedInteractRay { get; private set; }
 
         public static Ray3? QueuedHitRay { get; private set; }
@@ -54,6 +60,15 @@ namespace Survivalcraft.TestAutomation {
             HeldDigRayEndFrame = Time.FrameIndex + Math.Max(1, frameCount);
         }
 
+        public static void HoldLookInput(Vector2 look, int frameCount) {
+            HeldLookInput = look;
+            HeldLookInputEndFrame = Time.FrameIndex + Math.Max(1, frameCount);
+        }
+
+        public static void QueueToggleCrouch() {
+            QueuedToggleCrouch = true;
+        }
+
         public static void CancelDigRay() {
             HeldDigRay = null;
             HeldDigRayEndFrame = -1;
@@ -71,6 +86,9 @@ namespace Survivalcraft.TestAutomation {
         public static void ResetGameplayInputs() {
             HeldMoveInput = Vector3.Zero;
             HeldMoveInputEndFrame = -1;
+            HeldLookInput = Vector2.Zero;
+            HeldLookInputEndFrame = -1;
+            QueuedToggleCrouch = false;
             QueuedInteractRay = null;
             QueuedHitRay = null;
             CancelDigRay();
@@ -87,6 +105,25 @@ namespace Survivalcraft.TestAutomation {
 
             move = Vector3.Zero;
             return false;
+        }
+
+        public static bool TryGetHeldLookInput(out Vector2 look) {
+            if (Time.FrameIndex < HeldLookInputEndFrame) {
+                look = HeldLookInput;
+                return true;
+            }
+
+            look = Vector2.Zero;
+            return false;
+        }
+
+        public static bool TryConsumeToggleCrouch() {
+            if (!QueuedToggleCrouch) {
+                return false;
+            }
+
+            QueuedToggleCrouch = false;
+            return true;
         }
 
         public static bool TryConsumeInteractRay(out Ray3 ray) {
@@ -205,6 +242,12 @@ namespace Survivalcraft.TestAutomation {
                 __instance.m_playerInput.CrouchMove = move;
                 __instance.m_playerInput.CameraMove = move;
                 __instance.m_playerInput.CameraCrouchMove = move;
+            }
+            if (InputHijackState.TryGetHeldLookInput(out Vector2 look)) {
+                __instance.m_playerInput.Look = look;
+            }
+            if (InputHijackState.TryConsumeToggleCrouch()) {
+                __instance.m_playerInput.ToggleCrouch = true;
             }
 
             if (InputHijackState.TryConsumeInteractRay(out Ray3 interactRay)) {

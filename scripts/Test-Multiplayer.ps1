@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "full")]
+    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "full")]
     [string]$Mode = "fast",
 
     [ValidateSet("Debug", "Release")]
@@ -81,6 +81,24 @@ $m1RelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
 }
 elseif ($Mode -eq "m1" -or $Mode -eq "full") {
     Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "terrain-interaction-m1-lifecycle-relay"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$motionDirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\player-motion-lifecycle-direct-$runStamp"
+}
+elseif ($Mode -eq "motion" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "player-motion-lifecycle-direct"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$motionRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\player-motion-lifecycle-relay-$runStamp"
+}
+elseif ($Mode -eq "motion" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "player-motion-lifecycle-relay"
 }
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
@@ -212,6 +230,26 @@ function Run-M1TerrainInteractionScenario {
     )
 }
 
+function Run-PlayerMotionScenario {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("direct", "relay")]
+        [string]$Transport,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ArtifactDirectory
+    )
+
+    Build-CoreRuntime
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "run", "player-motion-multiplayer",
+        "--transport", $Transport,
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $ArtifactDirectory
+    )
+}
+
 Push-Location $repositoryRoot
 try {
     switch ($Mode) {
@@ -250,6 +288,16 @@ try {
             Run-M1TerrainInteractionScenario -Transport "direct" -ArtifactDirectory $m1DirectArtifactDirectory
             Run-M1TerrainInteractionScenario -Transport "relay" -ArtifactDirectory $m1RelayArtifactDirectory
         }
+        "motion-direct" {
+            Run-PlayerMotionScenario -Transport "direct" -ArtifactDirectory $motionDirectArtifactDirectory
+        }
+        "motion-relay" {
+            Run-PlayerMotionScenario -Transport "relay" -ArtifactDirectory $motionRelayArtifactDirectory
+        }
+        "motion" {
+            Run-PlayerMotionScenario -Transport "direct" -ArtifactDirectory $motionDirectArtifactDirectory
+            Run-PlayerMotionScenario -Transport "relay" -ArtifactDirectory $motionRelayArtifactDirectory
+        }
         "full" {
             Run-FastTests
             Run-Doctor
@@ -260,6 +308,8 @@ try {
             Run-V2GameplayScenario -Transport "relay" -ArtifactDirectory $v2RelayArtifactDirectory
             Run-M1TerrainInteractionScenario -Transport "direct" -ArtifactDirectory $m1DirectArtifactDirectory
             Run-M1TerrainInteractionScenario -Transport "relay" -ArtifactDirectory $m1RelayArtifactDirectory
+            Run-PlayerMotionScenario -Transport "direct" -ArtifactDirectory $motionDirectArtifactDirectory
+            Run-PlayerMotionScenario -Transport "relay" -ArtifactDirectory $motionRelayArtifactDirectory
             $legacyTestArguments = @(
                 "test", $gameTestProject, "--nologo", "-c", $Configuration,
                 "--filter", "Layer!=L2&Layer!=L0&Layer!=L1",

@@ -4,7 +4,9 @@ public sealed record SnapshotV2PlayerComparisonOptions(
     double PositionTolerance = 0.05,
     double VelocityTolerance = 0.1,
     double ScalarTolerance = 0.00001,
-    bool CompareNetworkIdentity = false);
+    bool CompareNetworkIdentity = false,
+    double LookAngleTolerance = 0.02,
+    double RotationAngleTolerance = 0.03);
 
 public sealed record SnapshotV2Diff(
     bool Equal,
@@ -57,6 +59,8 @@ public static class SnapshotV2Comparer {
         ValidateTolerance(options.PositionTolerance, nameof(options.PositionTolerance));
         ValidateTolerance(options.VelocityTolerance, nameof(options.VelocityTolerance));
         ValidateTolerance(options.ScalarTolerance, nameof(options.ScalarTolerance));
+        ValidateTolerance(options.LookAngleTolerance, nameof(options.LookAngleTolerance));
+        ValidateTolerance(options.RotationAngleTolerance, nameof(options.RotationAngleTolerance));
 
         List<SnapshotDifference> differences = [];
         Dictionary<int, PlayerSnapshotV2> remaining = actual.Players
@@ -137,6 +141,91 @@ public static class SnapshotV2Comparer {
             options.VelocityTolerance,
             differences);
         CompareValue(path + ".isCrouching", expected.IsCrouching, actual.IsCrouching, differences);
+        CompareNullableVector(
+            path + ".lookAngles",
+            expected.LookAngles,
+            actual.LookAngles,
+            options.LookAngleTolerance,
+            differences);
+        CompareNullableRotation(
+            path + ".rotation",
+            expected.Rotation,
+            actual.Rotation,
+            options.RotationAngleTolerance,
+            differences);
+    }
+
+    private static void CompareNullableRotation(
+        string path,
+        QuaternionState? expected,
+        QuaternionState? actual,
+        double tolerance,
+        List<SnapshotDifference> differences) {
+        if (expected == null || actual == null) {
+            if (expected != actual) {
+                differences.Add(new SnapshotDifference(
+                    path,
+                    expected?.ToString() ?? "null",
+                    actual?.ToString() ?? "null"));
+            }
+            return;
+        }
+        double expectedLength = Math.Sqrt(
+            expected.X * expected.X
+            + expected.Y * expected.Y
+            + expected.Z * expected.Z
+            + expected.W * expected.W);
+        double actualLength = Math.Sqrt(
+            actual.X * actual.X
+            + actual.Y * actual.Y
+            + actual.Z * actual.Z
+            + actual.W * actual.W);
+        if (expectedLength <= double.Epsilon || actualLength <= double.Epsilon) {
+            differences.Add(new SnapshotDifference(
+                path,
+                expected.ToString(),
+                $"{actual}; invalid quaternion length"));
+            return;
+        }
+        double dot = Math.Abs(
+            (expected.X * actual.X
+             + expected.Y * actual.Y
+             + expected.Z * actual.Z
+             + expected.W * actual.W)
+            / (expectedLength * actualLength));
+        double angle = 2 * Math.Acos(Math.Clamp(dot, 0, 1));
+        if (angle > tolerance) {
+            differences.Add(new SnapshotDifference(
+                path,
+                expected.ToString(),
+                $"{actual}; angle={angle:R}; tolerance={tolerance:R}"));
+        }
+    }
+
+    private static void CompareNullableVector(
+        string path,
+        Vector2State? expected,
+        Vector2State? actual,
+        double tolerance,
+        List<SnapshotDifference> differences) {
+        if (expected == null || actual == null) {
+            if (expected != actual) {
+                differences.Add(new SnapshotDifference(
+                    path,
+                    expected?.ToString() ?? "null",
+                    actual?.ToString() ?? "null"));
+            }
+            return;
+        }
+        double x = expected.X - actual.X;
+        double y = expected.Y - actual.Y;
+        double distance = Math.Sqrt(x * x + y * y);
+        if (distance > tolerance) {
+            differences.Add(new SnapshotDifference(
+                path,
+                expected.ToString(),
+                $"{actual}; distance={distance:R}; tolerance={tolerance:R}"));
+        }
     }
 
     private static void CompareVector(

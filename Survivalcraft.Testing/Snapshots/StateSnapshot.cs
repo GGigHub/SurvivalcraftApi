@@ -43,4 +43,8 @@ public sealed record TerrainCellState(
     int Contents,
     int Data);
 
+public sealed record Vector2State(double X, double Y);
+
 public sealed record Vector3State(double X, double Y, double Z);
+
+public sealed record QuaternionState(double X, double Y, double Z, double W);

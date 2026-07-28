@@ -254,6 +254,90 @@ public sealed class ScenarioArtifactTests {
             TerrainInteractionMultiplayerScenario.ParseReplayActions(wrongOrder));
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void PlayerMotionReplayParserPreservesStrictTypedActionSequence() {
+        PlayerMoveCommand move = new(7, new Vector3State(0, 0, 0.75), HoldFrames: 45);
+        PlayerLookCommand look = new(7, new Vector2State(0.6, -0.35), HoldFrames: 10);
+        PlayerSetCrouchCommand crouch = new(7, true);
+        PlayerLookCommand persistenceLook = new(
+            7,
+            new Vector2State(-0.45, 0.25),
+            HoldFrames: 10);
+        PlayerSetCrouchCommand persistenceCrouch = new(7, true);
+        ScenarioActionRecordV2[] records = [
+            TerrainActionRecord("move", ControlCommandNames.PlayerMove, move),
+            TerrainActionRecord("look", ControlCommandNames.PlayerLook, look),
+            TerrainActionRecord("crouch", ControlCommandNames.PlayerSetCrouch, crouch),
+            TerrainActionRecord(
+                "persistence-look",
+                ControlCommandNames.PlayerLook,
+                persistenceLook),
+            TerrainActionRecord(
+                "persistence-crouch",
+                ControlCommandNames.PlayerSetCrouch,
+                persistenceCrouch)
+        ];
+
+        PlayerMotionReplayPlan replay =
+            PlayerMotionMultiplayerScenario.ParseReplayActions(records);
+
+        Assert.Equal(move, replay.InitialMove);
+        Assert.Equal(look, replay.InitialLook);
+        Assert.Equal(crouch, replay.InitialCrouch);
+        Assert.Equal(persistenceLook, replay.PersistenceLook);
+        Assert.Equal(persistenceCrouch, replay.PersistenceCrouch);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void PlayerMotionReplayParserRejectsWrongRoleOrderAndTransientNoOp() {
+        ScenarioActionRecordV2[] records = [
+            TerrainActionRecord(
+                "move",
+                ControlCommandNames.PlayerMove,
+                new PlayerMoveCommand(1, new Vector3State(0, 0, 0.75))),
+            TerrainActionRecord(
+                "look",
+                ControlCommandNames.PlayerLook,
+                new PlayerLookCommand(1, new Vector2State(0.5, -0.25))),
+            TerrainActionRecord(
+                "crouch",
+                ControlCommandNames.PlayerSetCrouch,
+                new PlayerSetCrouchCommand(1, true)),
+            TerrainActionRecord(
+                "persistence-look",
+                ControlCommandNames.PlayerLook,
+                new PlayerLookCommand(1, new Vector2State(-0.5, 0.25))),
+            TerrainActionRecord(
+                "persistence-crouch",
+                ControlCommandNames.PlayerSetCrouch,
+                new PlayerSetCrouchCommand(1, true))
+        ];
+
+        Assert.Throws<InvalidDataException>(() =>
+            PlayerMotionMultiplayerScenario.ParseReplayActions([
+                records[0] with { Role = "server" },
+                .. records[1..]
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            PlayerMotionMultiplayerScenario.ParseReplayActions([
+                records[1],
+                records[0],
+                .. records[2..]
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            PlayerMotionMultiplayerScenario.ParseReplayActions([
+                .. records[..2],
+                records[2] with {
+                    Payload = JsonSerializer.SerializeToElement(
+                        new PlayerSetCrouchCommand(1, false),
+                        ControlProtocol.JsonOptions)
+                },
+                .. records[3..]
+            ]));
+    }
+
     private static ScenarioActionRecordV2 TerrainActionRecord<TCommand>(
         string actionId,
         string command,

@@ -24,6 +24,7 @@ public partial class TestAutomationModLoader {
         }
         ComponentPlayer.OnInteractEvent += HandleTypedInteractEvent;
         ComponentPlayer.OnDigEvent += HandleTypedDigEvent;
+        ComponentPlayer.OnBodyUpdate += HandleTypedBodyUpdate;
         typedPlayerActionsInitialized = true;
     }
 
@@ -33,12 +34,14 @@ public partial class TestAutomationModLoader {
         }
         ComponentPlayer.OnInteractEvent -= HandleTypedInteractEvent;
         ComponentPlayer.OnDigEvent -= HandleTypedDigEvent;
+        ComponentPlayer.OnBodyUpdate -= HandleTypedBodyUpdate;
         typedPlayerActionsInitialized = false;
         ResetTypedPlayerActions();
     }
 
     private void ResetTypedPlayerActions() {
         pendingTerrainAction = null;
+        pendingPlayerMotionAction = null;
         InputHijackState.ResetGameplayInputs();
     }
 
@@ -233,6 +236,11 @@ public partial class TestAutomationModLoader {
             throw new AutomationCommandException(
                 "action_in_progress",
                 $"Action '{pendingTerrainAction.ActionId}' is still in progress.");
+        }
+        if (pendingPlayerMotionAction != null) {
+            throw new AutomationCommandException(
+                "action_in_progress",
+                $"Action '{pendingPlayerMotionAction.ActionId}' is still in progress.");
         }
         ValidateTerrainCoordinate(targetCell);
         Project project = GameManager.Project

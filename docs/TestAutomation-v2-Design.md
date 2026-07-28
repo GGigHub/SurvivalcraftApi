@@ -1,6 +1,6 @@
 # TestAutomation v2 设计
 
-状态：设计基线；M0 已实现，M1 玩家地形交互已达到完整覆盖契约
+状态：设计基线；M0 已实现，M1 玩家地形交互与人物运动均已达到完整覆盖契约
 目标分支：`codex/api-mp-integration`
 适用范围：核心玩法联机自动化、直连与中继、多客户端、失败取证和长期稳定性测试
 
@@ -471,7 +471,7 @@ Survivalcraft.TestAutomation/
 - `player.setCreativeFly` 进入 `ComponentGui.TrySetCreativeFlyEnabled` 生产入口，再走现有 `PlayerCreativeFlyPacket`，没有直接修改远端状态或伪造数据包；
 - 同一 `CreativeFlyMultiplayerScenario` 已在一服两客 Direct 与 Relay 下真实通过，并作为两项 L2 Theory 进入测试程序集；
 - 失败产物 v2 与机器可检查覆盖清单已经落地；`actions.json` 保存强类型动作载荷，回放会校验场景/wire/API/snapshot 版本并重新执行记录动作；
-- 当前回归结果为平台 L0/L1 53 项、游戏 L0/L1 14 项、包含五项既有场景与两项 M1 场景的 L2 7 项全部通过。
+- 当前回归结果为平台 L0/L1 57 项、游戏 L0/L1 14 项、包含五项既有场景及地形交互与人物运动各两项的 L2 9 项全部通过。
 
 当前创飞覆盖尚不标记为完整：创飞自身仍需加入 late join、重连、持久化与更完整的权限拒绝矩阵。
 
@@ -491,4 +491,21 @@ Survivalcraft.TestAutomation/
 - `TerrainInteractionMultiplayerScenario` 已在 Direct 与 Relay 的真实无窗口拓扑通过，Direct 产物也已由 Host 完整回放；
 - 覆盖清单和 L2 Theory 已记录 Direct、Relay、权威、观察者、late join、重连、故障与持久化证据，PowerShell 的 `m1-direct`、`m1-relay` 和 `m1` 入口执行完整矩阵。
 
-`player.place-dig-use` 现已标记为 `covered`。下一条开发主线是 `player.motion-look-crouch`；创飞仍需补齐它自己的 late join、重连和持久化矩阵，不能借用地形交互证据提升状态。
+`player.place-dig-use` 现已标记为 `covered`。创飞仍需补齐它自己的 late join、重连和持久化矩阵，不能借用其他功能证据提升状态。
+
+## 23. M1 人物运动、视角与蹲伏完整覆盖实施记录
+
+本切片完成 `player.move`、`player.look` 和 `player.setCrouch` 的可回放生产输入链：
+
+- 新增强类型 move/look/setCrouch DTO，以及服务端准备、actor 客户端应用的两阶段人物夹具；夹具只创建平坦平台并设置站位、零速度、零视角与非蹲伏前置条件，不写动作最终状态；
+- 输入适配器在 `ComponentInput.Update` 后注入固定帧的 Move/Look 或一次 ToggleCrouch，生产代码继续负责 `ComponentPlayer` 控制、`ComponentLocomotion` 积分和 `PlayerBodyUpdatePacket` 权威同步；
+- setCrouch 使用目标状态语义。人物尚未真正落地时，适配器等待 `StandingOnValue` 并按有界间隔重试生产 ToggleCrouch；目标一旦改变立即停止，避免重复 toggle 反转状态；
+- Player Snapshot v2 以兼容的可选字段新增头部 `lookAngles` 和身体四元数 `rotation`；规范化器支持两者，比较器对视角使用向量容差、对旋转使用忽略四元数符号的角度容差，旧 v2 JSON 缺少字段时仍可读取；
+- 一服三客 Direct/Relay 场景验证服务端不能发起玩家输入、非 owner 客户端不能驱动 actor，move/look/crouch 均产生 queued、observed、applied 事件并在服务端、actor 与 observer 收敛；
+- 三个初始动作在固定延迟、抖动、100% 复制和 50% 重排下执行；client-c 随后 late join 并恢复位置、视角与蹲伏；
+- client-a 断线后以稳定 PlayerIndex 重连，四个节点断言玩家索引唯一。实体重建语义被显式区分：ComponentFrame 保存的位置与身体四元数朝向继续存在，ComponentLocomotion.LookAngles 与 ComponentBody crouch 不保存，因此必须复位；
+- 重连后重新建立同位置夹具，再通过生产输入执行 look/crouch；服务端保存、停止、重载并重建 transport，重新加入的 actor 与 client-c observer 再次验证位置/身体朝向持久而头部视角/蹲伏复位；
+- `ScenarioReplayV2` 严格记录并校验五个动作的角色、命令顺序、强类型载荷与网络故障配置；Direct 与 Relay 产物均已完整回放；
+- `PlayerMotionMultiplayerScenarioTest`、覆盖清单和 PowerShell 的 `motion-direct`、`motion-relay`、`motion` 入口把完整矩阵纳入无窗口自动门禁。
+
+`player.motion-look-crouch` 现已标记为 `covered`。下一条核心开发主线可以进入 `terrain.streaming-and-revisions`，同时保留创飞生命周期补全作为独立小任务。

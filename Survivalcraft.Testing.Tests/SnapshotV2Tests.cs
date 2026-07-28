@@ -116,6 +116,61 @@ public sealed class SnapshotV2Tests {
 
     [Fact]
     [Trait("Layer", "L0")]
+    public void PlayerComparerAndCanonicalizerIncludeLookAngles() {
+        PlayerSnapshotV2 player = Player(1, "A", 1) with {
+            Body = Player(1, "A", 1).Body! with {
+                LookAngles = new Vector2State(0.1234567, -0.25),
+                Rotation = new QuaternionState(0, 0, 0, 1)
+            }
+        };
+        StateSnapshotV2 expected = Snapshot([player], []);
+        StateSnapshotV2 withinTolerance = expected with {
+            Players = [player with {
+                Body = player.Body! with {
+                    LookAngles = new Vector2State(0.133, -0.25),
+                    Rotation = new QuaternionState(0, 0, 0, -1)
+                }
+            }]
+        };
+        StateSnapshotV2 outsideTolerance = expected with {
+            Players = [player with {
+                Body = player.Body! with {
+                    LookAngles = new Vector2State(0.16, -0.25),
+                    Rotation = new QuaternionState(0, Math.Sin(0.05), 0, Math.Cos(0.05))
+                }
+            }]
+        };
+        StateSnapshotV2 equivalentQuaternion = expected with {
+            Players = [player with {
+                Body = player.Body! with { Rotation = new QuaternionState(0, 0, 0, -1) }
+            }]
+        };
+
+        PlayerBodySnapshotV2 normalizedBody = Assert.Single(
+            SnapshotV2Canonicalizer.Normalize(expected, decimalPlaces: 5).Players).Body!;
+        Assert.Equal(new Vector2State(0.12346, -0.25), normalizedBody.LookAngles);
+        Assert.Equal(new QuaternionState(0, 0, 0, 1), normalizedBody.Rotation);
+        Assert.Equal(
+            SnapshotV2Canonicalizer.ComputeSha256(expected),
+            SnapshotV2Canonicalizer.ComputeSha256(equivalentQuaternion));
+        Assert.True(SnapshotV2Comparer.ComparePlayers(
+            expected,
+            withinTolerance,
+            new SnapshotV2PlayerComparisonOptions(LookAngleTolerance: 0.02)).Equal);
+        SnapshotV2Diff difference = SnapshotV2Comparer.ComparePlayers(
+            expected,
+            outsideTolerance,
+            new SnapshotV2PlayerComparisonOptions(LookAngleTolerance: 0.02));
+        Assert.Contains(
+            difference.Differences,
+            item => item.Path == "$.players[playerIndex=1].body.lookAngles");
+        Assert.Contains(
+            difference.Differences,
+            item => item.Path == "$.players[playerIndex=1].body.rotation");
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void TerrainProjectionIsCanonicalAndComparedByCoordinate() {
         TerrainCellSnapshotV2 firstCell = new(10, 64, 20, 5, 5, 0, true);
         TerrainCellSnapshotV2 secondCell = new(11, 64, 20, 21, 21, 0, true);

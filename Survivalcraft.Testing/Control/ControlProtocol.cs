@@ -135,6 +135,11 @@ public static class ControlCommandNames {
     public const string GetEvents = "state.getEvents";
     public const string ResetEvents = "state.resetEvents";
     public const string SetCreativeFly = "player.setCreativeFly";
+    public const string PreparePlayerMotionFixture = "fixture.player.prepareMotion";
+    public const string ApplyPlayerMotionFixture = "fixture.player.applyMotion";
+    public const string PlayerMove = "player.move";
+    public const string PlayerLook = "player.look";
+    public const string PlayerSetCrouch = "player.setCrouch";
     public const string PrepareTerrainInteractionFixture = "fixture.player.prepareTerrainInteraction";
     public const string ApplyTerrainInteractionFixture = "fixture.player.applyTerrainInteraction";
     public const string PlayerUse = "player.use";

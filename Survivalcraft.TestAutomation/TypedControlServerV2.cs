@@ -88,6 +88,56 @@ public partial class TestAutomationModLoader {
                 requiresProject: true,
                 requiresNetwork: true),
             SetCreativeFly);
+        router.Register<PreparePlayerMotionFixtureCommand, PlayerMotionFixture>(
+            Metadata(
+                ControlCommandNames.PreparePlayerMotionFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PreparePlayerMotionFixture(command));
+        router.Register<ApplyPlayerMotionFixtureCommand, ControlAck>(
+            Metadata(
+                ControlCommandNames.ApplyPlayerMotionFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => ApplyPlayerMotionFixture(command));
+        router.Register<PlayerMoveCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerMove,
+                AutomationCommandDomain.Player,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerMove);
+        router.Register<PlayerLookCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerLook,
+                AutomationCommandDomain.Player,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerLook);
+        router.Register<PlayerSetCrouchCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerSetCrouch,
+                AutomationCommandDomain.Player,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerSetCrouch);
         router.Register<PrepareTerrainInteractionFixtureCommand, TerrainInteractionFixture>(
             Metadata(
                 ControlCommandNames.PrepareTerrainInteractionFixture,
@@ -355,7 +405,9 @@ public partial class TestAutomationModLoader {
             : new PlayerBodySnapshotV2(
                 ToVector(body.Position),
                 ToVector(body.Velocity),
-                body.IsCrouching);
+                body.IsCrouching,
+                ToVector(componentPlayer!.ComponentLocomotion.LookAngles),
+                ToQuaternion(body.Rotation));
         return new PlayerSnapshotV2(
             player.PlayerIndex,
             player.Name ?? string.Empty,
@@ -368,6 +420,12 @@ public partial class TestAutomationModLoader {
             player.Level,
             componentPlayer?.ComponentLocomotion?.IsCreativeFlyEnabled == true);
     }
+
+    private static Vector2State ToVector(Vector2 vector) =>
+        new(vector.X, vector.Y);
+
+    private static QuaternionState ToQuaternion(Quaternion value) =>
+        new(value.X, value.Y, value.Z, value.W);
 
     private static string? ResolveNetworkIdentity(PlayerData player) {
         if (player.IsMainPlayer && NetworkManager.NetworkGuid != Guid.Empty) {

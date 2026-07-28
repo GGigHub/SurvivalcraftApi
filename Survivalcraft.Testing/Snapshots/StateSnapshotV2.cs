@@ -71,4 +71,6 @@ public sealed record PlayerSnapshotV2(
 public sealed record PlayerBodySnapshotV2(
     Vector3State Position,
     Vector3State Velocity,
-    bool IsCrouching);
+    bool IsCrouching,
+    Vector2State? LookAngles = null,
+    QuaternionState? Rotation = null);

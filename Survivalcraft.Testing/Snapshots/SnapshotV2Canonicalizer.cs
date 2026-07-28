@@ -29,7 +29,13 @@ public static class SnapshotV2Canonicalizer {
                         ? null
                         : player.Body with {
                             Position = Normalize(player.Body.Position, decimalPlaces),
-                            Velocity = Normalize(player.Body.Velocity, decimalPlaces)
+                            Velocity = Normalize(player.Body.Velocity, decimalPlaces),
+                            LookAngles = player.Body.LookAngles == null
+                                ? null
+                                : Normalize(player.Body.LookAngles, decimalPlaces),
+                            Rotation = player.Body.Rotation == null
+                                ? null
+                                : Normalize(player.Body.Rotation, decimalPlaces)
                         },
                     Health = player.Health.HasValue
                         ? Round(player.Health.Value, decimalPlaces)
@@ -66,8 +72,48 @@ public static class SnapshotV2Canonicalizer {
             Round(value.Y, decimalPlaces),
             Round(value.Z, decimalPlaces));
 
-    private static double Round(double value, int decimalPlaces) =>
-        Math.Round(value, decimalPlaces, MidpointRounding.AwayFromZero);
+    private static Vector2State Normalize(Vector2State value, int decimalPlaces) =>
+        new(
+            Round(value.X, decimalPlaces),
+            Round(value.Y, decimalPlaces));
+
+    private static QuaternionState Normalize(QuaternionState value, int decimalPlaces) {
+        double length = Math.Sqrt(
+            value.X * value.X
+            + value.Y * value.Y
+            + value.Z * value.Z
+            + value.W * value.W);
+        double x = value.X;
+        double y = value.Y;
+        double z = value.Z;
+        double w = value.W;
+        if (double.IsFinite(length) && length > double.Epsilon) {
+            x /= length;
+            y /= length;
+            z /= length;
+            w /= length;
+        }
+        bool negate = w < 0
+            || (w == 0 && z < 0)
+            || (w == 0 && z == 0 && y < 0)
+            || (w == 0 && z == 0 && y == 0 && x < 0);
+        if (negate) {
+            x = -x;
+            y = -y;
+            z = -z;
+            w = -w;
+        }
+        return new QuaternionState(
+            Round(x, decimalPlaces),
+            Round(y, decimalPlaces),
+            Round(z, decimalPlaces),
+            Round(w, decimalPlaces));
+    }
+
+    private static double Round(double value, int decimalPlaces) {
+        double rounded = Math.Round(value, decimalPlaces, MidpointRounding.AwayFromZero);
+        return rounded == 0d ? 0d : rounded;
+    }
 
     private static SortedDictionary<string, string> ToSortedDictionary(
         IReadOnlyDictionary<string, string> source) {
