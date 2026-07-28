@@ -34,19 +34,19 @@
     },
     {
       "featureId": "player.place-dig-use",
-      "status": "planned",
+      "status": "covered",
       "productionEntry": "ComponentInput -> ComponentPlayer -> ComponentMiner -> PlayerInteractPacket / PlayerDigPacket",
       "fixtureCommand": "fixture.player.prepareTerrainInteraction / fixture.player.applyTerrainInteraction",
       "actionCommand": "player.place / player.dig / player.use",
       "snapshotDomains": ["players", "terrain", "events"],
-      "directTest": "TerrainInteractionMultiplayerScenarioTest.PlaceDigUseConvergeAcrossAuthorityAndObserver(Direct)",
-      "relayTest": "TerrainInteractionMultiplayerScenarioTest.PlaceDigUseConvergeAcrossAuthorityAndObserver(Relay)",
-      "lateJoinTest": null,
-      "reconnectTest": null,
+      "directTest": "TerrainInteractionMultiplayerScenarioTest.PlaceDigUseSurviveLateJoinReconnectFaultsAndReload(Direct)",
+      "relayTest": "TerrainInteractionMultiplayerScenarioTest.PlaceDigUseSurviveLateJoinReconnectFaultsAndReload(Relay)",
+      "lateJoinTest": "terrain-late-join-convergence",
+      "reconnectTest": "terrain-reconnect-convergence",
       "authorityTest": "dig-server-authority-observer-convergence",
-      "faultTest": null,
-      "persistenceTest": null,
-      "note": "Typed use, place and dig run through the production input/miner path with Direct and Relay authority/observer convergence, event correlation, server-origin rejection and unreachable-target rejection. Late join, reconnect, network faults and persistence remain before the feature can be marked covered."
+      "faultTest": "terrain-action-under-network-faults",
+      "persistenceTest": "terrain-save-reload-persistence",
+      "note": "Typed use, place and dig run through the production input/miner path with Direct and Relay authority/observer convergence, event correlation, server-origin rejection, unreachable-target rejection, a third late-joining client, actor reconnect, deterministic latency/jitter/duplication/reordering, and server save/reload persistence."
     },
     {
       "featureId": "terrain.streaming-and-revisions",

@@ -2,7 +2,7 @@
 
 本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会按场景启动隔离的 Survivalcraft 进程：核心场景完成建服、两阶段兼容握手、模组消息、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、超时与恢复；中继场景另外启动真实 RelayServer，验证房间协商、模组消息、故障注入和同房间重连。所有场景都会把可回放的诊断材料写入 `TestResults`。
 
-强类型玩法驱动、Snapshot v2、一服两客拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞以及 M1 的 use/place/dig 首个纵向切片。
+强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞以及达到完整覆盖契约的 M1 use/place/dig 场景。
 
 ## 一键运行
 
@@ -26,8 +26,8 @@
 - `relay`：运行隐藏 RelayServer 与两个无界面游戏节点，验证中继模组通道、重复帧去重、异常隔离、会话清理和重连。
 - `v2-direct` / `v2-relay`：分别运行 TestAutomation v2 的一服两客创飞同步场景。
 - `v2`：同一份强类型玩法场景依次通过直连和中继运行；不使用 UI 点击、UDP 文本命令或 Roslyn 脚本。
-- `m1-direct` / `m1-relay`：分别运行一服两客 use/place/dig 生产输入路径场景。
-- `m1`：同一份 M1 地形交互动作依次通过直连和中继运行，并保存可回放的动作载荷。
+- `m1-direct` / `m1-relay`：分别运行一服三客 use/place/dig 生产输入路径与生命周期场景。
+- `m1`：同一份 M1 场景依次通过直连和中继运行，覆盖 late join、actor 重连、确定性网络故障、服务端保存重载，并保存可回放的动作与故障载荷。
 - `full`：依次执行 fast、doctor、compatibility、core、relay、M0 与 M1 的直连/中继场景和未分层的原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
 - `-UseAngle`：构建 Windows ANGLE 兼容运行时，适合没有完整 OpenGL 驱动的 CI 机器。
 - `-NoBuild`：复用已构建的二进制文件。
@@ -45,7 +45,7 @@ dotnet test ./Survivalcraft.Test/Survivalcraft.Test.csproj `
 | --- | --- | --- | --- |
 | L0 | 协议编解码、规范化快照、精确差异 | 否 | 秒级以内 |
 | L1 | 手动时钟、确定性调度器、模拟网络、产物写入 | 否 | 秒级以内 |
-| L2 | 真实进程的兼容矩阵、直连核心、中继和 v2 一服两客玩法场景 | 是（强制无界面） | 当前合计约 1.5 分钟 |
+| L2 | 真实进程的兼容矩阵、直连核心、中继和 v2 多客户端玩法场景 | 是（强制无界面） | 当前合计约 2 分钟 |
 | Legacy/full | 历史功能和复现场景集合 | 是 | 分钟到更长 |
 
 AI 开发循环应先跑 L0/L1；涉及加载、ECS、网络包或持久化的改动再跑 L2。准备合并时必须通过 fast、doctor、compatibility、core 和 relay；full 用于额外观察历史迁移债务。这样能够让高频修改尽快失败，同时保留真实进程验收。
@@ -102,11 +102,15 @@ M0 的首个可运行切片保持 wire protocol v1，并独立发布 Automation 
 
 `CreativeFlyMultiplayerScenario` 使用 `MultiplayerCluster` 启动一台服务端、客户端 A、客户端 B，以及可选的隐藏 RelayServer。客户端 A 调用 `player.setCreativeFly` 时，自动化适配器进入 `ComponentGui.TrySetCreativeFlyEnabled` 生产路径，由现有 `PlayerCreativeFlyPacket` 经过服务端权威校验后广播；场景分别在服务端、发起客户端和观察客户端轮询 Snapshot v2，验证启用与关闭均最终收敛。动作会产生 `queued`、`applied` 或 `rejected` 结构化事件。
 
-`TerrainInteractionMultiplayerScenario` 复用同一拓扑，依次执行涂色 use、方块 place 和工具 dig。客户端动作从 `ComponentInput` 的受控输入边界进入 `ComponentPlayer` 与 `ComponentMiner`，再通过现有 `PlayerInteractPacket` / `PlayerDigPacket` 到服务端；服务端从玩家眼位重新计算权威射线，场景不直接发送玩法包或写最终状态。夹具只负责在服务端布置方块与手持物、在客户端同步玩家前置位置。每个动作都检查发起端结构化事件以及服务端、发起端、观察端的 Terrain Snapshot v2 收敛。
+`TerrainInteractionMultiplayerScenario` 使用一服三客拓扑，依次执行涂色 use、方块 place 和工具 dig。客户端动作从 `ComponentInput` 的受控输入边界进入 `ComponentPlayer` 与 `ComponentMiner`，再通过现有 `PlayerInteractPacket` / `PlayerDigPacket` 到服务端；服务端从玩家眼位重新计算权威射线，场景不直接发送玩法包或写最终状态。夹具只负责在服务端布置方块与手持物、在客户端同步玩家前置位置。每个动作都检查发起端结构化事件以及服务端、发起端、观察端的 Terrain Snapshot v2 收敛。
 
-Terrain Snapshot v2 返回去除动态光照位的稳定方块值、contents、data 和 `isLoaded`。场景必须先确认三端目标区块已加载，不能把“区块缺失时读到的 0”误判为空气；这避免权威改单包因客户端区块尚不存在而被正常丢弃。
+生命周期顺序固定为：use 完成后 client-c 首次加入并恢复既有地形；place 在固定种子的 18 ms 延迟、4 ms 抖动、重复包和重排下执行；随后清除故障，client-a 主动断线并以同一玩家身份重连，四个节点必须只有唯一的 PlayerIndex 投影；重连后的 actor 再执行 dig。最后服务端保存并停止世界，重新加载存档、重建直连或中继房间，服务端和重新加入的 client-c 都必须与保存前 Terrain Snapshot v2 完全一致。
 
-覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。创飞与 place/dig/use 条目已经记录 Direct、Relay、服务端权威、观察者和非法请求证据，但仍保持 `planned`，直到对应领域补齐 late join、重连、故障和持久化后才允许标记为 `covered`。
+该重连测试发现并修复了生产路径中的旧远端 `PlayerData` 残留：观察客户端收到同索引的新 `PlayerAddPacket` 时会清理失效记录，同时把仍活跃的重复 add 作为幂等确认处理。测试不会通过忽略重复玩家投影来掩盖问题。
+
+Terrain Snapshot v2 返回去除动态光照位的稳定方块值、contents、data 和 `isLoaded`。场景必须先确认所有观察节点的目标区块已加载，不能把“区块缺失时读到的 0”误判为空气；这避免权威改单包因客户端区块尚不存在而被正常丢弃。
+
+覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。`player.place-dig-use` 已记录 Direct、Relay、服务端权威、观察者、非法请求、late join、重连、确定性故障和保存重载证据，因此状态为 `covered`；创飞仍保持 `planned`，等待它自己的生命周期矩阵。
 
 ## 确定性边界
 
@@ -115,7 +119,7 @@ Terrain Snapshot v2 返回去除动态光照位的稳定方块值、contents、d
 - 核心 L2 场景在加载和 LiteNetLib 传输阶段使用真实时间，因为窗口事件循环和底层传输需要持续轮询；它通过固定世界种子、固定游戏随机计数器、关闭音频和多线程地形更新来降低抖动。
 - 生产路径上的网络故障注入器作用于直连和中继的应用层出站帧，可设置固定种子的延迟、抖动、丢包、重复、重排和带宽限制。中继建房/入房控制帧和测试控制管道不经过故障注入，因此即使游戏数据网络异常，测试仍能取回状态与日志。
 
-核心验收默认使用 12 ms 延迟和 3 ms 确定性抖动，不启用丢包。高损耗和乱序应作为单独场景添加，避免把“基础功能是否成立”和“极端网络韧性”混成一个不稳定门禁。
+核心验收默认使用 12 ms 延迟和 3 ms 确定性抖动，不启用丢包。M1 地形交互使用可回放的 18 ms 延迟、4 ms 抖动、100% 应用层复制和 50% 重排，不启用丢包；这样能稳定验证重复/乱序幂等性，同时避免单次动作帧被不可恢复地丢弃。高损耗应进入单独的重试或 soak 场景。
 
 ## 核心验收场景
 
@@ -179,9 +183,9 @@ TestResults/{core-multiplayer,compatibility-matrix,relay-mod-channel}-*/
 └── relay.log                 # 仅中继场景
 ```
 
-v2 场景另外写入 `replay-v2.json`、`topology.json`、`capabilities-*.json`、`actions.json`、`events-*.json`、`assertions.json` 和 `snapshot-*.v2.json`。这些文件保存实际动作角色、命令名、强类型载荷、动作 ID、动作回执、事件阶段及一服两客每个检查点的投影快照；成功和失败使用相同格式。
+v2 场景另外写入 `replay-v2.json`、`topology.json`、`capabilities-*.json`、`actions.json`、`events-*.json`、`assertions.json` 和 `snapshot-*.v2.json`。这些文件保存实际动作角色、命令名、强类型载荷、动作 ID、动作回执、事件阶段、故障配置及各拓扑节点每个检查点的投影快照；成功和失败使用相同格式。
 
-同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式和 `actions.json` 中的动作载荷重新运行；当前支持创飞和 terrain-interaction 两个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。
+同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞和 terrain-interaction 两个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。
 
 - `steps.json` 给出第一个失败步骤、起止时间和异常。
 - `snapshot-*.json` 已排序并规范化浮点数，适合机器比较。

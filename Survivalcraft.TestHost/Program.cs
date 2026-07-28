@@ -399,6 +399,7 @@ internal static class Program {
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(8)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
+            NetworkFaults: replay?.NetworkFaults,
             ReplayPlan: replayPlan);
     }
 

@@ -12,6 +12,7 @@ public static class MultiplayerGameplayBootstrap {
         IDictionary<string, AutomationDescription> capabilities,
         string worldName,
         int seed,
+        int initialClientCount,
         TimeSpan stepTimeout,
         CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(cluster);
@@ -19,6 +20,9 @@ public static class MultiplayerGameplayBootstrap {
         ArgumentNullException.ThrowIfNull(requiredCapabilities);
         ArgumentNullException.ThrowIfNull(capabilities);
         ArgumentException.ThrowIfNullOrWhiteSpace(worldName);
+        if (initialClientCount is < 1 || initialClientCount > cluster.Clients.Length) {
+            throw new ArgumentOutOfRangeException(nameof(initialClientCount));
+        }
 
         await runner.RunAsync(
             "start-cluster",
@@ -100,27 +104,22 @@ public static class MultiplayerGameplayBootstrap {
             cancellationToken).ConfigureAwait(false);
 
         await runner.RunAsync(
-            "connect-two-clients",
-            "network.connect(client-a, client-b)",
+            "connect-initial-clients",
+            $"network.connect({string.Join(", ", cluster.Clients.Take(initialClientCount).Select(client => client.Role))})",
             async token => {
-                for (int index = 0; index < cluster.Clients.Length; index++) {
+                for (int index = 0; index < initialClientCount; index++) {
                     GameNodeProcess client = cluster.Clients[index];
-                    await cluster.ConnectClientAsync(client, token).ConfigureAwait(false);
-                    _ = await MultiplayerScenarioOperations.WaitForWorldEntryAsync(
-                        client,
-                        serverSide: false,
-                        stepTimeout,
-                        token).ConfigureAwait(false);
-                    await MultiplayerScenarioOperations.EnsureClientPlayingAsync(
+                    await ConnectClientAndEnterAsync(
+                        cluster,
                         client,
                         $"Learner{(char)('A' + index)}",
                         stepTimeout,
                         token).ConfigureAwait(false);
                 }
                 _ = await cluster.Server.WaitForStatusAsync(
-                    status => status.ServerSessionCount == cluster.Clients.Length,
+                    status => status.ServerSessionCount == initialClientCount,
                     stepTimeout,
-                    "Server did not expose both client sessions.",
+                    $"Server did not expose {initialClientCount} initial client sessions.",
                     token).ConfigureAwait(false);
             },
             cancellationToken).ConfigureAwait(false);
@@ -136,6 +135,28 @@ public static class MultiplayerGameplayBootstrap {
                 $"Client A did not expose a ready main player. Status={actorStatus}.");
         }
         return actorStatus.PlayerIndex;
+    }
+
+    public static async Task ConnectClientAndEnterAsync(
+        MultiplayerCluster cluster,
+        GameNodeProcess client,
+        string playerName,
+        TimeSpan stepTimeout,
+        CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(cluster);
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrWhiteSpace(playerName);
+        await cluster.ConnectClientAsync(client, cancellationToken).ConfigureAwait(false);
+        _ = await MultiplayerScenarioOperations.WaitForWorldEntryAsync(
+            client,
+            serverSide: false,
+            stepTimeout,
+            cancellationToken).ConfigureAwait(false);
+        await MultiplayerScenarioOperations.EnsureClientPlayingAsync(
+            client,
+            playerName,
+            stepTimeout,
+            cancellationToken).ConfigureAwait(false);
     }
 
     public static IEnumerable<GameNodeProcess> AllNodes(MultiplayerCluster cluster) =>

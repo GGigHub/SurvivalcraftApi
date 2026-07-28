@@ -12,7 +12,7 @@ public sealed class TerrainInteractionMultiplayerScenarioTest {
     [Trait("Layer", "L2")]
     [Trait("Category", "GameplayV2")]
     [Trait("Milestone", "M1")]
-    public async Task PlaceDigUseConvergeAcrossAuthorityAndObserver(
+    public async Task PlaceDigUseSurviveLateJoinReconnectFaultsAndReload(
         MultiplayerTransportKind transport) {
         string artifactBase = Environment.GetEnvironmentVariable("SC_TEST_ARTIFACTS")
             ?? Path.Combine(AppContext.BaseDirectory, "TestResults");
@@ -37,6 +37,30 @@ public sealed class TerrainInteractionMultiplayerScenarioTest {
         Assert.True(File.Exists(Path.Combine(
             result.ArtifactDirectory,
             "snapshot-client-b-dig-final.v2.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-client-c-after-late-join.v2.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-client-a-after-reconnect.v2.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-server-after-reload.v2.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-client-c-after-reload.v2.json")));
+        ScenarioReplayV2 replay = await ScenarioArtifactWriter.ReadReplayV2Async(
+            result.ArtifactDirectory);
+        Assert.Equal(TerrainInteractionMultiplayerScenario.ScenarioVersion, replay.Version);
+        Assert.NotNull(replay.NetworkFaults);
+        Assert.Equal(1, replay.NetworkFaults.DuplicationRate);
+        string assertions = await File.ReadAllTextAsync(Path.Combine(
+            result.ArtifactDirectory,
+            "assertions.json"));
+        Assert.Contains("terrain-late-join-convergence", assertions, StringComparison.Ordinal);
+        Assert.Contains("terrain-reconnect-convergence", assertions, StringComparison.Ordinal);
+        Assert.Contains("terrain-action-under-network-faults", assertions, StringComparison.Ordinal);
+        Assert.Contains("terrain-save-reload-persistence", assertions, StringComparison.Ordinal);
         if (transport == MultiplayerTransportKind.Relay) {
             Assert.False(string.IsNullOrWhiteSpace(result.RoomCode));
             Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "relay.log")));

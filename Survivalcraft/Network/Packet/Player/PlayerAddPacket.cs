@@ -30,6 +30,23 @@ public class PlayerAddPacket : Packet {
         var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
         var playerData = new PlayerData(GameManager.Project);
         playerData.Load(m_vd);
+
+        PlayerData[] sameIndex = subsystemPlayers.PlayersData
+            .Where(existing => existing.PlayerIndex == playerData.PlayerIndex)
+            .ToArray();
+        PlayerData retainedPlayer = sameIndex.FirstOrDefault(existing => existing.IsMainPlayer)
+            ?? sameIndex.FirstOrDefault(existing => existing.ComponentPlayer != null);
+        foreach (PlayerData stale in sameIndex.Where(existing => existing != retainedPlayer)) {
+            Log.Warning(
+                $"Replacing stale remote player data. PlayerIndex={stale.PlayerIndex}, Name={stale.Name}");
+            subsystemPlayers.RemovePlayerData(stale, true);
+        }
+        if (retainedPlayer != null) {
+            NetworkManager.Queue(new PlayerKnownPacket(retainedPlayer.PlayerIndex));
+            playerData.Dispose();
+            return;
+        }
+
         subsystemPlayers.AddPlayerData(playerData);
         NetworkManager.Queue(new PlayerKnownPacket(playerData.PlayerIndex));
     }

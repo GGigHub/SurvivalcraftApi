@@ -49,7 +49,8 @@ public sealed record ScenarioReplayV2(
     string Transport,
     int WireProtocolVersion,
     int AutomationApiVersion,
-    int SnapshotSchemaVersion);
+    int SnapshotSchemaVersion,
+    NetworkFaultProfile? NetworkFaults = null);
 
 public sealed record ScenarioTopologyV2(
     string Transport,

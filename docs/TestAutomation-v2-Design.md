@@ -1,6 +1,6 @@
 # TestAutomation v2 设计
 
-状态：设计基线；M0 与 M1 玩家地形交互首个纵向切片已实现
+状态：设计基线；M0 已实现，M1 玩家地形交互已达到完整覆盖契约
 目标分支：`codex/api-mp-integration`
 适用范围：核心玩法联机自动化、直连与中继、多客户端、失败取证和长期稳定性测试
 
@@ -473,9 +473,9 @@ Survivalcraft.TestAutomation/
 - 失败产物 v2 与机器可检查覆盖清单已经落地；`actions.json` 保存强类型动作载荷，回放会校验场景/wire/API/snapshot 版本并重新执行记录动作；
 - 当前回归结果为平台 L0/L1 53 项、游戏 L0/L1 14 项、包含五项既有场景与两项 M1 场景的 L2 7 项全部通过。
 
-当前创飞覆盖尚不标记为完整：M1 仍需加入 late join、重连、持久化与更完整的权限拒绝矩阵。
+当前创飞覆盖尚不标记为完整：创飞自身仍需加入 late join、重连、持久化与更完整的权限拒绝矩阵。
 
-## 22. M1 玩家地形交互首个切片实施记录
+## 22. M1 玩家地形交互完整覆盖实施记录
 
 本切片完成 `player.use`、`player.place` 和 `player.dig` 的一条可回放生产链：
 
@@ -484,7 +484,11 @@ Survivalcraft.TestAutomation/
 - use 使用油漆桶涂木板，place 在支撑块相邻格放木板，dig 使用工具移除泥土，三者均验证服务端、发起客户端和观察客户端收敛；
 - Terrain Snapshot v2 新增投影、稳定排序、比较规则和 `isLoaded`，并去除异步光照位；区块缺失不再与空气混淆；
 - 动作适配器发布 `queued`、`observed`、`applied` 或 `rejected` 事件，场景还验证服务端节点不能发起玩家动作、客户端不能选择不可达目标；
-- `TerrainInteractionMultiplayerScenario` 已在 Direct 与 Relay 的一服两客真实无窗口拓扑通过；Direct 产物中的三个动作载荷也已由 Host 重新执行并通过；
-- 覆盖清单和 L2 Theory 已记录 Direct、Relay、权威与观察者证据，PowerShell 新增 `m1-direct`、`m1-relay` 和 `m1` 入口。
+- 场景升级为一服三客：use 后 client-c late join，place 在固定延迟、抖动、100% 复制和 50% 重排下执行，client-a 随后断线并以稳定 PlayerIndex 重连，再执行 dig；
+- 服务端在三种动作完成后保存并停止世界，重新加载存档并重建 Direct/Relay host；服务端和重新加入的 client-c 都与保存前 Terrain Snapshot v2 做坐标级比较；
+- 重连矩阵暴露并修复了观察客户端旧远端 `PlayerData` 残留。`PlayerAddPacket` 现在清理同索引失效记录，并把仍活跃的重复 add 作为幂等确认处理；四个节点都显式断言 PlayerIndex 唯一；
+- `ScenarioReplayV2` 记录 `networkFaults`，Host 会连同三个强类型动作载荷重放完整生命周期；
+- `TerrainInteractionMultiplayerScenario` 已在 Direct 与 Relay 的真实无窗口拓扑通过，Direct 产物也已由 Host 完整回放；
+- 覆盖清单和 L2 Theory 已记录 Direct、Relay、权威、观察者、late join、重连、故障与持久化证据，PowerShell 的 `m1-direct`、`m1-relay` 和 `m1` 入口执行完整矩阵。
 
-该功能仍保持 `planned`：late join、重连、固定网络故障和保存重载尚未纳入同一功能契约。下一步优先扩展 `player.motion-look-crouch`，再把地形交互加入 late join / reconnect / persistence 矩阵。
+`player.place-dig-use` 现已标记为 `covered`。下一条开发主线是 `player.motion-look-crouch`；创飞仍需补齐它自己的 late join、重连和持久化矩阵，不能借用地形交互证据提升状态。

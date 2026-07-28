@@ -114,6 +114,12 @@ public sealed class ScenarioArtifactTests {
                 "test",
                 true);
             ActionReceipt receipt = new("a1", true, 1, 1, "applied");
+            NetworkFaultProfile faultProfile = new(
+                Seed: 42,
+                BaseLatencyMilliseconds: 18,
+                DuplicationRate: 1,
+                ReorderRate: 0.5,
+                ReorderDelayMilliseconds: 18);
             StateSnapshotV2 snapshot = new(
                 2,
                 "capture",
@@ -127,7 +133,16 @@ public sealed class ScenarioArtifactTests {
                 new Dictionary<string, string>());
             ScenarioArtifactBundleV2 bundle = new(
                 new ScenarioDefinition("creative-fly", 1, 42, ["server", "client-a", "client-b"], []),
-                new ScenarioReplayV2("creative-fly", 1, 42, "runtime", "direct", 1, 2, 2),
+                new ScenarioReplayV2(
+                    "creative-fly",
+                    1,
+                    42,
+                    "runtime",
+                    "direct",
+                    1,
+                    2,
+                    2,
+                    faultProfile),
                 new ScenarioTopologyV2("direct", "server", ["client-a", "client-b"], false, null),
                 [],
                 new Dictionary<string, AutomationDescription> { ["client-a"] = capabilities },
@@ -174,6 +189,7 @@ public sealed class ScenarioArtifactTests {
             Assert.Empty(Directory.GetFiles(root, "*.tmp-*"));
             Assert.Equal("creative-fly", replay.Scenario);
             Assert.Equal("direct", replay.Transport);
+            Assert.Equal(faultProfile, replay.NetworkFaults);
             Assert.True(Assert.Single(replayActions)
                 .Payload.Deserialize<SetCreativeFlyCommand>(ControlProtocol.JsonOptions)?.Enabled);
         }

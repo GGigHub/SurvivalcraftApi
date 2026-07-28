@@ -68,19 +68,19 @@ else {
     [System.IO.Path]::GetFullPath($Artifacts)
 }
 $m1DirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
-    Join-Path $repositoryRoot "TestResults\terrain-interaction-m1-direct-$runStamp"
+    Join-Path $repositoryRoot "TestResults\terrain-interaction-m1-lifecycle-direct-$runStamp"
 }
 elseif ($Mode -eq "m1" -or $Mode -eq "full") {
-    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "terrain-interaction-m1-direct"
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "terrain-interaction-m1-lifecycle-direct"
 }
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
 }
 $m1RelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
-    Join-Path $repositoryRoot "TestResults\terrain-interaction-m1-relay-$runStamp"
+    Join-Path $repositoryRoot "TestResults\terrain-interaction-m1-lifecycle-relay-$runStamp"
 }
 elseif ($Mode -eq "m1" -or $Mode -eq "full") {
-    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "terrain-interaction-m1-relay"
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "terrain-interaction-m1-lifecycle-relay"
 }
 else {
     [System.IO.Path]::GetFullPath($Artifacts)

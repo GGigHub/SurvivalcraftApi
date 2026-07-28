@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using Survivalcraft.Testing.Control;
+using Survivalcraft.Testing.Networking;
 using Survivalcraft.Testing.Processes;
 using Survivalcraft.Testing.Snapshots;
 
@@ -21,6 +22,7 @@ public sealed record TerrainInteractionMultiplayerScenarioOptions(
     TimeSpan? ScenarioTimeout = null,
     string? WorkDirectory = null,
     bool KeepData = false,
+    NetworkFaultProfile? NetworkFaults = null,
     TerrainInteractionReplayPlan? ReplayPlan = null);
 
 public sealed record TerrainInteractionMultiplayerScenarioResult(
@@ -45,7 +47,14 @@ public sealed class TerrainInteractionMultiplayerScenarioException : Exception {
 
 public sealed class TerrainInteractionMultiplayerScenario {
     public const string ScenarioName = "terrain-interaction-multiplayer";
-    public const int ScenarioVersion = 1;
+    public const int ScenarioVersion = 2;
+
+    private static readonly string[] NodeRoles = [
+        "server",
+        "client-a",
+        "client-b",
+        "client-c"
+    ];
 
     private static readonly PlayerTerrainActionKind[] ActionOrder = [
         PlayerTerrainActionKind.Use,
@@ -54,14 +63,14 @@ public sealed class TerrainInteractionMultiplayerScenario {
     ];
 
     private static readonly ScenarioStepDefinition[] StepDefinitions = [
-        new("start-cluster", "process.start(server, client-a, client-b, relay?)"),
+        new("start-cluster", "process.start(server, client-a, client-b, client-c, relay?)"),
         new("wait-main-menu", ControlCommandNames.GetStatus),
         new("require-v2-capabilities", ControlCommandNames.Describe),
         new("configure-determinism", ControlCommandNames.ConfigureNode),
         new("create-server-world", ControlCommandNames.CreateWorld),
         new("enter-server-world", ControlCommandNames.EnterWorld),
         new("start-transport-host", "network.startHost"),
-        new("connect-two-clients", "network.connect(client-a, client-b)"),
+        new("connect-initial-clients", "network.connect(client-a, client-b)"),
         new("resolve-actor", ControlCommandNames.GetStatus),
         new("reject-server-originated-action", ControlCommandNames.PlayerUse),
         new("reject-unreachable-client-target", ControlCommandNames.PlayerUse),
@@ -72,19 +81,43 @@ public sealed class TerrainInteractionMultiplayerScenario {
         new("execute-use", ControlCommandNames.PlayerUse),
         new("verify-use-convergence", ControlCommandNames.GetSnapshotV2),
         new("verify-use-events", ControlCommandNames.GetEvents),
+        new("connect-late-client", "network.connect(client-c)"),
+        new("verify-late-join-state", ControlCommandNames.GetSnapshotV2),
+        new("enable-network-faults", ControlCommandNames.SetNetworkFaults),
         new("prepare-place-fixture", ControlCommandNames.PrepareTerrainInteractionFixture),
         new("apply-place-fixture", ControlCommandNames.ApplyTerrainInteractionFixture),
         new("verify-place-baseline", ControlCommandNames.GetSnapshotV2),
         new("execute-place", ControlCommandNames.PlayerPlace),
         new("verify-place-convergence", ControlCommandNames.GetSnapshotV2),
         new("verify-place-events", ControlCommandNames.GetEvents),
+        new("verify-network-faults", ControlCommandNames.GetSnapshotV2),
+        new("disable-network-faults", ControlCommandNames.SetNetworkFaults),
+        new("disconnect-actor", ControlCommandNames.Disconnect),
+        new("reconnect-actor", "network.connect(client-a)"),
+        new("verify-reconnected-state", ControlCommandNames.GetSnapshotV2),
         new("prepare-dig-fixture", ControlCommandNames.PrepareTerrainInteractionFixture),
         new("apply-dig-fixture", ControlCommandNames.ApplyTerrainInteractionFixture),
         new("verify-dig-baseline", ControlCommandNames.GetSnapshotV2),
         new("execute-dig", ControlCommandNames.PlayerDig),
         new("verify-dig-convergence", ControlCommandNames.GetSnapshotV2),
-        new("verify-dig-events", ControlCommandNames.GetEvents)
+        new("verify-dig-events", ControlCommandNames.GetEvents),
+        new("capture-pre-save-state", ControlCommandNames.GetSnapshotV2),
+        new("save-and-stop-world", ControlCommandNames.SaveWorld),
+        new("reload-saved-world", ControlCommandNames.ReloadWorld),
+        new("restart-transport-host", "network.startHost"),
+        new("verify-server-persistence", ControlCommandNames.GetSnapshotV2),
+        new("connect-persistence-observer", "network.connect(client-c)"),
+        new("verify-client-persistence", ControlCommandNames.GetSnapshotV2)
     ];
+
+    public static NetworkFaultProfile CreateDefaultNetworkFaults(int seed) =>
+        new(
+            Seed: unchecked(seed + 401),
+            BaseLatencyMilliseconds: 18,
+            JitterMilliseconds: 4,
+            DuplicationRate: 1,
+            ReorderRate: 0.5,
+            ReorderDelayMilliseconds: 18);
 
     public static TerrainInteractionReplayPlan ParseReplayActions(
         IReadOnlyList<ScenarioActionRecordV2> records) {
@@ -124,6 +157,13 @@ public sealed class TerrainInteractionMultiplayerScenario {
         string artifactDirectory = Path.GetFullPath(options.ArtifactDirectory);
         ValidateRuntime(runtimeDirectory, options.Transport);
         ValidateReplayPlan(options.ReplayPlan);
+        NetworkFaultProfile faultProfile = (options.NetworkFaults
+            ?? CreateDefaultNetworkFaults(options.Seed)).Validate();
+        if (!IsFaultProfileEnabled(faultProfile)) {
+            throw new ArgumentException(
+                "Terrain interaction resilience requires a non-empty network fault profile.",
+                nameof(options.NetworkFaults));
+        }
 
         TimeSpan stepTimeout = options.StepTimeout ?? TimeSpan.FromSeconds(60);
         TimeSpan scenarioTimeout = options.ScenarioTimeout ?? TimeSpan.FromMinutes(8);
@@ -144,7 +184,7 @@ public sealed class TerrainInteractionMultiplayerScenario {
             ScenarioName,
             ScenarioVersion,
             options.Seed,
-            ["server", "client-a", "client-b"],
+            NodeRoles,
             StepDefinitions);
         ScenarioRunner runner = new(stepTimeout);
         Dictionary<string, AutomationDescription> capabilities = new(StringComparer.Ordinal);
@@ -172,7 +212,7 @@ public sealed class TerrainInteractionMultiplayerScenario {
                 runDirectory,
                 options.Transport,
                 options.Seed,
-                ClientCount: 2,
+                ClientCount: 3,
                 StartupTimeout: stepTimeout));
             RequiredAutomationCapabilities requiredCapabilities = new(
                 SnapshotSchemaVersion: AutomationProtocol.CurrentSnapshotSchemaVersion,
@@ -181,6 +221,10 @@ public sealed class TerrainInteractionMultiplayerScenario {
                     ControlCommandNames.GetSnapshotV2,
                     ControlCommandNames.GetEvents,
                     ControlCommandNames.ResetEvents,
+                    ControlCommandNames.Disconnect,
+                    ControlCommandNames.SaveWorld,
+                    ControlCommandNames.ReloadWorld,
+                    ControlCommandNames.SetNetworkFaults,
                     ControlCommandNames.PrepareTerrainInteractionFixture,
                     ControlCommandNames.ApplyTerrainInteractionFixture,
                     ControlCommandNames.PlayerUse,
@@ -190,6 +234,8 @@ public sealed class TerrainInteractionMultiplayerScenario {
                 Domains: [
                     AutomationCommandDomain.System,
                     AutomationCommandDomain.Fixture,
+                    AutomationCommandDomain.World,
+                    AutomationCommandDomain.Network,
                     AutomationCommandDomain.State,
                     AutomationCommandDomain.Player,
                     AutomationCommandDomain.Terrain
@@ -201,8 +247,14 @@ public sealed class TerrainInteractionMultiplayerScenario {
                 capabilities,
                 $"TerrainActions-{options.Transport}-{options.Seed}",
                 options.Seed,
+                2,
                 stepTimeout,
                 scenarioToken).ConfigureAwait(false);
+            int initialActorPlayerIndex = actorPlayerIndex;
+            metrics["actor.initialPlayerIndex"] = actorPlayerIndex.ToString(CultureInfo.InvariantCulture);
+            if (!string.IsNullOrWhiteSpace(cluster.RoomCode)) {
+                metrics["relay.initialRoomCode"] = cluster.RoomCode;
+            }
 
             await VerifyAuthorityRejectionsAsync(
                 cluster,
@@ -220,21 +272,342 @@ public sealed class TerrainInteractionMultiplayerScenario {
                         cancellationToken: token))),
                 scenarioToken).ConfigureAwait(false);
 
-            foreach (PlayerTerrainActionKind kind in ActionOrder) {
-                await RunInteractionAsync(
-                    cluster,
-                    runner,
-                    kind,
-                    actorPlayerIndex,
-                    options.ReplayPlan,
+            GameNodeProcess[] initialNodes = [
+                cluster.Server,
+                cluster.Clients[0],
+                cluster.Clients[1]
+            ];
+            Dictionary<TerrainCellCoordinate, int> expectedTerrain = [];
+
+            TerrainInteractionFixture useFixture = await RunInteractionAsync(
+                cluster,
+                initialNodes,
+                runner,
+                PlayerTerrainActionKind.Use,
+                actorPlayerIndex,
+                options.ReplayPlan,
+                stepTimeout,
+                snapshots,
+                events,
+                actions,
+                assertions,
+                observedCells,
+                scenarioToken).ConfigureAwait(false);
+            expectedTerrain[useFixture.ExpectedCell] = useFixture.ExpectedValue;
+
+            GameNodeProcess lateClient = cluster.Clients[2];
+            await runner.RunAsync(
+                "connect-late-client",
+                "network.connect(client-c)",
+                async token => {
+                    await MultiplayerGameplayBootstrap.ConnectClientAndEnterAsync(
+                        cluster,
+                        lateClient,
+                        "LearnerC",
+                        stepTimeout,
+                        token).ConfigureAwait(false);
+                    _ = await cluster.Server.WaitForStatusAsync(
+                        status => status.ServerSessionCount == 3,
+                        stepTimeout,
+                        "Server did not expose the late-joined client session.",
+                        token).ConfigureAwait(false);
+                },
+                scenarioToken).ConfigureAwait(false);
+
+            snapshots["client-c-after-late-join"] = await runner.RunAsync(
+                "verify-late-join-state",
+                ControlCommandNames.GetSnapshotV2,
+                token => WaitForTerrainValuesAsync(
+                    lateClient,
+                    expectedTerrain,
                     stepTimeout,
-                    snapshots,
-                    events,
-                    actions,
-                    assertions,
-                    observedCells,
-                    scenarioToken).ConfigureAwait(false);
+                    token),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "terrain-late-join-convergence",
+                "passed",
+                [lateClient.Role],
+                $"cells={expectedTerrain.Count}"));
+
+            GameNodeProcess[] allNodes = MultiplayerGameplayBootstrap.AllNodes(cluster).ToArray();
+            await runner.RunAsync(
+                "enable-network-faults",
+                ControlCommandNames.SetNetworkFaults,
+                token => ConfigureNetworkFaultsAsync(allNodes, faultProfile, token),
+                scenarioToken).ConfigureAwait(false);
+
+            TerrainInteractionFixture placeFixture = await RunInteractionAsync(
+                cluster,
+                allNodes,
+                runner,
+                PlayerTerrainActionKind.Place,
+                actorPlayerIndex,
+                options.ReplayPlan,
+                stepTimeout,
+                snapshots,
+                events,
+                actions,
+                assertions,
+                observedCells,
+                scenarioToken).ConfigureAwait(false);
+            expectedTerrain[placeFixture.ExpectedCell] = placeFixture.ExpectedValue;
+
+            long duplicatedPackets = await runner.RunAsync(
+                "verify-network-faults",
+                ControlCommandNames.GetSnapshotV2,
+                _ => Task.FromResult(VerifyNetworkFaultEvidence(snapshots, allNodes, "place")),
+                value => $"duplicated={value}",
+                scenarioToken).ConfigureAwait(false);
+            metrics["fault.duplicatedPackets"] = duplicatedPackets.ToString(CultureInfo.InvariantCulture);
+            metrics["fault.profile"] = FormatFaultProfile(faultProfile);
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "terrain-action-under-network-faults",
+                "passed",
+                allNodes.Select(node => node.Role).ToArray(),
+                $"place converged; {FormatFaultProfile(faultProfile)}; duplicated={duplicatedPackets}"));
+
+            await runner.RunAsync(
+                "disable-network-faults",
+                ControlCommandNames.SetNetworkFaults,
+                token => ConfigureNetworkFaultsAsync(
+                    allNodes,
+                    new NetworkFaultProfile(Seed: unchecked(faultProfile.Seed + 100)),
+                    token),
+                scenarioToken).ConfigureAwait(false);
+
+            GameNodeProcess actorClient = cluster.Clients[0];
+            await runner.RunAsync(
+                "disconnect-actor",
+                ControlCommandNames.Disconnect,
+                async token => {
+                    _ = await actorClient.SendAsync<DisconnectCommand, ControlAck>(
+                        ControlCommandNames.Disconnect,
+                        new DisconnectCommand(),
+                        cancellationToken: token).ConfigureAwait(false);
+                    _ = await actorClient.WaitForStatusAsync(
+                        status => !status.ProjectLoaded
+                            && !status.IsClientRunning
+                            && string.Equals(status.Screen, "MainMenuScreen", StringComparison.Ordinal),
+                        stepTimeout,
+                        "Client A did not return to MainMenu after disconnect.",
+                        token).ConfigureAwait(false);
+                    _ = await cluster.Server.WaitForStatusAsync(
+                        status => status.ServerSessionCount == 2,
+                        stepTimeout,
+                        "Server retained the disconnected actor session.",
+                        token).ConfigureAwait(false);
+                },
+                scenarioToken).ConfigureAwait(false);
+
+            NodeStatus reconnectedActor = await runner.RunAsync(
+                "reconnect-actor",
+                "network.connect(client-a)",
+                async token => {
+                    await MultiplayerGameplayBootstrap.ConnectClientAndEnterAsync(
+                        cluster,
+                        actorClient,
+                        "LearnerA",
+                        stepTimeout,
+                        token).ConfigureAwait(false);
+                    _ = await cluster.Server.WaitForStatusAsync(
+                        status => status.ServerSessionCount == 3,
+                        stepTimeout,
+                        "Server did not restore the actor session.",
+                        token).ConfigureAwait(false);
+                    return await actorClient.GetStatusAsync(token).ConfigureAwait(false);
+                },
+                status => $"playerIndex={status.PlayerIndex}",
+                scenarioToken).ConfigureAwait(false);
+            if (reconnectedActor.PlayerIndex < 0 || !reconnectedActor.MainPlayerReady) {
+                throw new InvalidOperationException(
+                    $"Reconnected client A did not expose a ready actor. Status={reconnectedActor}.");
             }
+            if (reconnectedActor.PlayerIndex != initialActorPlayerIndex) {
+                throw new InvalidOperationException(
+                    $"Reconnected actor identity changed from player {initialActorPlayerIndex} "
+                    + $"to {reconnectedActor.PlayerIndex}.");
+            }
+            actorPlayerIndex = reconnectedActor.PlayerIndex;
+            metrics["actor.reconnectedPlayerIndex"] = actorPlayerIndex.ToString(CultureInfo.InvariantCulture);
+
+            Dictionary<string, StateSnapshotV2> reconnectedSnapshots = await runner.RunAsync(
+                "verify-reconnected-state",
+                ControlCommandNames.GetSnapshotV2,
+                token => WaitForReconnectStateOnAllAsync(
+                    allNodes,
+                    actorPlayerIndex,
+                    expectedTerrain,
+                    stepTimeout,
+                    token),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            foreach ((string role, StateSnapshotV2 snapshot) in reconnectedSnapshots) {
+                snapshots[$"{role}-after-reconnect"] = snapshot;
+            }
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "terrain-reconnect-convergence",
+                "passed",
+                allNodes.Select(node => node.Role).ToArray(),
+                $"cells={expectedTerrain.Count}; uniquePlayerIndexes=true; playerIndex={actorPlayerIndex}"));
+
+            TerrainInteractionFixture digFixture = await RunInteractionAsync(
+                cluster,
+                allNodes,
+                runner,
+                PlayerTerrainActionKind.Dig,
+                actorPlayerIndex,
+                options.ReplayPlan,
+                stepTimeout,
+                snapshots,
+                events,
+                actions,
+                assertions,
+                observedCells,
+                scenarioToken).ConfigureAwait(false);
+            expectedTerrain[digFixture.ExpectedCell] = digFixture.ExpectedValue;
+
+            StateSnapshotV2 preSaveSnapshot = await runner.RunAsync(
+                "capture-pre-save-state",
+                ControlCommandNames.GetSnapshotV2,
+                token => WaitForTerrainValuesAsync(
+                    cluster.Server,
+                    expectedTerrain,
+                    stepTimeout,
+                    token),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            snapshots["server-before-save"] = preSaveSnapshot;
+
+            string savedWorldDirectory = await runner.RunAsync(
+                "save-and-stop-world",
+                ControlCommandNames.SaveWorld,
+                async token => {
+                    SaveWorldResult saved = await cluster.Server.SendAsync<SaveWorldCommand, SaveWorldResult>(
+                        ControlCommandNames.SaveWorld,
+                        new SaveWorldCommand(),
+                        timeout: stepTimeout,
+                        cancellationToken: token).ConfigureAwait(false);
+                    if (!saved.Saved || string.IsNullOrWhiteSpace(saved.DirectoryName)) {
+                        throw new InvalidOperationException(
+                            "Server declined to save the terrain interaction world.");
+                    }
+                    await Task.WhenAll(cluster.Clients.Select(client =>
+                        client.SendAsync<DisconnectCommand, ControlAck>(
+                            ControlCommandNames.Disconnect,
+                            new DisconnectCommand(),
+                            cancellationToken: token))).ConfigureAwait(false);
+                    await Task.WhenAll(cluster.Clients.Select(client =>
+                        client.WaitForStatusAsync(
+                            status => !status.ProjectLoaded
+                                && !status.IsClientRunning
+                                && string.Equals(status.Screen, "MainMenuScreen", StringComparison.Ordinal),
+                            stepTimeout,
+                            $"Node '{client.Role}' did not return to MainMenu before persistence reload.",
+                            token))).ConfigureAwait(false);
+                    _ = await cluster.Server.WaitForStatusAsync(
+                        status => status.ServerSessionCount == 0,
+                        stepTimeout,
+                        "Server retained client sessions before persistence reload.",
+                        token).ConfigureAwait(false);
+                    _ = await cluster.Server.SendAsync<DisconnectCommand, ControlAck>(
+                        ControlCommandNames.Disconnect,
+                        new DisconnectCommand(SaveWorld: true),
+                        timeout: stepTimeout,
+                        cancellationToken: token).ConfigureAwait(false);
+                    _ = await cluster.Server.WaitForStatusAsync(
+                        status => !status.ProjectLoaded
+                            && !status.IsServerRunning
+                            && string.Equals(status.Screen, "MainMenuScreen", StringComparison.Ordinal),
+                        stepTimeout,
+                        "Server did not return to MainMenu after saving.",
+                        token).ConfigureAwait(false);
+                    return saved.DirectoryName;
+                },
+                directory => directory,
+                scenarioToken).ConfigureAwait(false);
+
+            await runner.RunAsync(
+                "reload-saved-world",
+                ControlCommandNames.ReloadWorld,
+                async token => {
+                    _ = await cluster.Server.SendAsync<ReloadWorldCommand, ControlAck>(
+                        ControlCommandNames.ReloadWorld,
+                        new ReloadWorldCommand(savedWorldDirectory),
+                        cancellationToken: token).ConfigureAwait(false);
+                    NodeStatus entry = await MultiplayerScenarioOperations.WaitForWorldEntryAsync(
+                        cluster.Server,
+                        serverSide: true,
+                        stepTimeout,
+                        token).ConfigureAwait(false);
+                    if (string.Equals(entry.Screen, "PlayerScreen", StringComparison.Ordinal)) {
+                        await MultiplayerScenarioOperations.EnterWorldWhenReadyAsync(
+                            cluster.Server,
+                            "Host",
+                            stepTimeout,
+                            token).ConfigureAwait(false);
+                    }
+                    _ = await cluster.Server.WaitForStatusAsync(
+                        status => status.ProjectLoaded
+                            && status.IsServerRunning
+                            && status.MainPlayerReady
+                            && string.Equals(status.Screen, "GameScreen", StringComparison.Ordinal),
+                        stepTimeout,
+                        "Saved terrain interaction world did not become playable.",
+                        token).ConfigureAwait(false);
+                },
+                scenarioToken).ConfigureAwait(false);
+
+            string? reloadRoomCode = await runner.RunAsync(
+                "restart-transport-host",
+                "network.startHost",
+                token => cluster.StartHostAsync(stepTimeout, token),
+                room => room ?? "direct",
+                scenarioToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(reloadRoomCode)) {
+                metrics["relay.reloadRoomCode"] = reloadRoomCode;
+            }
+
+            snapshots["server-after-reload"] = await runner.RunAsync(
+                "verify-server-persistence",
+                ControlCommandNames.GetSnapshotV2,
+                async token => {
+                    StateSnapshotV2 reloaded = await WaitForTerrainValuesAsync(
+                        cluster.Server,
+                        expectedTerrain,
+                        stepTimeout,
+                        token).ConfigureAwait(false);
+                    EnsureTerrainSnapshotsEqual(preSaveSnapshot, reloaded, "server save/reload");
+                    return reloaded;
+                },
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+
+            await runner.RunAsync(
+                "connect-persistence-observer",
+                "network.connect(client-c)",
+                token => MultiplayerGameplayBootstrap.ConnectClientAndEnterAsync(
+                    cluster,
+                    lateClient,
+                    "LearnerC",
+                    stepTimeout,
+                    token),
+                scenarioToken).ConfigureAwait(false);
+
+            snapshots["client-c-after-reload"] = await runner.RunAsync(
+                "verify-client-persistence",
+                ControlCommandNames.GetSnapshotV2,
+                async token => {
+                    StateSnapshotV2 reloaded = await WaitForTerrainValuesAsync(
+                        lateClient,
+                        expectedTerrain,
+                        stepTimeout,
+                        token).ConfigureAwait(false);
+                    EnsureTerrainSnapshotsEqual(preSaveSnapshot, reloaded, "client after server reload");
+                    return reloaded;
+                },
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "terrain-save-reload-persistence",
+                "passed",
+                [cluster.Server.Role, lateClient.Role],
+                $"cells={expectedTerrain.Count}; world={savedWorldDirectory}"));
         }
         catch (Exception exception) {
             scenarioFailure = exception;
@@ -270,11 +643,12 @@ public sealed class TerrainInteractionMultiplayerScenario {
                     options.Transport.ToString(),
                     ControlProtocol.CurrentVersion,
                     AutomationProtocol.CurrentApiVersion,
-                    AutomationProtocol.CurrentSnapshotSchemaVersion);
+                    AutomationProtocol.CurrentSnapshotSchemaVersion,
+                    faultProfile);
                 ScenarioTopologyV2 topology = new(
                     options.Transport.ToString(),
                     "server",
-                    ["client-a", "client-b"],
+                    ["client-a", "client-b", "client-c"],
                     options.Transport == MultiplayerTransportKind.Relay,
                     cluster?.RoomCode);
                 await ScenarioArtifactWriter.WriteV2Async(
@@ -325,8 +699,9 @@ public sealed class TerrainInteractionMultiplayerScenario {
             stopwatch.Elapsed);
     }
 
-    private static async Task RunInteractionAsync(
+    private static async Task<TerrainInteractionFixture> RunInteractionAsync(
         MultiplayerCluster cluster,
+        IReadOnlyCollection<GameNodeProcess> observationNodes,
         ScenarioRunner runner,
         PlayerTerrainActionKind kind,
         int actorPlayerIndex,
@@ -338,6 +713,10 @@ public sealed class TerrainInteractionMultiplayerScenario {
         List<ScenarioAssertionRecordV2> assertions,
         List<TerrainCellCoordinate> observedCells,
         CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(observationNodes);
+        if (observationNodes.Count == 0) {
+            throw new ArgumentException("At least one observation node is required.", nameof(observationNodes));
+        }
         string actionName = kind.ToString().ToLowerInvariant();
         TerrainCellCoordinate? replayTarget = ReplayTarget(replayPlan, kind);
         TerrainInteractionFixture fixture = await runner.RunAsync(
@@ -366,7 +745,7 @@ public sealed class TerrainInteractionMultiplayerScenario {
             $"verify-{actionName}-baseline",
             ControlCommandNames.GetSnapshotV2,
             token => WaitForTerrainOnAllAsync(
-                cluster,
+                observationNodes,
                 fixture,
                 expectedFinal: false,
                 stepTimeout,
@@ -402,7 +781,7 @@ public sealed class TerrainInteractionMultiplayerScenario {
             $"verify-{actionName}-convergence",
             ControlCommandNames.GetSnapshotV2,
             token => WaitForTerrainOnAllAsync(
-                cluster,
+                observationNodes,
                 fixture,
                 expectedFinal: true,
                 stepTimeout,
@@ -414,7 +793,7 @@ public sealed class TerrainInteractionMultiplayerScenario {
         assertions.Add(new ScenarioAssertionRecordV2(
             $"{actionName}-server-authority-observer-convergence",
             "passed",
-            MultiplayerGameplayBootstrap.AllNodes(cluster).Select(node => node.Role).ToArray(),
+            observationNodes.Select(node => node.Role).ToArray(),
             $"target={FormatCell(fixture.ExpectedCell)}; value={fixture.ExpectedValue}"));
 
         ActionEventsResult actionEvents = await runner.RunAsync(
@@ -432,6 +811,7 @@ public sealed class TerrainInteractionMultiplayerScenario {
             "passed",
             [cluster.Clients[0].Role],
             $"actionId={executed.Receipt.ActionId}; phases=queued,applied"));
+        return fixture;
     }
 
     private static async Task VerifyAuthorityRejectionsAsync(
@@ -545,8 +925,54 @@ public sealed class TerrainInteractionMultiplayerScenario {
             JsonSerializer.SerializeToElement(command, ControlProtocol.JsonOptions),
             receipt);
 
+    private static async Task ConfigureNetworkFaultsAsync(
+        IReadOnlyCollection<GameNodeProcess> nodes,
+        NetworkFaultProfile baseProfile,
+        CancellationToken cancellationToken) {
+        GameNodeProcess[] orderedNodes = nodes.ToArray();
+        NetworkFaultProfile[] expectedProfiles = orderedNodes
+            .Select((_, index) => baseProfile with {
+                Seed = unchecked(baseProfile.Seed + index)
+            })
+            .ToArray();
+        NetworkFaultState[] states = await Task.WhenAll(orderedNodes.Select((node, index) =>
+            node.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
+                ControlCommandNames.SetNetworkFaults,
+                new SetNetworkFaultsCommand(expectedProfiles[index]),
+                cancellationToken: cancellationToken))).ConfigureAwait(false);
+        for (int index = 0; index < states.Length; index++) {
+            if (states[index].Profile != expectedProfiles[index]) {
+                throw new InvalidOperationException(
+                    $"Node '{orderedNodes[index].Role}' did not apply its deterministic fault profile.");
+            }
+        }
+    }
+
+    private static long VerifyNetworkFaultEvidence(
+        IReadOnlyDictionary<string, StateSnapshotV2> snapshots,
+        IReadOnlyCollection<GameNodeProcess> nodes,
+        string actionName) {
+        Dictionary<string, long> duplicatedByRole = new(StringComparer.Ordinal);
+        foreach (GameNodeProcess node in nodes) {
+            string key = $"{node.Role}-{actionName}-final";
+            if (!snapshots.TryGetValue(key, out StateSnapshotV2? snapshot)
+                || snapshot.Network == null) {
+                throw new InvalidOperationException(
+                    $"Network fault evidence snapshot '{key}' is missing.");
+            }
+            duplicatedByRole[node.Role] = snapshot.Network.FaultDuplicated;
+        }
+        foreach (string requiredRole in new[] { "server", "client-a" }) {
+            if (!duplicatedByRole.TryGetValue(requiredRole, out long count) || count <= 0) {
+                throw new InvalidOperationException(
+                    $"Node '{requiredRole}' did not report duplicated packets during {actionName}.");
+            }
+        }
+        return duplicatedByRole.Values.Sum();
+    }
+
     private static async Task<Dictionary<string, StateSnapshotV2>> WaitForTerrainOnAllAsync(
-        MultiplayerCluster cluster,
+        IReadOnlyCollection<GameNodeProcess> nodes,
         TerrainInteractionFixture fixture,
         bool expectedFinal,
         TimeSpan timeout,
@@ -554,7 +980,8 @@ public sealed class TerrainInteractionMultiplayerScenario {
         TimeSpan observationTimeout = timeout > TimeSpan.FromSeconds(2)
             ? timeout - TimeSpan.FromSeconds(1)
             : timeout;
-        Task<StateSnapshotV2>[] waits = MultiplayerGameplayBootstrap.AllNodes(cluster)
+        GameNodeProcess[] orderedNodes = nodes.ToArray();
+        Task<StateSnapshotV2>[] waits = orderedNodes
             .Select(node => WaitForTerrainAsync(
                 node,
                 fixture,
@@ -563,7 +990,7 @@ public sealed class TerrainInteractionMultiplayerScenario {
                 cancellationToken))
             .ToArray();
         StateSnapshotV2[] captured = await Task.WhenAll(waits).ConfigureAwait(false);
-        return MultiplayerGameplayBootstrap.AllNodes(cluster)
+        return orderedNodes
             .Select((node, index) => (node.Role, Snapshot: captured[index]))
             .ToDictionary(item => item.Role, item => item.Snapshot, StringComparer.Ordinal);
     }
@@ -620,6 +1047,131 @@ public sealed class TerrainInteractionMultiplayerScenario {
             + $"ActualTerrain={actual}; "
             + $"ExpectedPosition={FormatVector(fixture.PlayerPosition)}; "
             + $"ActualPosition={FormatVector(actualPosition)}.");
+    }
+
+    private static async Task<StateSnapshotV2> WaitForTerrainValuesAsync(
+        GameNodeProcess node,
+        IReadOnlyDictionary<TerrainCellCoordinate, int> expectedValues,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(node);
+        ArgumentNullException.ThrowIfNull(expectedValues);
+        if (expectedValues.Count == 0) {
+            throw new ArgumentException("At least one terrain expectation is required.", nameof(expectedValues));
+        }
+        TerrainCellCoordinate[] coordinates = expectedValues.Keys
+            .OrderBy(cell => cell.X)
+            .ThenBy(cell => cell.Y)
+            .ThenBy(cell => cell.Z)
+            .ToArray();
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        StateSnapshotV2? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            cancellationToken.ThrowIfCancellationRequested();
+            last = await node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+                ControlCommandNames.GetSnapshotV2,
+                new GetSnapshotV2Command(
+                    [SnapshotDomain.Network, SnapshotDomain.Terrain],
+                    TerrainCells: coordinates),
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+            bool matches = expectedValues.All(item => {
+                TerrainCellSnapshotV2? actual = FindCell(last, item.Key);
+                return actual?.IsLoaded == true && actual.Value == item.Value;
+            });
+            if (matches) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        string expected = string.Join(", ", expectedValues.Select(item =>
+            $"{FormatCell(item.Key)}={item.Value}"));
+        string actual = last == null
+            ? "missing snapshot"
+            : string.Join(", ", last.TerrainCells.Select(cell =>
+                $"{cell.X},{cell.Y},{cell.Z}={cell.Value}(loaded={cell.IsLoaded})"));
+        throw new TimeoutException(
+            $"Node '{node.Role}' did not converge terrain expectations. "
+            + $"Expected={expected}; Actual={actual}.");
+    }
+
+    private static void EnsureTerrainSnapshotsEqual(
+        StateSnapshotV2 expected,
+        StateSnapshotV2 actual,
+        string context) {
+        SnapshotV2Diff diff = SnapshotV2Comparer.CompareTerrainCells(expected, actual);
+        if (!diff.Equal) {
+            throw new InvalidOperationException(
+                $"Terrain changed across {context}: "
+                + string.Join(", ", diff.Differences.Select(item => item.Path)));
+        }
+    }
+
+    private static async Task<Dictionary<string, StateSnapshotV2>> WaitForReconnectStateOnAllAsync(
+        IReadOnlyCollection<GameNodeProcess> nodes,
+        int actorPlayerIndex,
+        IReadOnlyDictionary<TerrainCellCoordinate, int> expectedValues,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        TimeSpan observationTimeout = timeout > TimeSpan.FromSeconds(2)
+            ? timeout - TimeSpan.FromSeconds(1)
+            : timeout;
+        GameNodeProcess[] orderedNodes = nodes.ToArray();
+        StateSnapshotV2[] captured = await Task.WhenAll(orderedNodes.Select(node =>
+            WaitForReconnectStateAsync(
+                node,
+                actorPlayerIndex,
+                expectedValues,
+                observationTimeout,
+                cancellationToken))).ConfigureAwait(false);
+        return orderedNodes
+            .Select((node, index) => (node.Role, Snapshot: captured[index]))
+            .ToDictionary(item => item.Role, item => item.Snapshot, StringComparer.Ordinal);
+    }
+
+    private static async Task<StateSnapshotV2> WaitForReconnectStateAsync(
+        GameNodeProcess node,
+        int actorPlayerIndex,
+        IReadOnlyDictionary<TerrainCellCoordinate, int> expectedValues,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        TerrainCellCoordinate[] coordinates = expectedValues.Keys.ToArray();
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        StateSnapshotV2? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            cancellationToken.ThrowIfCancellationRequested();
+            last = await node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+                ControlCommandNames.GetSnapshotV2,
+                new GetSnapshotV2Command(
+                    [SnapshotDomain.Network, SnapshotDomain.Players, SnapshotDomain.Terrain],
+                    TerrainCells: coordinates),
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+            bool uniquePlayerIndexes = last.Players
+                .GroupBy(player => player.PlayerIndex)
+                .All(group => group.Count() == 1);
+            PlayerSnapshotV2? actor = uniquePlayerIndexes
+                ? last.Players.FirstOrDefault(player => player.PlayerIndex == actorPlayerIndex)
+                : null;
+            bool terrainMatches = expectedValues.All(item => {
+                TerrainCellSnapshotV2? cell = FindCell(last, item.Key);
+                return cell?.IsLoaded == true && cell.Value == item.Value;
+            });
+            if (uniquePlayerIndexes
+                && actor?.ReadyForPlaying == true
+                && actor.Body != null
+                && terrainMatches) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        string players = last == null
+            ? "missing"
+            : string.Join(", ", last.Players.Select(player =>
+                $"{player.PlayerIndex}:{player.Name}:ready={player.ReadyForPlaying}:entity={player.EntityId}"));
+        throw new TimeoutException(
+            $"Node '{node.Role}' did not converge reconnect state for player {actorPlayerIndex}. "
+            + $"Players={players}.");
     }
 
     private static async Task<ActionEventsResult> WaitForAppliedEventAsync(
@@ -770,6 +1322,19 @@ public sealed class TerrainInteractionMultiplayerScenario {
             cells.Add(coordinate);
         }
     }
+
+    private static bool IsFaultProfileEnabled(NetworkFaultProfile profile) =>
+        profile.BaseLatencyMilliseconds > 0
+        || profile.JitterMilliseconds > 0
+        || profile.LossRate > 0
+        || profile.DuplicationRate > 0
+        || profile.ReorderRate > 0
+        || profile.BandwidthBytesPerSecond > 0;
+
+    private static string FormatFaultProfile(NetworkFaultProfile profile) =>
+        string.Create(
+            CultureInfo.InvariantCulture,
+            $"seed={profile.Seed}; latencyMs={profile.BaseLatencyMilliseconds}; jitterMs={profile.JitterMilliseconds}; loss={profile.LossRate:R}; duplicate={profile.DuplicationRate:R}; reorder={profile.ReorderRate:R}; reorderDelayMs={profile.ReorderDelayMilliseconds}; bandwidth={profile.BandwidthBytesPerSecond}");
 
     private static string FormatCell(TerrainCellCoordinate cell) =>
         $"{cell.X},{cell.Y},{cell.Z}";
