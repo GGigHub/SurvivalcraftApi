@@ -76,7 +76,7 @@
 
 详见开发文档 [docs/Development.md](https://gitee.com/SC-SPM/SurvivalcraftApi/blob/SCAPI1.9/docs/Development.md)
 
-联机分支的自动测试入口与分层策略见 [docs/Testing.md](docs/Testing.md)，可直接运行 `./scripts/Test-Multiplayer.ps1 -Mode core` 完成双进程核心联机验收。
+联机分支的自动测试入口与分层策略见 [docs/Testing.md](docs/Testing.md)，第三方模组消息 API 见 [docs/ModMultiplayerChannels.md](docs/ModMultiplayerChannels.md)。可直接运行 `./scripts/Test-Multiplayer.ps1 -Mode core` 或 `-Mode relay` 完成无界面真实进程验收。
 
 ## 更新日志
 

@@ -61,6 +61,7 @@ public static class NetworkFaultInjector {
     static long m_dropped;
     static long m_duplicated;
     static double m_linkAvailableAt;
+    static double m_orderedAvailableAt;
 
     public static NetworkFaultSettings Settings => m_settings;
 
@@ -76,6 +77,7 @@ public static class NetworkFaultInjector {
         m_dropped = 0;
         m_duplicated = 0;
         m_linkAvailableAt = Time.RealTime;
+        m_orderedAvailableAt = Time.RealTime;
     }
 
     public static void Send(NetDataWriter writer, Action<NetDataWriter> sendImmediately) {
@@ -93,9 +95,13 @@ public static class NetworkFaultInjector {
             return;
         }
 
-        Schedule(data, sendImmediately, duplicate: false);
+        double originalDue = Schedule(data, sendImmediately, duplicate: false);
         if (m_random.NextProbability() < m_settings.DuplicationRate) {
-            Schedule(data.ToArray(), sendImmediately, duplicate: true);
+            Schedule(
+                data.ToArray(),
+                sendImmediately,
+                duplicate: true,
+                minimumDue: originalDue + 0.001);
             m_duplicated++;
         }
     }
@@ -119,23 +125,32 @@ public static class NetworkFaultInjector {
     public static void ClearPending() {
         m_pending.Clear();
         m_linkAvailableAt = Time.RealTime;
+        m_orderedAvailableAt = Time.RealTime;
     }
 
-    static void Schedule(
+    static double Schedule(
         byte[] data,
         Action<NetDataWriter> sendImmediately,
-        bool duplicate) {
+        bool duplicate,
+        double minimumDue = double.MinValue) {
         int jitter = m_settings.JitterMilliseconds == 0
             ? 0
             : m_random.NextInt(
                 -m_settings.JitterMilliseconds,
                 m_settings.JitterMilliseconds + 1);
-        int reorderDelay = m_random.NextProbability() < m_settings.ReorderRate
+        bool shouldReorder = m_random.NextProbability() < m_settings.ReorderRate;
+        int reorderDelay = shouldReorder
             ? m_settings.ReorderDelayMilliseconds
             : 0;
         int duplicateDelay = duplicate ? 1 : 0;
         double due = Time.RealTime
             + Math.Max(0, m_settings.BaseLatencyMilliseconds + jitter + reorderDelay + duplicateDelay) / 1000.0;
+        due = Math.Max(due, minimumDue);
+
+        if (!shouldReorder && !duplicate) {
+            due = Math.Max(due, m_orderedAvailableAt);
+            m_orderedAvailableAt = due;
+        }
 
         if (m_settings.BandwidthBytesPerSecond > 0) {
             double serializationSeconds = Math.Max(
@@ -149,6 +164,7 @@ public static class NetworkFaultInjector {
         m_pending.Enqueue(
             new PendingSend(data, sendImmediately),
             (due, sequence));
+        return due;
     }
 
     readonly record struct PendingSend(

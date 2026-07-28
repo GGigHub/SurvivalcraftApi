@@ -87,4 +87,29 @@ public sealed class ControlProtocolTests {
 
         Assert.Equal("invalid_frame_length", exception.Code);
     }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void RelayCommandsAndStatusRoundTripAsTypedPayloads() {
+        ControlRequest request = ControlProtocol.CreateRequest(
+            ControlCommandNames.ConnectRelay,
+            new ConnectRelayCommand("127.0.0.1", 28888, "A1B2"));
+
+        ConnectRelayCommand command = request.DeserializePayload<ConnectRelayCommand>();
+        Assert.Equal("127.0.0.1", command.Host);
+        Assert.Equal(28888, command.Port);
+        Assert.Equal("A1B2", command.RoomCode);
+
+        RelayStatus expected = new(
+            "host",
+            HostConnected: true,
+            ClientConnected: false,
+            "Ready",
+            "A1B2",
+            string.Empty,
+            HostSessionCount: 1);
+        RelayStatus actual = ControlProtocol.Success(request, expected)
+            .DeserializeResult<RelayStatus>();
+        Assert.Equal(expected, actual);
+    }
 }

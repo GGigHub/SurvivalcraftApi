@@ -13,6 +13,10 @@ public sealed class PacketFragment {
     internal const byte ChunkVersion = 2;
     internal const int MinChunkSize = 256;
     internal const int MaxChunkSize = 60 * 1024;
+    internal const int MaxPayloadLength = 16 * 1024 * 1024;
+    internal const int MaxActiveStates = 64;
+    internal const int MaxActiveStatesPerSource = 8;
+    internal const long MaxBufferedBytes = 64L * 1024 * 1024;
     private const int ChunkHeaderBytes = 19;
     private const double ChunkStateTimeoutSeconds = 15.0;
 
@@ -20,6 +24,10 @@ public sealed class PacketFragment {
 
     private readonly Dictionary<string, ChunkState> m_chunkStates = new Dictionary<string, ChunkState>();
     private double m_lastCleanupTime;
+    private long m_bufferedBytes;
+
+    internal int ActiveStateCount => m_chunkStates.Count;
+    internal long BufferedBytes => m_bufferedBytes;
 
     private sealed class ChunkState {
         public int TotalLength;
@@ -45,7 +53,7 @@ public sealed class PacketFragment {
             }
         }
         foreach (string key in expiredKeys) {
-            m_chunkStates.Remove(key);
+            RemoveState(key);
         }
     }
 
@@ -57,11 +65,17 @@ public sealed class PacketFragment {
         if (reader.AvailableBytes >= 4) {
             var probe = new NetDataReader(reader.RawData, reader.Position, reader.AvailableBytes);
             if (probe.GetUInt() == ChunkMagic) {
-                // It is a chunk
-                if (!TryReadChunkFrame(reader, out int messageId, out int totalLength, out int offset, out byte[] chunkData)) {
-                    return false; // Invalid chunk
+                try {
+                    if (!TryReadChunkFrame(reader, out int messageId, out int totalLength, out int offset, out byte[] chunkData)) {
+                        return false;
+                    }
+                    return TryAssembleChunk(sourceKey, messageId, totalLength, offset, chunkData, out payload);
                 }
-                return TryAssembleChunk(sourceKey, messageId, totalLength, offset, chunkData, out payload);
+                catch (Exception exception) when (exception is InvalidOperationException
+                    or EndOfStreamException
+                    or ArgumentException) {
+                    return false;
+                }
             }
         }
 
@@ -77,6 +91,12 @@ public sealed class PacketFragment {
     public static IEnumerable<NetDataWriter> FragmentPayload(byte[] payload) {
         if (payload == null) {
             yield break;
+        }
+        if (payload.Length > MaxPayloadLength) {
+            throw new ArgumentOutOfRangeException(
+                nameof(payload),
+                payload.Length,
+                $"Packet payload cannot exceed {MaxPayloadLength} bytes.");
         }
 
         int chunkSize = GetConfiguredChunkSize();
@@ -115,7 +135,11 @@ public sealed class PacketFragment {
         offset = reader.GetInt();
         int length = reader.GetUShort();
         
-        if (length <= 0 || totalLength <= 0 || offset < 0 || offset + length > totalLength) {
+        if (length <= 0
+            || totalLength <= 0
+            || totalLength > MaxPayloadLength
+            || offset < 0
+            || offset > totalLength - length) {
             throw new InvalidOperationException($"Invalid chunk frame payload. totalLength={totalLength}, offset={offset}, length={length}.");
         }
 
@@ -129,6 +153,9 @@ public sealed class PacketFragment {
 
     private bool TryAssembleChunk(string sourceKey, int messageId, int totalLength, int offset, byte[] chunkData, out byte[] payload) {
         payload = null;
+        if (string.IsNullOrWhiteSpace(sourceKey)) {
+            throw new ArgumentException("A chunk source key is required.", nameof(sourceKey));
+        }
         if (chunkData == null || chunkData.Length == 0) {
             throw new InvalidOperationException("Chunk frame has empty chunkData.");
         }
@@ -139,6 +166,15 @@ public sealed class PacketFragment {
             throw new InvalidOperationException($"Invalid totalChunks computed from totalLength={totalLength}, chunkSize={chunkSize}.");
         }
 
+        if (offset % chunkSize != 0) {
+            throw new InvalidOperationException($"Chunk offset {offset} is not aligned to chunk size {chunkSize}.");
+        }
+        int expectedChunkLength = Math.Min(chunkSize, totalLength - offset);
+        if (chunkData.Length != expectedChunkLength) {
+            throw new InvalidOperationException(
+                $"Chunk length {chunkData.Length} does not match expected length {expectedChunkLength} at offset {offset}.");
+        }
+
         int index = offset / chunkSize;
         if (index < 0 || index >= totalChunks) {
             throw new InvalidOperationException($"Invalid chunk index={index}, totalChunks={totalChunks}, offset={offset}, chunkSize={chunkSize}.");
@@ -146,6 +182,18 @@ public sealed class PacketFragment {
 
         string key = BuildChunkStateKey(sourceKey, messageId);
         if (!m_chunkStates.TryGetValue(key, out ChunkState state)) {
+            int sourceStateCount = 0;
+            string sourcePrefix = BuildChunkStatePrefix(sourceKey);
+            foreach (string existingKey in m_chunkStates.Keys) {
+                if (existingKey.StartsWith(sourcePrefix, StringComparison.Ordinal)) {
+                    sourceStateCount++;
+                }
+            }
+            if (m_chunkStates.Count >= MaxActiveStates
+                || sourceStateCount >= MaxActiveStatesPerSource
+                || totalLength > MaxBufferedBytes - m_bufferedBytes) {
+                throw new InvalidOperationException("Chunk reassembly capacity was exceeded.");
+            }
             state = new ChunkState {
                 TotalLength = totalLength,
                 ChunkSize = chunkSize,
@@ -156,9 +204,10 @@ public sealed class PacketFragment {
                 Received = new bool[totalChunks]
             };
             m_chunkStates[key] = state;
+            m_bufferedBytes += totalLength;
         }
         else if (state.TotalLength != totalLength || state.ChunkSize != chunkSize || state.TotalChunks != totalChunks) {
-            m_chunkStates.Remove(key);
+            RemoveState(key);
             throw new InvalidOperationException($"Chunk state mismatch for key={key}.");
         }
 
@@ -171,7 +220,7 @@ public sealed class PacketFragment {
 
         if (state.ReceivedChunks >= state.TotalChunks) {
             payload = state.Buffer;
-            m_chunkStates.Remove(key);
+            RemoveState(key);
             return true;
         }
 
@@ -207,6 +256,16 @@ public sealed class PacketFragment {
     }
 
     private static string BuildChunkStateKey(string sourceKey, int messageId) {
-        return $"{sourceKey}:{messageId}";
+        return $"{BuildChunkStatePrefix(sourceKey)}{messageId}";
+    }
+
+    private static string BuildChunkStatePrefix(string sourceKey) {
+        return $"{sourceKey.Length}:{sourceKey}:";
+    }
+
+    private void RemoveState(string key) {
+        if (m_chunkStates.Remove(key, out ChunkState state)) {
+            m_bufferedBytes -= state.TotalLength;
+        }
     }
 }

@@ -93,6 +93,8 @@ https://gitee.com/SC-SPM/SurvivalcraftApi/raw/SCAPI1.9/docs/HowToDevelopAMod.md
 > 接下来建议阅读架构文档：[docs/Architecture.md](Architecture.md)  
 > 推荐模组开发者使用示例模组项目开始新模组的开发：[SC-SPM/SurvivalcraftTemplateModForAPI](https://gitee.com/SC-SPM/SurvivalcraftTemplateModForAPI)
 
+开发需要在客户端与服务端之间同步状态的模组时，请使用命名空间化通道 API，并阅读 [模组联机消息通道](ModMultiplayerChannels.md)。
+
 ## 本仓库代码风格
 
 ### 格式化（源自 .editorconfig）

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text;
 using Survivalcraft.Testing.Control;
 using Survivalcraft.Testing.Networking;
 using Survivalcraft.Testing.Snapshots;
@@ -89,7 +90,7 @@ public static class ScenarioArtifactWriter {
                 cancellationToken).ConfigureAwait(false);
         }
         foreach ((string role, string[] lines) in bundle.Logs) {
-            await File.WriteAllLinesAsync(
+            await WriteLinesAtomicallyAsync(
                 Path.Combine(fullDirectory, $"{Sanitize(role)}.log"),
                 lines,
                 cancellationToken).ConfigureAwait(false);
@@ -113,13 +114,76 @@ public static class ScenarioArtifactWriter {
         string path,
         T value,
         CancellationToken cancellationToken) {
-        await using FileStream stream = File.Create(path);
-        await JsonSerializer.SerializeAsync(
-            stream,
-            value,
-            ArtifactJsonOptions,
-            cancellationToken).ConfigureAwait(false);
-        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        string temporaryPath = CreateTemporaryPath(path);
+        try {
+            await using (FileStream stream = new(
+                temporaryPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 16 * 1024,
+                useAsync: true)) {
+                await JsonSerializer.SerializeAsync(
+                    stream,
+                    value,
+                    ArtifactJsonOptions,
+                    cancellationToken).ConfigureAwait(false);
+                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                stream.Flush(flushToDisk: true);
+            }
+            File.Move(temporaryPath, path, overwrite: true);
+        }
+        finally {
+            TryDeleteTemporaryFile(temporaryPath);
+        }
+    }
+
+    private static async Task WriteLinesAtomicallyAsync(
+        string path,
+        IEnumerable<string> lines,
+        CancellationToken cancellationToken) {
+        string temporaryPath = CreateTemporaryPath(path);
+        try {
+            await using (FileStream stream = new(
+                temporaryPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 16 * 1024,
+                useAsync: true)) {
+                await using StreamWriter writer = new(
+                    stream,
+                    new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                    bufferSize: 16 * 1024,
+                    leaveOpen: true);
+                foreach (string line in lines) {
+                    await writer.WriteLineAsync(
+                        (line ?? string.Empty).AsMemory(),
+                        cancellationToken).ConfigureAwait(false);
+                }
+                await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                stream.Flush(flushToDisk: true);
+            }
+            File.Move(temporaryPath, path, overwrite: true);
+        }
+        finally {
+            TryDeleteTemporaryFile(temporaryPath);
+        }
+    }
+
+    private static string CreateTemporaryPath(string path) =>
+        $"{path}.tmp-{Guid.NewGuid():N}";
+
+    private static void TryDeleteTemporaryFile(string path) {
+        try {
+            if (File.Exists(path)) {
+                File.Delete(path);
+            }
+        }
+        catch {
+            // A stale temporary file is preferable to hiding the scenario result.
+        }
     }
 
     private static string Sanitize(string value) {

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
+using Game.Network;
 using NuGet.Versioning;
 
 namespace Game {
@@ -482,11 +483,16 @@ namespace Game {
 
         //释放资源
         public virtual void Dispose() {
-            try {
-                Loaders.ForEach(item => item.ModDispose());
-            }
-            catch {
-                // ignored
+            foreach (ModLoader loader in Loaders) {
+                try {
+                    loader.ModDispose();
+                }
+                catch (Exception exception) {
+                    Log.Warning($"Failed to dispose mod loader '{loader.GetType().FullName}' and continued cleanup: {exception}");
+                }
+                finally {
+                    ModNetworkManager.UnregisterOwner(loader);
+                }
             }
             ModArchive?.ZipFileStream.Dispose();
         }

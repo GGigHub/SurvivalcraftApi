@@ -38,7 +38,7 @@ public sealed class CoreMultiplayerScenarioException : Exception {
 
 public sealed class CoreMultiplayerScenario {
     public const string ScenarioName = "core-multiplayer";
-    public const int ScenarioVersion = 1;
+    public const int ScenarioVersion = 2;
 
     private static readonly ScenarioStepDefinition[] StepDefinitions = [
         new("start-nodes", "process.start(server, client)"),
@@ -48,13 +48,17 @@ public sealed class CoreMultiplayerScenario {
         new("enter-server-world", ControlCommandNames.EnterWorld),
         new("connect-client", ControlCommandNames.ConnectClient),
         new("enter-client-world", ControlCommandNames.EnterWorld),
+        new("exchange-mod-channel-messages", ControlCommandNames.SendTestModMessage),
+        new("isolate-mod-channel-handler-failure", ControlCommandNames.SendTestModMessage),
         new("enable-network-faults", ControlCommandNames.SetNetworkFaults),
         new("mutate-and-sync-terrain", ControlCommandNames.ChangeTerrainCell),
         new("disconnect-client", ControlCommandNames.Disconnect),
         new("reconnect-client", ControlCommandNames.ConnectClient),
         new("verify-reconnected-state", ControlCommandNames.GetSnapshot),
+        new("verify-mod-channel-after-reconnect", ControlCommandNames.SendTestModMessage),
         new("save-and-stop-world", ControlCommandNames.SaveWorld),
         new("reload-saved-world", ControlCommandNames.ReloadWorld),
+        new("verify-mod-channel-after-world-reload", ControlCommandNames.SendTestModMessage),
         new("verify-persistence", ControlCommandNames.GetSnapshot)
     ];
 
@@ -256,6 +260,118 @@ public sealed class CoreMultiplayerScenario {
                     scenarioToken)).ConfigureAwait(false);
 
             await StepActionAsync(
+                "exchange-mod-channel-messages",
+                ControlCommandNames.SendTestModMessage,
+                async () => {
+                    _ = await server.SendAsync<EmptyCommand, TestModMessagesStatus>(
+                        ControlCommandNames.ResetTestModMessages,
+                        new EmptyCommand(),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<EmptyCommand, TestModMessagesStatus>(
+                        ControlCommandNames.ResetTestModMessages,
+                        new EmptyCommand(),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+
+                    NetworkFaultProfile duplicateEveryPacket = new(
+                        Seed: unchecked(options.Seed + 101),
+                        DuplicationRate: 1);
+                    _ = await client.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
+                        ControlCommandNames.SetNetworkFaults,
+                        new SetNetworkFaultsCommand(duplicateEveryPacket),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+
+                    string duplicateCorrelation = $"duplicate-{options.Seed}";
+                    _ = await client.SendAsync<SendTestModMessageCommand, TestModSendResult>(
+                        ControlCommandNames.SendTestModMessage,
+                        new SendTestModMessageCommand(
+                            "deduplicated-client-message",
+                            CorrelationId: duplicateCorrelation),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    TestModMessagesStatus serverMessages = await WaitForTestModStateAsync(
+                        server,
+                        status => CountTestMessages(status, duplicateCorrelation) == 1
+                            && status.Channel.Metrics.Duplicates >= 1,
+                        stepTimeout,
+                        $"Server did not deduplicate '{duplicateCorrelation}'.",
+                        scenarioToken).ConfigureAwait(false);
+                    _ = await WaitForTestModStateAsync(
+                        client,
+                        status => CountTestMessages(status, duplicateCorrelation) == 1,
+                        stepTimeout,
+                        $"Client did not receive echo '{duplicateCorrelation}'.",
+                        scenarioToken).ConfigureAwait(false);
+                    metrics["modChannel.duplicates"] = serverMessages.Channel.Metrics.Duplicates
+                        .ToString(CultureInfo.InvariantCulture);
+
+                    _ = await client.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
+                        ControlCommandNames.SetNetworkFaults,
+                        new SetNetworkFaultsCommand(new NetworkFaultProfile(Seed: options.Seed + 102)),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    string broadcastCorrelation = $"broadcast-{options.Seed}";
+                    TestModSendResult broadcast =
+                        await server.SendAsync<SendTestModMessageCommand, TestModSendResult>(
+                            ControlCommandNames.SendTestModMessage,
+                            new SendTestModMessageCommand(
+                                "server-broadcast",
+                                Broadcast: true,
+                                CorrelationId: broadcastCorrelation),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    if (broadcast.RecipientCount != 1) {
+                        throw new InvalidOperationException(
+                            $"Expected one broadcast recipient, got {broadcast.RecipientCount}.");
+                    }
+                    _ = await WaitForTestModStateAsync(
+                        client,
+                        status => CountTestMessages(status, broadcastCorrelation) == 1,
+                        stepTimeout,
+                        $"Client did not receive broadcast '{broadcastCorrelation}'.",
+                        scenarioToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "isolate-mod-channel-handler-failure",
+                ControlCommandNames.SendTestModMessage,
+                async () => {
+                    string failedCorrelation = $"handler-failure-{options.Seed}";
+                    _ = await client.SendAsync<SendTestModMessageCommand, TestModSendResult>(
+                        ControlCommandNames.SendTestModMessage,
+                        new SendTestModMessageCommand(
+                            "intentional-isolated-failure",
+                            FailHandler: true,
+                            CorrelationId: failedCorrelation),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    TestModMessagesStatus failed = await WaitForTestModStateAsync(
+                        server,
+                        status => CountTestMessages(status, failedCorrelation) == 1
+                            && status.Channel.Metrics.HandlerErrors >= 1,
+                        stepTimeout,
+                        "Server did not isolate the requested mod handler failure.",
+                        scenarioToken).ConfigureAwait(false);
+                    metrics["modChannel.handlerErrors"] = failed.Channel.Metrics.HandlerErrors
+                        .ToString(CultureInfo.InvariantCulture);
+
+                    string recoveryCorrelation = $"handler-recovery-{options.Seed}";
+                    _ = await client.SendAsync<SendTestModMessageCommand, TestModSendResult>(
+                        ControlCommandNames.SendTestModMessage,
+                        new SendTestModMessageCommand(
+                            "handler-still-operational",
+                            CorrelationId: recoveryCorrelation),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await WaitForTestModStateAsync(
+                        client,
+                        status => CountTestMessages(status, recoveryCorrelation) == 1,
+                        stepTimeout,
+                        "Mod channel did not recover after an isolated handler failure.",
+                        scenarioToken).ConfigureAwait(false);
+                    NodeStatus clientStatus = await client.GetStatusAsync(scenarioToken)
+                        .ConfigureAwait(false);
+                    if (!clientStatus.IsClientRunning || !clientStatus.ProjectLoaded) {
+                        throw new InvalidOperationException(
+                            "The isolated mod handler failure terminated the multiplayer session.");
+                    }
+                }).ConfigureAwait(false);
+
+            await StepActionAsync(
                 "enable-network-faults",
                 ControlCommandNames.SetNetworkFaults,
                 async () => {
@@ -354,6 +470,25 @@ public sealed class CoreMultiplayerScenario {
                 }).ConfigureAwait(false);
 
             await StepActionAsync(
+                "verify-mod-channel-after-reconnect",
+                ControlCommandNames.SendTestModMessage,
+                async () => {
+                    string correlation = $"reconnect-{options.Seed}";
+                    _ = await client.SendAsync<SendTestModMessageCommand, TestModSendResult>(
+                        ControlCommandNames.SendTestModMessage,
+                        new SendTestModMessageCommand(
+                            "channel-survived-reconnect",
+                            CorrelationId: correlation),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await WaitForTestModStateAsync(
+                        client,
+                        status => CountTestMessages(status, correlation) == 1,
+                        stepTimeout,
+                        "Mod channel did not deliver after reconnect.",
+                        scenarioToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
+
+            await StepActionAsync(
                 "save-and-stop-world",
                 ControlCommandNames.SaveWorld,
                 async () => {
@@ -415,6 +550,54 @@ public sealed class CoreMultiplayerScenario {
                             && IsScreen(status, "GameScreen"),
                         stepTimeout,
                         "Saved world did not become playable after reload.",
+                        scenarioToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "verify-mod-channel-after-world-reload",
+                ControlCommandNames.SendTestModMessage,
+                async () => {
+                    _ = await client.SendAsync<ConnectClientCommand, ControlAck>(
+                        ControlCommandNames.ConnectClient,
+                        new ConnectClientCommand("127.0.0.1", server.GamePort),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await WaitForWorldEntryAsync(
+                        client,
+                        serverSide: false,
+                        stepTimeout,
+                        scenarioToken).ConfigureAwait(false);
+                    await EnsureClientPlayingAsync(
+                        client,
+                        "Learner",
+                        stepTimeout,
+                        scenarioToken).ConfigureAwait(false);
+
+                    string correlation = $"world-reload-{options.Seed}";
+                    _ = await client.SendAsync<SendTestModMessageCommand, TestModSendResult>(
+                        ControlCommandNames.SendTestModMessage,
+                        new SendTestModMessageCommand(
+                            "channel-survived-world-reload",
+                            CorrelationId: correlation),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    TestModMessagesStatus delivered = await WaitForTestModStateAsync(
+                        client,
+                        status => CountTestMessages(status, correlation) == 1,
+                        stepTimeout,
+                        "Mod channel did not deliver after world reload.",
+                        scenarioToken).ConfigureAwait(false);
+                    if (delivered.Channel.OverrideActive
+                        || delivered.Channel.Channels.Length == 0) {
+                        throw new InvalidOperationException(
+                            "The registered mod channel catalog was not restored after world reload.");
+                    }
+                    _ = await client.SendAsync<DisconnectCommand, ControlAck>(
+                        ControlCommandNames.Disconnect,
+                        new DisconnectCommand(),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await server.WaitForStatusAsync(
+                        status => status.ServerSessionCount == 0,
+                        stepTimeout,
+                        "Server retained the world-reload verification session.",
                         scenarioToken).ConfigureAwait(false);
                 }).ConfigureAwait(false);
 
@@ -519,6 +702,39 @@ public sealed class CoreMultiplayerScenario {
             persistenceDiff,
             stopwatch.Elapsed);
     }
+
+    private static async Task<TestModMessagesStatus> WaitForTestModStateAsync(
+        GameNodeProcess node,
+        Func<TestModMessagesStatus, bool> predicate,
+        TimeSpan timeout,
+        string failureMessage,
+        CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(predicate);
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        TestModMessagesStatus? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            cancellationToken.ThrowIfCancellationRequested();
+            last = await node.SendAsync<EmptyCommand, TestModMessagesStatus>(
+                ControlCommandNames.GetTestModMessages,
+                new EmptyCommand(),
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (predicate(last)) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken).ConfigureAwait(false);
+        }
+        throw new TimeoutException(
+            $"{failureMessage} Node={node.Role}; Last={last}.{Environment.NewLine}"
+            + node.GetRecentLogText());
+    }
+
+    private static int CountTestMessages(
+        TestModMessagesStatus status,
+        string correlationId) =>
+        status.Messages.Count(message => string.Equals(
+            message.CorrelationId,
+            correlationId,
+            StringComparison.Ordinal));
 
     private static async Task<NodeStatus> WaitForMainMenuAsync(
         GameNodeProcess node,

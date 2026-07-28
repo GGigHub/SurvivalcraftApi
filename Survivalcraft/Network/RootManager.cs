@@ -320,6 +320,9 @@ public static class RootManager {
                 NetworkManager.Queue(new WhoHasSkinPacket(skinName));
         };
         PlayerData.OnPlayerPlaying += (playerData) => {
+            if (NetworkManager.IsClientRunning && !playerData.IsMainPlayer) {
+                return;
+            }
             NetworkManager.SetState(NetworkState.Playing);
             if (NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new StatePacket(NetworkManager.PlayerIndex, NetworkState.Playing));

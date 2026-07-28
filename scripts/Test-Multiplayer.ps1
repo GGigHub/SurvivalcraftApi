@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("fast", "doctor", "core", "compatibility", "full")]
+    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "full")]
     [string]$Mode = "fast",
 
     [ValidateSet("Debug", "Release")]
@@ -40,7 +40,17 @@ elseif ($Mode -eq "full") {
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
 }
+$relayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\relay-mod-channel-$runStamp"
+}
+elseif ($Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "relay-mod-channel"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
 $buildProperties = if ($UseAngle) { @("-p:UseAngle=true") } else { @() }
+$script:coreRuntimeBuilt = $false
 
 function Invoke-DotNet {
     param([Parameter(Mandatory = $true)][string[]]$CommandArguments)
@@ -53,7 +63,7 @@ function Invoke-DotNet {
 }
 
 function Build-CoreRuntime {
-    if ($NoBuild) {
+    if ($NoBuild -or $script:coreRuntimeBuilt) {
         return
     }
     $gameBuildArguments = @(
@@ -63,18 +73,29 @@ function Build-CoreRuntime {
     Invoke-DotNet -CommandArguments @(
         "build", $hostProject, "--nologo", "-c", $Configuration
     )
+    $script:coreRuntimeBuilt = $true
 }
 
 function Run-FastTests {
-    $arguments = @(
+    $neutralArguments = @(
         "test", $fastProject, "--nologo", "-c", $Configuration,
         "--filter", "Layer=L0|Layer=L1",
         "--logger", "console;verbosity=normal"
     )
     if ($NoBuild) {
-        $arguments += "--no-build"
+        $neutralArguments += "--no-build"
     }
-    Invoke-DotNet -CommandArguments $arguments
+    Invoke-DotNet -CommandArguments $neutralArguments
+
+    $runtimeArguments = @(
+        "test", $gameTestProject, "--nologo", "-c", $Configuration,
+        "--filter", "Layer=L0|Layer=L1",
+        "--logger", "console;verbosity=normal"
+    ) + $buildProperties
+    if ($NoBuild) {
+        $runtimeArguments += "--no-build"
+    }
+    Invoke-DotNet -CommandArguments $runtimeArguments
 }
 
 function Run-Doctor {
@@ -105,6 +126,16 @@ function Run-CompatibilityScenario {
     )
 }
 
+function Run-RelayScenario {
+    Build-CoreRuntime
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "run", "relay-mod-channel",
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $relayArtifactDirectory
+    )
+}
+
 Push-Location $repositoryRoot
 try {
     switch ($Mode) {
@@ -120,13 +151,18 @@ try {
         "compatibility" {
             Run-CompatibilityScenario
         }
+        "relay" {
+            Run-RelayScenario
+        }
         "full" {
             Run-FastTests
+            Run-Doctor
             Run-CompatibilityScenario
             Run-CoreScenario
+            Run-RelayScenario
             $legacyTestArguments = @(
                 "test", $gameTestProject, "--nologo", "-c", $Configuration,
-                "--filter", "Layer!=L2",
+                "--filter", "Layer!=L2&Layer!=L0&Layer!=L1",
                 "--logger", "console;verbosity=normal"
             ) + $buildProperties
             if ($NoBuild) {

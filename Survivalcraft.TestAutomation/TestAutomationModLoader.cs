@@ -41,6 +41,8 @@ namespace Survivalcraft.TestAutomation {
             SettingsManager.LetRamdomStatic = true;
             SettingsManager.MultithreadedTerrainUpdate = false;
 
+            InitializeTestModChannel();
+
             // Start UDP Server
             StartUdpServer();
             StartTypedControlServer();
@@ -301,6 +303,7 @@ namespace Survivalcraft.TestAutomation {
             cts.Cancel();
             udpServer?.Close();
             StopTypedControlServer();
+            DisposeTestModChannel();
             base.ModDispose();
         }
     }

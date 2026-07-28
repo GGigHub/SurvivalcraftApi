@@ -68,7 +68,8 @@ public class NetworkServer : INetEventListener {
     public void Send(Packet packet, ClientSession session) {
         if (packet.MinNeedState <= session.NetworkState
             && (session.CompatibilityState == NetworkCompatibilityState.Accepted
-                || packet is CompatibilityResultPacket)) {
+                || packet is CompatibilityResultPacket
+                || packet is ModChannelCatalogResultPacket)) {
             PacketStreamWriter writer = new();
             writer.Write(PacketFragment.VerifyByte);
             writer.Write(packet.ID);
@@ -104,6 +105,7 @@ public class NetworkServer : INetEventListener {
                 if (!ClientSessions.TryGetValue(peer, out ClientSession session)) return;
                 if (session.CompatibilityState != NetworkCompatibilityState.Accepted
                     && packet is not CompatibilityHelloPacket
+                    && packet is not ModChannelCatalogPacket
                     && packet is not ConnectPacket) {
                     NetworkCompatibilityRuntime.RejectPrematurePacket(session, packet);
                     return;
@@ -140,6 +142,7 @@ public class NetworkServer : INetEventListener {
         }
 
         ClientSessions.Remove(peer);
+        ModNetworkManager.ClearSession(session);
         if (session != null) {
             session.NetworkState = NetworkState.NotConnected;
         }

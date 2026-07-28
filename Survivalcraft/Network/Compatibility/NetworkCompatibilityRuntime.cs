@@ -18,6 +18,7 @@ public static class NetworkCompatibilityRuntime {
     private static NetworkCompatibilityResult s_pendingClientRejection;
 
     public static NetworkCompatibilityResult LastClientResult { get; private set; }
+    public static NetworkCompatibilityResult LastClientCoreResult { get; private set; }
     public static NetworkCompatibilityManifest LastClientHello { get; private set; }
     internal static bool HasLocalManifestOverride => s_localManifestOverride != null;
 
@@ -68,28 +69,56 @@ public static class NetworkCompatibilityRuntime {
         NetworkCompatibilityManifest manifest = GetLocalManifest();
         LastClientHello = manifest.Clone();
         LastClientResult = null;
+        LastClientCoreResult = null;
         s_pendingClientRejection = null;
         session.CompatibilityState = NetworkCompatibilityState.AwaitingHello;
         session.CompatibilityResult = null;
+        session.ChannelCompatibilityResult = null;
+        session.ModChannelCatalogFingerprint = string.Empty;
         session.CompatibilityStartedUtc = DateTime.UtcNow;
         return manifest;
     }
 
     public static void UpdateClientHandshake(ClientSession session) {
         if (session == null
-            || session.CompatibilityState != NetworkCompatibilityState.AwaitingHello
+            || (session.CompatibilityState != NetworkCompatibilityState.AwaitingHello
+                && session.CompatibilityState != NetworkCompatibilityState.AwaitingChannels)
             || session.CompatibilityStartedUtc == default
             || DateTime.UtcNow - session.CompatibilityStartedUtc < ClientHandshakeTimeout) {
             return;
         }
 
-        RecordClientResult(
+        RecordClientFinalResult(
             session,
             NetworkCompatibility.CreateHandshakeTimeoutResult(
-                (int)ClientHandshakeTimeout.TotalSeconds));
+                (int)ClientHandshakeTimeout.TotalSeconds,
+                session.CompatibilityState));
     }
 
-    public static void RecordClientResult(
+    public static void RecordClientCoreResult(
+        ClientSession session,
+        NetworkCompatibilityResult result) {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(result);
+        session.CompatibilityResult = result;
+        LastClientCoreResult = result;
+        if (result.Accepted) {
+            session.CompatibilityState = NetworkCompatibilityState.AwaitingChannels;
+            return;
+        }
+        RecordClientFinalResult(session, result);
+    }
+
+    public static void RecordClientChannelResult(
+        ClientSession session,
+        NetworkCompatibilityResult result) {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(result);
+        session.ChannelCompatibilityResult = result;
+        RecordClientFinalResult(session, result);
+    }
+
+    public static void RecordClientFinalResult(
         ClientSession session,
         NetworkCompatibilityResult result) {
         ArgumentNullException.ThrowIfNull(session);
@@ -116,8 +145,14 @@ public static class NetworkCompatibilityRuntime {
         }
         NetworkCompatibilityResult result = NetworkCompatibility.CreateHandshakeRequiredResult(
             packet?.GetType().Name ?? "unknown packet");
+        bool awaitingChannels = session.CompatibilityState == NetworkCompatibilityState.AwaitingChannels;
         session.CompatibilityState = NetworkCompatibilityState.Rejected;
         session.CompatibilityResult = result;
-        NetworkManager.Queue(new CompatibilityResultPacket(result) { To = session });
+        if (awaitingChannels) {
+            NetworkManager.Queue(new ModChannelCatalogResultPacket(result) { To = session });
+        }
+        else {
+            NetworkManager.Queue(new CompatibilityResultPacket(result) { To = session });
+        }
     }
 }

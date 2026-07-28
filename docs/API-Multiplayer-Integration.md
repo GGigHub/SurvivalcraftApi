@@ -37,6 +37,7 @@ The initial contract is intentionally strict:
 4. Built-in `SurvivalCraft`, `FastDebug`, and `Network` entities are excluded from the user-mod manifest because protocol and API versions already cover them.
 5. The client and server manifests must match exactly, including duplicates and missing or extra packages being rejected with structured diagnostics.
 6. `GameplayImpactLevel` and `NonPersistentMod` are not network-compatibility declarations and must not be used to silently waive a mismatch.
+7. After the core manifest matches, both peers exchange a canonical catalog of namespaced mod channels. Channel name, version, direction, and payload limit must also match exactly.
 
 Exact manifest equality is conservative but safe. A later schema revision may add an explicit network scope (for example required, client-optional, or server-only); optional behavior will only be enabled after corresponding isolation tests exist.
 
@@ -47,21 +48,34 @@ transport connected
     -> client sends CompatibilityHello
     -> server canonicalizes and validates versions and mod manifest
     -> server sends CompatibilityResult
+       -> accepted: client sends ModChannelCatalog
+       -> server validates the exact channel contract
+       -> server sends ModChannelCatalogResult
        -> accepted: client sends ConnectPacket and normal project sync begins
        -> rejected: client records a stable code and detailed differences, then disconnects
 ```
 
 The server must reject a `ConnectPacket` received before compatibility acceptance. Compatibility failures must be observable through the automated control channel; relying on a generic transport disconnect reason is insufficient.
 
-The implemented wire contract uses protocol revision `1`, packet IDs `113`/`114`, and bounded payloads. `ApiModManifest` and `StructuredCompatibilityResult` are mandatory capabilities; `ModPacketChannel` advertises the API's dynamic packet registration path. The client gives the application handshake 15 seconds before producing `HandshakeTimeout`; a direct server removes any non-accepted transport session after 20 seconds. Until acceptance, both client receive paths and server send paths admit compatibility traffic only, with `ConnectPacket` retaining an explicit defensive check.
+The implemented wire contract uses protocol revision `2`. Packet IDs `113`/`114` carry the core manifest result, `115`/`116` carry the channel catalog result, and `255` carries the stable mod-message envelope. `ApiModManifest`, `StructuredCompatibilityResult`, and `ModPacketChannel` are mandatory capabilities. The client gives the complete two-stage application handshake 15 seconds before producing `HandshakeTimeout`; direct and relay hosts remove any non-accepted transport session after 20 seconds. Until acceptance, both client receive paths and server send paths admit only the packet required by the current handshake stage, with `ConnectPacket` retaining an explicit defensive check.
+
+Compatibility diagnostics are bounded to 32 machine-readable issues so every rejection remains encodable within the 1 MiB result frame. Catalog and message codecs independently reject null, truncated, trailing, oversized, or non-canonical data before a mod handler can observe it.
+
+## Namespaced mod message channel
+
+The stable API is `ModLoader.RegisterNetworkChannel`, which returns a `ModNetworkChannel` handle. Package identity always comes from the owning `ModLoader`; a mod cannot claim another namespace through the public helper. Sending is explicit through `SendToServer`, `SendToClient`, or `Broadcast`, and receive dispatch verifies the negotiated version, allowed direction, per-channel payload limit, authenticated session, loaded Project, per-peer rate window, and message deduplication identity.
+
+Registrations live for the mod runtime rather than one world. Peer traffic state is cleared on direct or relay disconnect and on Project disposal; registrations remain available across world reload. Mod unloading unregisters each loader in a `finally` block, and full mod-runtime initialization clears any stale catalog. Handler exceptions are logged and converted into an isolated `HandlerFailed` dispatch result without terminating the network session.
+
+Direct and relay transports use the same envelope and checks. The relay protocol includes an authoritative host-to-relay peer disconnect command so a client that never finishes compatibility negotiation cannot retain a relay session indefinitely. Detailed third-party usage and limits are documented in [ModMultiplayerChannels.md](ModMultiplayerChannels.md).
 
 ## Automated quality gates
 
 The integration line uses progressively broader gates:
 
-- L0: pure tests for canonicalization, duplicate detection, deterministic ordering, version rules, and mismatch diagnostics.
-- L1: bounded wire-codec round trips and malformed/truncated payload rejection.
-- L2: real server/client processes for accepted compatibility, protocol mismatch, API mismatch, mod mismatch, reconnect, terrain synchronization, and persistence.
+- L0: pure tests for canonicalization, identifier/count bounds, duplicate detection, deterministic ordering, version rules, typed control frames, and mismatch diagnostics.
+- L1: bounded wire-codec round trips, malformed/truncated payload rejection, limiter/deduplicator behavior, and mod registration/unload lifecycle.
+- L2: real server/client processes for accepted compatibility, protocol/API/mod/channel mismatch, direct and relay mod messages, handler isolation, reconnect, terrain synchronization, world reload, and persistence.
 - Fault/replay: each failed scenario retains process logs, control transcripts, state snapshots, seeds, ports, and launch arguments under `TestResults`.
 
 The test host must expose typed commands and observations for compatibility overrides and results. Overrides are test-scoped dependency injection; production discovery always reads the actual loaded mod set.
@@ -76,8 +90,22 @@ The first complete API multiplayer milestone requires all of the following:
 - Core connect, terrain sync, reconnect, and persistence scenarios pass without manual input.
 - Failures produce enough artifacts for an AI developer to reproduce and diagnose them without watching the UI.
 
-This milestone establishes a safe development mainline. It does not claim that every third-party mod is multiplayer-correct; mod-defined state replication remains a separate capability that must be declared and tested.
+This milestone established the safe integration baseline.
 
-## Implemented first milestone
+## Second milestone definition of done
 
-The API 1.9.3 merge, compatibility handshake, typed diagnostics, real-process mismatch matrix, accepted connection, reconnect, terrain synchronization, and persistence checks are implemented on this branch. Promotion requires the stable `fast`, `doctor`, `compatibility`, and `core` gates. The legacy non-L2 collection is retained as a headless migration audit while its remaining UI/log assertions are converted to typed state checks.
+The mod-capability milestone additionally requires:
+
+- a namespaced channel contract that does not allocate third-party global packet IDs;
+- exact pre-Project channel negotiation with bounded machine-readable errors;
+- direction, identity, payload, rate, duplicate, session, and Project checks before dispatch;
+- registration cleanup on mod unload and peer-state cleanup across disconnect and world reload;
+- isolated handler failures that do not terminate a compatible session;
+- typed automation and real headless direct plus relay scenarios, including reconnect and fault injection;
+- a third-party developer contract describing authority, limits, lifecycle, and repeatable gates.
+
+This still does not claim that every third-party mod is multiplayer-correct; each mod must implement and test an authoritative state model over its declared channels.
+
+## Implemented milestones
+
+The API 1.9.3 merge, two-stage compatibility handshake, stable mod channel, typed diagnostics, real-process mismatch matrix, direct and relay message scenarios, reconnect, terrain synchronization, world reload, and persistence checks are implemented on this branch. Promotion requires the stable `fast`, `doctor`, `compatibility`, `core`, and `relay` gates. The legacy non-L2 collection is retained as a headless migration audit while its remaining UI/log assertions are converted to typed state checks.

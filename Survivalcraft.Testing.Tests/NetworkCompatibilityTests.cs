@@ -176,6 +176,25 @@ public sealed class NetworkCompatibilityTests {
         Assert.Contains("15 seconds", result.Summary, StringComparison.Ordinal);
     }
 
+    [Fact]
+    [Trait("Layer", "L1")]
+    public void RejectionDiagnosticsAreBoundedAndAlwaysWireEncodable() {
+        NetworkCompatibilityResult result = NetworkCompatibilityResult.Reject(
+            Enumerable.Range(0, NetworkCompatibility.MaximumIssueCount + 10)
+                .Select(index => new NetworkCompatibilityIssue(
+                    NetworkCompatibilityIssueCode.ChannelVersionMismatch,
+                    $"mod{index}",
+                    "1",
+                    "2",
+                    $"Mismatch {index}.")));
+
+        Assert.Equal(NetworkCompatibility.MaximumIssueCount, result.Issues.Count);
+        Assert.Contains("additional issue(s) omitted", result.Summary, StringComparison.Ordinal);
+        NetworkCompatibilityResult decoded = NetworkCompatibilityWireCodec.DecodeResult(
+            NetworkCompatibilityWireCodec.EncodeResult(result));
+        Assert.Equal(NetworkCompatibility.MaximumIssueCount, decoded.Issues.Count);
+    }
+
     private static NetworkCompatibilityManifest Manifest(params NetworkModIdentity[] mods) =>
         new(
             NetworkCompatibility.ProtocolRevision,

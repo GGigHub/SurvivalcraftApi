@@ -81,6 +81,7 @@ public static class NetworkManager {
     }
 
     public static void StopClient() {
+        ModNetworkManager.ClearSession(MySession);
         NetworkClient?.Disconnect();
         RelayClient?.Disconnect();
         NetworkClient = null;
@@ -109,8 +110,16 @@ public static class NetworkManager {
         }
     }
     public static void StartRelayHost(IPEndPoint relayEndPoint) {
-        RelayHost = new();
-        RelayHost.Start(relayEndPoint);
+        RelayHostCodeStatus = RelayHostCodeStatus.Creating;
+        try {
+            RelayHost = new();
+            RelayHost.Start(relayEndPoint);
+        }
+        catch {
+            RelayHost = null;
+            RelayHostCodeStatus = RelayHostCodeStatus.Failed;
+            throw;
+        }
     }
     public static void ConnectRelay(IPEndPoint relayEndPoint, string roomCode) {
         RelayClient = new(roomCode);

@@ -20,6 +20,7 @@ public enum PacketType : byte {
     // Connect
     ConnectInfo = 0, IndexInfo = 1, ProjectInfo = 2, StateInfo = 3, LatencyProbe = 111,
     CompatibilityHello = 113, CompatibilityResult = 114,
+    ModChannelCatalog = 115, ModChannelCatalogResult = 116,
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
@@ -64,6 +65,7 @@ public enum PacketType : byte {
     PlayerBodyUpdate = 71, PlayerInteract = 72, PlayerAim = 73, PlayerDig = 74, PlayerHit = 75,
     PlayerCreativeFly = 76, PlayerIntoPlaying = 77, PlayerRestart = 78, PlayerAddExperience = 79,
     PlayerDragDrop = 80, PlayerStatSync = 81, PlayerPositionSet = 82, PlayerDrop = 107,
+    PlayerEntityRequest = 117,
 
     // Terrain
     Time = 4, Sky = 5,
@@ -87,6 +89,8 @@ public class PacketManager {
         RegisterPacket<ConnectPacket>();
         RegisterPacket<CompatibilityHelloPacket>();
         RegisterPacket<CompatibilityResultPacket>();
+        RegisterPacket<ModChannelCatalogPacket>();
+        RegisterPacket<ModChannelCatalogResultPacket>();
         RegisterPacket<IndexPacket>();
         RegisterPacket<LatencyProbePacket>();
         RegisterPacket<ProjectPacket>();
@@ -181,6 +185,7 @@ public class PacketManager {
         RegisterPacket<PlayerDeletePacket>();
         RegisterPacket<PlayerDigPacket>();
         RegisterPacket<PlayerDropPacket>();
+        RegisterPacket<PlayerEntityRequestPacket>();
         RegisterPacket<PlayerDragDropPacket>();
         RegisterPacket<PlayerHitPacket>();
         RegisterPacket<PlayerInteractPacket>();
@@ -202,6 +207,9 @@ public class PacketManager {
         RegisterPacket<TerrainChangeCellPacket>();
         RegisterPacket<TerrainSyncChunkListPacket>();
         RegisterPacket<TerrainViewDistancePacket>();
+
+        // API mod envelope
+        RegisterPacket<ModMessagePacket>();
     }
 
     public static void RegisterPacket<T>() where T : Packet, new() {

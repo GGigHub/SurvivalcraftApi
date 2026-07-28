@@ -55,6 +55,19 @@ internal static class Program {
                 return 0;
             }
 
+            if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase)
+                && args.Length >= 2
+                && args[1].Equals(RelayModChannelScenario.ScenarioName, StringComparison.OrdinalIgnoreCase)) {
+                Dictionary<string, string?> options = ParseOptions(args, 2);
+                RelayModChannelScenarioOptions scenarioOptions =
+                    BuildRelayScenarioOptions(repositoryRoot, options, replay: null);
+                RelayModChannelScenarioResult result = await new RelayModChannelScenario()
+                    .RunAsync(scenarioOptions)
+                    .ConfigureAwait(false);
+                PrintResult(result);
+                return 0;
+            }
+
             if (args[0].Equals("replay", StringComparison.OrdinalIgnoreCase)) {
                 if (args.Length < 2 || args[1].StartsWith("--", StringComparison.Ordinal)) {
                     throw new ArgumentException("replay requires the source artifact directory.");
@@ -88,6 +101,18 @@ internal static class Program {
                     PrintResult(result);
                     return 0;
                 }
+                if (replay.Scenario.Equals(
+                        RelayModChannelScenario.ScenarioName,
+                        StringComparison.Ordinal)) {
+                    RelayModChannelScenarioOptions scenarioOptions =
+                        BuildRelayScenarioOptions(repositoryRoot, options, replay);
+                    RelayModChannelScenarioResult result =
+                        await new RelayModChannelScenario()
+                            .RunAsync(scenarioOptions)
+                            .ConfigureAwait(false);
+                    PrintResult(result);
+                    return 0;
+                }
                 throw new InvalidDataException(
                     $"Replay scenario '{replay.Scenario}' is not supported by this host.");
             }
@@ -101,6 +126,11 @@ internal static class Program {
             return 1;
         }
         catch (CompatibilityMatrixScenarioException exception) {
+            Console.Error.WriteLine($"FAILED: {exception.Message}");
+            Console.Error.WriteLine(exception.InnerException);
+            return 1;
+        }
+        catch (RelayModChannelScenarioException exception) {
             Console.Error.WriteLine($"FAILED: {exception.Message}");
             Console.Error.WriteLine(exception.InnerException);
             return 1;
@@ -170,6 +200,74 @@ internal static class Program {
         };
 
         return new CoreMultiplayerScenarioOptions(
+            runtime,
+            artifactDirectory,
+            seed,
+            profile,
+            StepTimeout: GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(60)),
+            ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(6)),
+            WorkDirectory: workDirectory,
+            KeepData: GetFlag(options, "keep-data"));
+    }
+
+    private static RelayModChannelScenarioOptions BuildRelayScenarioOptions(
+        string repositoryRoot,
+        IReadOnlyDictionary<string, string?> options,
+        ScenarioReplay? replay) {
+        int seed = GetInt32(options, "seed", replay?.Seed ?? 20260728);
+        string runtime = options.TryGetValue("runtime", out string? runtimeValue)
+            && !string.IsNullOrWhiteSpace(runtimeValue)
+                ? Path.GetFullPath(runtimeValue)
+                : replay?.RuntimeDirectory ?? ResolveRuntime(repositoryRoot, options);
+        string artifactDirectory = options.TryGetValue("artifacts", out string? artifactValue)
+            && !string.IsNullOrWhiteSpace(artifactValue)
+                ? Path.GetFullPath(artifactValue)
+                : Path.Combine(
+                    repositoryRoot,
+                    "TestResults",
+                    replay == null
+                        ? $"relay-mod-channel-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}"
+                        : $"relay-mod-channel-replay-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}");
+        string? workDirectory = options.TryGetValue("work-dir", out string? workValue)
+            && !string.IsNullOrWhiteSpace(workValue)
+                ? Path.GetFullPath(workValue)
+                : null;
+
+        NetworkFaultProfile baseProfile = replay?.NetworkFaults
+            ?? new NetworkFaultProfile(Seed: seed);
+        NetworkFaultProfile profile = baseProfile with {
+            Seed = seed,
+            BaseLatencyMilliseconds = GetInt32(
+                options,
+                "latency-ms",
+                replay?.NetworkFaults.BaseLatencyMilliseconds ?? 8),
+            JitterMilliseconds = GetInt32(
+                options,
+                "jitter-ms",
+                replay?.NetworkFaults.JitterMilliseconds ?? 2),
+            LossRate = GetDouble(
+                options,
+                "loss-rate",
+                replay?.NetworkFaults.LossRate ?? 0),
+            DuplicationRate = GetDouble(
+                options,
+                "duplication-rate",
+                replay?.NetworkFaults.DuplicationRate ?? 0),
+            ReorderRate = GetDouble(
+                options,
+                "reorder-rate",
+                replay?.NetworkFaults.ReorderRate ?? 0),
+            ReorderDelayMilliseconds = GetInt32(
+                options,
+                "reorder-delay-ms",
+                replay?.NetworkFaults.ReorderDelayMilliseconds ?? 0),
+            BandwidthBytesPerSecond = GetInt32(
+                options,
+                "bandwidth-bytes",
+                replay?.NetworkFaults.BandwidthBytesPerSecond ?? 0)
+        };
+
+        return new RelayModChannelScenarioOptions(
             runtime,
             artifactDirectory,
             seed,
@@ -328,6 +426,14 @@ internal static class Program {
         Console.WriteLine($"elapsed={result.Elapsed}");
     }
 
+    private static void PrintResult(RelayModChannelScenarioResult result) {
+        Console.WriteLine("SCENARIO PASSED");
+        Console.WriteLine($"artifacts={result.ArtifactDirectory}");
+        Console.WriteLine($"room={result.RoomCode}");
+        Console.WriteLine($"deduplicatedFrames={result.DeduplicatedFrames}");
+        Console.WriteLine($"elapsed={result.Elapsed}");
+    }
+
     private static string ResolveRuntime(
         string repositoryRoot,
         IReadOnlyDictionary<string, string?> options) {
@@ -446,6 +552,7 @@ internal static class Program {
         Console.WriteLine("  doctor [--runtime PATH] [--static-only]");
         Console.WriteLine("  run core-multiplayer [options]");
         Console.WriteLine("  run compatibility-matrix [options]");
+        Console.WriteLine("  run relay-mod-channel [options]");
         Console.WriteLine("  replay ARTIFACT_DIRECTORY [options]");
         Console.WriteLine();
         Console.WriteLine("Common options:");

@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 using Engine;
 using Engine.Graphics;
+using Game.Network;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -57,6 +58,24 @@ namespace Game {
         ///     Mod被卸载时执行
         /// </summary>
         public virtual void ModDispose() { }
+
+        /// <summary>
+        /// 注册由当前模组包名拥有的联机消息通道。通道必须在 __ModInitialize 中注册，
+        /// 服务端与客户端的声明完全一致后才会允许进入联机世界。
+        /// </summary>
+        public ModNetworkChannel RegisterNetworkChannel(
+            string channelName,
+            int version,
+            ModNetworkDirection directions,
+            Action<ModNetworkMessageContext, ReadOnlyMemory<byte>> handler,
+            int maximumPayloadBytes = ModNetworkProtocol.DefaultMaximumPayloadBytes) =>
+            ModNetworkManager.RegisterChannel(
+                this,
+                channelName,
+                version,
+                directions,
+                maximumPayloadBytes,
+                handler);
 
         /// <summary>
         ///     视图雾颜色调整

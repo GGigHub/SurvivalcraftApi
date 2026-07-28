@@ -28,7 +28,8 @@ public enum RelayMessageType : byte {
     PeerLeft = 7,
     DataToHost = 8,
     DataToPeer = 9,
-    CloseRoom = 10
+    CloseRoom = 10,
+    DisconnectPeer = 11
 }
 
 public static class RelayProtocol {

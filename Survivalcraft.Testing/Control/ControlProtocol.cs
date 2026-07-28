@@ -123,6 +123,9 @@ public static class ControlCommandNames {
     public const string ReloadWorld = "world.reload";
     public const string SaveWorld = "world.save";
     public const string ConnectClient = "network.connect";
+    public const string StartRelayHost = "network.startRelayHost";
+    public const string ConnectRelay = "network.connectRelay";
+    public const string GetRelayStatus = "network.getRelayStatus";
     public const string EnterWorld = "player.enterWorld";
     public const string Disconnect = "network.disconnect";
     public const string ChangeTerrainCell = "terrain.changeCell";
@@ -132,6 +135,11 @@ public static class ControlCommandNames {
     public const string SetNetworkFaults = "network.setFaults";
     public const string ConfigureCompatibility = "network.configureCompatibility";
     public const string GetCompatibility = "network.getCompatibility";
+    public const string ConfigureModChannels = "network.configureModChannels";
+    public const string GetModChannels = "network.getModChannels";
+    public const string SendTestModMessage = "network.sendTestModMessage";
+    public const string GetTestModMessages = "network.getTestModMessages";
+    public const string ResetTestModMessages = "network.resetTestModMessages";
     public const string ClickWidget = "ui.clickWidget";
     public const string ExecuteLegacyScript = "legacy.executeScript";
 }
@@ -169,6 +177,16 @@ public sealed record SaveWorldCommand(bool WaitForCompletion = true);
 public sealed record SaveWorldResult(string DirectoryName, bool Saved);
 
 public sealed record ConnectClientCommand(string Host, int Port);
+public sealed record StartRelayHostCommand(string Host, int Port);
+public sealed record ConnectRelayCommand(string Host, int Port, string RoomCode);
+public sealed record RelayStatus(
+    string Mode,
+    bool HostConnected,
+    bool ClientConnected,
+    string HostCodeStatus,
+    string RoomCode,
+    string GlobalCode,
+    int HostSessionCount);
 public sealed record EnterWorldCommand(string PlayerName);
 public sealed record DisconnectCommand(
     bool SaveWorld = false,
@@ -246,6 +264,69 @@ public sealed record CompatibilityStatus(
     string? PrimaryCode,
     string? Summary,
     CompatibilityIssueState[] Issues);
+
+public sealed record ModChannelDescriptorState(
+    string PackageName,
+    string ChannelName,
+    int Version,
+    int Directions,
+    int MaximumPayloadBytes);
+
+public sealed record ConfigureModChannelsCommand(
+    bool ClearOverride = false,
+    ModChannelDescriptorState[]? Channels = null);
+
+public sealed record ModNetworkMetricsState(
+    long Sent,
+    long Received,
+    long Delivered,
+    long Dropped,
+    long Duplicates,
+    long RateLimited,
+    long HandlerErrors);
+
+public sealed record ModNetworkDispatchState(
+    DateTimeOffset Timestamp,
+    string PackageName,
+    string ChannelName,
+    string MessageId,
+    string Code,
+    bool IsServer,
+    int PayloadBytes,
+    string Detail);
+
+public sealed record ModChannelStatus(
+    bool OverrideActive,
+    string Fingerprint,
+    ModChannelDescriptorState[] Channels,
+    ModNetworkMetricsState Metrics,
+    ModNetworkDispatchState? LastDispatch);
+
+public sealed record SendTestModMessageCommand(
+    string Payload,
+    bool Broadcast = false,
+    bool FailHandler = false,
+    string? CorrelationId = null);
+
+public sealed record TestModMessageState(
+    DateTimeOffset Timestamp,
+    string CorrelationId,
+    string Payload,
+    string MessageId,
+    bool ReceivedOnServer,
+    int? SenderPlayerIndex,
+    bool EchoRequested,
+    bool HandlerFailureRequested);
+
+public sealed record TestModSendResult(
+    string CorrelationId,
+    string Route,
+    int RecipientCount,
+    int PayloadBytes);
+
+public sealed record TestModMessagesStatus(
+    TestModMessageState[] Messages,
+    ModChannelStatus Channel);
 
 public sealed record ClickWidgetCommand(string NameOrText);
 public sealed record ExecuteLegacyScriptCommand(string Code, bool ReturnValue);

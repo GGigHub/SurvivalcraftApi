@@ -35,7 +35,7 @@ public sealed class CompatibilityMatrixScenarioException : Exception {
 
 public sealed class CompatibilityMatrixScenario {
     public const string ScenarioName = "compatibility-matrix";
-    public const int ScenarioVersion = 1;
+    public const int ScenarioVersion = 2;
 
     private static readonly ScenarioStepDefinition[] StepDefinitions = [
         new("start-nodes", "process.start(server, client)"),
@@ -46,6 +46,7 @@ public sealed class CompatibilityMatrixScenario {
         new("reject-api-mismatch", ControlCommandNames.ConfigureCompatibility),
         new("reject-capability-mismatch", ControlCommandNames.ConfigureCompatibility),
         new("reject-mod-mismatch", ControlCommandNames.ConfigureCompatibility),
+        new("reject-mod-channel-mismatch", ControlCommandNames.ConfigureModChannels),
         new("reject-handshake-timeout", ControlCommandNames.SetNetworkFaults),
         new("recover-with-matching-manifest", ControlCommandNames.ConfigureCompatibility),
         new("stop-nodes", ControlCommandNames.Disconnect)
@@ -142,15 +143,24 @@ public sealed class CompatibilityMatrixScenario {
 
         async Task<CompatibilityStatus> RunRejectionAsync(
             string caseName,
-            ConfigureCompatibilityCommand configuration,
-            string expectedCode) {
+            ConfigureCompatibilityCommand? configuration,
+            string expectedCode,
+            ConfigureModChannelsCommand? channelConfiguration = null) {
             if (server == null || client == null) {
                 throw new InvalidOperationException("Scenario nodes are not running.");
             }
-            _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
-                ControlCommandNames.ConfigureCompatibility,
-                configuration,
-                cancellationToken: scenarioToken).ConfigureAwait(false);
+            if (configuration != null) {
+                _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                    ControlCommandNames.ConfigureCompatibility,
+                    configuration,
+                    cancellationToken: scenarioToken).ConfigureAwait(false);
+            }
+            if (channelConfiguration != null) {
+                _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                    ControlCommandNames.ConfigureModChannels,
+                    channelConfiguration,
+                    cancellationToken: scenarioToken).ConfigureAwait(false);
+            }
             _ = await client.SendAsync<ConnectClientCommand, ControlAck>(
                 ControlCommandNames.ConnectClient,
                 new ConnectClientCommand("127.0.0.1", server.GamePort),
@@ -300,12 +310,26 @@ public sealed class CompatibilityMatrixScenario {
                 result => result.PrimaryCode).ConfigureAwait(false);
 
             _ = await StepAsync(
+                "reject-mod-channel-mismatch",
+                ControlCommandNames.ConfigureModChannels,
+                () => RunRejectionAsync(
+                    "mod-channel",
+                    new ConfigureCompatibilityCommand(ClearOverride: true),
+                    "MissingClientChannel",
+                    new ConfigureModChannelsCommand(Channels: [])),
+                result => result.PrimaryCode).ConfigureAwait(false);
+
+            _ = await StepAsync(
                 "reject-handshake-timeout",
                 ControlCommandNames.SetNetworkFaults,
                 async () => {
                     _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
                         ControlCommandNames.ConfigureCompatibility,
                         new ConfigureCompatibilityCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                        ControlCommandNames.ConfigureModChannels,
+                        new ConfigureModChannelsCommand(ClearOverride: true),
                         cancellationToken: scenarioToken).ConfigureAwait(false);
                     _ = await server.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
                         ControlCommandNames.SetNetworkFaults,
@@ -356,6 +380,10 @@ public sealed class CompatibilityMatrixScenario {
                     _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
                         ControlCommandNames.ConfigureCompatibility,
                         new ConfigureCompatibilityCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                        ControlCommandNames.ConfigureModChannels,
+                        new ConfigureModChannelsCommand(ClearOverride: true),
                         cancellationToken: scenarioToken).ConfigureAwait(false);
                     _ = await client.SendAsync<ConnectClientCommand, ControlAck>(
                         ControlCommandNames.ConnectClient,
@@ -449,9 +477,9 @@ public sealed class CompatibilityMatrixScenario {
                 $"Scenario passed but artifacts could not be written to '{artifactDirectory}'.",
                 artifactFailure);
         }
-        if (rejectionCodes.Count != 5) {
+        if (rejectionCodes.Count != 6) {
             throw new InvalidOperationException(
-                $"Scenario completed with {rejectionCodes.Count} rejection cases instead of 5.");
+                $"Scenario completed with {rejectionCodes.Count} rejection cases instead of 6.");
         }
         return new CompatibilityMatrixScenarioResult(
             artifactDirectory,

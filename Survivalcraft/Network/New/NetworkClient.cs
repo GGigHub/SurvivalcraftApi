@@ -14,7 +14,10 @@ public class ClientSession {
     public NetworkState NetworkState { get; set; }
     public NetworkCompatibilityState CompatibilityState { get; set; }
     public NetworkCompatibilityResult CompatibilityResult { get; set; }
+    public NetworkCompatibilityResult ChannelCompatibilityResult { get; set; }
+    public string ModChannelCatalogFingerprint { get; set; } = string.Empty;
     public DateTime CompatibilityStartedUtc { get; set; }
+    public DateTime LastPlayerEntityRequestUtc { get; set; }
 }
 
 public class NetworkClient : INetEventListener {
@@ -59,7 +62,8 @@ public class NetworkClient : INetEventListener {
     public void Send(Packet packet) {
         if (MySession != null
             && MySession.CompatibilityState != NetworkCompatibilityState.Accepted
-            && packet is not CompatibilityHelloPacket) {
+            && packet is not CompatibilityHelloPacket
+            && packet is not ModChannelCatalogPacket) {
             return;
         }
         PacketStreamWriter writer = new();
@@ -93,7 +97,8 @@ public class NetworkClient : INetEventListener {
         if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (MySession?.CompatibilityState != NetworkCompatibilityState.Accepted
-                    && packet is not CompatibilityResultPacket) {
+                    && packet is not CompatibilityResultPacket
+                    && packet is not ModChannelCatalogResultPacket) {
                     return;
                 }
                 if (packet.MinNeedState >= NetworkState.ProjectLoaded && GameManager.Project == null) {

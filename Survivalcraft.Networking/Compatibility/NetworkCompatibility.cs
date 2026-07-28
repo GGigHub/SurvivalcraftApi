@@ -17,6 +17,7 @@ public enum NetworkCapabilities {
 public enum NetworkCompatibilityState : byte {
     NotStarted,
     AwaitingHello,
+    AwaitingChannels,
     Accepted,
     Rejected
 }
@@ -33,7 +34,14 @@ public enum NetworkCompatibilityIssueCode : byte {
     ModVersionMismatch,
     ModApiVersionMismatch,
     HandshakeRequired,
-    HandshakeTimeout
+    HandshakeTimeout,
+    InvalidServerChannelCatalog,
+    InvalidClientChannelCatalog,
+    MissingClientChannel,
+    ExtraClientChannel,
+    ChannelVersionMismatch,
+    ChannelDirectionMismatch,
+    ChannelPayloadLimitMismatch
 }
 
 public sealed class NetworkModIdentity {
@@ -117,10 +125,16 @@ public sealed class NetworkCompatibilityResult {
     };
 
     public static NetworkCompatibilityResult Reject(IEnumerable<NetworkCompatibilityIssue> issues) {
-        List<NetworkCompatibilityIssue> issueList = issues?.ToList() ?? [];
+        List<NetworkCompatibilityIssue> allIssues = issues?.ToList() ?? [];
+        List<NetworkCompatibilityIssue> issueList = allIssues
+            .Take(NetworkCompatibility.MaximumIssueCount)
+            .ToList();
         string summary = issueList.Count == 0
             ? "Compatibility rejected."
             : string.Join("; ", issueList.Select(issue => issue.Message));
+        if (allIssues.Count > issueList.Count) {
+            summary += $"; {allIssues.Count - issueList.Count} additional issue(s) omitted.";
+        }
         if (summary.Length > MaximumSummaryLength) {
             summary = summary[..(MaximumSummaryLength - 3)] + "...";
         }
@@ -137,9 +151,9 @@ public sealed class NetworkCompatibilityResult {
 }
 
 public static class NetworkCompatibility {
-    public const int ProtocolRevision = 1;
+    public const int ProtocolRevision = 2;
     public const int MaximumModCount = 256;
-    public const int MaximumIssueCount = 520;
+    public const int MaximumIssueCount = 32;
     public const int MaximumFieldLength = 256;
 
     public const NetworkCapabilities CurrentCapabilities =
@@ -149,7 +163,8 @@ public static class NetworkCompatibility {
 
     public const NetworkCapabilities RequiredCapabilities =
         NetworkCapabilities.ApiModManifest
-        | NetworkCapabilities.StructuredCompatibilityResult;
+        | NetworkCapabilities.StructuredCompatibilityResult
+        | NetworkCapabilities.ModPacketChannel;
 
     public static NetworkCompatibilityResult Evaluate(
         NetworkCompatibilityManifest serverManifest,
@@ -262,13 +277,15 @@ public static class NetworkCompatibility {
                 $"Compatibility handshake must complete before '{packetName}' is accepted.")
         ]);
 
-    public static NetworkCompatibilityResult CreateHandshakeTimeoutResult(int timeoutSeconds) =>
+    public static NetworkCompatibilityResult CreateHandshakeTimeoutResult(
+        int timeoutSeconds,
+        NetworkCompatibilityState state = NetworkCompatibilityState.AwaitingHello) =>
         NetworkCompatibilityResult.Reject([
             new NetworkCompatibilityIssue(
                 NetworkCompatibilityIssueCode.HandshakeTimeout,
                 string.Empty,
                 $"completed within {timeoutSeconds} seconds",
-                nameof(NetworkCompatibilityState.AwaitingHello),
+                state.ToString(),
                 $"Compatibility handshake timed out after {timeoutSeconds} seconds.")
         ]);
 

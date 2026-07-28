@@ -21,7 +21,7 @@ while (!cancellation.IsCancellationRequested) {
 server.Stop();
 return 0;
 
-internal enum RelayMessageType : byte { CreateRoom = 1, RoomCreated, JoinRoom, JoinAccepted, JoinRejected, PeerJoined, PeerLeft, DataToHost, DataToPeer, CloseRoom }
+internal enum RelayMessageType : byte { CreateRoom = 1, RoomCreated, JoinRoom, JoinAccepted, JoinRejected, PeerJoined, PeerLeft, DataToHost, DataToPeer, CloseRoom, DisconnectPeer }
 
 internal static class RelayProtocol {
     public const uint Magic = 0x5343524C;
@@ -70,6 +70,7 @@ internal sealed class RelayServer(RelayCenterOptions centerOptions) : INetEventL
                 case RelayMessageType.DataToHost: ForwardToHost(sender, reader); break;
                 case RelayMessageType.DataToPeer: ForwardToPeer(sender, reader); break;
                 case RelayMessageType.CloseRoom: Remove(sender); break;
+                case RelayMessageType.DisconnectPeer: DisconnectPeer(sender, reader); break;
             }
         } catch (Exception ex) { Console.Error.WriteLine($"Rejected frame from {sender.Address}: {ex.Message}"); }
     }
@@ -133,6 +134,14 @@ internal sealed class RelayServer(RelayCenterOptions centerOptions) : INetEventL
         if (!memberships.TryGetValue(host, out Room? room) || host != room.Host) return;
         int id = reader.GetInt(); byte[] payload = ReadPayload(reader);
         if (room.Peers.TryGetValue(id, out NetPeer? peer)) { NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToPeer); frame.PutBytesWithLength(payload); peer.Send(frame, DeliveryMethod.ReliableOrdered); }
+    }
+
+    private void DisconnectPeer(NetPeer host, NetPacketReader reader) {
+        if (!memberships.TryGetValue(host, out Room? room) || host != room.Host) return;
+        int id = reader.GetInt();
+        if (!room.Peers.TryGetValue(id, out NetPeer? peer)) return;
+        Remove(peer);
+        peer.Disconnect();
     }
 
     private static byte[] ReadPayload(NetDataReader reader) { byte[] data = reader.GetBytesWithLength(); if (data.Length > RelayProtocol.MaxPayloadLength) throw new InvalidDataException("payload too large"); return data; }

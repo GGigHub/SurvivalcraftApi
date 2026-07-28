@@ -447,6 +447,7 @@ public static class ModsManager {
     }
 
     public static void Initialize() {
+        Game.Network.ModNetworkManager.ResetRegistrations();
         if (!Storage.DirectoryExists(ModsPath)) {
             Storage.CreateDirectory(ModsPath);
         }

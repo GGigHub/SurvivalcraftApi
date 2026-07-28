@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 using System.Reflection;
 using Engine;
+using Game.Network;
 
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -233,6 +234,7 @@ namespace Game {
                 m_subsystemUpdate = null;
                 m_worldInfo = null;
                 IsNetworkProject = false;
+                ModNetworkManager.OnProjectDisposed();
                 ModsManager.HookAction(
                     "OnProjectDisposed",
                     loader => {

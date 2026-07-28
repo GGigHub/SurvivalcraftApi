@@ -26,6 +26,7 @@ public sealed class CompatibilityMatrixScenarioTest {
         Assert.Equal("ApiVersionMismatch", result.RejectionCodes["api"]);
         Assert.Equal("MissingCapabilities", result.RejectionCodes["capability"]);
         Assert.Equal("ExtraClientMod", result.RejectionCodes["mod"]);
+        Assert.Equal("MissingClientChannel", result.RejectionCodes["mod-channel"]);
         Assert.Equal("HandshakeTimeout", result.RejectionCodes["timeout"]);
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "outcome.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "snapshot-timeout-rejected.json")));

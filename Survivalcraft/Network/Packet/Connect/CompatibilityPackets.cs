@@ -26,7 +26,9 @@ public sealed class CompatibilityHelloPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        if (!isServer || From == null) {
+        if (!isServer
+            || From == null
+            || From.CompatibilityState != NetworkCompatibilityState.AwaitingHello) {
             return;
         }
         NetworkCompatibilityResult result = NetworkCompatibility.Evaluate(
@@ -34,7 +36,7 @@ public sealed class CompatibilityHelloPacket : Packet {
             Manifest);
         From.CompatibilityResult = result;
         From.CompatibilityState = result.Accepted
-            ? NetworkCompatibilityState.Accepted
+            ? NetworkCompatibilityState.AwaitingChannels
             : NetworkCompatibilityState.Rejected;
         NetworkManager.Queue(new CompatibilityResultPacket(result) { To = From });
         if (result.Accepted) {
@@ -75,10 +77,13 @@ public sealed class CompatibilityResultPacket : Packet {
             || session.CompatibilityState != NetworkCompatibilityState.AwaitingHello) {
             return;
         }
-        NetworkCompatibilityRuntime.RecordClientResult(session, Result);
+        NetworkCompatibilityRuntime.RecordClientCoreResult(session, Result);
         if (Result.Accepted) {
-            Log.Information("Server accepted network compatibility handshake.");
-            NetworkManager.Queue(new ConnectPacket(NetworkManager.NetworkGuid));
+            Log.Information("Server accepted API/mod compatibility; negotiating mod channels.");
+            ModNetworkChannelCatalog catalog = ModNetworkManager.GetLocalCatalog();
+            session.ModChannelCatalogFingerprint =
+                ModNetworkProtocol.ComputeCatalogFingerprint(catalog);
+            NetworkManager.Queue(new ModChannelCatalogPacket(catalog));
         }
         else {
             Log.Warning($"Server rejected network compatibility handshake: {Result.Summary}");

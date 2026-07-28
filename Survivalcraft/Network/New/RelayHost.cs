@@ -38,6 +38,30 @@ public sealed class RelayHost : INetEventListener {
 
     public void Update() {
         _netManager.PollEvents();
+        DateTime now = DateTime.UtcNow;
+        foreach (KeyValuePair<int, ClientSession> item in _sessions.ToArray()) {
+            ClientSession session = item.Value;
+            if (session.CompatibilityState != NetworkCompatibilityState.Accepted
+                && session.CompatibilityStartedUtc != default
+                && now - session.CompatibilityStartedUtc >= NetworkCompatibilityRuntime.ServerHandshakeTimeout) {
+                session.CompatibilityResult = NetworkCompatibility.CreateHandshakeTimeoutResult(
+                    (int)NetworkCompatibilityRuntime.ServerHandshakeTimeout.TotalSeconds,
+                    session.CompatibilityState);
+                session.CompatibilityState = NetworkCompatibilityState.Rejected;
+                session.CompatibilityStartedUtc = default;
+                Log.Warning(
+                    $"Disconnecting relay peer {item.Key}: compatibility handshake timed out.");
+                _sessions.Remove(item.Key);
+                ModNetworkManager.ClearSession(session);
+                PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
+                GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
+                if (_relayPeer != null) {
+                    NetDataWriter writer = RelayProtocol.Begin(RelayMessageType.DisconnectPeer);
+                    writer.Put(item.Key);
+                    _relayPeer.Send(writer, DeliveryMethod.ReliableOrdered);
+                }
+            }
+        }
     }
 
     public void Disconnect() {
@@ -55,7 +79,8 @@ public sealed class RelayHost : INetEventListener {
     public void Send(Packet packet, ClientSession session) {
         if (packet.MinNeedState > session.NetworkState
             || (session.CompatibilityState != NetworkCompatibilityState.Accepted
-                && packet is not CompatibilityResultPacket)) return;
+                && packet is not CompatibilityResultPacket
+                && packet is not ModChannelCatalogResultPacket)) return;
         int connectionId = _sessions.FirstOrDefault(p => p.Value == session).Key;
         if (connectionId == 0) return;
         PacketStreamWriter payload = new();
@@ -66,7 +91,12 @@ public sealed class RelayHost : INetEventListener {
             NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToPeer);
             frame.Put(connectionId);
             frame.PutBytesWithLength(chunk.CopyData());
-            _relayPeer?.Send(frame, DeliveryMethod.ReliableOrdered);
+            if (_relayPeer != null) {
+                NetPeer relayPeer = _relayPeer;
+                NetworkFaultInjector.Send(
+                    frame,
+                    data => relayPeer.Send(data, DeliveryMethod.ReliableOrdered));
+            }
         }
     }
 
@@ -101,6 +131,7 @@ public sealed class RelayHost : INetEventListener {
         else if (type == RelayMessageType.PeerLeft) {
             int id = reader.GetInt();
             if (_sessions.Remove(id, out ClientSession session)) {
+                ModNetworkManager.ClearSession(session);
                 PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
                 GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
             }
@@ -125,6 +156,7 @@ public sealed class RelayHost : INetEventListener {
                 foreach (Packet packet in PacketManager.DecodePackets(payload)) {
                     if (session.CompatibilityState != NetworkCompatibilityState.Accepted
                         && packet is not CompatibilityHelloPacket
+                        && packet is not ModChannelCatalogPacket
                         && packet is not ConnectPacket) {
                         NetworkCompatibilityRuntime.RejectPrematurePacket(session, packet);
                         continue;
@@ -143,6 +175,9 @@ public sealed class RelayHost : INetEventListener {
         IsDisconnected = true;
 
         PlayerBodyUpdatePacket.ClearSnapshots();
+        foreach (ClientSession session in _sessions.Values) {
+            ModNetworkManager.ClearSession(session);
+        }
         _sessions.Clear();
         GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
 

@@ -107,6 +107,18 @@ public partial class TestAutomationModLoader {
                 request,
                 ConnectClient(request.DeserializePayload<ConnectClientCommand>()),
                 sequence),
+            ControlCommandNames.StartRelayHost => ControlProtocol.Success(
+                request,
+                StartRelayHost(request.DeserializePayload<StartRelayHostCommand>()),
+                sequence),
+            ControlCommandNames.ConnectRelay => ControlProtocol.Success(
+                request,
+                ConnectRelay(request.DeserializePayload<ConnectRelayCommand>()),
+                sequence),
+            ControlCommandNames.GetRelayStatus => ControlProtocol.Success(
+                request,
+                BuildRelayStatus(),
+                sequence),
             ControlCommandNames.EnterWorld => ControlProtocol.Success(
                 request,
                 EnterWorld(request.DeserializePayload<EnterWorldCommand>()),
@@ -144,6 +156,28 @@ public partial class TestAutomationModLoader {
                 request,
                 BuildCompatibilityStatus(),
                 sequence),
+            ControlCommandNames.ConfigureModChannels => ControlProtocol.Success(
+                request,
+                ConfigureModChannels(
+                    request.DeserializePayload<ConfigureModChannelsCommand>()),
+                sequence),
+            ControlCommandNames.GetModChannels => ControlProtocol.Success(
+                request,
+                BuildModChannelStatus(),
+                sequence),
+            ControlCommandNames.SendTestModMessage => ControlProtocol.Success(
+                request,
+                SendTestModMessage(
+                    request.DeserializePayload<SendTestModMessageCommand>()),
+                sequence),
+            ControlCommandNames.GetTestModMessages => ControlProtocol.Success(
+                request,
+                BuildTestModMessagesStatus(),
+                sequence),
+            ControlCommandNames.ResetTestModMessages => ControlProtocol.Success(
+                request,
+                ResetTestModMessages(),
+                sequence),
             ControlCommandNames.ClickWidget => ControlProtocol.Success(
                 request,
                 QueueTypedWidgetClick(request.DeserializePayload<ClickWidgetCommand>()),
@@ -180,6 +214,8 @@ public partial class TestAutomationModLoader {
             global::Game.Random.Counter = command.Seed;
         }
         NetworkCompatibilityRuntime.ClearLocalManifestOverride();
+        ModNetworkManager.ClearLocalCatalogOverride();
+        ResetTestModMessages();
         return new ControlAck(true, $"Configured role '{nodeRole}' with seed {command.Seed}.");
     }
 
@@ -246,6 +282,61 @@ public partial class TestAutomationModLoader {
             new IPEndPoint(address, command.Port),
             null);
         return new ControlAck(true, $"Connecting to {address}:{command.Port}.");
+    }
+
+    private ControlAck StartRelayHost(StartRelayHostCommand command) {
+        if (GameManager.Project == null || GameManager.IsNetworkProject) {
+            throw new InvalidOperationException(
+                "Starting a relay host requires a loaded storage-backed server world.");
+        }
+        if (NetworkManager.RelayHost != null) {
+            throw new InvalidOperationException("A relay host is already active.");
+        }
+        IPAddress address = IPAddress.Parse(command.Host);
+        NetworkManager.StartRelayHost(new IPEndPoint(address, command.Port));
+        return new ControlAck(true, $"Creating relay room through {address}:{command.Port}.");
+    }
+
+    private ControlAck ConnectRelay(ConnectRelayCommand command) {
+        if (string.IsNullOrWhiteSpace(command.RoomCode)) {
+            throw new ArgumentException("Relay room code cannot be empty.", nameof(command));
+        }
+        ReturnToMainMenu(saveWorld: false);
+        IPAddress address = IPAddress.Parse(command.Host);
+        RelayJoinInfo joinInfo = new(
+            new IPEndPoint(address, command.Port),
+            command.RoomCode.Trim());
+        ScreensManager.SwitchScreen(
+            "GameLoading",
+            null,
+            null,
+            joinInfo,
+            null);
+        return new ControlAck(
+            true,
+            $"Joining relay room '{joinInfo.RoomCode}' through {address}:{command.Port}.");
+    }
+
+    private static RelayStatus BuildRelayStatus() {
+        RelayHost? host = NetworkManager.RelayHost;
+        RelayClient? client = NetworkManager.RelayClient;
+        bool hostConnected = host?.IsConnected == true;
+        bool clientConnected = client?.IsConnected == true;
+        string mode = hostConnected && clientConnected
+            ? "host+client"
+            : hostConnected
+                ? "host"
+                : clientConnected
+                    ? "client"
+                    : "none";
+        return new RelayStatus(
+            mode,
+            hostConnected,
+            clientConnected,
+            NetworkManager.RelayHostCodeStatus.ToString(),
+            host?.RoomCode ?? string.Empty,
+            host?.GlobalCode ?? string.Empty,
+            host?.Sessions.Count() ?? 0);
     }
 
     private ControlAck EnterWorld(EnterWorldCommand command) {
@@ -339,6 +430,7 @@ public partial class TestAutomationModLoader {
                 worldInfo.DirectoryName ?? string.Empty,
                 worldInfo.WorldSettings?.WorldSeed ?? 0);
         NetworkFaultMetrics metrics = NetworkFaultInjector.Metrics;
+        ModNetworkRuntimeMetrics modMetrics = ModNetworkManager.Metrics;
         Dictionary<string, string> diagnostics = new() {
             ["projectKind"] = GameManager.IsNetworkProject ? "network" : "storage",
             ["fault.sent"] = metrics.Sent.ToString(),
@@ -347,7 +439,12 @@ public partial class TestAutomationModLoader {
             ["fault.pending"] = metrics.Pending.ToString(),
             ["compatibility.state"] = BuildCompatibilityStateName(),
             ["compatibility.code"] = NetworkCompatibilityRuntime.LastClientResult?.PrimaryCode.ToString() ?? string.Empty,
-            ["compatibility.summary"] = NetworkCompatibilityRuntime.LastClientResult?.Summary ?? string.Empty
+            ["compatibility.summary"] = NetworkCompatibilityRuntime.LastClientResult?.Summary ?? string.Empty,
+            ["modChannel.sent"] = modMetrics.Sent.ToString(),
+            ["modChannel.received"] = modMetrics.Received.ToString(),
+            ["modChannel.delivered"] = modMetrics.Delivered.ToString(),
+            ["modChannel.dropped"] = modMetrics.Dropped.ToString(),
+            ["modChannel.handlerErrors"] = modMetrics.HandlerErrors.ToString()
         };
 
         return new StateSnapshot(

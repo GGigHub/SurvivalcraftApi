@@ -45,7 +45,8 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
     public void Send(Packet packet) {
         if (MySession != null
             && MySession.CompatibilityState != NetworkCompatibilityState.Accepted
-            && packet is not CompatibilityHelloPacket) {
+            && packet is not CompatibilityHelloPacket
+            && packet is not ModChannelCatalogPacket) {
             return;
         }
         PacketStreamWriter payload = new();
@@ -55,7 +56,12 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(payload.Data())) {
             NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToHost);
             frame.PutBytesWithLength(chunk.CopyData());
-            _relayPeer?.Send(frame, DeliveryMethod.ReliableOrdered);
+            if (_relayPeer != null) {
+                NetPeer relayPeer = _relayPeer;
+                NetworkFaultInjector.Send(
+                    frame,
+                    data => relayPeer.Send(data, DeliveryMethod.ReliableOrdered));
+            }
         }
     }
 
@@ -96,7 +102,8 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
             if (NetworkManager.PackageFragment.TryProcessIncoming(inner, "relay-host", out byte[] payload)) {
                 foreach (Packet packet in PacketManager.DecodePackets(payload)) {
                     if (MySession?.CompatibilityState != NetworkCompatibilityState.Accepted
-                        && packet is not CompatibilityResultPacket) {
+                        && packet is not CompatibilityResultPacket
+                        && packet is not ModChannelCatalogResultPacket) {
                         continue;
                     }
                     if (packet.MinNeedState < NetworkState.ProjectLoaded || GameManager.Project != null)
@@ -109,6 +116,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
         if (MySession != null) {
+            ModNetworkManager.ClearSession(MySession);
             MySession.NetworkState = NetworkState.NotConnected;
         }
 

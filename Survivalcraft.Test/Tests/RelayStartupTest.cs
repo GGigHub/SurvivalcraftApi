@@ -526,7 +526,10 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
     private static async Task ClickPlayerPlayButtonIfShownAsync(GameContext context) {
         WaitResult<string> result = await TestWaiter.TryUntilAsync(
             async () => (string?)await context.PushCommandAsync(
-                "FUNC if (ScreensManager.CurrentScreen is GameScreen) return \"game\";" +
+                "FUNC if (ScreensManager.CurrentScreen is GameScreen) {" +
+                "var players = GameManager.Project?.FindSubsystem<SubsystemPlayers>();" +
+                "return players != null && players.PlayersData.Any(p => p.IsMainPlayer) ? \"game\" : \"wait\";" +
+                "}" +
                 "var screen = ScreensManager.CurrentScreen as PlayerScreen;" +
                 "if (screen == null) return ScreensManager.CurrentScreen?.GetType().Name ?? \"null\";" +
                 "return screen.m_playerData != null && screen.m_playButton.IsVisible && screen.m_playButton.IsEnabled ? \"ready\" : \"player\";")

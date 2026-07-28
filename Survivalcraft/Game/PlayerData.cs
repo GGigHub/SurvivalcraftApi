@@ -1,5 +1,6 @@
 using System.Globalization;
 using Engine;
+using Game.Network;
 
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -240,6 +241,13 @@ namespace Game {
                 m_lastPlayerEntityRequestTick = m_subsystemUpdate.UpdateTick - GetTicksForSeconds(1.0);
             }, delegate {
                 UpdateSpawnDialog("Waiting for player entity from server", null, 0f, false);
+                if (NetworkManager.IsClientRunning
+                    && IsMainPlayer
+                    && m_subsystemUpdate.UpdateTick - m_lastPlayerEntityRequestTick
+                        >= GetTicksForSeconds(1.0)) {
+                    m_lastPlayerEntityRequestTick = m_subsystemUpdate.UpdateTick;
+                    NetworkManager.Queue(new PlayerEntityRequestPacket(PlayerIndex));
+                }
                 if (ShouldPollPeriodicState()) {
                     if (ComponentPlayer != null) {
                         m_stateMachine.TransitionTo("Playing");
