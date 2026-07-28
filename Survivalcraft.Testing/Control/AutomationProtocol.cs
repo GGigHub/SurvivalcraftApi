@@ -13,6 +13,7 @@ public static class AutomationProtocol {
 
 public enum AutomationCommandDomain {
     System,
+    Fixture,
     Node,
     World,
     Network,

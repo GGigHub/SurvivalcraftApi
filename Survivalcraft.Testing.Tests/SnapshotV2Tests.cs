@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Survivalcraft.Testing.Control;
 using Survivalcraft.Testing.Snapshots;
 using Xunit;
@@ -42,8 +43,12 @@ public sealed class SnapshotV2Tests {
         ControlRequest request = ControlProtocol.CreateRequest(
             ControlCommandNames.GetSnapshotV2,
             new GetSnapshotV2Command(
-                [SnapshotDomain.Network, SnapshotDomain.Players, SnapshotDomain.Events],
+                [SnapshotDomain.Network, SnapshotDomain.Players, SnapshotDomain.Terrain, SnapshotDomain.Events],
                 PlayerIndexes: [1, 2],
+                TerrainCells: [
+                    new TerrainCellCoordinate(10, 64, 20),
+                    new TerrainCellCoordinate(11, 64, 20)
+                ],
                 EventAfterSequence: 7,
                 EventLimit: 64));
 
@@ -51,9 +56,20 @@ public sealed class SnapshotV2Tests {
 
         Assert.Equal(ControlProtocol.CurrentVersion, request.Version);
         Assert.Equal(
-            new[] { SnapshotDomain.Network, SnapshotDomain.Players, SnapshotDomain.Events },
+            new[] {
+                SnapshotDomain.Network,
+                SnapshotDomain.Players,
+                SnapshotDomain.Terrain,
+                SnapshotDomain.Events
+            },
             command.Domains);
         Assert.Equal(new[] { 1, 2 }, Assert.IsType<int[]>(command.PlayerIndexes));
+        Assert.Equal(
+            new[] {
+                new TerrainCellCoordinate(10, 64, 20),
+                new TerrainCellCoordinate(11, 64, 20)
+            },
+            Assert.IsType<TerrainCellCoordinate[]>(command.TerrainCells));
         Assert.Equal(7, command.EventAfterSequence);
         Assert.Equal(64, command.EventLimit);
     }
@@ -98,9 +114,57 @@ public sealed class SnapshotV2Tests {
         Assert.Equal("$.players[playerIndex=1].creativeFlyEnabled", difference.Path);
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void TerrainProjectionIsCanonicalAndComparedByCoordinate() {
+        TerrainCellSnapshotV2 firstCell = new(10, 64, 20, 5, 5, 0, true);
+        TerrainCellSnapshotV2 secondCell = new(11, 64, 20, 21, 21, 0, true);
+        StateSnapshotV2 first = Snapshot([], [], [secondCell, firstCell]);
+        StateSnapshotV2 second = Snapshot([], [], [firstCell, secondCell]);
+
+        Assert.Equal(
+            SnapshotV2Canonicalizer.ComputeSha256(first),
+            SnapshotV2Canonicalizer.ComputeSha256(second));
+        Assert.True(SnapshotV2Comparer.CompareTerrainCells(first, second).Equal);
+
+        StateSnapshotV2 changed = second with {
+            TerrainCells = [firstCell, secondCell with { Value = 0, Contents = 0 }]
+        };
+        SnapshotV2Diff difference = SnapshotV2Comparer.CompareTerrainCells(first, changed);
+
+        Assert.False(difference.Equal);
+        Assert.Contains(
+            difference.Differences,
+            item => item.Path == "$.terrainCells[x=11,y=64,z=20].value");
+
+        StateSnapshotV2 unloaded = second with {
+            TerrainCells = [firstCell, secondCell with { IsLoaded = false }]
+        };
+        SnapshotV2Diff loadedDifference =
+            SnapshotV2Comparer.CompareTerrainCells(first, unloaded);
+        Assert.Contains(
+            loadedDifference.Differences,
+            item => item.Path == "$.terrainCells[x=11,y=64,z=20].isLoaded");
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void TerrainLoadednessIsScopedToSnapshotV2() {
+        string legacyJson = JsonSerializer.Serialize(
+            new TerrainCellState(10, 64, 20, 0, 0, 0),
+            ControlProtocol.JsonOptions);
+        string v2Json = JsonSerializer.Serialize(
+            new TerrainCellSnapshotV2(10, 64, 20, 0, 0, 0, false),
+            ControlProtocol.JsonOptions);
+
+        Assert.DoesNotContain("\"isLoaded\"", legacyJson, StringComparison.Ordinal);
+        Assert.Contains("\"isLoaded\":false", v2Json, StringComparison.Ordinal);
+    }
+
     private static StateSnapshotV2 Snapshot(
         PlayerSnapshotV2[] players,
-        ActionEventRecord[] events) =>
+        ActionEventRecord[] events,
+        TerrainCellSnapshotV2[]? terrainCells = null) =>
         new(
             AutomationProtocol.CurrentSnapshotSchemaVersion,
             "capture",
@@ -109,6 +173,7 @@ public sealed class SnapshotV2Tests {
             new NodeSnapshotV2("client-a", "GameScreen", true, true, "network"),
             new NetworkSnapshotV2("client", "Playing", 1, 0, "none", 0, 0, 0, 0),
             players,
+            terrainCells ?? [],
             events,
             new Dictionary<string, string> { ["z"] = "last", ["a"] = "first" });
 

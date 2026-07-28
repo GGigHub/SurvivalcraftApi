@@ -83,6 +83,20 @@ internal static class Program {
                 return 0;
             }
 
+            if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase)
+                && args.Length >= 2
+                && args[1].Equals(TerrainInteractionMultiplayerScenario.ScenarioName, StringComparison.OrdinalIgnoreCase)) {
+                Dictionary<string, string?> options = ParseOptions(args, 2);
+                TerrainInteractionMultiplayerScenarioOptions scenarioOptions =
+                    BuildTerrainInteractionScenarioOptions(repositoryRoot, options, replay: null);
+                TerrainInteractionMultiplayerScenarioResult result =
+                    await new TerrainInteractionMultiplayerScenario()
+                        .RunAsync(scenarioOptions)
+                        .ConfigureAwait(false);
+                PrintResult(result);
+                return 0;
+            }
+
             if (args[0].Equals("replay", StringComparison.OrdinalIgnoreCase)) {
                 if (args.Length < 2 || args[1].StartsWith("--", StringComparison.Ordinal)) {
                     throw new ArgumentException("replay requires the source artifact directory.");
@@ -93,59 +107,70 @@ internal static class Program {
                 if (File.Exists(replayV2Path)) {
                     ScenarioReplayV2 replayV2 = await ScenarioArtifactWriter.ReadReplayV2Async(
                         sourceArtifactDirectory).ConfigureAwait(false);
-                    if (!replayV2.Scenario.Equals(
-                            CreativeFlyMultiplayerScenario.ScenarioName,
-                            StringComparison.Ordinal)) {
-                        throw new InvalidDataException(
-                            $"Replay v2 scenario '{replayV2.Scenario}' is not supported by this host.");
-                    }
-                    if (replayV2.Version != CreativeFlyMultiplayerScenario.ScenarioVersion) {
-                        throw new InvalidDataException(
-                            $"Replay v2 scenario version {replayV2.Version} is incompatible with "
-                            + $"{CreativeFlyMultiplayerScenario.ScenarioName} version "
-                            + $"{CreativeFlyMultiplayerScenario.ScenarioVersion}.");
-                    }
-                    if (replayV2.WireProtocolVersion != ControlProtocol.CurrentVersion
-                        || replayV2.AutomationApiVersion != AutomationProtocol.CurrentApiVersion
-                        || replayV2.SnapshotSchemaVersion != AutomationProtocol.CurrentSnapshotSchemaVersion) {
-                        throw new InvalidDataException(
-                            "Replay v2 protocol versions are incompatible with this host. "
-                            + $"Replay=wire:{replayV2.WireProtocolVersion},api:{replayV2.AutomationApiVersion},snapshot:{replayV2.SnapshotSchemaVersion}; "
-                            + $"Host=wire:{ControlProtocol.CurrentVersion},api:{AutomationProtocol.CurrentApiVersion},snapshot:{AutomationProtocol.CurrentSnapshotSchemaVersion}.");
-                    }
+                    ValidateReplayV2ProtocolVersions(replayV2);
                     ScenarioActionRecordV2[] actionRecords =
                         await ScenarioArtifactWriter.ReadActionsV2Async(sourceArtifactDirectory)
                             .ConfigureAwait(false);
-                    SetCreativeFlyCommand[] replayActions = actionRecords.Select(record => {
-                        if (!string.Equals(record.Role, "client-a", StringComparison.Ordinal)) {
-                            throw new InvalidDataException(
-                                $"Replay v2 action role '{record.Role}' is not supported by "
-                                + $"{CreativeFlyMultiplayerScenario.ScenarioName} version "
-                                + $"{CreativeFlyMultiplayerScenario.ScenarioVersion}.");
-                        }
-                        if (!string.Equals(
-                                record.Command,
-                                ControlCommandNames.SetCreativeFly,
-                                StringComparison.Ordinal)) {
-                            throw new InvalidDataException(
-                                $"Replay v2 contains unsupported action '{record.Command}'.");
-                        }
-                        return record.Payload.Deserialize<SetCreativeFlyCommand>(ControlProtocol.JsonOptions)
-                            ?? throw new InvalidDataException(
-                                $"Replay v2 action '{record.Receipt.ActionId}' has an invalid payload.");
-                    }).ToArray();
-                    CreativeFlyMultiplayerScenarioOptions v2Options =
-                        BuildCreativeFlyScenarioOptions(
-                            repositoryRoot,
-                            options,
+                    if (replayV2.Scenario.Equals(
+                            CreativeFlyMultiplayerScenario.ScenarioName,
+                            StringComparison.Ordinal)) {
+                        ValidateReplayV2ScenarioVersion(
                             replayV2,
-                            replayActions);
-                    CreativeFlyMultiplayerScenarioResult v2Result =
-                        await new CreativeFlyMultiplayerScenario()
-                            .RunAsync(v2Options)
-                            .ConfigureAwait(false);
-                    PrintResult(v2Result);
-                    return 0;
+                            CreativeFlyMultiplayerScenario.ScenarioVersion);
+                        SetCreativeFlyCommand[] replayActions = actionRecords.Select(record => {
+                            if (!string.Equals(record.Role, "client-a", StringComparison.Ordinal)) {
+                                throw new InvalidDataException(
+                                    $"Replay v2 action role '{record.Role}' is not supported by "
+                                    + $"{CreativeFlyMultiplayerScenario.ScenarioName} version "
+                                    + $"{CreativeFlyMultiplayerScenario.ScenarioVersion}.");
+                            }
+                            if (!string.Equals(
+                                    record.Command,
+                                    ControlCommandNames.SetCreativeFly,
+                                    StringComparison.Ordinal)) {
+                                throw new InvalidDataException(
+                                    $"Replay v2 contains unsupported action '{record.Command}'.");
+                            }
+                            return record.Payload.Deserialize<SetCreativeFlyCommand>(ControlProtocol.JsonOptions)
+                                ?? throw new InvalidDataException(
+                                    $"Replay v2 action '{record.Receipt.ActionId}' has an invalid payload.");
+                        }).ToArray();
+                        CreativeFlyMultiplayerScenarioOptions v2Options =
+                            BuildCreativeFlyScenarioOptions(
+                                repositoryRoot,
+                                options,
+                                replayV2,
+                                replayActions);
+                        CreativeFlyMultiplayerScenarioResult v2Result =
+                            await new CreativeFlyMultiplayerScenario()
+                                .RunAsync(v2Options)
+                                .ConfigureAwait(false);
+                        PrintResult(v2Result);
+                        return 0;
+                    }
+                    if (replayV2.Scenario.Equals(
+                            TerrainInteractionMultiplayerScenario.ScenarioName,
+                            StringComparison.Ordinal)) {
+                        ValidateReplayV2ScenarioVersion(
+                            replayV2,
+                            TerrainInteractionMultiplayerScenario.ScenarioVersion);
+                        TerrainInteractionReplayPlan replayPlan =
+                            TerrainInteractionMultiplayerScenario.ParseReplayActions(actionRecords);
+                        TerrainInteractionMultiplayerScenarioOptions v2Options =
+                            BuildTerrainInteractionScenarioOptions(
+                                repositoryRoot,
+                                options,
+                                replayV2,
+                                replayPlan);
+                        TerrainInteractionMultiplayerScenarioResult v2Result =
+                            await new TerrainInteractionMultiplayerScenario()
+                                .RunAsync(v2Options)
+                                .ConfigureAwait(false);
+                        PrintResult(v2Result);
+                        return 0;
+                    }
+                    throw new InvalidDataException(
+                        $"Replay v2 scenario '{replayV2.Scenario}' is not supported by this host.");
                 }
                 ScenarioReplay replay = await ScenarioArtifactWriter.ReadReplayAsync(
                     sourceArtifactDirectory).ConfigureAwait(false);
@@ -209,6 +234,11 @@ internal static class Program {
             return 1;
         }
         catch (CreativeFlyMultiplayerScenarioException exception) {
+            Console.Error.WriteLine($"FAILED: {exception.Message}");
+            Console.Error.WriteLine(exception.InnerException);
+            return 1;
+        }
+        catch (TerrainInteractionMultiplayerScenarioException exception) {
             Console.Error.WriteLine($"FAILED: {exception.Message}");
             Console.Error.WriteLine(exception.InnerException);
             return 1;
@@ -328,6 +358,69 @@ internal static class Program {
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
             ReplayActions: replayActions);
+    }
+
+    private static TerrainInteractionMultiplayerScenarioOptions BuildTerrainInteractionScenarioOptions(
+        string repositoryRoot,
+        IReadOnlyDictionary<string, string?> options,
+        ScenarioReplayV2? replay,
+        TerrainInteractionReplayPlan? replayPlan = null) {
+        int seed = GetInt32(options, "seed", replay?.Seed ?? 20260729);
+        MultiplayerTransportKind replayTransport = replay == null
+            ? MultiplayerTransportKind.Direct
+            : ParseTransport(replay.Transport, "Replay transport");
+        MultiplayerTransportKind transport = GetTransport(
+            options,
+            "transport",
+            replayTransport);
+        string runtime = options.TryGetValue("runtime", out string? runtimeValue)
+            && !string.IsNullOrWhiteSpace(runtimeValue)
+                ? Path.GetFullPath(runtimeValue)
+                : replay?.RuntimeDirectory ?? ResolveRuntime(repositoryRoot, options);
+        string artifactDirectory = options.TryGetValue("artifacts", out string? artifactValue)
+            && !string.IsNullOrWhiteSpace(artifactValue)
+                ? Path.GetFullPath(artifactValue)
+                : Path.Combine(
+                    repositoryRoot,
+                    "TestResults",
+                    replay == null
+                        ? $"terrain-interaction-{transport.ToString().ToLowerInvariant()}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}"
+                        : $"terrain-interaction-{transport.ToString().ToLowerInvariant()}-replay-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}");
+        string? workDirectory = options.TryGetValue("work-dir", out string? workValue)
+            && !string.IsNullOrWhiteSpace(workValue)
+                ? Path.GetFullPath(workValue)
+                : null;
+        return new TerrainInteractionMultiplayerScenarioOptions(
+            runtime,
+            artifactDirectory,
+            seed,
+            transport,
+            StepTimeout: GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(60)),
+            ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(8)),
+            WorkDirectory: workDirectory,
+            KeepData: GetFlag(options, "keep-data"),
+            ReplayPlan: replayPlan);
+    }
+
+    private static void ValidateReplayV2ProtocolVersions(ScenarioReplayV2 replay) {
+        if (replay.WireProtocolVersion != ControlProtocol.CurrentVersion
+            || replay.AutomationApiVersion != AutomationProtocol.CurrentApiVersion
+            || replay.SnapshotSchemaVersion != AutomationProtocol.CurrentSnapshotSchemaVersion) {
+            throw new InvalidDataException(
+                "Replay v2 protocol versions are incompatible with this host. "
+                + $"Replay=wire:{replay.WireProtocolVersion},api:{replay.AutomationApiVersion},snapshot:{replay.SnapshotSchemaVersion}; "
+                + $"Host=wire:{ControlProtocol.CurrentVersion},api:{AutomationProtocol.CurrentApiVersion},snapshot:{AutomationProtocol.CurrentSnapshotSchemaVersion}.");
+        }
+    }
+
+    private static void ValidateReplayV2ScenarioVersion(
+        ScenarioReplayV2 replay,
+        int supportedVersion) {
+        if (replay.Version != supportedVersion) {
+            throw new InvalidDataException(
+                $"Replay v2 scenario version {replay.Version} is incompatible with "
+                + $"{replay.Scenario} version {supportedVersion}.");
+        }
     }
 
     private static RelayModChannelScenarioOptions BuildRelayScenarioOptions(
@@ -565,6 +658,18 @@ internal static class Program {
         Console.WriteLine($"elapsed={result.Elapsed}");
     }
 
+    private static void PrintResult(TerrainInteractionMultiplayerScenarioResult result) {
+        Console.WriteLine("SCENARIO PASSED");
+        Console.WriteLine($"artifacts={result.ArtifactDirectory}");
+        Console.WriteLine($"transport={result.Transport}");
+        Console.WriteLine($"actorPlayerIndex={result.ActorPlayerIndex}");
+        Console.WriteLine($"actions={result.ActionCount}");
+        if (!string.IsNullOrWhiteSpace(result.RoomCode)) {
+            Console.WriteLine($"room={result.RoomCode}");
+        }
+        Console.WriteLine($"elapsed={result.Elapsed}");
+    }
+
     private static string ResolveRuntime(
         string repositoryRoot,
         IReadOnlyDictionary<string, string?> options) {
@@ -704,6 +809,7 @@ internal static class Program {
         Console.WriteLine("  run compatibility-matrix [options]");
         Console.WriteLine("  run relay-mod-channel [options]");
         Console.WriteLine("  run creative-fly-multiplayer --transport direct|relay [options]");
+        Console.WriteLine("  run terrain-interaction-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  replay ARTIFACT_DIRECTORY [options]");
         Console.WriteLine();
         Console.WriteLine("Common options:");

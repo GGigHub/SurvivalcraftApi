@@ -1,6 +1,6 @@
 # TestAutomation v2 设计
 
-状态：设计基线；M0 首个纵向切片已实现
+状态：设计基线；M0 与 M1 玩家地形交互首个纵向切片已实现
 目标分支：`codex/api-mp-integration`
 适用范围：核心玩法联机自动化、直连与中继、多客户端、失败取证和长期稳定性测试
 
@@ -471,6 +471,20 @@ Survivalcraft.TestAutomation/
 - `player.setCreativeFly` 进入 `ComponentGui.TrySetCreativeFlyEnabled` 生产入口，再走现有 `PlayerCreativeFlyPacket`，没有直接修改远端状态或伪造数据包；
 - 同一 `CreativeFlyMultiplayerScenario` 已在一服两客 Direct 与 Relay 下真实通过，并作为两项 L2 Theory 进入测试程序集；
 - 失败产物 v2 与机器可检查覆盖清单已经落地；`actions.json` 保存强类型动作载荷，回放会校验场景/wire/API/snapshot 版本并重新执行记录动作；
-- 当前回归结果为平台 L0/L1 48 项、游戏 L0/L1 14 项、包含三项原有场景与两项新玩法场景的 L2 5 项全部通过。
+- 当前回归结果为平台 L0/L1 53 项、游戏 L0/L1 14 项、包含五项既有场景与两项 M1 场景的 L2 7 项全部通过。
 
-当前创飞覆盖尚不标记为完整：M1 仍需加入 late join、重连、持久化与权限拒绝矩阵。下一纵向切片按风险顺序实现 `player.place`、`player.dig` 和 `player.use`。
+当前创飞覆盖尚不标记为完整：M1 仍需加入 late join、重连、持久化与更完整的权限拒绝矩阵。
+
+## 22. M1 玩家地形交互首个切片实施记录
+
+本切片完成 `player.use`、`player.place` 和 `player.dig` 的一条可回放生产链：
+
+- 新增强类型动作 DTO，以及服务端准备/客户端应用两阶段受控夹具；夹具只建立手持物、站位和方块前置条件，不写动作最终状态；
+- 动作经 `ComponentInput -> ComponentPlayer -> ComponentMiner` 执行，现有 `PlayerInteractPacket` / `PlayerDigPacket` 将事件送到服务端，服务端从权威眼位重新射线检测；
+- use 使用油漆桶涂木板，place 在支撑块相邻格放木板，dig 使用工具移除泥土，三者均验证服务端、发起客户端和观察客户端收敛；
+- Terrain Snapshot v2 新增投影、稳定排序、比较规则和 `isLoaded`，并去除异步光照位；区块缺失不再与空气混淆；
+- 动作适配器发布 `queued`、`observed`、`applied` 或 `rejected` 事件，场景还验证服务端节点不能发起玩家动作、客户端不能选择不可达目标；
+- `TerrainInteractionMultiplayerScenario` 已在 Direct 与 Relay 的一服两客真实无窗口拓扑通过；Direct 产物中的三个动作载荷也已由 Host 重新执行并通过；
+- 覆盖清单和 L2 Theory 已记录 Direct、Relay、权威与观察者证据，PowerShell 新增 `m1-direct`、`m1-relay` 和 `m1` 入口。
+
+该功能仍保持 `planned`：late join、重连、固定网络故障和保存重载尚未纳入同一功能契约。下一步优先扩展 `player.motion-look-crouch`，再把地形交互加入 late join / reconnect / persistence 矩阵。

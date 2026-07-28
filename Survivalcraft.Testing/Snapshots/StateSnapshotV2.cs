@@ -5,12 +5,14 @@ namespace Survivalcraft.Testing.Snapshots;
 public enum SnapshotDomain {
     Network,
     Players,
+    Terrain,
     Events
 }
 
 public sealed record GetSnapshotV2Command(
     SnapshotDomain[] Domains,
     int[]? PlayerIndexes = null,
+    TerrainCellCoordinate[]? TerrainCells = null,
     long EventAfterSequence = 0,
     int EventLimit = 128,
     bool IncludeVolatileDiagnostics = false);
@@ -23,8 +25,18 @@ public sealed record StateSnapshotV2(
     NodeSnapshotV2 Node,
     NetworkSnapshotV2? Network,
     PlayerSnapshotV2[] Players,
+    TerrainCellSnapshotV2[] TerrainCells,
     ActionEventRecord[] RecentEvents,
     IReadOnlyDictionary<string, string> Diagnostics);
+
+public sealed record TerrainCellSnapshotV2(
+    int X,
+    int Y,
+    int Z,
+    int Value,
+    int Contents,
+    int Data,
+    bool IsLoaded);
 
 public sealed record NodeSnapshotV2(
     string Role,

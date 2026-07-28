@@ -35,17 +35,18 @@
     {
       "featureId": "player.place-dig-use",
       "status": "planned",
-      "productionEntry": "ComponentPlayer interaction paths -> terrain/player packets",
-      "fixtureCommand": "fixture.player.setHeldItem / fixture.terrain.setCells",
-      "actionCommand": "player.place / player.dig / player.use / player.interact",
+      "productionEntry": "ComponentInput -> ComponentPlayer -> ComponentMiner -> PlayerInteractPacket / PlayerDigPacket",
+      "fixtureCommand": "fixture.player.prepareTerrainInteraction / fixture.player.applyTerrainInteraction",
+      "actionCommand": "player.place / player.dig / player.use",
       "snapshotDomains": ["players", "terrain", "events"],
-      "directTest": null,
-      "relayTest": null,
+      "directTest": "TerrainInteractionMultiplayerScenarioTest.PlaceDigUseConvergeAcrossAuthorityAndObserver(Direct)",
+      "relayTest": "TerrainInteractionMultiplayerScenarioTest.PlaceDigUseConvergeAcrossAuthorityAndObserver(Relay)",
       "lateJoinTest": null,
       "reconnectTest": null,
-      "authorityTest": null,
+      "authorityTest": "dig-server-authority-observer-convergence",
       "faultTest": null,
-      "persistenceTest": null
+      "persistenceTest": null,
+      "note": "Typed use, place and dig run through the production input/miner path with Direct and Relay authority/observer convergence, event correlation, server-origin rejection and unreachable-target rejection. Late join, reconnect, network faults and persistence remain before the feature can be marked covered."
     },
     {
       "featureId": "terrain.streaming-and-revisions",

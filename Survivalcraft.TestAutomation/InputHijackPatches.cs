@@ -54,6 +54,11 @@ namespace Survivalcraft.TestAutomation {
             HeldDigRayEndFrame = Time.FrameIndex + Math.Max(1, frameCount);
         }
 
+        public static void CancelDigRay() {
+            HeldDigRay = null;
+            HeldDigRayEndFrame = -1;
+        }
+
         public static void HoldAimRay(Ray3 ray, int frameCount) {
             HeldAimRay = ray;
             HeldAimRayEndFrame = Time.FrameIndex + Math.Max(1, frameCount);
@@ -61,6 +66,17 @@ namespace Survivalcraft.TestAutomation {
 
         public static void QueueDrop() {
             QueuedDrop = true;
+        }
+
+        public static void ResetGameplayInputs() {
+            HeldMoveInput = Vector3.Zero;
+            HeldMoveInputEndFrame = -1;
+            QueuedInteractRay = null;
+            QueuedHitRay = null;
+            CancelDigRay();
+            HeldAimRay = null;
+            HeldAimRayEndFrame = -1;
+            QueuedDrop = false;
         }
 
         public static bool TryGetHeldMoveInput(out Vector3 move) {

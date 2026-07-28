@@ -88,6 +88,56 @@ public partial class TestAutomationModLoader {
                 requiresProject: true,
                 requiresNetwork: true),
             SetCreativeFly);
+        router.Register<PrepareTerrainInteractionFixtureCommand, TerrainInteractionFixture>(
+            Metadata(
+                ControlCommandNames.PrepareTerrainInteractionFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareTerrainInteractionFixture(command));
+        router.Register<ApplyTerrainInteractionFixtureCommand, ControlAck>(
+            Metadata(
+                ControlCommandNames.ApplyTerrainInteractionFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["client", "client-a", "client-b"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => ApplyTerrainInteractionFixture(command));
+        router.Register<PlayerUseCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerUse,
+                AutomationCommandDomain.Player,
+                true,
+                allowedRoles: ["client", "client-a", "client-b"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerUse);
+        router.Register<PlayerPlaceCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerPlace,
+                AutomationCommandDomain.Player,
+                true,
+                allowedRoles: ["client", "client-a", "client-b"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerPlace);
+        router.Register<PlayerDigCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerDig,
+                AutomationCommandDomain.Player,
+                true,
+                allowedRoles: ["client", "client-a", "client-b"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerDig);
         router.Register<SetClockCommand, ClockState>(
             Metadata(ControlCommandNames.SetClock, AutomationCommandDomain.Time, true),
             (_, command) => SetClock(command));
@@ -196,6 +246,16 @@ public partial class TestAutomationModLoader {
                 "limit_exceeded",
                 "At most 64 player indexes can be selected.");
         }
+        if (command.TerrainCells is { Length: > AutomationProtocol.MaximumSnapshotTerrainCells }) {
+            throw new AutomationCommandException(
+                "limit_exceeded",
+                $"At most {AutomationProtocol.MaximumSnapshotTerrainCells} terrain cells can be selected.");
+        }
+        if (command.TerrainCells?.Any(cell => cell.Y is < 0 or > 255) == true) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "Terrain cell Y coordinates must be between 0 and 255.");
+        }
 
         Project? project = GameManager.Project;
         SubsystemPlayers? subsystemPlayers = project?.FindSubsystem<SubsystemPlayers>();
@@ -212,6 +272,32 @@ public partial class TestAutomationModLoader {
         NetworkSnapshotV2? network = domains.Contains(SnapshotDomain.Network)
             ? BuildNetworkSnapshotV2()
             : null;
+        SubsystemTerrain? subsystemTerrain = project?.FindSubsystem<SubsystemTerrain>();
+        TerrainCellSnapshotV2[] terrainCells = domains.Contains(SnapshotDomain.Terrain)
+            && subsystemTerrain != null
+            ? (command.TerrainCells ?? [])
+                .Distinct()
+                .Select(cell => {
+                    bool isLoaded = subsystemTerrain.Terrain.GetChunkAtCoords(
+                        cell.X >> 4,
+                        cell.Z >> 4) != null;
+                    int value = isLoaded
+                        ? subsystemTerrain.Terrain.GetCellValue(cell.X, cell.Y, cell.Z)
+                        : 0;
+                    return new TerrainCellSnapshotV2(
+                        cell.X,
+                        cell.Y,
+                        cell.Z,
+                        Terrain.ReplaceLight(value, 0),
+                        Terrain.ExtractContents(value),
+                        Terrain.ExtractData(value),
+                        isLoaded);
+                })
+                .OrderBy(cell => cell.X)
+                .ThenBy(cell => cell.Y)
+                .ThenBy(cell => cell.Z)
+                .ToArray()
+            : [];
         ActionEventRecord[] events = domains.Contains(SnapshotDomain.Events)
             ? actionEventJournal.Query(new GetEventsCommand(
                 command.EventAfterSequence,
@@ -236,6 +322,7 @@ public partial class TestAutomationModLoader {
                 project == null ? "none" : GameManager.IsNetworkProject ? "network" : "storage"),
             network,
             players,
+            terrainCells,
             events,
             diagnostics);
     }

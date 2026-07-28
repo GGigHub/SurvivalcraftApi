@@ -2,7 +2,7 @@
 
 本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会按场景启动隔离的 Survivalcraft 进程：核心场景完成建服、两阶段兼容握手、模组消息、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、超时与恢复；中继场景另外启动真实 RelayServer，验证房间协商、模组消息、故障注入和同房间重连。所有场景都会把可回放的诊断材料写入 `TestResults`。
 
-下一阶段的强类型玩法驱动、Snapshot v2、一服两客拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。
+强类型玩法驱动、Snapshot v2、一服两客拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞以及 M1 的 use/place/dig 首个纵向切片。
 
 ## 一键运行
 
@@ -15,6 +15,7 @@
 ./scripts/Test-Multiplayer.ps1 -Mode compatibility
 ./scripts/Test-Multiplayer.ps1 -Mode relay
 ./scripts/Test-Multiplayer.ps1 -Mode v2
+./scripts/Test-Multiplayer.ps1 -Mode m1
 ./scripts/Test-Multiplayer.ps1 -Mode full
 ```
 
@@ -25,7 +26,9 @@
 - `relay`：运行隐藏 RelayServer 与两个无界面游戏节点，验证中继模组通道、重复帧去重、异常隔离、会话清理和重连。
 - `v2-direct` / `v2-relay`：分别运行 TestAutomation v2 的一服两客创飞同步场景。
 - `v2`：同一份强类型玩法场景依次通过直连和中继运行；不使用 UI 点击、UDP 文本命令或 Roslyn 脚本。
-- `full`：依次执行 fast、doctor、compatibility、core、relay、v2 直连/中继和未分层的原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
+- `m1-direct` / `m1-relay`：分别运行一服两客 use/place/dig 生产输入路径场景。
+- `m1`：同一份 M1 地形交互动作依次通过直连和中继运行，并保存可回放的动作载荷。
+- `full`：依次执行 fast、doctor、compatibility、core、relay、M0 与 M1 的直连/中继场景和未分层的原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
 - `-UseAngle`：构建 Windows ANGLE 兼容运行时，适合没有完整 OpenGL 驱动的 CI 机器。
 - `-NoBuild`：复用已构建的二进制文件。
 
@@ -85,20 +88,25 @@ flowchart LR
 - 联机：`network.connect`、`network.startRelayHost`、`network.connectRelay`、`network.getRelayStatus`、`network.disconnect`、`network.setFaults`、`network.configureCompatibility`、`network.getCompatibility`
 - 模组通道：`network.configureModChannels`、`network.getModChannels`、`network.sendTestModMessage`、`network.getTestModMessages`、`network.resetTestModMessages`
 - 玩家和地形：`player.enterWorld`、`terrain.changeCell`
-- v2 玩法：`player.setCreativeFly`
+- v2 玩法：`player.setCreativeFly`、`player.use`、`player.place`、`player.dig`
+- v2 夹具：`fixture.player.prepareTerrainInteraction`、`fixture.player.applyTerrainInteraction`
 - 可观测性：`state.getSnapshot`、`state.getSnapshotV2`、`state.getEvents`、`state.resetEvents`
 - 能力发现：`system.describe`
 - 确定性：`time.setClock`、`time.advanceTicks`
 
 每个游戏命令都被调度到游戏主线程执行，失败会返回结构化错误，而不是靠搜索一行日志判断结果。旧 UDP 文本命令和 Roslyn 脚本仍为历史测试保留；新核心场景不依赖任意脚本执行。
 
-## TestAutomation v2 首个纵向切片
+## TestAutomation v2 纵向切片
 
 M0 的首个可运行切片保持 wire protocol v1，并独立发布 Automation API v2 与 Snapshot schema v2。`system.describe` 会在进入世界前返回命令元数据、领域、版本、上限和构建身份；场景缺少必需能力时立即以 `unsupported_capability` 失败。
 
 `CreativeFlyMultiplayerScenario` 使用 `MultiplayerCluster` 启动一台服务端、客户端 A、客户端 B，以及可选的隐藏 RelayServer。客户端 A 调用 `player.setCreativeFly` 时，自动化适配器进入 `ComponentGui.TrySetCreativeFlyEnabled` 生产路径，由现有 `PlayerCreativeFlyPacket` 经过服务端权威校验后广播；场景分别在服务端、发起客户端和观察客户端轮询 Snapshot v2，验证启用与关闭均最终收敛。动作会产生 `queued`、`applied` 或 `rejected` 结构化事件。
 
-覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。当前创飞条目已经记录 Direct、Relay、服务端权威和观察者证据，但仍保持 `planned`，直到 M1 补齐 late join、重连和持久化后才允许标记为 `covered`。
+`TerrainInteractionMultiplayerScenario` 复用同一拓扑，依次执行涂色 use、方块 place 和工具 dig。客户端动作从 `ComponentInput` 的受控输入边界进入 `ComponentPlayer` 与 `ComponentMiner`，再通过现有 `PlayerInteractPacket` / `PlayerDigPacket` 到服务端；服务端从玩家眼位重新计算权威射线，场景不直接发送玩法包或写最终状态。夹具只负责在服务端布置方块与手持物、在客户端同步玩家前置位置。每个动作都检查发起端结构化事件以及服务端、发起端、观察端的 Terrain Snapshot v2 收敛。
+
+Terrain Snapshot v2 返回去除动态光照位的稳定方块值、contents、data 和 `isLoaded`。场景必须先确认三端目标区块已加载，不能把“区块缺失时读到的 0”误判为空气；这避免权威改单包因客户端区块尚不存在而被正常丢弃。
+
+覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。创飞与 place/dig/use 条目已经记录 Direct、Relay、服务端权威、观察者和非法请求证据，但仍保持 `planned`，直到对应领域补齐 late join、重连、故障和持久化后才允许标记为 `covered`。
 
 ## 确定性边界
 
@@ -173,7 +181,7 @@ TestResults/{core-multiplayer,compatibility-matrix,relay-mod-channel}-*/
 
 v2 场景另外写入 `replay-v2.json`、`topology.json`、`capabilities-*.json`、`actions.json`、`events-*.json`、`assertions.json` 和 `snapshot-*.v2.json`。这些文件保存实际动作角色、命令名、强类型载荷、动作 ID、动作回执、事件阶段及一服两客每个检查点的投影快照；成功和失败使用相同格式。
 
-同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式和 `actions.json` 中的动作载荷重新运行；`--runtime` 和 `--artifacts` 仍可覆盖。
+同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式和 `actions.json` 中的动作载荷重新运行；当前支持创飞和 terrain-interaction 两个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。
 
 - `steps.json` 给出第一个失败步骤、起止时间和异常。
 - `snapshot-*.json` 已排序并规范化浮点数，适合机器比较。
@@ -201,6 +209,6 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## CI
 
-`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor，以及包含兼容矩阵、直连核心、中继和 v2 Direct/Relay 的全部 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
+`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor，以及包含兼容矩阵、直连核心、中继、M0 创飞和 M1 terrain-interaction Direct/Relay 的全部 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
 
 当前远端位于 CNB，而 GitHub Workflow 只有在仓库镜像到 GitHub 后才会自动执行。CNB 支持由组织启用的 Windows 自托管构建节点，启用后可把脚本中的同样命令接入 `.cnb.yml`；在节点尚未配置前不提交一个必然排队或失败的 CNB 任务。测试框架和 PowerShell 入口本身不依赖 GitHub API。参见 [CNB 构建节点文档](https://docs.cnb.cool/zh/build/build-node.html)。

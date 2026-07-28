@@ -1,4 +1,5 @@
 using Survivalcraft.Testing.Control;
+using Survivalcraft.Testing.Snapshots;
 using Xunit;
 
 namespace Survivalcraft.Testing.Tests;
@@ -155,6 +156,31 @@ public sealed class AutomationProtocolTests {
                 Limit: AutomationProtocol.MaximumEventQueryCount + 1)));
 
         Assert.Equal("limit_exceeded", exception.Code);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void TerrainInteractionActionsRoundTripThroughTypedWireContract() {
+        TerrainCellCoordinate target = new(12, 65, 24);
+        ControlRequest placeRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PlayerPlace,
+            new PlayerPlaceCommand(1, target));
+        ControlRequest digRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PlayerDig,
+            new PlayerDigCommand(1, target, HoldFrames: 300));
+        ControlRequest fixtureRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PrepareTerrainInteractionFixture,
+            new PrepareTerrainInteractionFixtureCommand(
+                PlayerTerrainActionKind.Use,
+                1,
+                target));
+
+        Assert.Equal(target, placeRequest.DeserializePayload<PlayerPlaceCommand>().TargetCell);
+        Assert.Equal(300, digRequest.DeserializePayload<PlayerDigCommand>().HoldFrames);
+        PrepareTerrainInteractionFixtureCommand fixture =
+            fixtureRequest.DeserializePayload<PrepareTerrainInteractionFixtureCommand>();
+        Assert.Equal(PlayerTerrainActionKind.Use, fixture.Kind);
+        Assert.Equal(target, fixture.TargetCell);
     }
 
     private static AutomationCommandDescriptor Descriptor(string name) =>

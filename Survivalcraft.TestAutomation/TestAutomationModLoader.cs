@@ -42,6 +42,7 @@ namespace Survivalcraft.TestAutomation {
             SettingsManager.MultithreadedTerrainUpdate = false;
 
             InitializeTestModChannel();
+            InitializeTypedPlayerActions();
 
             // Start UDP Server
             StartUdpServer();
@@ -303,6 +304,7 @@ namespace Survivalcraft.TestAutomation {
             cts.Cancel();
             udpServer?.Close();
             StopTypedControlServer();
+            DisposeTypedPlayerActions();
             DisposeTestModChannel();
             base.ModDispose();
         }

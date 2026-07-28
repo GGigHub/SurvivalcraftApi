@@ -16,6 +16,11 @@ public sealed class CoverageManifestTests {
             feature.FeatureId == "player.creative-fly"
             && feature.DirectTest != null
             && feature.RelayTest != null);
+        Assert.Contains(manifest.Features, feature =>
+            feature.FeatureId == "player.place-dig-use"
+            && feature.DirectTest != null
+            && feature.RelayTest != null
+            && feature.AuthorityTest != null);
     }
 
     [Fact]

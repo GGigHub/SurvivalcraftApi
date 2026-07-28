@@ -39,6 +39,11 @@ public static class SnapshotV2Canonicalizer {
                 .OrderBy(player => player.PlayerIndex)
                 .ThenBy(player => player.Name, StringComparer.Ordinal)
                 .ToArray(),
+            TerrainCells = snapshot.TerrainCells
+                .OrderBy(cell => cell.X)
+                .ThenBy(cell => cell.Y)
+                .ThenBy(cell => cell.Z)
+                .ToArray(),
             RecentEvents = snapshot.RecentEvents
                 .OrderBy(item => item.Sequence)
                 .Select(item => item with { Data = ToSortedDictionary(item.Data) })

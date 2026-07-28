@@ -107,6 +107,7 @@ public partial class TestAutomationModLoader {
         NetworkCompatibilityRuntime.ClearLocalManifestOverride();
         ModNetworkManager.ClearLocalCatalogOverride();
         ResetTestModMessages();
+        ResetTypedPlayerActions();
         actionEventJournal.Reset();
         return new ControlAck(true, $"Configured role '{nodeRole}' with seed {command.Seed}.");
     }

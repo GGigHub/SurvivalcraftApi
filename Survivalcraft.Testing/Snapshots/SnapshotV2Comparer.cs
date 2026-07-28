@@ -11,6 +11,42 @@ public sealed record SnapshotV2Diff(
     SnapshotDifference[] Differences);
 
 public static class SnapshotV2Comparer {
+    public static SnapshotV2Diff CompareTerrainCells(
+        StateSnapshotV2 expected,
+        StateSnapshotV2 actual) {
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentNullException.ThrowIfNull(actual);
+        List<SnapshotDifference> differences = [];
+        Dictionary<(int X, int Y, int Z), TerrainCellSnapshotV2> remaining = actual.TerrainCells
+            .ToDictionary(cell => (cell.X, cell.Y, cell.Z));
+        foreach (TerrainCellSnapshotV2 expectedCell in expected.TerrainCells
+                     .OrderBy(cell => cell.X)
+                     .ThenBy(cell => cell.Y)
+                     .ThenBy(cell => cell.Z)) {
+            string path = $"$.terrainCells[x={expectedCell.X},y={expectedCell.Y},z={expectedCell.Z}]";
+            if (!remaining.Remove(
+                    (expectedCell.X, expectedCell.Y, expectedCell.Z),
+                    out TerrainCellSnapshotV2? actualCell)) {
+                differences.Add(new SnapshotDifference(path, expectedCell.ToString(), "<missing>"));
+                continue;
+            }
+            CompareValue(path + ".isLoaded", expectedCell.IsLoaded, actualCell.IsLoaded, differences);
+            CompareValue(path + ".value", expectedCell.Value, actualCell.Value, differences);
+            CompareValue(path + ".contents", expectedCell.Contents, actualCell.Contents, differences);
+            CompareValue(path + ".data", expectedCell.Data, actualCell.Data, differences);
+        }
+        foreach (TerrainCellSnapshotV2 extra in remaining.Values
+                     .OrderBy(cell => cell.X)
+                     .ThenBy(cell => cell.Y)
+                     .ThenBy(cell => cell.Z)) {
+            differences.Add(new SnapshotDifference(
+                $"$.terrainCells[x={extra.X},y={extra.Y},z={extra.Z}]",
+                "<missing>",
+                extra.ToString()));
+        }
+        return new SnapshotV2Diff(differences.Count == 0, differences.ToArray());
+    }
+
     public static SnapshotV2Diff ComparePlayers(
         StateSnapshotV2 expected,
         StateSnapshotV2 actual,

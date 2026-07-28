@@ -123,6 +123,7 @@ public sealed class ScenarioArtifactTests {
                 null,
                 [],
                 [],
+                [],
                 new Dictionary<string, string>());
             ScenarioArtifactBundleV2 bundle = new(
                 new ScenarioDefinition("creative-fly", 1, 42, ["server", "client-a", "client-b"], []),
@@ -182,4 +183,68 @@ public sealed class ScenarioArtifactTests {
             }
         }
     }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void TerrainInteractionReplayParserPreservesTypedActionPayloads() {
+        PlayerUseCommand use = new(7, new TerrainCellCoordinate(10, 65, 11));
+        PlayerPlaceCommand place = new(7, new TerrainCellCoordinate(12, 66, 13));
+        PlayerDigCommand dig = new(7, new TerrainCellCoordinate(14, 67, 15), HoldFrames: 321);
+        ScenarioActionRecordV2[] records = [
+            TerrainActionRecord("use", ControlCommandNames.PlayerUse, use),
+            TerrainActionRecord("place", ControlCommandNames.PlayerPlace, place),
+            TerrainActionRecord("dig", ControlCommandNames.PlayerDig, dig)
+        ];
+
+        TerrainInteractionReplayPlan replay =
+            TerrainInteractionMultiplayerScenario.ParseReplayActions(records);
+
+        Assert.Equal(use, replay.Use);
+        Assert.Equal(place, replay.Place);
+        Assert.Equal(dig, replay.Dig);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void TerrainInteractionReplayParserRejectsWrongRoleAndOrder() {
+        ScenarioActionRecordV2[] records = [
+            TerrainActionRecord(
+                "use",
+                ControlCommandNames.PlayerUse,
+                new PlayerUseCommand(1, new TerrainCellCoordinate(1, 64, 1))),
+            TerrainActionRecord(
+                "place",
+                ControlCommandNames.PlayerPlace,
+                new PlayerPlaceCommand(1, new TerrainCellCoordinate(2, 64, 2))),
+            TerrainActionRecord(
+                "dig",
+                ControlCommandNames.PlayerDig,
+                new PlayerDigCommand(1, new TerrainCellCoordinate(3, 64, 3)))
+        ];
+        ScenarioActionRecordV2[] wrongRole = [
+            records[0] with { Role = "server" },
+            records[1],
+            records[2]
+        ];
+        ScenarioActionRecordV2[] wrongOrder = [
+            records[1],
+            records[0],
+            records[2]
+        ];
+
+        Assert.Throws<InvalidDataException>(() =>
+            TerrainInteractionMultiplayerScenario.ParseReplayActions(wrongRole));
+        Assert.Throws<InvalidDataException>(() =>
+            TerrainInteractionMultiplayerScenario.ParseReplayActions(wrongOrder));
+    }
+
+    private static ScenarioActionRecordV2 TerrainActionRecord<TCommand>(
+        string actionId,
+        string command,
+        TCommand payload) =>
+        new(
+            "client-a",
+            command,
+            JsonSerializer.SerializeToElement(payload, ControlProtocol.JsonOptions),
+            new ActionReceipt(actionId, true, 1, 1, "applied"));
 }
