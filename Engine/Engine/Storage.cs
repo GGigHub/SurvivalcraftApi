@@ -27,6 +27,7 @@ namespace Engine {
         const bool m_isAndroidPlatform = false;
         static bool m_dataDirectoryCreated;
         static object m_dataDirectoryCreationLock = new();
+        static string m_dataDirectoryOverride;
 #else
         const bool m_isAndroidPlatform = true;
 #endif
@@ -57,6 +58,17 @@ namespace Engine {
             MountOPFS("/__root__");
 #endif
         }
+
+#if !ANDROID && !IOS && !BROWSER
+        public static void SetDataDirectory(string path) {
+            ArgumentException.ThrowIfNullOrWhiteSpace(path);
+            string fullPath = Path.GetFullPath(path);
+            lock (m_dataDirectoryCreationLock) {
+                m_dataDirectoryOverride = fullPath;
+                m_dataDirectoryCreated = false;
+            }
+        }
+#endif
 
         public static long FreeSpace {
             get {
@@ -328,10 +340,12 @@ namespace Engine {
 #pragma warning restore IL3000
 #endif
         public static string GetDataDirectory(bool writeAccess) {
-            string text = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                Assembly.GetEntryAssembly()!.GetName()!.Name!
-            );
+            string text = !string.IsNullOrEmpty(m_dataDirectoryOverride)
+                ? m_dataDirectoryOverride
+                : Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    Assembly.GetEntryAssembly()!.GetName()!.Name!
+                );
             if (writeAccess) {
                 lock (m_dataDirectoryCreationLock) {
                     if (m_dataDirectoryCreated) {

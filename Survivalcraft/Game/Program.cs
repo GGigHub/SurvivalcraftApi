@@ -38,6 +38,8 @@ namespace Game {
 
         public static Dictionary<string, string> StartupParameters = [];
 
+        public static bool IsHeadless => StartupParameters.ContainsKey("headless");
+
         public static event Action<Uri> HandleUri;
 #if ANDROID || BROWSER
         public static bool m_firstFramePrepared;
@@ -143,9 +145,15 @@ namespace Game {
                         break;
                 }
             }
+            if (StartupParameters.TryGetValue("data-dir", out string dataDirectory)
+                && !string.IsNullOrWhiteSpace(dataDirectory)) {
+                Storage.SetDataDirectory(dataDirectory);
+            }
             string mutexName;
             using (SHA256 sha256 = SHA256.Create()) {
-                byte[] hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(Assembly.GetEntryAssembly()?.Location ?? "SurvivalcraftApi"));
+                string instanceId = StartupParameters.GetValueOrDefault("instance-id", "default");
+                string mutexIdentity = (Assembly.GetEntryAssembly()?.Location ?? "SurvivalcraftApi") + "|" + instanceId;
+                byte[] hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(mutexIdentity));
                 mutexName = $"Global\\{BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant()}";
             }
             m_mutex = new Mutex(true, mutexName, out m_mutexHandled);
@@ -160,6 +168,10 @@ namespace Game {
 
 #if WINDOWS
             Window.Created += () => {
+                if (IsHeadless) {
+                    Window.PresentationInterval = 0;
+                    return;
+                }
                 InputMethod.Initialize(Process.GetCurrentProcess().MainWindowHandle);
                 InputMethod.Enabled = false;
             };
@@ -229,7 +241,12 @@ namespace Game {
                 ExceptionManager.ReportExceptionToUser("Unhandled exception.", e.Exception);
                 e.IsHandled = true;
             };
-            Window.Run(0, 0, WindowMode.Resizable, title);
+            Window.Run(
+                IsHeadless ? 64 : 0,
+                IsHeadless ? 64 : 0,
+                WindowMode.Resizable,
+                title,
+                !IsHeadless);
         }
 
         public static void HandleUriHandler(Uri uri) {
@@ -323,28 +340,32 @@ namespace Game {
             }
             m_cpuEndTime = Time.RealTime;
             try {
-                Display.RenderTarget = null;
-                if (ExceptionManager.Error == null) {
-                    if (LoadingScreen.m_isContentLoaded) {
-                        ScreensManager.Draw();
-                        PerformanceManager.Draw();
-                        ScreenCaptureManager.Run();
+                if (!IsHeadless) {
+                    try {
+                        Display.RenderTarget = null;
+                        if (ExceptionManager.Error == null) {
+                            if (LoadingScreen.m_isContentLoaded) {
+                                ScreensManager.Draw();
+                                PerformanceManager.Draw();
+                                ScreenCaptureManager.Run();
+                            }
+                            else {
+                                Display.Clear(Color.White, 1f);
+                            }
+                        }
+                        else {
+                            ExceptionManager.DrawExceptionScreen();
+                        }
                     }
-                    else {
-                        Display.Clear(Color.White, 1f);
+                    catch (Exception e2) {
+                        if (GameManager.Project != null) {
+                            GameManager.DisposeProject();
+                        }
+                        Log.Error(e2);
+                        ExceptionManager.ReportExceptionToUser(null, e2);
+                        ScreensManager.SwitchScreen("MainMenu");
                     }
                 }
-                else {
-                    ExceptionManager.DrawExceptionScreen();
-                }
-            }
-            catch (Exception e2) {
-                if (GameManager.Project != null) {
-                    GameManager.DisposeProject();
-                }
-                Log.Error(e2);
-                ExceptionManager.ReportExceptionToUser(null, e2);
-                ScreensManager.SwitchScreen("MainMenu");
             }
             finally {
 #if ANDROID

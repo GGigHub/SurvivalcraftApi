@@ -409,7 +409,12 @@ namespace Engine {
         public const string InputLibrary = "Silk.NET.Input.Glfw";
 #endif
 
-        public static void Run(int width = 0, int height = 0, WindowMode windowMode = WindowMode.Resizable, string title = "") {
+        public static void Run(
+            int width = 0,
+            int height = 0,
+            WindowMode windowMode = WindowMode.Resizable,
+            string title = "",
+            bool isVisible = true) {
 #if !BROWSER
             if (m_view != null) {
                 throw new InvalidOperationException("Window is already opened.");
@@ -481,7 +486,12 @@ namespace Engine {
             width = width == 0 ? screenSize.X * 4 / 5 : width;
             height = height == 0 ? screenSize.Y * 4 / 5 : height;
             WindowOptions windowOptions = WindowOptions.Default with {
-                Title = title, PreferredDepthBufferBits = 24, PreferredStencilBufferBits = 8, API = api, Size = new Vector2D<int>(width, height)
+                Title = title,
+                PreferredDepthBufferBits = 24,
+                PreferredStencilBufferBits = 8,
+                API = api,
+                Size = new Vector2D<int>(width, height),
+                IsVisible = isVisible
             };
             m_gameWindow = Silk.NET.Windowing.Window.Create(windowOptions);
             m_view = m_gameWindow;

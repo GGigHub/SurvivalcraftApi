@@ -51,6 +51,7 @@ public static class NetworkManager {
         PacketManager.Initialize();
     }
     public static void Update() {
+        NetworkFaultInjector.Update();
         NetworkServer?.Update();
         NetworkClient?.Update();
         RelayHost?.Update();
@@ -69,6 +70,7 @@ public static class NetworkManager {
         NetworkBodyInterpolation.Clear();
         PlayerBodyUpdatePacket.ClearSnapshots();
         RelayHostCodeStatus = RelayHostCodeStatus.Inactive;
+        NetworkFaultInjector.ClearPending();
     }
     public static void StartServer() {
         NetworkServer = new();

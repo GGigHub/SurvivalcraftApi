@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 
 namespace Survivalcraft.TestAutomation {
-    public class TestAutomationModLoader : ModLoader {
+    public partial class TestAutomationModLoader : ModLoader {
         private UdpClient udpServer;
         private CancellationTokenSource cts = new();
         private readonly Queue<string> pendingWidgetClicks = new();
@@ -43,6 +43,7 @@ namespace Survivalcraft.TestAutomation {
 
             // Start UDP Server
             StartUdpServer();
+            StartTypedControlServer();
         }
 
         private void StartUdpServer() {
@@ -299,6 +300,7 @@ namespace Survivalcraft.TestAutomation {
         public override void ModDispose() {
             cts.Cancel();
             udpServer?.Close();
+            StopTypedControlServer();
             base.ModDispose();
         }
     }

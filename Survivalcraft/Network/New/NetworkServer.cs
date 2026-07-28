@@ -65,7 +65,10 @@ public class NetworkServer : INetEventListener {
             NetPeer peer = ClientSessions.FirstOrDefault(kvp => kvp.Value == session).Key;
             if (peer == null) return;
             foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
-                peer.Send(chunk, DeliveryMethod.ReliableOrdered);
+                NetPeer targetPeer = peer;
+                NetworkFaultInjector.Send(
+                    chunk,
+                    data => targetPeer.Send(data, DeliveryMethod.ReliableOrdered));
             }
         }
     }

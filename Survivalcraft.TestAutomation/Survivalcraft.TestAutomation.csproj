@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Engine\Engine.csproj" />
     <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />
+    <ProjectReference Include="..\Survivalcraft.Testing\Survivalcraft.Testing.csproj" />
     <ProjectReference Include="..\Survivalcraft.Windows\Survivalcraft.Windows.csproj">
       <Private>false</Private>
     </ProjectReference>
@@ -22,7 +23,7 @@
   <Target Name="PackageMod" AfterTargets="Build">
     <PropertyGroup>
       <ModTempDir>$(IntermediateOutputPath)ModTemp\</ModTempDir>
-      <ModOutputPath>..\Survivalcraft.Test\bin\Debug\net10.0-windows\Mods\</ModOutputPath>
+      <ModOutputPath>..\Survivalcraft.Test\bin\$(Configuration)\net10.0-windows\Mods\</ModOutputPath>
     </PropertyGroup>
     <RemoveDir Directories="$(ModTempDir)" />
     <MakeDir Directories="$(ModTempDir)" />
@@ -31,6 +32,7 @@
       <ModDependencyFiles Include="$(TargetDir)Microsoft.CodeAnalysis*.dll" />
       <ModDependencyFiles Include="$(TargetDir)System.Collections.Immutable*.dll" />
       <ModDependencyFiles Include="$(TargetDir)System.Reflection.Metadata*.dll" />
+      <ModDependencyFiles Include="$(TargetDir)Survivalcraft.Testing.dll" />
     </ItemGroup>
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModTempDir)" />
     <Copy SourceFiles="@(ModDependencyFiles)" DestinationFolder="$(ModTempDir)" />

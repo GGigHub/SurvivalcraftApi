@@ -76,6 +76,8 @@
 
 详见开发文档 [docs/Development.md](https://gitee.com/SC-SPM/SurvivalcraftApi/blob/SCAPI1.9/docs/Development.md)
 
+联机分支的自动测试入口与分层策略见 [docs/Testing.md](docs/Testing.md)，可直接运行 `./scripts/Test-Multiplayer.ps1 -Mode core` 完成双进程核心联机验收。
+
 ## 更新日志
 
 详见 [CHANGELOG.md](https://gitee.com/SC-SPM/SurvivalcraftApi/blob/SCAPI1.9/CHANGELOG.md)

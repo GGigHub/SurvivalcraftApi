@@ -1,6 +1,35 @@
 using System.Diagnostics;
 
 namespace Engine {
+    public interface IEngineTimeSource {
+        long Timestamp { get; }
+        long Frequency { get; }
+    }
+
+    public sealed class ManualEngineTimeSource : IEngineTimeSource {
+        private long m_timestamp;
+
+        public ManualEngineTimeSource(double initialSeconds = 0.0) {
+            if (double.IsNaN(initialSeconds) || double.IsInfinity(initialSeconds) || initialSeconds < 0.0) {
+                throw new ArgumentOutOfRangeException(nameof(initialSeconds));
+            }
+            m_timestamp = checked((long)Math.Round(initialSeconds * Frequency));
+        }
+
+        public long Timestamp => Interlocked.Read(ref m_timestamp);
+
+        public long Frequency => TimeSpan.TicksPerSecond;
+
+        public double Seconds => Timestamp / (double)Frequency;
+
+        public void Advance(double seconds) {
+            if (double.IsNaN(seconds) || double.IsInfinity(seconds) || seconds < 0.0) {
+                throw new ArgumentOutOfRangeException(nameof(seconds));
+            }
+            Interlocked.Add(ref m_timestamp, checked((long)Math.Round(seconds * Frequency)));
+        }
+    }
+
     public static class Time {
         struct DelayedExecutionRequest {
             public double Time;
@@ -13,6 +42,8 @@ namespace Engine {
         }
 
         static long? m_startTicks;
+
+        static IEngineTimeSource m_timeSource = new StopwatchEngineTimeSource();
 
         static List<DelayedExecutionRequest> m_delayedExecutionsRequests = [];
 
@@ -27,15 +58,32 @@ namespace Engine {
 
         public static long Ticks {
             get {
-                long timestamp = Stopwatch.GetTimestamp();
+                long timestamp = m_timeSource.Timestamp;
                 m_startTicks ??= timestamp;
                 return timestamp - m_startTicks.Value;
             }
         }
 
-        public static long TicksPerSecond => Stopwatch.Frequency;
+        public static long TicksPerSecond => m_timeSource.Frequency;
 
         public static double RealTime => Ticks / (double)TicksPerSecond;
+
+        public static bool IsManualTime => m_timeSource is ManualEngineTimeSource;
+
+        public static void EnableManualTime(double initialSeconds = 0.0) {
+            SetTimeSource(new ManualEngineTimeSource(initialSeconds));
+        }
+
+        public static void DisableManualTime() {
+            SetTimeSource(new StopwatchEngineTimeSource());
+        }
+
+        public static void AdvanceManualTime(double seconds) {
+            if (m_timeSource is not ManualEngineTimeSource manualTimeSource) {
+                throw new InvalidOperationException("Manual time is not enabled.");
+            }
+            manualTimeSource.Advance(seconds);
+        }
 
         public static double PreviousFrameStartTime { get; private set; }
 
@@ -116,6 +164,27 @@ namespace Engine {
 
         static void Sleep(double duration) {
             Task.Delay((int)Math.Clamp(Math.Round(duration * 1000.0), 0.0, 2147483647.0)).Wait();
+        }
+
+        static void SetTimeSource(IEngineTimeSource timeSource) {
+            m_timeSource = timeSource ?? throw new ArgumentNullException(nameof(timeSource));
+            m_startTicks = timeSource is ManualEngineTimeSource ? 0 : null;
+            PreviousFrameStartTime = 0.0;
+            FrameStartTime = 0.0;
+            PreviousFrameDuration = 0f;
+            FrameDuration = 0f;
+            CpuFrameDuration = 0f;
+            AverageFrameDuration = 0f;
+            AverageCpuFrameDuration = 0f;
+            m_fpsStartTime = 0.0;
+            m_fpsStartFrameIndex = FrameIndex;
+            m_fpsCpuTime = 0f;
+            m_remainingDuration = 0f;
+        }
+
+        sealed class StopwatchEngineTimeSource : IEngineTimeSource {
+            public long Timestamp => Stopwatch.GetTimestamp();
+            public long Frequency => Stopwatch.Frequency;
         }
     }
 }

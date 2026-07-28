@@ -60,7 +60,12 @@ public class NetworkClient : INetEventListener {
         packet.Serialize(new PacketSerializer(writer));
 
         foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
-            _serverPeer?.Send(chunk, DeliveryMethod.ReliableOrdered);
+            if (_serverPeer != null) {
+                NetPeer peer = _serverPeer;
+                NetworkFaultInjector.Send(
+                    chunk,
+                    data => peer.Send(data, DeliveryMethod.ReliableOrdered));
+            }
         }
     }
 
