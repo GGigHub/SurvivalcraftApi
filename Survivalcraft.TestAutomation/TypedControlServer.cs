@@ -11,6 +11,8 @@ namespace Survivalcraft.TestAutomation;
 
 public partial class TestAutomationModLoader {
     private NamedPipeControlServer? typedControlServer;
+    private TypedCommandRouter? typedCommandRouter;
+    private readonly ActionEventJournal actionEventJournal = new();
     private long typedResponseSequence;
     private string nodeRole = "unknown";
 
@@ -22,6 +24,7 @@ public partial class TestAutomationModLoader {
             return;
         }
 
+        typedCommandRouter = CreateTypedCommandRouter();
         typedControlServer = new NamedPipeControlServer(pipeName, HandleTypedRequestAsync);
         _ = typedControlServer.StartAsync(cts.Token);
         Log.Information(
@@ -78,121 +81,9 @@ public partial class TestAutomationModLoader {
 
     private ControlResponse ProcessTypedRequest(ControlRequest request) {
         long sequence = Interlocked.Increment(ref typedResponseSequence);
-        return request.Command switch {
-            ControlCommandNames.Ping => ControlProtocol.Success(
-                request,
-                BuildPingResult(request.DeserializePayload<PingCommand>()),
-                sequence),
-            ControlCommandNames.GetStatus => ControlProtocol.Success(
-                request,
-                BuildNodeStatus(),
-                sequence),
-            ControlCommandNames.ConfigureNode => ControlProtocol.Success(
-                request,
-                ConfigureNode(request.DeserializePayload<ConfigureNodeCommand>()),
-                sequence),
-            ControlCommandNames.CreateWorld => ControlProtocol.Success(
-                request,
-                CreateWorld(request.DeserializePayload<CreateWorldCommand>()),
-                sequence),
-            ControlCommandNames.ReloadWorld => ControlProtocol.Success(
-                request,
-                ReloadWorld(request.DeserializePayload<ReloadWorldCommand>()),
-                sequence),
-            ControlCommandNames.SaveWorld => ControlProtocol.Success(
-                request,
-                SaveWorld(request.DeserializePayload<SaveWorldCommand>()),
-                sequence),
-            ControlCommandNames.ConnectClient => ControlProtocol.Success(
-                request,
-                ConnectClient(request.DeserializePayload<ConnectClientCommand>()),
-                sequence),
-            ControlCommandNames.StartRelayHost => ControlProtocol.Success(
-                request,
-                StartRelayHost(request.DeserializePayload<StartRelayHostCommand>()),
-                sequence),
-            ControlCommandNames.ConnectRelay => ControlProtocol.Success(
-                request,
-                ConnectRelay(request.DeserializePayload<ConnectRelayCommand>()),
-                sequence),
-            ControlCommandNames.GetRelayStatus => ControlProtocol.Success(
-                request,
-                BuildRelayStatus(),
-                sequence),
-            ControlCommandNames.EnterWorld => ControlProtocol.Success(
-                request,
-                EnterWorld(request.DeserializePayload<EnterWorldCommand>()),
-                sequence),
-            ControlCommandNames.Disconnect => ControlProtocol.Success(
-                request,
-                Disconnect(request.DeserializePayload<DisconnectCommand>()),
-                sequence),
-            ControlCommandNames.ChangeTerrainCell => ControlProtocol.Success(
-                request,
-                ChangeTerrainCell(request.DeserializePayload<ChangeTerrainCellCommand>()),
-                sequence),
-            ControlCommandNames.GetSnapshot => ControlProtocol.Success(
-                request,
-                BuildSnapshot(request.DeserializePayload<GetSnapshotCommand>()),
-                sequence),
-            ControlCommandNames.SetClock => ControlProtocol.Success(
-                request,
-                SetClock(request.DeserializePayload<SetClockCommand>()),
-                sequence),
-            ControlCommandNames.AdvanceTicks => ControlProtocol.Success(
-                request,
-                AdvanceTicks(request.DeserializePayload<AdvanceTicksCommand>()),
-                sequence),
-            ControlCommandNames.SetNetworkFaults => ControlProtocol.Success(
-                request,
-                SetNetworkFaults(request.DeserializePayload<SetNetworkFaultsCommand>()),
-                sequence),
-            ControlCommandNames.ConfigureCompatibility => ControlProtocol.Success(
-                request,
-                ConfigureCompatibility(
-                    request.DeserializePayload<ConfigureCompatibilityCommand>()),
-                sequence),
-            ControlCommandNames.GetCompatibility => ControlProtocol.Success(
-                request,
-                BuildCompatibilityStatus(),
-                sequence),
-            ControlCommandNames.ConfigureModChannels => ControlProtocol.Success(
-                request,
-                ConfigureModChannels(
-                    request.DeserializePayload<ConfigureModChannelsCommand>()),
-                sequence),
-            ControlCommandNames.GetModChannels => ControlProtocol.Success(
-                request,
-                BuildModChannelStatus(),
-                sequence),
-            ControlCommandNames.SendTestModMessage => ControlProtocol.Success(
-                request,
-                SendTestModMessage(
-                    request.DeserializePayload<SendTestModMessageCommand>()),
-                sequence),
-            ControlCommandNames.GetTestModMessages => ControlProtocol.Success(
-                request,
-                BuildTestModMessagesStatus(),
-                sequence),
-            ControlCommandNames.ResetTestModMessages => ControlProtocol.Success(
-                request,
-                ResetTestModMessages(),
-                sequence),
-            ControlCommandNames.ClickWidget => ControlProtocol.Success(
-                request,
-                QueueTypedWidgetClick(request.DeserializePayload<ClickWidgetCommand>()),
-                sequence),
-            ControlCommandNames.ExecuteLegacyScript => ControlProtocol.Success(
-                request,
-                ExecuteTypedLegacyScript(request.DeserializePayload<ExecuteLegacyScriptCommand>()),
-                sequence),
-            _ => ControlProtocol.Failure(
-                request,
-                "unknown_command",
-                $"Unknown control command '{request.Command}'.",
-                null,
-                sequence)
-        };
+        TypedCommandRouter router = typedCommandRouter
+            ?? throw new InvalidOperationException("Typed command router is not initialized.");
+        return router.Dispatch(request, sequence, nodeRole);
     }
 
     private PingResult BuildPingResult(PingCommand command) =>
@@ -216,6 +107,7 @@ public partial class TestAutomationModLoader {
         NetworkCompatibilityRuntime.ClearLocalManifestOverride();
         ModNetworkManager.ClearLocalCatalogOverride();
         ResetTestModMessages();
+        actionEventJournal.Reset();
         return new ControlAck(true, $"Configured role '{nodeRole}' with seed {command.Seed}.");
     }
 

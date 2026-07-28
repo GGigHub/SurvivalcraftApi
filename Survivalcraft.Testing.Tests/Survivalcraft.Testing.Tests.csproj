@@ -24,4 +24,10 @@
     <ProjectReference Include="..\Survivalcraft.Testing\Survivalcraft.Testing.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\Survivalcraft.Testing\Coverage\core-multiplayer.json"
+          Link="Coverage\core-multiplayer.json"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

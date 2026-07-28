@@ -117,6 +117,7 @@ public sealed class ControlCommandException : Exception {
 
 public static class ControlCommandNames {
     public const string Ping = "system.ping";
+    public const string Describe = "system.describe";
     public const string GetStatus = "node.getStatus";
     public const string ConfigureNode = "node.configure";
     public const string CreateWorld = "world.create";
@@ -130,6 +131,10 @@ public static class ControlCommandNames {
     public const string Disconnect = "network.disconnect";
     public const string ChangeTerrainCell = "terrain.changeCell";
     public const string GetSnapshot = "state.getSnapshot";
+    public const string GetSnapshotV2 = "state.getSnapshotV2";
+    public const string GetEvents = "state.getEvents";
+    public const string ResetEvents = "state.resetEvents";
+    public const string SetCreativeFly = "player.setCreativeFly";
     public const string SetClock = "time.setClock";
     public const string AdvanceTicks = "time.advanceTicks";
     public const string SetNetworkFaults = "network.setFaults";

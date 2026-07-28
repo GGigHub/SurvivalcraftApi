@@ -41,6 +41,50 @@ public sealed record ScenarioArtifactBundle(
     string Outcome,
     string? Error);
 
+public sealed record ScenarioReplayV2(
+    string Scenario,
+    int Version,
+    int Seed,
+    string RuntimeDirectory,
+    string Transport,
+    int WireProtocolVersion,
+    int AutomationApiVersion,
+    int SnapshotSchemaVersion);
+
+public sealed record ScenarioTopologyV2(
+    string Transport,
+    string ServerRole,
+    string[] ClientRoles,
+    bool RelayEnabled,
+    string? RoomCode);
+
+public sealed record ScenarioActionRecordV2(
+    string Role,
+    string Command,
+    JsonElement Payload,
+    ActionReceipt Receipt);
+
+public sealed record ScenarioAssertionRecordV2(
+    string Name,
+    string Status,
+    string[] Roles,
+    string Detail);
+
+public sealed record ScenarioArtifactBundleV2(
+    ScenarioDefinition Definition,
+    ScenarioReplayV2 Replay,
+    ScenarioTopologyV2 Topology,
+    ScenarioStepRecord[] Steps,
+    IReadOnlyDictionary<string, AutomationDescription> Capabilities,
+    ScenarioActionRecordV2[] Actions,
+    IReadOnlyDictionary<string, ActionEventsResult> Events,
+    IReadOnlyDictionary<string, StateSnapshotV2> Snapshots,
+    ScenarioAssertionRecordV2[] Assertions,
+    IReadOnlyDictionary<string, string[]> Logs,
+    IReadOnlyDictionary<string, string> Metrics,
+    string Outcome,
+    string? Error);
+
 public static class ScenarioArtifactWriter {
     private static readonly JsonSerializerOptions ArtifactJsonOptions =
         new(ControlProtocol.JsonOptions) {
@@ -98,6 +142,75 @@ public static class ScenarioArtifactWriter {
         return fullDirectory;
     }
 
+    public static async Task<string> WriteV2Async(
+        string artifactDirectory,
+        ScenarioArtifactBundleV2 bundle,
+        CancellationToken cancellationToken = default) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(artifactDirectory);
+        ArgumentNullException.ThrowIfNull(bundle);
+        string fullDirectory = Path.GetFullPath(artifactDirectory);
+        Directory.CreateDirectory(fullDirectory);
+
+        await WriteJsonAsync(
+            Path.Combine(fullDirectory, "scenario.json"),
+            bundle.Definition,
+            cancellationToken).ConfigureAwait(false);
+        await WriteJsonAsync(
+            Path.Combine(fullDirectory, "replay-v2.json"),
+            bundle.Replay,
+            cancellationToken).ConfigureAwait(false);
+        await WriteJsonAsync(
+            Path.Combine(fullDirectory, "topology.json"),
+            bundle.Topology,
+            cancellationToken).ConfigureAwait(false);
+        await WriteJsonAsync(
+            Path.Combine(fullDirectory, "steps.json"),
+            bundle.Steps,
+            cancellationToken).ConfigureAwait(false);
+        await WriteJsonAsync(
+            Path.Combine(fullDirectory, "actions.json"),
+            bundle.Actions,
+            cancellationToken).ConfigureAwait(false);
+        await WriteJsonAsync(
+            Path.Combine(fullDirectory, "assertions.json"),
+            bundle.Assertions,
+            cancellationToken).ConfigureAwait(false);
+        await WriteJsonAsync(
+            Path.Combine(fullDirectory, "metrics.json"),
+            bundle.Metrics,
+            cancellationToken).ConfigureAwait(false);
+        await WriteJsonAsync(
+            Path.Combine(fullDirectory, "outcome.json"),
+            new { bundle.Outcome, bundle.Error },
+            cancellationToken).ConfigureAwait(false);
+
+        foreach ((string role, AutomationDescription description) in bundle.Capabilities) {
+            await WriteJsonAsync(
+                Path.Combine(fullDirectory, $"capabilities-{Sanitize(role)}.json"),
+                description,
+                cancellationToken).ConfigureAwait(false);
+        }
+        foreach ((string role, ActionEventsResult events) in bundle.Events) {
+            await WriteJsonAsync(
+                Path.Combine(fullDirectory, $"events-{Sanitize(role)}.json"),
+                events,
+                cancellationToken).ConfigureAwait(false);
+        }
+        foreach ((string name, StateSnapshotV2 snapshot) in bundle.Snapshots) {
+            await WriteJsonAsync(
+                Path.Combine(fullDirectory, $"snapshot-{Sanitize(name)}.v2.json"),
+                SnapshotV2Canonicalizer.Normalize(snapshot),
+                cancellationToken).ConfigureAwait(false);
+        }
+        foreach ((string role, string[] lines) in bundle.Logs) {
+            await WriteLinesAtomicallyAsync(
+                Path.Combine(fullDirectory, $"{Sanitize(role)}.log"),
+                lines,
+                cancellationToken).ConfigureAwait(false);
+        }
+        return fullDirectory;
+    }
+
     public static async Task<ScenarioReplay> ReadReplayAsync(
         string artifactDirectory,
         CancellationToken cancellationToken = default) {
@@ -108,6 +221,30 @@ public static class ScenarioArtifactWriter {
             ArtifactJsonOptions,
             cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidDataException($"Replay file '{path}' is empty or invalid.");
+    }
+
+    public static async Task<ScenarioReplayV2> ReadReplayV2Async(
+        string artifactDirectory,
+        CancellationToken cancellationToken = default) {
+        string path = Path.Combine(Path.GetFullPath(artifactDirectory), "replay-v2.json");
+        await using FileStream stream = File.OpenRead(path);
+        return await JsonSerializer.DeserializeAsync<ScenarioReplayV2>(
+            stream,
+            ArtifactJsonOptions,
+            cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidDataException($"Replay file '{path}' is empty or invalid.");
+    }
+
+    public static async Task<ScenarioActionRecordV2[]> ReadActionsV2Async(
+        string artifactDirectory,
+        CancellationToken cancellationToken = default) {
+        string path = Path.Combine(Path.GetFullPath(artifactDirectory), "actions.json");
+        await using FileStream stream = File.OpenRead(path);
+        return await JsonSerializer.DeserializeAsync<ScenarioActionRecordV2[]>(
+            stream,
+            ArtifactJsonOptions,
+            cancellationToken).ConfigureAwait(false)
+            ?? throw new InvalidDataException($"Action replay file '{path}' is empty or invalid.");
     }
 
     private static async Task WriteJsonAsync<T>(

@@ -141,6 +141,23 @@ public sealed class GameNodeProcess : IAsyncDisposable {
             new EmptyCommand(),
             cancellationToken: cancellationToken);
 
+    public Task<AutomationDescription> DescribeAutomationAsync(
+        CancellationToken cancellationToken = default) =>
+        SendAsync<EmptyCommand, AutomationDescription>(
+            ControlCommandNames.Describe,
+            new EmptyCommand(),
+            cancellationToken: cancellationToken);
+
+    public async Task<AutomationDescription> RequireCapabilitiesAsync(
+        RequiredAutomationCapabilities required,
+        CancellationToken cancellationToken = default) {
+        ArgumentNullException.ThrowIfNull(required);
+        AutomationDescription description = await DescribeAutomationAsync(cancellationToken)
+            .ConfigureAwait(false);
+        AutomationCapabilityValidator.EnsureSupported(description, required);
+        return description;
+    }
+
     public async Task<NodeStatus> WaitForStatusAsync(
         Func<NodeStatus, bool> predicate,
         TimeSpan timeout,

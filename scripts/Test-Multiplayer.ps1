@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "full")]
+    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "full")]
     [string]$Mode = "fast",
 
     [ValidateSet("Debug", "Release")]
@@ -45,6 +45,24 @@ $relayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
 }
 elseif ($Mode -eq "full") {
     Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "relay-mod-channel"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$v2DirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\creative-fly-v2-direct-$runStamp"
+}
+elseif ($Mode -eq "v2" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "creative-fly-v2-direct"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$v2RelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\creative-fly-v2-relay-$runStamp"
+}
+elseif ($Mode -eq "v2" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "creative-fly-v2-relay"
 }
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
@@ -136,6 +154,26 @@ function Run-RelayScenario {
     )
 }
 
+function Run-V2GameplayScenario {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("direct", "relay")]
+        [string]$Transport,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ArtifactDirectory
+    )
+
+    Build-CoreRuntime
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "run", "creative-fly-multiplayer",
+        "--transport", $Transport,
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $ArtifactDirectory
+    )
+}
+
 Push-Location $repositoryRoot
 try {
     switch ($Mode) {
@@ -154,12 +192,24 @@ try {
         "relay" {
             Run-RelayScenario
         }
+        "v2-direct" {
+            Run-V2GameplayScenario -Transport "direct" -ArtifactDirectory $v2DirectArtifactDirectory
+        }
+        "v2-relay" {
+            Run-V2GameplayScenario -Transport "relay" -ArtifactDirectory $v2RelayArtifactDirectory
+        }
+        "v2" {
+            Run-V2GameplayScenario -Transport "direct" -ArtifactDirectory $v2DirectArtifactDirectory
+            Run-V2GameplayScenario -Transport "relay" -ArtifactDirectory $v2RelayArtifactDirectory
+        }
         "full" {
             Run-FastTests
             Run-Doctor
             Run-CompatibilityScenario
             Run-CoreScenario
             Run-RelayScenario
+            Run-V2GameplayScenario -Transport "direct" -ArtifactDirectory $v2DirectArtifactDirectory
+            Run-V2GameplayScenario -Transport "relay" -ArtifactDirectory $v2RelayArtifactDirectory
             $legacyTestArguments = @(
                 "test", $gameTestProject, "--nologo", "-c", $Configuration,
                 "--filter", "Layer!=L2&Layer!=L0&Layer!=L1",

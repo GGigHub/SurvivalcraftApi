@@ -627,18 +627,8 @@ namespace Game {
             if (m_creativeFlyButtonWidget.IsVisible
                 && (m_creativeFlyButtonWidget.IsClicked || playerInput.ToggleCreativeFly)
                 && componentRider.Mount == null) {
-                bool isCreativeFlyEnabled = m_componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled;
-                m_componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled = !isCreativeFlyEnabled;
-                if (m_componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled != isCreativeFlyEnabled) {
-                    if (m_componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled) {
-                        m_componentPlayer.ComponentLocomotion.JumpOrder = 1f;
-                        DisplaySmallMessage(LanguageControl.Get(fName, 7), Color.White, false, false);
-                    }
-                    else {
-                        DisplaySmallMessage(LanguageControl.Get(fName, 8), Color.White, false, false);
-                    }
-                }
-                OnPlayerCreativeFly?.Invoke(this, m_componentPlayer);
+                TrySetCreativeFlyEnabled(
+                    !m_componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled);
             }
             if (m_cameraButtonWidget.IsClicked
                 || playerInput.SwitchCameraMode) {
@@ -738,6 +728,27 @@ namespace Game {
                 || m_backButtonWidget.IsClicked) {
                 DialogsManager.ShowDialog(m_componentPlayer.GuiWidget, new GameMenuDialog(m_componentPlayer));
             }
+        }
+
+        public virtual bool TrySetCreativeFlyEnabled(bool enabled) {
+            if (m_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative
+                || m_componentPlayer.ComponentRider?.Mount != null) {
+                return false;
+            }
+            if (m_componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled == enabled) {
+                return true;
+            }
+
+            m_componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled = enabled;
+            if (enabled) {
+                m_componentPlayer.ComponentLocomotion.JumpOrder = 1f;
+                DisplaySmallMessage(LanguageControl.Get(fName, 7), Color.White, false, false);
+            }
+            else {
+                DisplaySmallMessage(LanguageControl.Get(fName, 8), Color.White, false, false);
+            }
+            OnPlayerCreativeFly?.Invoke(this, m_componentPlayer);
+            return true;
         }
 
         public virtual bool IsClothingVisible() => ModalPanelWidget is ClothingWidget;

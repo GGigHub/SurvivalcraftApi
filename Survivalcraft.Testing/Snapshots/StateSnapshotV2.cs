@@ -1,0 +1,62 @@
+using Survivalcraft.Testing.Control;
+
+namespace Survivalcraft.Testing.Snapshots;
+
+public enum SnapshotDomain {
+    Network,
+    Players,
+    Events
+}
+
+public sealed record GetSnapshotV2Command(
+    SnapshotDomain[] Domains,
+    int[]? PlayerIndexes = null,
+    long EventAfterSequence = 0,
+    int EventLimit = 128,
+    bool IncludeVolatileDiagnostics = false);
+
+public sealed record StateSnapshotV2(
+    int SchemaVersion,
+    string CaptureId,
+    long CaptureTick,
+    double TimeSeconds,
+    NodeSnapshotV2 Node,
+    NetworkSnapshotV2? Network,
+    PlayerSnapshotV2[] Players,
+    ActionEventRecord[] RecentEvents,
+    IReadOnlyDictionary<string, string> Diagnostics);
+
+public sealed record NodeSnapshotV2(
+    string Role,
+    string Screen,
+    bool ContentLoaded,
+    bool ProjectLoaded,
+    string ProjectKind);
+
+public sealed record NetworkSnapshotV2(
+    string Mode,
+    string State,
+    int LocalPlayerIndex,
+    int ServerSessionCount,
+    string RelayMode,
+    long FaultSent,
+    long FaultDropped,
+    long FaultDuplicated,
+    int FaultPending);
+
+public sealed record PlayerSnapshotV2(
+    int PlayerIndex,
+    string Name,
+    string? NetworkIdentity,
+    bool IsMainPlayer,
+    bool ReadyForPlaying,
+    int? EntityId,
+    PlayerBodySnapshotV2? Body,
+    double? Health,
+    double Level,
+    bool CreativeFlyEnabled);
+
+public sealed record PlayerBodySnapshotV2(
+    Vector3State Position,
+    Vector3State Velocity,
+    bool IsCrouching);
