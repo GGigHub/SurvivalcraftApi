@@ -153,6 +153,20 @@ internal static class Program {
                 return 0;
             }
 
+            if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase)
+                && args.Length >= 2
+                && args[1].Equals(EnvironmentMechanicsMultiplayerScenario.ScenarioName, StringComparison.OrdinalIgnoreCase)) {
+                Dictionary<string, string?> options = ParseOptions(args, 2);
+                EnvironmentMechanicsMultiplayerScenarioOptions scenarioOptions =
+                    BuildEnvironmentMechanicsScenarioOptions(repositoryRoot, options, replay: null);
+                EnvironmentMechanicsMultiplayerScenarioResult result =
+                    await new EnvironmentMechanicsMultiplayerScenario()
+                        .RunAsync(scenarioOptions)
+                        .ConfigureAwait(false);
+                PrintResult(result);
+                return 0;
+            }
+
             if (args[0].Equals("replay", StringComparison.OrdinalIgnoreCase)) {
                 if (args.Length < 2 || args[1].StartsWith("--", StringComparison.Ordinal)) {
                     throw new ArgumentException("replay requires the source artifact directory.");
@@ -304,6 +318,27 @@ internal static class Program {
                                 replayPlan);
                         InventoryHealthMultiplayerScenarioResult v2Result =
                             await new InventoryHealthMultiplayerScenario()
+                                .RunAsync(v2Options)
+                                .ConfigureAwait(false);
+                        PrintResult(v2Result);
+                        return 0;
+                    }
+                    if (replayV2.Scenario.Equals(
+                            EnvironmentMechanicsMultiplayerScenario.ScenarioName,
+                            StringComparison.Ordinal)) {
+                        ValidateReplayV2ScenarioVersion(
+                            replayV2,
+                            EnvironmentMechanicsMultiplayerScenario.ScenarioVersion);
+                        EnvironmentMechanicsReplayPlan replayPlan =
+                            EnvironmentMechanicsMultiplayerScenario.ParseReplayActions(actionRecords);
+                        EnvironmentMechanicsMultiplayerScenarioOptions v2Options =
+                            BuildEnvironmentMechanicsScenarioOptions(
+                                repositoryRoot,
+                                options,
+                                replayV2,
+                                replayPlan);
+                        EnvironmentMechanicsMultiplayerScenarioResult v2Result =
+                            await new EnvironmentMechanicsMultiplayerScenario()
                                 .RunAsync(v2Options)
                                 .ConfigureAwait(false);
                         PrintResult(v2Result);
@@ -735,6 +770,49 @@ internal static class Program {
             ReplayPlan: replayPlan);
     }
 
+    private static EnvironmentMechanicsMultiplayerScenarioOptions BuildEnvironmentMechanicsScenarioOptions(
+        string repositoryRoot,
+        IReadOnlyDictionary<string, string?> options,
+        ScenarioReplayV2? replay,
+        EnvironmentMechanicsReplayPlan? replayPlan = null) {
+        int seed = GetInt32(options, "seed", replay?.Seed ?? 20260803);
+        MultiplayerTransportKind replayTransport = replay == null
+            ? MultiplayerTransportKind.Direct
+            : ParseTransport(replay.Transport, "Replay transport");
+        MultiplayerTransportKind transport = GetTransport(
+            options,
+            "transport",
+            replayTransport);
+        string runtime = options.TryGetValue("runtime", out string? runtimeValue)
+            && !string.IsNullOrWhiteSpace(runtimeValue)
+                ? Path.GetFullPath(runtimeValue)
+                : replay?.RuntimeDirectory ?? ResolveRuntime(repositoryRoot, options);
+        string artifactDirectory = options.TryGetValue("artifacts", out string? artifactValue)
+            && !string.IsNullOrWhiteSpace(artifactValue)
+                ? Path.GetFullPath(artifactValue)
+                : Path.Combine(
+                    repositoryRoot,
+                    "TestResults",
+                    replay == null
+                        ? $"environment-mechanics-{transport.ToString().ToLowerInvariant()}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}"
+                        : $"environment-mechanics-{transport.ToString().ToLowerInvariant()}-replay-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}");
+        string? workDirectory = options.TryGetValue("work-dir", out string? workValue)
+            && !string.IsNullOrWhiteSpace(workValue)
+                ? Path.GetFullPath(workValue)
+                : null;
+        return new EnvironmentMechanicsMultiplayerScenarioOptions(
+            runtime,
+            artifactDirectory,
+            seed,
+            transport,
+            StepTimeout: GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(60)),
+            ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(10)),
+            WorkDirectory: workDirectory,
+            KeepData: GetFlag(options, "keep-data"),
+            NetworkFaults: replay?.NetworkFaults,
+            ReplayPlan: replayPlan);
+    }
+
     private static void ValidateReplayV2ProtocolVersions(ScenarioReplayV2 replay) {
         if (replay.WireProtocolVersion != ControlProtocol.CurrentVersion
             || replay.AutomationApiVersion != AutomationProtocol.CurrentApiVersion
@@ -1051,6 +1129,18 @@ internal static class Program {
         Console.WriteLine($"elapsed={result.Elapsed}");
     }
 
+    private static void PrintResult(EnvironmentMechanicsMultiplayerScenarioResult result) {
+        Console.WriteLine("SCENARIO PASSED");
+        Console.WriteLine($"artifacts={result.ArtifactDirectory}");
+        Console.WriteLine($"transport={result.Transport}");
+        Console.WriteLine($"actorPlayerIndex={result.ActorPlayerIndex}");
+        Console.WriteLine($"actions={result.ActionCount}");
+        if (!string.IsNullOrWhiteSpace(result.RoomCode)) {
+            Console.WriteLine($"room={result.RoomCode}");
+        }
+        Console.WriteLine($"elapsed={result.Elapsed}");
+    }
+
     private static string ResolveRuntime(
         string repositoryRoot,
         IReadOnlyDictionary<string, string?> options) {
@@ -1195,6 +1285,7 @@ internal static class Program {
         Console.WriteLine("  run terrain-streaming-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  run entity-creature-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  run inventory-health-multiplayer --transport direct|relay [options]");
+        Console.WriteLine("  run environment-mechanics-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  replay ARTIFACT_DIRECTORY [options]");
         Console.WriteLine();
         Console.WriteLine("Common options:");

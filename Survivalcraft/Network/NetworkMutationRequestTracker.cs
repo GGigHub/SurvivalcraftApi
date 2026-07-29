@@ -11,7 +11,12 @@ public enum NetworkMutationDomain : byte {
     PlayerWorldDragDrop,
     PlayerHit,
     PlayerRestart,
-    PlayerInjury
+    PlayerInjury,
+    EnvironmentTime,
+    EnvironmentWeather,
+    EnvironmentLightning,
+    PlayerSleep,
+    PlayerWakeup
 }
 
 /// <summary>

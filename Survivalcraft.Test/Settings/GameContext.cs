@@ -90,6 +90,7 @@ public sealed class GameContext : IDisposable {
             RedirectStandardError = false,
             CreateNoWindow = true
         };
+        processInfo.Environment["SC_TEST_DISABLE_RESTART"] = "1";
         foreach (string argument in BuildProcessArguments(arguments)) {
             processInfo.ArgumentList.Add(argument);
         }

@@ -65,12 +65,30 @@ public static class RootManager {
             if (NetworkManager.IsServerRunning && Time.PeriodicEvent(2.0, 0.0))
                 NetworkManager.Queue(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
         };
-        ComponentGui.OnManualLightingStrike += (gui, position, direction) =>
-            NetworkManager.Queue(new SubsystemSkyPacket(position, direction));
-        ComponentGui.OnManualTimeChange += (gui, totalElapsedGameTime, timeOfDayOffset) =>
-            NetworkManager.Queue(new SubsystemTimePacket(totalElapsedGameTime, timeOfDayOffset));
-        ComponentGui.OnManualWeatherChange += (gui, type) =>
-            NetworkManager.Queue(new SubsystemWeatherPacket(type));
+        ComponentGui.OnManualLightingStrike += (gui, position, direction) => {
+            if (NetworkManager.IsClientRunning)
+                NetworkManager.Queue(new SubsystemSkyPacket(position, direction));
+        };
+        ComponentGui.OnManualTimeChange += (gui, totalElapsedGameTime, timeOfDayOffset) => {
+            if (NetworkManager.IsClientRunning)
+                NetworkManager.Queue(SubsystemTimePacket.CreateRequest(timeOfDayOffset));
+            else if (GameManager.Project != null) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    GameManager.Project,
+                    NetworkStateRevisionDomain.Time,
+                    SubsystemTimePacket.EnvironmentStateId);
+                NetworkManager.Queue(new SubsystemTimePacket(
+                    totalElapsedGameTime,
+                    timeOfDayOffset,
+                    revision));
+            }
+        };
+        ComponentGui.OnManualWeatherChange += (gui, type) => {
+            if (NetworkManager.IsClientRunning)
+                NetworkManager.Queue(new SubsystemWeatherPacket(type));
+            else
+                QueueAuthoritativeWeatherState();
+        };
         ComponentGui.OnPlayerCreativeFly += (gui, player) =>
             NetworkManager.Queue(new PlayerCreativeFlyPacket(player));
         ComponentHealth.OnCreatureDied += (health) => {
@@ -131,8 +149,22 @@ public static class RootManager {
                 NetworkManager.Queue(new PlayerAddExperiencePacket(level.m_componentPlayer.PlayerData, count, playSound, level.m_componentPlayer.PlayerData.Level));
         };
         ComponentOnFire.OnSetOnFire += (onFire, attacker, duration) => {
-            if (!NetworkManager.IsClientRunning)
-                NetworkManager.Queue(new EntityOnFirePacket(onFire, attacker, duration));
+            if (!NetworkManager.IsClientRunning && onFire.Entity.Id > 0) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    onFire.Entity.Project,
+                    NetworkStateRevisionDomain.Fire,
+                    onFire.Entity.Id);
+                NetworkManager.Queue(new EntityOnFirePacket(onFire, attacker, revision));
+            }
+        };
+        ComponentOnFire.OnExtinguish += onFire => {
+            if (!NetworkManager.IsClientRunning && onFire.Entity.Id > 0) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    onFire.Entity.Project,
+                    NetworkStateRevisionDomain.Fire,
+                    onFire.Entity.Id);
+                NetworkManager.Queue(new EntityOnFirePacket(onFire, revision: revision));
+            }
         };
         SubsystemParticles.OnParticleSystemAdded += particleSystem => {
             if (NetworkManager.IsClientRunning || particleSystem is not HitValueParticleSystem hitValueParticleSystem) {
@@ -254,8 +286,18 @@ public static class RootManager {
             if (NetworkManager.IsServerRunning)
                 NetworkManager.Queue(new ComponentFurnacePacket(furnaces));
         };
-        SubsystemGameInfo.OnTimeUpdate += (totalElapsedGameTime, timeOfDayOffset) =>
-            NetworkManager.Queue(new SubsystemTimePacket(totalElapsedGameTime, timeOfDayOffset));
+        SubsystemGameInfo.OnTimeUpdate += (totalElapsedGameTime, timeOfDayOffset) => {
+            if (!NetworkManager.IsClientRunning && GameManager.Project != null) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    GameManager.Project,
+                    NetworkStateRevisionDomain.Time,
+                    SubsystemTimePacket.EnvironmentStateId);
+                NetworkManager.Queue(new SubsystemTimePacket(
+                    totalElapsedGameTime,
+                    timeOfDayOffset,
+                    revision));
+            }
+        };
         SubsystemMemoryBankBlockBehavior.OnEditBlockData += (subsystem, cell, data) => {
             if (NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new MemoryBankDataPacket(cell, false, default, default, data));
@@ -299,8 +341,15 @@ public static class RootManager {
         };
         SubsystemSignBlockBehavior.OnSignDataChanged += (subsystem, point, lines, colors, url) =>
             NetworkManager.Queue(new SignBlockPacket(point, lines, colors, url));
-        SubsystemSky.OnSkyLightning += (targetPosition) =>
-            NetworkManager.Queue(new SubsystemSkyPacket(targetPosition));
+        SubsystemSky.OnSkyLightning += targetPosition => {
+            if (!NetworkManager.IsClientRunning && GameManager.Project != null) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    GameManager.Project,
+                    NetworkStateRevisionDomain.Sky,
+                    SubsystemTimePacket.EnvironmentStateId);
+                NetworkManager.Queue(new SubsystemSkyPacket(targetPosition, revision));
+            }
+        };
         SubsystemSwitchBlockBehavior.OnEditBlockVoltage += (subsystem, cell, newVoltageLevel) => {
             if (NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new SwitchVoltagePacket(cell, false, default, default, newVoltageLevel));
@@ -331,9 +380,9 @@ public static class RootManager {
                 NetworkManager.Queue(new TruthTableDataPacket(id, data));
         };
         SubsystemWeather.OnFogChange += (startTime, rampTime, endTime) =>
-            NetworkManager.Queue(new SubsystemWeatherPacket(startTime, rampTime, endTime));
+            QueueAuthoritativeWeatherState();
         SubsystemWeather.OnPrecipitationChange += (startTime, endTime, intensity, rampTime) =>
-            NetworkManager.Queue(new SubsystemWeatherPacket(startTime, endTime, intensity, rampTime));
+            QueueAuthoritativeWeatherState();
         TerrainUpdater.OnTerrainSyncChunkList += (updater, playerIndex, chunks) =>
             NetworkManager.Queue(new TerrainSyncChunkListPacket(chunks) {
                 To = Enumerable.FirstOrDefault(
@@ -384,14 +433,28 @@ public static class RootManager {
         ComponentSleep.OnSleepEvent += (sleep, allowManualWakeup) => {
             if (NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new SleepRequestPacket(sleep, allowManualWakeup));
-            if (!NetworkManager.IsClientRunning)
-                NetworkManager.Queue(new SleepStatusPacket(sleep, allowManualWakeup, true));
+            if (!NetworkManager.IsClientRunning && sleep.Entity.Id > 0) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    sleep.Entity.Project,
+                    NetworkStateRevisionDomain.Sleep,
+                    sleep.Entity.Id);
+                NetworkManager.Queue(new SleepStatusPacket(
+                    sleep,
+                    allowManualWakeup,
+                    true,
+                    revision: revision));
+            }
         };
         ComponentSleep.OnWakeUpEvent += (sleep) => {
             if (NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new WakeupRequestPacket(sleep));
-            if (!NetworkManager.IsClientRunning)
-                NetworkManager.Queue(new WakeupStatusPacket(sleep));
+            if (!NetworkManager.IsClientRunning && sleep.Entity.Id > 0) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    sleep.Entity.Project,
+                    NetworkStateRevisionDomain.Sleep,
+                    sleep.Entity.Id);
+                NetworkManager.Queue(new WakeupStatusPacket(sleep, revision));
+            }
         };
         ComponentPlayer.OnBodyUpdate += (player, isMainPlayer) => {
             if (!NetworkManager.IsClientRunning && Time.PeriodicEvent(0.2f, 0.0)) {
@@ -435,5 +498,20 @@ public static class RootManager {
                 NetworkManager.Queue(new EntityRemovePacket(arg.Entity.Id, revision));
             }
         };
+    }
+
+    private static void QueueAuthoritativeWeatherState() {
+        if (NetworkManager.IsClientRunning || GameManager.Project == null) {
+            return;
+        }
+        SubsystemWeather weather = GameManager.Project.FindSubsystem<SubsystemWeather>();
+        if (weather == null) {
+            return;
+        }
+        long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+            GameManager.Project,
+            NetworkStateRevisionDomain.Weather,
+            SubsystemTimePacket.EnvironmentStateId);
+        NetworkManager.Queue(new SubsystemWeatherPacket(weather, revision));
     }
 }

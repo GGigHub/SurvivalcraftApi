@@ -163,6 +163,14 @@ public static class ControlCommandNames {
     public const string PlayerHit = "player.hit";
     public const string PlayerRequestRespawn = "player.requestRespawn";
     public const string RunHealthRevisionBurst = "health.runRevisionBurst";
+    public const string SetEnvironmentFixture = "fixture.environment.set";
+    public const string EnvironmentRequestChange = "environment.requestChange";
+    public const string RunEnvironmentRevisionBurst = "environment.runRevisionBurst";
+    public const string PrepareMechanicsFixture = "fixture.mechanics.prepare";
+    public const string SetPlayerFireFixture = "fixture.mechanics.setPlayerFire";
+    public const string PlayerSleep = "player.sleep";
+    public const string PlayerIgnite = "player.ignite";
+    public const string RunMechanicsRevisionBurst = "mechanics.runRevisionBurst";
     public const string SetClock = "time.setClock";
     public const string AdvanceTicks = "time.advanceTicks";
     public const string SetNetworkFaults = "network.setFaults";

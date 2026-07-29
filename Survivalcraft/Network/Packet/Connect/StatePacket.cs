@@ -73,6 +73,24 @@ public class StatePacket : ClientPacketBase {
                         && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
                         From.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = false;
                     }
+                    long timeRevision = NetworkStateRevisionTracker.GetAuthoritativeRevision(
+                        GameManager.Project,
+                        NetworkStateRevisionDomain.Time,
+                        SubsystemTimePacket.EnvironmentStateId);
+                    NetworkManager.Queue(new SubsystemTimePacket(
+                        subsystemGameInfo.TotalElapsedGameTime,
+                        subsystemGameInfo.TimeOfDay.TimeOfDayOffset,
+                        timeRevision) { To = From });
+                    SubsystemWeather weather = GameManager.Project.FindSubsystem<SubsystemWeather>();
+                    if (weather != null) {
+                        long weatherRevision = NetworkStateRevisionTracker.GetAuthoritativeRevision(
+                            GameManager.Project,
+                            NetworkStateRevisionDomain.Weather,
+                            SubsystemTimePacket.EnvironmentStateId);
+                        NetworkManager.Queue(new SubsystemWeatherPacket(weather, weatherRevision) {
+                            To = From
+                        });
+                    }
                     foreach (Entity entity in GameManager.Project.Entities) {
                         ComponentHealth health = entity.FindComponent<ComponentHealth>();
                         if (health != null && entity.Id > 0) {
@@ -81,6 +99,17 @@ public class StatePacket : ClientPacketBase {
                         ComponentDamage damage = entity.FindComponent<ComponentDamage>();
                         if (damage != null && entity.Id > 0) {
                             NetworkManager.Queue(new DamageSyncPacket(damage) { To = From });
+                        }
+                        ComponentSleep sleep = entity.FindComponent<ComponentSleep>();
+                        if (sleep != null && entity.Id > 0) {
+                            NetworkManager.Queue(new SleepStatusPacket(
+                                sleep,
+                                sleep.m_allowManualWakeUp,
+                                true) { To = From });
+                        }
+                        ComponentOnFire onFire = entity.FindComponent<ComponentOnFire>();
+                        if (onFire != null && entity.Id > 0) {
+                            NetworkManager.Queue(new EntityOnFirePacket(onFire) { To = From });
                         }
                         foreach (IInventory inventory in entity.FindComponents<IInventory>()) {
                             if (inventory is ComponentClothing clothing) {

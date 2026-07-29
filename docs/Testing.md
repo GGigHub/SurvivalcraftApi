@@ -2,7 +2,7 @@
 
 本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会按场景启动隔离的 Survivalcraft 进程：核心场景完成建服、两阶段兼容握手、模组消息、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、超时与恢复；中继场景另外启动真实 RelayServer，验证房间协商、模组消息、故障注入和同房间重连。所有场景都会把可回放的诊断材料写入 `TestResults`。
 
-强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞，以及达到完整覆盖契约的 use/place/dig、move/look/crouch、terrain streaming/revisions、entity/creature lifecycle/physics、inventory/container operations 和 health/damage/respawn 六条生产链。
+强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞，以及达到完整覆盖契约的 use/place/dig、move/look/crouch、terrain streaming/revisions、entity/creature lifecycle/physics、inventory/container operations、health/damage/respawn、time/weather/lightning 和 sleep/player-fire 生产链。
 
 ## 一键运行
 
@@ -20,6 +20,8 @@
 ./scripts/Test-Multiplayer.ps1 -Mode streaming
 ./scripts/Test-Multiplayer.ps1 -Mode entity
 ./scripts/Test-Multiplayer.ps1 -Mode inventory-health
+./scripts/Test-Multiplayer.ps1 -Mode environment-mechanics
+./scripts/Test-Multiplayer.ps1 -Mode legacy
 ./scripts/Test-Multiplayer.ps1 -Mode full
 ```
 
@@ -40,7 +42,10 @@
 - `entity`：依次运行 Direct/Relay，覆盖真实实体生成和冲量、同 ID 世代替换、墓碑、旧加载包与重复/乱序、late join、同身份重连、保存重载和严格双动作回放契约。
 - `inventory-health-direct` / `inventory-health-relay`：分别运行一服三客的库存、容器、伤害、死亡和重生场景。
 - `inventory-health`：依次运行 Direct/Relay，覆盖真实 move/select/drop/melee/respawn 生产路径、跨会话权限拒绝、请求 ID 幂等、单调 revision、100% 重复与 50% 重排、观察者、late join、同身份重连、保存重载和严格七动作回放。
-- `full`：依次执行 fast、doctor、compatibility、core、relay、M0、地形交互、人物运动、地形流送、实体/生物及库存/生命的直连/中继场景和未分层原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
+- `environment-mechanics-direct` / `environment-mechanics-relay`：分别运行一服三客的环境时间、降水、雾、雷电、睡眠、唤醒和玩家着火场景。
+- `environment-mechanics`：依次运行 Direct/Relay，覆盖非创造模式拒绝及同 revision 权威快照纠正客户端乐观时间/天气状态、Playing 会话所有权、伪造权威状态和跨玩家请求拒绝、单调 revision、100% 重复与 50% 重排、观察者、late join、玩家身份稳定但实体世代变化的重连、保存重载和严格八动作回放。雷电按瞬时事件验证，不向 late joiner 重放历史雷击。
+- `legacy`：单独运行未分层历史迁移审计，同时输出控制台日志、`legacy-audit.trx` 和列出失败测试名的 `legacy-audit-summary.json`，使诊断在终端输出丢失后仍可由 AI 解析和比对。
+- `full`：依次执行 fast、doctor、compatibility、core、relay、M0、地形交互、人物运动、地形流送、实体/生物、库存/生命及环境/睡眠/玩家火焰的直连/中继场景和未分层原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
 - `-UseAngle`：构建 Windows ANGLE 兼容运行时，适合没有完整 OpenGL 驱动的 CI 机器。
 - `-NoBuild`：复用已构建的二进制文件。
 
@@ -68,6 +73,8 @@ AI 开发循环应先跑 L0/L1；涉及加载、ECS、网络包或持久化的�
 
 功能分支首次 full 审计的 18 项失败中，上述 17 项与基线测试名完全一致；唯一新增项是旧 RelayStartup UI helper 把新世界启动时的瞬时 `GameScreen` 误判为玩家已经进入世界。helper 改为确认主玩家存在后，该真实中心服/中继服用例已定点复跑 1/1 通过。因此当前没有已知的本分支独有 legacy 回归。由于其中若干历史用例受实时模拟影响，后续审计应比较失败测试名与诊断内容，而不要只比较总数；在这些旧债务被逐项迁移或修复前，full 仍可能返回非零。
 
+2026-07-30 的环境/玩法主线终审再次执行了全部 124 项并生成 `legacy-audit.trx` 与 `legacy-audit-summary.json`：107 项通过、17 项失败。原有 EnvironmentSync 与 AnimalPositionSync 已转为通过，CreatureSync 也少 1 个失败；同次长套件中出现的 2 个 RelayStartup 异常在低负载下分别定点复跑 1/1 通过，PlayerSync 的 Aim 异常则在改动前的 `384d0bd9` 上以相同注入空引用复现。由此确认这些名单变化来自 legacy 的实时模拟与 `FUNC` 注入不确定性，而不是本轮生产协议回归。稳定门禁仍以强类型 Direct/Relay 场景、严格 replay 和正式 L2 为准，legacy 结构化报告保留作迁移审计。
+
 ## 运行结构
 
 ```mermaid
@@ -87,7 +94,7 @@ flowchart LR
 
 `GameNodeProcess` 从一份只读构建目录启动多个实例。每个实例都有唯一的 `--instance-id`、端口、命名管道和 `--data-dir`，因此不再为每个角色复制约 49 MiB 的完整运行时，也不会共享世界、设置或存档。游戏、命令、日志与 Relay 的 UDP 端口统一通过 `UdpPortLeaseAllocator` 分配：它使用独立于系统临时端口的范围、跨 TestHost 进程的独占租约文件和 15 分钟冷却期，并在落租约前实际尝试独占绑定。连续或并行的 AI 测试任务因此不会立即复用刚退出节点的端口，也不会让日志/Relay 抢占尚未启动监听的游戏端口。
 
-所有自动测试中的游戏启动器都强制追加 `--headless`。新框架的 `GameNodeProcess` 和历史测试的 `GameContext` 同时使用 `UseShellExecute=false`、`CreateNoWindow=true` 与独立 `--data-dir`，所以 `doctor`、L2 和 legacy/full 都不会弹出或抢占前台游戏窗口。测试世界、设置、日志和缓存也不会写入开发者日常游戏目录；中继与中心服务进程同样使用无窗口启动并在用例结束时等待回收。
+所有自动测试中的游戏启动器都强制追加 `--headless`。新框架的 `GameNodeProcess` 和历史测试的 `GameContext` 同时使用 `UseShellExecute=false`、`CreateNoWindow=true`、独立 `--data-dir` 与 `SC_TEST_DISABLE_RESTART=1`；测试中若游戏请求内部重启，只允许原进程退出并由宿主判错，不会丢失 headless 参数后生成不可追踪的窗口进程。因此 `doctor`、L2 和 legacy/full 都不会弹出或抢占前台游戏窗口。测试世界、设置、日志和缓存也不会写入开发者日常游戏目录；中继与中心服务进程同样使用无窗口启动并在用例结束时等待回收。
 
 当前的 `--headless` 是“64×64 不可见窗口 + 跳过绘制提交”，仍然创建图形上下文以满足内容和纹理初始化；它不是完全没有图形设备的纯服务器。因此 Windows 机器仍需可用的 OpenGL ES 或 ANGLE/D3D 环境。CI 使用 `UseAngle=true` 降低对显卡驱动的依赖，但整个测试过程不会显示游戏界面。
 
@@ -213,7 +220,7 @@ TestResults/{core-multiplayer,compatibility-matrix,relay-mod-channel}-*/
 
 v2 场景另外写入 `replay-v2.json`、`topology.json`、`capabilities-*.json`、`actions.json`、`events-*.json`、`assertions.json` 和 `snapshot-*.v2.json`。这些文件保存实际动作角色、命令名、强类型载荷、动作 ID、动作回执、事件阶段、故障配置及各拓扑节点每个检查点的投影快照；成功和失败使用相同格式。
 
-同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature 和 inventory-health 六个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；inventory-health 严格要求 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn 七个动作及各自角色完全一致。
+同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、inventory-health 和 environment-mechanics 七个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；inventory-health 严格要求 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn 七个动作；environment-mechanics 严格要求 time、precipitation、fog、lightning、sleep、environment revision burst、fire revision burst、wake 八个动作及各自角色完全一致。
 
 - `steps.json` 给出第一个失败步骤、起止时间和异常。
 - `snapshot-*.json` 已排序并规范化浮点数，适合机器比较。
@@ -241,6 +248,6 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## CI
 
-`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor，以及包含兼容矩阵、直连核心、中继、M0 创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature 和 inventory-health Direct/Relay 的全部 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
+`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor，以及包含兼容矩阵、直连核心、中继、M0 创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、inventory-health 和 environment-mechanics Direct/Relay 的全部 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
 
 当前远端位于 CNB，而 GitHub Workflow 只有在仓库镜像到 GitHub 后才会自动执行。CNB 支持由组织启用的 Windows 自托管构建节点，启用后可把脚本中的同样命令接入 `.cnb.yml`；在节点尚未配置前不提交一个必然排队或失败的 CNB 任务。测试框架和 PowerShell 入口本身不依赖 GitHub API。参见 [CNB 构建节点文档](https://docs.cnb.cool/zh/build/build-node.html)。

@@ -239,7 +239,8 @@ public partial class TestAutomationModLoader {
         ComponentPlayer actor = ResolvePlayer(
             project.FindSubsystem<SubsystemPlayers>(true),
             command.PlayerIndex,
-            requireMainPlayer: !command.ExpectRejected);
+            requireMainPlayer: !command.ExpectRejected,
+            requireReady: !command.ExpectRejected);
         if (actor.ComponentHealth.Health > 0f) {
             throw new AutomationCommandException(
                 "player_not_dead",

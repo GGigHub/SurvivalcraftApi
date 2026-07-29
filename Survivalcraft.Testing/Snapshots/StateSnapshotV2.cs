@@ -9,7 +9,9 @@ public enum SnapshotDomain {
     Entities,
     Events,
     Inventories,
-    Health
+    Health,
+    Environment,
+    Mechanics
 }
 
 public sealed record GetSnapshotV2Command(
@@ -38,7 +40,46 @@ public sealed record StateSnapshotV2(
     EntityLifecycleSnapshotV2? EntityLifecycle = null,
     InventorySnapshotV2[]? Inventories = null,
     HealthStateSnapshotV2[]? HealthStates = null,
-    StateRevisionMetricsSnapshotV2? StateRevisions = null);
+    StateRevisionMetricsSnapshotV2? StateRevisions = null,
+    EnvironmentSnapshotV2? Environment = null,
+    MechanicsStateSnapshotV2[]? MechanicsStates = null);
+
+public sealed record EnvironmentSnapshotV2(
+    double TotalElapsedGameTime,
+    double TimeOfDayOffset,
+    float TimeOfYear,
+    double PrecipitationStartTime,
+    double PrecipitationEndTime,
+    float PrecipitationRampTime,
+    float LightningIntensity,
+    bool IsPrecipitationStarted,
+    double FogStartTime,
+    double FogEndTime,
+    float FogRampTime,
+    float FogProgress,
+    bool IsFogStarted,
+    double LastLightningStrikeTime,
+    Vector3State? LightningStrikePosition,
+    long TimeRevision,
+    long WeatherRevision,
+    long SkyRevision,
+    string GameMode);
+
+public sealed record MechanicsStateSnapshotV2(
+    int EntityId,
+    bool Exists,
+    bool IsPlayer,
+    int? PlayerIndex,
+    bool HasSleep,
+    bool IsSleeping,
+    bool AllowManualWakeup,
+    double? SleepStartTime,
+    long SleepRevision,
+    bool HasOnFire,
+    bool IsOnFire,
+    double FireDuration,
+    long FireRevision,
+    long LifecycleRevision);
 
 public sealed record InventorySnapshotV2(
     int InventoryId,

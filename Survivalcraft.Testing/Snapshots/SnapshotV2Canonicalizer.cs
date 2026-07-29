@@ -87,6 +87,48 @@ public static class SnapshotV2Canonicalizer {
                 })
                 .OrderBy(state => state.EntityId)
                 .ToArray(),
+            Environment = snapshot.Environment == null
+                ? null
+                : snapshot.Environment with {
+                    TotalElapsedGameTime = Round(
+                        snapshot.Environment.TotalElapsedGameTime,
+                        decimalPlaces),
+                    TimeOfDayOffset = Round(snapshot.Environment.TimeOfDayOffset, decimalPlaces),
+                    TimeOfYear = (float)Round(snapshot.Environment.TimeOfYear, decimalPlaces),
+                    PrecipitationStartTime = Round(
+                        snapshot.Environment.PrecipitationStartTime,
+                        decimalPlaces),
+                    PrecipitationEndTime = Round(
+                        snapshot.Environment.PrecipitationEndTime,
+                        decimalPlaces),
+                    PrecipitationRampTime = (float)Round(
+                        snapshot.Environment.PrecipitationRampTime,
+                        decimalPlaces),
+                    LightningIntensity = (float)Round(
+                        snapshot.Environment.LightningIntensity,
+                        decimalPlaces),
+                    FogStartTime = Round(snapshot.Environment.FogStartTime, decimalPlaces),
+                    FogEndTime = Round(snapshot.Environment.FogEndTime, decimalPlaces),
+                    FogRampTime = (float)Round(
+                        snapshot.Environment.FogRampTime,
+                        decimalPlaces),
+                    FogProgress = (float)Round(snapshot.Environment.FogProgress, decimalPlaces),
+                    LastLightningStrikeTime = Round(
+                        snapshot.Environment.LastLightningStrikeTime,
+                        decimalPlaces),
+                    LightningStrikePosition = snapshot.Environment.LightningStrikePosition == null
+                        ? null
+                        : Normalize(snapshot.Environment.LightningStrikePosition, decimalPlaces)
+                },
+            MechanicsStates = snapshot.MechanicsStates?
+                .Select(state => state with {
+                    SleepStartTime = state.SleepStartTime.HasValue
+                        ? Round(state.SleepStartTime.Value, decimalPlaces)
+                        : null,
+                    FireDuration = Round(state.FireDuration, decimalPlaces)
+                })
+                .OrderBy(state => state.EntityId)
+                .ToArray(),
             RecentEvents = snapshot.RecentEvents
                 .OrderBy(item => item.Sequence)
                 .Select(item => item with { Data = ToSortedDictionary(item.Data) })

@@ -393,6 +393,13 @@ namespace Game {
             Window.Activity.ApplicationContext.StartActivity(intent);
             Java.Lang.JavaSystem.Exit(0);
 #elif !BROWSER
+            if (string.Equals(
+                    Environment.GetEnvironmentVariable("SC_TEST_DISABLE_RESTART"),
+                    "1",
+                    StringComparison.Ordinal)) {
+                Log.Warning("Internal restart suppressed by the automated test host.");
+                return;
+            }
             Process current = Process.GetCurrentProcess();
             Process.Start(new ProcessStartInfo {
                 FileName = current.MainModule!.FileName!,

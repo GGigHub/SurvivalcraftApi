@@ -1,6 +1,6 @@
 # TestAutomation v2 设计
 
-状态：设计基线；M0 已实现，M1 玩家地形交互与人物运动均已达到完整覆盖契约
+状态：设计基线；M0 已实现，M1 已推进至环境、睡眠与玩家火焰完整覆盖契约
 目标分支：`codex/api-mp-integration`
 适用范围：核心玩法联机自动化、直连与中继、多客户端、失败取证和长期稳定性测试
 
@@ -9,7 +9,7 @@
 TestAutomation v2 不重写现有测试框架，而是在已经稳定的命名管道控制面、无界面进程模型和场景产物之上增加完整的领域驱动能力。设计采用以下决定：
 
 1. 保持长度前缀 JSON 的 wire protocol v1，不因增加命令或快照字段破坏现有 TestHost 与运行时配对。
-2. 单独引入可演进的 Automation API（当前为 v3）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
+2. 单独引入可演进的 Automation API（当前为 v4）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
 3. 保留所有现有 v1 命令和 `state.getSnapshot`，以新增命令的方式演进，不修改旧 DTO 的含义。
 4. 明确区分 `fixture.*` 布置命令和玩家动作命令。前者用于构造确定性前置条件；后者必须经过真实客户端玩法路径，不能直接伪造最终状态或网络包。
 5. 新稳定场景不得使用 `legacy.executeScript`、`FUNC`、`EXEC` 或 UI 点击来验证非 UI 玩法。
@@ -90,7 +90,7 @@ flowchart LR
 ```text
 AutomationDescription
 ├── wireProtocolVersion        = 1
-├── automationApiVersion       = 3
+├── automationApiVersion       = 4
 ├── snapshotSchemaVersions     = [1, 2]
 ├── supportedCommands          = [...]
 ├── supportedDomains           = [...]
@@ -464,7 +464,7 @@ Survivalcraft.TestAutomation/
 
 已实现并进入自动门禁的内容：
 
-- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；当前库存/生命扩展后 API 为 v3；
+- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 扩展后当前为 v4；
 - 现有控制命令由注册式 `TypedCommandRouter` 统一分派，重复命令名在初始化阶段失败；
 - 新增有界 `ActionEventJournal`、`state.getEvents` 和 `state.resetEvents`；
 - 新增 Node、Network、Players、Events 投影的 Snapshot v2、稳定排序和玩家领域容差比较；
@@ -557,3 +557,19 @@ Survivalcraft.TestAutomation/
 - L0 覆盖 revision window、请求去重并发、扩展包编解码、Snapshot 规范化/差异、协议 round-trip 和 replay 拒绝规则；L2 Theory、覆盖清单及 PowerShell 的 `inventory-health-direct`、`inventory-health-relay`、`inventory-health` 入口纳入完整门禁。
 
 `inventory.container-operations` 与 `health-damage-respawn` 均已标记为 `covered`。后续可继续推进环境、骑乘/睡眠/火焰、电路/移动方块和 pickable/projectile 生命周期，复用 request identity、lifecycle revision 与强类型快照模式。
+
+## 27. 环境、睡眠与玩家火焰完整覆盖实施记录
+
+本切片把全局环境状态和玩家 mechanics 状态放入同一条严格可回放生产链，同时把 Automation API 提升到 v4：
+
+- wire protocol 提升到 revision 6。时间、天气和雷电包显式区分 `State` 与 `Request`；客户端只提交目标时间偏移、合法天气动作或视线附近雷击请求，服务端重新验证 Playing 会话、创造模式、方向/位置和值域，并拒绝客户端伪造的权威状态；
+- 时间、天气和雷电分别使用隔离的单调 revision，天气快照包含完整降水与雾调度。雷电是瞬时事件，只向当时在线节点广播，不给 late joiner 伪造历史雷击；
+- 睡眠和唤醒请求绑定发送会话的真实 `ComponentPlayer` 与当前实体 ID，并带 64 位 request ID。状态包绑定实体 lifecycle revision 与 sleep revision，能同步睡眠和明确的 awake 基线；
+- 玩家着火包只接受服务端到客户端方向，绑定 lifecycle/fire revision，携带明确的 on/off 与剩余时长。`ComponentOnFire` 在显式灭火和自然归零时广播灭火状态，late join/reconnect 不再依赖本地推断；
+- Snapshot v2 新增 `environment` 与 `mechanics` 投影，包含游戏模式、时间、年内进度、完整天气调度、最后雷击、sleep/fire/lifecycle revision 和剩余火焰时长；规范化器稳定排序实体并规范化所有浮点字段；
+- 强类型命令新增 `fixture.environment.set`、`environment.requestChange`、`environment.runRevisionBurst`、`fixture.mechanics.prepare`、`fixture.mechanics.setPlayerFire`、`player.sleep`、`player.ignite` 和 `mechanics.runRevisionBurst`。夹具只建立确定性前置条件，合法动作仍进入生产包路径；
+- 一服三客 Direct/Relay 场景验证控制角色拒绝、Survival 模式环境请求拒绝、同 revision 权威快照纠正请求端乐观时间/天气状态、伪造环境/火焰状态、跨玩家睡眠冒用、观察者收敛、100% 复制与 50% 重排下的旧状态拒绝、late join、稳定 PlayerIndex 与新实体世代重连，以及环境/睡眠/剩余着火状态的保存重载；
+- `actions.json` 严格包含 client-a 的 time、precipitation、fog、lightning、sleep，server 的 environment/fire revision burst，以及 client-a wake 八个动作。Direct 与 Relay 原运行、严格回放和 xUnit L2 Theory 均真实无窗口通过；
+- L0 覆盖生产包编解码、AutoTest v4 DTO、Snapshot 规范化、覆盖清单和 replay 拒绝规则；PowerShell 的 `environment-mechanics-direct`、`environment-mechanics-relay`、`environment-mechanics` 入口及 `full` 门禁已经接入。
+
+`environment.time-weather-lightning` 与 `mechanics.sleep-fire` 现已标记为 `covered`。骑乘仍是独立的 `mechanics.mount` planned 项，不因共享 mechanics 名称而被提前宣称覆盖。

@@ -83,6 +83,7 @@ public sealed class GameNodeProcess : IAsyncDisposable {
             RedirectStandardError = false,
             CreateNoWindow = true
         };
+        startInfo.Environment["SC_TEST_DISABLE_RESTART"] = "1";
         AddArgument(startInfo, "--log-port", LogPort.ToString());
         AddArgument(startInfo, "--cmd-port", CommandPort.ToString());
         AddArgument(startInfo, "--game-port", GamePort.ToString());

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "entity-direct", "entity-relay", "entity", "inventory-health-direct", "inventory-health-relay", "inventory-health", "full")]
+    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "entity-direct", "entity-relay", "entity", "inventory-health-direct", "inventory-health-relay", "inventory-health", "environment-mechanics-direct", "environment-mechanics-relay", "environment-mechanics", "legacy", "full")]
     [string]$Mode = "fast",
 
     [ValidateSet("Debug", "Release")]
@@ -153,6 +153,33 @@ $inventoryHealthRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artif
 }
 elseif ($Mode -eq "inventory-health" -or $Mode -eq "full") {
     Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "inventory-health-lifecycle-relay"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$environmentMechanicsDirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\environment-mechanics-direct-$runStamp"
+}
+elseif ($Mode -eq "environment-mechanics" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "environment-mechanics-direct"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$environmentMechanicsRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\environment-mechanics-relay-$runStamp"
+}
+elseif ($Mode -eq "environment-mechanics" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "environment-mechanics-relay"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$legacyArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\legacy-audit-$runStamp"
+}
+elseif ($Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "legacy-audit"
 }
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
@@ -364,6 +391,75 @@ function Run-InventoryHealthScenario {
     )
 }
 
+function Run-EnvironmentMechanicsScenario {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("direct", "relay")]
+        [string]$Transport,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ArtifactDirectory
+    )
+
+    Build-CoreRuntime
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "run", "environment-mechanics-multiplayer",
+        "--transport", $Transport,
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $ArtifactDirectory
+    )
+}
+
+function Run-LegacyAudit {
+    New-Item -ItemType Directory -Force -Path $legacyArtifactDirectory | Out-Null
+    $legacyTestArguments = @(
+        "test", $gameTestProject, "--nologo", "-c", $Configuration,
+        "--filter", "Layer!=L2&Layer!=L0&Layer!=L1",
+        "--logger", "console;verbosity=normal",
+        "--logger", "trx;LogFileName=legacy-audit.trx",
+        "--results-directory", $legacyArtifactDirectory
+    ) + $buildProperties
+    if ($NoBuild) {
+        $legacyTestArguments += "--no-build"
+    }
+    Write-Host "dotnet $($legacyTestArguments -join ' ')"
+    & dotnet @legacyTestArguments
+    $legacyExitCode = $LASTEXITCODE
+    $trxFile = Get-ChildItem -LiteralPath $legacyArtifactDirectory -Filter "legacy-audit*.trx" |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+    if ($null -eq $trxFile) {
+        throw "Legacy audit did not produce a TRX result (dotnet exit code $legacyExitCode)."
+    }
+
+    [xml]$trx = Get-Content -LiteralPath $trxFile.FullName -Raw
+    $namespace = [System.Xml.XmlNamespaceManager]::new($trx.NameTable)
+    $namespace.AddNamespace("t", $trx.DocumentElement.NamespaceURI)
+    $counters = $trx.SelectSingleNode("//t:ResultSummary/t:Counters", $namespace)
+    $failedTests = @(
+        $trx.SelectNodes("//t:UnitTestResult[@outcome='Failed']", $namespace) |
+            ForEach-Object { $_.GetAttribute("testName") } |
+            Sort-Object -Unique
+    )
+    $summary = [ordered]@{
+        schemaVersion = 1
+        dotnetExitCode = $legacyExitCode
+        total = [int]$counters.GetAttribute("total")
+        executed = [int]$counters.GetAttribute("executed")
+        passed = [int]$counters.GetAttribute("passed")
+        failed = [int]$counters.GetAttribute("failed")
+        failedTests = $failedTests
+        trx = $trxFile.Name
+    }
+    $summaryPath = Join-Path $legacyArtifactDirectory "legacy-audit-summary.json"
+    $summary | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $summaryPath -Encoding utf8
+    Write-Host "Legacy audit: total=$($summary.total), passed=$($summary.passed), failed=$($summary.failed), summary=$summaryPath"
+    if ($legacyExitCode -ne 0) {
+        throw "dotnet exited with code $legacyExitCode"
+    }
+}
+
 Push-Location $repositoryRoot
 try {
     switch ($Mode) {
@@ -442,6 +538,19 @@ try {
             Run-InventoryHealthScenario -Transport "direct" -ArtifactDirectory $inventoryHealthDirectArtifactDirectory
             Run-InventoryHealthScenario -Transport "relay" -ArtifactDirectory $inventoryHealthRelayArtifactDirectory
         }
+        "environment-mechanics-direct" {
+            Run-EnvironmentMechanicsScenario -Transport "direct" -ArtifactDirectory $environmentMechanicsDirectArtifactDirectory
+        }
+        "environment-mechanics-relay" {
+            Run-EnvironmentMechanicsScenario -Transport "relay" -ArtifactDirectory $environmentMechanicsRelayArtifactDirectory
+        }
+        "environment-mechanics" {
+            Run-EnvironmentMechanicsScenario -Transport "direct" -ArtifactDirectory $environmentMechanicsDirectArtifactDirectory
+            Run-EnvironmentMechanicsScenario -Transport "relay" -ArtifactDirectory $environmentMechanicsRelayArtifactDirectory
+        }
+        "legacy" {
+            Run-LegacyAudit
+        }
         "full" {
             Run-FastTests
             Run-Doctor
@@ -460,15 +569,9 @@ try {
             Run-EntityCreatureScenario -Transport "relay" -ArtifactDirectory $entityRelayArtifactDirectory
             Run-InventoryHealthScenario -Transport "direct" -ArtifactDirectory $inventoryHealthDirectArtifactDirectory
             Run-InventoryHealthScenario -Transport "relay" -ArtifactDirectory $inventoryHealthRelayArtifactDirectory
-            $legacyTestArguments = @(
-                "test", $gameTestProject, "--nologo", "-c", $Configuration,
-                "--filter", "Layer!=L2&Layer!=L0&Layer!=L1",
-                "--logger", "console;verbosity=normal"
-            ) + $buildProperties
-            if ($NoBuild) {
-                $legacyTestArguments += "--no-build"
-            }
-            Invoke-DotNet -CommandArguments $legacyTestArguments
+            Run-EnvironmentMechanicsScenario -Transport "direct" -ArtifactDirectory $environmentMechanicsDirectArtifactDirectory
+            Run-EnvironmentMechanicsScenario -Transport "relay" -ArtifactDirectory $environmentMechanicsRelayArtifactDirectory
+            Run-LegacyAudit
         }
     }
 }

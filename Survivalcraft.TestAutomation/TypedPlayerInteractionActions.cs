@@ -368,10 +368,12 @@ public partial class TestAutomationModLoader {
     private static ComponentPlayer ResolvePlayer(
         SubsystemPlayers players,
         int playerIndex,
-        bool requireMainPlayer) {
+        bool requireMainPlayer,
+        bool requireReady = true) {
         PlayerData? player = players.PlayersData.FirstOrDefault(candidate =>
             candidate.PlayerIndex == playerIndex);
-        if (player?.ComponentPlayer == null || !player.IsReadyForPlaying) {
+        if (player?.ComponentPlayer == null
+            || (requireReady && !player.IsReadyForPlaying)) {
             throw new AutomationCommandException(
                 "actor_not_found",
                 $"Player {playerIndex} is not ready for gameplay.");

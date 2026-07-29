@@ -195,16 +195,19 @@ namespace Game {
                 return;
             }
 
+            bool authoritativeNetworkVisual = fromNetwork && NetworkManager.IsClientRunning;
             float explosionPressure = m_random.Float(0f, 1f) < 0.2f ? 39 : 19;
             bool strike = m_subsystemTime.GameTime - m_lastLightningStrikeTime > 1.0;
             bool setBodyOnFire = true;
-            ModsManager.HookAction(
-                "OnLightningStrike",
-                loader => {
-                    loader.OnLightningStrike(this, ref targetPosition, ref strike, ref explosionPressure, ref setBodyOnFire);
-                    return false;
-                }
-            );
+            if (!authoritativeNetworkVisual) {
+                ModsManager.HookAction(
+                    "OnLightningStrike",
+                    loader => {
+                        loader.OnLightningStrike(this, ref targetPosition, ref strike, ref explosionPressure, ref setBodyOnFire);
+                        return false;
+                    }
+                );
+            }
             if (m_lightningStrikePosition.HasValue
                 || !strike) {
                 return;
@@ -226,7 +229,12 @@ namespace Game {
             else if (num < 200f) {
                 m_subsystemAudio.PlayRandomSound("Audio/ThunderFar", 0.8f, m_random.Float(-0.2f, 0.2f), 0f, delay);
             }
-            
+
+            if (authoritativeNetworkVisual) {
+                // The server owns mod hooks, ignition, statistics, explosions and terrain effects.
+                return;
+            }
+
             if (!fromNetwork) {
                 OnSkyLightning?.Invoke(targetPosition);
             }

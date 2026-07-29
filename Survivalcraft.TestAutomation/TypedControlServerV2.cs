@@ -368,6 +368,86 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             RunHealthRevisionBurst);
+        router.Register<SetEnvironmentFixtureCommand, SetEnvironmentFixtureResult>(
+            Metadata(
+                ControlCommandNames.SetEnvironmentFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => SetEnvironmentFixture(command));
+        router.Register<EnvironmentRequestChangeCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.EnvironmentRequestChange,
+                AutomationCommandDomain.Environment,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueueEnvironmentChange);
+        router.Register<RunEnvironmentRevisionBurstCommand, EnvironmentRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunEnvironmentRevisionBurst,
+                AutomationCommandDomain.Environment,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunEnvironmentRevisionBurst);
+        router.Register<PrepareMechanicsFixtureCommand, MechanicsFixture>(
+            Metadata(
+                ControlCommandNames.PrepareMechanicsFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareMechanicsFixture(command));
+        router.Register<SetPlayerFireFixtureCommand, SetPlayerFireFixtureResult>(
+            Metadata(
+                ControlCommandNames.SetPlayerFireFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => SetPlayerFireFixture(command));
+        router.Register<PlayerSleepCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerSleep,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerSleep);
+        router.Register<PlayerIgniteCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerIgnite,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerIgnite);
+        router.Register<RunMechanicsRevisionBurstCommand, MechanicsRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunMechanicsRevisionBurst,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunMechanicsRevisionBurst);
         router.Register<SetClockCommand, ClockState>(
             Metadata(ControlCommandNames.SetClock, AutomationCommandDomain.Time, true),
             (_, command) => SetClock(command));
@@ -593,9 +673,19 @@ public partial class TestAutomationModLoader {
             && project != null
                 ? BuildHealthStateSnapshotsV2(project, command.EntityIds)
                 : null;
+        EnvironmentSnapshotV2? environment = domains.Contains(SnapshotDomain.Environment)
+            && project != null
+                ? BuildEnvironmentSnapshotV2(project)
+                : null;
+        MechanicsStateSnapshotV2[]? mechanicsStates = domains.Contains(SnapshotDomain.Mechanics)
+            && project != null
+                ? BuildMechanicsStateSnapshotsV2(project, command.EntityIds)
+                : null;
         StateRevisionMetricsSnapshotV2? stateRevisions =
             (domains.Contains(SnapshotDomain.Inventories)
-                || domains.Contains(SnapshotDomain.Health))
+                || domains.Contains(SnapshotDomain.Health)
+                || domains.Contains(SnapshotDomain.Environment)
+                || domains.Contains(SnapshotDomain.Mechanics))
             && project != null
                 ? BuildStateRevisionMetricsSnapshotV2(project)
                 : null;
@@ -631,7 +721,99 @@ public partial class TestAutomationModLoader {
             entityLifecycle,
             inventories,
             healthStates,
-            stateRevisions);
+            stateRevisions,
+            environment,
+            mechanicsStates);
+    }
+
+    private static EnvironmentSnapshotV2 BuildEnvironmentSnapshotV2(Project project) {
+        SubsystemGameInfo info = project.FindSubsystem<SubsystemGameInfo>(true);
+        SubsystemWeather weather = project.FindSubsystem<SubsystemWeather>(true);
+        SubsystemSky sky = project.FindSubsystem<SubsystemSky>(true);
+        bool client = NetworkManager.IsClientRunning;
+        long Revision(NetworkStateRevisionDomain domain) => client
+            ? NetworkStateRevisionTracker.GetAppliedRevision(
+                project,
+                domain,
+                SubsystemTimePacket.EnvironmentStateId)
+            : NetworkStateRevisionTracker.GetAuthoritativeRevision(
+                project,
+                domain,
+                SubsystemTimePacket.EnvironmentStateId);
+        return new EnvironmentSnapshotV2(
+            info.TotalElapsedGameTime,
+            info.TimeOfDay.TimeOfDayOffset,
+            info.WorldSettings.TimeOfYear,
+            weather.m_precipitationStartTime,
+            SnapshotScheduleEnd(weather.m_precipitationEndTime),
+            weather.m_precipitationRampTime,
+            weather.m_lightningIntensity,
+            weather.IsPrecipitationStarted,
+            weather.m_fogStartTime,
+            SnapshotScheduleEnd(weather.m_fogEndTime),
+            weather.m_fogRampTime,
+            weather.FogProgress,
+            weather.IsFogStarted,
+            sky.m_lastLightningStrikeTime,
+            sky.m_lightningStrikePosition.HasValue
+                ? ToVector(sky.m_lightningStrikePosition.Value)
+                : null,
+            Revision(NetworkStateRevisionDomain.Time),
+            Revision(NetworkStateRevisionDomain.Weather),
+            Revision(NetworkStateRevisionDomain.Sky),
+            info.WorldSettings.GameMode.ToString());
+    }
+
+    private static double SnapshotScheduleEnd(double value) =>
+        double.IsPositiveInfinity(value) ? double.MaxValue : value;
+
+    private static MechanicsStateSnapshotV2[] BuildMechanicsStateSnapshotsV2(
+        Project project,
+        int[]? selectedEntityIds) {
+        int[] entityIds = selectedEntityIds
+            ?? project.Entities
+                .Where(entity => entity.FindComponent<ComponentSleep>() != null
+                    || entity.FindComponent<ComponentOnFire>() != null)
+                .Select(entity => entity.Id)
+                .Where(entityId => entityId > 0)
+                .Distinct()
+                .OrderBy(entityId => entityId)
+                .Take(AutomationProtocol.MaximumSnapshotEntities)
+                .ToArray();
+        bool client = NetworkManager.IsClientRunning;
+        return entityIds
+            .Distinct()
+            .Select(entityId => {
+                Entity? entity = project.FindEntity(entityId);
+                ComponentPlayer? player = entity?.FindComponent<ComponentPlayer>();
+                ComponentSleep? sleep = entity?.FindComponent<ComponentSleep>();
+                ComponentOnFire? onFire = entity?.FindComponent<ComponentOnFire>();
+                long Revision(NetworkStateRevisionDomain domain, bool present) => !present
+                    ? -1
+                    : client
+                        ? NetworkStateRevisionTracker.GetAppliedRevision(project, domain, entityId)
+                        : NetworkStateRevisionTracker.GetAuthoritativeRevision(project, domain, entityId);
+                long lifecycleRevision = client
+                    ? EntityLifecycleTracker.GetAppliedRevision(project, entityId)
+                    : EntityLifecycleTracker.GetAuthoritativeRevision(project, entityId);
+                return new MechanicsStateSnapshotV2(
+                    entityId,
+                    entity != null,
+                    player != null,
+                    player?.PlayerData?.PlayerIndex,
+                    sleep != null,
+                    sleep?.IsSleeping == true,
+                    sleep?.m_allowManualWakeUp == true,
+                    sleep?.m_sleepStartTime,
+                    Revision(NetworkStateRevisionDomain.Sleep, sleep != null),
+                    onFire != null,
+                    onFire?.IsOnFire == true,
+                    onFire?.m_fireDuration ?? 0,
+                    Revision(NetworkStateRevisionDomain.Fire, onFire != null),
+                    lifecycleRevision);
+            })
+            .OrderBy(state => state.EntityId)
+            .ToArray();
     }
 
     private static InventorySnapshotV2[] BuildInventorySnapshotsV2(

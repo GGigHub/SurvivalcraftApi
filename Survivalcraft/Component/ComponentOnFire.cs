@@ -39,6 +39,8 @@ namespace Game {
 
         public static event Action<ComponentOnFire, ComponentCreature, float> OnSetOnFire;
 
+        public static event Action<ComponentOnFire> OnExtinguish;
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void SetOnFire(ComponentCreature attacker, float duration, bool fromNetwork = false) {
@@ -53,9 +55,13 @@ namespace Game {
             if (!fromNetwork) OnSetOnFire?.Invoke(this, attacker, duration);
         }
 
-        public virtual void Extinguish() {
+        public virtual void Extinguish(bool fromNetwork = false) {
+            bool wasOnFire = IsOnFire;
             Attacker = null;
             m_fireDuration = 0f;
+            if (wasOnFire && !fromNetwork) {
+                OnExtinguish?.Invoke(this);
+            }
         }
 
         public virtual void Update(float dt) {
@@ -63,7 +69,13 @@ namespace Game {
                 return;
             }
             if (IsOnFire) {
+                float previousDuration = m_fireDuration;
                 m_fireDuration = MathUtils.Max(m_fireDuration - dt, 0f);
+                if (previousDuration > 0f
+                    && m_fireDuration <= 0f
+                    && !NetworkManager.IsClientRunning) {
+                    OnExtinguish?.Invoke(this);
+                }
                 if (!m_hideFireParticle) {
                     if (m_onFireParticleSystem == null) {
                         m_onFireParticleSystem = new OnFireParticleSystem();

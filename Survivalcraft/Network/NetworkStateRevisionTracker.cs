@@ -6,7 +6,12 @@ namespace Game.Network;
 public enum NetworkStateRevisionDomain : byte {
     Inventory,
     Health,
-    Damage
+    Damage,
+    Time,
+    Weather,
+    Sky,
+    Sleep,
+    Fire
 }
 
 public readonly record struct NetworkStateRevisionMetrics(
