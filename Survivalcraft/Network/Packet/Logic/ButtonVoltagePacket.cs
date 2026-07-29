@@ -17,24 +17,80 @@ public class ButtonVoltagePacket : EditableBlockPacketBase {
         m_inventoryId = inventoryId;
         m_slotIndex = slotIndex;
         m_voltage = voltage;
+        InitializeRequest(
+            NetworkLogicElementKind.Button,
+            editAsItem,
+            inventoryId,
+            slotIndex,
+            cell);
     }
     public override void Serialize(PacketSerializer archive) {
+        SerializeMutationEnvelope(archive);
         SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
         archive.Value(ref m_voltage);
     }
     public override void Handle(bool isServer) {
-        if (m_editAsItem) {
-            GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
-                ReplaceDataAtSlot(inventory, m_slotIndex, d => ButtonBlock.SetVoltageLevel(d, m_voltage));
-            });
+        EditableTarget target = Target(m_editAsItem, m_inventoryId, m_slotIndex, m_cellFace);
+        if (isServer) {
+            EditableLogicResultCode result = ValidateServerRequest(
+                NetworkLogicElementKind.Button,
+                target,
+                ButtonBlock.Index,
+                out IInventory inventory,
+                out int currentValue);
+            if (result == EditableLogicResultCode.Accepted
+                && m_voltage is < 0 or > 15) {
+                result = EditableLogicResultCode.InvalidValue;
+            }
+            if (result == EditableLogicResultCode.Accepted) {
+                Apply(target, inventory, currentValue);
+                PrepareAuthoritativeState(NetworkLogicElementKind.Button, target);
+                QueueAuthoritativeInventoryState(inventory);
+                NetworkManager.Queue(this);
+            }
+            else if (From != null && GameManager.Project != null) {
+                if (Terrain.ExtractContents(currentValue) == ButtonBlock.Index) {
+                    m_voltage = ButtonBlock.GetVoltageLevel(Terrain.ExtractData(currentValue));
+                }
+                PrepareAuthoritativeState(
+                    NetworkLogicElementKind.Button,
+                    target,
+                    result,
+                    advanceRevision: false);
+                To = From;
+                NetworkManager.Queue(this);
+            }
+            return;
         }
-        else {
-            SubsystemTerrain st = GameManager.Project.FindSubsystem<SubsystemTerrain>();
-            int value = st.Terrain.GetCellValue(m_cellFace.X, m_cellFace.Y, m_cellFace.Z);
-            int newValue = Terrain.ReplaceData(value, ButtonBlock.SetVoltageLevel(Terrain.ExtractData(value), m_voltage));
-            st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
+        if (m_voltage is < 0 or > 15
+            || !TryAcceptClientState(
+                NetworkLogicElementKind.Button,
+                target,
+                ButtonBlock.Index,
+                out IInventory clientInventory,
+                out int clientValue)) {
+            return;
         }
-        if (isServer) NetworkManager.Queue(this);
+        Apply(target, clientInventory, clientValue);
+    }
+
+    private void Apply(EditableTarget target, IInventory inventory, int currentValue) {
+        if (target.IsItem) {
+            ReplaceDataAtSlot(
+                inventory,
+                target.SlotIndex,
+                data => ButtonBlock.SetVoltageLevel(data, m_voltage));
+            return;
+        }
+        SubsystemTerrain terrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
+        int newValue = Terrain.ReplaceData(
+            currentValue,
+            ButtonBlock.SetVoltageLevel(Terrain.ExtractData(currentValue), m_voltage));
+        terrain.ChangeCell(
+            target.CellFace.X,
+            target.CellFace.Y,
+            target.CellFace.Z,
+            newValue);
     }
 }
 

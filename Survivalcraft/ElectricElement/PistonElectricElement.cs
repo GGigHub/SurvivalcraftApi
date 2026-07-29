@@ -27,7 +27,11 @@ namespace Game {
             int num2 = MathUtils.Max((int)(num * 15.999f) - 7, 0);
             if (num2 != m_lastLength) {
                 m_lastLength = num2;
-                SubsystemElectricity.Project.FindSubsystem<SubsystemPistonBlockBehavior>(true).AdjustPiston(CellFaces[0].Point, num2);
+                if (!NetworkManager.IsClientRunning) {
+                    SubsystemElectricity.Project
+                        .FindSubsystem<SubsystemPistonBlockBehavior>(true)
+                        .AdjustPiston(CellFaces[0].Point, num2);
+                }
             }
             return false;
         }

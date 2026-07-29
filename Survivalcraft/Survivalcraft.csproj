@@ -15,6 +15,10 @@
       <Compile Include="Network\New\RelayHost.cs" />
       <Compile Include="Network\New\NetworkServer.cs" />
       <Compile Include="Network\PacketManager.cs" />
+      <Compile Include="Network\NetworkLogicStateTracker.cs" />
+      <Compile Include="Network\NetworkMovingBlockIdentityTracker.cs" />
+      <Compile Include="Network\LogicStatePacketFactory.cs" />
+      <Compile Include="Network\DeferredEditableLogicStateQueue.cs" />
       <Compile Include="Network\Packet\Base\ClientPacketBase.cs" />
       <Compile Include="Network\Packet\Base\EditableBlockPacketBase.cs" />
       <Compile Include="Network\Packet\Base\PlayerPacketBase.cs" />

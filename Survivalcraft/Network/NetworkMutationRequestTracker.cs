@@ -17,7 +17,9 @@ public enum NetworkMutationDomain : byte {
     EnvironmentLightning,
     PlayerSleep,
     PlayerWakeup,
-    PlayerMount
+    PlayerMount,
+    PlayerInteract,
+    LogicEdit
 }
 
 /// <summary>

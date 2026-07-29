@@ -7,8 +7,8 @@ namespace Survivalcraft.Testing.Tests;
 public sealed class NetworkCompatibilityTests {
     [Fact]
     [Trait("Layer", "L0")]
-    public void ProtocolRevisionIncludesAuthoritativeMountWireFormat() {
-        Assert.Equal(7, NetworkCompatibility.ProtocolRevision);
+    public void ProtocolRevisionIncludesAuthoritativeLogicWireFormat() {
+        Assert.Equal(8, NetworkCompatibility.ProtocolRevision);
     }
 
     [Fact]

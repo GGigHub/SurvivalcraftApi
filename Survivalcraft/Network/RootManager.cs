@@ -337,8 +337,11 @@ public static class RootManager {
                 NetworkManager.Queue(new MovingBlockAddPacket((SubsystemMovingBlocks.MovingBlockSet)movingBlockSet));
             }
         };
-        SubsystemMovingBlocks.OnMovingBlockRemove += (movingBlockSet, isCrash) =>
-            NetworkManager.Queue(new MovingBlockRemovePacket(movingBlockSet, isCrash));
+        SubsystemMovingBlocks.OnMovingBlockRemove += (movingBlockSet, isCrash) => {
+            if (!NetworkManager.IsClientRunning) {
+                NetworkManager.Queue(new MovingBlockRemovePacket(movingBlockSet, isCrash));
+            }
+        };
         SubsystemPickables.OnPickableCreate += (pickable) =>
             NetworkManager.Queue(new PickableCreatePacket(pickable));
         SubsystemPickables.OnPickableDelete += (pickable) =>

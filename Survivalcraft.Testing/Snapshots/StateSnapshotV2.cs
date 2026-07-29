@@ -11,7 +11,8 @@ public enum SnapshotDomain {
     Inventories,
     Health,
     Environment,
-    Mechanics
+    Mechanics,
+    Logic
 }
 
 public sealed record GetSnapshotV2Command(
@@ -22,7 +23,8 @@ public sealed record GetSnapshotV2Command(
     int EventLimit = 128,
     bool IncludeVolatileDiagnostics = false,
     int[]? EntityIds = null,
-    int[]? InventoryIds = null);
+    int[]? InventoryIds = null,
+    TerrainCellCoordinate[]? LogicCells = null);
 
 public sealed record StateSnapshotV2(
     int SchemaVersion,
@@ -42,7 +44,53 @@ public sealed record StateSnapshotV2(
     HealthStateSnapshotV2[]? HealthStates = null,
     StateRevisionMetricsSnapshotV2? StateRevisions = null,
     EnvironmentSnapshotV2? Environment = null,
-    MechanicsStateSnapshotV2[]? MechanicsStates = null);
+    MechanicsStateSnapshotV2[]? MechanicsStates = null,
+    LogicElementStateSnapshotV2[]? LogicStates = null,
+    PersistentVoltageSnapshotV2[]? PersistentVoltages = null,
+    MovingBlockStateSnapshotV2[]? MovingBlocks = null,
+    LogicRevisionMetricsSnapshotV2? LogicRevisions = null);
+
+public sealed record LogicElementStateSnapshotV2(
+    int X,
+    int Y,
+    int Z,
+    string Kind,
+    int Value,
+    int Contents,
+    int Data,
+    string State,
+    long Revision);
+
+public sealed record PersistentVoltageSnapshotV2(
+    int X,
+    int Y,
+    int Z,
+    double Voltage);
+
+public sealed record MovingBlockStateSnapshotV2(
+    string Identity,
+    bool HasTag,
+    TerrainCellCoordinate? Tag,
+    long InstanceId,
+    bool Present,
+    long Generation,
+    long Revision,
+    Vector3State Position,
+    Vector3State TargetPosition,
+    Vector3State Velocity,
+    int BlockCount,
+    string Blocks);
+
+public sealed record LogicRevisionMetricsSnapshotV2(
+    int AuthoritativeTrackedStates,
+    int ClientTrackedStates,
+    long AppliedStates,
+    long IgnoredStaleStates,
+    long IgnoredLifecycleStates,
+    int AuthoritativeMovingGenerations,
+    int ClientMovingGenerations,
+    int MovingTombstones,
+    long ElectricityRevision);
 
 public sealed record EnvironmentSnapshotV2(
     double TotalElapsedGameTime,

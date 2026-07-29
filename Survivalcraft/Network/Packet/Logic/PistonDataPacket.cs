@@ -17,24 +17,90 @@ public class PistonDataPacket : EditableBlockPacketBase {
         m_inventoryId = inventoryId;
         m_slotIndex = slotIndex;
         m_data = data;
+        InitializeRequest(
+            NetworkLogicElementKind.Piston,
+            editAsItem,
+            inventoryId,
+            slotIndex,
+            cell);
     }
     public override void Serialize(PacketSerializer archive) {
+        SerializeMutationEnvelope(archive);
         SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
         archive.Value(ref m_data);
     }
     public override void Handle(bool isServer) {
-        if (m_editAsItem) {
-            GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
-                ReplaceDataAtSlot(inventory, m_slotIndex, _ => m_data);
-            });
+        EditableTarget target = Target(m_editAsItem, m_inventoryId, m_slotIndex, m_cellFace);
+        if (isServer) {
+            EditableLogicResultCode result = ValidateServerRequest(
+                NetworkLogicElementKind.Piston,
+                target,
+                PistonBlock.Index,
+                out IInventory inventory,
+                out int currentValue);
+            int currentData = Terrain.ExtractData(currentValue);
+            if (result == EditableLogicResultCode.Accepted
+                && !IsValidPistonEdit(currentData, m_data)) {
+                result = EditableLogicResultCode.InvalidValue;
+            }
+            if (result == EditableLogicResultCode.Accepted) {
+                Apply(target, inventory, currentValue);
+                PrepareAuthoritativeState(NetworkLogicElementKind.Piston, target);
+                QueueAuthoritativeInventoryState(inventory);
+                NetworkManager.Queue(this);
+            }
+            else if (From != null && GameManager.Project != null) {
+                if (Terrain.ExtractContents(currentValue) == PistonBlock.Index) {
+                    m_data = currentData;
+                }
+                PrepareAuthoritativeState(
+                    NetworkLogicElementKind.Piston,
+                    target,
+                    result,
+                    advanceRevision: false);
+                To = From;
+                NetworkManager.Queue(this);
+            }
+            return;
         }
-        else {
-            SubsystemTerrain st = GameManager.Project.FindSubsystem<SubsystemTerrain>();
-            int value = st.Terrain.GetCellValue(m_cellFace.X, m_cellFace.Y, m_cellFace.Z);
-            int newValue = Terrain.ReplaceData(value, m_data);
-            st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
+        if (!IsValidAuthoritativeState(m_data)
+            || !TryAcceptClientState(
+                NetworkLogicElementKind.Piston,
+                target,
+                PistonBlock.Index,
+                out IInventory clientInventory,
+                out int clientValue)) {
+            return;
         }
-        if (isServer) NetworkManager.Queue(this);
+        Apply(target, clientInventory, clientValue);
+    }
+
+    private void Apply(EditableTarget target, IInventory inventory, int currentValue) {
+        if (target.IsItem) {
+            ReplaceDataAtSlot(inventory, target.SlotIndex, _ => m_data);
+            return;
+        }
+        SubsystemTerrain terrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
+        terrain.ChangeCell(
+            target.CellFace.X,
+            target.CellFace.Y,
+            target.CellFace.Z,
+            Terrain.ReplaceData(currentValue, m_data));
+    }
+
+    private static bool IsValidPistonEdit(int currentData, int proposedData) {
+        const int immutableMask = 0x39;
+        return IsValidAuthoritativeState(proposedData)
+            && (proposedData & immutableMask) == (currentData & immutableMask);
+    }
+
+    internal static bool IsValidAuthoritativeState(int data) {
+        const int knownMask = 0x3FFF;
+        return (data & ~knownMask) == 0
+            && PistonBlock.GetMode(data) <= PistonMode.StrictPulling
+            && PistonBlock.GetMaxExtension(data) <= SubsystemPistonBlockBehavior.PistonMaxExtension
+            && PistonBlock.GetPullCount(data) <= SubsystemPistonBlockBehavior.PistonMaxMovedBlocks
+            && PistonBlock.GetSpeed(data) <= SubsystemPistonBlockBehavior.PistonMaxSpeedSetting;
     }
 }
 

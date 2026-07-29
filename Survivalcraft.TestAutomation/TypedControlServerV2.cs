@@ -488,6 +488,76 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             RunMountLifecycleBurst);
+        router.Register<PrepareLogicFixtureCommand, LogicFixture>(
+            Metadata(
+                ControlCommandNames.PrepareLogicFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareLogicFixture(command));
+        router.Register<ApplyLogicFixtureCommand, ControlAck>(
+            Metadata(
+                ControlCommandNames.ApplyLogicFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => ApplyLogicFixture(command));
+        router.Register<LogicEditCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.LogicEdit,
+                AutomationCommandDomain.Logic,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueueLogicEdit);
+        router.Register<LogicInteractCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.LogicInteract,
+                AutomationCommandDomain.Logic,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueueLogicInteract);
+        router.Register<RunLogicRevisionBurstCommand, LogicRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunLogicRevisionBurst,
+                AutomationCommandDomain.Logic,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunLogicRevisionBurst);
+        router.Register<RunMovingBlockLifecycleBurstCommand, MovingBlockLifecycleBurstResult>(
+            Metadata(
+                ControlCommandNames.RunMovingBlockLifecycleBurst,
+                AutomationCommandDomain.Logic,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunMovingBlockLifecycleBurst);
+        router.Register<RunPistonLifecycleCommand, PistonLifecycleResult>(
+            Metadata(
+                ControlCommandNames.RunPistonLifecycle,
+                AutomationCommandDomain.Logic,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunPistonLifecycle);
         router.Register<SetClockCommand, ClockState>(
             Metadata(ControlCommandNames.SetClock, AutomationCommandDomain.Time, true),
             (_, command) => SetClock(command));
@@ -626,6 +696,16 @@ public partial class TestAutomationModLoader {
                 "invalid_payload",
                 "Terrain cell Y coordinates must be between 0 and 255.");
         }
+        if (command.LogicCells is { Length: > AutomationProtocol.MaximumSnapshotLogicElements }) {
+            throw new AutomationCommandException(
+                "limit_exceeded",
+                $"At most {AutomationProtocol.MaximumSnapshotLogicElements} logic cells can be selected.");
+        }
+        if (command.LogicCells?.Any(cell => cell.Y is < 0 or > 255) == true) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "Logic cell Y coordinates must be between 0 and 255.");
+        }
 
         Project? project = GameManager.Project;
         SubsystemPlayers? subsystemPlayers = project?.FindSubsystem<SubsystemPlayers>();
@@ -721,6 +801,24 @@ public partial class TestAutomationModLoader {
             && project != null
                 ? BuildMechanicsStateSnapshotsV2(project, command.EntityIds)
                 : null;
+        LogicElementStateSnapshotV2[]? logicStates = domains.Contains(SnapshotDomain.Logic)
+            && project != null
+                ? BuildLogicElementSnapshotsV2(
+                    project,
+                    command.LogicCells ?? command.TerrainCells ?? [])
+                : null;
+        PersistentVoltageSnapshotV2[]? persistentVoltages = domains.Contains(SnapshotDomain.Logic)
+            && project != null
+                ? BuildPersistentVoltageSnapshotsV2(project)
+                : null;
+        MovingBlockStateSnapshotV2[]? movingBlocks = domains.Contains(SnapshotDomain.Logic)
+            && project != null
+                ? BuildMovingBlockSnapshotsV2(project)
+                : null;
+        LogicRevisionMetricsSnapshotV2? logicRevisions = domains.Contains(SnapshotDomain.Logic)
+            && project != null
+                ? BuildLogicRevisionMetricsSnapshotV2(project)
+                : null;
         StateRevisionMetricsSnapshotV2? stateRevisions =
             (domains.Contains(SnapshotDomain.Inventories)
                 || domains.Contains(SnapshotDomain.Health)
@@ -763,7 +861,238 @@ public partial class TestAutomationModLoader {
             healthStates,
             stateRevisions,
             environment,
-            mechanicsStates);
+            mechanicsStates,
+            logicStates,
+            persistentVoltages,
+            movingBlocks,
+            logicRevisions);
+    }
+
+    private static LogicElementStateSnapshotV2[] BuildLogicElementSnapshotsV2(
+        Project project,
+        TerrainCellCoordinate[] selectedCells) {
+        SubsystemTerrain terrain = project.FindSubsystem<SubsystemTerrain>(true);
+        SubsystemMemoryBankBlockBehavior memory =
+            project.FindSubsystem<SubsystemMemoryBankBlockBehavior>(true);
+        SubsystemTruthTableCircuitBlockBehavior truth =
+            project.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>(true);
+        SubsystemSignBlockBehavior signs =
+            project.FindSubsystem<SubsystemSignBlockBehavior>(true);
+        bool client = NetworkManager.IsClientRunning;
+        return selectedCells
+            .Distinct()
+            .Take(AutomationProtocol.MaximumSnapshotLogicElements)
+            .Select(cell => {
+                Point3 point = new(cell.X, cell.Y, cell.Z);
+                int value = Terrain.ReplaceLight(
+                    terrain.Terrain.GetCellValue(cell.X, cell.Y, cell.Z),
+                    0);
+                int contents = Terrain.ExtractContents(value);
+                int data = Terrain.ExtractData(value);
+                (NetworkLogicElementKind ElementKind, string Kind, string State) descriptor =
+                    DescribeLogicElement(contents, data, point, memory, truth, signs);
+                long revision = descriptor.ElementKind == NetworkLogicElementKind.None
+                    ? -1
+                    : client
+                        ? NetworkLogicStateTracker.GetAppliedRevision(
+                            project,
+                            NetworkLogicStateKey.Editable(
+                                descriptor.ElementKind,
+                                false,
+                                0,
+                                0,
+                                point))
+                        : NetworkLogicStateTracker.GetAuthoritativeRevision(
+                            project,
+                            NetworkLogicStateKey.Editable(
+                                descriptor.ElementKind,
+                                false,
+                                0,
+                                0,
+                                point));
+                return new LogicElementStateSnapshotV2(
+                    cell.X,
+                    cell.Y,
+                    cell.Z,
+                    descriptor.Kind,
+                    value,
+                    contents,
+                    data,
+                    descriptor.State,
+                    revision);
+            })
+            .OrderBy(state => state.X)
+            .ThenBy(state => state.Y)
+            .ThenBy(state => state.Z)
+            .ToArray();
+    }
+
+    private static (
+        NetworkLogicElementKind ElementKind,
+        string Kind,
+        string State) DescribeLogicElement(
+        int contents,
+        int data,
+        Point3 point,
+        SubsystemMemoryBankBlockBehavior memory,
+        SubsystemTruthTableCircuitBlockBehavior truth,
+        SubsystemSignBlockBehavior signs) {
+        if (contents == AdjustableDelayGateBlock.Index) {
+            return (
+                NetworkLogicElementKind.AdjustableDelayGate,
+                "adjustableDelayGate",
+                $"delay={AdjustableDelayGateBlock.GetDelay(data)}");
+        }
+        if (contents == BatteryBlock.Index) {
+            return (
+                NetworkLogicElementKind.Battery,
+                "battery",
+                $"voltage={BatteryBlock.GetVoltageLevel(data)}");
+        }
+        if (contents == ButtonBlock.Index) {
+            return (
+                NetworkLogicElementKind.Button,
+                "button",
+                $"voltage={ButtonBlock.GetVoltageLevel(data)}");
+        }
+        if (contents == SwitchBlock.Index) {
+            return (
+                NetworkLogicElementKind.Switch,
+                "switch",
+                string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"voltage={SwitchBlock.GetVoltageLevel(data)};on={SwitchBlock.GetLeverState(Terrain.MakeBlockValue(contents, 0, data))}"));
+        }
+        if (contents == PistonBlock.Index) {
+            return (
+                NetworkLogicElementKind.Piston,
+                "piston",
+                string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"mode={PistonBlock.GetMode(data)};face={PistonBlock.GetFace(data)};extension={PistonBlock.GetMaxExtension(data)};pull={PistonBlock.GetPullCount(data)};speed={PistonBlock.GetSpeed(data)};extended={PistonBlock.GetIsExtended(data)}"));
+        }
+        if (contents == MemoryBankBlock.Index) {
+            MemoryBankData? state = memory.GetBlockData(point);
+            return (
+                NetworkLogicElementKind.MemoryBank,
+                "memoryBank",
+                string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"data={state?.SaveString() ?? string.Empty};lastOutput={state?.LastOutput ?? 0}"));
+        }
+        if (contents == TruthTableCircuitBlock.Index) {
+            TruthTableData? state = truth.GetBlockData(point);
+            return (
+                NetworkLogicElementKind.TruthTable,
+                "truthTable",
+                $"data={state?.SaveString() ?? string.Empty}");
+        }
+        if (contents >= 0
+            && contents < BlocksManager.Blocks.Length
+            && BlocksManager.Blocks[contents] is SignBlock) {
+            SignData? state = signs.GetSignData(point);
+            string lines = string.Join("|", state?.Lines ?? []);
+            string colors = string.Join(
+                ",",
+                (state?.Colors ?? []).Select(color =>
+                    color.PackedValue.ToString("X8", CultureInfo.InvariantCulture)));
+            return (
+                NetworkLogicElementKind.Sign,
+                "sign",
+                $"lines={lines};colors={colors};url={state?.Url ?? string.Empty}");
+        }
+        if (contents == DispenserBlock.Index) {
+            return (
+                NetworkLogicElementKind.Dispenser,
+                "dispenser",
+                string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"mode={DispenserBlock.GetMode(data)};acceptsDrops={DispenserBlock.GetAcceptsDrops(data)}"));
+        }
+        return (NetworkLogicElementKind.None, "unknown", $"data={data}");
+    }
+
+    private static PersistentVoltageSnapshotV2[] BuildPersistentVoltageSnapshotsV2(
+        Project project) =>
+        project.FindSubsystem<SubsystemElectricity>(true)
+            .m_persistentElementsVoltages
+            .OrderBy(item => item.Key.X)
+            .ThenBy(item => item.Key.Y)
+            .ThenBy(item => item.Key.Z)
+            .Take(AutomationProtocol.MaximumSnapshotLogicElements)
+            .Select(item => new PersistentVoltageSnapshotV2(
+                item.Key.X,
+                item.Key.Y,
+                item.Key.Z,
+                item.Value))
+            .ToArray();
+
+    private static MovingBlockStateSnapshotV2[] BuildMovingBlockSnapshotsV2(
+        Project project) {
+        bool client = NetworkManager.IsClientRunning;
+        return project.FindSubsystem<SubsystemMovingBlocks>(true)
+            .m_movingBlockSets
+            .OrderBy(set => set.Id, StringComparer.Ordinal)
+            .ThenBy(set => set.Tag is Point3 point ? point.X : 0)
+            .ThenBy(set => set.Tag is Point3 point ? point.Y : 0)
+            .ThenBy(set => set.Tag is Point3 point ? point.Z : 0)
+            .ThenBy(NetworkMovingBlockIdentityTracker.GetOrCreate)
+            .Take(AutomationProtocol.MaximumSnapshotLogicElements)
+            .Select(set => {
+                bool hasTag = set.Tag is Point3;
+                Point3 tag = hasTag ? (Point3)set.Tag : default;
+                long instanceId = NetworkMovingBlockIdentityTracker.GetOrCreate(set);
+                NetworkLogicStateKey key = NetworkMovingBlockIdentityTracker.CreateStateKey(
+                    set.Id, hasTag, tag, instanceId);
+                long generation = client
+                    ? NetworkLogicStateTracker.GetAppliedMovingGeneration(project, key)
+                    : NetworkLogicStateTracker.GetAuthoritativeMovingGeneration(project, key);
+                long revision = client
+                    ? NetworkLogicStateTracker.GetAppliedRevision(project, key)
+                    : NetworkLogicStateTracker.GetAuthoritativeRevision(project, key);
+                string blocks = string.Join(
+                    ";",
+                    set.Blocks
+                        .OrderBy(block => block.Offset.X)
+                        .ThenBy(block => block.Offset.Y)
+                        .ThenBy(block => block.Offset.Z)
+                        .Select(block => string.Create(
+                            CultureInfo.InvariantCulture,
+                            $"{block.Offset.X},{block.Offset.Y},{block.Offset.Z}:{Terrain.ReplaceLight(block.Value, 0)}")));
+                return new MovingBlockStateSnapshotV2(
+                    set.Id,
+                    hasTag,
+                    hasTag ? new TerrainCellCoordinate(tag.X, tag.Y, tag.Z) : null,
+                    instanceId,
+                    true,
+                    generation,
+                    revision,
+                    ToVector(set.Position),
+                    ToVector(set.TargetPosition),
+                    ToVector(set.CurrentVelocity),
+                    set.Blocks.Count,
+                    blocks);
+            })
+            .ToArray();
+    }
+
+    private static LogicRevisionMetricsSnapshotV2 BuildLogicRevisionMetricsSnapshotV2(
+        Project project) {
+        NetworkLogicStateMetrics metrics = NetworkLogicStateTracker.GetMetrics(project);
+        NetworkLogicStateKey electricityKey = NetworkLogicStateKey.Electricity();
+        long electricityRevision = NetworkManager.IsClientRunning
+            ? NetworkLogicStateTracker.GetAppliedRevision(project, electricityKey)
+            : NetworkLogicStateTracker.GetAuthoritativeRevision(project, electricityKey);
+        return new LogicRevisionMetricsSnapshotV2(
+            metrics.AuthoritativeTrackedStates,
+            metrics.ClientTrackedStates,
+            metrics.AppliedStates,
+            metrics.IgnoredStaleStates,
+            metrics.IgnoredLifecycleStates,
+            metrics.AuthoritativeMovingGenerations,
+            metrics.ClientMovingGenerations,
+            metrics.MovingTombstones,
+            electricityRevision);
     }
 
     private static EnvironmentSnapshotV2 BuildEnvironmentSnapshotV2(Project project) {

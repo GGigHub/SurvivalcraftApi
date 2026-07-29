@@ -43,6 +43,9 @@ namespace Game {
         public override int[] HandledBlocks => [];
 
         public void AdjustPiston(Point3 position, int length) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             if (!m_actions.TryGetValue(position, out QueuedAction value)) {
                 value = new QueuedAction();
                 m_actions[position] = value;
@@ -111,6 +114,9 @@ namespace Game {
         }
 
         public override void OnBlockRemoved(int value, int newValue, int x, int y, int z) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             int num = Terrain.ExtractContents(value);
             int data = Terrain.ExtractData(value);
             switch (num) {
@@ -187,6 +193,9 @@ namespace Game {
         }
 
         public override void OnChunkDiscarding(TerrainChunk chunk) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             BoundingBox boundingBox = new(chunk.BoundingBox.Min - new Vector3(16f), chunk.BoundingBox.Max + new Vector3(16f));
             DynamicArray<IMovingBlockSet> dynamicArray = new();
             m_subsystemMovingBlocks.FindMovingBlocks(boundingBox, false, dynamicArray);
@@ -209,6 +218,9 @@ namespace Game {
         }
 
         public void ProcessQueuedActions() {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             m_tmpActions.Clear();
             m_tmpActions.AddRange(m_actions);
             foreach (KeyValuePair<Point3, QueuedAction> tmpAction in m_tmpActions) {
@@ -316,6 +328,9 @@ namespace Game {
         }
 
         public bool MovePiston(Point3 position, int length) {
+            if (NetworkManager.IsClientRunning) {
+                return false;
+            }
             Terrain terrain = m_subsystemTerrain.Terrain;
             int data = Terrain.ExtractData(terrain.GetCellValue(position.X, position.Y, position.Z));
             int face = PistonBlock.GetFace(data);
@@ -476,6 +491,9 @@ namespace Game {
         }
 
         public void StopPiston(Point3 position) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             IMovingBlockSet movingBlockSet = m_subsystemMovingBlocks.FindMovingBlocks("Piston", position);
             if (movingBlockSet != null) {
                 int cellValue = m_subsystemTerrain.Terrain.GetCellValue(position.X, position.Y, position.Z);
@@ -510,7 +528,8 @@ namespace Game {
         }
 
         public void MovingBlocksCollidedWithTerrain(IMovingBlockSet movingBlockSet, Point3 p) {
-            if (movingBlockSet.Id != "Piston") {
+            if (NetworkManager.IsClientRunning
+                || movingBlockSet.Id != "Piston") {
                 return;
             }
             Point3 point = (Point3)movingBlockSet.Tag;
@@ -540,7 +559,8 @@ namespace Game {
         }
 
         public void MovingBlocksStopped(IMovingBlockSet movingBlockSet) {
-            if (movingBlockSet.Id != "Piston"
+            if (NetworkManager.IsClientRunning
+                || movingBlockSet.Id != "Piston"
                 || movingBlockSet.Tag is not Point3 tag) {
                 return;
             }

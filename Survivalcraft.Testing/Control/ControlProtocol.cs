@@ -175,6 +175,13 @@ public static class ControlCommandNames {
     public const string PlayerMount = "player.mount";
     public const string RunMountRevisionBurst = "mechanics.runMountRevisionBurst";
     public const string RunMountLifecycleBurst = "mechanics.runMountLifecycleBurst";
+    public const string PrepareLogicFixture = "fixture.logic.prepare";
+    public const string ApplyLogicFixture = "fixture.logic.apply";
+    public const string LogicEdit = "logic.edit";
+    public const string LogicInteract = "logic.interact";
+    public const string RunLogicRevisionBurst = "logic.runRevisionBurst";
+    public const string RunMovingBlockLifecycleBurst = "logic.runMovingBlockLifecycleBurst";
+    public const string RunPistonLifecycle = "logic.runPistonLifecycle";
     public const string SetClock = "time.setClock";
     public const string AdvanceTicks = "time.advanceTicks";
     public const string SetNetworkFaults = "network.setFaults";

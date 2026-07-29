@@ -31,11 +31,142 @@ public sealed record SnapshotV2MechanicsComparisonOptions(
     bool CompareRevisions = true,
     bool CompareLifecycleRevisions = true);
 
+public sealed record SnapshotV2LogicComparisonOptions(
+    double VoltageTolerance = 0.00001,
+    double PositionTolerance = 0.1,
+    double VelocityTolerance = 0.1,
+    bool CompareRevisions = true);
+
 public sealed record SnapshotV2Diff(
     bool Equal,
     SnapshotDifference[] Differences);
 
 public static class SnapshotV2Comparer {
+    public static SnapshotV2Diff CompareLogic(
+        StateSnapshotV2 expected,
+        StateSnapshotV2 actual,
+        SnapshotV2LogicComparisonOptions? options = null) {
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentNullException.ThrowIfNull(actual);
+        options ??= new SnapshotV2LogicComparisonOptions();
+        ValidateTolerance(options.VoltageTolerance, nameof(options.VoltageTolerance));
+        ValidateTolerance(options.PositionTolerance, nameof(options.PositionTolerance));
+        ValidateTolerance(options.VelocityTolerance, nameof(options.VelocityTolerance));
+
+        List<SnapshotDifference> differences = [];
+        Dictionary<(int X, int Y, int Z), LogicElementStateSnapshotV2> logic =
+            (actual.LogicStates ?? []).ToDictionary(state => (state.X, state.Y, state.Z));
+        foreach (LogicElementStateSnapshotV2 expectedState in (expected.LogicStates ?? [])
+                     .OrderBy(state => state.X)
+                     .ThenBy(state => state.Y)
+                     .ThenBy(state => state.Z)) {
+            (int X, int Y, int Z) key = (expectedState.X, expectedState.Y, expectedState.Z);
+            string path = $"$.logicStates[x={key.X},y={key.Y},z={key.Z}]";
+            if (!logic.Remove(key, out LogicElementStateSnapshotV2? actualState)) {
+                differences.Add(new SnapshotDifference(path, expectedState.ToString(), "<missing>"));
+                continue;
+            }
+            CompareValue(path + ".kind", expectedState.Kind, actualState.Kind, differences);
+            CompareValue(path + ".value", expectedState.Value, actualState.Value, differences);
+            CompareValue(path + ".contents", expectedState.Contents, actualState.Contents, differences);
+            CompareValue(path + ".data", expectedState.Data, actualState.Data, differences);
+            CompareValue(path + ".state", expectedState.State, actualState.State, differences);
+            if (options.CompareRevisions) {
+                CompareValue(path + ".revision", expectedState.Revision, actualState.Revision, differences);
+            }
+        }
+        foreach (LogicElementStateSnapshotV2 extra in logic.Values
+                     .OrderBy(state => state.X)
+                     .ThenBy(state => state.Y)
+                     .ThenBy(state => state.Z)) {
+            differences.Add(new SnapshotDifference(
+                $"$.logicStates[x={extra.X},y={extra.Y},z={extra.Z}]",
+                "<missing>",
+                extra.ToString()));
+        }
+
+        Dictionary<(int X, int Y, int Z), PersistentVoltageSnapshotV2> voltages =
+            (actual.PersistentVoltages ?? []).ToDictionary(state => (state.X, state.Y, state.Z));
+        foreach (PersistentVoltageSnapshotV2 expectedState in (expected.PersistentVoltages ?? [])
+                     .OrderBy(state => state.X)
+                     .ThenBy(state => state.Y)
+                     .ThenBy(state => state.Z)) {
+            (int X, int Y, int Z) key = (expectedState.X, expectedState.Y, expectedState.Z);
+            string path = $"$.persistentVoltages[x={key.X},y={key.Y},z={key.Z}]";
+            if (!voltages.Remove(key, out PersistentVoltageSnapshotV2? actualState)) {
+                differences.Add(new SnapshotDifference(path, expectedState.ToString(), "<missing>"));
+                continue;
+            }
+            CompareScalar(
+                path + ".voltage",
+                expectedState.Voltage,
+                actualState.Voltage,
+                options.VoltageTolerance,
+                differences);
+        }
+        foreach (PersistentVoltageSnapshotV2 extra in voltages.Values
+                     .OrderBy(state => state.X)
+                     .ThenBy(state => state.Y)
+                     .ThenBy(state => state.Z)) {
+            differences.Add(new SnapshotDifference(
+                $"$.persistentVoltages[x={extra.X},y={extra.Y},z={extra.Z}]",
+                "<missing>",
+                extra.ToString()));
+        }
+
+        Dictionary<(string Identity, bool HasTag, TerrainCellCoordinate? Tag, long InstanceId), MovingBlockStateSnapshotV2>
+            moving = (actual.MovingBlocks ?? []).ToDictionary(
+                state => (state.Identity, state.HasTag, state.Tag, state.InstanceId));
+        foreach (MovingBlockStateSnapshotV2 expectedState in (expected.MovingBlocks ?? [])
+                     .OrderBy(state => state.Identity, StringComparer.Ordinal)
+                     .ThenBy(state => state.Tag?.X ?? 0)
+                     .ThenBy(state => state.Tag?.Y ?? 0)
+                     .ThenBy(state => state.Tag?.Z ?? 0)
+                     .ThenBy(state => state.InstanceId)) {
+            (string Identity, bool HasTag, TerrainCellCoordinate? Tag, long InstanceId) key =
+                (expectedState.Identity, expectedState.HasTag, expectedState.Tag, expectedState.InstanceId);
+            string path = $"$.movingBlocks[identity={key.Identity},tag={key.Tag},instance={key.InstanceId}]";
+            if (!moving.Remove(key, out MovingBlockStateSnapshotV2? actualState)) {
+                differences.Add(new SnapshotDifference(path, expectedState.ToString(), "<missing>"));
+                continue;
+            }
+            CompareValue(path + ".present", expectedState.Present, actualState.Present, differences);
+            CompareValue(path + ".generation", expectedState.Generation, actualState.Generation, differences);
+            if (options.CompareRevisions) {
+                CompareValue(path + ".revision", expectedState.Revision, actualState.Revision, differences);
+            }
+            CompareVector(
+                path + ".position",
+                expectedState.Position,
+                actualState.Position,
+                options.PositionTolerance,
+                differences);
+            CompareVector(
+                path + ".targetPosition",
+                expectedState.TargetPosition,
+                actualState.TargetPosition,
+                options.PositionTolerance,
+                differences);
+            CompareVector(
+                path + ".velocity",
+                expectedState.Velocity,
+                actualState.Velocity,
+                options.VelocityTolerance,
+                differences);
+            CompareValue(path + ".blockCount", expectedState.BlockCount, actualState.BlockCount, differences);
+            CompareValue(path + ".blocks", expectedState.Blocks, actualState.Blocks, differences);
+        }
+        foreach (MovingBlockStateSnapshotV2 extra in moving.Values
+                     .OrderBy(state => state.Identity, StringComparer.Ordinal)
+                     .ThenBy(state => state.InstanceId)) {
+            differences.Add(new SnapshotDifference(
+                $"$.movingBlocks[identity={extra.Identity},tag={extra.Tag},instance={extra.InstanceId}]",
+                "<missing>",
+                extra.ToString()));
+        }
+        return new SnapshotV2Diff(differences.Count == 0, differences.ToArray());
+    }
+
     public static SnapshotV2Diff CompareMechanicsStates(
         StateSnapshotV2 expected,
         StateSnapshotV2 actual,

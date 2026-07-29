@@ -2,7 +2,7 @@
 
 本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会按场景启动隔离的 Survivalcraft 进程：核心场景完成建服、两阶段兼容握手、模组消息、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、超时与恢复；中继场景另外启动真实 RelayServer，验证房间协商、模组消息、故障注入和同房间重连。所有场景都会把可回放的诊断材料写入 `TestResults`。
 
-强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞，以及达到完整覆盖契约的 use/place/dig、move/look/crouch、terrain streaming/revisions、entity/creature lifecycle/physics、inventory/container operations、health/damage/respawn、time/weather/lightning、sleep/player-fire 和 mount/dismount 生产链。
+强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞，以及达到完整覆盖契约的 use/place/dig、move/look/crouch、terrain streaming/revisions、entity/creature lifecycle/physics、inventory/container operations、health/damage/respawn、time/weather/lightning、sleep/player-fire、mount/dismount 和 logic/electricity/moving-blocks 生产链。
 
 ## 一键运行
 
@@ -22,6 +22,7 @@
 ./scripts/Test-Multiplayer.ps1 -Mode inventory-health
 ./scripts/Test-Multiplayer.ps1 -Mode environment-mechanics
 ./scripts/Test-Multiplayer.ps1 -Mode mount
+./scripts/Test-Multiplayer.ps1 -Mode logic
 ./scripts/Test-Multiplayer.ps1 -Mode legacy
 ./scripts/Test-Multiplayer.ps1 -Mode full
 ```
@@ -47,8 +48,10 @@
 - `environment-mechanics`：依次运行 Direct/Relay，覆盖非创造模式拒绝及同 revision 权威快照纠正客户端乐观时间/天气状态、Playing 会话所有权、伪造权威状态和跨玩家请求拒绝、单调 revision、100% 重复与 50% 重排、观察者、late join、玩家身份稳定但实体世代变化的重连、保存重载和严格八动作回放。雷电按瞬时事件验证，不向 late joiner 重放历史雷击。
 - `mount-direct` / `mount-relay`：分别运行一服三客的真实 Boat 骑乘、下马和实体世代场景。
 - `mount`：依次运行 Direct/Relay，覆盖 Playing 会话所有权、跨玩家冒用、伪造权威状态、距离与占用校验、骑手/坐骑双向关系、单调 mount revision、目标 lifecycle 世代、100% 重复与 50% 重排、观察者、late join、骑手移除释放坐骑、稳定身份重连、安全下马的保存重载边界和严格七动作回放。
+- `logic-direct` / `logic-relay`：分别运行一服三客的九类逻辑方块、电力状态和移动方块/活塞生命周期场景。
+- `logic`：依次运行 Direct/Relay，覆盖 Playing 会话、跨玩家冒用、超距、伪造 state 与旧 expected revision 拒绝，请求 ID 幂等，九类逻辑编辑和真实开关交互，单调 logic/electricity/moving revision，moving instance ID/generation/tombstone、相同业务 ID 的无标签集合并发，100% 重复与 50% 重排、观察者、late join 预载对账、稳定身份重连、保存重载和严格十七动作回放。
 - `legacy`：单独运行未分层历史迁移审计，同时输出控制台日志、`legacy-audit.trx` 和列出失败测试名的 `legacy-audit-summary.json`，使诊断在终端输出丢失后仍可由 AI 解析和比对。
-- `full`：依次执行 fast、doctor、compatibility、core、relay、M0、地形交互、人物运动、地形流送、实体/生物、库存/生命、环境/睡眠/玩家火焰及骑乘的直连/中继场景和未分层原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
+- `full`：依次执行 fast、doctor、compatibility、core、relay、M0、地形交互、人物运动、地形流送、实体/生物、库存/生命、环境/睡眠/玩家火焰、骑乘及逻辑/电力/移动方块的直连/中继场景和未分层原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
 - `-UseAngle`：构建 Windows ANGLE 兼容运行时，适合没有完整 OpenGL 驱动的 CI 机器。
 - `-NoBuild`：复用已构建的二进制文件。
 
@@ -110,8 +113,8 @@ flowchart LR
 - 联机：`network.connect`、`network.startRelayHost`、`network.connectRelay`、`network.getRelayStatus`、`network.disconnect`、`network.setFaults`、`network.configureCompatibility`、`network.getCompatibility`
 - 模组通道：`network.configureModChannels`、`network.getModChannels`、`network.sendTestModMessage`、`network.getTestModMessages`、`network.resetTestModMessages`
 - 玩家和地形：`player.enterWorld`、`terrain.changeCell`
-- v2 玩法：`player.setCreativeFly`、`player.move`、`player.look`、`player.setCrouch`、`player.use`、`player.place`、`player.dig`、`terrain.runRevisionBurst`、`entity.applyImpulse`、`entity.runLifecycleBurst`、`inventory.move`、`inventory.selectSlot`、`inventory.drop`、`inventory.runRevisionBurst`、`player.hit`、`player.requestRespawn`、`health.runRevisionBurst`、`player.mount`、`mechanics.runMountRevisionBurst`、`mechanics.runMountLifecycleBurst`
-- v2 夹具：`fixture.player.prepareMotion`、`fixture.player.applyMotion`、`fixture.player.prepareTerrainInteraction`、`fixture.player.applyTerrainInteraction`、`fixture.terrain.prepareRegion`、`fixture.terrain.applyView`、`fixture.entity.prepareLifecycle`、`fixture.inventory.prepare`、`fixture.inventory.apply`、`fixture.health.prepare`、`fixture.health.apply`、`fixture.health.set`、`fixture.mechanics.prepareMount`
+- v2 玩法：`player.setCreativeFly`、`player.move`、`player.look`、`player.setCrouch`、`player.use`、`player.place`、`player.dig`、`terrain.runRevisionBurst`、`entity.applyImpulse`、`entity.runLifecycleBurst`、`inventory.move`、`inventory.selectSlot`、`inventory.drop`、`inventory.runRevisionBurst`、`player.hit`、`player.requestRespawn`、`health.runRevisionBurst`、`player.mount`、`mechanics.runMountRevisionBurst`、`mechanics.runMountLifecycleBurst`、`logic.edit`、`logic.interact`、`logic.runRevisionBurst`、`logic.runMovingBlockLifecycleBurst`、`logic.runPistonLifecycle`
+- v2 夹具：`fixture.player.prepareMotion`、`fixture.player.applyMotion`、`fixture.player.prepareTerrainInteraction`、`fixture.player.applyTerrainInteraction`、`fixture.terrain.prepareRegion`、`fixture.terrain.applyView`、`fixture.entity.prepareLifecycle`、`fixture.inventory.prepare`、`fixture.inventory.apply`、`fixture.health.prepare`、`fixture.health.apply`、`fixture.health.set`、`fixture.mechanics.prepareMount`、`fixture.logic.prepare`、`fixture.logic.apply`
 - 可观测性：`state.getSnapshot`、`state.getSnapshotV2`、`state.getEvents`、`state.resetEvents`
 - 能力发现：`system.describe`
 - 确定性：`time.setClock`、`time.advanceTicks`
@@ -223,7 +226,7 @@ TestResults/{core-multiplayer,compatibility-matrix,relay-mod-channel}-*/
 
 v2 场景另外写入 `replay-v2.json`、`topology.json`、`capabilities-*.json`、`actions.json`、`events-*.json`、`assertions.json` 和 `snapshot-*.v2.json`。这些文件保存实际动作角色、命令名、强类型载荷、动作 ID、动作回执、事件阶段、故障配置及各拓扑节点每个检查点的投影快照；成功和失败使用相同格式。
 
-同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、inventory-health、environment-mechanics 和 mount 八个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；inventory-health 严格要求 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn 七个动作；environment-mechanics 严格要求 time、precipitation、fog、lightning、sleep、environment revision burst、fire revision burst、wake 八个动作；mount 严格要求 mount、dismount、故障下 mount、revision burst、同 ID lifecycle burst、重连前 remount 和重连后 mount 七个动作，且旧 revision 与旧 lifecycle 注入必须启用。
+同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、inventory-health、environment-mechanics、mount 和 logic 九个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；inventory-health 严格要求 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn 七个动作；environment-mechanics 严格要求 time、precipitation、fog、lightning、sleep、environment revision burst、fire revision burst、wake 八个动作；mount 严格要求 mount、dismount、故障下 mount、revision burst、同 ID lifecycle burst、重连前 remount 和重连后 mount 七个动作，且旧 revision 与旧 lifecycle 注入必须启用；logic 严格要求四个权限/安全探针、九类编辑、真实开关交互、logic revision burst、moving lifecycle burst 和 piston lifecycle 十七个动作，并要求旧 revision、旧 generation 与墓碑注入保持启用。
 
 - `steps.json` 给出第一个失败步骤、起止时间和异常。
 - `snapshot-*.json` 已排序并规范化浮点数，适合机器比较。
@@ -251,6 +254,6 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## CI
 
-`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor，以及包含兼容矩阵、直连核心、中继、M0 创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、inventory-health、environment-mechanics 和 mount Direct/Relay 的全部 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
+`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor，以及包含兼容矩阵、直连核心、中继、M0 创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、inventory-health、environment-mechanics、mount 和 logic Direct/Relay 的全部 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
 
 当前远端位于 CNB，而 GitHub Workflow 只有在仓库镜像到 GitHub 后才会自动执行。CNB 支持由组织启用的 Windows 自托管构建节点，启用后可把脚本中的同样命令接入 `.cnb.yml`；在节点尚未配置前不提交一个必然排队或失败的 CNB 任务。测试框架和 PowerShell 入口本身不依赖 GitHub API。参见 [CNB 构建节点文档](https://docs.cnb.cool/zh/build/build-node.html)。

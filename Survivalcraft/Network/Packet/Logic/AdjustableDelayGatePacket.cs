@@ -17,24 +17,80 @@ public class AdjustableDelayGatePacket : EditableBlockPacketBase {
         m_inventoryId = inventoryId;
         m_slotIndex = slotIndex;
         m_delay = delay;
+        InitializeRequest(
+            NetworkLogicElementKind.AdjustableDelayGate,
+            editAsItem,
+            inventoryId,
+            slotIndex,
+            cell);
     }
     public override void Serialize(PacketSerializer archive) {
+        SerializeMutationEnvelope(archive);
         SerializeEditableTarget(archive, ref m_editAsItem, ref m_inventoryId, ref m_slotIndex, ref m_cellFace);
         archive.Value(ref m_delay);
     }
     public override void Handle(bool isServer) {
-        if (m_editAsItem) {
-            GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
-                ReplaceDataAtSlot(inventory, m_slotIndex, d => AdjustableDelayGateBlock.SetDelay(d, m_delay));
-            });
+        EditableTarget target = Target(m_editAsItem, m_inventoryId, m_slotIndex, m_cellFace);
+        if (isServer) {
+            EditableLogicResultCode result = ValidateServerRequest(
+                NetworkLogicElementKind.AdjustableDelayGate,
+                target,
+                AdjustableDelayGateBlock.Index,
+                out IInventory inventory,
+                out int currentValue);
+            if (result == EditableLogicResultCode.Accepted
+                && m_delay is < 0 or > 255) {
+                result = EditableLogicResultCode.InvalidValue;
+            }
+            if (result == EditableLogicResultCode.Accepted) {
+                Apply(target, inventory, currentValue);
+                PrepareAuthoritativeState(NetworkLogicElementKind.AdjustableDelayGate, target);
+                QueueAuthoritativeInventoryState(inventory);
+                NetworkManager.Queue(this);
+            }
+            else if (From != null && GameManager.Project != null) {
+                if (Terrain.ExtractContents(currentValue) == AdjustableDelayGateBlock.Index) {
+                    m_delay = AdjustableDelayGateBlock.GetDelay(Terrain.ExtractData(currentValue));
+                }
+                PrepareAuthoritativeState(
+                    NetworkLogicElementKind.AdjustableDelayGate,
+                    target,
+                    result,
+                    advanceRevision: false);
+                To = From;
+                NetworkManager.Queue(this);
+            }
+            return;
         }
-        else {
-            SubsystemTerrain st = GameManager.Project.FindSubsystem<SubsystemTerrain>();
-            int value = st.Terrain.GetCellValue(m_cellFace.X, m_cellFace.Y, m_cellFace.Z);
-            int newValue = Terrain.ReplaceData(value, AdjustableDelayGateBlock.SetDelay(Terrain.ExtractData(value), m_delay));
-            st.ChangeCell(m_cellFace.X, m_cellFace.Y, m_cellFace.Z, newValue);
+        if (m_delay is < 0 or > 255
+            || !TryAcceptClientState(
+                NetworkLogicElementKind.AdjustableDelayGate,
+                target,
+                AdjustableDelayGateBlock.Index,
+                out IInventory clientInventory,
+                out int clientValue)) {
+            return;
         }
-        if (isServer) NetworkManager.Queue(this);
+        Apply(target, clientInventory, clientValue);
+    }
+
+    private void Apply(EditableTarget target, IInventory inventory, int currentValue) {
+        if (target.IsItem) {
+            ReplaceDataAtSlot(
+                inventory,
+                target.SlotIndex,
+                data => AdjustableDelayGateBlock.SetDelay(data, m_delay));
+            return;
+        }
+        SubsystemTerrain terrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
+        int newValue = Terrain.ReplaceData(
+            currentValue,
+            AdjustableDelayGateBlock.SetDelay(Terrain.ExtractData(currentValue), m_delay));
+        terrain.ChangeCell(
+            target.CellFace.X,
+            target.CellFace.Y,
+            target.CellFace.Z,
+            newValue);
     }
 }
 

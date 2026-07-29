@@ -165,6 +165,10 @@ public abstract class TerrainPacketBase : Packet {
                 data.Revision,
                 forceRefresh);
         if (!plan.ApplySnapshot) {
+            DeferredEditableLogicStateQueue.ApplyChunk(
+                subsystemTerrain.Project,
+                data.Coords.X,
+                data.Coords.Y);
             return;
         }
 
@@ -172,6 +176,10 @@ public abstract class TerrainPacketBase : Packet {
         foreach (TerrainRevisionCellChange change in plan.Changes) {
             ApplyCellChangeContents(subsystemTerrain, change);
         }
+        DeferredEditableLogicStateQueue.ApplyChunk(
+            subsystemTerrain.Project,
+            data.Coords.X,
+            data.Coords.Y);
     }
 
     public static void ApplyRevisionedCellChange(
@@ -187,6 +195,12 @@ public abstract class TerrainPacketBase : Packet {
                 new TerrainRevisionCellChange(x, y, z, value, revision));
         foreach (TerrainRevisionCellChange change in plan.Changes) {
             ApplyCellChangeContents(subsystemTerrain, change);
+        }
+        if (plan.Changes.Length > 0) {
+            DeferredEditableLogicStateQueue.ApplyChunk(
+                subsystemTerrain.Project,
+                x >> 4,
+                z >> 4);
         }
     }
 

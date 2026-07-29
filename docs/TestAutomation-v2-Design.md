@@ -588,3 +588,18 @@ Survivalcraft.TestAutomation/
 - L0 覆盖生产包编解码、AutoTest v5 DTO、Snapshot 规范化/双向差异、覆盖清单和 replay 角色/顺序/安全开关拒绝规则；PowerShell 的 `mount-direct`、`mount-relay`、`mount` 入口与 `full` 门禁已经接入。
 
 `mechanics.mount` 现已标记为 `covered`。下一条核心主线可进入 `logic.electricity-and-moving-blocks`，继续复用会话所有权、request identity、生命周期世代和严格回放模式。
+
+## 29. 逻辑电路、电力状态与移动方块完整覆盖实施记录
+
+本切片把九类可编辑逻辑方块、电力持久状态和活塞/移动方块生命周期纳入同一条服务端权威生产链，并把 Automation API 提升到 v6、wire protocol 提升到 revision 8：
+
+- Adjustable Delay Gate、Battery、Button、Switch、Piston、Memory Bank、Truth Table、Sign 和 Dispenser 状态包显式区分 request 与 authoritative state；请求绑定 Playing 会话、64 位 request ID、期望 logic revision 和目标 terrain revision，服务端重新校验发送者、距离、目标方块、背包/编辑权限与数据范围；
+- 编辑请求按会话幂等，逻辑、电力和移动方块使用彼此隔离的单调 revision。Moving block add/remove 绑定 generation，并保留 tombstone；同世代的延迟 add 不能复活已移除集合，只有更新世代可以重新创建。无标签 moving set 另有线端稳定 instance ID，因此两个相同业务 ID 的并发集合不会被错误合并；
+- 客户端不再自主推进活塞地形变更，活塞伸缩与移动集合只接受服务端权威结果。电力全量状态在按 revision 合并后仍恢复有序模拟队列，使 Memory Bank 等动态输出在观察端一致收敛；
+- late join/reconnect 的 StatePacket 会合并运行期权威状态与 Memory Bank、Truth Table、Sign 的持久字典，并将已由存档预载但尚未登记 instance ID 的无标签 moving set 与权威基线对账。若逻辑基线先于目标地形区块到达，则进入按目标去重、最多 4096 项、确定性淘汰最久未更新目标的队列，并在区块流送落地后按最新 revision 重放，避免静默丢失与无界内存增长；
+- Snapshot v2 的 logic 投影包含目标地形格、九类结构化状态、Memory Bank 动态输出、持久电压、moving block 内容/位置/instance ID/generation/tombstone，以及 logic/electricity/moving revision 与拒绝指标；比较器可联合 terrain value/revision 判断真正收敛；
+- 强类型命令新增 `fixture.logic.prepare`、`fixture.logic.apply`、`logic.edit`、`logic.interact`、`logic.runRevisionBurst`、`logic.runMovingBlockLifecycleBurst` 和 `logic.runPistonLifecycle`。夹具只建立确定性方块、玩家位置与流送视图，合法动作仍进入生产包和真实交互路径；
+- 一服三客 Direct/Relay 场景验证控制命令角色拒绝、跨玩家冒用、超距请求、伪造 state、旧 expected revision、九类编辑、真实开关交互幂等、观察者收敛、100% 复制与 50% 重排下的旧 revision/旧 generation 拒绝、两个同 ID 无标签移动集合并存、真实活塞生命周期、late join、稳定身份重连和保存重载；
+- `actions.json` 严格包含四个安全探针、九类编辑、开关交互、logic revision burst、moving-block lifecycle burst 和 piston lifecycle 共十七个动作。Direct 与 Relay 的原运行和严格回放均真实无窗口通过；PowerShell 的 `logic-direct`、`logic-relay`、`logic` 入口与 `full` 门禁已经接入。
+
+`logic.electricity-and-moving-blocks` 现已标记为 `covered`。下一条尚未覆盖的核心主线是 `pickable-projectile.lifecycle`。

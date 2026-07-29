@@ -73,6 +73,11 @@ public class StatePacket : ClientPacketBase {
                         && subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative) {
                         From.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = false;
                     }
+                    foreach (Packet logicPacket
+                             in LogicStatePacketFactory.CreateEditableBaselines(GameManager.Project)) {
+                        logicPacket.To = From;
+                        NetworkManager.Queue(logicPacket);
+                    }
                     long timeRevision = NetworkStateRevisionTracker.GetAuthoritativeRevision(
                         GameManager.Project,
                         NetworkStateRevisionDomain.Time,
@@ -90,6 +95,28 @@ public class StatePacket : ClientPacketBase {
                         NetworkManager.Queue(new SubsystemWeatherPacket(weather, weatherRevision) {
                             To = From
                         });
+                    }
+                    SubsystemElectricity electricity =
+                        GameManager.Project.FindSubsystem<SubsystemElectricity>();
+                    if (electricity != null) {
+                        long electricityRevision =
+                            NetworkLogicStateTracker.GetAuthoritativeRevision(
+                                GameManager.Project,
+                                NetworkLogicStateKey.Electricity());
+                        NetworkManager.Queue(new SubsystemElectricityPacket(
+                            electricity,
+                            electricityRevision) { To = From });
+                    }
+                    SubsystemMovingBlocks movingBlocks =
+                        GameManager.Project.FindSubsystem<SubsystemMovingBlocks>();
+                    if (movingBlocks != null) {
+                        foreach (SubsystemMovingBlocks.MovingBlockSet movingSet
+                                 in movingBlocks.m_movingBlockSets.ToArray()) {
+                            MovingBlockAddPacket movingState =
+                                MovingBlockAddPacket.CreateBaseline(movingSet);
+                            movingState.To = From;
+                            NetworkManager.Queue(movingState);
+                        }
                     }
                     foreach (Entity entity in GameManager.Project.Entities) {
                         ComponentHealth health = entity.FindComponent<ComponentHealth>();

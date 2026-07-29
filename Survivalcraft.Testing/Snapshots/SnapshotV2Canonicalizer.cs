@@ -129,6 +129,33 @@ public static class SnapshotV2Canonicalizer {
                 })
                 .OrderBy(state => state.EntityId)
                 .ToArray(),
+            LogicStates = snapshot.LogicStates?
+                .OrderBy(state => state.X)
+                .ThenBy(state => state.Y)
+                .ThenBy(state => state.Z)
+                .ThenBy(state => state.Kind, StringComparer.Ordinal)
+                .ToArray(),
+            PersistentVoltages = snapshot.PersistentVoltages?
+                .Select(state => state with {
+                    Voltage = Round(state.Voltage, decimalPlaces)
+                })
+                .OrderBy(state => state.X)
+                .ThenBy(state => state.Y)
+                .ThenBy(state => state.Z)
+                .ToArray(),
+            MovingBlocks = snapshot.MovingBlocks?
+                .Select(state => state with {
+                    Position = Normalize(state.Position, decimalPlaces),
+                    TargetPosition = Normalize(state.TargetPosition, decimalPlaces),
+                    Velocity = Normalize(state.Velocity, decimalPlaces)
+                })
+                .OrderBy(state => state.Identity, StringComparer.Ordinal)
+                .ThenBy(state => state.HasTag)
+                .ThenBy(state => state.Tag?.X ?? 0)
+                .ThenBy(state => state.Tag?.Y ?? 0)
+                .ThenBy(state => state.Tag?.Z ?? 0)
+                .ThenBy(state => state.InstanceId)
+                .ToArray(),
             RecentEvents = snapshot.RecentEvents
                 .OrderBy(item => item.Sequence)
                 .Select(item => item with { Data = ToSortedDictionary(item.Data) })
