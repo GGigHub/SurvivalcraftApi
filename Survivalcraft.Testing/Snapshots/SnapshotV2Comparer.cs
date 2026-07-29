@@ -26,11 +26,71 @@ public sealed record SnapshotV2HealthComparisonOptions(
     bool CompareRevisions = true,
     bool CompareLifecycleRevision = true);
 
+public sealed record SnapshotV2MechanicsComparisonOptions(
+    double ScalarTolerance = 0.00001,
+    bool CompareRevisions = true,
+    bool CompareLifecycleRevisions = true);
+
 public sealed record SnapshotV2Diff(
     bool Equal,
     SnapshotDifference[] Differences);
 
 public static class SnapshotV2Comparer {
+    public static SnapshotV2Diff CompareMechanicsStates(
+        StateSnapshotV2 expected,
+        StateSnapshotV2 actual,
+        SnapshotV2MechanicsComparisonOptions? options = null) {
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentNullException.ThrowIfNull(actual);
+        options ??= new SnapshotV2MechanicsComparisonOptions();
+        ValidateTolerance(options.ScalarTolerance, nameof(options.ScalarTolerance));
+
+        List<SnapshotDifference> differences = [];
+        Dictionary<int, MechanicsStateSnapshotV2> remaining = (actual.MechanicsStates ?? [])
+            .ToDictionary(state => state.EntityId);
+        foreach (MechanicsStateSnapshotV2 expectedState in (expected.MechanicsStates ?? [])
+                     .OrderBy(state => state.EntityId)) {
+            string path = $"$.mechanicsStates[entityId={expectedState.EntityId}]";
+            if (!remaining.Remove(expectedState.EntityId, out MechanicsStateSnapshotV2? actualState)) {
+                differences.Add(new SnapshotDifference(path, expectedState.ToString(), "<missing>"));
+                continue;
+            }
+
+            CompareValue(path + ".exists", expectedState.Exists, actualState.Exists, differences);
+            CompareValue(path + ".isPlayer", expectedState.IsPlayer, actualState.IsPlayer, differences);
+            CompareValue(path + ".playerIndex", expectedState.PlayerIndex, actualState.PlayerIndex, differences);
+            CompareValue(path + ".hasSleep", expectedState.HasSleep, actualState.HasSleep, differences);
+            CompareValue(path + ".isSleeping", expectedState.IsSleeping, actualState.IsSleeping, differences);
+            CompareValue(path + ".allowManualWakeup", expectedState.AllowManualWakeup, actualState.AllowManualWakeup, differences);
+            CompareNullableScalar(path + ".sleepStartTime", expectedState.SleepStartTime, actualState.SleepStartTime, options.ScalarTolerance, differences);
+            CompareValue(path + ".hasOnFire", expectedState.HasOnFire, actualState.HasOnFire, differences);
+            CompareValue(path + ".isOnFire", expectedState.IsOnFire, actualState.IsOnFire, differences);
+            CompareScalar(path + ".fireDuration", expectedState.FireDuration, actualState.FireDuration, options.ScalarTolerance, differences);
+            CompareValue(path + ".hasRider", expectedState.HasRider, actualState.HasRider, differences);
+            CompareValue(path + ".mountEntityId", expectedState.MountEntityId, actualState.MountEntityId, differences);
+            CompareValue(path + ".mountAnimating", expectedState.MountAnimating, actualState.MountAnimating, differences);
+            CompareValue(path + ".isDismounting", expectedState.IsDismounting, actualState.IsDismounting, differences);
+            CompareValue(path + ".hasMount", expectedState.HasMount, actualState.HasMount, differences);
+            CompareValue(path + ".riderEntityId", expectedState.RiderEntityId, actualState.RiderEntityId, differences);
+            if (options.CompareRevisions) {
+                CompareValue(path + ".sleepRevision", expectedState.SleepRevision, actualState.SleepRevision, differences);
+                CompareValue(path + ".fireRevision", expectedState.FireRevision, actualState.FireRevision, differences);
+                CompareValue(path + ".mountRevision", expectedState.MountRevision, actualState.MountRevision, differences);
+            }
+            if (options.CompareLifecycleRevisions) {
+                CompareValue(path + ".lifecycleRevision", expectedState.LifecycleRevision, actualState.LifecycleRevision, differences);
+                CompareValue(path + ".mountEntityLifecycleRevision", expectedState.MountEntityLifecycleRevision, actualState.MountEntityLifecycleRevision, differences);
+            }
+        }
+        foreach (MechanicsStateSnapshotV2 extra in remaining.Values.OrderBy(state => state.EntityId)) {
+            differences.Add(new SnapshotDifference(
+                $"$.mechanicsStates[entityId={extra.EntityId}]",
+                "<missing>",
+                extra.ToString()));
+        }
+        return new SnapshotV2Diff(differences.Count == 0, differences.ToArray());
+    }
+
     public static SnapshotV2Diff CompareInventories(
         StateSnapshotV2 expected,
         StateSnapshotV2 actual,

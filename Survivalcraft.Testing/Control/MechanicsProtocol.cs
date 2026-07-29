@@ -1,3 +1,5 @@
+using Survivalcraft.Testing.Snapshots;
+
 namespace Survivalcraft.Testing.Control;
 
 public sealed record PrepareMechanicsFixtureCommand(int PlayerIndex);
@@ -44,3 +46,56 @@ public sealed record MechanicsRevisionBurstResult(
     float FinalDuration,
     long StaleRevision,
     long FinalRevision);
+
+public sealed record PrepareMountFixtureCommand(
+    int PlayerIndex,
+    string Alias = "primary",
+    string TemplateName = "Boat",
+    double Distance = 1.0);
+
+public sealed record MountFixture(
+    string Alias,
+    string TemplateName,
+    int PlayerIndex,
+    int RiderEntityId,
+    long RiderLifecycleRevision,
+    int MountEntityId,
+    long MountLifecycleRevision,
+    long MountRevision,
+    Vector3State Position);
+
+public sealed record PlayerMountCommand(
+    int PlayerIndex,
+    int MountEntityId,
+    bool Mount,
+    int? TargetRiderEntityId = null,
+    bool ForgeAuthoritativeState = false,
+    bool ExpectRejected = false);
+
+public sealed record RunMountRevisionBurstCommand(
+    int RiderEntityId,
+    int MountEntityId,
+    bool FinalMounted = true,
+    bool SendStaleState = true);
+
+public sealed record MountRevisionBurstResult(
+    ActionReceipt Receipt,
+    int RiderEntityId,
+    int MountEntityId,
+    bool FinalMounted,
+    long StaleRevision,
+    long FinalRevision);
+
+public sealed record RunMountLifecycleBurstCommand(
+    string Alias,
+    int RiderEntityId,
+    bool ReuseEntityId = true,
+    bool SendStaleState = true);
+
+public sealed record MountLifecycleBurstResult(
+    ActionReceipt Receipt,
+    MountFixture Replacement,
+    long StaleMountLifecycleRevision,
+    long FinalMountLifecycleRevision,
+    long AuthoritativeMountRevision,
+    long InjectedStaleRevision);

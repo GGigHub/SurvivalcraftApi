@@ -171,6 +171,10 @@ public static class ControlCommandNames {
     public const string PlayerSleep = "player.sleep";
     public const string PlayerIgnite = "player.ignite";
     public const string RunMechanicsRevisionBurst = "mechanics.runRevisionBurst";
+    public const string PrepareMountFixture = "fixture.mechanics.prepareMount";
+    public const string PlayerMount = "player.mount";
+    public const string RunMountRevisionBurst = "mechanics.runMountRevisionBurst";
+    public const string RunMountLifecycleBurst = "mechanics.runMountLifecycleBurst";
     public const string SetClock = "time.setClock";
     public const string AdvanceTicks = "time.advanceTicks";
     public const string SetNetworkFaults = "network.setFaults";

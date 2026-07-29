@@ -43,6 +43,14 @@ namespace Game {
             }
         }
 
+        /// <summary>
+        /// The mount represented by the latest authoritative transition. During a
+        /// dismount animation the physical parent is retained briefly, while the
+        /// authoritative relationship is already unmounted.
+        /// </summary>
+        public ComponentMount AuthoritativeMount =>
+            m_isAnimating && m_isDismounting ? null : Mount;
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual ComponentMount FindNearestMount() {
@@ -68,26 +76,16 @@ namespace Game {
 
         public virtual void StartMounting(ComponentMount componentMount, bool fromNetwork = false) {
             if (!m_isAnimating
-                && Mount == null) {
+                && Mount == null
+                && componentMount != null) {
                 if (NetworkManager.IsClientRunning && !fromNetwork) {
                     OnMounting?.Invoke(this, componentMount, true);
                     return;
                 }
-                m_isAnimating = true;
-                m_animationTime = 0f;
-                m_isDismounting = false;
-                ComponentCreature.ComponentBody.ParentBody = componentMount.ComponentBody;
-                ComponentCreature.ComponentBody.ParentBodyPositionOffset = Vector3.Transform(
-                    ComponentCreature.ComponentBody.Position - componentMount.ComponentBody.Position,
-                    Quaternion.Conjugate(componentMount.ComponentBody.Rotation)
-                );
-                ComponentCreature.ComponentBody.ParentBodyRotationOffset = Quaternion.Conjugate(componentMount.ComponentBody.Rotation)
-                    * ComponentCreature.ComponentBody.Rotation;
-                m_targetPositionOffset = componentMount.MountOffset + m_riderOffset;
-                m_targetRotationOffset = Quaternion.Identity;
-                ComponentCreature.ComponentLocomotion.IsCreativeFlyEnabled = false;
-
-                if (!fromNetwork) OnMounting?.Invoke(this, componentMount, false);
+                if (ApplyAuthoritativeMountState(componentMount, animate: true)
+                    && !fromNetwork) {
+                    OnMounting?.Invoke(this, componentMount, false);
+                }
             }
         }
 
@@ -98,39 +96,121 @@ namespace Game {
                     OnDismounting?.Invoke(this, true);
                     return;
                 }
-
-                float x = 0f;
-                if (Mount.DismountOffset.X > 0f) {
-                    float s = Mount.DismountOffset.X + 0.5f;
-                    Vector3 vector = 0.5f * (ComponentCreature.ComponentBody.BoundingBox.Min + ComponentCreature.ComponentBody.BoundingBox.Max);
-                    TerrainRaycastResult? terrainRaycastResult = m_subsystemTerrain.Raycast(
-                        vector,
-                        vector - s * ComponentCreature.ComponentBody.Matrix.Right,
-                        false,
-                        true,
-                        null
-                    );
-                    TerrainRaycastResult? terrainRaycastResult2 = m_subsystemTerrain.Raycast(
-                        vector,
-                        vector + s * ComponentCreature.ComponentBody.Matrix.Right,
-                        false,
-                        true,
-                        null
-                    );
-                    x = !terrainRaycastResult.HasValue ? 0f - Mount.DismountOffset.X :
-                        !terrainRaycastResult2.HasValue ? Mount.DismountOffset.X :
-                            !(terrainRaycastResult.Value.Distance > terrainRaycastResult2.Value.Distance) ?
-                                MathUtils.Min(terrainRaycastResult2.Value.Distance, Mount.DismountOffset.X) :
-                                0f - MathUtils.Min(terrainRaycastResult.Value.Distance, Mount.DismountOffset.X);
+                if (ApplyAuthoritativeMountState(null, animate: true)
+                    && !fromNetwork) {
+                    OnDismounting?.Invoke(this, false);
                 }
-                m_isAnimating = true;
-                m_animationTime = 0f;
-                m_isDismounting = true;
-                m_targetPositionOffset = Mount.MountOffset + m_riderOffset + new Vector3(x, Mount.DismountOffset.Y, Mount.DismountOffset.Z);
-                m_targetRotationOffset = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.Sign(x) * MathUtils.DegToRad(60f));
-
-                if (!fromNetwork) OnDismounting?.Invoke(this, false);
             }
+        }
+
+        /// <summary>
+        /// Reconciles the physical parent link with an authoritative mount state.
+        /// This method never raises network request/status events and is therefore
+        /// safe for packet application, late-join baselines and server fixtures.
+        /// </summary>
+        public virtual bool ApplyAuthoritativeMountState(
+            ComponentMount componentMount,
+            bool animate) {
+            ComponentBody body = ComponentCreature.ComponentBody;
+            ComponentMount currentMount = Mount;
+            if (componentMount != null) {
+                if (componentMount.Entity == Entity
+                    || componentMount.ComponentBody == null
+                    || componentMount.ComponentBody.Entity?.Project != Entity.Project) {
+                    return false;
+                }
+                if (currentMount == componentMount) {
+                    if (m_isAnimating && m_isDismounting) {
+                        m_isAnimating = false;
+                        m_isDismounting = false;
+                        m_animationTime = 0f;
+                        m_targetPositionOffset = componentMount.MountOffset + m_riderOffset;
+                        m_targetRotationOffset = Quaternion.Identity;
+                        body.ParentBodyPositionOffset = m_targetPositionOffset;
+                        body.ParentBodyRotationOffset = m_targetRotationOffset;
+                    }
+                    return true;
+                }
+                if (body.ParentBody != null) {
+                    body.ParentBody = null;
+                }
+                m_animationTime = 0f;
+                m_isDismounting = false;
+                body.ParentBody = componentMount.ComponentBody;
+                m_targetPositionOffset = componentMount.MountOffset + m_riderOffset;
+                m_targetRotationOffset = Quaternion.Identity;
+                if (animate) {
+                    m_isAnimating = true;
+                    body.ParentBodyPositionOffset = Vector3.Transform(
+                        body.Position - componentMount.ComponentBody.Position,
+                        Quaternion.Conjugate(componentMount.ComponentBody.Rotation));
+                    body.ParentBodyRotationOffset =
+                        Quaternion.Conjugate(componentMount.ComponentBody.Rotation)
+                        * body.Rotation;
+                }
+                else {
+                    m_isAnimating = false;
+                    body.ParentBodyPositionOffset = m_targetPositionOffset;
+                    body.ParentBodyRotationOffset = m_targetRotationOffset;
+                    m_outOfMountTime = 0f;
+                }
+                ComponentCreature.ComponentLocomotion.IsCreativeFlyEnabled = false;
+                return true;
+            }
+
+            if (currentMount == null) {
+                m_isAnimating = false;
+                m_isDismounting = false;
+                m_animationTime = 0f;
+                return true;
+            }
+            if (!animate) {
+                body.Velocity = currentMount.ComponentBody.Velocity;
+                body.ParentBody = null;
+                m_isAnimating = false;
+                m_isDismounting = false;
+                m_animationTime = 0f;
+                m_outOfMountTime = 0f;
+                return true;
+            }
+
+            float x = CalculateDismountOffset(currentMount);
+            m_isAnimating = true;
+            m_animationTime = 0f;
+            m_isDismounting = true;
+            m_targetPositionOffset = currentMount.MountOffset
+                + m_riderOffset
+                + new Vector3(x, currentMount.DismountOffset.Y, currentMount.DismountOffset.Z);
+            m_targetRotationOffset = Quaternion.CreateFromAxisAngle(
+                Vector3.UnitY,
+                MathF.Sign(x) * MathUtils.DegToRad(60f));
+            return true;
+        }
+
+        private float CalculateDismountOffset(ComponentMount componentMount) {
+            if (componentMount.DismountOffset.X <= 0f) {
+                return 0f;
+            }
+            float distance = componentMount.DismountOffset.X + 0.5f;
+            Vector3 center = 0.5f * (ComponentCreature.ComponentBody.BoundingBox.Min
+                + ComponentCreature.ComponentBody.BoundingBox.Max);
+            TerrainRaycastResult? left = m_subsystemTerrain.Raycast(
+                center,
+                center - distance * ComponentCreature.ComponentBody.Matrix.Right,
+                false,
+                true,
+                null);
+            TerrainRaycastResult? right = m_subsystemTerrain.Raycast(
+                center,
+                center + distance * ComponentCreature.ComponentBody.Matrix.Right,
+                false,
+                true,
+                null);
+            return !left.HasValue ? -componentMount.DismountOffset.X
+                : !right.HasValue ? componentMount.DismountOffset.X
+                : left.Value.Distance <= right.Value.Distance
+                    ? MathUtils.Min(right.Value.Distance, componentMount.DismountOffset.X)
+                    : -MathUtils.Min(left.Value.Distance, componentMount.DismountOffset.X);
         }
 
         public virtual void Update(float dt) {
@@ -148,6 +228,7 @@ namespace Game {
                             componentBody.Velocity = componentBody.ParentBody.Velocity;
                             componentBody.ParentBody = null;
                         }
+                        m_isDismounting = false;
                     }
                     else {
                         componentBody.ParentBodyPositionOffset = m_targetPositionOffset;
@@ -175,11 +256,10 @@ namespace Game {
                 if (m_outOfMountTime > 0.1f
                     || (componentHealth != null && componentHealth.Health <= 0f)
                     || ComponentCreature.ComponentHealth.Health <= 0f) {
-                    //服务器和客户端都由自己控制下马
-                    if (ComponentCreature.ComponentBody.Player != null && !ComponentCreature.ComponentBody.Player.PlayerData.IsMainPlayer) {
-
-                    }
-                    else {
+                    // The server owns every rider. A client may only request a
+                    // dismount for its local player; observers never mutate it.
+                    if (!NetworkManager.IsClientRunning
+                        || ComponentCreature.ComponentBody.Player?.PlayerData.IsMainPlayer == true) {
                         StartDismounting();
                     }
                 }

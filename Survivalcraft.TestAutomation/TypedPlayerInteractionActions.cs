@@ -56,6 +56,7 @@ public partial class TestAutomationModLoader {
         pendingInventoryAction = null;
         pendingHealthAction = null;
         ResetEntityLifecycleFixtures();
+        ResetMountFixtures();
         InputHijackState.ResetGameplayInputs();
     }
 

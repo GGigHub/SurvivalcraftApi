@@ -9,7 +9,7 @@ namespace Survivalcraft.Testing.Tests;
 public sealed class EnvironmentMechanicsProtocolTests {
     [Fact]
     [Trait("Layer", "L0")]
-    public void AutoTestV4EnvironmentAndMechanicsCommandsRoundTrip() {
+    public void AutoTestV5EnvironmentAndMechanicsCommandsRoundTrip() {
         EnvironmentRequestChangeCommand environment = new(
             3,
             EnvironmentChangeKind.TimeOfDay,
@@ -37,7 +37,7 @@ public sealed class EnvironmentMechanicsProtocolTests {
             ControlCommandNames.SetEnvironmentFixture,
             survivalFixture);
 
-        Assert.Equal(4, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(5, AutomationProtocol.CurrentApiVersion);
         Assert.Equal(environment, environmentRequest.DeserializePayload<EnvironmentRequestChangeCommand>());
         Assert.Equal(sleep, sleepRequest.DeserializePayload<PlayerSleepCommand>());
         Assert.Equal(survivalFixture,

@@ -111,6 +111,14 @@ public class StatePacket : ClientPacketBase {
                         if (onFire != null && entity.Id > 0) {
                             NetworkManager.Queue(new EntityOnFirePacket(onFire) { To = From });
                         }
+                        ComponentRider rider = entity.FindComponent<ComponentRider>();
+                        if (rider != null && entity.Id > 0) {
+                            ComponentMountPacket mountState = ComponentMountPacket.CreateState(
+                                rider,
+                                rider.AuthoritativeMount);
+                            mountState.To = From;
+                            NetworkManager.Queue(mountState);
+                        }
                         foreach (IInventory inventory in entity.FindComponents<IInventory>()) {
                             if (inventory is ComponentClothing clothing) {
                                 NetworkManager.Queue(new ClothingSyncPacket(clothing) { To = From });

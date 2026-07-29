@@ -47,9 +47,18 @@ public sealed class MechanicsSyncTest : IClassFixture<GameFixture> {
     [Fact, TestOrder(Priority = 3)]
     public async Task TestMountAndDismountSync() {
         int playerIndex = await MechanicsSyncTools.WaitForClientPlayerIndexAsync(client);
-        int boatId = await MechanicsSyncTools.CreateBoatNearPlayerAsync(server, playerIndex, 4f, 1f, 4f);
+        // The authoritative mount protocol enforces the production interaction
+        // range. Keep this legacy positive-path fixture genuinely reachable;
+        // the typed mount scenario separately proves that a far target is rejected.
+        int boatId = await MechanicsSyncTools.CreateBoatNearPlayerAsync(server, playerIndex, 1f, 0f, 0f);
         Assert.True(boatId > 0, "Server did not create mountable boat.");
+        Assert.True(
+            await MechanicsSyncTools.PrepareBoatForMountAsync(server, playerIndex, boatId),
+            "Server did not stabilize the legacy mount fixture.");
         Assert.True(await MechanicsSyncTools.WaitForEntityExistsAsync(client, boatId), $"Client did not receive boat entity {boatId}.");
+        MechanicsSyncTools.MountProtocolState protocolState =
+            await MechanicsSyncTools.WaitForMountProtocolReadyAsync(client, playerIndex, boatId);
+        Assert.True(protocolState.IsReady, $"Mount protocol baselines were incomplete. State={protocolState.Raw}");
 
         MechanicsSyncTools.MountState requested = await MechanicsSyncTools.StartMountingAsync(client, playerIndex, boatId);
         Assert.True(requested.Exists, $"Client did not request mounting. State={requested.Raw}");

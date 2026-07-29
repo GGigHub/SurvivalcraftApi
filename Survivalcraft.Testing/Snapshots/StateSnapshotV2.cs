@@ -79,7 +79,15 @@ public sealed record MechanicsStateSnapshotV2(
     bool IsOnFire,
     double FireDuration,
     long FireRevision,
-    long LifecycleRevision);
+    long LifecycleRevision,
+    bool HasRider = false,
+    int? MountEntityId = null,
+    bool MountAnimating = false,
+    bool IsDismounting = false,
+    long MountRevision = -1,
+    long MountEntityLifecycleRevision = -1,
+    bool HasMount = false,
+    int? RiderEntityId = null);
 
 public sealed record InventorySnapshotV2(
     int InventoryId,
@@ -118,7 +126,8 @@ public sealed record StateRevisionMetricsSnapshotV2(
     int AuthoritativeTrackedStates,
     int ClientTrackedStates,
     long AppliedStates,
-    long IgnoredStaleStates);
+    long IgnoredStaleStates,
+    long IgnoredLifecycleStates = 0);
 
 public sealed record EntitySnapshotV2(
     int EntityId,

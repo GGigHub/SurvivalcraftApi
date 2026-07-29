@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "entity-direct", "entity-relay", "entity", "inventory-health-direct", "inventory-health-relay", "inventory-health", "environment-mechanics-direct", "environment-mechanics-relay", "environment-mechanics", "legacy", "full")]
+    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "entity-direct", "entity-relay", "entity", "inventory-health-direct", "inventory-health-relay", "inventory-health", "environment-mechanics-direct", "environment-mechanics-relay", "environment-mechanics", "mount-direct", "mount-relay", "mount", "legacy", "full")]
     [string]$Mode = "fast",
 
     [ValidateSet("Debug", "Release")]
@@ -171,6 +171,24 @@ $environmentMechanicsRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($
 }
 elseif ($Mode -eq "environment-mechanics" -or $Mode -eq "full") {
     Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "environment-mechanics-relay"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$mountDirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\mount-direct-$runStamp"
+}
+elseif ($Mode -eq "mount" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "mount-direct"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$mountRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\mount-relay-$runStamp"
+}
+elseif ($Mode -eq "mount" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "mount-relay"
 }
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
@@ -411,6 +429,26 @@ function Run-EnvironmentMechanicsScenario {
     )
 }
 
+function Run-MountScenario {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("direct", "relay")]
+        [string]$Transport,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ArtifactDirectory
+    )
+
+    Build-CoreRuntime
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "run", "mount-multiplayer",
+        "--transport", $Transport,
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $ArtifactDirectory
+    )
+}
+
 function Run-LegacyAudit {
     New-Item -ItemType Directory -Force -Path $legacyArtifactDirectory | Out-Null
     $legacyTestArguments = @(
@@ -548,6 +586,16 @@ try {
             Run-EnvironmentMechanicsScenario -Transport "direct" -ArtifactDirectory $environmentMechanicsDirectArtifactDirectory
             Run-EnvironmentMechanicsScenario -Transport "relay" -ArtifactDirectory $environmentMechanicsRelayArtifactDirectory
         }
+        "mount-direct" {
+            Run-MountScenario -Transport "direct" -ArtifactDirectory $mountDirectArtifactDirectory
+        }
+        "mount-relay" {
+            Run-MountScenario -Transport "relay" -ArtifactDirectory $mountRelayArtifactDirectory
+        }
+        "mount" {
+            Run-MountScenario -Transport "direct" -ArtifactDirectory $mountDirectArtifactDirectory
+            Run-MountScenario -Transport "relay" -ArtifactDirectory $mountRelayArtifactDirectory
+        }
         "legacy" {
             Run-LegacyAudit
         }
@@ -571,6 +619,8 @@ try {
             Run-InventoryHealthScenario -Transport "relay" -ArtifactDirectory $inventoryHealthRelayArtifactDirectory
             Run-EnvironmentMechanicsScenario -Transport "direct" -ArtifactDirectory $environmentMechanicsDirectArtifactDirectory
             Run-EnvironmentMechanicsScenario -Transport "relay" -ArtifactDirectory $environmentMechanicsRelayArtifactDirectory
+            Run-MountScenario -Transport "direct" -ArtifactDirectory $mountDirectArtifactDirectory
+            Run-MountScenario -Transport "relay" -ArtifactDirectory $mountRelayArtifactDirectory
             Run-LegacyAudit
         }
     }

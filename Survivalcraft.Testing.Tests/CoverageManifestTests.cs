@@ -78,7 +78,14 @@ public sealed class CoverageManifestTests {
             && feature.PersistenceTest != null);
         Assert.Contains(manifest.Features, feature =>
             feature.FeatureId == "mechanics.mount"
-            && feature.Status == "planned");
+            && feature.Status == "covered"
+            && feature.DirectTest != null
+            && feature.RelayTest != null
+            && feature.LateJoinTest != null
+            && feature.ReconnectTest != null
+            && feature.AuthorityTest != null
+            && feature.FaultTest != null
+            && feature.PersistenceTest != null);
     }
 
     [Fact]

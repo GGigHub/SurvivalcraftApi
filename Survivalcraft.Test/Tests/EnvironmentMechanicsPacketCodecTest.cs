@@ -160,6 +160,62 @@ public sealed class EnvironmentMechanicsPacketCodecTest {
                 extinguished.m_revision));
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void MountPacketsPreserveOwnershipLifecycleRevisionAndRequestIdentity() {
+        ComponentMountPacket request = RoundTrip(
+            new ComponentMountPacket {
+                m_type = ComponentMountPacket.EventType.MountRequest,
+                m_result = ComponentMountPacket.ResultCode.None,
+                m_riderEntityId = 41,
+                m_mountEntityId = 52,
+                m_riderLifecycleRevision = 7,
+                m_mountLifecycleRevision = 9,
+                m_revision = 11,
+                m_requestId = 4_294_967_701L
+            },
+            static () => new ComponentMountPacket());
+        ComponentMountPacket state = RoundTrip(
+            new ComponentMountPacket {
+                m_type = ComponentMountPacket.EventType.State,
+                m_result = ComponentMountPacket.ResultCode.OwnershipMismatch,
+                m_riderEntityId = 41,
+                m_mountEntityId = 0,
+                m_riderLifecycleRevision = 7,
+                m_mountLifecycleRevision = -1,
+                m_revision = 12,
+                m_requestId = 4_294_967_701L
+            },
+            static () => new ComponentMountPacket());
+
+        Assert.Equal((
+                ComponentMountPacket.EventType.MountRequest,
+                ComponentMountPacket.ResultCode.None,
+                41,
+                52,
+                7L,
+                9L,
+                11L,
+                4_294_967_701L),
+            (request.m_type, request.m_result, request.m_riderEntityId,
+                request.m_mountEntityId, request.m_riderLifecycleRevision,
+                request.m_mountLifecycleRevision, request.m_revision,
+                request.m_requestId));
+        Assert.Equal((
+                ComponentMountPacket.EventType.State,
+                ComponentMountPacket.ResultCode.OwnershipMismatch,
+                41,
+                0,
+                7L,
+                -1L,
+                12L,
+                4_294_967_701L),
+            (state.m_type, state.m_result, state.m_riderEntityId,
+                state.m_mountEntityId, state.m_riderLifecycleRevision,
+                state.m_mountLifecycleRevision, state.m_revision,
+                state.m_requestId));
+    }
+
     private static TPacket RoundTrip<TPacket>(
         TPacket source,
         Func<TPacket> create)

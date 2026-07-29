@@ -58,6 +58,15 @@ public static class MechanicsSyncTools {
     public static Task<int> CreateBoatNearPlayerAsync(GameContext context, int playerIndex, float offsetX, float offsetY, float offsetZ) =>
         CreatureSyncTools.CreateBoatNearPlayerAsync(context, playerIndex, offsetX, offsetY, offsetZ);
 
+    public static async Task<bool> PrepareBoatForMountAsync(
+        GameContext context,
+        int playerIndex,
+        int mountEntityId) =>
+        (bool?)await context.PushCommandAsync(
+            "FUNC " + GameTools.ReadScript("MechanicsSync/PrepareBoatForMountCode.cs")
+                .Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture))
+                .Replace("__MOUNT_ENTITY_ID__", mountEntityId.ToString(CultureInfo.InvariantCulture))) ?? false;
+
     public static Task<bool> WaitForEntityExistsAsync(GameContext context, int entityId) =>
         CreatureSyncTools.WaitForEntityExistsAsync(context, entityId);
 
@@ -125,6 +134,25 @@ public static class MechanicsSyncTools {
             "FUNC " + GameTools.ReadScript("MechanicsSync/StartMountingCode.cs")
                 .Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture))
                 .Replace("__MOUNT_ENTITY_ID__", mountEntityId.ToString(CultureInfo.InvariantCulture))) ?? "missing");
+
+    public static async Task<MountProtocolState> GetMountProtocolStateAsync(
+        GameContext context,
+        int playerIndex,
+        int mountEntityId) =>
+        ParseMountProtocolState((string?)await context.PushCommandAsync(
+            "FUNC " + GameTools.ReadScript("MechanicsSync/GetMountProtocolStateCode.cs")
+                .Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture))
+                .Replace("__MOUNT_ENTITY_ID__", mountEntityId.ToString(CultureInfo.InvariantCulture))) ?? "missing");
+
+    public static Task<MountProtocolState> WaitForMountProtocolReadyAsync(
+        GameContext context,
+        int playerIndex,
+        int mountEntityId) =>
+        TestWaiter.UntilAsync(
+            () => GetMountProtocolStateAsync(context, playerIndex, mountEntityId),
+            state => state.IsReady,
+            TestTimeouts.DefaultEventually,
+            $"Mount protocol baselines were not ready for player {playerIndex} and mount {mountEntityId}.");
 
     public static async Task<MountState> StartDismountingAsync(GameContext context, int playerIndex) =>
         ParseMountState((string?)await context.PushCommandAsync(
@@ -351,6 +379,9 @@ public static class MechanicsSyncTools {
     private static float Float(Dictionary<string, string> map, string key) =>
         map.TryGetValue(key, out string? value) && float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float result) ? result : 0f;
 
+    private static long Long(Dictionary<string, string> map, string key) =>
+        map.TryGetValue(key, out string? value) && long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out long result) ? result : -1;
+
     private static bool Bool(Dictionary<string, string> map, string key) =>
         map.TryGetValue(key, out string? value) && value == "1";
 
@@ -364,6 +395,16 @@ public static class MechanicsSyncTools {
         if (raw.Equals("missing", StringComparison.OrdinalIgnoreCase)) return new(false, 0, false, false, raw);
         Dictionary<string, string> map = ParseMap(raw);
         return new(true, Int(map, "mount"), Bool(map, "animating"), Bool(map, "dismounting"), raw);
+    }
+
+    public static MountProtocolState ParseMountProtocolState(string raw) {
+        if (raw.Equals("missing", StringComparison.OrdinalIgnoreCase)) return new(-1, -1, -1, raw);
+        Dictionary<string, string> map = ParseMap(raw);
+        return new(
+            Long(map, "riderLifecycle"),
+            Long(map, "mountLifecycle"),
+            Long(map, "mountRevision"),
+            raw);
     }
 
     public static EntityFireState ParseEntityFireState(string raw) {
@@ -408,6 +449,15 @@ public static class MechanicsSyncTools {
 
     public readonly record struct SleepState(bool Exists, bool IsSleeping, bool AllowManualWakeup, string Raw);
     public readonly record struct MountState(bool Exists, int MountId, bool IsAnimating, bool IsDismounting, string Raw);
+    public readonly record struct MountProtocolState(
+        long RiderLifecycleRevision,
+        long MountLifecycleRevision,
+        long MountRevision,
+        string Raw) {
+        public bool IsReady => RiderLifecycleRevision >= 0
+            && MountLifecycleRevision >= 0
+            && MountRevision >= 0;
+    }
     public readonly record struct EntityFireState(bool Exists, bool IsOnFire, float Duration, string Raw);
     public readonly record struct FireBlockState(int X, int Y, int Z, bool OnFire, string Raw);
     public readonly record struct SicknessState(bool Exists, bool IsSick, bool HasNausea, float Duration, string Raw);

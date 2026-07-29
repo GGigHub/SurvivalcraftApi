@@ -572,4 +572,19 @@ Survivalcraft.TestAutomation/
 - `actions.json` 严格包含 client-a 的 time、precipitation、fog、lightning、sleep，server 的 environment/fire revision burst，以及 client-a wake 八个动作。Direct 与 Relay 原运行、严格回放和 xUnit L2 Theory 均真实无窗口通过；
 - L0 覆盖生产包编解码、AutoTest v4 DTO、Snapshot 规范化、覆盖清单和 replay 拒绝规则；PowerShell 的 `environment-mechanics-direct`、`environment-mechanics-relay`、`environment-mechanics` 入口及 `full` 门禁已经接入。
 
-`environment.time-weather-lightning` 与 `mechanics.sleep-fire` 现已标记为 `covered`。骑乘仍是独立的 `mechanics.mount` planned 项，不因共享 mechanics 名称而被提前宣称覆盖。
+`environment.time-weather-lightning` 与 `mechanics.sleep-fire` 现已标记为 `covered`。
+
+## 28. 骑乘、下马与双实体生命周期完整覆盖实施记录
+
+本切片把骑手与坐骑的双向关系纳入服务端权威生产链，并把 Automation API 提升到 v5、wire protocol 提升到 revision 7：
+
+- `ComponentMountPacket` 显式区分 mount/dismount request 与 authoritative state；请求绑定 Playing 会话、真实骑手实体、骑手 lifecycle、目标坐骑 lifecycle、期望 mount revision 和 64 位 request ID，服务端重新校验距离、存活、占用、忙碌状态与模组钩子，并对拒绝请求发送同 revision 权威关系用于修复请求端乐观状态；
+- 客户端拒绝伪造方向、旧 mount revision、旧骑手世代和旧坐骑世代；实体移除会解除关联，重新加入的 rider 会向所有已有观察者广播实体与明确的未骑乘基线，避免稳定 PlayerIndex 重连后保留旧关系；
+- `ComponentRider` 将本地输入请求与服务端直接状态变更分离，自动下马只由服务端决定；下马动画结束会清理瞬时标志，存档只保存稳定关系所需实体而不把跨 Project 引用带入重载；
+- Snapshot v2 的 mechanics 投影包含 rider/mount 双侧 ID、动画/下马状态、mount revision 与目标 lifecycle revision；通用比较器可完整比较睡眠、火焰和骑乘语义，并可在保存重载边界显式忽略内存 revision；state-revision metrics 分开记录 stale 与 lifecycle 拒绝；
+- 强类型命令新增 `fixture.mechanics.prepareMount`、`player.mount`、`mechanics.runMountRevisionBurst` 和 `mechanics.runMountLifecycleBurst`。夹具创建真实 Boat，只布置近距与 12 格外目标；合法动作仍通过生产包，安全探针覆盖跨玩家骑手冒用、客户端伪造 State 和超距请求；
+- 一服三客 Direct/Relay 场景在 18 ms 延迟、4 ms 抖动、100% 复制和 50% 重排下验证 mount/dismount、观察者收敛、旧 revision 拒绝、坐骑同 ID 世代替换与延迟旧包拒绝；随后覆盖 client-c late join、骑手断线释放坐骑、稳定身份但新实体世代重连，以及已挂载保存后重载为安全下马且 Boat 继续持久化的边界；
+- `actions.json` 严格包含 mount、dismount、故障下 mount、服务端 revision burst、服务端 lifecycle burst、断线前 remount 和重连后 mount 七个动作。Direct 与 Relay 的原运行和严格回放均真实无窗口通过；
+- L0 覆盖生产包编解码、AutoTest v5 DTO、Snapshot 规范化/双向差异、覆盖清单和 replay 角色/顺序/安全开关拒绝规则；PowerShell 的 `mount-direct`、`mount-relay`、`mount` 入口与 `full` 门禁已经接入。
+
+`mechanics.mount` 现已标记为 `covered`。下一条核心主线可进入 `logic.electricity-and-moving-blocks`，继续复用会话所有权、request identity、生命周期世代和严格回放模式。

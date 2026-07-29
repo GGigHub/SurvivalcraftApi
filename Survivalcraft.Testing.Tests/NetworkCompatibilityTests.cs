@@ -7,6 +7,12 @@ namespace Survivalcraft.Testing.Tests;
 public sealed class NetworkCompatibilityTests {
     [Fact]
     [Trait("Layer", "L0")]
+    public void ProtocolRevisionIncludesAuthoritativeMountWireFormat() {
+        Assert.Equal(7, NetworkCompatibility.ProtocolRevision);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void CanonicalizationNormalizesAndOrdersManifestDeterministically() {
         NetworkCompatibilityManifest source = Manifest(
             new NetworkModIdentity(" Zeta.Mod ", " 2.0 ", " 1.9.3 "),

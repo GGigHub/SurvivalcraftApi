@@ -448,6 +448,46 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             RunMechanicsRevisionBurst);
+        router.Register<PrepareMountFixtureCommand, MountFixture>(
+            Metadata(
+                ControlCommandNames.PrepareMountFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareMountFixture(command));
+        router.Register<PlayerMountCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerMount,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerMount);
+        router.Register<RunMountRevisionBurstCommand, MountRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunMountRevisionBurst,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunMountRevisionBurst);
+        router.Register<RunMountLifecycleBurstCommand, MountLifecycleBurstResult>(
+            Metadata(
+                ControlCommandNames.RunMountLifecycleBurst,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunMountLifecycleBurst);
         router.Register<SetClockCommand, ClockState>(
             Metadata(ControlCommandNames.SetClock, AutomationCommandDomain.Time, true),
             (_, command) => SetClock(command));
@@ -773,7 +813,9 @@ public partial class TestAutomationModLoader {
         int[] entityIds = selectedEntityIds
             ?? project.Entities
                 .Where(entity => entity.FindComponent<ComponentSleep>() != null
-                    || entity.FindComponent<ComponentOnFire>() != null)
+                    || entity.FindComponent<ComponentOnFire>() != null
+                    || entity.FindComponent<ComponentRider>() != null
+                    || entity.FindComponent<ComponentMount>() != null)
                 .Select(entity => entity.Id)
                 .Where(entityId => entityId > 0)
                 .Distinct()
@@ -788,6 +830,13 @@ public partial class TestAutomationModLoader {
                 ComponentPlayer? player = entity?.FindComponent<ComponentPlayer>();
                 ComponentSleep? sleep = entity?.FindComponent<ComponentSleep>();
                 ComponentOnFire? onFire = entity?.FindComponent<ComponentOnFire>();
+                ComponentRider? rider = entity?.FindComponent<ComponentRider>();
+                ComponentMount? mount = entity?.FindComponent<ComponentMount>();
+                ComponentMount? authoritativeMount = rider?.AuthoritativeMount;
+                ComponentRider? authoritativeRider = mount?.Rider;
+                if (authoritativeRider?.AuthoritativeMount != mount) {
+                    authoritativeRider = null;
+                }
                 long Revision(NetworkStateRevisionDomain domain, bool present) => !present
                     ? -1
                     : client
@@ -810,7 +859,19 @@ public partial class TestAutomationModLoader {
                     onFire?.IsOnFire == true,
                     onFire?.m_fireDuration ?? 0,
                     Revision(NetworkStateRevisionDomain.Fire, onFire != null),
-                    lifecycleRevision);
+                    lifecycleRevision,
+                    rider != null,
+                    authoritativeMount?.Entity?.Id,
+                    rider?.m_isAnimating == true,
+                    rider?.m_isDismounting == true,
+                    Revision(NetworkStateRevisionDomain.Mount, rider != null),
+                    authoritativeMount?.Entity?.Id is int mountEntityId
+                        ? client
+                            ? EntityLifecycleTracker.GetAppliedRevision(project, mountEntityId)
+                            : EntityLifecycleTracker.GetAuthoritativeRevision(project, mountEntityId)
+                        : -1,
+                    mount != null,
+                    authoritativeRider?.Entity?.Id);
             })
             .OrderBy(state => state.EntityId)
             .ToArray();
@@ -965,7 +1026,8 @@ public partial class TestAutomationModLoader {
             metrics.AuthoritativeTrackedStates,
             metrics.ClientTrackedStates,
             metrics.AppliedStates,
-            metrics.IgnoredStaleStates);
+            metrics.IgnoredStaleStates,
+            metrics.IgnoredLifecycleStates);
     }
 
     private static EntitySnapshotV2 BuildEntitySnapshotV2(Project project, int entityId) {

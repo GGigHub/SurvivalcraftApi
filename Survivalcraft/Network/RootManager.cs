@@ -221,10 +221,30 @@ public static class RootManager {
             if (!NetworkManager.IsClientRunning)
                 NetworkManager.Queue(new RandomPeckBehaviorPacket(behavior, isPeck));
         };
-        ComponentRider.OnDismounting += (rider, isRequest) =>
-            NetworkManager.Queue(new ComponentMountPacket(rider, isRequest));
-        ComponentRider.OnMounting += (rider, mount, isRequest) =>
-            NetworkManager.Queue(new ComponentMountPacket(rider, mount, isRequest));
+        ComponentRider.OnDismounting += (rider, isRequest) => {
+            if (NetworkManager.IsClientRunning && isRequest) {
+                NetworkManager.Queue(new ComponentMountPacket(rider, isRequest: true));
+            }
+            else if (!NetworkManager.IsClientRunning && !isRequest && rider.Entity.Id > 0) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    rider.Entity.Project,
+                    NetworkStateRevisionDomain.Mount,
+                    rider.Entity.Id);
+                NetworkManager.Queue(ComponentMountPacket.CreateState(rider, null, revision));
+            }
+        };
+        ComponentRider.OnMounting += (rider, mount, isRequest) => {
+            if (NetworkManager.IsClientRunning && isRequest) {
+                NetworkManager.Queue(new ComponentMountPacket(rider, mount, isRequest: true));
+            }
+            else if (!NetworkManager.IsClientRunning && !isRequest && rider.Entity.Id > 0) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    rider.Entity.Project,
+                    NetworkStateRevisionDomain.Mount,
+                    rider.Entity.Id);
+                NetworkManager.Queue(ComponentMountPacket.CreateState(rider, mount, revision));
+            }
+        };
         ComponentSickness.OnSicknessChange += (sickness) => {
             if (NetworkManager.IsServerRunning)
                 NetworkManager.Queue(new ComponentSicknessPacket(sickness, ComponentSicknessPacket.EventType.SyncStat));
@@ -481,6 +501,7 @@ public static class RootManager {
         ComponentLocomotion.IsNetworkMode += NetworkBodySyncHelpers.ShouldBeNetworkControlled;
         ComponentBody.OnNetworkBodyUpdate += NetworkBodyInterpolation.Update;
         ComponentBody.OnBodyRemoved += NetworkBodyInterpolation.RemoveTarget;
+        ComponentBody.OnBodyRemoved += HandleMountBodyRemoved;
         ComponentBody.OnBodyUpdate += BehaviorSyncPacket.CollectBehaviorForSync;
         Project.EntityAdded += (_, arg) => {
             if (!NetworkManager.IsClientRunning && arg.Entity.Id > 0) {
@@ -488,6 +509,12 @@ public static class RootManager {
                     arg.Entity.Project,
                     arg.Entity.Id);
                 NetworkManager.Queue(new EntityLoadPacket(arg.Entity));
+                ComponentRider rider = arg.Entity.FindComponent<ComponentRider>();
+                if (rider != null) {
+                    NetworkManager.Queue(ComponentMountPacket.CreateState(
+                        rider,
+                        rider.AuthoritativeMount));
+                }
             }
         };
         Project.EntityRemoved += (_, arg) => {
@@ -513,5 +540,25 @@ public static class RootManager {
             NetworkStateRevisionDomain.Weather,
             SubsystemTimePacket.EnvironmentStateId);
         NetworkManager.Queue(new SubsystemWeatherPacket(weather, revision));
+    }
+
+    private static void HandleMountBodyRemoved(ComponentBody body) {
+        if (NetworkManager.IsClientRunning
+            || body?.Entity?.Id <= 0
+            || body.Entity.FindComponent<ComponentMount>() == null) {
+            return;
+        }
+        foreach (ComponentBody childBody in body.ChildBodies.ToArray()) {
+            ComponentRider rider = childBody.Entity.FindComponent<ComponentRider>();
+            if (rider == null || rider.Entity.Id <= 0) {
+                continue;
+            }
+            rider.ApplyAuthoritativeMountState(null, animate: false);
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                rider.Entity.Project,
+                NetworkStateRevisionDomain.Mount,
+                rider.Entity.Id);
+            NetworkManager.Queue(ComponentMountPacket.CreateState(rider, null, revision));
+        }
     }
 }

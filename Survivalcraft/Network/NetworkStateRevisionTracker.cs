@@ -11,14 +11,16 @@ public enum NetworkStateRevisionDomain : byte {
     Weather,
     Sky,
     Sleep,
-    Fire
+    Fire,
+    Mount
 }
 
 public readonly record struct NetworkStateRevisionMetrics(
     int AuthoritativeTrackedStates,
     int ClientTrackedStates,
     long AppliedStates,
-    long IgnoredStaleStates);
+    long IgnoredStaleStates,
+    long IgnoredLifecycleStates);
 
 internal readonly record struct NetworkStateRevisionDecision(
     bool Apply,
@@ -115,7 +117,13 @@ public static class NetworkStateRevisionTracker {
             context.AuthoritativeRevisions.Count,
             context.ClientWindows.Count,
             context.AppliedStates,
-            context.IgnoredStaleStates);
+            context.IgnoredStaleStates,
+            context.IgnoredLifecycleStates);
+    }
+
+    public static void RecordIgnoredLifecycleState(Project project) {
+        ArgumentNullException.ThrowIfNull(project);
+        Context(project).IgnoredLifecycleStates++;
     }
 
     private static RevisionContext Context(Project project) =>
@@ -136,5 +144,6 @@ public static class NetworkStateRevisionTracker {
         public Dictionary<StateKey, NetworkStateRevisionWindow> ClientWindows { get; } = [];
         public long AppliedStates;
         public long IgnoredStaleStates;
+        public long IgnoredLifecycleStates;
     }
 }
