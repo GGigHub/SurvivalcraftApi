@@ -43,14 +43,15 @@ public sealed class SnapshotV2Tests {
         ControlRequest request = ControlProtocol.CreateRequest(
             ControlCommandNames.GetSnapshotV2,
             new GetSnapshotV2Command(
-                [SnapshotDomain.Network, SnapshotDomain.Players, SnapshotDomain.Terrain, SnapshotDomain.Events],
+                [SnapshotDomain.Network, SnapshotDomain.Players, SnapshotDomain.Terrain, SnapshotDomain.Entities, SnapshotDomain.Events],
                 PlayerIndexes: [1, 2],
                 TerrainCells: [
                     new TerrainCellCoordinate(10, 64, 20),
                     new TerrainCellCoordinate(11, 64, 20)
                 ],
                 EventAfterSequence: 7,
-                EventLimit: 64));
+                EventLimit: 64,
+                EntityIds: [31, 32]));
 
         GetSnapshotV2Command command = request.DeserializePayload<GetSnapshotV2Command>();
 
@@ -60,6 +61,7 @@ public sealed class SnapshotV2Tests {
                 SnapshotDomain.Network,
                 SnapshotDomain.Players,
                 SnapshotDomain.Terrain,
+                SnapshotDomain.Entities,
                 SnapshotDomain.Events
             },
             command.Domains);
@@ -72,6 +74,7 @@ public sealed class SnapshotV2Tests {
             Assert.IsType<TerrainCellCoordinate[]>(command.TerrainCells));
         Assert.Equal(7, command.EventAfterSequence);
         Assert.Equal(64, command.EventLimit);
+        Assert.Equal(new[] { 31, 32 }, Assert.IsType<int[]>(command.EntityIds));
     }
 
     [Fact]
@@ -282,6 +285,73 @@ public sealed class SnapshotV2Tests {
         Assert.Contains("\"isLoaded\":false", v2Json, StringComparison.Ordinal);
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void EntityProjectionIsCanonicalAndComparedByEntityId() {
+        EntitySnapshotV2 firstEntity = Entity(31, 1.234567, revision: 3);
+        EntitySnapshotV2 secondEntity = Entity(32, 2, revision: 1);
+        StateSnapshotV2 first = Snapshot([], []) with {
+            Entities = [secondEntity, firstEntity],
+            EntityLifecycle = new EntityLifecycleSnapshotV2(2, 2, 3, 1, 4, 1)
+        };
+        StateSnapshotV2 second = Snapshot([], []) with {
+            Entities = [
+                firstEntity with {
+                    Body = firstEntity.Body! with {
+                        Rotation = new QuaternionState(0, 0, 0, -1)
+                    }
+                },
+                secondEntity
+            ],
+            EntityLifecycle = first.EntityLifecycle
+        };
+
+        StateSnapshotV2 normalized = SnapshotV2Canonicalizer.Normalize(first, decimalPlaces: 5);
+        EntitySnapshotV2[] normalizedEntities = Assert.IsType<EntitySnapshotV2[]>(
+            normalized.Entities);
+        Assert.Equal(new[] { 31, 32 }, normalizedEntities.Select(entity => entity.EntityId));
+        Assert.Equal(1.23457, normalizedEntities[0].Body!.Position.X);
+        Assert.Equal(
+            SnapshotV2Canonicalizer.ComputeSha256(first),
+            SnapshotV2Canonicalizer.ComputeSha256(second));
+        Assert.True(SnapshotV2Comparer.CompareEntities(first, second).Equal);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void EntityComparerIncludesRevisionAndTombstoneState() {
+        EntitySnapshotV2 expectedEntity = Entity(31, 1, revision: 3);
+        StateSnapshotV2 expected = Snapshot([], []) with { Entities = [expectedEntity] };
+        StateSnapshotV2 revised = expected with {
+            Entities = [expectedEntity with { Revision = 4 }]
+        };
+        StateSnapshotV2 tombstoned = expected with {
+            Entities = [expectedEntity with {
+                Exists = false,
+                TemplateName = null,
+                IsCreature = false,
+                Body = null,
+                Health = null,
+                Hitpoints = null,
+                Revision = 4,
+                IsTombstone = true
+            }]
+        };
+
+        SnapshotV2Diff revisionDifference = SnapshotV2Comparer.CompareEntities(expected, revised);
+        SnapshotV2Diff tombstoneDifference = SnapshotV2Comparer.CompareEntities(expected, tombstoned);
+
+        Assert.Contains(
+            revisionDifference.Differences,
+            item => item.Path == "$.entities[entityId=31].revision");
+        Assert.Contains(
+            tombstoneDifference.Differences,
+            item => item.Path == "$.entities[entityId=31].isTombstone");
+        Assert.Contains(
+            tombstoneDifference.Differences,
+            item => item.Path == "$.entities[entityId=31].exists");
+    }
+
     private static StateSnapshotV2 Snapshot(
         PlayerSnapshotV2[] players,
         ActionEventRecord[] events,
@@ -312,5 +382,21 @@ public sealed class SnapshotV2Tests {
                 false),
             1,
             1,
+            false);
+
+    private static EntitySnapshotV2 Entity(int id, double position, long revision) =>
+        new(
+            id,
+            true,
+            "Cow",
+            true,
+            false,
+            new EntityBodySnapshotV2(
+                new Vector3State(position, 2, 3),
+                new Vector3State(0, 0, 0),
+                new QuaternionState(0, 0, 0, 1)),
+            1,
+            1,
+            revision,
             false);
 }

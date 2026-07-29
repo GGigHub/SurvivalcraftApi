@@ -524,3 +524,18 @@ Survivalcraft.TestAutomation/
 - `TerrainStreamingMultiplayerScenarioTest`、覆盖清单和 PowerShell 的 `streaming-direct`、`streaming-relay`、`streaming` 入口将这条矩阵纳入门禁。
 
 `terrain.streaming-and-revisions` 现已标记为 `covered`。后续核心主线可以进入实体/生物生命周期与物理，复用本切片的 revision window 和 loadedness 断言模式。
+
+## 25. 实体生命周期与生物权威物理完整覆盖实施记录
+
+本切片把实体世代、墓碑和非玩家生物身体同步纳入同一条严格可回放生产链：
+
+- wire protocol 提升到 revision 4；`EntityLoadPacket` 和 `EntityRemovePacket` 携带服务端按 EntityId 单调递增的生命周期 revision，客户端以墓碑窗口拒绝重复、旧加载和旧删除，因此旧世代不能复活或覆盖同 ID 的新实体；
+- `BehaviorSyncPacket` 在原行为状态之外携带实体 revision 与服务端身体位置、速度、旋转；客户端只对当前世代应用快照，并通过既有 `NetworkBodyInterpolation` 平滑。非玩家生物在客户端被标记为网络控制，服务端继续承担物理权威；
+- Entity Snapshot v2 可按 ID 投影存在性、模板、生物/玩家类型、身体、健康、hitpoints、revision 和 tombstone；生命周期指标区分服务端/客户端追踪数、已应用加载/删除、忽略旧包和墓碑数；
+- `fixture.entity.prepareLifecycle` 只在服务端创建稳定 Cow 前置条件；`entity.applyImpulse` 调用真实 `ComponentBody.ApplyImpulse` 并运行固定帧；`entity.runLifecycleBurst` 对同一 ID 执行删除和新 Cow 替换，同时删除 Duck 形成墓碑，最后排入捕获的旧加载包；
+- 一服三客 Direct/Relay 场景在 18 ms 延迟、4 ms 抖动、100% 复制和 50% 重排下验证身体收敛、新世代保留、墓碑不复活和客户端 server-only 权限拒绝；
+- client-c late join 只取得当前权威实体，client-a 断线后以稳定 PlayerIndex 重连；保存、停止、重载和重建 transport 后，存活 Cow 与替换 Cow 继续存在，已删除 Duck 仍不存在，而每 Project 内存 revision 窗口允许重新建立；
+- `actions.json` 严格包含 server `entity.applyImpulse`、server `entity.runLifecycleBurst` 两个动作且旧加载注入必须开启；Direct 与 Relay 原运行和完整回放均真实无窗口通过；
+- L0 覆盖 lifecycle window、包编解码、Snapshot 规范化/差异和 replay 拒绝规则；L2 Theory、覆盖清单及 PowerShell 的 `entity-direct`、`entity-relay`、`entity` 入口纳入完整门禁。
+
+`entity-creature.lifecycle-physics` 现已标记为 `covered`。下一条核心主线应进入 inventory/container operations，并复用实体生命周期 revision 处理掉落物或容器实体失效后的陈旧动作。

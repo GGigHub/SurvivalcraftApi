@@ -11,11 +11,76 @@ public sealed record SnapshotV2PlayerComparisonOptions(
 public sealed record SnapshotV2TerrainComparisonOptions(
     bool CompareRevision = false);
 
+public sealed record SnapshotV2EntityComparisonOptions(
+    double PositionTolerance = 0.2,
+    double VelocityTolerance = 0.25,
+    double ScalarTolerance = 0.00001,
+    double RotationAngleTolerance = 0.05,
+    bool CompareRevision = true);
+
 public sealed record SnapshotV2Diff(
     bool Equal,
     SnapshotDifference[] Differences);
 
 public static class SnapshotV2Comparer {
+    public static SnapshotV2Diff CompareEntities(
+        StateSnapshotV2 expected,
+        StateSnapshotV2 actual,
+        SnapshotV2EntityComparisonOptions? options = null) {
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentNullException.ThrowIfNull(actual);
+        options ??= new SnapshotV2EntityComparisonOptions();
+        ValidateTolerance(options.PositionTolerance, nameof(options.PositionTolerance));
+        ValidateTolerance(options.VelocityTolerance, nameof(options.VelocityTolerance));
+        ValidateTolerance(options.ScalarTolerance, nameof(options.ScalarTolerance));
+        ValidateTolerance(options.RotationAngleTolerance, nameof(options.RotationAngleTolerance));
+
+        List<SnapshotDifference> differences = [];
+        Dictionary<int, EntitySnapshotV2> remaining = (actual.Entities ?? [])
+            .ToDictionary(entity => entity.EntityId);
+        foreach (EntitySnapshotV2 expectedEntity in (expected.Entities ?? [])
+                     .OrderBy(entity => entity.EntityId)) {
+            string path = $"$.entities[entityId={expectedEntity.EntityId}]";
+            if (!remaining.Remove(expectedEntity.EntityId, out EntitySnapshotV2? actualEntity)) {
+                differences.Add(new SnapshotDifference(path, expectedEntity.ToString(), "<missing>"));
+                continue;
+            }
+            CompareValue(path + ".exists", expectedEntity.Exists, actualEntity.Exists, differences);
+            CompareValue(path + ".templateName", expectedEntity.TemplateName, actualEntity.TemplateName, differences);
+            CompareValue(path + ".isCreature", expectedEntity.IsCreature, actualEntity.IsCreature, differences);
+            CompareValue(path + ".isPlayer", expectedEntity.IsPlayer, actualEntity.IsPlayer, differences);
+            CompareValue(path + ".isTombstone", expectedEntity.IsTombstone, actualEntity.IsTombstone, differences);
+            if (options.CompareRevision) {
+                CompareValue(path + ".revision", expectedEntity.Revision, actualEntity.Revision, differences);
+            }
+            CompareNullableScalar(
+                path + ".health",
+                expectedEntity.Health,
+                actualEntity.Health,
+                options.ScalarTolerance,
+                differences);
+            CompareNullableScalar(
+                path + ".hitpoints",
+                expectedEntity.Hitpoints,
+                actualEntity.Hitpoints,
+                options.ScalarTolerance,
+                differences);
+            CompareEntityBody(
+                path + ".body",
+                expectedEntity.Body,
+                actualEntity.Body,
+                options,
+                differences);
+        }
+        foreach (EntitySnapshotV2 extra in remaining.Values.OrderBy(entity => entity.EntityId)) {
+            differences.Add(new SnapshotDifference(
+                $"$.entities[entityId={extra.EntityId}]",
+                "<missing>",
+                extra.ToString()));
+        }
+        return new SnapshotV2Diff(differences.Count == 0, differences.ToArray());
+    }
+
     public static SnapshotV2Diff CompareTerrainCells(
         StateSnapshotV2 expected,
         StateSnapshotV2 actual,
@@ -154,6 +219,41 @@ public static class SnapshotV2Comparer {
             expected.LookAngles,
             actual.LookAngles,
             options.LookAngleTolerance,
+            differences);
+        CompareNullableRotation(
+            path + ".rotation",
+            expected.Rotation,
+            actual.Rotation,
+            options.RotationAngleTolerance,
+            differences);
+    }
+
+    private static void CompareEntityBody(
+        string path,
+        EntityBodySnapshotV2? expected,
+        EntityBodySnapshotV2? actual,
+        SnapshotV2EntityComparisonOptions options,
+        List<SnapshotDifference> differences) {
+        if (expected == null || actual == null) {
+            if (expected != actual) {
+                differences.Add(new SnapshotDifference(
+                    path,
+                    expected?.ToString() ?? "null",
+                    actual?.ToString() ?? "null"));
+            }
+            return;
+        }
+        CompareVector(
+            path + ".position",
+            expected.Position,
+            actual.Position,
+            options.PositionTolerance,
+            differences);
+        CompareVector(
+            path + ".velocity",
+            expected.Velocity,
+            actual.Velocity,
+            options.VelocityTolerance,
             differences);
         CompareNullableRotation(
             path + ".rotation",

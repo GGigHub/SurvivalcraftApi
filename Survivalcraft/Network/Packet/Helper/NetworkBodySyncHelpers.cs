@@ -17,17 +17,26 @@ public static class NetworkBodySyncHelpers {
         bool isMainPlayer = componentPlayer?.PlayerData?.IsMainPlayer == true;
 
         bool hasNonMainChildPlayer = false;
+        bool hasMainChildPlayer = false;
         for (int i = 0; i < body.ChildBodies.Count; i++) {
             ComponentPlayer childPlayer = body.ChildBodies[i].Entity.FindComponent<ComponentPlayer>();
-            if (childPlayer?.PlayerData?.IsMainPlayer == false) {
+            if (childPlayer?.PlayerData?.IsMainPlayer == true) {
+                hasMainChildPlayer = true;
+            }
+            else if (childPlayer?.PlayerData?.IsMainPlayer == false) {
                 hasNonMainChildPlayer = true;
-                break;
             }
         }
 
         if (NetworkManager.IsClientRunning) {
-            return (componentPlayer != null && !isMainPlayer && body.ParentBody == null)
-                || hasNonMainChildPlayer;
+            if (componentPlayer != null) {
+                return !isMainPlayer && body.ParentBody == null;
+            }
+            if (hasMainChildPlayer) {
+                return false;
+            }
+            return hasNonMainChildPlayer
+                || BehaviorSyncPacket.ShouldSyncBehavior(body);
         }
 
         return (componentPlayer != null && !isMainPlayer && body.ParentBody == null)

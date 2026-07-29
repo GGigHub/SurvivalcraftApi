@@ -19,6 +19,7 @@ public enum AutomationCommandDomain {
     Network,
     Player,
     Terrain,
+    Entity,
     State,
     Time,
     Ui,

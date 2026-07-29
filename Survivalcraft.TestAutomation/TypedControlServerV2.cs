@@ -218,6 +218,36 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             RunTerrainRevisionBurst);
+        router.Register<PrepareEntityLifecycleFixtureCommand, EntityLifecycleFixture>(
+            Metadata(
+                ControlCommandNames.PrepareEntityLifecycleFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareEntityLifecycleFixture(command));
+        router.Register<ApplyEntityImpulseCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.ApplyEntityImpulse,
+                AutomationCommandDomain.Entity,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            ApplyEntityImpulse);
+        router.Register<RunEntityLifecycleBurstCommand, EntityLifecycleBurstResult>(
+            Metadata(
+                ControlCommandNames.RunEntityLifecycleBurst,
+                AutomationCommandDomain.Entity,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunEntityLifecycleBurst);
         router.Register<SetClockCommand, ClockState>(
             Metadata(ControlCommandNames.SetClock, AutomationCommandDomain.Time, true),
             (_, command) => SetClock(command));
@@ -326,6 +356,16 @@ public partial class TestAutomationModLoader {
                 "limit_exceeded",
                 "At most 64 player indexes can be selected.");
         }
+        if (command.EntityIds is { Length: > AutomationProtocol.MaximumSnapshotEntities }) {
+            throw new AutomationCommandException(
+                "limit_exceeded",
+                $"At most {AutomationProtocol.MaximumSnapshotEntities} entity IDs can be selected.");
+        }
+        if (command.EntityIds?.Any(entityId => entityId <= 0) == true) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "Entity IDs must be positive.");
+        }
         if (command.TerrainCells is { Length: > AutomationProtocol.MaximumSnapshotTerrainCells }) {
             throw new AutomationCommandException(
                 "limit_exceeded",
@@ -397,6 +437,24 @@ public partial class TestAutomationModLoader {
             && subsystemTerrain != null
                 ? BuildTerrainStreamingSnapshotV2(subsystemTerrain)
                 : null;
+        EntitySnapshotV2[]? entities = domains.Contains(SnapshotDomain.Entities)
+            && project != null
+                ? (command.EntityIds ?? project.Entities
+                        .Select(entity => entity.Id)
+                        .Where(entityId => entityId > 0)
+                        .Distinct()
+                        .OrderBy(entityId => entityId)
+                        .Take(AutomationProtocol.MaximumSnapshotEntities)
+                        .ToArray())
+                    .Distinct()
+                    .Select(entityId => BuildEntitySnapshotV2(project, entityId))
+                    .OrderBy(entity => entity.EntityId)
+                    .ToArray()
+                : null;
+        EntityLifecycleSnapshotV2? entityLifecycle = domains.Contains(SnapshotDomain.Entities)
+            && project != null
+                ? BuildEntityLifecycleSnapshotV2(project)
+                : null;
         ActionEventRecord[] events = domains.Contains(SnapshotDomain.Events)
             ? actionEventJournal.Query(new GetEventsCommand(
                 command.EventAfterSequence,
@@ -424,7 +482,51 @@ public partial class TestAutomationModLoader {
             terrainCells,
             events,
             diagnostics,
-            terrainStreaming);
+            terrainStreaming,
+            entities,
+            entityLifecycle);
+    }
+
+    private static EntitySnapshotV2 BuildEntitySnapshotV2(Project project, int entityId) {
+        Entity? entity = project.FindEntity(entityId);
+        ComponentBody? body = entity?.FindComponent<ComponentBody>();
+        ComponentHealth? health = entity?.FindComponent<ComponentHealth>();
+        ComponentDamage? damage = entity?.FindComponent<ComponentDamage>();
+        long revision = NetworkManager.IsClientRunning
+            ? EntityLifecycleTracker.GetAppliedRevision(project, entityId)
+            : EntityLifecycleTracker.GetAuthoritativeRevision(project, entityId);
+        bool tombstone = entity == null
+            && revision >= 0
+            && (NetworkManager.IsClientRunning
+                ? !EntityLifecycleTracker.IsPresent(project, entityId)
+                : revision > 0);
+        return new EntitySnapshotV2(
+            entityId,
+            entity != null,
+            entity?.ValuesDictionary?.DatabaseObject?.Name,
+            entity?.FindComponent<ComponentCreature>() != null,
+            entity?.FindComponent<ComponentPlayer>() != null,
+            body == null
+                ? null
+                : new EntityBodySnapshotV2(
+                    ToVector(body.Position),
+                    ToVector(body.Velocity),
+                    ToQuaternion(body.Rotation)),
+            health?.Health,
+            damage?.Hitpoints,
+            revision,
+            tombstone);
+    }
+
+    private static EntityLifecycleSnapshotV2 BuildEntityLifecycleSnapshotV2(Project project) {
+        EntityLifecycleMetrics metrics = EntityLifecycleTracker.GetMetrics(project);
+        return new EntityLifecycleSnapshotV2(
+            metrics.AuthoritativeTrackedEntities,
+            metrics.ClientTrackedEntities,
+            metrics.AppliedLoads,
+            metrics.AppliedRemovals,
+            metrics.IgnoredStalePackets,
+            metrics.Tombstones);
     }
 
     private static TerrainStreamingSnapshotV2 BuildTerrainStreamingSnapshotV2(

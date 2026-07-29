@@ -7,9 +7,14 @@ public class BehaviorSyncPacket : Packet {
     public override byte ID => (byte)PacketType.BehaviorSync;
     public override NetworkState MinNeedState => NetworkState.Playing;
     public const float DestinationEpsilonSquared = 0.0001f;
+    public const int MaximumItemCount = 65_536;
 
     public struct BehaviorSyncItem {
         public int EntityId;
+        public long LifecycleRevision;
+        public Vector3 BodyPosition;
+        public Quaternion BodyRotation;
+        public Vector3 BodyVelocity;
         public int ActiveBehaviorIndex;
 
         public bool HasPathfinding;
@@ -40,11 +45,13 @@ public class BehaviorSyncPacket : Packet {
     }
 
     public List<BehaviorSyncItem> m_items = [];
+    public double m_sendTime;
 
     public BehaviorSyncPacket() {
     }
 
     public BehaviorSyncPacket(List<ComponentBody> bodies) {
+        m_sendTime = Engine.Time.RealTime;
         foreach (ComponentBody body in bodies) {
             if (ShouldSyncBehavior(body)) {
                 m_items.Add(CreateItem(body));
@@ -53,8 +60,12 @@ public class BehaviorSyncPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
+        archive.Value(ref m_sendTime);
         int count = archive.IsWriting ? m_items.Count : 0;
         archive.Value(ref count);
+        if (count is < 0 or > MaximumItemCount) {
+            throw new InvalidDataException($"Invalid behavior sync item count {count}.");
+        }
         if (archive.IsReading) {
             m_items.Clear();
             for (int i = 0; i < count; i++) {
@@ -76,18 +87,51 @@ public class BehaviorSyncPacket : Packet {
             return;
         }
 
-        List<int> missingEntities = [];
+        Project project = GameManager.Project;
+        HashSet<int> missingEntities = [];
         foreach (BehaviorSyncItem item in m_items) {
-            Entity entity = GameManager.Project.FindEntity(item.EntityId);
+            Entity entity = project.FindEntity(item.EntityId);
             if (entity == null) {
-                missingEntities.Add(item.EntityId);
+                if (EntityLifecycleTracker.ShouldRequestLoad(
+                        project,
+                        item.EntityId,
+                        item.LifecycleRevision,
+                        entityExists: false)) {
+                    missingEntities.Add(item.EntityId);
+                }
+                continue;
+            }
+            if (!EntityLifecycleTracker.CanApplyState(
+                    project,
+                    item.EntityId,
+                    item.LifecycleRevision)) {
+                if (EntityLifecycleTracker.ShouldRequestLoad(
+                        project,
+                        item.EntityId,
+                        item.LifecycleRevision,
+                        entityExists: true)) {
+                    missingEntities.Add(item.EntityId);
+                }
                 continue;
             }
             ApplyItem(entity, item);
+            ComponentBody body = entity.FindComponent<ComponentBody>();
+            if (body != null) {
+                NetworkBodyInterpolation.PushSnapshot(
+                    body,
+                    positionChanged: true,
+                    item.BodyPosition,
+                    rotationChanged: true,
+                    item.BodyRotation,
+                    velocityChanged: true,
+                    item.BodyVelocity,
+                    m_sendTime,
+                    NetworkBodyInterpolation.RemoteBodyDelay);
+            }
         }
 
         if (missingEntities.Count > 0) {
-            NetworkManager.Queue(new EntitySyncRequestPacket(missingEntities));
+            NetworkManager.Queue(new EntitySyncRequestPacket(missingEntities.ToList()));
         }
     }
 
@@ -195,6 +239,12 @@ public class BehaviorSyncPacket : Packet {
 
         BehaviorSyncItem item = new() {
             EntityId = body.Entity.Id,
+            LifecycleRevision = EntityLifecycleTracker.GetAuthoritativeRevision(
+                body.Entity.Project,
+                body.Entity.Id),
+            BodyPosition = body.Position,
+            BodyRotation = body.Rotation,
+            BodyVelocity = body.Velocity,
             ActiveBehaviorIndex = GetActiveBehaviorIndex(selector),
             HasPathfinding = pathfinding != null,
             HasPilot = pilot != null,
@@ -300,6 +350,10 @@ public class BehaviorSyncPacket : Packet {
 
     private static void SerializeItem(PacketSerializer archive, ref BehaviorSyncItem item) {
         archive.Value(ref item.EntityId);
+        archive.Value(ref item.LifecycleRevision);
+        archive.Value(ref item.BodyPosition);
+        archive.Value(ref item.BodyRotation);
+        archive.Value(ref item.BodyVelocity);
         archive.Value(ref item.ActiveBehaviorIndex);
 
         archive.Value(ref item.HasPathfinding);

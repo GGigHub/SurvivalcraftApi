@@ -2,7 +2,7 @@
 
 本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会按场景启动隔离的 Survivalcraft 进程：核心场景完成建服、两阶段兼容握手、模组消息、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、超时与恢复；中继场景另外启动真实 RelayServer，验证房间协商、模组消息、故障注入和同房间重连。所有场景都会把可回放的诊断材料写入 `TestResults`。
 
-强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞，以及达到完整覆盖契约的 use/place/dig、move/look/crouch 和 terrain streaming/revisions 三条生产链。
+强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞，以及达到完整覆盖契约的 use/place/dig、move/look/crouch、terrain streaming/revisions 和 entity/creature lifecycle/physics 四条生产链。
 
 ## 一键运行
 
@@ -18,6 +18,7 @@
 ./scripts/Test-Multiplayer.ps1 -Mode m1
 ./scripts/Test-Multiplayer.ps1 -Mode motion
 ./scripts/Test-Multiplayer.ps1 -Mode streaming
+./scripts/Test-Multiplayer.ps1 -Mode entity
 ./scripts/Test-Multiplayer.ps1 -Mode full
 ```
 
@@ -34,7 +35,9 @@
 - `motion`：依次运行上述 Direct/Relay 场景，覆盖所有权拒绝、观察者收敛、late join、同身份重连、确定性故障，以及“位置与身体朝向持久、头部视角和蹲伏复位”的保存语义。
 - `streaming-direct` / `streaming-relay`：分别运行一服三客的真实区块流送和单调修订场景。
 - `streaming`：依次运行 Direct/Relay，覆盖 loadedness 边界、真实移动触发视距、旧快照与重复/乱序包、late join、同身份重连、保存重载和严格双动作回放契约。
-- `full`：依次执行 fast、doctor、compatibility、core、relay、M0、地形交互、人物运动和地形流送的直连/中继场景及未分层原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
+- `entity-direct` / `entity-relay`：分别运行一服三客的实体生命周期与生物权威物理场景。
+- `entity`：依次运行 Direct/Relay，覆盖真实实体生成和冲量、同 ID 世代替换、墓碑、旧加载包与重复/乱序、late join、同身份重连、保存重载和严格双动作回放契约。
+- `full`：依次执行 fast、doctor、compatibility、core、relay、M0、地形交互、人物运动、地形流送和实体/生物的直连/中继场景及未分层原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。原有测试数量多、耗时长，而且仍有少量依赖 UI/日志措辞的历史债务，仅用于迁移审计或定时任务，不作为当前稳定门禁。
 - `-UseAngle`：构建 Windows ANGLE 兼容运行时，适合没有完整 OpenGL 驱动的 CI 机器。
 - `-NoBuild`：复用已构建的二进制文件。
 
@@ -51,7 +54,7 @@ dotnet test ./Survivalcraft.Test/Survivalcraft.Test.csproj `
 | --- | --- | --- | --- |
 | L0 | 协议编解码、规范化快照、精确差异 | 否 | 秒级以内 |
 | L1 | 手动时钟、确定性调度器、模拟网络、产物写入 | 否 | 秒级以内 |
-| L2 | 真实进程的兼容矩阵、直连核心、中继和 v2 多客户端玩法场景 | 是（强制无界面） | 当前合计约 3 分钟 |
+| L2 | 真实进程的兼容矩阵、直连核心、中继和 v2 多客户端玩法场景 | 是（强制无界面） | 当前合计约 4 分钟 |
 | Legacy/full | 历史功能和复现场景集合 | 是 | 分钟到更长 |
 
 AI 开发循环应先跑 L0/L1；涉及加载、ECS、网络包或持久化的改动再跑 L2。准备合并时必须通过 fast、doctor、compatibility、core 和 relay；full 用于额外观察历史迁移债务。这样能够让高频修改尽快失败，同时保留真实进程验收。
@@ -94,8 +97,8 @@ flowchart LR
 - 联机：`network.connect`、`network.startRelayHost`、`network.connectRelay`、`network.getRelayStatus`、`network.disconnect`、`network.setFaults`、`network.configureCompatibility`、`network.getCompatibility`
 - 模组通道：`network.configureModChannels`、`network.getModChannels`、`network.sendTestModMessage`、`network.getTestModMessages`、`network.resetTestModMessages`
 - 玩家和地形：`player.enterWorld`、`terrain.changeCell`
-- v2 玩法：`player.setCreativeFly`、`player.move`、`player.look`、`player.setCrouch`、`player.use`、`player.place`、`player.dig`、`terrain.runRevisionBurst`
-- v2 夹具：`fixture.player.prepareMotion`、`fixture.player.applyMotion`、`fixture.player.prepareTerrainInteraction`、`fixture.player.applyTerrainInteraction`、`fixture.terrain.prepareRegion`、`fixture.terrain.applyView`
+- v2 玩法：`player.setCreativeFly`、`player.move`、`player.look`、`player.setCrouch`、`player.use`、`player.place`、`player.dig`、`terrain.runRevisionBurst`、`entity.applyImpulse`、`entity.runLifecycleBurst`
+- v2 夹具：`fixture.player.prepareMotion`、`fixture.player.applyMotion`、`fixture.player.prepareTerrainInteraction`、`fixture.player.applyTerrainInteraction`、`fixture.terrain.prepareRegion`、`fixture.terrain.applyView`、`fixture.entity.prepareLifecycle`
 - 可观测性：`state.getSnapshot`、`state.getSnapshotV2`、`state.getEvents`、`state.resetEvents`
 - 能力发现：`system.describe`
 - 确定性：`time.setClock`、`time.advanceTicks`
@@ -124,7 +127,11 @@ Terrain Snapshot v2 返回去除动态光照位的稳定方块值、contents、d
 
 Terrain Snapshot v2 因此新增每格 `revision`、`chunkState`，并提供 streaming update locations、ready/allocated/pending/sent chunk 计数和修订窗口指标。重复/旧 revision 与“区块未加载而忽略改单”分别计数，避免把正常视距过滤误当成乱序恢复证据。revision 比较保持显式选择，避免旧场景把 Project 重载后的合法修订重建误判为状态回归。
 
-覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。`player.place-dig-use`、`player.motion-look-crouch` 和 `terrain.streaming-and-revisions` 均已记录 Direct、Relay、服务端权威、观察者、非法请求、late join、重连、确定性故障和保存重载证据，因此状态为 `covered`；创飞仍保持 `planned`，等待它自己的生命周期矩阵。
+`EntityCreatureMultiplayerScenario` 在服务端创建真实 Cow，并通过 `ComponentBody.ApplyImpulse` 进入生产物理路径；服务端在 `BehaviorSyncPacket` 中同步带生命周期 revision 的权威位置、速度和旋转，客户端生物由 `NetworkBodyInterpolation` 驱动，避免各端独立模拟漂移。生命周期 burst 对同一 EntityId 执行 remove/add 世代替换，同时为另一实体建立墓碑，再故意晚发旧 `EntityLoadPacket`。在 100% 复制和 50% 重排下，客户端必须保留最新替换实体、拒绝陈旧复活，并暴露 applied/ignored/tombstone 指标。场景随后验证 client-c late join、actor 同身份重连，以及存活实体和替换实体持久、已移除实体不复活的保存重载边界。
+
+Entity Snapshot v2 支持按 ID 投影实体存在性、模板、生物/玩家标志、身体位置/速度/四元数、健康、hitpoints、revision 和 tombstone，并提供生命周期追踪器指标。实体比较器默认比较 revision，身体使用明确容差，四元数同样把 `q` 与 `-q` 视为同一朝向。
+
+覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。`player.place-dig-use`、`player.motion-look-crouch`、`terrain.streaming-and-revisions` 和 `entity-creature.lifecycle-physics` 均已记录 Direct、Relay、服务端权威、观察者、非法请求、late join、重连、确定性故障和保存重载证据，因此状态为 `covered`；创飞仍保持 `planned`，等待它自己的生命周期矩阵。
 
 ## 确定性边界
 
@@ -133,7 +140,7 @@ Terrain Snapshot v2 因此新增每格 `revision`、`chunkState`，并提供 str
 - 核心 L2 场景在加载和 LiteNetLib 传输阶段使用真实时间，因为窗口事件循环和底层传输需要持续轮询；它通过固定世界种子、固定游戏随机计数器、关闭音频和多线程地形更新来降低抖动。
 - 生产路径上的网络故障注入器作用于直连和中继的应用层出站帧，可设置固定种子的延迟、抖动、丢包、重复、重排和带宽限制。中继建房/入房控制帧和测试控制管道不经过故障注入，因此即使游戏数据网络异常，测试仍能取回状态与日志。
 
-核心验收默认使用 12 ms 延迟和 3 ms 确定性抖动，不启用丢包。地形交互、人物运动和地形流送使用可回放的 18 ms 延迟、4 ms 抖动、100% 应用层复制和 50% 重排，不启用丢包；这样能稳定验证重复/乱序幂等性，同时避免单次动作帧被不可恢复地丢弃。高损耗应进入单独的重试或 soak 场景。
+核心验收默认使用 12 ms 延迟和 3 ms 确定性抖动，不启用丢包。地形交互、人物运动、地形流送和实体生命周期使用可回放的 18 ms 延迟、4 ms 抖动、100% 应用层复制和 50% 重排，不启用丢包；这样能稳定验证重复/乱序幂等性，同时避免单次动作帧被不可恢复地丢弃。高损耗应进入单独的重试或 soak 场景。
 
 ## 核心验收场景
 
@@ -199,7 +206,7 @@ TestResults/{core-multiplayer,compatibility-matrix,relay-mod-channel}-*/
 
 v2 场景另外写入 `replay-v2.json`、`topology.json`、`capabilities-*.json`、`actions.json`、`events-*.json`、`assertions.json` 和 `snapshot-*.v2.json`。这些文件保存实际动作角色、命令名、强类型载荷、动作 ID、动作回执、事件阶段、故障配置及各拓扑节点每个检查点的投影快照；成功和失败使用相同格式。
 
-同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion 和 terrain-streaming 四个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致，terrain-streaming 则严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`，且后者必须包含旧快照注入。
+同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming 和 entity-creature 五个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用。
 
 - `steps.json` 给出第一个失败步骤、起止时间和异常。
 - `snapshot-*.json` 已排序并规范化浮点数，适合机器比较。
@@ -227,6 +234,6 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## CI
 
-`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor，以及包含兼容矩阵、直连核心、中继、M0 创飞、terrain-interaction、player-motion 和 terrain-streaming Direct/Relay 的全部 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
+`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行两个门禁：先执行 L0/L1，再用 ANGLE 运行 doctor，以及包含兼容矩阵、直连核心、中继、M0 创飞、terrain-interaction、player-motion、terrain-streaming 和 entity-creature Direct/Relay 的全部 L2。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2 无论成功失败都会上传 `TestResults`，便于 AI 或开发者下载诊断。
 
 当前远端位于 CNB，而 GitHub Workflow 只有在仓库镜像到 GitHub 后才会自动执行。CNB 支持由组织启用的 Windows 自托管构建节点，启用后可把脚本中的同样命令接入 `.cnb.yml`；在节点尚未配置前不提交一个必然排队或失败的 CNB 任务。测试框架和 PowerShell 入口本身不依赖 GitHub API。参见 [CNB 构建节点文档](https://docs.cnb.cool/zh/build/build-node.html)。

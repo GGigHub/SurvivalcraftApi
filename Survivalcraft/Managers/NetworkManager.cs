@@ -75,6 +75,7 @@ public static class NetworkManager {
         RelayHost = null;
         StopClient();
         NetworkBodyInterpolation.Clear();
+        BehaviorSyncPacket.Clear();
         PlayerBodyUpdatePacket.ClearSnapshots();
         RelayHostCodeStatus = RelayHostCodeStatus.Inactive;
         NetworkFaultInjector.ClearPending();

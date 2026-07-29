@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "full")]
+    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "entity-direct", "entity-relay", "entity", "full")]
     [string]$Mode = "fast",
 
     [ValidateSet("Debug", "Release")]
@@ -117,6 +117,24 @@ $streamingRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts))
 }
 elseif ($Mode -eq "streaming" -or $Mode -eq "full") {
     Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "terrain-streaming-revisions-relay"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$entityDirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\entity-creature-lifecycle-direct-$runStamp"
+}
+elseif ($Mode -eq "entity" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "entity-creature-lifecycle-direct"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$entityRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\entity-creature-lifecycle-relay-$runStamp"
+}
+elseif ($Mode -eq "entity" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "entity-creature-lifecycle-relay"
 }
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
@@ -288,6 +306,26 @@ function Run-TerrainStreamingScenario {
     )
 }
 
+function Run-EntityCreatureScenario {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("direct", "relay")]
+        [string]$Transport,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ArtifactDirectory
+    )
+
+    Build-CoreRuntime
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "run", "entity-creature-multiplayer",
+        "--transport", $Transport,
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $ArtifactDirectory
+    )
+}
+
 Push-Location $repositoryRoot
 try {
     switch ($Mode) {
@@ -346,6 +384,16 @@ try {
             Run-TerrainStreamingScenario -Transport "direct" -ArtifactDirectory $streamingDirectArtifactDirectory
             Run-TerrainStreamingScenario -Transport "relay" -ArtifactDirectory $streamingRelayArtifactDirectory
         }
+        "entity-direct" {
+            Run-EntityCreatureScenario -Transport "direct" -ArtifactDirectory $entityDirectArtifactDirectory
+        }
+        "entity-relay" {
+            Run-EntityCreatureScenario -Transport "relay" -ArtifactDirectory $entityRelayArtifactDirectory
+        }
+        "entity" {
+            Run-EntityCreatureScenario -Transport "direct" -ArtifactDirectory $entityDirectArtifactDirectory
+            Run-EntityCreatureScenario -Transport "relay" -ArtifactDirectory $entityRelayArtifactDirectory
+        }
         "full" {
             Run-FastTests
             Run-Doctor
@@ -360,6 +408,8 @@ try {
             Run-PlayerMotionScenario -Transport "relay" -ArtifactDirectory $motionRelayArtifactDirectory
             Run-TerrainStreamingScenario -Transport "direct" -ArtifactDirectory $streamingDirectArtifactDirectory
             Run-TerrainStreamingScenario -Transport "relay" -ArtifactDirectory $streamingRelayArtifactDirectory
+            Run-EntityCreatureScenario -Transport "direct" -ArtifactDirectory $entityDirectArtifactDirectory
+            Run-EntityCreatureScenario -Transport "relay" -ArtifactDirectory $entityRelayArtifactDirectory
             $legacyTestArguments = @(
                 "test", $gameTestProject, "--nologo", "-c", $Configuration,
                 "--filter", "Layer!=L2&Layer!=L0&Layer!=L1",

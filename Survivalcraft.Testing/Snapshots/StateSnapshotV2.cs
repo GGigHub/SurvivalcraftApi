@@ -6,6 +6,7 @@ public enum SnapshotDomain {
     Network,
     Players,
     Terrain,
+    Entities,
     Events
 }
 
@@ -15,7 +16,8 @@ public sealed record GetSnapshotV2Command(
     TerrainCellCoordinate[]? TerrainCells = null,
     long EventAfterSequence = 0,
     int EventLimit = 128,
-    bool IncludeVolatileDiagnostics = false);
+    bool IncludeVolatileDiagnostics = false,
+    int[]? EntityIds = null);
 
 public sealed record StateSnapshotV2(
     int SchemaVersion,
@@ -28,7 +30,34 @@ public sealed record StateSnapshotV2(
     TerrainCellSnapshotV2[] TerrainCells,
     ActionEventRecord[] RecentEvents,
     IReadOnlyDictionary<string, string> Diagnostics,
-    TerrainStreamingSnapshotV2? TerrainStreaming = null);
+    TerrainStreamingSnapshotV2? TerrainStreaming = null,
+    EntitySnapshotV2[]? Entities = null,
+    EntityLifecycleSnapshotV2? EntityLifecycle = null);
+
+public sealed record EntitySnapshotV2(
+    int EntityId,
+    bool Exists,
+    string? TemplateName,
+    bool IsCreature,
+    bool IsPlayer,
+    EntityBodySnapshotV2? Body,
+    double? Health,
+    double? Hitpoints,
+    long Revision,
+    bool IsTombstone);
+
+public sealed record EntityBodySnapshotV2(
+    Vector3State Position,
+    Vector3State Velocity,
+    QuaternionState Rotation);
+
+public sealed record EntityLifecycleSnapshotV2(
+    int AuthoritativeTrackedEntities,
+    int ClientTrackedEntities,
+    long AppliedLoads,
+    long AppliedRemovals,
+    long IgnoredStalePackets,
+    int Tombstones);
 
 public sealed record TerrainCellSnapshotV2(
     int X,

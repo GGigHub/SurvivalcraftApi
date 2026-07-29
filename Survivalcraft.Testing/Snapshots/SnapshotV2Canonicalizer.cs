@@ -50,6 +50,24 @@ public static class SnapshotV2Canonicalizer {
                 .ThenBy(cell => cell.Y)
                 .ThenBy(cell => cell.Z)
                 .ToArray(),
+            Entities = snapshot.Entities?
+                .Select(entity => entity with {
+                    Body = entity.Body == null
+                        ? null
+                        : entity.Body with {
+                            Position = Normalize(entity.Body.Position, decimalPlaces),
+                            Velocity = Normalize(entity.Body.Velocity, decimalPlaces),
+                            Rotation = Normalize(entity.Body.Rotation, decimalPlaces)
+                        },
+                    Health = entity.Health.HasValue
+                        ? Round(entity.Health.Value, decimalPlaces)
+                        : null,
+                    Hitpoints = entity.Hitpoints.HasValue
+                        ? Round(entity.Hitpoints.Value, decimalPlaces)
+                        : null
+                })
+                .OrderBy(entity => entity.EntityId)
+                .ToArray(),
             RecentEvents = snapshot.RecentEvents
                 .OrderBy(item => item.Sequence)
                 .Select(item => item with { Data = ToSortedDictionary(item.Data) })

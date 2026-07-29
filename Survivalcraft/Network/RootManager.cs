@@ -371,12 +371,20 @@ public static class RootManager {
         ComponentBody.OnBodyRemoved += NetworkBodyInterpolation.RemoveTarget;
         ComponentBody.OnBodyUpdate += BehaviorSyncPacket.CollectBehaviorForSync;
         Project.EntityAdded += (_, arg) => {
-            if (!NetworkManager.IsClientRunning)
+            if (!NetworkManager.IsClientRunning && arg.Entity.Id > 0) {
+                EntityLifecycleTracker.AdvanceAuthoritativeRevision(
+                    arg.Entity.Project,
+                    arg.Entity.Id);
                 NetworkManager.Queue(new EntityLoadPacket(arg.Entity));
+            }
         };
         Project.EntityRemoved += (_, arg) => {
-            if (!NetworkManager.IsClientRunning)
-                NetworkManager.Queue(new EntityRemovePacket(arg.Entity.Id));
+            if (!NetworkManager.IsClientRunning && arg.Entity.Id > 0) {
+                long revision = EntityLifecycleTracker.AdvanceAuthoritativeRevision(
+                    arg.Entity.Project,
+                    arg.Entity.Id);
+                NetworkManager.Queue(new EntityRemovePacket(arg.Entity.Id, revision));
+            }
         };
     }
 }

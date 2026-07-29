@@ -148,6 +148,9 @@ public static class ControlCommandNames {
     public const string PrepareTerrainStreamingFixture = "fixture.terrain.prepareRegion";
     public const string ApplyTerrainStreamingView = "fixture.terrain.applyView";
     public const string RunTerrainRevisionBurst = "terrain.runRevisionBurst";
+    public const string PrepareEntityLifecycleFixture = "fixture.entity.prepareLifecycle";
+    public const string ApplyEntityImpulse = "entity.applyImpulse";
+    public const string RunEntityLifecycleBurst = "entity.runLifecycleBurst";
     public const string SetClock = "time.setClock";
     public const string AdvanceTicks = "time.advanceTicks";
     public const string SetNetworkFaults = "network.setFaults";

@@ -43,6 +43,7 @@ public partial class TestAutomationModLoader {
         pendingTerrainAction = null;
         pendingPlayerMotionAction = null;
         pendingTerrainStreamingMoveTrigger = null;
+        ResetEntityLifecycleFixtures();
         InputHijackState.ResetGameplayInputs();
     }
 

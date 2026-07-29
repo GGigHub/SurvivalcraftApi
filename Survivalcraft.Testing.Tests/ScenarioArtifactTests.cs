@@ -346,6 +346,59 @@ public sealed class ScenarioArtifactTests {
 
     [Fact]
     [Trait("Layer", "L0")]
+    public void EntityCreatureReplayParserPreservesStrictServerActionSequence() {
+        ApplyEntityImpulseCommand impulse = new(
+            "survivor",
+            new Vector3State(1.5, 0, 0.5),
+            ActiveFrames: 12);
+        RunEntityLifecycleBurstCommand burst = new(
+            "replacement",
+            "tombstone",
+            SendStaleLoads: true);
+        ScenarioActionRecordV2[] records = [
+            ServerActionRecord("impulse", ControlCommandNames.ApplyEntityImpulse, impulse),
+            ServerActionRecord("burst", ControlCommandNames.RunEntityLifecycleBurst, burst)
+        ];
+
+        EntityCreatureReplayPlan replay =
+            EntityCreatureMultiplayerScenario.ParseReplayActions(records);
+
+        Assert.Equal(impulse, replay.Impulse);
+        Assert.Equal(burst, replay.LifecycleBurst);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void EntityCreatureReplayParserRejectsWrongOrderRoleAndMissingStaleProbe() {
+        ScenarioActionRecordV2 impulse = ServerActionRecord(
+            "impulse",
+            ControlCommandNames.ApplyEntityImpulse,
+            new ApplyEntityImpulseCommand("survivor", new Vector3State(1, 0, 0)));
+        ScenarioActionRecordV2 burst = ServerActionRecord(
+            "burst",
+            ControlCommandNames.RunEntityLifecycleBurst,
+            new RunEntityLifecycleBurstCommand());
+
+        Assert.Throws<InvalidDataException>(() =>
+            EntityCreatureMultiplayerScenario.ParseReplayActions([burst, impulse]));
+        Assert.Throws<InvalidDataException>(() =>
+            EntityCreatureMultiplayerScenario.ParseReplayActions([
+                impulse with { Role = "client-a" },
+                burst
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            EntityCreatureMultiplayerScenario.ParseReplayActions([
+                impulse,
+                burst with {
+                    Payload = JsonSerializer.SerializeToElement(
+                        new RunEntityLifecycleBurstCommand(SendStaleLoads: false),
+                        ControlProtocol.JsonOptions)
+                }
+            ]));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void PlayerMotionReplayParserRejectsWrongRoleOrderAndTransientNoOp() {
         ScenarioActionRecordV2[] records = [
             TerrainActionRecord(
@@ -402,4 +455,14 @@ public sealed class ScenarioArtifactTests {
             command,
             JsonSerializer.SerializeToElement(payload, ControlProtocol.JsonOptions),
             new ActionReceipt(actionId, true, 1, 1, "applied"));
+
+    private static ScenarioActionRecordV2 ServerActionRecord<TCommand>(
+        string actionId,
+        string command,
+        TCommand payload) =>
+        new(
+            "server",
+            command,
+            JsonSerializer.SerializeToElement(payload, ControlProtocol.JsonOptions),
+            new ActionReceipt(actionId, true, 1, -1, "applied"));
 }

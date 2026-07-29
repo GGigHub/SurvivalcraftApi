@@ -214,6 +214,35 @@ public sealed class AutomationProtocolTests {
         Assert.True(crouchRequest.DeserializePayload<PlayerSetCrouchCommand>().Enabled);
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void EntityLifecycleActionsRoundTripThroughTypedWireContract() {
+        Vector3State impulse = new(1.5, 0, 0.5);
+        ControlRequest fixtureRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PrepareEntityLifecycleFixture,
+            new PrepareEntityLifecycleFixtureCommand(7));
+        ControlRequest impulseRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.ApplyEntityImpulse,
+            new ApplyEntityImpulseCommand("survivor", impulse, ActiveFrames: 12));
+        ControlRequest burstRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.RunEntityLifecycleBurst,
+            new RunEntityLifecycleBurstCommand());
+
+        PrepareEntityLifecycleFixtureCommand fixture =
+            fixtureRequest.DeserializePayload<PrepareEntityLifecycleFixtureCommand>();
+        ApplyEntityImpulseCommand decodedImpulse =
+            impulseRequest.DeserializePayload<ApplyEntityImpulseCommand>();
+        RunEntityLifecycleBurstCommand burst =
+            burstRequest.DeserializePayload<RunEntityLifecycleBurstCommand>();
+
+        Assert.Equal(7, fixture.ActorPlayerIndex);
+        Assert.Equal("Cow", fixture.TemplateName);
+        Assert.Equal("survivor", decodedImpulse.Alias);
+        Assert.Equal(impulse, decodedImpulse.Impulse);
+        Assert.Equal(12, decodedImpulse.ActiveFrames);
+        Assert.True(burst.SendStaleLoads);
+    }
+
     private static AutomationCommandDescriptor Descriptor(string name) =>
         new(
             name,
