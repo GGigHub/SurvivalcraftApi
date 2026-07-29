@@ -264,7 +264,8 @@ namespace Game {
         public virtual void Update(float dt) {
             lock (this) {
                 Vector3 position = m_componentCreature.ComponentBody.Position;
-                if (m_regenerateLifeEnabled
+                if (!NetworkManager.IsClientRunning
+                    && m_regenerateLifeEnabled
                     && Health > 0f
                     && Health < 1f) {
                     OnHealthHealUpdate?.Invoke(this);

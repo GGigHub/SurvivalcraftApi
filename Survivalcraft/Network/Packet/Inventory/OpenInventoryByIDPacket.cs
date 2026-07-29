@@ -23,7 +23,8 @@ public class OpenInventoryByIDPacket : Packet {
         var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
         if (isServer && From != null) {
             IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
-            if (inventory != null) {
+            if (inventory != null
+                && InventoryPacketHelpers.CanSessionAccessInventory(inventory, From)) {
                 OpenInventoryByIDPacket packet = new(inventory) {
                     To = From
                 };

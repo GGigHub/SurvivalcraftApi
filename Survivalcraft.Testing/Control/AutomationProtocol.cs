@@ -1,11 +1,12 @@
 namespace Survivalcraft.Testing.Control;
 
 public static class AutomationProtocol {
-    public const int CurrentApiVersion = 2;
+    public const int CurrentApiVersion = 3;
     public const int CurrentSnapshotSchemaVersion = 2;
     public const int MaximumSnapshotEntities = 2048;
     public const int MaximumSnapshotTerrainCells = 4096;
-    public const int MaximumSnapshotInventorySlots = 1024;
+    // A single creative inventory exposes more than 1600 catalog slots.
+    public const int MaximumSnapshotInventorySlots = 4096;
     public const int MaximumSnapshotLogicElements = 1024;
     public const int MaximumEventQueryCount = 512;
     public const int DefaultEventJournalCapacity = 4096;
@@ -20,6 +21,8 @@ public enum AutomationCommandDomain {
     Player,
     Terrain,
     Entity,
+    Inventory,
+    Health,
     State,
     Time,
     Ui,

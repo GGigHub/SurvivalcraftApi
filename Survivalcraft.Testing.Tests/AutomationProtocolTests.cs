@@ -243,6 +243,49 @@ public sealed class AutomationProtocolTests {
         Assert.True(burst.SendStaleLoads);
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void InventoryAndHealthActionsRoundTripThroughTypedWireContract() {
+        ControlRequest moveRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.InventoryMove,
+            new InventoryMoveCommand(1, 10, 2, 20, 3, 4));
+        ControlRequest inventoryBurstRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.RunInventoryRevisionBurst,
+            new RunInventoryRevisionBurstCommand(20, 3, FinalCount: 7));
+        ControlRequest hitRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PlayerHit,
+            new PlayerHitCommand(1, 30, ExpectRejected: true));
+        ControlRequest respawnRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.PlayerRequestRespawn,
+            new PlayerRequestRespawnCommand(1, ExpectRejected: true));
+        ControlRequest healthBurstRequest = ControlProtocol.CreateRequest(
+            ControlCommandNames.RunHealthRevisionBurst,
+            new RunHealthRevisionBurstCommand(30, FinalHealth: 0.55));
+
+        InventoryMoveCommand move = moveRequest.DeserializePayload<InventoryMoveCommand>();
+        RunInventoryRevisionBurstCommand inventoryBurst =
+            inventoryBurstRequest.DeserializePayload<RunInventoryRevisionBurstCommand>();
+        PlayerHitCommand hit = hitRequest.DeserializePayload<PlayerHitCommand>();
+        PlayerRequestRespawnCommand respawn =
+            respawnRequest.DeserializePayload<PlayerRequestRespawnCommand>();
+        RunHealthRevisionBurstCommand healthBurst =
+            healthBurstRequest.DeserializePayload<RunHealthRevisionBurstCommand>();
+
+        Assert.Equal((10, 2, 20, 3, 4), (
+            move.FromInventoryId,
+            move.FromSlotIndex,
+            move.ToInventoryId,
+            move.ToSlotIndex,
+            move.Count));
+        Assert.Equal(7, inventoryBurst.FinalCount);
+        Assert.True(inventoryBurst.SendStaleSnapshot);
+        Assert.Equal(30, hit.TargetEntityId);
+        Assert.True(hit.ExpectRejected);
+        Assert.True(respawn.ExpectRejected);
+        Assert.Equal(0.55, healthBurst.FinalHealth);
+        Assert.True(healthBurst.SendStaleSnapshot);
+    }
+
     private static AutomationCommandDescriptor Descriptor(string name) =>
         new(
             name,

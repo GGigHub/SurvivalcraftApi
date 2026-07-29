@@ -25,7 +25,8 @@ public class OpenInventoryByPointPacket : Packet {
             ComponentBlockEntity blockEntity = subsystemBlockEntities.GetBlockEntity(m_point3.X, m_point3.Y, m_point3.Z);
             if (blockEntity != null) {
                 IInventory inventory = blockEntity.Entity.FindComponent<IInventory>(throwOnError: false);
-                if (inventory != null) {
+                if (inventory != null
+                    && InventoryPacketHelpers.CanSessionAccessInventory(inventory, From)) {
                     OpenInventoryByIDPacket packet = new OpenInventoryByIDPacket(inventory);
                     packet.To = From;
                     NetworkManager.Queue(packet);

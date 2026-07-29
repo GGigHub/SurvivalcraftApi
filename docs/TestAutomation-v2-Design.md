@@ -9,7 +9,7 @@
 TestAutomation v2 不重写现有测试框架，而是在已经稳定的命名管道控制面、无界面进程模型和场景产物之上增加完整的领域驱动能力。设计采用以下决定：
 
 1. 保持长度前缀 JSON 的 wire protocol v1，不因增加命令或快照字段破坏现有 TestHost 与运行时配对。
-2. 单独引入 `AutomationApiVersion = 2` 和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
+2. 单独引入可演进的 Automation API（当前为 v3）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
 3. 保留所有现有 v1 命令和 `state.getSnapshot`，以新增命令的方式演进，不修改旧 DTO 的含义。
 4. 明确区分 `fixture.*` 布置命令和玩家动作命令。前者用于构造确定性前置条件；后者必须经过真实客户端玩法路径，不能直接伪造最终状态或网络包。
 5. 新稳定场景不得使用 `legacy.executeScript`、`FUNC`、`EXEC` 或 UI 点击来验证非 UI 玩法。
@@ -90,7 +90,7 @@ flowchart LR
 ```text
 AutomationDescription
 ├── wireProtocolVersion        = 1
-├── automationApiVersion       = 2
+├── automationApiVersion       = 3
 ├── snapshotSchemaVersions     = [1, 2]
 ├── supportedCommands          = [...]
 ├── supportedDomains           = [...]
@@ -333,6 +333,7 @@ resource-metrics.json
 ## 15. 安全与隔离
 
 - 所有游戏进程继续强制 `--headless`、`CreateNoWindow=true`、独立 `--data-dir` 和唯一实例 ID。
+- 游戏、命令、日志与 Relay 共享跨进程 UDP 端口租约器；使用非系统临时端口范围、独占可绑定性检查和退出后冷却，支持连续及并行 TestHost 而不发生端口抢占。
 - TestAutomation 控制服务只有提供随机 `--control-pipe` 时才启动；后续应增加显式 `--test-automation` 开关作为第二条件。
 - fixture 命令只能作用于当前测试 Project，不接受任意文件路径、类型名或 C# 代码。
 - 路径参数必须解析并验证位于当前节点数据目录内。
@@ -463,7 +464,7 @@ Survivalcraft.TestAutomation/
 
 已实现并进入自动门禁的内容：
 
-- wire protocol 仍为 v1，新增 `system.describe` 与 Automation API v2 能力校验；
+- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；当前库存/生命扩展后 API 为 v3；
 - 现有控制命令由注册式 `TypedCommandRouter` 统一分派，重复命令名在初始化阶段失败；
 - 新增有界 `ActionEventJournal`、`state.getEvents` 和 `state.resetEvents`；
 - 新增 Node、Network、Players、Events 投影的 Snapshot v2、稳定排序和玩家领域容差比较；
@@ -538,4 +539,21 @@ Survivalcraft.TestAutomation/
 - `actions.json` 严格包含 server `entity.applyImpulse`、server `entity.runLifecycleBurst` 两个动作且旧加载注入必须开启；Direct 与 Relay 原运行和完整回放均真实无窗口通过；
 - L0 覆盖 lifecycle window、包编解码、Snapshot 规范化/差异和 replay 拒绝规则；L2 Theory、覆盖清单及 PowerShell 的 `entity-direct`、`entity-relay`、`entity` 入口纳入完整门禁。
 
-`entity-creature.lifecycle-physics` 现已标记为 `covered`。下一条核心主线应进入 inventory/container operations，并复用实体生命周期 revision 处理掉落物或容器实体失效后的陈旧动作。
+`entity-creature.lifecycle-physics` 现已标记为 `covered`。下一条核心主线进入 inventory/container operations，并复用实体生命周期 revision 处理容器实体失效后的陈旧动作。
+
+## 26. 库存、容器、生命、伤害与重生完整覆盖实施记录
+
+本切片把两个相互依赖的核心玩法域放入同一条严格可回放生产链，同时把 Automation API 提升到 v3：
+
+- wire protocol 提升到 revision 5。`InventorySyncPacket`、`ActiveSlotChangePacket`、`HealthSyncPacket`、`InjureEventPacket` 和 `DamageSyncPacket` 携带按 inventory/entity 与领域隔离的单调 revision，并绑定现有实体 lifecycle revision；客户端拒绝旧状态、失效世代和无效数值；
+- 所有会改变库存、伤害或重生状态的客户端请求都有 64 位 request ID。服务端按 `ClientSession + mutation domain + request ID` 做有界精确去重，既允许不同请求乱序到达，也避免网络复制让 move、drop、hit 或 respawn 执行两次；
+- 库存服务端权威检查覆盖玩家库存所有权、附近容器访问距离、slot/count 边界和任意 `SetSlotItemPacket` 客户端写入。远端 active-slot 请求由服务端直接提升 revision 并广播确认，避免旧完整快照在客户端造成选择回滚；
+- 生命链以服务端重新计算的近战射线和距离为准，客户端不能指定任意伤害；自伤请求只接受固定的本人 choke 语义，重生只接受当前已死亡的玩家。客户端不再独立再生生命，死亡时间、死因和清空死亡状态由权威快照精确同步；
+- Snapshot v2 新增 `inventories`、`health` 和 state-revision metrics。库存按 inventory ID、实体/组件类型、槽、active slot、容器坐标和 revision 投影；生命按实体存在性、玩家身份、Health/Damage 数值、死亡状态、死因和三类 revision 投影；规范化器和比较器支持精确或显式忽略重载后的内存 revision；
+- 强类型夹具只建立有限 Survival 库存、真实箱子、近战 actor 与真实 Cow。动作分别走 `MoveItemPacket`、`ActiveSlotChangePacket`、输入驱动的 `PlayerDropPacket`、`PlayerHitPacket` 和 `PlayerRestartPacket`，不会直接写动作最终状态；
+- 一服三客 Direct/Relay 场景先验证控制角色与伪造 observer move 被拒绝，再让 observer 发送伪造命中几何与冒用 actor 身份的重生请求，服务端必须分别保持目标未受伤和 actor 死亡；随后在 18 ms 延迟、4 ms 抖动、100% 复制和 50% 重排下执行 move/select/drop、库存旧快照 burst、真实命中/死亡、健康旧快照 burst 和合法玩家死亡/重生，所有初始节点必须同时满足语义状态与权威 revision 收敛；
+- client-c late join、actor 同身份重连、保存/停止/重载及 transport 重建均被覆盖。战斗目标和持久化健康实体职责分离：前者验证死亡链，后者从未死亡，因而存档断言不会把正常尸体清理语义误报为丢失；
+- `actions.json` 严格包含 client-a move、select、drop，server inventory burst，client-a hit，server health burst，client-a respawn 七个动作；Direct 与 Relay 的原运行和完整回放均真实无窗口通过；
+- L0 覆盖 revision window、请求去重并发、扩展包编解码、Snapshot 规范化/差异、协议 round-trip 和 replay 拒绝规则；L2 Theory、覆盖清单及 PowerShell 的 `inventory-health-direct`、`inventory-health-relay`、`inventory-health` 入口纳入完整门禁。
+
+`inventory.container-operations` 与 `health-damage-respawn` 均已标记为 `covered`。后续可继续推进环境、骑乘/睡眠/火焰、电路/移动方块和 pickable/projectile 生命周期，复用 request identity、lifecycle revision 与强类型快照模式。

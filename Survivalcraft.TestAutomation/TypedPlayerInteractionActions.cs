@@ -25,6 +25,11 @@ public partial class TestAutomationModLoader {
         ComponentPlayer.OnInteractEvent += HandleTypedInteractEvent;
         ComponentPlayer.OnDigEvent += HandleTypedDigEvent;
         ComponentPlayer.OnBodyUpdate += HandleTypedBodyUpdate;
+        ComponentPlayer.OnActiveSlotChanged += HandleTypedActiveSlotChanged;
+        ComponentPlayer.OnDropEvent += HandleTypedDropEvent;
+        ComponentPlayer.OnHit += HandleTypedHitEvent;
+        ComponentInventoryBase.OnSlotChanged += HandleTypedInventorySlotChanged;
+        PlayerData.OnPlayerRestart += HandleTypedPlayerRestart;
         typedPlayerActionsInitialized = true;
     }
 
@@ -35,6 +40,11 @@ public partial class TestAutomationModLoader {
         ComponentPlayer.OnInteractEvent -= HandleTypedInteractEvent;
         ComponentPlayer.OnDigEvent -= HandleTypedDigEvent;
         ComponentPlayer.OnBodyUpdate -= HandleTypedBodyUpdate;
+        ComponentPlayer.OnActiveSlotChanged -= HandleTypedActiveSlotChanged;
+        ComponentPlayer.OnDropEvent -= HandleTypedDropEvent;
+        ComponentPlayer.OnHit -= HandleTypedHitEvent;
+        ComponentInventoryBase.OnSlotChanged -= HandleTypedInventorySlotChanged;
+        PlayerData.OnPlayerRestart -= HandleTypedPlayerRestart;
         typedPlayerActionsInitialized = false;
         ResetTypedPlayerActions();
     }
@@ -43,6 +53,8 @@ public partial class TestAutomationModLoader {
         pendingTerrainAction = null;
         pendingPlayerMotionAction = null;
         pendingTerrainStreamingMoveTrigger = null;
+        pendingInventoryAction = null;
+        pendingHealthAction = null;
         ResetEntityLifecycleFixtures();
         InputHijackState.ResetGameplayInputs();
     }

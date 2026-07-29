@@ -68,6 +68,25 @@ public static class SnapshotV2Canonicalizer {
                 })
                 .OrderBy(entity => entity.EntityId)
                 .ToArray(),
+            Inventories = snapshot.Inventories?
+                .Select(inventory => inventory with {
+                    Slots = inventory.Slots
+                        .OrderBy(slot => slot.SlotIndex)
+                        .ToArray()
+                })
+                .OrderBy(inventory => inventory.InventoryId)
+                .ToArray(),
+            HealthStates = snapshot.HealthStates?
+                .Select(state => state with {
+                    Health = state.Health.HasValue
+                        ? Round(state.Health.Value, decimalPlaces)
+                        : null,
+                    Hitpoints = state.Hitpoints.HasValue
+                        ? Round(state.Hitpoints.Value, decimalPlaces)
+                        : null
+                })
+                .OrderBy(state => state.EntityId)
+                .ToArray(),
             RecentEvents = snapshot.RecentEvents
                 .OrderBy(item => item.Sequence)
                 .Select(item => item with { Data = ToSortedDictionary(item.Data) })

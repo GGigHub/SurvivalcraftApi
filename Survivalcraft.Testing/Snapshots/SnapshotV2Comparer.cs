@@ -18,11 +18,119 @@ public sealed record SnapshotV2EntityComparisonOptions(
     double RotationAngleTolerance = 0.05,
     bool CompareRevision = true);
 
+public sealed record SnapshotV2InventoryComparisonOptions(
+    bool CompareRevision = true);
+
+public sealed record SnapshotV2HealthComparisonOptions(
+    double ScalarTolerance = 0.00001,
+    bool CompareRevisions = true,
+    bool CompareLifecycleRevision = true);
+
 public sealed record SnapshotV2Diff(
     bool Equal,
     SnapshotDifference[] Differences);
 
 public static class SnapshotV2Comparer {
+    public static SnapshotV2Diff CompareInventories(
+        StateSnapshotV2 expected,
+        StateSnapshotV2 actual,
+        SnapshotV2InventoryComparisonOptions? options = null) {
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentNullException.ThrowIfNull(actual);
+        options ??= new SnapshotV2InventoryComparisonOptions();
+        List<SnapshotDifference> differences = [];
+        Dictionary<int, InventorySnapshotV2> remaining = (actual.Inventories ?? [])
+            .ToDictionary(inventory => inventory.InventoryId);
+        foreach (InventorySnapshotV2 expectedInventory in (expected.Inventories ?? [])
+                     .OrderBy(inventory => inventory.InventoryId)) {
+            string path = $"$.inventories[inventoryId={expectedInventory.InventoryId}]";
+            if (!remaining.Remove(expectedInventory.InventoryId, out InventorySnapshotV2? actualInventory)) {
+                differences.Add(new SnapshotDifference(path, expectedInventory.ToString(), "<missing>"));
+                continue;
+            }
+            CompareValue(path + ".entityId", expectedInventory.EntityId, actualInventory.EntityId, differences);
+            CompareValue(path + ".componentType", expectedInventory.ComponentType, actualInventory.ComponentType, differences);
+            CompareValue(path + ".kind", expectedInventory.Kind, actualInventory.Kind, differences);
+            CompareValue(path + ".slotsCount", expectedInventory.SlotsCount, actualInventory.SlotsCount, differences);
+            CompareValue(path + ".activeSlotIndex", expectedInventory.ActiveSlotIndex, actualInventory.ActiveSlotIndex, differences);
+            CompareValue(path + ".blockCell", expectedInventory.BlockCell, actualInventory.BlockCell, differences);
+            if (options.CompareRevision) {
+                CompareValue(path + ".revision", expectedInventory.Revision, actualInventory.Revision, differences);
+            }
+            Dictionary<int, InventorySlotSnapshotV2> actualSlots = actualInventory.Slots
+                .ToDictionary(slot => slot.SlotIndex);
+            foreach (InventorySlotSnapshotV2 expectedSlot in expectedInventory.Slots
+                         .OrderBy(slot => slot.SlotIndex)) {
+                string slotPath = path + $".slots[slotIndex={expectedSlot.SlotIndex}]";
+                if (!actualSlots.Remove(expectedSlot.SlotIndex, out InventorySlotSnapshotV2? actualSlot)) {
+                    differences.Add(new SnapshotDifference(slotPath, expectedSlot.ToString(), "<missing>"));
+                    continue;
+                }
+                CompareValue(slotPath + ".value", expectedSlot.Value, actualSlot.Value, differences);
+                CompareValue(slotPath + ".count", expectedSlot.Count, actualSlot.Count, differences);
+                CompareValue(slotPath + ".contents", expectedSlot.Contents, actualSlot.Contents, differences);
+                CompareValue(slotPath + ".data", expectedSlot.Data, actualSlot.Data, differences);
+            }
+            foreach (InventorySlotSnapshotV2 extra in actualSlots.Values.OrderBy(slot => slot.SlotIndex)) {
+                differences.Add(new SnapshotDifference(
+                    path + $".slots[slotIndex={extra.SlotIndex}]",
+                    "<missing>",
+                    extra.ToString()));
+            }
+        }
+        foreach (InventorySnapshotV2 extra in remaining.Values.OrderBy(inventory => inventory.InventoryId)) {
+            differences.Add(new SnapshotDifference(
+                $"$.inventories[inventoryId={extra.InventoryId}]",
+                "<missing>",
+                extra.ToString()));
+        }
+        return new SnapshotV2Diff(differences.Count == 0, differences.ToArray());
+    }
+
+    public static SnapshotV2Diff CompareHealthStates(
+        StateSnapshotV2 expected,
+        StateSnapshotV2 actual,
+        SnapshotV2HealthComparisonOptions? options = null) {
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentNullException.ThrowIfNull(actual);
+        options ??= new SnapshotV2HealthComparisonOptions();
+        ValidateTolerance(options.ScalarTolerance, nameof(options.ScalarTolerance));
+        List<SnapshotDifference> differences = [];
+        Dictionary<int, HealthStateSnapshotV2> remaining = (actual.HealthStates ?? [])
+            .ToDictionary(state => state.EntityId);
+        foreach (HealthStateSnapshotV2 expectedState in (expected.HealthStates ?? [])
+                     .OrderBy(state => state.EntityId)) {
+            string path = $"$.healthStates[entityId={expectedState.EntityId}]";
+            if (!remaining.Remove(expectedState.EntityId, out HealthStateSnapshotV2? actualState)) {
+                differences.Add(new SnapshotDifference(path, expectedState.ToString(), "<missing>"));
+                continue;
+            }
+            CompareValue(path + ".exists", expectedState.Exists, actualState.Exists, differences);
+            CompareValue(path + ".templateName", expectedState.TemplateName, actualState.TemplateName, differences);
+            CompareValue(path + ".isPlayer", expectedState.IsPlayer, actualState.IsPlayer, differences);
+            CompareValue(path + ".playerIndex", expectedState.PlayerIndex, actualState.PlayerIndex, differences);
+            CompareNullableScalar(path + ".health", expectedState.Health, actualState.Health, options.ScalarTolerance, differences);
+            CompareValue(path + ".isDead", expectedState.IsDead, actualState.IsDead, differences);
+            CompareValue(path + ".hasDeathTime", expectedState.HasDeathTime, actualState.HasDeathTime, differences);
+            CompareValue(path + ".causeOfDeath", expectedState.CauseOfDeath, actualState.CauseOfDeath, differences);
+            CompareNullableScalar(path + ".hitpoints", expectedState.Hitpoints, actualState.Hitpoints, options.ScalarTolerance, differences);
+            if (options.CompareRevisions) {
+                CompareValue(path + ".healthRevision", expectedState.HealthRevision, actualState.HealthRevision, differences);
+                CompareValue(path + ".damageRevision", expectedState.DamageRevision, actualState.DamageRevision, differences);
+            }
+            if (options.CompareLifecycleRevision) {
+                CompareValue(path + ".lifecycleRevision", expectedState.LifecycleRevision, actualState.LifecycleRevision, differences);
+            }
+        }
+        foreach (HealthStateSnapshotV2 extra in remaining.Values.OrderBy(state => state.EntityId)) {
+            differences.Add(new SnapshotDifference(
+                $"$.healthStates[entityId={extra.EntityId}]",
+                "<missing>",
+                extra.ToString()));
+        }
+        return new SnapshotV2Diff(differences.Count == 0, differences.ToArray());
+    }
+
     public static SnapshotV2Diff CompareEntities(
         StateSnapshotV2 expected,
         StateSnapshotV2 actual,

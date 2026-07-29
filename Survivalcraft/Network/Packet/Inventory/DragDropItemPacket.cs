@@ -13,6 +13,7 @@ public class DragDropItemPacket : Packet {
     public DragMode dragMode;
     public bool processingOnly;
     public int requestedDragCount;
+    public long requestId;
 
     public DragDropItemPacket() {
     }
@@ -25,6 +26,7 @@ public class DragDropItemPacket : Packet {
         toSlotIndex = toIndex;
         processingOnly = proc;
         requestedDragCount = count;
+        requestId = NetworkMutationRequestTracker.CreateRequestId();
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -35,6 +37,7 @@ public class DragDropItemPacket : Packet {
         archive.Value(ref toSlotIndex);
         archive.Value(ref processingOnly);
         archive.Value(ref requestedDragCount);
+        archive.Value(ref requestId);
     }
 
     public override void Handle(bool isServer) {
@@ -46,8 +49,15 @@ public class DragDropItemPacket : Packet {
             InventoryPacketHelpers.QueueInventorySync(from, to, From);
             return;
         }
-        if (PlayerDragDropPacket.IsOwnedByOtherPlayer(from, From, out _)
-            || PlayerDragDropPacket.IsOwnedByOtherPlayer(to, From, out _)) {
+        if (!InventoryPacketHelpers.CanSessionAccessInventory(from, From)
+            || !InventoryPacketHelpers.CanSessionAccessInventory(to, From)) {
+            InventoryPacketHelpers.QueueInventorySync(from, to, From);
+            return;
+        }
+        if (!NetworkMutationRequestTracker.TryAccept(
+                From,
+                NetworkMutationDomain.InventoryDragDrop,
+                requestId)) {
             InventoryPacketHelpers.QueueInventorySync(from, to, From);
             return;
         }

@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net;
-using System.Net.Sockets;
 
 namespace Survivalcraft.Testing.Processes;
 
@@ -30,7 +29,7 @@ public sealed class RelayServerProcess : IAsyncDisposable {
             throw new ArgumentOutOfRangeException(nameof(options.Port));
         }
         RuntimeDirectory = Path.GetFullPath(options.RuntimeDirectory);
-        Port = options.Port == 0 ? AllocateUdpPort() : options.Port;
+        Port = options.Port == 0 ? UdpPortLeaseAllocator.Allocate() : options.Port;
     }
 
     public string RuntimeDirectory { get; }
@@ -125,11 +124,6 @@ public sealed class RelayServerProcess : IAsyncDisposable {
         if (line.Contains("relay listening on UDP", StringComparison.OrdinalIgnoreCase)) {
             ready.TrySetResult(true);
         }
-    }
-
-    private static int AllocateUdpPort() {
-        using UdpClient socket = new(new IPEndPoint(IPAddress.Loopback, 0));
-        return ((IPEndPoint)socket.Client.LocalEndPoint!).Port;
     }
 
     private static string GetExitCodeText(Process target) {

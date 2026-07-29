@@ -17,8 +17,13 @@ public static class RootManager {
                 NetworkManager.Queue(new CreatureSoundPacket(sounds, type, skipIfRecentlyPlayed));
         };
         ComponentDamage.OnDamage += (damage) => {
-            if (!NetworkManager.IsClientRunning)
-                NetworkManager.Queue(new DamageSyncPacket(damage));
+            if (!NetworkManager.IsClientRunning && damage.Entity.Id > 0) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    damage.Entity.Project,
+                    NetworkStateRevisionDomain.Damage,
+                    damage.Entity.Id);
+                NetworkManager.Queue(new DamageSyncPacket(damage, revision));
+            }
         };
         ComponentDigInMudBehavior.OnIsDigInChanged += (behavior, isDigIn) => {
             if (!NetworkManager.IsClientRunning)
@@ -69,23 +74,53 @@ public static class RootManager {
         ComponentGui.OnPlayerCreativeFly += (gui, player) =>
             NetworkManager.Queue(new PlayerCreativeFlyPacket(player));
         ComponentHealth.OnCreatureDied += (health) => {
-            if (!NetworkManager.IsClientRunning)
-                NetworkManager.Queue(new HealthSyncPacket(health));
+            if (!NetworkManager.IsClientRunning && health.Entity.Id > 0) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    health.Entity.Project,
+                    NetworkStateRevisionDomain.Health,
+                    health.Entity.Id);
+                NetworkManager.Queue(new HealthSyncPacket(health, revision));
+            }
         };
         ComponentHealth.OnHealthFallDamage += InjureRequestPacket.SendFallDamage;
         ComponentHealth.OnHealthHealUpdate += (health) => {
-            if (!NetworkManager.IsClientRunning && Time.PeriodicEvent(2.0, 0.0))
-                NetworkManager.Queue(new HealthSyncPacket(health));
+            if (!NetworkManager.IsClientRunning
+                && health.Entity.Id > 0
+                && Time.PeriodicEvent(2.0, 0.0)) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    health.Entity.Project,
+                    NetworkStateRevisionDomain.Health,
+                    health.Entity.Id);
+                NetworkManager.Queue(new HealthSyncPacket(health, revision));
+            }
         };
         ComponentHealth.OnHealthInjured += (health, injury, amount) => {
-            if (!NetworkManager.IsClientRunning && amount > 0f)
-                NetworkManager.Queue(new InjureEventPacket(health, injury.Attacker, amount, injury.Cause, injury.IgnoreInvulnerability));
+            if (!NetworkManager.IsClientRunning && health.Entity.Id > 0 && amount > 0f) {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    health.Entity.Project,
+                    NetworkStateRevisionDomain.Health,
+                    health.Entity.Id);
+                NetworkManager.Queue(new InjureEventPacket(
+                    health,
+                    injury.Attacker,
+                    amount,
+                    injury.Cause,
+                    injury.IgnoreInvulnerability,
+                    revision));
+            }
         };
         ComponentHumanModel.OnRow += (model) =>
             NetworkManager.Queue(new HumanRowBehaviorPacket(model));
         ComponentInventoryBase.OnSlotChanged += (inventory, slotIndex) => {
-            if (!NetworkManager.IsClientRunning)
+            if (!NetworkManager.IsClientRunning
+                && inventory?.Id > 0
+                && inventory is not ComponentClothing) {
+                NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    inventory.Project,
+                    NetworkStateRevisionDomain.Inventory,
+                    inventory.Id);
                 NetworkManager.Queue(new InventorySyncPacket(inventory));
+            }
         };
         ComponentClothing.OnSlotChanged += (inventory, slotIndex) => {
             if (!NetworkManager.IsClientRunning && inventory is ComponentClothing clothing && clothing.Id > 0)
@@ -117,8 +152,22 @@ public static class RootManager {
                 NetworkManager.Queue(new PickableSetFlyToPositionPacket(pickable));
         };
         ComponentPlayer.OnActiveSlotChanged += (player) => {
-            if (player.ComponentMiner?.Inventory != null)
-                NetworkManager.Queue(new ActiveSlotChangePacket(player.ComponentMiner.Inventory));
+            IInventory inventory = player.ComponentMiner?.Inventory;
+            if (inventory == null || inventory.Id <= 0) {
+                return;
+            }
+            if (NetworkManager.IsClientRunning) {
+                if (player.PlayerData.IsMainPlayer) {
+                    NetworkManager.Queue(new ActiveSlotChangePacket(inventory));
+                }
+            }
+            else {
+                long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    inventory.Project,
+                    NetworkStateRevisionDomain.Inventory,
+                    inventory.Id);
+                NetworkManager.Queue(new ActiveSlotChangePacket(inventory, revision));
+            }
         };
         ComponentPlayer.OnAimEvent += (player) =>
             NetworkManager.Queue(new PlayerAimPacket(player));

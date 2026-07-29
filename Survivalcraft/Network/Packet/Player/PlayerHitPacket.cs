@@ -8,29 +8,46 @@ public class PlayerHitPacket : PlayerPacketBase {
     public int bodyId;
     public Vector3 m_hitPosition;
     public Vector3 m_hitDirection;
+    public long m_requestId;
     public PlayerHitPacket() { }
     public PlayerHitPacket(ComponentPlayer player, ComponentBody body, Vector3 hitPosition, Vector3 hitDirection) {
         m_fromPlayerIndex = player.PlayerData.PlayerIndex;
         bodyId = body.Entity.Id;
         m_hitPosition = hitPosition;
         m_hitDirection = hitDirection;
+        m_requestId = NetworkMutationRequestTracker.CreateRequestId();
     }
     public override void Serialize(PacketSerializer archive) {
         SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
         archive.Value(ref bodyId);
         archive.Value(ref m_hitPosition);
         archive.Value(ref m_hitDirection);
+        archive.Value(ref m_requestId);
     }
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
+        if (isServer && !NetworkMutationRequestTracker.TryAccept(
+                From,
+                NetworkMutationDomain.PlayerHit,
+                m_requestId)) {
+            return;
+        }
         if (isServer && ThrottleHit(playerData)) {
             return;
         }
         ComponentPlayer player = playerData.ComponentPlayer;
+        if (player?.ComponentMiner == null) {
+            return;
+        }
         player.ComponentCreatureModel.Update(0f);
         Vector3 eye = player.ComponentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
         Vector3 dir = m_hitDirection;
-        if (dir.LengthSquared() < 1E-06f) {
+        if (!IsFinite(m_hitPosition)
+            || !IsFinite(dir)
+            || dir.LengthSquared() < 1E-06f) {
+            if (isServer) {
+                return;
+            }
             dir = player.ComponentMiner.ComponentCreature.ComponentBody.Matrix.Forward;
         }
         dir = Vector3.Normalize(dir);
@@ -48,11 +65,33 @@ public class PlayerHitPacket : PlayerPacketBase {
                     || m_hitPosition.Z < box.Min.Z || m_hitPosition.Z > box.Max.Z) {
                     return;
                 }
+                const float meleeReach = 2f;
+                if (Vector3.DistanceSquared(eye, m_hitPosition)
+                    > MathUtils.Sqr(meleeReach + 0.25f)) {
+                    return;
+                }
+                BodyRaycastResult? authoritativeHit = player.ComponentMiner.Raycast<BodyRaycastResult>(
+                    new Ray3(eye, dir),
+                    RaycastMode.Interaction,
+                    reach: meleeReach);
+                if (!authoritativeHit.HasValue
+                    || authoritativeHit.Value.ComponentBody != body
+                    || Vector3.DistanceSquared(
+                        authoritativeHit.Value.HitPoint(),
+                        m_hitPosition) > 1f) {
+                    return;
+                }
+                m_hitPosition = authoritativeHit.Value.HitPoint();
             }
             player.ComponentMiner.Hit(body, m_hitPosition, dir, !isServer, isServer);
             QueuePlayerPacket(this, isServer);
         });
     }
+
+    private static bool IsFinite(Vector3 value) =>
+        float.IsFinite(value.X)
+        && float.IsFinite(value.Y)
+        && float.IsFinite(value.Z);
 }
 
 

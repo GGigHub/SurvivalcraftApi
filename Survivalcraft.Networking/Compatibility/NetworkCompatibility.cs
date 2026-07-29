@@ -151,7 +151,7 @@ public sealed class NetworkCompatibilityResult {
 }
 
 public static class NetworkCompatibility {
-    public const int ProtocolRevision = 4;
+    public const int ProtocolRevision = 5;
     public const int MaximumModCount = 256;
     public const int MaximumIssueCount = 32;
     public const int MaximumFieldLength = 256;

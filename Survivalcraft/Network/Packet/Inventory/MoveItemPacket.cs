@@ -11,6 +11,7 @@ public class MoveItemPacket : Packet {
     public int toInventoryId;
     public int toSlotIndex;
     public int count;
+    public long requestId;
 
     public MoveItemPacket() {
     }
@@ -21,6 +22,7 @@ public class MoveItemPacket : Packet {
         toInventoryId = to.Id;
         toSlotIndex = toIndex;
         count = c;
+        requestId = NetworkMutationRequestTracker.CreateRequestId();
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -29,6 +31,7 @@ public class MoveItemPacket : Packet {
         archive.Value(ref toInventoryId);
         archive.Value(ref toSlotIndex);
         archive.Value(ref count);
+        archive.Value(ref requestId);
     }
 
     public override void Handle(bool isServer) {
@@ -41,8 +44,15 @@ public class MoveItemPacket : Packet {
             return;
         }
         if (from != null && to != null) {
-            if (PlayerDragDropPacket.IsOwnedByOtherPlayer(from, From, out _)
-                || PlayerDragDropPacket.IsOwnedByOtherPlayer(to, From, out _)) {
+            if (!InventoryPacketHelpers.CanSessionAccessInventory(from, From)
+                || !InventoryPacketHelpers.CanSessionAccessInventory(to, From)) {
+                InventoryPacketHelpers.QueueInventorySync(from, to, From);
+                return;
+            }
+            if (!NetworkMutationRequestTracker.TryAccept(
+                    From,
+                    NetworkMutationDomain.InventoryMove,
+                    requestId)) {
                 InventoryPacketHelpers.QueueInventorySync(from, to, From);
                 return;
             }

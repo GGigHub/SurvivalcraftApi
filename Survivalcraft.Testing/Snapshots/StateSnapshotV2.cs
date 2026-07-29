@@ -7,7 +7,9 @@ public enum SnapshotDomain {
     Players,
     Terrain,
     Entities,
-    Events
+    Events,
+    Inventories,
+    Health
 }
 
 public sealed record GetSnapshotV2Command(
@@ -17,7 +19,8 @@ public sealed record GetSnapshotV2Command(
     long EventAfterSequence = 0,
     int EventLimit = 128,
     bool IncludeVolatileDiagnostics = false,
-    int[]? EntityIds = null);
+    int[]? EntityIds = null,
+    int[]? InventoryIds = null);
 
 public sealed record StateSnapshotV2(
     int SchemaVersion,
@@ -32,7 +35,49 @@ public sealed record StateSnapshotV2(
     IReadOnlyDictionary<string, string> Diagnostics,
     TerrainStreamingSnapshotV2? TerrainStreaming = null,
     EntitySnapshotV2[]? Entities = null,
-    EntityLifecycleSnapshotV2? EntityLifecycle = null);
+    EntityLifecycleSnapshotV2? EntityLifecycle = null,
+    InventorySnapshotV2[]? Inventories = null,
+    HealthStateSnapshotV2[]? HealthStates = null,
+    StateRevisionMetricsSnapshotV2? StateRevisions = null);
+
+public sealed record InventorySnapshotV2(
+    int InventoryId,
+    int? EntityId,
+    string ComponentType,
+    string Kind,
+    int SlotsCount,
+    int ActiveSlotIndex,
+    long Revision,
+    InventorySlotSnapshotV2[] Slots,
+    TerrainCellCoordinate? BlockCell = null);
+
+public sealed record InventorySlotSnapshotV2(
+    int SlotIndex,
+    int Value,
+    int Count,
+    int Contents,
+    int Data);
+
+public sealed record HealthStateSnapshotV2(
+    int EntityId,
+    bool Exists,
+    string? TemplateName,
+    bool IsPlayer,
+    int? PlayerIndex,
+    double? Health,
+    bool IsDead,
+    bool HasDeathTime,
+    string? CauseOfDeath,
+    long HealthRevision,
+    double? Hitpoints,
+    long DamageRevision,
+    long LifecycleRevision);
+
+public sealed record StateRevisionMetricsSnapshotV2(
+    int AuthoritativeTrackedStates,
+    int ClientTrackedStates,
+    long AppliedStates,
+    long IgnoredStaleStates);
 
 public sealed record EntitySnapshotV2(
     int EntityId,

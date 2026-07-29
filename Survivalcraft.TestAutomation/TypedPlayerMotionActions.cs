@@ -334,6 +334,16 @@ public partial class TestAutomationModLoader {
                 "action_in_progress",
                 $"Action '{pendingPlayerMotionAction.ActionId}' is still in progress.");
         }
+        if (pendingInventoryAction != null) {
+            throw new AutomationCommandException(
+                "action_in_progress",
+                $"Action '{pendingInventoryAction.ActionId}' is still in progress.");
+        }
+        if (pendingHealthAction != null) {
+            throw new AutomationCommandException(
+                "action_in_progress",
+                $"Action '{pendingHealthAction.ActionId}' is still in progress.");
+        }
     }
 
     private static void PreparePlayerForMotionFixture(

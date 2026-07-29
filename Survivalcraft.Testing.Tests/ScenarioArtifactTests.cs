@@ -446,6 +446,68 @@ public sealed class ScenarioArtifactTests {
             ]));
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void InventoryHealthReplayParserPreservesStrictCrossDomainSequence() {
+        ScenarioActionRecordV2[] records = [
+            TerrainActionRecord(
+                "move",
+                ControlCommandNames.InventoryMove,
+                new InventoryMoveCommand(1, 10, 0, 20, 0, 3)),
+            TerrainActionRecord(
+                "select",
+                ControlCommandNames.InventorySelectSlot,
+                new InventorySelectSlotCommand(1, 10, 1)),
+            TerrainActionRecord(
+                "drop",
+                ControlCommandNames.InventoryDrop,
+                new InventoryDropCommand(1)),
+            ServerActionRecord(
+                "inventory-burst",
+                ControlCommandNames.RunInventoryRevisionBurst,
+                new RunInventoryRevisionBurstCommand(20, 0)),
+            TerrainActionRecord(
+                "hit",
+                ControlCommandNames.PlayerHit,
+                new PlayerHitCommand(1, 30)),
+            ServerActionRecord(
+                "health-burst",
+                ControlCommandNames.RunHealthRevisionBurst,
+                new RunHealthRevisionBurstCommand(30)),
+            TerrainActionRecord(
+                "respawn",
+                ControlCommandNames.PlayerRequestRespawn,
+                new PlayerRequestRespawnCommand(1))
+        ];
+
+        InventoryHealthReplayPlan plan =
+            InventoryHealthMultiplayerScenario.ParseReplayActions(records);
+
+        Assert.Equal(3, plan.Move.Count);
+        Assert.Equal(1, plan.SelectSlot.SlotIndex);
+        Assert.Equal(20, plan.InventoryRevisionBurst.InventoryId);
+        Assert.Equal(30, plan.Hit.TargetEntityId);
+        Assert.Equal(30, plan.HealthRevisionBurst.EntityId);
+        Assert.Equal(1, plan.Respawn.PlayerIndex);
+        Assert.Throws<InvalidDataException>(() =>
+            InventoryHealthMultiplayerScenario.ParseReplayActions([
+                records[0],
+                records[2],
+                records[1],
+                .. records[3..]
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            InventoryHealthMultiplayerScenario.ParseReplayActions([
+                .. records[..5],
+                records[5] with {
+                    Payload = JsonSerializer.SerializeToElement(
+                        new RunHealthRevisionBurstCommand(30, SendStaleSnapshot: false),
+                        ControlProtocol.JsonOptions)
+                },
+                records[6]
+            ]));
+    }
+
     private static ScenarioActionRecordV2 TerrainActionRecord<TCommand>(
         string actionId,
         string command,

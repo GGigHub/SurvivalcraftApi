@@ -248,6 +248,126 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             RunEntityLifecycleBurst);
+        router.Register<PrepareInventoryFixtureCommand, InventoryFixture>(
+            Metadata(
+                ControlCommandNames.PrepareInventoryFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareInventoryFixture(command));
+        router.Register<ApplyInventoryFixtureCommand, ControlAck>(
+            Metadata(
+                ControlCommandNames.ApplyInventoryFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => ApplyInventoryFixture(command));
+        router.Register<InventoryMoveCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.InventoryMove,
+                AutomationCommandDomain.Inventory,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueueInventoryMove);
+        router.Register<InventorySelectSlotCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.InventorySelectSlot,
+                AutomationCommandDomain.Inventory,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueueInventorySelectSlot);
+        router.Register<InventoryDropCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.InventoryDrop,
+                AutomationCommandDomain.Inventory,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueueInventoryDrop);
+        router.Register<RunInventoryRevisionBurstCommand, InventoryRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunInventoryRevisionBurst,
+                AutomationCommandDomain.Inventory,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunInventoryRevisionBurst);
+        router.Register<PrepareHealthFixtureCommand, HealthFixture>(
+            Metadata(
+                ControlCommandNames.PrepareHealthFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareHealthFixture(command));
+        router.Register<SetHealthFixtureCommand, SetHealthFixtureResult>(
+            Metadata(
+                ControlCommandNames.SetHealthFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => SetHealthFixture(command));
+        router.Register<ApplyHealthFixtureCommand, ControlAck>(
+            Metadata(
+                ControlCommandNames.ApplyHealthFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => ApplyHealthFixture(command));
+        router.Register<PlayerHitCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerHit,
+                AutomationCommandDomain.Health,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerHit);
+        router.Register<PlayerRequestRespawnCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerRequestRespawn,
+                AutomationCommandDomain.Health,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerRespawn);
+        router.Register<RunHealthRevisionBurstCommand, HealthRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunHealthRevisionBurst,
+                AutomationCommandDomain.Health,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunHealthRevisionBurst);
         router.Register<SetClockCommand, ClockState>(
             Metadata(ControlCommandNames.SetClock, AutomationCommandDomain.Time, true),
             (_, command) => SetClock(command));
@@ -366,6 +486,16 @@ public partial class TestAutomationModLoader {
                 "invalid_payload",
                 "Entity IDs must be positive.");
         }
+        if (command.InventoryIds is { Length: > 256 }) {
+            throw new AutomationCommandException(
+                "limit_exceeded",
+                "At most 256 inventory IDs can be selected.");
+        }
+        if (command.InventoryIds?.Any(inventoryId => inventoryId <= 0) == true) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "Inventory IDs must be positive.");
+        }
         if (command.TerrainCells is { Length: > AutomationProtocol.MaximumSnapshotTerrainCells }) {
             throw new AutomationCommandException(
                 "limit_exceeded",
@@ -455,6 +585,20 @@ public partial class TestAutomationModLoader {
             && project != null
                 ? BuildEntityLifecycleSnapshotV2(project)
                 : null;
+        InventorySnapshotV2[]? inventories = domains.Contains(SnapshotDomain.Inventories)
+            && project != null
+                ? BuildInventorySnapshotsV2(project, command.InventoryIds)
+                : null;
+        HealthStateSnapshotV2[]? healthStates = domains.Contains(SnapshotDomain.Health)
+            && project != null
+                ? BuildHealthStateSnapshotsV2(project, command.EntityIds)
+                : null;
+        StateRevisionMetricsSnapshotV2? stateRevisions =
+            (domains.Contains(SnapshotDomain.Inventories)
+                || domains.Contains(SnapshotDomain.Health))
+            && project != null
+                ? BuildStateRevisionMetricsSnapshotV2(project)
+                : null;
         ActionEventRecord[] events = domains.Contains(SnapshotDomain.Events)
             ? actionEventJournal.Query(new GetEventsCommand(
                 command.EventAfterSequence,
@@ -484,7 +628,162 @@ public partial class TestAutomationModLoader {
             diagnostics,
             terrainStreaming,
             entities,
-            entityLifecycle);
+            entityLifecycle,
+            inventories,
+            healthStates,
+            stateRevisions);
+    }
+
+    private static InventorySnapshotV2[] BuildInventorySnapshotsV2(
+        Project project,
+        int[]? selectedInventoryIds) {
+        HashSet<int>? selected = selectedInventoryIds?.ToHashSet();
+        IInventory[] inventories = project.Entities
+            .SelectMany(entity => entity.FindComponents<IInventory>())
+            .Where(inventory => inventory.Id > 0
+                && (selected == null || selected.Contains(inventory.Id)))
+            .GroupBy(inventory => inventory.Id)
+            .Select(group => group.First())
+            .OrderBy(inventory => inventory.Id)
+            .ToArray();
+        int totalSlots = inventories.Sum(inventory => inventory.SlotsCount);
+        if (totalSlots > AutomationProtocol.MaximumSnapshotInventorySlots) {
+            throw new AutomationCommandException(
+                "limit_exceeded",
+                $"Selected inventories contain {totalSlots} slots; maximum is "
+                + $"{AutomationProtocol.MaximumSnapshotInventorySlots}.");
+        }
+        return inventories.Select(BuildInventorySnapshotV2).ToArray();
+    }
+
+    private static InventorySnapshotV2 BuildInventorySnapshotV2(IInventory inventory) {
+        Component? component = inventory as Component;
+        Entity? entity = component?.Entity;
+        ComponentBlockEntity? blockEntity = entity?.FindComponent<ComponentBlockEntity>();
+        string kind = inventory switch {
+            ComponentChest => "chest",
+            ComponentFurnace => "furnace",
+            ComponentDispenser => "dispenser",
+            ComponentCraftingTable => "craftingTable",
+            ComponentClothing => "clothing",
+            ComponentCreativeInventory => "creative",
+            ComponentInventory _ when entity?.FindComponent<ComponentPlayer>() != null => "player",
+            _ => "inventory"
+        };
+        long revision = NetworkManager.IsClientRunning
+            ? NetworkStateRevisionTracker.GetAppliedRevision(
+                inventory.Project,
+                NetworkStateRevisionDomain.Inventory,
+                inventory.Id)
+            : NetworkStateRevisionTracker.GetAuthoritativeRevision(
+                inventory.Project,
+                NetworkStateRevisionDomain.Inventory,
+                inventory.Id);
+        InventorySlotSnapshotV2[] slots = Enumerable.Range(0, inventory.SlotsCount)
+            .Select(index => {
+                int value = inventory.GetSlotValue(index);
+                return new InventorySlotSnapshotV2(
+                    index,
+                    value,
+                    inventory.GetSlotCount(index),
+                    Terrain.ExtractContents(value),
+                    Terrain.ExtractData(value));
+            })
+            .ToArray();
+        return new InventorySnapshotV2(
+            inventory.Id,
+            entity?.Id > 0 ? entity.Id : null,
+            inventory.GetType().FullName ?? inventory.GetType().Name,
+            kind,
+            inventory.SlotsCount,
+            inventory.ActiveSlotIndex,
+            revision,
+            slots,
+            blockEntity == null
+                ? null
+                : new TerrainCellCoordinate(
+                    blockEntity.Coordinates.X,
+                    blockEntity.Coordinates.Y,
+                    blockEntity.Coordinates.Z));
+    }
+
+    private static HealthStateSnapshotV2[] BuildHealthStateSnapshotsV2(
+        Project project,
+        int[]? selectedEntityIds) {
+        int[] entityIds = selectedEntityIds
+            ?? project.Entities
+                .Where(entity => entity.FindComponent<ComponentHealth>() != null
+                    || entity.FindComponent<ComponentDamage>() != null)
+                .Select(entity => entity.Id)
+                .Where(entityId => entityId > 0)
+                .Distinct()
+                .OrderBy(entityId => entityId)
+                .Take(AutomationProtocol.MaximumSnapshotEntities)
+                .ToArray();
+        return entityIds
+            .Distinct()
+            .Select(entityId => BuildHealthStateSnapshotV2(project, entityId))
+            .OrderBy(state => state.EntityId)
+            .ToArray();
+    }
+
+    private static HealthStateSnapshotV2 BuildHealthStateSnapshotV2(
+        Project project,
+        int entityId) {
+        Entity? entity = project.FindEntity(entityId);
+        ComponentHealth? health = entity?.FindComponent<ComponentHealth>();
+        ComponentDamage? damage = entity?.FindComponent<ComponentDamage>();
+        ComponentPlayer? player = entity?.FindComponent<ComponentPlayer>();
+        bool client = NetworkManager.IsClientRunning;
+        long healthRevision = health == null
+            ? -1
+            : client
+                ? NetworkStateRevisionTracker.GetAppliedRevision(
+                    project,
+                    NetworkStateRevisionDomain.Health,
+                    entityId)
+                : NetworkStateRevisionTracker.GetAuthoritativeRevision(
+                    project,
+                    NetworkStateRevisionDomain.Health,
+                    entityId);
+        long damageRevision = damage == null
+            ? -1
+            : client
+                ? NetworkStateRevisionTracker.GetAppliedRevision(
+                    project,
+                    NetworkStateRevisionDomain.Damage,
+                    entityId)
+                : NetworkStateRevisionTracker.GetAuthoritativeRevision(
+                    project,
+                    NetworkStateRevisionDomain.Damage,
+                    entityId);
+        long lifecycleRevision = client
+            ? EntityLifecycleTracker.GetAppliedRevision(project, entityId)
+            : EntityLifecycleTracker.GetAuthoritativeRevision(project, entityId);
+        return new HealthStateSnapshotV2(
+            entityId,
+            entity != null,
+            entity?.ValuesDictionary?.DatabaseObject?.Name,
+            player != null,
+            player?.PlayerData?.PlayerIndex,
+            health?.Health,
+            health?.Health <= 0f,
+            health?.DeathTime.HasValue ?? false,
+            string.IsNullOrEmpty(health?.CauseOfDeath) ? null : health.CauseOfDeath,
+            healthRevision,
+            damage?.Hitpoints,
+            damageRevision,
+            lifecycleRevision);
+    }
+
+    private static StateRevisionMetricsSnapshotV2 BuildStateRevisionMetricsSnapshotV2(
+        Project project) {
+        NetworkStateRevisionMetrics metrics = NetworkStateRevisionTracker.GetMetrics(project);
+        return new StateRevisionMetricsSnapshotV2(
+            metrics.AuthoritativeTrackedStates,
+            metrics.ClientTrackedStates,
+            metrics.AppliedStates,
+            metrics.IgnoredStaleStates);
     }
 
     private static EntitySnapshotV2 BuildEntitySnapshotV2(Project project, int entityId) {

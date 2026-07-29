@@ -10,6 +10,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
     public int m_slotIndex;
     public Vector3 m_hitPosition;
     public int m_count;
+    public long m_requestId;
     public PlayerDragDropPacket() { }
     public PlayerDragDropPacket(PlayerData playerData, int inventoryId, int slotIndex, Vector3 position, int count) {
         m_fromPlayerIndex = playerData.PlayerIndex;
@@ -17,6 +18,7 @@ public class PlayerDragDropPacket : PlayerPacketBase {
         m_slotIndex = slotIndex;
         m_hitPosition = position;
         m_count = count;
+        m_requestId = NetworkMutationRequestTracker.CreateRequestId();
     }
     public override void Serialize(PacketSerializer archive) {
         SerializePlayerId(archive, archive.IsWriting ? ResolvePlayer(m_fromPlayerIndex) : null);
@@ -24,12 +26,29 @@ public class PlayerDragDropPacket : PlayerPacketBase {
         archive.Value(ref m_slotIndex);
         archive.Value(ref m_hitPosition);
         archive.Value(ref m_count);
+        archive.Value(ref m_requestId);
     }
 
     public override void Handle(bool isServer) {
-        if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
+        if (!isServer || !TryResolvePlayer(true, out PlayerData playerData)) return;
+        if (!float.IsFinite(m_hitPosition.X)
+            || !float.IsFinite(m_hitPosition.Y)
+            || !float.IsFinite(m_hitPosition.Z)
+            || Vector3.DistanceSquared(
+                playerData.ComponentPlayer.ComponentBody.Position,
+                m_hitPosition) > 36f
+            || m_count <= 0) {
+            return;
+        }
+        if (!NetworkMutationRequestTracker.TryAccept(
+                From,
+                NetworkMutationDomain.PlayerWorldDragDrop,
+                m_requestId)) {
+            return;
+        }
         GameManager.Project.FindSubsystem<SubsystemInventories>().FindInventoryById(m_inventoryId, inventory => {
-            if (inventory == null || IsOwnedByOtherPlayer(inventory, From, out _)) {
+            if (inventory == null
+                || !InventoryPacketHelpers.CanSessionAccessInventory(inventory, From)) {
                 return;
             }
             if (inventory is ComponentCreativeInventory && GameManager.Project.FindSubsystem<SubsystemGameInfo>()?.WorldSettings?.GameMode != GameMode.Creative) {

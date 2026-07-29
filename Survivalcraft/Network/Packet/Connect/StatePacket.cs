@@ -74,6 +74,14 @@ public class StatePacket : ClientPacketBase {
                         From.GetPlayerData().ComponentPlayer.ComponentHealth.IsInvulnerable = false;
                     }
                     foreach (Entity entity in GameManager.Project.Entities) {
+                        ComponentHealth health = entity.FindComponent<ComponentHealth>();
+                        if (health != null && entity.Id > 0) {
+                            NetworkManager.Queue(new HealthSyncPacket(health) { To = From });
+                        }
+                        ComponentDamage damage = entity.FindComponent<ComponentDamage>();
+                        if (damage != null && entity.Id > 0) {
+                            NetworkManager.Queue(new DamageSyncPacket(damage) { To = From });
+                        }
                         foreach (IInventory inventory in entity.FindComponents<IInventory>()) {
                             if (inventory is ComponentClothing clothing) {
                                 NetworkManager.Queue(new ClothingSyncPacket(clothing) { To = From });

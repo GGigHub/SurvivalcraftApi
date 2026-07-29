@@ -20,6 +20,7 @@ public class InjureRequestPacket : Packet {
     public bool m_ignoreInvulnerability;
     public string m_cause = "";
     public RequestInjureType m_requestInjureType;
+    public long m_requestId;
 
     public InjureRequestPacket() {
     }
@@ -32,6 +33,7 @@ public class InjureRequestPacket : Packet {
         m_cause = cause;
         m_ignoreInvulnerability = ignoreInvulnerability;
         m_requestInjureType = requestType;
+        m_requestId = NetworkMutationRequestTracker.CreateRequestId();
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -42,6 +44,7 @@ public class InjureRequestPacket : Packet {
         archive.Value(ref m_amount);
         archive.Value(ref m_cause);
         archive.Enum(ref m_requestInjureType);
+        archive.Value(ref m_requestId);
     }
 
     public override void Handle(bool isServer) {
@@ -50,9 +53,20 @@ public class InjureRequestPacket : Packet {
             return;
         }
         var selfHealth = From?.GetPlayerData()?.ComponentPlayer?.ComponentHealth;
-        if (m_attackerId == 0) {
-            selfHealth?.Injure(m_amount, null, m_ignoreInvulnerability, NormalizeCause(m_requestInjureType));
+        if (selfHealth == null
+            || m_targetId != selfHealth.Entity.Id
+            || m_attackerId != 0
+            || !float.IsFinite(m_amount)
+            || MathF.Abs(m_amount - 0.1f) > 0.0001f) {
+            return;
         }
+        if (!NetworkMutationRequestTracker.TryAccept(
+                From,
+                NetworkMutationDomain.PlayerInjury,
+                m_requestId)) {
+            return;
+        }
+        selfHealth.Injure(0.1f, null, true, NormalizeCause(m_requestInjureType));
     }
 
     private static string NormalizeCause(RequestInjureType type) {

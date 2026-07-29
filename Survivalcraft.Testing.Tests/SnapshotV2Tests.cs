@@ -43,7 +43,7 @@ public sealed class SnapshotV2Tests {
         ControlRequest request = ControlProtocol.CreateRequest(
             ControlCommandNames.GetSnapshotV2,
             new GetSnapshotV2Command(
-                [SnapshotDomain.Network, SnapshotDomain.Players, SnapshotDomain.Terrain, SnapshotDomain.Entities, SnapshotDomain.Events],
+                [SnapshotDomain.Network, SnapshotDomain.Players, SnapshotDomain.Terrain, SnapshotDomain.Entities, SnapshotDomain.Inventories, SnapshotDomain.Health, SnapshotDomain.Events],
                 PlayerIndexes: [1, 2],
                 TerrainCells: [
                     new TerrainCellCoordinate(10, 64, 20),
@@ -51,7 +51,8 @@ public sealed class SnapshotV2Tests {
                 ],
                 EventAfterSequence: 7,
                 EventLimit: 64,
-                EntityIds: [31, 32]));
+                EntityIds: [31, 32],
+                InventoryIds: [41, 42]));
 
         GetSnapshotV2Command command = request.DeserializePayload<GetSnapshotV2Command>();
 
@@ -62,6 +63,8 @@ public sealed class SnapshotV2Tests {
                 SnapshotDomain.Players,
                 SnapshotDomain.Terrain,
                 SnapshotDomain.Entities,
+                SnapshotDomain.Inventories,
+                SnapshotDomain.Health,
                 SnapshotDomain.Events
             },
             command.Domains);
@@ -75,6 +78,7 @@ public sealed class SnapshotV2Tests {
         Assert.Equal(7, command.EventAfterSequence);
         Assert.Equal(64, command.EventLimit);
         Assert.Equal(new[] { 31, 32 }, Assert.IsType<int[]>(command.EntityIds));
+        Assert.Equal(new[] { 41, 42 }, Assert.IsType<int[]>(command.InventoryIds));
     }
 
     [Fact]
@@ -350,6 +354,109 @@ public sealed class SnapshotV2Tests {
         Assert.Contains(
             tombstoneDifference.Differences,
             item => item.Path == "$.entities[entityId=31].exists");
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void InventoryProjectionIsCanonicalAndComparedByInventoryAndSlotId() {
+        InventorySnapshotV2 firstInventory = new(
+            41,
+            31,
+            "Game.ComponentInventory",
+            "player",
+            2,
+            1,
+            7,
+            [
+                new InventorySlotSnapshotV2(1, 22, 3, 22, 0),
+                new InventorySlotSnapshotV2(0, 201, 1, 201, 0)
+            ]);
+        InventorySnapshotV2 secondInventory = new(
+            42,
+            32,
+            "Game.ComponentChest",
+            "chest",
+            1,
+            -1,
+            4,
+            [new InventorySlotSnapshotV2(0, 0, 0, 0, 0)],
+            new TerrainCellCoordinate(10, 64, 20));
+        StateSnapshotV2 first = Snapshot([], []) with {
+            Inventories = [secondInventory, firstInventory]
+        };
+        StateSnapshotV2 second = Snapshot([], []) with {
+            Inventories = [
+                firstInventory with { Slots = firstInventory.Slots.Reverse().ToArray() },
+                secondInventory
+            ]
+        };
+
+        Assert.Equal(
+            SnapshotV2Canonicalizer.ComputeSha256(first),
+            SnapshotV2Canonicalizer.ComputeSha256(second));
+        Assert.True(SnapshotV2Comparer.CompareInventories(first, second).Equal);
+
+        StateSnapshotV2 changed = second with {
+            Inventories = [
+                firstInventory with {
+                    Slots = [
+                        new InventorySlotSnapshotV2(0, 201, 1, 201, 0),
+                        new InventorySlotSnapshotV2(1, 22, 2, 22, 0)
+                    ]
+                },
+                secondInventory
+            ]
+        };
+        SnapshotV2Diff diff = SnapshotV2Comparer.CompareInventories(first, changed);
+        Assert.Contains(diff.Differences,
+            item => item.Path == "$.inventories[inventoryId=41].slots[slotIndex=1].count");
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void HealthProjectionRoundsScalarsAndComparesLifecycleState() {
+        HealthStateSnapshotV2 state = new(
+            31,
+            true,
+            "Cow",
+            false,
+            null,
+            0.1234567,
+            false,
+            false,
+            null,
+            5,
+            0.7654321,
+            3,
+            8);
+        StateSnapshotV2 expected = Snapshot([], []) with { HealthStates = [state] };
+        StateSnapshotV2 equivalent = Snapshot([], []) with {
+            HealthStates = [state with { Health = 0.1234568, Hitpoints = 0.7654322 }]
+        };
+
+        HealthStateSnapshotV2 normalized = Assert.Single(
+            SnapshotV2Canonicalizer.Normalize(expected, decimalPlaces: 5).HealthStates!);
+        Assert.Equal(0.12346, normalized.Health);
+        Assert.Equal(0.76543, normalized.Hitpoints);
+        Assert.True(SnapshotV2Comparer.CompareHealthStates(
+            expected,
+            equivalent,
+            new SnapshotV2HealthComparisonOptions(ScalarTolerance: 0.00001)).Equal);
+
+        StateSnapshotV2 dead = expected with {
+            HealthStates = [state with {
+                Health = 0,
+                IsDead = true,
+                HasDeathTime = true,
+                CauseOfDeath = "melee",
+                HealthRevision = 6
+            }]
+        };
+        SnapshotV2Diff diff = SnapshotV2Comparer.CompareHealthStates(expected, dead);
+        Assert.Contains(diff.Differences,
+            item => item.Path == "$.healthStates[entityId=31].isDead");
+        Assert.Contains(diff.Differences,
+            item => item.Path == "$.healthStates[entityId=31].healthRevision");
     }
 
     private static StateSnapshotV2 Snapshot(

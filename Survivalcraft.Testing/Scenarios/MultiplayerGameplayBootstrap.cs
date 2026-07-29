@@ -14,7 +14,8 @@ public static class MultiplayerGameplayBootstrap {
         int seed,
         int initialClientCount,
         TimeSpan stepTimeout,
-        CancellationToken cancellationToken) {
+        CancellationToken cancellationToken,
+        bool creative = true) {
         ArgumentNullException.ThrowIfNull(cluster);
         ArgumentNullException.ThrowIfNull(runner);
         ArgumentNullException.ThrowIfNull(requiredCapabilities);
@@ -63,7 +64,10 @@ public static class MultiplayerGameplayBootstrap {
             ControlCommandNames.CreateWorld,
             token => cluster.Server.SendAsync<CreateWorldCommand, CreateWorldResult>(
                 ControlCommandNames.CreateWorld,
-                new CreateWorldCommand(worldName, seed.ToString(CultureInfo.InvariantCulture)),
+                new CreateWorldCommand(
+                    worldName,
+                    seed.ToString(CultureInfo.InvariantCulture),
+                    Creative: creative),
                 timeout: stepTimeout,
                 cancellationToken: token),
             result => result.DirectoryName,

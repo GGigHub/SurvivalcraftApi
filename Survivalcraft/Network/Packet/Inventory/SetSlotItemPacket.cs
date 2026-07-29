@@ -31,13 +31,17 @@ public class SetSlotItemPacket : Packet {
     public override void Handle(bool isServer) {
         var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
         IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
-        if (inventory != null) {
+        if (inventory == null) {
+            return;
+        }
+        if (isServer) {
+            InventoryPacketHelpers.QueueInventorySync(inventory, From);
+            return;
+        }
+        if (InventoryPacketHelpers.IsSlotIndexValid(inventory, m_slotIndex)
+            && m_count >= 0) {
             inventory.RemoveSlotItems(m_slotIndex, inventory.GetSlotCount(m_slotIndex));
             inventory.AddSlotItems(m_slotIndex, m_value, m_count);
-            if (isServer) {
-                To = From;
-                NetworkManager.Queue(this);
-            }
         }
     }
 }

@@ -17,8 +17,6 @@ public sealed record GameNodeOptions(
 
 public sealed class GameNodeProcess : IAsyncDisposable {
     private const int MaximumRetainedLogLines = 10_000;
-    private static readonly object PortSync = new();
-    private static readonly HashSet<int> ReservedPorts = [];
 
     private readonly GameNodeOptions options;
     private readonly CancellationTokenSource disposeSource = new();
@@ -40,10 +38,12 @@ public sealed class GameNodeProcess : IAsyncDisposable {
         DataDirectory = Path.GetFullPath(options.DataDirectory);
         ControlPipeName = $"sc-test-{Sanitize(options.Role)}-{Guid.NewGuid():N}";
         InstanceId = $"{Sanitize(options.Role)}-{Guid.NewGuid():N}";
-        GamePort = AllocateUdpPort();
-        CommandPort = AllocateUdpPort();
-        logServer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
-        LogPort = ((IPEndPoint)logServer.Client.LocalEndPoint!).Port;
+        GamePort = UdpPortLeaseAllocator.Allocate();
+        CommandPort = UdpPortLeaseAllocator.Allocate();
+        LogPort = UdpPortLeaseAllocator.Allocate();
+        logServer = new UdpClient(AddressFamily.InterNetwork);
+        logServer.Client.ExclusiveAddressUse = true;
+        logServer.Client.Bind(new IPEndPoint(IPAddress.Loopback, LogPort));
         controlClient = new NamedPipeControlClient(ControlPipeName);
         logReceiveTask = Task.Run(ReceiveLogsAsync);
     }
@@ -240,25 +240,6 @@ public sealed class GameNodeProcess : IAsyncDisposable {
         message.Contains("[Error]", StringComparison.OrdinalIgnoreCase)
         || message.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase);
 
-    private static int AllocateUdpPort() {
-        lock (PortSync) {
-            for (int attempt = 0; attempt < 100; attempt++) {
-                using UdpClient client = new(new IPEndPoint(IPAddress.Loopback, 0));
-                int port = ((IPEndPoint)client.Client.LocalEndPoint!).Port;
-                if (ReservedPorts.Add(port)) {
-                    return port;
-                }
-            }
-        }
-        throw new InvalidOperationException("Could not reserve a unique UDP port for a game node.");
-    }
-
-    private static void ReleaseUdpPort(int port) {
-        lock (PortSync) {
-            ReservedPorts.Remove(port);
-        }
-    }
-
     private static string Sanitize(string value) {
         StringBuilder builder = new(value.Length);
         foreach (char character in value) {
@@ -305,7 +286,5 @@ public sealed class GameNodeProcess : IAsyncDisposable {
             // Expected during shutdown.
         }
         disposeSource.Dispose();
-        ReleaseUdpPort(GamePort);
-        ReleaseUdpPort(CommandPort);
     }
 }
