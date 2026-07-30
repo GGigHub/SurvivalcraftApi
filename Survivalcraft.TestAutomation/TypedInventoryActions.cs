@@ -12,6 +12,7 @@ public partial class TestAutomationModLoader {
     private const int InventoryNetworkObservationDeadlineFrames = 1200;
 
     private PendingInventoryAction? pendingInventoryAction;
+    private PendingContainerOpenAction? pendingContainerOpenAction;
 
     private enum InventoryActionKind {
         Move,
@@ -31,6 +32,15 @@ public partial class TestAutomationModLoader {
         int ExpectedSecondaryCount,
         int ExpectedActiveSlot,
         long MinimumRevision,
+        int DeadlineFrame);
+
+    private sealed record PendingContainerOpenAction(
+        string ActionId,
+        long NetworkRequestId,
+        int PlayerIndex,
+        NetworkContainerOpenRequestKind RequestKind,
+        NetworkContainerOpenResultCode ExpectedResult,
+        int ExpectedInventoryId,
         int DeadlineFrame);
 
     private InventoryFixture PrepareInventoryFixture(
@@ -60,27 +70,43 @@ public partial class TestAutomationModLoader {
             (int)MathF.Floor(origin.X) + 3,
             Math.Clamp((int)MathF.Floor(origin.Y), 2, 252),
             (int)MathF.Floor(origin.Z));
+        Point3 furnacePoint = new(chestPoint.X + 1, chestPoint.Y, chestPoint.Z);
         terrain.ChangeCell(
             chestPoint.X,
             chestPoint.Y,
             chestPoint.Z,
             Terrain.MakeBlockValue(ChestBlock.Index));
+        terrain.ChangeCell(
+            furnacePoint.X,
+            furnacePoint.Y,
+            furnacePoint.Z,
+            Terrain.MakeBlockValue(FurnaceBlock.Index));
         terrain.TerrainUpdater.RequestSynchronousUpdate();
         ComponentChest chest = blockEntities.GetBlockEntity(chestPoint)?.Entity
             .FindComponent<ComponentChest>()
             ?? throw new AutomationCommandException(
                 "fixture_failed",
                 "Chest block entity was not created synchronously.");
+        ComponentFurnace furnace = blockEntities.GetBlockEntity(furnacePoint)?.Entity
+            .FindComponent<ComponentFurnace>()
+            ?? throw new AutomationCommandException(
+                "fixture_failed",
+                "Furnace block entity was not created synchronously.");
         IInventory playerInventory = actor.ComponentMiner.Inventory
             ?? throw new AutomationCommandException(
                 "invalid_state",
                 "Player inventory is unavailable.");
         int stackValue = Terrain.MakeBlockValue(CoalChunkBlock.Index);
         int dropValue = Terrain.MakeBlockValue(DirtBlock.Index);
+        int ingredientValue = Terrain.MakeBlockValue(RawMeatBlock.Index);
+        int resultValue = Terrain.MakeBlockValue(CookedMeatBlock.Index);
         ClearInventory(playerInventory);
         ClearInventory(chest);
+        ClearInventory(furnace);
         SetInventorySlot(playerInventory, 0, stackValue, command.PlayerItemCount);
         SetInventorySlot(playerInventory, 1, dropValue, 3);
+        SetInventorySlot(playerInventory, 2, ingredientValue, 1);
+        SetInventorySlot(playerInventory, 3, stackValue, 1);
         SetInventorySlot(chest, 0, stackValue, command.ChestItemCount);
         playerInventory.ActiveSlotIndex = 0;
 
@@ -90,6 +116,16 @@ public partial class TestAutomationModLoader {
             chestPoint.Z - 2f);
         PrepareInventoryActor(actor, playerPosition);
         QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+            furnace.Project,
+            NetworkStateRevisionDomain.Inventory,
+            furnace.Id);
+        QueueFixtureSynchronization(new InventorySyncPacket(furnace));
+        long furnaceRevision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+            furnace.Project,
+            NetworkStateRevisionDomain.Furnace,
+            furnace.Id);
+        QueueFixtureSynchronization(new ComponentFurnacePacket(furnace, furnaceRevision));
         return new InventoryFixture(
             command.PlayerIndex,
             actor.Entity.Id,
@@ -101,7 +137,16 @@ public partial class TestAutomationModLoader {
             stackValue,
             dropValue,
             command.PlayerItemCount,
-            command.ChestItemCount);
+            command.ChestItemCount,
+            furnace.Entity.Id,
+            furnace.Id,
+            new TerrainCellCoordinate(furnacePoint.X, furnacePoint.Y, furnacePoint.Z),
+            ingredientValue,
+            stackValue,
+            resultValue,
+            0,
+            furnace.FuelSlotIndex,
+            furnace.ResultSlotIndex);
     }
 
     private ControlAck ApplyInventoryFixture(ApplyInventoryFixtureCommand command) {
@@ -228,6 +273,88 @@ public partial class TestAutomationModLoader {
             "queued",
             Provenance: provenance,
             ProductionEntry: entry);
+    }
+
+    private ActionReceipt QueueInventoryOpenContainer(
+        AutomationCommandContext context,
+        InventoryOpenContainerCommand command) {
+        EnsureClientActionRole("Container open actions");
+        EnsureNoTypedPlayerActionInProgress();
+        if (!Enum.IsDefined(command.TargetKind)
+            || !Enum.IsDefined(command.ExpectedResult)) {
+            throw new AutomationCommandException("invalid_payload", "Container open enum value is invalid.");
+        }
+        Project project = GameManager.Project
+            ?? throw new AutomationCommandException("invalid_state", "No project is loaded.");
+        ComponentPlayer actor = ResolvePlayer(
+            project.FindSubsystem<SubsystemPlayers>(true),
+            command.PlayerIndex,
+            requireMainPlayer: true);
+        if (command.ActorPositionOverride != null) {
+            Vector3 overridePosition = ToVector(command.ActorPositionOverride);
+            if (!IsFinite(overridePosition)) {
+                throw new AutomationCommandException(
+                    "invalid_payload",
+                    "Container actor position override must be finite.");
+            }
+            PrepareInventoryActor(actor, overridePosition);
+            QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        }
+        Packet packet;
+        long networkRequestId;
+        NetworkContainerOpenRequestKind requestKind;
+        string target;
+        if (command.TargetKind == InventoryOpenTargetKind.ById) {
+            if (command.InventoryId <= 0 || command.Cell != null) {
+                throw new AutomationCommandException(
+                    "invalid_payload",
+                    "An open-by-id action requires a positive inventoryId and no cell.");
+            }
+            OpenInventoryByIDPacket request = new(command.InventoryId);
+            packet = request;
+            networkRequestId = request.m_requestId;
+            requestKind = NetworkContainerOpenRequestKind.ById;
+            target = command.InventoryId.ToString(CultureInfo.InvariantCulture);
+        }
+        else {
+            TerrainCellCoordinate cell = command.Cell
+                ?? throw new AutomationCommandException(
+                    "invalid_payload",
+                    "An open-by-point action requires a cell.");
+            OpenInventoryByPointPacket request = new(new Point3(cell.X, cell.Y, cell.Z));
+            packet = request;
+            networkRequestId = request.m_requestId;
+            requestKind = NetworkContainerOpenRequestKind.ByPoint;
+            target = $"{cell.X},{cell.Y},{cell.Z}";
+        }
+        NetworkContainerOpenResultCode expected = ToNetworkResult(command.ExpectedResult);
+        actor.ComponentGui.ModalPanelWidget = null;
+        ContainerOpenResultTracker.TryTake(networkRequestId, out _);
+        RecordInventoryAction(
+            context.RequestId,
+            "openContainer",
+            ActionEventPhase.Queued,
+            command.PlayerIndex,
+            target,
+            $"queued_{command.ExpectedResult.ToString().ToLowerInvariant()}");
+        pendingContainerOpenAction = new PendingContainerOpenAction(
+            context.RequestId,
+            networkRequestId,
+            command.PlayerIndex,
+            requestKind,
+            expected,
+            command.InventoryId,
+            checked(Time.FrameIndex + InventoryNetworkObservationDeadlineFrames));
+        QueueProductionRequest(packet);
+        ScheduleContainerOpenObservation(pendingContainerOpenAction);
+        return new ActionReceipt(
+            context.RequestId,
+            true,
+            Time.FrameIndex,
+            command.PlayerIndex,
+            "queued",
+            Provenance: ActionProvenance.ProductionRequest,
+            ProductionEntry: ProductionPathEntries.InventoryOpenContainer);
     }
 
     private ActionReceipt QueueInventorySelectSlot(
@@ -400,6 +527,125 @@ public partial class TestAutomationModLoader {
             finalRevision);
     }
 
+    private FurnaceRevisionBurstResult RunFurnaceRevisionBurst(
+        AutomationCommandContext context,
+        RunFurnaceRevisionBurstCommand command) {
+        EnsureServerFixtureRole("Furnace revision bursts");
+        if (!float.IsFinite(command.FinalFireTimeRemaining)
+            || command.FinalFireTimeRemaining < 0f
+            || !float.IsFinite(command.FinalSmeltingProgress)
+            || command.FinalSmeltingProgress is < 0f or > 1f
+            || !float.IsFinite(command.FinalHeatLevel)
+            || command.FinalHeatLevel < 0f) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "Final furnace runtime values are invalid.");
+        }
+        Project project = GameManager.Project
+            ?? throw new AutomationCommandException("invalid_state", "No project is loaded.");
+        ComponentFurnace furnace = project.FindSubsystem<SubsystemInventories>(true)
+            .GetInventoryById(command.FurnaceInventoryId) as ComponentFurnace
+            ?? throw new AutomationCommandException(
+                "inventory_not_found",
+                "Furnace inventory is unavailable.");
+        ComponentFurnacePacket stale = new(furnace);
+        long staleRevision = stale.furnaceDataList.Single().revision;
+        RecordInventoryAction(
+            context.RequestId,
+            "furnaceRevisionBurst",
+            ActionEventPhase.Queued,
+            -1,
+            furnace.Id.ToString(CultureInfo.InvariantCulture),
+            "queued");
+        furnace.m_fireTimeRemaining = command.FinalFireTimeRemaining;
+        furnace.m_smeltingProgress = command.FinalSmeltingProgress;
+        furnace.m_heatLevel = command.FinalHeatLevel;
+        long finalRevision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+            project,
+            NetworkStateRevisionDomain.Furnace,
+            furnace.Id);
+        QueueAuthoritativeState(new ComponentFurnacePacket(furnace, finalRevision));
+        if (command.SendStaleSnapshot) {
+            QueueFaultInjectionAfterSettle(stale);
+        }
+        RecordInventoryAction(
+            context.RequestId,
+            "furnaceRevisionBurst",
+            ActionEventPhase.Applied,
+            -1,
+            furnace.Id.ToString(CultureInfo.InvariantCulture),
+            "final_state_queued");
+        ActionReceipt receipt = new(
+            context.RequestId,
+            true,
+            Time.FrameIndex,
+            -1,
+            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.FurnaceRevision);
+        return new FurnaceRevisionBurstResult(
+            receipt,
+            furnace.Id,
+            command.FinalFireTimeRemaining,
+            command.FinalSmeltingProgress,
+            command.FinalHeatLevel,
+            staleRevision,
+            finalRevision);
+    }
+
+    private void ScheduleContainerOpenObservation(PendingContainerOpenAction pending) {
+        int nextFrame = checked(Time.FrameIndex + 1);
+        Time.QueueFrameIndexDelayedExecution(nextFrame, () => {
+            if (pendingContainerOpenAction?.ActionId != pending.ActionId) {
+                return;
+            }
+            if (ContainerOpenResultTracker.TryTake(
+                    pending.NetworkRequestId,
+                    out NetworkContainerOpenResult result)) {
+                bool matches = result.RequestKind == pending.RequestKind
+                    && result.Code == pending.ExpectedResult
+                    && (pending.ExpectedInventoryId <= 0
+                        || result.InventoryId == pending.ExpectedInventoryId)
+                    && (pending.ExpectedResult != NetworkContainerOpenResultCode.Accepted
+                        || result.Opened);
+                RecordInventoryAction(
+                    pending.ActionId,
+                    "openContainer",
+                    matches ? ActionEventPhase.Applied : ActionEventPhase.Rejected,
+                    pending.PlayerIndex,
+                    result.InventoryId.ToString(CultureInfo.InvariantCulture),
+                    matches
+                        ? $"production_result_{result.Code.ToString().ToLowerInvariant()}"
+                        : $"unexpected_result_{result.Code.ToString().ToLowerInvariant()}");
+                pendingContainerOpenAction = null;
+                return;
+            }
+            if (Time.FrameIndex >= pending.DeadlineFrame) {
+                RecordInventoryAction(
+                    pending.ActionId,
+                    "openContainer",
+                    ActionEventPhase.Rejected,
+                    pending.PlayerIndex,
+                    pending.ExpectedInventoryId.ToString(CultureInfo.InvariantCulture),
+                    "result_not_observed");
+                pendingContainerOpenAction = null;
+                return;
+            }
+            ScheduleContainerOpenObservation(pending);
+        });
+    }
+
+    private static NetworkContainerOpenResultCode ToNetworkResult(
+        InventoryOpenExpectedResult result) => result switch {
+            InventoryOpenExpectedResult.Accepted => NetworkContainerOpenResultCode.Accepted,
+            InventoryOpenExpectedResult.InvalidRequest => NetworkContainerOpenResultCode.InvalidRequest,
+            InventoryOpenExpectedResult.InventoryNotFound => NetworkContainerOpenResultCode.InventoryNotFound,
+            InventoryOpenExpectedResult.PermissionDenied => NetworkContainerOpenResultCode.PermissionDenied,
+            InventoryOpenExpectedResult.UnsupportedInventory => NetworkContainerOpenResultCode.UnsupportedInventory,
+            InventoryOpenExpectedResult.ClientStateUnavailable => NetworkContainerOpenResultCode.ClientStateUnavailable,
+            _ => throw new AutomationCommandException("invalid_payload", "Unknown expected container result.")
+        };
+
     private void HandleTypedInventorySlotChanged(IInventory inventory, int slotIndex) {
         PendingInventoryAction? pending = pendingInventoryAction;
         if (pending == null
@@ -542,6 +788,12 @@ public partial class TestAutomationModLoader {
         string code) {
         if (string.Equals(name, "revisionBurst", StringComparison.Ordinal)) {
             return (ActionProvenance.FaultInjection, ProductionPathEntries.InventoryRevision);
+        }
+        if (string.Equals(name, "furnaceRevisionBurst", StringComparison.Ordinal)) {
+            return (ActionProvenance.FaultInjection, ProductionPathEntries.FurnaceRevision);
+        }
+        if (string.Equals(name, "openContainer", StringComparison.Ordinal)) {
+            return (ActionProvenance.ProductionRequest, ProductionPathEntries.InventoryOpenContainer);
         }
         if (string.Equals(name, "selectSlot", StringComparison.OrdinalIgnoreCase)) {
             return (ActionProvenance.ProductionInput, ProductionPathEntries.InventorySelectSlot);

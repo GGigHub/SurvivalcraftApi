@@ -194,7 +194,18 @@ public sealed record InventorySnapshotV2(
     int ActiveSlotIndex,
     long Revision,
     InventorySlotSnapshotV2[] Slots,
-    TerrainCellCoordinate? BlockCell = null);
+    TerrainCellCoordinate? BlockCell = null,
+    FurnaceStateSnapshotV2? FurnaceState = null);
+
+public sealed record FurnaceStateSnapshotV2(
+    double FireTimeRemaining,
+    double SmeltingProgress,
+    double HeatLevel,
+    long Revision,
+    int IngredientSlots,
+    int FuelSlotIndex,
+    int ResultSlotIndex,
+    int RemainsSlotIndex);
 
 public sealed record InventorySlotSnapshotV2(
     int SlotIndex,

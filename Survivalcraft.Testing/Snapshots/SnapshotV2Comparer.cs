@@ -19,7 +19,9 @@ public sealed record SnapshotV2EntityComparisonOptions(
     bool CompareRevision = true);
 
 public sealed record SnapshotV2InventoryComparisonOptions(
-    bool CompareRevision = true);
+    bool CompareRevision = true,
+    double FurnaceScalarTolerance = 0.001,
+    bool CompareFurnaceRevision = false);
 
 public sealed record SnapshotV2HealthComparisonOptions(
     double ScalarTolerance = 0.00001,
@@ -229,6 +231,7 @@ public static class SnapshotV2Comparer {
         ArgumentNullException.ThrowIfNull(expected);
         ArgumentNullException.ThrowIfNull(actual);
         options ??= new SnapshotV2InventoryComparisonOptions();
+        ValidateTolerance(options.FurnaceScalarTolerance, nameof(options.FurnaceScalarTolerance));
         List<SnapshotDifference> differences = [];
         Dictionary<int, InventorySnapshotV2> remaining = (actual.Inventories ?? [])
             .ToDictionary(inventory => inventory.InventoryId);
@@ -245,6 +248,12 @@ public static class SnapshotV2Comparer {
             CompareValue(path + ".slotsCount", expectedInventory.SlotsCount, actualInventory.SlotsCount, differences);
             CompareValue(path + ".activeSlotIndex", expectedInventory.ActiveSlotIndex, actualInventory.ActiveSlotIndex, differences);
             CompareValue(path + ".blockCell", expectedInventory.BlockCell, actualInventory.BlockCell, differences);
+            CompareFurnaceState(
+                path + ".furnaceState",
+                expectedInventory.FurnaceState,
+                actualInventory.FurnaceState,
+                options,
+                differences);
             if (options.CompareRevision) {
                 CompareValue(path + ".revision", expectedInventory.Revision, actualInventory.Revision, differences);
             }
@@ -276,6 +285,28 @@ public static class SnapshotV2Comparer {
                 extra.ToString()));
         }
         return new SnapshotV2Diff(differences.Count == 0, differences.ToArray());
+    }
+
+    private static void CompareFurnaceState(
+        string path,
+        FurnaceStateSnapshotV2? expected,
+        FurnaceStateSnapshotV2? actual,
+        SnapshotV2InventoryComparisonOptions options,
+        List<SnapshotDifference> differences) {
+        if (expected == null || actual == null) {
+            CompareValue(path, expected, actual, differences);
+            return;
+        }
+        CompareScalar(path + ".fireTimeRemaining", expected.FireTimeRemaining, actual.FireTimeRemaining, options.FurnaceScalarTolerance, differences);
+        CompareScalar(path + ".smeltingProgress", expected.SmeltingProgress, actual.SmeltingProgress, options.FurnaceScalarTolerance, differences);
+        CompareScalar(path + ".heatLevel", expected.HeatLevel, actual.HeatLevel, options.FurnaceScalarTolerance, differences);
+        CompareValue(path + ".ingredientSlots", expected.IngredientSlots, actual.IngredientSlots, differences);
+        CompareValue(path + ".fuelSlotIndex", expected.FuelSlotIndex, actual.FuelSlotIndex, differences);
+        CompareValue(path + ".resultSlotIndex", expected.ResultSlotIndex, actual.ResultSlotIndex, differences);
+        CompareValue(path + ".remainsSlotIndex", expected.RemainsSlotIndex, actual.RemainsSlotIndex, differences);
+        if (options.CompareFurnaceRevision) {
+            CompareValue(path + ".revision", expected.Revision, actual.Revision, differences);
+        }
     }
 
     public static SnapshotV2Diff CompareHealthStates(

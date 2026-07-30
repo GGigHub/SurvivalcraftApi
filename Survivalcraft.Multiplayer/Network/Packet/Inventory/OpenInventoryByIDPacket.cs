@@ -1,5 +1,3 @@
-using Engine;
-
 namespace Game.Network;
 
 public class OpenInventoryByIDPacket : Packet {
@@ -7,55 +5,50 @@ public class OpenInventoryByIDPacket : Packet {
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public int m_inventoryId;
+    public long m_requestId;
 
     public OpenInventoryByIDPacket() {
     }
 
-    public OpenInventoryByIDPacket(IInventory inventory) {
-        m_inventoryId = inventory.Id;
+    public OpenInventoryByIDPacket(IInventory inventory)
+        : this(inventory?.Id ?? 0) {
+    }
+
+    public OpenInventoryByIDPacket(int inventoryId) {
+        m_inventoryId = inventoryId;
+        m_requestId = NetworkMutationRequestTracker.CreateRequestId();
     }
 
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref m_inventoryId);
+        archive.Value(ref m_requestId);
     }
 
     public override void Handle(bool isServer) {
-        var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
-        if (isServer && From != null) {
-            IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
-            if (inventory != null
-                && InventoryPacketHelpers.CanSessionAccessInventory(inventory, From)) {
-                OpenInventoryByIDPacket packet = new(inventory) {
-                    To = From
-                };
-                NetworkManager.Queue(packet);
-            }
+        if (!isServer || From == null) {
+            return;
+        }
+        NetworkContainerOpenResultCode result;
+        IInventory inventory = null;
+        if (m_requestId <= 0 || m_inventoryId <= 0) {
+            result = NetworkContainerOpenResultCode.InvalidRequest;
         }
         else {
-            IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
-            if (inventory != null) {
-                var player = GameManager.Project.FindSubsystem<SubsystemPlayers>()?.ComponentPlayers.FirstOrDefault(p => p.PlayerData.PlayerIndex == NetworkManager.PlayerIndex);
-                if (player?.ComponentGui == null || player.ComponentMiner?.Inventory == null) {
-                    return;
-                }
-                if (inventory is ComponentChest componentChest) {
-                    player.ComponentGui.ModalPanelWidget = new ChestWidget(player.ComponentMiner.Inventory, componentChest);
-                    AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-                }
-                else if (inventory is ComponentFurnace componentFurnace) {
-                    player.ComponentGui.ModalPanelWidget = new FurnaceWidget(player.ComponentMiner.Inventory, componentFurnace);
-                    AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-                }
-                else if (inventory is ComponentDispenser componentDispenser) {
-                    player.ComponentMiner.ComponentPlayer.ComponentGui.ModalPanelWidget = new DispenserWidget(player.ComponentMiner.Inventory, componentDispenser);
-                    AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-                }
-                else if (inventory is ComponentCraftingTable componentCraftingTable) {
-                    player.ComponentMiner.ComponentPlayer.ComponentGui.ModalPanelWidget = new CraftingTableWidget(player.ComponentMiner.Inventory, componentCraftingTable);
-                    AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-                }
-            }
+            inventory = GameManager.Project.FindSubsystem<SubsystemInventories>()
+                .GetInventoryById(m_inventoryId);
+            result = inventory == null
+                ? NetworkContainerOpenResultCode.InventoryNotFound
+                : !InventoryPacketHelpers.CanSessionAccessInventory(inventory, From)
+                    ? NetworkContainerOpenResultCode.PermissionDenied
+                    : !OpenInventoryResultPacket.IsSupportedInventory(inventory)
+                        ? NetworkContainerOpenResultCode.UnsupportedInventory
+                        : NetworkContainerOpenResultCode.Accepted;
         }
+        OpenInventoryResultPacket.Queue(
+            From,
+            m_requestId,
+            NetworkContainerOpenRequestKind.ById,
+            result,
+            inventory?.Id ?? m_inventoryId);
     }
 }
-

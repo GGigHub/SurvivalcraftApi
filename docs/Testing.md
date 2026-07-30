@@ -50,7 +50,7 @@
 - `pickable-projectile-direct` / `pickable-projectile-relay`：分别运行一服三客的掉落物生命周期、吸引和真实弩箭发射场景。
 - `pickable-projectile`：依次运行 Direct/Relay，覆盖服务端角色约束、真实 `ComponentInput -> PlayerAimPacket -> Crossbow -> ProjectilePacket` 路径、观察者瞬态事件去重、单调 pickable revision、陈旧 create 复活哨兵、合法 ID 复用、late join、同身份重连、保存重载和严格三动作回放。
 - `inventory-health-direct` / `inventory-health-relay`：分别运行一服三客的库存、容器、伤害、死亡和重生场景。
-- `inventory-health`：依次运行 Direct/Relay，覆盖真实 move/select/drop/melee/respawn 生产路径、跨会话权限拒绝、请求 ID 幂等、单调 revision、100% 重复与 50% 重排、观察者、late join、同身份重连、保存重载和严格七动作回放。
+- `inventory-health`：依次运行 Direct/Relay，覆盖按坐标和 ID 打开真实容器、所有权与距离拒绝、真实熔炉投料/燃烧/产出、move/select/drop/melee/respawn 生产路径、请求 ID 幂等、库存与熔炉独立单调 revision、100% 重复与 50% 重排、观察者、late join、同身份重连、保存重载和严格十四动作回放。
 - `environment-mechanics-direct` / `environment-mechanics-relay`：分别运行一服三客的环境时间、降水、雾、雷电、睡眠、唤醒和玩家着火场景。
 - `environment-mechanics`：依次运行 Direct/Relay，覆盖非创造模式拒绝及同 revision 权威快照纠正客户端乐观时间/天气状态、Playing 会话所有权、伪造权威状态和跨玩家请求拒绝、单调 revision、100% 重复与 50% 重排、观察者、late join、玩家身份稳定但实体世代变化的重连、保存重载和严格八动作回放。雷电按瞬时事件验证，不向 late joiner 重放历史雷击。
 - `mount-direct` / `mount-relay`：分别运行一服三客的真实 Boat 骑乘、下马和实体世代场景。
@@ -263,7 +263,7 @@ L3 根目录另外包含 `fault-schedule.json` 和每轮原子更新的 `soak-su
   -Artifacts ./TestResults/l3-replay -NoBuild
 ```
 
-同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、pickable-projectile、inventory-health、environment-mechanics、mount、logic 和 session-lifecycle 十一个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；pickable-projectile 严格要求 server attraction、client-a 真实 Aim 发射、server stale-create lifecycle burst 三个动作，且陈旧创建注入必须启用；inventory-health 严格要求 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn 七个动作；environment-mechanics 严格要求 time、precipitation、fog、lightning、sleep、environment revision burst、fire revision burst、wake 八个动作；mount 严格要求 mount、dismount、故障下 mount、revision burst、同 ID lifecycle burst、重连前 remount 和重连后 mount 七个动作，且旧 revision 与旧 lifecycle 注入必须启用；logic 严格要求四个权限/安全探针、九类编辑、真实开关交互、logic revision burst、moving lifecycle burst 和 piston lifecycle 十七个动作，并要求旧 revision、旧 generation 与墓碑注入保持启用；session-lifecycle 回放保持原传输、种子和故障 profile，重新执行全部拒绝、风暴、限流与清理哨兵。
+同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、pickable-projectile、inventory-health、environment-mechanics、mount、logic 和 session-lifecycle 十一个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；pickable-projectile 严格要求 server attraction、client-a 真实 Aim 发射、server stale-create lifecycle burst 三个动作，且陈旧创建注入必须启用；inventory-health 严格要求按坐标打开熔炉、按 ID 打开熔炉、玩家库存越权拒绝、远距容器拒绝、熔炉投料、熔炉加燃料、熔炉 revision burst、箱子 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn 十四个动作；environment-mechanics 严格要求 time、precipitation、fog、lightning、sleep、environment revision burst、fire revision burst、wake 八个动作；mount 严格要求 mount、dismount、故障下 mount、revision burst、同 ID lifecycle burst、重连前 remount 和重连后 mount 七个动作，且旧 revision 与旧 lifecycle 注入必须启用；logic 严格要求四个权限/安全探针、九类编辑、真实开关交互、logic revision burst、moving lifecycle burst 和 piston lifecycle 十七个动作，并要求旧 revision、旧 generation 与墓碑注入保持启用；session-lifecycle 回放保持原传输、种子和故障 profile，重新执行全部拒绝、风暴、限流与清理哨兵。
 
 - `steps.json` 给出第一个失败步骤、起止时间和异常。
 - `snapshot-*.json` 已排序并规范化浮点数，适合机器比较。
@@ -297,11 +297,11 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## Autotest 可信度门禁
 
-当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，当前 Automation API 为 v9：
+当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，当前 Automation API 为 v10：
 
-- `production-surfaces.json` 对源码发现到的 104 个联机 hook 与 109 个 packet class 做精确库存；新增、删除或改名必须显式更新库存，避免生产面悄悄脱离测试计划。
+- `production-surfaces.json` 对源码发现到的 104 个联机 hook 与 110 个 packet class 做精确库存；新增、删除或改名必须显式更新库存，避免生产面悄悄脱离测试计划。
 - `core-multiplayer.json` 使用 Coverage Contract v2。一个 feature 只有同时具备 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 且没有 open gap 时才能标为 `covered`；报告只给出可审计的数量与缺口，不把 partial/planned 混成漂亮的覆盖率。
-- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry；M6 新增流量 burst、PlayerCreate replay 与会话快照后当前为 v9。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
+- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry；M6 新增流量 burst、PlayerCreate replay 与会话快照后为 v9，M7 新增容器开启结果、熔炉动作与熔炉快照后为 v10。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
 - `ProductionPathGateway` 是 TestAutomation 唯一允许直接调用 `NetworkManager.Queue` 的位置。源码哨兵禁止旁路，并要求 fixture、production request、authoritative state、fault injection 这几类 API 都有真实调用点；延迟旧状态注入使用固定游戏帧 settle，避免重排让“旧包”先到而产生伪随机结果。
 - `GameNodeProcess` 从控制通道就绪后每 250 ms 旁路采样进程资源。每个 v2 `metrics.json` 都包含各角色的初始/最终/峰值工作集、私有内存、增长量、句柄、线程、CPU 与采样时长；采样失败不会伪装成 0 通过，L3 的 minimum-samples 门禁会拒绝无观测结果。
 - `MultiplayerSoakSchedule` 使用稳定 PRNG 生成场景、场景种子及故障 profile，开跑前先持久化。`MultiplayerSoakRunner` 每轮立即原子更新 summary，玩法失败、生产路径证明失败、进程资源超预算或任一节点故障队列超过默认 10000 包都会让 L3 返回非零；门槛不会为迁就失败而自动放宽。第一次完整精确回放据此抓到了生命值每帧广播的生产流量风暴，修复后原九场景计划以相同 SHA-256 在隔离目录 9/9 无窗口重放通过。

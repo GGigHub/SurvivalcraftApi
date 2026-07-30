@@ -20,6 +20,7 @@ public class NetworkClient : INetEventListener {
 
     public void Connect(IPEndPoint serverAddress) {
         _packetDispatcher.Reset();
+        ContainerOpenResultTracker.Reset();
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
@@ -114,6 +115,7 @@ public class NetworkClient : INetEventListener {
 
     public void OnPeerConnected(NetPeer peer) {
         _packetDispatcher.Reset();
+        ContainerOpenResultTracker.Reset();
         _serverPeer = peer;
         Log.Information($"Connected: {_serverAddress}");
 
@@ -133,6 +135,7 @@ public class NetworkClient : INetEventListener {
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
         _packetDispatcher.Reset();
+        ContainerOpenResultTracker.Reset();
         if (MySession != null) {
             ModNetworkManager.ClearSession(MySession);
             MySession.DisconnectedUtc = DateTime.UtcNow;

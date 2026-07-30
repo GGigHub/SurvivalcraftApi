@@ -621,6 +621,55 @@ public sealed class ScenarioArtifactTests {
     public void InventoryHealthReplayParserPreservesStrictCrossDomainSequence() {
         ScenarioActionRecordV2[] records = [
             TerrainActionRecord(
+                "open-point",
+                ControlCommandNames.InventoryOpenContainer,
+                new InventoryOpenContainerCommand(
+                    1,
+                    InventoryOpenTargetKind.ByPoint,
+                    InventoryOpenExpectedResult.Accepted,
+                    30,
+                    new TerrainCellCoordinate(4, 70, -8))),
+            TerrainActionRecord(
+                "open-id",
+                ControlCommandNames.InventoryOpenContainer,
+                new InventoryOpenContainerCommand(
+                    1,
+                    InventoryOpenTargetKind.ById,
+                    InventoryOpenExpectedResult.Accepted,
+                    30)),
+            ClientActionRecord(
+                "client-b",
+                "deny-id",
+                ControlCommandNames.InventoryOpenContainer,
+                new InventoryOpenContainerCommand(
+                    2,
+                    InventoryOpenTargetKind.ById,
+                    InventoryOpenExpectedResult.PermissionDenied,
+                    10)),
+            ClientActionRecord(
+                "client-b",
+                "deny-point",
+                ControlCommandNames.InventoryOpenContainer,
+                new InventoryOpenContainerCommand(
+                    2,
+                    InventoryOpenTargetKind.ByPoint,
+                    InventoryOpenExpectedResult.PermissionDenied,
+                    30,
+                    new TerrainCellCoordinate(4, 70, -8),
+                    new Vector3State(40, 70, 40))),
+            TerrainActionRecord(
+                "furnace-ingredient",
+                ControlCommandNames.InventoryMove,
+                new InventoryMoveCommand(1, 10, 2, 30, 0, 1)),
+            TerrainActionRecord(
+                "furnace-fuel",
+                ControlCommandNames.InventoryMove,
+                new InventoryMoveCommand(1, 10, 3, 30, 2, 1)),
+            ServerActionRecord(
+                "furnace-burst",
+                ControlCommandNames.RunFurnaceRevisionBurst,
+                new RunFurnaceRevisionBurstCommand(30)),
+            TerrainActionRecord(
                 "move",
                 ControlCommandNames.InventoryMove,
                 new InventoryMoveCommand(1, 10, 0, 20, 0, 3)),
@@ -654,6 +703,9 @@ public sealed class ScenarioArtifactTests {
             InventoryHealthMultiplayerScenario.ParseReplayActions(records);
 
         Assert.Equal(3, plan.Move.Count);
+        Assert.Equal(30, plan.OpenFurnaceByPoint.InventoryId);
+        Assert.Equal(InventoryOpenExpectedResult.PermissionDenied, plan.DenyFurnaceByPoint.ExpectedResult);
+        Assert.Equal(30, plan.FurnaceRevisionBurst.FurnaceInventoryId);
         Assert.Equal(1, plan.SelectSlot.SlotIndex);
         Assert.Equal(20, plan.InventoryRevisionBurst.InventoryId);
         Assert.Equal(30, plan.Hit.TargetEntityId);
@@ -668,13 +720,13 @@ public sealed class ScenarioArtifactTests {
             ]));
         Assert.Throws<InvalidDataException>(() =>
             InventoryHealthMultiplayerScenario.ParseReplayActions([
-                .. records[..5],
-                records[5] with {
+                .. records[..12],
+                records[12] with {
                     Payload = JsonSerializer.SerializeToElement(
                         new RunHealthRevisionBurstCommand(30, SendStaleSnapshot: false),
                         ControlProtocol.JsonOptions)
                 },
-                records[6]
+                records[13]
             ]));
     }
 
@@ -682,8 +734,15 @@ public sealed class ScenarioArtifactTests {
         string actionId,
         string command,
         TCommand payload) =>
+        ClientActionRecord("client-a", actionId, command, payload);
+
+    private static ScenarioActionRecordV2 ClientActionRecord<TCommand>(
+        string role,
+        string actionId,
+        string command,
+        TCommand payload) =>
         new(
-            "client-a",
+            role,
             command,
             JsonSerializer.SerializeToElement(payload, ControlProtocol.JsonOptions),
             new ActionReceipt(actionId, true, 1, 1, "applied"));

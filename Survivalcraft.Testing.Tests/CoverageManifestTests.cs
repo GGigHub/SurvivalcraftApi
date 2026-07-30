@@ -21,9 +21,9 @@ public sealed class CoverageManifestTests {
         CoverageFeature[] covered = manifest.Features
             .Where(feature => feature.Status == "covered")
             .ToArray();
-        Assert.Equal(14, covered.Length);
+        Assert.Equal(15, covered.Length);
         Assert.Equal(5, manifest.Features.Count(feature => feature.Status == "planned"));
-        Assert.Equal(2, manifest.Features.Count(feature => feature.Status == "partial"));
+        Assert.Equal(1, manifest.Features.Count(feature => feature.Status == "partial"));
         Assert.All(covered, feature => {
             Assert.NotNull(feature.ProductionPathTest);
             Assert.NotNull(feature.DirectTest);
@@ -75,7 +75,7 @@ public sealed class CoverageManifestTests {
         Assert.Empty(ProductionSurfaceCoverage.Validate(coverage, inventory));
         ProductionSurface[] discovered = ProductionSurfaceCoverage.Discover(FindRepositoryRoot());
         Assert.Equal(104, discovered.Count(surface => surface.Kind == "hook"));
-        Assert.Equal(109, discovered.Count(surface => surface.Kind == "packet"));
+        Assert.Equal(110, discovered.Count(surface => surface.Kind == "packet"));
         Assert.Empty(ProductionSurfaceCoverage.CompareInventory(inventory, discovered));
     }
 
@@ -151,7 +151,7 @@ public sealed class CoverageManifestTests {
         Assert.True(report.IsStructurallyValid);
         Assert.Equal(coverage.Features.Length, report.TotalFeatures);
         Assert.Equal(104, report.HookSurfaces);
-        Assert.Equal(109, report.PacketSurfaces);
+        Assert.Equal(110, report.PacketSurfaces);
         Assert.True(report.Statuses["covered"] > 0);
         Assert.True(report.Statuses["planned"] > 0);
         Assert.Contains(report.Features, feature =>

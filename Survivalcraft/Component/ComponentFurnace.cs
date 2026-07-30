@@ -143,6 +143,7 @@ namespace Game {
                         m_smeltingRecipe = null;
                         m_smeltingProgress = 0f;
                         m_updateSmeltingRecipe = true;
+                        OnSlotChange(ResultSlotIndex);
                     }
                 }
             }
@@ -198,10 +199,12 @@ namespace Game {
                 Block block = BlocksManager.Blocks[num2];
                 if (block.GetExplosionPressure(slot2.Value) > 0f) {
                     slot2.Count = 0;
+                    OnSlotChange(FuelSlotIndex);
                     m_subsystemExplosions.TryExplodeBlock(coordinates.X, coordinates.Y, coordinates.Z, slot2.Value);
                 }
                 else if (block.GetFuelHeatLevel(slot2.Value) > 0f) {
                     slot2.Count--;
+                    OnSlotChange(FuelSlotIndex);
                     m_fireTimeRemaining = block.GetFuelFireDuration(slot2.Value) * FuelTimeEfficiency;
                     m_heatLevel = block.GetFuelHeatLevel(slot2.Value);
                     return true;
@@ -229,6 +232,7 @@ namespace Game {
             m_furnaceSize = SlotsCount - 3;
             m_fireTimeRemaining = valuesDictionary.GetValue<float>("FireTimeRemaining");
             m_heatLevel = valuesDictionary.GetValue<float>("HeatLevel");
+            m_smeltingProgress = valuesDictionary.GetValue<float>("SmeltingProgress", 0f);
             m_updateSmeltingRecipe = true;
             m_fireParticleSystem = new FireParticleSystem(m_componentBlockEntity.Position + new Vector3(0.5f, 0.2f, 0.5f), 0.15f, 16f);
         }
@@ -237,6 +241,7 @@ namespace Game {
             base.Save(valuesDictionary, entityToIdMap);
             valuesDictionary.SetValue("FireTimeRemaining", m_fireTimeRemaining);
             valuesDictionary.SetValue("HeatLevel", m_heatLevel);
+            valuesDictionary.SetValue("SmeltingProgress", m_smeltingProgress);
         }
 
         public virtual CraftingRecipe FindSmeltingRecipe(float heatLevel) {

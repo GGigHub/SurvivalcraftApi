@@ -20,6 +20,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
 
     public void Connect(IPEndPoint relayAddress) {
         _packetDispatcher.Reset();
+        ContainerOpenResultTracker.Reset();
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
@@ -87,6 +88,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         if (!RelayProtocol.TryReadHeader(reader, out RelayMessageType type)) return;
         if (type == RelayMessageType.JoinAccepted) {
             _packetDispatcher.Reset();
+            ContainerOpenResultTracker.Reset();
             _ = reader.GetInt();
             Log.Information($"Relay room joined: {_roomCode}");
             MySession = new ClientSession {
@@ -133,6 +135,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
         _packetDispatcher.Reset();
+        ContainerOpenResultTracker.Reset();
         if (MySession != null) {
             ModNetworkManager.ClearSession(MySession);
             MySession.DisconnectedUtc = DateTime.UtcNow;

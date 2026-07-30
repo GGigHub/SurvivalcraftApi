@@ -30,7 +30,7 @@ public sealed class InventoryHealthMultiplayerScenarioTest {
             await new InventoryHealthMultiplayerScenario().RunAsync(options);
 
         Assert.Equal(1, result.ActorPlayerIndex);
-        Assert.Equal(7, result.ActionCount);
+        Assert.Equal(14, result.ActionCount);
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "actions.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "assertions.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "replay-v2.json")));
@@ -58,6 +58,11 @@ public sealed class InventoryHealthMultiplayerScenarioTest {
             result.ArtifactDirectory,
             "assertions.json"));
         Assert.Contains("inventory-session-ownership-enforcement", assertions, StringComparison.Ordinal);
+        Assert.Contains("container-open-success-path", assertions, StringComparison.Ordinal);
+        Assert.Contains("container-open-by-id-ownership-enforcement", assertions, StringComparison.Ordinal);
+        Assert.Contains("container-open-by-point-range-enforcement", assertions, StringComparison.Ordinal);
+        Assert.Contains("furnace-processing-fuel-result-convergence", assertions, StringComparison.Ordinal);
+        Assert.Contains("furnace-stale-duplicate-reorder-convergence", assertions, StringComparison.Ordinal);
         Assert.Contains("inventory-duplicate-reorder-idempotent-convergence", assertions, StringComparison.Ordinal);
         Assert.Contains("health-authoritative-hit-death-convergence", assertions, StringComparison.Ordinal);
         Assert.Contains("health-server-authoritative-hit-validation", assertions, StringComparison.Ordinal);
@@ -67,6 +72,9 @@ public sealed class InventoryHealthMultiplayerScenarioTest {
         Assert.Contains("inventory-health-late-join-baseline", assertions, StringComparison.Ordinal);
         Assert.Contains("inventory-health-reconnect-baseline", assertions, StringComparison.Ordinal);
         Assert.Contains("inventory-health-save-reload-persistence", assertions, StringComparison.Ordinal);
+        Assert.Contains("furnace-late-join-baseline", assertions, StringComparison.Ordinal);
+        Assert.Contains("furnace-reconnect-baseline", assertions, StringComparison.Ordinal);
+        Assert.Contains("furnace-save-reload-persistence", assertions, StringComparison.Ordinal);
         if (transport == MultiplayerTransportKind.Relay) {
             Assert.False(string.IsNullOrWhiteSpace(result.RoomCode));
             Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "relay.log")));

@@ -87,6 +87,13 @@ public static class SnapshotV2Canonicalizer {
                 .ToArray(),
             Inventories = snapshot.Inventories?
                 .Select(inventory => inventory with {
+                    FurnaceState = inventory.FurnaceState == null
+                        ? null
+                        : inventory.FurnaceState with {
+                            FireTimeRemaining = Round(inventory.FurnaceState.FireTimeRemaining, decimalPlaces),
+                            SmeltingProgress = Round(inventory.FurnaceState.SmeltingProgress, decimalPlaces),
+                            HeatLevel = Round(inventory.FurnaceState.HeatLevel, decimalPlaces)
+                        },
                     Slots = inventory.Slots
                         .OrderBy(slot => slot.SlotIndex)
                         .ToArray()

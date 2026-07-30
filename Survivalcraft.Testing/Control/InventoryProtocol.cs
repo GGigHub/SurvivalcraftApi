@@ -21,7 +21,38 @@ public sealed record InventoryFixture(
     int StackItemValue,
     int DropItemValue,
     int PlayerItemCount,
-    int ChestItemCount);
+    int ChestItemCount,
+    int FurnaceEntityId,
+    int FurnaceInventoryId,
+    TerrainCellCoordinate FurnaceCell,
+    int FurnaceIngredientValue,
+    int FurnaceFuelValue,
+    int FurnaceResultValue,
+    int FurnaceIngredientSlotIndex,
+    int FurnaceFuelSlotIndex,
+    int FurnaceResultSlotIndex);
+
+public enum InventoryOpenTargetKind {
+    ById,
+    ByPoint
+}
+
+public enum InventoryOpenExpectedResult {
+    Accepted,
+    InvalidRequest,
+    InventoryNotFound,
+    PermissionDenied,
+    UnsupportedInventory,
+    ClientStateUnavailable
+}
+
+public sealed record InventoryOpenContainerCommand(
+    int PlayerIndex,
+    InventoryOpenTargetKind TargetKind,
+    InventoryOpenExpectedResult ExpectedResult,
+    int InventoryId = 0,
+    TerrainCellCoordinate? Cell = null,
+    Vector3State? ActorPositionOverride = null);
 
 public sealed record InventoryMoveCommand(
     int PlayerIndex,
@@ -53,5 +84,21 @@ public sealed record InventoryRevisionBurstResult(
     int SlotIndex,
     int FinalValue,
     int FinalCount,
+    long StaleRevision,
+    long FinalRevision);
+
+public sealed record RunFurnaceRevisionBurstCommand(
+    int FurnaceInventoryId,
+    float FinalFireTimeRemaining = 0f,
+    float FinalSmeltingProgress = 0f,
+    float FinalHeatLevel = 0f,
+    bool SendStaleSnapshot = true);
+
+public sealed record FurnaceRevisionBurstResult(
+    ActionReceipt Receipt,
+    int FurnaceInventoryId,
+    float FinalFireTimeRemaining,
+    float FinalSmeltingProgress,
+    float FinalHeatLevel,
     long StaleRevision,
     long FinalRevision);

@@ -161,7 +161,9 @@ public static class ControlCommandNames {
     public const string InventoryMove = "inventory.move";
     public const string InventorySelectSlot = "inventory.selectSlot";
     public const string InventoryDrop = "inventory.drop";
+    public const string InventoryOpenContainer = "inventory.openContainer";
     public const string RunInventoryRevisionBurst = "inventory.runRevisionBurst";
+    public const string RunFurnaceRevisionBurst = "inventory.runFurnaceRevisionBurst";
     public const string PrepareHealthFixture = "fixture.health.prepare";
     public const string SetHealthFixture = "fixture.health.set";
     public const string ApplyHealthFixture = "fixture.health.apply";

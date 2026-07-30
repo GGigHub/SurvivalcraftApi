@@ -9,6 +9,13 @@ using Survivalcraft.Testing.Snapshots;
 namespace Survivalcraft.Testing.Scenarios;
 
 public sealed record InventoryHealthReplayPlan(
+    InventoryOpenContainerCommand OpenFurnaceByPoint,
+    InventoryOpenContainerCommand OpenFurnaceById,
+    InventoryOpenContainerCommand DenyPlayerInventoryById,
+    InventoryOpenContainerCommand DenyFurnaceByPoint,
+    InventoryMoveCommand FurnaceIngredientMove,
+    InventoryMoveCommand FurnaceFuelMove,
+    RunFurnaceRevisionBurstCommand FurnaceRevisionBurst,
     InventoryMoveCommand Move,
     InventorySelectSlotCommand SelectSlot,
     InventoryDropCommand Drop,
@@ -51,7 +58,7 @@ public sealed class InventoryHealthMultiplayerScenarioException : Exception {
 
 public sealed class InventoryHealthMultiplayerScenario {
     public const string ScenarioName = "inventory-health-multiplayer";
-    public const int ScenarioVersion = 1;
+    public const int ScenarioVersion = 2;
 
     private static readonly string[] NodeRoles = [
         "server",
@@ -74,8 +81,17 @@ public sealed class InventoryHealthMultiplayerScenario {
         new("prepare-inventory-fixture", ControlCommandNames.PrepareInventoryFixture),
         new("apply-inventory-fixture", ControlCommandNames.ApplyInventoryFixture),
         new("verify-inventory-baseline", ControlCommandNames.GetSnapshotV2),
+        new("open-furnace-by-point", ControlCommandNames.InventoryOpenContainer),
+        new("open-furnace-by-id", ControlCommandNames.InventoryOpenContainer),
+        new("deny-player-inventory-open-by-id", ControlCommandNames.InventoryOpenContainer),
+        new("deny-furnace-open-by-range", ControlCommandNames.InventoryOpenContainer),
         new("verify-production-inventory-authority", ControlCommandNames.InventoryMove),
         new("enable-network-faults", ControlCommandNames.SetNetworkFaults),
+        new("move-furnace-ingredient", ControlCommandNames.InventoryMove),
+        new("move-furnace-fuel", ControlCommandNames.InventoryMove),
+        new("verify-furnace-processing", ControlCommandNames.GetSnapshotV2),
+        new("run-furnace-revision-burst", ControlCommandNames.RunFurnaceRevisionBurst),
+        new("verify-furnace-convergence", ControlCommandNames.GetSnapshotV2),
         new("move-inventory-items", ControlCommandNames.InventoryMove),
         new("select-inventory-slot", ControlCommandNames.InventorySelectSlot),
         new("drop-active-stack", ControlCommandNames.InventoryDrop),
@@ -111,7 +127,17 @@ public sealed class InventoryHealthMultiplayerScenario {
         int PlayerSlot1Count,
         int ChestSlot0Count,
         int ActiveSlotIndex,
-        bool IncludePlayerInventory = true);
+        bool IncludePlayerInventory = true,
+        int PlayerSlot2Count = -1,
+        int PlayerSlot3Count = -1,
+        int FurnaceInventoryId = 0,
+        int FurnaceIngredientCount = 0,
+        int FurnaceFuelCount = 0,
+        int FurnaceResultCount = 0,
+        bool IncludeFurnace = false,
+        bool RequireFurnaceIdle = false,
+        long MinimumChestRevision = -1,
+        long MinimumFurnaceRevision = -1);
 
     public static NetworkFaultProfile CreateDefaultNetworkFaults(int seed) =>
         new(
@@ -126,6 +152,13 @@ public sealed class InventoryHealthMultiplayerScenario {
         IReadOnlyList<ScenarioActionRecordV2> records) {
         ArgumentNullException.ThrowIfNull(records);
         (string Role, string Command)[] expected = [
+            ("client-a", ControlCommandNames.InventoryOpenContainer),
+            ("client-a", ControlCommandNames.InventoryOpenContainer),
+            ("client-b", ControlCommandNames.InventoryOpenContainer),
+            ("client-b", ControlCommandNames.InventoryOpenContainer),
+            ("client-a", ControlCommandNames.InventoryMove),
+            ("client-a", ControlCommandNames.InventoryMove),
+            ("server", ControlCommandNames.RunFurnaceRevisionBurst),
             ("client-a", ControlCommandNames.InventoryMove),
             ("client-a", ControlCommandNames.InventorySelectSlot),
             ("client-a", ControlCommandNames.InventoryDrop),
@@ -146,13 +179,20 @@ public sealed class InventoryHealthMultiplayerScenario {
             }
         }
         InventoryHealthReplayPlan plan = new(
-            DeserializeAction<InventoryMoveCommand>(records[0]),
-            DeserializeAction<InventorySelectSlotCommand>(records[1]),
-            DeserializeAction<InventoryDropCommand>(records[2]),
-            DeserializeAction<RunInventoryRevisionBurstCommand>(records[3]),
-            DeserializeAction<PlayerHitCommand>(records[4]),
-            DeserializeAction<RunHealthRevisionBurstCommand>(records[5]),
-            DeserializeAction<PlayerRequestRespawnCommand>(records[6]));
+            DeserializeAction<InventoryOpenContainerCommand>(records[0]),
+            DeserializeAction<InventoryOpenContainerCommand>(records[1]),
+            DeserializeAction<InventoryOpenContainerCommand>(records[2]),
+            DeserializeAction<InventoryOpenContainerCommand>(records[3]),
+            DeserializeAction<InventoryMoveCommand>(records[4]),
+            DeserializeAction<InventoryMoveCommand>(records[5]),
+            DeserializeAction<RunFurnaceRevisionBurstCommand>(records[6]),
+            DeserializeAction<InventoryMoveCommand>(records[7]),
+            DeserializeAction<InventorySelectSlotCommand>(records[8]),
+            DeserializeAction<InventoryDropCommand>(records[9]),
+            DeserializeAction<RunInventoryRevisionBurstCommand>(records[10]),
+            DeserializeAction<PlayerHitCommand>(records[11]),
+            DeserializeAction<RunHealthRevisionBurstCommand>(records[12]),
+            DeserializeAction<PlayerRequestRespawnCommand>(records[13]));
         ValidateReplayPlan(plan);
         return plan;
     }
@@ -233,7 +273,9 @@ public sealed class InventoryHealthMultiplayerScenario {
                     ControlCommandNames.InventoryMove,
                     ControlCommandNames.InventorySelectSlot,
                     ControlCommandNames.InventoryDrop,
+                    ControlCommandNames.InventoryOpenContainer,
                     ControlCommandNames.RunInventoryRevisionBurst,
+                    ControlCommandNames.RunFurnaceRevisionBurst,
                     ControlCommandNames.PrepareHealthFixture,
                     ControlCommandNames.ApplyHealthFixture,
                     ControlCommandNames.SetHealthFixture,
@@ -292,7 +334,7 @@ public sealed class InventoryHealthMultiplayerScenario {
                     new PrepareInventoryFixtureCommand(actorPlayerIndex),
                     timeout: stepTimeout,
                     cancellationToken: token),
-                fixture => $"playerInventory={fixture.PlayerInventoryId}; chestInventory={fixture.ChestInventoryId}",
+                fixture => $"playerInventory={fixture.PlayerInventoryId}; chestInventory={fixture.ChestInventoryId}; furnaceInventory={fixture.FurnaceInventoryId}",
                 scenarioToken).ConfigureAwait(false);
             ValidateInventoryFixture(inventoryFixture, actorPlayerIndex);
             _ = await runner.RunAsync(
@@ -310,7 +352,12 @@ public sealed class InventoryHealthMultiplayerScenario {
                 inventoryFixture.PlayerItemCount,
                 3,
                 inventoryFixture.ChestItemCount,
-                0);
+                0,
+                PlayerSlot2Count: 1,
+                PlayerSlot3Count: 1,
+                FurnaceInventoryId: inventoryFixture.FurnaceInventoryId,
+                IncludeFurnace: true,
+                RequireFurnaceIdle: true);
             Dictionary<string, StateSnapshotV2> baselineSnapshots =
                 await WaitForInventoryOnAllAsync(
                     initialNodes,
@@ -320,6 +367,105 @@ public sealed class InventoryHealthMultiplayerScenario {
                     scenarioToken).ConfigureAwait(false);
             AddSnapshots(snapshots, baselineSnapshots, "inventory-baseline");
             EnsureInventorySnapshotsEqual(baselineSnapshots.Values.ToArray());
+
+            InventoryHealthReplayPlan plan = options.ReplayPlan
+                ?? CreateDefaultPlan(
+                    actorPlayerIndex,
+                    observerPlayerIndex,
+                    inventoryFixture,
+                    targetEntityId: -1);
+            ValidateContainerAndFurnacePlan(
+                plan,
+                inventoryFixture,
+                actorPlayerIndex,
+                observerPlayerIndex);
+
+            ActionReceipt openByPointReceipt = await SendActionAsync(
+                runner,
+                "open-furnace-by-point",
+                actorClient,
+                ControlCommandNames.InventoryOpenContainer,
+                plan.OpenFurnaceByPoint,
+                scenarioToken).ConfigureAwait(false);
+            actions.Add(ActionRecord(
+                actorClient.Role,
+                ControlCommandNames.InventoryOpenContainer,
+                plan.OpenFurnaceByPoint,
+                openByPointReceipt));
+            events["client-a-open-furnace-by-point"] = await WaitForAppliedEventAsync(
+                actorClient,
+                openByPointReceipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+
+            ActionReceipt openByIdReceipt = await SendActionAsync(
+                runner,
+                "open-furnace-by-id",
+                actorClient,
+                ControlCommandNames.InventoryOpenContainer,
+                plan.OpenFurnaceById,
+                scenarioToken).ConfigureAwait(false);
+            actions.Add(ActionRecord(
+                actorClient.Role,
+                ControlCommandNames.InventoryOpenContainer,
+                plan.OpenFurnaceById,
+                openByIdReceipt));
+            events["client-a-open-furnace-by-id"] = await WaitForAppliedEventAsync(
+                actorClient,
+                openByIdReceipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+
+            ActionReceipt denyByIdReceipt = await SendActionAsync(
+                runner,
+                "deny-player-inventory-open-by-id",
+                observerClient,
+                ControlCommandNames.InventoryOpenContainer,
+                plan.DenyPlayerInventoryById,
+                scenarioToken).ConfigureAwait(false);
+            actions.Add(ActionRecord(
+                observerClient.Role,
+                ControlCommandNames.InventoryOpenContainer,
+                plan.DenyPlayerInventoryById,
+                denyByIdReceipt));
+            events["client-b-deny-player-inventory-by-id"] = await WaitForAppliedEventAsync(
+                observerClient,
+                denyByIdReceipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+
+            ActionReceipt denyByPointReceipt = await SendActionAsync(
+                runner,
+                "deny-furnace-open-by-range",
+                observerClient,
+                ControlCommandNames.InventoryOpenContainer,
+                plan.DenyFurnaceByPoint,
+                scenarioToken).ConfigureAwait(false);
+            actions.Add(ActionRecord(
+                observerClient.Role,
+                ControlCommandNames.InventoryOpenContainer,
+                plan.DenyFurnaceByPoint,
+                denyByPointReceipt));
+            events["client-b-deny-furnace-by-point"] = await WaitForAppliedEventAsync(
+                observerClient,
+                denyByPointReceipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "container-open-success-path",
+                "passed",
+                [cluster.Server.Role, actorClient.Role],
+                "actor opened the real furnace through both by-point and by-id production packets"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "container-open-by-id-ownership-enforcement",
+                "passed",
+                [cluster.Server.Role, observerClient.Role],
+                "observer received an exact PermissionDenied result for actor inventory ownership"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "container-open-by-point-range-enforcement",
+                "passed",
+                [cluster.Server.Role, observerClient.Role],
+                "observer received an exact PermissionDenied result for the remote furnace point"));
 
             ActionReceipt forgedMove = await runner.RunAsync(
                 "verify-production-inventory-authority",
@@ -360,8 +506,112 @@ public sealed class InventoryHealthMultiplayerScenario {
                 token => ConfigureNetworkFaultsAsync(initialNodes, faultProfile, token),
                 scenarioToken).ConfigureAwait(false);
 
-            InventoryHealthReplayPlan plan = options.ReplayPlan
-                ?? CreateDefaultPlan(actorPlayerIndex, inventoryFixture, targetEntityId: -1);
+            ActionReceipt ingredientMoveReceipt = await SendActionAsync(
+                runner,
+                "move-furnace-ingredient",
+                actorClient,
+                ControlCommandNames.InventoryMove,
+                plan.FurnaceIngredientMove,
+                scenarioToken).ConfigureAwait(false);
+            actions.Add(ActionRecord(
+                actorClient.Role,
+                ControlCommandNames.InventoryMove,
+                plan.FurnaceIngredientMove,
+                ingredientMoveReceipt));
+            events["client-a-furnace-ingredient"] = await WaitForAppliedEventAsync(
+                actorClient,
+                ingredientMoveReceipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+
+            ActionReceipt fuelMoveReceipt = await SendActionAsync(
+                runner,
+                "move-furnace-fuel",
+                actorClient,
+                ControlCommandNames.InventoryMove,
+                plan.FurnaceFuelMove,
+                scenarioToken).ConfigureAwait(false);
+            actions.Add(ActionRecord(
+                actorClient.Role,
+                ControlCommandNames.InventoryMove,
+                plan.FurnaceFuelMove,
+                fuelMoveReceipt));
+            events["client-a-furnace-fuel"] = await WaitForAppliedEventAsync(
+                actorClient,
+                fuelMoveReceipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+
+            InventoryExpectation processedFurnace = baselineInventory with {
+                PlayerSlot2Count = 0,
+                PlayerSlot3Count = 0,
+                FurnaceIngredientCount = 0,
+                FurnaceFuelCount = 0,
+                FurnaceResultCount = 1,
+                RequireFurnaceIdle = false
+            };
+            Dictionary<string, StateSnapshotV2> processedFurnaceSnapshots =
+                await WaitForInventoryOnAllAsync(
+                    initialNodes,
+                    processedFurnace,
+                    requireStaleEvidence: false,
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
+            AddSnapshots(snapshots, processedFurnaceSnapshots, "furnace-processed");
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furnace-processing-fuel-result-convergence",
+                "passed",
+                initialNodes.Select(node => node.Role).ToArray(),
+                "raw meat and coal traversed production inventory requests; all nodes observed fuel consumption and cooked result"));
+
+            Dictionary<string, long> staleBeforeFurnaceBurst = processedFurnaceSnapshots
+                .Where(pair => pair.Key.StartsWith("client", StringComparison.Ordinal))
+                .ToDictionary(
+                    pair => pair.Key,
+                    pair => pair.Value.StateRevisions?.IgnoredStaleStates ?? 0,
+                    StringComparer.Ordinal);
+            FurnaceRevisionBurstResult furnaceBurst = await runner.RunAsync(
+                "run-furnace-revision-burst",
+                ControlCommandNames.RunFurnaceRevisionBurst,
+                token => cluster.Server.SendAsync<
+                    RunFurnaceRevisionBurstCommand,
+                    FurnaceRevisionBurstResult>(
+                    ControlCommandNames.RunFurnaceRevisionBurst,
+                    plan.FurnaceRevisionBurst,
+                    cancellationToken: token),
+                result => $"revision={result.FinalRevision}; progress={result.FinalSmeltingProgress:R}",
+                scenarioToken).ConfigureAwait(false);
+            EnsureAccepted(furnaceBurst.Receipt);
+            actions.Add(ActionRecord(
+                cluster.Server.Role,
+                ControlCommandNames.RunFurnaceRevisionBurst,
+                plan.FurnaceRevisionBurst,
+                furnaceBurst.Receipt));
+            events["server-furnace-revision-burst"] = await WaitForAppliedEventAsync(
+                cluster.Server,
+                furnaceBurst.Receipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+            InventoryExpectation finalFurnace = processedFurnace with {
+                RequireFurnaceIdle = true,
+                MinimumFurnaceRevision = furnaceBurst.FinalRevision
+            };
+            Dictionary<string, StateSnapshotV2> furnaceFinalSnapshots =
+                await WaitForInventoryOnAllAsync(
+                    initialNodes,
+                    finalFurnace,
+                    requireStaleEvidence: true,
+                    stepTimeout,
+                    scenarioToken,
+                    staleBeforeFurnaceBurst).ConfigureAwait(false);
+            AddSnapshots(snapshots, furnaceFinalSnapshots, "furnace-revision-final");
+            EnsureInventorySnapshotsEqual(furnaceFinalSnapshots.Values.ToArray());
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furnace-stale-duplicate-reorder-convergence",
+                "passed",
+                initialNodes.Select(node => node.Role).ToArray(),
+                $"furnaceInventoryId={furnaceBurst.FurnaceInventoryId}; revision={furnaceBurst.FinalRevision}; stale revision rejected after final state"));
+
             InventoryMoveCommand move = plan.Move;
             ValidateInventoryPlan(move, plan.SelectSlot, plan.Drop, plan.InventoryRevisionBurst, inventoryFixture);
 
@@ -402,6 +652,19 @@ public sealed class InventoryHealthMultiplayerScenario {
             events["client-a-drop"] = await WaitForAppliedEventAsync(
                 actorClient, dropReceipt.ActionId, stepTimeout, scenarioToken).ConfigureAwait(false);
 
+            Dictionary<string, long> staleBeforeInventoryBurst = new(StringComparer.Ordinal);
+            foreach (GameNodeProcess client in initialNodes.Where(node =>
+                         node.Role.StartsWith("client", StringComparison.Ordinal))) {
+                StateSnapshotV2 beforeBurst = await CaptureAsync(
+                    client,
+                    [],
+                    [],
+                    [],
+                    scenarioToken).ConfigureAwait(false);
+                staleBeforeInventoryBurst[client.Role] =
+                    beforeBurst.StateRevisions?.IgnoredStaleStates ?? 0;
+            }
+
             InventoryRevisionBurstResult inventoryBurst = await runner.RunAsync(
                 "run-inventory-revision-burst",
                 ControlCommandNames.RunInventoryRevisionBurst,
@@ -431,14 +694,24 @@ public sealed class InventoryHealthMultiplayerScenario {
                 inventoryFixture.PlayerItemCount - move.Count,
                 0,
                 inventoryBurst.FinalCount,
-                1);
+                1,
+                PlayerSlot2Count: 0,
+                PlayerSlot3Count: 0,
+                FurnaceInventoryId: inventoryFixture.FurnaceInventoryId,
+                FurnaceIngredientCount: 0,
+                FurnaceFuelCount: 0,
+                FurnaceResultCount: 1,
+                IncludeFurnace: true,
+                RequireFurnaceIdle: true,
+                MinimumChestRevision: inventoryBurst.FinalRevision);
             Dictionary<string, StateSnapshotV2> inventoryFinalSnapshots =
                 await WaitForInventoryOnAllAsync(
                     initialNodes,
                     finalInventory,
                     requireStaleEvidence: true,
                     stepTimeout,
-                    scenarioToken).ConfigureAwait(false);
+                    scenarioToken,
+                    staleBeforeInventoryBurst).ConfigureAwait(false);
             AddSnapshots(snapshots, inventoryFinalSnapshots, "inventory-final");
             EnsureInventorySnapshotsEqual(inventoryFinalSnapshots.Values.ToArray());
             assertions.Add(new ScenarioAssertionRecordV2(
@@ -506,8 +779,16 @@ public sealed class InventoryHealthMultiplayerScenario {
                 "forged finite hit geometry reached production transport but could not injure the target"));
 
             plan = options.ReplayPlan
-                ?? CreateDefaultPlan(actorPlayerIndex, inventoryFixture, healthFixture.TargetEntityId);
-            ValidatePlanAgainstFixtures(plan, inventoryFixture, healthFixture);
+                ?? CreateDefaultPlan(
+                    actorPlayerIndex,
+                    observerPlayerIndex,
+                    inventoryFixture,
+                    healthFixture.TargetEntityId);
+            ValidatePlanAgainstFixtures(
+                plan,
+                inventoryFixture,
+                healthFixture,
+                observerPlayerIndex);
 
             ActionReceipt hitReceipt = await SendActionAsync(
                 runner,
@@ -711,7 +992,12 @@ public sealed class InventoryHealthMultiplayerScenario {
                 "inventory-health-late-join-baseline",
                 "passed",
                 [lateClient.Role],
-                "late joiner received current chest, health, and respawned player baselines"));
+                "late joiner received current chest, furnace result/runtime, health, and respawned player baselines"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furnace-late-join-baseline",
+                "passed",
+                [lateClient.Role],
+                "late joiner received the completed furnace inventory and idle runtime state"));
 
             await runner.RunAsync(
                 "disconnect-actor",
@@ -757,7 +1043,12 @@ public sealed class InventoryHealthMultiplayerScenario {
                 "inventory-health-reconnect-baseline",
                 "passed",
                 [cluster.Server.Role, actorClient.Role],
-                $"playerIndex={actorPlayerIndex}; chest and health baselines restored"));
+                $"playerIndex={actorPlayerIndex}; chest, furnace and health baselines restored"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furnace-reconnect-baseline",
+                "passed",
+                [cluster.Server.Role, actorClient.Role],
+                "reconnected actor received the completed furnace inventory and idle runtime state"));
 
             persistenceHealthFixture = await runner.RunAsync(
                 "prepare-persistence-health-fixture",
@@ -857,6 +1148,11 @@ public sealed class InventoryHealthMultiplayerScenario {
                 $"world={savedWorldDirectory}; chestCount={chestOnly.ChestSlot0Count}; "
                     + $"targetEntityId={persistenceHealthFixture.TargetEntityId}; "
                     + $"targetHealth={persistenceHealthFixture.TargetHealth:R}"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furnace-save-reload-persistence",
+                "passed",
+                persistenceNodes.Select(node => node.Role).ToArray(),
+                $"world={savedWorldDirectory}; furnaceInventoryId={inventoryFixture.FurnaceInventoryId}; cookedResultCount=1; runtime=idle"));
         }
         catch (Exception exception) {
             scenarioFailure = exception;
@@ -952,9 +1248,51 @@ public sealed class InventoryHealthMultiplayerScenario {
 
     private static InventoryHealthReplayPlan CreateDefaultPlan(
         int playerIndex,
+        int observerPlayerIndex,
         InventoryFixture fixture,
         int targetEntityId) =>
         new(
+            new InventoryOpenContainerCommand(
+                playerIndex,
+                InventoryOpenTargetKind.ByPoint,
+                InventoryOpenExpectedResult.Accepted,
+                fixture.FurnaceInventoryId,
+                fixture.FurnaceCell),
+            new InventoryOpenContainerCommand(
+                playerIndex,
+                InventoryOpenTargetKind.ById,
+                InventoryOpenExpectedResult.Accepted,
+                fixture.FurnaceInventoryId),
+            new InventoryOpenContainerCommand(
+                observerPlayerIndex,
+                InventoryOpenTargetKind.ById,
+                InventoryOpenExpectedResult.PermissionDenied,
+                fixture.PlayerInventoryId),
+            new InventoryOpenContainerCommand(
+                observerPlayerIndex,
+                InventoryOpenTargetKind.ByPoint,
+                InventoryOpenExpectedResult.PermissionDenied,
+                fixture.FurnaceInventoryId,
+                fixture.FurnaceCell,
+                new Vector3State(
+                    fixture.FurnaceCell.X + 32.5,
+                    fixture.FurnaceCell.Y + 0.05,
+                    fixture.FurnaceCell.Z + 32.5)),
+            new InventoryMoveCommand(
+                playerIndex,
+                fixture.PlayerInventoryId,
+                2,
+                fixture.FurnaceInventoryId,
+                fixture.FurnaceIngredientSlotIndex,
+                1),
+            new InventoryMoveCommand(
+                playerIndex,
+                fixture.PlayerInventoryId,
+                3,
+                fixture.FurnaceInventoryId,
+                fixture.FurnaceFuelSlotIndex,
+                1),
+            new RunFurnaceRevisionBurstCommand(fixture.FurnaceInventoryId),
             new InventoryMoveCommand(
                 playerIndex,
                 fixture.PlayerInventoryId,
@@ -991,6 +1329,12 @@ public sealed class InventoryHealthMultiplayerScenario {
                         cancellationToken: token),
                     "permission_denied").ConfigureAwait(false);
                 await RequireRejectionAsync(
+                    () => cluster.Clients[1].SendAsync<RunFurnaceRevisionBurstCommand, FurnaceRevisionBurstResult>(
+                        ControlCommandNames.RunFurnaceRevisionBurst,
+                        new RunFurnaceRevisionBurstCommand(1),
+                        cancellationToken: token),
+                    "permission_denied").ConfigureAwait(false);
+                await RequireRejectionAsync(
                     () => cluster.Clients[0].SendAsync<PrepareHealthFixtureCommand, HealthFixture>(
                         ControlCommandNames.PrepareHealthFixture,
                         new PrepareHealthFixtureCommand(playerIndex),
@@ -1006,6 +1350,16 @@ public sealed class InventoryHealthMultiplayerScenario {
                     () => cluster.Server.SendAsync<InventoryDropCommand, ActionReceipt>(
                         ControlCommandNames.InventoryDrop,
                         new InventoryDropCommand(playerIndex),
+                        cancellationToken: token),
+                    "permission_denied").ConfigureAwait(false);
+                await RequireRejectionAsync(
+                    () => cluster.Server.SendAsync<InventoryOpenContainerCommand, ActionReceipt>(
+                        ControlCommandNames.InventoryOpenContainer,
+                        new InventoryOpenContainerCommand(
+                            playerIndex,
+                            InventoryOpenTargetKind.ById,
+                            InventoryOpenExpectedResult.Accepted,
+                            1),
                         cancellationToken: token),
                     "permission_denied").ConfigureAwait(false);
                 await RequireRejectionAsync(
@@ -1061,7 +1415,8 @@ public sealed class InventoryHealthMultiplayerScenario {
         InventoryExpectation expected,
         bool requireStaleEvidence,
         TimeSpan timeout,
-        CancellationToken cancellationToken) {
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, long>? minimumStaleEvidence = null) {
         DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
         Dictionary<string, StateSnapshotV2> result = new(StringComparer.Ordinal);
         foreach (GameNodeProcess node in nodes) {
@@ -1076,10 +1431,7 @@ public sealed class InventoryHealthMultiplayerScenario {
                 remaining,
                 cancellationToken).ConfigureAwait(false);
         }
-        while (requireStaleEvidence
-            && !result.Any(pair =>
-                pair.Key.StartsWith("client", StringComparison.Ordinal)
-                && pair.Value.StateRevisions?.IgnoredStaleStates > 0)) {
+        while (requireStaleEvidence && !HasStaleEvidence(result, minimumStaleEvidence)) {
             cancellationToken.ThrowIfCancellationRequested();
             if (DateTimeOffset.UtcNow >= deadline) {
                 throw new TimeoutException(
@@ -1100,6 +1452,19 @@ public sealed class InventoryHealthMultiplayerScenario {
         return result;
     }
 
+    private static bool HasStaleEvidence(
+        IReadOnlyDictionary<string, StateSnapshotV2> snapshots,
+        IReadOnlyDictionary<string, long>? minimumStaleEvidence) =>
+        snapshots.Any(pair => {
+            if (!pair.Key.StartsWith("client", StringComparison.Ordinal)) {
+                return false;
+            }
+            long ignored = pair.Value.StateRevisions?.IgnoredStaleStates ?? 0;
+            return minimumStaleEvidence == null
+                ? ignored > 0
+                : ignored > minimumStaleEvidence.GetValueOrDefault(pair.Key);
+        });
+
     private static async Task<StateSnapshotV2> WaitForInventoryAsync(
         GameNodeProcess node,
         InventoryExpectation expected,
@@ -1110,11 +1475,16 @@ public sealed class InventoryHealthMultiplayerScenario {
         StateSnapshotV2? last = null;
         while (DateTimeOffset.UtcNow < deadline) {
             cancellationToken.ThrowIfCancellationRequested();
+            List<int> inventoryIds = [expected.ChestInventoryId];
+            if (expected.IncludePlayerInventory) {
+                inventoryIds.Add(expected.PlayerInventoryId);
+            }
+            if (expected.IncludeFurnace) {
+                inventoryIds.Add(expected.FurnaceInventoryId);
+            }
             last = await CaptureAsync(
                 node,
-                expected.IncludePlayerInventory
-                    ? [expected.PlayerInventoryId, expected.ChestInventoryId]
-                    : [expected.ChestInventoryId],
+                inventoryIds.ToArray(),
                 [],
                 [],
                 cancellationToken).ConfigureAwait(false);
@@ -1122,13 +1492,30 @@ public sealed class InventoryHealthMultiplayerScenario {
             InventorySnapshotV2? player = expected.IncludePlayerInventory
                 ? FindInventory(last, expected.PlayerInventoryId)
                 : null;
+            InventorySnapshotV2? furnace = expected.IncludeFurnace
+                ? FindInventory(last, expected.FurnaceInventoryId)
+                : null;
             bool matches = chest != null
                 && SlotCount(chest, 0) == expected.ChestSlot0Count
+                && chest.Revision >= expected.MinimumChestRevision
                 && (!expected.IncludePlayerInventory
                     || player != null
                         && SlotCount(player, 0) == expected.PlayerSlot0Count
                         && SlotCount(player, 1) == expected.PlayerSlot1Count
+                        && (expected.PlayerSlot2Count < 0
+                            || SlotCount(player, 2) == expected.PlayerSlot2Count)
+                        && (expected.PlayerSlot3Count < 0
+                            || SlotCount(player, 3) == expected.PlayerSlot3Count)
                         && player.ActiveSlotIndex == expected.ActiveSlotIndex)
+                && (!expected.IncludeFurnace
+                    || furnace != null
+                        && furnace.FurnaceState != null
+                        && furnace.FurnaceState.Revision >= expected.MinimumFurnaceRevision
+                        && SlotCount(furnace, 0) == expected.FurnaceIngredientCount
+                        && SlotCount(furnace, 2) == expected.FurnaceFuelCount
+                        && SlotCount(furnace, 3) == expected.FurnaceResultCount
+                        && (!expected.RequireFurnaceIdle
+                            || IsIdleFurnace(furnace.FurnaceState)))
                 && (!requireStaleEvidence || last.StateRevisions?.IgnoredStaleStates > 0);
             if (matches) {
                 return last;
@@ -1341,18 +1728,31 @@ public sealed class InventoryHealthMultiplayerScenario {
         StateSnapshotV2? last = null;
         while (DateTimeOffset.UtcNow < deadline) {
             cancellationToken.ThrowIfCancellationRequested();
+            int[] inventoryIds = inventory.IncludeFurnace
+                ? [inventory.ChestInventoryId, inventory.FurnaceInventoryId]
+                : [inventory.ChestInventoryId];
             last = await CaptureAsync(
                 node,
-                [inventory.ChestInventoryId],
+                inventoryIds,
                 [healthEntityId],
                 [actorPlayerIndex],
                 cancellationToken).ConfigureAwait(false);
             InventorySnapshotV2? chest = FindInventory(last, inventory.ChestInventoryId);
+            InventorySnapshotV2? furnace = inventory.IncludeFurnace
+                ? FindInventory(last, inventory.FurnaceInventoryId)
+                : null;
             HealthStateSnapshotV2? health = last.HealthStates?.SingleOrDefault();
             PlayerSnapshotV2? actor = last.Players.SingleOrDefault(
                 player => player.PlayerIndex == actorPlayerIndex);
             if (chest != null
                 && SlotCount(chest, 0) == inventory.ChestSlot0Count
+                && (!inventory.IncludeFurnace
+                    || furnace != null
+                        && SlotCount(furnace, 0) == inventory.FurnaceIngredientCount
+                        && SlotCount(furnace, 2) == inventory.FurnaceFuelCount
+                        && SlotCount(furnace, 3) == inventory.FurnaceResultCount
+                        && (!inventory.RequireFurnaceIdle
+                            || IsIdleFurnace(furnace.FurnaceState)))
                 && health != null
                 && health.Exists
                 && !health.IsDead
@@ -1571,7 +1971,11 @@ public sealed class InventoryHealthMultiplayerScenario {
                     node,
                     inventoryFixture == null
                         ? []
-                        : [inventoryFixture.PlayerInventoryId, inventoryFixture.ChestInventoryId],
+                        : [
+                            inventoryFixture.PlayerInventoryId,
+                            inventoryFixture.ChestInventoryId,
+                            inventoryFixture.FurnaceInventoryId
+                        ],
                     healthFixture == null
                         ? []
                         : persistenceHealthFixture == null
@@ -1637,6 +2041,12 @@ public sealed class InventoryHealthMultiplayerScenario {
     private static int SlotCount(InventorySnapshotV2 inventory, int slotIndex) =>
         inventory.Slots.Single(slot => slot.SlotIndex == slotIndex).Count;
 
+    private static bool IsIdleFurnace(FurnaceStateSnapshotV2? state) =>
+        state != null
+        && Math.Abs(state.FireTimeRemaining) <= 0.001
+        && Math.Abs(state.SmeltingProgress) <= 0.001
+        && Math.Abs(state.HeatLevel) <= 0.001;
+
     private static PlayerSnapshotV2 RequireReadyActor(StateSnapshotV2 snapshot, int playerIndex) =>
         snapshot.Players.Single(player => player.PlayerIndex == playerIndex);
 
@@ -1649,7 +2059,17 @@ public sealed class InventoryHealthMultiplayerScenario {
             || fixture.PlayerInventoryId <= 0
             || fixture.ChestEntityId <= 0
             || fixture.ChestInventoryId <= 0
+            || fixture.FurnaceEntityId <= 0
+            || fixture.FurnaceInventoryId <= 0
             || fixture.PlayerInventoryId == fixture.ChestInventoryId
+            || fixture.FurnaceInventoryId == fixture.PlayerInventoryId
+            || fixture.FurnaceInventoryId == fixture.ChestInventoryId
+            || fixture.FurnaceIngredientValue <= 0
+            || fixture.FurnaceFuelValue <= 0
+            || fixture.FurnaceResultValue <= 0
+            || fixture.FurnaceIngredientSlotIndex != 0
+            || fixture.FurnaceFuelSlotIndex != 2
+            || fixture.FurnaceResultSlotIndex != 3
             || fixture.PlayerItemCount < 1) {
             throw new InvalidOperationException($"Invalid inventory fixture: {fixture}.");
         }
@@ -1689,10 +2109,78 @@ public sealed class InventoryHealthMultiplayerScenario {
         }
     }
 
+    private static void ValidateContainerAndFurnacePlan(
+        InventoryHealthReplayPlan plan,
+        InventoryFixture fixture,
+        int actorPlayerIndex,
+        int observerPlayerIndex) {
+        bool openByPointMatches = plan.OpenFurnaceByPoint.PlayerIndex == actorPlayerIndex
+            && plan.OpenFurnaceByPoint.TargetKind == InventoryOpenTargetKind.ByPoint
+            && plan.OpenFurnaceByPoint.ExpectedResult == InventoryOpenExpectedResult.Accepted
+            && plan.OpenFurnaceByPoint.InventoryId == fixture.FurnaceInventoryId
+            && plan.OpenFurnaceByPoint.Cell == fixture.FurnaceCell;
+        bool openByIdMatches = plan.OpenFurnaceById.PlayerIndex == actorPlayerIndex
+            && plan.OpenFurnaceById.TargetKind == InventoryOpenTargetKind.ById
+            && plan.OpenFurnaceById.ExpectedResult == InventoryOpenExpectedResult.Accepted
+            && plan.OpenFurnaceById.InventoryId == fixture.FurnaceInventoryId
+            && plan.OpenFurnaceById.Cell == null;
+        bool deniedByIdMatches = plan.DenyPlayerInventoryById.PlayerIndex == observerPlayerIndex
+            && plan.DenyPlayerInventoryById.TargetKind == InventoryOpenTargetKind.ById
+            && plan.DenyPlayerInventoryById.ExpectedResult == InventoryOpenExpectedResult.PermissionDenied
+            && plan.DenyPlayerInventoryById.InventoryId == fixture.PlayerInventoryId
+            && plan.DenyPlayerInventoryById.Cell == null;
+        Vector3State? overridePosition = plan.DenyFurnaceByPoint.ActorPositionOverride;
+        bool deniedByPointMatches = plan.DenyFurnaceByPoint.PlayerIndex == observerPlayerIndex
+            && plan.DenyFurnaceByPoint.TargetKind == InventoryOpenTargetKind.ByPoint
+            && plan.DenyFurnaceByPoint.ExpectedResult == InventoryOpenExpectedResult.PermissionDenied
+            && plan.DenyFurnaceByPoint.InventoryId == fixture.FurnaceInventoryId
+            && plan.DenyFurnaceByPoint.Cell == fixture.FurnaceCell
+            && overridePosition != null
+            && Math.Pow(overridePosition.X - (fixture.FurnaceCell.X + 0.5), 2)
+                + Math.Pow(overridePosition.Y - (fixture.FurnaceCell.Y + 0.5), 2)
+                + Math.Pow(overridePosition.Z - (fixture.FurnaceCell.Z + 0.5), 2)
+                > 36;
+        bool ingredientMoveMatches = plan.FurnaceIngredientMove.PlayerIndex == actorPlayerIndex
+            && plan.FurnaceIngredientMove.FromInventoryId == fixture.PlayerInventoryId
+            && plan.FurnaceIngredientMove.FromSlotIndex == 2
+            && plan.FurnaceIngredientMove.ToInventoryId == fixture.FurnaceInventoryId
+            && plan.FurnaceIngredientMove.ToSlotIndex == fixture.FurnaceIngredientSlotIndex
+            && plan.FurnaceIngredientMove.Count == 1
+            && !plan.FurnaceIngredientMove.ExpectRejected;
+        bool fuelMoveMatches = plan.FurnaceFuelMove.PlayerIndex == actorPlayerIndex
+            && plan.FurnaceFuelMove.FromInventoryId == fixture.PlayerInventoryId
+            && plan.FurnaceFuelMove.FromSlotIndex == 3
+            && plan.FurnaceFuelMove.ToInventoryId == fixture.FurnaceInventoryId
+            && plan.FurnaceFuelMove.ToSlotIndex == fixture.FurnaceFuelSlotIndex
+            && plan.FurnaceFuelMove.Count == 1
+            && !plan.FurnaceFuelMove.ExpectRejected;
+        bool burstMatches = plan.FurnaceRevisionBurst.FurnaceInventoryId == fixture.FurnaceInventoryId
+            && plan.FurnaceRevisionBurst.SendStaleSnapshot
+            && plan.FurnaceRevisionBurst.FinalFireTimeRemaining == 0f
+            && plan.FurnaceRevisionBurst.FinalSmeltingProgress == 0f
+            && plan.FurnaceRevisionBurst.FinalHeatLevel == 0f;
+        if (!openByPointMatches
+            || !openByIdMatches
+            || !deniedByIdMatches
+            || !deniedByPointMatches
+            || !ingredientMoveMatches
+            || !fuelMoveMatches
+            || !burstMatches) {
+            throw new InvalidDataException(
+                "Container/furnace replay actions do not match the prepared fixture.");
+        }
+    }
+
     private static void ValidatePlanAgainstFixtures(
         InventoryHealthReplayPlan plan,
         InventoryFixture inventory,
-        HealthFixture health) {
+        HealthFixture health,
+        int observerPlayerIndex) {
+        ValidateContainerAndFurnacePlan(
+            plan,
+            inventory,
+            inventory.PlayerIndex,
+            observerPlayerIndex);
         ValidateInventoryPlan(
             plan.Move,
             plan.SelectSlot,
@@ -1716,6 +2204,15 @@ public sealed class InventoryHealthMultiplayerScenario {
         }
         if (plan.Move.Count <= 0
             || plan.Move.ExpectRejected
+            || plan.FurnaceIngredientMove.Count != 1
+            || plan.FurnaceIngredientMove.ExpectRejected
+            || plan.FurnaceFuelMove.Count != 1
+            || plan.FurnaceFuelMove.ExpectRejected
+            || !plan.FurnaceRevisionBurst.SendStaleSnapshot
+            || plan.OpenFurnaceByPoint.ExpectedResult != InventoryOpenExpectedResult.Accepted
+            || plan.OpenFurnaceById.ExpectedResult != InventoryOpenExpectedResult.Accepted
+            || plan.DenyPlayerInventoryById.ExpectedResult != InventoryOpenExpectedResult.PermissionDenied
+            || plan.DenyFurnaceByPoint.ExpectedResult != InventoryOpenExpectedResult.PermissionDenied
             || plan.SelectSlot.SlotIndex < 0
             || !plan.InventoryRevisionBurst.SendStaleSnapshot
             || plan.Hit.TargetEntityId <= 0

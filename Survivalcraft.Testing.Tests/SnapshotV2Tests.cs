@@ -429,6 +429,58 @@ public sealed class SnapshotV2Tests {
 
     [Fact]
     [Trait("Layer", "L0")]
+    public void FurnaceProjectionRoundsRuntimeAndUsesExplicitToleranceAndRevisionPolicy() {
+        InventorySnapshotV2 furnace = new(
+            51,
+            61,
+            "Game.ComponentFurnace",
+            "furnace",
+            5,
+            -1,
+            7,
+            [
+                new InventorySlotSnapshotV2(0, 126, 1, 126, 0),
+                new InventorySlotSnapshotV2(1, 0, 0, 0, 0),
+                new InventorySlotSnapshotV2(2, 201, 0, 201, 0),
+                new InventorySlotSnapshotV2(3, 127, 1, 127, 0),
+                new InventorySlotSnapshotV2(4, 0, 0, 0, 0)
+            ],
+            new TerrainCellCoordinate(4, 70, -8),
+            new FurnaceStateSnapshotV2(12.1234567, 0.6250001, 1, 9, 2, 2, 3, 4));
+        StateSnapshotV2 expected = Snapshot([], []) with { Inventories = [furnace] };
+        StateSnapshotV2 withinTolerance = expected with {
+            Inventories = [furnace with {
+                FurnaceState = furnace.FurnaceState! with {
+                    FireTimeRemaining = 12.124,
+                    SmeltingProgress = 0.6255,
+                    Revision = 10
+                }
+            }]
+        };
+
+        FurnaceStateSnapshotV2 normalized = Assert.Single(
+            SnapshotV2Canonicalizer.Normalize(expected, decimalPlaces: 5).Inventories!)
+            .FurnaceState!;
+        Assert.Equal(12.12346, normalized.FireTimeRemaining);
+        Assert.Equal(0.625, normalized.SmeltingProgress);
+        Assert.True(SnapshotV2Comparer.CompareInventories(
+            expected,
+            withinTolerance,
+            new SnapshotV2InventoryComparisonOptions(
+                FurnaceScalarTolerance: 0.001,
+                CompareFurnaceRevision: false)).Equal);
+        SnapshotV2Diff revisionDifference = SnapshotV2Comparer.CompareInventories(
+            expected,
+            withinTolerance,
+            new SnapshotV2InventoryComparisonOptions(
+                FurnaceScalarTolerance: 0.001,
+                CompareFurnaceRevision: true));
+        Assert.Contains(revisionDifference.Differences,
+            item => item.Path == "$.inventories[inventoryId=51].furnaceState.revision");
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void HealthProjectionRoundsScalarsAndComparesLifecycleState() {
         HealthStateSnapshotV2 state = new(
             31,

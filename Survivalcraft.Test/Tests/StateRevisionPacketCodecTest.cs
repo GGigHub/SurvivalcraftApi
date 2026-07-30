@@ -1,5 +1,7 @@
 using Game;
 using Game.Network;
+using GameEntitySystem;
+using TemplatesDatabase;
 using Xunit;
 
 namespace Survivalcraft.Test;
@@ -179,6 +181,97 @@ public sealed class StateRevisionPacketCodecTest {
             (decoded.m_entityId, decoded.Food, decoded.Stamina, decoded.Sleep,
                 decoded.Wetness, decoded.Temperature,
                 decoded.m_lifecycleRevision, decoded.m_revision));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void FurnacePacketPreservesInventoryLifecycleAndIndependentRevision() {
+        ComponentFurnacePacket source = new();
+        source.furnaceDataList.Add(new ComponentFurnacePacket.FurnacePacketData {
+            inventoryID = 91,
+            entityID = 73,
+            fireTimeRemaining = 12.5f,
+            smeltingProgress = 0.625f,
+            heatLevel = 1f,
+            lifecycleRevision = 17,
+            revision = 4_294_967_721L
+        });
+
+        ComponentFurnacePacket decoded = RoundTrip(
+            source,
+            static () => new ComponentFurnacePacket());
+        ComponentFurnacePacket.FurnacePacketData state = Assert.Single(decoded.furnaceDataList);
+
+        Assert.Equal(
+            (91, 73, 12.5f, 0.625f, 1f, 17L, 4_294_967_721L),
+            (state.inventoryID, state.entityID, state.fireTimeRemaining,
+                state.smeltingProgress, state.heatLevel,
+                state.lifecycleRevision, state.revision));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void FurnacePacketRejectsOversizedStateCount() {
+        byte[] payload;
+        using (PacketStreamWriter writer = new()) {
+            writer.Write(ComponentFurnacePacket.MaximumFurnaceCount + 1);
+            payload = writer.Data();
+        }
+        using PacketStreamReader reader = new(payload);
+        ComponentFurnacePacket packet = new();
+
+        Assert.Throws<InvalidDataException>(() =>
+            packet.Serialize(new PacketSerializer(reader)));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void FurnaceSavePersistsInProgressSmeltingState() {
+        ComponentFurnace furnace = new() {
+            m_fireTimeRemaining = 18.5f,
+            m_heatLevel = 1f,
+            m_smeltingProgress = 0.375f
+        };
+        ValuesDictionary values = new();
+
+        furnace.Save(values, new EntityToIdMap([]));
+
+        Assert.Equal(18.5f, values.GetValue<float>("FireTimeRemaining"));
+        Assert.Equal(1f, values.GetValue<float>("HeatLevel"));
+        Assert.Equal(0.375f, values.GetValue<float>("SmeltingProgress"));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void ContainerOpenPacketsPreserveRequestIdentityAndTypedResult() {
+        OpenInventoryByIDPacket byId = RoundTrip(
+            new OpenInventoryByIDPacket {
+                m_inventoryId = 51,
+                m_requestId = 4_294_967_801L
+            },
+            static () => new OpenInventoryByIDPacket());
+        OpenInventoryByPointPacket byPoint = RoundTrip(
+            new OpenInventoryByPointPacket {
+                m_point3 = new Engine.Point3(4, 70, -8),
+                m_requestId = 4_294_967_802L
+            },
+            static () => new OpenInventoryByPointPacket());
+        OpenInventoryResultPacket result = RoundTrip(
+            new OpenInventoryResultPacket {
+                m_requestId = 4_294_967_802L,
+                m_requestKind = NetworkContainerOpenRequestKind.ByPoint,
+                m_result = NetworkContainerOpenResultCode.PermissionDenied,
+                m_inventoryId = 51
+            },
+            static () => new OpenInventoryResultPacket());
+
+        Assert.Equal((51, 4_294_967_801L), (byId.m_inventoryId, byId.m_requestId));
+        Assert.Equal((new Engine.Point3(4, 70, -8), 4_294_967_802L),
+            (byPoint.m_point3, byPoint.m_requestId));
+        Assert.Equal(
+            (4_294_967_802L, NetworkContainerOpenRequestKind.ByPoint,
+                NetworkContainerOpenResultCode.PermissionDenied, 51),
+            (result.m_requestId, result.m_requestKind, result.m_result, result.m_inventoryId));
     }
 
     private static TPacket RoundTrip<TPacket>(

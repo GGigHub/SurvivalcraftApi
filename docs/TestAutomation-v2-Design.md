@@ -9,7 +9,7 @@
 TestAutomation v2 不重写现有测试框架，而是在已经稳定的命名管道控制面、无界面进程模型和场景产物之上增加完整的领域驱动能力。设计采用以下决定：
 
 1. 保持长度前缀 JSON 的 wire protocol v1，不因增加命令或快照字段破坏现有 TestHost 与运行时配对。
-2. 单独引入可演进的 Automation API（当前为 v9）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
+2. 单独引入可演进的 Automation API（当前为 v10）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
 3. 保留所有现有 v1 命令和 `state.getSnapshot`，以新增命令的方式演进，不修改旧 DTO 的含义。
 4. 明确区分 `fixture.*` 布置命令和玩家动作命令。前者用于构造确定性前置条件；后者必须经过真实客户端玩法路径，不能直接伪造最终状态或网络包。
 5. 新稳定场景不得使用 `legacy.executeScript`、`FUNC`、`EXEC` 或 UI 点击来验证非 UI 玩法。
@@ -464,7 +464,7 @@ Survivalcraft.TestAutomation/
 
 已实现并进入自动门禁的内容：
 
-- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 为 v8，会话/通道生命周期后当前为 v9；
+- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 为 v8，会话/通道生命周期为 v9，熔炉/容器结果后当前为 v10；
 - 现有控制命令由注册式 `TypedCommandRouter` 统一分派，重复命令名在初始化阶段失败；
 - 新增有界 `ActionEventJournal`、`state.getEvents` 和 `state.resetEvents`；
 - 新增 Node、Network、Players、Events 投影的 Snapshot v2、稳定排序和玩家领域容差比较；
@@ -608,8 +608,8 @@ Survivalcraft.TestAutomation/
 
 本切片不新增玩法捷径，而是为全部强类型玩法建立不能虚高的共同证据层：
 
-- Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 104 个 hook 和 109 个 packet class。
-- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v9。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
+- Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 104 个 hook 和 110 个 packet class。
+- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v10。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
 - `ProductionPathGateway` 成为测试模组唯一的直接 packet queue 边界，源码哨兵同时禁止私有旁路；fixture synchronization、production request、authoritative state 与 fault injection 四类路径被明确区分。
 - revision/lifecycle 旧状态注入在最终权威包稳定 30 个游戏帧后再交付，消除故障重排导致“旧包先到”的非确定性假阴性。
 - 每个游戏节点从控制通道 ready 起每 250 ms 采样工作集、私有内存、句柄、线程与 CPU。当前十个 v2 场景在 dispose 前把资源摘要写入 metrics；L3 对无样本、峰值、增长量和故障待发队列实行硬预算。Snapshot v2 还记录按 packet class 聚合的排队次数、故障传输次数和字节数，soak 失败会指出最高流量包型，避免只得到一个不可诊断的队列数字。
@@ -649,3 +649,17 @@ Survivalcraft.TestAutomation/
 - 2026-07-30 的最终无窗口证据包括平台 L0/L1 109/109、游戏 L0/L1 68/68、完整游戏 L2 25/25（含兼容矩阵与 Direct/Relay 生命周期），以及一轮带 loss 的 session-only L3。Direct/Relay 都返回 5 类拒绝、4 个稳定身份、至少 18 次重复创建抑制和 32 次限流；L3 五节点峰值工作集约 471–505 MiB。
 
 `network.session-compatibility`、`api.mod-channel` 和 `player.session-lifecycle` 现均标记为 `covered/soak`。当前 21 个 feature 为 14 个 `covered`、2 个 `partial`、5 个 `planned`；该等级表示已有可重放自动证据，不代表人工 reality 验收或所有未来模组协议都自动正确。
+
+## 33. M7 熔炉与容器交互完整覆盖实施记录
+
+本切片补齐此前仍停留在部分覆盖的真实容器 UI 请求与熔炉加工链，把 Automation API 提升到 v10、联机协议 revision 提升到 10：
+
+- 容器开启请求新增 64 位 request ID，并由服务端返回有界、强类型的 `Accepted`、`InvalidRequest`、`InventoryNotFound`、`PermissionDenied` 或 `UnsupportedInventory` 结果。客户端用 256 项已见窗口保证同一结果只执行一次，延迟重复包不会反复打开界面或播放声音。自动化不再依据日志或本地 UI 推断成功，而是等待对应请求的生产结果；成功路径仍创建真实容器 widget。
+- `ComponentFurnacePacket` 绑定 inventory ID、实体 lifecycle revision 和独立 furnace revision，限制单包最多 1024 项并拒绝非有限或越界状态；服务端对更大的合法已加载集合自动分片。客户端先验证实体世代，再按炉体领域的单调窗口拒绝旧包，避免库存 revision 与燃烧进度相互覆盖。
+- 熔炉消耗燃料、爆炸和完成冶炼时都会触发库存同步；`SmeltingProgress` 进入存档，避免保存重载后把正在加工的炉体静默重置。
+- 强类型夹具建立相邻的真实箱子与熔炉，并只提供原料和燃料。十四动作场景先验证按坐标、按 ID 开启成功，再验证玩家库存越权和远距容器拒绝，随后通过真实 `MoveItemPacket` 投料、加煤并等待生产更新把生肉与燃料消耗为熟肉。
+- Snapshot v2 增加炉火、热量、加工进度、槽位索引和 furnace revision。场景分别验证初始观察者收敛、故障下旧炉体包拒绝、late join、稳定身份重连及保存重载；revision 在运行期严格比较，在新 Project 边界按显式策略忽略内存计数器。
+- 最终无窗口门禁为平台 L0/L1 110/110、游戏 L0/L1 73/73、完整游戏 L2 25/25，Direct/Relay 定点 Theory 另行 2/2 通过。首轮全量在并行负载下暴露了“内容相同、revision 尚未收敛”的等待竞态，加入服务端最终 revision 下限后定点与全量均复验通过。
+- Direct L3 使用 seed `20260730`，在延迟、抖动、100% 重复、重排和带宽调度下通过，四节点峰值工作集约 406–454 MiB，句柄峰值 901、线程峰值 36，最终故障队列为零。全部真实游戏进程均保持 headless/no-window。
+
+`inventory.furnace-container` 现已从 `partial` 提升为 `covered/mutation`。覆盖契约当前为 15 个 `covered`、1 个 `partial`、5 个 `planned`，生产面库存为 104 个 hook 和 110 个 packet class。

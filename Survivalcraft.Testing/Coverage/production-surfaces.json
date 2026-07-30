@@ -1087,6 +1087,13 @@
       "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/OpenInventoryByPointPacket.cs"
     },
     {
+      "surfaceId": "packet:OpenInventoryResultPacket",
+      "kind": "packet",
+      "symbol": "OpenInventoryResultPacket",
+      "featureId": "inventory.furnace-container",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/OpenInventoryResultPacket.cs"
+    },
+    {
       "surfaceId": "packet:PickableCreateListPacket",
       "kind": "packet",
       "symbol": "PickableCreateListPacket",

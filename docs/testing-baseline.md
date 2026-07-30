@@ -51,6 +51,12 @@ M6 在同一 Debug/ANGLE 运行时上完成全部无窗口验收：平台 L0/L1 
 
 并发重连首次真实暴露了 Project 尚未加载时处理 `PlayerAddPacket` 的空引用。修复后的客户端按 session 延迟依赖 Project 的包，并以 4096 项硬上限阻止无界增长；断线和 session 切换会清空旧队列。覆盖契约因此把 `network.session-compatibility`、`api.mod-channel` 和 `player.session-lifecycle` 从 `partial` 提升为 `covered/soak`，当前计数为 14 covered、2 partial、5 planned。
 
+## M7 熔炉与容器验收（2026-07-30）
+
+M7 将容器开启结果、所有权/距离拒绝、真实熔炉投料、燃料消耗、熟食产出、独立 furnace revision、late join、同身份重连和保存重载合并进严格十四动作场景。最终无窗口门禁为平台 L0/L1 110/110、游戏 L0/L1 73/73、完整游戏 L2 25/25；Direct 与 Relay 的一服三客定点 Theory 另行 2/2 通过。额外 Direct L3 使用 seed `20260730`，在延迟、抖动、100% 重复、随机重排和带宽调度下通过，四节点峰值工作集约 406–454 MiB，句柄峰值 901、线程峰值 36，最终故障待发队列为零。所有节点继续使用 `--headless`、`CreateNoWindow=true` 与隔离数据目录。
+
+覆盖契约由此把 `inventory.furnace-container` 从 `partial` 提升为 `covered/mutation`，当前计数为 15 covered、1 partial、5 planned；生产面精确库存为 104 个 hook 和 110 个 packet class。首轮完整 L2 在并行负载下捕获到“槽位内容已相同但客户端 revision 尚未到达最终值”的等待竞态；加入最终 revision 下限后，定点 2/2 与最终完整 L2 25/25 均通过，门禁不再把内容巧合相等误判为版本收敛。
+
 ## 当前可重复命令
 
 ```powershell

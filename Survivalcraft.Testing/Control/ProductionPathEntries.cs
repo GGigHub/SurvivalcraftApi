@@ -21,7 +21,10 @@ public static class ProductionPathEntries {
         "ComponentInventoryBase.ActiveSlotIndex -> ActiveSlotChangePacket.Handle";
     public const string InventoryDrop =
         "ComponentInput -> ComponentPlayer.OnNetworkPlayerDrop";
+    public const string InventoryOpenContainer =
+        "OpenInventoryByPointPacket/OpenInventoryByIDPacket.Handle -> OpenInventoryResultPacket.Handle";
     public const string InventoryRevision = "InventorySyncPacket.Handle";
+    public const string FurnaceRevision = "ComponentFurnacePacket.Handle";
     public const string PlayerHit = "ComponentInput -> ComponentMiner.Hit";
     public const string PlayerHitFault = "PlayerHitPacket.Handle";
     public const string PlayerRespawn =

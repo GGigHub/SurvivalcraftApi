@@ -412,8 +412,15 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkFurnaceUpdate(ComponentFurnace furnace) {
-        if (NetworkManager.IsServerRunning && Time.PeriodicEvent(2.0, 0.0))
-            NetworkManager.Queue(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
+        if (NetworkManager.IsServerRunning
+            && furnace?.Id > 0
+            && Time.PeriodicEvent(2.0, 0.0)) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                furnace.Project,
+                NetworkStateRevisionDomain.Furnace,
+                furnace.Id);
+            NetworkManager.Queue(new ComponentFurnacePacket(furnace, revision));
+        }
     }
 
     public override void OnNetworkManualLightingStrike(ComponentGui gui, Vector3 position, Vector3 direction) {
@@ -717,8 +724,21 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkFurnacesUpdate(SubsystemFurnaceBlockBehavior subsystem, List<ComponentFurnace> furnaces) {
-        if (NetworkManager.IsServerRunning)
-            NetworkManager.Queue(new ComponentFurnacePacket(furnaces));
+        if (NetworkManager.IsServerRunning) {
+            ComponentFurnace[] trackedFurnaces = furnaces
+                .Where(furnace => furnace?.Id > 0 && furnace.Entity?.Id > 0)
+                .ToArray();
+            foreach (ComponentFurnace furnace in trackedFurnaces) {
+                NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                    furnace.Project,
+                    NetworkStateRevisionDomain.Furnace,
+                    furnace.Id);
+            }
+            foreach (ComponentFurnace[] batch in trackedFurnaces.Chunk(
+                         ComponentFurnacePacket.MaximumFurnaceCount)) {
+                NetworkManager.Queue(new ComponentFurnacePacket(batch));
+            }
+        }
     }
 
     public override void OnNetworkTimeUpdate(double totalElapsedGameTime, double timeOfDayOffset) {

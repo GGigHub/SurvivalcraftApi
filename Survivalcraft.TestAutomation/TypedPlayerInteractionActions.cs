@@ -82,6 +82,8 @@ public partial class TestAutomationModLoader {
         pendingPlayerMotionAction = null;
         pendingTerrainStreamingMoveTrigger = null;
         pendingInventoryAction = null;
+        pendingContainerOpenAction = null;
+        ContainerOpenResultTracker.Reset();
         pendingHealthAction = null;
         ResetEntityLifecycleFixtures();
         ResetPickableProjectileFixtures();

@@ -5,6 +5,7 @@ namespace Game.Network;
 
 public enum NetworkStateRevisionDomain : byte {
     Inventory,
+    Furnace,
     Health,
     Damage,
     Time,

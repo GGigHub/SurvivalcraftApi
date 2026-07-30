@@ -348,6 +348,16 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             QueueInventoryDrop);
+        router.Register<InventoryOpenContainerCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.InventoryOpenContainer,
+                AutomationCommandDomain.Inventory,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueueInventoryOpenContainer);
         router.Register<RunInventoryRevisionBurstCommand, InventoryRevisionBurstResult>(
             Metadata(
                 ControlCommandNames.RunInventoryRevisionBurst,
@@ -358,6 +368,16 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             RunInventoryRevisionBurst);
+        router.Register<RunFurnaceRevisionBurstCommand, FurnaceRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunFurnaceRevisionBurst,
+                AutomationCommandDomain.Inventory,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunFurnaceRevisionBurst);
         router.Register<PrepareHealthFixtureCommand, HealthFixture>(
             Metadata(
                 ControlCommandNames.PrepareHealthFixture,
@@ -1383,7 +1403,26 @@ public partial class TestAutomationModLoader {
                 : new TerrainCellCoordinate(
                     blockEntity.Coordinates.X,
                     blockEntity.Coordinates.Y,
-                    blockEntity.Coordinates.Z));
+                    blockEntity.Coordinates.Z),
+            inventory is ComponentFurnace furnace
+                ? new FurnaceStateSnapshotV2(
+                    furnace.FireTimeRemaining,
+                    furnace.SmeltingProgress,
+                    furnace.HeatLevel,
+                    NetworkManager.IsClientRunning
+                        ? NetworkStateRevisionTracker.GetAppliedRevision(
+                            furnace.Project,
+                            NetworkStateRevisionDomain.Furnace,
+                            furnace.Id)
+                        : NetworkStateRevisionTracker.GetAuthoritativeRevision(
+                            furnace.Project,
+                            NetworkStateRevisionDomain.Furnace,
+                            furnace.Id),
+                    furnace.m_furnaceSize,
+                    furnace.FuelSlotIndex,
+                    furnace.ResultSlotIndex,
+                    furnace.RemainsSlotIndex)
+                : null);
     }
 
     private static HealthStateSnapshotV2[] BuildHealthStateSnapshotsV2(

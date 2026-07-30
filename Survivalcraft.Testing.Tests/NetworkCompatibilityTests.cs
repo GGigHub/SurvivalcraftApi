@@ -8,7 +8,7 @@ public sealed class NetworkCompatibilityTests {
     [Fact]
     [Trait("Layer", "L0")]
     public void ProtocolRevisionIncludesTypedSessionAdmission() {
-        Assert.Equal(9, NetworkCompatibility.ProtocolRevision);
+        Assert.Equal(10, NetworkCompatibility.ProtocolRevision);
     }
 
     [Fact]

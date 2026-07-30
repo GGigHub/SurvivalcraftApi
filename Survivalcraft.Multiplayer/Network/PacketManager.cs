@@ -23,6 +23,7 @@ public enum PacketType : byte {
     CompatibilityHello = 113, CompatibilityResult = 114,
     ModChannelCatalog = 115, ModChannelCatalogResult = 116,
     SessionAdmissionResult = 118,
+    OpenInventoryResult = 119,
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
@@ -134,6 +135,7 @@ public static class PacketManager {
         RegisterPacket<MoveItemPacket>();
         RegisterPacket<OpenInventoryByIDPacket>();
         RegisterPacket<OpenInventoryByPointPacket>();
+        RegisterPacket<OpenInventoryResultPacket>();
         RegisterPacket<PickableCreateListPacket>();
         RegisterPacket<PickableCreatePacket>();
         RegisterPacket<PickableDeleteListPacket>();
