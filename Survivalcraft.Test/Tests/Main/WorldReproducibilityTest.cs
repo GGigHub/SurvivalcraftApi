@@ -26,8 +26,8 @@ public class WorldReproducibilityTest : IClassFixture<GameFixture> {
         bool serverMainMenu = await server.WaitLogAsync("Entered screen \"MainMenu\"");
         Assert.True(serverMainMenu, "Server failed to return to MainMenu");
 
-        string serverWorldsPath = Path.Combine(server.RunDirectory, "doc", "Worlds");
-        string clientWorldsPath = Path.Combine(client.RunDirectory, "doc", "Worlds");
+        string serverWorldsPath = Path.Combine(server.DataDirectory, "doc", "Worlds");
+        string clientWorldsPath = Path.Combine(client.DataDirectory, "doc", "Worlds");
 
         string[] worldDirs = Directory.GetDirectories(serverWorldsPath);
         Assert.NotEmpty(worldDirs);
@@ -108,6 +108,13 @@ public class WorldReproducibilityTest : IClassFixture<GameFixture> {
 
     private static List<string> CompareXml(XElement? el1, XElement? el2, string path) {
         var diffs = new List<string>();
+
+        if (el1 == null || el2 == null) {
+            if (el1 != el2) {
+                diffs.Add($"{path}: element missing in {(el1 == null ? "server" : "client")}");
+            }
+            return diffs;
+        }
 
         if (el1.Name != el2.Name) {
             diffs.Add($"{path}: Name {el1.Name} != {el2.Name}");

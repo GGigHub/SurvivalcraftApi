@@ -151,6 +151,11 @@ public static class ControlCommandNames {
     public const string PrepareEntityLifecycleFixture = "fixture.entity.prepareLifecycle";
     public const string ApplyEntityImpulse = "entity.applyImpulse";
     public const string RunEntityLifecycleBurst = "entity.runLifecycleBurst";
+    public const string PreparePickableProjectileFixture = "fixture.pickable.prepareLifecycle";
+    public const string ApplyPickableProjectileFixture = "fixture.pickable.applyLifecycle";
+    public const string AttractPickable = "pickable.attract";
+    public const string PlayerFireProjectile = "player.fireProjectile";
+    public const string RunPickableLifecycleBurst = "pickable.runLifecycleBurst";
     public const string PrepareInventoryFixture = "fixture.inventory.prepare";
     public const string ApplyInventoryFixture = "fixture.inventory.apply";
     public const string InventoryMove = "inventory.move";

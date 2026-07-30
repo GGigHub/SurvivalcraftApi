@@ -7,12 +7,16 @@ public class PickableSetFlyToPositionPacket : Packet {
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_id;
     public Vector3? m_flyToPosition;
+    public long m_revision;
 
     public PickableSetFlyToPositionPacket() { }
 
-    public PickableSetFlyToPositionPacket(Pickable pickable) {
+    public PickableSetFlyToPositionPacket(Pickable pickable, long? revision = null) {
         m_id = pickable.Id;
         m_flyToPosition = pickable.FlyToPosition;
+        m_revision = revision ?? PickableLifecycleTracker.GetAuthoritativeRevision(
+            GameManager.Project,
+            pickable.Id);
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -26,13 +30,18 @@ public class PickableSetFlyToPositionPacket : Packet {
         if (archive.IsReading) {
             m_flyToPosition = hasFlyToPosition ? flyTo : null;
         }
+        archive.Value(ref m_revision);
     }
 
     public override void Handle(bool isServer) {
         if (isServer) {
             return;
         }
-        GameManager.Project.FindSubsystem<SubsystemPickables>().PickableAction(m_id, pick => pick.FlyToPosition = m_flyToPosition);
+        PickablePacketHelpers.TryApplyFlyToPosition(
+            GameManager.Project.FindSubsystem<SubsystemPickables>(),
+            m_id,
+            m_flyToPosition,
+            m_revision);
     }
 }
 

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "policy": "new-failures-block",
+  "groups": [
+    {
+      "featureId": "terrain.streaming-and-revisions",
+      "disposition": "superseded",
+      "reason": "The legacy headless fixture assumes a render camera raises the production 32-block player baseline to 64 blocks and then shares ordered static state across tests. The v2 scenario proves streaming and revisions without that render dependency.",
+      "tests": [
+        "Survivalcraft.Test.TerrainStreamingTest.TestClientInitialLoadedChunkCountMatchesServerAt64Blocks",
+        "Survivalcraft.Test.TerrainStreamingTest.TestClientMovementLoadsNewChunksAtTheViewDistanceEdge",
+        "Survivalcraft.Test.TerrainStreamingTest.TestClientLargerViewDistancesAreServerDriven"
+      ],
+      "replacements": [
+        "TerrainStreamingMultiplayerScenarioTest.StreamingRevisionsSurviveFaultsLateJoinReconnectAndReload(Direct)",
+        "TerrainStreamingMultiplayerScenarioTest.StreamingRevisionsSurviveFaultsLateJoinReconnectAndReload(Relay)"
+      ]
+    },
+    {
+      "featureId": "entity-creature.lifecycle-physics",
+      "disposition": "superseded",
+      "reason": "These order-dependent scripts predate lifecycle generations and authoritative body revisions. The v2 scenario creates deterministic entities and verifies stale-generation rejection, observer convergence, late join, reconnect, faults, and reload.",
+      "tests": [
+        "Survivalcraft.Test.CreatureSyncTest.TestExistingEntitiesSyncWhenClientJoinsGame",
+        "Survivalcraft.Test.CreatureSyncTest.TestServerBodyPositionUpdateSyncsToClient",
+        "Survivalcraft.Test.CreatureSyncTest.TestClientPlayerBodyCollisionIsAcceptedByServer"
+      ],
+      "replacements": [
+        "EntityCreatureMultiplayerScenarioTest.EntityLifecycleAndCreatureBodiesConvergeAcrossNetworkBoundaries(Direct)",
+        "EntityCreatureMultiplayerScenarioTest.EntityLifecycleAndCreatureBodiesConvergeAcrossNetworkBoundaries(Relay)"
+      ]
+    },
+    {
+      "featureId": "player.session-lifecycle",
+      "disposition": "superseded",
+      "reason": "The legacy assertion depends on an obsolete PlayerDataChanged event flag. Current session creation, reconnect, and reload behavior is exercised through the declared core and relay production scenarios.",
+      "tests": [
+        "Survivalcraft.Test.PlayerSyncTest.TestPlayerModifyIsVisibleToObserverClient"
+      ],
+      "replacements": [
+        "CoreMultiplayerScenarioTest.ConnectMutateReconnectAndReloadIsFullyAutomated",
+        "RelayModChannelScenarioTest.NegotiatesDeduplicatesAndReconnectsWithoutManualInput"
+      ]
+    },
+    {
+      "featureId": "player.creative-fly",
+      "disposition": "superseded",
+      "reason": "The old shared UI fixture can lose the headless widget transition. The v2 component-GUI action has explicit production-path evidence in both transports; the feature remains partial for its separately declared gaps.",
+      "tests": [
+        "Survivalcraft.Test.PlayerSyncTest.TestCreativeFlyToggleBroadcastsToObserver"
+      ],
+      "replacements": [
+        "CreativeFlyMultiplayerScenarioTest.CreativeFlyConvergesAcrossAuthorityAndObserver(Direct)",
+        "CreativeFlyMultiplayerScenarioTest.CreativeFlyConvergesAcrossAuthorityAndObserver(Relay)"
+      ]
+    },
+    {
+      "featureId": "player.place-dig-use",
+      "disposition": "superseded",
+      "reason": "The legacy Roslyn/UI commands omit current request identity and expected terrain revision and are correctly rejected by the authoritative server. The typed scenario drives ComponentMiner production inputs with authority and replay evidence.",
+      "tests": [
+        "Survivalcraft.Test.PlayerSyncTest.TestClientUsePathCreatesBoatForObserver",
+        "Survivalcraft.Test.PlayerSyncTest.TestClientInteractPathTogglesDoorForObserver",
+        "Survivalcraft.Test.PlayerSyncTest.TestClientPlacePathPlacesBlockForObserver",
+        "Survivalcraft.Test.PlayerSyncTest.TestClientUsePathPaintsBlockForObserver",
+        "Survivalcraft.Test.PlayerSyncTest.TestClientDigPathRemovesBlockForObserver"
+      ],
+      "replacements": [
+        "TerrainInteractionMultiplayerScenarioTest.PlaceDigUseSurviveLateJoinReconnectFaultsAndReload(Direct)",
+        "TerrainInteractionMultiplayerScenarioTest.PlaceDigUseSurviveLateJoinReconnectFaultsAndReload(Relay)"
+      ]
+    },
+    {
+      "featureId": "health-damage-respawn",
+      "disposition": "superseded",
+      "reason": "The old sequential player fixture attacks a target after earlier UI steps have failed. The typed inventory-health scenario performs a real melee ray and verifies authoritative damage, revisions, observer state, respawn, faults, and reload.",
+      "tests": [
+        "Survivalcraft.Test.PlayerSyncTest.TestClientHitPathDamagesEntityForObserver"
+      ],
+      "replacements": [
+        "InventoryHealthMultiplayerScenarioTest.InventoryDamageAndRespawnSurviveAllNetworkBoundaries(Direct)",
+        "InventoryHealthMultiplayerScenarioTest.InventoryDamageAndRespawnSurviveAllNetworkBoundaries(Relay)"
+      ]
+    },
+    {
+      "featureId": "pickable-projectile.lifecycle",
+      "disposition": "superseded",
+      "reason": "The legacy aim script relies on shared UI and inventory state. The v2 scenario supplies real ComponentInput Aim and proves the PlayerAimPacket-to-projectile production chain, exactly-once observer events, lifecycle mutation, and reload boundaries.",
+      "tests": [
+        "Survivalcraft.Test.PlayerSyncTest.TestClientAimPathFiresProjectileForObserver"
+      ],
+      "replacements": [
+        "PickableProjectileMultiplayerScenarioTest.PickablesAndProjectilesSurviveAllNetworkBoundaries(Direct)",
+        "PickableProjectileMultiplayerScenarioTest.PickablesAndProjectilesSurviveAllNetworkBoundaries(Relay)"
+      ]
+    },
+    {
+      "featureId": "logic.electricity-and-moving-blocks",
+      "disposition": "superseded",
+      "reason": "The legacy editable-block scripts predate request identity, expected logic revision, structured authoritative state, and moving-block generations. The v2 logic scenario covers those contracts and rejects the obsolete mutations.",
+      "tests": [
+        "Survivalcraft.Test.LogicBlockSyncTest.TestEditableLogicBlockSettingsSync",
+        "Survivalcraft.Test.LogicBlockSyncTest.TestStructuredLogicBlockDataSync",
+        "Survivalcraft.Test.LogicBlockSyncTest.TestPistonMovingBlockAndDispenserSettingsSync"
+      ],
+      "replacements": [
+        "LogicMultiplayerScenarioTest.LogicAndMovingBlocksSurviveAllNetworkBoundaries(Direct)",
+        "LogicMultiplayerScenarioTest.LogicAndMovingBlocksSurviveAllNetworkBoundaries(Relay)"
+      ]
+    },
+    {
+      "featureId": "mechanics.mount",
+      "disposition": "superseded",
+      "reason": "The old mount helper predates request identity and lifecycle/revision baselines. The typed mount scenario exercises production ComponentRider and Boat paths with range rejection, stale revisions, lifecycle replacement, disconnect, reconnect, and reload.",
+      "tests": [
+        "Survivalcraft.Test.MechanicsSyncTest.TestMountAndDismountSync"
+      ],
+      "replacements": [
+        "MountMultiplayerScenarioTest.MountLifecycleSurvivesAllNetworkBoundaries(Direct)",
+        "MountMultiplayerScenarioTest.MountLifecycleSurvivesAllNetworkBoundaries(Relay)"
+      ]
+    },
+    {
+      "featureId": "player.progression-vitals",
+      "disposition": "coverage-gap",
+      "reason": "The legacy suicide path depends on a multi-dialog Clothing UI transition that is not reliable headlessly. No replacement is claimed: explicit choke/suicide UI coverage remains a planned feature gap.",
+      "tests": [
+        "Survivalcraft.Test.HealthSyncTest.TestClientChokeRequestIsAppliedByServer"
+      ],
+      "replacements": []
+    }
+  ]
+}

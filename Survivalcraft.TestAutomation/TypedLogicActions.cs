@@ -109,9 +109,9 @@ public partial class TestAutomationModLoader {
                      player != actor && !player.PlayerData.IsMainPlayer)) {
             Vector3 farPosition = new(baseX + 24.5f, baseY + 1.05f, baseZ + 24.5f);
             PrepareLogicPlayer(other, farPosition);
-            NetworkManager.Queue(new PlayerBodyUpdatePacket(other, forceFull: true));
+            QueueFixtureSynchronization(new PlayerBodyUpdatePacket(other, forceFull: true));
         }
-        NetworkManager.Queue(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
         terrain.TerrainUpdater.SetUpdateLocation(
             actor.PlayerData.PlayerIndex,
             playerPosition.XZ,
@@ -219,7 +219,7 @@ public partial class TestAutomationModLoader {
             [Color.Black, Color.Black, Color.Black, Color.Black],
             string.Empty);
         terrain.TerrainUpdater.RequestSynchronousUpdate();
-        NetworkManager.Queue(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
         return new ControlAck(true, $"Prepared logic actor {fixture.PlayerIndex}.");
     }
 
@@ -259,7 +259,12 @@ public partial class TestAutomationModLoader {
             editable.m_terrainRevision = command.TerrainRevision.Value;
         }
         for (int i = 0; i < command.DuplicateCount; i++) {
-            NetworkManager.Queue(packet);
+            if (command.ExpectRejected) {
+                QueueFaultInjection(packet);
+            }
+            else {
+                QueueProductionRequest(packet);
+            }
         }
         RecordLogicAction(
             context.RequestId,
@@ -269,12 +274,24 @@ public partial class TestAutomationModLoader {
             command.Cell,
             command.ExpectRejected ? "rejection_probe_queued" : "queued",
             command.Kind.ToString());
+        RecordLogicAction(
+            context.RequestId,
+            "edit",
+            ActionEventPhase.Observed,
+            actor.PlayerData.PlayerIndex,
+            command.Cell,
+            command.ExpectRejected ? "rejection_probe_sent" : "production_request_sent",
+            command.Kind.ToString());
         return new ActionReceipt(
             context.RequestId,
             true,
             Time.FrameIndex,
             actor.PlayerData.PlayerIndex,
-            command.ExpectRejected ? "rejection_probe_queued" : "queued");
+            command.ExpectRejected ? "rejection_probe_queued" : "queued",
+            Provenance: command.ExpectRejected
+                ? ActionProvenance.FaultInjection
+                : ActionProvenance.ProductionRequest,
+            ProductionEntry: ProductionPathEntries.LogicEdit);
     }
 
     private ActionReceipt QueueLogicInteract(
@@ -307,7 +324,12 @@ public partial class TestAutomationModLoader {
             m_requestId = NetworkMutationRequestTracker.CreateRequestId()
         };
         for (int i = 0; i < command.DuplicateCount; i++) {
-            NetworkManager.Queue(packet);
+            if (command.ExpectRejected) {
+                QueueFaultInjection(packet);
+            }
+            else {
+                QueueProductionRequest(packet);
+            }
         }
         RecordLogicAction(
             context.RequestId,
@@ -317,12 +339,24 @@ public partial class TestAutomationModLoader {
             command.Cell,
             command.ExpectRejected ? "rejection_probe_queued" : "queued",
             command.TargetPlayerIndex?.ToString(CultureInfo.InvariantCulture) ?? "self");
+        RecordLogicAction(
+            context.RequestId,
+            "interact",
+            ActionEventPhase.Observed,
+            actor.PlayerData.PlayerIndex,
+            command.Cell,
+            command.ExpectRejected ? "rejection_probe_sent" : "production_request_sent",
+            command.TargetPlayerIndex?.ToString(CultureInfo.InvariantCulture) ?? "self");
         return new ActionReceipt(
             context.RequestId,
             true,
             Time.FrameIndex,
             actor.PlayerData.PlayerIndex,
-            command.ExpectRejected ? "rejection_probe_queued" : "queued");
+            command.ExpectRejected ? "rejection_probe_queued" : "queued",
+            Provenance: command.ExpectRejected
+                ? ActionProvenance.FaultInjection
+                : ActionProvenance.ProductionRequest,
+            ProductionEntry: ProductionPathEntries.LogicInteract);
     }
 
     private LogicRevisionBurstResult RunLogicRevisionBurst(
@@ -366,6 +400,15 @@ public partial class TestAutomationModLoader {
             0,
             0,
             point);
+
+        RecordLogicAction(
+            context.RequestId,
+            "revisionBurst",
+            ActionEventPhase.Queued,
+            -1,
+            command.BatteryCell,
+            "revision_burst",
+            command.IntermediateVoltage.ToString(CultureInfo.InvariantCulture));
 
         int intermediateData = BatteryBlock.SetVoltageLevel(
             Terrain.ExtractData(currentValue),
@@ -416,11 +459,11 @@ public partial class TestAutomationModLoader {
             NetworkLogicStateKey.Electricity());
         SubsystemElectricityPacket finalElectricity = new(electricity, finalElectricityRevision);
 
-        NetworkManager.Queue(finalLogic);
-        NetworkManager.Queue(finalElectricity);
+        QueueAuthoritativeState(finalLogic);
+        QueueAuthoritativeState(finalElectricity);
         if (command.SendStaleState) {
-            NetworkManager.Queue(staleLogic);
-            NetworkManager.Queue(staleElectricity);
+            QueueFaultInjectionAfterSettle(staleLogic);
+            QueueFaultInjectionAfterSettle(staleElectricity);
         }
         RecordLogicAction(
             context.RequestId,
@@ -435,7 +478,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleState ? "stale_states_queued" : "applied");
+            command.SendStaleState ? "stale_states_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.LogicRevision);
         return new LogicRevisionBurstResult(
             receipt,
             command.BatteryCell,
@@ -460,6 +505,14 @@ public partial class TestAutomationModLoader {
             ?? throw new AutomationCommandException("invalid_state", "No project is loaded.");
         SubsystemMovingBlocks moving = project.FindSubsystem<SubsystemMovingBlocks>(true);
         Point3 tag = ToPoint(command.AnchorCell);
+        RecordLogicAction(
+            context.RequestId,
+            "movingLifecycleBurst",
+            ActionEventPhase.Queued,
+            -1,
+            command.AnchorCell,
+            "lifecycle_burst",
+            command.Identity);
         IMovingBlockSet existing = moving.FindMovingBlocks(command.Identity, tag);
         if (existing != null) {
             moving.RemoveMovingBlockSet(existing);
@@ -536,7 +589,7 @@ public partial class TestAutomationModLoader {
             int staleDeliveryFrame = checked(Time.FrameIndex + 30);
             Time.QueueFrameIndexDelayedExecution(
                 staleDeliveryFrame,
-                () => NetworkManager.Queue(staleAdd));
+                () => QueueFaultInjection(staleAdd));
         }
         RecordLogicAction(
             context.RequestId,
@@ -551,7 +604,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleAdd ? "stale_add_queued" : "applied");
+            command.SendStaleAdd ? "stale_add_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.MovingBlockLifecycle);
         return new MovingBlockLifecycleBurstResult(
             receipt,
             command.Identity,
@@ -577,6 +632,14 @@ public partial class TestAutomationModLoader {
         SubsystemPistonBlockBehavior pistons =
             project.FindSubsystem<SubsystemPistonBlockBehavior>(true);
         SubsystemMovingBlocks moving = project.FindSubsystem<SubsystemMovingBlocks>(true);
+        RecordLogicAction(
+            context.RequestId,
+            "pistonLifecycle",
+            ActionEventPhase.Queued,
+            -1,
+            command.PistonCell,
+            "queued",
+            command.Extension.ToString(CultureInfo.InvariantCulture));
         pistons.AdjustPiston(point, command.Extension);
         pistons.ProcessQueuedActions();
         IMovingBlockSet movingSet = moving.FindMovingBlocks(
@@ -610,7 +673,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             -1,
-            command.Stop ? "stopped" : "moving");
+            command.Stop ? "stopped" : "moving",
+            Provenance: ActionProvenance.AuthoritativeState,
+            ProductionEntry: ProductionPathEntries.PistonLifecycle);
         return new PistonLifecycleResult(
             receipt,
             command.PistonCell,
@@ -748,6 +813,7 @@ public partial class TestAutomationModLoader {
         TerrainCellCoordinate cell,
         string code,
         string value) {
+        (ActionProvenance provenance, string entry) = LogicEvidence(action, code);
         actionEventJournal.Record(
             Time.FrameIndex,
             actionId,
@@ -760,7 +826,29 @@ public partial class TestAutomationModLoader {
             code,
             new Dictionary<string, string> {
                 ["value"] = value
-            });
+            },
+            provenance: provenance,
+            productionEntry: entry);
+    }
+
+    private static (ActionProvenance Provenance, string Entry) LogicEvidence(
+        string action,
+        string code) {
+        if (string.Equals(action, "revisionBurst", StringComparison.Ordinal)) {
+            return (ActionProvenance.FaultInjection, ProductionPathEntries.LogicRevision);
+        }
+        if (string.Equals(action, "movingLifecycleBurst", StringComparison.Ordinal)) {
+            return (ActionProvenance.FaultInjection, ProductionPathEntries.MovingBlockLifecycle);
+        }
+        if (string.Equals(action, "pistonLifecycle", StringComparison.Ordinal)) {
+            return (ActionProvenance.AuthoritativeState, ProductionPathEntries.PistonLifecycle);
+        }
+        bool fault = code.Contains("rejection_probe", StringComparison.Ordinal);
+        return string.Equals(action, "interact", StringComparison.Ordinal)
+            ? (fault ? ActionProvenance.FaultInjection : ActionProvenance.ProductionRequest,
+                ProductionPathEntries.LogicInteract)
+            : (fault ? ActionProvenance.FaultInjection : ActionProvenance.ProductionRequest,
+                ProductionPathEntries.LogicEdit);
     }
 
     private static void EnsureLogicServerRole(string operation) {

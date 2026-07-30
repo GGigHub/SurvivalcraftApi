@@ -1,9 +1,83 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "features": [
     {
+      "featureId": "network.session-compatibility",
+      "status": "partial",
+      "risk": "critical",
+      "confidence": "partial",
+      "productionEntry": "NetworkClient / NetworkServer / RelayClient / RelayHost and two-stage compatibility handshake",
+      "fixtureCommand": "network.configureCompatibility",
+      "actionCommand": "network.connect / network.startRelayHost / network.connectRelay / network.disconnect",
+      "snapshotDomains": ["network", "events"],
+      "directTest": "CompatibilityMatrixScenarioTest.RejectsIncompatibleClientsAndRecoversWithoutManualInput",
+      "relayTest": "RelayModChannelScenarioTest.NegotiatesDeduplicatesAndReconnectsWithoutManualInput",
+      "lateJoinTest": null,
+      "reconnectTest": "matching-profile-reconnect",
+      "authorityTest": "compatibility-rejection-matrix",
+      "faultTest": "compatibility-handshake-timeout",
+      "persistenceTest": null,
+      "productionPathTest": "real-lite-net-lib-connect-and-handshake",
+      "observerTest": null,
+      "gaps": [
+        "relay compatibility rejection parity is not independently matrixed",
+        "connection-loss and partition recovery are not covered across every handshake phase",
+        "session persistence is intentionally unsupported but lacks an explicit not-applicable contract"
+      ]
+    },
+    {
+      "featureId": "api.mod-channel",
+      "status": "partial",
+      "risk": "critical",
+      "confidence": "partial",
+      "productionEntry": "ModNetworkManager -> catalog handshake -> ModMessagePacket",
+      "fixtureCommand": "network.testModChannel",
+      "actionCommand": "network.sendTestModMessage",
+      "snapshotDomains": ["network", "events"],
+      "directTest": "CoreMultiplayerScenarioTest.ConnectMutateReconnectAndReloadIsFullyAutomated",
+      "relayTest": "RelayModChannelScenarioTest.NegotiatesDeduplicatesAndReconnectsWithoutManualInput",
+      "lateJoinTest": null,
+      "reconnectTest": "relay-mod-channel-session-cleanup-and-reconnect",
+      "authorityTest": "mod-channel-direction-and-payload-enforcement",
+      "faultTest": "mod-message-duplicate-deduplication",
+      "persistenceTest": null,
+      "productionPathTest": "registered-api-channel-real-envelope-path",
+      "observerTest": "relay-host-and-client-echo-observation",
+      "gaps": [
+        "late-joining clients do not have a dedicated channel catalog scenario",
+        "bandwidth and traffic-limit behavior lacks long-running verification",
+        "session-scoped non-persistence lacks an explicit not-applicable contract"
+      ]
+    },
+    {
+      "featureId": "player.session-lifecycle",
+      "status": "partial",
+      "risk": "critical",
+      "confidence": "partial",
+      "productionEntry": "PlayerData / SubsystemPlayers -> player add/create/known/modify/delete/entity-request packet pipeline",
+      "fixtureCommand": "world.create / world.load",
+      "actionCommand": "network.connect / network.disconnect / world.enter",
+      "snapshotDomains": ["players", "entities", "network", "events"],
+      "directTest": "CoreMultiplayerScenarioTest.ConnectMutateReconnectAndReloadIsFullyAutomated",
+      "relayTest": "RelayModChannelScenarioTest.NegotiatesDeduplicatesAndReconnectsWithoutManualInput",
+      "lateJoinTest": "multiple-v2-late-join-checkpoints",
+      "reconnectTest": "stable-player-index-reconnect-checkpoints",
+      "authorityTest": "player-session-identity-ownership",
+      "faultTest": null,
+      "persistenceTest": "player-identity-save-reload-checkpoints",
+      "productionPathTest": "real-player-create-and-entity-request-path",
+      "observerTest": "one-server-three-client-player-projections",
+      "gaps": [
+        "simultaneous join and reconnect storms are not covered",
+        "disconnect during player entity creation is not deterministically injected",
+        "duplicate-player legacy reproductions are not fully migrated to typed scenarios"
+      ]
+    },
+    {
       "featureId": "player.creative-fly",
-      "status": "planned",
+      "status": "partial",
+      "risk": "high",
+      "confidence": "partial",
       "productionEntry": "ComponentGui.TrySetCreativeFlyEnabled -> PlayerCreativeFlyPacket",
       "fixtureCommand": null,
       "actionCommand": "player.setCreativeFly",
@@ -15,11 +89,19 @@
       "authorityTest": "creative-fly-enabled-convergence",
       "faultTest": null,
       "persistenceTest": null,
-      "note": "Direct, relay, server authority and observer convergence are automated in M0; late join, reconnect and persistence remain for M1."
+      "productionPathTest": "component-gui-creative-fly-action",
+      "observerTest": "creative-fly-observer-convergence",
+      "gaps": [
+        "late join is not covered",
+        "stable-identity reconnect is not covered",
+        "duplicate/reordered delivery and save/reload semantics are not covered"
+      ]
     },
     {
       "featureId": "player.motion-look-crouch",
       "status": "covered",
+      "risk": "critical",
+      "confidence": "behavioral",
       "productionEntry": "ComponentInput -> ComponentPlayer -> PlayerBodyUpdatePacket",
       "fixtureCommand": "fixture.player.prepareMotion / fixture.player.applyMotion",
       "actionCommand": "player.move / player.look / player.setCrouch",
@@ -31,11 +113,15 @@
       "authorityTest": "move-authority-observer-convergence",
       "faultTest": "motion-action-under-network-faults",
       "persistenceTest": "motion-save-reload-semantics",
-      "note": "Typed move, look and setCrouch enter through ComponentInput and the production PlayerBodyUpdatePacket path. Direct and Relay validate ownership rejection, server/observer convergence for body quaternion plus head look angles, a third late joiner, stable actor identity on reconnect, deterministic latency/jitter/duplication/reordering, strict five-action replay, persistent position/rotation, and transient look/crouch reset across reconnect and save/reload."
+      "productionPathTest": "typed-motion-through-component-input",
+      "observerTest": "motion-authority-and-observer-convergence",
+      "gaps": []
     },
     {
       "featureId": "player.place-dig-use",
       "status": "covered",
+      "risk": "critical",
+      "confidence": "behavioral",
       "productionEntry": "ComponentInput -> ComponentPlayer -> ComponentMiner -> PlayerInteractPacket / PlayerDigPacket",
       "fixtureCommand": "fixture.player.prepareTerrainInteraction / fixture.player.applyTerrainInteraction",
       "actionCommand": "player.place / player.dig / player.use",
@@ -47,11 +133,37 @@
       "authorityTest": "dig-server-authority-observer-convergence",
       "faultTest": "terrain-action-under-network-faults",
       "persistenceTest": "terrain-save-reload-persistence",
-      "note": "Typed use, place and dig run through the production input/miner path with Direct and Relay authority/observer convergence, event correlation, server-origin rejection, unreachable-target rejection, a third late-joining client, actor reconnect, deterministic latency/jitter/duplication/reordering, and server save/reload persistence."
+      "productionPathTest": "typed-use-place-dig-through-component-miner",
+      "observerTest": "terrain-action-observer-convergence",
+      "gaps": []
+    },
+    {
+      "featureId": "player.progression-vitals",
+      "status": "planned",
+      "risk": "medium",
+      "confidence": "planned",
+      "productionEntry": "ComponentLevel / ComponentVitalStats -> experience and vital-stat packet pipeline",
+      "fixtureCommand": null,
+      "actionCommand": null,
+      "snapshotDomains": ["players", "health", "events"],
+      "directTest": null,
+      "relayTest": null,
+      "lateJoinTest": null,
+      "reconnectTest": null,
+      "authorityTest": null,
+      "faultTest": null,
+      "persistenceTest": null,
+      "gaps": [
+        "experience gain and level synchronization lack typed gameplay actions",
+        "hunger, stamina, temperature and related vital-stat convergence are not in stable L2",
+        "persistence and reconnect semantics are unverified"
+      ]
     },
     {
       "featureId": "terrain.streaming-and-revisions",
       "status": "covered",
+      "risk": "critical",
+      "confidence": "behavioral",
       "productionEntry": "TerrainUpdater.SetUpdateLocation -> TerrainViewDistancePacket -> TerrainSyncChunkListPacket / revisioned terrain change packets",
       "fixtureCommand": "fixture.terrain.prepareRegion / fixture.terrain.applyView",
       "actionCommand": "player.move / terrain.runRevisionBurst",
@@ -63,11 +175,15 @@
       "authorityTest": "terrain-streaming-authority-enforcement",
       "faultTest": "terrain-revision-stale-duplicate-reorder-convergence",
       "persistenceTest": "terrain-save-reload-revision-boundary",
-      "note": "A deterministic one-server/three-client Direct and Relay scenario proves unloaded versus loaded cells, real ComponentInput movement across TerrainUpdater's eight-block hysteresis, authoritative chunk delivery, monotonic per-chunk revisions under a stale full snapshot plus 100% duplication and 50% reordering, observer and late-join baselines, stable-identity reconnect, strict two-action replay, and persisted terrain with in-memory revision reset after world reload."
+      "productionPathTest": "real-player-movement-terrain-updater-path",
+      "observerTest": "terrain-streaming-observer-baseline",
+      "gaps": []
     },
     {
       "featureId": "entity-creature.lifecycle-physics",
       "status": "covered",
+      "risk": "critical",
+      "confidence": "behavioral",
       "productionEntry": "Project.EntityAdded/EntityRemoved -> EntityLoadPacket / EntityRemovePacket; BehaviorSyncPacket -> NetworkBodyInterpolation",
       "fixtureCommand": "fixture.entity.prepareLifecycle",
       "actionCommand": "entity.applyImpulse / entity.runLifecycleBurst",
@@ -79,11 +195,37 @@
       "authorityTest": "entity-lifecycle-authority-enforcement",
       "faultTest": "entity-stale-load-duplicate-reorder-convergence",
       "persistenceTest": "entity-save-reload-lifecycle-boundary",
-      "note": "A deterministic one-server/three-client Direct and Relay scenario creates a real Cow, applies a production ComponentBody impulse, and proves authoritative body convergence. It then reuses an entity ID across remove/add generations and injects stale loads under 100% duplication and 50% reordering, proving replacement and tombstone convergence, late join, stable-identity reconnect, save/reload persistence, strict two-action replay, and client rejection of server-only lifecycle controls."
+      "productionPathTest": "real-project-entity-and-component-body-path",
+      "observerTest": "entity-physics-observer-convergence",
+      "gaps": []
+    },
+    {
+      "featureId": "entity-creature.behavior-sound",
+      "status": "planned",
+      "risk": "medium",
+      "confidence": "planned",
+      "productionEntry": "Creature behavior components and ComponentCreatureSounds -> behavior/sound packet pipeline",
+      "fixtureCommand": null,
+      "actionCommand": null,
+      "snapshotDomains": ["entities", "events"],
+      "directTest": null,
+      "relayTest": null,
+      "lateJoinTest": null,
+      "reconnectTest": null,
+      "authorityTest": null,
+      "faultTest": null,
+      "persistenceTest": null,
+      "gaps": [
+        "behavior state transitions are only incidentally exercised",
+        "creature and bugle sound events lack typed event assertions",
+        "late join treatment for transient behaviors is undefined"
+      ]
     },
     {
       "featureId": "inventory.container-operations",
       "status": "covered",
+      "risk": "critical",
+      "confidence": "behavioral",
       "productionEntry": "ComponentInput / ComponentInventoryBase -> MoveItemPacket / ActiveSlotChangePacket / PlayerDropPacket -> revisioned InventorySyncPacket",
       "fixtureCommand": "fixture.inventory.prepare / fixture.inventory.apply",
       "actionCommand": "inventory.move / inventory.selectSlot / inventory.drop / inventory.runRevisionBurst",
@@ -95,11 +237,60 @@
       "authorityTest": "inventory-session-ownership-enforcement",
       "faultTest": "inventory-duplicate-reorder-idempotent-convergence",
       "persistenceTest": "inventory-health-save-reload-persistence",
-      "note": "A one-server/three-client Direct and Relay scenario drives real move, active-slot and drop production paths. It proves session ownership against a forged observer packet, request-ID idempotency under 100% duplication, monotonic inventory revisions under stale reordering, observer and late-join convergence, stable-identity reconnect, chest persistence, and strict replay."
+      "productionPathTest": "real-inventory-move-select-drop-path",
+      "observerTest": "inventory-observer-convergence",
+      "gaps": []
+    },
+    {
+      "featureId": "inventory.clothing-skin",
+      "status": "planned",
+      "risk": "medium",
+      "confidence": "planned",
+      "productionEntry": "ComponentClothing -> clothing synchronization and skin request/reply packet pipeline",
+      "fixtureCommand": null,
+      "actionCommand": null,
+      "snapshotDomains": ["players", "inventories", "events"],
+      "directTest": null,
+      "relayTest": null,
+      "lateJoinTest": null,
+      "reconnectTest": null,
+      "authorityTest": null,
+      "faultTest": null,
+      "persistenceTest": null,
+      "gaps": [
+        "clothing slot changes lack stable typed gameplay coverage",
+        "skin discovery and transfer lack malformed/oversized payload tests",
+        "observer, reconnect and persistence semantics are unverified"
+      ]
+    },
+    {
+      "featureId": "inventory.furnace-container",
+      "status": "partial",
+      "risk": "high",
+      "confidence": "partial",
+      "productionEntry": "ComponentFurnace / SubsystemEntityBlockBehavior -> furnace and open-container packet pipeline",
+      "fixtureCommand": "fixture.inventory.prepare",
+      "actionCommand": "inventory.move",
+      "snapshotDomains": ["inventories", "terrain", "events"],
+      "directTest": "InventoryHealthMultiplayerScenarioTest.InventoryDamageAndRespawnSurviveAllNetworkBoundaries(Direct)",
+      "relayTest": "InventoryHealthMultiplayerScenarioTest.InventoryDamageAndRespawnSurviveAllNetworkBoundaries(Relay)",
+      "lateJoinTest": "inventory-health-late-join-baseline",
+      "reconnectTest": "inventory-health-reconnect-baseline",
+      "authorityTest": "inventory-session-ownership-enforcement",
+      "faultTest": "inventory-duplicate-reorder-idempotent-convergence",
+      "persistenceTest": "inventory-health-save-reload-persistence",
+      "productionPathTest": "real-chest-container-path",
+      "observerTest": "inventory-observer-convergence",
+      "gaps": [
+        "furnace processing, fuel and result synchronization are not covered by typed L2",
+        "open-by-id and open-by-point ownership/range checks lack dedicated scenarios"
+      ]
     },
     {
       "featureId": "health-damage-respawn",
       "status": "covered",
+      "risk": "critical",
+      "confidence": "behavioral",
       "productionEntry": "ComponentInput -> PlayerHitPacket -> ComponentMiner/ComponentHealth -> InjureEventPacket/HealthSyncPacket; PlayerRestartPacket",
       "fixtureCommand": "fixture.health.prepare / fixture.health.apply / fixture.health.set",
       "actionCommand": "player.hit / player.requestRespawn / health.runRevisionBurst",
@@ -111,11 +302,15 @@
       "authorityTest": "health-server-authoritative-hit-validation / respawn-session-ownership-enforcement",
       "faultTest": "health-stale-duplicate-reorder-convergence / player-death-respawn-duplicate-idempotency",
       "persistenceTest": "inventory-health-save-reload-persistence",
-      "note": "The same deterministic scenario uses the real melee ray and server-authoritative reach check, proves forged hit geometry and observer respawn impersonation cannot mutate state, synchronizes health/damage with entity lifecycle and monotonic revisions, rejects stale rollback, kills and respawns the actor exactly once under duplicated packets, and verifies observer, late join, reconnect, save/reload and strict seven-action replay."
+      "productionPathTest": "real-melee-ray-health-and-respawn-path",
+      "observerTest": "health-death-respawn-observer-convergence",
+      "gaps": []
     },
     {
       "featureId": "environment.time-weather-lightning",
       "status": "covered",
+      "risk": "high",
+      "confidence": "behavioral",
       "productionEntry": "SubsystemTimeOfDay / SubsystemWeather / SubsystemSky packet pipeline",
       "fixtureCommand": "fixture.environment.set",
       "actionCommand": "environment.requestChange / environment.runRevisionBurst",
@@ -127,11 +322,15 @@
       "authorityTest": "environment-sleep-fire-production-authority",
       "faultTest": "environment-mechanics-duplicate-reorder-convergence",
       "persistenceTest": "environment-mechanics-save-reload-persistence",
-      "note": "A deterministic one-server/three-client Direct and Relay scenario drives production time, precipitation, fog and lightning requests. It proves rejection outside creative mode, same-revision authoritative healing of optimistic client time/weather state, Playing-session authority, rejection of forged authoritative state, monotonic weather revisions under stale packets plus 100% duplication and 50% reordering, observer convergence, current-state baselines for late join and stable-identity reconnect, save/reload persistence, and strict eight-action replay. Lightning is verified as a live event and is intentionally not replayed as historical state to late joiners."
+      "productionPathTest": "real-time-weather-sky-request-path",
+      "observerTest": "environment-observer-convergence",
+      "gaps": []
     },
     {
       "featureId": "mechanics.sleep-fire",
       "status": "covered",
+      "risk": "high",
+      "confidence": "behavioral",
       "productionEntry": "ComponentSleep / ComponentOnFire packet pipeline",
       "fixtureCommand": "fixture.mechanics.prepare / fixture.mechanics.setPlayerFire",
       "actionCommand": "player.sleep / player.ignite / mechanics.runRevisionBurst",
@@ -143,11 +342,15 @@
       "authorityTest": "environment-sleep-fire-production-authority",
       "faultTest": "environment-mechanics-duplicate-reorder-convergence",
       "persistenceTest": "environment-mechanics-save-reload-persistence",
-      "note": "The same Direct and Relay scenario sends production sleep and wake requests, rejects cross-player sleep impersonation and forged client fire state, synchronizes explicit ignition and extinguish state with lifecycle-aware monotonic revisions, verifies stale-packet rejection under deterministic duplication/reordering, and covers observer, late join, reconnect, save/reload and strict replay boundaries."
+      "productionPathTest": "real-component-sleep-and-on-fire-path",
+      "observerTest": "sleep-fire-observer-convergence",
+      "gaps": []
     },
     {
       "featureId": "mechanics.mount",
       "status": "covered",
+      "risk": "high",
+      "confidence": "behavioral",
       "productionEntry": "ComponentGui / ComponentRider -> ComponentMountPacket -> lifecycle-bound authoritative rider/mount relation",
       "fixtureCommand": "fixture.mechanics.prepareMount",
       "actionCommand": "player.mount / mechanics.runMountRevisionBurst / mechanics.runMountLifecycleBurst",
@@ -159,11 +362,59 @@
       "authorityTest": "mount-session-lifecycle-and-range-authority",
       "faultTest": "mount-stale-duplicate-reorder-lifecycle-convergence",
       "persistenceTest": "mount-save-reload-safe-dismount-persistence",
-      "note": "A deterministic one-server/three-client Direct and Relay scenario uses real Boat entities and the production rider path. It rejects cross-player rider impersonation, forged authoritative state, stale expected revisions, invalid lifecycle generations, occupied targets and out-of-range requests; proves both rider and mount projections converge under 100% duplication and 50% reordering; reuses a mount entity ID across generations and records explicit lifecycle rejection metrics; verifies observer, late join, rider removal, stable-identity reconnect, safe-dismount save/reload semantics, and strict seven-action replay."
+      "productionPathTest": "real-component-rider-and-boat-path",
+      "observerTest": "mount-bidirectional-observer-convergence",
+      "gaps": []
+    },
+    {
+      "featureId": "mechanics.status-effects",
+      "status": "planned",
+      "risk": "medium",
+      "confidence": "planned",
+      "productionEntry": "ComponentFlu / ComponentSickness -> status-effect packet pipeline",
+      "fixtureCommand": null,
+      "actionCommand": null,
+      "snapshotDomains": ["players", "mechanics", "events"],
+      "directTest": null,
+      "relayTest": null,
+      "lateJoinTest": null,
+      "reconnectTest": null,
+      "authorityTest": null,
+      "faultTest": null,
+      "persistenceTest": null,
+      "gaps": [
+        "flu, sneeze, nausea and sickness transitions lack typed actions and snapshots",
+        "transient effects are not correlated through the event journal",
+        "late join, reconnect and persistence behavior is unverified"
+      ]
+    },
+    {
+      "featureId": "mechanics.explosion-world-fire",
+      "status": "planned",
+      "risk": "high",
+      "confidence": "planned",
+      "productionEntry": "SubsystemExplosions / SubsystemFireBlockBehavior / SubsystemParticles packet pipeline",
+      "fixtureCommand": null,
+      "actionCommand": null,
+      "snapshotDomains": ["terrain", "entities", "events"],
+      "directTest": null,
+      "relayTest": null,
+      "lateJoinTest": null,
+      "reconnectTest": null,
+      "authorityTest": null,
+      "faultTest": null,
+      "persistenceTest": null,
+      "gaps": [
+        "explosion terrain damage and sound event correlation are not in stable L2",
+        "world fire spread/add/remove synchronization lacks revisioned lifecycle coverage",
+        "fault and persistence semantics are unverified"
+      ]
     },
     {
       "featureId": "logic.electricity-and-moving-blocks",
       "status": "covered",
+      "risk": "high",
+      "confidence": "behavioral",
       "productionEntry": "SubsystemElectricity / editable logic packets / PlayerInteractPacket / SubsystemMovingBlocks",
       "fixtureCommand": "fixture.logic.prepare / fixture.logic.apply / fixture.terrain.applyView",
       "actionCommand": "logic.edit / logic.interact / logic.runRevisionBurst / logic.runMovingBlockLifecycleBurst / logic.runPistonLifecycle",
@@ -175,22 +426,31 @@
       "authorityTest": "logic-control-authority-enforcement / logic-session-range-and-sender-authority",
       "faultTest": "logic-stale-duplicate-reorder-lifecycle-convergence",
       "persistenceTest": "logic-save-reload-persistence",
-      "note": "A deterministic one-server/three-client Direct and Relay scenario drives authoritative edits for adjustable delay gates, batteries, buttons, switches, pistons, memory banks, truth tables, signs and dispensers, plus real switch interaction, electricity revisions and moving-block/piston lifecycles. It rejects server-only controls, cross-player impersonation, out-of-range requests, forged state and stale expected revisions; proves request-ID idempotency, monotonic revisions, generations and tombstones under 100% duplication and 50% reordering; keeps same-ID untagged moving sets distinct through wire-stable instance IDs; reconciles preloaded moving sets and replays a hard-bounded deferred editable baseline after terrain streaming; and verifies observer, late join, stable-identity reconnect, save/reload persistence and strict seventeen-action replay."
+      "productionPathTest": "real-edit-interact-electricity-and-moving-block-path",
+      "observerTest": "logic-electricity-moving-observer-convergence",
+      "gaps": []
     },
     {
       "featureId": "pickable-projectile.lifecycle",
-      "status": "planned",
-      "productionEntry": "SubsystemPickables / SubsystemProjectiles packet pipeline",
-      "fixtureCommand": "fixture.pickable.spawn / fixture.player.prepareWeapon",
-      "actionCommand": "player.pick / player.drop / player.fire",
-      "snapshotDomains": ["pickables", "projectiles", "events"],
-      "directTest": null,
-      "relayTest": null,
-      "lateJoinTest": null,
-      "reconnectTest": null,
-      "authorityTest": null,
-      "faultTest": null,
-      "persistenceTest": null
+      "status": "covered",
+      "risk": "high",
+      "confidence": "mutation",
+      "productionEntry": "SubsystemPickables -> revisioned Pickable packets / ComponentInput -> ComponentPlayer -> PlayerAimPacket -> SubsystemCrossbowBlockBehavior.OnAim -> ProjectilePacket",
+      "fixtureCommand": "fixture.pickable.prepareLifecycle / fixture.pickable.applyLifecycle",
+      "actionCommand": "pickable.attract / player.fireProjectile / pickable.runLifecycleBurst",
+      "snapshotDomains": ["pickables", "projectiles", "network", "events"],
+      "directTest": "PickableProjectileMultiplayerScenarioTest.PickablesAndProjectilesSurviveAllNetworkBoundaries(Direct)",
+      "relayTest": "PickableProjectileMultiplayerScenarioTest.PickablesAndProjectilesSurviveAllNetworkBoundaries(Relay)",
+      "lateJoinTest": "pickable-projectile-late-join-baseline",
+      "reconnectTest": "pickable-projectile-reconnect-baseline",
+      "authorityTest": "pickable-projectile-authority-enforcement",
+      "faultTest": "projectile-production-input-and-deduplication / pickable-stale-create-resurrection-sentry",
+      "persistenceTest": "pickable-save-reload-and-projectile-transience",
+      "productionPathTest": "pickable-attraction-production-convergence / projectile-production-input-and-deduplication",
+      "observerTest": "pickable-live-create-convergence / projectile-production-input-and-deduplication",
+      "mutationTest": "pickable-stale-create-resurrection-sentry",
+      "soakTest": "MultiplayerSoakRunner pickable-projectile-multiplayer replayable schedule",
+      "gaps": []
     }
   ]
 }

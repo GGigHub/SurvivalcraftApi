@@ -1,5 +1,7 @@
 using Engine;
 
+using GameEntitySystem;
+
 namespace Game.Network;
 
 public class ProjectilePacket : Packet {
@@ -20,6 +22,7 @@ public class ProjectilePacket : Packet {
     public Vector3 m_trailOfffset;
     public int m_ownerId;
     public bool m_isFireProjectile;
+    public long m_eventId;
 
     public ProjectilePacket() {
     }
@@ -32,6 +35,10 @@ public class ProjectilePacket : Packet {
         m_angularVelocity = projectile.AngularVelocity;
         m_ownerId = projectile.Owner == null ? 0 : projectile.Owner.Entity.Id;
         m_isFireProjectile = isFireProjectile;
+        m_eventId = projectile.NetworkEventId > 0
+            ? projectile.NetworkEventId
+            : ProjectileEventTracker.NextAuthoritativeEventId(GameManager.Project);
+        projectile.NetworkEventId = m_eventId;
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -42,13 +49,18 @@ public class ProjectilePacket : Packet {
         archive.Value(ref m_angularVelocity);
         archive.Value(ref m_ownerId);
         archive.Value(ref m_isFireProjectile);
+        archive.Value(ref m_eventId);
     }
 
     public override void Handle(bool isServer) {
-        if (isServer) {
+        if (isServer || m_eventId <= 0) {
             return;
         }
-        var subsystem = GameManager.Project.FindSubsystem<SubsystemProjectiles>();
+        Project project = GameManager.Project;
+        if (!ProjectileEventTracker.TryAccept(project, m_eventId)) {
+            return;
+        }
+        var subsystem = project.FindSubsystem<SubsystemProjectiles>();
         ComponentCreature creature = null;
         if (m_ownerId != 0) {
             GameManager.Project.FindEntity(m_ownerId, entity => {
@@ -60,6 +72,7 @@ public class ProjectilePacket : Packet {
             : subsystem.AddProjectile(m_value, m_position, m_velocity, m_angularVelocity, creature, true);
         if (projectile != null) {
             projectile.TrailOffset = m_trailOfffset;
+            projectile.NetworkEventId = m_eventId;
         }
     }
 }

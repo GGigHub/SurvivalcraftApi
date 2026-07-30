@@ -1,7 +1,7 @@
 namespace Survivalcraft.Testing.Control;
 
 public static class AutomationProtocol {
-    public const int CurrentApiVersion = 6;
+    public const int CurrentApiVersion = 8;
     public const int CurrentSnapshotSchemaVersion = 2;
     public const int MaximumSnapshotEntities = 2048;
     public const int MaximumSnapshotTerrainCells = 4096;
@@ -21,6 +21,8 @@ public enum AutomationCommandDomain {
     Player,
     Terrain,
     Entity,
+    Pickable,
+    Projectile,
     Inventory,
     Health,
     Environment,
@@ -147,6 +149,8 @@ public sealed record ActionReceipt(
     long QueuedTick,
     int ActorPlayerIndex,
     string Code,
-    string? Detail = null);
+    string? Detail = null,
+    ActionProvenance Provenance = ActionProvenance.Unknown,
+    string? ProductionEntry = null);
 
 public sealed record SetCreativeFlyCommand(bool Enabled, int? PlayerIndex = null);

@@ -6,11 +6,16 @@ public class PickableCreateListPacket : Packet {
     public override byte ID => (byte)PacketType.PickableCreateList;
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public List<Pickable> m_pickables = [];
+    public List<PickableLifecycleStamp> m_lifecycleStamps = [];
 
     public PickableCreateListPacket() { }
 
-    public PickableCreateListPacket(IEnumerable<Pickable> pickables) {
+    public PickableCreateListPacket(
+        IEnumerable<Pickable> pickables,
+        IEnumerable<PickableLifecycleStamp> lifecycleStamps = null) {
         m_pickables = [.. pickables];
+        m_lifecycleStamps = lifecycleStamps?.ToList()
+            ?? PickablePacketHelpers.CreateLifecycleStamps(m_pickables);
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -20,6 +25,7 @@ public class PickableCreateListPacket : Packet {
         else {
             PickablePacketHelpers.WriteList(archive, m_pickables, PickablePacketHelpers.SerializeFullPickable);
         }
+        PickablePacketHelpers.SerializeLifecycleStamps(archive, ref m_lifecycleStamps);
     }
 
     public override void Handle(bool isServer) {
@@ -27,8 +33,12 @@ public class PickableCreateListPacket : Packet {
             return;
         }
         SubsystemPickables subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>();
+        IReadOnlyDictionary<int, long> revisions =
+            PickablePacketHelpers.BuildLifecycleMap(m_lifecycleStamps);
         foreach (Pickable pickable in m_pickables) {
-            PickablePacketHelpers.UpsertPickable(subsystemPickables, pickable);
+            if (revisions.TryGetValue(pickable.Id, out long revision)) {
+                PickablePacketHelpers.TryApplyCreate(subsystemPickables, pickable, revision);
+            }
         }
     }
 }

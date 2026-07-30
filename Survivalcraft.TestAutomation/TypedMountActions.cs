@@ -78,7 +78,7 @@ public partial class TestAutomationModLoader {
         project.AddEntity(mountEntity);
         mountFixtureAliases.Add(command.Alias, mountEntity.Id);
 
-        NetworkManager.Queue(ComponentMountPacket.CreateState(
+        QueueFixtureSynchronization(ComponentMountPacket.CreateState(
             rider,
             rider.AuthoritativeMount));
         return CreateMountFixture(
@@ -151,7 +151,12 @@ public partial class TestAutomationModLoader {
                 : new ComponentMountPacket(rider, isRequest: true);
             packet.m_riderEntityId = riderEntityId;
         }
-        NetworkManager.Queue(packet);
+        if (command.ExpectRejected) {
+            QueueFaultInjection(packet);
+        }
+        else {
+            QueueProductionRequest(packet);
+        }
         RecordMountAction(
             context.RequestId,
             command.Mount,
@@ -165,7 +170,11 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             command.PlayerIndex,
-            command.ExpectRejected ? "rejection_probe_queued" : "queued");
+            command.ExpectRejected ? "rejection_probe_queued" : "queued",
+            Provenance: command.ExpectRejected
+                ? ActionProvenance.FaultInjection
+                : ActionProvenance.ProductionRequest,
+            ProductionEntry: ProductionPathEntries.MountState);
     }
 
     private MountRevisionBurstResult RunMountRevisionBurst(
@@ -195,7 +204,7 @@ public partial class TestAutomationModLoader {
             rider,
             command.FinalMounted ? mount : null);
         if (command.SendStaleState) {
-            NetworkManager.Queue(stale);
+            QueueFaultInjectionAfterSettle(stale);
         }
         RecordMountAction(
             context.RequestId,
@@ -210,7 +219,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleState ? "stale_state_queued" : "applied");
+            command.SendStaleState ? "stale_state_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.MountState);
         return new MountRevisionBurstResult(
             receipt,
             command.RiderEntityId,
@@ -264,7 +275,7 @@ public partial class TestAutomationModLoader {
                 project,
                 NetworkStateRevisionDomain.Mount,
                 rider.Entity.Id);
-            NetworkManager.Queue(ComponentMountPacket.CreateState(
+            QueueAuthoritativeState(ComponentMountPacket.CreateState(
                 rider,
                 null,
                 authoritativeMountRevision));
@@ -285,9 +296,9 @@ public partial class TestAutomationModLoader {
             int staleDeliveryFrame = checked(Time.FrameIndex + 30);
             Time.QueueFrameIndexDelayedExecution(
                 staleDeliveryFrame,
-                () => NetworkManager.Queue(staleLifecycleState));
+                () => QueueFaultInjection(staleLifecycleState));
         }
-        NetworkManager.Queue(ComponentMountPacket.CreateState(
+        QueueAuthoritativeState(ComponentMountPacket.CreateState(
             rider,
             null,
             authoritativeMountRevision));
@@ -313,7 +324,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleState ? "stale_lifecycle_state_queued" : "applied");
+            command.SendStaleState ? "stale_lifecycle_state_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.MountState);
         return new MountLifecycleBurstResult(
             receipt,
             fixture,
@@ -360,7 +373,7 @@ public partial class TestAutomationModLoader {
             project,
             NetworkStateRevisionDomain.Mount,
             rider.Entity.Id);
-        NetworkManager.Queue(ComponentMountPacket.CreateState(rider, mount, revision));
+        QueueAuthoritativeState(ComponentMountPacket.CreateState(rider, mount, revision));
         return revision;
     }
 
@@ -373,7 +386,7 @@ public partial class TestAutomationModLoader {
             project,
             NetworkStateRevisionDomain.Mount,
             rider.Entity.Id);
-        NetworkManager.Queue(ComponentMountPacket.CreateState(rider, null, revision));
+        QueueFixtureSynchronization(ComponentMountPacket.CreateState(rider, null, revision));
     }
 
     private static MountFixture CreateMountFixture(
@@ -407,6 +420,7 @@ public partial class TestAutomationModLoader {
         int riderEntityId,
         int mountEntityId,
         string code) {
+        ActionProvenance provenance = MountEvidence(code);
         actionEventJournal.Record(
             Time.FrameIndex,
             actionId,
@@ -420,6 +434,23 @@ public partial class TestAutomationModLoader {
             new Dictionary<string, string> {
                 ["riderEntityId"] = riderEntityId.ToString(CultureInfo.InvariantCulture),
                 ["mountEntityId"] = mountEntityId.ToString(CultureInfo.InvariantCulture)
-            });
+            },
+            provenance: provenance,
+            productionEntry: ProductionPathEntries.MountState);
+    }
+
+    private static ActionProvenance MountEvidence(string code) {
+        string[] faultMarkers = [
+            "forged_",
+            "rejection_probe",
+            "revision_burst",
+            "stale_",
+            "final_state_",
+            "lifecycle_burst",
+            "replacement_"
+        ];
+        return faultMarkers.Any(marker => code.Contains(marker, StringComparison.Ordinal))
+            ? ActionProvenance.FaultInjection
+            : ActionProvenance.ProductionRequest;
     }
 }

@@ -36,6 +36,10 @@ namespace Survivalcraft.TestAutomation {
 
         public static int HeldAimRayEndFrame { get; private set; } = -1;
 
+        public static int AimInjectionCount { get; private set; }
+
+        public static int LastAimInjectionFrame { get; private set; } = -1;
+
         public static bool QueuedDrop { get; private set; }
 
         public static void SetMouseMovement(Point2 movement) {
@@ -77,6 +81,13 @@ namespace Survivalcraft.TestAutomation {
         public static void HoldAimRay(Ray3 ray, int frameCount) {
             HeldAimRay = ray;
             HeldAimRayEndFrame = Time.FrameIndex + Math.Max(1, frameCount);
+            AimInjectionCount = 0;
+            LastAimInjectionFrame = -1;
+        }
+
+        public static void RecordAimInjection() {
+            AimInjectionCount++;
+            LastAimInjectionFrame = Time.FrameIndex;
         }
 
         public static void QueueDrop() {
@@ -94,6 +105,8 @@ namespace Survivalcraft.TestAutomation {
             CancelDigRay();
             HeldAimRay = null;
             HeldAimRayEndFrame = -1;
+            AimInjectionCount = 0;
+            LastAimInjectionFrame = -1;
             QueuedDrop = false;
         }
 
@@ -261,6 +274,7 @@ namespace Survivalcraft.TestAutomation {
             }
             if (InputHijackState.TryGetHeldAimRay(out Ray3 aimRay)) {
                 __instance.m_playerInput.Aim = aimRay;
+                InputHijackState.RecordAimInjection();
             }
             if (InputHijackState.TryConsumeDrop()) {
                 __instance.m_playerInput.Drop = true;

@@ -78,6 +78,11 @@ public class StatePacket : ClientPacketBase {
                         logicPacket.To = From;
                         NetworkManager.Queue(logicPacket);
                     }
+                    SubsystemPickables pickables =
+                        GameManager.Project.FindSubsystem<SubsystemPickables>(true);
+                    NetworkManager.Queue(new PickableSyncListPacket(pickables.Pickables) {
+                        To = From
+                    });
                     long timeRevision = NetworkStateRevisionTracker.GetAuthoritativeRevision(
                         GameManager.Project,
                         NetworkStateRevisionDomain.Time,
@@ -126,6 +131,13 @@ public class StatePacket : ClientPacketBase {
                         ComponentDamage damage = entity.FindComponent<ComponentDamage>();
                         if (damage != null && entity.Id > 0) {
                             NetworkManager.Queue(new DamageSyncPacket(damage) { To = From });
+                        }
+                        ComponentVitalStats vitalStats =
+                            entity.FindComponent<ComponentVitalStats>();
+                        if (vitalStats != null && entity.Id > 0) {
+                            NetworkManager.Queue(new VitalStatSyncPacket(vitalStats) {
+                                To = From
+                            });
                         }
                         ComponentSleep sleep = entity.FindComponent<ComponentSleep>();
                         if (sleep != null && entity.Id > 0) {

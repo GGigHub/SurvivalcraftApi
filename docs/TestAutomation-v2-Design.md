@@ -9,7 +9,7 @@
 TestAutomation v2 不重写现有测试框架，而是在已经稳定的命名管道控制面、无界面进程模型和场景产物之上增加完整的领域驱动能力。设计采用以下决定：
 
 1. 保持长度前缀 JSON 的 wire protocol v1，不因增加命令或快照字段破坏现有 TestHost 与运行时配对。
-2. 单独引入可演进的 Automation API（当前为 v4）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
+2. 单独引入可演进的 Automation API（当前为 v8）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
 3. 保留所有现有 v1 命令和 `state.getSnapshot`，以新增命令的方式演进，不修改旧 DTO 的含义。
 4. 明确区分 `fixture.*` 布置命令和玩家动作命令。前者用于构造确定性前置条件；后者必须经过真实客户端玩法路径，不能直接伪造最终状态或网络包。
 5. 新稳定场景不得使用 `legacy.executeScript`、`FUNC`、`EXEC` 或 UI 点击来验证非 UI 玩法。
@@ -308,7 +308,7 @@ DTO、选择器、命令元数据、规范化、比较规则、覆盖清单和�
 
 ### L3
 
-定时运行的长时间自动测试：随机但可回放的动作序列、网络矩阵、30 至 60 分钟 soak、资源增长和进程泄漏检查。不作为每次提交的快速门禁。
+定时运行的长时间自动测试：使用稳定 PRNG 预生成并持久化场景、场景种子与故障 profile，逐轮执行真实无窗口进程，并检查工作集、私有内存、句柄、线程、CPU、采样完整性和玩法收敛。完整九场景轮转进入每周计划门禁；增加 iterations 可形成 30 至 60 分钟或更长的 soak，不作为每次提交的快速门禁。
 
 真实网络阶段不得通过暂停所有节点实现伪 lockstep，否则 LiteNetLib 轮询和超时会失真。需要逐 tick 精确性的规则放在 L1，L2 验证真实传输下在截止时间内收敛。
 
@@ -464,7 +464,7 @@ Survivalcraft.TestAutomation/
 
 已实现并进入自动门禁的内容：
 
-- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 扩展后当前为 v4；
+- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 领域后当前为 v8；
 - 现有控制命令由注册式 `TypedCommandRouter` 统一分派，重复命令名在初始化阶段失败；
 - 新增有界 `ActionEventJournal`、`state.getEvents` 和 `state.resetEvents`；
 - 新增 Node、Network、Players、Events 投影的 Snapshot v2、稳定排序和玩家领域容差比较；
@@ -602,4 +602,35 @@ Survivalcraft.TestAutomation/
 - 一服三客 Direct/Relay 场景验证控制命令角色拒绝、跨玩家冒用、超距请求、伪造 state、旧 expected revision、九类编辑、真实开关交互幂等、观察者收敛、100% 复制与 50% 重排下的旧 revision/旧 generation 拒绝、两个同 ID 无标签移动集合并存、真实活塞生命周期、late join、稳定身份重连和保存重载；
 - `actions.json` 严格包含四个安全探针、九类编辑、开关交互、logic revision burst、moving-block lifecycle burst 和 piston lifecycle 共十七个动作。Direct 与 Relay 的原运行和严格回放均真实无窗口通过；PowerShell 的 `logic-direct`、`logic-relay`、`logic` 入口与 `full` 门禁已经接入。
 
-`logic.electricity-and-moving-blocks` 现已标记为 `covered`。下一条尚未覆盖的核心主线是 `pickable-projectile.lifecycle`。
+`logic.electricity-and-moving-blocks` 现已标记为 `covered`。随后进入 `pickable-projectile.lifecycle`，并继续复用生产路径证明、revision、墓碑和严格回放契约。
+
+## 30. M5 自动测试可信度实施记录
+
+本切片不新增玩法捷径，而是为全部强类型玩法建立不能虚高的共同证据层：
+
+- Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 104 个 hook 和 108 个 packet class。
+- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v8。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
+- `ProductionPathGateway` 成为测试模组唯一的直接 packet queue 边界，源码哨兵同时禁止私有旁路；fixture synchronization、production request、authoritative state 与 fault injection 四类路径被明确区分。
+- revision/lifecycle 旧状态注入在最终权威包稳定 30 个游戏帧后再交付，消除故障重排导致“旧包先到”的非确定性假阴性。
+- 每个游戏节点从控制通道 ready 起每 250 ms 采样工作集、私有内存、句柄、线程与 CPU。所有九个 v2 场景在 dispose 前把资源摘要写入 metrics；L3 对无样本、峰值、增长量和故障待发队列实行硬预算。Snapshot v2 还记录按 packet class 聚合的排队次数、故障传输次数和字节数，soak 失败会指出最高流量包型，避免只得到一个不可诊断的队列数字。
+- `MultiplayerSoakSchedule` 对九个完整玩法场景生成可序列化的故障轮转，默认随机化 latency、jitter、reorder delay/rate 与 bandwidth 并始终触发 duplicate/reorder 哨兵；可选 loss 模式加入确定性的 1–3% 丢包。
+- `MultiplayerSoakRunner` 在执行前保存 schedule，在每轮后原子更新 summary，允许失败后继续收集证据或 fail fast。任一玩法断言、生产路径证明或资源预算失败都会使最终退出码非零。
+- 第一次完整九场景精确回放真实暴露了三类问题：游戏帧远快于墙钟时的观察截止条件、带宽调度错误施加的每包 1 ms 下限，以及生产 `VitalStatSyncPacket` 每帧广播造成的流量风暴。包型证据显示逻辑场景曾排队 118296 个生命值包、形成 473184 次故障传输，服务端待发队列峰值 196826；生产修复改为 5 Hz 同步并加入 lifecycle/revision 防重排后，同一故障配置分别降为 45、180 和 14。库存场景的待发峰值也从 13709 降到 49，默认 10000 包硬门槛未被放宽。
+- 修复后，原九场景 schedule 在一服三客无窗口拓扑精确重放 9/9 通过，原计划与重放 `fault-schedule.json` 的 SHA-256 均为 `03F025CDE1CE972B33F489B39C49C944879C01CC45D974E55C093E7CA598B555`；计划任务每周运行完整轮转并保留 30 天产物。TestHost 同时允许用 `--fault-seed`、latency、jitter、loss、duplication、reorder、reorder delay 和 bandwidth 参数逐项复现单一 profile，不再只把这些选项显示在帮助文本里。
+- 未分层 legacy 套件不再以一个会漂移的失败总数判断。版本化 `legacy-known-failures.json` 将每个允许失败绑定到 coverage feature、迁移原因和 Direct/Relay 替代证据；只有明确未覆盖的 UI 行为可以标为 `coverage-gap`。139 项仍全部执行，新增失败、测试改名/漏跑或未完成会阻断，已知失败和偶发恢复则分别写入 observed/resolved。M5 终审为 121 passed、18 known failed、0 unexpected、0 missing、2 resolved。
+
+这使自动测试更接近真实验收，但不宣称替代尚未覆盖的玩法。coverage trust 报告会持续列出 partial/planned 域，下一条开发主线仍应按风险清单补齐生产场景。
+
+## 31. 掉落物与投射物生命周期完整覆盖实施记录
+
+本切片把可持久掉落物、吸引移动、真实弩箭输入和瞬态投射物事件放入同一条可回放生产链，并把 Automation API 提升到 v8：
+
+- Pickable create/update/delete/sync/attract 包携带按 `PickableId` 单调递增的 revision。客户端维护存在窗口和墓碑，拒绝旧 create、旧 update 与重复 delete；ID 被生产系统合法复用时，只有更高 revision 的新生命周期可以重新出现。
+- Projectile 事件携带服务端生成的 64 位 event ID，客户端使用有界窗口去重，因此应用层 100% 复制不会生成第二支观察端投射物；late join、重连和 Project 重载不重放历史瞬态事件。
+- `player.fireProjectile` 不直接排 `PlayerAimPacket` 或 `ProjectilePacket`。适配器只向 `ComponentInput` 提供 Aim，在 headless 下补做生产 ViewWidget 布局和相机矩阵准备，再由 `ComponentPlayer -> PlayerAimPacket -> SubsystemCrossbowBlockBehavior.OnAim` 完成真实发射。只有明确的 `AimEvent.Complete` 才记录 `applied`；仅观察到输入会在截止帧 fail closed。
+- 强类型命令新增 `fixture.pickable.prepareLifecycle`、`fixture.pickable.applyLifecycle`、`pickable.attract`、`player.fireProjectile` 和 `pickable.runLifecycleBurst`；Snapshot v2 新增 pickables、projectiles、生命周期窗口、事件去重与陈旧包计数。
+- 一服三客 Direct/Relay 场景验证控制角色拒绝、实时 create 收敛、服务端吸引、真实客户端发射、观察者事件恰好一次、100% 复制与 50% 重排、陈旧 create 墓碑哨兵、late join、稳定身份重连、保存重载和投射物瞬态边界。
+- 场景允许已释放的 Pickable ID 被更高 revision 的新对象合法复用。随机 L3 首次暴露了箭矢落地后复用墓碑 ID 的测试假阴性；修正后同一持久化 schedule 原样重放通过，证明断言区分“旧生命周期复活”和“新生命周期复用”。
+- `actions.json` 严格包含 server attraction、client-a 真实 Aim 发射、server stale-create lifecycle burst 三个动作。Direct 与 Relay 的原运行和独立 replay 均真实无窗口通过；PowerShell、xUnit L2、九场景 soak 轮转和每周 CI 已接入。
+
+`pickable-projectile.lifecycle` 现已标记为 `covered`，置信级别保守标为 `mutation`：它具备陈旧创建复活哨兵并已进入 L3，但尚不把单轮随机样本夸大为长期 soak 或人工 reality 证据。覆盖契约当前为 21 个 feature：11 个 `covered`、5 个 `partial`、5 个 `planned`。

@@ -1,6 +1,13 @@
 ﻿using Engine;
 
+using GameEntitySystem;
+
 namespace Game.Network;
+
+public struct PickableLifecycleStamp {
+    public int PickableId;
+    public long Revision;
+}
 
 public static class PickablePacketHelpers {
     public static void SerializeFullPickable(PacketSerializer archive, Pickable pickable) {
@@ -70,6 +77,147 @@ public static class PickablePacketHelpers {
             pickables.Add(pickable);
         }
         return pickables;
+    }
+
+    public static List<PickableLifecycleStamp> CreateLifecycleStamps(
+        IEnumerable<Pickable> pickables) {
+        Project project = GameManager.Project
+            ?? throw new InvalidOperationException("Cannot stamp pickables without a loaded project.");
+        return pickables
+            .Where(pickable => pickable.Id > 0)
+            .Select(pickable => new PickableLifecycleStamp {
+                PickableId = pickable.Id,
+                Revision = PickableLifecycleTracker.GetAuthoritativeRevision(project, pickable.Id)
+            })
+            .ToList();
+    }
+
+    public static void SerializeLifecycleStamps(
+        PacketSerializer archive,
+        ref List<PickableLifecycleStamp> stamps) {
+        int count = archive.IsWriting ? stamps.Count : 0;
+        archive.Value(ref count);
+        if (count is < 0 or > 65_536) {
+            throw new InvalidDataException($"Invalid pickable lifecycle stamp count {count}.");
+        }
+        if (archive.IsReading) {
+            stamps = new List<PickableLifecycleStamp>(count);
+            for (int index = 0; index < count; index++) {
+                PickableLifecycleStamp stamp = new();
+                archive.Value(ref stamp.PickableId);
+                archive.Value(ref stamp.Revision);
+                stamps.Add(stamp);
+            }
+        }
+        else {
+            foreach (PickableLifecycleStamp source in stamps) {
+                PickableLifecycleStamp stamp = source;
+                archive.Value(ref stamp.PickableId);
+                archive.Value(ref stamp.Revision);
+            }
+        }
+    }
+
+    public static IReadOnlyDictionary<int, long> BuildLifecycleMap(
+        IEnumerable<PickableLifecycleStamp> stamps) {
+        Dictionary<int, long> result = [];
+        foreach (PickableLifecycleStamp stamp in stamps) {
+            if (stamp.PickableId > 0 && stamp.Revision >= 0) {
+                result.TryAdd(stamp.PickableId, stamp.Revision);
+            }
+        }
+        return result;
+    }
+
+    public static bool TryApplyCreate(
+        SubsystemPickables subsystemPickables,
+        Pickable source,
+        long revision) {
+        if (source.Id <= 0 || revision < 0) {
+            return false;
+        }
+        Project project = GameManager.Project;
+        bool exists = subsystemPickables.Pickables.Any(pickable => pickable.Id == source.Id);
+        PickableLifecycleDecision decision = PickableLifecycleTracker.ReceiveCreate(
+            project,
+            source.Id,
+            revision,
+            forceRefresh: !exists);
+        if (!decision.Apply) {
+            return false;
+        }
+        UpsertPickable(subsystemPickables, source);
+        return true;
+    }
+
+    public static bool TryApplyUpdate(
+        SubsystemPickables subsystemPickables,
+        Pickable source,
+        long revision) {
+        if (source.Id <= 0 || revision < 0) {
+            return false;
+        }
+        bool found = subsystemPickables.PickableAction(source.Id, current => {
+            PickableLifecycleDecision decision = PickableLifecycleTracker.ReceiveUpdate(
+                GameManager.Project,
+                source.Id,
+                revision);
+            if (decision.Apply) {
+                current.Position = source.Position;
+                current.FlyToPosition = source.FlyToPosition;
+            }
+        }, requestSync: false);
+        if (!found && NetworkManager.IsClientRunning) {
+            PickableLifecycleTracker.RecordMissingUpdateRequest(GameManager.Project);
+            NetworkManager.Queue(new PickableRequestSyncPacket(source.Id));
+        }
+        return found;
+    }
+
+    public static bool TryApplyFlyToPosition(
+        SubsystemPickables subsystemPickables,
+        int pickableId,
+        Vector3? flyToPosition,
+        long revision) {
+        if (pickableId <= 0 || revision < 0) {
+            return false;
+        }
+        bool found = subsystemPickables.PickableAction(pickableId, current => {
+            PickableLifecycleDecision decision = PickableLifecycleTracker.ReceiveUpdate(
+                GameManager.Project,
+                pickableId,
+                revision);
+            if (decision.Apply) {
+                current.FlyToPosition = flyToPosition;
+            }
+        }, requestSync: false);
+        if (!found && NetworkManager.IsClientRunning) {
+            PickableLifecycleTracker.RecordMissingUpdateRequest(GameManager.Project);
+            NetworkManager.Queue(new PickableRequestSyncPacket(pickableId));
+        }
+        return found;
+    }
+
+    public static bool TryApplyRemoval(
+        SubsystemPickables subsystemPickables,
+        int pickableId,
+        long revision,
+        bool playSound) {
+        if (pickableId <= 0 || revision < 0) {
+            return false;
+        }
+        Project project = GameManager.Project;
+        bool exists = subsystemPickables.Pickables.Any(pickable => pickable.Id == pickableId);
+        PickableLifecycleDecision decision = PickableLifecycleTracker.ReceiveRemoval(
+            project,
+            pickableId,
+            revision,
+            forceRefresh: exists && !PickableLifecycleTracker.IsPresent(project, pickableId));
+        if (!decision.Apply) {
+            return false;
+        }
+        RemovePickable(subsystemPickables, pickableId, playSound);
+        return true;
     }
 
     public static void UpsertPickable(SubsystemPickables subsystemPickables, Pickable source) {

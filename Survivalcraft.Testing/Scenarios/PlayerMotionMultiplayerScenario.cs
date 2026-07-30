@@ -739,6 +739,7 @@ public sealed class PlayerMotionMultiplayerScenario {
             if (cluster != null) {
                 await CaptureFailureEvidenceAsync(cluster, snapshots, events).ConfigureAwait(false);
                 foreach (GameNodeProcess node in MultiplayerGameplayBootstrap.AllNodes(cluster)) {
+                    ScenarioResourceMetrics.Capture(metrics, node);
                     logs[node.Role] = node.Logs.ToArray();
                 }
                 if (cluster.Relay != null) {

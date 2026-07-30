@@ -24,6 +24,8 @@ public sealed class GameNodeProcess : IAsyncDisposable {
     private readonly UdpClient logServer;
     private readonly Task logReceiveTask;
     private readonly NamedPipeControlClient controlClient;
+    private Task resourceMonitorTask = Task.CompletedTask;
+    private ProcessResourceMonitor? resourceMonitor;
     private Process? process;
     private string? fatalLogLine;
     private bool disposed;
@@ -60,6 +62,8 @@ public sealed class GameNodeProcess : IAsyncDisposable {
     public bool IsRunning => process is { HasExited: false };
     public IReadOnlyList<string> Logs => logs.ToArray();
     public string? FatalLogLine => Volatile.Read(ref fatalLogLine);
+    public ProcessResourceSummary ResourceSummary =>
+        resourceMonitor?.Summary ?? ProcessResourceSummary.Empty;
 
     public async Task StartAsync(CancellationToken cancellationToken = default) {
         ObjectDisposedException.ThrowIf(disposed, this);
@@ -108,6 +112,11 @@ public sealed class GameNodeProcess : IAsyncDisposable {
                 ControlCommandNames.Ping,
                 new PingCommand("startup"),
                 cancellationToken: cancellationToken).ConfigureAwait(false);
+            resourceMonitor = new ProcessResourceMonitor(process);
+            _ = resourceMonitor.Capture();
+            resourceMonitorTask = Task.Run(
+                () => resourceMonitor.RunAsync(disposeSource.Token),
+                CancellationToken.None);
         }
         catch (Exception exception) {
             TryKillProcess();
@@ -206,6 +215,9 @@ public sealed class GameNodeProcess : IAsyncDisposable {
         }
     }
 
+    public void CaptureResourceSample() =>
+        _ = resourceMonitor?.Capture();
+
     private async Task ReceiveLogsAsync() {
         while (!disposeSource.IsCancellationRequested) {
             try {
@@ -275,17 +287,18 @@ public sealed class GameNodeProcess : IAsyncDisposable {
             return;
         }
         disposed = true;
+        CaptureResourceSample();
+        disposeSource.Cancel();
         await controlClient.DisposeAsync().ConfigureAwait(false);
         TryKillProcess();
-        process?.Dispose();
-        disposeSource.Cancel();
         logServer.Dispose();
         try {
-            await logReceiveTask.ConfigureAwait(false);
+            await Task.WhenAll(logReceiveTask, resourceMonitorTask).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {
             // Expected during shutdown.
         }
+        process?.Dispose();
         disposeSource.Dispose();
     }
 }

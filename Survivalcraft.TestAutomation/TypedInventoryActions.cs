@@ -9,6 +9,8 @@ using Survivalcraft.Testing.Snapshots;
 namespace Survivalcraft.TestAutomation;
 
 public partial class TestAutomationModLoader {
+    private const int InventoryNetworkObservationDeadlineFrames = 1200;
+
     private PendingInventoryAction? pendingInventoryAction;
 
     private enum InventoryActionKind {
@@ -87,7 +89,7 @@ public partial class TestAutomationModLoader {
             chestPoint.Y + 0.05f,
             chestPoint.Z - 2f);
         PrepareInventoryActor(actor, playerPosition);
-        NetworkManager.Queue(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
         return new InventoryFixture(
             command.PlayerIndex,
             actor.Entity.Id,
@@ -119,7 +121,7 @@ public partial class TestAutomationModLoader {
                 "The inventory fixture player entity does not match this client.");
         }
         PrepareInventoryActor(actor, ToVector(fixture.PlayerPosition));
-        NetworkManager.Queue(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
         return new ControlAck(true, $"Applied inventory fixture for player {fixture.PlayerIndex}.");
     }
 
@@ -177,13 +179,19 @@ public partial class TestAutomationModLoader {
             ActionEventPhase.Queued,
             command.PlayerIndex,
             $"{command.FromInventoryId}:{command.FromSlotIndex}->{command.ToInventoryId}:{command.ToSlotIndex}",
-            "queued");
-        NetworkManager.Queue(new MoveItemPacket(
+            command.ExpectRejected ? "queued_expected_rejection" : "queued");
+        MoveItemPacket packet = new(
             from,
             command.FromSlotIndex,
             to,
             command.ToSlotIndex,
-            command.Count));
+            command.Count);
+        if (command.ExpectRejected) {
+            QueueFaultInjection(packet);
+        }
+        else {
+            QueueProductionRequest(packet);
+        }
         if (command.ExpectRejected) {
             RecordInventoryAction(
                 context.RequestId,
@@ -206,10 +214,20 @@ public partial class TestAutomationModLoader {
                 targetCount + moved,
                 -1,
                 -1,
-                checked(Time.FrameIndex + 300));
+                checked(Time.FrameIndex + InventoryNetworkObservationDeadlineFrames));
             ScheduleInventoryActionTimeout(pendingInventoryAction);
         }
-        return new ActionReceipt(context.RequestId, true, tick, command.PlayerIndex, "queued");
+        (ActionProvenance provenance, string entry) = InventoryEvidence(
+            "move",
+            command.ExpectRejected ? "queued_expected_rejection" : "queued");
+        return new ActionReceipt(
+            context.RequestId,
+            true,
+            tick,
+            command.PlayerIndex,
+            "queued",
+            Provenance: provenance,
+            ProductionEntry: entry);
     }
 
     private ActionReceipt QueueInventorySelectSlot(
@@ -255,11 +273,18 @@ public partial class TestAutomationModLoader {
                 inventory.Project,
                 NetworkStateRevisionDomain.Inventory,
                 inventory.Id) + 1,
-            checked(Time.FrameIndex + 180));
+            checked(Time.FrameIndex + InventoryNetworkObservationDeadlineFrames));
         inventory.ActiveSlotIndex = command.SlotIndex;
         ScheduleSelectSlotObservation(pendingInventoryAction);
         ScheduleInventoryActionTimeout(pendingInventoryAction);
-        return new ActionReceipt(context.RequestId, true, tick, command.PlayerIndex, "queued");
+        return new ActionReceipt(
+            context.RequestId,
+            true,
+            tick,
+            command.PlayerIndex,
+            "queued",
+            Provenance: ActionProvenance.ProductionInput,
+            ProductionEntry: ProductionPathEntries.InventorySelectSlot);
     }
 
     private ActionReceipt QueueInventoryDrop(
@@ -301,10 +326,17 @@ public partial class TestAutomationModLoader {
             -1,
             -1,
             -1,
-            checked(Time.FrameIndex + 300));
+            checked(Time.FrameIndex + InventoryNetworkObservationDeadlineFrames));
         InputHijackState.QueueDrop();
         ScheduleInventoryActionTimeout(pendingInventoryAction);
-        return new ActionReceipt(context.RequestId, true, tick, command.PlayerIndex, "queued");
+        return new ActionReceipt(
+            context.RequestId,
+            true,
+            tick,
+            command.PlayerIndex,
+            "queued",
+            Provenance: ActionProvenance.ProductionInput,
+            ProductionEntry: ProductionPathEntries.InventoryDrop);
     }
 
     private InventoryRevisionBurstResult RunInventoryRevisionBurst(
@@ -341,7 +373,7 @@ public partial class TestAutomationModLoader {
             NetworkStateRevisionDomain.Inventory,
             inventory.Id);
         if (command.SendStaleSnapshot) {
-            NetworkManager.Queue(stale);
+            QueueFaultInjectionAfterSettle(stale);
         }
         RecordInventoryAction(
             context.RequestId,
@@ -355,7 +387,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied");
+            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.InventoryRevision);
         return new InventoryRevisionBurstResult(
             receipt,
             inventory.Id,
@@ -488,6 +522,7 @@ public partial class TestAutomationModLoader {
         int playerIndex,
         string target,
         string code) {
+        (ActionProvenance provenance, string entry) = InventoryEvidence(name, code);
         actionEventJournal.Record(
             Time.FrameIndex,
             actionId,
@@ -497,7 +532,28 @@ public partial class TestAutomationModLoader {
             phase,
             playerIndex >= 0 ? playerIndex : null,
             target,
-            code);
+            code,
+            provenance: provenance,
+            productionEntry: entry);
+    }
+
+    private static (ActionProvenance Provenance, string Entry) InventoryEvidence(
+        string name,
+        string code) {
+        if (string.Equals(name, "revisionBurst", StringComparison.Ordinal)) {
+            return (ActionProvenance.FaultInjection, ProductionPathEntries.InventoryRevision);
+        }
+        if (string.Equals(name, "selectSlot", StringComparison.OrdinalIgnoreCase)) {
+            return (ActionProvenance.ProductionInput, ProductionPathEntries.InventorySelectSlot);
+        }
+        if (string.Equals(name, "drop", StringComparison.OrdinalIgnoreCase)) {
+            return (ActionProvenance.ProductionInput, ProductionPathEntries.InventoryDrop);
+        }
+        bool fault = code.Contains("expected_rejection", StringComparison.Ordinal)
+            || code.Contains("rejection_probe", StringComparison.Ordinal);
+        return fault
+            ? (ActionProvenance.FaultInjection, ProductionPathEntries.InventoryMove)
+            : (ActionProvenance.ProductionRequest, ProductionPathEntries.InventoryMove);
     }
 
     private static void EnsureServerFixtureRole(string operation) {

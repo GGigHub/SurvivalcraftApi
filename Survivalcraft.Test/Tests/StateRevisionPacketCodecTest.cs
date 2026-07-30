@@ -159,6 +159,28 @@ public sealed class StateRevisionPacketCodecTest {
                 decoded.m_lifecycleRevision, decoded.m_revision));
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void VitalStatsPacketPreservesLifecycleAndStateRevisions() {
+        VitalStatSyncPacket decoded = RoundTrip(
+            new VitalStatSyncPacket {
+                m_entityId = 19,
+                Food = 0.25f,
+                Stamina = 0.75f,
+                Sleep = 0.5f,
+                Wetness = 0.125f,
+                Temperature = 11.5f,
+                m_lifecycleRevision = 28,
+                m_revision = 34
+            },
+            static () => new VitalStatSyncPacket());
+
+        Assert.Equal((19, 0.25f, 0.75f, 0.5f, 0.125f, 11.5f, 28L, 34L),
+            (decoded.m_entityId, decoded.Food, decoded.Stamina, decoded.Sleep,
+                decoded.Wetness, decoded.Temperature,
+                decoded.m_lifecycleRevision, decoded.m_revision));
+    }
+
     private static TPacket RoundTrip<TPacket>(
         TPacket source,
         Func<TPacket> create)

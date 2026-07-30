@@ -248,6 +248,56 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             RunEntityLifecycleBurst);
+        router.Register<PreparePickableProjectileFixtureCommand, PickableProjectileFixture>(
+            Metadata(
+                ControlCommandNames.PreparePickableProjectileFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PreparePickableProjectileFixture(command));
+        router.Register<ApplyPickableProjectileFixtureCommand, ControlAck>(
+            Metadata(
+                ControlCommandNames.ApplyPickableProjectileFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => ApplyPickableProjectileFixture(command));
+        router.Register<AttractPickableCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.AttractPickable,
+                AutomationCommandDomain.Pickable,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            AttractPickable);
+        router.Register<PlayerFireProjectileCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.PlayerFireProjectile,
+                AutomationCommandDomain.Projectile,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueuePlayerFireProjectile);
+        router.Register<RunPickableLifecycleBurstCommand, PickableLifecycleBurstResult>(
+            Metadata(
+                ControlCommandNames.RunPickableLifecycleBurst,
+                AutomationCommandDomain.Pickable,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunPickableLifecycleBurst);
         router.Register<PrepareInventoryFixtureCommand, InventoryFixture>(
             Metadata(
                 ControlCommandNames.PrepareInventoryFixture,
@@ -686,6 +736,26 @@ public partial class TestAutomationModLoader {
                 "invalid_payload",
                 "Inventory IDs must be positive.");
         }
+        if (command.PickableIds is { Length: > AutomationProtocol.MaximumSnapshotEntities }) {
+            throw new AutomationCommandException(
+                "limit_exceeded",
+                $"At most {AutomationProtocol.MaximumSnapshotEntities} pickable IDs can be selected.");
+        }
+        if (command.PickableIds?.Any(pickableId => pickableId <= 0) == true) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "Pickable IDs must be positive.");
+        }
+        if (command.ProjectileEventIds is { Length: > AutomationProtocol.MaximumSnapshotEntities }) {
+            throw new AutomationCommandException(
+                "limit_exceeded",
+                $"At most {AutomationProtocol.MaximumSnapshotEntities} projectile event IDs can be selected.");
+        }
+        if (command.ProjectileEventIds?.Any(eventId => eventId <= 0) == true) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "Projectile event IDs must be positive.");
+        }
         if (command.TerrainCells is { Length: > AutomationProtocol.MaximumSnapshotTerrainCells }) {
             throw new AutomationCommandException(
                 "limit_exceeded",
@@ -819,6 +889,24 @@ public partial class TestAutomationModLoader {
             && project != null
                 ? BuildLogicRevisionMetricsSnapshotV2(project)
                 : null;
+        PickableSnapshotV2[]? pickables = domains.Contains(SnapshotDomain.Pickables)
+            && project != null
+                ? BuildPickableSnapshotsV2(project, command.PickableIds)
+                : null;
+        PickableLifecycleSnapshotV2? pickableLifecycle =
+            domains.Contains(SnapshotDomain.Pickables)
+            && project != null
+                ? BuildPickableLifecycleSnapshotV2(project)
+                : null;
+        ProjectileSnapshotV2[]? projectiles = domains.Contains(SnapshotDomain.Projectiles)
+            && project != null
+                ? BuildProjectileSnapshotsV2(project, command.ProjectileEventIds)
+                : null;
+        ProjectileEventSnapshotV2? projectileEvents =
+            domains.Contains(SnapshotDomain.Projectiles)
+            && project != null
+                ? BuildProjectileEventSnapshotV2(project)
+                : null;
         StateRevisionMetricsSnapshotV2? stateRevisions =
             (domains.Contains(SnapshotDomain.Inventories)
                 || domains.Contains(SnapshotDomain.Health)
@@ -865,7 +953,11 @@ public partial class TestAutomationModLoader {
             logicStates,
             persistentVoltages,
             movingBlocks,
-            logicRevisions);
+            logicRevisions,
+            pickables,
+            pickableLifecycle,
+            projectiles,
+            projectileEvents);
     }
 
     private static LogicElementStateSnapshotV2[] BuildLogicElementSnapshotsV2(
@@ -1445,6 +1537,7 @@ public partial class TestAutomationModLoader {
                 : NetworkManager.IsClientRunning ? "client" : "none";
         RelayStatus relay = BuildRelayStatus();
         NetworkFaultMetrics metrics = NetworkFaultInjector.Metrics;
+        NetworkPacketTrafficMetrics traffic = NetworkPacketTrafficTracker.Metrics;
         return new NetworkSnapshotV2(
             mode,
             NetworkManager.MyState.ToString(),
@@ -1454,7 +1547,10 @@ public partial class TestAutomationModLoader {
             metrics.Sent,
             metrics.Dropped,
             metrics.Duplicated,
-            metrics.Pending);
+            metrics.Pending,
+            traffic.QueuedPacketsByType,
+            traffic.FaultTransmissionsByType,
+            traffic.FaultBytesByType);
     }
 
     private static PlayerSnapshotV2 BuildPlayerSnapshotV2(PlayerData player) {
@@ -1534,7 +1630,9 @@ public partial class TestAutomationModLoader {
             code: "queued",
             data: new Dictionary<string, string> {
                 ["enabled"] = command.Enabled.ToString(CultureInfo.InvariantCulture)
-            });
+            },
+            provenance: ActionProvenance.ProductionInput,
+            productionEntry: ProductionPathEntries.CreativeFly);
 
         if (previous == command.Enabled) {
             actionEventJournal.Record(
@@ -1545,13 +1643,17 @@ public partial class TestAutomationModLoader {
                 "creativeFly",
                 ActionEventPhase.Observed,
                 actor.PlayerIndex,
-                code: "already_applied");
+                code: "already_applied",
+                provenance: ActionProvenance.ProductionInput,
+                productionEntry: ProductionPathEntries.CreativeFly);
             return new ActionReceipt(
                 context.RequestId,
                 true,
                 tick,
                 actor.PlayerIndex,
-                "already_applied");
+                "already_applied",
+                Provenance: ActionProvenance.ProductionInput,
+                ProductionEntry: ProductionPathEntries.CreativeFly);
         }
 
         bool accepted = actor.ComponentPlayer.ComponentGui.TrySetCreativeFlyEnabled(command.Enabled);
@@ -1567,13 +1669,17 @@ public partial class TestAutomationModLoader {
             code: code,
             data: new Dictionary<string, string> {
                 ["enabled"] = command.Enabled.ToString(CultureInfo.InvariantCulture)
-            });
+            },
+            provenance: ActionProvenance.ProductionInput,
+            productionEntry: ProductionPathEntries.CreativeFly);
         return new ActionReceipt(
             context.RequestId,
             accepted,
             tick,
             actor.PlayerIndex,
             code,
-            accepted ? null : "The production gameplay path rejected the requested fly state.");
+            accepted ? null : "The production gameplay path rejected the requested fly state.",
+            ActionProvenance.ProductionInput,
+            ProductionPathEntries.CreativeFly);
     }
 }

@@ -558,6 +558,7 @@ public sealed class EntityCreatureMultiplayerScenario {
                 await CaptureFailureEvidenceAsync(cluster, observedEntityIds, snapshots, events)
                     .ConfigureAwait(false);
                 foreach (GameNodeProcess node in MultiplayerGameplayBootstrap.AllNodes(cluster)) {
+                    ScenarioResourceMetrics.Capture(metrics, node);
                     logs[node.Role] = node.Logs.ToArray();
                 }
                 if (cluster.Relay != null) {

@@ -18,10 +18,13 @@ public class PickableRequestSyncPacket : Packet {
     }
 
     public override void Handle(bool isServer) {
+        if (!isServer || From == null || m_id <= 0) {
+            return;
+        }
         SubsystemPickables subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>();
         bool found = subsystemPickables.PickableAction(m_id, pick => {
             NetworkManager.Queue(new PickableCreatePacket(pick) { To = From });
-        });
+        }, requestSync: false);
         if (!found) {
             NetworkManager.Queue(new PickableDeletePacket(m_id) { To = From });
         }

@@ -623,6 +623,7 @@ public sealed class TerrainStreamingMultiplayerScenario {
                 await CaptureFailureEvidenceAsync(cluster, fixture?.ProbeCell, snapshots, events)
                     .ConfigureAwait(false);
                 foreach (GameNodeProcess node in MultiplayerGameplayBootstrap.AllNodes(cluster)) {
+                    ScenarioResourceMetrics.Capture(metrics, node);
                     logs[node.Role] = node.Logs.ToArray();
                 }
                 if (cluster.Relay != null) {

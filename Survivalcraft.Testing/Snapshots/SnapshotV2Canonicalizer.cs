@@ -156,6 +156,24 @@ public static class SnapshotV2Canonicalizer {
                 .ThenBy(state => state.Tag?.Z ?? 0)
                 .ThenBy(state => state.InstanceId)
                 .ToArray(),
+            Pickables = snapshot.Pickables?
+                .Select(state => state with {
+                    Position = Normalize(state.Position, decimalPlaces),
+                    Velocity = Normalize(state.Velocity, decimalPlaces),
+                    FlyToPosition = state.FlyToPosition == null
+                        ? null
+                        : Normalize(state.FlyToPosition, decimalPlaces)
+                })
+                .OrderBy(state => state.PickableId)
+                .ToArray(),
+            Projectiles = snapshot.Projectiles?
+                .Select(state => state with {
+                    Position = Normalize(state.Position, decimalPlaces),
+                    Velocity = Normalize(state.Velocity, decimalPlaces),
+                    AngularVelocity = Normalize(state.AngularVelocity, decimalPlaces)
+                })
+                .OrderBy(state => state.EventId)
+                .ToArray(),
             RecentEvents = snapshot.RecentEvents
                 .OrderBy(item => item.Sequence)
                 .Select(item => item with { Data = ToSortedDictionary(item.Data) })

@@ -97,7 +97,9 @@ public partial class TestAutomationModLoader {
             ActionEventPhase.Queued,
             target: command.Alias,
             code: "queued",
-            data: data);
+            data: data,
+            provenance: ActionProvenance.AuthoritativeState,
+            productionEntry: ProductionPathEntries.EntityImpulse);
 
         body.ApplyImpulse(impulse);
         actionEventJournal.Record(
@@ -109,7 +111,9 @@ public partial class TestAutomationModLoader {
             ActionEventPhase.Observed,
             target: command.Alias,
             code: "production_impulse_applied",
-            data: data);
+            data: data,
+            provenance: ActionProvenance.AuthoritativeState,
+            productionEntry: ProductionPathEntries.EntityImpulse);
 
         int entityId = entity.Id;
         int completionFrame = checked(Time.FrameIndex + command.ActiveFrames);
@@ -127,7 +131,9 @@ public partial class TestAutomationModLoader {
                     ActionEventPhase.Rejected,
                     target: command.Alias,
                     code: "entity_missing",
-                    data: data);
+                    data: data,
+                    provenance: ActionProvenance.AuthoritativeState,
+                    productionEntry: ProductionPathEntries.EntityImpulse);
                 return;
             }
             currentBody.Velocity = Vector3.Zero;
@@ -141,7 +147,9 @@ public partial class TestAutomationModLoader {
                 ActionEventPhase.Applied,
                 target: command.Alias,
                 code: "impulse_window_completed",
-                data: data);
+                data: data,
+                provenance: ActionProvenance.AuthoritativeState,
+                productionEntry: ProductionPathEntries.EntityImpulse);
         });
 
         return new ActionReceipt(
@@ -149,7 +157,9 @@ public partial class TestAutomationModLoader {
             true,
             queuedTick,
             -1,
-            "queued");
+            "queued",
+            Provenance: ActionProvenance.AuthoritativeState,
+            ProductionEntry: ProductionPathEntries.EntityImpulse);
     }
 
     private EntityLifecycleBurstResult RunEntityLifecycleBurst(
@@ -184,7 +194,9 @@ public partial class TestAutomationModLoader {
             "lifecycleBurst",
             ActionEventPhase.Queued,
             target: $"{command.ReplacementAlias},{command.TombstoneAlias}",
-            code: "queued");
+            code: "queued",
+            provenance: ActionProvenance.FaultInjection,
+            productionEntry: ProductionPathEntries.EntityLifecycle);
 
         Entity replaced = CreateStableEntity(project, "Cow", origin + new Vector3(10f, 0f, 0f));
         project.AddEntity(replaced);
@@ -220,8 +232,8 @@ public partial class TestAutomationModLoader {
         entityFixtureAliases.Add(command.TombstoneAlias, tombstoneEntityId);
 
         if (command.SendStaleLoads) {
-            NetworkManager.Queue(staleReplacementLoad);
-            NetworkManager.Queue(staleRemovedLoad);
+            QueueFaultInjectionAfterSettle(staleReplacementLoad);
+            QueueFaultInjectionAfterSettle(staleRemovedLoad);
         }
 
         IReadOnlyDictionary<string, string> data = new Dictionary<string, string> {
@@ -240,7 +252,9 @@ public partial class TestAutomationModLoader {
             ActionEventPhase.Observed,
             target: $"{command.ReplacementAlias},{command.TombstoneAlias}",
             code: "authoritative_lifecycle_observed",
-            data: data);
+            data: data,
+            provenance: ActionProvenance.FaultInjection,
+            productionEntry: ProductionPathEntries.EntityLifecycle);
         actionEventJournal.Record(
             Time.FrameIndex,
             context.RequestId,
@@ -250,14 +264,18 @@ public partial class TestAutomationModLoader {
             ActionEventPhase.Applied,
             target: $"{command.ReplacementAlias},{command.TombstoneAlias}",
             code: command.SendStaleLoads ? "stale_loads_queued" : "applied",
-            data: data);
+            data: data,
+            provenance: ActionProvenance.FaultInjection,
+            productionEntry: ProductionPathEntries.EntityLifecycle);
 
         ActionReceipt receipt = new(
             context.RequestId,
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleLoads ? "stale_loads_queued" : "applied");
+            command.SendStaleLoads ? "stale_loads_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.EntityLifecycle);
         return new EntityLifecycleBurstResult(
             receipt,
             CreateEntityFixture(command.ReplacementAlias, replacement),

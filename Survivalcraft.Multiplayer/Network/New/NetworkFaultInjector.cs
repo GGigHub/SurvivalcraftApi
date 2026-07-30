@@ -70,6 +70,7 @@ public static class NetworkFaultInjector {
 
     public static void Configure(NetworkFaultSettings settings) {
         m_settings = (settings ?? throw new ArgumentNullException(nameof(settings))).Validate();
+        NetworkPacketTrafficTracker.Reset();
         m_random = new StableRandom(unchecked((ulong)(uint)m_settings.Seed) + 0x9E3779B97F4A7C15UL);
         m_pending.Clear();
         m_sequence = 0;
@@ -80,7 +81,10 @@ public static class NetworkFaultInjector {
         m_orderedAvailableAt = Time.RealTime;
     }
 
-    public static void Send(NetDataWriter writer, Action<NetDataWriter> sendImmediately) {
+    public static void Send(
+        NetDataWriter writer,
+        Action<NetDataWriter> sendImmediately,
+        string packetType = null) {
         ArgumentNullException.ThrowIfNull(writer);
         ArgumentNullException.ThrowIfNull(sendImmediately);
         if (!m_settings.Enabled) {
@@ -95,13 +99,18 @@ public static class NetworkFaultInjector {
             return;
         }
 
-        double originalDue = Schedule(data, sendImmediately, duplicate: false);
+        double originalDue = Schedule(
+            data,
+            sendImmediately,
+            duplicate: false,
+            packetType: packetType);
         if (m_random.NextProbability() < m_settings.DuplicationRate) {
             Schedule(
                 data.ToArray(),
                 sendImmediately,
                 duplicate: true,
-                minimumDue: originalDue + 0.001);
+                minimumDue: originalDue + 0.001,
+                packetType: packetType);
             m_duplicated++;
         }
     }
@@ -132,7 +141,8 @@ public static class NetworkFaultInjector {
         byte[] data,
         Action<NetDataWriter> sendImmediately,
         bool duplicate,
-        double minimumDue = double.MinValue) {
+        double minimumDue = double.MinValue,
+        string packetType = null) {
         int jitter = m_settings.JitterMilliseconds == 0
             ? 0
             : m_random.NextInt(
@@ -153,14 +163,17 @@ public static class NetworkFaultInjector {
         }
 
         if (m_settings.BandwidthBytesPerSecond > 0) {
-            double serializationSeconds = Math.Max(
-                0.001,
-                data.Length / (double)m_settings.BandwidthBytesPerSecond);
+            // Bandwidth is a byte-rate limit, not a packet-rate limit. A fixed
+            // 1 ms floor here silently capped the link at 1000 packets/second
+            // and produced an unbounded queue for many small state packets.
+            double serializationSeconds =
+                data.Length / (double)m_settings.BandwidthBytesPerSecond;
             due = Math.Max(due, m_linkAvailableAt + serializationSeconds);
             m_linkAvailableAt = due;
         }
 
         long sequence = m_sequence++;
+        NetworkPacketTrafficTracker.RecordFaultTransmission(packetType, data.Length);
         m_pending.Enqueue(
             new PendingSend(data, sendImmediately),
             (due, sequence));

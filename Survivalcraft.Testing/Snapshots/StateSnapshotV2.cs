@@ -12,7 +12,9 @@ public enum SnapshotDomain {
     Health,
     Environment,
     Mechanics,
-    Logic
+    Logic,
+    Pickables,
+    Projectiles
 }
 
 public sealed record GetSnapshotV2Command(
@@ -24,7 +26,9 @@ public sealed record GetSnapshotV2Command(
     bool IncludeVolatileDiagnostics = false,
     int[]? EntityIds = null,
     int[]? InventoryIds = null,
-    TerrainCellCoordinate[]? LogicCells = null);
+    TerrainCellCoordinate[]? LogicCells = null,
+    int[]? PickableIds = null,
+    long[]? ProjectileEventIds = null);
 
 public sealed record StateSnapshotV2(
     int SchemaVersion,
@@ -48,7 +52,51 @@ public sealed record StateSnapshotV2(
     LogicElementStateSnapshotV2[]? LogicStates = null,
     PersistentVoltageSnapshotV2[]? PersistentVoltages = null,
     MovingBlockStateSnapshotV2[]? MovingBlocks = null,
-    LogicRevisionMetricsSnapshotV2? LogicRevisions = null);
+    LogicRevisionMetricsSnapshotV2? LogicRevisions = null,
+    PickableSnapshotV2[]? Pickables = null,
+    PickableLifecycleSnapshotV2? PickableLifecycle = null,
+    ProjectileSnapshotV2[]? Projectiles = null,
+    ProjectileEventSnapshotV2? ProjectileEvents = null);
+
+public sealed record PickableSnapshotV2(
+    int PickableId,
+    bool Exists,
+    int Value,
+    int Count,
+    Vector3State Position,
+    Vector3State Velocity,
+    Vector3State? FlyToPosition,
+    long Revision,
+    bool IsTombstone);
+
+public sealed record PickableLifecycleSnapshotV2(
+    int AuthoritativeTrackedPickables,
+    int ClientTrackedPickables,
+    long AppliedCreates,
+    long AppliedUpdates,
+    long AppliedRemovals,
+    long IgnoredStalePackets,
+    long MissingUpdateRequests,
+    int Tombstones);
+
+public sealed record ProjectileSnapshotV2(
+    long EventId,
+    int Value,
+    Vector3State Position,
+    Vector3State Velocity,
+    Vector3State AngularVelocity,
+    int? OwnerEntityId,
+    bool IsIncendiary,
+    bool ToRemove);
+
+public sealed record ProjectileEventSnapshotV2(
+    long GeneratedEvents,
+    long AcceptedEvents,
+    long IgnoredDuplicateEvents,
+    long IgnoredExpiredEvents,
+    long HighestGeneratedEventId,
+    long HighestAcceptedEventId,
+    int RememberedEventIds);
 
 public sealed record LogicElementStateSnapshotV2(
     int X,
@@ -253,7 +301,10 @@ public sealed record NetworkSnapshotV2(
     long FaultSent,
     long FaultDropped,
     long FaultDuplicated,
-    int FaultPending);
+    int FaultPending,
+    IReadOnlyDictionary<string, long>? QueuedPacketsByType = null,
+    IReadOnlyDictionary<string, long>? FaultTransmissionsByType = null,
+    IReadOnlyDictionary<string, long>? FaultBytesByType = null);
 
 public sealed record PlayerSnapshotV2(
     int PlayerIndex,

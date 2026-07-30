@@ -9,7 +9,7 @@ namespace Survivalcraft.Testing.Tests;
 public sealed class MountProtocolTests {
     [Fact]
     [Trait("Layer", "L0")]
-    public void AutoTestV6MountCommandsRoundTripWithoutLosingSecurityFields() {
+    public void AutoTestV7MountCommandsRoundTripWithoutLosingSecurityFields() {
         PlayerMountCommand action = new(
             3,
             52,
@@ -30,7 +30,7 @@ public sealed class MountProtocolTests {
             ControlCommandNames.RunMountLifecycleBurst,
             lifecycleBurst);
 
-        Assert.Equal(6, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(8, AutomationProtocol.CurrentApiVersion);
         Assert.Equal(action, actionRequest.DeserializePayload<PlayerMountCommand>());
         Assert.Equal(revisionBurst,
             revisionRequest.DeserializePayload<RunMountRevisionBurstCommand>());

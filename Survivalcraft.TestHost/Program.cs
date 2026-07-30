@@ -2,9 +2,11 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Text.Json;
 using Survivalcraft.Testing.Control;
+using Survivalcraft.Testing.Coverage;
 using Survivalcraft.Testing.Networking;
 using Survivalcraft.Testing.Processes;
 using Survivalcraft.Testing.Scenarios;
+using Survivalcraft.Testing.Soak;
 
 namespace Survivalcraft.TestHost;
 
@@ -17,6 +19,23 @@ internal static class Program {
             }
 
             string repositoryRoot = FindRepositoryRoot();
+            if (args[0].Equals("coverage", StringComparison.OrdinalIgnoreCase)) {
+                Dictionary<string, string?> options = ParseOptions(args, 1);
+                CoverageTrustReport report = await BuildCoverageTrustReportAsync(
+                    repositoryRoot).ConfigureAwait(false);
+                PrintCoverageTrustReport(report);
+                if (options.TryGetValue("output", out string? output)
+                    && !string.IsNullOrWhiteSpace(output)) {
+                    string outputPath = Path.GetFullPath(output);
+                    Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+                    await File.WriteAllTextAsync(
+                        outputPath,
+                        JsonSerializer.Serialize(report, ControlProtocol.JsonOptions))
+                        .ConfigureAwait(false);
+                    Console.WriteLine($"output={outputPath}");
+                }
+                return report.IsStructurallyValid ? 0 : 1;
+            }
             if (args[0].Equals("doctor", StringComparison.OrdinalIgnoreCase)) {
                 Dictionary<string, string?> options = ParseOptions(args, 1);
                 string runtime = ResolveRuntime(repositoryRoot, options);
@@ -24,6 +43,14 @@ internal static class Program {
                     runtime,
                     GetTimeSpan(options, "startup-timeout", TimeSpan.FromSeconds(90)),
                     GetFlag(options, "static-only")).ConfigureAwait(false);
+                return 0;
+            }
+            if (args[0].Equals("soak", StringComparison.OrdinalIgnoreCase)) {
+                Dictionary<string, string?> options = ParseOptions(args, 1);
+                MultiplayerSoakSummary summary = await RunSoakAsync(
+                    repositoryRoot,
+                    options).ConfigureAwait(false);
+                PrintSoakResult(summary);
                 return 0;
             }
 
@@ -133,6 +160,20 @@ internal static class Program {
                     BuildEntityCreatureScenarioOptions(repositoryRoot, options, replay: null);
                 EntityCreatureMultiplayerScenarioResult result =
                     await new EntityCreatureMultiplayerScenario()
+                        .RunAsync(scenarioOptions)
+                        .ConfigureAwait(false);
+                PrintResult(result);
+                return 0;
+            }
+
+            if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase)
+                && args.Length >= 2
+                && args[1].Equals(PickableProjectileMultiplayerScenario.ScenarioName, StringComparison.OrdinalIgnoreCase)) {
+                Dictionary<string, string?> options = ParseOptions(args, 2);
+                PickableProjectileMultiplayerScenarioOptions scenarioOptions =
+                    BuildPickableProjectileScenarioOptions(repositoryRoot, options, replay: null);
+                PickableProjectileMultiplayerScenarioResult result =
+                    await new PickableProjectileMultiplayerScenario()
                         .RunAsync(scenarioOptions)
                         .ConfigureAwait(false);
                 PrintResult(result);
@@ -331,6 +372,27 @@ internal static class Program {
                         return 0;
                     }
                     if (replayV2.Scenario.Equals(
+                            PickableProjectileMultiplayerScenario.ScenarioName,
+                            StringComparison.Ordinal)) {
+                        ValidateReplayV2ScenarioVersion(
+                            replayV2,
+                            PickableProjectileMultiplayerScenario.ScenarioVersion);
+                        PickableProjectileReplayPlan replayPlan =
+                            PickableProjectileMultiplayerScenario.ParseReplayActions(actionRecords);
+                        PickableProjectileMultiplayerScenarioOptions v2Options =
+                            BuildPickableProjectileScenarioOptions(
+                                repositoryRoot,
+                                options,
+                                replayV2,
+                                replayPlan);
+                        PickableProjectileMultiplayerScenarioResult v2Result =
+                            await new PickableProjectileMultiplayerScenario()
+                                .RunAsync(v2Options)
+                                .ConfigureAwait(false);
+                        PrintResult(v2Result);
+                        return 0;
+                    }
+                    if (replayV2.Scenario.Equals(
                             InventoryHealthMultiplayerScenario.ScenarioName,
                             StringComparison.Ordinal)) {
                         ValidateReplayV2ScenarioVersion(
@@ -503,6 +565,11 @@ internal static class Program {
             Console.Error.WriteLine(exception.InnerException);
             return 1;
         }
+        catch (PickableProjectileMultiplayerScenarioException exception) {
+            Console.Error.WriteLine($"FAILED: {exception.Message}");
+            Console.Error.WriteLine(exception.InnerException);
+            return 1;
+        }
         catch (InventoryHealthMultiplayerScenarioException exception) {
             Console.Error.WriteLine($"FAILED: {exception.Message}");
             Console.Error.WriteLine(exception.InnerException);
@@ -664,7 +731,10 @@ internal static class Program {
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(8)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
-            NetworkFaults: replay?.NetworkFaults,
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                TerrainInteractionMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
             ReplayPlan: replayPlan);
     }
 
@@ -707,7 +777,10 @@ internal static class Program {
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(9)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
-            NetworkFaults: replay?.NetworkFaults,
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                PlayerMotionMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
             ReplayPlan: replayPlan);
     }
 
@@ -750,7 +823,10 @@ internal static class Program {
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(8)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
-            NetworkFaults: replay?.NetworkFaults,
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                TerrainStreamingMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
             ReplayPlan: replayPlan);
     }
 
@@ -793,7 +869,56 @@ internal static class Program {
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(9)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
-            NetworkFaults: replay?.NetworkFaults,
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                EntityCreatureMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
+            ReplayPlan: replayPlan);
+    }
+
+    private static PickableProjectileMultiplayerScenarioOptions BuildPickableProjectileScenarioOptions(
+        string repositoryRoot,
+        IReadOnlyDictionary<string, string?> options,
+        ScenarioReplayV2? replay,
+        PickableProjectileReplayPlan? replayPlan = null) {
+        int seed = GetInt32(options, "seed", replay?.Seed ?? 20260806);
+        MultiplayerTransportKind replayTransport = replay == null
+            ? MultiplayerTransportKind.Direct
+            : ParseTransport(replay.Transport, "Replay transport");
+        MultiplayerTransportKind transport = GetTransport(
+            options,
+            "transport",
+            replayTransport);
+        string runtime = options.TryGetValue("runtime", out string? runtimeValue)
+            && !string.IsNullOrWhiteSpace(runtimeValue)
+                ? Path.GetFullPath(runtimeValue)
+                : replay?.RuntimeDirectory ?? ResolveRuntime(repositoryRoot, options);
+        string artifactDirectory = options.TryGetValue("artifacts", out string? artifactValue)
+            && !string.IsNullOrWhiteSpace(artifactValue)
+                ? Path.GetFullPath(artifactValue)
+                : Path.Combine(
+                    repositoryRoot,
+                    "TestResults",
+                    replay == null
+                        ? $"pickable-projectile-{transport.ToString().ToLowerInvariant()}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}"
+                        : $"pickable-projectile-{transport.ToString().ToLowerInvariant()}-replay-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}");
+        string? workDirectory = options.TryGetValue("work-dir", out string? workValue)
+            && !string.IsNullOrWhiteSpace(workValue)
+                ? Path.GetFullPath(workValue)
+                : null;
+        return new PickableProjectileMultiplayerScenarioOptions(
+            runtime,
+            artifactDirectory,
+            seed,
+            transport,
+            StepTimeout: GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(60)),
+            ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(10)),
+            WorkDirectory: workDirectory,
+            KeepData: GetFlag(options, "keep-data"),
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                PickableProjectileMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
             ReplayPlan: replayPlan);
     }
 
@@ -836,7 +961,10 @@ internal static class Program {
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(10)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
-            NetworkFaults: replay?.NetworkFaults,
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                InventoryHealthMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
             ReplayPlan: replayPlan);
     }
 
@@ -879,7 +1007,10 @@ internal static class Program {
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(10)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
-            NetworkFaults: replay?.NetworkFaults,
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                EnvironmentMechanicsMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
             ReplayPlan: replayPlan);
     }
 
@@ -922,7 +1053,10 @@ internal static class Program {
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(10)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
-            NetworkFaults: replay?.NetworkFaults,
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                MountMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
             ReplayPlan: replayPlan);
     }
 
@@ -965,8 +1099,45 @@ internal static class Program {
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(12)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
-            NetworkFaults: replay?.NetworkFaults,
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                LogicMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
             ReplayPlan: replayPlan);
+    }
+
+    private static NetworkFaultProfile BuildGameplayNetworkFaults(
+        IReadOnlyDictionary<string, string?> options,
+        ScenarioReplayV2? replay,
+        NetworkFaultProfile defaultProfile) {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(defaultProfile);
+        NetworkFaultProfile profile = replay?.NetworkFaults ?? defaultProfile;
+        return (profile with {
+            Seed = GetInt32(options, "fault-seed", profile.Seed),
+            BaseLatencyMilliseconds = GetInt32(
+                options,
+                "latency-ms",
+                profile.BaseLatencyMilliseconds),
+            JitterMilliseconds = GetInt32(
+                options,
+                "jitter-ms",
+                profile.JitterMilliseconds),
+            LossRate = GetDouble(options, "loss-rate", profile.LossRate),
+            DuplicationRate = GetDouble(
+                options,
+                "duplication-rate",
+                profile.DuplicationRate),
+            ReorderRate = GetDouble(options, "reorder-rate", profile.ReorderRate),
+            ReorderDelayMilliseconds = GetInt32(
+                options,
+                "reorder-delay-ms",
+                profile.ReorderDelayMilliseconds),
+            BandwidthBytesPerSecond = GetInt32(
+                options,
+                "bandwidth-bytes",
+                profile.BandwidthBytesPerSecond)
+        }).Validate();
     }
 
     private static void ValidateReplayV2ProtocolVersions(ScenarioReplayV2 replay) {
@@ -1295,6 +1466,18 @@ internal static class Program {
         Console.WriteLine($"elapsed={result.Elapsed}");
     }
 
+    private static void PrintResult(PickableProjectileMultiplayerScenarioResult result) {
+        Console.WriteLine("SCENARIO PASSED");
+        Console.WriteLine($"artifacts={result.ArtifactDirectory}");
+        Console.WriteLine($"transport={result.Transport}");
+        Console.WriteLine($"actorPlayerIndex={result.ActorPlayerIndex}");
+        Console.WriteLine($"actions={result.ActionCount}");
+        if (!string.IsNullOrWhiteSpace(result.RoomCode)) {
+            Console.WriteLine($"room={result.RoomCode}");
+        }
+        Console.WriteLine($"elapsed={result.Elapsed}");
+    }
+
     private static void PrintResult(InventoryHealthMultiplayerScenarioResult result) {
         Console.WriteLine("SCENARIO PASSED");
         Console.WriteLine($"artifacts={result.ArtifactDirectory}");
@@ -1361,6 +1544,186 @@ internal static class Program {
             configuration,
             "net10.0-windows",
             "win-x64");
+    }
+
+    private static async Task<CoverageTrustReport> BuildCoverageTrustReportAsync(
+        string repositoryRoot) {
+        string coverageDirectory = Path.Combine(
+            repositoryRoot,
+            "Survivalcraft.Testing",
+            "Coverage");
+        CoverageManifest coverage = await CoverageManifestValidator.LoadAsync(
+            Path.Combine(coverageDirectory, "core-multiplayer.json")).ConfigureAwait(false);
+        ProductionSurfaceManifest inventory = await ProductionSurfaceCoverage.LoadAsync(
+            Path.Combine(coverageDirectory, "production-surfaces.json")).ConfigureAwait(false);
+        return CoverageTrustReportBuilder.Build(
+            coverage,
+            inventory,
+            ProductionSurfaceCoverage.Discover(repositoryRoot));
+    }
+
+    private static async Task<MultiplayerSoakSummary> RunSoakAsync(
+        string repositoryRoot,
+        IReadOnlyDictionary<string, string?> options) {
+        string runtime = ResolveRuntime(repositoryRoot, options);
+        string artifactDirectory = options.TryGetValue("artifacts", out string? artifactValue)
+            && !string.IsNullOrWhiteSpace(artifactValue)
+                ? Path.GetFullPath(artifactValue)
+                : Path.Combine(
+                    repositoryRoot,
+                    "TestResults",
+                    $"multiplayer-soak-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}");
+
+        MultiplayerSoakSchedule schedule;
+        if (options.TryGetValue("replay-schedule", out string? replayScheduleValue)) {
+            if (string.IsNullOrWhiteSpace(replayScheduleValue)) {
+                throw new ArgumentException("Option '--replay-schedule' expects a path.");
+            }
+            string[] generationOnlyOptions = [
+                "seed",
+                "iterations",
+                "transport",
+                "include-loss",
+                "scenarios"
+            ];
+            string[] conflicts = generationOnlyOptions
+                .Where(options.ContainsKey)
+                .ToArray();
+            if (conflicts.Length > 0) {
+                throw new ArgumentException(
+                    "A replayed soak schedule cannot be overridden by: "
+                    + string.Join(", ", conflicts.Select(name => $"--{name}")));
+            }
+            schedule = await MultiplayerSoakSchedule.ReadAsync(
+                replayScheduleValue).ConfigureAwait(false);
+        }
+        else {
+            string[] scenarios = GetScenarioRotation(options);
+            schedule = MultiplayerSoakSchedule.Generate(
+                GetInt32(options, "seed", 20260730),
+                GetInt32(options, "iterations", scenarios.Length),
+                GetTransport(
+                    options,
+                    "transport",
+                    MultiplayerTransportKind.Direct),
+                GetFlag(options, "include-loss"),
+                scenarios);
+        }
+
+        SoakResourceBudget defaults = new();
+        SoakResourceBudget budget = new(
+            ToBytesFromMebibytes(
+                GetInt32(
+                    options,
+                    "max-working-set-mib",
+                    checked((int)(defaults.MaximumPeakWorkingSetBytes / 1024 / 1024))),
+                "max-working-set-mib"),
+            ToBytesFromMebibytes(
+                GetInt32(
+                    options,
+                    "max-private-mib",
+                    checked((int)(defaults.MaximumPeakPrivateBytes / 1024 / 1024))),
+                "max-private-mib"),
+            ToBytesFromMebibytes(
+                GetInt32(
+                    options,
+                    "max-growth-mib",
+                    checked((int)(defaults.MaximumWorkingSetGrowthBytes / 1024 / 1024))),
+                "max-growth-mib"),
+            GetInt32(options, "max-handles", defaults.MaximumPeakHandles),
+            GetInt32(options, "max-threads", defaults.MaximumPeakThreads),
+            GetInt32(options, "minimum-resource-samples", defaults.MinimumSamples),
+            GetInt32(
+                options,
+                "max-pending-fault-packets",
+                defaults.MaximumPendingFaultPackets));
+
+        TimeSpan? stepTimeout = options.ContainsKey("step-timeout")
+            ? GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(60))
+            : null;
+        TimeSpan? scenarioTimeout = options.ContainsKey("scenario-timeout")
+            ? GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(12))
+            : null;
+        return await new MultiplayerSoakRunner().RunAsync(
+            new MultiplayerSoakOptions(
+                runtime,
+                artifactDirectory,
+                schedule,
+                budget,
+                stepTimeout,
+                scenarioTimeout,
+                KeepData: GetFlag(options, "keep-data"),
+                ContinueAfterFailure: !GetFlag(options, "fail-fast")))
+            .ConfigureAwait(false);
+    }
+
+    private static string[] GetScenarioRotation(
+        IReadOnlyDictionary<string, string?> options) {
+        if (!options.TryGetValue("scenarios", out string? value)) {
+            return MultiplayerSoakSchedule.DefaultScenarioRotation.ToArray();
+        }
+        if (string.IsNullOrWhiteSpace(value)) {
+            throw new ArgumentException("Option '--scenarios' expects a comma-separated list.");
+        }
+        string[] scenarios = value.Split(
+            ',',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (scenarios.Length == 0) {
+            throw new ArgumentException("Option '--scenarios' contains no scenario names.");
+        }
+        return scenarios;
+    }
+
+    private static long ToBytesFromMebibytes(int mebibytes, string optionName) {
+        if (mebibytes <= 0) {
+            throw new ArgumentOutOfRangeException(
+                optionName,
+                "Resource budget must be a positive MiB value.");
+        }
+        return checked((long)mebibytes * 1024 * 1024);
+    }
+
+    private static void PrintSoakResult(MultiplayerSoakSummary summary) {
+        Console.WriteLine("SOAK PASSED");
+        Console.WriteLine($"iterations={summary.CompletedIterations}");
+        Console.WriteLine($"scheduleSeed={summary.Schedule.Seed}");
+        Console.WriteLine($"transport={summary.Schedule.Transport}");
+        Console.WriteLine($"includesLoss={summary.Schedule.IncludesLoss}");
+        foreach (MultiplayerSoakResourceHighWatermark highWatermark
+            in summary.ResourceHighWatermarks) {
+            Console.WriteLine(
+                $"resource {highWatermark.Role} "
+                + $"workingSetMiB={highWatermark.PeakWorkingSetBytes / 1024d / 1024d:F1} "
+                + $"privateMiB={highWatermark.PeakPrivateBytes / 1024d / 1024d:F1} "
+                + $"handles={highWatermark.PeakHandles} threads={highWatermark.PeakThreads}");
+        }
+        Console.WriteLine($"artifacts={summary.ArtifactDirectory}");
+    }
+
+    private static void PrintCoverageTrustReport(CoverageTrustReport report) {
+        Console.WriteLine(report.IsStructurallyValid
+            ? "COVERAGE CONTRACT VALID"
+            : "COVERAGE CONTRACT INVALID");
+        Console.WriteLine($"features={report.TotalFeatures}");
+        Console.WriteLine($"surfaces.hooks={report.HookSurfaces}");
+        Console.WriteLine($"surfaces.packets={report.PacketSurfaces}");
+        Console.WriteLine("statuses=" + string.Join(
+            ",",
+            report.Statuses.Select(pair => $"{pair.Key}:{pair.Value}")));
+        Console.WriteLine("confidence=" + string.Join(
+            ",",
+            report.ConfidenceLevels.Select(pair => $"{pair.Key}:{pair.Value}")));
+        FeatureTrustSummary[] open = report.Features
+            .Where(feature => feature.Status != "covered")
+            .ToArray();
+        Console.WriteLine($"openFeatures={open.Length}");
+        foreach (FeatureTrustSummary feature in open) {
+            Console.WriteLine(
+                $"open {feature.Risk} {feature.Status} {feature.FeatureId} gaps={feature.Gaps.Length}");
+        }
+        foreach (string error in report.ValidationErrors) {
+            Console.Error.WriteLine($"error {error}");
+        }
     }
 
     private static Dictionary<string, string?> ParseOptions(string[] args, int startIndex) {
@@ -1478,7 +1841,10 @@ internal static class Program {
         Console.WriteLine("Survivalcraft multiplayer automation host");
         Console.WriteLine();
         Console.WriteLine("Commands:");
+        Console.WriteLine("  coverage [--output PATH]");
         Console.WriteLine("  doctor [--runtime PATH] [--static-only]");
+        Console.WriteLine("  soak [--iterations N] [--transport direct|relay] [options]");
+        Console.WriteLine("  soak --replay-schedule PATH [options]");
         Console.WriteLine("  run core-multiplayer [options]");
         Console.WriteLine("  run compatibility-matrix [options]");
         Console.WriteLine("  run relay-mod-channel [options]");
@@ -1487,6 +1853,7 @@ internal static class Program {
         Console.WriteLine("  run player-motion-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  run terrain-streaming-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  run entity-creature-multiplayer --transport direct|relay [options]");
+        Console.WriteLine("  run pickable-projectile-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  run inventory-health-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  run environment-mechanics-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  run mount-multiplayer --transport direct|relay [options]");
@@ -1497,12 +1864,30 @@ internal static class Program {
         Console.WriteLine("  --runtime PATH             Built Survivalcraft.Test runtime");
         Console.WriteLine("  --artifacts PATH           Durable result bundle directory");
         Console.WriteLine("  --seed INTEGER             Deterministic scenario seed");
+        Console.WriteLine("  --fault-seed INTEGER       Deterministic network-fault seed");
         Console.WriteLine("  --step-timeout SECONDS     Per-step deadline (default 60)");
         Console.WriteLine("  --scenario-timeout SECONDS Overall deadline (default 360)");
         Console.WriteLine("  --latency-ms INTEGER       Injected application-packet latency");
         Console.WriteLine("  --jitter-ms INTEGER        Injected deterministic jitter");
         Console.WriteLine("  --loss-rate NUMBER         Packet loss probability [0,1]");
+        Console.WriteLine("  --duplication-rate NUMBER  Packet duplication probability [0,1]");
+        Console.WriteLine("  --reorder-rate NUMBER      Packet reorder probability [0,1]");
+        Console.WriteLine("  --reorder-delay-ms INTEGER Extra delay applied to reordered packets");
+        Console.WriteLine("  --bandwidth-bytes INTEGER  Per-node outbound byte-rate limit");
         Console.WriteLine("  --keep-data                Keep isolated game data directories");
+        Console.WriteLine();
+        Console.WriteLine("Soak options:");
+        Console.WriteLine("  --iterations INTEGER       Generated schedule length (default one full rotation)");
+        Console.WriteLine("  --scenarios CSV            Scenario-name rotation to execute");
+        Console.WriteLine("  --include-loss             Add deterministic 1-3% application-packet loss");
+        Console.WriteLine("  --replay-schedule PATH     Replay an exact fault schedule JSON file");
+        Console.WriteLine("  --max-working-set-mib N    Per-node peak working-set budget (default 1536)");
+        Console.WriteLine("  --max-private-mib N        Per-node peak private-memory budget (default 2048)");
+        Console.WriteLine("  --max-growth-mib N         Per-node working-set growth budget (default 768)");
+        Console.WriteLine("  --max-handles N            Per-node peak handle budget (default 8192)");
+        Console.WriteLine("  --max-threads N            Per-node peak thread budget (default 512)");
+        Console.WriteLine("  --max-pending-fault-packets N  Per-node fault queue budget (default 10000)");
+        Console.WriteLine("  --fail-fast                Stop after the first failed soak iteration");
         Console.WriteLine("  --transport direct|relay   Multiplayer transport for v2 gameplay scenarios");
     }
 }

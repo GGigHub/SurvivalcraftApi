@@ -9,7 +9,7 @@ namespace Survivalcraft.Testing.Tests;
 public sealed class LogicProtocolTests {
     [Fact]
     [Trait("Layer", "L0")]
-    public void AutoTestV6LogicCommandsPreserveAuthorityAndLifecycleFields() {
+    public void AutoTestV7LogicCommandsPreserveAuthorityAndLifecycleFields() {
         TerrainCellCoordinate cell = new(12, 70, 14);
         LogicEditCommand edit = new(
             3,
@@ -34,7 +34,7 @@ public sealed class LogicProtocolTests {
             ControlCommandNames.RunMovingBlockLifecycleBurst,
             moving).DeserializePayload<RunMovingBlockLifecycleBurstCommand>();
 
-        Assert.Equal(6, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(8, AutomationProtocol.CurrentApiVersion);
         Assert.Equal(edit, decodedEdit);
         Assert.Equal(moving, decodedMoving);
         Assert.Equal("Logic", AutomationCommandDomain.Logic.ToString());

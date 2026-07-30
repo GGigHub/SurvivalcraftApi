@@ -40,11 +40,11 @@ public partial class TestAutomationModLoader {
             project,
             NetworkStateRevisionDomain.Weather,
             SubsystemTimePacket.EnvironmentStateId);
-        NetworkManager.Queue(new SubsystemTimePacket(
+        QueueFixtureSynchronization(new SubsystemTimePacket(
             info.TotalElapsedGameTime,
             info.TimeOfDay.TimeOfDayOffset,
             timeRevision));
-        NetworkManager.Queue(new SubsystemWeatherPacket(weather, weatherRevision));
+        QueueFixtureSynchronization(new SubsystemWeatherPacket(weather, weatherRevision));
         return new SetEnvironmentFixtureResult(
             info.TimeOfDay.TimeOfDayOffset,
             info.WorldSettings.TimeOfYear,
@@ -79,7 +79,9 @@ public partial class TestAutomationModLoader {
             command.Change,
             ActionEventPhase.Queued,
             command.PlayerIndex,
-            command.ForgeAuthoritativeState ? "forged_state" : "request");
+            command.ExpectRejected
+                ? (command.ForgeAuthoritativeState ? "forged_state" : "rejection_probe")
+                : "request");
 
         if (command.ForgeAuthoritativeState) {
             QueueForgedEnvironmentState(command, actor, info, weather);
@@ -101,28 +103,28 @@ public partial class TestAutomationModLoader {
                     // production request. Reproduce that behavior so rejected requests must
                     // prove that the server heals the requesting client.
                     info.TimeOfDay.TimeOfDayOffset = offset;
-                    NetworkManager.Queue(SubsystemTimePacket.CreateRequest(offset));
+                    QueueProductionRequest(SubsystemTimePacket.CreateRequest(offset));
                     break;
                 case EnvironmentChangeKind.PrecipitationStart:
                     weather.ManualPrecipitationStart();
-                    NetworkManager.Queue(new SubsystemWeatherPacket(2));
+                    QueueProductionRequest(new SubsystemWeatherPacket(2));
                     break;
                 case EnvironmentChangeKind.PrecipitationEnd:
                     weather.ManualPrecipitationEnd();
-                    NetworkManager.Queue(new SubsystemWeatherPacket(1));
+                    QueueProductionRequest(new SubsystemWeatherPacket(1));
                     break;
                 case EnvironmentChangeKind.FogStart:
                     weather.ManualFogStart();
-                    NetworkManager.Queue(new SubsystemWeatherPacket(4));
+                    QueueProductionRequest(new SubsystemWeatherPacket(4));
                     break;
                 case EnvironmentChangeKind.FogEnd:
                     weather.ManualFogEnd();
-                    NetworkManager.Queue(new SubsystemWeatherPacket(3));
+                    QueueProductionRequest(new SubsystemWeatherPacket(3));
                     break;
                 case EnvironmentChangeKind.Lightning:
                     Matrix eyeRotation = Matrix.CreateFromQuaternion(
                         actor.ComponentCreatureModel.EyeRotation);
-                    NetworkManager.Queue(new SubsystemSkyPacket(
+                    QueueProductionRequest(new SubsystemSkyPacket(
                         actor.ComponentCreatureModel.EyePosition,
                         eyeRotation.Forward));
                     break;
@@ -139,7 +141,11 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             command.PlayerIndex,
-            command.ExpectRejected ? "rejection_probe_queued" : "queued");
+            command.ExpectRejected ? "rejection_probe_queued" : "queued",
+            Provenance: command.ExpectRejected
+                ? ActionProvenance.FaultInjection
+                : ActionProvenance.ProductionRequest,
+            ProductionEntry: EnvironmentProductionEntry(command.Change));
     }
 
     private EnvironmentRevisionBurstResult RunEnvironmentRevisionBurst(
@@ -165,7 +171,7 @@ public partial class TestAutomationModLoader {
             NetworkStateRevisionDomain.Weather,
             SubsystemTimePacket.EnvironmentStateId);
         if (command.SendStaleSnapshot) {
-            NetworkManager.Queue(stale);
+            QueueFaultInjectionAfterSettle(stale);
         }
         RecordEnvironmentAction(
             context.RequestId,
@@ -178,7 +184,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied");
+            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.EnvironmentWeather);
         return new EnvironmentRevisionBurstResult(
             receipt,
             command.FinalPrecipitationStarted,
@@ -220,12 +228,12 @@ public partial class TestAutomationModLoader {
             project,
             NetworkStateRevisionDomain.Fire,
             actor.Entity.Id);
-        NetworkManager.Queue(new SleepStatusPacket(
+        QueueFixtureSynchronization(new SleepStatusPacket(
             sleep,
             sleep.m_allowManualWakeUp,
             true,
             revision: sleepRevision));
-        NetworkManager.Queue(new EntityOnFirePacket(onFire, revision: fireRevision));
+        QueueFixtureSynchronization(new EntityOnFirePacket(onFire, revision: fireRevision));
         return new MechanicsFixture(
             command.PlayerIndex,
             actor.Entity.Id,
@@ -259,7 +267,7 @@ public partial class TestAutomationModLoader {
             project,
             NetworkStateRevisionDomain.Fire,
             command.EntityId);
-        NetworkManager.Queue(new EntityOnFirePacket(onFire, revision: revision));
+        QueueFixtureSynchronization(new EntityOnFirePacket(onFire, revision: revision));
         return new SetPlayerFireFixtureResult(
             command.EntityId,
             onFire.IsOnFire,
@@ -299,13 +307,23 @@ public partial class TestAutomationModLoader {
             SleepRequestPacket packet = new(sleep, command.AllowManualWakeup) {
                 m_entityId = targetEntityId
             };
-            NetworkManager.Queue(packet);
+            if (command.ExpectRejected) {
+                QueueFaultInjection(packet);
+            }
+            else {
+                QueueProductionRequest(packet);
+            }
         }
         else {
             WakeupRequestPacket packet = new(sleep) {
                 m_entityId = targetEntityId
             };
-            NetworkManager.Queue(packet);
+            if (command.ExpectRejected) {
+                QueueFaultInjection(packet);
+            }
+            else {
+                QueueProductionRequest(packet);
+            }
         }
         RecordMechanicsAction(
             context.RequestId,
@@ -319,7 +337,13 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             command.PlayerIndex,
-            command.ExpectRejected ? "rejection_probe_queued" : "queued");
+            command.ExpectRejected ? "rejection_probe_queued" : "queued",
+            Provenance: command.ExpectRejected
+                ? ActionProvenance.FaultInjection
+                : ActionProvenance.ProductionRequest,
+            ProductionEntry: command.Sleep
+                ? ProductionPathEntries.SleepRequest
+                : ProductionPathEntries.WakeRequest);
     }
 
     private ActionReceipt QueuePlayerIgnite(
@@ -355,7 +379,7 @@ public partial class TestAutomationModLoader {
             command.PlayerIndex,
             command.TargetEntityId,
             "forged_authoritative_state");
-        NetworkManager.Queue(forged);
+        QueueFaultInjection(forged);
         RecordMechanicsAction(
             context.RequestId,
             "ignite",
@@ -368,7 +392,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             command.PlayerIndex,
-            command.ExpectRejected ? "rejection_probe_queued" : "queued");
+            command.ExpectRejected ? "rejection_probe_queued" : "queued",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.FireState);
     }
 
     private MechanicsRevisionBurstResult RunMechanicsRevisionBurst(
@@ -405,7 +431,7 @@ public partial class TestAutomationModLoader {
             NetworkStateRevisionDomain.Fire,
             command.EntityId);
         if (command.SendStaleSnapshot) {
-            NetworkManager.Queue(stale);
+            QueueFaultInjectionAfterSettle(stale);
         }
         RecordMechanicsAction(
             context.RequestId,
@@ -419,7 +445,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied");
+            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.FireState);
         return new MechanicsRevisionBurstResult(
             receipt,
             command.EntityId,
@@ -436,13 +464,13 @@ public partial class TestAutomationModLoader {
         long forgedRevision = long.MaxValue / 2;
         switch (command.Change) {
             case EnvironmentChangeKind.TimeOfDay:
-                NetworkManager.Queue(new SubsystemTimePacket(
+                QueueFaultInjection(new SubsystemTimePacket(
                     info.TotalElapsedGameTime + 10_000,
                     command.TimeOfDayOffset ?? info.TimeOfDay.TimeOfDayOffset + 0.5,
                     forgedRevision));
                 break;
             case EnvironmentChangeKind.Lightning:
-                NetworkManager.Queue(new SubsystemSkyPacket(
+                QueueFaultInjection(new SubsystemSkyPacket(
                     actor.ComponentCreatureModel.EyePosition,
                     forgedRevision));
                 break;
@@ -452,7 +480,7 @@ public partial class TestAutomationModLoader {
                 packet.m_precipitationEndTime = double.PositiveInfinity;
                 packet.m_fogStartTime = info.TotalElapsedGameTime;
                 packet.m_fogEndTime = double.PositiveInfinity;
-                NetworkManager.Queue(packet);
+                QueueFaultInjection(packet);
                 break;
         }
     }
@@ -484,7 +512,7 @@ public partial class TestAutomationModLoader {
             weather.Project,
             NetworkStateRevisionDomain.Weather,
             SubsystemTimePacket.EnvironmentStateId);
-        NetworkManager.Queue(new SubsystemWeatherPacket(weather, revision));
+        QueueAuthoritativeState(new SubsystemWeatherPacket(weather, revision));
     }
 
     private static void ApplyAuthoritativeFireSnapshot(
@@ -496,7 +524,7 @@ public partial class TestAutomationModLoader {
             onFire.Entity.Project,
             NetworkStateRevisionDomain.Fire,
             onFire.Entity.Id);
-        NetworkManager.Queue(new EntityOnFirePacket(onFire, revision: revision));
+        QueueAuthoritativeState(new EntityOnFirePacket(onFire, revision: revision));
     }
 
     private void RecordEnvironmentAction(
@@ -505,6 +533,10 @@ public partial class TestAutomationModLoader {
         ActionEventPhase phase,
         int playerIndex,
         string code) {
+        bool fault = code.Contains("forged", StringComparison.Ordinal)
+            || code.Contains("rejection_probe", StringComparison.Ordinal)
+            || code.Contains("revision_burst", StringComparison.Ordinal)
+            || code.Contains("final_state", StringComparison.Ordinal);
         actionEventJournal.Record(
             Time.FrameIndex,
             actionId,
@@ -514,7 +546,11 @@ public partial class TestAutomationModLoader {
             phase,
             playerIndex >= 0 ? playerIndex : null,
             "environment",
-            code);
+            code,
+            provenance: fault
+                ? ActionProvenance.FaultInjection
+                : ActionProvenance.ProductionRequest,
+            productionEntry: EnvironmentProductionEntry(change));
     }
 
     private void RecordMechanicsAction(
@@ -524,6 +560,10 @@ public partial class TestAutomationModLoader {
         int playerIndex,
         int entityId,
         string code) {
+        bool fault = string.Equals(name, "ignite", StringComparison.Ordinal)
+            || string.Equals(name, "fireRevisionBurst", StringComparison.Ordinal)
+            || code.Contains("rejection_probe", StringComparison.Ordinal)
+            || code.Contains("forged", StringComparison.Ordinal);
         actionEventJournal.Record(
             Time.FrameIndex,
             actionId,
@@ -533,6 +573,21 @@ public partial class TestAutomationModLoader {
             phase,
             playerIndex >= 0 ? playerIndex : null,
             entityId.ToString(CultureInfo.InvariantCulture),
-            code);
+            code,
+            provenance: fault
+                ? ActionProvenance.FaultInjection
+                : ActionProvenance.ProductionRequest,
+            productionEntry: name switch {
+                "sleep" => ProductionPathEntries.SleepRequest,
+                "wake" => ProductionPathEntries.WakeRequest,
+                _ => ProductionPathEntries.FireState
+            });
     }
+
+    private static string EnvironmentProductionEntry(EnvironmentChangeKind change) =>
+        change switch {
+            EnvironmentChangeKind.TimeOfDay => ProductionPathEntries.EnvironmentTime,
+            EnvironmentChangeKind.Lightning => ProductionPathEntries.EnvironmentSky,
+            _ => ProductionPathEntries.EnvironmentWeather
+        };
 }

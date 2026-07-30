@@ -7,6 +7,16 @@ public enum ActionEventPhase {
     Observed
 }
 
+public enum ActionProvenance {
+    Unknown,
+    Fixture,
+    ProductionInput,
+    ProductionRequest,
+    AuthoritativeState,
+    FaultInjection,
+    Observation
+}
+
 public sealed record ActionEventRecord(
     long Sequence,
     DateTimeOffset Timestamp,
@@ -19,7 +29,9 @@ public sealed record ActionEventRecord(
     int? ActorPlayerIndex,
     string? Target,
     string Code,
-    IReadOnlyDictionary<string, string> Data);
+    IReadOnlyDictionary<string, string> Data,
+    ActionProvenance Provenance = ActionProvenance.Unknown,
+    string? ProductionEntry = null);
 
 public sealed record GetEventsCommand(
     long AfterSequence = 0,
@@ -62,7 +74,9 @@ public sealed class ActionEventJournal {
         string? target = null,
         string code = "ok",
         IReadOnlyDictionary<string, string>? data = null,
-        DateTimeOffset? timestamp = null) {
+        DateTimeOffset? timestamp = null,
+        ActionProvenance provenance = ActionProvenance.Unknown,
+        string? productionEntry = null) {
         ArgumentException.ThrowIfNullOrWhiteSpace(actionId);
         ArgumentException.ThrowIfNullOrWhiteSpace(role);
         ArgumentException.ThrowIfNullOrWhiteSpace(eventName);
@@ -79,7 +93,9 @@ public sealed class ActionEventJournal {
                 actorPlayerIndex,
                 target,
                 code,
-                CopyData(data));
+                CopyData(data),
+                provenance,
+                productionEntry);
             if (events.Count == capacity) {
                 events.Dequeue();
                 droppedEvents++;

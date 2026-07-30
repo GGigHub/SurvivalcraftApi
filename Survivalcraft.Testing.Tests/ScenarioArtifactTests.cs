@@ -113,7 +113,15 @@ public sealed class ScenarioArtifactTests {
                     4096),
                 "test",
                 true);
-            ActionReceipt receipt = new("a1", true, 1, 1, "applied");
+            const string productionEntry = "ComponentGui.TrySetCreativeFlyEnabled";
+            ActionReceipt receipt = new(
+                "a1",
+                true,
+                1,
+                1,
+                "applied",
+                Provenance: ActionProvenance.ProductionInput,
+                ProductionEntry: productionEntry);
             NetworkFaultProfile faultProfile = new(
                 Seed: 42,
                 BaseLatencyMilliseconds: 18,
@@ -154,7 +162,38 @@ public sealed class ScenarioArtifactTests {
                         ControlProtocol.JsonOptions),
                     receipt)],
                 new Dictionary<string, ActionEventsResult> {
-                    ["client-a"] = new ActionEventsResult([], 1, 0, 0, false)
+                    ["client-a"] = new ActionEventsResult([
+                        new ActionEventRecord(
+                            1,
+                            DateTimeOffset.UnixEpoch,
+                            1,
+                            "a1",
+                            "client-a",
+                            AutomationCommandDomain.Player,
+                            "creativeFly",
+                            ActionEventPhase.Queued,
+                            1,
+                            null,
+                            "queued",
+                            new Dictionary<string, string>(),
+                            ActionProvenance.ProductionInput,
+                            productionEntry),
+                        new ActionEventRecord(
+                            2,
+                            DateTimeOffset.UnixEpoch,
+                            2,
+                            "a1",
+                            "client-a",
+                            AutomationCommandDomain.Player,
+                            "creativeFly",
+                            ActionEventPhase.Applied,
+                            1,
+                            null,
+                            "applied",
+                            new Dictionary<string, string>(),
+                            ActionProvenance.ProductionInput,
+                            productionEntry)
+                    ], 1, 2, 0, false)
                 },
                 new Dictionary<string, StateSnapshotV2> { ["client-a-final"] = snapshot },
                 [new ScenarioAssertionRecordV2("fly", "passed", ["client-a"], "enabled")],
@@ -174,6 +213,7 @@ public sealed class ScenarioArtifactTests {
                 "capabilities-client-a.json",
                 "actions.json",
                 "events-client-a.json",
+                "attestations.json",
                 "snapshot-client-a-final.v2.json",
                 "assertions.json"
             ];
@@ -192,6 +232,136 @@ public sealed class ScenarioArtifactTests {
             Assert.Equal(faultProfile, replay.NetworkFaults);
             Assert.True(Assert.Single(replayActions)
                 .Payload.Deserialize<SetCreativeFlyCommand>(ControlProtocol.JsonOptions)?.Enabled);
+            ProductionPathAttestation[] attestations = JsonSerializer.Deserialize<
+                ProductionPathAttestation[]>(
+                await File.ReadAllTextAsync(Path.Combine(root, "attestations.json")),
+                ControlProtocol.JsonOptions) ?? [];
+            Assert.True(Assert.Single(attestations).Passed);
+        }
+        finally {
+            if (Directory.Exists(root)) {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void ProductionPathAttestationRejectsFixtureAndMismatchedEventEvidence() {
+        const string actionId = "action-1";
+        const string productionEntry = "MoveItemPacket.Handle";
+        ScenarioActionRecordV2 action = new(
+            "client-a",
+            ControlCommandNames.InventoryMove,
+            JsonSerializer.SerializeToElement(
+                new InventoryMoveCommand(1, 10, 0, 20, 0, 1),
+                ControlProtocol.JsonOptions),
+            new ActionReceipt(
+                actionId,
+                true,
+                1,
+                1,
+                "queued",
+                Provenance: ActionProvenance.ProductionRequest,
+                ProductionEntry: productionEntry));
+        ActionEventRecord queued = new(
+            1,
+            DateTimeOffset.UnixEpoch,
+            1,
+            actionId,
+            "client-a",
+            AutomationCommandDomain.Inventory,
+            "move",
+            ActionEventPhase.Queued,
+            1,
+            null,
+            "queued",
+            new Dictionary<string, string>(),
+            ActionProvenance.ProductionRequest,
+            productionEntry);
+        ActionEventRecord mismatchedTerminal = queued with {
+            Sequence = 2,
+            Phase = ActionEventPhase.Applied,
+            ProductionEntry = "Fixture.ApplyInventory"
+        };
+
+        ProductionPathAttestation attestation = Assert.Single(
+            ProductionPathAttestationBuilder.Build(
+                [action],
+                new Dictionary<string, ActionEventsResult> {
+                    ["client-a"] = new ActionEventsResult(
+                        [queued, mismatchedTerminal],
+                        1,
+                        2,
+                        0,
+                        false)
+                }));
+
+        Assert.False(attestation.Passed);
+        Assert.Contains(
+            "provenance-stamped applied/observed/rejected event",
+            attestation.MissingEvidence);
+        Assert.Throws<InvalidDataException>(() =>
+            ProductionPathAttestationBuilder.EnsureComplete([attestation]));
+
+        ProductionPathAttestation fixture = Assert.Single(
+            ProductionPathAttestationBuilder.Build(
+                [action with {
+                    Receipt = action.Receipt with {
+                        Provenance = ActionProvenance.Fixture,
+                        ProductionEntry = "Fixture.ApplyInventory"
+                    }
+                }],
+                new Dictionary<string, ActionEventsResult>()));
+        Assert.False(fixture.Passed);
+        Assert.Contains("non-fixture receipt provenance", fixture.MissingEvidence);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public async Task PassedV2BundleFailsClosedWhenProductionEvidenceIsMissing() {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "Survivalcraft.Testing.Tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            ScenarioArtifactBundleV2 bundle = new(
+                new ScenarioDefinition("gate", 1, 1, ["client-a"], []),
+                new ScenarioReplayV2(
+                    "gate",
+                    1,
+                    1,
+                    "runtime",
+                    "direct",
+                    ControlProtocol.CurrentVersion,
+                    AutomationProtocol.CurrentApiVersion,
+                    AutomationProtocol.CurrentSnapshotSchemaVersion),
+                new ScenarioTopologyV2("direct", "server", ["client-a"], false, null),
+                [],
+                new Dictionary<string, AutomationDescription>(),
+                [new ScenarioActionRecordV2(
+                    "client-a",
+                    ControlCommandNames.SetCreativeFly,
+                    JsonSerializer.SerializeToElement(
+                        new SetCreativeFlyCommand(true, 1),
+                        ControlProtocol.JsonOptions),
+                    new ActionReceipt("missing", true, 1, 1, "queued"))],
+                new Dictionary<string, ActionEventsResult>(),
+                new Dictionary<string, StateSnapshotV2>(),
+                [],
+                new Dictionary<string, string[]>(),
+                new Dictionary<string, string>(),
+                "passed",
+                null);
+
+            InvalidDataException exception = await Assert.ThrowsAsync<InvalidDataException>(() =>
+                ScenarioArtifactWriter.WriteV2Async(root, bundle));
+
+            Assert.Contains("Production path attestation failed", exception.Message);
+            Assert.True(File.Exists(Path.Combine(root, "attestations.json")));
+            using JsonDocument outcome = JsonDocument.Parse(
+                await File.ReadAllTextAsync(Path.Combine(root, "outcome.json")));
+            Assert.Equal("failed", outcome.RootElement.GetProperty("outcome").GetString());
         }
         finally {
             if (Directory.Exists(root)) {

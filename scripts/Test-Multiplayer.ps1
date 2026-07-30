@@ -1,12 +1,24 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("fast", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "entity-direct", "entity-relay", "entity", "inventory-health-direct", "inventory-health-relay", "inventory-health", "environment-mechanics-direct", "environment-mechanics-relay", "environment-mechanics", "mount-direct", "mount-relay", "mount", "logic-direct", "logic-relay", "logic", "legacy", "full")]
+    [ValidateSet("fast", "trust", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "entity-direct", "entity-relay", "entity", "pickable-projectile-direct", "pickable-projectile-relay", "pickable-projectile", "inventory-health-direct", "inventory-health-relay", "inventory-health", "environment-mechanics-direct", "environment-mechanics-relay", "environment-mechanics", "mount-direct", "mount-relay", "mount", "logic-direct", "logic-relay", "logic", "soak", "legacy", "full")]
     [string]$Mode = "fast",
 
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Debug",
 
     [string]$Artifacts,
+
+    [ValidateRange(1, 10000)]
+    [int]$SoakIterations = 9,
+
+    [ValidateSet("direct", "relay")]
+    [string]$SoakTransport = "direct",
+
+    [int]$SoakSeed = 20260730,
+
+    [switch]$SoakIncludeLoss,
+
+    [string]$SoakReplaySchedule,
 
     [switch]$UseAngle,
 
@@ -20,6 +32,7 @@ $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $fastProject = Join-Path $repositoryRoot "Survivalcraft.Testing.Tests\Survivalcraft.Testing.Tests.csproj"
 $gameTestProject = Join-Path $repositoryRoot "Survivalcraft.Test\Survivalcraft.Test.csproj"
 $hostProject = Join-Path $repositoryRoot "Survivalcraft.TestHost\Survivalcraft.TestHost.csproj"
+$legacyBaselinePath = Join-Path $repositoryRoot "Survivalcraft.Testing\Coverage\legacy-known-failures.json"
 $runtimeDirectory = Join-Path $repositoryRoot "Survivalcraft.Test\bin\$Configuration\net10.0-windows\win-x64"
 $runStamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $coreArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
@@ -139,6 +152,24 @@ elseif ($Mode -eq "entity" -or $Mode -eq "full") {
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
 }
+$pickableProjectileDirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\pickable-projectile-direct-$runStamp"
+}
+elseif ($Mode -eq "pickable-projectile" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "pickable-projectile-direct"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$pickableProjectileRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\pickable-projectile-relay-$runStamp"
+}
+elseif ($Mode -eq "pickable-projectile" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "pickable-projectile-relay"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
 $inventoryHealthDirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
     Join-Path $repositoryRoot "TestResults\inventory-health-lifecycle-direct-$runStamp"
 }
@@ -222,6 +253,19 @@ else {
 }
 $buildProperties = if ($UseAngle) { @("-p:UseAngle=true") } else { @() }
 $script:coreRuntimeBuilt = $false
+$script:hostBuilt = $false
+$coverageReportPath = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\coverage-trust-$runStamp.json"
+}
+else {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "coverage-trust.json"
+}
+$soakArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\multiplayer-soak-$runStamp"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
 
 function Invoke-DotNet {
     param([Parameter(Mandatory = $true)][string[]]$CommandArguments)
@@ -233,17 +277,25 @@ function Invoke-DotNet {
     }
 }
 
+function Build-AutomationHost {
+    if ($NoBuild -or $script:hostBuilt) {
+        return
+    }
+    Invoke-DotNet -CommandArguments @(
+        "build", $hostProject, "--nologo", "-c", $Configuration
+    )
+    $script:hostBuilt = $true
+}
+
 function Build-CoreRuntime {
     if ($NoBuild -or $script:coreRuntimeBuilt) {
         return
     }
     $gameBuildArguments = @(
-        "build", $gameTestProject, "--nologo", "-c", $Configuration
+        "build", $gameTestProject, "--nologo", "-c", $Configuration, "-m:1"
     ) + $buildProperties
     Invoke-DotNet -CommandArguments $gameBuildArguments
-    Invoke-DotNet -CommandArguments @(
-        "build", $hostProject, "--nologo", "-c", $Configuration
-    )
+    Build-AutomationHost
     $script:coreRuntimeBuilt = $true
 }
 
@@ -275,6 +327,40 @@ function Run-Doctor {
         "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
         "--", "doctor", "--runtime", $runtimeDirectory
     )
+}
+
+function Run-CoverageTrust {
+    Build-AutomationHost
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "coverage", "--output", $coverageReportPath
+    )
+}
+
+function Run-Soak {
+    Build-CoreRuntime
+    $soakArguments = @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "soak",
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $soakArtifactDirectory
+    )
+    if ([string]::IsNullOrWhiteSpace($SoakReplaySchedule)) {
+        $soakArguments += @(
+            "--iterations", $SoakIterations.ToString([System.Globalization.CultureInfo]::InvariantCulture),
+            "--transport", $SoakTransport,
+            "--seed", $SoakSeed.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+        )
+        if ($SoakIncludeLoss) {
+            $soakArguments += "--include-loss"
+        }
+    }
+    else {
+        $soakArguments += @(
+            "--replay-schedule", ([System.IO.Path]::GetFullPath($SoakReplaySchedule))
+        )
+    }
+    Invoke-DotNet -CommandArguments $soakArguments
 }
 
 function Run-CoreScenario {
@@ -407,6 +493,26 @@ function Run-EntityCreatureScenario {
     )
 }
 
+function Run-PickableProjectileScenario {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("direct", "relay")]
+        [string]$Transport,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ArtifactDirectory
+    )
+
+    Build-CoreRuntime
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "run", "pickable-projectile-multiplayer",
+        "--transport", $Transport,
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $ArtifactDirectory
+    )
+}
+
 function Run-InventoryHealthScenario {
     param(
         [Parameter(Mandatory = $true)]
@@ -513,27 +619,84 @@ function Run-LegacyAudit {
     $namespace = [System.Xml.XmlNamespaceManager]::new($trx.NameTable)
     $namespace.AddNamespace("t", $trx.DocumentElement.NamespaceURI)
     $counters = $trx.SelectSingleNode("//t:ResultSummary/t:Counters", $namespace)
-    $failedTests = @(
-        $trx.SelectNodes("//t:UnitTestResult[@outcome='Failed']", $namespace) |
+    if ($null -eq $counters) {
+        throw "Legacy audit TRX does not contain result counters."
+    }
+    $allResults = @($trx.SelectNodes("//t:UnitTestResult", $namespace))
+    $executedTests = @(
+        $allResults |
             ForEach-Object { $_.GetAttribute("testName") } |
             Sort-Object -Unique
     )
+    $failedTests = @(
+        $allResults |
+            Where-Object { $_.GetAttribute("outcome") -eq "Failed" } |
+            ForEach-Object { $_.GetAttribute("testName") } |
+            Sort-Object -Unique
+    )
+    if (!(Test-Path -LiteralPath $legacyBaselinePath -PathType Leaf)) {
+        throw "Legacy failure baseline not found: $legacyBaselinePath"
+    }
+    $baseline = Get-Content -LiteralPath $legacyBaselinePath -Raw | ConvertFrom-Json
+    if ($baseline.schemaVersion -ne 1 -or $baseline.policy -ne "new-failures-block") {
+        throw "Legacy failure baseline has an unsupported schema or policy: $legacyBaselinePath"
+    }
+    $rawKnownFailures = @(
+        $baseline.groups |
+            ForEach-Object { $_.tests }
+    )
+    $knownFailures = @($rawKnownFailures | Sort-Object -Unique)
+    if ($knownFailures.Count -eq 0 -or $knownFailures.Count -ne $rawKnownFailures.Count) {
+        throw "Legacy failure baseline must contain a non-empty unique test inventory."
+    }
+    $unexpectedFailures = @(
+        $failedTests |
+            Where-Object { $knownFailures -notcontains $_ }
+    )
+    $knownFailuresObserved = @(
+        $failedTests |
+            Where-Object { $knownFailures -contains $_ }
+    )
+    $resolvedKnownFailures = @(
+        $knownFailures |
+            Where-Object { $failedTests -notcontains $_ }
+    )
+    $missingBaselineTests = @(
+        $knownFailures |
+            Where-Object { $executedTests -notcontains $_ }
+    )
+    $total = [int]$counters.GetAttribute("total")
+    $executed = [int]$counters.GetAttribute("executed")
+    $completed = $total -gt 0 -and $executed -eq $total
+    $baselineMatched = $unexpectedFailures.Count -eq 0 -and $missingBaselineTests.Count -eq 0
+    $gatePassed = $completed -and $baselineMatched -and ($legacyExitCode -eq 0 -or $legacyExitCode -eq 1)
     $summary = [ordered]@{
-        schemaVersion = 1
+        schemaVersion = 2
+        policy = $baseline.policy
+        baseline = [System.IO.Path]::GetRelativePath($repositoryRoot, $legacyBaselinePath)
         dotnetExitCode = $legacyExitCode
-        total = [int]$counters.GetAttribute("total")
-        executed = [int]$counters.GetAttribute("executed")
+        total = $total
+        executed = $executed
         passed = [int]$counters.GetAttribute("passed")
         failed = [int]$counters.GetAttribute("failed")
+        completed = $completed
+        knownFailureAllowance = $knownFailures.Count
+        knownFailuresObserved = $knownFailuresObserved
+        unexpectedFailures = $unexpectedFailures
+        resolvedKnownFailures = $resolvedKnownFailures
+        missingBaselineTests = $missingBaselineTests
+        baselineMatched = $baselineMatched
+        gatePassed = $gatePassed
         failedTests = $failedTests
         trx = $trxFile.Name
     }
     $summaryPath = Join-Path $legacyArtifactDirectory "legacy-audit-summary.json"
-    $summary | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $summaryPath -Encoding utf8
-    Write-Host "Legacy audit: total=$($summary.total), passed=$($summary.passed), failed=$($summary.failed), summary=$summaryPath"
-    if ($legacyExitCode -ne 0) {
-        throw "dotnet exited with code $legacyExitCode"
+    $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Encoding utf8
+    Write-Host "Legacy audit: total=$($summary.total), passed=$($summary.passed), failed=$($summary.failed), known=$($knownFailuresObserved.Count), unexpected=$($unexpectedFailures.Count), resolved=$($resolvedKnownFailures.Count), summary=$summaryPath"
+    if (!$gatePassed) {
+        throw "Legacy audit gate failed: completed=$completed, unexpectedFailures=$($unexpectedFailures.Count), missingBaselineTests=$($missingBaselineTests.Count), dotnetExitCode=$legacyExitCode"
     }
+    Write-Host "LEGACY AUDIT BASELINE MATCHED"
 }
 
 Push-Location $repositoryRoot
@@ -541,6 +704,9 @@ try {
     switch ($Mode) {
         "fast" {
             Run-FastTests
+        }
+        "trust" {
+            Run-CoverageTrust
         }
         "doctor" {
             Run-Doctor
@@ -604,6 +770,16 @@ try {
             Run-EntityCreatureScenario -Transport "direct" -ArtifactDirectory $entityDirectArtifactDirectory
             Run-EntityCreatureScenario -Transport "relay" -ArtifactDirectory $entityRelayArtifactDirectory
         }
+        "pickable-projectile-direct" {
+            Run-PickableProjectileScenario -Transport "direct" -ArtifactDirectory $pickableProjectileDirectArtifactDirectory
+        }
+        "pickable-projectile-relay" {
+            Run-PickableProjectileScenario -Transport "relay" -ArtifactDirectory $pickableProjectileRelayArtifactDirectory
+        }
+        "pickable-projectile" {
+            Run-PickableProjectileScenario -Transport "direct" -ArtifactDirectory $pickableProjectileDirectArtifactDirectory
+            Run-PickableProjectileScenario -Transport "relay" -ArtifactDirectory $pickableProjectileRelayArtifactDirectory
+        }
         "inventory-health-direct" {
             Run-InventoryHealthScenario -Transport "direct" -ArtifactDirectory $inventoryHealthDirectArtifactDirectory
         }
@@ -644,11 +820,15 @@ try {
             Run-LogicScenario -Transport "direct" -ArtifactDirectory $logicDirectArtifactDirectory
             Run-LogicScenario -Transport "relay" -ArtifactDirectory $logicRelayArtifactDirectory
         }
+        "soak" {
+            Run-Soak
+        }
         "legacy" {
             Run-LegacyAudit
         }
         "full" {
             Run-FastTests
+            Run-CoverageTrust
             Run-Doctor
             Run-CompatibilityScenario
             Run-CoreScenario
@@ -663,6 +843,8 @@ try {
             Run-TerrainStreamingScenario -Transport "relay" -ArtifactDirectory $streamingRelayArtifactDirectory
             Run-EntityCreatureScenario -Transport "direct" -ArtifactDirectory $entityDirectArtifactDirectory
             Run-EntityCreatureScenario -Transport "relay" -ArtifactDirectory $entityRelayArtifactDirectory
+            Run-PickableProjectileScenario -Transport "direct" -ArtifactDirectory $pickableProjectileDirectArtifactDirectory
+            Run-PickableProjectileScenario -Transport "relay" -ArtifactDirectory $pickableProjectileRelayArtifactDirectory
             Run-InventoryHealthScenario -Transport "direct" -ArtifactDirectory $inventoryHealthDirectArtifactDirectory
             Run-InventoryHealthScenario -Transport "relay" -ArtifactDirectory $inventoryHealthRelayArtifactDirectory
             Run-EnvironmentMechanicsScenario -Transport "direct" -ArtifactDirectory $environmentMechanicsDirectArtifactDirectory

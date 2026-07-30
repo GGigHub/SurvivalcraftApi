@@ -84,7 +84,8 @@ public sealed record ScenarioArtifactBundleV2(
     IReadOnlyDictionary<string, string[]> Logs,
     IReadOnlyDictionary<string, string> Metrics,
     string Outcome,
-    string? Error);
+    string? Error,
+    ProductionPathAttestation[]? Attestations = null);
 
 public static class ScenarioArtifactWriter {
     private static readonly JsonSerializerOptions ArtifactJsonOptions =
@@ -151,6 +152,17 @@ public static class ScenarioArtifactWriter {
         ArgumentNullException.ThrowIfNull(bundle);
         string fullDirectory = Path.GetFullPath(artifactDirectory);
         Directory.CreateDirectory(fullDirectory);
+        ProductionPathAttestation[] attestations = bundle.Attestations
+            ?? ProductionPathAttestationBuilder.Build(bundle.Actions, bundle.Events);
+        InvalidDataException? attestationFailure = null;
+        if (string.Equals(bundle.Outcome, "passed", StringComparison.Ordinal)) {
+            try {
+                ProductionPathAttestationBuilder.EnsureComplete(attestations);
+            }
+            catch (InvalidDataException exception) {
+                attestationFailure = exception;
+            }
+        }
 
         await WriteJsonAsync(
             Path.Combine(fullDirectory, "scenario.json"),
@@ -173,6 +185,10 @@ public static class ScenarioArtifactWriter {
             bundle.Actions,
             cancellationToken).ConfigureAwait(false);
         await WriteJsonAsync(
+            Path.Combine(fullDirectory, "attestations.json"),
+            attestations,
+            cancellationToken).ConfigureAwait(false);
+        await WriteJsonAsync(
             Path.Combine(fullDirectory, "assertions.json"),
             bundle.Assertions,
             cancellationToken).ConfigureAwait(false);
@@ -182,7 +198,10 @@ public static class ScenarioArtifactWriter {
             cancellationToken).ConfigureAwait(false);
         await WriteJsonAsync(
             Path.Combine(fullDirectory, "outcome.json"),
-            new { bundle.Outcome, bundle.Error },
+            new {
+                Outcome = attestationFailure == null ? bundle.Outcome : "failed",
+                Error = attestationFailure?.ToString() ?? bundle.Error
+            },
             cancellationToken).ConfigureAwait(false);
 
         foreach ((string role, AutomationDescription description) in bundle.Capabilities) {
@@ -208,6 +227,9 @@ public static class ScenarioArtifactWriter {
                 Path.Combine(fullDirectory, $"{Sanitize(role)}.log"),
                 lines,
                 cancellationToken).ConfigureAwait(false);
+        }
+        if (attestationFailure != null) {
+            throw attestationFailure;
         }
         return fullDirectory;
     }

@@ -60,7 +60,8 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
                 NetPeer relayPeer = _relayPeer;
                 NetworkFaultInjector.Send(
                     frame,
-                    data => relayPeer.Send(data, DeliveryMethod.ReliableOrdered));
+                    data => relayPeer.Send(data, DeliveryMethod.ReliableOrdered),
+                    packet.GetType().Name);
             }
         }
     }

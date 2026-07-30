@@ -5,6 +5,12 @@ using TemplatesDatabase;
 
 namespace Game {
     public class Projectile : WorldItem {
+        /// <summary>
+        /// Stable network event identity used to make replicated projectile creation idempotent.
+        /// Zero identifies a local or persisted projectile that was not created from a live event.
+        /// </summary>
+        public long NetworkEventId;
+
         public Vector3 Rotation;
 
         public Vector3 AngularVelocity;

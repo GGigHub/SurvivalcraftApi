@@ -228,6 +228,7 @@ namespace Survivalcraft.Multiplayer {
             };
             NetworkManager.QueueAction = (packetObj) => {
                 if (packetObj is Packet packet) {
+                    NetworkPacketTrafficTracker.RecordQueued(packet);
                     (NetworkManager.NetworkClient as NetworkClient)?.Send(packet);
                     (NetworkManager.NetworkServer as NetworkServer)?.Board(packet);
                     (NetworkManager.RelayClient as RelayClient)?.Send(packet);
@@ -249,8 +250,25 @@ namespace Survivalcraft.Multiplayer {
                 (NetworkManager.NetworkServer as NetworkServer)?.Board(packet);
                 (NetworkManager.RelayHost as RelayHost)?.Board(packet);
             };
-            NetworkManager.QueuePickableCreateAction = (pickable) => NetworkManager.Queue(new PickableCreatePacket(pickable));
-            NetworkManager.QueuePickableUpdateAction = (pickables) => NetworkManager.Queue(new PickableUpdatePacket(pickables));
+            NetworkManager.QueuePickableCreateAction = pickable => {
+                long revision = PickableLifecycleTracker.GetAuthoritativeRevision(
+                    GameManager.Project,
+                    pickable.Id);
+                NetworkManager.Queue(new PickableCreatePacket(pickable, revision));
+            };
+            NetworkManager.QueuePickableUpdateAction = pickables => {
+                Project project = GameManager.Project;
+                List<PickableLifecycleStamp> stamps = pickables
+                    .Where(pickable => pickable.Id > 0)
+                    .Select(pickable => new PickableLifecycleStamp {
+                        PickableId = pickable.Id,
+                        Revision = PickableLifecycleTracker.AdvanceAuthoritativeRevision(
+                            project,
+                            pickable.Id)
+                    })
+                    .ToList();
+                NetworkManager.Queue(new PickableUpdatePacket(pickables, stamps));
+            };
 
             NetworkManager.Initialize();
         }
@@ -514,8 +532,12 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkPickableAttract(Pickable pickable) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new PickableSetFlyToPositionPacket(pickable));
+        if (!NetworkManager.IsClientRunning) {
+            long revision = PickableLifecycleTracker.AdvanceAuthoritativeRevision(
+                GameManager.Project,
+                pickable.Id);
+            NetworkManager.Queue(new PickableSetFlyToPositionPacket(pickable, revision));
+        }
     }
 
     public override void OnNetworkActiveSlotChanged(ComponentPlayer player) {
@@ -610,8 +632,13 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkVitalStatsUpdate(ComponentVitalStats stats) {
-        if (NetworkManager.IsServerRunning)
-            NetworkManager.Queue(new VitalStatSyncPacket(stats));
+        if (NetworkManager.IsServerRunning && Time.PeriodicEvent(0.2, 0.0)) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                stats.Entity.Project,
+                NetworkStateRevisionDomain.VitalStats,
+                stats.Entity.Id);
+            NetworkManager.Queue(new VitalStatSyncPacket(stats, revision));
+        }
     }
 
     public override void OnNetworkAdjustableDelayGateBlockEdited(SubsystemAdjustableDelayGateBlockBehavior subsystem, CellFace cell, int newDelay) {
@@ -716,11 +743,17 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkPickableCreated(Pickable pickable) {
-        NetworkManager.Queue(new PickableCreatePacket(pickable));
+        long revision = PickableLifecycleTracker.AdvanceAuthoritativeRevision(
+            GameManager.Project,
+            pickable.Id);
+        NetworkManager.Queue(new PickableCreatePacket(pickable, revision));
     }
 
     public override void OnNetworkPickableDeleted(Pickable pickable) {
-        NetworkManager.Queue(new PickableDeletePacket(pickable));
+        long revision = PickableLifecycleTracker.AdvanceAuthoritativeRevision(
+            GameManager.Project,
+            pickable.Id);
+        NetworkManager.Queue(new PickableDeletePacket(pickable, revision));
     }
 
     public override void OnNetworkPickableRequestSync(int id) {
@@ -906,11 +939,14 @@ namespace Survivalcraft.Multiplayer {
             foreach (ClientSession session in NetworkManager.ServerSessions) {
                 if (session.NetworkState < NetworkState.Playing || session.PlayerIndex == player.PlayerData.PlayerIndex)
                     continue;
-                NetworkManager.Queue(new PlayerBodyUpdatePacket(player, session) { To = session });
+                NetworkManager.Queue(new PlayerBodyUpdatePacket(
+                    player,
+                    session,
+                    forceFull: true) { To = session });
             }
         }
         if (isMainPlayer && Time.PeriodicEvent(0.2f, 0.0))
-            NetworkManager.Queue(new PlayerBodyUpdatePacket(player));
+            NetworkManager.Queue(new PlayerBodyUpdatePacket(player, forceFull: true));
     }
 
     public override void OnNetworkTerrainPlayerLocationUpdate(TerrainUpdater updater, TerrainUpdater.UpdateLocation location) {

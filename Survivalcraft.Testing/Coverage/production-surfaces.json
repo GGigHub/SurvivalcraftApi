@@ -1,0 +1,1489 @@
+{
+  "schemaVersion": 1,
+  "surfaces": [
+    {
+      "surfaceId": "hook:IsNetworkMode",
+      "kind": "hook",
+      "symbol": "IsNetworkMode",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnEntityAdd",
+      "kind": "hook",
+      "symbol": "OnEntityAdd",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnEntityRemove",
+      "kind": "hook",
+      "symbol": "OnEntityRemove",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkActiveSlotChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkActiveSlotChanged",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkAdjustableDelayGateBlockEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkAdjustableDelayGateBlockEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkAdjustableDelayGateItemEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkAdjustableDelayGateItemEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkBatteryBlockVoltageEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkBatteryBlockVoltageEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkBatteryItemVoltageEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkBatteryItemVoltageEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkBodyRemoved",
+      "kind": "hook",
+      "symbol": "OnNetworkBodyRemoved",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkBodyUpdate",
+      "kind": "hook",
+      "symbol": "OnNetworkBodyUpdate",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkBodyUpdated",
+      "kind": "hook",
+      "symbol": "OnNetworkBodyUpdated",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkButtonBlockVoltageEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkButtonBlockVoltageEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkButtonItemVoltageEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkButtonItemVoltageEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkChaseBehaviorAttackChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkChaseBehaviorAttackChanged",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkChokeRequest",
+      "kind": "hook",
+      "symbol": "OnNetworkChokeRequest",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkClothingSlotChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkClothingSlotChanged",
+      "featureId": "inventory.clothing-skin",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkCreatureDied",
+      "kind": "hook",
+      "symbol": "OnNetworkCreatureDied",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkCreatureSound",
+      "kind": "hook",
+      "symbol": "OnNetworkCreatureSound",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkCrossbowPull",
+      "kind": "hook",
+      "symbol": "OnNetworkCrossbowPull",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkDamage",
+      "kind": "hook",
+      "symbol": "OnNetworkDamage",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkDigInMudBehaviorChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkDigInMudBehaviorChanged",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkDispenserClicked",
+      "kind": "hook",
+      "symbol": "OnNetworkDispenserClicked",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkDragDropItem",
+      "kind": "hook",
+      "symbol": "OnNetworkDragDropItem",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkEatPickableBehaviorChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkEatPickableBehaviorChanged",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkEditableItemDataHarvested",
+      "kind": "hook",
+      "symbol": "OnNetworkEditableItemDataHarvested",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkElectricityPersistentVoltageChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkElectricityPersistentVoltageChanged",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkExplosionCell",
+      "kind": "hook",
+      "symbol": "OnNetworkExplosionCell",
+      "featureId": "mechanics.explosion-world-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkExplosionSound",
+      "kind": "hook",
+      "symbol": "OnNetworkExplosionSound",
+      "featureId": "mechanics.explosion-world-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkExtinguish",
+      "kind": "hook",
+      "symbol": "OnNetworkExtinguish",
+      "featureId": "mechanics.sleep-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFireBlockAdded",
+      "kind": "hook",
+      "symbol": "OnNetworkFireBlockAdded",
+      "featureId": "mechanics.explosion-world-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFireBlockRemoved",
+      "kind": "hook",
+      "symbol": "OnNetworkFireBlockRemoved",
+      "featureId": "mechanics.explosion-world-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFishOutOfWaterBehaviorChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkFishOutOfWaterBehaviorChanged",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFluEffect",
+      "kind": "hook",
+      "symbol": "OnNetworkFluEffect",
+      "featureId": "mechanics.status-effects",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFluImpulse",
+      "kind": "hook",
+      "symbol": "OnNetworkFluImpulse",
+      "featureId": "mechanics.status-effects",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFluSneeze",
+      "kind": "hook",
+      "symbol": "OnNetworkFluSneeze",
+      "featureId": "mechanics.status-effects",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFluStarted",
+      "kind": "hook",
+      "symbol": "OnNetworkFluStarted",
+      "featureId": "mechanics.status-effects",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFluUpdate",
+      "kind": "hook",
+      "symbol": "OnNetworkFluUpdate",
+      "featureId": "mechanics.status-effects",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFogChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkFogChanged",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFurnacesUpdate",
+      "kind": "hook",
+      "symbol": "OnNetworkFurnacesUpdate",
+      "featureId": "inventory.furnace-container",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFurnaceUpdate",
+      "kind": "hook",
+      "symbol": "OnNetworkFurnaceUpdate",
+      "featureId": "inventory.furnace-container",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkHealthFallDamage",
+      "kind": "hook",
+      "symbol": "OnNetworkHealthFallDamage",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkHealthHealUpdate",
+      "kind": "hook",
+      "symbol": "OnNetworkHealthHealUpdate",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkHealthInjured",
+      "kind": "hook",
+      "symbol": "OnNetworkHealthInjured",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkHumanModelRow",
+      "kind": "hook",
+      "symbol": "OnNetworkHumanModelRow",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkInventorySlotChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkInventorySlotChanged",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkLevelExperience",
+      "kind": "hook",
+      "symbol": "OnNetworkLevelExperience",
+      "featureId": "player.progression-vitals",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkLookAroundBehaviorChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkLookAroundBehaviorChanged",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkManualLightingStrike",
+      "kind": "hook",
+      "symbol": "OnNetworkManualLightingStrike",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkManualTimeChange",
+      "kind": "hook",
+      "symbol": "OnNetworkManualTimeChange",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkManualWeatherChange",
+      "kind": "hook",
+      "symbol": "OnNetworkManualWeatherChange",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkMemoryBankBlockEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkMemoryBankBlockEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkMemoryBankDataHarvested",
+      "kind": "hook",
+      "symbol": "OnNetworkMemoryBankDataHarvested",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkMemoryBankItemEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkMemoryBankItemEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkMoveItem",
+      "kind": "hook",
+      "symbol": "OnNetworkMoveItem",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkMovingBlockAdded",
+      "kind": "hook",
+      "symbol": "OnNetworkMovingBlockAdded",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkMovingBlockRemoved",
+      "kind": "hook",
+      "symbol": "OnNetworkMovingBlockRemoved",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkNauseaEffect",
+      "kind": "hook",
+      "symbol": "OnNetworkNauseaEffect",
+      "featureId": "mechanics.status-effects",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkOpenInventoryRequest",
+      "kind": "hook",
+      "symbol": "OnNetworkOpenInventoryRequest",
+      "featureId": "inventory.furnace-container",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkParticleSystemAdded",
+      "kind": "hook",
+      "symbol": "OnNetworkParticleSystemAdded",
+      "featureId": "mechanics.explosion-world-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPickableAttract",
+      "kind": "hook",
+      "symbol": "OnNetworkPickableAttract",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPickableCreated",
+      "kind": "hook",
+      "symbol": "OnNetworkPickableCreated",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPickableDeleted",
+      "kind": "hook",
+      "symbol": "OnNetworkPickableDeleted",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPickableRequestSync",
+      "kind": "hook",
+      "symbol": "OnNetworkPickableRequestSync",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPistonBlockEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkPistonBlockEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPistonItemEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkPistonItemEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerAim",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerAim",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerBodyUpdate",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerBodyUpdate",
+      "featureId": "player.motion-look-crouch",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerCreate",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerCreate",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerCreativeFly",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerCreativeFly",
+      "featureId": "player.creative-fly",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerDig",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerDig",
+      "featureId": "player.place-dig-use",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerDragDrop",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerDragDrop",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerDrop",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerDrop",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerHit",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerHit",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerInteract",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerInteract",
+      "featureId": "player.place-dig-use",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerIntoPlaying",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerIntoPlaying",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerModify",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerModify",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerPlaying",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerPlaying",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerRestart",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerRestart",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPlayerStateChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkPlayerStateChanged",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkPrecipitationChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkPrecipitationChanged",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkProjectileFired",
+      "kind": "hook",
+      "symbol": "OnNetworkProjectileFired",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkRandomFeedBehaviorChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkRandomFeedBehaviorChanged",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkRandomPeckBehaviorChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkRandomPeckBehaviorChanged",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkRequestSkin",
+      "kind": "hook",
+      "symbol": "OnNetworkRequestSkin",
+      "featureId": "inventory.clothing-skin",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkRiderDismounting",
+      "kind": "hook",
+      "symbol": "OnNetworkRiderDismounting",
+      "featureId": "mechanics.mount",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkRiderMounting",
+      "kind": "hook",
+      "symbol": "OnNetworkRiderMounting",
+      "featureId": "mechanics.mount",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkSetOnFire",
+      "kind": "hook",
+      "symbol": "OnNetworkSetOnFire",
+      "featureId": "mechanics.sleep-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkSicknessChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkSicknessChanged",
+      "featureId": "mechanics.status-effects",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkSignDataChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkSignDataChanged",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkSignEditRequested",
+      "kind": "hook",
+      "symbol": "OnNetworkSignEditRequested",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkSkyLightning",
+      "kind": "hook",
+      "symbol": "OnNetworkSkyLightning",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkSleep",
+      "kind": "hook",
+      "symbol": "OnNetworkSleep",
+      "featureId": "mechanics.sleep-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkStubbornSteedHeadShakeOrder",
+      "kind": "hook",
+      "symbol": "OnNetworkStubbornSteedHeadShakeOrder",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkSwitchBlockVoltageEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkSwitchBlockVoltageEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkSwitchItemVoltageEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkSwitchItemVoltageEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkTerrainCellChanged",
+      "kind": "hook",
+      "symbol": "OnNetworkTerrainCellChanged",
+      "featureId": "terrain.streaming-and-revisions",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkTerrainPlayerLocationUpdate",
+      "kind": "hook",
+      "symbol": "OnNetworkTerrainPlayerLocationUpdate",
+      "featureId": "terrain.streaming-and-revisions",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkTerrainSyncChunkList",
+      "kind": "hook",
+      "symbol": "OnNetworkTerrainSyncChunkList",
+      "featureId": "terrain.streaming-and-revisions",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkTimeUpdate",
+      "kind": "hook",
+      "symbol": "OnNetworkTimeUpdate",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkTruthTableBlockEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkTruthTableBlockEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkTruthTableDataHarvested",
+      "kind": "hook",
+      "symbol": "OnNetworkTruthTableDataHarvested",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkTruthTableItemEdited",
+      "kind": "hook",
+      "symbol": "OnNetworkTruthTableItemEdited",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkVitalStatsUpdate",
+      "kind": "hook",
+      "symbol": "OnNetworkVitalStatsUpdate",
+      "featureId": "player.progression-vitals",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkWakeUp",
+      "kind": "hook",
+      "symbol": "OnNetworkWakeUp",
+      "featureId": "mechanics.sleep-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "packet:ActiveSlotChangePacket",
+      "kind": "packet",
+      "symbol": "ActiveSlotChangePacket",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/ActiveSlotChangePacket.cs"
+    },
+    {
+      "surfaceId": "packet:AdjustableDelayGatePacket",
+      "kind": "packet",
+      "symbol": "AdjustableDelayGatePacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/AdjustableDelayGatePacket.cs"
+    },
+    {
+      "surfaceId": "packet:BatteryVoltagePacket",
+      "kind": "packet",
+      "symbol": "BatteryVoltagePacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/BatteryVoltagePacket.cs"
+    },
+    {
+      "surfaceId": "packet:BehaviorSyncPacket",
+      "kind": "packet",
+      "symbol": "BehaviorSyncPacket",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/BehaviorSyncPacket.cs"
+    },
+    {
+      "surfaceId": "packet:BodyCollisionPacket",
+      "kind": "packet",
+      "symbol": "BodyCollisionPacket",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/BodyCollisionPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ButtonVoltagePacket",
+      "kind": "packet",
+      "symbol": "ButtonVoltagePacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/ButtonVoltagePacket.cs"
+    },
+    {
+      "surfaceId": "packet:ChaseBehaviorPacket",
+      "kind": "packet",
+      "symbol": "ChaseBehaviorPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/ChaseBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ClothingSyncPacket",
+      "kind": "packet",
+      "symbol": "ClothingSyncPacket",
+      "featureId": "inventory.clothing-skin",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/ClothingSyncPacket.cs"
+    },
+    {
+      "surfaceId": "packet:CompatibilityHelloPacket",
+      "kind": "packet",
+      "symbol": "CompatibilityHelloPacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/CompatibilityPackets.cs"
+    },
+    {
+      "surfaceId": "packet:CompatibilityResultPacket",
+      "kind": "packet",
+      "symbol": "CompatibilityResultPacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/CompatibilityPackets.cs"
+    },
+    {
+      "surfaceId": "packet:ComponentFluPacket",
+      "kind": "packet",
+      "symbol": "ComponentFluPacket",
+      "featureId": "mechanics.status-effects",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/ComponentFluPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ComponentFurnacePacket",
+      "kind": "packet",
+      "symbol": "ComponentFurnacePacket",
+      "featureId": "inventory.furnace-container",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/ComponentFurnacePacket.cs"
+    },
+    {
+      "surfaceId": "packet:ComponentMountPacket",
+      "kind": "packet",
+      "symbol": "ComponentMountPacket",
+      "featureId": "mechanics.mount",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/ComponentMountPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ComponentSicknessPacket",
+      "kind": "packet",
+      "symbol": "ComponentSicknessPacket",
+      "featureId": "mechanics.status-effects",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/ComponentSicknessPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ConnectPacket",
+      "kind": "packet",
+      "symbol": "ConnectPacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/ConnectPacket.cs"
+    },
+    {
+      "surfaceId": "packet:CreatureSoundPacket",
+      "kind": "packet",
+      "symbol": "CreatureSoundPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/CreatureSoundPacket.cs"
+    },
+    {
+      "surfaceId": "packet:CrossbowPullPacket",
+      "kind": "packet",
+      "symbol": "CrossbowPullPacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/CrossbowPullPacket.cs"
+    },
+    {
+      "surfaceId": "packet:DamageSyncPacket",
+      "kind": "packet",
+      "symbol": "DamageSyncPacket",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Health/DamageSyncPacket.cs"
+    },
+    {
+      "surfaceId": "packet:DigInMudBehaviorPacket",
+      "kind": "packet",
+      "symbol": "DigInMudBehaviorPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/DigInMudBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:DispenserPacket",
+      "kind": "packet",
+      "symbol": "DispenserPacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/DispenserPacket.cs"
+    },
+    {
+      "surfaceId": "packet:DragDropItemPacket",
+      "kind": "packet",
+      "symbol": "DragDropItemPacket",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/DragDropItemPacket.cs"
+    },
+    {
+      "surfaceId": "packet:EatPickableBehaviorPacket",
+      "kind": "packet",
+      "symbol": "EatPickableBehaviorPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/EatPickableBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:EditSignPacket",
+      "kind": "packet",
+      "symbol": "EditSignPacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/EditSignPacket.cs"
+    },
+    {
+      "surfaceId": "packet:EntityLoadPacket",
+      "kind": "packet",
+      "symbol": "EntityLoadPacket",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/EntityLoadPacket.cs"
+    },
+    {
+      "surfaceId": "packet:EntityOnFirePacket",
+      "kind": "packet",
+      "symbol": "EntityOnFirePacket",
+      "featureId": "mechanics.sleep-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/EntityOnFirePacket.cs"
+    },
+    {
+      "surfaceId": "packet:EntityRemovePacket",
+      "kind": "packet",
+      "symbol": "EntityRemovePacket",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/EntityRemovePacket.cs"
+    },
+    {
+      "surfaceId": "packet:EntitySyncRequestPacket",
+      "kind": "packet",
+      "symbol": "EntitySyncRequestPacket",
+      "featureId": "entity-creature.lifecycle-physics",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/EntitySyncRequestPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ExplosionCellPacket",
+      "kind": "packet",
+      "symbol": "ExplosionCellPacket",
+      "featureId": "mechanics.explosion-world-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/ExplosionCellPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ExplosionSoundPacket",
+      "kind": "packet",
+      "symbol": "ExplosionSoundPacket",
+      "featureId": "mechanics.explosion-world-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/ExplosionSoundPacket.cs"
+    },
+    {
+      "surfaceId": "packet:FireBlockAddPacket",
+      "kind": "packet",
+      "symbol": "FireBlockAddPacket",
+      "featureId": "mechanics.explosion-world-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/FireBlockAddPacket.cs"
+    },
+    {
+      "surfaceId": "packet:FireBlockRemovePacket",
+      "kind": "packet",
+      "symbol": "FireBlockRemovePacket",
+      "featureId": "mechanics.explosion-world-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/FireBlockRemovePacket.cs"
+    },
+    {
+      "surfaceId": "packet:FishOutOfWaterBehaviorPacket",
+      "kind": "packet",
+      "symbol": "FishOutOfWaterBehaviorPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/FishOutOfWaterBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:HealthSyncPacket",
+      "kind": "packet",
+      "symbol": "HealthSyncPacket",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Health/HealthSyncPacket.cs"
+    },
+    {
+      "surfaceId": "packet:HitValuePacket",
+      "kind": "packet",
+      "symbol": "HitValuePacket",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/HitValuePacket.cs"
+    },
+    {
+      "surfaceId": "packet:HumanRowBehaviorPacket",
+      "kind": "packet",
+      "symbol": "HumanRowBehaviorPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/HumanRowBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:IndexPacket",
+      "kind": "packet",
+      "symbol": "IndexPacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/IndexPacket.cs"
+    },
+    {
+      "surfaceId": "packet:InjureEventPacket",
+      "kind": "packet",
+      "symbol": "InjureEventPacket",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Health/InjureEventPacket.cs"
+    },
+    {
+      "surfaceId": "packet:InjureRequestPacket",
+      "kind": "packet",
+      "symbol": "InjureRequestPacket",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Health/InjureRequestPacket.cs"
+    },
+    {
+      "surfaceId": "packet:InventorySyncPacket",
+      "kind": "packet",
+      "symbol": "InventorySyncPacket",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/InventorySyncPacket.cs"
+    },
+    {
+      "surfaceId": "packet:LatencyProbePacket",
+      "kind": "packet",
+      "symbol": "LatencyProbePacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/LatencyProbePacket.cs"
+    },
+    {
+      "surfaceId": "packet:LookAroundBehaviorPacket",
+      "kind": "packet",
+      "symbol": "LookAroundBehaviorPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/LookAroundBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:MemoryBankDataPacket",
+      "kind": "packet",
+      "symbol": "MemoryBankDataPacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/MemoryBankDataPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ModChannelCatalogPacket",
+      "kind": "packet",
+      "symbol": "ModChannelCatalogPacket",
+      "featureId": "api.mod-channel",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/ModChannelHandshakePackets.cs"
+    },
+    {
+      "surfaceId": "packet:ModChannelCatalogResultPacket",
+      "kind": "packet",
+      "symbol": "ModChannelCatalogResultPacket",
+      "featureId": "api.mod-channel",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/ModChannelHandshakePackets.cs"
+    },
+    {
+      "surfaceId": "packet:ModMessagePacket",
+      "kind": "packet",
+      "symbol": "ModMessagePacket",
+      "featureId": "api.mod-channel",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mod/ModMessagePacket.cs"
+    },
+    {
+      "surfaceId": "packet:MoveItemPacket",
+      "kind": "packet",
+      "symbol": "MoveItemPacket",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/MoveItemPacket.cs"
+    },
+    {
+      "surfaceId": "packet:MovingBlockAddPacket",
+      "kind": "packet",
+      "symbol": "MovingBlockAddPacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/MovingBlockAddPacket.cs"
+    },
+    {
+      "surfaceId": "packet:MovingBlockRemovePacket",
+      "kind": "packet",
+      "symbol": "MovingBlockRemovePacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/MovingBlockRemovePacket.cs"
+    },
+    {
+      "surfaceId": "packet:OpenInventoryByIDPacket",
+      "kind": "packet",
+      "symbol": "OpenInventoryByIDPacket",
+      "featureId": "inventory.furnace-container",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/OpenInventoryByIDPacket.cs"
+    },
+    {
+      "surfaceId": "packet:OpenInventoryByPointPacket",
+      "kind": "packet",
+      "symbol": "OpenInventoryByPointPacket",
+      "featureId": "inventory.furnace-container",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/OpenInventoryByPointPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PickableCreateListPacket",
+      "kind": "packet",
+      "symbol": "PickableCreateListPacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Pickable/PickableCreateListPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PickableCreatePacket",
+      "kind": "packet",
+      "symbol": "PickableCreatePacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Pickable/PickableCreatePacket.cs"
+    },
+    {
+      "surfaceId": "packet:PickableDeleteListPacket",
+      "kind": "packet",
+      "symbol": "PickableDeleteListPacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Pickable/PickableDeleteListPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PickableDeletePacket",
+      "kind": "packet",
+      "symbol": "PickableDeletePacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Pickable/PickableDeletePacket.cs"
+    },
+    {
+      "surfaceId": "packet:PickableRequestSyncPacket",
+      "kind": "packet",
+      "symbol": "PickableRequestSyncPacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Pickable/PickableRequestSyncPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PickableSetFlyToPositionPacket",
+      "kind": "packet",
+      "symbol": "PickableSetFlyToPositionPacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Pickable/PickableSetFlyToPositionPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PickableSyncListPacket",
+      "kind": "packet",
+      "symbol": "PickableSyncListPacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Pickable/PickableSyncListPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PickableUpdatePacket",
+      "kind": "packet",
+      "symbol": "PickableUpdatePacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Pickable/PickableUpdatePacket.cs"
+    },
+    {
+      "surfaceId": "packet:PistonDataPacket",
+      "kind": "packet",
+      "symbol": "PistonDataPacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/PistonDataPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerAddExperiencePacket",
+      "kind": "packet",
+      "symbol": "PlayerAddExperiencePacket",
+      "featureId": "player.progression-vitals",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerAddExperiencePacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerAddPacket",
+      "kind": "packet",
+      "symbol": "PlayerAddPacket",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerAddPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerAimPacket",
+      "kind": "packet",
+      "symbol": "PlayerAimPacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerAimPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerBodyUpdatePacket",
+      "kind": "packet",
+      "symbol": "PlayerBodyUpdatePacket",
+      "featureId": "player.motion-look-crouch",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerBodyUpdatePacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerBuglePacket",
+      "kind": "packet",
+      "symbol": "PlayerBuglePacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerBuglePacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerCreatePacket",
+      "kind": "packet",
+      "symbol": "PlayerCreatePacket",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerCreatePacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerCreativeFlyPacket",
+      "kind": "packet",
+      "symbol": "PlayerCreativeFlyPacket",
+      "featureId": "player.creative-fly",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerCreativeFlyPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerDeletePacket",
+      "kind": "packet",
+      "symbol": "PlayerDeletePacket",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerDeletePacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerDigPacket",
+      "kind": "packet",
+      "symbol": "PlayerDigPacket",
+      "featureId": "player.place-dig-use",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerDigPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerDragDropPacket",
+      "kind": "packet",
+      "symbol": "PlayerDragDropPacket",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerDragDropPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerDropPacket",
+      "kind": "packet",
+      "symbol": "PlayerDropPacket",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerDropPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerEntityRequestPacket",
+      "kind": "packet",
+      "symbol": "PlayerEntityRequestPacket",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerEntityRequestPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerHitPacket",
+      "kind": "packet",
+      "symbol": "PlayerHitPacket",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerHitPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerInteractPacket",
+      "kind": "packet",
+      "symbol": "PlayerInteractPacket",
+      "featureId": "player.place-dig-use",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerInteractPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerIntoPlayingPacket",
+      "kind": "packet",
+      "symbol": "PlayerIntoPlayingPacket",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerIntoPlayingPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerKnownPacket",
+      "kind": "packet",
+      "symbol": "PlayerKnownPacket",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerKnownPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerModifyPacket",
+      "kind": "packet",
+      "symbol": "PlayerModifyPacket",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerModifyPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerNoMsgAddPacket",
+      "kind": "packet",
+      "symbol": "PlayerNoMsgAddPacket",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerNoMsgAddPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerNoMsgRemovePacket",
+      "kind": "packet",
+      "symbol": "PlayerNoMsgRemovePacket",
+      "featureId": "player.session-lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerNoMsgRemovePacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerPositionSetPacket",
+      "kind": "packet",
+      "symbol": "PlayerPositionSetPacket",
+      "featureId": "player.motion-look-crouch",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerPositionSetPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerRestartPacket",
+      "kind": "packet",
+      "symbol": "PlayerRestartPacket",
+      "featureId": "health-damage-respawn",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerRestartPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerStatSyncPacket",
+      "kind": "packet",
+      "symbol": "PlayerStatSyncPacket",
+      "featureId": "player.progression-vitals",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerStatSyncPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ProjectilePacket",
+      "kind": "packet",
+      "symbol": "ProjectilePacket",
+      "featureId": "pickable-projectile.lifecycle",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/ProjectilePacket.cs"
+    },
+    {
+      "surfaceId": "packet:ProjectPacket",
+      "kind": "packet",
+      "symbol": "ProjectPacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/ProjectPacket.cs"
+    },
+    {
+      "surfaceId": "packet:RandomFeedBehaviorPacket",
+      "kind": "packet",
+      "symbol": "RandomFeedBehaviorPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/RandomFeedBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:RandomPeckBehaviorPacket",
+      "kind": "packet",
+      "symbol": "RandomPeckBehaviorPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/RandomPeckBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:ReplySkinPacket",
+      "kind": "packet",
+      "symbol": "ReplySkinPacket",
+      "featureId": "inventory.clothing-skin",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Skin/ReplySkinPacket.cs"
+    },
+    {
+      "surfaceId": "packet:RequestSkinPacket",
+      "kind": "packet",
+      "symbol": "RequestSkinPacket",
+      "featureId": "inventory.clothing-skin",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Skin/RequestSkinPacket.cs"
+    },
+    {
+      "surfaceId": "packet:SetSlotItemPacket",
+      "kind": "packet",
+      "symbol": "SetSlotItemPacket",
+      "featureId": "inventory.container-operations",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/SetSlotItemPacket.cs"
+    },
+    {
+      "surfaceId": "packet:SignBlockPacket",
+      "kind": "packet",
+      "symbol": "SignBlockPacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/SignBlockPacket.cs"
+    },
+    {
+      "surfaceId": "packet:SleepRequestPacket",
+      "kind": "packet",
+      "symbol": "SleepRequestPacket",
+      "featureId": "mechanics.sleep-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/SleepRequestPacket.cs"
+    },
+    {
+      "surfaceId": "packet:SleepStatusPacket",
+      "kind": "packet",
+      "symbol": "SleepStatusPacket",
+      "featureId": "mechanics.sleep-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/SleepStatusPacket.cs"
+    },
+    {
+      "surfaceId": "packet:StatePacket",
+      "kind": "packet",
+      "symbol": "StatePacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/StatePacket.cs"
+    },
+    {
+      "surfaceId": "packet:StubbornSteedBehaviorPacket",
+      "kind": "packet",
+      "symbol": "StubbornSteedBehaviorPacket",
+      "featureId": "entity-creature.behavior-sound",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/StubbornSteedBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:SubsystemElectricityPacket",
+      "kind": "packet",
+      "symbol": "SubsystemElectricityPacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/SubsystemElectricityPacket.cs"
+    },
+    {
+      "surfaceId": "packet:SubsystemSkyPacket",
+      "kind": "packet",
+      "symbol": "SubsystemSkyPacket",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Terrain/SubsystemSkyPacket.cs"
+    },
+    {
+      "surfaceId": "packet:SubsystemTimePacket",
+      "kind": "packet",
+      "symbol": "SubsystemTimePacket",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Terrain/SubsystemTimePacket.cs"
+    },
+    {
+      "surfaceId": "packet:SubsystemWeatherPacket",
+      "kind": "packet",
+      "symbol": "SubsystemWeatherPacket",
+      "featureId": "environment.time-weather-lightning",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Terrain/SubsystemWeatherPacket.cs"
+    },
+    {
+      "surfaceId": "packet:SwitchVoltagePacket",
+      "kind": "packet",
+      "symbol": "SwitchVoltagePacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/SwitchVoltagePacket.cs"
+    },
+    {
+      "surfaceId": "packet:TerrainChangeCellListPacket",
+      "kind": "packet",
+      "symbol": "TerrainChangeCellListPacket",
+      "featureId": "terrain.streaming-and-revisions",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Terrain/TerrainChangeCellListPacket.cs"
+    },
+    {
+      "surfaceId": "packet:TerrainChangeCellPacket",
+      "kind": "packet",
+      "symbol": "TerrainChangeCellPacket",
+      "featureId": "terrain.streaming-and-revisions",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Terrain/TerrainChangeCellPacket.cs"
+    },
+    {
+      "surfaceId": "packet:TerrainSyncChunkListPacket",
+      "kind": "packet",
+      "symbol": "TerrainSyncChunkListPacket",
+      "featureId": "terrain.streaming-and-revisions",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Terrain/TerrainSyncChunkListPacket.cs"
+    },
+    {
+      "surfaceId": "packet:TerrainViewDistancePacket",
+      "kind": "packet",
+      "symbol": "TerrainViewDistancePacket",
+      "featureId": "terrain.streaming-and-revisions",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Terrain/TerrainViewDistancePacket.cs"
+    },
+    {
+      "surfaceId": "packet:TruthTableDataPacket",
+      "kind": "packet",
+      "symbol": "TruthTableDataPacket",
+      "featureId": "logic.electricity-and-moving-blocks",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/TruthTableDataPacket.cs"
+    },
+    {
+      "surfaceId": "packet:VitalStatSyncPacket",
+      "kind": "packet",
+      "symbol": "VitalStatSyncPacket",
+      "featureId": "player.progression-vitals",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Health/VitalStatSyncPacket.cs"
+    },
+    {
+      "surfaceId": "packet:WakeupRequestPacket",
+      "kind": "packet",
+      "symbol": "WakeupRequestPacket",
+      "featureId": "mechanics.sleep-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/WakeupRequestPacket.cs"
+    },
+    {
+      "surfaceId": "packet:WakeupStatusPacket",
+      "kind": "packet",
+      "symbol": "WakeupStatusPacket",
+      "featureId": "mechanics.sleep-fire",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/WakeupStatusPacket.cs"
+    },
+    {
+      "surfaceId": "packet:WhoHasSkinPacket",
+      "kind": "packet",
+      "symbol": "WhoHasSkinPacket",
+      "featureId": "inventory.clothing-skin",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Skin/WhoHasSkinPacket.cs"
+    },
+    {
+      "surfaceId": "packet:WhoHasSkinReplyPacket",
+      "kind": "packet",
+      "symbol": "WhoHasSkinReplyPacket",
+      "featureId": "inventory.clothing-skin",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/Skin/WhoHasSkinReplyPacket.cs"
+    }
+  ]
+}

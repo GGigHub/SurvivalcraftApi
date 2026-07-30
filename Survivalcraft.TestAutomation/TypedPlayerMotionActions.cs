@@ -121,7 +121,7 @@ public partial class TestAutomationModLoader {
         terrain.TerrainUpdater.RequestSynchronousUpdate();
         PreparePlayerForMotionFixture(actor, start, fixture.StandingValue);
         actor.ComponentLocomotion.LookAngles = look;
-        NetworkManager.Queue(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
         return new ControlAck(
             true,
             $"Prepared and synchronized player {fixture.PlayerIndex} for typed motion input.");
@@ -198,6 +198,11 @@ public partial class TestAutomationModLoader {
                 desiredCrouch: command.Enabled);
             RecordMotionEvent(
                 alreadyApplied,
+                ActionEventPhase.Queued,
+                "queued",
+                actor);
+            RecordMotionEvent(
+                alreadyApplied,
                 ActionEventPhase.Applied,
                 "already_applied",
                 actor);
@@ -206,7 +211,9 @@ public partial class TestAutomationModLoader {
                 true,
                 Time.FrameIndex,
                 command.PlayerIndex,
-                "already_applied");
+                "already_applied",
+                Provenance: ActionProvenance.ProductionInput,
+                ProductionEntry: ProductionPathEntries.PlayerMotion);
         }
 
         PendingPlayerMotionAction pending = CreatePendingMotionAction(
@@ -344,6 +351,11 @@ public partial class TestAutomationModLoader {
                 "action_in_progress",
                 $"Action '{pendingHealthAction.ActionId}' is still in progress.");
         }
+        if (pendingProjectileAction != null) {
+            throw new AutomationCommandException(
+                "action_in_progress",
+                $"Action '{pendingProjectileAction.ActionId}' is still in progress.");
+        }
     }
 
     private static void PreparePlayerForMotionFixture(
@@ -413,7 +425,9 @@ public partial class TestAutomationModLoader {
             pending.PlayerIndex,
             MotionTarget(pending),
             code,
-            MotionActionData(pending, actor));
+            MotionActionData(pending, actor),
+            provenance: ActionProvenance.ProductionInput,
+            productionEntry: ProductionPathEntries.PlayerMotion);
     }
 
     private static IReadOnlyDictionary<string, string> MotionActionData(
@@ -529,5 +543,7 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             playerIndex,
-            "queued");
+            "queued",
+            Provenance: ActionProvenance.ProductionInput,
+            ProductionEntry: ProductionPathEntries.PlayerMotion);
 }

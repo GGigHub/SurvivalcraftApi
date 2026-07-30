@@ -28,6 +28,7 @@ public partial class TestAutomationModLoader {
             "OnNetworkPlayerBodyUpdate",
             "OnNetworkActiveSlotChanged",
             "OnNetworkPlayerDrop",
+            "OnNetworkPlayerAim",
             "OnNetworkPlayerHit",
             "OnNetworkInventorySlotChanged",
             "OnNetworkPlayerRestart"
@@ -52,8 +53,10 @@ public partial class TestAutomationModLoader {
     public override void OnNetworkPlayerDig(ComponentPlayer player) =>
         HandleTypedDigEvent(player);
 
-    public override void OnNetworkPlayerBodyUpdate(ComponentPlayer player, bool isMainPlayer) =>
+    public override void OnNetworkPlayerBodyUpdate(ComponentPlayer player, bool isMainPlayer) {
         HandleTypedBodyUpdate(player, isMainPlayer);
+        HandleTypedProjectileInputFrame(player, isMainPlayer);
+    }
 
     public override void OnNetworkActiveSlotChanged(ComponentPlayer player) =>
         HandleTypedActiveSlotChanged(player);
@@ -81,6 +84,7 @@ public partial class TestAutomationModLoader {
         pendingInventoryAction = null;
         pendingHealthAction = null;
         ResetEntityLifecycleFixtures();
+        ResetPickableProjectileFixtures();
         ResetMountFixtures();
         ResetLogicFixtures();
         InputHijackState.ResetGameplayInputs();
@@ -158,12 +162,10 @@ public partial class TestAutomationModLoader {
         }
 
         ClearInteractionPath(terrain, target, expectedCell);
-        int chunkMinX = (target.X >> 4) << 4;
-        int chunkMinZ = (target.Z >> 4) << 4;
         Vector3 playerPosition = new(
-            chunkMinX + 8.5f,
+            target.X + 0.5f,
             target.Y + 1f,
-            chunkMinZ + 11f);
+            target.Z + 3f);
         PreparePlayerForFixture(actor, activeValue, playerPosition);
         terrain.TerrainUpdater.RequestSynchronousUpdate();
         int initialValue = Terrain.ReplaceLight(
@@ -218,7 +220,7 @@ public partial class TestAutomationModLoader {
         SubsystemPlayers players = project.FindSubsystem<SubsystemPlayers>(true);
         ComponentPlayer actor = ResolvePlayer(players, fixture.PlayerIndex, requireMainPlayer: true);
         PreparePlayerForFixture(actor, fixture.ActiveValue, position, fixture.ActiveCount);
-        NetworkManager.Queue(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
         return new ControlAck(
             true,
             $"Prepared and synchronized player {fixture.PlayerIndex} for {fixture.Kind} "
@@ -306,7 +308,9 @@ public partial class TestAutomationModLoader {
             playerIndex,
             FormatCell(targetCell),
             "queued",
-            ActionData(pending, "queued"));
+            ActionData(pending, "queued"),
+            provenance: ActionProvenance.ProductionInput,
+            productionEntry: ProductionPathEntries.PlayerTerrainInteraction);
         if (kind == PlayerTerrainActionKind.Dig) {
             InputHijackState.HoldDigRay(ray, holdFrames);
         }
@@ -318,7 +322,9 @@ public partial class TestAutomationModLoader {
             true,
             tick,
             playerIndex,
-            "queued");
+            "queued",
+            Provenance: ActionProvenance.ProductionInput,
+            ProductionEntry: ProductionPathEntries.PlayerTerrainInteraction);
     }
 
     private void HandleTypedInteractEvent(ComponentPlayer player) {
@@ -347,7 +353,9 @@ public partial class TestAutomationModLoader {
             pending.PlayerIndex,
             FormatCell(pending.TargetCell),
             matches ? "input_applied" : "unexpected_input_event",
-            ActionData(pending, actual.ToString()));
+            ActionData(pending, actual.ToString()),
+            provenance: ActionProvenance.ProductionInput,
+            productionEntry: ProductionPathEntries.PlayerTerrainInteraction);
         pendingTerrainAction = null;
     }
 
@@ -370,7 +378,9 @@ public partial class TestAutomationModLoader {
                 pending.PlayerIndex,
                 FormatCell(pending.TargetCell),
                 "dig_started",
-                ActionData(pending, actual.ToString()));
+                ActionData(pending, actual.ToString()),
+                provenance: ActionProvenance.ProductionInput,
+                productionEntry: ProductionPathEntries.PlayerTerrainInteraction);
             return;
         }
         if (actual is not (ComponentPlayer.DigEvent.End or ComponentPlayer.DigEvent.Cancel)) {
@@ -387,7 +397,9 @@ public partial class TestAutomationModLoader {
             pending.PlayerIndex,
             FormatCell(pending.TargetCell),
             applied ? "input_applied" : "input_cancelled",
-            ActionData(pending, actual.ToString()));
+            ActionData(pending, actual.ToString()),
+            provenance: ActionProvenance.ProductionInput,
+            productionEntry: ProductionPathEntries.PlayerTerrainInteraction);
         InputHijackState.CancelDigRay();
         pendingTerrainAction = null;
     }

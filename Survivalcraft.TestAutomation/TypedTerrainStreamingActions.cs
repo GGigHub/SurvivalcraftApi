@@ -162,7 +162,7 @@ public partial class TestAutomationModLoader {
                 (float)command.ContentDistance);
         }
         updater.RequestSynchronousUpdate();
-        NetworkManager.Queue(new PlayerBodyUpdatePacket(player, forceFull: true));
+        QueueFixtureSynchronization(new PlayerBodyUpdatePacket(player, forceFull: true));
         return new ControlAck(
             true,
             command.ArmMoveThreshold
@@ -251,7 +251,9 @@ public partial class TestAutomationModLoader {
             ActionEventPhase.Queued,
             target: target,
             code: "queued",
-            data: RevisionActionData(staleSnapshot.Revision, staleSnapshot.Revision, command.Values.Length));
+            data: RevisionActionData(staleSnapshot.Revision, staleSnapshot.Revision, command.Values.Length),
+            provenance: ActionProvenance.FaultInjection,
+            productionEntry: ProductionPathEntries.TerrainRevision);
 
         foreach (int value in command.Values) {
             terrain.ChangeCell(
@@ -276,9 +278,11 @@ public partial class TestAutomationModLoader {
             ActionEventPhase.Observed,
             target: target,
             code: "authoritative_revision_observed",
-            data: RevisionActionData(staleSnapshot.Revision, finalRevision, command.Values.Length));
+            data: RevisionActionData(staleSnapshot.Revision, finalRevision, command.Values.Length),
+            provenance: ActionProvenance.FaultInjection,
+            productionEntry: ProductionPathEntries.TerrainRevision);
         if (command.SendStaleSnapshot) {
-            NetworkManager.Queue(new TerrainSyncChunkListPacket([staleSnapshot]));
+            QueueFaultInjectionAfterSettle(new TerrainSyncChunkListPacket([staleSnapshot]));
         }
         terrain.TerrainUpdater.RemoveUpdateLocation(TerrainStreamingFixtureLocationIndex);
         terrain.TerrainUpdater.RequestSynchronousUpdate();
@@ -291,14 +295,18 @@ public partial class TestAutomationModLoader {
             ActionEventPhase.Applied,
             target: target,
             code: command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied",
-            data: RevisionActionData(staleSnapshot.Revision, finalRevision, command.Values.Length));
+            data: RevisionActionData(staleSnapshot.Revision, finalRevision, command.Values.Length),
+            provenance: ActionProvenance.FaultInjection,
+            productionEntry: ProductionPathEntries.TerrainRevision);
 
         ActionReceipt receipt = new(
             context.RequestId,
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied");
+            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.TerrainRevision);
         return new TerrainRevisionBurstResult(
             receipt,
             staleSnapshot.Revision,

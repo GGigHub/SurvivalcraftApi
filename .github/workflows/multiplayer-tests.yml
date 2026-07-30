@@ -46,6 +46,12 @@ jobs:
       - name: Build automation host
         shell: pwsh
         run: dotnet build ./Survivalcraft.TestHost/Survivalcraft.TestHost.csproj --nologo -c Debug
+      - name: Verify coverage contract and production-surface inventory
+        shell: pwsh
+        run: >-
+          dotnet run --project ./Survivalcraft.TestHost/Survivalcraft.TestHost.csproj
+          --no-build -c Debug -- coverage
+          --output ./TestResults/coverage-trust.json
       - name: Verify headless runtime and control channel
         shell: pwsh
         run: dotnet run --project ./Survivalcraft.TestHost/Survivalcraft.TestHost.csproj --no-build -c Debug -- doctor --startup-timeout 120
@@ -65,3 +71,34 @@ jobs:
           path: TestResults
           if-no-files-found: warn
           retention-days: 14
+
+  l3-soak:
+    name: L3 replayable multiplayer soak
+    if: github.event_name == 'schedule'
+    needs: api-multiplayer
+    runs-on: windows-latest
+    timeout-minutes: 120
+    env:
+      SC_TEST_ARTIFACTS: ${{ github.workspace }}\TestResults\l3
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Run full replayable fault rotation headlessly
+        shell: pwsh
+        run: >-
+          ./scripts/Test-Multiplayer.ps1
+          -Mode soak
+          -UseAngle
+          -SoakIterations 9
+          -SoakTransport direct
+          -Artifacts ./TestResults/l3
+      - name: Upload replayable soak evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: api-multiplayer-l3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: TestResults
+          if-no-files-found: error
+          retention-days: 30

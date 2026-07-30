@@ -67,7 +67,7 @@ public partial class TestAutomationModLoader {
         SetInventorySlot(inventory, 0, weaponValue, 1);
         inventory.ActiveSlotIndex = 0;
         actor.PlayerData.Level = Math.Max(actor.PlayerData.Level, 10f);
-        NetworkManager.Queue(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
         return new HealthFixture(
             command.PlayerIndex,
             actor.Entity.Id,
@@ -98,7 +98,7 @@ public partial class TestAutomationModLoader {
         actor.PlayerData.Level = Math.Max(actor.PlayerData.Level, 10f);
         SetInventorySlot(actor.ComponentMiner.Inventory, 0, fixture.WeaponValue, 1);
         actor.ComponentMiner.Inventory.ActiveSlotIndex = 0;
-        NetworkManager.Queue(new PlayerBodyUpdatePacket(actor, forceFull: true));
+        QueueFixtureSynchronization(new PlayerBodyUpdatePacket(actor, forceFull: true));
         return new ControlAck(true, $"Applied health fixture for player {fixture.PlayerIndex}.");
     }
 
@@ -130,7 +130,7 @@ public partial class TestAutomationModLoader {
                 project,
                 NetworkStateRevisionDomain.Health,
                 command.EntityId);
-            NetworkManager.Queue(new HealthSyncPacket(health, revision));
+            QueueFixtureSynchronization(new HealthSyncPacket(health, revision));
         }
         long finalRevision = NetworkStateRevisionTracker.GetAuthoritativeRevision(
             project,
@@ -174,7 +174,7 @@ public partial class TestAutomationModLoader {
                 command.PlayerIndex,
                 command.TargetEntityId,
                 "queued_expected_rejection");
-            NetworkManager.Queue(new PlayerHitPacket(
+            QueueFaultInjection(new PlayerHitPacket(
                 actor,
                 target,
                 targetPoint + new Vector3(32f, 0f, 0f),
@@ -191,7 +191,9 @@ public partial class TestAutomationModLoader {
                 true,
                 rejectedTick,
                 command.PlayerIndex,
-                "queued_expected_rejection");
+                "queued_expected_rejection",
+                Provenance: ActionProvenance.FaultInjection,
+                ProductionEntry: ProductionPathEntries.PlayerHitFault);
         }
         float distance = delta.Length();
         if (!float.IsFinite(distance) || distance is < 0.05f or > 2.25f) {
@@ -226,7 +228,14 @@ public partial class TestAutomationModLoader {
             checked(Time.FrameIndex + 180));
         InputHijackState.QueueHitRay(ray);
         ScheduleHealthActionTimeout(pendingHealthAction);
-        return new ActionReceipt(context.RequestId, true, tick, command.PlayerIndex, "queued");
+        return new ActionReceipt(
+            context.RequestId,
+            true,
+            tick,
+            command.PlayerIndex,
+            "queued",
+            Provenance: ActionProvenance.ProductionInput,
+            ProductionEntry: ProductionPathEntries.PlayerHit);
     }
 
     private ActionReceipt QueuePlayerRespawn(
@@ -260,7 +269,7 @@ public partial class TestAutomationModLoader {
                 command.PlayerIndex,
                 actor.Entity.Id,
                 "queued_expected_rejection");
-            NetworkManager.Queue(new PlayerRestartPacket(actor.PlayerData));
+            QueueFaultInjection(new PlayerRestartPacket(actor.PlayerData));
             RecordHealthAction(
                 context.RequestId,
                 "requestRespawn",
@@ -273,7 +282,9 @@ public partial class TestAutomationModLoader {
                 true,
                 rejectedTick,
                 command.PlayerIndex,
-                "queued_expected_rejection");
+                "queued_expected_rejection",
+                Provenance: ActionProvenance.FaultInjection,
+                ProductionEntry: ProductionPathEntries.PlayerRespawnFault);
         }
         long tick = Time.FrameIndex;
         RecordHealthAction(
@@ -291,7 +302,14 @@ public partial class TestAutomationModLoader {
             checked(Time.FrameIndex + 600));
         actor.PlayerData.readyToRestart = true;
         ScheduleHealthActionTimeout(pendingHealthAction);
-        return new ActionReceipt(context.RequestId, true, tick, command.PlayerIndex, "queued");
+        return new ActionReceipt(
+            context.RequestId,
+            true,
+            tick,
+            command.PlayerIndex,
+            "queued",
+            Provenance: ActionProvenance.ProductionInput,
+            ProductionEntry: ProductionPathEntries.PlayerRespawn);
     }
 
     private HealthRevisionBurstResult RunHealthRevisionBurst(
@@ -328,7 +346,7 @@ public partial class TestAutomationModLoader {
             NetworkStateRevisionDomain.Health,
             command.EntityId);
         if (command.SendStaleSnapshot) {
-            NetworkManager.Queue(stale);
+            QueueFaultInjectionAfterSettle(stale);
         }
         RecordHealthAction(
             context.RequestId,
@@ -342,7 +360,9 @@ public partial class TestAutomationModLoader {
             true,
             Time.FrameIndex,
             -1,
-            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied");
+            command.SendStaleSnapshot ? "stale_snapshot_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.HealthRevision);
         return new HealthRevisionBurstResult(
             receipt,
             command.EntityId,
@@ -362,7 +382,7 @@ public partial class TestAutomationModLoader {
             health.Entity.Project,
             NetworkStateRevisionDomain.Health,
             health.Entity.Id);
-        NetworkManager.Queue(new HealthSyncPacket(health, revision));
+        QueueAuthoritativeState(new HealthSyncPacket(health, revision));
     }
 
     private void HandleTypedHitEvent(
@@ -425,6 +445,7 @@ public partial class TestAutomationModLoader {
         int playerIndex,
         int targetEntityId,
         string code) {
+        (ActionProvenance provenance, string entry) = HealthEvidence(name, code);
         actionEventJournal.Record(
             Time.FrameIndex,
             actionId,
@@ -434,7 +455,28 @@ public partial class TestAutomationModLoader {
             phase,
             playerIndex >= 0 ? playerIndex : null,
             targetEntityId.ToString(CultureInfo.InvariantCulture),
-            code);
+            code,
+            provenance: provenance,
+            productionEntry: entry);
+    }
+
+    private static (ActionProvenance Provenance, string Entry) HealthEvidence(
+        string name,
+        string code) {
+        bool fault = code.Contains("expected_rejection", StringComparison.Ordinal)
+            || code.Contains("forged_", StringComparison.Ordinal);
+        if (string.Equals(name, "revisionBurst", StringComparison.OrdinalIgnoreCase)) {
+            return (ActionProvenance.FaultInjection, ProductionPathEntries.HealthRevision);
+        }
+        if (string.Equals(name, "requestRespawn", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(name, nameof(HealthActionKind.Respawn), StringComparison.OrdinalIgnoreCase)) {
+            return fault
+                ? (ActionProvenance.FaultInjection, ProductionPathEntries.PlayerRespawnFault)
+                : (ActionProvenance.ProductionInput, ProductionPathEntries.PlayerRespawn);
+        }
+        return fault
+            ? (ActionProvenance.FaultInjection, ProductionPathEntries.PlayerHitFault)
+            : (ActionProvenance.ProductionInput, ProductionPathEntries.PlayerHit);
     }
 
     private static void PrepareHealthActor(ComponentPlayer actor, Vector3 position) {

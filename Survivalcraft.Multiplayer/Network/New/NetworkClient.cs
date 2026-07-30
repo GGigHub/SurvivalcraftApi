@@ -63,7 +63,8 @@ public class NetworkClient : INetEventListener {
                 NetPeer peer = _serverPeer;
                 NetworkFaultInjector.Send(
                     chunk,
-                    data => peer.Send(data, DeliveryMethod.ReliableOrdered));
+                    data => peer.Send(data, DeliveryMethod.ReliableOrdered),
+                    packet.GetType().Name);
             }
         }
     }

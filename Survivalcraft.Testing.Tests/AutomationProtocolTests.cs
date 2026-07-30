@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Survivalcraft.Testing.Control;
 using Survivalcraft.Testing.Snapshots;
 using Xunit;
@@ -156,6 +157,32 @@ public sealed class AutomationProtocolTests {
                 Limit: AutomationProtocol.MaximumEventQueryCount + 1)));
 
         Assert.Equal("limit_exceeded", exception.Code);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void ActionEvidenceRoundTripsWithoutLosingProductionProvenance() {
+        ActionReceipt receipt = new(
+            "action-1",
+            true,
+            17,
+            3,
+            "queued",
+            Provenance: ActionProvenance.ProductionRequest,
+            ProductionEntry: "MoveItemPacket.Handle");
+        ControlResponse response = new(
+            "action-1",
+            ControlProtocol.CurrentVersion,
+            true,
+            JsonSerializer.SerializeToElement(receipt, ControlProtocol.JsonOptions),
+            null,
+            1);
+
+        ActionReceipt decoded = response.DeserializeResult<ActionReceipt>();
+
+        Assert.Equal(receipt, decoded);
+        Assert.Equal(ActionProvenance.ProductionRequest, decoded.Provenance);
+        Assert.Equal("MoveItemPacket.Handle", decoded.ProductionEntry);
     }
 
     [Fact]
