@@ -47,8 +47,17 @@ public class NetworkServer : INetEventListener {
             if (session.CompatibilityState != NetworkCompatibilityState.Accepted
                 && session.CompatibilityStartedUtc != default
                 && now - session.CompatibilityStartedUtc >= NetworkCompatibilityRuntime.ServerHandshakeTimeout) {
+                NetworkSessionLifecycleTracker.RecordCompatibilityRejected(
+                    session,
+                    NetworkCompatibilityIssueCode.HandshakeTimeout.ToString());
                 Log.Warning($"Disconnecting {item.Key}: compatibility handshake timed out.");
                 item.Key.Disconnect();
+            }
+            else if (NetworkSessionAdmissionRuntime.HasServerTimedOut(session, now)) {
+                NetworkSessionAdmissionRuntime.RejectServerSession(
+                    session,
+                    NetworkSessionAdmission.CreateTimeoutResult(
+                        (int)NetworkSessionAdmissionRuntime.ServerAdmissionTimeout.TotalSeconds));
             }
         }
     }
@@ -67,9 +76,7 @@ public class NetworkServer : INetEventListener {
 
     public void Send(Packet packet, ClientSession session) {
         if (packet.MinNeedState <= session.NetworkState
-            && (session.CompatibilityState == NetworkCompatibilityState.Accepted
-                || packet is CompatibilityResultPacket
-                || packet is ModChannelCatalogResultPacket)) {
+            && CanSend(session, packet)) {
             PacketStreamWriter writer = new();
             writer.Write(PacketFragment.VerifyByte);
             writer.Write(packet.ID);
@@ -104,11 +111,16 @@ public class NetworkServer : INetEventListener {
         if (PacketManager.PackageFragment.TryProcessIncoming(reader, peer.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (!ClientSessions.TryGetValue(peer, out ClientSession session)) return;
-                if (session.CompatibilityState != NetworkCompatibilityState.Accepted
-                    && packet is not CompatibilityHelloPacket
-                    && packet is not ModChannelCatalogPacket
+                if (session.CompatibilityState != NetworkCompatibilityState.Accepted) {
+                    if (packet is not CompatibilityHelloPacket
+                        && packet is not ModChannelCatalogPacket) {
+                        NetworkCompatibilityRuntime.RejectPrematurePacket(session, packet);
+                        return;
+                    }
+                }
+                else if (session.AdmissionState != NetworkSessionAdmissionState.Accepted
                     && packet is not ConnectPacket) {
-                    NetworkCompatibilityRuntime.RejectPrematurePacket(session, packet);
+                    NetworkSessionAdmissionRuntime.RejectPrematurePacket(session, packet);
                     return;
                 }
                 if (packet.MinNeedState <= session.NetworkState) {
@@ -125,6 +137,7 @@ public class NetworkServer : INetEventListener {
 
     public void OnPeerConnected(NetPeer peer) {
         ClientSession session = new() {
+            TransportKind = "direct-server",
             PlayerIndex = -1,
             NetworkGuid = Guid.Empty,
             NetworkState = NetworkState.Connected,
@@ -132,24 +145,57 @@ public class NetworkServer : INetEventListener {
             CompatibilityStartedUtc = DateTime.UtcNow
         };
         ClientSessions[peer] = session;
+        NetworkSessionLifecycleTracker.RecordConnected(session);
 
         Log.Information($"Connected: {peer}");
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         if (ClientSessions.TryGetValue(peer, out ClientSession session)) {
-            GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
-            PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
+            CleanupSession(session, disconnectInfo.Reason.ToString());
         }
 
         ClientSessions.Remove(peer);
-        ModNetworkManager.ClearSession(session);
-        if (session != null) {
-            session.NetworkState = NetworkState.NotConnected;
-        }
 
         if (!_disconnectByUser) {
             Log.Information($"Disconnected: {peer}, {disconnectInfo}");
         }
+    }
+
+    public bool DisconnectSession(ClientSession session, string reason) {
+        KeyValuePair<NetPeer, ClientSession> match = ClientSessions.FirstOrDefault(
+            item => item.Value == session);
+        if (match.Key == null) {
+            return false;
+        }
+        CleanupSession(session, reason);
+        ClientSessions.Remove(match.Key);
+        match.Key.Disconnect();
+        return true;
+    }
+
+    private static bool CanSend(ClientSession session, Packet packet) {
+        if (packet is CompatibilityResultPacket or ModChannelCatalogResultPacket) {
+            return true;
+        }
+        if (session.CompatibilityState != NetworkCompatibilityState.Accepted) {
+            return false;
+        }
+        return packet is SessionAdmissionResultPacket
+            || session.AdmissionState == NetworkSessionAdmissionState.Accepted;
+    }
+
+    private static void CleanupSession(ClientSession session, string reason) {
+        if (session == null || session.NetworkState == NetworkState.NotConnected) {
+            return;
+        }
+        GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
+        PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
+        ModNetworkManager.ClearSession(session);
+        session.DisconnectedUtc = DateTime.UtcNow;
+        session.DisconnectReason = reason ?? string.Empty;
+        NetworkSessionLifecycleTracker.RecordDisconnected(session, session.DisconnectReason);
+        session.PlayerIndex = -1;
+        session.NetworkState = NetworkState.NotConnected;
     }
 }

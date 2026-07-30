@@ -1,8 +1,8 @@
 # 联机自动化测试
 
-本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会按场景启动隔离的 Survivalcraft 进程：核心场景完成建服、两阶段兼容握手、模组消息、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、超时与恢复；中继场景另外启动真实 RelayServer，验证房间协商、模组消息、故障注入和同房间重连。所有场景都会把可回放的诊断材料写入 `TestResults`。
+本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会按场景启动隔离的 Survivalcraft 进程：核心场景完成建服、两阶段兼容握手、模组消息、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、分阶段超时与恢复；会话生命周期场景在 Direct/Relay 上验证四客户端并发加入/重连、实体创建期断线、稳定身份、API 通道晚加入、限流、背压和隔离；中继场景另外启动真实 RelayServer。所有场景都会把可回放的诊断材料写入 `TestResults`。
 
-强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞，以及达到完整覆盖契约的 use/place/dig、move/look/crouch、terrain streaming/revisions、entity/creature lifecycle/physics、pickable/projectile lifecycle、inventory/container operations、health/damage/respawn、time/weather/lightning、sleep/player-fire、mount/dismount 和 logic/electricity/moving-blocks 生产链。
+强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已落地 M0 创飞，以及达到完整覆盖契约的会话兼容性、API 模组通道、玩家会话生命周期、use/place/dig、move/look/crouch、terrain streaming/revisions、entity/creature lifecycle/physics、pickable/projectile lifecycle、inventory/container operations、health/damage/respawn、time/weather/lightning、sleep/player-fire、mount/dismount 和 logic/electricity/moving-blocks 生产链。
 
 ## 一键运行
 
@@ -25,7 +25,8 @@
 ./scripts/Test-Multiplayer.ps1 -Mode environment-mechanics
 ./scripts/Test-Multiplayer.ps1 -Mode mount
 ./scripts/Test-Multiplayer.ps1 -Mode logic
-./scripts/Test-Multiplayer.ps1 -Mode soak -SoakIterations 9
+./scripts/Test-Multiplayer.ps1 -Mode session
+./scripts/Test-Multiplayer.ps1 -Mode soak -SoakIterations 10
 ./scripts/Test-Multiplayer.ps1 -Mode legacy
 ./scripts/Test-Multiplayer.ps1 -Mode full
 ```
@@ -56,9 +57,11 @@
 - `mount`：依次运行 Direct/Relay，覆盖 Playing 会话所有权、跨玩家冒用、伪造权威状态、距离与占用校验、骑手/坐骑双向关系、单调 mount revision、目标 lifecycle 世代、100% 重复与 50% 重排、观察者、late join、骑手移除释放坐骑、稳定身份重连、安全下马的保存重载边界和严格七动作回放。
 - `logic-direct` / `logic-relay`：分别运行一服三客的九类逻辑方块、电力状态和移动方块/活塞生命周期场景。
 - `logic`：依次运行 Direct/Relay，覆盖 Playing 会话、跨玩家冒用、超距、伪造 state 与旧 expected revision 拒绝，请求 ID 幂等，九类逻辑编辑和真实开关交互，单调 logic/electricity/moving revision，moving instance ID/generation/tombstone、相同业务 ID 的无标签集合并发，100% 重复与 50% 重排、观察者、late join 预载对账、稳定身份重连、保存重载和严格十七动作回放。
-- `soak`：运行 L3 随机但可重放的故障轮转。默认按九条高价值玩法场景生成种子固定的 schedule，每轮保存场景种子、故障类别和完整 profile，并对每个隐藏节点的工作集、私有内存、句柄、线程、CPU、样本数与故障待发队列执行预算门禁。`-SoakIterations`、`-SoakTransport`、`-SoakSeed` 和 `-SoakIncludeLoss` 可调整生成计划；`-SoakReplaySchedule PATH` 会原样重放已有 `fault-schedule.json`。
+- `session-direct` / `session-relay`：分别运行一服四客的 typed admission、兼容性拒绝、会话生命周期与 API 模组通道压力场景。
+- `session`：依次运行 Direct/Relay，覆盖五类兼容性拒绝、并发加入/重连风暴、latest-session-wins、重复 `PlayerCreatePacket` 幂等、实体创建期断线、晚加入目录、逐会话限流恢复、背压和异常隔离。
+- `soak`：运行 L3 随机但可重放的故障轮转。默认按十条高价值场景生成种子固定的 schedule，每轮保存场景种子、故障类别和完整 profile，并对每个隐藏节点的工作集、私有内存、句柄、线程、CPU、样本数与故障待发队列执行预算门禁。`-SoakIterations`、`-SoakTransport`、`-SoakSeed` 和 `-SoakIncludeLoss` 可调整生成计划；`-SoakReplaySchedule PATH` 会原样重放已有 `fault-schedule.json`。
 - `legacy`：单独运行全部未分层历史测试，同时输出控制台日志、`legacy-audit.trx` 和 `legacy-audit-summary.json`。门禁按 `legacy-known-failures.json` 的测试全名比较，不按失败数量猜测：任何新增失败、基线测试被改名/漏跑或套件未完整执行都会返回非零；已知失败仍逐项出现在结果中。
-- `full`：依次执行 fast、trust、doctor、compatibility、core、relay、M0、地形交互、人物运动、地形流送、实体/生物、掉落物/投射物、库存/生命、环境/睡眠/玩家火焰、骑乘及逻辑/电力/移动方块的直连/中继场景和全部未分层原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。legacy 允许集合不是“全绿”声明，但属于新增回归硬门禁。
+- `full`：依次执行 fast、trust、doctor、compatibility、core、relay、M0、地形交互、人物运动、地形流送、实体/生物、掉落物/投射物、库存/生命、环境/睡眠/玩家火焰、骑乘、逻辑/电力/移动方块及会话生命周期的直连/中继场景和全部未分层原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。legacy 允许集合不是“全绿”声明，但属于新增回归硬门禁。
 - `-UseAngle`：构建 Windows ANGLE 兼容运行时，适合没有完整 OpenGL 驱动的 CI 机器。
 - `-NoBuild`：复用已构建的二进制文件。
 
@@ -75,7 +78,7 @@ dotnet test ./Survivalcraft.Test/Survivalcraft.Test.csproj `
 | --- | --- | --- | --- |
 | L0 | 协议编解码、规范化快照、精确差异 | 否 | 秒级以内 |
 | L1 | 手动时钟、确定性调度器、模拟网络、产物写入 | 否 | 秒级以内 |
-| L2 | 真实进程的兼容矩阵、直连核心、中继和 v2 多客户端玩法场景 | 是（强制无界面） | 当前合计约 5 分钟 |
+| L2 | 真实进程的兼容矩阵、直连核心、中继和 v2 多客户端玩法场景 | 是（强制无界面） | 按全套场景与机器负载变化 |
 | L3 | 可重放故障轮转、资源高水位与长时 soak | 是（强制无界面） | 单轮约 30 秒，完整轮转按机器负载变化 |
 | Legacy/full | 历史功能、复现场景和已知失败增量门禁 | 是 | 分钟到更长 |
 
@@ -120,8 +123,8 @@ flowchart LR
 
 - 节点：`system.ping`、`node.getStatus`、`node.configure`
 - 世界：`world.create`、`world.save`、`world.reload`
-- 联机：`network.connect`、`network.startRelayHost`、`network.connectRelay`、`network.getRelayStatus`、`network.disconnect`、`network.setFaults`、`network.configureCompatibility`、`network.getCompatibility`
-- 模组通道：`network.configureModChannels`、`network.getModChannels`、`network.sendTestModMessage`、`network.getTestModMessages`、`network.resetTestModMessages`
+- 联机：`network.connect`、`network.startRelayHost`、`network.connectRelay`、`network.getRelayStatus`、`network.disconnect`、`network.setFaults`、`network.configureCompatibility`、`network.getCompatibility`、`network.replayPlayerCreate`
+- 模组通道：`network.configureModChannels`、`network.getModChannels`、`network.sendTestModMessage`、`network.runTestModTrafficBurst`、`network.getTestModMessages`、`network.resetTestModMessages`
 - 玩家和地形：`player.enterWorld`、`terrain.changeCell`
 - v2 玩法：`player.setCreativeFly`、`player.move`、`player.look`、`player.setCrouch`、`player.use`、`player.place`、`player.dig`、`terrain.runRevisionBurst`、`entity.applyImpulse`、`entity.runLifecycleBurst`、`pickable.attract`、`player.fireProjectile`、`pickable.runLifecycleBurst`、`inventory.move`、`inventory.selectSlot`、`inventory.drop`、`inventory.runRevisionBurst`、`player.hit`、`player.requestRespawn`、`health.runRevisionBurst`、`player.mount`、`mechanics.runMountRevisionBurst`、`mechanics.runMountLifecycleBurst`、`logic.edit`、`logic.interact`、`logic.runRevisionBurst`、`logic.runMovingBlockLifecycleBurst`、`logic.runPistonLifecycle`
 - v2 夹具：`fixture.player.prepareMotion`、`fixture.player.applyMotion`、`fixture.player.prepareTerrainInteraction`、`fixture.player.applyTerrainInteraction`、`fixture.terrain.prepareRegion`、`fixture.terrain.applyView`、`fixture.entity.prepareLifecycle`、`fixture.pickable.prepareLifecycle`、`fixture.pickable.applyLifecycle`、`fixture.inventory.prepare`、`fixture.inventory.apply`、`fixture.health.prepare`、`fixture.health.apply`、`fixture.health.set`、`fixture.mechanics.prepareMount`、`fixture.logic.prepare`、`fixture.logic.apply`
@@ -161,7 +164,7 @@ Entity Snapshot v2 支持按 ID 投影实体存在性、模板、生物/玩家�
 
 该场景在 100% 应用层重复和 50% 重排下要求服务端、actor、observer 收敛，并记录旧状态被拒绝的指标；之后验证 client-c late join、actor 同身份重连。保存前另建一个从未死亡的稳定健康实体，避免把尸体清理语义误当成持久化失败；重载后箱子内容、稳定实体健康和玩家身份必须在服务端与重连客户端一致。Inventory 与 Health Snapshot v2 支持精确选择、槽位和生命周期字段、revision 及 stale 指标，七个动作按角色和顺序严格回放。
 
-覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。当前 21 个 feature 中有 11 个 `covered`、5 个 `partial`、5 个 `planned`；生产场景已将玩家地形交互、运动、地形流送、实体/生物、掉落物/投射物、库存/生命、环境、睡眠/火焰、骑乘和逻辑/移动方块的 Direct、Relay、服务端权威、观察者、非法请求、late join、重连、确定性故障和保存重载证据纳入硬门禁。创飞与会话生命周期仍按各自真实缺口保留为 partial，不能借用其他场景提升状态。
+覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。当前 21 个 feature 中有 14 个 `covered`、2 个 `partial`、5 个 `planned`；会话兼容性、API 模组通道和玩家会话生命周期均具备 Direct、Relay、观察者、权限、late join、重连、定向故障、显式持久化边界、mutation sentry 与可重放 loss soak 证据。仍为 partial/planned 的领域继续按真实缺口保留，不能借用其他场景提升状态。
 
 ## 确定性边界
 
@@ -197,10 +200,24 @@ Entity Snapshot v2 支持按 ID 投影实体存在性、模板、生物/玩家�
 3. 缺少必要能力返回 `MissingCapabilities`；
 4. 客户端多出模组返回 `ExtraClientMod`；
 5. 客户端缺少服务端声明的模组通道返回 `MissingClientChannel`；
-6. 服务端到客户端的握手结果被确定性丢弃时，客户端在 15 秒后返回 `HandshakeTimeout` 并清理会话；
-7. 清除测试覆盖并恢复无故障网络后，匹配清单和通道目录能够完成握手和项目加载。
+6. 分别将 `CompatibilityHelloPacket`、`CompatibilityResultPacket`、`ModChannelCatalogPacket`、`ModChannelCatalogResultPacket` 定向黑洞，客户端返回 `HandshakeTimeout` 并清理会话；
+7. 分别将 `ConnectPacket`、`SessionAdmissionResultPacket` 定向黑洞，客户端返回 `AdmissionTimeout` 并清理会话；
+8. 清除测试覆盖并恢复无故障网络后，匹配清单和通道目录能够完成握手、typed admission 和项目加载。
 
 每个拒绝均断言客户端未加载服务端项目、传输已停止且服务端会话数回到零。结果包含稳定错误码、逐项差异、状态快照和丢包指标。
+
+## 会话与 API 通道生命周期场景
+
+`SessionLifecycleMultiplayerScenario` 使用一服四客，并以同一份步骤在 Direct 与 Relay 上执行：
+
+1. 在选定传输上逐项验证协议、API、能力、额外模组和缺少通道五种拒绝码；
+2. 三客户端并发首次加入，typed admission 为每个连接分配唯一 session ID，并在项目未就绪时将依赖 Project 的玩家包放入按 session 隔离、最多 4096 项的有界队列；
+3. 重放 `PlayerCreatePacket`，断言重复创建只计数不复制玩家实体；随后验证晚加入客户端目录协商与逐会话消息隔离；
+4. 四客户端并发流量触发每对端 128 条/秒限流，其他会话不受牵连；窗口恢复后消息重新可达，故障带宽背压期间待发队列保持有界并最终归零；
+5. 在玩家实体创建包被定向丢弃时立即断开客户端，服务端清理半完成生命周期；重新连接后只出现一个稳定身份；
+6. 三客户端同时断开并重连，最后让相同稳定身份的新 session 淘汰旧 session，验证 latest-session-wins 与最终零残留会话。
+
+场景产物包含 session admission、玩家 lifecycle 和 mod-channel 的 Snapshot v2 指标。启用 L3 loss 时还会强制执行一次 `PlayerCreatePacket` 100% 丢包哨兵，只有实际观察到 `faultDropped >= 1` 且待发队列归零才允许通过。
 
 ## 中继模组通道场景
 
@@ -221,7 +238,7 @@ Entity Snapshot v2 支持按 ID 投影实体存在性、模板、生物/玩家�
 成功和失败都会生成同一套目录：
 
 ```text
-TestResults/{core-multiplayer,compatibility-matrix,relay-mod-channel}-*/
+TestResults/{core-multiplayer,compatibility-matrix,relay-mod-channel,session-lifecycle}-*/
 ├── outcome.json
 ├── scenario.json
 ├── replay.json
@@ -246,7 +263,7 @@ L3 根目录另外包含 `fault-schedule.json` 和每轮原子更新的 `soak-su
   -Artifacts ./TestResults/l3-replay -NoBuild
 ```
 
-同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、pickable-projectile、inventory-health、environment-mechanics、mount 和 logic 十个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；pickable-projectile 严格要求 server attraction、client-a 真实 Aim 发射、server stale-create lifecycle burst 三个动作，且陈旧创建注入必须启用；inventory-health 严格要求 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn 七个动作；environment-mechanics 严格要求 time、precipitation、fog、lightning、sleep、environment revision burst、fire revision burst、wake 八个动作；mount 严格要求 mount、dismount、故障下 mount、revision burst、同 ID lifecycle burst、重连前 remount 和重连后 mount 七个动作，且旧 revision 与旧 lifecycle 注入必须启用；logic 严格要求四个权限/安全探针、九类编辑、真实开关交互、logic revision burst、moving lifecycle burst 和 piston lifecycle 十七个动作，并要求旧 revision、旧 generation 与墓碑注入保持启用。
+同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、pickable-projectile、inventory-health、environment-mechanics、mount、logic 和 session-lifecycle 十一个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；pickable-projectile 严格要求 server attraction、client-a 真实 Aim 发射、server stale-create lifecycle burst 三个动作，且陈旧创建注入必须启用；inventory-health 严格要求 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn 七个动作；environment-mechanics 严格要求 time、precipitation、fog、lightning、sleep、environment revision burst、fire revision burst、wake 八个动作；mount 严格要求 mount、dismount、故障下 mount、revision burst、同 ID lifecycle burst、重连前 remount 和重连后 mount 七个动作，且旧 revision 与旧 lifecycle 注入必须启用；logic 严格要求四个权限/安全探针、九类编辑、真实开关交互、logic revision burst、moving lifecycle burst 和 piston lifecycle 十七个动作，并要求旧 revision、旧 generation 与墓碑注入保持启用；session-lifecycle 回放保持原传输、种子和故障 profile，重新执行全部拒绝、风暴、限流与清理哨兵。
 
 - `steps.json` 给出第一个失败步骤、起止时间和异常。
 - `snapshot-*.json` 已排序并规范化浮点数，适合机器比较。
@@ -274,17 +291,17 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## CI
 
-`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行三层门禁：先执行 L0/L1；再校验 Coverage Contract/生产面库存，并用 ANGLE 运行 doctor 与全部 L2；每周计划任务随后执行九场景 L3 直连故障轮转。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2/L3 无论成功失败都会上传 `TestResults`，L3 证据保留 30 天，便于 AI 或开发者下载后精确重放。
+`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行三层门禁：先执行 L0/L1；再校验 Coverage Contract/生产面库存，并用 ANGLE 运行 doctor 与全部 L2；每周计划任务随后执行十场景 L3 直连故障轮转。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2/L3 无论成功失败都会上传 `TestResults`，L3 证据保留 30 天，便于 AI 或开发者下载后精确重放。
 
 当前远端位于 CNB，而 GitHub Workflow 只有在仓库镜像到 GitHub 后才会自动执行。CNB 支持由组织启用的 Windows 自托管构建节点，启用后可把脚本中的同样命令接入 `.cnb.yml`；在节点尚未配置前不提交一个必然排队或失败的 CNB 任务。测试框架和 PowerShell 入口本身不依赖 GitHub API。参见 [CNB 构建节点文档](https://docs.cnb.cool/zh/build/build-node.html)。
 
 ## Autotest 可信度门禁
 
-当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，并把 Automation API 提升到 v7：
+当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，当前 Automation API 为 v9：
 
-- `production-surfaces.json` 对源码发现到的 104 个联机 hook 与 108 个 packet class 做精确库存；新增、删除或改名必须显式更新库存，避免生产面悄悄脱离测试计划。
+- `production-surfaces.json` 对源码发现到的 104 个联机 hook 与 109 个 packet class 做精确库存；新增、删除或改名必须显式更新库存，避免生产面悄悄脱离测试计划。
 - `core-multiplayer.json` 使用 Coverage Contract v2。一个 feature 只有同时具备 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 且没有 open gap 时才能标为 `covered`；报告只给出可审计的数量与缺口，不把 partial/planned 混成漂亮的覆盖率。
-- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry，当前 pickable/projectile 领域使 API 提升到 v8。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
+- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry；M6 新增流量 burst、PlayerCreate replay 与会话快照后当前为 v9。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
 - `ProductionPathGateway` 是 TestAutomation 唯一允许直接调用 `NetworkManager.Queue` 的位置。源码哨兵禁止旁路，并要求 fixture、production request、authoritative state、fault injection 这几类 API 都有真实调用点；延迟旧状态注入使用固定游戏帧 settle，避免重排让“旧包”先到而产生伪随机结果。
 - `GameNodeProcess` 从控制通道就绪后每 250 ms 旁路采样进程资源。每个 v2 `metrics.json` 都包含各角色的初始/最终/峰值工作集、私有内存、增长量、句柄、线程、CPU 与采样时长；采样失败不会伪装成 0 通过，L3 的 minimum-samples 门禁会拒绝无观测结果。
 - `MultiplayerSoakSchedule` 使用稳定 PRNG 生成场景、场景种子及故障 profile，开跑前先持久化。`MultiplayerSoakRunner` 每轮立即原子更新 summary，玩法失败、生产路径证明失败、进程资源超预算或任一节点故障队列超过默认 10000 包都会让 L3 返回非零；门槛不会为迁就失败而自动放宽。第一次完整精确回放据此抓到了生命值每帧广播的生产流量风暴，修复后原九场景计划以相同 SHA-256 在隔离目录 9/9 无窗口重放通过。

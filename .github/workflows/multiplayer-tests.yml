@@ -29,10 +29,10 @@ jobs:
         run: ./scripts/Test-Multiplayer.ps1 -Mode fast
 
   api-multiplayer:
-    name: L2 direct, compatibility, and relay
+    name: L2 headless Direct, Relay, compatibility, and session lifecycle
     needs: deterministic-tests
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       SC_TEST_ARTIFACTS: ${{ github.workspace }}\TestResults\l2
     steps:
@@ -42,7 +42,7 @@ jobs:
           global-json-file: global.json
       - name: Build ANGLE-compatible game runtime
         shell: pwsh
-        run: dotnet build ./Survivalcraft.Test/Survivalcraft.Test.csproj --nologo -c Debug -p:UseAngle=true
+        run: dotnet build ./Survivalcraft.Test/Survivalcraft.Test.csproj --nologo -c Debug -m:1 -p:UseAngle=true
       - name: Build automation host
         shell: pwsh
         run: dotnet build ./Survivalcraft.TestHost/Survivalcraft.TestHost.csproj --nologo -c Debug
@@ -55,7 +55,7 @@ jobs:
       - name: Verify headless runtime and control channel
         shell: pwsh
         run: dotnet run --project ./Survivalcraft.TestHost/Survivalcraft.TestHost.csproj --no-build -c Debug -- doctor --startup-timeout 120
-      - name: Run compatibility, direct core, and relay acceptance tests
+      - name: Run all headless L2 acceptance tests
         shell: pwsh
         run: >-
           dotnet test ./Survivalcraft.Test/Survivalcraft.Test.csproj
@@ -91,7 +91,7 @@ jobs:
           ./scripts/Test-Multiplayer.ps1
           -Mode soak
           -UseAngle
-          -SoakIterations 9
+          -SoakIterations 10
           -SoakTransport direct
           -Artifacts ./TestResults/l3
       - name: Upload replayable soak evidence

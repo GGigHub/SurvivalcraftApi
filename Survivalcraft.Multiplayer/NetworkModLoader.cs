@@ -123,6 +123,7 @@ namespace Survivalcraft.Multiplayer {
 
             NetworkManager.InitializeAction = () => {
                 PacketManager.Initialize();
+                NetworkSessionLifecycleTracker.Reset();
             };
             NetworkManager.UpdateAction = () => {
                 NetworkFaultInjector.Update();
@@ -132,6 +133,7 @@ namespace Survivalcraft.Multiplayer {
                 (NetworkManager.RelayClient as RelayClient)?.Update();
                 PacketManager.PackageFragment.CleanupStates();
                 NetworkCompatibilityRuntime.UpdateClientHandshake(NetworkManager.MySession);
+                NetworkSessionAdmissionRuntime.UpdateClientAdmission(NetworkManager.MySession);
                 if (NetworkCompatibilityRuntime.TryTakePendingClientRejection(
                         out NetworkCompatibilityResult rejection)) {
                     NetworkManager.StopClient();
@@ -140,6 +142,15 @@ namespace Survivalcraft.Multiplayer {
                     DialogsManager.Alert(
                         "Incompatible multiplayer",
                         rejection.ToDisplayMessage());
+                }
+                else if (NetworkSessionAdmissionRuntime.TryTakePendingClientRejection(
+                        out NetworkSessionAdmissionResult admissionRejection)) {
+                    NetworkManager.StopClient();
+                    GameManager.DisposeProject();
+                    ScreensManager.SwitchScreen("MainMenu");
+                    DialogsManager.Alert(
+                        "Multiplayer session rejected",
+                        admissionRejection.ToDisplayMessage());
                 }
             };
             NetworkManager.StopClientAction = () => {
@@ -184,6 +195,14 @@ namespace Survivalcraft.Multiplayer {
                 player.Project?.FindSubsystem<SubsystemNetwork>()?.SavePlayerEntity(player, networkGuid);
             NetworkManager.RequestPlayerEntityAction = playerIndex =>
                 NetworkManager.Queue(new PlayerEntityRequestPacket(playerIndex));
+            NetworkManager.DisconnectSessionAction = (session, reason) => {
+                if ((NetworkManager.NetworkServer as NetworkServer)?.DisconnectSession(
+                        session,
+                        reason) == true) {
+                    return;
+                }
+                (NetworkManager.RelayHost as RelayHost)?.DisconnectSession(session, reason);
+            };
 
             NetworkManager.StartServerAction = () => {
                 var server = new NetworkServer();

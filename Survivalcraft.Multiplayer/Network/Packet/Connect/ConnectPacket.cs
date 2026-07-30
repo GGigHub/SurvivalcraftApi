@@ -29,17 +29,69 @@ public class ConnectPacket : Packet {
                 NetworkCompatibilityRuntime.RejectPrematurePacket(From, this);
                 return;
             }
-            // 前置拦截如校验黑名单
-            From.NetworkGuid = playerGuid;
-            SubsystemNetwork subsystemNetwork = GameManager.Project.FindSubsystem<SubsystemNetwork>();
-            if (subsystemNetwork.MakePlayerOnline(From.NetworkGuid, out PlayerData playerData)) {
-                From.PlayerIndex = playerData.PlayerIndex;
-                NetworkManager.Queue(new PlayerAddPacket(playerData) { Except = From });
-                NetworkManager.Queue(new IndexPacket(From.PlayerIndex) { To = From });
+            if (From.AdmissionState == NetworkSessionAdmissionState.Accepted) {
+                if (From.NetworkGuid != playerGuid) {
+                    NetworkSessionAdmissionRuntime.RejectServerSession(
+                        From,
+                        NetworkSessionAdmission.CreateIdentityChangedResult());
+                    return;
+                }
+                SendAcceptedSessionState(From);
+                return;
             }
-            byte[] data = GetNowProject(GameManager.Project);
-            NetworkManager.Queue(new ProjectPacket(data) { To = From });
+            if (From.AdmissionState != NetworkSessionAdmissionState.AwaitingRequest) {
+                NetworkSessionAdmissionRuntime.RejectPrematurePacket(From, this);
+                return;
+            }
+            if (playerGuid == Guid.Empty) {
+                NetworkSessionAdmissionRuntime.RejectServerSession(
+                    From,
+                    NetworkSessionAdmission.CreateInvalidIdentityResult());
+                return;
+            }
+
+            ClientSession existingSession = NetworkManager.ServerSessions.FirstOrDefault(
+                session => session != null
+                    && session != From
+                    && session.NetworkGuid == playerGuid
+                    && session.AdmissionState == NetworkSessionAdmissionState.Accepted
+                    && session.NetworkState != NetworkState.NotConnected);
+            if (existingSession != null) {
+                existingSession.AdmissionResult =
+                    NetworkSessionAdmission.CreateSupersededResult();
+                existingSession.AdmissionState = NetworkSessionAdmissionState.Rejected;
+                NetworkSessionLifecycleTracker.RecordSuperseded(existingSession);
+                NetworkManager.DisconnectSession(
+                    existingSession,
+                    existingSession.AdmissionResult.Summary);
+            }
+
+            From.NetworkGuid = playerGuid;
+            From.AdmissionResult = NetworkSessionAdmissionResult.Accept();
+            From.AdmissionState = NetworkSessionAdmissionState.Accepted;
+            From.AdmissionStartedUtc = default;
+            NetworkSessionLifecycleTracker.RecordAdmissionAccepted(From);
+            SendAcceptedSessionState(From);
         }
+    }
+
+    private static void SendAcceptedSessionState(ClientSession session) {
+        NetworkManager.Queue(new SessionAdmissionResultPacket(
+            NetworkSessionAdmissionResult.Accept()) { To = session });
+        SubsystemNetwork subsystemNetwork =
+            GameManager.Project.FindSubsystem<SubsystemNetwork>();
+        if (session.PlayerIndex < 0
+            && subsystemNetwork.MakePlayerOnline(session.NetworkGuid, out PlayerData playerData)) {
+            session.PlayerIndex = playerData.PlayerIndex;
+            NetworkSessionLifecycleTracker.RecordPlayerAssigned(session);
+            NetworkManager.Queue(new PlayerAddPacket(playerData) { Except = session });
+            NetworkManager.Queue(new IndexPacket(session.PlayerIndex) { To = session });
+        }
+        else if (session.PlayerIndex >= 0) {
+            NetworkManager.Queue(new IndexPacket(session.PlayerIndex) { To = session });
+        }
+        byte[] data = GetNowProject(GameManager.Project);
+        NetworkManager.Queue(new ProjectPacket(data) { To = session });
     }
 
     public static byte[] GetNowProject(Project project) {

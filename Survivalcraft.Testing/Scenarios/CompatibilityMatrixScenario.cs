@@ -35,7 +35,7 @@ public sealed class CompatibilityMatrixScenarioException : Exception {
 
 public sealed class CompatibilityMatrixScenario {
     public const string ScenarioName = "compatibility-matrix";
-    public const int ScenarioVersion = 2;
+    public const int ScenarioVersion = 3;
 
     private static readonly ScenarioStepDefinition[] StepDefinitions = [
         new("start-nodes", "process.start(server, client)"),
@@ -47,7 +47,12 @@ public sealed class CompatibilityMatrixScenario {
         new("reject-capability-mismatch", ControlCommandNames.ConfigureCompatibility),
         new("reject-mod-mismatch", ControlCommandNames.ConfigureCompatibility),
         new("reject-mod-channel-mismatch", ControlCommandNames.ConfigureModChannels),
-        new("reject-handshake-timeout", ControlCommandNames.SetNetworkFaults),
+        new("blackhole-compatibility-hello", ControlCommandNames.SetNetworkFaults),
+        new("blackhole-compatibility-result", ControlCommandNames.SetNetworkFaults),
+        new("blackhole-mod-channel-catalog", ControlCommandNames.SetNetworkFaults),
+        new("blackhole-mod-channel-catalog-result", ControlCommandNames.SetNetworkFaults),
+        new("blackhole-session-connect", ControlCommandNames.SetNetworkFaults),
+        new("blackhole-session-admission-result", ControlCommandNames.SetNetworkFaults),
         new("recover-with-matching-manifest", ControlCommandNames.ConfigureCompatibility),
         new("stop-nodes", ControlCommandNames.Disconnect)
     ];
@@ -61,7 +66,7 @@ public sealed class CompatibilityMatrixScenario {
         ValidateRuntime(runtimeDirectory);
 
         TimeSpan stepTimeout = options.StepTimeout ?? TimeSpan.FromSeconds(60);
-        TimeSpan scenarioTimeout = options.ScenarioTimeout ?? TimeSpan.FromMinutes(5);
+        TimeSpan scenarioTimeout = options.ScenarioTimeout ?? TimeSpan.FromMinutes(8);
         if (stepTimeout <= TimeSpan.Zero || scenarioTimeout <= TimeSpan.Zero) {
             throw new ArgumentOutOfRangeException(nameof(options), "Timeouts must be positive.");
         }
@@ -73,9 +78,6 @@ public sealed class CompatibilityMatrixScenario {
         Directory.CreateDirectory(runDirectory);
 
         NetworkFaultProfile noFaults = new(Seed: options.Seed);
-        NetworkFaultProfile handshakeBlackhole = new(
-            Seed: options.Seed + 1,
-            LossRate: 1);
         ScenarioDefinition definition = new(
             ScenarioName,
             ScenarioVersion,
@@ -188,6 +190,103 @@ public sealed class CompatibilityMatrixScenario {
                     new GetSnapshotCommand(IncludeEntities: false),
                     cancellationToken: scenarioToken).ConfigureAwait(false);
             return rejected;
+        }
+
+        async Task<string> RunHandshakeBlackholeAsync(
+            string caseName,
+            string packetType,
+            bool injectOnServer,
+            bool admissionPhase) {
+            if (server == null || client == null) {
+                throw new InvalidOperationException("Scenario nodes are not running.");
+            }
+            _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                ControlCommandNames.ConfigureCompatibility,
+                new ConfigureCompatibilityCommand(ClearOverride: true),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                ControlCommandNames.ConfigureModChannels,
+                new ConfigureModChannelsCommand(ClearOverride: true),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            _ = await server.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
+                ControlCommandNames.SetNetworkFaults,
+                new SetNetworkFaultsCommand(noFaults),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            _ = await client.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
+                ControlCommandNames.SetNetworkFaults,
+                new SetNetworkFaultsCommand(noFaults),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+
+            GameNodeProcess faultNode = injectOnServer ? server : client;
+            NetworkFaultProfile blackhole = new(
+                Seed: options.Seed + 100 + rejectionCodes.Count,
+                LossRate: 1,
+                TargetPacketTypes: [packetType]);
+            _ = await faultNode.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
+                ControlCommandNames.SetNetworkFaults,
+                new SetNetworkFaultsCommand(blackhole),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            _ = await client.SendAsync<ConnectClientCommand, ControlAck>(
+                ControlCommandNames.ConnectClient,
+                new ConnectClientCommand("127.0.0.1", server.GamePort),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            _ = await client.WaitForStatusAsync(
+                status => status.IsClientRunning
+                    && !string.IsNullOrWhiteSpace(status.SessionId),
+                stepTimeout,
+                $"Client did not start blackholed handshake phase '{caseName}'.",
+                scenarioToken).ConfigureAwait(false);
+
+            string code;
+            string summary;
+            if (admissionPhase) {
+                NodeStatus timedOut = await WaitForAdmissionTimeoutAsync(
+                    client,
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
+                code = timedOut.AdmissionCode ?? string.Empty;
+                summary = $"admissionState={timedOut.AdmissionState}";
+            }
+            else {
+                CompatibilityStatus timedOut = await WaitForCompatibilityAsync(
+                    client,
+                    "HandshakeTimeout",
+                    accepted: false,
+                    requireProjectLoaded: false,
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
+                code = timedOut.PrimaryCode ?? string.Empty;
+                summary = timedOut.Summary ?? string.Empty;
+            }
+            _ = await server.WaitForStatusAsync(
+                status => status.ServerSessionCount == 0,
+                stepTimeout,
+                $"Server retained blackholed handshake phase '{caseName}'.",
+                scenarioToken).ConfigureAwait(false);
+            NodeStatus faultStatus = await faultNode.GetStatusAsync(scenarioToken)
+                .ConfigureAwait(false);
+            if (faultStatus.NetworkFaults.Dropped < 1) {
+                throw new InvalidOperationException(
+                    $"Targeted blackhole '{caseName}' did not drop {packetType}.");
+            }
+
+            rejectionCodes[caseName] = code;
+            metrics[$"{caseName}.packetType"] = packetType;
+            metrics[$"{caseName}.code"] = code;
+            metrics[$"{caseName}.summary"] = summary;
+            metrics[$"{caseName}.droppedPackets"] =
+                faultStatus.NetworkFaults.Dropped.ToString(CultureInfo.InvariantCulture);
+            snapshots[$"{caseName}-rejected"] =
+                await client.SendAsync<GetSnapshotCommand, StateSnapshot>(
+                    ControlCommandNames.GetSnapshot,
+                    new GetSnapshotCommand(IncludeEntities: false),
+                    cancellationToken: scenarioToken).ConfigureAwait(false);
+
+            _ = await faultNode.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
+                ControlCommandNames.SetNetworkFaults,
+                new SetNetworkFaultsCommand(noFaults),
+                cancellationToken: scenarioToken).ConfigureAwait(false);
+            return code;
         }
 
         try {
@@ -319,59 +418,26 @@ public sealed class CompatibilityMatrixScenario {
                     new ConfigureModChannelsCommand(Channels: [])),
                 result => result.PrimaryCode).ConfigureAwait(false);
 
-            _ = await StepAsync(
-                "reject-handshake-timeout",
-                ControlCommandNames.SetNetworkFaults,
-                async () => {
-                    _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
-                        ControlCommandNames.ConfigureCompatibility,
-                        new ConfigureCompatibilityCommand(ClearOverride: true),
-                        cancellationToken: scenarioToken).ConfigureAwait(false);
-                    _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
-                        ControlCommandNames.ConfigureModChannels,
-                        new ConfigureModChannelsCommand(ClearOverride: true),
-                        cancellationToken: scenarioToken).ConfigureAwait(false);
-                    _ = await server.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
-                        ControlCommandNames.SetNetworkFaults,
-                        new SetNetworkFaultsCommand(handshakeBlackhole),
-                        cancellationToken: scenarioToken).ConfigureAwait(false);
-                    _ = await client.SendAsync<ConnectClientCommand, ControlAck>(
-                        ControlCommandNames.ConnectClient,
-                        new ConnectClientCommand("127.0.0.1", server.GamePort),
-                        cancellationToken: scenarioToken).ConfigureAwait(false);
-
-                    CompatibilityStatus timedOut = await WaitForCompatibilityAsync(
-                        client,
-                        "HandshakeTimeout",
-                        accepted: false,
-                        requireProjectLoaded: false,
-                        stepTimeout,
-                        scenarioToken).ConfigureAwait(false);
-                    _ = await server.WaitForStatusAsync(
-                        status => status.ServerSessionCount == 0,
-                        stepTimeout,
-                        "Server retained the timed-out compatibility session.",
-                        scenarioToken).ConfigureAwait(false);
-                    NodeStatus serverStatus =
-                        await server.GetStatusAsync(scenarioToken).ConfigureAwait(false);
-                    _ = await server.SendAsync<SetNetworkFaultsCommand, NetworkFaultState>(
-                        ControlCommandNames.SetNetworkFaults,
-                        new SetNetworkFaultsCommand(noFaults),
-                        cancellationToken: scenarioToken).ConfigureAwait(false);
-
-                    rejectionCodes["timeout"] = timedOut.PrimaryCode ?? string.Empty;
-                    metrics["timeout.code"] = timedOut.PrimaryCode ?? string.Empty;
-                    metrics["timeout.summary"] = timedOut.Summary ?? string.Empty;
-                    metrics["timeout.droppedPackets"] = serverStatus.NetworkFaults.Dropped.ToString(
-                        CultureInfo.InvariantCulture);
-                    snapshots["timeout-rejected"] =
-                        await client.SendAsync<GetSnapshotCommand, StateSnapshot>(
-                            ControlCommandNames.GetSnapshot,
-                            new GetSnapshotCommand(IncludeEntities: false),
-                            cancellationToken: scenarioToken).ConfigureAwait(false);
-                    return timedOut;
-                },
-                result => result.PrimaryCode).ConfigureAwait(false);
+            (string Step, string Case, string Packet, bool Server, bool Admission)[] phases = [
+                ("blackhole-compatibility-hello", "timeout-compatibility-hello", "CompatibilityHelloPacket", false, false),
+                ("blackhole-compatibility-result", "timeout-compatibility-result", "CompatibilityResultPacket", true, false),
+                ("blackhole-mod-channel-catalog", "timeout-mod-channel-catalog", "ModChannelCatalogPacket", false, false),
+                ("blackhole-mod-channel-catalog-result", "timeout-mod-channel-catalog-result", "ModChannelCatalogResultPacket", true, false),
+                ("blackhole-session-connect", "timeout-session-connect", "ConnectPacket", false, true),
+                ("blackhole-session-admission-result", "timeout-session-admission-result", "SessionAdmissionResultPacket", true, true)
+            ];
+            foreach ((string step, string caseName, string packet, bool onServer, bool admission)
+                     in phases) {
+                _ = await StepAsync(
+                    step,
+                    ControlCommandNames.SetNetworkFaults,
+                    () => RunHandshakeBlackholeAsync(
+                        caseName,
+                        packet,
+                        onServer,
+                        admission),
+                    result => result).ConfigureAwait(false);
+            }
 
             _ = await StepAsync(
                 "recover-with-matching-manifest",
@@ -477,9 +543,9 @@ public sealed class CompatibilityMatrixScenario {
                 $"Scenario passed but artifacts could not be written to '{artifactDirectory}'.",
                 artifactFailure);
         }
-        if (rejectionCodes.Count != 6) {
+        if (rejectionCodes.Count != 11) {
             throw new InvalidOperationException(
-                $"Scenario completed with {rejectionCodes.Count} rejection cases instead of 6.");
+                $"Scenario completed with {rejectionCodes.Count} rejection cases instead of 11.");
         }
         return new CompatibilityMatrixScenarioResult(
             artifactDirectory,
@@ -523,6 +589,32 @@ public sealed class CompatibilityMatrixScenario {
         throw new TimeoutException(
             $"Client compatibility did not become accepted={accepted}, code={expectedCode}. "
             + $"LastCompatibility={lastCompatibility}; LastNode={lastNode}.{Environment.NewLine}"
+            + client.GetRecentLogText());
+    }
+
+    private static async Task<NodeStatus> WaitForAdmissionTimeoutAsync(
+        GameNodeProcess client,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        NodeStatus? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            cancellationToken.ThrowIfCancellationRequested();
+            last = await client.GetStatusAsync(cancellationToken).ConfigureAwait(false);
+            if (string.Equals(
+                    last.AdmissionCode,
+                    "AdmissionTimeout",
+                    StringComparison.Ordinal)
+                && !last.IsClientRunning
+                && !last.ProjectLoaded) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        throw new TimeoutException(
+            $"Client session admission did not time out. LastStatus={last}."
+            + Environment.NewLine
             + client.GetRecentLogText());
     }
 

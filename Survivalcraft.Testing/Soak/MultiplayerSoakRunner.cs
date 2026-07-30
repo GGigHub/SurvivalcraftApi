@@ -337,6 +337,19 @@ public sealed class MultiplayerSoakRunner {
                         NetworkFaults: entry.NetworkFaults),
                     cancellationToken).ConfigureAwait(false);
                 break;
+            case SessionLifecycleMultiplayerScenario.ScenarioName:
+                _ = await new SessionLifecycleMultiplayerScenario().RunAsync(
+                    new SessionLifecycleMultiplayerScenarioOptions(
+                        runtimeDirectory,
+                        artifactDirectory,
+                        options.Schedule.Transport,
+                        entry.ScenarioSeed,
+                        options.StepTimeout,
+                        options.ScenarioTimeout,
+                        KeepData: options.KeepData,
+                        NetworkFaults: entry.NetworkFaults),
+                    cancellationToken).ConfigureAwait(false);
+                break;
             default:
                 throw new InvalidDataException(
                     $"Unsupported soak scenario '{entry.Scenario}'.");

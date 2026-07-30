@@ -33,13 +33,13 @@
     {
       "featureId": "player.session-lifecycle",
       "disposition": "superseded",
-      "reason": "The legacy assertion depends on an obsolete PlayerDataChanged event flag. Current session creation, reconnect, and reload behavior is exercised through the declared core and relay production scenarios.",
+      "reason": "The legacy assertion depends on an obsolete PlayerDataChanged event flag. Typed Direct/Relay session-lifecycle scenarios now exercise concurrent creation, reconnect, duplicate PlayerCreate delivery, identity takeover, entity-creation interruption, and final cleanup.",
       "tests": [
         "Survivalcraft.Test.PlayerSyncTest.TestPlayerModifyIsVisibleToObserverClient"
       ],
       "replacements": [
-        "CoreMultiplayerScenarioTest.ConnectMutateReconnectAndReloadIsFullyAutomated",
-        "RelayModChannelScenarioTest.NegotiatesDeduplicatesAndReconnectsWithoutManualInput"
+        "SessionLifecycleMultiplayerScenarioTest.SessionsAndModChannelsSurviveProductionLifecycleBoundaries(Direct)",
+        "SessionLifecycleMultiplayerScenarioTest.SessionsAndModChannelsSurviveProductionLifecycleBoundaries(Relay)"
       ]
     },
     {

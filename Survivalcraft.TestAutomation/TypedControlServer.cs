@@ -104,8 +104,18 @@ public partial class TestAutomationModLoader {
         if (command.FixedRandom) {
             global::Game.Random.Counter = command.Seed;
         }
+        if (command.NetworkIdentity != null) {
+            if (!Guid.TryParse(command.NetworkIdentity, out Guid networkIdentity)
+                || networkIdentity == Guid.Empty) {
+                throw new ArgumentException(
+                    "NetworkIdentity must be a non-empty GUID.",
+                    nameof(command.NetworkIdentity));
+            }
+            SettingsManager.OnlineAccessToken = networkIdentity.ToString("D");
+        }
         NetworkCompatibilityRuntime.ClearLocalManifestOverride();
         ModNetworkManager.ClearLocalCatalogOverride();
+        NetworkSessionLifecycleTracker.Reset();
         ResetTestModMessages();
         ResetTypedPlayerActions();
         actionEventJournal.Reset();
@@ -391,7 +401,8 @@ public partial class TestAutomationModLoader {
             profile.DuplicationRate,
             profile.ReorderRate,
             profile.ReorderDelayMilliseconds,
-            profile.BandwidthBytesPerSecond));
+            profile.BandwidthBytesPerSecond,
+            profile.TargetPacketTypes));
         return BuildNetworkFaultState();
     }
 
@@ -493,7 +504,12 @@ public partial class TestAutomationModLoader {
             Time.RealTime,
             BuildNetworkFaultState(),
             BuildCompatibilityStateName(),
-            NetworkCompatibilityRuntime.LastClientResult?.PrimaryCode.ToString());
+            NetworkCompatibilityRuntime.LastClientResult?.PrimaryCode.ToString(),
+            NetworkManager.MySession?.AdmissionState.ToString()
+                ?? NetworkSessionAdmissionState.NotStarted.ToString(),
+            NetworkManager.MySession?.AdmissionResult?.Code.ToString()
+                ?? NetworkSessionAdmissionRuntime.LastClientResult?.Code.ToString(),
+            NetworkManager.MySession?.SessionId.ToString("D"));
     }
 
     private NetworkFaultState BuildNetworkFaultState() {
@@ -508,7 +524,8 @@ public partial class TestAutomationModLoader {
                 settings.DuplicationRate,
                 settings.ReorderRate,
                 settings.ReorderDelayMilliseconds,
-                settings.BandwidthBytesPerSecond),
+                settings.BandwidthBytesPerSecond,
+                settings.TargetPacketTypes),
             metrics.Sent,
             metrics.Dropped,
             metrics.Duplicated,

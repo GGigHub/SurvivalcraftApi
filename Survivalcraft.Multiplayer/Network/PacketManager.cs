@@ -14,6 +14,7 @@ public abstract class Packet {
     public ClientSession To { get; set; } = null;
     public ClientSession Except { get; set; } = null;
     public virtual NetworkState MinNeedState => NetworkState.NotConnected;
+    public virtual bool RequiresProject => MinNeedState >= NetworkState.ProjectLoaded;
 }
 
 public enum PacketType : byte {
@@ -21,6 +22,7 @@ public enum PacketType : byte {
     ConnectInfo = 0, IndexInfo = 1, ProjectInfo = 2, StateInfo = 3, LatencyProbe = 111,
     CompatibilityHello = 113, CompatibilityResult = 114,
     ModChannelCatalog = 115, ModChannelCatalogResult = 116,
+    SessionAdmissionResult = 118,
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
@@ -92,6 +94,7 @@ public static class PacketManager {
         RegisterPacket<CompatibilityResultPacket>();
         RegisterPacket<ModChannelCatalogPacket>();
         RegisterPacket<ModChannelCatalogResultPacket>();
+        RegisterPacket<SessionAdmissionResultPacket>();
         RegisterPacket<IndexPacket>();
         RegisterPacket<LatencyProbePacket>();
         RegisterPacket<ProjectPacket>();

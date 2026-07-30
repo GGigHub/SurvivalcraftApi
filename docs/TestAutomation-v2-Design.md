@@ -9,7 +9,7 @@
 TestAutomation v2 不重写现有测试框架，而是在已经稳定的命名管道控制面、无界面进程模型和场景产物之上增加完整的领域驱动能力。设计采用以下决定：
 
 1. 保持长度前缀 JSON 的 wire protocol v1，不因增加命令或快照字段破坏现有 TestHost 与运行时配对。
-2. 单独引入可演进的 Automation API（当前为 v8）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
+2. 单独引入可演进的 Automation API（当前为 v9）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
 3. 保留所有现有 v1 命令和 `state.getSnapshot`，以新增命令的方式演进，不修改旧 DTO 的含义。
 4. 明确区分 `fixture.*` 布置命令和玩家动作命令。前者用于构造确定性前置条件；后者必须经过真实客户端玩法路径，不能直接伪造最终状态或网络包。
 5. 新稳定场景不得使用 `legacy.executeScript`、`FUNC`、`EXEC` 或 UI 点击来验证非 UI 玩法。
@@ -308,7 +308,7 @@ DTO、选择器、命令元数据、规范化、比较规则、覆盖清单和�
 
 ### L3
 
-定时运行的长时间自动测试：使用稳定 PRNG 预生成并持久化场景、场景种子与故障 profile，逐轮执行真实无窗口进程，并检查工作集、私有内存、句柄、线程、CPU、采样完整性和玩法收敛。完整九场景轮转进入每周计划门禁；增加 iterations 可形成 30 至 60 分钟或更长的 soak，不作为每次提交的快速门禁。
+定时运行的长时间自动测试：使用稳定 PRNG 预生成并持久化场景、场景种子与故障 profile，逐轮执行真实无窗口进程，并检查工作集、私有内存、句柄、线程、CPU、采样完整性和玩法收敛。完整十场景轮转进入每周计划门禁；增加 iterations 可形成 30 至 60 分钟或更长的 soak，不作为每次提交的快速门禁。
 
 真实网络阶段不得通过暂停所有节点实现伪 lockstep，否则 LiteNetLib 轮询和超时会失真。需要逐 tick 精确性的规则放在 L1，L2 验证真实传输下在截止时间内收敛。
 
@@ -464,7 +464,7 @@ Survivalcraft.TestAutomation/
 
 已实现并进入自动门禁的内容：
 
-- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 领域后当前为 v8；
+- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 为 v8，会话/通道生命周期后当前为 v9；
 - 现有控制命令由注册式 `TypedCommandRouter` 统一分派，重复命令名在初始化阶段失败；
 - 新增有界 `ActionEventJournal`、`state.getEvents` 和 `state.resetEvents`；
 - 新增 Node、Network、Players、Events 投影的 Snapshot v2、稳定排序和玩家领域容差比较；
@@ -608,12 +608,12 @@ Survivalcraft.TestAutomation/
 
 本切片不新增玩法捷径，而是为全部强类型玩法建立不能虚高的共同证据层：
 
-- Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 104 个 hook 和 108 个 packet class。
-- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v8。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
+- Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 104 个 hook 和 109 个 packet class。
+- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v9。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
 - `ProductionPathGateway` 成为测试模组唯一的直接 packet queue 边界，源码哨兵同时禁止私有旁路；fixture synchronization、production request、authoritative state 与 fault injection 四类路径被明确区分。
 - revision/lifecycle 旧状态注入在最终权威包稳定 30 个游戏帧后再交付，消除故障重排导致“旧包先到”的非确定性假阴性。
-- 每个游戏节点从控制通道 ready 起每 250 ms 采样工作集、私有内存、句柄、线程与 CPU。所有九个 v2 场景在 dispose 前把资源摘要写入 metrics；L3 对无样本、峰值、增长量和故障待发队列实行硬预算。Snapshot v2 还记录按 packet class 聚合的排队次数、故障传输次数和字节数，soak 失败会指出最高流量包型，避免只得到一个不可诊断的队列数字。
-- `MultiplayerSoakSchedule` 对九个完整玩法场景生成可序列化的故障轮转，默认随机化 latency、jitter、reorder delay/rate 与 bandwidth 并始终触发 duplicate/reorder 哨兵；可选 loss 模式加入确定性的 1–3% 丢包。
+- 每个游戏节点从控制通道 ready 起每 250 ms 采样工作集、私有内存、句柄、线程与 CPU。当前十个 v2 场景在 dispose 前把资源摘要写入 metrics；L3 对无样本、峰值、增长量和故障待发队列实行硬预算。Snapshot v2 还记录按 packet class 聚合的排队次数、故障传输次数和字节数，soak 失败会指出最高流量包型，避免只得到一个不可诊断的队列数字。
+- `MultiplayerSoakSchedule` 对十个完整场景生成可序列化的故障轮转，默认随机化 latency、jitter、reorder delay/rate 与 bandwidth 并始终触发 duplicate/reorder 哨兵；可选 loss 模式加入确定性的 1–3% 丢包。
 - `MultiplayerSoakRunner` 在执行前保存 schedule，在每轮后原子更新 summary，允许失败后继续收集证据或 fail fast。任一玩法断言、生产路径证明或资源预算失败都会使最终退出码非零。
 - 第一次完整九场景精确回放真实暴露了三类问题：游戏帧远快于墙钟时的观察截止条件、带宽调度错误施加的每包 1 ms 下限，以及生产 `VitalStatSyncPacket` 每帧广播造成的流量风暴。包型证据显示逻辑场景曾排队 118296 个生命值包、形成 473184 次故障传输，服务端待发队列峰值 196826；生产修复改为 5 Hz 同步并加入 lifecycle/revision 防重排后，同一故障配置分别降为 45、180 和 14。库存场景的待发峰值也从 13709 降到 49，默认 10000 包硬门槛未被放宽。
 - 修复后，原九场景 schedule 在一服三客无窗口拓扑精确重放 9/9 通过，原计划与重放 `fault-schedule.json` 的 SHA-256 均为 `03F025CDE1CE972B33F489B39C49C944879C01CC45D974E55C093E7CA598B555`；计划任务每周运行完整轮转并保留 30 天产物。TestHost 同时允许用 `--fault-seed`、latency、jitter、loss、duplication、reorder、reorder delay 和 bandwidth 参数逐项复现单一 profile，不再只把这些选项显示在帮助文本里。
@@ -631,6 +631,21 @@ Survivalcraft.TestAutomation/
 - 强类型命令新增 `fixture.pickable.prepareLifecycle`、`fixture.pickable.applyLifecycle`、`pickable.attract`、`player.fireProjectile` 和 `pickable.runLifecycleBurst`；Snapshot v2 新增 pickables、projectiles、生命周期窗口、事件去重与陈旧包计数。
 - 一服三客 Direct/Relay 场景验证控制角色拒绝、实时 create 收敛、服务端吸引、真实客户端发射、观察者事件恰好一次、100% 复制与 50% 重排、陈旧 create 墓碑哨兵、late join、稳定身份重连、保存重载和投射物瞬态边界。
 - 场景允许已释放的 Pickable ID 被更高 revision 的新对象合法复用。随机 L3 首次暴露了箭矢落地后复用墓碑 ID 的测试假阴性；修正后同一持久化 schedule 原样重放通过，证明断言区分“旧生命周期复活”和“新生命周期复用”。
-- `actions.json` 严格包含 server attraction、client-a 真实 Aim 发射、server stale-create lifecycle burst 三个动作。Direct 与 Relay 的原运行和独立 replay 均真实无窗口通过；PowerShell、xUnit L2、九场景 soak 轮转和每周 CI 已接入。
+- `actions.json` 严格包含 server attraction、client-a 真实 Aim 发射、server stale-create lifecycle burst 三个动作。Direct 与 Relay 的原运行和独立 replay 均真实无窗口通过；PowerShell、xUnit L2、当前十场景 soak 轮转和每周 CI 已接入。
 
-`pickable-projectile.lifecycle` 现已标记为 `covered`，置信级别保守标为 `mutation`：它具备陈旧创建复活哨兵并已进入 L3，但尚不把单轮随机样本夸大为长期 soak 或人工 reality 证据。覆盖契约当前为 21 个 feature：11 个 `covered`、5 个 `partial`、5 个 `planned`。
+`pickable-projectile.lifecycle` 现已标记为 `covered`，置信级别保守标为 `mutation`：它具备陈旧创建复活哨兵并已进入 L3，但尚不把单轮随机样本夸大为长期 soak 或人工 reality 证据。本切片完成时覆盖契约为 21 个 feature：11 个 `covered`、5 个 `partial`、5 个 `planned`。
+
+## 32. M6 会话兼容性、玩家生命周期与 API 通道完整覆盖实施记录
+
+本切片把“握手成功”推进为可审计的 typed session admission，并把 Automation API 提升到 v9、联机协议 revision 提升到 9：
+
+- 新增 `NetworkSessionAdmissionState`、稳定拒绝码、4 KiB 有界 wire codec 与 `SessionAdmissionResultPacket`。只有兼容清单和模组通道目录均接受后，连接才能进入 admission；空身份、同 session 改换身份、超时和被更新连接取代都返回机器可读结果。
+- 每个 Direct/Relay 连接持有独立 session ID。相同稳定玩家身份的新连接采用 latest-session-wins，服务端为旧连接记录 `Superseded` 并将其回收；`ConnectPacket` 与 `PlayerCreatePacket` 的重复交付是幂等确认，不再创建第二份玩家或实体。
+- 并发重连实测发现 `PlayerAddPacket` 可能先于客户端 Project 完成加载并触发空引用。生产修复引入按 session 隔离、最多 4096 项的 `ClientPacketDispatcher`：依赖 Project 的包在加载完成后有序刷新，断线或 session 切换时全部清除，旧 session 包不能泄漏到新世界。
+- 故障 profile 新增最多 64 个精确 `TargetPacketTypes`。兼容场景分别黑洞 Hello、Result、Catalog、CatalogResult、Connect 和 AdmissionResult 六个阶段，并要求前四类得到 `HandshakeTimeout`、后两类得到 `AdmissionTimeout`，每一步都必须观测到真实丢包计数。
+- Snapshot v2 的 network 域新增 session 列表、admission/lifecycle 计数、最多 512 条生命周期事件和 mod-channel 收发、丢弃、重复、限流、处理器异常等指标；规范化器固定排序，证据不依赖日志措辞。
+- 新增 `network.runTestModTrafficBurst` 与 `network.replayPlayerCreate`。一服四客 Direct/Relay 场景覆盖五类兼容性拒绝、并发首次加入、并发重连、实体创建期断线、重复创建、稳定身份取代、晚加入目录、逐会话限流/恢复、带宽背压和处理器异常隔离。
+- `MultiplayerSoakSchedule` 当前轮转十个场景。session-lifecycle 在 loss 计划下额外强制一个 `PlayerCreatePacket` 100% 丢包哨兵，避免低概率 profile 因样本恰巧未丢包而形成假证据；只有 `faultDropped >= 1`、待发队列归零和所有资源预算同时满足才通过。
+- 2026-07-30 的最终无窗口证据包括平台 L0/L1 109/109、游戏 L0/L1 68/68、完整游戏 L2 25/25（含兼容矩阵与 Direct/Relay 生命周期），以及一轮带 loss 的 session-only L3。Direct/Relay 都返回 5 类拒绝、4 个稳定身份、至少 18 次重复创建抑制和 32 次限流；L3 五节点峰值工作集约 471–505 MiB。
+
+`network.session-compatibility`、`api.mod-channel` 和 `player.session-lifecycle` 现均标记为 `covered/soak`。当前 21 个 feature 为 14 个 `covered`、2 个 `partial`、5 个 `planned`；该等级表示已有可重放自动证据，不代表人工 reality 验收或所有未来模组协议都自动正确。

@@ -7,6 +7,7 @@ namespace Game.Network;
 public class PlayerNoMsgRemovePacket : Packet {
     public override byte ID => (byte)PacketType.PlayerNoMsgRemove;
     public override NetworkState MinNeedState => NetworkState.Connected;
+    public override bool RequiresProject => true;
     public int m_playerIndex;
 
     public PlayerNoMsgRemovePacket() { }

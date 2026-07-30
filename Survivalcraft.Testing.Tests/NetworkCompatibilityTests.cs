@@ -7,8 +7,42 @@ namespace Survivalcraft.Testing.Tests;
 public sealed class NetworkCompatibilityTests {
     [Fact]
     [Trait("Layer", "L0")]
-    public void ProtocolRevisionIncludesAuthoritativeLogicWireFormat() {
-        Assert.Equal(8, NetworkCompatibility.ProtocolRevision);
+    public void ProtocolRevisionIncludesTypedSessionAdmission() {
+        Assert.Equal(9, NetworkCompatibility.ProtocolRevision);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void SessionAdmissionResultRoundTripsAndRejectsTrailingData() {
+        NetworkSessionAdmissionResult expected =
+            NetworkSessionAdmission.CreateIdentityChangedResult();
+
+        byte[] payload = NetworkSessionAdmissionWireCodec.Encode(expected);
+        NetworkSessionAdmissionResult actual =
+            NetworkSessionAdmissionWireCodec.Decode(payload);
+
+        Assert.False(actual.Accepted);
+        Assert.Equal(NetworkSessionAdmissionCode.IdentityChanged, actual.Code);
+        Assert.Equal(expected.Summary, actual.Summary);
+        Assert.Throws<InvalidDataException>(() =>
+            NetworkSessionAdmissionWireCodec.Decode([.. payload, 0]));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void SessionAdmissionCodecRejectsInconsistentAcceptedCode() {
+        byte[] payload;
+        using (MemoryStream stream = new()) {
+            using BinaryWriter writer = new(stream, System.Text.Encoding.UTF8, leaveOpen: true);
+            writer.Write(true);
+            writer.Write((byte)NetworkSessionAdmissionCode.InvalidIdentity);
+            writer.Write("invalid");
+            writer.Flush();
+            payload = stream.ToArray();
+        }
+
+        Assert.Throws<InvalidDataException>(() =>
+            NetworkSessionAdmissionWireCodec.Decode(payload));
     }
 
     [Fact]

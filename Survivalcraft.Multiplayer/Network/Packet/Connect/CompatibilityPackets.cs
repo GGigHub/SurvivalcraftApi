@@ -43,6 +43,9 @@ public sealed class CompatibilityHelloPacket : Packet {
             Log.Information("Network compatibility handshake accepted.");
         }
         else {
+            NetworkSessionLifecycleTracker.RecordCompatibilityRejected(
+                From,
+                result.PrimaryCode.ToString());
             Log.Warning($"Network compatibility handshake rejected: {result.Summary}");
         }
     }

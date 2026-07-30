@@ -1038,6 +1038,13 @@
       "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/ModChannelHandshakePackets.cs"
     },
     {
+      "surfaceId": "packet:SessionAdmissionResultPacket",
+      "kind": "packet",
+      "symbol": "SessionAdmissionResultPacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/SessionAdmissionResultPacket.cs"
+    },
+    {
       "surfaceId": "packet:ModMessagePacket",
       "kind": "packet",
       "symbol": "ModMessagePacket",

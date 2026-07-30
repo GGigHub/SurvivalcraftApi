@@ -37,7 +37,7 @@ public sealed class EnvironmentMechanicsProtocolTests {
             ControlCommandNames.SetEnvironmentFixture,
             survivalFixture);
 
-        Assert.Equal(8, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(9, AutomationProtocol.CurrentApiVersion);
         Assert.Equal(environment, environmentRequest.DeserializePayload<EnvironmentRequestChangeCommand>());
         Assert.Equal(sleep, sleepRequest.DeserializePayload<PlayerSleepCommand>());
         Assert.Equal(survivalFixture,

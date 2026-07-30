@@ -126,6 +126,7 @@ int others = channel.Broadcast(payload, except: session);
 - 通道在模组加载期注册，跨世界加载和世界重载持续存在；
 - `GameManager.DisposeProject` 只清理对端限流和去重状态，不删除模组注册；
 - 客户端断线、直连会话移除和中继会话移除都会清理对应状态；
+- 晚加入或重连的客户端必须在自己的新 session 中重新协商完整目录；旧 session 的目录、限流和去重状态不会继承；
 - 模组实体释放时，即使某个 `ModDispose` 抛出异常，该加载器拥有的通道仍会在 `finally` 中注销；
 - `ModsManager.Initialize` 重新建立整个模组运行时时会清空旧注册；
 - `ModNetworkChannel.Dispose` 可提前注销单个通道，重复调用是安全的。
@@ -140,10 +141,11 @@ int others = channel.Broadcast(payload, except: session);
 ./scripts/Test-Multiplayer.ps1 -Mode fast
 ./scripts/Test-Multiplayer.ps1 -Mode core
 ./scripts/Test-Multiplayer.ps1 -Mode relay
+./scripts/Test-Multiplayer.ps1 -Mode session
 ./scripts/Test-Multiplayer.ps1 -Mode full
 ```
 
-`core` 验证直连消息、重复包去重、处理器异常隔离、断线重连和世界重载；`relay` 启动独立隐藏中继进程，验证相同目录协商、双向消息、故障注入、会话清理和同房间重连。所有真实游戏节点都强制使用 `--headless`、独立 `--data-dir` 和 `CreateNoWindow=true`。
+`core` 验证直连消息、重复包去重、处理器异常隔离、断线重连和世界重载；`relay` 启动独立隐藏中继进程，验证相同目录协商、双向消息、故障注入、会话清理和同房间重连；`session` 在 Direct/Relay 各运行一服四客，验证晚加入目录、逐会话限流/恢复、背压、异常隔离、并发重连和最终状态清理。所有真实游戏节点都强制使用 `--headless`、独立 `--data-dir` 和 `CreateNoWindow=true`。
 
 失败与成功都会写出 `steps.json`、`metrics.json`、快照、节点日志和 `replay.json`。开发模组协议时，应先为纯编解码和边界添加 L0/L1，再增加一个使用真实 Project 的无界面 L2 场景。
 

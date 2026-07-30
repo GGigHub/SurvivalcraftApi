@@ -12,12 +12,14 @@ public class NetworkClient : INetEventListener {
     private NetManager _netManager;
     private IPEndPoint _serverAddress;
     private bool _disconnectByUser;
+    private readonly ClientPacketDispatcher _packetDispatcher = new();
 
     public ClientSession MySession { get; set; }
     public bool IsConnected { get; set; }
     public bool IsRunning => _netManager?.IsRunning == true;
 
     public void Connect(IPEndPoint serverAddress) {
+        _packetDispatcher.Reset();
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
@@ -44,14 +46,21 @@ public class NetworkClient : INetEventListener {
     public void Update() {
         LatencyProbe.Update();
         _netManager.PollEvents();
+        _packetDispatcher.Flush(MySession);
     }
 
     public void Send(Packet packet) {
-        if (MySession != null
-            && MySession.CompatibilityState != NetworkCompatibilityState.Accepted
-            && packet is not CompatibilityHelloPacket
-            && packet is not ModChannelCatalogPacket) {
-            return;
+        if (MySession != null) {
+            if (MySession.CompatibilityState != NetworkCompatibilityState.Accepted
+                && packet is not CompatibilityHelloPacket
+                && packet is not ModChannelCatalogPacket) {
+                return;
+            }
+            if (MySession.CompatibilityState == NetworkCompatibilityState.Accepted
+                && MySession.AdmissionState != NetworkSessionAdmissionState.Accepted
+                && packet is not ConnectPacket) {
+                return;
+            }
         }
         PacketStreamWriter writer = new();
         writer.Write(PacketFragment.VerifyByte);
@@ -84,15 +93,17 @@ public class NetworkClient : INetEventListener {
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         if (PacketManager.PackageFragment.TryProcessIncoming(reader, peer.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
-                if (MySession?.CompatibilityState != NetworkCompatibilityState.Accepted
-                    && packet is not CompatibilityResultPacket
-                    && packet is not ModChannelCatalogResultPacket) {
+                if (MySession?.CompatibilityState != NetworkCompatibilityState.Accepted) {
+                    if (packet is not CompatibilityResultPacket
+                        && packet is not ModChannelCatalogResultPacket) {
+                        return;
+                    }
+                }
+                else if (MySession.AdmissionState != NetworkSessionAdmissionState.Accepted
+                    && packet is not SessionAdmissionResultPacket) {
                     return;
                 }
-                if (packet.MinNeedState >= NetworkState.ProjectLoaded && GameManager.Project == null) {
-                    return;
-                }
-                packet.Handle(false);
+                _packetDispatcher.Dispatch(MySession, packet);
             });
         }
     }
@@ -102,23 +113,33 @@ public class NetworkClient : INetEventListener {
     }
 
     public void OnPeerConnected(NetPeer peer) {
+        _packetDispatcher.Reset();
         _serverPeer = peer;
         Log.Information($"Connected: {_serverAddress}");
 
         MySession = new ClientSession {
+            TransportKind = "direct-client",
             PlayerIndex = -1,
             NetworkGuid = Guid.Parse(SettingsManager.OnlineAccessToken),
             NetworkState = NetworkState.NotConnected,
             CompatibilityState = NetworkCompatibilityState.AwaitingHello
         };
         IsConnected = true;
+        NetworkSessionLifecycleTracker.RecordConnected(MySession);
         NetworkCompatibilityManifest manifest = NetworkCompatibilityRuntime.BeginClientHandshake(MySession);
         Send(new CompatibilityHelloPacket(manifest));
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
+        _packetDispatcher.Reset();
         if (MySession != null) {
+            ModNetworkManager.ClearSession(MySession);
+            MySession.DisconnectedUtc = DateTime.UtcNow;
+            MySession.DisconnectReason = disconnectInfo.Reason.ToString();
+            NetworkSessionLifecycleTracker.RecordDisconnected(
+                MySession,
+                MySession.DisconnectReason);
             MySession.NetworkState = NetworkState.NotConnected;
         }
 

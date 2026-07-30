@@ -27,9 +27,23 @@ public sealed class CompatibilityMatrixScenarioTest {
         Assert.Equal("MissingCapabilities", result.RejectionCodes["capability"]);
         Assert.Equal("ExtraClientMod", result.RejectionCodes["mod"]);
         Assert.Equal("MissingClientChannel", result.RejectionCodes["mod-channel"]);
-        Assert.Equal("HandshakeTimeout", result.RejectionCodes["timeout"]);
+        foreach (string phase in new[] {
+                     "timeout-compatibility-hello",
+                     "timeout-compatibility-result",
+                     "timeout-mod-channel-catalog",
+                     "timeout-mod-channel-catalog-result"
+                 }) {
+            Assert.Equal("HandshakeTimeout", result.RejectionCodes[phase]);
+        }
+        Assert.Equal("AdmissionTimeout", result.RejectionCodes["timeout-session-connect"]);
+        Assert.Equal(
+            "AdmissionTimeout",
+            result.RejectionCodes["timeout-session-admission-result"]);
+        Assert.Equal(11, result.RejectionCodes.Count);
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "outcome.json")));
-        Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "snapshot-timeout-rejected.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-timeout-session-admission-result-rejected.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "snapshot-matching-accepted.json")));
     }
 }

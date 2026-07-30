@@ -34,7 +34,8 @@ public readonly record struct ModNetworkRuntimeMetrics(
     long Dropped,
     long Duplicates,
     long RateLimited,
-    long HandlerErrors);
+    long HandlerErrors,
+    int ActivePeerStates);
 
 public sealed record ModNetworkDispatchRecord(
     DateTimeOffset Timestamp,
@@ -113,7 +114,8 @@ public static class ModNetworkManager {
                     s_dropped,
                     s_duplicates,
                     s_rateLimited,
-                    s_handlerErrors);
+                    s_handlerErrors,
+                    s_peerStates.Count);
             }
         }
     }

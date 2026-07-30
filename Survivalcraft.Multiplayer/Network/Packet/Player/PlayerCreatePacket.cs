@@ -26,15 +26,28 @@ public class PlayerCreatePacket : Packet {
     }
 
     public override void Handle(bool isServer) {
-        if (!isServer) return;
-        var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
-        var playerData = new PlayerData(GameManager.Project);
+        if (!isServer
+            || From == null
+            || From.AdmissionState != NetworkSessionAdmissionState.Accepted) {
+            return;
+        }
+        From.PlayerCreateRequests++;
+        if (From.PlayerIndex >= 0) {
+            From.DuplicatePlayerCreateRequests++;
+            NetworkSessionLifecycleTracker.RecordDuplicatePlayerCreateIgnored(From);
+            NetworkManager.Queue(new IndexPacket(From.PlayerIndex) { To = From });
+            return;
+        }
+        SubsystemPlayers subsystemPlayers =
+            GameManager.Project.FindSubsystem<SubsystemPlayers>();
+        PlayerData playerData = new(GameManager.Project);
         playerData.Load(m_vd);
         subsystemPlayers.AddPlayerData(playerData);
         // 服务端广播给所有客户端，添加玩家
         NetworkManager.Queue(new PlayerAddPacket(playerData));
 
         From.PlayerIndex = playerData.PlayerIndex;
+        NetworkSessionLifecycleTracker.RecordPlayerAssigned(From);
         NetworkManager.Queue(new IndexPacket(From.PlayerIndex) { To = From });
     }
 }

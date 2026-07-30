@@ -34,6 +34,8 @@ public sealed class PlayerEntityRequestPacket : Packet {
             return;
         }
         From.LastPlayerEntityRequestUtc = now;
+        From.PlayerEntityRequests++;
+        NetworkSessionLifecycleTracker.RecordPlayerEntityRequested(From);
 
         SubsystemNetwork subsystemNetwork =
             GameManager.Project.FindSubsystem<SubsystemNetwork>();

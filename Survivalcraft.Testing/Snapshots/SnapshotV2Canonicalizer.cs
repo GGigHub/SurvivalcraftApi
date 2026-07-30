@@ -23,6 +23,23 @@ public static class SnapshotV2Canonicalizer {
 
         return snapshot with {
             TimeSeconds = Round(snapshot.TimeSeconds, decimalPlaces),
+            Network = snapshot.Network == null
+                ? null
+                : snapshot.Network with {
+                    Sessions = snapshot.Network.Sessions?
+                        .OrderBy(session => session.TransportKind, StringComparer.Ordinal)
+                        .ThenBy(session => session.NetworkIdentity, StringComparer.Ordinal)
+                        .ThenBy(session => session.PlayerIndex)
+                        .ThenBy(session => session.SessionId, StringComparer.Ordinal)
+                        .ToArray(),
+                    SessionLifecycle = snapshot.Network.SessionLifecycle == null
+                        ? null
+                        : snapshot.Network.SessionLifecycle with {
+                            Events = snapshot.Network.SessionLifecycle.Events
+                                .OrderBy(item => item.Sequence)
+                                .ToArray()
+                        }
+                },
             Players = snapshot.Players
                 .Select(player => player with {
                     Body = player.Body == null

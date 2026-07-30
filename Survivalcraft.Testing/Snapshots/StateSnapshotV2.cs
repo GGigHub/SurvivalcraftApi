@@ -304,7 +304,58 @@ public sealed record NetworkSnapshotV2(
     int FaultPending,
     IReadOnlyDictionary<string, long>? QueuedPacketsByType = null,
     IReadOnlyDictionary<string, long>? FaultTransmissionsByType = null,
-    IReadOnlyDictionary<string, long>? FaultBytesByType = null);
+    IReadOnlyDictionary<string, long>? FaultBytesByType = null,
+    NetworkSessionSnapshotV2[]? Sessions = null,
+    NetworkSessionLifecycleSnapshotV2? SessionLifecycle = null,
+    ModNetworkRuntimeSnapshotV2? ModChannel = null);
+
+public sealed record NetworkSessionSnapshotV2(
+    string SessionId,
+    string TransportKind,
+    string CompatibilityState,
+    string? CompatibilityCode,
+    string AdmissionState,
+    string? AdmissionCode,
+    string? NetworkIdentity,
+    int PlayerIndex,
+    string NetworkState,
+    string ModChannelCatalogFingerprint,
+    int PlayerCreateRequests,
+    int DuplicatePlayerCreateRequests,
+    int PlayerEntityRequests);
+
+public sealed record NetworkSessionLifecycleEventSnapshotV2(
+    long Sequence,
+    string SessionId,
+    string TransportKind,
+    string Kind,
+    string? NetworkIdentity,
+    int PlayerIndex,
+    string Detail);
+
+public sealed record NetworkSessionLifecycleSnapshotV2(
+    long Connected,
+    long CompatibilityAccepted,
+    long CompatibilityRejected,
+    long AdmissionAccepted,
+    long AdmissionRejected,
+    long Superseded,
+    long PlayerAssigned,
+    long DuplicatePlayerCreateIgnored,
+    long PlayerEntityRequested,
+    long Disconnected,
+    NetworkSessionLifecycleEventSnapshotV2[] Events);
+
+public sealed record ModNetworkRuntimeSnapshotV2(
+    string CatalogFingerprint,
+    long Sent,
+    long Received,
+    long Delivered,
+    long Dropped,
+    long Duplicates,
+    long RateLimited,
+    long HandlerErrors,
+    int ActivePeerStates);
 
 public sealed record PlayerSnapshotV2(
     int PlayerIndex,

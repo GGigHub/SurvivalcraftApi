@@ -11,7 +11,8 @@ public sealed record NetworkFaultSettings(
     double DuplicationRate = 0,
     double ReorderRate = 0,
     int ReorderDelayMilliseconds = 0,
-    int BandwidthBytesPerSecond = 0) {
+    int BandwidthBytesPerSecond = 0,
+    string[] TargetPacketTypes = null) {
 
     public bool Enabled =>
         BaseLatencyMilliseconds > 0
@@ -33,6 +34,26 @@ public sealed record NetworkFaultSettings(
         ValidateProbability(LossRate, nameof(LossRate));
         ValidateProbability(DuplicationRate, nameof(DuplicationRate));
         ValidateProbability(ReorderRate, nameof(ReorderRate));
+        if (TargetPacketTypes is { Length: > 64 }) {
+            throw new ArgumentOutOfRangeException(
+                nameof(TargetPacketTypes),
+                "At most 64 packet type filters are allowed.");
+        }
+        if (TargetPacketTypes != null) {
+            HashSet<string> packetTypes = new(StringComparer.Ordinal);
+            foreach (string packetType in TargetPacketTypes) {
+                if (string.IsNullOrWhiteSpace(packetType) || packetType.Length > 256) {
+                    throw new ArgumentException(
+                        "Target packet types must contain 1 to 256 non-whitespace characters.",
+                        nameof(TargetPacketTypes));
+                }
+                if (!packetTypes.Add(packetType)) {
+                    throw new ArgumentException(
+                        $"Target packet type '{packetType}' is duplicated.",
+                        nameof(TargetPacketTypes));
+                }
+            }
+        }
         return this;
     }
 
@@ -87,7 +108,7 @@ public static class NetworkFaultInjector {
         string packetType = null) {
         ArgumentNullException.ThrowIfNull(writer);
         ArgumentNullException.ThrowIfNull(sendImmediately);
-        if (!m_settings.Enabled) {
+        if (!m_settings.Enabled || !AppliesTo(packetType)) {
             sendImmediately(writer);
             m_sent++;
             return;
@@ -136,6 +157,11 @@ public static class NetworkFaultInjector {
         m_linkAvailableAt = Time.RealTime;
         m_orderedAvailableAt = Time.RealTime;
     }
+
+    static bool AppliesTo(string packetType) =>
+        m_settings.TargetPacketTypes is not { Length: > 0 }
+        || (packetType != null
+            && Array.IndexOf(m_settings.TargetPacketTypes, packetType) >= 0);
 
     static double Schedule(
         byte[] data,

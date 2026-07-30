@@ -7,6 +7,7 @@ namespace Game.Network;
 public class PlayerModifyPacket : Packet {
     public override byte ID => (byte)PacketType.PlayerModify;
     public override NetworkState MinNeedState => NetworkState.Connected;
+    public override bool RequiresProject => true;
     public int m_playerIndex;
     public string m_playerName;
     public string m_skinName;

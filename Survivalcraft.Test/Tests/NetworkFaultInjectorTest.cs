@@ -65,4 +65,37 @@ public sealed class NetworkFaultInjectorTest {
             NetworkFaultInjector.Configure(new NetworkFaultSettings());
         }
     }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void PacketTypeFilterAppliesFaultsOnlyToNamedPackets() {
+        int delivered = 0;
+        try {
+            NetworkFaultInjector.Configure(new NetworkFaultSettings(
+                LossRate: 1,
+                TargetPacketTypes: [nameof(CompatibilityHelloPacket)]));
+            NetDataWriter targeted = new();
+            targeted.Put((byte)1);
+            NetworkFaultInjector.Send(
+                targeted,
+                _ => delivered++,
+                nameof(CompatibilityHelloPacket));
+            NetDataWriter bypassed = new();
+            bypassed.Put((byte)2);
+            NetworkFaultInjector.Send(
+                bypassed,
+                _ => delivered++,
+                nameof(StatePacket));
+
+            Assert.Equal(1, delivered);
+            Assert.Equal(1, NetworkFaultInjector.Metrics.Dropped);
+            Assert.Equal(1, NetworkFaultInjector.Metrics.Sent);
+            Assert.Equal(
+                new[] { nameof(CompatibilityHelloPacket) },
+                NetworkFaultInjector.Settings.TargetPacketTypes);
+        }
+        finally {
+            NetworkFaultInjector.Configure(new NetworkFaultSettings());
+        }
+    }
 }

@@ -51,15 +51,16 @@ public sealed class RelayHost : INetEventListener {
                 session.CompatibilityStartedUtc = default;
                 Log.Warning(
                     $"Disconnecting relay peer {item.Key}: compatibility handshake timed out.");
-                _sessions.Remove(item.Key);
-                ModNetworkManager.ClearSession(session);
-                PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
-                GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
-                if (_relayPeer != null) {
-                    NetDataWriter writer = RelayProtocol.Begin(RelayMessageType.DisconnectPeer);
-                    writer.Put(item.Key);
-                    _relayPeer.Send(writer, DeliveryMethod.ReliableOrdered);
-                }
+                NetworkSessionLifecycleTracker.RecordCompatibilityRejected(
+                    session,
+                    NetworkCompatibilityIssueCode.HandshakeTimeout.ToString());
+                DisconnectSession(item.Key, session, "Compatibility handshake timed out.");
+            }
+            else if (NetworkSessionAdmissionRuntime.HasServerTimedOut(session, now)) {
+                NetworkSessionAdmissionRuntime.RejectServerSession(
+                    session,
+                    NetworkSessionAdmission.CreateTimeoutResult(
+                        (int)NetworkSessionAdmissionRuntime.ServerAdmissionTimeout.TotalSeconds));
             }
         }
     }
@@ -77,10 +78,7 @@ public sealed class RelayHost : INetEventListener {
     }
 
     public void Send(Packet packet, ClientSession session) {
-        if (packet.MinNeedState > session.NetworkState
-            || (session.CompatibilityState != NetworkCompatibilityState.Accepted
-                && packet is not CompatibilityResultPacket
-                && packet is not ModChannelCatalogResultPacket)) return;
+        if (packet.MinNeedState > session.NetworkState || !CanSend(session, packet)) return;
         int connectionId = _sessions.FirstOrDefault(p => p.Value == session).Key;
         if (connectionId == 0) return;
         PacketStreamWriter payload = new();
@@ -122,19 +120,19 @@ public sealed class RelayHost : INetEventListener {
             int id = reader.GetInt();
             Log.Information($"Relay peer joined: connection={id}");
             _sessions[id] = new ClientSession {
+                TransportKind = "relay-host",
                 PlayerIndex = -1,
                 NetworkGuid = Guid.Empty,
                 NetworkState = NetworkState.Connected,
                 CompatibilityState = NetworkCompatibilityState.AwaitingHello,
                 CompatibilityStartedUtc = DateTime.UtcNow
             };
+            NetworkSessionLifecycleTracker.RecordConnected(_sessions[id]);
         }
         else if (type == RelayMessageType.PeerLeft) {
             int id = reader.GetInt();
             if (_sessions.Remove(id, out ClientSession session)) {
-                ModNetworkManager.ClearSession(session);
-                PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
-                GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
+                CleanupSession(session, "Relay peer left.");
             }
         }
         else if (type == RelayMessageType.DataToHost) {
@@ -143,6 +141,7 @@ public sealed class RelayHost : INetEventListener {
             // connections and can therefore be observed in either order.
             if (!_sessions.TryGetValue(id, out ClientSession session)) {
                 session = new ClientSession {
+                    TransportKind = "relay-host",
                     PlayerIndex = -1,
                     NetworkGuid = Guid.Empty,
                     NetworkState = NetworkState.Connected,
@@ -150,16 +149,22 @@ public sealed class RelayHost : INetEventListener {
                     CompatibilityStartedUtc = DateTime.UtcNow
                 };
                 _sessions[id] = session;
+                NetworkSessionLifecycleTracker.RecordConnected(session);
             }
             byte[] data = reader.GetBytesWithLength();
             NetDataReader inner = new(data);
             if (PacketManager.PackageFragment.TryProcessIncoming(inner, $"relay-{id}", out byte[] payload)) {
                 foreach (Packet packet in PacketManager.DecodePackets(payload)) {
-                    if (session.CompatibilityState != NetworkCompatibilityState.Accepted
-                        && packet is not CompatibilityHelloPacket
-                        && packet is not ModChannelCatalogPacket
+                    if (session.CompatibilityState != NetworkCompatibilityState.Accepted) {
+                        if (packet is not CompatibilityHelloPacket
+                            && packet is not ModChannelCatalogPacket) {
+                            NetworkCompatibilityRuntime.RejectPrematurePacket(session, packet);
+                            continue;
+                        }
+                    }
+                    else if (session.AdmissionState != NetworkSessionAdmissionState.Accepted
                         && packet is not ConnectPacket) {
-                        NetworkCompatibilityRuntime.RejectPrematurePacket(session, packet);
+                        NetworkSessionAdmissionRuntime.RejectPrematurePacket(session, packet);
                         continue;
                     }
                     if (packet.MinNeedState <= session.NetworkState) {
@@ -176,11 +181,10 @@ public sealed class RelayHost : INetEventListener {
         IsDisconnected = true;
 
         PlayerBodyUpdatePacket.ClearSnapshots();
-        foreach (ClientSession session in _sessions.Values) {
-            ModNetworkManager.ClearSession(session);
+        foreach (ClientSession session in _sessions.Values.ToArray()) {
+            CleanupSession(session, disconnectInfo.Reason.ToString());
         }
         _sessions.Clear();
-        GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakeAllPlayersOffline();
 
         NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Failed;
         Log.Information($"Relay disconnected: {peer.Address}, Reason: {disconnectInfo.Reason}");
@@ -211,5 +215,50 @@ public sealed class RelayHost : INetEventListener {
 
     public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType) {
         Log.Information($"Unconnected receive by: {remoteEndPoint}");
+    }
+
+    public bool DisconnectSession(ClientSession session, string reason) {
+        KeyValuePair<int, ClientSession> match = _sessions.FirstOrDefault(
+            item => item.Value == session);
+        if (match.Key == 0) {
+            return false;
+        }
+        DisconnectSession(match.Key, session, reason);
+        return true;
+    }
+
+    private void DisconnectSession(int connectionId, ClientSession session, string reason) {
+        CleanupSession(session, reason);
+        _sessions.Remove(connectionId);
+        if (_relayPeer != null) {
+            NetDataWriter writer = RelayProtocol.Begin(RelayMessageType.DisconnectPeer);
+            writer.Put(connectionId);
+            _relayPeer.Send(writer, DeliveryMethod.ReliableOrdered);
+        }
+    }
+
+    private static bool CanSend(ClientSession session, Packet packet) {
+        if (packet is CompatibilityResultPacket or ModChannelCatalogResultPacket) {
+            return true;
+        }
+        if (session.CompatibilityState != NetworkCompatibilityState.Accepted) {
+            return false;
+        }
+        return packet is SessionAdmissionResultPacket
+            || session.AdmissionState == NetworkSessionAdmissionState.Accepted;
+    }
+
+    private static void CleanupSession(ClientSession session, string reason) {
+        if (session == null || session.NetworkState == NetworkState.NotConnected) {
+            return;
+        }
+        GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
+        PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
+        ModNetworkManager.ClearSession(session);
+        session.DisconnectedUtc = DateTime.UtcNow;
+        session.DisconnectReason = reason ?? string.Empty;
+        NetworkSessionLifecycleTracker.RecordDisconnected(session, session.DisconnectReason);
+        session.PlayerIndex = -1;
+        session.NetworkState = NetworkState.NotConnected;
     }
 }

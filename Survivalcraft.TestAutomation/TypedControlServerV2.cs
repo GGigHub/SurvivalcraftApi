@@ -632,6 +632,21 @@ public partial class TestAutomationModLoader {
         router.Register<SendTestModMessageCommand, TestModSendResult>(
             Metadata(ControlCommandNames.SendTestModMessage, AutomationCommandDomain.Network, true),
             (_, command) => SendTestModMessage(command));
+        router.Register<RunTestModTrafficBurstCommand, TestModTrafficBurstResult>(
+            Metadata(
+                ControlCommandNames.RunTestModTrafficBurst,
+                AutomationCommandDomain.Network,
+                true,
+                requiresNetwork: true),
+            (_, command) => RunTestModTrafficBurst(command));
+        router.Register<ReplayPlayerCreateCommand, ReplayPlayerCreateResult>(
+            Metadata(
+                ControlCommandNames.ReplayPlayerCreate,
+                AutomationCommandDomain.Network,
+                true,
+                requiresProject: true,
+                requiresNetwork: true),
+            (_, command) => ReplayPlayerCreate(command));
         router.Register<EmptyCommand, TestModMessagesStatus>(
             Metadata(ControlCommandNames.GetTestModMessages, AutomationCommandDomain.Network),
             (_, _) => BuildTestModMessagesStatus());
@@ -1538,6 +1553,16 @@ public partial class TestAutomationModLoader {
         RelayStatus relay = BuildRelayStatus();
         NetworkFaultMetrics metrics = NetworkFaultInjector.Metrics;
         NetworkPacketTrafficMetrics traffic = NetworkPacketTrafficTracker.Metrics;
+        List<ClientSession> sessions = NetworkManager.ServerSessions
+            .Where(session => session != null)
+            .ToList();
+        ClientSession? localSession = NetworkManager.MySession;
+        if (localSession != null && !sessions.Contains(localSession)) {
+            sessions.Add(localSession);
+        }
+        NetworkSessionLifecycleMetrics lifecycle =
+            NetworkSessionLifecycleTracker.Metrics;
+        ModNetworkRuntimeMetrics modMetrics = ModNetworkManager.Metrics;
         return new NetworkSnapshotV2(
             mode,
             NetworkManager.MyState.ToString(),
@@ -1550,7 +1575,56 @@ public partial class TestAutomationModLoader {
             metrics.Pending,
             traffic.QueuedPacketsByType,
             traffic.FaultTransmissionsByType,
-            traffic.FaultBytesByType);
+            traffic.FaultBytesByType,
+            sessions.Select(session => new NetworkSessionSnapshotV2(
+                session.SessionId.ToString("D"),
+                session.TransportKind ?? string.Empty,
+                session.CompatibilityState.ToString(),
+                session.CompatibilityResult?.PrimaryCode.ToString(),
+                session.AdmissionState.ToString(),
+                session.AdmissionResult?.Code.ToString(),
+                session.NetworkGuid == Guid.Empty
+                    ? null
+                    : session.NetworkGuid.ToString("D"),
+                session.PlayerIndex,
+                session.NetworkState.ToString(),
+                session.ModChannelCatalogFingerprint ?? string.Empty,
+                session.PlayerCreateRequests,
+                session.DuplicatePlayerCreateRequests,
+                session.PlayerEntityRequests)).ToArray(),
+            new NetworkSessionLifecycleSnapshotV2(
+                lifecycle.Connected,
+                lifecycle.CompatibilityAccepted,
+                lifecycle.CompatibilityRejected,
+                lifecycle.AdmissionAccepted,
+                lifecycle.AdmissionRejected,
+                lifecycle.Superseded,
+                lifecycle.PlayerAssigned,
+                lifecycle.DuplicatePlayerCreateIgnored,
+                lifecycle.PlayerEntityRequested,
+                lifecycle.Disconnected,
+                lifecycle.Events.Select(item =>
+                    new NetworkSessionLifecycleEventSnapshotV2(
+                        item.Sequence,
+                        item.SessionId.ToString("D"),
+                        item.TransportKind,
+                        item.Kind,
+                        item.NetworkGuid == Guid.Empty
+                            ? null
+                            : item.NetworkGuid.ToString("D"),
+                        item.PlayerIndex,
+                        item.Detail)).ToArray()),
+            new ModNetworkRuntimeSnapshotV2(
+                ModNetworkProtocol.ComputeCatalogFingerprint(
+                    ModNetworkManager.GetLocalCatalog()),
+                modMetrics.Sent,
+                modMetrics.Received,
+                modMetrics.Delivered,
+                modMetrics.Dropped,
+                modMetrics.Duplicates,
+                modMetrics.RateLimited,
+                modMetrics.HandlerErrors,
+                modMetrics.ActivePeerStates));
     }
 
     private static PlayerSnapshotV2 BuildPlayerSnapshotV2(PlayerData player) {

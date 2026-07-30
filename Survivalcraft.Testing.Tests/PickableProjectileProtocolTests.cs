@@ -20,7 +20,7 @@ public sealed class PickableProjectileProtocolTests {
             HoldFrames: 6);
         RunPickableLifecycleBurstCommand burst = new("tombstone", true);
 
-        Assert.Equal(8, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(9, AutomationProtocol.CurrentApiVersion);
         Assert.Equal(
             prepare,
             Request(ControlCommandNames.PreparePickableProjectileFixture, prepare)

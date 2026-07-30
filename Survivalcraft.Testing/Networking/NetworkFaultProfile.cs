@@ -8,7 +8,8 @@ public sealed record NetworkFaultProfile(
     double DuplicationRate = 0,
     double ReorderRate = 0,
     int ReorderDelayMilliseconds = 0,
-    int BandwidthBytesPerSecond = 0) {
+    int BandwidthBytesPerSecond = 0,
+    string[]? TargetPacketTypes = null) {
 
     public NetworkFaultProfile Validate() {
         if (BaseLatencyMilliseconds < 0) {
@@ -26,6 +27,24 @@ public sealed record NetworkFaultProfile(
         ValidateProbability(LossRate, nameof(LossRate));
         ValidateProbability(DuplicationRate, nameof(DuplicationRate));
         ValidateProbability(ReorderRate, nameof(ReorderRate));
+        if (TargetPacketTypes is { Length: > 64 }) {
+            throw new ArgumentOutOfRangeException(nameof(TargetPacketTypes));
+        }
+        if (TargetPacketTypes != null) {
+            HashSet<string> packetTypes = new(StringComparer.Ordinal);
+            foreach (string packetType in TargetPacketTypes) {
+                if (string.IsNullOrWhiteSpace(packetType) || packetType.Length > 256) {
+                    throw new ArgumentException(
+                        "Target packet types must contain 1 to 256 non-whitespace characters.",
+                        nameof(TargetPacketTypes));
+                }
+                if (!packetTypes.Add(packetType)) {
+                    throw new ArgumentException(
+                        $"Target packet type '{packetType}' is duplicated.",
+                        nameof(TargetPacketTypes));
+                }
+            }
+        }
         return this;
     }
 

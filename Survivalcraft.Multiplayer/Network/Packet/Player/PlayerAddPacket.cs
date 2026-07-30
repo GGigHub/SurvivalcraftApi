@@ -7,6 +7,7 @@ namespace Game.Network;
 public class PlayerAddPacket : Packet {
     public override byte ID => (byte)PacketType.PlayerAdd;
     public override NetworkState MinNeedState => NetworkState.Connected;
+    public override bool RequiresProject => true;
     public ValuesDictionary m_vd;
 
     public PlayerAddPacket() { }

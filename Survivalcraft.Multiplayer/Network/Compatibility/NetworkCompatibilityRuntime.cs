@@ -127,8 +127,14 @@ public static class NetworkCompatibilityRuntime {
             ? NetworkCompatibilityState.Accepted
             : NetworkCompatibilityState.Rejected;
         LastClientResult = result;
-        if (!result.Accepted) {
+        if (result.Accepted) {
+            NetworkSessionLifecycleTracker.RecordCompatibilityAccepted(session);
+        }
+        else {
             s_pendingClientRejection = result;
+            NetworkSessionLifecycleTracker.RecordCompatibilityRejected(
+                session,
+                result.PrimaryCode.ToString());
         }
     }
 

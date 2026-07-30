@@ -236,6 +236,20 @@ internal static class Program {
                 return 0;
             }
 
+            if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase)
+                && args.Length >= 2
+                && args[1].Equals(SessionLifecycleMultiplayerScenario.ScenarioName, StringComparison.OrdinalIgnoreCase)) {
+                Dictionary<string, string?> options = ParseOptions(args, 2);
+                SessionLifecycleMultiplayerScenarioOptions scenarioOptions =
+                    BuildSessionLifecycleScenarioOptions(repositoryRoot, options, replay: null);
+                SessionLifecycleMultiplayerScenarioResult result =
+                    await new SessionLifecycleMultiplayerScenario()
+                        .RunAsync(scenarioOptions)
+                        .ConfigureAwait(false);
+                PrintResult(result);
+                return 0;
+            }
+
             if (args[0].Equals("replay", StringComparison.OrdinalIgnoreCase)) {
                 if (args.Length < 2 || args[1].StartsWith("--", StringComparison.Ordinal)) {
                     throw new ArgumentException("replay requires the source artifact directory.");
@@ -471,6 +485,24 @@ internal static class Program {
                                 replayPlan);
                         LogicMultiplayerScenarioResult v2Result =
                             await new LogicMultiplayerScenario()
+                                .RunAsync(v2Options)
+                                .ConfigureAwait(false);
+                        PrintResult(v2Result);
+                        return 0;
+                    }
+                    if (replayV2.Scenario.Equals(
+                            SessionLifecycleMultiplayerScenario.ScenarioName,
+                            StringComparison.Ordinal)) {
+                        ValidateReplayV2ScenarioVersion(
+                            replayV2,
+                            SessionLifecycleMultiplayerScenario.ScenarioVersion);
+                        SessionLifecycleMultiplayerScenarioOptions v2Options =
+                            BuildSessionLifecycleScenarioOptions(
+                                repositoryRoot,
+                                options,
+                                replayV2);
+                        SessionLifecycleMultiplayerScenarioResult v2Result =
+                            await new SessionLifecycleMultiplayerScenario()
                                 .RunAsync(v2Options)
                                 .ConfigureAwait(false);
                         PrintResult(v2Result);
@@ -1106,6 +1138,55 @@ internal static class Program {
             ReplayPlan: replayPlan);
     }
 
+    private static SessionLifecycleMultiplayerScenarioOptions
+        BuildSessionLifecycleScenarioOptions(
+            string repositoryRoot,
+            IReadOnlyDictionary<string, string?> options,
+            ScenarioReplayV2? replay) {
+        int seed = GetInt32(options, "seed", replay?.Seed ?? 20260730);
+        MultiplayerTransportKind replayTransport = replay == null
+            ? MultiplayerTransportKind.Direct
+            : ParseTransport(replay.Transport, "Replay transport");
+        MultiplayerTransportKind transport = GetTransport(
+            options,
+            "transport",
+            replayTransport);
+        string runtime = options.TryGetValue("runtime", out string? runtimeValue)
+            && !string.IsNullOrWhiteSpace(runtimeValue)
+                ? Path.GetFullPath(runtimeValue)
+                : replay?.RuntimeDirectory ?? ResolveRuntime(repositoryRoot, options);
+        string artifactDirectory = options.TryGetValue("artifacts", out string? artifactValue)
+            && !string.IsNullOrWhiteSpace(artifactValue)
+                ? Path.GetFullPath(artifactValue)
+                : Path.Combine(
+                    repositoryRoot,
+                    "TestResults",
+                    replay == null
+                        ? $"session-lifecycle-{transport.ToString().ToLowerInvariant()}-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}"
+                        : $"session-lifecycle-{transport.ToString().ToLowerInvariant()}-replay-{DateTimeOffset.UtcNow:yyyyMMdd-HHmmss}");
+        string? workDirectory = options.TryGetValue("work-dir", out string? workValue)
+            && !string.IsNullOrWhiteSpace(workValue)
+                ? Path.GetFullPath(workValue)
+                : null;
+        return new SessionLifecycleMultiplayerScenarioOptions(
+            runtime,
+            artifactDirectory,
+            transport,
+            seed,
+            StepTimeout: GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(75)),
+            ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(12)),
+            WorkDirectory: workDirectory,
+            KeepData: GetFlag(options, "keep-data"),
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                new NetworkFaultProfile(
+                    Seed: seed + 50,
+                    DuplicationRate: 1,
+                    ReorderRate: 0.5,
+                    ReorderDelayMilliseconds: 30)));
+    }
+
     private static NetworkFaultProfile BuildGameplayNetworkFaults(
         IReadOnlyDictionary<string, string?> options,
         ScenarioReplayV2? replay,
@@ -1526,6 +1607,17 @@ internal static class Program {
         Console.WriteLine($"elapsed={result.Elapsed}");
     }
 
+    private static void PrintResult(SessionLifecycleMultiplayerScenarioResult result) {
+        Console.WriteLine("SCENARIO PASSED");
+        Console.WriteLine($"artifacts={result.ArtifactDirectory}");
+        Console.WriteLine($"transport={result.Transport}");
+        Console.WriteLine($"compatibilityRejections={result.CompatibilityRejections}");
+        Console.WriteLine($"stableIdentities={result.StableIdentityCount}");
+        Console.WriteLine($"duplicatePlayerCreatesIgnored={result.DuplicatePlayerCreatesIgnored}");
+        Console.WriteLine($"rateLimitedMessages={result.RateLimitedMessages}");
+        Console.WriteLine($"elapsed={result.Elapsed}");
+    }
+
     private static string ResolveRuntime(
         string repositoryRoot,
         IReadOnlyDictionary<string, string?> options) {
@@ -1858,6 +1950,7 @@ internal static class Program {
         Console.WriteLine("  run environment-mechanics-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  run mount-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  run logic-multiplayer --transport direct|relay [options]");
+        Console.WriteLine("  run session-lifecycle-multiplayer --transport direct|relay [options]");
         Console.WriteLine("  replay ARTIFACT_DIRECTORY [options]");
         Console.WriteLine();
         Console.WriteLine("Common options:");

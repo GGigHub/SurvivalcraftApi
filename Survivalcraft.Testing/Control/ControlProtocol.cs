@@ -195,6 +195,8 @@ public static class ControlCommandNames {
     public const string ConfigureModChannels = "network.configureModChannels";
     public const string GetModChannels = "network.getModChannels";
     public const string SendTestModMessage = "network.sendTestModMessage";
+    public const string RunTestModTrafficBurst = "network.runTestModTrafficBurst";
+    public const string ReplayPlayerCreate = "network.replayPlayerCreate";
     public const string GetTestModMessages = "network.getTestModMessages";
     public const string ResetTestModMessages = "network.resetTestModMessages";
     public const string ClickWidget = "ui.clickWidget";
@@ -216,7 +218,8 @@ public sealed record ConfigureNodeCommand(
     int Seed,
     bool FixedRandom = true,
     bool DisableAudio = true,
-    bool DisableMultithreadedTerrain = true);
+    bool DisableMultithreadedTerrain = true,
+    string? NetworkIdentity = null);
 
 public sealed record CreateWorldCommand(
     string Name,
@@ -340,7 +343,8 @@ public sealed record ModNetworkMetricsState(
     long Dropped,
     long Duplicates,
     long RateLimited,
-    long HandlerErrors);
+    long HandlerErrors,
+    int ActivePeerStates = 0);
 
 public sealed record ModNetworkDispatchState(
     DateTimeOffset Timestamp,
@@ -381,6 +385,25 @@ public sealed record TestModSendResult(
     int RecipientCount,
     int PayloadBytes);
 
+public sealed record RunTestModTrafficBurstCommand(
+    int Count,
+    int PayloadCharacters = 32,
+    bool Broadcast = false,
+    string? CorrelationPrefix = null);
+
+public sealed record TestModTrafficBurstResult(
+    int Attempted,
+    string Route,
+    int RecipientCount,
+    long EncodedPayloadBytes);
+
+public sealed record ReplayPlayerCreateCommand(int Count = 1);
+
+public sealed record ReplayPlayerCreateResult(
+    int Replayed,
+    int PlayerIndex,
+    string SessionId);
+
 public sealed record TestModMessagesStatus(
     TestModMessageState[] Messages,
     ModChannelStatus Channel);
@@ -405,4 +428,7 @@ public sealed record NodeStatus(
     double TimeSeconds,
     NetworkFaultState NetworkFaults,
     string CompatibilityState,
-    string? CompatibilityCode);
+    string? CompatibilityCode,
+    string AdmissionState = "NotStarted",
+    string? AdmissionCode = null,
+    string? SessionId = null);

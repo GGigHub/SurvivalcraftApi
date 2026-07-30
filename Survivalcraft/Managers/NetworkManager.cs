@@ -22,6 +22,8 @@ public class RelayJoinInfo(IPEndPoint endPoint, string roomCode) {
 }
 
 public class ClientSession {
+    public Guid SessionId { get; set; } = Guid.NewGuid();
+    public string TransportKind { get; set; } = string.Empty;
     public int PlayerIndex { get; set; }
     public Guid NetworkGuid { get; set; }
     public NetworkState NetworkState { get; set; }
@@ -30,7 +32,15 @@ public class ClientSession {
     public NetworkCompatibilityResult ChannelCompatibilityResult { get; set; }
     public string ModChannelCatalogFingerprint { get; set; } = string.Empty;
     public DateTime CompatibilityStartedUtc { get; set; }
+    public NetworkSessionAdmissionState AdmissionState { get; set; }
+    public NetworkSessionAdmissionResult AdmissionResult { get; set; }
+    public DateTime AdmissionStartedUtc { get; set; }
+    public int PlayerCreateRequests { get; set; }
+    public int DuplicatePlayerCreateRequests { get; set; }
+    public int PlayerEntityRequests { get; set; }
     public DateTime LastPlayerEntityRequestUtc { get; set; }
+    public DateTime DisconnectedUtc { get; set; }
+    public string DisconnectReason { get; set; } = string.Empty;
 }
 
 public static class NetworkManager {
@@ -67,6 +77,7 @@ public static class NetworkManager {
     public static Action<ModNetworkEnvelope> SendModMessageToServerAction { get; set; }
     public static Action<ModNetworkEnvelope, ClientSession> SendModMessageToClientAction { get; set; }
     public static Action<ModNetworkEnvelope, ClientSession> BroadcastModMessageAction { get; set; }
+    public static Action<ClientSession, string> DisconnectSessionAction { get; set; }
 
     public static bool IsServerRunning => IsServerRunningFunc?.Invoke() ?? false;
     public static bool IsClientRunning => IsClientRunningFunc?.Invoke() ?? false;
@@ -126,6 +137,9 @@ public static class NetworkManager {
     public static void SendModMessageToClient(ModNetworkEnvelope envelope, ClientSession session) => SendModMessageToClientAction?.Invoke(envelope, session);
 
     public static void BroadcastModMessage(ModNetworkEnvelope envelope, ClientSession except = null) => BroadcastModMessageAction?.Invoke(envelope, except);
+
+    public static void DisconnectSession(ClientSession session, string reason) =>
+        DisconnectSessionAction?.Invoke(session, reason ?? string.Empty);
 
     public static async Task<RelayJoinInfo> ResolveRelayJoinInfoAsync(string globalCode) =>
         ResolveRelayJoinInfoAsyncFunc != null ? await ResolveRelayJoinInfoAsyncFunc(globalCode) : null;

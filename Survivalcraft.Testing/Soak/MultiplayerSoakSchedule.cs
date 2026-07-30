@@ -31,7 +31,8 @@ public sealed record MultiplayerSoakSchedule(
         InventoryHealthMultiplayerScenario.ScenarioName,
         EnvironmentMechanicsMultiplayerScenario.ScenarioName,
         MountMultiplayerScenario.ScenarioName,
-        LogicMultiplayerScenario.ScenarioName
+        LogicMultiplayerScenario.ScenarioName,
+        SessionLifecycleMultiplayerScenario.ScenarioName
     ];
 
     private static readonly HashSet<string> SupportedScenarios =

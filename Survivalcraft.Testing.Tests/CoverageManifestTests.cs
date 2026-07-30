@@ -21,9 +21,9 @@ public sealed class CoverageManifestTests {
         CoverageFeature[] covered = manifest.Features
             .Where(feature => feature.Status == "covered")
             .ToArray();
-        Assert.Equal(11, covered.Length);
+        Assert.Equal(14, covered.Length);
         Assert.Equal(5, manifest.Features.Count(feature => feature.Status == "planned"));
-        Assert.Equal(5, manifest.Features.Count(feature => feature.Status == "partial"));
+        Assert.Equal(2, manifest.Features.Count(feature => feature.Status == "partial"));
         Assert.All(covered, feature => {
             Assert.NotNull(feature.ProductionPathTest);
             Assert.NotNull(feature.DirectTest);
@@ -44,6 +44,18 @@ public sealed class CoverageManifestTests {
             && feature.DirectTest != null
             && feature.RelayTest != null
             && (feature.Gaps == null || feature.Gaps.Length == 0));
+        Assert.All(
+            manifest.Features.Where(feature => feature.FeatureId is
+                "network.session-compatibility" or
+                "api.mod-channel" or
+                "player.session-lifecycle"),
+            feature => {
+                Assert.Equal("covered", feature.Status);
+                Assert.Equal("soak", feature.Confidence);
+                Assert.NotNull(feature.MutationTest);
+                Assert.NotNull(feature.SoakTest);
+                Assert.True(feature.Gaps == null || feature.Gaps.Length == 0);
+            });
     }
 
     [Fact]
@@ -63,7 +75,7 @@ public sealed class CoverageManifestTests {
         Assert.Empty(ProductionSurfaceCoverage.Validate(coverage, inventory));
         ProductionSurface[] discovered = ProductionSurfaceCoverage.Discover(FindRepositoryRoot());
         Assert.Equal(104, discovered.Count(surface => surface.Kind == "hook"));
-        Assert.Equal(108, discovered.Count(surface => surface.Kind == "packet"));
+        Assert.Equal(109, discovered.Count(surface => surface.Kind == "packet"));
         Assert.Empty(ProductionSurfaceCoverage.CompareInventory(inventory, discovered));
     }
 
@@ -139,14 +151,15 @@ public sealed class CoverageManifestTests {
         Assert.True(report.IsStructurallyValid);
         Assert.Equal(coverage.Features.Length, report.TotalFeatures);
         Assert.Equal(104, report.HookSurfaces);
-        Assert.Equal(108, report.PacketSurfaces);
+        Assert.Equal(109, report.PacketSurfaces);
         Assert.True(report.Statuses["covered"] > 0);
         Assert.True(report.Statuses["planned"] > 0);
         Assert.Contains(report.Features, feature =>
             feature.FeatureId == "player.session-lifecycle"
             && feature.Risk == "critical"
-            && feature.Status == "partial"
-            && feature.Gaps.Length > 0);
+            && feature.Status == "covered"
+            && feature.Confidence == "soak"
+            && feature.Gaps.Length == 0);
     }
 
     [Fact]

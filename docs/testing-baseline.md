@@ -45,6 +45,12 @@
 
 历史测试集合在迁移审计中仍发现若干与本里程碑无关的脆弱断言，包括 UI 操作链、日志文本和动态生物位置容差。已修复旧中继脚本命名空间、地形诊断字段和离线世界重载空引用；尚未迁移的历史用例不计入当前稳定门禁，后续按业务域逐批替换为强类型状态断言。
 
+## M6 会话与 API 通道验收（2026-07-30）
+
+M6 在同一 Debug/ANGLE 运行时上完成全部无窗口验收：平台 L0/L1 109/109、游戏 L0/L1 68/68、完整游戏 L2 25/25；其中握手阶段兼容矩阵、Direct 生命周期和 Relay 生命周期均通过。两个生命周期传输各返回 5 类兼容拒绝、4 个稳定玩家身份、18 次重复 `PlayerCreatePacket` 抑制和 32 次逐会话限流。额外 session-only Direct L3 使用 seed `20260730` 与 loss profile 通过，五节点峰值工作集约 471–505 MiB，强制 `PlayerCreatePacket` 丢包哨兵实际记录 `faultDropped >= 1` 且最终待发队列为零。
+
+并发重连首次真实暴露了 Project 尚未加载时处理 `PlayerAddPacket` 的空引用。修复后的客户端按 session 延迟依赖 Project 的包，并以 4096 项硬上限阻止无界增长；断线和 session 切换会清空旧队列。覆盖契约因此把 `network.session-compatibility`、`api.mod-channel` 和 `player.session-lifecycle` 从 `partial` 提升为 `covered/soak`，当前计数为 14 covered、2 partial、5 planned。
+
 ## 当前可重复命令
 
 ```powershell
@@ -52,10 +58,12 @@
 ./scripts/Test-Multiplayer.ps1 -Mode doctor
 ./scripts/Test-Multiplayer.ps1 -Mode compatibility
 ./scripts/Test-Multiplayer.ps1 -Mode core
+./scripts/Test-Multiplayer.ps1 -Mode session
+./scripts/Test-Multiplayer.ps1 -Mode soak -SoakIterations 10
 ./scripts/Test-Multiplayer.ps1 -Mode full
 ```
 
-稳定门禁的成功标准：命令退出码为 0；L0/L1 全绿；doctor 到达 `MainMenuScreen`；兼容矩阵五类结果与预期一致；核心 L2 的 `outcome.json` 为 `passed` 且 `state.diff.json` 的 `equal` 为 `true`。`full` 当前用于历史迁移审计，不等同于全绿承诺。
+稳定门禁的成功标准：命令退出码为 0；L0/L1 全绿；doctor 到达 `MainMenuScreen`；兼容矩阵五类拒绝与六个阶段黑洞结果符合预期；核心 L2 的 `outcome.json` 为 `passed` 且 `state.diff.json` 的 `equal` 为 `true`；session Direct/Relay 的身份、重复创建、限流、背压和最终清理断言全部通过。`full` 当前用于历史迁移审计，不等同于全绿承诺。
 
 ## 后续迁移指标
 

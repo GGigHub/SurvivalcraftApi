@@ -25,13 +25,28 @@ public sealed class SnapshotV2Tests {
         ActionEventRecord secondEvent = firstEvent with { Sequence = 2, ActionId = "a2" };
         PlayerSnapshotV2 firstPlayer = Player(1, "A", 1.0000001);
         PlayerSnapshotV2 secondPlayer = Player(2, "B", 2);
+        NetworkSessionSnapshotV2 firstSession = Session("session-a");
+        NetworkSessionSnapshotV2 secondSession = Session("session-b");
         StateSnapshotV2 first = Snapshot(
             [secondPlayer, firstPlayer],
-            [secondEvent, firstEvent]);
+            [secondEvent, firstEvent]) with {
+            Network = Snapshot([], []).Network! with {
+                Sessions = [secondSession, firstSession]
+            }
+        };
         StateSnapshotV2 second = Snapshot(
             [firstPlayer, secondPlayer],
-            [firstEvent, secondEvent]);
+            [firstEvent, secondEvent]) with {
+            Network = first.Network! with {
+                Sessions = [firstSession, secondSession]
+            }
+        };
 
+        StateSnapshotV2 normalized = SnapshotV2Canonicalizer.Normalize(first);
+
+        Assert.Equal(
+            new[] { "session-a", "session-b" },
+            normalized.Network!.Sessions!.Select(session => session.SessionId));
         Assert.Equal(
             SnapshotV2Canonicalizer.ComputeSha256(first),
             SnapshotV2Canonicalizer.ComputeSha256(second));
@@ -490,6 +505,22 @@ public sealed class SnapshotV2Tests {
             1,
             1,
             false);
+
+    private static NetworkSessionSnapshotV2 Session(string sessionId) =>
+        new(
+            sessionId,
+            "direct",
+            "AwaitingManifest",
+            null,
+            "NotStarted",
+            null,
+            null,
+            -1,
+            "Connected",
+            string.Empty,
+            0,
+            0,
+            0);
 
     private static EntitySnapshotV2 Entity(int id, double position, long revision) =>
         new(

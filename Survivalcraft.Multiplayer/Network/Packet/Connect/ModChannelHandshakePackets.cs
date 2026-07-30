@@ -41,9 +41,14 @@ public sealed class ModChannelCatalogPacket : Packet {
             : NetworkCompatibilityState.Rejected;
         NetworkManager.Queue(new ModChannelCatalogResultPacket(result) { To = From });
         if (result.Accepted) {
+            NetworkSessionAdmissionRuntime.BeginServerAdmission(From);
+            NetworkSessionLifecycleTracker.RecordCompatibilityAccepted(From);
             Log.Information("Mod channel catalog accepted.");
         }
         else {
+            NetworkSessionLifecycleTracker.RecordCompatibilityRejected(
+                From,
+                result.PrimaryCode.ToString());
             Log.Warning($"Mod channel catalog rejected: {result.Summary}");
         }
     }
@@ -81,6 +86,7 @@ public sealed class ModChannelCatalogResultPacket : Packet {
         NetworkCompatibilityRuntime.RecordClientChannelResult(session, Result);
         if (Result.Accepted) {
             Log.Information("Server accepted mod channel catalog.");
+            NetworkSessionAdmissionRuntime.BeginClientAdmission(session);
             NetworkManager.Queue(new ConnectPacket(NetworkManager.NetworkGuid));
         }
         else {
