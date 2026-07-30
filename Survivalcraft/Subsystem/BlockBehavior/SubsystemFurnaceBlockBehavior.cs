@@ -8,7 +8,6 @@ namespace Game {
         public SubsystemParticles m_subsystemParticles;
         public SubsystemBlockEntities m_subsystemBlockEntities;
         public Dictionary<Point3, FireParticleSystem> m_particleSystemsByCell = [];
-        public static event Action<SubsystemFurnaceBlockBehavior, List<ComponentFurnace>> OnFurnacesUpdate;
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -111,7 +110,7 @@ namespace Game {
                     }
                 }
                 if (componentFurnaces.Count > 0) {
-                    OnFurnacesUpdate?.Invoke(this, componentFurnaces);
+                    ModsManager.HookAction("OnNetworkFurnacesUpdate", loader => loader.OnNetworkFurnacesUpdate(this, componentFurnaces));
                 }
             }
         }

@@ -77,8 +77,9 @@ public enum PacketType : byte {
     ModPacket = 255
 }
 
-public class PacketManager {
-    public const byte VerifyByte = 0x88;
+public static class PacketManager {
+    public static PacketFragment PackageFragment { get; } = new();
+    private const byte VerifyByte = 0x88;
 
     private static readonly Func<Packet>[] m_factories = new Func<Packet>[256];
 

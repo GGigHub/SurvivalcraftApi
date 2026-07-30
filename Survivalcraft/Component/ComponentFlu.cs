@@ -38,12 +38,6 @@ namespace Game {
 
         public double m_lastMessageTime = -1000.0;
 
-        public static event Action<ComponentFlu> OnFluUpdate;
-        public static event Action<ComponentFlu> OnFluEffectEvent;
-        public static event Action<ComponentFlu> OnStartFluEvent;
-        public static event Action<ComponentFlu> OnSneezeEvent;
-        public static event Action<ComponentFlu, Vector3> OnFluImpulseEvent;
-
 
         public bool HasFlu => m_fluDuration > 0f;
 
@@ -76,7 +70,7 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            OnFluUpdate?.Invoke(this);
+            ModsManager.HookAction("OnNetworkFluUpdate", loader => loader.OnNetworkFluUpdate(this));
             if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
                 || !m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled) {
                 m_fluDuration = 0f;
@@ -101,7 +95,7 @@ namespace Game {
                     && m_subsystemTime.PeriodicGameTimeEvent(5.0, -0.0099999997764825821)
                     && m_subsystemTime.GameTime - m_lastEffectTime > 13.0) {
                     FluEffect();
-                    OnFluEffectEvent?.Invoke(this);
+                    ModsManager.HookAction("OnNetworkFluEffect", loader => loader.OnNetworkFluEffect(this));
                 }
             }
             else if (m_componentPlayer.ComponentVitalStats.Temperature < 6f) {
@@ -112,7 +106,7 @@ namespace Game {
                     if (m_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0)
                         && m_random.Bool(0.025f)) {
                         StartFlu();
-                        OnStartFluEvent?.Invoke(this);
+                        ModsManager.HookAction("OnNetworkFluStarted", loader => loader.OnNetworkFluStarted(this));
                     }
                     if (m_subsystemTime.GameTime - m_lastMessageTime > 60.0) {
                         m_lastMessageTime = m_subsystemTime.GameTime;
@@ -123,7 +117,7 @@ namespace Game {
                     && m_subsystemTime.PeriodicGameTimeEvent(num2, -0.0099999997764825821)
                     && m_random.Bool(0.75f)) {
                     Sneeze();
-                    OnSneezeEvent?.Invoke(this);
+                    ModsManager.HookAction("OnNetworkFluSneeze", loader => loader.OnNetworkFluSneeze(this));
                 }
             }
             else {
@@ -145,7 +139,7 @@ namespace Game {
                     if (!NetworkManager.IsClientRunning) {
                         Vector3 impulse = -1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector();
                         m_componentPlayer.ComponentBody.ApplyImpulse(impulse);
-                        OnFluImpulseEvent?.Invoke(this, impulse);
+                        ModsManager.HookAction("OnNetworkFluImpulse", loader => loader.OnNetworkFluImpulse(this, impulse));
                     }
                 }
             }

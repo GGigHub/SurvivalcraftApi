@@ -73,7 +73,6 @@ public static class ModsManager {
 
     internal static ModEntity SurvivalCraftModEntity;
     internal static ModEntity FastDebugModEntity;
-    internal static ModEntity NetworkModEntity;
     internal static bool ConfigLoaded;
 
     public class ModSettings {
@@ -134,6 +133,12 @@ public static class ModsManager {
     /// <summary>
     ///     执行Hook
     /// </summary>
+    public static void HookAction(string HookName, Action<ModLoader> action) {
+        HookAction(HookName, modLoader => {
+            action(modLoader);
+            return false;
+        });
+    }
     public static void HookAction(string HookName, Func<ModLoader, bool> action) {
         if (ModHooks.TryGetValue(HookName, out ModHook modHook)) {
             foreach (ModLoader modLoader in modHook.Loaders) {
@@ -462,8 +467,6 @@ public static class ModsManager {
 #if !BROWSER
         FastDebugModEntity = new FastDebugModEntity();
         ModListAll.Add(FastDebugModEntity);
-        NetworkModEntity = new NetworkModEntity();
-        ModListAll.Add(NetworkModEntity);
         GetScmods(ModsPath);
         if (!string.IsNullOrEmpty(SettingsManager.ModLoadAfters)) {
             string[] array = SettingsManager.ModLoadAfters.Split(';');

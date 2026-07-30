@@ -238,7 +238,7 @@ v2 场景另外写入 `replay-v2.json`、`topology.json`、`capabilities-*.json`
 ```powershell
 dotnet run --project ./Survivalcraft.TestHost -- replay `
   ./TestResults/core-multiplayer-20260728-120000 `
-  --runtime ./Survivalcraft.Test/bin/Debug/net10.0-windows
+  --runtime ./Survivalcraft.Test/bin/Debug/net10.0-windows/win-x64
 ```
 
 运行时路径可以覆盖，因此从 CI 下载产物后也能在另一台机器复现。

@@ -22,14 +22,19 @@ public partial class TestAutomationModLoader {
         if (typedPlayerActionsInitialized) {
             return;
         }
-        ComponentPlayer.OnInteractEvent += HandleTypedInteractEvent;
-        ComponentPlayer.OnDigEvent += HandleTypedDigEvent;
-        ComponentPlayer.OnBodyUpdate += HandleTypedBodyUpdate;
-        ComponentPlayer.OnActiveSlotChanged += HandleTypedActiveSlotChanged;
-        ComponentPlayer.OnDropEvent += HandleTypedDropEvent;
-        ComponentPlayer.OnHit += HandleTypedHitEvent;
-        ComponentInventoryBase.OnSlotChanged += HandleTypedInventorySlotChanged;
-        PlayerData.OnPlayerRestart += HandleTypedPlayerRestart;
+        string[] hookNames = [
+            "OnNetworkPlayerInteract",
+            "OnNetworkPlayerDig",
+            "OnNetworkPlayerBodyUpdate",
+            "OnNetworkActiveSlotChanged",
+            "OnNetworkPlayerDrop",
+            "OnNetworkPlayerHit",
+            "OnNetworkInventorySlotChanged",
+            "OnNetworkPlayerRestart"
+        ];
+        foreach (string hookName in hookNames) {
+            ModsManager.RegisterHook(hookName, this);
+        }
         typedPlayerActionsInitialized = true;
     }
 
@@ -37,17 +42,37 @@ public partial class TestAutomationModLoader {
         if (!typedPlayerActionsInitialized) {
             return;
         }
-        ComponentPlayer.OnInteractEvent -= HandleTypedInteractEvent;
-        ComponentPlayer.OnDigEvent -= HandleTypedDigEvent;
-        ComponentPlayer.OnBodyUpdate -= HandleTypedBodyUpdate;
-        ComponentPlayer.OnActiveSlotChanged -= HandleTypedActiveSlotChanged;
-        ComponentPlayer.OnDropEvent -= HandleTypedDropEvent;
-        ComponentPlayer.OnHit -= HandleTypedHitEvent;
-        ComponentInventoryBase.OnSlotChanged -= HandleTypedInventorySlotChanged;
-        PlayerData.OnPlayerRestart -= HandleTypedPlayerRestart;
         typedPlayerActionsInitialized = false;
         ResetTypedPlayerActions();
     }
+
+    public override void OnNetworkPlayerInteract(ComponentPlayer player) =>
+        HandleTypedInteractEvent(player);
+
+    public override void OnNetworkPlayerDig(ComponentPlayer player) =>
+        HandleTypedDigEvent(player);
+
+    public override void OnNetworkPlayerBodyUpdate(ComponentPlayer player, bool isMainPlayer) =>
+        HandleTypedBodyUpdate(player, isMainPlayer);
+
+    public override void OnNetworkActiveSlotChanged(ComponentPlayer player) =>
+        HandleTypedActiveSlotChanged(player);
+
+    public override void OnNetworkPlayerDrop(ComponentPlayer player) =>
+        HandleTypedDropEvent(player);
+
+    public override void OnNetworkPlayerHit(
+        ComponentPlayer player,
+        ComponentBody hitBody,
+        Vector3 hitPoint,
+        Vector3 direction) =>
+        HandleTypedHitEvent(player, hitBody, hitPoint, direction);
+
+    public override void OnNetworkInventorySlotChanged(IInventory inventory, int slotIndex) =>
+        HandleTypedInventorySlotChanged(inventory, slotIndex);
+
+    public override void OnNetworkPlayerRestart(PlayerData playerData) =>
+        HandleTypedPlayerRestart(playerData);
 
     private void ResetTypedPlayerActions() {
         pendingTerrainAction = null;

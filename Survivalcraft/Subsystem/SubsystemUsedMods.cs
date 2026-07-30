@@ -9,7 +9,7 @@ namespace Game {
             foreach (ModEntity modEntity in ModsManager.ModList) {
                 if (modEntity is SurvivalCraftModEntity
                     || modEntity is FastDebugModEntity
-                    || modEntity is NetworkModEntity) {
+                    || modEntity.modInfo?.PackageName == "network") {
                     continue;
                 }
                 if (modEntity.modInfo.NonPersistentMod) {

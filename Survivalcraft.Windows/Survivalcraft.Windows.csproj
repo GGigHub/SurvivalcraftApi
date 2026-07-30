@@ -45,4 +45,5 @@
     <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
         <ZipDirectory SourceDirectory="..\Survivalcraft\Content" DestinationFile="..\Survivalcraft\Content.zip" Overwrite="true" />
     </Target>
+  <Import Project="..\build\NetworkMod.targets" />
 </Project>

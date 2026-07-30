@@ -46,7 +46,9 @@ public sealed class ModNetworkManagerTest : IDisposable {
     [Trait("Layer", "L1")]
     public void RegistrationIsRejectedAfterMultiplayerTransportStarts() {
         TestLoader loader = CreateLoader("late.mod");
+        Func<bool>? previousIsClientRunning = NetworkManager.IsClientRunningFunc;
         NetworkManager.NetworkClient = new NetworkClient { IsConnected = true };
+        NetworkManager.IsClientRunningFunc = () => true;
         try {
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                 loader.RegisterNetworkChannel(
@@ -60,6 +62,7 @@ public sealed class ModNetworkManagerTest : IDisposable {
         }
         finally {
             NetworkManager.NetworkClient = null;
+            NetworkManager.IsClientRunningFunc = previousIsClientRunning;
         }
     }
 

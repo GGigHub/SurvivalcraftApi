@@ -211,8 +211,8 @@ public partial class TestAutomationModLoader {
     }
 
     private static RelayStatus BuildRelayStatus() {
-        RelayHost? host = NetworkManager.RelayHost;
-        RelayClient? client = NetworkManager.RelayClient;
+        RelayHost? host = NetworkManager.RelayHost as RelayHost;
+        RelayClient? client = NetworkManager.RelayClient as RelayClient;
         bool hostConnected = host?.IsConnected == true;
         bool clientConnected = client?.IsConnected == true;
         string mode = hostConnected && clientConnected
@@ -483,6 +483,7 @@ public partial class TestAutomationModLoader {
             project != null,
             NetworkManager.IsServerRunning,
             NetworkManager.IsClientRunning,
+            NetworkManager.IsRuntimeBound,
             NetworkManager.MyState.ToString(),
             NetworkManager.PlayerIndex,
             players?.PlayersData.Count ?? 0,

@@ -53,11 +53,11 @@ namespace Game {
         }
 
         private static string GetRelayHostCodeText() {
-            string globalCode = NetworkManager.RelayHost?.GlobalCode;
+            string globalCode = NetworkManager.RelayGlobalCode;
             if (!string.IsNullOrWhiteSpace(globalCode)) {
                 return $"联机码：{globalCode}";
             }
-            string roomCode = NetworkManager.RelayHost?.RoomCode;
+            string roomCode = NetworkManager.RelayRoomCode;
             if (!string.IsNullOrWhiteSpace(roomCode)) {
                 return $"房间码：{roomCode}";
             }

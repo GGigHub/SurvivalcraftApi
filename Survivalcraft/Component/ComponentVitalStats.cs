@@ -70,8 +70,6 @@ namespace Game {
 
         public Action<int> FoodEaten { get; set; }
 
-        public static event Action<ComponentVitalStats> OnVitalStatsUpdate;
-
         /// <summary>
         ///     1.8.1.2添加：
         ///     用于多模组控制同一项参数
@@ -196,7 +194,7 @@ namespace Game {
                 UpdateSleep();
                 UpdateTemperature();
                 UpdateWetness();
-                OnVitalStatsUpdate?.Invoke(this);
+                ModsManager.HookAction("OnNetworkVitalStatsUpdate", loader => loader.OnNetworkVitalStatsUpdate(this));
             }
             else {
                 m_pantingSound.Stop();

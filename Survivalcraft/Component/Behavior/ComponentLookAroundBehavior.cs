@@ -17,14 +17,12 @@ namespace Game {
 
         private bool m_isLookRandom;
 
-        public static event Action<ComponentLookAroundBehavior, bool> OnIsLookRandomChanged;
-
         public bool IsLookRandom {
             get { return m_isLookRandom; }
             set {
                 if (m_isLookRandom != value) {
                     m_isLookRandom = value;
-                    OnIsLookRandomChanged?.Invoke(this, value);
+                    ModsManager.HookAction("OnNetworkLookAroundBehaviorChanged", loader => loader.OnNetworkLookAroundBehaviorChanged(this, value));
                 }
             }
         }

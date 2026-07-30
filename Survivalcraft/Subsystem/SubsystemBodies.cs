@@ -5,7 +5,6 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemBodies : Subsystem, IUpdateable {
-        public static event Action<ComponentBody> OnBodyUpdate;
 
         public const float m_areaSize = 8f;
 
@@ -183,7 +182,7 @@ namespace Game {
                 }
                 value.Add(componentBody);
             }
-            OnBodyUpdate?.Invoke(componentBody);
+
         }
 
         public void ComponentBody_PositionChanged(ComponentFrame componentFrame) {

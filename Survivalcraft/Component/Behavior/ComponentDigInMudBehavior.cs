@@ -39,14 +39,12 @@ namespace Game {
 
         private bool m_isDigIn;
 
-        public static event Action<ComponentDigInMudBehavior, bool> OnIsDigInChanged;
-
         public bool IsDigIn {
             get { return m_isDigIn; }
             set {
                 if (m_isDigIn != value) {
                     m_isDigIn = value;
-                    OnIsDigInChanged?.Invoke(this, value);
+                    ModsManager.HookAction("OnNetworkDigInMudBehaviorChanged", loader => loader.OnNetworkDigInMudBehaviorChanged(this, value));
                 }
             }
         }

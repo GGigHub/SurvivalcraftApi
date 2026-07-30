@@ -36,9 +36,6 @@ namespace Game {
 
         public string DamageSoundName { get; set; }
 
-
-        public static event Action<ComponentDamage> OnDamage;
-
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Damage(float amount) {
@@ -50,13 +47,13 @@ namespace Game {
                 && Hitpoints > 0f) {
                 Hitpoints = MathUtils.Max(Hitpoints - amount, 0f);
             }
-            OnDamage?.Invoke(this);
+            ModsManager.HookAction("OnNetworkDamage", loader => loader.OnNetworkDamage(this));
         }
 
         public virtual void Update(float dt) {
             Vector3 position = m_componentBody.Position;
             if (Hitpoints <= 0f) {
-                OnDamage?.Invoke(this);
+                ModsManager.HookAction("OnNetworkDamage", loader => loader.OnNetworkDamage(this));
                 m_subsystemParticles.AddParticleSystem(
                     new BlockDebrisParticleSystem(
                         m_subsystemTerrain,

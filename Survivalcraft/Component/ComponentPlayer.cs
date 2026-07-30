@@ -1,5 +1,4 @@
 using Engine;
-using Game.Network;
 
 using GameEntitySystem;
 using System;
@@ -37,20 +36,6 @@ namespace Game {
         public bool m_allowAddLookOrder = true;
 
         public double? m_aimStartTime;
-
-        public static event Action<ComponentPlayer> OnActiveSlotChanged;
-
-        public static event Action<ComponentPlayer, bool> OnBodyUpdate;
-
-        public static event Action<ComponentPlayer, ComponentBody, Vector3, Vector3> OnHit;
-
-        public static event Action<ComponentPlayer> OnDigEvent;
-
-        public static event Action<ComponentPlayer> OnInteractEvent;
-
-        public static event Action<ComponentPlayer> OnAimEvent;
-
-        public static event Action<ComponentPlayer> OnDropEvent;
 
         public double AimDuration {
             get {
@@ -180,7 +165,7 @@ namespace Game {
                     Pickable pickable = m_subsystemPickables.CreatePickable(slotValue, num3, position, velocity, null, Entity);
                     if (pickable != null) {
                         m_subsystemPickables.AddPickable(pickable);
-                        NetworkManager.Queue(new PickableCreatePacket(pickable));
+                        NetworkManager.QueuePickableCreate(pickable);
                     }
                 }
                 else {
@@ -268,7 +253,7 @@ namespace Game {
         public virtual void Update(float dt) {
             if (PlayerData.IsMainPlayer && ComponentMiner?.Inventory != null && LastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex) {
                 LastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
-                OnActiveSlotChanged?.Invoke(this);
+                ModsManager.HookAction("OnNetworkActiveSlotChanged", loader => loader.OnNetworkActiveSlotChanged(this));
             }
             PlayerInput playerInput = ComponentInput.PlayerInput;
             if (ComponentInput.IsControlledByTouch
@@ -392,7 +377,7 @@ namespace Game {
             }
             int num = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);
             Block block = BlocksManager.Blocks[num];
-            OnBodyUpdate?.Invoke(this, PlayerData.IsMainPlayer);
+            ModsManager.HookAction("OnNetworkPlayerBodyUpdate", loader => loader.OnNetworkPlayerBodyUpdate(this, PlayerData.IsMainPlayer));
 
             // Handle replicated Interact/Aim/Dig events on server and remote clients.
             if (!PlayerData.IsMainPlayer) {
@@ -666,7 +651,7 @@ namespace Game {
                                 playerInput.Hit.Value.Direction,
                                 NetworkManager.IsClientRunning
                             );
-                            OnHit?.Invoke(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction);
+                            ModsManager.HookAction("OnNetworkPlayerHit", loader => loader.OnNetworkPlayerHit(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
                         }
                     }
                 }
@@ -727,15 +712,15 @@ namespace Game {
                 if (last_digEvent.digEvent != digEvent.digEvent || ComponentMiner.DigCellFaceChanged) {
                     ComponentMiner.DigCellFaceChanged = false;
                     last_digEvent = digEvent;
-                    OnDigEvent?.Invoke(this);
+                    ModsManager.HookAction("OnNetworkPlayerDig", loader => loader.OnNetworkPlayerDig(this));
                 }
                 if (last_interactEvent.interactEvent != interactEvent.interactEvent) {
                     last_interactEvent = interactEvent;
-                    OnInteractEvent?.Invoke(this);
+                    ModsManager.HookAction("OnNetworkPlayerInteract", loader => loader.OnNetworkPlayerInteract(this));
                 }
                 if (last_aimEvent.aimEvent != aimEvent.aimEvent) {
                     last_aimEvent = aimEvent;
-                    OnAimEvent?.Invoke(this);
+                    ModsManager.HookAction("OnNetworkPlayerAim", loader => loader.OnNetworkPlayerAim(this));
                 }
             }
             if (playerInput.Drop
@@ -750,7 +735,7 @@ namespace Game {
                     }
                 );
                 if (PlayerData.IsMainPlayer && NetworkManager.IsClientRunning) {
-                    OnDropEvent?.Invoke(this);
+                    ModsManager.HookAction("OnNetworkPlayerDrop", loader => loader.OnNetworkPlayerDrop(this));
                     skipVanilla_ = true;
                 }
                 if (!skipVanilla_) {

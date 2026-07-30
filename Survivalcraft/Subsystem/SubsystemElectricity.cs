@@ -7,7 +7,6 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemElectricity : Subsystem, IUpdateable {
-        public static event Action<SubsystemElectricity, List<NetSimulate>> OnElectricityPersistentVoltageChanged;
         public class NetSimulate {
             public int StartStep;
 
@@ -450,7 +449,7 @@ namespace Game {
                     netSimulate.SaveData.Add(entry.Key, entry.Value);
                 }
                 list.Add(netSimulate);
-                OnElectricityPersistentVoltageChanged?.Invoke(this, [.. list]);
+                ModsManager.HookAction("OnNetworkElectricityPersistentVoltageChanged", loader => loader.OnNetworkElectricityPersistentVoltageChanged(this, [.. list]));
                 list.Clear();
             }
             while (m_remainingSimulationTime >= 0.01f) {

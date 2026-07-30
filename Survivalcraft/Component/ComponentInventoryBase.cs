@@ -32,8 +32,6 @@ namespace Game {
             set { }
         }
 
-        public static event Action<IInventory, int> OnSlotChanged;
-
         public static int FindAcquireSlotForItem(IInventory inventory, int value) {
             for (int i = 0; i < inventory.SlotsCount; i++) {
                 if (inventory.GetSlotCount(i) > 0
@@ -263,7 +261,7 @@ namespace Game {
         }
 
         public virtual void OnSlotChange(int slotIndex) {
-            OnSlotChanged?.Invoke(this, slotIndex);
+            ModsManager.HookAction("OnNetworkInventorySlotChanged", loader => loader.OnNetworkInventorySlotChanged(this, slotIndex));
         }
 
         public virtual void DropAllItems(Vector3 position) {

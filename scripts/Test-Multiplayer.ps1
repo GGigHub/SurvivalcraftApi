@@ -20,7 +20,7 @@ $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $fastProject = Join-Path $repositoryRoot "Survivalcraft.Testing.Tests\Survivalcraft.Testing.Tests.csproj"
 $gameTestProject = Join-Path $repositoryRoot "Survivalcraft.Test\Survivalcraft.Test.csproj"
 $hostProject = Join-Path $repositoryRoot "Survivalcraft.TestHost\Survivalcraft.TestHost.csproj"
-$runtimeDirectory = Join-Path $repositoryRoot "Survivalcraft.Test\bin\$Configuration\net10.0-windows"
+$runtimeDirectory = Join-Path $repositoryRoot "Survivalcraft.Test\bin\$Configuration\net10.0-windows\win-x64"
 $runStamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $coreArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
     Join-Path $repositoryRoot "TestResults\core-multiplayer-$runStamp"

@@ -41,7 +41,7 @@ public class GameFixture : IAsyncLifetime, IDisposable {
             bool clientMainMenuEntered = Client.WaitLog("Entered screen \"MainMenu\"", 60);
             if (!serverMainMenuEntered || !clientMainMenuEntered) {
                 throw new TimeoutException(
-                    $"Game contexts did not enter MainMenu. Server={serverMainMenuEntered}; Client={clientMainMenuEntered}.");
+                    $"Game contexts did not enter MainMenu. Server={serverMainMenuEntered}; Client={clientMainMenuEntered}.\nServer Log:\n{Server.GetRecentLogText()}\nClient Log:\n{Client.GetRecentLogText()}");
             }
         }
         catch {

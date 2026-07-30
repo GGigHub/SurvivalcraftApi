@@ -126,7 +126,7 @@ public static class ModNetworkManager {
         }
     }
 
-    internal static bool HasCatalogOverride {
+    public static bool HasCatalogOverride {
         get {
             lock (s_sync) {
                 return s_catalogOverride != null;
@@ -218,14 +218,14 @@ public static class ModNetworkManager {
         }
     }
 
-    internal static void SetLocalCatalogOverride(ModNetworkChannelCatalog catalog) {
+    public static void SetLocalCatalogOverride(ModNetworkChannelCatalog catalog) {
         EnsureCatalogCanChange();
         lock (s_sync) {
             s_catalogOverride = catalog?.Clone();
         }
     }
 
-    internal static void ClearLocalCatalogOverride() {
+    public static void ClearLocalCatalogOverride() {
         EnsureCatalogCanChange();
         lock (s_sync) {
             s_catalogOverride = null;
@@ -290,10 +290,9 @@ public static class ModNetworkManager {
                 $"Mod channel '{registration.Descriptor.QualifiedName}' cannot send before the client project is loaded.");
         }
 
-        ModMessagePacket packet = CreatePacket(registration.Descriptor, payload);
-        NetworkManager.NetworkClient?.Send(packet);
-        NetworkManager.RelayClient?.Send(packet);
-        RecordSent(registration.Descriptor, packet.Envelope, isServer: false);
+        ModNetworkEnvelope envelope = CreateEnvelope(registration.Descriptor, payload);
+        NetworkManager.SendModMessageToServer(envelope);
+        RecordSent(registration.Descriptor, envelope, isServer: false);
     }
 
     public static void SendToClient(
@@ -312,11 +311,9 @@ public static class ModNetworkManager {
                 $"Mod channel '{registration.Descriptor.QualifiedName}' cannot send to an inactive client session.");
         }
 
-        ModMessagePacket packet = CreatePacket(registration.Descriptor, payload);
-        packet.To = session;
-        NetworkManager.NetworkServer?.Board(packet);
-        NetworkManager.RelayHost?.Board(packet);
-        RecordSent(registration.Descriptor, packet.Envelope, isServer: true);
+        ModNetworkEnvelope envelope = CreateEnvelope(registration.Descriptor, payload);
+        NetworkManager.SendModMessageToClient(envelope, session);
+        RecordSent(registration.Descriptor, envelope, isServer: true);
     }
 
     public static int Broadcast(
@@ -336,15 +333,13 @@ public static class ModNetworkManager {
             return 0;
         }
 
-        ModMessagePacket packet = CreatePacket(registration.Descriptor, payload);
-        packet.Except = except;
-        NetworkManager.NetworkServer?.Board(packet);
-        NetworkManager.RelayHost?.Board(packet);
-        RecordSent(registration.Descriptor, packet.Envelope, isServer: true);
+        ModNetworkEnvelope envelope = CreateEnvelope(registration.Descriptor, payload);
+        NetworkManager.BroadcastModMessage(envelope, except);
+        RecordSent(registration.Descriptor, envelope, isServer: true);
         return recipients.Length;
     }
 
-    internal static ModNetworkDispatchCode Dispatch(
+    public static ModNetworkDispatchCode Dispatch(
         ModNetworkEnvelope envelope,
         bool isServer,
         ClientSession sender) {
@@ -463,7 +458,7 @@ public static class ModNetworkManager {
         }
     }
 
-    internal static void ClearSession(ClientSession session) {
+    public static void ClearSession(ClientSession session) {
         if (session == null) {
             return;
         }
@@ -472,13 +467,13 @@ public static class ModNetworkManager {
         }
     }
 
-    internal static void OnProjectDisposed() {
+    public static void OnProjectDisposed() {
         lock (s_sync) {
             s_peerStates.Clear();
         }
     }
 
-    internal static void ResetRegistrations() {
+    public static void ResetRegistrations() {
         lock (s_sync) {
             s_registrations.Clear();
             s_ownerKeys.Clear();
@@ -488,7 +483,7 @@ public static class ModNetworkManager {
         }
     }
 
-    internal static void ResetMetrics() {
+    public static void ResetMetrics() {
         lock (s_sync) {
             ResetMetricsLocked();
         }
@@ -536,15 +531,15 @@ public static class ModNetworkManager {
         }
     }
 
-    private static ModMessagePacket CreatePacket(
+    private static ModNetworkEnvelope CreateEnvelope(
         ModNetworkChannelDescriptor descriptor,
         byte[] payload) =>
-        new(new ModNetworkEnvelope(
+        new(
             Guid.NewGuid(),
             descriptor.PackageName,
             descriptor.ChannelName,
             descriptor.Version,
-            payload));
+            payload);
 
     private static void RecordSent(
         ModNetworkChannelDescriptor descriptor,

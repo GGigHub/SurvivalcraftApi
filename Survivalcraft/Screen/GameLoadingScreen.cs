@@ -7,8 +7,6 @@ using Engine;
 namespace Game;
 
 public class GameLoadingScreen : Screen {
-    public static event Action<NetworkState> OnPlayerStateChanged;
-    public static Action OnPlayerIntoPlaying;
 
     public WorldInfo m_worldInfo;
     public string m_worldSnapshotName;
@@ -54,7 +52,7 @@ public class GameLoadingScreen : Screen {
             }
         }, delegate {
             if (NetworkManager.MyState == NetworkState.Connected) {
-                OnPlayerStateChanged?.Invoke(NetworkState.Connected);
+                ModsManager.HookAction("OnNetworkPlayerStateChanged", loader => loader.OnNetworkPlayerStateChanged(NetworkState.Connected));
             }
         });
         m_stateMachine.AddState("Loading", null,
@@ -77,7 +75,7 @@ public class GameLoadingScreen : Screen {
                 }
                 if (IsAdventureRestart && NetworkManager.IsClientRunning) {
                     // 需要注入主玩家的概念
-                    OnPlayerIntoPlaying?.Invoke();
+                    ModsManager.HookAction("OnNetworkPlayerIntoPlaying", loader => loader.OnNetworkPlayerIntoPlaying());
                 }
                 ScreensManager.SwitchScreen("Game");
             }
@@ -88,7 +86,7 @@ public class GameLoadingScreen : Screen {
             SetSpwanDialogMessage("加载服务器 Project", 0.6f);
             if (NetworkManager.MyState == NetworkState.Connected) {
                 GameManager.LoadProject(m_projectXmlData, ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
-                OnPlayerStateChanged?.Invoke(NetworkState.ProjectLoaded);
+                ModsManager.HookAction("OnNetworkPlayerStateChanged", loader => loader.OnNetworkPlayerStateChanged(NetworkState.ProjectLoaded));
                 ScreensManager.SwitchScreen("Game");
                 m_projectXmlData = null;
                 IsServerReply = false;

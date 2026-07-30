@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <NetworkModProject Condition="'$(NetworkModProject)' == ''">$(MSBuildThisFileDirectory)..\Survivalcraft.Multiplayer\Survivalcraft.Multiplayer.csproj</NetworkModProject>
+    <NetworkModPackagePath Condition="'$(NetworkModPackagePath)' == ''">$(MSBuildThisFileDirectory)..\Survivalcraft.Multiplayer\bin\$(Configuration)\net10.0-windows\win-x64\scmod\Survivalcraft.Multiplayer.scmod</NetworkModPackagePath>
+  </PropertyGroup>
+
+  <Target Name="PackageAndCopyNetworkMod" AfterTargets="Build" Condition="'$(SkipNetworkModPackage)' != 'true'">
+    <MSBuild Projects="$(NetworkModProject)" Targets="Build" Properties="Configuration=$(Configuration);GenerateModPackage=true" BuildInParallel="false" />
+    <MakeDir Directories="$(OutputPath)Mods\" />
+    <Copy SourceFiles="$(NetworkModPackagePath)" DestinationFolder="$(OutputPath)Mods\" />
+    <Message Importance="high" Text="Copied Network mod to $(OutputPath)Mods\Survivalcraft.Multiplayer.scmod" />
+  </Target>
+</Project>

@@ -6,8 +6,6 @@ using GameEntitySystem;
 
 namespace Game {
     public class InventorySlotWidget : CanvasWidget, IDragTargetWidget {
-        public static event Action<IInventory, int, IInventory, int, int> OnMoveItem;
-        public static event Action<IInventory, int, DragMode, IInventory, int, bool, int> OnDragDropItem;
         public BevelledRectangleWidget m_rectangleWidget;
 
         public RectangleWidget m_highlightWidget;
@@ -575,7 +573,7 @@ namespace Game {
             int slotCount2 = targetInventory.GetSlotCount(targetSlotIndex);
 
             if (notifyNetwork && NetworkManager.IsClientRunning) {
-                OnMoveItem?.Invoke(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count);
+                ModsManager.HookAction("OnNetworkMoveItem", loader => loader.OnNetworkMoveItem(sourceInventory, sourceSlotIndex, targetInventory, targetSlotIndex, count));
             }
             if (slotCount2 == 0
                 || slotValue == slotValue2) {
@@ -606,7 +604,7 @@ namespace Game {
             dragCount = CalculateSplitCount(dragCount, dragMode);
 
             if (NetworkManager.IsClientRunning) {
-                OnDragDropItem?.Invoke(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly, dragCount);
+                ModsManager.HookAction("OnNetworkDragDropItem", loader => loader.OnNetworkDragDropItem(sourceInventory, sourceSlotIndex, dragMode, targetInventory, targetSlotIndex, processingOnly, dragCount));
             }
 
             bool flag = false;

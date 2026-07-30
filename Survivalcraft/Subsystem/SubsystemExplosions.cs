@@ -5,9 +5,6 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemExplosions : Subsystem, IUpdateable {
-        public static event Action<Dictionary<Point2, List<(Point3, float)>>> OnExplosionCell;
-
-        public static event Action<Vector3, float, float> OnExplosionSound;
         public class SparseSpatialArray<T> {
             public const int m_bits1 = 4;
 
@@ -298,7 +295,7 @@ namespace Game {
                 m_surroundingPressureByPoint = null;
             }
             if (!NetworkManager.IsClientRunning) {
-                OnExplosionCell?.Invoke(m_explosionCells);
+                ModsManager.HookAction("OnNetworkExplosionCell", loader => loader.OnNetworkExplosionCell(m_explosionCells));
                 //清空爆炸点
                 m_explosionCells.Clear();
             }
@@ -826,7 +823,7 @@ namespace Game {
             if (!NetworkManager.IsClientRunning) {
                 PlayExplosionSound(position, pressure, delay, playExplosionSound);
                 if (playExplosionSound) {
-                    OnExplosionSound?.Invoke(position, pressure, delay);
+                    ModsManager.HookAction("OnNetworkExplosionSound", loader => loader.OnNetworkExplosionSound(position, pressure, delay));
                 }
             }
             if (pressure > 2000000f) {

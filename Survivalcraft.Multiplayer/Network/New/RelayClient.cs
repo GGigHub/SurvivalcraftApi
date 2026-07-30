@@ -99,7 +99,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         else if (type == RelayMessageType.DataToPeer) {
             byte[] data = reader.GetBytesWithLength();
             NetDataReader inner = new(data);
-            if (NetworkManager.PackageFragment.TryProcessIncoming(inner, "relay-host", out byte[] payload)) {
+            if (PacketManager.PackageFragment.TryProcessIncoming(inner, "relay-host", out byte[] payload)) {
                 foreach (Packet packet in PacketManager.DecodePackets(payload)) {
                     if (MySession?.CompatibilityState != NetworkCompatibilityState.Accepted
                         && packet is not CompatibilityResultPacket

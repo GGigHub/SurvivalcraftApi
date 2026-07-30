@@ -4,7 +4,6 @@ using Engine;
 
 namespace Game {
     public class CrossbowWidget : CanvasWidget {
-        public static event Action<IInventory, int> OnCrossbowPull;
         public IInventory m_inventory;
 
         public int m_slotIndex;
@@ -82,7 +81,7 @@ namespace Game {
                 else {
                     m_dragStartOffset = null;
                     if (draw == 15) {
-                        OnCrossbowPull?.Invoke(m_inventory, m_slotIndex);
+                        ModsManager.HookAction("OnNetworkCrossbowPull", loader => loader.OnNetworkCrossbowPull(m_inventory, m_slotIndex));
                         AudioManager.PlaySound("Audio/UI/ItemMoved", 1f, 0f, 0f);
                         return;
                     }

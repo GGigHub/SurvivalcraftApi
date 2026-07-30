@@ -390,6 +390,7 @@ public sealed record NodeStatus(
     bool ProjectLoaded,
     bool IsServerRunning,
     bool IsClientRunning,
+    bool NetworkRuntimeBound,
     string NetworkState,
     int PlayerIndex,
     int PlayerCount,

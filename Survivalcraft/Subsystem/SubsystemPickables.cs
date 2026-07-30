@@ -7,11 +7,6 @@ using TemplatesDatabase;
 
 namespace Game {
     public class SubsystemPickables : Subsystem, IDrawable, IUpdateable {
-        public static event Action<int> OnPickableRequestSync;
-
-        public static event Action<Pickable> OnPickableCreate;
-
-        public static event Action<Pickable> OnPickableDelete;
 
         public SubsystemAudio m_subsystemAudio;
 
@@ -62,7 +57,7 @@ namespace Game {
             }
             if (requestSync
                 && NetworkManager.IsClientRunning) {
-                OnPickableRequestSync?.Invoke(id);
+                ModsManager.HookAction("OnNetworkPickableRequestSync", loader => loader.OnNetworkPickableRequestSync(id));
             }
             return false;
         }
@@ -109,7 +104,7 @@ namespace Game {
             }
             PickableAdded?.Invoke(pickable);
             if (!NetworkManager.IsClientRunning) {
-                OnPickableCreate?.Invoke(pickable);
+                ModsManager.HookAction("OnNetworkPickableCreated", loader => loader.OnNetworkPickableCreated(pickable));
             }
             return pickable;
         }
@@ -217,7 +212,7 @@ namespace Game {
                     useMaps.Remove(item.Id);
                     PickableRemoved?.Invoke(item);
                     if (!NetworkManager.IsClientRunning) {
-                        OnPickableDelete?.Invoke(item);
+                        ModsManager.HookAction("OnNetworkPickableDeleted", loader => loader.OnNetworkPickableDeleted(item));
                     }
                 }
                 m_pickablesToRemove.Clear();
@@ -233,7 +228,7 @@ namespace Game {
                         }
                     }
                     if (pickablesToUpdate.Count > 0) {
-                        NetworkManager.Queue(new Network.PickableUpdatePacket(pickablesToUpdate));
+                        NetworkManager.QueuePickableUpdate(pickablesToUpdate);
                     }
                 }
             }

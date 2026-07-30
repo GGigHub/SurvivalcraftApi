@@ -53,8 +53,6 @@ namespace Game {
 
         public double m_lastPukeSoundTime = -1000.0;
 
-        public static event Action<ComponentCreatureSounds, byte, bool> OnPlaySound;
-
         public virtual void PlayIdleSound(bool skipIfRecentlyPlayed, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) return;
             bool flag = !string.IsNullOrEmpty(m_rareIdleSound) && m_random.Bool(m_rareIdleSoundProbability);
@@ -71,7 +69,7 @@ namespace Game {
                     num,
                     false
                 );
-                if (!fromNetwork) OnPlaySound?.Invoke(this, 0, skipIfRecentlyPlayed);
+                if (!fromNetwork) ModsManager.HookAction("OnNetworkCreatureSound", loader => loader.OnNetworkCreatureSound(this, 0, skipIfRecentlyPlayed));
             }
         }
 
@@ -80,7 +78,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_painSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_painSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_painSoundMinDistance, autoDelay: false);
-                if (!fromNetwork) OnPlaySound?.Invoke(this, 1, false);
+                if (!fromNetwork) ModsManager.HookAction("OnNetworkCreatureSound", loader => loader.OnNetworkCreatureSound(this, 1, false));
             }
         }
 
@@ -89,7 +87,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_moanSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_moanSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_moanSoundMinDistance, autoDelay: false);
-                if (!fromNetwork) OnPlaySound?.Invoke(this, 2, false);
+                if (!fromNetwork) ModsManager.HookAction("OnNetworkCreatureSound", loader => loader.OnNetworkCreatureSound(this, 2, false));
             }
         }
 
@@ -98,7 +96,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_sneezeSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_sneezeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_sneezeSoundMinDistance, autoDelay: false);
-                if (!fromNetwork) OnPlaySound?.Invoke(this, 3, false);
+                if (!fromNetwork) ModsManager.HookAction("OnNetworkCreatureSound", loader => loader.OnNetworkCreatureSound(this, 3, false));
             }
         }
 
@@ -107,7 +105,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_coughSound) && m_subsystemTime.GameTime > m_lastCoughingSoundTime + 1.0) {
                 m_lastCoughingSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_coughSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_coughSoundMinDistance, autoDelay: false);
-                if (!fromNetwork) OnPlaySound?.Invoke(this, 4, false);
+                if (!fromNetwork) ModsManager.HookAction("OnNetworkCreatureSound", loader => loader.OnNetworkCreatureSound(this, 4, false));
             }
         }
 
@@ -116,7 +114,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_pukeSound) && m_subsystemTime.GameTime > m_lastPukeSoundTime + 1.0) {
                 m_lastPukeSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_pukeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_pukeSoundMinDistance, autoDelay: false);
-                if (!fromNetwork) OnPlaySound?.Invoke(this, 5, false);
+                if (!fromNetwork) ModsManager.HookAction("OnNetworkCreatureSound", loader => loader.OnNetworkCreatureSound(this, 5, false));
             }
         }
 
@@ -125,7 +123,7 @@ namespace Game {
             if (!string.IsNullOrEmpty(m_attackSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_attackSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_attackSoundMinDistance, autoDelay: false);
-                if (!fromNetwork) OnPlaySound?.Invoke(this, 6, false);
+                if (!fromNetwork) ModsManager.HookAction("OnNetworkCreatureSound", loader => loader.OnNetworkCreatureSound(this, 6, false));
             }
         }
 

@@ -14,10 +14,8 @@ namespace Game {
 
         public DatabaseObject m_databaseObject;
 
-        public static event Action<SubsystemEntityBlockBehavior, Point3> OnOpenInventoryRequest;
-
         protected void InvokeOnOpenInventoryRequest(Point3 point) {
-            OnOpenInventoryRequest?.Invoke(this, point);
+            ModsManager.HookAction("OnNetworkOpenInventoryRequest", loader => loader.OnNetworkOpenInventoryRequest(this, point));
         }
 
         public override void Load(ValuesDictionary valuesDictionary) {

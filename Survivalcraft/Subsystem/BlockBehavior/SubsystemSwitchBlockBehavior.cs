@@ -4,10 +4,6 @@ namespace Game {
     public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior {
         public override int[] HandledBlocks => [141];
 
-        public static event Action<SubsystemSwitchBlockBehavior, int, int, int> OnEditItemVoltage;
-
-        public static event Action<SubsystemSwitchBlockBehavior, CellFace, int> OnEditBlockVoltage;
-
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
                 return false;
@@ -28,7 +24,7 @@ namespace Game {
                                 inventory.RemoveSlotItems(slotIndex, count);
                                 inventory.AddSlotItems(slotIndex, num, count);
                             }
-                            OnEditItemVoltage?.Invoke(this, inventory.Id, slotIndex, newVoltageLevel);
+                            ModsManager.HookAction("OnNetworkSwitchItemVoltageEdited", loader => loader.OnNetworkSwitchItemVoltageEdited(this, inventory.Id, slotIndex, newVoltageLevel));
                         }
                     }
                 )
@@ -52,7 +48,7 @@ namespace Game {
                                 int newValue = Terrain.ReplaceData(value, num);
                                 SubsystemTerrain.ChangeCell(x, y, z, newValue);
                             }
-                            OnEditBlockVoltage?.Invoke(this, cell, newVoltageLevel);
+                            ModsManager.HookAction("OnNetworkSwitchBlockVoltageEdited", loader => loader.OnNetworkSwitchBlockVoltageEdited(this, cell, newVoltageLevel));
                         }
                     }
                 )

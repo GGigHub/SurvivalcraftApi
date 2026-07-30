@@ -81,12 +81,9 @@ namespace Game {
 
         public double m_rowHoldEndTime;
 
-        public static event Action<ComponentHumanModel> OnRow;
-
         public Vector3 m_baseInhandItemOffset;
 
         public Vector3 m_baseInhandItemRotation;
-
         public override float AttackPhase {
             get => m_punchPhase;
             set => m_punchPhase = value;
@@ -193,9 +190,9 @@ namespace Game {
             if ((m_rowLeft || m_rowRight)
                 && componentMount != null
                 && componentMount.ComponentBody.ImmersionFactor > 0f
-                && Math.Floor(1.1 * m_subsystemTime.GameTime)
-                != Math.Floor(1.1 * (m_subsystemTime.GameTime - m_subsystemTime.GameTimeDelta))) {
-                OnRow?.Invoke(this);
+                && Math.Floor(1.1000000238418579 * m_subsystemTime.GameTime)
+                != Math.Floor(1.1000000238418579 * (m_subsystemTime.GameTime - m_subsystemTime.GameTimeDelta))) {
+                ModsManager.HookAction("OnNetworkHumanModelRow", loader => loader.OnNetworkHumanModelRow(this));
                 m_subsystemAudio.PlayRandomSound(
                     "Audio/Rowing",
                     m_random.Float(0.4f, 0.6f),

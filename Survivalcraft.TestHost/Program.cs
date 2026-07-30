@@ -1100,6 +1100,7 @@ internal static class Program {
             "Survivalcraft.dll",
             "Survivalcraft.Networking.dll",
             "Content.zip",
+            Path.Combine("Mods", "Survivalcraft.Multiplayer.scmod"),
             Path.Combine("Mods", "Survivalcraft.TestAutomation.scmod")
         ];
         foreach (string relativePath in requiredFiles) {
@@ -1130,6 +1131,25 @@ internal static class Program {
             }
         }
 
+        string multiplayerModPath = Path.Combine(
+            runtimeDirectory,
+            "Mods",
+            "Survivalcraft.Multiplayer.scmod");
+        using (ZipArchive archive = ZipFile.OpenRead(multiplayerModPath)) {
+            string[] requiredEntries = [
+                "modinfo.json",
+                "Survivalcraft.Multiplayer.dll"
+            ];
+            foreach (string entry in requiredEntries) {
+                if (!archive.Entries.Any(candidate =>
+                    candidate.FullName.Equals(entry, StringComparison.OrdinalIgnoreCase))) {
+                    throw new InvalidDataException(
+                        $"Multiplayer mod '{multiplayerModPath}' does not contain '{entry}'.");
+                }
+                Console.WriteLine($"ok multiplayer-mod-entry {entry}");
+            }
+        }
+
         Console.WriteLine($"ok protocol v{ControlProtocol.CurrentVersion}");
         if (staticOnly) {
             Console.WriteLine("DOCTOR PASSED (static only)");
@@ -1149,11 +1169,13 @@ internal static class Program {
                 StartupTimeout: startupTimeout));
             await node.StartAsync().ConfigureAwait(false);
             NodeStatus status = await node.WaitForStatusAsync(
-                value => value.ContentLoaded && value.Screen == "MainMenuScreen",
+                value => value.ContentLoaded
+                    && value.Screen == "MainMenuScreen"
+                    && value.NetworkRuntimeBound,
                 startupTimeout,
-                "Doctor node did not reach MainMenu.").ConfigureAwait(false);
+                "Doctor node did not reach MainMenu with the multiplayer runtime bound.").ConfigureAwait(false);
             Console.WriteLine(
-                $"ok headless-control pid={node.ProcessId} screen={status.Screen} role={status.Role}");
+                $"ok headless-control pid={node.ProcessId} screen={status.Screen} role={status.Role} networkBound={status.NetworkRuntimeBound}");
             Console.WriteLine("DOCTOR PASSED");
         }
         catch {
@@ -1337,7 +1359,8 @@ internal static class Program {
             "Survivalcraft.Test",
             "bin",
             configuration,
-            "net10.0-windows");
+            "net10.0-windows",
+            "win-x64");
     }
 
     private static Dictionary<string, string?> ParseOptions(string[] args, int startIndex) {

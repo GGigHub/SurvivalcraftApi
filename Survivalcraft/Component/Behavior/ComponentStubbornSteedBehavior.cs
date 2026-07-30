@@ -23,8 +23,6 @@ namespace Game {
 
         public Random m_random = new();
 
-        public static event Action<ComponentStubbornSteedBehavior, float> OnHeadShakeOrder;
-
         public float m_periodicEventOffset;
 
         public float m_stubbornProbability;
@@ -83,7 +81,7 @@ namespace Game {
                     if (m_componentSteedBehavior.WasOrderIssued) {
                         float headShakeOrder = m_random.Float(0.6f, 1f);
                         m_componentCreature.ComponentCreatureModel.HeadShakeOrder = headShakeOrder;
-                        OnHeadShakeOrder?.Invoke(this, headShakeOrder);
+                        ModsManager.HookAction("OnNetworkStubbornSteedHeadShakeOrder", loader => loader.OnNetworkStubbornSteedHeadShakeOrder(this, headShakeOrder));
                         m_componentCreature.ComponentCreatureSounds.PlayPainSound();
                     }
                 },

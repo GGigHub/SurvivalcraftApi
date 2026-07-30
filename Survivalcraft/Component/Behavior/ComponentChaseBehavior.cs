@@ -110,8 +110,6 @@ namespace Game {
 
         public ComponentCreature Target => m_target;
 
-        public static event Action<ComponentChaseBehavior, bool> OnIsAttackChanged;
-
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override float ImportanceLevel => m_importanceLevel;
@@ -567,7 +565,7 @@ namespace Game {
             set {
                 if (m_isAttack != value) {
                     m_isAttack = value;
-                    OnIsAttackChanged?.Invoke(this, value);
+                    ModsManager.HookAction("OnNetworkChaseBehaviorAttackChanged", loader => loader.OnNetworkChaseBehaviorAttackChanged(this, value));
                 }
             }
         }

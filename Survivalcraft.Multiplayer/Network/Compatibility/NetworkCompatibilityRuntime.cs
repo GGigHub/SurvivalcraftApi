@@ -20,7 +20,7 @@ public static class NetworkCompatibilityRuntime {
     public static NetworkCompatibilityResult LastClientResult { get; private set; }
     public static NetworkCompatibilityResult LastClientCoreResult { get; private set; }
     public static NetworkCompatibilityManifest LastClientHello { get; private set; }
-    internal static bool HasLocalManifestOverride => s_localManifestOverride != null;
+    public static bool HasLocalManifestOverride => s_localManifestOverride != null;
 
     public static NetworkCompatibilityManifest CreateLoadedManifest() {
         List<NetworkModIdentity> mods = [];
@@ -29,7 +29,6 @@ public static class NetworkCompatibilityRuntime {
             if (info == null
                 || modEntity is SurvivalCraftModEntity
                 || modEntity is FastDebugModEntity
-                || modEntity is NetworkModEntity
                 || s_builtinPackages.Contains(info.PackageName ?? string.Empty)) {
                 continue;
             }
@@ -56,11 +55,11 @@ public static class NetworkCompatibilityRuntime {
     public static NetworkCompatibilityManifest GetLocalManifest() =>
         (s_localManifestOverride ?? CreateLoadedManifest()).Clone();
 
-    internal static void SetLocalManifestOverride(NetworkCompatibilityManifest manifest) {
+    public static void SetLocalManifestOverride(NetworkCompatibilityManifest manifest) {
         s_localManifestOverride = manifest?.Clone();
     }
 
-    internal static void ClearLocalManifestOverride() {
+    public static void ClearLocalManifestOverride() {
         s_localManifestOverride = null;
     }
 

@@ -7,19 +7,6 @@ using LiteNetLib.Utils;
 
 namespace Game.Network;
 
-public class ClientSession {
-    // 不是ClientIndex
-    public int PlayerIndex { get; set; }
-    public Guid NetworkGuid { get; set; }
-    public NetworkState NetworkState { get; set; }
-    public NetworkCompatibilityState CompatibilityState { get; set; }
-    public NetworkCompatibilityResult CompatibilityResult { get; set; }
-    public NetworkCompatibilityResult ChannelCompatibilityResult { get; set; }
-    public string ModChannelCatalogFingerprint { get; set; } = string.Empty;
-    public DateTime CompatibilityStartedUtc { get; set; }
-    public DateTime LastPlayerEntityRequestUtc { get; set; }
-}
-
 public class NetworkClient : INetEventListener {
     private NetPeer _serverPeer;
     private NetManager _netManager;
@@ -94,7 +81,7 @@ public class NetworkClient : INetEventListener {
     }
 
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
-        if (NetworkManager.PackageFragment.TryProcessIncoming(reader, peer.ToString(), out byte[] payload)) {
+        if (PacketManager.PackageFragment.TryProcessIncoming(reader, peer.ToString(), out byte[] payload)) {
             PacketManager.DecodePackets(payload).ForEach((packet) => {
                 if (MySession?.CompatibilityState != NetworkCompatibilityState.Accepted
                     && packet is not CompatibilityResultPacket

@@ -1,3 +1,4 @@
+using Game;
 using Game.Network;
 using Xunit;
 

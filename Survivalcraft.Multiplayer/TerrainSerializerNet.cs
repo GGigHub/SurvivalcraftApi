@@ -1,4 +1,4 @@
-﻿using Engine;
+using Engine;
 
 namespace Game.Network;
 
@@ -7,7 +7,7 @@ public class TerrainSerializerNet : TerrainSerializer23 {
 #if ANDROID
     static readonly string path = Storage.CombinePaths(RunPath.AndroidFilePath, "NetChunks.tmp");
 #else
-    static readonly string path = Storage.CombinePaths("app:/", "NetChunks23");
+    static readonly string path = Storage.CombinePaths("app:/", "NetChunks24");
 #endif
 
     public TerrainSerializerNet() {

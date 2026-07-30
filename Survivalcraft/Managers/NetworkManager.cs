@@ -1,14 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
 using System.Linq;
-using Engine.Graphics;
-using Game;
-using Game.Network;
-using GameEntitySystem;
-using TemplatesDatabase;
+using System.Net;
+using System.Threading.Tasks;
 using Engine;
+using Game.Network;
 
 namespace Game;
 
@@ -25,111 +21,121 @@ public class RelayJoinInfo(IPEndPoint endPoint, string roomCode) {
     public string RoomCode { get; } = roomCode;
 }
 
+public class ClientSession {
+    public int PlayerIndex { get; set; }
+    public Guid NetworkGuid { get; set; }
+    public NetworkState NetworkState { get; set; }
+    public NetworkCompatibilityState CompatibilityState { get; set; }
+    public NetworkCompatibilityResult CompatibilityResult { get; set; }
+    public NetworkCompatibilityResult ChannelCompatibilityResult { get; set; }
+    public string ModChannelCatalogFingerprint { get; set; } = string.Empty;
+    public DateTime CompatibilityStartedUtc { get; set; }
+    public DateTime LastPlayerEntityRequestUtc { get; set; }
+}
+
 public static class NetworkManager {
-    public static NetworkClient NetworkClient { get; set; } = null;
-    public static NetworkServer NetworkServer { get; set; } = null;
-    public static RelayClient RelayClient { get; set; } = null;
-    public static RelayHost RelayHost { get; set; } = null;
-    public static PacketFragment PackageFragment { get; } = new();
+    public static object NetworkClient { get; set; }
+    public static object NetworkServer { get; set; }
+    public static object RelayClient { get; set; }
+    public static object RelayHost { get; set; }
     public static RelayHostCodeStatus RelayHostCodeStatus { get; set; } = RelayHostCodeStatus.Inactive;
 
-    public static bool IsServerRunning => (NetworkServer?.IsRunning ?? false) || (RelayHost?.IsConnected ?? false);
-    public static bool IsClientRunning => (NetworkClient?.IsConnected ?? false) || (RelayClient?.IsConnected ?? false);
-    public static int ClientLatency => IsClientRunning ? LatencyProbe.Latency : -1;
-    public static ClientSession MySession => NetworkClient?.MySession ?? RelayClient?.MySession;
+    public static Func<bool> IsServerRunningFunc { get; set; }
+    public static Func<bool> IsClientRunningFunc { get; set; }
+    public static Func<int> ClientLatencyFunc { get; set; }
+    public static Func<ClientSession> MySessionFunc { get; set; }
+    public static Func<IEnumerable<ClientSession>> ServerSessionsFunc { get; set; }
+    public static Func<string> RelayGlobalCodeFunc { get; set; }
+    public static Func<string> RelayRoomCodeFunc { get; set; }
+    public static Func<string, Task<RelayJoinInfo>> ResolveRelayJoinInfoAsyncFunc { get; set; }
+    public static Func<TerrainSerializer23> CreateTerrainSerializerNetFunc { get; set; }
+
+    public static Action InitializeAction { get; set; }
+    public static Action UpdateAction { get; set; }
+    public static Action StopAction { get; set; }
+    public static Action StopClientAction { get; set; }
+    public static Action StartServerAction { get; set; }
+    public static Action<IPEndPoint> ConnectServerAction { get; set; }
+    public static Func<Task> StartRelayHostAsyncFunc { get; set; }
+    public static Action<IPEndPoint> StartRelayHostAction { get; set; }
+    public static Action<IPEndPoint, string> ConnectRelayAction { get; set; }
+    public static Action<object> QueueAction { get; set; }
+    public static Action<Pickable> QueuePickableCreateAction { get; set; }
+    public static Action<List<Pickable>> QueuePickableUpdateAction { get; set; }
+    public static Action<ComponentPlayer, Guid> SavePlayerEntityAction { get; set; }
+    public static Action<int> RequestPlayerEntityAction { get; set; }
+    public static Action<ModNetworkEnvelope> SendModMessageToServerAction { get; set; }
+    public static Action<ModNetworkEnvelope, ClientSession> SendModMessageToClientAction { get; set; }
+    public static Action<ModNetworkEnvelope, ClientSession> BroadcastModMessageAction { get; set; }
+
+    public static bool IsServerRunning => IsServerRunningFunc?.Invoke() ?? false;
+    public static bool IsClientRunning => IsClientRunningFunc?.Invoke() ?? false;
+    public static bool IsRuntimeBound =>
+        InitializeAction != null
+        && UpdateAction != null
+        && StartServerAction != null
+        && QueueAction != null;
+    public static int ClientLatency => ClientLatencyFunc?.Invoke() ?? -1;
+    public static ClientSession MySession => MySessionFunc?.Invoke();
     public static int PlayerIndex => MySession?.PlayerIndex ?? -1;
     public static Guid NetworkGuid => MySession?.NetworkGuid ?? Guid.Empty;
     public static NetworkState MyState => MySession?.NetworkState ?? NetworkState.NotConnected;
-    public static void SetPlayerIndex(int index) => MySession?.PlayerIndex = index;
-    public static void SetState(NetworkState state) => MySession?.NetworkState = state;
-    public static IEnumerable<ClientSession> ServerSessions =>
-        (NetworkServer?.ClientSessions.Values as IEnumerable<ClientSession> ?? [])
-        .Concat(RelayHost?.Sessions ?? []);
+    public static string RelayGlobalCode => RelayGlobalCodeFunc?.Invoke();
+    public static string RelayRoomCode => RelayRoomCodeFunc?.Invoke();
+    public static void SetPlayerIndex(int index) { if (MySession != null) MySession.PlayerIndex = index; }
+    public static void SetState(NetworkState state) { if (MySession != null) MySession.NetworkState = state; }
+    public static IEnumerable<ClientSession> ServerSessions => ServerSessionsFunc?.Invoke() ?? Array.Empty<ClientSession>();
 
-    public static void Initialize() {
-        RootManager.Initialize();
-        PacketManager.Initialize();
-    }
-    public static void Update() {
-        NetworkFaultInjector.Update();
-        NetworkServer?.Update();
-        NetworkClient?.Update();
-        RelayHost?.Update();
-        RelayClient?.Update();
-        PackageFragment.CleanupStates();
-        NetworkCompatibilityRuntime.UpdateClientHandshake(MySession);
-        if (NetworkCompatibilityRuntime.TryTakePendingClientRejection(
-                out NetworkCompatibilityResult rejection)) {
-            StopClient();
-            GameManager.DisposeProject();
-            ScreensManager.SwitchScreen("MainMenu");
-            DialogsManager.Alert(
-                "Incompatible multiplayer",
-                rejection.ToDisplayMessage());
-        }
-    }
+    public static void Initialize() => InitializeAction?.Invoke();
+
+    public static void Update() => UpdateAction?.Invoke();
+
     public static void Stop() {
-        NetworkServer?.Stop();
-        RelayHost?.Disconnect();
-        NetworkServer = null;
-        RelayHost = null;
-        StopClient();
-        NetworkBodyInterpolation.Clear();
-        BehaviorSyncPacket.Clear();
-        PlayerBodyUpdatePacket.ClearSnapshots();
+        StopAction?.Invoke();
         RelayHostCodeStatus = RelayHostCodeStatus.Inactive;
-        NetworkFaultInjector.ClearPending();
     }
 
-    public static void StopClient() {
-        ModNetworkManager.ClearSession(MySession);
-        NetworkClient?.Disconnect();
-        RelayClient?.Disconnect();
-        NetworkClient = null;
-        RelayClient = null;
-        LatencyProbe.Reset();
-    }
-    public static void StartServer() {
-        NetworkServer = new();
-        NetworkServer.Start();
-    }
-    public static void ConnectServer(IPEndPoint iPEndPoint) {
-        NetworkClient = new();
-        NetworkClient.Connect(iPEndPoint);
-    }
+    public static void StopClient() => StopClientAction?.Invoke();
+
+    public static void StartServer() => StartServerAction?.Invoke();
+
+    public static void ConnectServer(IPEndPoint endPoint) => ConnectServerAction?.Invoke(endPoint);
 
     public static async Task StartRelayHostAsync() {
-        try {
-            RelayHostCodeStatus = RelayHostCodeStatus.Creating;
-            IPEndPoint endPoint = await CenterServerClient.GetBestRelayEndPointAsync();
-            RelayHost = new RelayHost();
-            RelayHost.Start(endPoint);
-        }
-        catch (Exception ex) {
-            Log.Warning($"Failed to start relay host: {ex.Message}");
-            RelayHostCodeStatus = RelayHostCodeStatus.Failed;
-        }
+        if (StartRelayHostAsyncFunc != null) await StartRelayHostAsyncFunc();
     }
-    public static void StartRelayHost(IPEndPoint relayEndPoint) {
-        RelayHostCodeStatus = RelayHostCodeStatus.Creating;
-        try {
-            RelayHost = new();
-            RelayHost.Start(relayEndPoint);
+
+    public static void StartRelayHost(IPEndPoint relayEndPoint) => StartRelayHostAction?.Invoke(relayEndPoint);
+
+    public static void ConnectRelay(IPEndPoint relayEndPoint, string roomCode) => ConnectRelayAction?.Invoke(relayEndPoint, roomCode);
+
+    public static void Queue(object packet) => QueueAction?.Invoke(packet);
+
+    public static void QueuePickableCreate(Pickable pickable) => QueuePickableCreateAction?.Invoke(pickable);
+
+    public static void QueuePickableUpdate(List<Pickable> pickables) => QueuePickableUpdateAction?.Invoke(pickables);
+
+    public static void SavePlayerEntity(ComponentPlayer player, Guid networkGuid) => SavePlayerEntityAction?.Invoke(player, networkGuid);
+
+    public static void RequestPlayerEntity(int playerIndex) => RequestPlayerEntityAction?.Invoke(playerIndex);
+
+    public static TerrainSerializer23 CreateTerrainSerializerNet() => CreateTerrainSerializerNetFunc?.Invoke();
+
+    public static void SendModMessageToServer(ModNetworkEnvelope envelope) => SendModMessageToServerAction?.Invoke(envelope);
+
+    public static void SendModMessageToClient(ModNetworkEnvelope envelope, ClientSession session) => SendModMessageToClientAction?.Invoke(envelope, session);
+
+    public static void BroadcastModMessage(ModNetworkEnvelope envelope, ClientSession except = null) => BroadcastModMessageAction?.Invoke(envelope, except);
+
+    public static async Task<RelayJoinInfo> ResolveRelayJoinInfoAsync(string globalCode) =>
+        ResolveRelayJoinInfoAsyncFunc != null ? await ResolveRelayJoinInfoAsyncFunc(globalCode) : null;
+
+    public static async Task<IPAddress> TryGetIPAddress(string host) {
+        if (!IPAddress.TryParse(host, out IPAddress address)) {
+            IPAddress[] addresses = await Dns.GetHostAddressesAsync(host);
+            address = addresses.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                ?? addresses.FirstOrDefault();
         }
-        catch {
-            RelayHost = null;
-            RelayHostCodeStatus = RelayHostCodeStatus.Failed;
-            throw;
-        }
-    }
-    public static void ConnectRelay(IPEndPoint relayEndPoint, string roomCode) {
-        RelayClient = new(roomCode);
-        RelayClient.Connect(relayEndPoint);
-    }
-    public static void Queue(Packet packet) {
-        NetworkClient?.Send(packet);
-        NetworkServer?.Board(packet);
-        RelayClient?.Send(packet);
-        RelayHost?.Board(packet);
+        return address;
     }
 }

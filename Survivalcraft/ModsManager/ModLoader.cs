@@ -2225,5 +2225,109 @@ namespace Game {
         /// <param name="componentCreature">攻击的生物</param>
         /// <param name="parameter">事件参数（可自定义）</param>
         public virtual void OnCreatureAttackEnd(ComponentCreature componentCreature, object parameter) { }
+        // 联机模组专用modloader
+        public virtual bool IsNetworkMode(ComponentBody body) => false;
+        public virtual void OnNetworkChaseBehaviorAttackChanged(ComponentChaseBehavior behavior, bool isAttack) { }
+        public virtual void OnNetworkCreatureSound(ComponentCreatureSounds sounds, byte type, bool skipIfRecentlyPlayed) { }
+        public virtual void OnNetworkDamage(ComponentDamage damage) { }
+        public virtual void OnNetworkDigInMudBehaviorChanged(ComponentDigInMudBehavior behavior, bool isDigIn) { }
+        public virtual void OnNetworkEatPickableBehaviorChanged(ComponentEatPickableBehavior behavior, bool isFeed) { }
+        public virtual void OnNetworkFishOutOfWaterBehaviorChanged(ComponentFishOutOfWaterBehavior behavior, bool isBend) { }
+        public virtual void OnNetworkLookAroundBehaviorChanged(ComponentLookAroundBehavior behavior, bool isLookRandom) { }
+        public virtual void OnNetworkFluEffect(ComponentFlu flu) { }
+        public virtual void OnNetworkFluUpdate(ComponentFlu flu) { }
+        public virtual void OnNetworkFluSneeze(ComponentFlu flu) { }
+        public virtual void OnNetworkFluStarted(ComponentFlu flu) { }
+        public virtual void OnNetworkFluImpulse(ComponentFlu flu, Vector3 impulse) { }
+        public virtual void OnNetworkFurnaceUpdate(ComponentFurnace furnace) { }
+        public virtual void OnNetworkManualLightingStrike(ComponentGui gui, Vector3 position, Vector3 direction) { }
+        public virtual void OnNetworkManualTimeChange(ComponentGui gui, double totalElapsedGameTime, double timeOfDayOffset) { }
+        public virtual void OnNetworkManualWeatherChange(ComponentGui gui, int type) { }
+        public virtual void OnNetworkPlayerCreativeFly(ComponentGui gui, ComponentPlayer player) { }
+        public virtual void OnNetworkCreatureDied(ComponentHealth health) { }
+        public virtual void OnNetworkHealthFallDamage(ComponentHealth health, float fallDamage, string cause) { }
+        public virtual void OnNetworkHealthHealUpdate(ComponentHealth health) { }
+        public virtual void OnNetworkHealthInjured(ComponentHealth health, Injury injury, float amount) { }
+        public virtual void OnNetworkHumanModelRow(ComponentHumanModel model) { }
+        public virtual void OnNetworkInventorySlotChanged(IInventory inventory, int slotIndex) { }
+        public virtual void OnNetworkClothingSlotChanged(IInventory inventory, int slotIndex) { }
+        public virtual void OnNetworkLevelExperience(ComponentLevel level, int count, bool playSound) { }
+        public virtual void OnNetworkSetOnFire(ComponentOnFire onFire, ComponentCreature attacker, float duration) { }
+        public virtual void OnNetworkExtinguish(ComponentOnFire onFire) { }
+        public virtual void OnNetworkParticleSystemAdded(ParticleSystemBase particleSystem) { }
+        public virtual void OnNetworkPickableAttract(Pickable pickable) { }
+        public virtual void OnNetworkActiveSlotChanged(ComponentPlayer player) { }
+        public virtual void OnNetworkPlayerAim(ComponentPlayer player) { }
+        public virtual void OnNetworkPlayerDig(ComponentPlayer player) { }
+        public virtual void OnNetworkPlayerHit(ComponentPlayer player, ComponentBody hitBody, Vector3 hitPoint, Vector3 direction) { }
+        public virtual void OnNetworkPlayerInteract(ComponentPlayer player) { }
+        public virtual void OnNetworkPlayerDrop(ComponentPlayer player) { }
+        public virtual void OnNetworkRandomFeedBehaviorChanged(ComponentRandomFeedBehavior behavior, bool isFeed) { }
+        public virtual void OnNetworkRandomPeckBehaviorChanged(ComponentRandomPeckBehavior behavior, bool isPeck) { }
+        public virtual void OnNetworkRiderDismounting(ComponentRider rider, bool isRequest) { }
+        public virtual void OnNetworkRiderMounting(ComponentRider rider, ComponentMount mount, bool isRequest) { }
+        public virtual void OnNetworkSicknessChanged(ComponentSickness sickness) { }
+        public virtual void OnNetworkNauseaEffect(ComponentSickness sickness) { }
+        public virtual void OnNetworkStubbornSteedHeadShakeOrder(ComponentStubbornSteedBehavior behavior, float headShakeOrder) { }
+        public virtual void OnNetworkVitalStatsUpdate(ComponentVitalStats stats) { }
+        public virtual void OnNetworkAdjustableDelayGateBlockEdited(SubsystemAdjustableDelayGateBlockBehavior subsystem, CellFace cell, int newDelay) { }
+        public virtual void OnNetworkAdjustableDelayGateItemEdited(SubsystemAdjustableDelayGateBlockBehavior subsystem, int inventoryId, int slotIndex, int newDelay) { }
+        public virtual void OnNetworkBatteryBlockVoltageEdited(SubsystemBatteryBlockBehavior subsystem, CellFace cell, int newVoltageLevel) { }
+        public virtual void OnNetworkBatteryItemVoltageEdited(SubsystemBatteryBlockBehavior subsystem, int inventoryId, int slotIndex, int newVoltageLevel) { }
+        public virtual void OnNetworkButtonBlockVoltageEdited(SubsystemButtonBlockBehavior subsystem, CellFace cell, int newVoltageLevel) { }
+        public virtual void OnNetworkButtonItemVoltageEdited(SubsystemButtonBlockBehavior subsystem, int inventoryId, int slotIndex, int newVoltageLevel) { }
+        public virtual void OnNetworkElectricityPersistentVoltageChanged(SubsystemElectricity subsystem, List<SubsystemElectricity.NetSimulate> list) { }
+        public virtual void OnNetworkOpenInventoryRequest(SubsystemEntityBlockBehavior subsystem, Point3 point) { }
+        public virtual void OnNetworkExplosionCell(Dictionary<Point2, List<(Point3, float)>> explosionCells) { }
+        public virtual void OnNetworkExplosionSound(Vector3 position, float pressure, float delay) { }
+        public virtual void OnNetworkFireBlockAdded(int x, int y, int z, float expandability) { }
+        public virtual void OnNetworkFireBlockRemoved(int x, int y, int z) { }
+        public virtual void OnNetworkFurnacesUpdate(SubsystemFurnaceBlockBehavior subsystem, List<ComponentFurnace> furnaces) { }
+        public virtual void OnNetworkTimeUpdate(double totalElapsedGameTime, double timeOfDayOffset) { }
+        public virtual void OnNetworkMemoryBankBlockEdited(SubsystemMemoryBankBlockBehavior subsystem, CellFace cell, MemoryBankData data) { }
+        public virtual void OnNetworkMemoryBankItemEdited(SubsystemMemoryBankBlockBehavior subsystem, int inventoryId, int slotIndex, MemoryBankData data) { }
+        public virtual void OnNetworkMemoryBankDataHarvested(int id, MemoryBankData data) { }
+        public virtual void OnNetworkMovingBlockAdded(IMovingBlockSet movingBlockSet) { }
+        public virtual void OnNetworkMovingBlockRemoved(IMovingBlockSet movingBlockSet, bool isCrash) { }
+        public virtual void OnNetworkPickableCreated(Pickable pickable) { }
+        public virtual void OnNetworkPickableDeleted(Pickable pickable) { }
+        public virtual void OnNetworkPickableRequestSync(int id) { }
+        public virtual void OnNetworkPistonBlockEdited(SubsystemPistonBlockBehavior subsystem, CellFace cell, int data) { }
+        public virtual void OnNetworkPistonItemEdited(SubsystemPistonBlockBehavior subsystem, int inventoryId, int slotIndex, int data) { }
+        public virtual void OnNetworkProjectileFired(Projectile projectile, bool isFireProjectile) { }
+        public virtual void OnNetworkSignEditRequested(SubsystemSignBlockBehavior subsystem, Point3 point) { }
+        public virtual void OnNetworkSignDataChanged(SubsystemSignBlockBehavior subsystem, Point3 point, string[] lines, Color[] colors, string url) { }
+        public virtual void OnNetworkSkyLightning(Vector3 targetPosition) { }
+        public virtual void OnNetworkSwitchBlockVoltageEdited(SubsystemSwitchBlockBehavior subsystem, CellFace cell, int newVoltageLevel) { }
+        public virtual void OnNetworkSwitchItemVoltageEdited(SubsystemSwitchBlockBehavior subsystem, int inventoryId, int slotIndex, int newVoltageLevel) { }
+        public virtual void OnNetworkTerrainCellChanged(SubsystemTerrain subsystem, int x, int y, int z, int value) { }
+        public virtual void OnNetworkTruthTableBlockEdited(SubsystemTruthTableCircuitBlockBehavior subsystem, CellFace cell, TruthTableData data) { }
+        public virtual void OnNetworkTruthTableItemEdited(SubsystemTruthTableCircuitBlockBehavior subsystem, int inventoryId, int slotIndex, TruthTableData data) { }
+        public virtual void OnNetworkTruthTableDataHarvested(int id, TruthTableData data) { }
+        public virtual void OnNetworkFogChanged(double startTime, float rampTime, double endTime) { }
+        public virtual void OnNetworkPrecipitationChanged(double startTime, double endTime, float intensity, float rampTime) { }
+        public virtual void OnNetworkTerrainSyncChunkList(TerrainUpdater updater, int playerIndex, List<TerrainChunk> chunks) { }
+        public virtual void OnNetworkPlayerRestart(PlayerData playerData) { }
+        public virtual void OnNetworkPlayerIntoPlaying() { }
+        public virtual void OnNetworkPlayerCreate(PlayerData playerData) { }
+        public virtual void OnNetworkPlayerModify(PlayerData playerData) { }
+        public virtual void OnNetworkPlayerStateChanged(NetworkState state) { }
+        public virtual void OnNetworkCrossbowPull(IInventory inventory, int slotIndex) { }
+        public virtual void OnNetworkDispenserClicked(Point3 position, byte data) { }
+        public virtual void OnNetworkDragDropItem(IInventory sourceInventory, int sourceSlotIndex, DragMode dragMode, IInventory targetInventory, int targetSlotIndex, bool processingOnly, int dragCount) { }
+        public virtual void OnNetworkMoveItem(IInventory sourceInventory, int sourceSlotIndex, IInventory targetInventory, int targetSlotIndex, int count) { }
+        public virtual void OnNetworkPlayerDragDrop(PlayerData playerData, int inventoryId, int slotIndex, Vector3 worldPos, int count) { }
+        public virtual void OnNetworkChokeRequest(ComponentHealth health, ComponentCreature attacker, float amount, string cause, bool ignoreInvulnerability) { }
+        public virtual void OnNetworkRequestSkin(ComponentClothing clothing, string skinName) { }
+        public virtual void OnNetworkPlayerPlaying(PlayerData playerData) { }
+        public virtual void OnNetworkSleep(ComponentSleep sleep, bool allowManualWakeup) { }
+        public virtual void OnNetworkWakeUp(ComponentSleep sleep) { }
+        public virtual void OnNetworkPlayerBodyUpdate(ComponentPlayer player, bool isMainPlayer) { }
+        public virtual void OnNetworkTerrainPlayerLocationUpdate(TerrainUpdater updater, TerrainUpdater.UpdateLocation location) { }
+        public virtual void OnNetworkBodyUpdate(ComponentBody body, float dt) { }
+        public virtual void OnNetworkBodyRemoved(ComponentBody body) { }
+        public virtual void OnNetworkBodyUpdated(ComponentBody body, float dt) { }
+
+        public virtual void OnNetworkEditableItemDataHarvested<T>(int id, T data) { }
     }
 }

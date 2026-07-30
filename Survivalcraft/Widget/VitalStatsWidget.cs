@@ -5,7 +5,6 @@ using Engine;
 
 namespace Game {
     public class VitalStatsWidget : CanvasWidget {
-        public static event Action<ComponentHealth, ComponentCreature, float, string, bool> OnChokeRequest;
         public ButtonWidget m_chokeButton;
         public LabelWidget m_titleLabel;
         public LinkWidget m_healthLink;
@@ -74,7 +73,7 @@ namespace Game {
                 m_componentPlayer.PlayerData.Name,
                 MathF.Floor(m_componentPlayer.PlayerData.Level),
                 LanguageControl.GetContentWidgets(fName, m_componentPlayer.PlayerData.PlayerClass.ToString())
-            );
+                );
             m_healthValueBar.Value = m_componentPlayer.ComponentHealth.Health;
             m_staminaValueBar.Value = m_componentPlayer.ComponentVitalStats.Stamina;
             m_foodValueBar.Value = m_componentPlayer.ComponentVitalStats.Food;
@@ -197,13 +196,13 @@ namespace Game {
             }
             if (m_chokeButton.IsClicked) {
                 if (NetworkManager.IsClientRunning) {
-                    OnChokeRequest?.Invoke(
+                    ModsManager.HookAction("OnNetworkChokeRequest", loader => loader.OnNetworkChokeRequest(
                         m_componentPlayer.ComponentHealth,
                         null,
                         0.1f,
                         LanguageControl.GetContentWidgets(fName, "Choked"),
                         true
-                    );
+                    ));
                 }
                 else {
                     m_componentPlayer.ComponentHealth.Injure(new SuicideInjury(0.1f));

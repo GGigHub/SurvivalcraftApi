@@ -3,7 +3,6 @@ using Engine;
 
 namespace Game {
     public class ClothingWidget : CanvasWidget {
-        public static event Action<ComponentSleep, bool> OnSleepRequest;
         public GridPanelWidget m_inventoryGrid;
 
         public StackPanelWidget m_clothingStack;
@@ -75,7 +74,7 @@ namespace Game {
             }
             if (m_sleepButton.IsClicked
                 && m_componentPlayer != null) {
-                OnSleepRequest?.Invoke(m_componentPlayer.ComponentSleep, true);
+
                 if (!m_componentPlayer.ComponentSleep.CanSleep(out string reason)) {
                     m_componentPlayer.ComponentGui.DisplaySmallMessage(reason, Color.White, false, false);
                 }

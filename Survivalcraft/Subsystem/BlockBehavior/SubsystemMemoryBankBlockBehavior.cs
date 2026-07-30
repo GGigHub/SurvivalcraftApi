@@ -8,10 +8,6 @@ namespace Game {
 
         public SubsystemMemoryBankBlockBehavior() : base(186) { }
 
-        public static event Action<SubsystemMemoryBankBlockBehavior, int, int, MemoryBankData> OnEditItemData;
-
-        public static event Action<SubsystemMemoryBankBlockBehavior, CellFace, MemoryBankData> OnEditBlockData;
-
         public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer) {
             if (componentPlayer.DragHostWidget.IsDragInProgress) {
                 return false;
@@ -33,7 +29,7 @@ namespace Game {
                                 inventory.RemoveSlotItems(slotIndex, count);
                                 inventory.AddSlotItems(slotIndex, value2, count);
                             }
-                            OnEditItemData?.Invoke(this, inventory.Id, slotIndex, memoryBankData);
+                            ModsManager.HookAction("OnNetworkMemoryBankItemEdited", loader => loader.OnNetworkMemoryBankItemEdited(this, inventory.Id, slotIndex, memoryBankData));
                         }
                     )
                 );
@@ -73,7 +69,7 @@ namespace Game {
                                     subsystemElectricity.QueueElectricElementForSimulation(electricElement, subsystemElectricity.CircuitStep + 1);
                                 }
                             }
-                            OnEditBlockData?.Invoke(this, cell, memoryBankData);
+                            ModsManager.HookAction("OnNetworkMemoryBankBlockEdited", loader => loader.OnNetworkMemoryBankBlockEdited(this, cell, memoryBankData));
                         }
                     )
                 );

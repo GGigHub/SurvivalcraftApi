@@ -47,13 +47,6 @@ namespace Game {
 
         public float m_progress;
         public int PlayerIndex { get; set; }
-
-        public static event Action<PlayerData> OnPlayerPlaying;
-        public static event Action<PlayerData> OnPlayerRestart;
-        public static Action OnPlayerDisconnected;
-        public static event Action<PlayerData> OnPlayerPlayingUpdate;
-        public static event Action<PlayerData> PlayerFirstUpdated;
-
         public bool isSetStatus = false;
 
         public bool IsDead;
@@ -149,7 +142,7 @@ namespace Game {
             ResetName();
             InputDevice = WidgetInputDevice.None;
             m_stateMachine.AddState("FirstUpdate", null, delegate {
-                PlayerFirstUpdated?.Invoke(this);
+
                 if (ComponentPlayer != null) {
                     UpdateSpawnDialog(string.Format(LanguageControl.Get(fName, 4), Name, MathUtils.Floor(Level)), null, 0f, resetProgress: true);
                     m_stateMachine.TransitionTo("WaitForTerrain");
@@ -246,7 +239,7 @@ namespace Game {
                     && m_subsystemUpdate.UpdateTick - m_lastPlayerEntityRequestTick
                         >= GetTicksForSeconds(1.0)) {
                     m_lastPlayerEntityRequestTick = m_subsystemUpdate.UpdateTick;
-                    NetworkManager.Queue(new PlayerEntityRequestPacket(PlayerIndex));
+                    NetworkManager.RequestPlayerEntity(PlayerIndex);
                 }
                 if (ShouldPollPeriodicState()) {
                     if (ComponentPlayer != null) {
@@ -257,7 +250,7 @@ namespace Game {
             m_stateMachine.AddState("Playing", delegate {
                 HideSpawnDialog();
                 if (NetworkManager.IsClientRunning) {
-                    OnPlayerPlaying?.Invoke(this);
+                    ModsManager.HookAction("OnNetworkPlayerPlaying", loader => loader.OnNetworkPlayerPlaying(this));
                 }
                 Log.Verbose($"Player into playing. Index: {0}", PlayerIndex);
             }, delegate {
@@ -273,7 +266,7 @@ namespace Game {
                 else if (ComponentPlayer.ComponentHealth.Health <= 0f) {
                     m_playerDeathTick = m_subsystemUpdate.UpdateTick;
                 }
-                OnPlayerPlayingUpdate?.Invoke(this);
+
             }, null);
             m_stateMachine.AddState("PlayerDead", delegate {
                 isSetStatus = false;
@@ -304,7 +297,7 @@ namespace Game {
                 }
                 else if ((IsMainPlayer && m_playerDeathTick.HasValue && m_subsystemUpdate.UpdateTick - m_playerDeathTick.Value >= GetTicksForSeconds(1.5) && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any) || readyToRestart) {
                     if (NetworkManager.IsClientRunning && IsMainPlayer) {
-                        OnPlayerRestart?.Invoke(this);
+                        ModsManager.HookAction("OnNetworkPlayerRestart", loader => loader.OnNetworkPlayerRestart(this));
                     }
                     IsDead = true;
                     readyToRestart = true;
