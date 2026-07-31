@@ -17,7 +17,7 @@ using XmlUtilities;
 using ZipArchive = Game.ZipArchive;
 public static class ModsManager {
     public static string ModSuffix = ".scmod";
-    public static string APIVersionString = "1.9.2.2";
+    public static string APIVersionString = "1.9.2.3";
     public static string ShortAPIVersionString = "1.9";
     public static NuGetVersion APINuGetVersion = new(1, 9, 2, 2);
     public static string GameVersion = "2.4.0.0";
@@ -66,6 +66,11 @@ public static class ModsManager {
     public static string ConfigsPath { get; } = $"{DocPath}/Configs.xml";
     public static string LogPath { get; } = $"{ExternalPath}/Bugs";
     public static string ModsPath = $"{ExternalPath}/Mods";
+#if ANDROID
+    public static string InternalModsPath => "app:/InternalMods";
+#else
+    public static string InternalModsPath => "app:/InternalMods";
+#endif
     public static bool IsAndroid => OperatingSystem.IsAndroid();
     //public static bool IsAndroid => VersionsManager.Platform == Platform.Android;
 
@@ -419,6 +424,11 @@ public static class ModsManager {
         if (!Storage.DirectoryExists(ModsPath)) {
             Storage.CreateDirectory(ModsPath);
         }
+#if !BROWSER && !ANDROID
+        if (!Storage.DirectoryExists(InternalModsPath)) {
+            Storage.CreateDirectory(InternalModsPath);
+        }
+#endif
         ShaderCache.CacheDirectory = Storage.CombinePaths(DocPath, "ShaderCaches");
         ModHooks.Clear();
         ModListAll.Clear();
@@ -428,6 +438,7 @@ public static class ModsManager {
         SurvivalCraftModEntity = new SurvivalCraftModEntity();
         ModListAll.Add(SurvivalCraftModEntity);
 #if !BROWSER
+        GetScmods(InternalModsPath, true);
         FastDebugModEntity = new FastDebugModEntity();
         ModListAll.Add(FastDebugModEntity);
         GetScmods(ModsPath);
@@ -492,7 +503,10 @@ public static class ModsManager {
     // By Gemini
     public static void SortModListAll() {
         // 1. 基础排序：先单纯按照 LoadOrder 从小到大排
-        List<ModEntity> orderedMods = ModListAll.Where(m => m.modInfo != null).OrderBy(m => m.modInfo.LoadOrder).ToList();
+        List<ModEntity> orderedMods = ModListAll.Where(m => m.modInfo != null)
+            .OrderBy(m => m is SurvivalCraftModEntity ? 0 : m.IsSystemMod ? 1 : 2)
+            .ThenBy(m => m.modInfo.LoadOrder)
+            .ToList();
         // 2. 准备图结构：入度表 (InDegree) 和 邻接表 (AdjList)
         Dictionary<string, int> inDegree = new();
         Dictionary<string, List<string>> adjList = new();
@@ -572,14 +586,15 @@ public static class ModsManager {
     ///     获取所有文件
     /// </summary>
     /// <param name="path">文件路径</param>
-    public static void GetScmods(string path) {
+    /// <param name="isSystemMod">是否将扫描到的模组标记为系统模组</param>
+    public static void GetScmods(string path, bool isSystemMod = false) {
         foreach (string item in Storage.ListFileNames(path)) {
             if (Storage.GetExtension(item).ToLowerInvariant() == ModSuffix) {
                 string filePath = Storage.CombinePaths(path, item);
                 using Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read);
                 try {
                     Stream keepOpenStream = GetDecipherStream(stream);
-                    ModEntity modEntity = new(filePath, ZipArchive.Open(keepOpenStream, true));
+                    ModEntity modEntity = new(filePath, ZipArchive.Open(keepOpenStream, true), isSystemMod);
                     if (modEntity.modInfo == null) {
                         LoadingScreen.Warning(
                             $"The modinfo.json is missing or broken from [{Storage.GetFileName(modEntity.ModFilePath)}], and this mod will be disabled."
@@ -606,7 +621,7 @@ public static class ModsManager {
             }
         }
         foreach (string dir in Storage.ListDirectoryNames(path)) {
-            GetScmods(Storage.CombinePaths(path, dir));
+            GetScmods(Storage.CombinePaths(path, dir), isSystemMod);
         }
     }
 
@@ -1062,23 +1077,27 @@ public static class ModsManager {
     public static string HeadingCode2 = "修改他人mod请获得原作者授权，否则小心出名！";
 
     public static Stream GetDecipherStream(Stream stream) {
+        using MemoryStream sourceStream = new();
+        if (stream.CanSeek) {
+            stream.Position = 0L;
+        }
+        stream.CopyTo(sourceStream);
+        stream.Dispose();
+
+        byte[] buff = sourceStream.ToArray();
         MemoryStream keepOpenStream = new();
-        byte[] buff = new byte[stream.Length];
-        stream.ReadExactly(buff);
         byte[] hc = Encoding.UTF8.GetBytes(HeadingCode);
-        bool decipher = true;
-        for (int i = 0; i < hc.Length; i++) {
+        bool decipher = buff.Length >= hc.Length;
+        for (int i = 0; decipher && i < hc.Length; i++) {
             if (hc[i] != buff[i]) {
                 decipher = false;
-                break;
             }
         }
         byte[] hc2 = Encoding.UTF8.GetBytes(HeadingCode2);
-        bool decipher2 = true;
-        for (int i = 0; i < hc2.Length; i++) {
+        bool decipher2 = buff.Length >= hc2.Length;
+        for (int i = 0; decipher2 && i < hc2.Length; i++) {
             if (hc2[i] != buff[i]) {
                 decipher2 = false;
-                break;
             }
         }
         if (decipher) {
@@ -1108,10 +1127,9 @@ public static class ModsManager {
             keepOpenStream.Flush();
         }
         else {
-            stream.Position = 0L;
-            stream.CopyTo(keepOpenStream);
+            keepOpenStream.Write(buff, 0, buff.Length);
+            keepOpenStream.Flush();
         }
-        stream.Dispose();
         keepOpenStream.Position = 0L;
         return keepOpenStream;
     }

@@ -19,6 +19,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
     }
 
     public static readonly Dictionary<SnapshotKey, PlayerBodySyncSnapshot> s_playerBodySyncSnapshots = [];
+    public static readonly Dictionary<int, Vector3> s_authoritativePlayerPositions = [];
 
     public Vector3 Position;
     public Vector3 Velocity;
@@ -102,6 +103,9 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
         if (!TryResolvePlayer(isServer, out PlayerData playerData) || playerData.ComponentPlayer == null) {
             return;
         }
+        if (isServer) {
+            UpdateAuthoritativePlayerPosition(playerData);
+        }
         ComponentPlayer player = playerData.ComponentPlayer;
         ComponentBody body;
         if (changeFlag.HasFlag(ChangeFlag.ParentBodyChange) && player.ComponentBody.ParentBody != null) {
@@ -166,6 +170,27 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
         }
     }
 
+    private void UpdateAuthoritativePlayerPosition(PlayerData playerData) {
+        ComponentPlayer player = playerData.ComponentPlayer;
+        ComponentBody currentBody = player.ComponentBody.ParentBody ?? player.ComponentBody;
+        Vector3 position = s_authoritativePlayerPositions.TryGetValue(
+            playerData.PlayerIndex,
+            out Vector3 lastPosition
+        ) ? lastPosition : currentBody.Position;
+        if (changeFlag.HasFlag(ChangeFlag.PositionChange)) {
+            position = Position;
+        }
+        s_authoritativePlayerPositions[playerData.PlayerIndex] = position;
+    }
+
+    public static Vector3? GetAuthoritativePlayerPosition(ComponentPlayer player) {
+        if (player?.PlayerData == null
+            || !s_authoritativePlayerPositions.TryGetValue(player.PlayerData.PlayerIndex, out Vector3 position)) {
+            return null;
+        }
+        return position;
+    }
+
     private bool HasRelayableChange() {
         const ChangeFlag relayableChanges =
             ChangeFlag.LookAnglesChange
@@ -213,10 +238,14 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
                 s_playerBodySyncSnapshots.Remove(key);
             }
         }
+        if (session.PlayerIndex >= 0) {
+            s_authoritativePlayerPositions.Remove(session.PlayerIndex);
+        }
     }
 
     public static void ClearSnapshots() {
         s_playerBodySyncSnapshots.Clear();
+        s_authoritativePlayerPositions.Clear();
     }
 }
 

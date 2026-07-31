@@ -27,6 +27,7 @@ public sealed class RelayHost : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
+            ChannelsCount = NetworkChannels.Count,
         };
 
         if (!_netManager.Start()) {
@@ -64,7 +65,7 @@ public sealed class RelayHost : INetEventListener {
             NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToPeer);
             frame.Put(connectionId);
             frame.PutBytesWithLength(chunk.CopyData());
-            _relayPeer?.Send(frame, DeliveryMethod.ReliableOrdered);
+            _relayPeer?.Send(frame, packet.Channel, DeliveryMethod.ReliableOrdered);
         }
     }
 

@@ -124,10 +124,12 @@ namespace Game {
                     }
                 }
             }
-            m_triggerEnableButton.IsEnabled = entity.IsDisabled
-                ? entity.DisableReason == ModDisableReason.Manually
-                : entity.modInfo?.PackageName is not "survivalcraft" and not "fastdebug";
-            m_deleteButton.IsEnabled = entity.modInfo?.PackageName is not "survivalcraft" and not "fastdebug"
+            m_triggerEnableButton.IsEnabled = !entity.IsSystemMod
+                && (entity.IsDisabled
+                    ? entity.DisableReason == ModDisableReason.Manually
+                    : entity.modInfo?.PackageName is not "survivalcraft" and not "fastdebug");
+            m_deleteButton.IsEnabled = !entity.IsSystemMod
+                && entity.modInfo?.PackageName is not "survivalcraft" and not "fastdebug"
                 && !string.IsNullOrEmpty(entity.ModFilePath);
             UpdateTitleAndTriggerEnableButton();
         }

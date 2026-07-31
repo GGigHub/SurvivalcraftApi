@@ -42,7 +42,7 @@
         </None>
         <!-- 来自 https://github.com/mmozeiko/build-angle/releases/tag/2026-01-04 -->
     </ItemGroup>
-    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(DesignTimeBuild)' != 'true' and '$(SkipContentZip)' != 'true'">
         <ZipDirectory SourceDirectory="..\Survivalcraft\Content" DestinationFile="..\Survivalcraft\Content.zip" Overwrite="true" />
     </Target>
   <Import Project="..\build\NetworkMod.targets" />

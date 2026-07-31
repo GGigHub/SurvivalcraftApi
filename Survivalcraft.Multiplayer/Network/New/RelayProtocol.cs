@@ -34,7 +34,7 @@ public enum RelayMessageType : byte {
 public static class RelayProtocol {
     public const uint Magic = 0x5343524C; // SCRL
     public const byte Version = 1;
-    public const string ConnectionKey = "sc-relay-1";
+    public const string ConnectionKey = "x26.08.01";
     public const int MaxPayloadLength = 64 * 1024;
 
     public static NetDataWriter Begin(RelayMessageType type) {

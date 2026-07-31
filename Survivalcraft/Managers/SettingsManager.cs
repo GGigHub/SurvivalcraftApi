@@ -357,8 +357,6 @@ namespace Game {
 
         public static string BulletinTime { get; set; }
 
-        public static string PendingHotUpdateReleaseNotes { get; set; }
-
         public static bool DragHalfInSplit { get; set; }
 
         public static bool ShortInventoryLooping { get; set; }
@@ -632,7 +630,6 @@ namespace Game {
                     : ScreenLayout.TripleHorizontal;
                 ScreenLayout4 = ScreenLayout.Quadruple;
                 BulletinTime = string.Empty;
-                PendingHotUpdateReleaseNotes = string.Empty;
                 ScpboxUserInfo = string.Empty;
                 HorizontalCreativeFlight = true;
                 CreativeDragMaxStacking = true;

@@ -26,8 +26,9 @@ internal enum RelayMessageType : byte { CreateRoom = 1, RoomCreated, JoinRoom, J
 internal static class RelayProtocol {
     public const uint Magic = 0x5343524C;
     public const byte Version = 1;
-    public const string ConnectionKey = "sc-relay-1";
+    public const string ConnectionKey = "x26.08.01";
     public const int MaxPayloadLength = 64 * 1024;
+    public const byte ChannelsCount = 2;
     public static NetDataWriter Begin(RelayMessageType type) { NetDataWriter w = new(); w.Put(Magic); w.Put(Version); w.Put((byte)type); return w; }
     public static bool Read(NetDataReader r, out RelayMessageType type) { type = default; if (r.AvailableBytes < 6 || r.GetUInt() != Magic || r.GetByte() != Version) return false; type = (RelayMessageType)r.GetByte(); return true; }
 }
@@ -51,7 +52,7 @@ internal sealed class RelayServer(RelayCenterOptions centerOptions) : INetEventL
     private DateTime lastRelayHeartbeatUtc = DateTime.MinValue;
     private NetManager? manager;
 
-    public bool Start(int port) { manager = new NetManager(this) { DisconnectTimeout = 15000, UpdateTime = 15, ReuseAddress = true }; return manager.Start(port); }
+    public bool Start(int port) { manager = new NetManager(this) { ChannelsCount = RelayProtocol.ChannelsCount, DisconnectTimeout = 15000, UpdateTime = 15, ReuseAddress = true }; return manager.Start(port); }
     public void PollEvents() {
         DrainMainThreadActions();
         manager?.PollEvents();
@@ -67,8 +68,8 @@ internal sealed class RelayServer(RelayCenterOptions centerOptions) : INetEventL
             switch (type) {
                 case RelayMessageType.CreateRoom: CreateRoom(sender); break;
                 case RelayMessageType.JoinRoom: JoinRoom(sender, reader.GetString(16)); break;
-                case RelayMessageType.DataToHost: ForwardToHost(sender, reader); break;
-                case RelayMessageType.DataToPeer: ForwardToPeer(sender, reader); break;
+                case RelayMessageType.DataToHost: ForwardToHost(sender, reader, channel); break;
+                case RelayMessageType.DataToPeer: ForwardToPeer(sender, reader, channel); break;
                 case RelayMessageType.CloseRoom: Remove(sender); break;
             }
         } catch (Exception ex) { Console.Error.WriteLine($"Rejected frame from {sender.Address}: {ex.Message}"); }
@@ -122,17 +123,17 @@ internal sealed class RelayServer(RelayCenterOptions centerOptions) : INetEventL
         NetDataWriter joined = RelayProtocol.Begin(RelayMessageType.PeerJoined); joined.Put(id); room.Host.Send(joined, DeliveryMethod.ReliableOrdered);
     }
 
-    private void ForwardToHost(NetPeer peer, NetPacketReader reader) {
+    private void ForwardToHost(NetPeer peer, NetPacketReader reader, byte channel) {
         if (!memberships.TryGetValue(peer, out Room? room) || peer == room.Host) return;
         int id = room.Peers.FirstOrDefault(p => p.Value == peer).Key; if (id == 0) return;
         byte[] payload = ReadPayload(reader);
-        NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToHost); frame.Put(id); frame.PutBytesWithLength(payload); room.Host.Send(frame, DeliveryMethod.ReliableOrdered);
+        NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToHost); frame.Put(id); frame.PutBytesWithLength(payload); room.Host.Send(frame, channel, DeliveryMethod.ReliableOrdered);
     }
 
-    private void ForwardToPeer(NetPeer host, NetPacketReader reader) {
+    private void ForwardToPeer(NetPeer host, NetPacketReader reader, byte channel) {
         if (!memberships.TryGetValue(host, out Room? room) || host != room.Host) return;
         int id = reader.GetInt(); byte[] payload = ReadPayload(reader);
-        if (room.Peers.TryGetValue(id, out NetPeer? peer)) { NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToPeer); frame.PutBytesWithLength(payload); peer.Send(frame, DeliveryMethod.ReliableOrdered); }
+        if (room.Peers.TryGetValue(id, out NetPeer? peer)) { NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToPeer); frame.PutBytesWithLength(payload); peer.Send(frame, channel, DeliveryMethod.ReliableOrdered); }
     }
 
     private static byte[] ReadPayload(NetDataReader reader) { byte[] data = reader.GetBytesWithLength(); if (data.Length > RelayProtocol.MaxPayloadLength) throw new InvalidDataException("payload too large"); return data; }

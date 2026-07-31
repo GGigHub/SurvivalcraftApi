@@ -21,6 +21,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
+            ChannelsCount = NetworkChannels.Count,
         };
 
         if (!_netManager.Start()) {
@@ -50,7 +51,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(payload.Data())) {
             NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToHost);
             frame.PutBytesWithLength(chunk.CopyData());
-            _relayPeer?.Send(frame, DeliveryMethod.ReliableOrdered);
+            _relayPeer?.Send(frame, packet.Channel, DeliveryMethod.ReliableOrdered);
         }
     }
 

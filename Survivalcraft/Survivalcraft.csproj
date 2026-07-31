@@ -4,9 +4,6 @@
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-      <Compile Include="ModsManager\HotUpdateManager.cs" />
-    </ItemGroup>
-    <ItemGroup>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj" />
     </ItemGroup>
     <ItemGroup>

@@ -21,6 +21,7 @@ public class NetworkClient : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
+            ChannelsCount = NetworkChannels.Count,
             UnconnectedMessagesEnabled = true,
             ReuseAddress = true
         };
@@ -29,7 +30,7 @@ public class NetworkClient : INetEventListener {
         }
 
         _serverAddress = serverAddress;
-        _netManager.Connect(_serverAddress, "x26.06.01");
+        _netManager.Connect(_serverAddress, "x26.08.01");
 
         Log.Information($"Connecting {_serverAddress}");
     }
@@ -53,7 +54,7 @@ public class NetworkClient : INetEventListener {
         packet.Serialize(new PacketSerializer(writer));
 
         foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
-            _serverPeer?.Send(chunk, DeliveryMethod.ReliableOrdered);
+            _serverPeer?.Send(chunk, packet.Channel, DeliveryMethod.ReliableOrdered);
         }
     }
 

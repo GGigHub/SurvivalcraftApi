@@ -5,6 +5,7 @@ namespace Game.Network;
 public class TerrainChangeCellPacket : Packet {
     public override byte ID => (byte)PacketType.TerrainChangeCell;
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
+    public override byte Channel => NetworkChannels.Terrain;
     public int m_X;
     public byte m_Y;
     public int m_Z;

@@ -17,6 +17,7 @@ public class NetworkServer : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
+            ChannelsCount = NetworkChannels.Count,
             UnconnectedMessagesEnabled = true,
             ReuseAddress = true
         };
@@ -65,14 +66,14 @@ public class NetworkServer : INetEventListener {
             NetPeer peer = ClientSessions.FirstOrDefault(kvp => kvp.Value == session).Key;
             if (peer == null) return;
             foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
-                peer.Send(chunk, DeliveryMethod.ReliableOrdered);
+                peer.Send(chunk, packet.Channel, DeliveryMethod.ReliableOrdered);
             }
         }
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {
         Log.Information($"Connection request by: {request.RemoteEndPoint}");
-        request.AcceptIfKey("x26.06.01");
+        request.AcceptIfKey("x26.08.01");
     }
 
     public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) {

@@ -29,7 +29,13 @@ namespace Game {
 
         public string ResourcesMd5 = string.Empty;
 
-        public virtual bool IsSystemMod => false;
+        /// <summary>
+        ///     是否为随游戏一起加载的系统模组。
+        ///     该标志由模组扫描入口设置，派生类也可以重写此属性。
+        /// </summary>
+        public virtual bool IsSystemMod => IsSystemModFlag;
+
+        internal bool IsSystemModFlag;
 
         public ModEntity() { }
 
@@ -39,8 +45,9 @@ namespace Game {
             InitResources();
         }
 
-        public ModEntity(string FileName, ZipArchive zipArchive) {
+        public ModEntity(string FileName, ZipArchive zipArchive, bool isSystemMod = false) {
             ModFilePath = FileName;
+            IsSystemModFlag = isSystemMod;
             Size = Storage.GetFileSize(FileName);
             ModArchive = zipArchive;
             InitResources();
@@ -183,7 +190,7 @@ namespace Game {
                 return;
             }
             if (string.IsNullOrEmpty(modInfo.PackageName)
-                || (ModsManager.ModListAll.Count >= 2 && (modInfo.PackageName == "survivalcraft" || modInfo.PackageName == "fastdebug"))
+                || (this is not SurvivalCraftModEntity && (modInfo.PackageName == "survivalcraft" || modInfo.PackageName == "fastdebug"))
                 || modInfo.PackageName.Contains(';')
                 || modInfo.PackageName.Contains('\n')) {
                 IsDisabled = true;
@@ -192,13 +199,27 @@ namespace Game {
             }
             ModEntity temp = ModsManager.ModListAll.FirstOrDefault(x => x.modInfo?.PackageName == modInfo.PackageName);
             if (temp != null) {
+                if (temp.IsSystemMod) {
+                    // InternalMods has priority over the user-writable Mods directory.
+                    IsDisabled = true;
+                    DisableReason = ModDisableReason.Duplicated;
+                    return;
+                }
+                if (IsSystemMod && !temp.IsSystemMod) {
+                    // Keep the system mod enabled; the duplicate user mod will be removed
+                    // by ModsManager.Initialize after scanning is complete.
+                    temp.IsDisabled = true;
+                    temp.DisableReason = ModDisableReason.Duplicated;
+                    return;
+                }
                 IsDisabled = true;
                 DisableReason = ModDisableReason.Duplicated;
                 temp.IsDisabled = true;
                 temp.DisableReason = ModDisableReason.Duplicated;
                 return;
             }
-            if (ModsManager.DisabledMods.TryGetValue(modInfo.PackageName, out HashSet<string> disabledVersions)
+            if (!IsSystemMod
+                && ModsManager.DisabledMods.TryGetValue(modInfo.PackageName, out HashSet<string> disabledVersions)
                 && disabledVersions.Contains(modInfo.Version)) {
                 IsDisabled = true;
                 DisableReason = ModDisableReason.Manually;

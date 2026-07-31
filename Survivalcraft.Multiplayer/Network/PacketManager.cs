@@ -10,6 +10,8 @@ public abstract class Packet {
     public abstract void Handle(bool isServer);
     public abstract void Serialize(PacketSerializer archive);
 
+    public virtual byte Channel => NetworkChannels.Default;
+
     public ClientSession From { get; set; } = null;
     public ClientSession To { get; set; } = null;
     public ClientSession Except { get; set; } = null;

@@ -129,7 +129,7 @@ namespace Game {
             PokingPhase = forceRestart ? 0.0001f : MathUtils.Max(0.0001f, PokingPhase);
         }
 
-        public bool Dig(TerrainRaycastResult raycastResult) {
+        public bool Dig(TerrainRaycastResult raycastResult, bool forceComplete = false) {
             bool result = false;
             m_lastDigFrameIndex = Time.FrameIndex;
             CellFace cellFace = raycastResult.CellFace;
@@ -148,9 +148,11 @@ namespace Game {
                 DigCellFaceChanged = true;
             }
             float digTimeWithActiveTool = CalculateDigTime(cellValue, activeBlockValue);
-            m_digProgress = digTimeWithActiveTool > 0f
-                ? MathUtils.Saturate((float)(m_subsystemTime.GameTime - m_digStartTime) / digTimeWithActiveTool)
-                : 1f;
+            m_digProgress = forceComplete
+                ? 1f
+                : digTimeWithActiveTool > 0f
+                    ? MathUtils.Saturate((float)(m_subsystemTime.GameTime - m_digStartTime) / digTimeWithActiveTool)
+                    : 1f;
             if (!IsLevelSufficientForTool(activeBlockValue)) {
                 m_digProgress = 0f;
                 if (m_subsystemTime.PeriodicGameTimeEvent(5.0, m_digStartTime + 1.0)) {
@@ -612,19 +614,21 @@ namespace Game {
         /// <param name="raycastBodies">该射线是否和生物等实体交互，为false时则忽略实体</param>
         /// <param name="raycastMovingBlocks">该射线是否和移动方块交互，为false时则忽略移动方块</param>
         /// <param name="Reach">进行Raycast的距离</param>
+        /// <param name="creaturePositionOverride">用于距离校验的生物位置，未提供时使用玩家当前眼睛位置</param>
         /// <returns></returns>
         public virtual object Raycast(Ray3 ray,
             RaycastMode mode,
             bool raycastTerrain = true,
             bool raycastBodies = true,
             bool raycastMovingBlocks = true,
-            float? Reach = null) {
+            float? Reach = null,
+            Vector3? creaturePositionOverride = null) {
             float reach = m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ? SettingsManager.CreativeReach : 5f;
             if (Reach.HasValue) {
                 reach = Reach.Value;
             }
             reach = Math.Min(reach, SettingsManager.VisibilityRange);
-            Vector3 creaturePosition = ComponentCreature.ComponentCreatureModel.EyePosition;
+            Vector3 creaturePosition = creaturePositionOverride ?? ComponentCreature.ComponentCreatureModel.EyePosition;
             Vector3 start = ray.Position;
             Vector3 direction = Vector3.Normalize(ray.Direction);
             Vector3 end = ray.Position + direction * (reach + 1f);
@@ -704,8 +708,9 @@ namespace Game {
             bool raycastTerrain = true,
             bool raycastBodies = true,
             bool raycastMovingBlocks = true,
-            float? reach = null) where T : struct {
-            object obj = Raycast(ray, mode, raycastTerrain, raycastBodies, raycastMovingBlocks, reach);
+            float? reach = null,
+            Vector3? creaturePositionOverride = null) where T : struct {
+            object obj = Raycast(ray, mode, raycastTerrain, raycastBodies, raycastMovingBlocks, reach, creaturePositionOverride);
             return obj is T obj1 ? obj1 : null;
         }
 

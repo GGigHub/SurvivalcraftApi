@@ -163,10 +163,6 @@ namespace Game {
             bool isLoadSucceed = true;
             Exception exception = null;
             AddLoadAction(
-            delegate {
-                _ = HotUpdateManager.CheckForUpdatesAsync();
-            });
-            AddLoadAction(
                 delegate { // 将所有的有效的scmod读取为ModEntity，并自动添加SurvivalCraftModEntity
                     ContentManager.Initialize();
                     ModsManager.Initialize();
@@ -524,19 +520,19 @@ namespace Game {
             InitScreens();
             AddLoadAction(FileAssociationManager.Initialize);
             AddLoadAction(() => {
-                //NCalc Warmup
-                Expression expression = new NCalc.Expression("[B] && [N] * 1.0 > 0.5");
-                _ = expression.GetParameterNames();
-                expression.Parameters.Add("B", true);
-                expression.Parameters.Add("N", 0.5f);
-                object expressionResult = expression.Evaluate();
-                _ = Convert.ToBoolean(expressionResult);
-            }
+                    //NCalc Warmup
+                    Expression expression = new NCalc.Expression("[B] && [N] * 1.0 > 0.5");
+                    _ = expression.GetParameterNames();
+                    expression.Parameters.Add("B", true);
+                    expression.Parameters.Add("N", 0.5f);
+                    object expressionResult = expression.Evaluate();
+                    _ = Convert.ToBoolean(expressionResult);
+                }
             );
             AddLoadAction(() => {
-                AnimationDriverRegistration.Register();
-                AnimationTemplateRegistration.Register();
-            }
+                    AnimationDriverRegistration.Register();
+                    AnimationTemplateRegistration.Register();
+                }
             );
             AddLoadAction(
                 delegate {

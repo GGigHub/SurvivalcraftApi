@@ -106,9 +106,33 @@ namespace Engine {
             return File.Exists(ProcessPath(path, false, m_isAndroidPlatform));
         }
 
-        public static bool DirectoryExists(string path) => Directory.Exists(ProcessPath(path, false, m_isAndroidPlatform));
+        public static bool DirectoryExists(string path) {
+#if ANDROID
+            string path2 = ProcessPath(path, false, false, out bool isApp);
+            if (isApp) {
+                return EngineActivity.m_activity.ApplicationContext?.Assets?.List(path2) != null;
+            }
+#endif
+            return Directory.Exists(ProcessPath(path, false, m_isAndroidPlatform));
+        }
 
-        public static long GetFileSize(string path) => new FileInfo(ProcessPath(path, false, m_isAndroidPlatform)).Length;
+        public static long GetFileSize(string path) {
+#if ANDROID
+            string path2 = ProcessPath(path, false, false, out bool isApp);
+            if (isApp) {
+                using Stream stream = EngineActivity.m_activity.ApplicationContext?.Assets?.Open(path2)
+                    ?? throw new FileNotFoundException(path);
+                byte[] buffer = new byte[81920];
+                long length = 0L;
+                int read;
+                while ((read = stream.Read(buffer, 0, buffer.Length)) > 0) {
+                    length += read;
+                }
+                return length;
+            }
+#endif
+            return new FileInfo(ProcessPath(path, false, m_isAndroidPlatform)).Length;
+        }
 
         public static DateTime GetFileLastWriteTime(string path) => File.GetLastWriteTimeUtc(ProcessPath(path, false, m_isAndroidPlatform));
 
@@ -166,10 +190,29 @@ namespace Engine {
             Directory.Delete(ProcessPath(path, true, m_isAndroidPlatform), recursive);
         }
 
-        public static IEnumerable<string> ListFileNames(string path) =>
-            from s in Directory.EnumerateFiles(ProcessPath(path, false, m_isAndroidPlatform)) select Path.GetFileName(s);
+        public static IEnumerable<string> ListFileNames(string path) {
+#if ANDROID
+            string path2 = ProcessPath(path, false, false, out bool isApp);
+            if (isApp) {
+                string[] assetNames = EngineActivity.m_activity.ApplicationContext?.Assets?.List(path2) ?? [];
+                return from s in assetNames
+                       where IsAndroidAssetFile(CombinePaths(path2, s))
+                       select s;
+            }
+#endif
+            return from s in Directory.EnumerateFiles(ProcessPath(path, false, m_isAndroidPlatform)) select Path.GetFileName(s);
+        }
 
         public static IEnumerable<string> ListDirectoryNames(string path) {
+#if ANDROID
+            string path2 = ProcessPath(path, false, false, out bool isApp);
+            if (isApp) {
+                string[] assetNames = EngineActivity.m_activity.ApplicationContext?.Assets?.List(path2) ?? [];
+                return from s in assetNames
+                       where s != ".__override__" && !IsAndroidAssetFile(CombinePaths(path2, s))
+                       select s;
+            }
+#endif
             return from s in Directory.EnumerateDirectories(ProcessPath(path, false, m_isAndroidPlatform))
 #if ANDROID
                 select Path.GetFileName(s)
@@ -263,6 +306,16 @@ namespace Engine {
             CombinePaths(GetDirectoryName(path), GetFileNameWithoutExtension(path)) + extension;
 
 #if ANDROID
+        private static bool IsAndroidAssetFile(string path) {
+            try {
+                using Stream stream = EngineActivity.m_activity.ApplicationContext?.Assets?.Open(path);
+                return stream != null;
+            }
+            catch {
+                return false;
+            }
+        }
+
         public static string ProcessPath(string path, bool writeAccess, bool failIfApp) => ProcessPath(path, writeAccess, failIfApp, out _);
         public static string ProcessPath(string path, bool writeAccess, bool failIfApp, out bool isApp) {
             ArgumentNullException.ThrowIfNull(path);

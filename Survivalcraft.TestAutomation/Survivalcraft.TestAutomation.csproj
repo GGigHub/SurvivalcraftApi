@@ -21,6 +21,7 @@
     </ProjectReference>
     <ProjectReference Include="..\Survivalcraft.Windows\Survivalcraft.Windows.csproj">
       <Private>false</Private>
+      <AdditionalProperties>SkipContentZip=true</AdditionalProperties>
     </ProjectReference>
   </ItemGroup>
 

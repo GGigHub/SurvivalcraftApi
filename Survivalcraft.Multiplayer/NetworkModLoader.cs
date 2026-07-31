@@ -161,6 +161,7 @@ namespace Survivalcraft.Multiplayer {
                 CenterServerClient.ResolveRelayJoinInfoAsync(globalCode);
             NetworkManager.CreateTerrainSerializerNetFunc = () =>
                 new TerrainSerializerNet();
+            NetworkManager.AuthoritativePlayerPositionFunc = PlayerBodyUpdatePacket.GetAuthoritativePlayerPosition;
             NetworkManager.SavePlayerEntityAction = (player, networkGuid) =>
                 player.Project?.FindSubsystem<SubsystemNetwork>()?.SavePlayerEntity(player, networkGuid);
 

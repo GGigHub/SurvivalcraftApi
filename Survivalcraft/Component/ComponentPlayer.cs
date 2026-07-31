@@ -244,7 +244,17 @@ namespace Game {
 
         TerrainRaycastResult? RaycastAuthoritativeTerrain(Ray3 requestedRay, RaycastMode mode) {
             Vector3 direction = requestedRay.Direction == Vector3.Zero ? ComponentBody.Matrix.Forward : requestedRay.Direction;
-            return ComponentMiner.Raycast<TerrainRaycastResult>(new Ray3(ComponentCreatureModel.EyePosition, direction), mode);
+            Vector3 eyePosition = ComponentCreatureModel.EyePosition;
+            Vector3? authoritativePosition = NetworkManager.GetAuthoritativePlayerPosition(this);
+            if (authoritativePosition.HasValue) {
+                ComponentBody referenceBody = ComponentBody.ParentBody ?? ComponentBody;
+                eyePosition = authoritativePosition.Value + (eyePosition - referenceBody.Position);
+            }
+            return ComponentMiner.Raycast<TerrainRaycastResult>(
+                new Ray3(eyePosition, direction),
+                mode,
+                creaturePositionOverride: eyePosition
+            );
         }
 
         public virtual void Update(float dt) {
@@ -397,9 +407,8 @@ namespace Game {
                 }
                 else if (digEvent.digEvent == DigEvent.End) {
                     if (NetworkManager.IsServerRunning && digEvent.NetDigRay.HasValue) {
-                        ComponentMiner.m_digProgress = 1f;
                         TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(digEvent.NetDigRay.Value, RaycastMode.Digging);
-                        if (raycast.HasValue) ComponentMiner.Dig(raycast.Value);
+                        if (raycast.HasValue) ComponentMiner.Dig(raycast.Value, forceComplete: true);
                     }
                     digEvent = default;
                     digEvent.NetDigRaycast = null;

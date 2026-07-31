@@ -6,6 +6,8 @@ using Engine;
 namespace Game.Network;
 
 public abstract class TerrainPacketBase : Packet {
+    public override byte Channel => NetworkChannels.Terrain;
+
     public class TerrainChunkSyncData {
         public Point2 Coords;
         public List<CellValueChange> CellChanges = [];

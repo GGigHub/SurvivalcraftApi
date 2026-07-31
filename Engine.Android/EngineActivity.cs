@@ -35,7 +35,6 @@ namespace Engine {
 
         public static string BasePath = RunPath.AndroidFilePath;
         public static string ConfigPath = RunPath.AndroidFilePath;
-        public static Dictionary<string, string> StartupParameters;
 
         const int PickFileRequestCode = 1001;
         TaskCompletionSource<(System.IO.Stream Stream, string FileName)> filePickTcs;
