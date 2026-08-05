@@ -7,9 +7,11 @@ public static class NetworkBodyInterpolation {
     public const double RemoteBodyDelay = 0.5;
     public const double DefaultSnapshotInterval = 0.2;
     public const double MaxExtrapolationTime = 0.5;
+    public const double MaxServerPredictionTime = 0.35;
     public const double MaxBufferedTime = 2.0;
     public const int MaxSnapshots = 150;
     public const float SnapDistanceSquared = 16f;
+    public const float ServerCorrectionRate = 12f;
     public const float CatchUpSpeed = 1.15f;
     public const float MaxPlaybackStep = 0.25f;
 
@@ -25,6 +27,15 @@ public static class NetworkBodyInterpolation {
         public double PlaybackTime;
         public bool HasPlaybackTime;
         public readonly List<BodySnapshot> Snapshots = [];
+
+        // Server-side movement uses the latest received state directly and
+        // predicts forward from it. These fields are intentionally separate
+        // from the client-side delayed snapshot queue below.
+        public bool HasServerTarget;
+        public double ServerTargetReceiveTime;
+        public Vector3 ServerTargetPosition;
+        public Quaternion ServerTargetRotation;
+        public Vector3 ServerTargetVelocity;
     }
 
     public static readonly Dictionary<ComponentBody, BodyInterpolationState> s_states = [];
@@ -120,6 +131,65 @@ public static class NetworkBodyInterpolation {
             latest.Position += latest.Velocity * (float)extrapolationTime;
         }
         ApplySnapshot(body, latest);
+    }
+
+    public static void PushServerSnapshot(
+        ComponentBody body,
+        bool positionChanged,
+        Vector3 position,
+        bool rotationChanged,
+        Quaternion rotation,
+        bool velocityChanged,
+        Vector3 velocity) {
+        if (body == null) {
+            return;
+        }
+
+        BodyInterpolationState state = GetOrCreateState(body, 0.0);
+        if (!state.HasServerTarget) {
+            state.ServerTargetPosition = body.Position;
+            state.ServerTargetRotation = body.Rotation;
+            state.ServerTargetVelocity = body.Velocity;
+            state.HasServerTarget = true;
+        }
+        if (positionChanged) {
+            state.ServerTargetPosition = position;
+        }
+        if (rotationChanged) {
+            state.ServerTargetRotation = rotation;
+        }
+        if (velocityChanged) {
+            state.ServerTargetVelocity = velocity;
+        }
+        state.ServerTargetReceiveTime = Engine.Time.RealTime;
+    }
+
+    public static void UpdateServer(ComponentBody body, float dt) {
+        if (body == null
+            || !s_states.TryGetValue(body, out BodyInterpolationState state)
+            || !state.HasServerTarget) {
+            return;
+        }
+
+        double elapsed = MathUtils.Max(0.0, Engine.Time.RealTime - state.ServerTargetReceiveTime);
+        float predictionTime = (float)MathUtils.Min(elapsed, MaxServerPredictionTime);
+        Vector3 predictedPosition = state.ServerTargetPosition + state.ServerTargetVelocity * predictionTime;
+        Vector3 error = predictedPosition - body.Position;
+        float factor = 1f - MathF.Exp(-ServerCorrectionRate * dt);
+
+        if (error.LengthSquared() > SnapDistanceSquared) {
+            body.Position = predictedPosition;
+            body.Rotation = state.ServerTargetRotation;
+            body.Velocity = state.ServerTargetVelocity;
+            return;
+        }
+
+        body.Position += error * factor;
+        body.Rotation = Quaternion.Slerp(body.Rotation, state.ServerTargetRotation, factor);
+        Vector3 desiredVelocity = elapsed <= MaxServerPredictionTime
+            ? state.ServerTargetVelocity
+            : Vector3.Zero;
+        body.Velocity = Vector3.Lerp(body.Velocity, desiredVelocity, factor);
     }
 
     public static double AdvancePlaybackTime(BodyInterpolationState state, float dt) {

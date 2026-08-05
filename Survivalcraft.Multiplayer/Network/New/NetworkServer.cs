@@ -118,7 +118,7 @@ public class NetworkServer : INetEventListener {
         }
 
         ClientSessions.Remove(peer);
-        session.NetworkState = NetworkState.NotConnected;
+        session?.NetworkState = NetworkState.NotConnected;
 
         if (!_disconnectByUser) {
             Log.Information($"Disconnected: {peer}, {disconnectInfo}");

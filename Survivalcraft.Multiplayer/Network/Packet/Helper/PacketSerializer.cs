@@ -180,18 +180,28 @@ public sealed class PacketSerializer {
         }
     }
 
-    public void Buffer(ref byte[] value) {
+    public void Buffer(ref byte[] value) => Buffer(ref value, int.MaxValue);
+
+    public void Buffer(ref byte[] value, int maxBytes) {
         if (IsWriting) {
             byte[] buff = value ?? [];
+            if (buff.Length > maxBytes) {
+                throw new InvalidDataException($"Buffer exceeds maximum size: {buff.Length} > {maxBytes}");
+            }
             m_writer.Write(buff.Length);
             m_writer.Write(buff);
         }
         else {
             int buffSize = m_reader.ReadInt32();
+            if (buffSize < 0 || buffSize > maxBytes) {
+                throw new InvalidDataException($"Buffer exceeds maximum size: {buffSize} > {maxBytes}");
+            }
             value = m_reader.ReadBytes(buffSize);
+            if (value.Length != buffSize) {
+                throw new InvalidDataException("Unexpected end of buffer");
+            }
         }
     }
-
     public void Value(ref Matrix? value) {
         if (IsWriting) {
             m_writer.Write(value.HasValue);

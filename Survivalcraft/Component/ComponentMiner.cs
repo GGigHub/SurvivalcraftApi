@@ -204,7 +204,7 @@ namespace Game {
                     m_lastToolHintTime = Time.FrameStartTime;
                 }
             }
-            if (flag2 || (m_lastPokingPhase <= 0.5f && PokingPhase > 0.5f)) {
+            if (forceComplete || flag2 || (m_lastPokingPhase <= 0.5f && PokingPhase > 0.5f)) {
                 if (m_digProgress >= 1f) {
                     DigCellFace = null;
                     if (flag2) {
@@ -253,6 +253,62 @@ namespace Game {
                 }
             }
             return result;
+        }
+
+        /// <summary>
+        /// Completes a server-side dig using an already validated absolute cell
+        /// coordinate. This path is used when the client ray no longer matches
+        /// the server's interpolated player position.
+        /// </summary>
+        public bool DigAtCell(CellFace cellFace, int newValue) {
+            m_lastDigFrameIndex = Time.FrameIndex;
+            int cellValue = m_subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
+            int cellContents = Terrain.ExtractContents(cellValue);
+            if (cellContents == 0) {
+                return false;
+            }
+
+            int activeBlockValue = ActiveBlockValue;
+            Block activeBlock = BlocksManager.Blocks[Terrain.ExtractContents(activeBlockValue)];
+            if (!IsLevelSufficientForTool(activeBlockValue)) {
+                return false;
+            }
+
+            DigCellFace = null;
+            BlockPlacementData digValue = new() {
+                CellFace = cellFace,
+                Value = newValue
+            };
+            m_subsystemTerrain.DestroyCell(
+                activeBlock.GetToolLevel(activeBlockValue),
+                cellFace.X,
+                cellFace.Y,
+                cellFace.Z,
+                digValue.Value,
+                false,
+                false
+            );
+
+            int durabilityReduction = 1;
+            int playerDataAdd = 1;
+            bool mute_ = false;
+            ModsManager.HookAction(
+                "OnBlockDug",
+                modLoader => {
+                    bool mute = false;
+                    modLoader.OnBlockDug(this, digValue, cellValue, ref durabilityReduction, ref mute, ref playerDataAdd);
+                    mute_ |= mute;
+                    return false;
+                }
+            );
+            if (!mute_) {
+                m_subsystemSoundMaterials.PlayImpactSound(cellValue, new Vector3(cellFace.X, cellFace.Y, cellFace.Z), 2f);
+            }
+            DamageActiveTool(durabilityReduction);
+            if (ComponentCreature.PlayerStats != null) {
+                ComponentCreature.PlayerStats.BlocksDug += playerDataAdd;
+            }
+            return true;
         }
 
         public bool Place(TerrainRaycastResult raycastResult) {
@@ -458,10 +514,7 @@ namespace Game {
             return false;
         }
 
-        public void Hit(ComponentBody componentBody, Vector3 hitPoint, Vector3 hitDirection, bool predictionOnly = false, bool showHitValue = true) {
-            if (NetworkManager.IsClientRunning) {
-                predictionOnly = true;
-            }
+        public void Hit(ComponentBody componentBody, Vector3 hitPoint, Vector3 hitDirection) {
             double hitInterval = HitInterval;
             ModsManager.HookAction(
                 "SetHitInterval",
@@ -538,18 +591,10 @@ namespace Game {
                         return false;
                     }
                 );
-                if (predictionOnly) {
-                    attackment.EnableTargetDamage = false;
-                    attackment.EnableAttackedEvent = false;
-                    attackment.EnableArmorProtection = false;
-                }
-                attackment.EnableHitValueParticleSystem = showHitValue;
                 AttackBody(attackment);
-                if (!predictionOnly) {
-                    DamageActiveTool(durabilityReduction);
-                }
+                DamageActiveTool(durabilityReduction);
             }
-            else if (ComponentCreature is ComponentPlayer && showHitValue) {
+            else if (ComponentCreature is ComponentPlayer) {
                 HitValueParticleSystem particleSystem = new(
                     hitPoint + 0.75f * hitDirection,
                     1f * hitDirection + ComponentCreature.ComponentBody.Velocity,
@@ -568,7 +613,7 @@ namespace Game {
                 );
                 Project.FindSubsystem<SubsystemParticles>(true).AddParticleSystem(particleSystem);
             }
-            if (!predictionOnly && ComponentCreature.PlayerStats != null) {
+            if (ComponentCreature.PlayerStats != null) {
                 ComponentCreature.PlayerStats.MeleeAttacks++;
                 if (flag) {
                     ComponentCreature.PlayerStats.MeleeHits++;
@@ -614,21 +659,19 @@ namespace Game {
         /// <param name="raycastBodies">该射线是否和生物等实体交互，为false时则忽略实体</param>
         /// <param name="raycastMovingBlocks">该射线是否和移动方块交互，为false时则忽略移动方块</param>
         /// <param name="Reach">进行Raycast的距离</param>
-        /// <param name="creaturePositionOverride">用于距离校验的生物位置，未提供时使用玩家当前眼睛位置</param>
         /// <returns></returns>
         public virtual object Raycast(Ray3 ray,
             RaycastMode mode,
             bool raycastTerrain = true,
             bool raycastBodies = true,
             bool raycastMovingBlocks = true,
-            float? Reach = null,
-            Vector3? creaturePositionOverride = null) {
+            float? Reach = null) {
             float reach = m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ? SettingsManager.CreativeReach : 5f;
             if (Reach.HasValue) {
                 reach = Reach.Value;
             }
             reach = Math.Min(reach, SettingsManager.VisibilityRange);
-            Vector3 creaturePosition = creaturePositionOverride ?? ComponentCreature.ComponentCreatureModel.EyePosition;
+            Vector3 creaturePosition = ComponentCreature.ComponentCreatureModel.EyePosition;
             Vector3 start = ray.Position;
             Vector3 direction = Vector3.Normalize(ray.Direction);
             Vector3 end = ray.Position + direction * (reach + 1f);
@@ -708,9 +751,8 @@ namespace Game {
             bool raycastTerrain = true,
             bool raycastBodies = true,
             bool raycastMovingBlocks = true,
-            float? reach = null,
-            Vector3? creaturePositionOverride = null) where T : struct {
-            object obj = Raycast(ray, mode, raycastTerrain, raycastBodies, raycastMovingBlocks, reach, creaturePositionOverride);
+            float? reach = null) where T : struct {
+            object obj = Raycast(ray, mode, raycastTerrain, raycastBodies, raycastMovingBlocks, reach);
             return obj is T obj1 ? obj1 : null;
         }
 

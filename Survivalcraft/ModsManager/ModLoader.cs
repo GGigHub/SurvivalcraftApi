@@ -2196,7 +2196,6 @@ namespace Game {
         // 联机模组专用modloader
         public virtual bool IsNetworkMode(ComponentBody body) => false;
         public virtual void OnNetworkChaseBehaviorAttackChanged(ComponentChaseBehavior behavior, bool isAttack) { }
-        public virtual void OnNetworkCreatureSound(ComponentCreatureSounds sounds, byte type, bool skipIfRecentlyPlayed) { }
         public virtual void OnNetworkDamage(ComponentDamage damage) { }
         public virtual void OnNetworkDigInMudBehaviorChanged(ComponentDigInMudBehavior behavior, bool isDigIn) { }
         public virtual void OnNetworkEatPickableBehaviorChanged(ComponentEatPickableBehavior behavior, bool isFeed) { }
@@ -2245,8 +2244,7 @@ namespace Game {
         public virtual void OnNetworkButtonItemVoltageEdited(SubsystemButtonBlockBehavior subsystem, int inventoryId, int slotIndex, int newVoltageLevel) { }
         public virtual void OnNetworkElectricityPersistentVoltageChanged(SubsystemElectricity subsystem, List<SubsystemElectricity.NetSimulate> list) { }
         public virtual void OnNetworkOpenInventoryRequest(SubsystemEntityBlockBehavior subsystem, Point3 point) { }
-        public virtual void OnNetworkExplosionCell(Dictionary<Point2, List<(Point3, float)>> explosionCells) { }
-        public virtual void OnNetworkExplosionSound(Vector3 position, float pressure, float delay) { }
+        public virtual void OnNetworkExplosion(Dictionary<Point2, List<(Point3, float)>> explosionCells, Vector3 position, float pressure, bool playExplosionSound) { }
         public virtual void OnNetworkFireBlockAdded(int x, int y, int z, float expandability) { }
         public virtual void OnNetworkFireBlockRemoved(int x, int y, int z) { }
         public virtual void OnNetworkFurnacesUpdate(SubsystemFurnaceBlockBehavior subsystem, List<ComponentFurnace> furnaces) { }
@@ -2256,6 +2254,7 @@ namespace Game {
         public virtual void OnNetworkMemoryBankDataHarvested(int id, MemoryBankData data) { }
         public virtual void OnNetworkMovingBlockAdded(IMovingBlockSet movingBlockSet) { }
         public virtual void OnNetworkMovingBlockRemoved(IMovingBlockSet movingBlockSet, bool isCrash) { }
+        public virtual void OnNetworkFurnitureHammerRequest(FurnitureDesign design, CellFace start) { }
         public virtual void OnNetworkPickableCreated(Pickable pickable) { }
         public virtual void OnNetworkPickableDeleted(Pickable pickable) { }
         public virtual void OnNetworkPickableRequestSync(int id) { }

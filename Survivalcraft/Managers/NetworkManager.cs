@@ -42,7 +42,6 @@ public static class NetworkManager {
     public static Func<string> RelayRoomCodeFunc { get; set; }
     public static Func<string, Task<RelayJoinInfo>> ResolveRelayJoinInfoAsyncFunc { get; set; }
     public static Func<TerrainSerializer23> CreateTerrainSerializerNetFunc { get; set; }
-    public static Func<ComponentPlayer, Vector3?> AuthoritativePlayerPositionFunc { get; set; }
 
     public static Action InitializeAction { get; set; }
     public static Action UpdateAction { get; set; }
@@ -123,10 +122,6 @@ public static class NetworkManager {
 
     public static TerrainSerializer23 CreateTerrainSerializerNet() {
         return CreateTerrainSerializerNetFunc?.Invoke();
-    }
-
-    public static Vector3? GetAuthoritativePlayerPosition(ComponentPlayer player) {
-        return AuthoritativePlayerPositionFunc?.Invoke(player);
     }
 
     public static async Task<RelayJoinInfo> ResolveRelayJoinInfoAsync(string globalCode) {

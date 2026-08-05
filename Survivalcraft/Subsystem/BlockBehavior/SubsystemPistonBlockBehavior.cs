@@ -518,7 +518,8 @@ namespace Game {
             int num = p.X * point2.X + p.Y * point2.Y + p.Z * point2.Z;
             int num2 = point.X * point2.X + point.Y * point2.Y + point.Z * point2.Z;
             if (num > num2) {
-                if (IsBlockBlocking(SubsystemTerrain.Terrain.GetCellValue(p.X, p.Y, p.Z))) {
+                int collidedCellValue = SubsystemTerrain.Terrain.GetCellValue(p.X, p.Y, p.Z);
+                if (IsBlockBlocking(collidedCellValue)) {
                     movingBlockSet.Stop();
                 }
                 else {
@@ -529,7 +530,7 @@ namespace Game {
                         p.Z,
                         0,
                         false,
-                        false
+                        IsFluidBlock(collidedCellValue)
                     );
                 }
             }
@@ -557,6 +558,8 @@ namespace Game {
         }
 
         public static bool IsBlockBlocking(int value) => BlocksManager.Blocks[Terrain.ExtractContents(value)].IsBlockingPiston(value);
+
+        public static bool IsFluidBlock(int value) => BlocksManager.FluidBlocks[Terrain.ExtractContents(value)] != null;
     }
 }
 

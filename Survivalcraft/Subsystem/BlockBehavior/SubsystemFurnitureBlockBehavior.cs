@@ -229,79 +229,32 @@ namespace Game {
                 design,
                 furnitureDesign,
                 delegate (bool result) {
-                    if (result) {
-                        design = TryAddDesign(design);
-                        if (design == null) {
-                            componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageControl.Get(fName, 3), Color.White, true, false);
-                        }
-                        else {
-                            bool destroyDesignBlocks = m_subsystemGameInfo.WorldSettings.GameMode != 0;
-                            int value = Terrain.MakeBlockValue(
-                                227,
-                                0,
-                                FurnitureBlock.SetDesignIndex(0, design.Index, design.ShadowStrengthFactor, design.IsLightEmitter)
-                            );
-                            int num3 = Math.Clamp(design.Resolution, 4, 8);
-                            Matrix matrix = componentMiner.ComponentCreature.ComponentBody.Matrix;
-                            Vector3 position = matrix.Translation + 1f * matrix.Forward + 1f * Vector3.UnitY;
-                            int toolDamageCount = 1;
-                            ModsManager.HookAction(
-                                "OnFurnitureDesigned",
-                                modLoader => {
-                                    modLoader.OnFurnitureDesigned(
-                                        design,
-                                        designedFromExistingFurniture,
-                                        ref num3,
-                                        ref destroyDesignBlocks,
-                                        ref toolDamageCount
-                                    );
-                                    return false;
-                                }
-                            );
-                            Block block = BlocksManager.Blocks[Terrain.ExtractContents(componentMiner.ActiveBlockValue)];
-                            int durabilityRemains = block.GetDurability(componentMiner.ActiveBlockValue)
-                                - block.GetDamage(componentMiner.ActiveBlockValue)
-                                + 1;
-                            if (durabilityRemains < toolDamageCount) {
-                                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                    LanguageControl.Get(fName, 5),
-                                    Color.White,
-                                    true,
-                                    false
-                                );
-                            }
-                            else {
-                                componentMiner.DamageActiveTool(toolDamageCount);
-                                if (destroyDesignBlocks) {
-                                    foreach (KeyValuePair<Point3, int> item2 in valuesDictionary) {
-                                        SubsystemTerrain.DestroyCell(
-                                            0,
-                                            item2.Key.X,
-                                            item2.Key.Y,
-                                            item2.Key.Z,
-                                            0,
-                                            true,
-                                            true
-                                        );
-                                    }
-                                }
-                                m_subsystemPickables.AddPickable(value, num3, position, null, null);
-                                componentMiner.Poke(false);
-                                for (int i = 0; i < 3; i++) {
-                                    Time.QueueTimeDelayedExecution(
-                                        Time.FrameStartTime + i * 0.25f,
-                                        delegate { m_subsystemSoundMaterials.PlayImpactSound(startValue, new Vector3(start.Point), 1f); }
-                                    );
-                                }
-                                if (componentMiner.ComponentCreature.PlayerStats != null) {
-                                    componentMiner.ComponentCreature.PlayerStats.FurnitureItemsMade += num3;
-                                }
-                            }
-                            if (!NetworkManager.IsClientRunning) {
-                                CreateDesign(componentMiner, design, valuesDictionary, start, startValue);
-                            }
-                        }
+                    if (!result) {
+                        return;
                     }
+                    if (NetworkManager.IsClientRunning) {
+                        ModsManager.HookAction(
+                            "OnNetworkFurnitureHammerRequest",
+                            modLoader => {
+                                modLoader.OnNetworkFurnitureHammerRequest(design, start);
+                                return false;
+                            }
+                        );
+                        return;
+                    }
+                    FurnitureDesign registeredDesign = TryAddDesign(design);
+                    if (registeredDesign == null) {
+                        componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageControl.Get(fName, 3), Color.White, true, false);
+                        return;
+                    }
+                    CommitFurnitureHammer(
+                        componentMiner,
+                        registeredDesign,
+                        valuesDictionary,
+                        start,
+                        startValue,
+                        designedFromExistingFurniture
+                    );
                 }
             );
             if (componentMiner.ComponentPlayer != null) {
@@ -392,6 +345,322 @@ namespace Game {
             }
         }
 
+        public const int MaxNetworkFurnitureDesignDataLength = 256 * 1024;
+
+        public const int MaxNetworkFurnitureResolution = 64;
+
+        public static bool TryDeserializeNetworkDesign(
+            byte[] data,
+            SubsystemTerrain subsystemTerrain,
+            out FurnitureDesign design,
+            out string error
+        ) {
+            design = null;
+            error = null;
+            if (data == null || data.Length == 0 || data.Length > MaxNetworkFurnitureDesignDataLength) {
+                error = "家具设计数据无效";
+                return false;
+            }
+            try {
+                ValuesDictionary source = new();
+                source.ApplyOverridesUseMessagePack(data);
+                int resolution = source.GetValue<int>("Resolution");
+                if (resolution < FurnitureDesign.MinResolution || resolution > MaxNetworkFurnitureResolution) {
+                    error = "家具设计分辨率超出网络限制";
+                    return false;
+                }
+                string name = source.GetValue("Name", string.Empty);
+                if (!string.IsNullOrEmpty(name)
+                    && (name.Length > 20 || name[0] == ' ' || name[^1] == ' ')) {
+                    error = "家具设计名称无效";
+                    return false;
+                }
+                FurnitureInteractionMode interactionMode = source.GetValue<FurnitureInteractionMode>("InteractionMode");
+                if (!Enum.IsDefined(typeof(FurnitureInteractionMode), interactionMode)) {
+                    error = "家具交互模式无效";
+                    return false;
+                }
+                string values = source.GetValue<string>("Values");
+                if (string.IsNullOrEmpty(values)) {
+                    error = "家具设计为空";
+                    return false;
+                }
+                int expectedCount = checked(resolution * resolution * resolution);
+                int valueCount = 0;
+                bool hasSolidValue = false;
+                foreach (string run in values.Split([','], StringSplitOptions.RemoveEmptyEntries)) {
+                    string[] parts = run.Split(['*'], StringSplitOptions.None);
+                    if (parts.Length != 2
+                        || !int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int runLength)
+                        || !int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int value)
+                        || runLength <= 0) {
+                        error = "家具设计数据格式无效";
+                        return false;
+                    }
+                    valueCount = checked(valueCount + runLength);
+                    if (valueCount > expectedCount) {
+                        error = "家具设计数据过大";
+                        return false;
+                    }
+                    if (value != 0) {
+                        int contents = Terrain.ExtractContents(value);
+                        if (contents < 0
+                            || contents >= BlocksManager.Blocks.Length
+                            || BlocksManager.Blocks[contents] == null
+                            || !IsValueAllowed(value)) {
+                            error = "家具设计包含不可用方块";
+                            return false;
+                        }
+                        hasSolidValue = true;
+                    }
+                }
+                if (valueCount != expectedCount || !hasSolidValue) {
+                    error = "家具设计数据不完整";
+                    return false;
+                }
+                ValuesDictionary sanitized = new();
+                if (!string.IsNullOrEmpty(name)) {
+                    sanitized.SetValue("Name", name);
+                }
+                sanitized.SetValue("TerrainUseCount", 0);
+                sanitized.SetValue("Resolution", resolution);
+                sanitized.SetValue("InteractionMode", interactionMode);
+                sanitized.SetValue("Values", values);
+                design = new FurnitureDesign(-1, subsystemTerrain, sanitized);
+                return true;
+            }
+            catch (Exception ex) {
+                error = "家具设计数据无效";
+                Log.Warning($"Rejected network furniture design: {ex.Message}");
+                return false;
+            }
+        }
+        public bool TryPrepareNetworkFurnitureHammer(
+            ComponentPlayer player,
+            FurnitureDesign requestedDesign,
+            CellFace start,
+            out FurnitureDesign design,
+            out Dictionary<Point3, int> valuesDictionary,
+            out int startValue,
+            out string error
+        ) {
+            design = null;
+            valuesDictionary = new();
+            startValue = 0;
+            error = null;
+            if (player?.ComponentMiner == null || requestedDesign == null) {
+                error = "家具锤请求无效";
+                return false;
+            }
+            if (start.Face < 0 || start.Face > 5 || !SubsystemTerrain.Terrain.IsCellValid(start.X, start.Y, start.Z)) {
+                error = "家具锤目标无效";
+                return false;
+            }
+            int activeBlockValue = player.ComponentMiner.ActiveBlockValue;
+            int activeContents = Terrain.ExtractContents(activeBlockValue);
+            if (activeContents < 0
+                || activeContents >= BlocksManager.Blocks.Length
+                || BlocksManager.Blocks[activeContents] is not HammerBlock activeHammer) {
+                error = "玩家当前未装备家具锤";
+                return false;
+            }
+            int durabilityRemains = activeHammer.GetDurability(activeBlockValue)
+                - activeHammer.GetDamage(activeBlockValue)
+                + 1;
+            if (durabilityRemains < 1) {
+                error = LanguageControl.Get(fName, 5);
+                return false;
+            }
+            float reach = m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
+                ? SettingsManager.CreativeReach
+                : 5f;
+            reach = Math.Min(reach, SettingsManager.VisibilityRange);
+            Vector3 eyePosition = player.ComponentCreatureModel.EyePosition;
+            Vector3 targetPosition = new Vector3(start.Point) + new Vector3(0.5f);
+            if (Vector3.DistanceSquared(eyePosition, targetPosition) > (reach + 1f) * (reach + 1f)) {
+                error = "家具锤目标超出范围";
+                return false;
+            }
+
+            startValue = SubsystemTerrain.Terrain.GetCellValue(start.X, start.Y, start.Z);
+            int contents = Terrain.ExtractContents(startValue);
+            if (contents == 227) {
+                int designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(startValue));
+                FurnitureDesign existingDesign = GetDesign(designIndex);
+                if (existingDesign == null) {
+                    error = "家具设计不存在";
+                    return false;
+                }
+                // The client may have renamed, rotated, resized, or otherwise edited
+                // the cloned furniture design in the dialog. The target and source
+                // cells are authoritative on the server; the validated design remains
+                // the client's requested result.
+                design = requestedDesign;
+                valuesDictionary[start.Point] = startValue;
+            }
+            else {
+                if (!TryCollectNetworkFurnitureBlocks(start, valuesDictionary, out error)) {
+                    return false;
+                }
+                design = requestedDesign;
+            }
+            FurnitureDesign registeredDesign = TryAddDesign(design);
+            if (registeredDesign == null) {
+                error = LanguageControl.Get(fName, 3);
+                return false;
+            }
+            design = registeredDesign;
+            return true;
+        }
+
+        private bool TryCollectNetworkFurnitureBlocks(
+            CellFace start,
+            Dictionary<Point3, int> valuesDictionary,
+            out string error
+        ) {
+            error = null;
+            Point3 min = start.Point;
+            Point3 max = start.Point;
+            Stack<Point3> pending = new();
+            HashSet<Point3> scannedPoints = [];
+            pending.Push(start.Point);
+            while (pending.Count > 0) {
+                Point3 point = pending.Pop();
+                if (valuesDictionary.ContainsKey(point)
+                    || !SubsystemTerrain.Terrain.IsCellValid(point.X, point.Y, point.Z)) {
+                    continue;
+                }
+                int value = SubsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y, point.Z);
+                if (IsValueDisallowed(value)) {
+                    error = "家具设计包含不允许的方块";
+                    return false;
+                }
+                bool allowed;
+                try {
+                    allowed = IsValueAllowed(value);
+                }
+                catch {
+                    error = "家具设计包含无效方块";
+                    return false;
+                }
+                if (!allowed) {
+                    continue;
+                }
+                TerrainChunk chunk = SubsystemTerrain.Terrain.GetChunkAtCell(point.X, point.Z);
+                if (chunk == null
+                    || chunk.State <= TerrainChunkState.InvalidContents4
+                    || (!chunk.IsLoaded && chunk.ModificationCounter == 0)) {
+                    error = LanguageControl.Get(fName, 4);
+                    return false;
+                }
+                min.X = Math.Min(min.X, point.X);
+                min.Y = Math.Min(min.Y, point.Y);
+                min.Z = Math.Min(min.Z, point.Z);
+                max.X = Math.Max(max.X, point.X);
+                max.Y = Math.Max(max.Y, point.Y);
+                max.Z = Math.Max(max.Z, point.Z);
+                if (Math.Abs(min.X - max.X) >= FurnitureDesign.MaxResolution
+                    || Math.Abs(min.Y - max.Y) >= FurnitureDesign.MaxResolution
+                    || Math.Abs(min.Z - max.Z) >= FurnitureDesign.MaxResolution) {
+                    error = LanguageControl.Get(fName, 2);
+                    return false;
+                }
+                valuesDictionary[point] = value;
+                Point3[] neighbors = [
+                    new(point.X - 1, point.Y, point.Z),
+                    new(point.X + 1, point.Y, point.Z),
+                    new(point.X, point.Y - 1, point.Z),
+                    new(point.X, point.Y + 1, point.Z),
+                    new(point.X, point.Y, point.Z - 1),
+                    new(point.X, point.Y, point.Z + 1)
+                ];
+                foreach (Point3 neighbor in neighbors) {
+                    if (scannedPoints.Add(neighbor)) {
+                        pending.Push(neighbor);
+                    }
+                }
+            }
+            if (valuesDictionary.Count == 0) {
+                error = "家具设计为空";
+                return false;
+            }
+            return true;
+        }
+        public bool CommitFurnitureHammer(
+            ComponentMiner componentMiner,
+            FurnitureDesign design,
+            Dictionary<Point3, int> valuesDictionary,
+            CellFace start,
+            int startValue,
+            bool designedFromExistingFurniture
+        ) {
+            bool destroyDesignBlocks = m_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative;
+            int value = Terrain.MakeBlockValue(
+                227,
+                0,
+                FurnitureBlock.SetDesignIndex(0, design.Index, design.ShadowStrengthFactor, design.IsLightEmitter)
+            );
+            int count = Math.Clamp(design.Resolution, 4, 8);
+            int toolDamageCount = 1;
+            ModsManager.HookAction(
+                "OnFurnitureDesigned",
+                modLoader => {
+                    modLoader.OnFurnitureDesigned(
+                        design,
+                        designedFromExistingFurniture,
+                        ref count,
+                        ref destroyDesignBlocks,
+                        ref toolDamageCount
+                    );
+                    return false;
+                }
+            );
+            toolDamageCount = Math.Max(toolDamageCount, 0);
+            int activeBlockValue = componentMiner.ActiveBlockValue;
+            int activeContents = Terrain.ExtractContents(activeBlockValue);
+            Block block = activeContents >= 0 && activeContents < BlocksManager.Blocks.Length
+                ? BlocksManager.Blocks[activeContents]
+                : null;
+            int durabilityRemains = block == null
+                ? 0
+                : block.GetDurability(activeBlockValue) - block.GetDamage(activeBlockValue) + 1;
+            if (durabilityRemains < toolDamageCount) {
+                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                    LanguageControl.Get(fName, 5),
+                    Color.White,
+                    true,
+                    false
+                );
+                return false;
+            }
+            componentMiner.DamageActiveTool(toolDamageCount);
+            if (destroyDesignBlocks) {
+                foreach (KeyValuePair<Point3, int> item in valuesDictionary) {
+                    SubsystemTerrain.DestroyCell(0, item.Key.X, item.Key.Y, item.Key.Z, 0, true, true);
+                }
+            }
+            m_subsystemPickables.AddPickable(
+                value,
+                count,
+                componentMiner.ComponentCreature.ComponentBody.Matrix.Translation
+                    + componentMiner.ComponentCreature.ComponentBody.Matrix.Forward
+                    + Vector3.UnitY,
+                null,
+                null
+            );
+            componentMiner.Poke(false);
+            for (int i = 0; i < 3; i++) {
+                Time.QueueTimeDelayedExecution(
+                    Time.FrameStartTime + i * 0.25f,
+                    delegate { m_subsystemSoundMaterials.PlayImpactSound(startValue, new Vector3(start.Point), 1f); }
+                );
+            }
+            if (componentMiner.ComponentCreature.PlayerStats != null) {
+                componentMiner.ComponentCreature.PlayerStats.FurnitureItemsMade += count;
+            }
+            CreateDesign(componentMiner, design, valuesDictionary, start, startValue, false);
+            return true;
+        }
         public FurnitureDesign CreateDesign(ComponentMiner componentMiner, FurnitureDesign design, Dictionary<Point3, int> valuesDictionary, CellFace start, int startValue, bool tryAdd = true) {
             if (tryAdd) {
                 FurnitureDesign existingDesign = TryAddDesignChain(design, true);

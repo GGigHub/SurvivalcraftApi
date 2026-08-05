@@ -136,6 +136,7 @@ namespace Game {
         public virtual void StopAttack() {
             m_stateMachine.TransitionTo("LookingForTarget");
             IsActive = false;
+            IsAttack = false;
             m_target = null;
             m_nextUpdateTime = 0.0;
             m_range = 0;
@@ -153,11 +154,14 @@ namespace Game {
 
         public virtual void Update(float dt) {
             if (NetworkManager.IsClientRunning) {
-                m_componentCreatureModel.AttackOrder = IsAttack;
+                m_componentCreatureModel.AttackOrder = IsActive && IsAttack;
                 return;
             }
             if (m_target == null) {
                 StopAttack();
+            }
+            else if (!IsActive) {
+                IsAttack = false;
             }
             m_autoChaseSuppressionTime -= dt;
             if (IsActive && m_target != null) {

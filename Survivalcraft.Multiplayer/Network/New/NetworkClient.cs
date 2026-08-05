@@ -100,7 +100,7 @@ public class NetworkClient : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
-        MySession.NetworkState = NetworkState.NotConnected;
+        MySession?.NetworkState = NetworkState.NotConnected;
 
         LatencyProbe.Reset();
         Log.Information($"Disconnected: {_serverAddress}, Reason: {disconnectInfo.Reason}");

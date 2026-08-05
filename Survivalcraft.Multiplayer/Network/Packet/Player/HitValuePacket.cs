@@ -47,13 +47,12 @@ public class HitValuePacket : Packet {
 
     public override void Handle(bool isServer) {
         if (isServer) return;
-        if (IsOwnServerEcho()) {
-            return;
-        }
         HitValueParticleSystem particleSystem = new HitValueParticleSystem(m_position, m_velocity, m_color, m_text, !m_velocityIsFinal);
         float pitch = new Random().Float(-0.2f, 0.2f);
         GameManager.Project.FindSubsystem<SubsystemParticles>(true).AddParticleSystem(particleSystem);
-        GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Swoosh", 1f, pitch, m_position, 3f, false);
+        if (!IsOwnServerEcho()) {
+            GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Swoosh", 1f, pitch, m_position, 3f, false);
+        }
     }
 
     private bool IsOwnServerEcho() {
@@ -71,5 +70,5 @@ public class HitValuePacket : Packet {
         }
         return false;
     }
-}
 
+}

@@ -21,6 +21,9 @@ public class BehaviorSyncPacket : Packet {
         public bool PathfindingIgnoreHeightDifference;
         public bool PathfindingRaycastDestination;
         public int PathfindingDoNotAvoidBodyId;
+        public int PathfindingPathVersion;
+        public int PathfindingPathCursor;
+        public List<Vector3> PathfindingPath;
 
         public bool HasPilot;
         public Vector3? PilotDestination;
@@ -198,7 +201,8 @@ public class BehaviorSyncPacket : Packet {
             ActiveBehaviorIndex = GetActiveBehaviorIndex(selector),
             HasPathfinding = pathfinding != null,
             HasPilot = pilot != null,
-            HasLocomotion = locomotion != null
+            HasLocomotion = locomotion != null,
+            PathfindingPath = []
         };
 
         if (pathfinding != null) {
@@ -210,6 +214,11 @@ public class BehaviorSyncPacket : Packet {
             item.PathfindingIgnoreHeightDifference = pathfinding.IgnoreHeightDifference;
             item.PathfindingRaycastDestination = pathfinding.RaycastDestination;
             item.PathfindingDoNotAvoidBodyId = GetBodyEntityId(pathfinding.DoNotAvoidBody);
+            item.PathfindingPathVersion = pathfinding.NetworkPathVersion;
+            item.PathfindingPathCursor = pathfinding.NetworkPathCursor;
+            for (int i = 0; i < pathfinding.m_pathfindingResult.Path.Count; i++) {
+                item.PathfindingPath.Add(pathfinding.m_pathfindingResult.Path.Array[i]);
+            }
         }
 
         if (pilot != null) {
@@ -248,6 +257,12 @@ public class BehaviorSyncPacket : Packet {
                     item.PathfindingIgnoreHeightDifference,
                     item.PathfindingRaycastDestination,
                     FindBody(item.PathfindingDoNotAvoidBodyId));
+            }
+            if (pathfinding != null) {
+                pathfinding.ApplyNetworkPath(
+                    item.PathfindingPathVersion,
+                    item.PathfindingPathCursor,
+                    item.PathfindingPath ?? []);
             }
         }
 
@@ -312,6 +327,20 @@ public class BehaviorSyncPacket : Packet {
             archive.Value(ref item.PathfindingIgnoreHeightDifference);
             archive.Value(ref item.PathfindingRaycastDestination);
             archive.Value(ref item.PathfindingDoNotAvoidBodyId);
+            archive.Value(ref item.PathfindingPathVersion);
+            archive.Value(ref item.PathfindingPathCursor);
+            int pathCount = archive.IsWriting ? item.PathfindingPath?.Count ?? 0 : 0;
+            archive.Value(ref pathCount);
+            if (archive.IsReading) {
+                item.PathfindingPath = [];
+            }
+            for (int i = 0; i < pathCount; i++) {
+                Vector3 point = archive.IsWriting ? item.PathfindingPath[i] : default;
+                archive.Value(ref point);
+                if (archive.IsReading) {
+                    item.PathfindingPath.Add(point);
+                }
+            }
         }
 
         archive.Value(ref item.HasPilot);

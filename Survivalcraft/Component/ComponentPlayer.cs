@@ -244,17 +244,7 @@ namespace Game {
 
         TerrainRaycastResult? RaycastAuthoritativeTerrain(Ray3 requestedRay, RaycastMode mode) {
             Vector3 direction = requestedRay.Direction == Vector3.Zero ? ComponentBody.Matrix.Forward : requestedRay.Direction;
-            Vector3 eyePosition = ComponentCreatureModel.EyePosition;
-            Vector3? authoritativePosition = NetworkManager.GetAuthoritativePlayerPosition(this);
-            if (authoritativePosition.HasValue) {
-                ComponentBody referenceBody = ComponentBody.ParentBody ?? ComponentBody;
-                eyePosition = authoritativePosition.Value + (eyePosition - referenceBody.Position);
-            }
-            return ComponentMiner.Raycast<TerrainRaycastResult>(
-                new Ray3(eyePosition, direction),
-                mode,
-                creaturePositionOverride: eyePosition
-            );
+            return ComponentMiner.Raycast<TerrainRaycastResult>(new Ray3(ComponentCreatureModel.EyePosition, direction), mode);
         }
 
         public virtual void Update(float dt) {
@@ -651,12 +641,16 @@ namespace Game {
                         flag = true;
                         m_isDigBlocked = true;
                         if (Vector3.Distance(bodyRaycastResult.Value.HitPoint(), ComponentCreatureModel.EyePosition) <= meleeAttackRange) {
-                            ComponentMiner.Hit(
-                                bodyRaycastResult.Value.ComponentBody,
-                                bodyRaycastResult.Value.HitPoint(),
-                                playerInput.Hit.Value.Direction,
-                                NetworkManager.IsClientRunning
-                            );
+                            if (NetworkManager.IsClientRunning) {
+                                ComponentMiner.Poke(false);
+                            }
+                            else {
+                                ComponentMiner.Hit(
+                                    bodyRaycastResult.Value.ComponentBody,
+                                    bodyRaycastResult.Value.HitPoint(),
+                                    playerInput.Hit.Value.Direction
+                                );
+                            }
                             ModsManager.HookAction("OnNetworkPlayerHit", loader => loader.OnNetworkPlayerHit(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
                         }
                     }

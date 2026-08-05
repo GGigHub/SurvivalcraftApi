@@ -55,6 +55,10 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
+
             if (m_subsystemTime.GameTime >= m_nextDiscardOldChunksTime) {
                 m_nextDiscardOldChunksTime = m_subsystemTime.GameTime + 60.0;
                 DiscardOldChunks();
@@ -253,6 +257,10 @@ namespace Game {
         }
 
         public virtual Entity SpawnEntity(SpawnEntityData data) {
+            if (NetworkManager.IsClientRunning) {
+                return null;
+            }
+
             try {
                 ValuesDictionary valuesDictionary = DatabaseManager.FindEntityValuesDictionary(data.TemplateName, true);
                 Entity entity = Project.CreateEntity(valuesDictionary, data.EntityId);

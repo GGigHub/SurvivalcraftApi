@@ -23,12 +23,12 @@ public class PlayerHitPacket : PlayerPacketBase {
     }
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
-        if (isServer && ThrottleHit(playerData)) {
-            return;
-        }
         ComponentPlayer player = playerData.ComponentPlayer;
         player.ComponentCreatureModel.Update(0f);
-        Vector3 eye = player.ComponentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
+        if (!isServer) {
+            player.ComponentMiner.Poke(false);
+            return;
+        }
         Vector3 dir = m_hitDirection;
         if (dir.LengthSquared() < 1E-06f) {
             dir = player.ComponentMiner.ComponentCreature.ComponentBody.Matrix.Forward;
@@ -39,17 +39,7 @@ public class PlayerHitPacket : PlayerPacketBase {
             if (body == null) {
                 return;
             }
-            if (isServer) {
-                BoundingBox box = body.BoundingBox;
-                box.Min -= new Vector3(0.5f);
-                box.Max += new Vector3(0.5f);
-                if (m_hitPosition.X < box.Min.X || m_hitPosition.X > box.Max.X
-                    || m_hitPosition.Y < box.Min.Y || m_hitPosition.Y > box.Max.Y
-                    || m_hitPosition.Z < box.Min.Z || m_hitPosition.Z > box.Max.Z) {
-                    return;
-                }
-            }
-            player.ComponentMiner.Hit(body, m_hitPosition, dir, !isServer, isServer);
+            player.ComponentMiner.Hit(body, m_hitPosition, dir);
             QueuePlayerPacket(this, isServer);
         });
     }

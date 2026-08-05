@@ -226,7 +226,6 @@ namespace Game {
         public void DoStop(MovingBlockSet item) {
             if (item != null) {
                 item.Stop = true;
-                RemoveMovingBlockSet(item, true);
             }
         }
 
@@ -350,6 +349,9 @@ namespace Game {
         public virtual void Update(float dt) {
             m_canGenerateGeometry = true;
             foreach (MovingBlockSet movingBlockSet in m_movingBlockSets) {
+                if (movingBlockSet.Stop) {
+                    continue;
+                }
                 bool pass = false;
                 ModsManager.HookAction(
                     "OnMovingBlockSetUpdate",
@@ -734,6 +736,7 @@ namespace Game {
                     throw new NullReferenceException("Moving Block Set cannot be null when stop block movement!");
                 }
                 movingBlock?.MovingBlockSet?.Stop();
+                int oldValue = m_subsystemTerrain.Terrain.GetCellValue(x, y, z);
                 m_subsystemTerrain.DestroyCell(
                     0,
                     x,
@@ -741,7 +744,7 @@ namespace Game {
                     z,
                     value,
                     m_noDropOnMovingBlockStopped,
-                    false,
+                    BlocksManager.FluidBlocks[Terrain.ExtractContents(oldValue)] != null,
                     movingBlock
                 );
                 //m_subsystemTerrain.ChangeCell(x,y,z,value,true,movingBlock);

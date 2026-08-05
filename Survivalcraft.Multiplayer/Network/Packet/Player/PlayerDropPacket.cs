@@ -19,6 +19,14 @@ public class PlayerDropPacket : PlayerPacketBase {
             return;
         }
 
-        playerData.ComponentPlayer.DoDrop();
+        ComponentPlayer player = playerData.ComponentPlayer;
+        player.DoDrop();
+
+        // ComponentCreativeInventory removes items without firing the normal
+        // inventory-change hook, so the client would keep displaying the old
+        // creative slot after a server-side Q drop.
+        if (player.ComponentMiner?.Inventory is ComponentCreativeInventory inventory) {
+            InventoryPacketHelpers.QueueInventorySync(inventory, From);
+        }
     }
 }

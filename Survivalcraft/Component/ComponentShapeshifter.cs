@@ -100,7 +100,8 @@ namespace Game {
         }
 
         public virtual void ComponentSpawn_Despawned(ComponentSpawn componentSpawn) {
-            if (m_componentHealth.Health > 0f
+            if (!NetworkManager.IsClientRunning
+                && m_componentHealth.Health > 0f
                 && !string.IsNullOrEmpty(m_spawnEntityTemplateName)) {
                 Entity entity = DatabaseManager.CreateEntity(Project, m_spawnEntityTemplateName, true);
                 ComponentBody componentBody = entity.FindComponent<ComponentBody>(true);

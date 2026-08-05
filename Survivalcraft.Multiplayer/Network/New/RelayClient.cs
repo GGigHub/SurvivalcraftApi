@@ -97,7 +97,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
-        MySession.NetworkState = NetworkState.NotConnected;
+        MySession?.NetworkState = NetworkState.NotConnected;
 
         LatencyProbe.Reset();
         Log.Information($"Relay disconnected: {peer.Address}, Reason: {disconnectInfo.Reason}");
