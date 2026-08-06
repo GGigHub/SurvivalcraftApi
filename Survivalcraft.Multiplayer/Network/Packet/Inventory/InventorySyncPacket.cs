@@ -70,11 +70,12 @@ public class InventorySyncPacket : Packet {
                 return;
             }
             foreach (var slot in m_slots) {
-                if (slot.slotIndex < 0 || slot.slotIndex >= inventory.SlotsCount) {
-                    continue;
-                }
-                inventory.RemoveSlotItems(slot.slotIndex, inventory.GetSlotCount(slot.slotIndex));
-                inventory.AddSlotItems(slot.slotIndex, slot.value, slot.count);
+                InventoryPacketHelpers.ApplySlotValue(
+                    inventory,
+                    slot.slotIndex,
+                    slot.value,
+                    slot.count
+                );
             }
         }
     }

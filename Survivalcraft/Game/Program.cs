@@ -215,7 +215,6 @@ namespace Game {
             Storage.Initialize();
             VersionsManager.Initialize();
             Window.HandleUri += HandleUriHandler;
-            Window.Deactivated += DeactivatedHandler;
             Window.Frame += FrameHandler;
             Window.ToRestart += ToRestartHandler;
             Window.FileDropped += FileDropHandler;
@@ -235,10 +234,6 @@ namespace Game {
 
         public static void HandleUriHandler(Uri uri) {
             m_urisToHandle.Add(uri);
-        }
-
-        public static void DeactivatedHandler() {
-            GC.Collect();
         }
 
         public static void FrameHandler() {

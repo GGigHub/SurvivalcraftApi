@@ -65,7 +65,7 @@ public enum PacketType : byte {
     PlayerBodyUpdate = 71, PlayerInteract = 72, PlayerAim = 73, PlayerDig = 74, PlayerHit = 75,
     PlayerCreativeFly = 76, PlayerIntoPlaying = 77, PlayerRestart = 78, PlayerAddExperience = 79,
     PlayerDragDrop = 80, PlayerStatSync = 81, PlayerPositionSet = 82, PlayerDrop = 107, FurnitureHammer = 108,
-    PlayerDigRequest = 113, PlayerDigConfirmation = 114,
+    PlayerDigRequest = 113, PlayerDigConfirmation = 114, PlayerPlaceConfirmation = 115,
 
     // Terrain
     Time = 4, Sky = 5,
@@ -182,6 +182,7 @@ public static class PacketManager {
         RegisterPacket<PlayerDigPacket>();
         RegisterPacket<PlayerDigRequestPacket>();
         RegisterPacket<PlayerDigConfirmationPacket>();
+        RegisterPacket<PlayerPlaceConfirmationPacket>();
         RegisterPacket<PlayerDropPacket>();
         RegisterPacket<PlayerDragDropPacket>();
         RegisterPacket<PlayerHitPacket>();

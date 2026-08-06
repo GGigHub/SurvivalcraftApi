@@ -23,25 +23,8 @@ public class PlayerHitPacket : PlayerPacketBase {
     }
     public override void Handle(bool isServer) {
         if (!TryResolvePlayer(isServer, out PlayerData playerData)) return;
-        ComponentPlayer player = playerData.ComponentPlayer;
-        player.ComponentCreatureModel.Update(0f);
-        if (!isServer) {
-            player.ComponentMiner.Poke(false);
-            return;
-        }
-        Vector3 dir = m_hitDirection;
-        if (dir.LengthSquared() < 1E-06f) {
-            dir = player.ComponentMiner.ComponentCreature.ComponentBody.Matrix.Forward;
-        }
-        dir = Vector3.Normalize(dir);
-        GameManager.Project.FindEntity(bodyId, entity => {
-            ComponentBody body = entity.FindComponent<ComponentBody>();
-            if (body == null) {
-                return;
-            }
-            player.ComponentMiner.Hit(body, m_hitPosition, dir);
-            QueuePlayerPacket(this, isServer);
-        });
+        playerData.ComponentPlayer.AddHitEvent(bodyId, m_hitPosition, m_hitDirection);
+        QueuePlayerPacket(this, isServer);
     }
 }
 

@@ -29,13 +29,19 @@ namespace Game {
 
         public double m_stubbornEndTime;
 
+        public bool m_isRiddenByLocalMainPlayer;
+
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public override float ImportanceLevel => m_importanceLevel;
 
         public virtual void Update(float dt) {
+            m_isRiddenByLocalMainPlayer = NetworkManager.IsClientRunning
+                && m_componentMount.Rider?.ComponentCreature.ComponentBody.Player?.PlayerData?.IsMainPlayer == true;
+            bool isStubbornWindowActive = m_isRiddenByLocalMainPlayer
+                && m_subsystemGameInfo.TotalElapsedGameTime < m_stubbornEndTime;
             m_stateMachine.Update();
-            if (!IsActive) {
+            if (!IsActive && !isStubbornWindowActive) {
                 m_stateMachine.TransitionTo("Inactive");
             }
             if (m_subsystemTime.PeriodicGameTimeEvent(1.0, m_periodicEventOffset)) {
@@ -68,7 +74,7 @@ namespace Game {
                         && (!m_isSaddled || m_componentEatPickableBehavior.Satiation <= 0f)) {
                         m_stubbornEndTime = m_subsystemGameInfo.TotalElapsedGameTime + m_random.Float(60f, 120f);
                     }
-                    if (IsActive) {
+                    if (IsActive || (m_isRiddenByLocalMainPlayer && m_subsystemGameInfo.TotalElapsedGameTime < m_stubbornEndTime)) {
                         m_stateMachine.TransitionTo("Stubborn");
                     }
                 },

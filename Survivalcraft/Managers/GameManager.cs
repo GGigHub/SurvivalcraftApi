@@ -54,7 +54,6 @@ namespace Game {
             m_subsystemUpdate = m_project.FindSubsystem<SubsystemUpdate>(throwOnError: true);
             m_worldInfo = new WorldInfo();
             Log.Information("Loading network project...");
-            GC.Collect();
         }
 
         public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, bool useNetProj = true) {
@@ -97,7 +96,6 @@ namespace Game {
                 SettingsManager.VisibilityRange.ToString(),
                 LanguageControl.Get("ResolutionMode", SettingsManager.ResolutionMode.ToString())
             );
-            GC.Collect();
         }
 
         public static void SaveProject(bool waitForCompletion, bool showErrorDialog) {
@@ -240,7 +238,6 @@ namespace Game {
                         return false;
                     }
                 );
-                GC.Collect();
             }
         }
 

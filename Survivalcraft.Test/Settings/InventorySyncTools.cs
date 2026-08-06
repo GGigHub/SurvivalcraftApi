@@ -131,6 +131,23 @@ public static class InventorySyncTools {
         }
     }
 
+    public static async Task<FurnaceInventoryState> GetFurnaceInventoryAsync(GameContext context, int entityId) {
+        object? result = await context.PushCommandAsync(
+            "FUNC " + GameTools.ReadScript("InventorySync/GetFurnaceInventoryCode.cs").Replace("{0}", entityId.ToString(CultureInfo.InvariantCulture)));
+
+        return ParseFurnaceInventoryState(result as string ?? string.Empty);
+    }
+
+    public static async Task SetFurnaceProgressAsync(GameContext context, int entityId, float progress) {
+        string script = GameTools.ReadScript("InventorySync/SetFurnaceProgressCode.cs")
+            .Replace("{0}", entityId.ToString(CultureInfo.InvariantCulture))
+            .Replace("{1}", progress.ToString("R", CultureInfo.InvariantCulture) + "f");
+        object? result = await context.PushCommandAsync("FUNC " + script);
+        if (result is not bool success || !success) {
+            throw new InvalidOperationException($"Failed to set furnace progress for entity {entityId}. Result={result ?? "null"}.");
+        }
+    }
+
     public static async Task<FurnaceState> WaitForActiveFurnaceStateAsync(GameContext context, int entityId) {
         FurnaceState state = default;
         for (int i = 0; i < 80; i++) {
@@ -244,6 +261,24 @@ public static class InventorySyncTools {
             float.Parse(parts[2], CultureInfo.InvariantCulture));
     }
 
+    public static FurnaceInventoryState ParseFurnaceInventoryState(string value) {
+        if (value == "missing" || string.IsNullOrWhiteSpace(value)) {
+            return new FurnaceInventoryState(false, 0, 0, 0, 0);
+        }
+
+        string[] parts = value.Split('|');
+        if (parts.Length != 4) {
+            throw new FormatException($"Invalid furnace inventory state: \"{value}\".");
+        }
+
+        return new FurnaceInventoryState(
+            true,
+            int.Parse(parts[0], CultureInfo.InvariantCulture),
+            int.Parse(parts[1], CultureInfo.InvariantCulture),
+            int.Parse(parts[2], CultureInfo.InvariantCulture),
+            int.Parse(parts[3], CultureInfo.InvariantCulture));
+    }
+
     public static bool FurnaceStatesMatch(FurnaceState expected, FurnaceState actual, out string mismatch) {
         if (!actual.Exists) {
             mismatch = "Client furnace is missing.";
@@ -311,4 +346,11 @@ public static class InventorySyncTools {
         float FireTimeRemaining,
         float SmeltingProgress,
         float HeatLevel);
+
+    public readonly record struct FurnaceInventoryState(
+        bool Exists,
+        int InputCount,
+        int FuelCount,
+        int ResultCount,
+        int RemainsCount);
 }

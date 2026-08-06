@@ -4,7 +4,7 @@ using GameEntitySystem;
 using TemplatesDatabase;
 
 namespace Game {
-    public class ComponentCraftingTable : ComponentInventoryBase, IUpdateable {
+    public class ComponentCraftingTable : ComponentInventoryBase {
         public int m_craftingGridSize;
 
         public string[] m_matchedIngredients = new string[9];
@@ -12,22 +12,10 @@ namespace Game {
         public CraftingRecipe m_matchedRecipe;
         public int RemainsSlotIndex => SlotsCount - 1;
 
-        public UpdateOrder UpdateOrder => UpdateOrder.Default;
-
-        public bool m_recipeUpdateNeeded;
-
         public bool m_recipeRefindNeeded;
         public int ResultSlotIndex => SlotsCount - 2;
 
         public bool m_resetWhenSlotItemsRemoved;
-
-        public virtual void Update(float dt) {
-            if (m_recipeUpdateNeeded) {
-                UpdateCraftingResult(m_recipeRefindNeeded);
-            }
-            m_recipeUpdateNeeded = false;
-            m_recipeRefindNeeded = false;
-        }
 
         public override int GetSlotCapacity(int slotIndex, int value) {
             if (slotIndex < SlotsCount - 2) {
@@ -42,8 +30,9 @@ namespace Game {
             if (oldCount == 0) {
                 m_recipeRefindNeeded = true;
             }
-            m_recipeUpdateNeeded = true;
             m_slots[ResultSlotIndex].Count = 0;
+            UpdateCraftingResult(m_recipeRefindNeeded);
+            m_recipeRefindNeeded = false;
         }
 
         public override int RemoveSlotItems(int slotIndex, int count) {
@@ -92,7 +81,6 @@ namespace Game {
             else {
                 num = base.RemoveSlotItems(slotIndex, count);
             }
-            m_recipeUpdateNeeded = true;
             if (m_resetWhenSlotItemsRemoved) {
                 m_slots[ResultSlotIndex].Count = 0;
             }
@@ -102,6 +90,8 @@ namespace Game {
                     m_recipeRefindNeeded = true;
                 }
             }
+            UpdateCraftingResult(m_recipeRefindNeeded);
+            m_recipeRefindNeeded = false;
             return num;
         }
 
@@ -123,6 +113,7 @@ namespace Game {
             base.Load(valuesDictionary, idToEntityMap);
             m_craftingGridSize = (int)MathF.Sqrt(SlotsCount - 2);
             UpdateCraftingResult(true);
+            m_recipeRefindNeeded = false;
         }
 
         public virtual void UpdateCraftingResult(bool recipeRefindNeeded) {

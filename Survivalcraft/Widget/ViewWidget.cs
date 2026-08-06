@@ -56,21 +56,13 @@ namespace Game {
             }
             if (inventoryDragData != null
                 && GameManager.Project != null) {
-                SubsystemPickables subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>(true);
                 ComponentPlayer componentPlayer = GameWidget.PlayerData.ComponentPlayer;
                 if (componentPlayer == null) {
                     return;
                 }
-                IInventory inventory = inventoryDragData.Inventory;
-                int slotIndex = inventoryDragData.SlotIndex;
-                int slotValue = inventory.GetSlotValue(slotIndex);
-                int removeCount = MathUtils.Min(inventory.GetSlotCount(slotIndex), count);
-                int num = inventory.RemoveSlotItems(slotIndex, removeCount);
-                if (num > 0) {
-                    Vector3 position = PlayerItemUsePosition.Calculate(componentPlayer.ComponentBody, 0f, 0f, 0.25f);
-                    Vector3 velocity = Vector3.Normalize(hitPosition) * 12f;
-                    subsystemPickables.AddPickable(slotValue, num, position, velocity, null, componentPlayer.Entity);
-                }
+                Vector3 position = PlayerItemUsePosition.Calculate(componentPlayer.ComponentBody, 0f, 0f, 0.25f);
+                Vector3 velocity = Vector3.Normalize(hitPosition) * 12f;
+                componentPlayer.DropInventoryItems(inventoryDragData.Inventory, inventoryDragData.SlotIndex, count, position, velocity);
             }
         }
 
@@ -82,11 +74,19 @@ namespace Game {
                 SubsystemPickables subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>(true);
                 ComponentPlayer componentPlayer = GameWidget.PlayerData.ComponentPlayer;
                 int slotValue = inventoryDragData.Inventory.GetSlotValue(inventoryDragData.SlotIndex);
-                int count = componentPlayer != null
-                    && componentPlayer.ComponentInput.SplitSourceInventory == inventoryDragData.Inventory
-                    && componentPlayer.ComponentInput.SplitSourceSlotIndex == inventoryDragData.SlotIndex ? 1 :
-                    inventoryDragData.DragMode != DragMode.SingleItem ? inventoryDragData.Inventory.GetSlotCount(inventoryDragData.SlotIndex) :
-                    MathUtils.Min(inventoryDragData.Inventory.GetSlotCount(inventoryDragData.SlotIndex), 1);
+                int count = inventoryDragData.Count;
+                if (count <= 0) {
+                    // Keep compatibility with drag data created by mods before
+                    // Count was added. DragMode already contains the split
+                    // decision made by the source slot.
+                    int slotCount = inventoryDragData.Inventory.GetSlotCount(inventoryDragData.SlotIndex);
+                    count = inventoryDragData.DragMode switch {
+                        DragMode.AllItems => slotCount,
+                        DragMode.SingleItem => MathUtils.Min(slotCount, 1),
+                        DragMode.HalfItems => (slotCount + 1) / 2,
+                        _ => 0
+                    };
+                }
 
                 Vector2 screenPos = dragWidget.WidgetToScreen(dragWidget.ActualSize / 2f);
                 Vector3 worldPos = Vector3.Normalize(

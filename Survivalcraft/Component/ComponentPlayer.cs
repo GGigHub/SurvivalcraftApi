@@ -50,7 +50,17 @@ namespace Game {
 
         public enum InteractEvent {
             None,
-            Start,
+            Start
+        }
+
+        /// <summary>
+        /// The resolved branch of an interaction request. Place is deliberately
+        /// kept as a child result of Interact rather than a root input channel.
+        /// </summary>
+        public enum InteractAction : byte {
+            None,
+            Use,
+            Interact,
             Place
         }
 
@@ -72,6 +82,10 @@ namespace Game {
             public DigEvent digEvent;
             public Ray3? NetDigRay;
             public TerrainRaycastResult? NetDigRaycast;
+            public bool HasDigTarget;
+            public CellFace DigTarget;
+            public int DigOldValue;
+            public int DigExpectedValue;
         }
 
         public struct AimEventItem {
@@ -79,10 +93,22 @@ namespace Game {
             public Ray3? NetAim;
         }
 
+        public struct HitEventItem {
+            public int BodyId;
+            public Vector3 HitPosition;
+            public Vector3 HitDirection;
+        }
+
         public struct InteractEventItem {
             public InteractEvent interactEvent;
+            public InteractAction action;
             public Ray3 NetInteractRay;
             public TerrainRaycastResult? NetPlaceRaycast;
+            public bool HasPlacePrediction;
+            public int PlaceActionId;
+            public CellFace PlaceCellFace;
+            public int PlaceOldValue;
+            public int PlaceExpectedValue;
         }
 
         public InteractEventItem interactEvent;
@@ -95,19 +121,81 @@ namespace Game {
 
         public List<AimEventItem> aimEvents = new List<AimEventItem>();
         public List<DigEventItem> digEvents = new List<DigEventItem>();
+        public List<HitEventItem> hitEvents = new List<HitEventItem>();
         public List<InteractEventItem> interactEvents = new List<InteractEventItem>();
         public byte LastActiveSlot;
 
+        public void AddDigEvent(
+            DigEvent digEvent,
+            Ray3? digRay,
+            TerrainRaycastResult? raycastResult,
+            bool hasDigTarget,
+            CellFace digTarget,
+            int digOldValue,
+            int digExpectedValue
+        ) {
+            digEvents.Add(new DigEventItem {
+                digEvent = digEvent,
+                NetDigRay = digRay,
+                NetDigRaycast = raycastResult,
+                HasDigTarget = hasDigTarget,
+                DigTarget = digTarget,
+                DigOldValue = digOldValue,
+                DigExpectedValue = digExpectedValue
+            });
+        }
+
         public void AddDigEvent(DigEvent digEvent, Ray3? digRay, TerrainRaycastResult? raycastResult) {
-            digEvents.Add(new DigEventItem { digEvent = digEvent, NetDigRay = digRay, NetDigRaycast = raycastResult });
+            AddDigEvent(digEvent, digRay, raycastResult, false, default, 0, 0);
         }
 
         public void AddAimEvent(AimEvent aimEvent, Ray3? aimRay) {
             aimEvents.Add(new AimEventItem { aimEvent = aimEvent, NetAim = aimRay });
         }
 
+        public void AddHitEvent(int bodyId, Vector3 hitPosition, Vector3 hitDirection) {
+            hitEvents.Add(new HitEventItem {
+                BodyId = bodyId,
+                HitPosition = hitPosition,
+                HitDirection = hitDirection
+            });
+        }
+
+        public void AddInteractEvent(
+            InteractEvent interactEvent,
+            InteractAction action,
+            Ray3 digRay,
+            TerrainRaycastResult? raycastResult,
+            bool hasPlacePrediction,
+            int placeActionId,
+            CellFace placeCellFace,
+            int placeOldValue,
+            int placeExpectedValue
+        ) {
+            interactEvents.Add(new InteractEventItem {
+                interactEvent = interactEvent,
+                action = action,
+                NetInteractRay = digRay,
+                NetPlaceRaycast = raycastResult,
+                HasPlacePrediction = hasPlacePrediction,
+                PlaceActionId = placeActionId,
+                PlaceCellFace = placeCellFace,
+                PlaceOldValue = placeOldValue,
+                PlaceExpectedValue = placeExpectedValue
+            });
+        }
+
+        public void AddInteractEvent(
+            InteractEvent interactEvent,
+            InteractAction action,
+            Ray3 digRay,
+            TerrainRaycastResult? raycastResult
+        ) {
+            AddInteractEvent(interactEvent, action, digRay, raycastResult, false, 0, default, 0, 0);
+        }
+
         public void AddInteractEvent(InteractEvent interactEvent, Ray3 digRay, TerrainRaycastResult? raycastResult) {
-            interactEvents.Add(new InteractEventItem { interactEvent = interactEvent, NetInteractRay = digRay, NetPlaceRaycast = raycastResult });
+            AddInteractEvent(interactEvent, InteractAction.None, digRay, raycastResult);
         }
 
         public GameWidget GameWidget => PlayerData.GameWidget;
@@ -154,24 +242,38 @@ namespace Game {
                 return;
             }
             IInventory inventory = ComponentMiner.Inventory;
-            int slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
-            int num3 = inventory.RemoveSlotItems(inventory.ActiveSlotIndex, inventory.GetSlotCount(inventory.ActiveSlotIndex));
-            if (slotValue != 0 && num3 != 0) {
-                Vector3 position = ComponentBody.Position
-                    + new Vector3(0f, ComponentBody.StanceBoxSize.Y * 0.66f, 0f)
-                    + 0.25f * ComponentBody.Matrix.Forward;
-                Vector3 velocity = 8f * Matrix.CreateFromQuaternion(ComponentCreatureModel.EyeRotation).Forward;
+            Vector3 position = ComponentBody.Position
+                + new Vector3(0f, ComponentBody.StanceBoxSize.Y * 0.66f, 0f)
+                + 0.25f * ComponentBody.Matrix.Forward;
+            Vector3 velocity = 8f * Matrix.CreateFromQuaternion(ComponentCreatureModel.EyeRotation).Forward;
+            DropInventoryItems(inventory, inventory.ActiveSlotIndex, inventory.GetSlotCount(inventory.ActiveSlotIndex), position, velocity);
+        }
+
+        /// <summary>
+        /// 统一的丢弃路径：Q 键丢弃（DoDrop）与拖拽丢弃（ViewWidget.DragDrop）都走这里。
+        /// </summary>
+        /// <returns>实际从库存移除的数量。</returns>
+        public int DropInventoryItems(IInventory inventory, int slotIndex, int count, Vector3 position, Vector3 velocity) {
+            if (inventory == null) {
+                return 0;
+            }
+            int slotValue = inventory.GetSlotValue(slotIndex);
+            int removeCount = MathUtils.Min(inventory.GetSlotCount(slotIndex), count);
+            int num = inventory.RemoveSlotItems(slotIndex, removeCount);
+            if (slotValue != 0 && num > 0) {
                 if (NetworkManager.IsServerRunning) {
-                    Pickable pickable = m_subsystemPickables.CreatePickable(slotValue, num3, position, velocity, null, Entity);
+                    Pickable pickable = m_subsystemPickables.CreatePickable(slotValue, num, position, velocity, null, Entity);
                     if (pickable != null) {
                         m_subsystemPickables.AddPickable(pickable);
                         NetworkManager.QueuePickableCreate(pickable);
                     }
                 }
                 else {
-                    m_subsystemPickables.AddPickable(slotValue, num3, position, velocity, null, Entity);
+                    m_subsystemPickables.AddPickable(slotValue, num, position, velocity, null, Entity);
                 }
+                ModsManager.HookAction("OnPlayerDroppedItems", loader => loader.OnPlayerDroppedItems(this, inventory, slotIndex, num));
             }
+            return num;
         }
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -193,8 +295,10 @@ namespace Game {
             PlayerInput playerInput,
             TerrainRaycastResult? terrainRaycastResult,
             MovingBlocksRaycastResult? movingBlocksRaycastResult,
-            out bool flag) {
+            out bool flag,
+            out InteractAction action) {
             bool dealed = false;
+            action = InteractAction.None;
             for (int t = 0; t < 3 && !dealed; t++) {
                 int maxPriority = -1;
                 if (maxPriority < priorityUse) {
@@ -212,6 +316,9 @@ namespace Game {
                 if (maxPriority == priorityUse /* && !dealed*/) {
                     if (playerInput.Interact.HasValue) {
                         dealed = ComponentMiner.Use(playerInput.Interact.Value);
+                        if (dealed) {
+                            action = InteractAction.Use;
+                        }
                     }
                     priorityUse = -2;
                 }
@@ -223,12 +330,18 @@ namespace Game {
                     else if (terrainRaycastResult.HasValue) {
                         dealed = ComponentMiner.Interact(terrainRaycastResult.Value);
                     }
+                    if (dealed) {
+                        action = InteractAction.Interact;
+                    }
                     priorityInteract = -2;
                 }
                 if (maxPriority == priorityPlace
                     && !dealed) {
                     if (terrainRaycastResult.HasValue) {
                         dealed = ComponentMiner.Place(terrainRaycastResult.Value);
+                    }
+                    if (dealed) {
+                        action = InteractAction.Place;
                     }
                     priorityPlace = -2;
                 }
@@ -245,6 +358,82 @@ namespace Game {
         TerrainRaycastResult? RaycastAuthoritativeTerrain(Ray3 requestedRay, RaycastMode mode) {
             Vector3 direction = requestedRay.Direction == Vector3.Zero ? ComponentBody.Matrix.Forward : requestedRay.Direction;
             return ComponentMiner.Raycast<TerrainRaycastResult>(new Ray3(ComponentCreatureModel.EyePosition, direction), mode);
+        }
+
+        static bool IsAimRayChanged(Ray3? previous, Ray3? current) {
+            if (!previous.HasValue || !current.HasValue) {
+                return previous.HasValue != current.HasValue;
+            }
+
+            Vector3 previousDirection = previous.Value.Direction;
+            Vector3 currentDirection = current.Value.Direction;
+            if (previousDirection.LengthSquared() > 1E-06f) {
+                previousDirection = Vector3.Normalize(previousDirection);
+            }
+            if (currentDirection.LengthSquared() > 1E-06f) {
+                currentDirection = Vector3.Normalize(currentDirection);
+            }
+
+            // Avoid emitting an Aim packet for every frame of an unchanged
+            // mouse/touch ray, while still keeping continuous aiming responsive.
+            return Vector3.DistanceSquared(previous.Value.Position, current.Value.Position) > 0.0025f
+                || Vector3.Dot(previousDirection, currentDirection) < 0.9995f;
+        }
+
+        TerrainRaycastResult? BuildNetworkTargetRaycast(
+            Ray3? requestedRay,
+            TerrainRaycastResult? requestedRaycast,
+            bool hasTarget,
+            CellFace target,
+            int expectedOldValue,
+            int expectedNewValue = -1
+        ) {
+            if (!hasTarget) {
+                return null;
+            }
+
+            Vector3 eyePosition = ComponentCreatureModel.EyePosition;
+            float reach = m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
+                ? SettingsManager.CreativeReach
+                : 5f;
+            reach = Math.Min(reach, SettingsManager.VisibilityRange);
+            Vector3 targetCenter = target.GetFaceCenter();
+            float reportedDistance = requestedRaycast.HasValue
+                ? requestedRaycast.Value.Distance
+                : Vector3.Distance(eyePosition, targetCenter);
+            if (reportedDistance > reach + 1f
+                || Vector3.DistanceSquared(eyePosition, targetCenter) > (reach + 2f) * (reach + 2f)) {
+                return null;
+            }
+
+            int value = m_subsystemTerrain.Terrain.GetCellValue(target.X, target.Y, target.Z);
+            if (Terrain.ExtractContents(value) == 0
+                || expectedOldValue != 0
+                && Terrain.ExtractContents(value) != Terrain.ExtractContents(expectedOldValue)) {
+                return null;
+            }
+
+            Vector3 direction = requestedRay?.Direction ?? ComponentBody.Matrix.Forward;
+            if (direction == Vector3.Zero) {
+                direction = ComponentBody.Matrix.Forward;
+            }
+
+            TerrainRaycastResult result = requestedRaycast ?? default;
+            result.Ray = new Ray3(eyePosition, Vector3.Normalize(direction));
+            result.Value = value;
+            result.CellFace = target;
+            result.Distance = Vector3.Distance(eyePosition, targetCenter);
+
+            if (expectedNewValue >= 0
+                && (!ComponentMiner.TryGetDigOperation(
+                    result,
+                    out BlockPlacementData authoritativeDigValue,
+                    out _
+                )
+                || Terrain.ExtractContents(authoritativeDigValue.Value) != Terrain.ExtractContents(expectedNewValue))) {
+                return null;
+            }
+            return result;
         }
 
         public virtual void Update(float dt) {
@@ -376,6 +565,28 @@ namespace Game {
             Block block = BlocksManager.Blocks[num];
             ModsManager.HookAction("OnNetworkPlayerBodyUpdate", loader => loader.OnNetworkPlayerBodyUpdate(this, PlayerData.IsMainPlayer));
 
+            if (hitEvents.Count > 0) {
+                HitEventItem hitEvent = hitEvents[0];
+                hitEvents.RemoveAt(0);
+                ComponentCreatureModel.Update(0f);
+                Vector3 direction = hitEvent.HitDirection;
+                if (direction.LengthSquared() < 1E-06f) {
+                    direction = ComponentMiner.ComponentCreature.ComponentBody.Matrix.Forward;
+                }
+                direction = Vector3.Normalize(direction);
+                if (NetworkManager.IsServerRunning) {
+                    GameManager.Project.FindEntity(hitEvent.BodyId, entity => {
+                        ComponentBody body = entity.FindComponent<ComponentBody>();
+                        if (body != null) {
+                            ComponentMiner.Hit(body, hitEvent.HitPosition, direction);
+                        }
+                    });
+                }
+                else {
+                    ComponentMiner.Poke(false);
+                }
+            }
+
             // Handle replicated Interact/Aim/Dig events on server and remote clients.
             if (!PlayerData.IsMainPlayer) {
                 if (digEvents.Count > 0) {
@@ -384,8 +595,26 @@ namespace Game {
                 }
                 if (digEvent.digEvent == DigEvent.Start) {
                     if (NetworkManager.IsServerRunning && digEvent.NetDigRay.HasValue) {
-                        TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(digEvent.NetDigRay.Value, RaycastMode.Digging);
+                        TerrainRaycastResult? raycast = digEvent.HasDigTarget
+                            ? BuildNetworkTargetRaycast(
+                                digEvent.NetDigRay,
+                                digEvent.NetDigRaycast,
+                                true,
+                                digEvent.DigTarget,
+                                digEvent.DigOldValue,
+                                digEvent.DigExpectedValue
+                            )
+                            : RaycastAuthoritativeTerrain(digEvent.NetDigRay.Value, RaycastMode.Digging);
                         if (raycast.HasValue) ComponentMiner.Dig(raycast.Value);
+                    }
+                    else if (!NetworkManager.IsServerRunning && digEvent.HasDigTarget) {
+                        int cellValue = m_subsystemTerrain.Terrain.GetCellValue(
+                            digEvent.DigTarget.X,
+                            digEvent.DigTarget.Y,
+                            digEvent.DigTarget.Z
+                        );
+                        if (Terrain.ExtractContents(cellValue) == 0) cellValue = digEvent.DigOldValue;
+                        ComponentMiner.BeginNetworkDigVisual(digEvent.DigTarget, cellValue);
                     }
                 }
                 else if (digEvent.digEvent == DigEvent.Cancel) {
@@ -394,16 +623,30 @@ namespace Game {
                     digEvent.NetDigRay = null;
                     ComponentMiner.DigCellFace = null;
                     ComponentMiner.m_digProgress = 0f;
+                    ComponentMiner.EndNetworkDigVisual();
                 }
                 else if (digEvent.digEvent == DigEvent.End) {
                     if (NetworkManager.IsServerRunning && digEvent.NetDigRay.HasValue) {
-                        TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(digEvent.NetDigRay.Value, RaycastMode.Digging);
+                        TerrainRaycastResult? raycast = digEvent.HasDigTarget
+                            ? BuildNetworkTargetRaycast(
+                                digEvent.NetDigRay,
+                                digEvent.NetDigRaycast,
+                                true,
+                                digEvent.DigTarget,
+                                digEvent.DigOldValue,
+                                digEvent.DigExpectedValue
+                            )
+                            : RaycastAuthoritativeTerrain(digEvent.NetDigRay.Value, RaycastMode.Digging);
                         if (raycast.HasValue) ComponentMiner.Dig(raycast.Value, forceComplete: true);
                     }
                     digEvent = default;
                     digEvent.NetDigRaycast = null;
                     digEvent.NetDigRay = null;
                     ComponentMiner.DigCellFace = null;
+                    ComponentMiner.EndNetworkDigVisual();
+                }
+                else if (digEvent.digEvent == DigEvent.None) {
+                    ComponentMiner.EndNetworkDigVisual();
                 }
 
                 if (aimEvents.Count > 0) {
@@ -437,16 +680,50 @@ namespace Game {
                 }
                 if (interactEvent.interactEvent == InteractEvent.Start) {
                     Vector3 direction = interactEvent.NetInteractRay.Direction == Vector3.Zero ? ComponentBody.Matrix.Forward : interactEvent.NetInteractRay.Direction;
-                    if (NetworkManager.IsServerRunning && !ComponentMiner.Use(new Ray3(ComponentCreatureModel.EyePosition, direction))) {
-                        TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(interactEvent.NetInteractRay, RaycastMode.Interaction);
-                        if (raycast.HasValue && !ComponentMiner.Interact(raycast.Value)) ComponentMiner.Place(raycast.Value);
-                    }
-                    interactEvent = default;
-                }
-                else if (interactEvent.interactEvent == InteractEvent.Place) {
                     if (NetworkManager.IsServerRunning) {
-                        TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(interactEvent.NetInteractRay, RaycastMode.Interaction);
-                        if (raycast.HasValue) ComponentMiner.Place(raycast.Value);
+                        switch (interactEvent.action) {
+                            case InteractAction.Use:
+                                ComponentMiner.Use(new Ray3(ComponentCreatureModel.EyePosition, direction));
+                                break;
+                            case InteractAction.Interact:
+                                if (interactEvent.NetPlaceRaycast.HasValue) {
+                                    TerrainRaycastResult? raycast = BuildNetworkTargetRaycast(
+                                        interactEvent.NetInteractRay,
+                                        interactEvent.NetPlaceRaycast,
+                                        true,
+                                        interactEvent.NetPlaceRaycast.Value.CellFace,
+                                        0
+                                    );
+                                    if (raycast.HasValue) ComponentMiner.Interact(raycast.Value);
+                                }
+                                break;
+                            case InteractAction.Place:
+                                bool placed = false;
+                                if (interactEvent.NetPlaceRaycast.HasValue) {
+                                    TerrainRaycastResult? raycast = BuildNetworkTargetRaycast(
+                                        interactEvent.NetInteractRay,
+                                        interactEvent.NetPlaceRaycast,
+                                        true,
+                                        interactEvent.NetPlaceRaycast.Value.CellFace,
+                                        0
+                                    );
+                                    if (raycast.HasValue) {
+                                        placed = ComponentMiner.Place(raycast.Value);
+                                    }
+                                }
+                                ModsManager.HookAction(
+                                    "OnNetworkPlayerPlace",
+                                    loader => loader.OnNetworkPlayerPlace(this, interactEvent, placed)
+                                );
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    else if (interactEvent.action != InteractAction.None) {
+                        // Remote clients only need the immediate visual feedback;
+                        // gameplay side effects remain server-authoritative.
+                        ComponentMiner.Poke(false);
                     }
                     interactEvent = default;
                 }
@@ -516,12 +793,11 @@ namespace Game {
                         playerInput,
                         terrainRaycastResult,
                         movingBlocksRaycastResult,
-                        out flag
-                    ); if (shouldSyncPlayerEvents
-                        && terrainRaycastResult.HasValue
-                        && priorityPlace >= priorityUse
-                        && priorityPlace >= priorityInteract) {
-                        interactEvent.interactEvent = InteractEvent.Place;
+                        out flag,
+                        out InteractAction action
+                    );
+                    if (shouldSyncPlayerEvents) {
+                        interactEvent.action = action;
                     }
                     m_lastActionTime = m_subsystemTime.GameTime;
                 }
@@ -682,6 +958,18 @@ namespace Game {
                         digEvent.digEvent = DigEvent.Start;
                         digEvent.NetDigRay = playerInput.Dig;
                         digEvent.NetDigRaycast = terrainRaycastResult2;
+                        digEvent.HasDigTarget = false;
+                        if (terrainRaycastResult2.HasValue
+                            && ComponentMiner.TryGetDigOperation(
+                                terrainRaycastResult2.Value,
+                                out BlockPlacementData digValue,
+                                out int oldValue
+                            )) {
+                            digEvent.HasDigTarget = true;
+                            digEvent.DigTarget = digValue.CellFace;
+                            digEvent.DigOldValue = oldValue;
+                            digEvent.DigExpectedValue = digValue.Value;
+                        }
                     }
                     if (terrainRaycastResult2.HasValue
                         && ComponentMiner.Dig(terrainRaycastResult2.Value)) {
@@ -718,7 +1006,8 @@ namespace Game {
                     last_interactEvent = interactEvent;
                     ModsManager.HookAction("OnNetworkPlayerInteract", loader => loader.OnNetworkPlayerInteract(this));
                 }
-                if (last_aimEvent.aimEvent != aimEvent.aimEvent) {
+                if (last_aimEvent.aimEvent != aimEvent.aimEvent
+                    || aimEvent.aimEvent == AimEvent.InProgress && IsAimRayChanged(last_aimEvent.NetAim, aimEvent.NetAim)) {
                     last_aimEvent = aimEvent;
                     ModsManager.HookAction("OnNetworkPlayerAim", loader => loader.OnNetworkPlayerAim(this));
                 }

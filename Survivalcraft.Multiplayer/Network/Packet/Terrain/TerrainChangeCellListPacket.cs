@@ -42,6 +42,12 @@ public class TerrainChangeCellListPacket : TerrainPacketBase {
                     cellChange.Z,
                     cellChange.Value
                 );
+                NetworkPlaceConfirmationRuntime.ObserveClientTerrainChange(
+                    cellChange.X,
+                    cellChange.Y,
+                    cellChange.Z,
+                    cellChange.Value
+                );
             }
         }
     }

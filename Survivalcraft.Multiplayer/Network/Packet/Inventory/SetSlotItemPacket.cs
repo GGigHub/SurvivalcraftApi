@@ -32,8 +32,14 @@ public class SetSlotItemPacket : Packet {
         var subsystemInventories = GameManager.Project.FindSubsystem<SubsystemInventories>();
         IInventory inventory = subsystemInventories.GetInventoryById(m_inventoryId);
         if (inventory != null) {
-            inventory.RemoveSlotItems(m_slotIndex, inventory.GetSlotCount(m_slotIndex));
-            inventory.AddSlotItems(m_slotIndex, m_value, m_count);
+            if (!InventoryPacketHelpers.IsSlotIndexValid(inventory, m_slotIndex)) {
+                if (isServer) {
+                    InventoryPacketHelpers.QueueInventorySync(inventory, From);
+                }
+                return;
+            }
+
+            InventoryPacketHelpers.ApplySlotValue(inventory, m_slotIndex, m_value, m_count);
             if (isServer) {
                 To = From;
                 NetworkManager.Queue(this);

@@ -12,6 +12,7 @@ public static class NetworkDigConfirmationRuntime {
     private const int ClientConfirmationTimeoutFrames = 120;
     private const int ClientRequestTimeoutFrames = 240;
     private const int ServerRequestTimeoutFrames = 180;
+    private const float MaxEyePositionDrift = 32f;
 
     private static int s_nextActionId;
     private static readonly Dictionary<int, PendingClientDig> s_clientPending = [];
@@ -27,6 +28,7 @@ public static class NetworkDigConfirmationRuntime {
         public CellFace CellFace;
         public int OldValue;
         public int ExpectedValue;
+        public Vector3 EyePosition;
         public bool CompletedLocally;
         public bool RequestSent;
         public int DeadlineFrame;
@@ -57,6 +59,7 @@ public static class NetworkDigConfirmationRuntime {
             CellFace = description.CellFace,
             OldValue = description.OldValue,
             ExpectedValue = description.ExpectedValue,
+            EyePosition = miner.ComponentPlayer.ComponentCreatureModel.EyePosition,
             DeadlineFrame = int.MaxValue
         };
         s_clientPending[pending.ActionId] = pending;
@@ -74,6 +77,7 @@ public static class NetworkDigConfirmationRuntime {
                 && SameCell(pending.CellFace, digValue.CellFace)) {
                 pending.CompletedLocally = true;
                 pending.DeadlineFrame = Time.FrameIndex + ClientConfirmationTimeoutFrames;
+                pending.EyePosition = miner.ComponentPlayer.ComponentCreatureModel.EyePosition;
             }
             return;
         }
@@ -103,10 +107,13 @@ public static class NetworkDigConfirmationRuntime {
         foreach (PendingClientDig pending in s_clientPending.Values
                      .Where(pending => SameCell(pending.CellFace, x, y, z))
                      .ToArray()) {
-            // Any server terrain packet for this cell is authoritative. An
-            // equal value is a normal confirmation; a different value means
-            // the server corrected the prediction.
-            RemoveClientPending(pending);
+            if (SameContents(value, pending.ExpectedValue)) {
+                RemoveClientPending(pending);
+                continue;
+            }
+            if (!SameContents(value, pending.OldValue)) {
+                RemoveClientPending(pending);
+            }
         }
     }
 
@@ -130,7 +137,7 @@ public static class NetworkDigConfirmationRuntime {
             return;
         }
 
-        if (!ValuesEqual(currentValue, packet.OldValue)) {
+        if (!SameContents(currentValue, packet.OldValue)) {
             SendConfirmation(
                 packet,
                 currentValue,
@@ -196,7 +203,8 @@ public static class NetworkDigConfirmationRuntime {
                             pending.Player,
                             pending.CellFace,
                             pending.OldValue,
-                            pending.ExpectedValue
+                            pending.ExpectedValue,
+                            pending.EyePosition
                         ));
                     }
                     catch (Exception exception) {
@@ -239,25 +247,32 @@ public static class NetworkDigConfirmationRuntime {
 
     private static bool TryRecoverServerDig(PlayerDigRequestPacket packet, ComponentPlayer player) {
         ComponentMiner miner = player.ComponentMiner;
-        if (miner == null || !IsWithinRecoveryCube(player, packet.CellFace)) {
+        if (miner == null || !IsWithinRecoveryCube(player, packet)) {
             return false;
         }
 
         int currentValue = GetCurrentValue(packet.CellFace);
-        if (!ValuesEqual(currentValue, packet.OldValue)) {
+        if (!SameContents(currentValue, packet.OldValue)) {
             return false;
         }
 
         return miner.DigAtCell(packet.CellFace, packet.ExpectedValue);
     }
 
-    private static bool IsWithinRecoveryCube(ComponentPlayer player, CellFace cellFace) {
-        Vector3 eyePosition = player.ComponentCreatureModel.EyePosition;
-        Vector3 cellCenter = new(cellFace.X + 0.5f, cellFace.Y + 0.5f, cellFace.Z + 0.5f);
-        Vector3 delta = cellCenter - eyePosition;
-        return MathF.Abs(delta.X) <= 2f
-            && MathF.Abs(delta.Y) <= 2f
-            && MathF.Abs(delta.Z) <= 2f;
+    private static bool IsWithinRecoveryCube(ComponentPlayer player, PlayerDigRequestPacket packet) {
+        Vector3 cellCenter = new(packet.CellFace.X + 0.5f, packet.CellFace.Y + 0.5f, packet.CellFace.Z + 0.5f);
+
+        ComponentMiner miner = player.ComponentMiner;
+        float reach = miner.m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
+            ? SettingsManager.CreativeReach
+            : 5f;
+        reach = Math.Min(reach, SettingsManager.VisibilityRange);
+        if (Vector3.DistanceSquared(packet.EyePosition, cellCenter) > (reach + 1f) * (reach + 1f)) {
+            return false;
+        }
+
+        Vector3 currentEye = player.ComponentCreatureModel.EyePosition;
+        return Vector3.DistanceSquared(packet.EyePosition, currentEye) <= MaxEyePositionDrift * MaxEyePositionDrift;
     }
 
     private static void MatchServerRequests(int playerIndex, CellFace cellFace, int actualValue) {
@@ -324,34 +339,12 @@ public static class NetworkDigConfirmationRuntime {
     ) {
         description = default;
         try {
-            SubsystemTerrain terrain = miner?.m_subsystemTerrain;
-            if (terrain?.Terrain == null) {
-                return false;
-            }
-
-            int hitValue = terrain.Terrain.GetCellValue(
-                raycastResult.CellFace.X,
-                raycastResult.CellFace.Y,
-                raycastResult.CellFace.Z
-            );
-            if (Terrain.ExtractContents(hitValue) == 0) {
-                return false;
-            }
-
-            Block block = BlocksManager.Blocks[Terrain.ExtractContents(hitValue)];
-            BlockPlacementData digValue = block.GetDigValue(
-                terrain,
-                miner,
-                hitValue,
-                miner.ActiveBlockValue,
-                raycastResult
-            );
-            int oldValue = terrain.Terrain.GetCellValue(
-                digValue.CellFace.X,
-                digValue.CellFace.Y,
-                digValue.CellFace.Z
-            );
-            if (Terrain.ExtractContents(oldValue) == 0) {
+            if (miner?.m_subsystemTerrain?.Terrain == null
+                || !miner.TryGetDigOperation(
+                    raycastResult,
+                    out BlockPlacementData digValue,
+                    out int oldValue
+                )) {
                 return false;
             }
 
@@ -379,6 +372,9 @@ public static class NetworkDigConfirmationRuntime {
 
     private static bool ValuesEqual(int first, int second) =>
         Terrain.ReplaceLight(first, 0) == Terrain.ReplaceLight(second, 0);
+
+    private static bool SameContents(int first, int second) =>
+        Terrain.ExtractContents(first) == Terrain.ExtractContents(second);
 
     private static bool SameCell(CellFace first, CellFace second) =>
         first.X == second.X && first.Y == second.Y && first.Z == second.Z;

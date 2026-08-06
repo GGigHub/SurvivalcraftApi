@@ -101,6 +101,28 @@ namespace Game {
         // player event synchronizer uses this to refresh an in-progress dig ray.
         public bool DigCellFaceChanged { get; set; }
 
+        /// <summary>
+        /// Describes the terrain edit produced by the most recent successful
+        /// placement. The multiplayer layer uses this to correlate the local
+        /// prediction with the server response without depending on network
+        /// types from the game assembly.
+        /// </summary>
+        public struct PlacementOperation {
+            public CellFace CellFace;
+            public int OldValue;
+            public int Value;
+        }
+
+        public PlacementOperation? LastPlacementOperation { get; private set; }
+
+        /// <summary>
+        /// Client-only visual mining state for a replicated remote player. It
+        /// advances the hand/crack animation without executing terrain edits.
+        /// </summary>
+        public bool NetworkDigVisualActive { get; private set; }
+
+        int m_networkDigVisualValue;
+
         public float DigTime {
             get {
                 if (!DigCellFace.HasValue) {
@@ -127,6 +149,67 @@ namespace Game {
 
         public virtual void Poke(bool forceRestart) {
             PokingPhase = forceRestart ? 0.0001f : MathUtils.Max(0.0001f, PokingPhase);
+        }
+
+        public void BeginNetworkDigVisual(CellFace cellFace, int cellValue) {
+            if (!NetworkDigVisualActive
+                || !DigCellFace.HasValue
+                || DigCellFace.Value.X != cellFace.X
+                || DigCellFace.Value.Y != cellFace.Y
+                || DigCellFace.Value.Z != cellFace.Z) {
+                m_digStartTime = m_subsystemTime.GameTime;
+                DigCellFace = cellFace;
+                m_digProgress = 0f;
+                Poke(true);
+            }
+            m_networkDigVisualValue = cellValue;
+            NetworkDigVisualActive = true;
+            m_lastDigFrameIndex = Time.FrameIndex;
+        }
+
+        public void EndNetworkDigVisual() {
+            NetworkDigVisualActive = false;
+            DigCellFace = null;
+            m_digProgress = 0f;
+            m_networkDigVisualValue = 0;
+        }
+
+        /// <summary>
+        /// Describes the concrete terrain edit selected by a digging ray. The
+        /// network layer uses this to carry the client's resolved target while
+        /// keeping block-specific GetDigValue logic in the game layer.
+        /// </summary>
+        public virtual bool TryGetDigOperation(
+            TerrainRaycastResult raycastResult,
+            out BlockPlacementData digValue,
+            out int oldValue
+        ) {
+            int hitValue = m_subsystemTerrain.Terrain.GetCellValue(
+                raycastResult.CellFace.X,
+                raycastResult.CellFace.Y,
+                raycastResult.CellFace.Z
+            );
+            int contents = Terrain.ExtractContents(hitValue);
+            if (contents == 0) {
+                digValue = default;
+                oldValue = 0;
+                return false;
+            }
+
+            Block block = BlocksManager.Blocks[contents];
+            digValue = block.GetDigValue(
+                m_subsystemTerrain,
+                this,
+                hitValue,
+                ActiveBlockValue,
+                raycastResult
+            );
+            oldValue = m_subsystemTerrain.Terrain.GetCellValue(
+                digValue.CellFace.X,
+                digValue.CellFace.Y,
+                digValue.CellFace.Z
+            );
+            return Terrain.ExtractContents(oldValue) != 0;
         }
 
         public bool Dig(TerrainRaycastResult raycastResult, bool forceComplete = false) {
@@ -322,6 +405,7 @@ namespace Game {
         }
 
         public bool Place(TerrainRaycastResult raycastResult, int value) {
+            LastPlacementOperation = null;
             int num = Terrain.ExtractContents(value);
             if (BlocksManager.Blocks[num].IsPlaceable_(value)) {
                 Block block = BlocksManager.Blocks[num];
@@ -424,15 +508,24 @@ namespace Game {
                             for (int i = 0; i < blockBehaviors.Length; i++) {
                                 blockBehaviors[i].OnItemPlaced(num2, num3, num4, ref placementData, value);
                             }
+                            int oldValue = m_subsystemTerrain.Terrain.GetCellValue(num2, num3, num4);
+                            bool isClientPredictedPlace = NetworkManager.IsClientRunning
+                                && !NetworkManager.IsServerRunning
+                                && ComponentPlayer?.PlayerData?.IsMainPlayer == true;
                             m_subsystemTerrain.DestroyCell(
                                 0,
                                 num2,
                                 num3,
                                 num4,
                                 placementData.Value,
-                                false,
+                                isClientPredictedPlace,
                                 false
                             );
+                            LastPlacementOperation = new PlacementOperation {
+                                CellFace = new CellFace(num2, num3, num4, placementData.CellFace.Face),
+                                OldValue = oldValue,
+                                Value = placementData.Value
+                            };
                             m_subsystemAudio.PlaySound(
                                 "Audio/BlockPlaced",
                                 1f,
@@ -836,8 +929,16 @@ namespace Game {
                 }
             }
             if (DigCellFace.HasValue
+                && !NetworkDigVisualActive
                 && Time.FrameIndex - m_lastDigFrameIndex > 1) {
                 DigCellFace = null;
+            }
+            if (NetworkDigVisualActive && DigCellFace.HasValue) {
+                m_lastDigFrameIndex = Time.FrameIndex;
+                float digTime = CalculateDigTime(m_networkDigVisualValue, ActiveBlockValue);
+                m_digProgress = digTime > 0f
+                    ? MathUtils.Saturate((float)(m_subsystemTime.GameTime - m_digStartTime) / digTime)
+                    : 1f;
             }
             if ((m_componentHealth != null && !(m_componentHealth.Health > 0f))
                 || !(AutoInteractRate > 0f)

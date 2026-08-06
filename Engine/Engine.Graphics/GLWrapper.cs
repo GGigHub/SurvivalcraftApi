@@ -974,7 +974,6 @@ namespace Engine.Graphics {
             try {
                 Log.Information("Device lost");
                 Display.HandleDeviceLost();
-                GC.Collect();
                 InitializeCache();
                 Display.Resize();
                 Display.HandleDeviceReset();

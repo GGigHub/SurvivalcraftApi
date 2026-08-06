@@ -1,16 +1,16 @@
 using Engine;
+using Game;
 
-namespace Game {
+namespace Survivalcraft.Multiplayer {
     public class NetworkStatusWidget : LabelWidget {
-        private const float RightWidgetGap = 8f;
+        const float RightWidgetGap = 8f;
 
         public override void Update() {
             base.Update();
 
             bool showClientLatency = NetworkManager.IsClientRunning;
             bool showHostCode = NetworkManager.RelayHostCodeStatus != RelayHostCodeStatus.Inactive;
-            IsVisible = showClientLatency || showHostCode;
-            if (!IsVisible) {
+            if (!showClientLatency && !showHostCode) {
                 Text = string.Empty;
                 return;
             }
@@ -29,6 +29,15 @@ namespace Game {
             };
         }
 
+        public override void MeasureOverride(Vector2 parentAvailableSize) {
+            if (string.IsNullOrEmpty(Text)) {
+                IsDrawRequired = false;
+                DesiredSize = Vector2.Zero;
+                return;
+            }
+            base.MeasureOverride(parentAvailableSize);
+        }
+
         public override void Arrange(Vector2 position, Vector2 parentActualSize) {
             float rightWidgetWidth = GetVisibleRightWidgetWidth();
             if (rightWidgetWidth > 0f) {
@@ -37,22 +46,28 @@ namespace Game {
             base.Arrange(position, parentActualSize);
         }
 
-        private float GetVisibleRightWidgetWidth() {
-            if (ParentWidget is not ContainerWidget parentWidget) return 0f;
+        float GetVisibleRightWidgetWidth() {
+            if (ParentWidget is not ContainerWidget parentWidget) {
+                return 0f;
+            }
             ContainerWidget rightControlsContainerWidget = parentWidget.Children.Find<ContainerWidget>("RightControlsContainer", false);
-            if (rightControlsContainerWidget?.IsVisible != true) return 0f;
+            if (rightControlsContainerWidget?.IsVisible != true) {
+                return 0f;
+            }
 
             float width = rightControlsContainerWidget.ActualSize.X;
             if (width <= 0f && !float.IsPositiveInfinity(rightControlsContainerWidget.ParentDesiredSize.X)) {
                 width = rightControlsContainerWidget.ParentDesiredSize.X;
             }
-            if (width <= 0f) return 0f;
+            if (width <= 0f) {
+                return 0f;
+            }
 
             float hiddenWidth = MathUtils.Max(rightControlsContainerWidget.RenderTransform.M41, 0f);
             return MathUtils.Max(width - hiddenWidth, 0f);
         }
 
-        private static string GetRelayHostCodeText() {
+        static string GetRelayHostCodeText() {
             string globalCode = NetworkManager.RelayGlobalCode;
             if (!string.IsNullOrWhiteSpace(globalCode)) {
                 return $"联机码：{globalCode}";

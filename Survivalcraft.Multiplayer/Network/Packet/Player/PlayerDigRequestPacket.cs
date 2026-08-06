@@ -1,3 +1,5 @@
+using Engine;
+
 namespace Game.Network;
 
 public enum PlayerDigRequestFailureReason : byte {
@@ -21,6 +23,7 @@ public sealed class PlayerDigRequestPacket : PlayerPacketBase {
     public CellFace CellFace;
     public int OldValue;
     public int ExpectedValue;
+    public Vector3 EyePosition;
 
     public PlayerDigRequestPacket() { }
 
@@ -29,13 +32,15 @@ public sealed class PlayerDigRequestPacket : PlayerPacketBase {
         ComponentPlayer player,
         CellFace cellFace,
         int oldValue,
-        int expectedValue
+        int expectedValue,
+        Vector3 eyePosition
     ) {
         ActionId = actionId;
         m_fromPlayerIndex = player.PlayerData.PlayerIndex;
         CellFace = cellFace;
         OldValue = oldValue;
         ExpectedValue = expectedValue;
+        EyePosition = eyePosition;
     }
 
     public override void Serialize(PacketSerializer archive) {
@@ -44,6 +49,7 @@ public sealed class PlayerDigRequestPacket : PlayerPacketBase {
         archive.Value(ref CellFace);
         archive.Value(ref OldValue);
         archive.Value(ref ExpectedValue);
+        archive.Value(ref EyePosition);
     }
 
     public override void Handle(bool isServer) {

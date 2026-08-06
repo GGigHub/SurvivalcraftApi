@@ -95,6 +95,18 @@ public class MovingBlockAddPacket : Packet {
             return;
         }
         SubsystemMovingBlocks subsystemMovingBlocks = GameManager.Project.FindSubsystem<SubsystemMovingBlocks>();
+
+        // The client simulates collapsing columns locally (dig prediction and
+        // block behaviors for network terrain changes), so the server's
+        // replicated "CollapsingBlock" set would otherwise be added on top of
+        // the local set. Two overlapping sets stop each other mid-air in
+        // SubsystemMovingBlocks.Update and get written back to the client's
+        // terrain as blocks the server does not have ("ghost sand"). Drop the
+        // local set and keep the server's authoritative set.
+        if (m_addId == SubsystemCollapsingBlockBehavior.IdString) {
+            RemoveMatchingLocalCollapseSet(subsystemMovingBlocks);
+        }
+
         List<MovingBlock> blocks = new(m_addBlocks.Count);
         foreach (MovingBlockData block in m_addBlocks) {
             blocks.Add(new MovingBlock {
@@ -109,6 +121,32 @@ public class MovingBlockAddPacket : Packet {
         }
         if (movingSet != null && movingSet.Id == SubsystemPistonBlockBehavior.IdString) {
             GameManager.Project.FindSubsystem<SubsystemAudio>().PlaySound("Audio/Piston", 1f, 0f, movingSet.Position, 2f, autoDelay: true);
+        }
+    }
+
+    private void RemoveMatchingLocalCollapseSet(SubsystemMovingBlocks subsystemMovingBlocks) {
+        Point3 addOrigin = Terrain.ToCell(m_addPosition);
+        foreach (SubsystemMovingBlocks.MovingBlockSet existing in subsystemMovingBlocks.MovingBlockSetEnumerable.ToArray()) {
+            if (existing.Id != SubsystemCollapsingBlockBehavior.IdString
+                || existing.Blocks.Count != m_addBlocks.Count
+                || Terrain.ToCell(existing.StartPosition) != addOrigin) {
+                continue;
+            }
+            bool matches = true;
+            for (int i = 0; i < m_addBlocks.Count; i++) {
+                if (existing.Blocks[i].Offset != m_addBlocks[i].Offset
+                    || existing.Blocks[i].Value != m_addBlocks[i].Value) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (!matches) {
+                continue;
+            }
+            // fromNetwork: true so the client removes the set locally without
+            // echoing a removal request back to the server.
+            subsystemMovingBlocks.RemoveMovingBlockSet(existing, true);
+            return;
         }
     }
 

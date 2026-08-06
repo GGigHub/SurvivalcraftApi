@@ -80,6 +80,9 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             int num = 0;
             while (true) {
                 if (num < 10) {

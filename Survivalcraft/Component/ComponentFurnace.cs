@@ -130,15 +130,13 @@ namespace Game {
                     if (m_smeltingProgress >= 1f) {
                         for (int i = 0; i < m_furnaceSize; i++) {
                             if (m_slots[i].Count > 0) {
-                                m_slots[i].Count--;
+                                RemoveSlotItems(i, 1);
                             }
                         }
-                        m_slots[ResultSlotIndex].Value = m_smeltingRecipe.ResultValue;
-                        m_slots[ResultSlotIndex].Count += m_smeltingRecipe.ResultCount;
+                        AddSlotItems(ResultSlotIndex, m_smeltingRecipe.ResultValue, m_smeltingRecipe.ResultCount);
                         if (m_smeltingRecipe.RemainsValue != 0
                             && m_smeltingRecipe.RemainsCount > 0) {
-                            m_slots[RemainsSlotIndex].Value = m_smeltingRecipe.RemainsValue;
-                            m_slots[RemainsSlotIndex].Count += m_smeltingRecipe.RemainsCount;
+                            AddSlotItems(RemainsSlotIndex, m_smeltingRecipe.RemainsValue, m_smeltingRecipe.RemainsCount);
                         }
                         m_smeltingRecipe = null;
                         m_smeltingProgress = 0f;
@@ -194,16 +192,17 @@ namespace Game {
             Point3 coordinates = m_componentBlockEntity.Coordinates;
             Slot slot2 = m_slots[FuelSlotIndex];
             if (slot2.Count > 0) {
-                int num2 = Terrain.ExtractContents(slot2.Value);
+                int fuelValue = slot2.Value;
+                int num2 = Terrain.ExtractContents(fuelValue);
                 Block block = BlocksManager.Blocks[num2];
-                if (block.GetExplosionPressure(slot2.Value) > 0f) {
-                    slot2.Count = 0;
-                    m_subsystemExplosions.TryExplodeBlock(coordinates.X, coordinates.Y, coordinates.Z, slot2.Value);
+                if (block.GetExplosionPressure(fuelValue) > 0f) {
+                    RemoveSlotItems(FuelSlotIndex, slot2.Count);
+                    m_subsystemExplosions.TryExplodeBlock(coordinates.X, coordinates.Y, coordinates.Z, fuelValue);
                 }
-                else if (block.GetFuelHeatLevel(slot2.Value) > 0f) {
-                    slot2.Count--;
-                    m_fireTimeRemaining = block.GetFuelFireDuration(slot2.Value) * FuelTimeEfficiency;
-                    m_heatLevel = block.GetFuelHeatLevel(slot2.Value);
+                else if (block.GetFuelHeatLevel(fuelValue) > 0f
+                    && RemoveSlotItems(FuelSlotIndex, 1) == 1) {
+                    m_fireTimeRemaining = block.GetFuelFireDuration(fuelValue) * FuelTimeEfficiency;
+                    m_heatLevel = block.GetFuelHeatLevel(fuelValue);
                     return true;
                 }
             }

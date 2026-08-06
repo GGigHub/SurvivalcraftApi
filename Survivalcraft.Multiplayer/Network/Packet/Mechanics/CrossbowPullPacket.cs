@@ -35,7 +35,7 @@ public class CrossbowPullPacket : Packet {
                         Value = value,
                         Count = inventory.GetSlotCount(m_slotIndex)
                     });
-                    NetworkManager.Queue(new InventorySyncPacket(inventory));
+                    InventoryPacketHelpers.QueueInventorySync(inventory);
                 }
             }
         }

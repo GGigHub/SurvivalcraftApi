@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AssemblyName>RelayProbe</AssemblyName>
+    <RootNamespace>RelayProbe</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LiteNetLib" Version="2.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Survivalcraft.Multiplayer\Network\Packet\Helper\CenterServerClient.cs" Link="Real\CenterServerClient.cs" />
+    <Compile Include="..\Survivalcraft.Multiplayer\Network\New\RelayHost.cs" Link="Real\RelayHost.cs" />
+    <Compile Include="..\Survivalcraft.Multiplayer\Network\New\RelayProtocol.cs" Link="Real\RelayProtocol.cs" />
+    <Compile Include="..\Survivalcraft.Multiplayer\Network\NetworkChannels.cs" Link="Real\NetworkChannels.cs" />
+  </ItemGroup>
+</Project>

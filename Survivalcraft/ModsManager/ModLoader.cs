@@ -2227,6 +2227,7 @@ namespace Game {
         public virtual void OnNetworkPlayerDig(ComponentPlayer player) { }
         public virtual void OnNetworkPlayerHit(ComponentPlayer player, ComponentBody hitBody, Vector3 hitPoint, Vector3 direction) { }
         public virtual void OnNetworkPlayerInteract(ComponentPlayer player) { }
+        public virtual void OnNetworkPlayerPlace(ComponentPlayer player, ComponentPlayer.InteractEventItem interactEvent, bool placed) { }
         public virtual void OnNetworkPlayerDrop(ComponentPlayer player) { }
         public virtual void OnNetworkRandomFeedBehaviorChanged(ComponentRandomFeedBehavior behavior, bool isFeed) { }
         public virtual void OnNetworkRandomPeckBehaviorChanged(ComponentRandomPeckBehavior behavior, bool isPeck) { }
@@ -2282,6 +2283,7 @@ namespace Game {
         public virtual void OnNetworkDispenserClicked(Point3 position, byte data) { }
         public virtual void OnNetworkDragDropItem(IInventory sourceInventory, int sourceSlotIndex, DragMode dragMode, IInventory targetInventory, int targetSlotIndex, bool processingOnly, int dragCount) { }
         public virtual void OnNetworkMoveItem(IInventory sourceInventory, int sourceSlotIndex, IInventory targetInventory, int targetSlotIndex, int count) { }
+        public virtual void OnPlayerDroppedItems(ComponentPlayer player, IInventory inventory, int slotIndex, int count) { }
         public virtual void OnNetworkPlayerDragDrop(PlayerData playerData, int inventoryId, int slotIndex, Vector3 worldPos, int count) { }
         public virtual void OnNetworkChokeRequest(ComponentHealth health, ComponentCreature attacker, float amount, string cause, bool ignoreInvulnerability) { }
         public virtual void OnNetworkRequestSkin(ComponentClothing clothing, string skinName) { }

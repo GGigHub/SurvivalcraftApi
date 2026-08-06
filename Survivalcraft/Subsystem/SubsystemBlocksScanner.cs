@@ -34,6 +34,9 @@ namespace Game {
         public virtual Action<TerrainChunk> ScanningChunkCompleted { get; set; }
 
         public virtual void Update(float dt) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             Terrain terrain = m_subsystemTerrain.Terrain;
             m_pollShaftsCount += terrain.AllocatedChunks.Length * 16 * 16 * dt / ScanPeriod;
             m_pollShaftsCount = Math.Clamp(m_pollShaftsCount, 0f, MaxShaftsToPollPerFrame);

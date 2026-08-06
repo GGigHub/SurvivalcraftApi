@@ -55,7 +55,6 @@ namespace Game {
                         $"Survivalcraft {now.Year:D4}-{now.Month:D2}-{now.Day:D2} {now.Hour:D2}-{now.Minute:D2}-{now.Second:D2}.png"
                     );
                     m_successHandler?.Invoke();
-                    GC.Collect();
                 }
                 catch (Exception ex) {
                     Log.Error($"Error capturing screen. Reason: {ex.Message}");

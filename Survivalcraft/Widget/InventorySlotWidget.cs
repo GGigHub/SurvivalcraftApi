@@ -329,7 +329,12 @@ namespace Game {
                 UpdateEnvironmentData(containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon").DrawBlockEnvironmentData);
                 DragHostWidget.BeginDrag(
                     containerWidget,
-                    new InventoryDragData { Inventory = m_inventory, SlotIndex = m_slotIndex, DragMode = dragMode },
+                    new InventoryDragData {
+                        Inventory = m_inventory,
+                        SlotIndex = m_slotIndex,
+                        DragMode = dragMode,
+                        Count = num3
+                    },
                     delegate { m_dragMode = null; }
                 );
                 m_dragMode = dragMode;

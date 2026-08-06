@@ -23,6 +23,20 @@ public static class SandPhysicsTools {
             raw);
     }
 
+    public static async Task<SandTarget> SetupClientSandColumnAsync(GameContext context, int playerIndex) {
+        string script = GameTools.ReadScript("SandPhysics/SetupClientSandColumnCode.cs")
+            .Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture));
+        string raw = (string?)await context.PushCommandAsync("FUNC " + script) ?? string.Empty;
+        Dictionary<string, string> values = ParseKeyValuePairs(raw);
+        return new SandTarget(
+            ParseInt(values, "x"),
+            ParseInt(values, "y"),
+            ParseInt(values, "z"),
+            ParseInt(values, "supportValue"),
+            ParseInt(values, "sandValue"),
+            raw);
+    }
+
     public static async Task DigSupportBlockAsync(GameContext context, SandTarget target) {
         string script = GameTools.ReadScript("SandPhysics/DigSupportBlockCode.cs")
             .Replace("__X__", target.X.ToString(CultureInfo.InvariantCulture))
@@ -62,6 +76,23 @@ public static class SandPhysicsTools {
         for (int i = 0; i < attempts; i++) {
             state = await GetSandPhysicsStateAsync(context, target);
             if (state.LandContents == state.SandIndex) {
+                return state;
+            }
+            await Task.Delay(intervalMs);
+        }
+        return state;
+    }
+
+    public static async Task<SandPhysicsState> WaitForSandVisibleAsync(
+        GameContext context,
+        SandTarget target,
+        int timeoutMs = 10000) {
+        SandPhysicsState state = default;
+        int intervalMs = 100;
+        int attempts = timeoutMs / intervalMs;
+        for (int i = 0; i < attempts; i++) {
+            state = await GetSandPhysicsStateAsync(context, target);
+            if (state.OrigContents == state.SandIndex) {
                 return state;
             }
             await Task.Delay(intervalMs);

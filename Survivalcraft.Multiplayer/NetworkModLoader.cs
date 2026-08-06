@@ -9,12 +9,15 @@ using GameEntitySystem;
 
 namespace Survivalcraft.Multiplayer {
     public class NetworkModLoader : ModLoader {
+        private const double FurnaceStateSyncPeriod = 0.1;
+
         public override void __ModInitialize() {
 
             string[] hookNames = [
                 "IsNetworkMode",
                 "OnMinerDig",
                 "OnBlockDug",
+                "GuiUpdate",
                 "OnEntityAdd",
                 "OnEntityRemove",
                 "OnNetworkChaseBehaviorAttackChanged",
@@ -49,7 +52,9 @@ namespace Survivalcraft.Multiplayer {
                 "OnNetworkPlayerDig",
                 "OnNetworkPlayerHit",
                 "OnNetworkPlayerInteract",
+                "OnNetworkPlayerPlace",
                 "OnNetworkPlayerDrop",
+                "OnPlayerDroppedItems",
                 "OnNetworkRandomFeedBehaviorChanged",
                 "OnNetworkRandomPeckBehaviorChanged",
                 "OnNetworkRiderDismounting",
@@ -131,6 +136,8 @@ namespace Survivalcraft.Multiplayer {
                 (NetworkManager.RelayClient as RelayClient)?.Update();
                 PacketManager.PackageFragment.CleanupStates();
                 NetworkDigConfirmationRuntime.Tick();
+                NetworkPlaceConfirmationRuntime.Tick();
+                InventoryPacketHelpers.FlushPendingSync();
             };
             NetworkManager.StopAction = () => {
                 (NetworkManager.NetworkServer as NetworkServer)?.Stop();
@@ -145,6 +152,8 @@ namespace Survivalcraft.Multiplayer {
                 PlayerBodyUpdatePacket.ClearSnapshots();
                 FurnitureHammerPacket.ClearState();
                 NetworkDigConfirmationRuntime.Reset();
+                NetworkPlaceConfirmationRuntime.Reset();
+                InventoryPacketHelpers.ClearPendingSync();
             };
             NetworkManager.IsServerRunningFunc = () =>
                 ((NetworkManager.NetworkServer as NetworkServer)?.IsRunning ?? false) || ((NetworkManager.RelayHost as RelayHost)?.IsConnected ?? false);
@@ -213,6 +222,56 @@ namespace Survivalcraft.Multiplayer {
             NetworkManager.QueuePickableUpdateAction = (pickables) => NetworkManager.Queue(new PickableUpdatePacket(pickables));
 
             NetworkManager.Initialize();
+        }
+
+        public override void GuiUpdate(ComponentGui componentGui) {
+            GameWidget gameWidget = componentGui.GameWidget;
+            ContainerWidget guiWidget = gameWidget.GuiWidget;
+            NetworkStatusWidget networkStatusWidget = FindOrMoveToGuiRoot<NetworkStatusWidget>(guiWidget);
+            if (networkStatusWidget == null) {
+                networkStatusWidget = new NetworkStatusWidget {
+                    Name = "RelayCodeLabel",
+                    Color = Color.White,
+                    DropShadow = true,
+                    HorizontalAlignment = WidgetAlignment.Far,
+                    VerticalAlignment = WidgetAlignment.Near,
+                    MarginLeft = 10f,
+                    MarginTop = 10f,
+                    MarginRight = 10f,
+                    MarginBottom = 10f
+                };
+                guiWidget.AddChildren(networkStatusWidget);
+            }
+            networkStatusWidget.Color = Color.White;
+            networkStatusWidget.DropShadow = true;
+            networkStatusWidget.HorizontalAlignment = WidgetAlignment.Far;
+            networkStatusWidget.VerticalAlignment = WidgetAlignment.Near;
+            networkStatusWidget.MarginLeft = 10f;
+            networkStatusWidget.MarginTop = 10f;
+            networkStatusWidget.MarginRight = 10f;
+            networkStatusWidget.MarginBottom = 10f;
+
+            PlayerNameArrowWidget playerNameArrowWidget = FindOrMoveToGuiRoot<PlayerNameArrowWidget>(guiWidget);
+            if (playerNameArrowWidget == null) {
+                playerNameArrowWidget = new PlayerNameArrowWidget();
+                guiWidget.AddChildren(playerNameArrowWidget);
+            }
+            playerNameArrowWidget.HorizontalAlignment = WidgetAlignment.Near;
+            playerNameArrowWidget.VerticalAlignment = WidgetAlignment.Near;
+            playerNameArrowWidget.MarginLeft = 10f;
+            playerNameArrowWidget.MarginTop = 10f;
+            playerNameArrowWidget.MarginRight = 10f;
+            playerNameArrowWidget.MarginBottom = 10f;
+            playerNameArrowWidget.SetGameWidget(gameWidget);
+        }
+
+        static T FindOrMoveToGuiRoot<T>(ContainerWidget guiWidget) where T : Widget {
+            T widget = guiWidget.Children.Find<T>(false);
+            if (widget != null && widget.ParentWidget != guiWidget) {
+                widget.ParentWidget?.RemoveChildren(widget);
+                guiWidget.AddChildren(widget);
+            }
+            return widget;
         }
 
         public override void OnXdbLoad(XElement xElement) {
@@ -313,7 +372,7 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkFurnaceUpdate(ComponentFurnace furnace) {
-        if (NetworkManager.IsServerRunning && Time.PeriodicEvent(2.0, 0.0))
+        if (NetworkManager.IsServerRunning && Time.PeriodicEvent(FurnaceStateSyncPeriod, 0.0))
             NetworkManager.Queue(new ComponentFurnacePacket(furnace.Entity.Id, furnace.FireTimeRemaining, furnace.SmeltingProgress, furnace.HeatLevel));
     }
 
@@ -358,7 +417,7 @@ namespace Survivalcraft.Multiplayer {
 
     public override void OnNetworkInventorySlotChanged(IInventory inventory, int slotIndex) {
         if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new InventorySyncPacket(inventory));
+            InventoryPacketHelpers.MarkInventoryDirty(inventory);
     }
 
     public override void OnNetworkClothingSlotChanged(IInventory inventory, int slotIndex) {
@@ -436,11 +495,28 @@ namespace Survivalcraft.Multiplayer {
         NetworkManager.Queue(new PlayerInteractPacket(player));
     }
 
+    public override void OnNetworkPlayerPlace(
+        ComponentPlayer player,
+        ComponentPlayer.InteractEventItem interactEvent,
+        bool placed
+    ) {
+        NetworkPlaceConfirmationRuntime.ObserveServerPlacement(player, interactEvent, placed);
+    }
+
     public override void OnNetworkPlayerDrop(ComponentPlayer player) {
         if (NetworkManager.IsClientRunning) {
             NetworkManager.Queue(new PlayerBodyUpdatePacket(player));
         }
         NetworkManager.Queue(new PlayerDropPacket(player));
+    }
+
+    public override void OnPlayerDroppedItems(ComponentPlayer player, IInventory inventory, int slotIndex, int count) {
+        // ComponentCreativeInventory removes items without firing the normal
+        // inventory-change hook, so sync it explicitly. Q-drop and drag-drop
+        // share this unified drop path (ComponentPlayer.DropInventoryItems).
+        if (NetworkManager.IsServerRunning && inventory is ComponentCreativeInventory) {
+            InventoryPacketHelpers.QueueInventorySync(inventory);
+        }
     }
 
     public override void OnNetworkRandomFeedBehaviorChanged(ComponentRandomFeedBehavior behavior, bool isFeed) {

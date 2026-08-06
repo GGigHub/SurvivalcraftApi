@@ -263,6 +263,62 @@ public sealed class InventorySyncTest : IClassFixture<GameFixture> {
             $"Furnace state was not synchronized. {mismatch} Server={serverState}, Client={clientState}.");
     }
 
+    [Fact, TestOrder(Priority = 18)]
+    public async Task TestFurnaceInventorySyncAfterServerProcessing() {
+        await EnsureWorldConnectedAsync();
+        int entityId = await InventorySyncTools.CreateFurnaceAsync(server);
+        Assert.True(entityId > 0, "Server did not create a furnace entity.");
+        Assert.True(await InventorySyncTools.WaitForEntityExistsAsync(client, entityId), $"Client did not receive furnace entity {entityId}.");
+
+        await InventorySyncTools.StartFurnaceSmeltingAsync(server, entityId);
+        InventorySyncTools.FurnaceInventoryState afterStart = await InventorySyncTools.GetFurnaceInventoryAsync(server, entityId);
+
+        InventorySyncTools.FurnaceInventoryState serverInventory = default;
+        InventorySyncTools.FurnaceInventoryState clientInventory = default;
+        bool fuelConsumed = false;
+        for (int i = 0; i < 80; i++) {
+            serverInventory = await InventorySyncTools.GetFurnaceInventoryAsync(server, entityId);
+            clientInventory = await InventorySyncTools.GetFurnaceInventoryAsync(client, entityId);
+            if (serverInventory.Exists
+                && clientInventory.Exists
+                && serverInventory.FuelCount == 0
+                && clientInventory.FuelCount == 0) {
+                fuelConsumed = true;
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        Assert.True(
+            fuelConsumed,
+            $"Furnace fuel was not synchronized after consumption. Server={serverInventory}, Client={clientInventory}.");
+
+        await InventorySyncTools.SetFurnaceProgressAsync(server, entityId, 0.99f);
+
+        bool resultSynchronized = false;
+        for (int i = 0; i < 80; i++) {
+            serverInventory = await InventorySyncTools.GetFurnaceInventoryAsync(server, entityId);
+            clientInventory = await InventorySyncTools.GetFurnaceInventoryAsync(client, entityId);
+            if (serverInventory.Exists
+                && clientInventory.Exists
+                && serverInventory.ResultCount > 0
+                && clientInventory.InputCount == serverInventory.InputCount
+                && clientInventory.FuelCount == serverInventory.FuelCount
+                && clientInventory.ResultCount == serverInventory.ResultCount
+                && clientInventory.RemainsCount == serverInventory.RemainsCount) {
+                resultSynchronized = true;
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        Assert.True(
+            resultSynchronized,
+            $"Furnace result inventory was not synchronized. AfterStart={afterStart}, Server={serverInventory}, Client={clientInventory}.");
+    }
+
     [Fact]
     public void Dispose() {
         fixture.ThrowIfAnyContextHasError();
