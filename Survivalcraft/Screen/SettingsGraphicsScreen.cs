@@ -45,7 +45,10 @@ namespace Game {
                     }
                 }
                 else {
-                    SettingsManager.UseVr = VrManager.IsVrAvailable && VrManager.StartVr();
+                    // StartVr waits for background init and returns false if VR is
+                    // unavailable, so the IsVrAvailable precheck is redundant (and
+                    // stale during the early init window).
+                    SettingsManager.UseVr = VrManager.StartVr();
                 }
             }
             m_virtualRealityButton.Text = SettingsManager.UseVr ? LanguageControl.Enable : LanguageControl.Disable;

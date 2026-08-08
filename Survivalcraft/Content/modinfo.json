@@ -1,8 +1,8 @@
 {
   "$schema": "modinfo-scheme.json",
   "Name": "SCPAK Resources",
-  "Version": "1.9.3",
-  "ApiVersion": "1.9.3",
+  "Version": "1.9.3.1",
+  "ApiVersion": "1.9.3.1",
   "Description": "Survivalcraft API Resource Pack 生存战争插件版资源包",
   "ScVersion": "2.4.0.0",
   "GameplayImpactLevel": "Cosmetic",

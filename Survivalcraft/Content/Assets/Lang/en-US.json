@@ -289,6 +289,7 @@
   "ModSettingsParser": {
     "PageInvalidId": "Mod '{0}' page missing valid Id or contains '/', skipped",
     "ItemInvalidId": "Setting item missing valid Id or contains '/', skipped",
+    "LabelInvalidId": "Mod setting label missing valid Id or contains '/', skipped",
     "TypeResolveFailed": "Type '{0}' of setting '{1}' could not be resolved, skipped",
     "DefaultParseFailed": "Default parse failed, using default({0}): {1}",
     "WidgetResolveFailed": "Widget '{0}' not found or not an IModSettingItemWidget, falling back to default"

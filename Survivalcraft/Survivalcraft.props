@@ -13,7 +13,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="NuGet.Versioning" Version="7.6.0" />
-        <PackageReference Include="Jint" Version="4.14.0" />
+        <PackageReference Include="Jint" Version="4.15.3" />
         <PackageReference Include="NAudio.Flac.Unknown.Mod" Version="1.0.4" /><!--Source: https://github.com/XiaofengdiZhu/NAudio.Flac/ -->
         <PackageReference Include="HarmonyX" Version="2.16.1" />
     </ItemGroup>

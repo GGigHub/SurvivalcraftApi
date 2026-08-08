@@ -1,5 +1,6 @@
 #if WINDOWS || ANDROID
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Engine.Graphics;
 using Silk.NET.OpenGLES;
 using Silk.NET.OpenXR;
@@ -13,6 +14,8 @@ namespace Engine {
     public abstract unsafe class OpenXrVrBackend : IVrBackend {
         XR m_xr;
         Instance m_instance;
+        Task m_initTask;
+        volatile bool m_initStarted;
         ulong m_systemId;
         Session m_session;
         Space m_playSpace;
@@ -98,7 +101,13 @@ namespace Engine {
         }
 
         // IVrBackend properties
-        public bool IsAvailable { get; private set; }
+        // Volatile-backed: IsAvailable is written by the background init thread
+        // (Windows) and read from the main thread.
+        volatile bool m_isAvailable;
+        public bool IsAvailable {
+            get => m_isAvailable;
+            private set => m_isAvailable = value;
+        }
         public bool IsStarted { get; private set; }
         public VrControllerType ControllerType { get; private set; } = VrControllerType.Unknown;
         int m_controllerDetectAttempts;
@@ -135,6 +144,29 @@ namespace Engine {
         }
 
         public void Initialize() {
+#if WINDOWS
+            // xrCreateInstance stalls for several seconds when an OpenXR runtime
+            // (SteamVR / WMR) is registered but no HMD is attached: it spawns the
+            // runtime broker synchronously on the calling thread. Kicking
+            // DoInitialize off to a background Task overlaps that latency with the
+            // rest of startup instead of freezing the loading-screen loop. OpenXR
+            // instance / system / view-config queries are thread-safe and do not
+            // touch the GL context, so off-thread init is valid; the session and
+            // graphics binding are still created on the render thread in StartVr.
+            // Idempotent: safe to call more than once.
+            if (!m_initStarted) {
+                m_initStarted = true;
+                m_initTask = Task.Run(() => {
+                    try {
+                        DoInitialize();
+                    }
+                    catch (Exception e) {
+                        Log.Error($"OpenXR initialization failed: {e}");
+                        IsAvailable = false;
+                    }
+                });
+            }
+#else
             try {
                 DoInitialize();
             }
@@ -142,6 +174,7 @@ namespace Engine {
                 Log.Error($"OpenXR initialization failed: {e}");
                 IsAvailable = false;
             }
+#endif
         }
 
         void DoInitialize() {
@@ -312,6 +345,15 @@ namespace Engine {
         }
 
         public void StartVr() {
+            // Wait for any background initialization (Windows) to finish so the
+            // IsAvailable check below sees the final result. When init already
+            // completed (the common case — it is kicked off early in
+            // Program.Initialize), Wait() returns immediately.
+            if (m_initTask != null) {
+                try { m_initTask.Wait(); }
+                catch (Exception e) { Log.Warning($"[VR] background init wait error: {e.Message}"); }
+            }
+
             if (!IsAvailable || IsStarted) return;
 
             try {
@@ -1588,6 +1630,10 @@ namespace Engine {
         }
 
         public void Dispose() {
+            // If background init (Windows) is still in flight, wait for it so we
+            // don't tear down while DoInitialize is calling into the OpenXR loader.
+            try { m_initTask?.Wait(); }
+            catch (Exception e) { Log.Warning($"[VR] background init wait error on dispose: {e.Message}"); }
             StopVr();
             IsAvailable = false;
             GC.SuppressFinalize(this);

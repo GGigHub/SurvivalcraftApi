@@ -34,11 +34,21 @@ namespace Game {
             bool hasType = obj.TryGetProperty("Type", out JsonElement typeEl) && typeEl.ValueKind == JsonValueKind.String;
             bool isSeparator = obj.TryGetProperty("Separator", out JsonElement sepEl) && sepEl.ValueKind == JsonValueKind.True;
             bool hasText = obj.TryGetProperty("Text", out JsonElement textEl) && textEl.ValueKind == JsonValueKind.String;
+            bool hasId = obj.TryGetProperty("Id", out JsonElement idEl) && idEl.ValueKind == JsonValueKind.String;
 
             if (isSeparator) return new ModSettingSeparator();
             if (hasItems) return ParsePage(obj, itemsEl, packageName);
             if (hasType) return ParseItem(obj, typeEl);
-            if (hasText) return new ModSettingLabel { Text = textEl.GetString() };
+            // Label：Text 在则取字面量/token（向后兼容）；Id-only（无 Type/Items/Text）→ 文案走 id链.Id.Name 自动键（ResolveText 第2档）
+            if (hasText) {
+                string textId = GetString(obj, "Id");
+                return new ModSettingLabel { Id = IsValidId(textId) ? textId : null, Text = textEl.GetString() };
+            }
+            if (hasId) {
+                string id = idEl.GetString();
+                if (!IsValidId(id)) { Log.Error("[ModSettings] " + L("LabelInvalidId", "Mod setting label missing valid Id or contains '/', skipped")); return null; }
+                return new ModSettingLabel { Id = id, Text = null };
+            }
             return null;
         }
 

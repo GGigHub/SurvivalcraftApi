@@ -2,6 +2,26 @@
 
 > 说明：此更新日志和发布页的更新日志略有不同
 
+## API 1.9.3.1 (2026-08-01)
+
+### 改进
+
+* 版本不符合要求的模组依赖，会在模组详情对话框中标出已找到的版本
+
+### 修复
+
+* 修复模组设置界面的描述不会保持在界面底部的问题
+* 修复模组设置界面的内置组件的一些明显问题
+* 修复 Windows 端没有 OpenXR 环境时，启动缓慢的问题
+* 修复一些可能导致模组设置丢失的问题
+
+### 对于开发者
+
+* `modinfo.json` 的 `Settings` 字段，可以另起一个文件 `modsettings.json` 来专门写
+* `IModSettingItemWidget` 新增 `ApplyExternalValue` 方法，可通过重写它，实现在 `ModSettingsManager.Set` 时自动更新组件显示的值
+* `ModelWidget` 新增 `CustomRenderer` 静态属性，从而实现自定义模型渲染
+* `ComponentModel` 新增 `VisibleInFppCamera` 属性
+
 ## API 1.9.3 (2026-07-16)
 
 ### 新增

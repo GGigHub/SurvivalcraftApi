@@ -170,14 +170,17 @@ namespace Game {
             );
             AddLoadAction(
                 delegate {
-                    VrManager.Initialize();
 #if ANDROID
                     // On Android VR headsets, force enable VR when available
                     if (VrManager.IsVrAvailable && !SettingsManager.UseVr) {
                         SettingsManager.UseVr = true;
                     }
 #endif
-                    if (VrManager.IsVrAvailable && SettingsManager.UseVr) {
+                    if (SettingsManager.UseVr) {
+                        // StartVr waits for the background init (Windows) to finish
+                        // and returns false if VR ended up unavailable. Don't gate on
+                        // IsVrAvailable here — that flag is still resolving async at
+                        // this early load step and would skip VR auto-start.
                         try {
                             VrManager.StartVr();
                             if (!VrManager.IsVrStarted) {

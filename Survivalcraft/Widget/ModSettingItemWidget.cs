@@ -25,6 +25,9 @@ namespace Game {
 
         /// <summary>页面轮询识别激活项（如滑块滑动中），用于更新共享 Description。默认 false。</summary>
         public bool IsOperating { get; set; }
+
+        /// <summary>外部（非用户操作）推送新值时由宿主调用：把新值同步到内部控件显示。默认空实现；内置 widget 经 UniformSpacingPanelSettingWidget 重写，第三方 widget 可按需重写以参与自动刷新。</summary>
+        public void ApplyExternalValue(object newValue) { }
     }
 
     /// <summary>
@@ -38,6 +41,8 @@ namespace Game {
         public object Value { get; protected set; }
         public string DescriptionText { get; set; }
         public Action<object> ValueChanged { get; set; }
+
+        protected bool m_applyingExternalValue;
 
         protected LabelWidget m_nameLabel;
         string m_nameLabelText;
@@ -80,11 +85,30 @@ namespace Game {
             if (valueWidget != null) Children.Add(valueWidget);
         }
 
-        /// <summary>子类检测到值变化时调用：更新 Value 并触发 ValueChanged（→ Manager.Set）。</summary>
+        /// <summary>子类检测到值变化时调用：更新 Value 并触发 ValueChanged（→ Manager.Set）。外部推值期间（m_applyingExternalValue）跳过回写，防 widget→Set→event→同 widget 循环。第三方重写本方法时须同样检查 m_applyingExternalValue，否则外部推值会被回写成循环。</summary>
         protected virtual void CommitValue(object newValue) {
             Value = newValue;
-            ValueChanged?.Invoke(newValue);
+            if (!m_applyingExternalValue) ValueChanged?.Invoke(newValue);
         }
+
+        /// <summary>宿主收到 SettingChanged 后调入口：设守卫 → 写 Value（不回写 Manager）→ 同步控件 → 清守卫。子类不重写本方法，重写 ApplyToControl。</summary>
+        public virtual void ApplyExternalValue(object newValue) => ApplyExternalValueCore(newValue);
+
+        protected void ApplyExternalValueCore(object newValue) {
+            // 入口处类型预检（Supports 契约）：脏值静默忽略，不污染 Value（否则 TextBox 下帧 Update 会误触发回写，BoolButton 下次点击会 InvalidCastException）。
+            if (newValue != null && !Supports(newValue.GetType())) return;
+            m_applyingExternalValue = true;
+            try {
+                Value = newValue;
+                ApplyToControl(newValue);
+            }
+            finally {
+                m_applyingExternalValue = false;
+            }
+        }
+
+        /// <summary>把新值同步到内部控件显示。基类默认空；各子类重写以写自己的控件（按 Supports 已校验类型解引用，类型不符静默忽略）。</summary>
+        protected virtual void ApplyToControl(object newValue) { }
     }
 
     // ===== 内置子类 =====
@@ -125,6 +149,10 @@ namespace Game {
                 m_button.Text = (bool)Value ? m_textTrue : m_textFalse;
             }
         }
+
+        protected override void ApplyToControl(object newValue) {
+            if (newValue is bool b) m_button.Text = b ? m_textTrue : m_textFalse;
+        }
     }
 
     /// <summary>enum 多项选择对话框（项数多时默认）。点按钮弹 ListSelectionDialog。</summary>
@@ -161,6 +189,10 @@ namespace Game {
                 ));
             }
         }
+
+        protected override void ApplyToControl(object newValue) {
+            if (newValue is Enum) m_button.Text = MemberText(newValue);
+        }
     }
 
     /// <summary>enum 少项滑块（SliderWidget + 整数下标）。</summary>
@@ -181,8 +213,7 @@ namespace Game {
                 Margin = new Vector2(20, 0),
                 MinValue = lo,
                 MaxValue = hi,
-                Granularity = 1,
-                Value = Math.Clamp(Array.IndexOf(m_members, Value), lo, hi)
+                Granularity = 1
             };
             if (descriptor.WidgetProperties is JsonElement props) {
                 // 用户配的 Min/Max 钳到下标域 [lo, hi]，防止滑块越界选不中末项
@@ -190,6 +221,8 @@ namespace Game {
                 if (props.TryGetProperty("MaxValue", out JsonElement max) && max.ValueKind == JsonValueKind.Number) m_slider.MaxValue = Math.Clamp(max.GetSingle(), lo, hi);
                 if (props.TryGetProperty("Granularity", out JsonElement g) && g.ValueKind == JsonValueKind.Number) m_slider.Granularity = g.GetSingle();
             }
+            // Value 须在 Min/Max/Granularity 全部就位后再设：否则按默认区间+粒度钳/round，后续改 Granularity 不重 round（与 NumberSlider 同款 bug）。
+            m_slider.Value = Math.Clamp(Array.IndexOf(m_members, Value), lo, hi);
             m_slider.Text = MemberText(Value);
             Assemble(m_slider);
         }
@@ -207,6 +240,14 @@ namespace Game {
                 m_slider.Text = MemberText(current);
                 if (m_slider.SlidingCompleted) CommitValue(current);
             }
+        }
+
+        protected override void ApplyToControl(object newValue) {
+            if (newValue is not Enum) return;
+            int idx = Array.IndexOf(m_members, newValue);
+            if (idx < 0) return;
+            m_slider.Value = Math.Clamp(idx, 0, m_members.Length - 1);
+            m_slider.Text = MemberText(newValue);
         }
     }
 
@@ -237,8 +278,7 @@ namespace Game {
                 Margin = new Vector2(20, 0),
                 MinValue = 0,
                 MaxValue = 1,
-                Granularity = 0.1f,
-                Value = ToFloat(Value)
+                Granularity = 0.1f
             };
             if (descriptor.WidgetProperties is JsonElement props) {
                 if (props.TryGetProperty("MinValue", out JsonElement min) && min.ValueKind == JsonValueKind.Number) m_slider.MinValue = min.GetSingle();
@@ -246,6 +286,7 @@ namespace Game {
                 if (props.TryGetProperty("Granularity", out JsonElement g) && g.ValueKind == JsonValueKind.Number) m_slider.Granularity = g.GetSingle();
                 if (props.TryGetProperty("DecimalPlaces", out JsonElement dp) && dp.ValueKind == JsonValueKind.Number) DecimalPlaces = dp.GetInt32();
             }
+            m_slider.Value = ToFloat(Value);
             UpdateText();
             Assemble(m_slider);
         }
@@ -269,6 +310,12 @@ namespace Game {
                 CommitValue(newVal);
                 UpdateText();
             }
+        }
+
+        protected override void ApplyToControl(object newValue) {
+            if (newValue == null || !IsNumeric(newValue.GetType())) return;
+            m_slider.Value = ToFloat(newValue);
+            UpdateText();
         }
     }
 
@@ -295,6 +342,10 @@ namespace Game {
             IsOperating = m_textBox.HasFocus;
             string current = Value as string;
             if (m_textBox.Text != current) CommitValue(m_textBox.Text);
+        }
+
+        protected override void ApplyToControl(object newValue) {
+            if (newValue is string s) m_textBox.Text = s;
         }
     }
 }

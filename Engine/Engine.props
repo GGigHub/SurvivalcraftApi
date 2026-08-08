@@ -36,7 +36,7 @@
         <PackageReference Include="System.Private.Uri" Version="4.3.2" />
         <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
         <!--NCalc for animation expression evaluation-->
-        <PackageReference Include="NCalcSync" Version="6.4.0" />
+        <PackageReference Include="NCalcSync" Version="7.0.0" />
     </ItemGroup>
     <ItemGroup>
         <Compile Remove="$(MSBuildThisFileDirectory)Engine.Graphics\EGL.cs" />

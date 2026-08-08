@@ -32,8 +32,28 @@ namespace Game {
         }
 
         public override void Enter(object[] parameters) {
+            ModSettingsManager.SettingChanged += OnSettingChanged;
             m_pageStack.Clear();
             NavigateCurrent();
+        }
+
+        public override void Leave() {
+            ModSettingsManager.SettingChanged -= OnSettingChanged;
+            base.Leave();
+        }
+
+        /// <summary>Manager 值变更：按 CachedPath 命中当前页 Widget 并刷新控件显示。逐项 try/catch 隔离，单项失败不影响其它。</summary>
+        void OnSettingChanged(string path, object value) {
+            foreach (IModSettingItemWidget w in m_itemWidgets) {
+                try {
+                    if (w.Descriptor?.CachedPath != path) continue;
+                    w.ApplyExternalValue(value);
+                }
+                catch (Exception e) {
+                    if (!LanguageControl.TryGet(out string msg, fName, "11")) msg = "ApplyExternalValue error, item={0}: {1}";
+                    Log.Error("[ModSettings] " + string.Format(msg, w.Descriptor?.Id, e.Message));
+                }
+            }
         }
 
         void NavigateCurrent() {
@@ -129,13 +149,17 @@ namespace Game {
 
         Widget CreateElementWidget(ModSettingElement el) {
             switch (el) {
-                case ModSettingLabel label:
+                case ModSettingLabel label: {
+                    bool hasId = label.Id != null;
+                    string[] idChain = hasId ? AppendId(m_pageIds, label.Id) : m_pageIds;
+                    string fieldName = hasId ? "Name" : "Text";
                     return new LabelWidget {
-                        Text = ModSettingLocalizer.ResolveText(m_packageName, m_pageIds, "Text", label.Text, true),
+                        Text = ModSettingLocalizer.ResolveText(m_packageName, idChain, fieldName, label.Text, true),
                         HorizontalAlignment = WidgetAlignment.Near,
                         Color = new Color(200, 200, 200),
-                        Margin = new Vector2(0f, 6f)
+                        Margin = new Vector2(20f, 6f)
                     };
+                }
                 case ModSettingSeparator:
                     return new RectangleWidget {
                         Size = new Vector2(float.PositiveInfinity, 2f),

@@ -289,6 +289,7 @@
   "ModSettingsParser": {
     "PageInvalidId": "模组 [{0}] 的 Page 缺少合法 Id 或含 [/] ，已跳过",
     "ItemInvalidId": "设置项缺少合法 Id 或含 [/] ，已跳过",
+    "LabelInvalidId": "标签缺少合法 Id 或含 [/] ，已跳过",
     "TypeResolveFailed": "设置项 [{1}] 的 Type [{0}] 无法解析，已跳过",
     "DefaultParseFailed": "Default 解析失败，用 default({0})：{1}",
     "WidgetResolveFailed": "Widget [{0}] 未找到或非 IModSettingItemWidget，回退默认"

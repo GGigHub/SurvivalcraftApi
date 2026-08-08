@@ -111,7 +111,7 @@
                     "Description": "[TemplateMod/Settings/Group1:2]",
                     "Type": "bool", // 基本类型、Game 命名空间之外的类型，需要写完整类名
                     "Default": false,
-                    "Widget": "BoolButtonSettingWidget" // 必须为实现了 IModSettingItemWidget 接口且继承自 Widget 类的类名
+                    "Widget": "BoolButtonSettingWidget" // 必须为实现了 IModSettingItemWidget 接口且继承自 Widget 类的类名，内置组件详见 ModSettingItemWidget.cs。
                 },
                 {
                     "Id": "TemplateModSettingsItem2",
@@ -128,6 +128,12 @@
                         "DecimalPlaces": 0
                     }
                 },
+                // 小标题有两种写法，第一种如下，支持 "[TemplateMod/Settings/Label1]" 本地化
+                { "Text": "我是小标题" },
+                // 小标题第二种写法，会自动尝试从 LanguageControl.Get("ModSettings", PackageName, Id 链, "Name") 获取
+                { "Id": "TemplateModSettingsLabel2" },
+                // 分隔线 Separator：
+                { "Separator": true },
                 {
                     "Id": "TemplateModSettingsSubgroup1",
                     "Name": "More Settings",

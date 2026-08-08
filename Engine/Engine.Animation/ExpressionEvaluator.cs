@@ -15,12 +15,6 @@ namespace Engine.Animation {
         public readonly Dictionary<string, string[]> m_requiredParameters = new();
 
         /// <summary>
-        /// Reusable parameter dictionary (avoid allocation per evaluation).
-        /// Note: Must be used in single-threaded context.
-        /// </summary>
-        public readonly Dictionary<string, object> m_reusableParameters = new();
-
-        /// <summary>
         /// Evaluate a boolean expression (for state conditions).
         /// </summary>
         /// <param name="expression">Expression string</param>
@@ -156,7 +150,6 @@ namespace Engine.Animation {
             }
             m_compiledExpressions.Clear();
             m_requiredParameters.Clear();
-            m_reusableParameters.Clear();
         }
 
         /// <summary>
@@ -188,16 +181,13 @@ namespace Engine.Animation {
             string cacheKey = normalizedExpr;
             string[] requiredParams = m_requiredParameters.TryGetValue(cacheKey, out string[] params_) ? params_ : Array.Empty<string>();
             if (requiredParams.Length == 0) {
-                expr.Parameters = null;
+                expr.Parameters.Clear();
                 return;
             }
 
-            // Reuse parameter dictionary: clear and refill
-            m_reusableParameters.Clear();
             foreach (string paramName in requiredParams) {
-                m_reusableParameters[paramName] = parameters.GetValue(paramName);
+                expr.Parameters[paramName] = parameters.GetValue(paramName);
             }
-            expr.Parameters = m_reusableParameters;
         }
 
         /// <summary>

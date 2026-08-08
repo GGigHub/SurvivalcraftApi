@@ -25,6 +25,7 @@ namespace Game {
     public class ModSettingSeparator : ModSettingElement { }
 
     public class ModSettingLabel : ModSettingElement {
+        public string Id;
         public string Text;
     }
 }
