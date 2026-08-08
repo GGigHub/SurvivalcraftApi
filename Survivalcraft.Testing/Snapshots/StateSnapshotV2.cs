@@ -59,7 +59,16 @@ public sealed record StateSnapshotV2(
     ProjectileEventSnapshotV2? ProjectileEvents = null,
     WorldFireStateSnapshotV2[]? WorldFires = null,
     WorldFireMetricsSnapshotV2? WorldFireMetrics = null,
-    ExplosionEventSnapshotV2? ExplosionEvents = null);
+    ExplosionEventSnapshotV2? ExplosionEvents = null,
+    FurnitureDesignSnapshotV2[]? FurnitureDesigns = null);
+
+public sealed record FurnitureDesignSnapshotV2(
+    int DesignIndex,
+    int Resolution,
+    string Name,
+    string InteractionMode,
+    int NonEmptyCellCount,
+    string ValueFingerprint);
 
 public sealed record WorldFireStateSnapshotV2(
     TerrainCellCoordinate Cell,
@@ -102,7 +111,9 @@ public sealed record PickableSnapshotV2(
     Vector3State Velocity,
     Vector3State? FlyToPosition,
     long Revision,
-    bool IsTombstone);
+    bool IsTombstone,
+    int Contents = 0,
+    int Data = 0);
 
 public sealed record PickableLifecycleSnapshotV2(
     int AuthoritativeTrackedPickables,

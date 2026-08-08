@@ -162,13 +162,13 @@ Terrain Snapshot v2 因此新增每格 `revision`、`chunkState`，并提供 str
 
 Entity Snapshot v2 支持按 ID 投影实体存在性、模板、生物/玩家标志、身体位置/速度/四元数、健康、hitpoints、revision 和 tombstone，并提供生命周期追踪器指标。实体比较器默认比较 revision，身体使用明确容差，四元数同样把 `q` 与 `-q` 视为同一朝向。
 
-`InventoryHealthMultiplayerScenario` 使用有限容量的 Survival 玩家库存和真实箱子。actor 依次通过 `MoveItemPacket`、`ActiveSlotChangePacket` 与 `PlayerDropPacket` 完成移动、选槽和丢弃；观察客户端发送针对 actor 库存的伪造 move 请求，服务端必须按会话所有权拒绝。生命链先让 observer 发送有限但伪造的命中几何并证明目标持续未受伤，再由 actor 用真实近战射线击杀 Cow；actor 死亡后 observer 又冒用其 PlayerIndex 发送 `PlayerRestartPacket`，服务端必须保持 actor 死亡，最后只接受 actor 自己的重生请求。所有变更请求携带稳定 request ID，服务端以每会话有界窗口精确去重；库存、Health 与 Damage 同时受实体生命周期和单调 revision 约束。
+`InventoryHealthMultiplayerScenario` 使用有限容量的 Survival 玩家库存和真实箱子。actor 依次通过 `MoveItemPacket`、`ActiveSlotChangePacket` 与 `PlayerDropPacket` 完成移动、选槽和丢弃；观察客户端发送针对 actor 库存的伪造 move 请求，服务端必须按会话所有权拒绝。生命链先让 observer 发送有限但伪造的命中几何并证明目标持续未受伤，再由 actor 用真实近战射线击杀 Cow；actor 死亡后 observer 又冒用其 PlayerIndex 发送 `PlayerRestartPacket`，服务端必须保持 actor 死亡，最后只接受 actor 自己的重生请求。家具锤链使用真实 `FurnitureHammerPacket` 与结构化结果，分别验证未装备、超距、空源、合法但材料错配以及限流拒绝，再在重复/重排下提交一次权威设计。所有变更请求携带稳定 request ID，服务端以每会话有界窗口精确去重；库存、Health、Damage 与家具设计同时受生命周期或单调状态约束。
 
-该场景在 100% 应用层重复和 50% 重排下要求服务端、actor、observer 收敛，并记录旧状态被拒绝的指标；之后验证 client-c late join、actor 同身份重连。保存前另建一个从未死亡的稳定健康实体，避免把尸体清理语义误当成持久化失败；重载后箱子内容、稳定实体健康和玩家身份必须在服务端与重连客户端一致。Inventory 与 Health Snapshot v2 支持精确选择、槽位和生命周期字段、revision 及 stale 指标，七个动作按角色和顺序严格回放。
+该场景在 100% 应用层重复和 50% 重排下要求服务端、actor、observer 收敛，并记录旧状态被拒绝的指标；之后验证 client-c late join、actor 同身份重连。保存前另建一个从未死亡的稳定健康实体，避免把尸体清理语义误当成持久化失败；重载后箱子内容、稳定实体健康、玩家身份、家具设计和产出掉落物必须在服务端与重连客户端一致。Inventory、Health 与家具 Snapshot v2 支持精确槽位、生命周期、revision、设计指纹及掉落物内容；十五个动作按角色和顺序严格回放。
 
 `EnvironmentMechanicsMultiplayerScenario` 还把世界火焰与爆炸纳入 mechanics Snapshot v2：火焰记录当前存在性、格坐标、权威 revision、应用/忽略/墓碑指标；Project 内全局单调 revision 与 4096 次变更墓碑窗口共同保证旧 add 不复活且历史内存有界。爆炸记录关联 event ID、已应用格分块与音效计数、重复/过期拒绝和活动窗口。场景以世界火焰 lifecycle burst 和真实 `SubsystemExplosions.AddExplosion` 作为第八、九个生产动作，随后唤醒；late join、同身份重连和保存重载必须只恢复当前火焰基线，不重放爆炸或已删除火焰。
 
-覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。当前 21 个 feature 中有 16 个 `covered`、1 个 `partial`、4 个 `planned`；会话兼容性、API 模组通道、玩家会话生命周期以及爆炸/世界火焰均具备 Direct、Relay、观察者、权限、late join、重连、定向故障、显式持久化边界、mutation sentry 与可重放 L3 证据。仍为 partial/planned 的领域继续按真实缺口保留，不能借用其他场景提升状态。
+覆盖契约位于 `Survivalcraft.Testing/Coverage/core-multiplayer.json`。当前 22 个 feature 中有 17 个 `covered`、1 个 `partial`、4 个 `planned`；家具锤、会话兼容性、API 模组通道、玩家会话生命周期以及爆炸/世界火焰均具备 Direct、Relay、观察者、权限、late join、重连、定向故障和显式持久化边界证据。仍为 partial/planned 的领域继续按真实缺口保留，不能借用其他场景提升状态。
 
 ## 确定性边界
 
@@ -267,7 +267,7 @@ L3 根目录另外包含 `fault-schedule.json` 和每轮原子更新的 `soak-su
   -Artifacts ./TestResults/l3-replay -NoBuild
 ```
 
-同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、pickable-projectile、inventory-health、environment-mechanics、mount、logic 和 session-lifecycle 十一个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。terrain-interaction version 3 除严格的 use/place/dig 三动作外，还重建定向 `PlayerDigPacket` 全丢失 profile，并要求客户端请求和服务端确认计数同时出现；player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；pickable-projectile 严格要求 server attraction、client-a 真实 Aim 发射、server stale-create lifecycle burst 三个动作，且陈旧创建注入必须启用；inventory-health 严格要求按坐标打开熔炉、按 ID 打开熔炉、玩家库存越权拒绝、远距容器拒绝、熔炉投料、熔炉加燃料、熔炉 revision burst、箱子 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn 十四个动作；environment-mechanics 严格要求 time、precipitation、fog、lightning、sleep、environment revision burst、player-fire revision burst、world-fire lifecycle burst、explosion、wake 十个动作，并要求陈旧世界火焰 add 与重复/过期爆炸分块注入保持启用；mount 严格要求 mount、dismount、故障下 mount、revision burst、同 ID lifecycle burst、重连前 remount 和重连后 mount 七个动作，且旧 revision 与旧 lifecycle 注入必须启用；logic 严格要求四个权限/安全探针、九类编辑、真实开关交互、logic revision burst、moving lifecycle burst 和 piston lifecycle 十七个动作，并要求旧 revision、旧 generation 与墓碑注入保持启用；session-lifecycle 回放保持原传输、种子和故障 profile，重新执行全部拒绝、风暴、限流与清理哨兵。
+同一个 `replay` 命令会自动识别 `replay-v2.json`，校验场景/wire/API/snapshot 四个版本后，以原种子、传输方式、`actions.json` 中的动作载荷和记录的 `networkFaults` 重新运行；当前支持创飞、terrain-interaction、player-motion、terrain-streaming、entity-creature、pickable-projectile、inventory-health、environment-mechanics、mount、logic 和 session-lifecycle 十一个 v2 场景，`--runtime` 和 `--artifacts` 仍可覆盖。terrain-interaction version 3 除严格的 use/place/dig 三动作外，还重建定向 `PlayerDigPacket` 全丢失 profile，并要求客户端请求和服务端确认计数同时出现；player-motion 回放严格要求五个动作的角色与顺序一致；terrain-streaming 严格要求 client-a 的 `player.move` 后紧接 server 的 `terrain.runRevisionBurst`；entity-creature 严格要求 server 的 `entity.applyImpulse` 后紧接 `entity.runLifecycleBurst`，并要求旧实体加载注入保持启用；pickable-projectile 严格要求 server attraction、client-a 真实 Aim 发射、server stale-create lifecycle burst 三个动作，且陈旧创建注入必须启用；inventory-health 严格要求按坐标打开熔炉、按 ID 打开熔炉、玩家库存越权拒绝、远距容器拒绝、熔炉投料、熔炉加燃料、熔炉 revision burst、箱子 move、select、drop、库存 revision burst、hit、健康 revision burst、respawn，以及最后一次带同 ID 重复注入的家具锤提交，共十五个动作；environment-mechanics 严格要求 time、precipitation、fog、lightning、sleep、environment revision burst、player-fire revision burst、world-fire lifecycle burst、explosion、wake 十个动作，并要求陈旧世界火焰 add 与重复/过期爆炸分块注入保持启用；mount 严格要求 mount、dismount、故障下 mount、revision burst、同 ID lifecycle burst、重连前 remount 和重连后 mount 七个动作，且旧 revision 与旧 lifecycle 注入必须启用；logic 严格要求四个权限/安全探针、九类编辑、真实开关交互、logic revision burst、moving lifecycle burst 和 piston lifecycle 十七个动作，并要求旧 revision、旧 generation 与墓碑注入保持启用；session-lifecycle 回放保持原传输、种子和故障 profile，重新执行全部拒绝、风暴、限流与清理哨兵。
 
 - `steps.json` 给出第一个失败步骤、起止时间和异常。
 - `snapshot-*.json` 已排序并规范化浮点数，适合机器比较。
@@ -301,11 +301,11 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## Autotest 可信度门禁
 
-当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，当前 Automation API 为 v11、多人联机 wire revision 为 12：
+当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，当前 Automation API 为 v12、多人联机 wire revision 为 13：
 
 - `production-surfaces.json` 对源码发现到的 103 个联机 hook 与 111 个 packet class 做精确库存；新增、删除或改名必须显式更新库存，避免生产面悄悄脱离测试计划。
-- `core-multiplayer.json` 使用 Coverage Contract v2。一个 feature 只有同时具备 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 且没有 open gap 时才能标为 `covered`；当前 22 个 feature 为 16 covered、2 partial、4 planned。新家具锤只有有界 codec 自动测试，因此明确保持 partial，不借用 use/place/dig 场景伪装成完整覆盖。
-- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry；M6 新增流量 burst、PlayerCreate replay 与会话快照后为 v9，M7 新增容器开启结果、熔炉动作与熔炉快照后为 v10，M8 新增世界火焰 lifecycle、爆炸事件动作及 Snapshot 证据后为 v11。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
+- `core-multiplayer.json` 使用 Coverage Contract v2。一个 feature 只有同时具备 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 且没有 open gap 时才能标为 `covered`；当前 22 个 feature 为 17 covered、1 partial、4 planned。家具锤已用独立 typed action 与结构化结果覆盖合法提交、五类拒绝、同 ID 幂等、Direct/Relay、观察者、late join、重连和保存重载，因此提升为 `covered/mutation`。
+- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry；M6 新增流量 burst、PlayerCreate replay 与会话快照后为 v9，M7 新增容器开启结果、熔炉动作与熔炉快照后为 v10，M8 新增世界火焰 lifecycle、爆炸事件动作及 Snapshot 证据后为 v11，M9 新增家具锤夹具、动作、结构化结果与设计/掉落物投影后为 v12。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
 - `ProductionPathGateway` 是 TestAutomation 唯一允许直接调用 `NetworkManager.Queue` 的位置。源码哨兵禁止旁路，并要求 fixture、production request、authoritative state、fault injection 这几类 API 都有真实调用点；延迟旧状态注入使用固定游戏帧 settle，避免重排让“旧包”先到而产生伪随机结果。
 - `GameNodeProcess` 从控制通道就绪后每 250 ms 旁路采样进程资源。每个 v2 `metrics.json` 都包含各角色的初始/最终/峰值工作集、私有内存、增长量、句柄、线程、CPU 与采样时长；采样失败不会伪装成 0 通过，L3 的 minimum-samples 门禁会拒绝无观测结果。
 - `MultiplayerSoakSchedule` 使用稳定 PRNG 生成场景、场景种子及故障 profile，开跑前先持久化。`MultiplayerSoakRunner` 每轮立即原子更新 summary，玩法失败、生产路径证明失败、进程资源超预算或任一节点故障队列超过默认 10000 包都会让 L3 返回非零；门槛不会为迁就失败而自动放宽。第一次完整精确回放据此抓到了生命值每帧广播的生产流量风暴，修复后原九场景计划以相同 SHA-256 在隔离目录 9/9 无窗口重放通过。

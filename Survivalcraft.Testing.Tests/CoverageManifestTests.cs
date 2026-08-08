@@ -21,16 +21,18 @@ public sealed class CoverageManifestTests {
         CoverageFeature[] covered = manifest.Features
             .Where(feature => feature.Status == "covered")
             .ToArray();
-        Assert.Equal(16, covered.Length);
+        Assert.Equal(17, covered.Length);
         Assert.Equal(4, manifest.Features.Count(feature => feature.Status == "planned"));
-        Assert.Equal(2, manifest.Features.Count(feature => feature.Status == "partial"));
+        Assert.Equal(1, manifest.Features.Count(feature => feature.Status == "partial"));
         Assert.Contains(manifest.Features, feature =>
             feature.FeatureId == "inventory.furniture-hammer"
-            && feature.Status == "partial"
+            && feature.Status == "covered"
+            && feature.Confidence == "mutation"
             && feature.AuthorityTest != null
-            && feature.DirectTest == null
-            && feature.RelayTest == null
-            && feature.Gaps is { Length: 3 });
+            && feature.DirectTest != null
+            && feature.RelayTest != null
+            && feature.MutationTest != null
+            && (feature.Gaps == null || feature.Gaps.Length == 0));
         Assert.All(covered, feature => {
             Assert.NotNull(feature.ProductionPathTest);
             Assert.NotNull(feature.DirectTest);

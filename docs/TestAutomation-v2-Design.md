@@ -1,6 +1,6 @@
 # TestAutomation v2 设计
 
-状态：设计基线；M8 已推进至爆炸与世界火焰完整覆盖契约
+状态：设计基线；M9 已推进至家具锤完整覆盖契约
 目标分支：`codex/api-mp-integration`
 适用范围：核心玩法联机自动化、直连与中继、多客户端、失败取证和长期稳定性测试
 
@@ -9,7 +9,7 @@
 TestAutomation v2 不重写现有测试框架，而是在已经稳定的命名管道控制面、无界面进程模型和场景产物之上增加完整的领域驱动能力。设计采用以下决定：
 
 1. 保持长度前缀 JSON 的 wire protocol v1，不因增加命令或快照字段破坏现有 TestHost 与运行时配对。
-2. 单独引入可演进的 Automation API（当前为 v11）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
+2. 单独引入可演进的 Automation API（当前为 v12）和 `StateSnapshotV2.SchemaVersion = 2`；能力版本、线协议版本和快照版本彼此独立。
 3. 保留所有现有 v1 命令和 `state.getSnapshot`，以新增命令的方式演进，不修改旧 DTO 的含义。
 4. 明确区分 `fixture.*` 布置命令和玩家动作命令。前者用于构造确定性前置条件；后者必须经过真实客户端玩法路径，不能直接伪造最终状态或网络包。
 5. 新稳定场景不得使用 `legacy.executeScript`、`FUNC`、`EXEC` 或 UI 点击来验证非 UI 玩法。
@@ -465,7 +465,7 @@ Survivalcraft.TestAutomation/
 
 已实现并进入自动门禁的内容：
 
-- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 为 v8，会话/通道生命周期为 v9，熔炉/容器结果为 v10，世界火焰/爆炸事件后当前为 v11；
+- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 为 v8，会话/通道生命周期为 v9，熔炉/容器结果为 v10，世界火焰/爆炸事件为 v11，家具锤夹具、动作与快照后当前为 v12；
 - 现有控制命令由注册式 `TypedCommandRouter` 统一分派，重复命令名在初始化阶段失败；
 - 新增有界 `ActionEventJournal`、`state.getEvents` 和 `state.resetEvents`；
 - 新增 Node、Network、Players、Events 投影的 Snapshot v2、稳定排序和玩家领域容差比较；
@@ -610,7 +610,7 @@ Survivalcraft.TestAutomation/
 本切片不新增玩法捷径，而是为全部强类型玩法建立不能虚高的共同证据层：
 
 - Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 103 个 hook 和 111 个 packet class。
-- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v11。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
+- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v12。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
 - `ProductionPathGateway` 成为测试模组唯一的直接 packet queue 边界，源码哨兵同时禁止私有旁路；fixture synchronization、production request、authoritative state 与 fault injection 四类路径被明确区分。
 - revision/lifecycle 旧状态注入在最终权威包稳定 30 个游戏帧后再交付，消除故障重排导致“旧包先到”的非确定性假阴性。
 - 每个游戏节点从控制通道 ready 起每 250 ms 采样工作集、私有内存、句柄、线程与 CPU。当前十个 v2 场景在 dispose 前把资源摘要写入 metrics；L3 对无样本、峰值、增长量和故障待发队列实行硬预算。Snapshot v2 还记录按 packet class 聚合的排队次数、故障传输次数和字节数，soak 失败会指出最高流量包型，避免只得到一个不可诊断的队列数字。
@@ -691,3 +691,15 @@ Survivalcraft.TestAutomation/
 - 上游服务端玩家平滑首次暴露同帧权限竞态：大幅位置包之后紧随的容器请求可能仍按旧位置授权。现在小位移仍平滑，大于 4 格的 discontinuity 在收包时立即落地；新增纯测试固定该语义，inventory-health Direct/Relay 的近距成功与远距拒绝均重新通过。
 - 当前源码最终 fast 为平台 114/114、游戏 84/84；trust 为 22 个 feature、103 个 hook、111 个 packet class，状态 16 covered / 2 partial / 4 planned；doctor 验证联机模组只存在于 `InternalMods` 且隐藏节点成功到达主菜单。兼容、核心、中继及所有玩法 Direct/Relay 共 25 个真实场景结果全部通过。
 - 最终 legacy 审计完整执行 140 项：125 通过、15 个已登记失败、0 个新增失败、0 个漏跑、5 个历史失败恢复，且新的“生物声音由各 peer 本地派生”测试通过，没有扩大允许集合。旧审计汇总已拆成 `Summarize-LegacyAudit.ps1`：正常路径由 `Test-Multiplayer.ps1` 调用；若外层长任务在完整 TRX 落盘后退出，也可独立恢复相同的 fail-closed schema v2 结论。
+
+## 36. M9 家具锤权威链与生命周期覆盖
+
+本切片把家具锤从有界 codec 覆盖推进为真实 Direct/Relay 行为覆盖，并把 Automation API 提升到 v12、联机协议提升到 revision 13：
+
+- `FurnitureHammerPacket` 现在携带稳定 request ID 与结构化 accepted/rejected 结果；服务端按会话有界去重并清理断线状态，重复同 ID 请求只能提交一次。
+- 服务端在注册设计或修改世界前验证玩家会话、锤子与耐久、距离、目标、源方块集合和设计边界，并比较去除光照后的权威源材料多重集。合法但材料错配的设计因此以 `DesignMismatch` 拒绝，不能凭客户端设计凭空换材质。
+- Automation API 新增 `fixture.furnitureHammer.prepare`、`fixture.furnitureHammer.apply` 与 `inventory.furnitureHammer`；Snapshot v2 新增稳定排序的家具设计指纹，pickable 投影补充 contents/data，动作事件记录请求 ID、结果码、设计索引、产出值/数量和重复次数。
+- `inventory-health-multiplayer` 升至 version 3 和严格十五动作回放。提交前分别证明未装备、超距、空源、合法材料伪造和限流请求不改变服务端状态；正式请求在 100% 重复与 50% 重排下仍只注册一个设计、消耗一个源并产生一个家具掉落物。
+- 同一场景随后验证初始 observer、late join、同身份重连和保存重载均获得相同设计指纹、已消耗源格与持久家具掉落物。Direct 与 Relay 的四节点真实无窗口运行及 fail-closed production-path attestation 均已通过。
+
+`inventory.furniture-hammer` 现为 `covered/mutation`。覆盖契约当前为 22 个 feature：17 个 `covered`、1 个 `partial`、4 个 `planned`；置信分布为 10 个 `behavioral`、4 个 `mutation`、3 个 `soak`、1 个 `partial`、4 个 `planned`，生产面库存仍为 103 个 hook 和 111 个 packet class。

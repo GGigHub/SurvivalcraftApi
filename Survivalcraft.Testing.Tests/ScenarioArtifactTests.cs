@@ -619,6 +619,18 @@ public sealed class ScenarioArtifactTests {
     [Fact]
     [Trait("Layer", "L0")]
     public void InventoryHealthReplayParserPreservesStrictCrossDomainSequence() {
+        FurnitureHammerFixture furnitureFixture = new(
+            1,
+            41,
+            10,
+            FurnitureHammerFixtureMode.Valid,
+            new TerrainCellCoordinate(6, 70, 13),
+            new Vector3State(6.5, 71, 16),
+            21,
+            21,
+            230,
+            0,
+            0);
         ScenarioActionRecordV2[] records = [
             TerrainActionRecord(
                 "open-point",
@@ -696,7 +708,15 @@ public sealed class ScenarioArtifactTests {
             TerrainActionRecord(
                 "respawn",
                 ControlCommandNames.PlayerRequestRespawn,
-                new PlayerRequestRespawnCommand(1))
+                new PlayerRequestRespawnCommand(1)),
+            TerrainActionRecord(
+                "furniture",
+                ControlCommandNames.FurnitureHammer,
+                new FurnitureHammerCommand(
+                    1,
+                    furnitureFixture,
+                    FurnitureHammerExpectedResult.Accepted,
+                    DuplicateCount: 3))
         ];
 
         InventoryHealthReplayPlan plan =
@@ -711,6 +731,7 @@ public sealed class ScenarioArtifactTests {
         Assert.Equal(30, plan.Hit.TargetEntityId);
         Assert.Equal(30, plan.HealthRevisionBurst.EntityId);
         Assert.Equal(1, plan.Respawn.PlayerIndex);
+        Assert.Equal(3, plan.FurnitureHammer!.DuplicateCount);
         Assert.Throws<InvalidDataException>(() =>
             InventoryHealthMultiplayerScenario.ParseReplayActions([
                 records[0],
@@ -726,7 +747,7 @@ public sealed class ScenarioArtifactTests {
                         new RunHealthRevisionBurstCommand(30, SendStaleSnapshot: false),
                         ControlProtocol.JsonOptions)
                 },
-                records[13]
+                .. records[13..]
             ]));
     }
 

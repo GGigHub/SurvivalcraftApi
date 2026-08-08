@@ -19,7 +19,8 @@ public enum NetworkMutationDomain : byte {
     PlayerWakeup,
     PlayerMount,
     PlayerInteract,
-    LogicEdit
+    LogicEdit,
+    FurnitureHammer
 }
 
 /// <summary>

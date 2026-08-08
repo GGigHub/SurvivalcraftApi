@@ -287,6 +287,43 @@ public static class SnapshotV2Comparer {
         return new SnapshotV2Diff(differences.Count == 0, differences.ToArray());
     }
 
+    public static SnapshotV2Diff CompareFurnitureDesigns(
+        StateSnapshotV2 expected,
+        StateSnapshotV2 actual) {
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentNullException.ThrowIfNull(actual);
+        List<SnapshotDifference> differences = [];
+        Dictionary<int, FurnitureDesignSnapshotV2> remaining =
+            (actual.FurnitureDesigns ?? [])
+            .ToDictionary(design => design.DesignIndex);
+        foreach (FurnitureDesignSnapshotV2 expectedDesign in
+                 (expected.FurnitureDesigns ?? []).OrderBy(design => design.DesignIndex)) {
+            string path = $"$.furnitureDesigns[designIndex={expectedDesign.DesignIndex}]";
+            if (!remaining.Remove(
+                    expectedDesign.DesignIndex,
+                    out FurnitureDesignSnapshotV2? actualDesign)) {
+                differences.Add(new SnapshotDifference(
+                    path,
+                    expectedDesign.ToString(),
+                    "<missing>"));
+                continue;
+            }
+            CompareValue(path + ".resolution", expectedDesign.Resolution, actualDesign.Resolution, differences);
+            CompareValue(path + ".name", expectedDesign.Name, actualDesign.Name, differences);
+            CompareValue(path + ".interactionMode", expectedDesign.InteractionMode, actualDesign.InteractionMode, differences);
+            CompareValue(path + ".nonEmptyCellCount", expectedDesign.NonEmptyCellCount, actualDesign.NonEmptyCellCount, differences);
+            CompareValue(path + ".valueFingerprint", expectedDesign.ValueFingerprint, actualDesign.ValueFingerprint, differences);
+        }
+        foreach (FurnitureDesignSnapshotV2 extra in remaining.Values
+                     .OrderBy(design => design.DesignIndex)) {
+            differences.Add(new SnapshotDifference(
+                $"$.furnitureDesigns[designIndex={extra.DesignIndex}]",
+                "<missing>",
+                extra.ToString()));
+        }
+        return new SnapshotV2Diff(differences.Count == 0, differences.ToArray());
+    }
+
     private static void CompareFurnaceState(
         string path,
         FurnaceStateSnapshotV2? expected,

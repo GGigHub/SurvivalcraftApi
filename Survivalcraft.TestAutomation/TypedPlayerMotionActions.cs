@@ -351,6 +351,11 @@ public partial class TestAutomationModLoader {
                 "action_in_progress",
                 $"Action '{pendingContainerOpenAction.ActionId}' is still in progress.");
         }
+        if (pendingFurnitureHammerAction != null) {
+            throw new AutomationCommandException(
+                "action_in_progress",
+                $"Action '{pendingFurnitureHammerAction.ActionId}' is still in progress.");
+        }
         if (pendingHealthAction != null) {
             throw new AutomationCommandException(
                 "action_in_progress",

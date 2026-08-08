@@ -198,6 +198,9 @@ public static class SnapshotV2Canonicalizer {
                 })
                 .OrderBy(state => state.PickableId)
                 .ToArray(),
+            FurnitureDesigns = snapshot.FurnitureDesigns?
+                .OrderBy(design => design.DesignIndex)
+                .ToArray(),
             Projectiles = snapshot.Projectiles?
                 .Select(state => state with {
                     Position = Normalize(state.Position, decimalPlaces),

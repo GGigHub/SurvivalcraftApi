@@ -158,6 +158,9 @@ public static class ControlCommandNames {
     public const string RunPickableLifecycleBurst = "pickable.runLifecycleBurst";
     public const string PrepareInventoryFixture = "fixture.inventory.prepare";
     public const string ApplyInventoryFixture = "fixture.inventory.apply";
+    public const string PrepareFurnitureHammerFixture = "fixture.furnitureHammer.prepare";
+    public const string ApplyFurnitureHammerFixture = "fixture.furnitureHammer.apply";
+    public const string FurnitureHammer = "inventory.furnitureHammer";
     public const string InventoryMove = "inventory.move";
     public const string InventorySelectSlot = "inventory.selectSlot";
     public const string InventoryDrop = "inventory.drop";

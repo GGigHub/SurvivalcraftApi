@@ -21,6 +21,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
     public void Connect(IPEndPoint relayAddress) {
         _packetDispatcher.Reset();
         ContainerOpenResultTracker.Reset();
+        FurnitureHammerResultTracker.Reset();
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
@@ -90,6 +91,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         if (type == RelayMessageType.JoinAccepted) {
             _packetDispatcher.Reset();
             ContainerOpenResultTracker.Reset();
+            FurnitureHammerResultTracker.Reset();
             _ = reader.GetInt();
             Log.Information($"Relay room joined: {_roomCode}");
             MySession = new ClientSession {
@@ -137,6 +139,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         IsConnected = false;
         _packetDispatcher.Reset();
         ContainerOpenResultTracker.Reset();
+        FurnitureHammerResultTracker.Reset();
         if (MySession != null) {
             ModNetworkManager.ClearSession(MySession);
             MySession.DisconnectedUtc = DateTime.UtcNow;

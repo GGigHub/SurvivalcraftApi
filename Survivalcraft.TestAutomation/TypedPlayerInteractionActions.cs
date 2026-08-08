@@ -84,6 +84,7 @@ public partial class TestAutomationModLoader {
         pendingInventoryAction = null;
         pendingContainerOpenAction = null;
         ContainerOpenResultTracker.Reset();
+        ResetFurnitureHammerActions();
         pendingHealthAction = null;
         ResetEntityLifecycleFixtures();
         ResetPickableProjectileFixtures();

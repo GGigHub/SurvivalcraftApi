@@ -521,7 +521,9 @@ public partial class TestAutomationModLoader {
                     ToVector(pickable?.Velocity ?? Vector3.Zero),
                     pickable?.FlyToPosition is Vector3 target ? ToVector(target) : null,
                     revision,
-                    tombstone);
+                    tombstone,
+                    Terrain.ExtractContents(pickable?.Value ?? 0),
+                    Terrain.ExtractData(pickable?.Value ?? 0));
             })
             .ToArray();
     }

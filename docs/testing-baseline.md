@@ -85,6 +85,22 @@ M8 将 revisioned world-fire add/remove、移除墓碑、服务端权威模拟�
 
 上游同步还暴露了“服务端收到大幅玩家位置校正后，同帧权限请求仍读取旧插值位置”的竞态。现在大于 4 格的 discontinuity 在收包时立即落地以供同帧权威校验，普通小位移继续平滑；两项 L0 防回退测试以及 inventory-health Direct/Relay 的近距成功、远距拒绝均通过。所有上述真实游戏节点继续使用 `--headless`、`CreateNoWindow=true` 和隔离数据目录。
 
+## M9 家具锤权威链与生命周期验收（2026-08-09）
+
+M9 把 `inventory.furniture-hammer` 从有界 codec 覆盖推进到完整的服务端权威生产链，并将 Automation API 提升到 v12、多人联机 wire revision 提升到 13。请求现在携带稳定 ID，接受和拒绝都返回机器可读结果；服务端按会话执行去重和限流，并重新验证玩家身份、手持锤、耐久、距离、源方块、设计边界以及归一化材料多重集。客户端声称的合法但不匹配材料也会以 `DesignMismatch` 拒绝，只有校验通过后才注册设计、消耗源方块和生成一次掉落物。
+
+`inventory-health-multiplayer` v3 扩展为严格十五动作。它先验证缺少工具、超距、空源、伪造材料和限流五类拒绝均不改变状态，再以 100% 同 ID 重复注入提交合法设计，并要求服务端、操作者和观察者都只看到一个设计、一次源消耗和一个家具掉落物；late join、同身份重连、保存重载与严格 replay 都继续核对设计指纹和掉落物内容。Direct、Relay 及二者独立 replay 四次真实运行全部通过；两次原始运行各有 25 条结构化断言且失败数为零，生产路径 attestation 也均无失败。xUnit 场景包装层随后独立通过 2/2。
+
+本切片的最终无窗口门禁为：
+
+- fast：平台 L0/L1 116/116、游戏 L0/L1 85/85；
+- trust：22 个 feature 中 17 covered、1 partial、4 planned；置信分布为 behavioral 10、mutation 4、soak 3、partial 1、planned 4；生产面精确库存为 103 个 hook 和 111 个 packet class；
+- doctor：隐藏节点到达 `MainMenuScreen`，联机模组包与装载位置检查通过；
+- 兼容矩阵、双进程核心场景和 Relay 模组通道场景全部通过；
+- furniture 定点 Direct/Relay、二者严格 replay 以及 xUnit 双传输包装层全部通过。
+
+覆盖契约因此把 `inventory.furniture-hammer` 提升为 `covered/mutation`。该等级表示家具锤的核心无 UI 生产动作已具备可重放、可归因的自动证据，不把对话框视觉呈现或未来家具组合配方的行为借算进本场景。所有节点继续使用 `--headless`、`CreateNoWindow=true` 与隔离数据目录，测试期间没有前台游戏窗口或残留游戏、中继进程。
+
 ## 当前可重复命令
 
 ```powershell

@@ -23,6 +23,8 @@ public static class ProductionPathEntries {
         "ComponentInput -> ComponentPlayer.OnNetworkPlayerDrop";
     public const string InventoryOpenContainer =
         "OpenInventoryByPointPacket/OpenInventoryByIDPacket.Handle -> OpenInventoryResultPacket.Handle";
+    public const string FurnitureHammer =
+        "FurnitureHammerPacket.Handle -> SubsystemFurnitureBlockBehavior.TryPrepareNetworkFurnitureHammer/CommitFurnitureHammer";
     public const string InventoryRevision = "InventorySyncPacket.Handle";
     public const string FurnaceRevision = "ComponentFurnacePacket.Handle";
     public const string PlayerHit = "ComponentInput -> ComponentMiner.Hit";

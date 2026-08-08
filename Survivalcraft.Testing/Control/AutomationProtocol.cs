@@ -1,7 +1,7 @@
 namespace Survivalcraft.Testing.Control;
 
 public static class AutomationProtocol {
-    public const int CurrentApiVersion = 11;
+    public const int CurrentApiVersion = 12;
     public const int CurrentSnapshotSchemaVersion = 2;
     public const int MaximumSnapshotEntities = 2048;
     public const int MaximumSnapshotTerrainCells = 4096;

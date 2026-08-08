@@ -11,6 +11,7 @@ public sealed class FurnitureHammerPacketCodecTest {
         byte[][] payloads = [
             Write(writer => {
                 writer.Write((byte)0);
+                writer.Write(101L);
                 writer.Write(3);
                 writer.Write(new byte[] { 1, 2, 3 });
                 writer.Write(12);
@@ -20,12 +21,18 @@ public sealed class FurnitureHammerPacketCodecTest {
             }),
             Write(writer => {
                 writer.Write((byte)1);
+                writer.Write(101L);
+                writer.Write((byte)FurnitureHammerResultCode.Accepted);
                 writer.Write(27);
+                writer.Write(1234);
+                writer.Write(4);
                 writer.Write(2);
                 writer.Write(new byte[] { 9, 8 });
             }),
             Write(writer => {
                 writer.Write((byte)2);
+                writer.Write(102L);
+                writer.Write((byte)FurnitureHammerResultCode.DesignMismatch);
                 writer.Write("rejected");
             })
         ];
@@ -44,6 +51,7 @@ public sealed class FurnitureHammerPacketCodecTest {
         byte[] unknown = Write(writer => writer.Write(byte.MaxValue));
         byte[] oversized = Write(writer => {
             writer.Write((byte)0);
+            writer.Write(101L);
             writer.Write(SubsystemFurnitureBlockBehavior.MaxNetworkFurnitureDesignDataLength + 1);
         });
 

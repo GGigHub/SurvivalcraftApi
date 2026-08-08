@@ -5,6 +5,23 @@ using Engine.Serialization;
 using TemplatesDatabase;
 
 namespace Game {
+    public enum FurnitureHammerResultCode : byte {
+        None,
+        Accepted,
+        InvalidRequest,
+        RateLimited,
+        InvalidDesign,
+        InvalidTarget,
+        ToolNotEquipped,
+        ToolBroken,
+        OutOfRange,
+        InvalidSource,
+        DesignMismatch,
+        RegistryFull,
+        CommitFailed,
+        ClientStateUnavailable
+    }
+
     public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior {
         public const int MaxFurnitureSetNameLength = 64;
 
@@ -376,7 +393,8 @@ namespace Game {
                     return false;
                 }
                 FurnitureInteractionMode interactionMode = source.GetValue<FurnitureInteractionMode>("InteractionMode");
-                if (!Enum.IsDefined(typeof(FurnitureInteractionMode), interactionMode)) {
+                if (!Enum.IsDefined(typeof(FurnitureInteractionMode), interactionMode)
+                    || interactionMode != FurnitureInteractionMode.None) {
                     error = "家具交互模式无效";
                     return false;
                 }
@@ -442,17 +460,20 @@ namespace Game {
             out FurnitureDesign design,
             out Dictionary<Point3, int> valuesDictionary,
             out int startValue,
+            out FurnitureHammerResultCode resultCode,
             out string error
         ) {
             design = null;
             valuesDictionary = new();
             startValue = 0;
+            resultCode = FurnitureHammerResultCode.InvalidRequest;
             error = null;
             if (player?.ComponentMiner == null || requestedDesign == null) {
                 error = "家具锤请求无效";
                 return false;
             }
             if (start.Face < 0 || start.Face > 5 || !SubsystemTerrain.Terrain.IsCellValid(start.X, start.Y, start.Z)) {
+                resultCode = FurnitureHammerResultCode.InvalidTarget;
                 error = "家具锤目标无效";
                 return false;
             }
@@ -461,6 +482,7 @@ namespace Game {
             if (activeContents < 0
                 || activeContents >= BlocksManager.Blocks.Length
                 || BlocksManager.Blocks[activeContents] is not HammerBlock activeHammer) {
+                resultCode = FurnitureHammerResultCode.ToolNotEquipped;
                 error = "玩家当前未装备家具锤";
                 return false;
             }
@@ -468,6 +490,7 @@ namespace Game {
                 - activeHammer.GetDamage(activeBlockValue)
                 + 1;
             if (durabilityRemains < 1) {
+                resultCode = FurnitureHammerResultCode.ToolBroken;
                 error = LanguageControl.Get(fName, 5);
                 return false;
             }
@@ -478,16 +501,19 @@ namespace Game {
             Vector3 eyePosition = player.ComponentCreatureModel.EyePosition;
             Vector3 targetPosition = new Vector3(start.Point) + new Vector3(0.5f);
             if (Vector3.DistanceSquared(eyePosition, targetPosition) > (reach + 1f) * (reach + 1f)) {
+                resultCode = FurnitureHammerResultCode.OutOfRange;
                 error = "家具锤目标超出范围";
                 return false;
             }
 
             startValue = SubsystemTerrain.Terrain.GetCellValue(start.X, start.Y, start.Z);
             int contents = Terrain.ExtractContents(startValue);
+            IEnumerable<int> authoritativeMaterials;
             if (contents == 227) {
                 int designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(startValue));
                 FurnitureDesign existingDesign = GetDesign(designIndex);
                 if (existingDesign == null) {
+                    resultCode = FurnitureHammerResultCode.InvalidSource;
                     error = "家具设计不存在";
                     return false;
                 }
@@ -497,20 +523,59 @@ namespace Game {
                 // the client's requested result.
                 design = requestedDesign;
                 valuesDictionary[start.Point] = startValue;
+                authoritativeMaterials = existingDesign.m_values;
             }
             else {
                 if (!TryCollectNetworkFurnitureBlocks(start, valuesDictionary, out error)) {
+                    resultCode = FurnitureHammerResultCode.InvalidSource;
                     return false;
                 }
                 design = requestedDesign;
+                authoritativeMaterials = valuesDictionary.Values;
+            }
+            if (!HasMatchingFurnitureMaterials(requestedDesign, authoritativeMaterials)) {
+                resultCode = FurnitureHammerResultCode.DesignMismatch;
+                error = "家具设计材料与目标方块不一致";
+                return false;
             }
             FurnitureDesign registeredDesign = TryAddDesign(design);
             if (registeredDesign == null) {
+                resultCode = FurnitureHammerResultCode.RegistryFull;
                 error = LanguageControl.Get(fName, 3);
                 return false;
             }
             design = registeredDesign;
+            resultCode = FurnitureHammerResultCode.Accepted;
             return true;
+        }
+
+        private static bool HasMatchingFurnitureMaterials(
+            FurnitureDesign requestedDesign,
+            IEnumerable<int> authoritativeMaterials
+        ) {
+            Dictionary<int, int> counts = new();
+            foreach (int value in authoritativeMaterials) {
+                AddMaterialCount(counts, value, 1);
+            }
+            foreach (int value in requestedDesign.m_values) {
+                AddMaterialCount(counts, value, -1);
+            }
+            return counts.Count == 0;
+        }
+
+        private static void AddMaterialCount(Dictionary<int, int> counts, int value, int delta) {
+            if (Terrain.ExtractContents(value) == 0) {
+                return;
+            }
+            int normalizedValue = Terrain.ReplaceLight(value, 0);
+            counts.TryGetValue(normalizedValue, out int count);
+            count += delta;
+            if (count == 0) {
+                counts.Remove(normalizedValue);
+            }
+            else {
+                counts[normalizedValue] = count;
+            }
         }
 
         private bool TryCollectNetworkFurnitureBlocks(
@@ -592,7 +657,8 @@ namespace Game {
             Dictionary<Point3, int> valuesDictionary,
             CellFace start,
             int startValue,
-            bool designedFromExistingFurniture
+            bool designedFromExistingFurniture,
+            Action<int, int> beforeMutation = null
         ) {
             bool destroyDesignBlocks = m_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative;
             int value = Terrain.MakeBlockValue(
@@ -633,6 +699,7 @@ namespace Game {
                 );
                 return false;
             }
+            beforeMutation?.Invoke(value, count);
             componentMiner.DamageActiveTool(toolDamageCount);
             if (destroyDesignBlocks) {
                 foreach (KeyValuePair<Point3, int> item in valuesDictionary) {

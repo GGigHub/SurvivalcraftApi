@@ -318,6 +318,36 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             (_, command) => ApplyInventoryFixture(command));
+        router.Register<PrepareFurnitureHammerFixtureCommand, FurnitureHammerFixture>(
+            Metadata(
+                ControlCommandNames.PrepareFurnitureHammerFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareFurnitureHammerFixture(command));
+        router.Register<ApplyFurnitureHammerFixtureCommand, ControlAck>(
+            Metadata(
+                ControlCommandNames.ApplyFurnitureHammerFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => ApplyFurnitureHammerFixture(command));
+        router.Register<FurnitureHammerCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.FurnitureHammer,
+                AutomationCommandDomain.Inventory,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueueFurnitureHammer);
         router.Register<InventoryMoveCommand, ActionReceipt>(
             Metadata(
                 ControlCommandNames.InventoryMove,
@@ -945,6 +975,11 @@ public partial class TestAutomationModLoader {
             && project != null
                 ? BuildInventorySnapshotsV2(project, command.InventoryIds)
                 : null;
+        FurnitureDesignSnapshotV2[]? furnitureDesigns =
+            domains.Contains(SnapshotDomain.Inventories)
+            && project != null
+                ? BuildFurnitureDesignSnapshotsV2(project)
+                : null;
         HealthStateSnapshotV2[]? healthStates = domains.Contains(SnapshotDomain.Health)
             && project != null
                 ? BuildHealthStateSnapshotsV2(project, command.EntityIds)
@@ -1058,7 +1093,8 @@ public partial class TestAutomationModLoader {
             projectileEvents,
             worldFires,
             worldFireMetrics,
-            explosionEvents);
+            explosionEvents,
+            furnitureDesigns);
     }
 
     private static WorldFireStateSnapshotV2[] BuildWorldFireSnapshotsV2(Project project) {

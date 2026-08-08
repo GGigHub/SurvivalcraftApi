@@ -30,7 +30,7 @@ public sealed class InventoryHealthMultiplayerScenarioTest {
             await new InventoryHealthMultiplayerScenario().RunAsync(options);
 
         Assert.Equal(1, result.ActorPlayerIndex);
-        Assert.Equal(14, result.ActionCount);
+        Assert.Equal(15, result.ActionCount);
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "actions.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "assertions.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "replay-v2.json")));
@@ -49,6 +49,9 @@ public sealed class InventoryHealthMultiplayerScenarioTest {
         Assert.True(File.Exists(Path.Combine(
             result.ArtifactDirectory,
             "snapshot-server-after-reload.v2.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-client-a-furniture-authoritative.v2.json")));
         ScenarioReplayV2 replay = await ScenarioArtifactWriter.ReadReplayV2Async(
             result.ArtifactDirectory);
         Assert.Equal(InventoryHealthMultiplayerScenario.ScenarioVersion, replay.Version);
@@ -75,6 +78,11 @@ public sealed class InventoryHealthMultiplayerScenarioTest {
         Assert.Contains("furnace-late-join-baseline", assertions, StringComparison.Ordinal);
         Assert.Contains("furnace-reconnect-baseline", assertions, StringComparison.Ordinal);
         Assert.Contains("furnace-save-reload-persistence", assertions, StringComparison.Ordinal);
+        Assert.Contains("furniture-hammer-authority-rejections", assertions, StringComparison.Ordinal);
+        Assert.Contains("furniture-hammer-stale-duplicate-reorder-convergence", assertions, StringComparison.Ordinal);
+        Assert.Contains("furniture-hammer-late-join-baseline", assertions, StringComparison.Ordinal);
+        Assert.Contains("furniture-hammer-reconnect-baseline", assertions, StringComparison.Ordinal);
+        Assert.Contains("furniture-hammer-save-reload-persistence", assertions, StringComparison.Ordinal);
         if (transport == MultiplayerTransportKind.Relay) {
             Assert.False(string.IsNullOrWhiteSpace(result.RoomCode));
             Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "relay.log")));

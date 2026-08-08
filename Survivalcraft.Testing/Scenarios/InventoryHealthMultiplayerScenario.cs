@@ -22,7 +22,8 @@ public sealed record InventoryHealthReplayPlan(
     RunInventoryRevisionBurstCommand InventoryRevisionBurst,
     PlayerHitCommand Hit,
     RunHealthRevisionBurstCommand HealthRevisionBurst,
-    PlayerRequestRespawnCommand Respawn);
+    PlayerRequestRespawnCommand Respawn,
+    FurnitureHammerCommand? FurnitureHammer = null);
 
 public sealed record InventoryHealthMultiplayerScenarioOptions(
     string RuntimeDirectory,
@@ -58,7 +59,7 @@ public sealed class InventoryHealthMultiplayerScenarioException : Exception {
 
 public sealed class InventoryHealthMultiplayerScenario {
     public const string ScenarioName = "inventory-health-multiplayer";
-    public const int ScenarioVersion = 2;
+    public const int ScenarioVersion = 3;
 
     private static readonly string[] NodeRoles = [
         "server",
@@ -107,6 +108,27 @@ public sealed class InventoryHealthMultiplayerScenario {
         new("request-respawn", ControlCommandNames.PlayerRequestRespawn),
         new("verify-respawn-convergence", ControlCommandNames.GetSnapshotV2),
         new("disable-network-faults", ControlCommandNames.SetNetworkFaults),
+        new("prepare-furniture-tool-authority", ControlCommandNames.PrepareFurnitureHammerFixture),
+        new("apply-furniture-tool-authority", ControlCommandNames.ApplyFurnitureHammerFixture),
+        new("verify-furniture-tool-authority", ControlCommandNames.FurnitureHammer),
+        new("prepare-furniture-range-authority", ControlCommandNames.PrepareFurnitureHammerFixture),
+        new("apply-furniture-range-authority", ControlCommandNames.ApplyFurnitureHammerFixture),
+        new("verify-furniture-range-authority", ControlCommandNames.FurnitureHammer),
+        new("prepare-furniture-source-authority", ControlCommandNames.PrepareFurnitureHammerFixture),
+        new("apply-furniture-source-authority", ControlCommandNames.ApplyFurnitureHammerFixture),
+        new("verify-furniture-source-authority", ControlCommandNames.FurnitureHammer),
+        new("prepare-furniture-design-authority", ControlCommandNames.PrepareFurnitureHammerFixture),
+        new("apply-furniture-design-authority", ControlCommandNames.ApplyFurnitureHammerFixture),
+        new("verify-furniture-design-authority", ControlCommandNames.FurnitureHammer),
+        new("prepare-furniture-rate-limit", ControlCommandNames.PrepareFurnitureHammerFixture),
+        new("apply-furniture-rate-limit", ControlCommandNames.ApplyFurnitureHammerFixture),
+        new("verify-furniture-rate-limit", ControlCommandNames.FurnitureHammer),
+        new("prepare-furniture-authoritative-commit", ControlCommandNames.PrepareFurnitureHammerFixture),
+        new("apply-furniture-authoritative-commit", ControlCommandNames.ApplyFurnitureHammerFixture),
+        new("enable-furniture-network-faults", ControlCommandNames.SetNetworkFaults),
+        new("commit-furniture-under-faults", ControlCommandNames.FurnitureHammer),
+        new("verify-furniture-convergence", ControlCommandNames.GetSnapshotV2),
+        new("disable-furniture-network-faults", ControlCommandNames.SetNetworkFaults),
         new("connect-late-client", "network.connect(client-c)"),
         new("verify-late-join", ControlCommandNames.GetSnapshotV2),
         new("disconnect-actor", ControlCommandNames.Disconnect),
@@ -139,6 +161,12 @@ public sealed class InventoryHealthMultiplayerScenario {
         long MinimumChestRevision = -1,
         long MinimumFurnaceRevision = -1);
 
+    private sealed record FurnitureRejectionProbeResult(
+        FurnitureHammerFixture Fixture,
+        ActionReceipt Receipt,
+        ActionEventsResult Events,
+        StateSnapshotV2 ServerSnapshot);
+
     public static NetworkFaultProfile CreateDefaultNetworkFaults(int seed) =>
         new(
             Seed: unchecked(seed + 907),
@@ -165,7 +193,8 @@ public sealed class InventoryHealthMultiplayerScenario {
             ("server", ControlCommandNames.RunInventoryRevisionBurst),
             ("client-a", ControlCommandNames.PlayerHit),
             ("server", ControlCommandNames.RunHealthRevisionBurst),
-            ("client-a", ControlCommandNames.PlayerRequestRespawn)
+            ("client-a", ControlCommandNames.PlayerRequestRespawn),
+            ("client-a", ControlCommandNames.FurnitureHammer)
         ];
         if (records.Count != expected.Length) {
             throw new InvalidDataException(
@@ -192,7 +221,8 @@ public sealed class InventoryHealthMultiplayerScenario {
             DeserializeAction<RunInventoryRevisionBurstCommand>(records[10]),
             DeserializeAction<PlayerHitCommand>(records[11]),
             DeserializeAction<RunHealthRevisionBurstCommand>(records[12]),
-            DeserializeAction<PlayerRequestRespawnCommand>(records[13]));
+            DeserializeAction<PlayerRequestRespawnCommand>(records[13]),
+            DeserializeAction<FurnitureHammerCommand>(records[14]));
         ValidateReplayPlan(plan);
         return plan;
     }
@@ -240,6 +270,7 @@ public sealed class InventoryHealthMultiplayerScenario {
         InventoryFixture? inventoryFixture = null;
         HealthFixture? healthFixture = null;
         HealthFixture? persistenceHealthFixture = null;
+        FurnitureHammerFixture? furnitureFixture = null;
         Exception? scenarioFailure = null;
         Exception? artifactFailure = null;
         int actorPlayerIndex = -1;
@@ -276,6 +307,9 @@ public sealed class InventoryHealthMultiplayerScenario {
                     ControlCommandNames.InventoryOpenContainer,
                     ControlCommandNames.RunInventoryRevisionBurst,
                     ControlCommandNames.RunFurnaceRevisionBurst,
+                    ControlCommandNames.PrepareFurnitureHammerFixture,
+                    ControlCommandNames.ApplyFurnitureHammerFixture,
+                    ControlCommandNames.FurnitureHammer,
                     ControlCommandNames.PrepareHealthFixture,
                     ControlCommandNames.ApplyHealthFixture,
                     ControlCommandNames.SetHealthFixture,
@@ -964,6 +998,154 @@ public sealed class InventoryHealthMultiplayerScenario {
                     token),
                 scenarioToken).ConfigureAwait(false);
 
+            FurnitureRejectionProbeResult toolProbe =
+                await ExecuteFurnitureRejectionProbeAsync(
+                    cluster,
+                    runner,
+                    observerClient,
+                    observerPlayerIndex,
+                    FurnitureHammerFixtureMode.MissingTool,
+                    FurnitureHammerExpectedResult.ToolNotEquipped,
+                    "furniture-tool-authority",
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
+            events["client-b-furniture-tool-rejection"] = toolProbe.Events;
+            snapshots["server-furniture-tool-rejection"] = toolProbe.ServerSnapshot;
+
+            FurnitureRejectionProbeResult rangeProbe =
+                await ExecuteFurnitureRejectionProbeAsync(
+                    cluster,
+                    runner,
+                    actorClient,
+                    actorPlayerIndex,
+                    FurnitureHammerFixtureMode.OutOfRange,
+                    FurnitureHammerExpectedResult.OutOfRange,
+                    "furniture-range-authority",
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
+            events["client-a-furniture-range-rejection"] = rangeProbe.Events;
+            snapshots["server-furniture-range-rejection"] = rangeProbe.ServerSnapshot;
+
+            FurnitureRejectionProbeResult sourceProbe =
+                await ExecuteFurnitureRejectionProbeAsync(
+                    cluster,
+                    runner,
+                    actorClient,
+                    actorPlayerIndex,
+                    FurnitureHammerFixtureMode.InvalidSource,
+                    FurnitureHammerExpectedResult.InvalidSource,
+                    "furniture-source-authority",
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
+            events["client-a-furniture-source-rejection"] = sourceProbe.Events;
+            snapshots["server-furniture-source-rejection"] = sourceProbe.ServerSnapshot;
+
+            FurnitureRejectionProbeResult designProbe =
+                await ExecuteFurnitureRejectionProbeAsync(
+                    cluster,
+                    runner,
+                    actorClient,
+                    actorPlayerIndex,
+                    FurnitureHammerFixtureMode.Valid,
+                    FurnitureHammerExpectedResult.DesignMismatch,
+                    "furniture-design-authority",
+                    stepTimeout,
+                    scenarioToken,
+                    forgeDesign: true).ConfigureAwait(false);
+            events["client-a-furniture-design-rejection"] = designProbe.Events;
+            snapshots["server-furniture-design-rejection"] = designProbe.ServerSnapshot;
+
+            FurnitureRejectionProbeResult rateProbe =
+                await ExecuteFurnitureRejectionProbeAsync(
+                    cluster,
+                    runner,
+                    actorClient,
+                    actorPlayerIndex,
+                    FurnitureHammerFixtureMode.Valid,
+                    FurnitureHammerExpectedResult.RateLimited,
+                    "furniture-rate-limit",
+                    stepTimeout,
+                    scenarioToken,
+                    probeRateLimit: true).ConfigureAwait(false);
+            events["client-a-furniture-rate-limit"] = rateProbe.Events;
+            snapshots["server-furniture-rate-limit"] = rateProbe.ServerSnapshot;
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furniture-hammer-authority-rejections",
+                "passed",
+                [cluster.Server.Role, actorClient.Role, observerClient.Role],
+                "server rejected missing tool, out-of-range target, empty source, forged materials and rate-limited requests without mutation"));
+
+            furnitureFixture = await PrepareAndApplyFurnitureFixtureAsync(
+                cluster,
+                runner,
+                actorClient,
+                actorPlayerIndex,
+                FurnitureHammerFixtureMode.Valid,
+                "furniture-authoritative-commit",
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+            FurnitureHammerCommand furnitureAction = options.ReplayPlan?.FurnitureHammer
+                ?? new FurnitureHammerCommand(
+                    actorPlayerIndex,
+                    furnitureFixture,
+                    FurnitureHammerExpectedResult.Accepted,
+                    DuplicateCount: 3);
+            ValidateFurnitureHammerPlan(furnitureAction, furnitureFixture);
+            await runner.RunAsync(
+                "enable-furniture-network-faults",
+                ControlCommandNames.SetNetworkFaults,
+                token => ConfigureNetworkFaultsAsync(initialNodes, faultProfile, token),
+                scenarioToken).ConfigureAwait(false);
+            ActionReceipt furnitureReceipt = await SendActionAsync(
+                runner,
+                "commit-furniture-under-faults",
+                actorClient,
+                ControlCommandNames.FurnitureHammer,
+                furnitureAction,
+                scenarioToken).ConfigureAwait(false);
+            actions.Add(ActionRecord(
+                actorClient.Role,
+                ControlCommandNames.FurnitureHammer,
+                furnitureAction,
+                furnitureReceipt));
+            events["client-a-furniture-commit"] = await WaitForAppliedEventAsync(
+                actorClient,
+                furnitureReceipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+            Dictionary<string, StateSnapshotV2> furnitureSnapshots =
+                await WaitForFurnitureHammerOnAllAsync(
+                    initialNodes,
+                    furnitureFixture,
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
+            AddSnapshots(snapshots, furnitureSnapshots, "furniture-authoritative");
+            EnsureFurnitureSnapshotsEqual(furnitureSnapshots.Values.ToArray());
+            long furnitureFaultDuplicates = furnitureSnapshots.Values
+                .Where(snapshot => snapshot.Network != null)
+                .Sum(snapshot => snapshot.Network!.FaultDuplicated);
+            if (furnitureFaultDuplicates <= 0) {
+                throw new InvalidOperationException(
+                    "Furniture hammer fault coverage did not observe duplicated traffic.");
+            }
+            metrics["furniture.faultDuplicatedPackets"] =
+                furnitureFaultDuplicates.ToString(CultureInfo.InvariantCulture);
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furniture-hammer-stale-duplicate-reorder-convergence",
+                "passed",
+                initialNodes.Select(node => node.Role).ToArray(),
+                $"designCount={furnitureFixture.InitialFurnitureDesignCount + 1}; "
+                    + $"pickableCount={furnitureFixture.InitialFurniturePickableCount + 1}; "
+                    + "one request identity committed exactly once under duplicate/reorder faults"));
+            await runner.RunAsync(
+                "disable-furniture-network-faults",
+                ControlCommandNames.SetNetworkFaults,
+                token => ConfigureNetworkFaultsAsync(
+                    initialNodes,
+                    new NetworkFaultProfile(Seed: unchecked(faultProfile.Seed + 200)),
+                    token),
+                scenarioToken).ConfigureAwait(false);
+
             InventoryExpectation chestOnly = finalInventory with { IncludePlayerInventory = false };
             GameNodeProcess lateClient = cluster.Clients[2];
             _ = await runner.RunAsync(
@@ -988,6 +1170,12 @@ public sealed class InventoryHealthMultiplayerScenario {
                 healthBurst.FinalHealth,
                 stepTimeout,
                 scenarioToken).ConfigureAwait(false);
+            snapshots["client-c-furniture-late-join"] =
+                await WaitForFurnitureHammerAsync(
+                    lateClient,
+                    furnitureFixture,
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
             assertions.Add(new ScenarioAssertionRecordV2(
                 "inventory-health-late-join-baseline",
                 "passed",
@@ -998,6 +1186,11 @@ public sealed class InventoryHealthMultiplayerScenario {
                 "passed",
                 [lateClient.Role],
                 "late joiner received the completed furnace inventory and idle runtime state"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furniture-hammer-late-join-baseline",
+                "passed",
+                [lateClient.Role],
+                "late joiner received the registered design, consumed source cell and persistent produced pickable"));
 
             await runner.RunAsync(
                 "disconnect-actor",
@@ -1039,6 +1232,12 @@ public sealed class InventoryHealthMultiplayerScenario {
                 healthBurst.FinalHealth,
                 stepTimeout,
                 scenarioToken).ConfigureAwait(false);
+            snapshots["client-a-furniture-reconnect"] =
+                await WaitForFurnitureHammerAsync(
+                    actorClient,
+                    furnitureFixture,
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
             assertions.Add(new ScenarioAssertionRecordV2(
                 "inventory-health-reconnect-baseline",
                 "passed",
@@ -1049,6 +1248,11 @@ public sealed class InventoryHealthMultiplayerScenario {
                 "passed",
                 [cluster.Server.Role, actorClient.Role],
                 "reconnected actor received the completed furnace inventory and idle runtime state"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furniture-hammer-reconnect-baseline",
+                "passed",
+                [cluster.Server.Role, actorClient.Role],
+                "reconnected actor received the authoritative furniture design and produced pickable baseline"));
 
             persistenceHealthFixture = await runner.RunAsync(
                 "prepare-persistence-health-fixture",
@@ -1136,6 +1340,14 @@ public sealed class InventoryHealthMultiplayerScenario {
                     healthTolerance: 0.05).ConfigureAwait(false);
             }
             AddSnapshots(snapshots, persistenceSnapshots, "after-reload");
+            Dictionary<string, StateSnapshotV2> furniturePersistenceSnapshots =
+                await WaitForFurnitureHammerOnAllAsync(
+                    persistenceNodes,
+                    furnitureFixture,
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
+            AddSnapshots(snapshots, furniturePersistenceSnapshots, "furniture-after-reload");
+            EnsureFurnitureSnapshotsEqual(furniturePersistenceSnapshots.Values.ToArray());
             EnsureInventorySnapshotsEqual(persistenceSnapshots.Values.ToArray());
             EnsureHealthSnapshotsEqual(
                 persistenceSnapshots.Values.ToArray(),
@@ -1153,6 +1365,11 @@ public sealed class InventoryHealthMultiplayerScenario {
                 "passed",
                 persistenceNodes.Select(node => node.Role).ToArray(),
                 $"world={savedWorldDirectory}; furnaceInventoryId={inventoryFixture.FurnaceInventoryId}; cookedResultCount=1; runtime=idle"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "furniture-hammer-save-reload-persistence",
+                "passed",
+                persistenceNodes.Select(node => node.Role).ToArray(),
+                $"world={savedWorldDirectory}; design and produced pickable survived save/reload with source cell consumed"));
         }
         catch (Exception exception) {
             scenarioFailure = exception;
@@ -1341,6 +1558,14 @@ public sealed class InventoryHealthMultiplayerScenario {
                         cancellationToken: token),
                     "permission_denied").ConfigureAwait(false);
                 await RequireRejectionAsync(
+                    () => cluster.Clients[0].SendAsync<
+                        PrepareFurnitureHammerFixtureCommand,
+                        FurnitureHammerFixture>(
+                        ControlCommandNames.PrepareFurnitureHammerFixture,
+                        new PrepareFurnitureHammerFixtureCommand(playerIndex),
+                        cancellationToken: token),
+                    "permission_denied").ConfigureAwait(false);
+                await RequireRejectionAsync(
                     () => cluster.Clients[1].SendAsync<RunHealthRevisionBurstCommand, HealthRevisionBurstResult>(
                         ControlCommandNames.RunHealthRevisionBurst,
                         new RunHealthRevisionBurstCommand(1),
@@ -1408,6 +1633,276 @@ public sealed class InventoryHealthMultiplayerScenario {
         }
         throw new InvalidOperationException(
             $"Expected command rejection '{code}', but the command succeeded.");
+    }
+
+    private static async Task<FurnitureHammerFixture> PrepareAndApplyFurnitureFixtureAsync(
+        MultiplayerCluster cluster,
+        ScenarioRunner runner,
+        GameNodeProcess actorClient,
+        int playerIndex,
+        FurnitureHammerFixtureMode mode,
+        string stepPrefix,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        FurnitureHammerFixture fixture = await runner.RunAsync(
+            $"prepare-{stepPrefix}",
+            ControlCommandNames.PrepareFurnitureHammerFixture,
+            token => cluster.Server.SendAsync<
+                PrepareFurnitureHammerFixtureCommand,
+                FurnitureHammerFixture>(
+                ControlCommandNames.PrepareFurnitureHammerFixture,
+                new PrepareFurnitureHammerFixtureCommand(playerIndex, mode),
+                cancellationToken: token),
+            result => $"player={result.PlayerIndex}; mode={result.Mode}; source={result.SourceCell}",
+            cancellationToken).ConfigureAwait(false);
+        _ = await runner.RunAsync(
+            $"apply-{stepPrefix}",
+            ControlCommandNames.ApplyFurnitureHammerFixture,
+            token => actorClient.SendAsync<ApplyFurnitureHammerFixtureCommand, ControlAck>(
+                ControlCommandNames.ApplyFurnitureHammerFixture,
+                new ApplyFurnitureHammerFixtureCommand(fixture),
+                cancellationToken: token),
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+        _ = await WaitForFurnitureFixtureAsync(
+            cluster.Server,
+            fixture,
+            timeout,
+            cancellationToken).ConfigureAwait(false);
+        _ = await WaitForFurnitureFixtureAsync(
+            actorClient,
+            fixture,
+            timeout,
+            cancellationToken).ConfigureAwait(false);
+        return fixture;
+    }
+
+    private static async Task<FurnitureRejectionProbeResult>
+        ExecuteFurnitureRejectionProbeAsync(
+            MultiplayerCluster cluster,
+            ScenarioRunner runner,
+            GameNodeProcess actorClient,
+            int playerIndex,
+            FurnitureHammerFixtureMode mode,
+            FurnitureHammerExpectedResult expectedResult,
+            string stepPrefix,
+            TimeSpan timeout,
+            CancellationToken cancellationToken,
+            bool forgeDesign = false,
+            bool probeRateLimit = false) {
+        FurnitureHammerFixture fixture = await PrepareAndApplyFurnitureFixtureAsync(
+            cluster,
+            runner,
+            actorClient,
+            playerIndex,
+            mode,
+            stepPrefix,
+            timeout,
+            cancellationToken).ConfigureAwait(false);
+        FurnitureHammerCommand command = new(
+            playerIndex,
+            fixture,
+            expectedResult,
+            ForgeDesign: forgeDesign,
+            ProbeRateLimit: probeRateLimit);
+        ActionReceipt receipt = await SendActionAsync(
+            runner,
+            $"verify-{stepPrefix}",
+            actorClient,
+            ControlCommandNames.FurnitureHammer,
+            command,
+            cancellationToken).ConfigureAwait(false);
+        ActionEventsResult events = await WaitForAppliedEventAsync(
+            actorClient,
+            receipt.ActionId,
+            timeout,
+            cancellationToken).ConfigureAwait(false);
+        StateSnapshotV2 serverSnapshot = await WaitForRejectedFurnitureStateAsync(
+            cluster.Server,
+            fixture,
+            timeout,
+            cancellationToken).ConfigureAwait(false);
+        return new FurnitureRejectionProbeResult(fixture, receipt, events, serverSnapshot);
+    }
+
+    private static async Task<StateSnapshotV2> WaitForFurnitureFixtureAsync(
+        GameNodeProcess node,
+        FurnitureHammerFixture fixture,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        StateSnapshotV2? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            last = await CaptureFurnitureAsync(node, fixture, cancellationToken)
+                .ConfigureAwait(false);
+            TerrainCellSnapshotV2? source = last.TerrainCells.SingleOrDefault();
+            InventorySnapshotV2? inventory = last.Inventories?.SingleOrDefault(item =>
+                item.InventoryId == fixture.PlayerInventoryId);
+            InventorySlotSnapshotV2? active = inventory?.Slots.SingleOrDefault(slot =>
+                slot.SlotIndex == inventory.ActiveSlotIndex);
+            if (source != null
+                && source.Value == fixture.SourceValue
+                && inventory?.ActiveSlotIndex == 0
+                && active?.Value == fixture.EquippedValue
+                && active.Count == 1) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        throw new TimeoutException(
+            $"Node '{node.Role}' did not converge furniture fixture {fixture.Mode}. "
+                + $"Last source={last?.TerrainCells.SingleOrDefault()}; "
+                + $"inventory={last?.Inventories?.SingleOrDefault()}.");
+    }
+
+    private static async Task<StateSnapshotV2> WaitForRejectedFurnitureStateAsync(
+        GameNodeProcess node,
+        FurnitureHammerFixture fixture,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        StateSnapshotV2? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            last = await CaptureFurnitureAsync(node, fixture, cancellationToken)
+                .ConfigureAwait(false);
+            if (FurnitureSourceValue(last, fixture) == fixture.SourceValue
+                && FurnitureDesignCount(last) == fixture.InitialFurnitureDesignCount
+                && FurniturePickableCount(last) == fixture.InitialFurniturePickableCount) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        throw new TimeoutException(
+            $"Node '{node.Role}' mutated state after rejected furniture request. "
+                + $"source={FurnitureSourceValue(last, fixture)}; "
+                + $"designs={FurnitureDesignCount(last)}; "
+                + $"pickables={FurniturePickableCount(last)}.");
+    }
+
+    private static async Task<Dictionary<string, StateSnapshotV2>>
+        WaitForFurnitureHammerOnAllAsync(
+            IReadOnlyCollection<GameNodeProcess> nodes,
+            FurnitureHammerFixture fixture,
+            TimeSpan timeout,
+            CancellationToken cancellationToken) {
+        Dictionary<string, StateSnapshotV2> result = new(StringComparer.Ordinal);
+        foreach (GameNodeProcess node in nodes) {
+            result[node.Role] = await WaitForFurnitureHammerAsync(
+                node,
+                fixture,
+                timeout,
+                cancellationToken).ConfigureAwait(false);
+        }
+        return result;
+    }
+
+    private static async Task<StateSnapshotV2> WaitForFurnitureHammerAsync(
+        GameNodeProcess node,
+        FurnitureHammerFixture fixture,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        StateSnapshotV2? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            last = await CaptureFurnitureAsync(node, fixture, cancellationToken)
+                .ConfigureAwait(false);
+            FurnitureDesignSnapshotV2[] designs = last.FurnitureDesigns ?? [];
+            PickableSnapshotV2[] furniturePickables = (last.Pickables ?? [])
+                .Where(item => item.Exists && item.Contents == FurnitureBlockContents)
+                .ToArray();
+            bool hasProducedDesign = designs.Any(design =>
+                design.Resolution == 2
+                && design.Name == "Automation Furniture"
+                && design.InteractionMode == "None"
+                && design.NonEmptyCellCount == 1);
+            bool hasProducedPickable = furniturePickables.Any(item => item.Count == 4);
+            if (FurnitureSourceValue(last, fixture) == 0
+                && designs.Length == fixture.InitialFurnitureDesignCount + 1
+                && furniturePickables.Length == fixture.InitialFurniturePickableCount + 1
+                && hasProducedDesign
+                && hasProducedPickable) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        throw new TimeoutException(
+            $"Node '{node.Role}' did not converge authoritative furniture state. "
+                + $"source={FurnitureSourceValue(last, fixture)}; "
+                + $"designs={FurnitureDesignCount(last)}; "
+                + $"pickables={FurniturePickableCount(last)}.");
+    }
+
+    private const int FurnitureBlockContents = 227;
+
+    private static Task<StateSnapshotV2> CaptureFurnitureAsync(
+        GameNodeProcess node,
+        FurnitureHammerFixture fixture,
+        CancellationToken cancellationToken) =>
+        node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+            ControlCommandNames.GetSnapshotV2,
+            new GetSnapshotV2Command(
+                [
+                    SnapshotDomain.Network,
+                    SnapshotDomain.Terrain,
+                    SnapshotDomain.Inventories,
+                    SnapshotDomain.Pickables,
+                    SnapshotDomain.Events
+                ],
+                TerrainCells: [fixture.SourceCell],
+                InventoryIds: [fixture.PlayerInventoryId],
+                EventLimit: 64),
+            cancellationToken: cancellationToken);
+
+    private static int FurnitureSourceValue(
+        StateSnapshotV2? snapshot,
+        FurnitureHammerFixture fixture) => snapshot?.TerrainCells
+        .SingleOrDefault(cell =>
+            cell.X == fixture.SourceCell.X
+            && cell.Y == fixture.SourceCell.Y
+            && cell.Z == fixture.SourceCell.Z)?.Value ?? int.MinValue;
+
+    private static int FurnitureDesignCount(StateSnapshotV2? snapshot) =>
+        snapshot?.FurnitureDesigns?.Length ?? -1;
+
+    private static int FurniturePickableCount(StateSnapshotV2? snapshot) =>
+        snapshot?.Pickables?.Count(item =>
+            item.Exists && item.Contents == FurnitureBlockContents) ?? -1;
+
+    private static void EnsureFurnitureSnapshotsEqual(
+        IReadOnlyList<StateSnapshotV2> snapshots) {
+        if (snapshots.Count < 2) {
+            return;
+        }
+        StateSnapshotV2 expected = snapshots[0];
+        (int Id, int Value, int Count)[] expectedPickables = (expected.Pickables ?? [])
+            .Where(item => item.Exists && item.Contents == FurnitureBlockContents)
+            .Select(item => (item.PickableId, item.Value, item.Count))
+            .OrderBy(item => item.PickableId)
+            .ToArray();
+        foreach (StateSnapshotV2 actual in snapshots.Skip(1)) {
+            SnapshotV2Diff designs = SnapshotV2Comparer.CompareFurnitureDesigns(
+                expected,
+                actual);
+            if (!designs.Equal) {
+                throw new InvalidOperationException(
+                    "Furniture design snapshots diverged: "
+                    + string.Join("; ", designs.Differences.Select(item => item.Path)));
+            }
+            if (!expected.TerrainCells.Select(cell => cell.Contents)
+                    .SequenceEqual(actual.TerrainCells.Select(cell => cell.Contents))) {
+                throw new InvalidOperationException("Furniture source terrain snapshots diverged.");
+            }
+            (int Id, int Value, int Count)[] actualPickables = (actual.Pickables ?? [])
+                .Where(item => item.Exists && item.Contents == FurnitureBlockContents)
+                .Select(item => (item.PickableId, item.Value, item.Count))
+                .OrderBy(item => item.PickableId)
+                .ToArray();
+            if (!expectedPickables.SequenceEqual(actualPickables)) {
+                throw new InvalidOperationException("Furniture pickable snapshots diverged.");
+            }
+        }
     }
 
     private static async Task<Dictionary<string, StateSnapshotV2>> WaitForInventoryOnAllAsync(
@@ -2198,6 +2693,20 @@ public sealed class InventoryHealthMultiplayerScenario {
         }
     }
 
+    private static void ValidateFurnitureHammerPlan(
+        FurnitureHammerCommand command,
+        FurnitureHammerFixture fixture) {
+        if (command.PlayerIndex != fixture.PlayerIndex
+            || command.Fixture != fixture
+            || command.ExpectedResult != FurnitureHammerExpectedResult.Accepted
+            || command.ForgeDesign
+            || command.ProbeRateLimit
+            || command.DuplicateCount < 2) {
+            throw new InvalidDataException(
+                "Furniture hammer replay action does not match the prepared fixture.");
+        }
+    }
+
     private static void ValidateReplayPlan(InventoryHealthReplayPlan? plan) {
         if (plan == null) {
             return;
@@ -2218,7 +2727,13 @@ public sealed class InventoryHealthMultiplayerScenario {
             || plan.Hit.TargetEntityId <= 0
             || plan.Hit.ExpectRejected
             || plan.Respawn.ExpectRejected
-            || !plan.HealthRevisionBurst.SendStaleSnapshot) {
+            || !plan.HealthRevisionBurst.SendStaleSnapshot
+            || (plan.FurnitureHammer != null
+                && (plan.FurnitureHammer.ExpectedResult
+                        != FurnitureHammerExpectedResult.Accepted
+                    || plan.FurnitureHammer.ForgeDesign
+                    || plan.FurnitureHammer.ProbeRateLimit
+                    || plan.FurnitureHammer.DuplicateCount < 2))) {
             throw new InvalidDataException("Inventory/health replay actions are invalid.");
         }
     }
