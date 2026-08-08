@@ -174,10 +174,15 @@ public static class ControlCommandNames {
     public const string EnvironmentRequestChange = "environment.requestChange";
     public const string RunEnvironmentRevisionBurst = "environment.runRevisionBurst";
     public const string PrepareMechanicsFixture = "fixture.mechanics.prepare";
+    public const string PrepareWorldMechanicsFixture = "fixture.mechanics.prepareWorld";
     public const string SetPlayerFireFixture = "fixture.mechanics.setPlayerFire";
     public const string PlayerSleep = "player.sleep";
     public const string PlayerIgnite = "player.ignite";
     public const string RunMechanicsRevisionBurst = "mechanics.runRevisionBurst";
+    public const string RunWorldFireLifecycleBurst = "mechanics.runWorldFireLifecycleBurst";
+    public const string TriggerExplosion = "mechanics.triggerExplosion";
+    public const string ProbeExplosionAuthority = "mechanics.probeExplosionAuthority";
+    public const string ForgeWorldFireState = "mechanics.forgeWorldFireState";
     public const string PrepareMountFixture = "fixture.mechanics.prepareMount";
     public const string PlayerMount = "player.mount";
     public const string RunMountRevisionBurst = "mechanics.runMountRevisionBurst";

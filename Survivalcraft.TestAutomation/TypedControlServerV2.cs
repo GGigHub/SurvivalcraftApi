@@ -478,6 +478,16 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             (_, command) => PrepareMechanicsFixture(command));
+        router.Register<PrepareWorldMechanicsFixtureCommand, WorldMechanicsFixture>(
+            Metadata(
+                ControlCommandNames.PrepareWorldMechanicsFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareWorldMechanicsFixture(command));
         router.Register<SetPlayerFireFixtureCommand, SetPlayerFireFixtureResult>(
             Metadata(
                 ControlCommandNames.SetPlayerFireFixture,
@@ -518,6 +528,46 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             RunMechanicsRevisionBurst);
+        router.Register<RunWorldFireLifecycleBurstCommand, WorldFireLifecycleBurstResult>(
+            Metadata(
+                ControlCommandNames.RunWorldFireLifecycleBurst,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunWorldFireLifecycleBurst);
+        router.Register<TriggerExplosionCommand, TriggerExplosionResult>(
+            Metadata(
+                ControlCommandNames.TriggerExplosion,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            TriggerExplosion);
+        router.Register<ProbeExplosionAuthorityCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.ProbeExplosionAuthority,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            ProbeExplosionAuthority);
+        router.Register<ForgeWorldFireStateCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.ForgeWorldFireState,
+                AutomationCommandDomain.Mechanics,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            QueueForgedWorldFireState);
         router.Register<PrepareMountFixtureCommand, MountFixture>(
             Metadata(
                 ControlCommandNames.PrepareMountFixture,
@@ -730,7 +780,8 @@ public partial class TestAutomationModLoader {
                 AutomationProtocol.MaximumSnapshotInventorySlots,
                 AutomationProtocol.MaximumSnapshotLogicElements,
                 AutomationProtocol.MaximumEventQueryCount,
-                AutomationProtocol.DefaultEventJournalCapacity),
+                AutomationProtocol.DefaultEventJournalCapacity,
+                AutomationProtocol.MaximumSnapshotWorldFires),
             assemblyIdentity,
             LegacyExecutionEnabled: true);
     }
@@ -942,6 +993,18 @@ public partial class TestAutomationModLoader {
             && project != null
                 ? BuildProjectileEventSnapshotV2(project)
                 : null;
+        WorldFireStateSnapshotV2[]? worldFires = domains.Contains(SnapshotDomain.Mechanics)
+            && project != null
+                ? BuildWorldFireSnapshotsV2(project)
+                : null;
+        WorldFireMetricsSnapshotV2? worldFireMetrics = domains.Contains(SnapshotDomain.Mechanics)
+            && project != null
+                ? BuildWorldFireMetricsSnapshotV2(project)
+                : null;
+        ExplosionEventSnapshotV2? explosionEvents = domains.Contains(SnapshotDomain.Mechanics)
+            && project != null
+                ? BuildExplosionEventSnapshotV2(project)
+                : null;
         StateRevisionMetricsSnapshotV2? stateRevisions =
             (domains.Contains(SnapshotDomain.Inventories)
                 || domains.Contains(SnapshotDomain.Health)
@@ -992,7 +1055,77 @@ public partial class TestAutomationModLoader {
             pickables,
             pickableLifecycle,
             projectiles,
-            projectileEvents);
+            projectileEvents,
+            worldFires,
+            worldFireMetrics,
+            explosionEvents);
+    }
+
+    private static WorldFireStateSnapshotV2[] BuildWorldFireSnapshotsV2(Project project) {
+        SubsystemFireBlockBehavior subsystem = project.FindSubsystem<SubsystemFireBlockBehavior>(true);
+        IReadOnlyList<WorldFireStateRecord> states = NetworkManager.IsClientRunning
+            ? WorldFireStateTracker.GetAppliedStates(project)
+            : WorldFireStateTracker.GetAuthoritativeStates(project);
+        Dictionary<Point3, WorldFireStateRecord> tracked = states.ToDictionary(state => state.Point);
+        foreach (SubsystemFireBlockBehavior.FireData fire in subsystem.m_fireData.Values) {
+            if (!tracked.ContainsKey(fire.Point)) {
+                tracked.Add(fire.Point, new WorldFireStateRecord(
+                    fire.Point,
+                    true,
+                    fire.FireExpandability,
+                    NetworkManager.IsClientRunning
+                        ? WorldFireStateTracker.GetAppliedRevision(project, fire.Point)
+                        : WorldFireStateTracker.GetAuthoritativeRevision(project, fire.Point)));
+            }
+        }
+        return tracked.Values
+            .OrderBy(state => state.Point.X)
+            .ThenBy(state => state.Point.Y)
+            .ThenBy(state => state.Point.Z)
+            .Take(AutomationProtocol.MaximumSnapshotWorldFires)
+            .Select(state => {
+                bool runtimePresent = subsystem.m_fireData.TryGetValue(
+                    state.Point,
+                    out SubsystemFireBlockBehavior.FireData? runtime);
+                return new WorldFireStateSnapshotV2(
+                    new TerrainCellCoordinate(state.Point.X, state.Point.Y, state.Point.Z),
+                    state.Present,
+                    runtimePresent,
+                    runtime?.FireExpandability ?? state.Expandability,
+                    state.Revision,
+                    !state.Present);
+            })
+            .ToArray();
+    }
+
+    private static WorldFireMetricsSnapshotV2 BuildWorldFireMetricsSnapshotV2(Project project) {
+        WorldFireStateMetrics metrics = WorldFireStateTracker.GetMetrics(project);
+        return new WorldFireMetricsSnapshotV2(
+            metrics.AuthoritativeTrackedCells,
+            metrics.ClientTrackedCells,
+            metrics.AppliedAdds,
+            metrics.AppliedRemovals,
+            metrics.IgnoredStaleStates,
+            metrics.RejectedClientStates,
+            metrics.Tombstones);
+    }
+
+    private static ExplosionEventSnapshotV2 BuildExplosionEventSnapshotV2(Project project) {
+        ExplosionEventMetrics metrics = ExplosionEventTracker.GetMetrics(project);
+        return new ExplosionEventSnapshotV2(
+            metrics.GeneratedEvents,
+            metrics.GeneratedCellChunks,
+            metrics.GeneratedCells,
+            metrics.GeneratedSoundEvents,
+            metrics.AcceptedEvents,
+            metrics.AcceptedCellChunks,
+            metrics.AppliedCells,
+            metrics.AcceptedSoundEvents,
+            metrics.IgnoredDuplicateParts,
+            metrics.IgnoredExpiredParts,
+            metrics.HighestGeneratedEventId,
+            metrics.HighestAcceptedEventId,
+            metrics.RememberedEvents);
     }
 
     private static LogicElementStateSnapshotV2[] BuildLogicElementSnapshotsV2(

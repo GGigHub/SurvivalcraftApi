@@ -10,6 +10,8 @@ namespace Survivalcraft.Test;
 
 public sealed class AnimalPositionSyncTest : IClassFixture<GameFixture>, IDisposable {
     private const int MaxObservedAnimals = 10;
+    private const int MaxConvergenceAttempts = 20;
+    private static readonly TimeSpan ConvergencePollInterval = TimeSpan.FromMilliseconds(100);
     public const float MaxPositionDistance = 5f;
 
     private const string GetExistingAnimalsCode = """
@@ -54,6 +56,7 @@ public sealed class AnimalPositionSyncTest : IClassFixture<GameFixture>, IDispos
         await GameTools.ConnectTestServer(client, server.GamePort);
 
         AnimalObservationTarget[] animals = await GetExistingAnimalsAsync(server);
+        Assert.NotEmpty(animals);
         Assert.True(animals.Length <= MaxObservedAnimals, $"Observed too many animals: {animals.Length}.");
 
         Stopwatch stopwatch = Stopwatch.StartNew();
@@ -68,6 +71,7 @@ public sealed class AnimalPositionSyncTest : IClassFixture<GameFixture>, IDispos
             .Where(observation => !observation.IsWithinRange)
             .ToArray();
 
+        Assert.Contains(observations, observation => observation.ClientChunkLoaded && observation.ClientState.Exists);
         Assert.True(
             outOfRangeObservations.Length == 0,
             "Animal positions exceeded 5 blocks:\n" + string.Join("\n", observations));
@@ -88,23 +92,52 @@ public sealed class AnimalPositionSyncTest : IClassFixture<GameFixture>, IDispos
 
         List<AnimalPositionObservation> observations = [];
         foreach (AnimalObservationTarget animal in animals) {
-            BodySyncState serverState = await CreatureSyncTools.GetBodyStateAsync(server, animal.Id);
+            AnimalPositionObservation? observation = await ObserveAnimalPositionAsync(
+                elapsedSinceConnect,
+                animal);
+            if (observation.HasValue) {
+                observations.Add(observation.Value);
+            }
+        }
+
+        return observations;
+    }
+
+    private async Task<AnimalPositionObservation?> ObserveAnimalPositionAsync(
+        TimeSpan elapsedSinceConnect,
+        AnimalObservationTarget animal) {
+        for (int attempt = 0; attempt < MaxConvergenceAttempts; attempt++) {
+            Task<BodySyncState> serverStateTask = CreatureSyncTools.GetBodyStateAsync(server, animal.Id);
+            Task<BodySyncState> clientStateTask = CreatureSyncTools.GetBodyStateAsync(client, animal.Id);
+            await Task.WhenAll(serverStateTask, clientStateTask);
+
+            BodySyncState serverState = await serverStateTask;
             if (!serverState.Exists) {
-                continue;
+                return null;
             }
 
-            BodySyncState clientState = await CreatureSyncTools.GetBodyStateAsync(client, animal.Id);
-            observations.Add(new AnimalPositionObservation(
+            BodySyncState clientState = await clientStateTask;
+            int chunkX = (int)MathF.Floor(serverState.Position.X) >> 4;
+            int chunkZ = (int)MathF.Floor(serverState.Position.Z) >> 4;
+            ChunkLoadState clientChunkState = await TerrainStreamingTools.GetChunkLoadStateAsync(client, chunkX, chunkZ);
+            AnimalPositionObservation observation = new(
                 elapsedSinceConnect,
                 animal,
                 serverState,
                 clientState,
+                clientChunkState.Loaded,
                 clientState.Exists
                     ? MathF.Sqrt(Vector3Dto.DistanceSquared(serverState.Position, clientState.Position))
-                    : float.PositiveInfinity));
+                    : float.PositiveInfinity);
+
+            if (observation.IsWithinRange || attempt == MaxConvergenceAttempts - 1) {
+                return observation;
+            }
+
+            await Task.Delay(ConvergencePollInterval, fixture.ErrorCts.Token);
         }
 
-        return observations;
+        throw new InvalidOperationException("Animal convergence loop terminated unexpectedly.");
     }
 
     private static async Task<AnimalObservationTarget[]> GetExistingAnimalsAsync(GameContext context) {
@@ -143,15 +176,17 @@ public readonly record struct AnimalPositionObservation(
     AnimalObservationTarget Animal,
     BodySyncState ServerState,
     BodySyncState ClientState,
+    bool ClientChunkLoaded,
     float Distance) {
     public bool IsWithinRange =>
-        ClientState.Exists
-        && ServerState.Exists
-        && ServerState.Id == ClientState.Id
-        && Distance <= AnimalPositionSyncTest.MaxPositionDistance;
+        ServerState.Exists
+        && (!ClientChunkLoaded
+            || (ClientState.Exists
+                && ServerState.Id == ClientState.Id
+                && Distance <= AnimalPositionSyncTest.MaxPositionDistance));
 
     public override string ToString() =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"t={ElapsedSinceConnect.TotalSeconds:R}s {Animal} distance={Distance:R}, Server={ServerState.Position}, Client={ClientState.Position}");
+            $"t={ElapsedSinceConnect.TotalSeconds:R}s {Animal} distance={Distance:R}, clientChunkLoaded={ClientChunkLoaded}, Server={ServerState.Position} velocity={ServerState.Velocity}, Client={ClientState.Position} velocity={ClientState.Velocity}");
 }

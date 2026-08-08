@@ -269,7 +269,11 @@ elseif ($Mode -eq "full") {
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
 }
-$buildProperties = if ($UseAngle) { @("-p:UseAngle=true") } else { @() }
+$serializedBuildProperties = @("-m:1", "-p:UseSharedCompilation=false")
+$buildProperties = @($serializedBuildProperties)
+if ($UseAngle) {
+    $buildProperties += "-p:UseAngle=true"
+}
 $script:coreRuntimeBuilt = $false
 $script:hostBuilt = $false
 $coverageReportPath = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
@@ -299,9 +303,10 @@ function Build-AutomationHost {
     if ($NoBuild -or $script:hostBuilt) {
         return
     }
-    Invoke-DotNet -CommandArguments @(
+    $hostBuildArguments = @(
         "build", $hostProject, "--nologo", "-c", $Configuration
-    )
+    ) + $serializedBuildProperties
+    Invoke-DotNet -CommandArguments $hostBuildArguments
     $script:hostBuilt = $true
 }
 
@@ -310,7 +315,7 @@ function Build-CoreRuntime {
         return
     }
     $gameBuildArguments = @(
-        "build", $gameTestProject, "--nologo", "-c", $Configuration, "-m:1"
+        "build", $gameTestProject, "--nologo", "-c", $Configuration
     ) + $buildProperties
     Invoke-DotNet -CommandArguments $gameBuildArguments
     Build-AutomationHost
@@ -322,7 +327,7 @@ function Run-FastTests {
         "test", $fastProject, "--nologo", "-c", $Configuration,
         "--filter", "Layer=L0|Layer=L1",
         "--logger", "console;verbosity=normal"
-    )
+    ) + $serializedBuildProperties
     if ($NoBuild) {
         $neutralArguments += "--no-build"
     }
@@ -337,6 +342,10 @@ function Run-FastTests {
         $runtimeArguments += "--no-build"
     }
     Invoke-DotNet -CommandArguments $runtimeArguments
+    if (!$NoBuild -and $Mode -eq "full") {
+        $script:coreRuntimeBuilt = $true
+        Build-AutomationHost
+    }
 }
 
 function Run-Doctor {
@@ -638,9 +647,12 @@ function Run-LegacyAudit {
         "--filter", "Layer!=L2&Layer!=L0&Layer!=L1",
         "--logger", "console;verbosity=normal",
         "--logger", "trx;LogFileName=legacy-audit.trx",
-        "--results-directory", $legacyArtifactDirectory
+        "--results-directory", $legacyArtifactDirectory,
+        "--blame-hang",
+        "--blame-hang-timeout", "5m",
+        "--blame-hang-dump-type", "none"
     ) + $buildProperties
-    if ($NoBuild) {
+    if ($NoBuild -or $script:coreRuntimeBuilt) {
         $legacyTestArguments += "--no-build"
     }
     Write-Host "dotnet $($legacyTestArguments -join ' ')"

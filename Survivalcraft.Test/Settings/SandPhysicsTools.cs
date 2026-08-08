@@ -61,13 +61,18 @@ public static class SandPhysicsTools {
         int attempts = timeoutMs / intervalMs;
         for (int i = 0; i < attempts; i++) {
             state = await GetSandPhysicsStateAsync(context, target);
-            if (state.LandContents == state.SandIndex) {
+            if (IsSettled(state)) {
                 return state;
             }
             await Task.Delay(intervalMs);
         }
         return state;
     }
+
+    public static bool IsSettled(SandPhysicsState state) =>
+        state.LandContents == state.SandIndex
+        && state.OrigContents == 0
+        && state.CollapsingSets == 0;
 
     public static async Task<bool> WaitForMainPlayerAsync(GameContext context) {
         for (int i = 0; i < 120; i++) {

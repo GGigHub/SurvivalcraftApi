@@ -153,6 +153,14 @@ public static class SnapshotV2Canonicalizer {
                 })
                 .OrderBy(state => state.EntityId)
                 .ToArray(),
+            WorldFires = snapshot.WorldFires?
+                .Select(state => state with {
+                    Expandability = (float)Round(state.Expandability, decimalPlaces)
+                })
+                .OrderBy(state => state.Cell.X)
+                .ThenBy(state => state.Cell.Y)
+                .ThenBy(state => state.Cell.Z)
+                .ToArray(),
             LogicStates = snapshot.LogicStates?
                 .OrderBy(state => state.X)
                 .ThenBy(state => state.Y)

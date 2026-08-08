@@ -126,7 +126,8 @@ public class BehaviorSyncPacket : Packet {
                     velocityChanged: true,
                     item.BodyVelocity,
                     m_sendTime,
-                    NetworkBodyInterpolation.RemoteBodyDelay);
+                    NetworkBodyInterpolation.RemoteBodyDelay,
+                    NetworkBodyInterpolation.RemoteBodyMaxPositionLagSquared);
             }
         }
 

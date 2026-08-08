@@ -708,19 +708,53 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkExplosionCell(Dictionary<Point2, List<(Point3, float)>> explosionCells) {
-        NetworkManager.Queue(new ExplosionCellPacket(explosionCells));
+        if (!NetworkManager.IsServerRunning || GameManager.Project == null) {
+            return;
+        }
+        SubsystemExplosions subsystem = GameManager.Project.FindSubsystem<SubsystemExplosions>();
+        long eventId = subsystem?.NetworkEventId ?? 0;
+        if (eventId <= 0) {
+            return;
+        }
+        IReadOnlyList<ExplosionCellPacket> packets = ExplosionCellPacket.CreateChunks(
+            explosionCells,
+            eventId);
+        if (packets.Count == 0) {
+            return;
+        }
+        ExplosionEventTracker.RecordGeneratedCells(
+            GameManager.Project,
+            eventId,
+            packets.Count,
+            packets.Sum(packet => packet.m_cells.Count));
+        foreach (ExplosionCellPacket packet in packets) {
+            NetworkManager.Queue(packet);
+        }
     }
 
     public override void OnNetworkExplosionSound(Vector3 position, float pressure, float delay) {
-        NetworkManager.Queue(new ExplosionSoundPacket(position, pressure, delay));
+        if (!NetworkManager.IsServerRunning || GameManager.Project == null) {
+            return;
+        }
+        SubsystemExplosions subsystem = GameManager.Project.FindSubsystem<SubsystemExplosions>();
+        long eventId = subsystem?.NetworkEventId ?? 0;
+        if (eventId <= 0) {
+            return;
+        }
+        ExplosionEventTracker.RecordGeneratedSound(GameManager.Project, eventId);
+        NetworkManager.Queue(new ExplosionSoundPacket(eventId, position, pressure, delay));
     }
 
     public override void OnNetworkFireBlockAdded(int x, int y, int z, float expandability) {
-        NetworkManager.Queue(new FireBlockAddPacket(x, y, z, expandability));
+        if (NetworkManager.IsServerRunning && GameManager.Project != null) {
+            NetworkManager.Queue(new FireBlockAddPacket(x, y, z, expandability));
+        }
     }
 
     public override void OnNetworkFireBlockRemoved(int x, int y, int z) {
-        NetworkManager.Queue(new FireBlockRemovePacket(x, y, z));
+        if (NetworkManager.IsServerRunning && GameManager.Project != null) {
+            NetworkManager.Queue(new FireBlockRemovePacket(x, y, z));
+        }
     }
 
     public override void OnNetworkFurnacesUpdate(SubsystemFurnaceBlockBehavior subsystem, List<ComponentFurnace> furnaces) {

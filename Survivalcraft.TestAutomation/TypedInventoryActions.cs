@@ -31,7 +31,9 @@ public partial class TestAutomationModLoader {
         int SecondarySlotIndex,
         int ExpectedSecondaryCount,
         int ExpectedActiveSlot,
-        long MinimumRevision,
+        long MinimumPrimaryRevision,
+        long MinimumSecondaryRevision,
+        bool AllowSecondaryEvolution,
         int DeadlineFrame);
 
     private sealed record PendingContainerOpenAction(
@@ -258,7 +260,16 @@ public partial class TestAutomationModLoader {
                 command.ToSlotIndex,
                 targetCount + moved,
                 -1,
-                -1,
+                NetworkStateRevisionTracker.GetAppliedRevision(
+                    project,
+                    NetworkStateRevisionDomain.Inventory,
+                    from.Id) + 1,
+                NetworkStateRevisionTracker.GetAppliedRevision(
+                    project,
+                    NetworkStateRevisionDomain.Inventory,
+                    to.Id) + 1,
+                to is ComponentFurnace furnace
+                    && command.ToSlotIndex <= furnace.FuelSlotIndex,
                 checked(Time.FrameIndex + InventoryNetworkObservationDeadlineFrames));
             ScheduleInventoryActionTimeout(pendingInventoryAction);
         }
@@ -400,6 +411,8 @@ public partial class TestAutomationModLoader {
                 inventory.Project,
                 NetworkStateRevisionDomain.Inventory,
                 inventory.Id) + 1,
+            -1,
+            false,
             checked(Time.FrameIndex + InventoryNetworkObservationDeadlineFrames));
         inventory.ActiveSlotIndex = command.SlotIndex;
         ScheduleSelectSlotObservation(pendingInventoryAction);
@@ -453,6 +466,8 @@ public partial class TestAutomationModLoader {
             -1,
             -1,
             -1,
+            -1,
+            false,
             checked(Time.FrameIndex + InventoryNetworkObservationDeadlineFrames));
         InputHijackState.QueueDrop();
         ScheduleInventoryActionTimeout(pendingInventoryAction);
@@ -668,7 +683,7 @@ public partial class TestAutomationModLoader {
             || NetworkStateRevisionTracker.GetAppliedRevision(
                 player.Entity.Project,
                 NetworkStateRevisionDomain.Inventory,
-                pending.PrimaryInventoryId) < pending.MinimumRevision) {
+                pending.PrimaryInventoryId) < pending.MinimumPrimaryRevision) {
             return;
         }
         CompleteInventoryAction(pending, "production_active_slot_observed");
@@ -700,9 +715,13 @@ public partial class TestAutomationModLoader {
                 && NetworkStateRevisionTracker.GetAppliedRevision(
                     primary.Project,
                     NetworkStateRevisionDomain.Inventory,
-                    primary.Id) >= pending.MinimumRevision;
+                    primary.Id) >= pending.MinimumPrimaryRevision;
         }
-        if (primary.GetSlotCount(pending.PrimarySlotIndex) != pending.ExpectedPrimaryCount) {
+        if (primary.GetSlotCount(pending.PrimarySlotIndex) != pending.ExpectedPrimaryCount
+            || NetworkStateRevisionTracker.GetAppliedRevision(
+                primary.Project,
+                NetworkStateRevisionDomain.Inventory,
+                primary.Id) < pending.MinimumPrimaryRevision) {
             return false;
         }
         if (pending.SecondaryInventoryId <= 0) {
@@ -710,7 +729,13 @@ public partial class TestAutomationModLoader {
         }
         IInventory? secondary = inventories?.GetInventoryById(pending.SecondaryInventoryId);
         return secondary != null
-            && secondary.GetSlotCount(pending.SecondarySlotIndex) == pending.ExpectedSecondaryCount;
+            && NetworkStateRevisionTracker.GetAppliedRevision(
+                secondary.Project,
+                NetworkStateRevisionDomain.Inventory,
+                secondary.Id) >= pending.MinimumSecondaryRevision
+            && (secondary.GetSlotCount(pending.SecondarySlotIndex)
+                    == pending.ExpectedSecondaryCount
+                || pending.AllowSecondaryEvolution);
     }
 
     private void ScheduleSelectSlotObservation(PendingInventoryAction pending) {

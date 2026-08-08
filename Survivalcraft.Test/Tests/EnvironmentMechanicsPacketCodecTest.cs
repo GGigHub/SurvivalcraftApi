@@ -1,5 +1,6 @@
 using Engine;
 using Game.Network;
+using GameEntitySystem;
 using Xunit;
 
 namespace Survivalcraft.Test;
@@ -158,6 +159,206 @@ public sealed class EnvironmentMechanicsPacketCodecTest {
             (extinguished.m_entityId, extinguished.m_isOnFire,
                 extinguished.m_duration, extinguished.m_lifecycleRevision,
                 extinguished.m_revision));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void ExplosionAndWorldFirePacketsPreserveCorrelatedLifecycleState() {
+        ExplosionCellPacket sourceCells = new() {
+            m_eventId = 4_294_967_801L,
+            m_chunkIndex = 1,
+            m_chunkCount = 3
+        };
+        sourceCells.m_cells.Add(new ExplosionCellPacket.CellData {
+            Point = new Point3(17, 64, -3),
+            Intensity = 0.75f
+        });
+        ExplosionCellPacket cells = RoundTrip(
+            sourceCells,
+            static () => new ExplosionCellPacket());
+        ExplosionSoundPacket sound = RoundTrip(
+            new ExplosionSoundPacket {
+                m_eventId = 4_294_967_801L,
+                m_position = new Vector3(17.5f, 64.5f, -2.5f),
+                m_level = 24_000f,
+                m_delay = 0.125f
+            },
+            static () => new ExplosionSoundPacket());
+        FireBlockAddPacket add = RoundTrip(
+            new FireBlockAddPacket {
+                x = 18,
+                y = 65,
+                z = -3,
+                m_expandability = 0.85f,
+                m_revision = 4_294_967_802L,
+                m_forceRefresh = true
+            },
+            static () => new FireBlockAddPacket());
+        FireBlockRemovePacket remove = RoundTrip(
+            new FireBlockRemovePacket {
+                x = 18,
+                y = 65,
+                z = -3,
+                m_revision = 4_294_967_803L
+            },
+            static () => new FireBlockRemovePacket());
+
+        ExplosionCellPacket.CellData cell = Assert.Single(cells.m_cells);
+        Assert.Equal((4_294_967_801L, 1, 3),
+            (cells.m_eventId, cells.m_chunkIndex, cells.m_chunkCount));
+        Assert.Equal(new Point3(17, 64, -3), cell.Point);
+        Assert.Equal(0.75f, cell.Intensity);
+        Assert.True(cells.IsValidState());
+        Assert.Equal((4_294_967_801L, 24_000f, 0.125f),
+            (sound.m_eventId, sound.m_level, sound.m_delay));
+        Assert.True(sound.IsValidState());
+        Assert.Equal((18, 65, -3, 0.85f, 4_294_967_802L, true),
+            (add.x, add.y, add.z, add.m_expandability, add.m_revision,
+                add.m_forceRefresh));
+        Assert.True(add.IsValidState());
+        Assert.Equal((18, 65, -3, 4_294_967_803L),
+            (remove.x, remove.y, remove.z, remove.m_revision));
+        Assert.True(remove.IsValidState());
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void ExplosionChunkingIsBoundedAndDeterministic() {
+        Dictionary<Point2, List<(Point3, float)>> cells = new() {
+            [new Point2(0, 0)] = Enumerable.Range(0, ExplosionCellPacket.MaximumCellsPerChunk + 1)
+                .Select(index => (new Point3(index % 16, 64 + index / 256, index / 16), 0.5f))
+                .ToList()
+        };
+
+        IReadOnlyList<ExplosionCellPacket> packets =
+            ExplosionCellPacket.CreateChunks(cells, 71);
+
+        Assert.Equal(2, packets.Count);
+        Assert.Equal(ExplosionCellPacket.MaximumCellsPerChunk, packets[0].m_cells.Count);
+        Assert.Single(packets[1].m_cells);
+        Assert.All(packets, packet => {
+            Assert.Equal(71, packet.m_eventId);
+            Assert.Equal(2, packet.m_chunkCount);
+            Assert.True(packet.IsValidState());
+        });
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void ExplosionWindowAcceptsReorderedPartsAndRejectsDuplicatesAndExpiredParts() {
+        ExplosionEventWindow window = new();
+
+        Assert.True(window.TryAcceptSound(2));
+        Assert.True(window.TryAcceptCells(1, 1, 2, 4));
+        Assert.True(window.TryAcceptCells(1, 0, 2, 3));
+        Assert.False(window.TryAcceptCells(1, 0, 2, 3));
+        Assert.False(window.TryAcceptSound(2));
+        Assert.Equal(2, window.AcceptedEvents);
+        Assert.Equal(2, window.AcceptedCellChunks);
+        Assert.Equal(7, window.AppliedCells);
+        Assert.Equal(2, window.IgnoredDuplicateParts);
+
+        Assert.False(window.TryAcceptCells(3, -1, 1, 1));
+        Assert.False(window.TryAcceptCells(4, 0, 0, 1));
+        Assert.False(window.TryAcceptCells(5, 0, 1, 0));
+        Assert.False(window.TryAcceptCells(
+            6,
+            0,
+            ExplosionCellPacket.MaximumChunksPerEvent + 1,
+            1));
+        Assert.Equal(2, window.AcceptedEvents);
+
+        Assert.True(window.TryAcceptSound(ExplosionEventWindow.RetentionWindow + 10L));
+        Assert.False(window.TryAcceptSound(1));
+        Assert.Equal(1, window.IgnoredExpiredParts);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void WorldFireWindowKeepsRemovalTombstoneAgainstStaleAndEqualAdds() {
+        WorldFireStateWindow window = new();
+
+        Assert.True(window.Receive(true, 1f, 5).Apply);
+        Assert.True(window.Receive(false, 0f, 6).Apply);
+        Assert.False(window.Receive(true, 1f, 5).Apply);
+        Assert.False(window.Receive(true, 1f, 6, forceRefresh: true).Apply);
+        Assert.True(window.Receive(true, 0.75f, 7).Apply);
+        Assert.False(window.Receive(true, 0.75f, 7).Apply);
+        Assert.True(window.Receive(true, 0.75f, 7, forceRefresh: true).Apply);
+        Assert.True(window.Present);
+        Assert.Equal(7, window.AppliedRevision);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void WorldFireTrackerBoundsTombstonesWithoutAllowingStaleResurrection() {
+        Project serverProject = new();
+        Project clientProject = new();
+        Point3 original = new(17, 64, -3);
+        WorldFireStateRecord initialAdd = WorldFireStateTracker.AdvanceAuthoritative(
+            serverProject,
+            original,
+            true,
+            1f);
+        Assert.True(WorldFireStateTracker.Receive(
+            clientProject,
+            original,
+            true,
+            1f,
+            initialAdd.Revision).Apply);
+        WorldFireStateRecord initialRemove = WorldFireStateTracker.AdvanceAuthoritative(
+            serverProject,
+            original,
+            false,
+            0f);
+        Assert.True(WorldFireStateTracker.Receive(
+            clientProject,
+            original,
+            false,
+            0f,
+            initialRemove.Revision).Apply);
+
+        for (int index = 0; index <= WorldFireStateTracker.TombstoneRetentionWindow; index++) {
+            Point3 point = new(100 + index, 64, 2);
+            WorldFireStateRecord removed = WorldFireStateTracker.AdvanceAuthoritative(
+                serverProject,
+                point,
+                false,
+                0f);
+            Assert.True(WorldFireStateTracker.Receive(
+                clientProject,
+                point,
+                false,
+                0f,
+                removed.Revision).Apply);
+        }
+
+        Assert.Equal(0, WorldFireStateTracker.GetAuthoritativeRevision(serverProject, original));
+        Assert.Equal(-1, WorldFireStateTracker.GetAppliedRevision(clientProject, original));
+        Assert.True(WorldFireStateTracker.GetMetrics(serverProject).AuthoritativeTrackedCells
+            <= WorldFireStateTracker.TombstoneRetentionWindow);
+        Assert.True(WorldFireStateTracker.GetMetrics(clientProject).Tombstones
+            <= WorldFireStateTracker.TombstoneRetentionWindow);
+        Assert.False(WorldFireStateTracker.Receive(
+            clientProject,
+            original,
+            true,
+            1f,
+            initialAdd.Revision).Apply);
+
+        WorldFireStateRecord currentAdd = WorldFireStateTracker.AdvanceAuthoritative(
+            serverProject,
+            original,
+            true,
+            0.75f);
+        Assert.True(WorldFireStateTracker.Receive(
+            clientProject,
+            original,
+            true,
+            0.75f,
+            currentAdd.Revision).Apply);
+        Assert.Equal(currentAdd.Revision,
+            WorldFireStateTracker.GetAppliedRevision(clientProject, original));
     }
 
     [Fact]

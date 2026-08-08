@@ -203,6 +203,9 @@ namespace Game {
         }
 
         public void AddExplosion(int x, int y, int z, float pressure, bool isIncendiary, bool noExplosionSound) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             if (pressure > 0f) {
                 m_queuedExplosions.Add(
                     new ExplosionData { X = x, Y = y, Z = z, Pressure = pressure, IsIncendiary = isIncendiary, NoExplosionSound = noExplosionSound }
@@ -213,9 +216,14 @@ namespace Game {
 
         private Dictionary<Point2, List<(Point3, float)>> m_explosionCells = new Dictionary<Point2, List<(Point3, float)>>();
 
+        public long NetworkEventId { get; private set; }
+
         public virtual void Update(float dt) {
             if (m_queuedExplosions.Count <= 0) {
                 return;
+            }
+            if (!NetworkManager.IsClientRunning) {
+                NetworkEventId = checked(NetworkEventId + 1);
             }
             int x = m_queuedExplosions[0].X;
             int y = m_queuedExplosions[0].Y;

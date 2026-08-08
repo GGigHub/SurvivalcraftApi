@@ -4,12 +4,13 @@ namespace Game.Network;
 
 public static class NetworkBodyInterpolation {
     public const double RemotePlayerDelay = 0.5;
-    public const double RemoteBodyDelay = 0.5;
+    public const double RemoteBodyDelay = 0.25;
     public const double DefaultSnapshotInterval = 0.2;
     public const double MaxExtrapolationTime = 0.5;
     public const double MaxBufferedTime = 2.0;
     public const int MaxSnapshots = 150;
     public const float SnapDistanceSquared = 16f;
+    public const float RemoteBodyMaxPositionLagSquared = 9f;
     public const float CatchUpSpeed = 1.15f;
     public const float MaxPlaybackStep = 0.25f;
 
@@ -38,7 +39,8 @@ public static class NetworkBodyInterpolation {
         bool velocityChanged,
         Vector3 velocity,
         double snapshotTime,
-        double playbackDelay) {
+        double playbackDelay,
+        float maxPositionLagSquared = float.MaxValue) {
         if (body == null || (!positionChanged && !rotationChanged && !velocityChanged)) {
             return;
         }
@@ -72,7 +74,12 @@ public static class NetworkBodyInterpolation {
                 state.Snapshots[^1] = snapshot;
                 return;
             }
-            if ((snapshot.Position - latest.Position).LengthSquared() > SnapDistanceSquared) {
+            bool authoritativeDiscontinuity =
+                (snapshot.Position - latest.Position).LengthSquared() > SnapDistanceSquared;
+            bool playbackDriftExceeded =
+                maxPositionLagSquared < float.MaxValue
+                && (snapshot.Position - body.Position).LengthSquared() > maxPositionLagSquared;
+            if (authoritativeDiscontinuity || playbackDriftExceeded) {
                 state.Snapshots.Clear();
                 state.PlaybackTime = snapshot.Time;
                 state.HasPlaybackTime = true;

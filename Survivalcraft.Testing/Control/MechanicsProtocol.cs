@@ -10,6 +10,17 @@ public sealed record MechanicsFixture(
     bool IsSleeping,
     bool IsOnFire);
 
+public sealed record PrepareWorldMechanicsFixtureCommand(int PlayerIndex);
+
+public sealed record WorldMechanicsFixture(
+    TerrainCellCoordinate PersistentFireCell,
+    TerrainCellCoordinate RemovedFireCell,
+    TerrainCellCoordinate ExplosionCell,
+    TerrainCellCoordinate ExplosionTargetCell,
+    int FuelValue,
+    int FireValue,
+    int ExplosionTargetValue);
+
 public sealed record SetPlayerFireFixtureCommand(
     int EntityId,
     float Duration = 30f,
@@ -46,6 +57,46 @@ public sealed record MechanicsRevisionBurstResult(
     float FinalDuration,
     long StaleRevision,
     long FinalRevision);
+
+public sealed record RunWorldFireLifecycleBurstCommand(
+    TerrainCellCoordinate PersistentFireCell,
+    TerrainCellCoordinate RemovedFireCell,
+    float Expandability = 1f,
+    bool SendStaleAdd = true);
+
+public sealed record WorldFireLifecycleBurstResult(
+    ActionReceipt Receipt,
+    TerrainCellCoordinate PersistentFireCell,
+    TerrainCellCoordinate RemovedFireCell,
+    long PersistentRevision,
+    long StaleAddRevision,
+    long RemovedRevision);
+
+public sealed record TriggerExplosionCommand(
+    TerrainCellCoordinate Cell,
+    float Pressure = 250f,
+    bool Incendiary = false);
+
+public sealed record TriggerExplosionResult(
+    ActionReceipt Receipt,
+    TerrainCellCoordinate Cell,
+    long ExpectedEventId,
+    float Pressure,
+    bool Incendiary);
+
+public sealed record ProbeExplosionAuthorityCommand(
+    int PlayerIndex,
+    TerrainCellCoordinate Cell,
+    float Pressure = 250f,
+    long ForgedEventId = 4_611_686_018_427_387_903L);
+
+public sealed record ForgeWorldFireStateCommand(
+    int PlayerIndex,
+    TerrainCellCoordinate Cell,
+    bool Present,
+    float Expandability = 1f,
+    long Revision = 4_611_686_018_427_387_903L,
+    bool ExpectRejected = true);
 
 public sealed record PrepareMountFixtureCommand(
     int PlayerIndex,

@@ -9,7 +9,7 @@ namespace Survivalcraft.Testing.Tests;
 public sealed class EnvironmentMechanicsProtocolTests {
     [Fact]
     [Trait("Layer", "L0")]
-    public void AutoTestV7EnvironmentAndMechanicsCommandsRoundTrip() {
+    public void AutoTestV11EnvironmentAndMechanicsCommandsRoundTrip() {
         EnvironmentRequestChangeCommand environment = new(
             3,
             EnvironmentChangeKind.TimeOfDay,
@@ -26,6 +26,15 @@ public sealed class EnvironmentMechanicsProtocolTests {
             TimeOfDayOffset: 0.125,
             TimeOfYear: 0.375f,
             CreativeMode: false);
+        RunWorldFireLifecycleBurstCommand worldFire = new(
+            new TerrainCellCoordinate(10, 64, 10),
+            new TerrainCellCoordinate(11, 64, 10));
+        TriggerExplosionCommand explosion = new(
+            new TerrainCellCoordinate(20, 64, 20),
+            Pressure: 250f);
+        ProbeExplosionAuthorityCommand explosionAuthority = new(
+            3,
+            new TerrainCellCoordinate(20, 64, 20));
 
         ControlRequest environmentRequest = ControlProtocol.CreateRequest(
             ControlCommandNames.EnvironmentRequestChange,
@@ -37,11 +46,20 @@ public sealed class EnvironmentMechanicsProtocolTests {
             ControlCommandNames.SetEnvironmentFixture,
             survivalFixture);
 
-        Assert.Equal(10, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(11, AutomationProtocol.CurrentApiVersion);
         Assert.Equal(environment, environmentRequest.DeserializePayload<EnvironmentRequestChangeCommand>());
         Assert.Equal(sleep, sleepRequest.DeserializePayload<PlayerSleepCommand>());
         Assert.Equal(survivalFixture,
             fixtureRequest.DeserializePayload<SetEnvironmentFixtureCommand>());
+        Assert.Equal(worldFire, ControlProtocol.CreateRequest(
+            ControlCommandNames.RunWorldFireLifecycleBurst,
+            worldFire).DeserializePayload<RunWorldFireLifecycleBurstCommand>());
+        Assert.Equal(explosion, ControlProtocol.CreateRequest(
+            ControlCommandNames.TriggerExplosion,
+            explosion).DeserializePayload<TriggerExplosionCommand>());
+        Assert.Equal(explosionAuthority, ControlProtocol.CreateRequest(
+            ControlCommandNames.ProbeExplosionAuthority,
+            explosionAuthority).DeserializePayload<ProbeExplosionAuthorityCommand>());
         Assert.Contains(AutomationCommandDomain.Environment, Enum.GetValues<AutomationCommandDomain>());
         Assert.Contains(AutomationCommandDomain.Mechanics, Enum.GetValues<AutomationCommandDomain>());
     }
@@ -91,7 +109,23 @@ public sealed class EnvironmentMechanicsProtocolTests {
         };
         StateSnapshotV2 snapshot = Snapshot() with {
             Environment = environment,
-            MechanicsStates = [first, second]
+            MechanicsStates = [first, second],
+            WorldFires = [
+                new WorldFireStateSnapshotV2(
+                    new TerrainCellCoordinate(11, 64, 10),
+                    false,
+                    false,
+                    0f,
+                    4,
+                    true),
+                new WorldFireStateSnapshotV2(
+                    new TerrainCellCoordinate(10, 64, 10),
+                    true,
+                    true,
+                    0.876543f,
+                    3,
+                    false)
+            ]
         };
 
         StateSnapshotV2 normalized = SnapshotV2Canonicalizer.Normalize(snapshot, decimalPlaces: 5);
@@ -106,9 +140,14 @@ public sealed class EnvironmentMechanicsProtocolTests {
         Assert.Equal([40, 41], mechanics.Select(state => state.EntityId));
         Assert.Equal(119.12346, mechanics[1].FireDuration);
         Assert.Equal(2.34568, mechanics[1].SleepStartTime);
+        WorldFireStateSnapshotV2[] worldFires = Assert.IsType<WorldFireStateSnapshotV2[]>(
+            normalized.WorldFires);
+        Assert.Equal([10, 11], worldFires.Select(state => state.Cell.X));
+        Assert.Equal(0.87654f, worldFires[0].Expandability);
 
         StateSnapshotV2 reordered = snapshot with {
-            MechanicsStates = [second, first]
+            MechanicsStates = [second, first],
+            WorldFires = [snapshot.WorldFires![1], snapshot.WorldFires[0]]
         };
         Assert.Equal(
             SnapshotV2Canonicalizer.ComputeSha256(snapshot),
@@ -150,6 +189,18 @@ public sealed class EnvironmentMechanicsProtocolTests {
                 "mechanics-burst",
                 ControlCommandNames.RunMechanicsRevisionBurst,
                 new RunMechanicsRevisionBurstCommand(31, 180f, 120f)),
+            ServerAction(
+                "world-fire-burst",
+                ControlCommandNames.RunWorldFireLifecycleBurst,
+                new RunWorldFireLifecycleBurstCommand(
+                    new TerrainCellCoordinate(10, 64, 10),
+                    new TerrainCellCoordinate(11, 64, 10))),
+            ServerAction(
+                "explosion",
+                ControlCommandNames.TriggerExplosion,
+                new TriggerExplosionCommand(
+                    new TerrainCellCoordinate(20, 64, 20),
+                    Pressure: 250f)),
             ClientAction(
                 "wake",
                 ControlCommandNames.PlayerSleep,
@@ -163,6 +214,8 @@ public sealed class EnvironmentMechanicsProtocolTests {
         Assert.Equal(EnvironmentChangeKind.Lightning, plan.Lightning.Change);
         Assert.True(plan.Sleep.Sleep);
         Assert.Equal(120f, plan.MechanicsRevisionBurst.FinalDuration);
+        Assert.True(plan.WorldFireLifecycleBurst.SendStaleAdd);
+        Assert.Equal(250f, plan.Explosion.Pressure);
         Assert.False(plan.Wake.Sleep);
         Assert.Throws<InvalidDataException>(() =>
             EnvironmentMechanicsMultiplayerScenario.ParseReplayActions([
@@ -179,7 +232,7 @@ public sealed class EnvironmentMechanicsProtocolTests {
                             SendStaleSnapshot: false),
                         ControlProtocol.JsonOptions)
                 },
-                records[7]
+                .. records[7..]
             ]));
     }
 

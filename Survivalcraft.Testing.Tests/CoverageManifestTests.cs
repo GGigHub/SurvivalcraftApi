@@ -21,8 +21,8 @@ public sealed class CoverageManifestTests {
         CoverageFeature[] covered = manifest.Features
             .Where(feature => feature.Status == "covered")
             .ToArray();
-        Assert.Equal(15, covered.Length);
-        Assert.Equal(5, manifest.Features.Count(feature => feature.Status == "planned"));
+        Assert.Equal(16, covered.Length);
+        Assert.Equal(4, manifest.Features.Count(feature => feature.Status == "planned"));
         Assert.Equal(1, manifest.Features.Count(feature => feature.Status == "partial"));
         Assert.All(covered, feature => {
             Assert.NotNull(feature.ProductionPathTest);

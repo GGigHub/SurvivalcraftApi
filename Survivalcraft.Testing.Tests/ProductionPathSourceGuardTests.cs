@@ -84,6 +84,58 @@ public sealed class ProductionPathSourceGuardTests {
 
     [Fact]
     [Trait("Layer", "L0")]
+    public void FullHarnessBuildsWindowsRuntimeOnceWithoutSharedCompilerLocks() {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(Path.Combine(
+            root,
+            "scripts",
+            "Test-Multiplayer.ps1"));
+
+        Assert.Matches(
+            @"\$serializedBuildProperties\s*=\s*@\(\s*""-m:1""\s*,\s*""-p:UseSharedCompilation=false""\s*\)",
+            source);
+        Assert.Contains(
+            "if (!$NoBuild -and $Mode -eq \"full\")",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "$script:coreRuntimeBuilt = $true",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "if ($NoBuild -or $script:coreRuntimeBuilt)",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void LegacyHarnessUsesSharedPortLeasesAndPerTestHangTimeout() {
+        string root = FindRepositoryRoot();
+        string contextSource = File.ReadAllText(Path.Combine(
+            root,
+            "Survivalcraft.Test",
+            "Settings",
+            "GameContext.cs"));
+        string harnessSource = File.ReadAllText(Path.Combine(
+            root,
+            "scripts",
+            "Test-Multiplayer.ps1"));
+
+        Assert.Equal(
+            2,
+            Regex.Matches(
+                contextSource,
+                @"UdpPortLeaseAllocator\s*\.\s*Allocate\s*\(",
+                RegexOptions.CultureInvariant).Count);
+        Assert.DoesNotContain("private static class UdpPortPool", contextSource, StringComparison.Ordinal);
+        Assert.Contains("\"--blame-hang\"", harnessSource, StringComparison.Ordinal);
+        Assert.Contains("\"--blame-hang-timeout\", \"5m\"", harnessSource, StringComparison.Ordinal);
+        Assert.Contains("\"--blame-hang-dump-type\", \"none\"", harnessSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void PeriodicPlayerBodySyncRemainsSelfHealingAfterReorderOrLoss() {
         string root = FindRepositoryRoot();
         string source = File.ReadAllText(Path.Combine(

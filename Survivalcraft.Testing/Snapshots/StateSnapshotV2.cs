@@ -56,7 +56,42 @@ public sealed record StateSnapshotV2(
     PickableSnapshotV2[]? Pickables = null,
     PickableLifecycleSnapshotV2? PickableLifecycle = null,
     ProjectileSnapshotV2[]? Projectiles = null,
-    ProjectileEventSnapshotV2? ProjectileEvents = null);
+    ProjectileEventSnapshotV2? ProjectileEvents = null,
+    WorldFireStateSnapshotV2[]? WorldFires = null,
+    WorldFireMetricsSnapshotV2? WorldFireMetrics = null,
+    ExplosionEventSnapshotV2? ExplosionEvents = null);
+
+public sealed record WorldFireStateSnapshotV2(
+    TerrainCellCoordinate Cell,
+    bool Present,
+    bool RuntimePresent,
+    float Expandability,
+    long Revision,
+    bool IsTombstone);
+
+public sealed record WorldFireMetricsSnapshotV2(
+    int AuthoritativeTrackedCells,
+    int ClientTrackedCells,
+    long AppliedAdds,
+    long AppliedRemovals,
+    long IgnoredStaleStates,
+    long RejectedClientStates,
+    int Tombstones);
+
+public sealed record ExplosionEventSnapshotV2(
+    long GeneratedEvents,
+    long GeneratedCellChunks,
+    long GeneratedCells,
+    long GeneratedSoundEvents,
+    long AcceptedEvents,
+    long AcceptedCellChunks,
+    long AppliedCells,
+    long AcceptedSoundEvents,
+    long IgnoredDuplicateParts,
+    long IgnoredExpiredParts,
+    long HighestGeneratedEventId,
+    long HighestAcceptedEventId,
+    int RememberedEvents);
 
 public sealed record PickableSnapshotV2(
     int PickableId,

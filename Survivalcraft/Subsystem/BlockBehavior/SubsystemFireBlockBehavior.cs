@@ -106,6 +106,19 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            if (NetworkManager.IsClientRunning) {
+                float intensity = 0f;
+                foreach (Point3 point in m_fireData.Keys) {
+                    intensity += 1f / (
+                        m_subsystemAudio.CalculateListenerDistanceSquared(new Vector3(point))
+                        + 0.01f);
+                }
+                m_fireSoundVolume = 0.75f * intensity;
+                m_subsystemAmbientSounds.FireSoundVolume = MathUtils.Max(
+                    m_subsystemAmbientSounds.FireSoundVolume,
+                    m_fireSoundVolume);
+                return;
+            }
             if (m_firePointsCopy.Count == 0) {
                 m_firePointsCopy.Count += m_fireData.Count;
                 m_fireData.Keys.CopyTo(m_firePointsCopy.Array, 0);
@@ -246,6 +259,9 @@ namespace Game {
         }
 
         public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             int num = Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
             int cellValue_px = SubsystemTerrain.Terrain.GetCellValue(x + 1, y, z);
             int cellValue_nx = SubsystemTerrain.Terrain.GetCellValue(x - 1, y, z);
@@ -369,12 +385,13 @@ namespace Game {
             }
 
             Point3 point = new(x, y, z);
-            if (!m_fireData.ContainsKey(point)) {
+            bool added = !m_fireData.ContainsKey(point);
+            if (added) {
                 FireData fireData = new() { Point = point, FireExpandability = expandability };
                 InitializeFireDataTimes(fireData);
                 m_fireData[point] = fireData;
             }
-            if (!NetworkManager.IsClientRunning && !fromNetwork) {
+            if (added && !NetworkManager.IsClientRunning && !fromNetwork) {
                 ModsManager.HookAction("OnNetworkFireBlockAdded", loader => loader.OnNetworkFireBlockAdded(x, y, z, expandability));
             }
         }
@@ -386,8 +403,8 @@ namespace Game {
             }
 
             Point3 key = new(x, y, z);
-            m_fireData.Remove(key);
-            if (!NetworkManager.IsClientRunning && !fromNetwork) {
+            bool removed = m_fireData.Remove(key);
+            if (removed && !NetworkManager.IsClientRunning && !fromNetwork) {
                 ModsManager.HookAction("OnNetworkFireBlockRemoved", loader => loader.OnNetworkFireBlockRemoved(x, y, z));
             }
         }

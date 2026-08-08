@@ -16,6 +16,8 @@ public sealed record EnvironmentMechanicsReplayPlan(
     PlayerSleepCommand Sleep,
     RunEnvironmentRevisionBurstCommand EnvironmentRevisionBurst,
     RunMechanicsRevisionBurstCommand MechanicsRevisionBurst,
+    RunWorldFireLifecycleBurstCommand WorldFireLifecycleBurst,
+    TriggerExplosionCommand Explosion,
     PlayerSleepCommand Wake);
 
 public sealed record EnvironmentMechanicsMultiplayerScenarioOptions(
@@ -52,7 +54,7 @@ public sealed class EnvironmentMechanicsMultiplayerScenarioException : Exception
 
 public sealed class EnvironmentMechanicsMultiplayerScenario {
     public const string ScenarioName = "environment-mechanics-multiplayer";
-    public const int ScenarioVersion = 1;
+    public const int ScenarioVersion = 2;
 
     private static readonly string[] NodeRoles = [
         "server",
@@ -73,6 +75,7 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
         new("verify-control-authority", "typed authority rejection"),
         new("set-environment-fixture", ControlCommandNames.SetEnvironmentFixture),
         new("prepare-mechanics-fixture", ControlCommandNames.PrepareMechanicsFixture),
+        new("prepare-world-mechanics-fixture", ControlCommandNames.PrepareWorldMechanicsFixture),
         new("verify-production-authority", "forged environment/sleep/fire packets"),
         new("enable-network-faults", ControlCommandNames.SetNetworkFaults),
         new("change-time", ControlCommandNames.EnvironmentRequestChange),
@@ -82,6 +85,8 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
         new("sleep-player", ControlCommandNames.PlayerSleep),
         new("run-environment-revision-burst", ControlCommandNames.RunEnvironmentRevisionBurst),
         new("run-mechanics-revision-burst", ControlCommandNames.RunMechanicsRevisionBurst),
+        new("run-world-fire-lifecycle-burst", ControlCommandNames.RunWorldFireLifecycleBurst),
+        new("trigger-explosion", ControlCommandNames.TriggerExplosion),
         new("wake-player", ControlCommandNames.PlayerSleep),
         new("verify-convergence", ControlCommandNames.GetSnapshotV2),
         new("disable-network-faults", ControlCommandNames.SetNetworkFaults),
@@ -129,6 +134,8 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
             ("client-a", ControlCommandNames.PlayerSleep),
             ("server", ControlCommandNames.RunEnvironmentRevisionBurst),
             ("server", ControlCommandNames.RunMechanicsRevisionBurst),
+            ("server", ControlCommandNames.RunWorldFireLifecycleBurst),
+            ("server", ControlCommandNames.TriggerExplosion),
             ("client-a", ControlCommandNames.PlayerSleep)
         ];
         if (records.Count != expected.Length) {
@@ -150,7 +157,9 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
             DeserializeAction<PlayerSleepCommand>(records[4]),
             DeserializeAction<RunEnvironmentRevisionBurstCommand>(records[5]),
             DeserializeAction<RunMechanicsRevisionBurstCommand>(records[6]),
-            DeserializeAction<PlayerSleepCommand>(records[7]));
+            DeserializeAction<RunWorldFireLifecycleBurstCommand>(records[7]),
+            DeserializeAction<TriggerExplosionCommand>(records[8]),
+            DeserializeAction<PlayerSleepCommand>(records[9]));
         ValidateReplayPlan(plan);
         return plan;
     }
@@ -196,6 +205,7 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
         Stopwatch stopwatch = Stopwatch.StartNew();
         MultiplayerCluster? cluster = null;
         MechanicsFixture? mechanicsFixture = null;
+        WorldMechanicsFixture? worldFixture = null;
         Exception? scenarioFailure = null;
         Exception? artifactFailure = null;
         int actorPlayerIndex = -1;
@@ -227,10 +237,15 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                     ControlCommandNames.EnvironmentRequestChange,
                     ControlCommandNames.RunEnvironmentRevisionBurst,
                     ControlCommandNames.PrepareMechanicsFixture,
+                    ControlCommandNames.PrepareWorldMechanicsFixture,
                     ControlCommandNames.SetPlayerFireFixture,
                     ControlCommandNames.PlayerSleep,
                     ControlCommandNames.PlayerIgnite,
-                    ControlCommandNames.RunMechanicsRevisionBurst
+                    ControlCommandNames.RunMechanicsRevisionBurst,
+                    ControlCommandNames.RunWorldFireLifecycleBurst,
+                    ControlCommandNames.TriggerExplosion,
+                    ControlCommandNames.ProbeExplosionAuthority,
+                    ControlCommandNames.ForgeWorldFireState
                 ],
                 Domains: [
                     AutomationCommandDomain.System,
@@ -298,6 +313,18 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 result => $"entityId={result.PlayerEntityId}",
                 scenarioToken).ConfigureAwait(false);
             ValidateFixture(mechanicsFixture, actorPlayerIndex);
+            worldFixture = await runner.RunAsync(
+                "prepare-world-mechanics-fixture",
+                ControlCommandNames.PrepareWorldMechanicsFixture,
+                token => cluster.Server.SendAsync<
+                    PrepareWorldMechanicsFixtureCommand,
+                    WorldMechanicsFixture>(
+                    ControlCommandNames.PrepareWorldMechanicsFixture,
+                    new PrepareWorldMechanicsFixtureCommand(actorPlayerIndex),
+                    cancellationToken: token),
+                result => $"fire={result.PersistentFireCell}; explosion={result.ExplosionCell}",
+                scenarioToken).ConfigureAwait(false);
+            ValidateWorldFixture(worldFixture);
             StateExpectation baseline = new(
                 environmentFixture.TimeOfDayOffset,
                 false,
@@ -320,6 +347,7 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 runner,
                 observerPlayerIndex,
                 mechanicsFixture,
+                worldFixture,
                 baseline,
                 snapshots,
                 events,
@@ -330,6 +358,11 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 "passed",
                 [cluster.Server.Role, observerClient.Role],
                 "non-creative time/weather requests were rejected and healed optimistic client state; forged environment/fire state and cross-player sleep request could not mutate server state"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "explosion-world-fire-production-authority",
+                "passed",
+                [cluster.Server.Role, observerClient.Role],
+                "client-authored fire state and explosion cell/sound packets were rejected, while local AddExplosion could not enter the client simulation queue"));
 
             await runner.RunAsync(
                 "enable-network-faults",
@@ -338,8 +371,15 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 scenarioToken).ConfigureAwait(false);
 
             EnvironmentMechanicsReplayPlan plan = options.ReplayPlan
-                ?? CreateDefaultPlan(actorPlayerIndex, mechanicsFixture.PlayerEntityId);
-            ValidatePlanAgainstFixture(plan, actorPlayerIndex, mechanicsFixture.PlayerEntityId);
+                ?? CreateDefaultPlan(
+                    actorPlayerIndex,
+                    mechanicsFixture.PlayerEntityId,
+                    worldFixture);
+            ValidatePlanAgainstFixture(
+                plan,
+                actorPlayerIndex,
+                mechanicsFixture.PlayerEntityId,
+                worldFixture);
 
             ActionReceipt timeReceipt = await SendActionAsync(
                 runner,
@@ -462,6 +502,50 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
             events["server-mechanics-revision-burst"] = await WaitForAppliedEventAsync(
                 cluster.Server, mechanicsBurst.Receipt.ActionId, stepTimeout, scenarioToken).ConfigureAwait(false);
 
+            WorldFireLifecycleBurstResult worldFireBurst = await runner.RunAsync(
+                "run-world-fire-lifecycle-burst",
+                ControlCommandNames.RunWorldFireLifecycleBurst,
+                token => cluster.Server.SendAsync<
+                    RunWorldFireLifecycleBurstCommand,
+                    WorldFireLifecycleBurstResult>(
+                    ControlCommandNames.RunWorldFireLifecycleBurst,
+                    plan.WorldFireLifecycleBurst,
+                    cancellationToken: token),
+                result => $"persistentRevision={result.PersistentRevision}; removedRevision={result.RemovedRevision}",
+                scenarioToken).ConfigureAwait(false);
+            EnsureAccepted(worldFireBurst.Receipt);
+            actions.Add(ActionRecord(
+                cluster.Server.Role,
+                ControlCommandNames.RunWorldFireLifecycleBurst,
+                plan.WorldFireLifecycleBurst,
+                worldFireBurst.Receipt));
+            events["server-world-fire-lifecycle-burst"] = await WaitForAppliedEventAsync(
+                cluster.Server,
+                worldFireBurst.Receipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+
+            TriggerExplosionResult explosion = await runner.RunAsync(
+                "trigger-explosion",
+                ControlCommandNames.TriggerExplosion,
+                token => cluster.Server.SendAsync<TriggerExplosionCommand, TriggerExplosionResult>(
+                    ControlCommandNames.TriggerExplosion,
+                    plan.Explosion,
+                    cancellationToken: token),
+                result => $"eventId={result.ExpectedEventId}; pressure={result.Pressure:R}",
+                scenarioToken).ConfigureAwait(false);
+            EnsureAccepted(explosion.Receipt);
+            actions.Add(ActionRecord(
+                cluster.Server.Role,
+                ControlCommandNames.TriggerExplosion,
+                plan.Explosion,
+                explosion.Receipt));
+            events["server-explosion"] = await WaitForAppliedEventAsync(
+                cluster.Server,
+                explosion.Receipt.ActionId,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+
             ActionReceipt wakeReceipt = await SendActionAsync(
                 runner,
                 "wake-player",
@@ -493,11 +577,28 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 finalSnapshots.Values.ToArray(),
                 mechanicsFixture.PlayerEntityId,
                 actorPlayerIndex);
+            Dictionary<string, StateSnapshotV2> worldSnapshots =
+                await WaitForWorldMechanicsOnAllAsync(
+                    initialNodes,
+                    worldFixture,
+                    worldFireBurst,
+                    explosion,
+                    expectRemovedTombstone: true,
+                    expectExplosionReplay: true,
+                    requireFaultEvidence: true,
+                    stepTimeout,
+                    scenarioToken).ConfigureAwait(false);
+            AddSnapshots(snapshots, worldSnapshots, "world-mechanics-fault-convergence");
             assertions.Add(new ScenarioAssertionRecordV2(
                 "environment-mechanics-duplicate-reorder-convergence",
                 "passed",
                 initialNodes.Select(node => node.Role).ToArray(),
                 $"weatherRevision={environmentBurst.FinalRevision}; fireRevision={mechanicsBurst.FinalRevision}"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "explosion-world-fire-correlated-lifecycle",
+                "passed",
+                initialNodes.Select(node => node.Role).ToArray(),
+                $"explosionEvent={explosion.ExpectedEventId}; persistentRevision={worldFireBurst.PersistentRevision}; removedRevision={worldFireBurst.RemovedRevision}; stale add and duplicate explosion parts rejected"));
 
             await runner.RunAsync(
                 "disable-network-faults",
@@ -526,11 +627,27 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 stepTimeout,
                 scenarioToken).ConfigureAwait(false);
             snapshots["client-c-late-join"] = lateSnapshot;
+            StateSnapshotV2 lateWorldSnapshot = await WaitForWorldMechanicsAsync(
+                lateClient,
+                worldFixture,
+                worldFireBurst,
+                explosion,
+                expectRemovedTombstone: false,
+                expectExplosionReplay: false,
+                compareRevision: true,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+            snapshots["client-c-late-join-world-mechanics"] = lateWorldSnapshot;
             assertions.Add(new ScenarioAssertionRecordV2(
                 "environment-mechanics-late-join-baseline",
                 "passed",
                 [cluster.Server.Role, lateClient.Role],
-                "late client received current environment, awake state and remaining fire state"));
+                "late client received current environment and persistent world fire baseline without historical explosion or removed-fire replay"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "explosion-world-fire-late-join-baseline",
+                "passed",
+                [cluster.Server.Role, lateClient.Role],
+                "late join received only present world fire; tombstones and transient explosion events were not replayed"));
 
             await runner.RunAsync(
                 "disconnect-actor",
@@ -571,6 +688,17 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 stepTimeout,
                 scenarioToken).ConfigureAwait(false);
             snapshots["client-a-reconnect"] = reconnectSnapshot;
+            StateSnapshotV2 reconnectWorldSnapshot = await WaitForWorldMechanicsAsync(
+                actorClient,
+                worldFixture,
+                worldFireBurst,
+                explosion,
+                expectRemovedTombstone: false,
+                expectExplosionReplay: false,
+                compareRevision: true,
+                stepTimeout,
+                scenarioToken).ConfigureAwait(false);
+            snapshots["client-a-reconnect-world-mechanics"] = reconnectWorldSnapshot;
             int reconnectedActorEntityId = RequirePlayerEntityId(
                 reconnectSnapshot,
                 actorPlayerIndex);
@@ -582,7 +710,12 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 "environment-mechanics-reconnect-baseline",
                 "passed",
                 [cluster.Server.Role, actorClient.Role],
-                "same player identity mapped to a fresh entity generation with authoritative awake/fire state"));
+                "same player identity mapped to a fresh entity generation with authoritative awake/player-fire and world-fire baselines, without transient explosion replay"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "explosion-world-fire-reconnect-baseline",
+                "passed",
+                [cluster.Server.Role, actorClient.Role],
+                "reconnected client rebuilt present world fire and did not replay the prior explosion or removed state"));
 
             SetEnvironmentFixtureResult persistenceEnvironment = await runner.RunAsync(
                 "prepare-persistence",
@@ -696,11 +829,39 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 stepTimeout,
                 scenarioToken).ConfigureAwait(false);
             AddSnapshots(snapshots, persistedSnapshots, "after-reload");
+            Dictionary<string, StateSnapshotV2> persistedWorldSnapshots =
+                await WaitForWorldMechanicsOnAllAsync(
+                    persistenceNodes,
+                    worldFixture,
+                    worldFireBurst,
+                    explosion,
+                    expectRemovedTombstone: false,
+                    expectExplosionReplay: false,
+                    requireFaultEvidence: false,
+                    stepTimeout,
+                    scenarioToken,
+                    compareRevision: false).ConfigureAwait(false);
+            AddSnapshots(snapshots, persistedWorldSnapshots, "after-reload-world-mechanics");
             assertions.Add(new ScenarioAssertionRecordV2(
                 "environment-mechanics-save-reload-persistence",
                 "passed",
                 persistenceNodes.Select(node => node.Role).ToArray(),
-                $"world={savedWorldDirectory}; offset={persistenceEnvironment.TimeOfDayOffset:R}; sleeping=true; onFire=true"));
+                $"world={savedWorldDirectory}; offset={persistenceEnvironment.TimeOfDayOffset:R}; sleeping=true; onFire=true; worldFire=true; removedFire=false; explosionReplay=false"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "explosion-world-fire-save-reload-persistence",
+                "passed",
+                persistenceNodes.Select(node => node.Role).ToArray(),
+                "persistent fire was reconstructed from terrain, removed fire stayed absent, and transient explosion history stayed empty"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "explosion-world-fire-observer-convergence",
+                "passed",
+                [observerClient.Role, lateClient.Role],
+                "independent observers converged present world fire and terrain damage across live and persisted baselines"));
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "world-fire-stale-add-resurrection-sentry",
+                "passed",
+                initialNodes.Select(node => node.Role).ToArray(),
+                "a delayed pre-removal add revision could not resurrect the removed world fire cell"));
         }
         catch (Exception exception) {
             scenarioFailure = exception;
@@ -795,7 +956,8 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
 
     private static EnvironmentMechanicsReplayPlan CreateDefaultPlan(
         int playerIndex,
-        int entityId) => new(
+        int entityId,
+        WorldMechanicsFixture worldFixture) => new(
         new EnvironmentRequestChangeCommand(
             playerIndex,
             EnvironmentChangeKind.TimeOfDay,
@@ -815,6 +977,12 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
             entityId,
             IntermediateDuration: 180f,
             FinalDuration: 120f),
+        new RunWorldFireLifecycleBurstCommand(
+            worldFixture.PersistentFireCell,
+            worldFixture.RemovedFireCell),
+        new TriggerExplosionCommand(
+            worldFixture.ExplosionCell,
+            Pressure: 250f),
         new PlayerSleepCommand(playerIndex, Sleep: false));
 
     private static async Task VerifyControlAuthorityRejectionsAsync(
@@ -843,6 +1011,14 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                         cancellationToken: token),
                     "permission_denied").ConfigureAwait(false);
                 await RequireRejectionAsync(
+                    () => cluster.Clients[1].SendAsync<
+                        TriggerExplosionCommand,
+                        TriggerExplosionResult>(
+                        ControlCommandNames.TriggerExplosion,
+                        new TriggerExplosionCommand(new TerrainCellCoordinate(0, 64, 0)),
+                        cancellationToken: token),
+                    "permission_denied").ConfigureAwait(false);
+                await RequireRejectionAsync(
                     () => cluster.Server.SendAsync<EnvironmentRequestChangeCommand, ActionReceipt>(
                         ControlCommandNames.EnvironmentRequestChange,
                         new EnvironmentRequestChangeCommand(
@@ -857,6 +1033,23 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                         new PlayerSleepCommand(playerIndex, Sleep: true),
                         cancellationToken: token),
                     "permission_denied").ConfigureAwait(false);
+                await RequireRejectionAsync(
+                    () => cluster.Server.SendAsync<ForgeWorldFireStateCommand, ActionReceipt>(
+                        ControlCommandNames.ForgeWorldFireState,
+                        new ForgeWorldFireStateCommand(
+                            playerIndex,
+                            new TerrainCellCoordinate(0, 64, 0),
+                            Present: true),
+                        cancellationToken: token),
+                    "permission_denied").ConfigureAwait(false);
+                await RequireRejectionAsync(
+                    () => cluster.Server.SendAsync<ProbeExplosionAuthorityCommand, ActionReceipt>(
+                        ControlCommandNames.ProbeExplosionAuthority,
+                        new ProbeExplosionAuthorityCommand(
+                            playerIndex,
+                            new TerrainCellCoordinate(0, 64, 0)),
+                        cancellationToken: token),
+                    "permission_denied").ConfigureAwait(false);
             },
             cancellationToken).ConfigureAwait(false);
     }
@@ -866,6 +1059,7 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
         ScenarioRunner runner,
         int observerPlayerIndex,
         MechanicsFixture fixture,
+        WorldMechanicsFixture worldFixture,
         StateExpectation baseline,
         Dictionary<string, StateSnapshotV2> snapshots,
         Dictionary<string, ActionEventsResult> events,
@@ -1033,6 +1227,47 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
             TimeSpan.FromMilliseconds(450),
             timeout,
             cancellationToken).ConfigureAwait(false);
+
+        ActionReceipt worldFire = await SendActionAsync(
+            runner,
+            "verify-production-authority",
+            observer,
+            ControlCommandNames.ForgeWorldFireState,
+            new ForgeWorldFireStateCommand(
+                observerPlayerIndex,
+                worldFixture.RemovedFireCell,
+                Present: true),
+            cancellationToken).ConfigureAwait(false);
+        events["observer-forged-world-fire"] = await WaitForAppliedEventAsync(
+            observer,
+            worldFire.ActionId,
+            timeout,
+            cancellationToken).ConfigureAwait(false);
+        snapshots["server-after-forged-world-fire"] = await WaitForRejectedWorldFireAsync(
+            cluster.Server,
+            worldFixture.RemovedFireCell,
+            timeout,
+            cancellationToken).ConfigureAwait(false);
+
+        ActionReceipt explosion = await SendActionAsync(
+            runner,
+            "verify-production-authority",
+            observer,
+            ControlCommandNames.ProbeExplosionAuthority,
+            new ProbeExplosionAuthorityCommand(
+                observerPlayerIndex,
+                worldFixture.ExplosionTargetCell),
+            cancellationToken).ConfigureAwait(false);
+        events["observer-forged-explosion"] = await WaitForAppliedEventAsync(
+            observer,
+            explosion.ActionId,
+            timeout,
+            cancellationToken).ConfigureAwait(false);
+        snapshots["server-after-forged-explosion"] = await WaitForRejectedExplosionAsync(
+            cluster.Server,
+            worldFixture,
+            timeout,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<ActionReceipt> SendActionAsync<TCommand>(
@@ -1116,6 +1351,207 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 .ConfigureAwait(false);
         }
         return result;
+    }
+
+    private static async Task<Dictionary<string, StateSnapshotV2>> WaitForWorldMechanicsOnAllAsync(
+        IReadOnlyCollection<GameNodeProcess> nodes,
+        WorldMechanicsFixture fixture,
+        WorldFireLifecycleBurstResult fire,
+        TriggerExplosionResult explosion,
+        bool expectRemovedTombstone,
+        bool expectExplosionReplay,
+        bool requireFaultEvidence,
+        TimeSpan timeout,
+        CancellationToken cancellationToken,
+        bool compareRevision = true) {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        Dictionary<string, StateSnapshotV2> result = new(StringComparer.Ordinal);
+        foreach (GameNodeProcess node in nodes) {
+            TimeSpan remaining = deadline - DateTimeOffset.UtcNow;
+            if (remaining <= TimeSpan.Zero) {
+                throw new TimeoutException("World mechanics convergence exceeded its deadline.");
+            }
+            result[node.Role] = await WaitForWorldMechanicsAsync(
+                node,
+                fixture,
+                fire,
+                explosion,
+                expectRemovedTombstone,
+                expectExplosionReplay,
+                compareRevision,
+                remaining,
+                cancellationToken).ConfigureAwait(false);
+        }
+        while (requireFaultEvidence
+            && (!result.Values.Any(snapshot =>
+                    snapshot.WorldFireMetrics?.IgnoredStaleStates > 0)
+                || !result.Values.Any(snapshot =>
+                    snapshot.ExplosionEvents?.IgnoredDuplicateParts > 0))) {
+            if (DateTimeOffset.UtcNow >= deadline) {
+                throw new TimeoutException(
+                    "World mechanics converged, but stale-fire or duplicate-explosion rejection evidence was absent.");
+            }
+            foreach (GameNodeProcess node in nodes.Where(node =>
+                         node.Role.StartsWith("client", StringComparison.Ordinal))) {
+                result[node.Role] = await CaptureWorldMechanicsAsync(
+                    node,
+                    fixture,
+                    cancellationToken).ConfigureAwait(false);
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        return result;
+    }
+
+    private static async Task<StateSnapshotV2> WaitForWorldMechanicsAsync(
+        GameNodeProcess node,
+        WorldMechanicsFixture fixture,
+        WorldFireLifecycleBurstResult fire,
+        TriggerExplosionResult explosion,
+        bool expectRemovedTombstone,
+        bool expectExplosionReplay,
+        bool compareRevision,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        StateSnapshotV2? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            last = await CaptureWorldMechanicsAsync(node, fixture, cancellationToken)
+                .ConfigureAwait(false);
+            if (MatchesWorldMechanics(
+                    node.Role,
+                    last,
+                    fixture,
+                    fire,
+                    explosion,
+                    expectRemovedTombstone,
+                    expectExplosionReplay,
+                    compareRevision)) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        throw new TimeoutException(
+            $"Node '{node.Role}' did not converge world mechanics state. "
+            + $"Persistent={FindWorldFire(last, fixture.PersistentFireCell)}; "
+            + $"Removed={FindWorldFire(last, fixture.RemovedFireCell)}; "
+            + $"Explosion={last?.ExplosionEvents}; Target={FindTerrainCell(last, fixture.ExplosionTargetCell)}.");
+    }
+
+    private static bool MatchesWorldMechanics(
+        string role,
+        StateSnapshotV2 snapshot,
+        WorldMechanicsFixture fixture,
+        WorldFireLifecycleBurstResult fire,
+        TriggerExplosionResult explosion,
+        bool expectRemovedTombstone,
+        bool expectExplosionReplay,
+        bool compareRevision) {
+        WorldFireStateSnapshotV2? persistent = FindWorldFire(snapshot, fixture.PersistentFireCell);
+        WorldFireStateSnapshotV2? removed = FindWorldFire(snapshot, fixture.RemovedFireCell);
+        TerrainCellSnapshotV2? target = FindTerrainCell(snapshot, fixture.ExplosionTargetCell);
+        ExplosionEventSnapshotV2? events = snapshot.ExplosionEvents;
+        bool persistentMatches = persistent is { Present: true, RuntimePresent: true }
+            && (compareRevision
+                ? persistent.Revision == fire.PersistentRevision
+                : persistent.Revision > 0);
+        bool removedMatches = expectRemovedTombstone
+            ? removed is { Present: false, RuntimePresent: false, IsTombstone: true }
+                && (!compareRevision || removed.Revision == fire.RemovedRevision)
+            : removed == null || !removed.Present && !removed.RuntimePresent;
+        bool server = string.Equals(role, "server", StringComparison.Ordinal);
+        bool terrainMatches = server
+            ? target is { IsLoaded: true, Contents: 0 }
+            : target == null || !target.IsLoaded || target.Contents == 0;
+        bool explosionMatches = expectExplosionReplay
+            ? server
+                ? events != null
+                    && events.GeneratedEvents > 0
+                    && events.GeneratedCellChunks > 0
+                    && events.GeneratedCells > 0
+                    && events.GeneratedSoundEvents > 0
+                    && events.HighestGeneratedEventId == explosion.ExpectedEventId
+                : events != null
+                    && events.AcceptedEvents > 0
+                    && events.AcceptedCellChunks > 0
+                    && events.AppliedCells > 0
+                    && events.AcceptedSoundEvents > 0
+                    && events.HighestAcceptedEventId == explosion.ExpectedEventId
+            : events != null
+                && (server
+                    ? events.GeneratedEvents == 0 && events.HighestGeneratedEventId == 0
+                    : events.AcceptedEvents == 0 && events.HighestAcceptedEventId == 0);
+        return persistentMatches && removedMatches && terrainMatches && explosionMatches;
+    }
+
+    private static Task<StateSnapshotV2> CaptureWorldMechanicsAsync(
+        GameNodeProcess node,
+        WorldMechanicsFixture fixture,
+        CancellationToken cancellationToken) =>
+        node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+            ControlCommandNames.GetSnapshotV2,
+            new GetSnapshotV2Command(
+                [SnapshotDomain.Mechanics, SnapshotDomain.Terrain],
+                TerrainCells: [fixture.ExplosionTargetCell]),
+            cancellationToken: cancellationToken);
+
+    private static async Task<StateSnapshotV2> WaitForRejectedWorldFireAsync(
+        GameNodeProcess server,
+        TerrainCellCoordinate cell,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        StateSnapshotV2? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            last = await server.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+                ControlCommandNames.GetSnapshotV2,
+                new GetSnapshotV2Command([SnapshotDomain.Mechanics]),
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+            WorldFireStateSnapshotV2? state = FindWorldFire(last, cell);
+            if (last.WorldFireMetrics?.RejectedClientStates > 0
+                && (state == null || !state.Present && !state.RuntimePresent)) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        throw new TimeoutException(
+            $"Server did not reject forged world fire state at {cell}. Last={last?.WorldFireMetrics}.");
+    }
+
+    private static async Task<StateSnapshotV2> WaitForRejectedExplosionAsync(
+        GameNodeProcess server,
+        WorldMechanicsFixture fixture,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        StateSnapshotV2? last = null;
+        while (DateTimeOffset.UtcNow < deadline) {
+            last = await CaptureWorldMechanicsAsync(server, fixture, cancellationToken)
+                .ConfigureAwait(false);
+            TerrainCellSnapshotV2? target = FindTerrainCell(
+                last,
+                fixture.ExplosionTargetCell);
+            ExplosionEventSnapshotV2? events = last.ExplosionEvents;
+            if (target is { IsLoaded: true }
+                && target.Value == fixture.ExplosionTargetValue
+                && events is {
+                    GeneratedEvents: 0,
+                    AcceptedEvents: 0,
+                    HighestGeneratedEventId: 0,
+                    HighestAcceptedEventId: 0
+                }) {
+                return last;
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        throw new TimeoutException(
+            $"Server did not reject forged explosion state at {fixture.ExplosionTargetCell}. "
+            + $"LastTarget={FindTerrainCell(last, fixture.ExplosionTargetCell)}; "
+            + $"LastEvents={last?.ExplosionEvents}.");
     }
 
     private static async Task<StateSnapshotV2> WaitForStateAsync(
@@ -1425,10 +1861,24 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
         }
     }
 
+    private static void ValidateWorldFixture(WorldMechanicsFixture fixture) {
+        if (fixture.PersistentFireCell == fixture.RemovedFireCell
+            || fixture.PersistentFireCell.Y is < 1 or >= 256
+            || fixture.RemovedFireCell.Y is < 1 or >= 256
+            || fixture.ExplosionCell.Y is < 1 or >= 256
+            || fixture.ExplosionTargetCell.Y is < 1 or >= 256
+            || fixture.FuelValue <= 0
+            || TerrainValueContents(fixture.FireValue) != 104
+            || fixture.ExplosionTargetValue <= 0) {
+            throw new InvalidOperationException($"Invalid world mechanics fixture: {fixture}.");
+        }
+    }
+
     private static void ValidatePlanAgainstFixture(
         EnvironmentMechanicsReplayPlan plan,
         int playerIndex,
-        int entityId) {
+        int entityId,
+        WorldMechanicsFixture worldFixture) {
         ValidateReplayPlan(plan);
         if (plan.Time.PlayerIndex != playerIndex
             || plan.Precipitation.PlayerIndex != playerIndex
@@ -1436,7 +1886,10 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
             || plan.Lightning.PlayerIndex != playerIndex
             || plan.Sleep.PlayerIndex != playerIndex
             || plan.Wake.PlayerIndex != playerIndex
-            || plan.MechanicsRevisionBurst.EntityId != entityId) {
+            || plan.MechanicsRevisionBurst.EntityId != entityId
+            || plan.WorldFireLifecycleBurst.PersistentFireCell != worldFixture.PersistentFireCell
+            || plan.WorldFireLifecycleBurst.RemovedFireCell != worldFixture.RemovedFireCell
+            || plan.Explosion.Cell != worldFixture.ExplosionCell) {
             throw new InvalidDataException(
                 "Environment/mechanics replay actions do not match the prepared fixture.");
         }
@@ -1462,10 +1915,17 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
             || plan.Wake.ExpectRejected
             || !plan.EnvironmentRevisionBurst.SendStaleSnapshot
             || !plan.MechanicsRevisionBurst.SendStaleSnapshot
-            || plan.MechanicsRevisionBurst.EntityId <= 0) {
+            || plan.MechanicsRevisionBurst.EntityId <= 0
+            || !plan.WorldFireLifecycleBurst.SendStaleAdd
+            || !float.IsFinite(plan.WorldFireLifecycleBurst.Expandability)
+            || plan.WorldFireLifecycleBurst.Expandability is < 0f or > 16f
+            || !float.IsFinite(plan.Explosion.Pressure)
+            || plan.Explosion.Pressure is <= 0f or > 100_000_000f) {
             throw new InvalidDataException("Environment/mechanics replay actions are invalid.");
         }
     }
+
+    private static int TerrainValueContents(int value) => value & 0x3FF;
 
     private static TCommand DeserializeAction<TCommand>(ScenarioActionRecordV2 record) =>
         record.Payload.Deserialize<TCommand>(ControlProtocol.JsonOptions)
@@ -1520,6 +1980,17 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
         return snapshot.MechanicsStates?
             .SingleOrDefault(state => state.EntityId == entityId);
     }
+
+    private static WorldFireStateSnapshotV2? FindWorldFire(
+        StateSnapshotV2? snapshot,
+        TerrainCellCoordinate cell) =>
+        snapshot?.WorldFires?.SingleOrDefault(state => state.Cell == cell);
+
+    private static TerrainCellSnapshotV2? FindTerrainCell(
+        StateSnapshotV2? snapshot,
+        TerrainCellCoordinate cell) =>
+        snapshot?.TerrainCells.SingleOrDefault(state =>
+            state.X == cell.X && state.Y == cell.Y && state.Z == cell.Z);
 
     private static int RequirePlayerEntityId(StateSnapshotV2 snapshot, int playerIndex) {
         int? entityId = snapshot.Players

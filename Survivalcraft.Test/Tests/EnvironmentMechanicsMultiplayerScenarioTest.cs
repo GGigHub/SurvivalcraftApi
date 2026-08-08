@@ -30,7 +30,7 @@ public sealed class EnvironmentMechanicsMultiplayerScenarioTest {
             await new EnvironmentMechanicsMultiplayerScenario().RunAsync(options);
 
         Assert.Equal(1, result.ActorPlayerIndex);
-        Assert.Equal(8, result.ActionCount);
+        Assert.Equal(10, result.ActionCount);
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "actions.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "assertions.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "replay-v2.json")));
@@ -46,6 +46,12 @@ public sealed class EnvironmentMechanicsMultiplayerScenarioTest {
         Assert.True(File.Exists(Path.Combine(
             result.ArtifactDirectory,
             "snapshot-server-fault-convergence.v2.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-server-world-mechanics-fault-convergence.v2.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-server-after-forged-explosion.v2.json")));
         Assert.True(File.Exists(Path.Combine(
             result.ArtifactDirectory,
             "snapshot-client-c-late-join.v2.json")));
@@ -69,6 +75,8 @@ public sealed class EnvironmentMechanicsMultiplayerScenarioTest {
         Assert.Contains("environment-sleep-fire-production-authority", assertions,
             StringComparison.Ordinal);
         Assert.Contains("environment-mechanics-duplicate-reorder-convergence", assertions,
+            StringComparison.Ordinal);
+        Assert.Contains("explosion-world-fire-correlated-lifecycle", assertions,
             StringComparison.Ordinal);
         Assert.Contains("environment-mechanics-late-join-baseline", assertions,
             StringComparison.Ordinal);

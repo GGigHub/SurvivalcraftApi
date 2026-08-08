@@ -39,6 +39,7 @@ public sealed class SandPhysicsLagTest : IClassFixture<GameFixture> {
         Assert.True(
             finalState.CollapsingSets == 0,
             $"BUG REPRODUCED: Server SubsystemMovingBlocks retained {finalState.CollapsingSets} lingering MovingBlockSet(s) after sand landed! (Expected 0). FinalState={finalState.Raw}");
+        Assert.Equal(0, finalState.OrigContents);
     }
 
     [Fact, TestOrder(Priority = 2)]
@@ -71,6 +72,8 @@ public sealed class SandPhysicsLagTest : IClassFixture<GameFixture> {
         Assert.True(
             clientState.CollapsingSets == 0,
             $"BUG REPRODUCED (Client): Client retained {clientState.CollapsingSets} lingering MovingBlockSet(s) after sand landed! State={clientState.Raw}");
+        Assert.Equal(0, serverState.OrigContents);
+        Assert.Equal(0, clientState.OrigContents);
     }
 
     [Fact, TestOrder(Priority = 3)]
@@ -88,7 +91,8 @@ public sealed class SandPhysicsLagTest : IClassFixture<GameFixture> {
             output.WriteLine($"Iter {i} Client: {clientState.Raw}");
 
             Assert.True(
-                clientState.CollapsingSets == expectedClientLingeringSets,
+                SandPhysicsTools.IsSettled(clientState)
+                && clientState.CollapsingSets == expectedClientLingeringSets,
                 $"BUG REPRODUCED (Accumulation Iteration {i}): Client moving block sets accumulated to {clientState.CollapsingSets} lingering sets after {i} sand dig(s)! ServerState={serverState.Raw}, ClientState={clientState.Raw}");
         }
     }

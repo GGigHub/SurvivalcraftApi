@@ -4,6 +4,7 @@ using Game;
 using Game.Network;
 using GameEntitySystem;
 using Survivalcraft.Testing.Control;
+using Survivalcraft.Testing.Snapshots;
 
 namespace Survivalcraft.TestAutomation;
 
@@ -241,6 +242,52 @@ public partial class TestAutomationModLoader {
             onFire.IsOnFire);
     }
 
+    private WorldMechanicsFixture PrepareWorldMechanicsFixture(
+        PrepareWorldMechanicsFixtureCommand command) {
+        EnsureServerFixtureRole("World mechanics fixtures");
+        Project project = GameManager.Project
+            ?? throw new AutomationCommandException("invalid_state", "No project is loaded.");
+        SubsystemPlayers players = project.FindSubsystem<SubsystemPlayers>(true);
+        _ = ResolvePlayer(players, command.PlayerIndex, requireMainPlayer: false);
+        SubsystemTerrain terrain = project.FindSubsystem<SubsystemTerrain>(true);
+        int baseX = Terrain.ToCell(players.GlobalSpawnPosition.X) + 20;
+        int baseY = Math.Clamp(Terrain.ToCell(players.GlobalSpawnPosition.Y) + 1, 8, 240);
+        int baseZ = Terrain.ToCell(players.GlobalSpawnPosition.Z) + 20;
+        TerrainCellCoordinate persistentFire = new(baseX, baseY, baseZ);
+        TerrainCellCoordinate removedFire = new(baseX + 3, baseY, baseZ);
+        TerrainCellCoordinate explosion = new(baseX + 12, baseY, baseZ);
+        TerrainCellCoordinate explosionTarget = explosion;
+        int fuelValue = Terrain.MakeBlockValue(OakWoodBlock.Index);
+        int fireValue = Terrain.MakeBlockValue(FireBlock.Index);
+        int explosionTargetValue = Terrain.MakeBlockValue(GlassBlock.Index);
+
+        foreach (TerrainCellCoordinate fireCell in new[] { persistentFire, removedFire }) {
+            terrain.ChangeCell(fireCell.X, fireCell.Y, fireCell.Z, 0);
+            terrain.ChangeCell(fireCell.X, fireCell.Y - 1, fireCell.Z, fuelValue);
+        }
+        for (int x = explosion.X - 1; x <= explosion.X + 1; x++) {
+            for (int y = explosion.Y - 1; y <= explosion.Y + 1; y++) {
+                for (int z = explosion.Z - 1; z <= explosion.Z + 1; z++) {
+                    terrain.ChangeCell(x, y, z, 0);
+                }
+            }
+        }
+        terrain.ChangeCell(
+            explosionTarget.X,
+            explosionTarget.Y,
+            explosionTarget.Z,
+            explosionTargetValue);
+        terrain.TerrainUpdater.RequestSynchronousUpdate();
+        return new WorldMechanicsFixture(
+            persistentFire,
+            removedFire,
+            explosion,
+            explosionTarget,
+            fuelValue,
+            fireValue,
+            explosionTargetValue);
+    }
+
     private SetPlayerFireFixtureResult SetPlayerFireFixture(
         SetPlayerFireFixtureCommand command) {
         EnsureServerFixtureRole("Player fire fixtures");
@@ -456,6 +503,280 @@ public partial class TestAutomationModLoader {
             finalRevision);
     }
 
+    private WorldFireLifecycleBurstResult RunWorldFireLifecycleBurst(
+        AutomationCommandContext context,
+        RunWorldFireLifecycleBurstCommand command) {
+        EnsureServerFixtureRole("World fire lifecycle bursts");
+        ValidateTerrainCoordinate(command.PersistentFireCell);
+        ValidateTerrainCoordinate(command.RemovedFireCell);
+        if (command.PersistentFireCell == command.RemovedFireCell
+            || !float.IsFinite(command.Expandability)
+            || command.Expandability is < 0f or > 16f) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "World fire lifecycle burst is invalid.");
+        }
+        Project project = GameManager.Project
+            ?? throw new AutomationCommandException("invalid_state", "No project is loaded.");
+        SubsystemTerrain terrain = project.FindSubsystem<SubsystemTerrain>(true);
+        Point3 persistent = ToPoint(command.PersistentFireCell);
+        Point3 removed = ToPoint(command.RemovedFireCell);
+        RecordMechanicsAction(
+            context.RequestId,
+            "worldFireLifecycle",
+            ActionEventPhase.Queued,
+            -1,
+            -1,
+            "revision_burst");
+
+        int fireValue = Terrain.MakeBlockValue(FireBlock.Index);
+        terrain.ChangeCell(persistent.X, persistent.Y, persistent.Z, fireValue);
+        terrain.ChangeCell(removed.X, removed.Y, removed.Z, fireValue);
+        SubsystemFireBlockBehavior fireBehavior =
+            project.FindSubsystem<SubsystemFireBlockBehavior>(true);
+        if (fireBehavior.m_fireData.TryGetValue(
+                persistent,
+                out SubsystemFireBlockBehavior.FireData? persistentData)
+            && persistentData != null) {
+            persistentData.Time0 = 3600f;
+            persistentData.Time1 = 3600f;
+            persistentData.Time2 = 3600f;
+            persistentData.Time3 = 3600f;
+            persistentData.Time5 = 3600f;
+        }
+        long persistentRevision = WorldFireStateTracker.GetAuthoritativeRevision(
+            project,
+            persistent);
+        long staleRevision = WorldFireStateTracker.GetAuthoritativeRevision(project, removed);
+        FireBlockAddPacket stale = new() {
+            x = removed.X,
+            y = removed.Y,
+            z = removed.Z,
+            m_expandability = command.Expandability,
+            m_revision = staleRevision
+        };
+        terrain.ChangeCell(removed.X, removed.Y, removed.Z, 0);
+        long removedRevision = WorldFireStateTracker.GetAuthoritativeRevision(project, removed);
+        if (persistentRevision <= 0 || staleRevision <= 0 || removedRevision <= staleRevision) {
+            throw new AutomationCommandException(
+                "invalid_state",
+                "World fire hooks did not publish a monotonic lifecycle.");
+        }
+        if (command.SendStaleAdd) {
+            QueueFaultInjectionAfterSettle(stale);
+        }
+        RecordMechanicsAction(
+            context.RequestId,
+            "worldFireLifecycle",
+            ActionEventPhase.Applied,
+            -1,
+            -1,
+            command.SendStaleAdd ? "stale_add_queued" : "final_state_queued");
+        ActionReceipt receipt = new(
+            context.RequestId,
+            true,
+            Time.FrameIndex,
+            -1,
+            command.SendStaleAdd ? "stale_add_queued" : "applied",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.WorldFireLifecycle);
+        return new WorldFireLifecycleBurstResult(
+            receipt,
+            command.PersistentFireCell,
+            command.RemovedFireCell,
+            persistentRevision,
+            staleRevision,
+            removedRevision);
+    }
+
+    private TriggerExplosionResult TriggerExplosion(
+        AutomationCommandContext context,
+        TriggerExplosionCommand command) {
+        EnsureServerFixtureRole("Explosion actions");
+        ValidateTerrainCoordinate(command.Cell);
+        if (!float.IsFinite(command.Pressure)
+            || command.Pressure is <= 0f or > 100_000_000f) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "Explosion pressure must be finite, positive and bounded.");
+        }
+        Project project = GameManager.Project
+            ?? throw new AutomationCommandException("invalid_state", "No project is loaded.");
+        SubsystemExplosions explosions = project.FindSubsystem<SubsystemExplosions>(true);
+        long expectedEventId = checked(explosions.NetworkEventId + 1);
+        RecordMechanicsAction(
+            context.RequestId,
+            "explosion",
+            ActionEventPhase.Queued,
+            -1,
+            -1,
+            "production_event");
+        explosions.AddExplosion(
+            command.Cell.X,
+            command.Cell.Y,
+            command.Cell.Z,
+            command.Pressure,
+            command.Incendiary,
+            noExplosionSound: false);
+        RecordMechanicsAction(
+            context.RequestId,
+            "explosion",
+            ActionEventPhase.Applied,
+            -1,
+            -1,
+            "production_event_queued");
+        ActionReceipt receipt = new(
+            context.RequestId,
+            true,
+            Time.FrameIndex,
+            -1,
+            "queued",
+            Provenance: ActionProvenance.ProductionInput,
+            ProductionEntry: ProductionPathEntries.ExplosionEvent);
+        return new TriggerExplosionResult(
+            receipt,
+            command.Cell,
+            expectedEventId,
+            command.Pressure,
+            command.Incendiary);
+    }
+
+    private ActionReceipt ProbeExplosionAuthority(
+        AutomationCommandContext context,
+        ProbeExplosionAuthorityCommand command) {
+        EnsureClientActionRole("Explosion authority probes");
+        ValidateTerrainCoordinate(command.Cell);
+        if (!float.IsFinite(command.Pressure)
+            || command.Pressure is <= 0f or > 100_000_000f
+            || command.ForgedEventId <= 0) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "Explosion authority probe values must be finite, positive and bounded.");
+        }
+        Project project = GameManager.Project
+            ?? throw new AutomationCommandException("invalid_state", "No project is loaded.");
+        ComponentPlayer actor = ResolvePlayer(
+            project.FindSubsystem<SubsystemPlayers>(true),
+            command.PlayerIndex,
+            requireMainPlayer: true);
+        SubsystemExplosions explosions = project.FindSubsystem<SubsystemExplosions>(true);
+        int queuedBefore = explosions.m_queuedExplosions.Count;
+        RecordMechanicsAction(
+            context.RequestId,
+            "explosionAuthority",
+            ActionEventPhase.Queued,
+            command.PlayerIndex,
+            actor.Entity.Id,
+            "local_and_packet_forgery");
+
+        explosions.AddExplosion(
+            command.Cell.X,
+            command.Cell.Y,
+            command.Cell.Z,
+            command.Pressure,
+            isIncendiary: false,
+            noExplosionSound: false);
+        if (explosions.m_queuedExplosions.Count != queuedBefore) {
+            throw new AutomationCommandException(
+                "authority_violation",
+                "Client-side AddExplosion entered the authoritative simulation queue.");
+        }
+
+        ExplosionCellPacket cells = new() {
+            m_eventId = command.ForgedEventId,
+            m_chunkIndex = 0,
+            m_chunkCount = 1
+        };
+        cells.m_cells.Add(new ExplosionCellPacket.CellData {
+            Point = ToPoint(command.Cell),
+            Intensity = 0.5f
+        });
+        QueueFaultInjection(cells);
+        QueueFaultInjection(new ExplosionSoundPacket(
+            command.ForgedEventId,
+            new Vector3(
+                command.Cell.X + 0.5f,
+                command.Cell.Y + 0.5f,
+                command.Cell.Z + 0.5f),
+            command.Pressure,
+            0f));
+        RecordMechanicsAction(
+            context.RequestId,
+            "explosionAuthority",
+            ActionEventPhase.Applied,
+            command.PlayerIndex,
+            actor.Entity.Id,
+            "rejection_probe_queued");
+        return new ActionReceipt(
+            context.RequestId,
+            true,
+            Time.FrameIndex,
+            command.PlayerIndex,
+            "rejection_probe_queued",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.ExplosionEvent);
+    }
+
+    private ActionReceipt QueueForgedWorldFireState(
+        AutomationCommandContext context,
+        ForgeWorldFireStateCommand command) {
+        EnsureClientActionRole("Forged world fire state probes");
+        ValidateTerrainCoordinate(command.Cell);
+        if (!command.ExpectRejected
+            || command.Revision <= 0
+            || !float.IsFinite(command.Expandability)
+            || command.Expandability is < 0f or > 16f) {
+            throw new AutomationCommandException(
+                "invalid_payload",
+                "World fire state injection must be an explicit bounded rejection probe.");
+        }
+        Project project = GameManager.Project
+            ?? throw new AutomationCommandException("invalid_state", "No project is loaded.");
+        ComponentPlayer actor = ResolvePlayer(
+            project.FindSubsystem<SubsystemPlayers>(true),
+            command.PlayerIndex,
+            requireMainPlayer: true);
+        RecordMechanicsAction(
+            context.RequestId,
+            "worldFireForgery",
+            ActionEventPhase.Queued,
+            command.PlayerIndex,
+            actor.Entity.Id,
+            "forged_authoritative_state");
+        if (command.Present) {
+            QueueFaultInjection(new FireBlockAddPacket {
+                x = command.Cell.X,
+                y = command.Cell.Y,
+                z = command.Cell.Z,
+                m_expandability = command.Expandability,
+                m_revision = command.Revision
+            });
+        }
+        else {
+            QueueFaultInjection(new FireBlockRemovePacket {
+                x = command.Cell.X,
+                y = command.Cell.Y,
+                z = command.Cell.Z,
+                m_revision = command.Revision
+            });
+        }
+        RecordMechanicsAction(
+            context.RequestId,
+            "worldFireForgery",
+            ActionEventPhase.Applied,
+            command.PlayerIndex,
+            actor.Entity.Id,
+            "rejection_probe_queued");
+        return new ActionReceipt(
+            context.RequestId,
+            true,
+            Time.FrameIndex,
+            command.PlayerIndex,
+            "rejection_probe_queued",
+            Provenance: ActionProvenance.FaultInjection,
+            ProductionEntry: ProductionPathEntries.WorldFireLifecycle);
+    }
+
     private static void QueueForgedEnvironmentState(
         EnvironmentRequestChangeCommand command,
         ComponentPlayer actor,
@@ -562,6 +883,8 @@ public partial class TestAutomationModLoader {
         string code) {
         bool fault = string.Equals(name, "ignite", StringComparison.Ordinal)
             || string.Equals(name, "fireRevisionBurst", StringComparison.Ordinal)
+            || string.Equals(name, "worldFireLifecycle", StringComparison.Ordinal)
+            || string.Equals(name, "worldFireForgery", StringComparison.Ordinal)
             || code.Contains("rejection_probe", StringComparison.Ordinal)
             || code.Contains("forged", StringComparison.Ordinal);
         actionEventJournal.Record(
@@ -576,10 +899,15 @@ public partial class TestAutomationModLoader {
             code,
             provenance: fault
                 ? ActionProvenance.FaultInjection
-                : ActionProvenance.ProductionRequest,
+                : string.Equals(name, "explosion", StringComparison.Ordinal)
+                    ? ActionProvenance.ProductionInput
+                    : ActionProvenance.ProductionRequest,
             productionEntry: name switch {
                 "sleep" => ProductionPathEntries.SleepRequest,
                 "wake" => ProductionPathEntries.WakeRequest,
+                "worldFireLifecycle" or "worldFireForgery" =>
+                    ProductionPathEntries.WorldFireLifecycle,
+                "explosion" => ProductionPathEntries.ExplosionEvent,
                 _ => ProductionPathEntries.FireState
             });
     }

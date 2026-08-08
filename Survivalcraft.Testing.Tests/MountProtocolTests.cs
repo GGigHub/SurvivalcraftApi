@@ -30,7 +30,7 @@ public sealed class MountProtocolTests {
             ControlCommandNames.RunMountLifecycleBurst,
             lifecycleBurst);
 
-        Assert.Equal(10, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(11, AutomationProtocol.CurrentApiVersion);
         Assert.Equal(action, actionRequest.DeserializePayload<PlayerMountCommand>());
         Assert.Equal(revisionBurst,
             revisionRequest.DeserializePayload<RunMountRevisionBurstCommand>());

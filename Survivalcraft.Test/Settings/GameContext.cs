@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Survivalcraft.Testing.Processes;
 
 namespace Survivalcraft.Test;
 
@@ -21,9 +22,6 @@ public sealed class GameContext : IDisposable {
 
     private readonly UdpClient commandClient = new();
     private readonly Task receiveTask;
-    private readonly UdpPortLease cmdPortLease;
-    private readonly UdpPortLease gamePortLease;
-
     private Process? gameProcess;
     private bool disposed;
 
@@ -38,10 +36,8 @@ public sealed class GameContext : IDisposable {
         Cts = new CancellationTokenSource();
         LogServer = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
         LogPort = ((IPEndPoint)LogServer.Client.LocalEndPoint!).Port;
-        cmdPortLease = UdpPortPool.Allocate();
-        gamePortLease = UdpPortPool.Allocate();
-        CmdPort = cmdPortLease.Port;
-        GamePort = gamePortLease.Port;
+        CmdPort = UdpPortLeaseAllocator.Allocate();
+        GamePort = UdpPortLeaseAllocator.Allocate();
         receiveTask = Task.Run(ReceiveMessagesAsync);
     }
 
@@ -200,8 +196,6 @@ public sealed class GameContext : IDisposable {
         }
 
         Cts.Dispose();
-        cmdPortLease.Dispose();
-        gamePortLease.Dispose();
         DeleteRunDirectory();
     }
 
@@ -310,50 +304,6 @@ public sealed class GameContext : IDisposable {
             value = value.Replace(invalidChar, '_');
         }
         return value;
-    }
-
-    private sealed class UdpPortLease : IDisposable {
-        private bool disposed;
-
-        public UdpPortLease(int port) {
-            Port = port;
-        }
-
-        public int Port { get; }
-
-        public void Dispose() {
-            if (disposed) {
-                return;
-            }
-
-            disposed = true;
-            UdpPortPool.Release(Port);
-        }
-    }
-
-    private static class UdpPortPool {
-        private static readonly object SyncRoot = new();
-        private static readonly HashSet<int> LeasedPorts = [];
-
-        public static UdpPortLease Allocate() {
-            lock (SyncRoot) {
-                for (int attempt = 0; attempt < 100; attempt++) {
-                    using UdpClient udpClient = new(new IPEndPoint(IPAddress.Loopback, 0));
-                    int port = ((IPEndPoint)udpClient.Client.LocalEndPoint!).Port;
-                    if (LeasedPorts.Add(port)) {
-                        return new UdpPortLease(port);
-                    }
-                }
-            }
-
-            throw new InvalidOperationException("Failed to allocate an unused UDP port for the test game context.");
-        }
-
-        public static void Release(int port) {
-            lock (SyncRoot) {
-                LeasedPorts.Remove(port);
-            }
-        }
     }
 
 }

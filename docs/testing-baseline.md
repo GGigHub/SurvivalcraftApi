@@ -57,6 +57,16 @@ M7 将容器开启结果、所有权/距离拒绝、真实熔炉投料、燃料�
 
 覆盖契约由此把 `inventory.furnace-container` 从 `partial` 提升为 `covered/mutation`，当前计数为 15 covered、1 partial、5 planned；生产面精确库存为 104 个 hook 和 110 个 packet class。首轮完整 L2 在并行负载下捕获到“槽位内容已相同但客户端 revision 尚未到达最终值”的等待竞态；加入最终 revision 下限后，定点 2/2 与最终完整 L2 25/25 均通过，门禁不再把内容巧合相等误判为版本收敛。
 
+## M8 爆炸与世界火焰验收（2026-07-31；2026-08-08 快速复验）
+
+M8 将 revisioned world-fire add/remove、移除墓碑、服务端权威模拟，以及共享 64 位 event ID 的爆炸格分块/音效事件纳入 wire revision 11 和 Automation API v11。环境/mechanics 场景扩展为严格十动作，Direct、Relay 及二者独立 replay 均通过；late join、同身份重连和保存重载只恢复当前存在的世界火焰，雷电、爆炸和已移除火焰不重放。持久火焰在重载后从地形重建，陈旧 add、重复/过期爆炸分块和伪造客户端权威状态均被拒绝。
+
+最终 `v4` 无窗口门禁为平台 L0/L1 112/112、游戏 L0/L1 78/78、完整游戏 L2 25/25。legacy 审计完整执行 140 项：121 通过、19 个已登记失败、0 个新增失败、0 个基线测试漏跑、1 个历史失败恢复，`baselineMatched=true` 且 `gatePassed=true`。2026-08-08 在当前源码上再次执行 fast，平台 112/112 与游戏 78/78 均通过。覆盖信任报告为 21 个 feature 中 16 covered、1 partial、4 planned；置信分布为 behavioral 10、mutation 3、soak 3、partial 1、planned 4，生产面库存保持 104 个 hook 和 110 个 packet class。
+
+额外 Direct L3 使用 seed `20260730`，在 40 ms latency、8 ms jitter、100% duplicate、25% reorder 和 66 ms reorder delay 下通过。server/client-a/client-b/client-c 峰值工作集约 436.5–476.9 MiB、私有内存 513.5–540.6 MiB、句柄峰值 991、线程峰值 36，最终故障待发队列为零；全部节点继续使用 `--headless`、`CreateNoWindow=true` 和隔离数据目录。
+
+本轮全量测试还反向改进了 autotest 与生产同步稳定性：熔炉判据同时要求源/目标 revision 前进，并只允许输入槽继续演化；动物位置只比较客户端已加载区块，以 20 次 100 ms 轮询做有界收敛，同时把远端身体播放延迟降为 0.25 秒并在落后最新权威位置超过 3 格时清空旧缓冲；沙子只有在落点已占用、原点为空且折叠集合归零时才完成；Relay 把 `GameLoading` 切换排到下一帧。legacy `GameContext` 也改用共享的非临时端口租约器，并为每个历史测试设置 5 分钟 hang watchdog。动物位置连续隔离三跑、沙子定点双跑以及最终 full 套件均通过；没有扩大玩法容差、修改权威结果或增加 legacy 失败白名单。
+
 ## 当前可重复命令
 
 ```powershell
@@ -64,9 +74,12 @@ M7 将容器开启结果、所有权/距离拒绝、真实熔炉投料、燃料�
 ./scripts/Test-Multiplayer.ps1 -Mode doctor
 ./scripts/Test-Multiplayer.ps1 -Mode compatibility
 ./scripts/Test-Multiplayer.ps1 -Mode core
+./scripts/Test-Multiplayer.ps1 -Mode environment-mechanics
 ./scripts/Test-Multiplayer.ps1 -Mode session
 ./scripts/Test-Multiplayer.ps1 -Mode soak -SoakIterations 10
+./scripts/Test-Multiplayer.ps1 -Mode legacy
 ./scripts/Test-Multiplayer.ps1 -Mode full
+dotnet test ./Survivalcraft.Test/Survivalcraft.Test.csproj -c Release --filter "Layer=L2" -p:UseAngle=true
 ```
 
 稳定门禁的成功标准：命令退出码为 0；L0/L1 全绿；doctor 到达 `MainMenuScreen`；兼容矩阵五类拒绝与六个阶段黑洞结果符合预期；核心 L2 的 `outcome.json` 为 `passed` 且 `state.diff.json` 的 `equal` 为 `true`；session Direct/Relay 的身份、重复创建、限流、背压和最终清理断言全部通过。`full` 当前用于历史迁移审计，不等同于全绿承诺。

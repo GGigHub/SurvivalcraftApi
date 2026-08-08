@@ -40,6 +40,23 @@ public sealed class NetworkBodyInterpolationTest : IDisposable {
         Assert.True(clientBody.Position.Z < 0f, $"Expected smoothed playback before latest server position. Actual={clientBody.Position}.");
     }
 
+    [Fact]
+    public void FastRemoteBodySnapsBeforePlaybackDriftsBeyondSpatialBudget() {
+        ComponentBody clientBody = CreateBody(new Vector3(0f, 70f, 0f));
+
+        PushRemoteBodySnapshot(clientBody, 0.0, new Vector3(0f, 70f, 0f));
+        PushRemoteBodySnapshot(clientBody, 0.1, new Vector3(1f, 70f, 0f));
+        PushRemoteBodySnapshot(clientBody, 0.2, new Vector3(2f, 70f, 0f));
+        PushRemoteBodySnapshot(clientBody, 0.3, new Vector3(3f, 70f, 0f));
+
+        Assert.Equal(0f, clientBody.Position.X);
+
+        PushRemoteBodySnapshot(clientBody, 0.4, new Vector3(4f, 70f, 0f));
+
+        Assert.Equal(4f, clientBody.Position.X);
+        Assert.Single(NetworkBodyInterpolation.s_states[clientBody].Snapshots);
+    }
+
     private static ComponentBody CreateBody(Vector3 position) {
         return new ComponentBody {
             Position = position,
@@ -59,5 +76,19 @@ public sealed class NetworkBodyInterpolationTest : IDisposable {
             velocity,
             time,
             playbackDelay);
+    }
+
+    private static void PushRemoteBodySnapshot(ComponentBody body, double time, Vector3 position) {
+        NetworkBodyInterpolation.PushSnapshot(
+            body,
+            positionChanged: true,
+            position,
+            rotationChanged: true,
+            Quaternion.Identity,
+            velocityChanged: true,
+            new Vector3(10f, 0f, 0f),
+            time,
+            NetworkBodyInterpolation.RemoteBodyDelay,
+            NetworkBodyInterpolation.RemoteBodyMaxPositionLagSquared);
     }
 }

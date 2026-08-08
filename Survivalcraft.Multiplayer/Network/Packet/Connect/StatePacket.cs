@@ -123,6 +123,22 @@ public class StatePacket : ClientPacketBase {
                             NetworkManager.Queue(movingState);
                         }
                     }
+                    SubsystemFireBlockBehavior worldFire =
+                        GameManager.Project.FindSubsystem<SubsystemFireBlockBehavior>();
+                    if (worldFire != null) {
+                        foreach (SubsystemFireBlockBehavior.FireData fire
+                                 in worldFire.m_fireData.Values
+                                     .OrderBy(value => value.Point.X)
+                                     .ThenBy(value => value.Point.Y)
+                                     .ThenBy(value => value.Point.Z)
+                                     .Take(FireBlockAddPacket.MaximumBaselineStates)) {
+                            FireBlockAddPacket fireState = FireBlockAddPacket.CreateBaseline(
+                                GameManager.Project,
+                                fire);
+                            fireState.To = From;
+                            NetworkManager.Queue(fireState);
+                        }
+                    }
                     foreach (Entity entity in GameManager.Project.Entities) {
                         ComponentHealth health = entity.FindComponent<ComponentHealth>();
                         if (health != null && entity.Id > 0) {
