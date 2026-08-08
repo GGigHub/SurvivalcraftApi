@@ -400,9 +400,8 @@ namespace Game {
                 }
                 else if (digEvent.digEvent == DigEvent.End) {
                     if (NetworkManager.IsServerRunning && digEvent.NetDigRay.HasValue) {
-                        ComponentMiner.m_digProgress = 1f;
                         TerrainRaycastResult? raycast = RaycastAuthoritativeTerrain(digEvent.NetDigRay.Value, RaycastMode.Digging);
-                        if (raycast.HasValue) ComponentMiner.Dig(raycast.Value);
+                        if (raycast.HasValue) ComponentMiner.Dig(raycast.Value, forceComplete: true);
                     }
                     digEvent = default;
                     digEvent.NetDigRaycast = null;
@@ -645,12 +644,16 @@ namespace Game {
                         flag = true;
                         m_isDigBlocked = true;
                         if (Vector3.Distance(bodyRaycastResult.Value.HitPoint(), ComponentCreatureModel.EyePosition) <= meleeAttackRange) {
-                            ComponentMiner.Hit(
-                                bodyRaycastResult.Value.ComponentBody,
-                                bodyRaycastResult.Value.HitPoint(),
-                                playerInput.Hit.Value.Direction,
-                                NetworkManager.IsClientRunning
-                            );
+                            if (NetworkManager.IsClientRunning) {
+                                ComponentMiner.Poke(false);
+                            }
+                            else {
+                                ComponentMiner.Hit(
+                                    bodyRaycastResult.Value.ComponentBody,
+                                    bodyRaycastResult.Value.HitPoint(),
+                                    playerInput.Hit.Value.Direction
+                                );
+                            }
                             ModsManager.HookAction("OnNetworkPlayerHit", loader => loader.OnNetworkPlayerHit(this, bodyRaycastResult.Value.ComponentBody, bodyRaycastResult.Value.HitPoint(), playerInput.Hit.Value.Direction));
                         }
                     }

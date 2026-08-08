@@ -1352,7 +1352,7 @@ internal static class Program {
             "Survivalcraft.dll",
             "Survivalcraft.Networking.dll",
             "Content.zip",
-            Path.Combine("Mods", "Survivalcraft.Multiplayer.scmod"),
+            Path.Combine("InternalMods", "Survivalcraft.Multiplayer.scmod"),
             Path.Combine("Mods", "Survivalcraft.TestAutomation.scmod")
         ];
         foreach (string relativePath in requiredFiles) {
@@ -1385,8 +1385,16 @@ internal static class Program {
 
         string multiplayerModPath = Path.Combine(
             runtimeDirectory,
+            "InternalMods",
+            "Survivalcraft.Multiplayer.scmod");
+        string legacyMultiplayerModPath = Path.Combine(
+            runtimeDirectory,
             "Mods",
             "Survivalcraft.Multiplayer.scmod");
+        if (File.Exists(legacyMultiplayerModPath)) {
+            throw new InvalidDataException(
+                $"Multiplayer mod is duplicated in Mods and InternalMods: {legacyMultiplayerModPath}");
+        }
         using (ZipArchive archive = ZipFile.OpenRead(multiplayerModPath)) {
             string[] requiredEntries = [
                 "modinfo.json",

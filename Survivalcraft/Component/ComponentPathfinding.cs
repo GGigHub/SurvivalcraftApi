@@ -30,6 +30,21 @@ namespace Game {
 
         public bool m_destinationChanged;
 
+        // This is incremented whenever the server-side path snapshot changes.
+        // Clients use it to identify a new authoritative path, while the
+        // actual remaining path is kept in m_pathfindingResult.Path.
+        public int NetworkPathVersion { get; private set; }
+
+        // The cursor advances as the server consumes path points.  The path
+        // array itself is kept in the game's native reverse order, so the
+        // cursor is metadata used to detect progress rather than an index
+        // into the array.
+        public int NetworkPathCursor { get; private set; }
+
+        private bool m_networkPathAuthoritative;
+        private int m_appliedNetworkPathVersion;
+        private int m_appliedNetworkPathCursor;
+
         public const float m_minPathfindingPeriod = 6f;
 
         public const float m_pathfindingCongestionCapacity = 500f;
@@ -68,6 +83,14 @@ namespace Game {
             bool ignoreHeightDifference,
             bool raycastDestination,
             ComponentBody doNotAvoidBody) {
+            bool changed = HasNetworkDestinationChanged(destination)
+                || Speed != speed
+                || Range != range
+                || MaxPathfindingPositions != maxPathfindingPositions
+                || UseRandomMovements != useRandomMovements
+                || IgnoreHeightDifference != ignoreHeightDifference
+                || RaycastDestination != raycastDestination
+                || DoNotAvoidBody != doNotAvoidBody;
             Destination = destination;
             Speed = speed;
             Range = range;
@@ -78,6 +101,10 @@ namespace Game {
             DoNotAvoidBody = doNotAvoidBody;
             m_destinationChanged = true;
             m_nextUpdateTime = 0.0;
+            if (changed) {
+                NetworkPathVersion++;
+                NetworkPathCursor = 0;
+            }
         }
 
         public virtual void Stop() {
@@ -100,8 +127,98 @@ namespace Game {
                 float num = m_random.Float(0.08f, 0.12f);
                 m_nextUpdateTime = m_subsystemTime.GameTime + num;
                 m_pathfindingCongestion = MathUtils.Max(m_pathfindingCongestion - 20f * num, 0f);
-                m_stateMachine.Update();
+                if (m_networkPathAuthoritative) {
+                    UpdateNetworkPath();
+                }
+                else {
+                    m_stateMachine.Update();
+                }
             }
+        }
+
+        /// <summary>
+        /// Applies the path calculated by the server.  Once this is called,
+        /// this component no longer queues local A* searches; it only follows
+        /// the server's path and pilot destination snapshots.
+        /// </summary>
+        public virtual void ApplyNetworkPath(int pathVersion, int pathCursor, List<Vector3> path) {
+            if (m_networkPathAuthoritative
+                && m_appliedNetworkPathVersion == pathVersion
+                && m_appliedNetworkPathCursor == pathCursor
+                && IsNetworkPathEqual(path)) {
+                return;
+            }
+
+            m_networkPathAuthoritative = true;
+            m_appliedNetworkPathVersion = pathVersion;
+            m_appliedNetworkPathCursor = pathCursor;
+            m_pathfindingResult.Path.Clear();
+            for (int i = 0; i < path.Count; i++) {
+                m_pathfindingResult.Path.Add(path[i]);
+            }
+            m_pathfindingResult.IsInProgress = false;
+            m_pathfindingResult.IsCompleted = true;
+            m_destinationChanged = false;
+            IsStuck = false;
+        }
+
+        private void UpdateNetworkPath() {
+            if (m_componentPilot == null || !Destination.HasValue) {
+                m_componentPilot?.Stop();
+                return;
+            }
+
+            // The pilot destination is also authoritative.  It represents
+            // either the currently followed waypoint or the server's direct
+            // movement fallback.
+            if (m_componentPilot.Destination.HasValue) {
+                if (m_componentPilot.IsStuck) {
+                    m_componentPilot.Stop();
+                }
+                return;
+            }
+
+            if (m_pathfindingResult.Path.Count > 0) {
+                Vector3 value = m_pathfindingResult.Path.Array[m_pathfindingResult.Path.Count - 1];
+                m_pathfindingResult.Path.RemoveAt(m_pathfindingResult.Path.Count - 1);
+                m_componentPilot.SetDestination(
+                    value,
+                    MathUtils.Min(Speed, 0.75f),
+                    0.75f,
+                    false,
+                    false,
+                    Speed >= 1f,
+                    DoNotAvoidBody
+                );
+            }
+            else {
+                // Do not locally invent a direct destination while the
+                // server is searching or has decided that the creature is
+                // stuck.  The next server snapshot will provide the next
+                // waypoint or direct pilot target.
+                m_componentPilot.Stop();
+            }
+        }
+
+        private bool HasNetworkDestinationChanged(Vector3? destination) {
+            if (Destination.HasValue != destination.HasValue) {
+                return true;
+            }
+            return Destination.HasValue
+                && destination.HasValue
+                && (Destination.Value - destination.Value).LengthSquared() > 0.0001f;
+        }
+
+        private bool IsNetworkPathEqual(List<Vector3> path) {
+            if (m_pathfindingResult.Path.Count != path.Count) {
+                return false;
+            }
+            for (int i = 0; i < path.Count; i++) {
+                if ((m_pathfindingResult.Path.Array[i] - path[i]).LengthSquared() > 0.0001f) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {
@@ -196,6 +313,8 @@ namespace Game {
                     }
                     if (m_pathfindingResult.IsCompleted) {
                         m_pathfindingCongestion = MathUtils.Min(m_pathfindingCongestion + m_pathfindingResult.PositionsChecked, 1000f);
+                        NetworkPathVersion++;
+                        NetworkPathCursor = 0;
                         if (m_pathfindingResult.Path.Count > 0) {
                             m_stateMachine.TransitionTo("MovingWithPath");
                         }
@@ -232,6 +351,8 @@ namespace Game {
                                 DoNotAvoidBody
                             );
                             m_pathfindingResult.Path.RemoveAt(m_pathfindingResult.Path.Count - 1);
+                            NetworkPathVersion++;
+                            NetworkPathCursor++;
                         }
                         else {
                             m_stateMachine.TransitionTo("MovingDirect");

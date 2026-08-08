@@ -24,6 +24,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
+            ChannelsCount = NetworkChannels.Count,
         };
 
         if (!_netManager.Start()) {
@@ -70,7 +71,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
                 NetPeer relayPeer = _relayPeer;
                 NetworkFaultInjector.Send(
                     frame,
-                    data => relayPeer.Send(data, DeliveryMethod.ReliableOrdered),
+                    data => relayPeer.Send(data, packet.Channel, DeliveryMethod.ReliableOrdered),
                     packet.GetType().Name);
             }
         }

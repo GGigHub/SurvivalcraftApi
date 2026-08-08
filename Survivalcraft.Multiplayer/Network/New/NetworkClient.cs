@@ -24,6 +24,7 @@ public class NetworkClient : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
+            ChannelsCount = NetworkChannels.Count,
             UnconnectedMessagesEnabled = true,
             ReuseAddress = true
         };
@@ -32,7 +33,7 @@ public class NetworkClient : INetEventListener {
         }
 
         _serverAddress = serverAddress;
-        _netManager.Connect(_serverAddress, "x26.06.01");
+        _netManager.Connect(_serverAddress, "x26.08.01");
 
         Log.Information($"Connecting {_serverAddress}");
     }
@@ -73,7 +74,7 @@ public class NetworkClient : INetEventListener {
                 NetPeer peer = _serverPeer;
                 NetworkFaultInjector.Send(
                     chunk,
-                    data => peer.Send(data, DeliveryMethod.ReliableOrdered),
+                    data => peer.Send(data, packet.Channel, DeliveryMethod.ReliableOrdered),
                     packet.GetType().Name);
             }
         }

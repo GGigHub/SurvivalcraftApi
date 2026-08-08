@@ -57,6 +57,45 @@ public sealed class NetworkBodyInterpolationTest : IDisposable {
         Assert.Single(NetworkBodyInterpolation.s_states[clientBody].Snapshots);
     }
 
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void ServerDiscontinuitySnapsImmediatelyForSameFrameAuthorityChecks() {
+        ComponentBody serverBody = CreateBody(new Vector3(0f, 70f, 0f));
+        Vector3 relocatedPosition = new(12f, 70f, -9f);
+        Vector3 relocatedVelocity = new(1f, 0f, 0f);
+
+        NetworkBodyInterpolation.PushServerSnapshot(
+            serverBody,
+            positionChanged: true,
+            relocatedPosition,
+            rotationChanged: true,
+            Quaternion.Identity,
+            velocityChanged: true,
+            relocatedVelocity);
+
+        Assert.Equal(relocatedPosition, serverBody.Position);
+        Assert.Equal(relocatedVelocity, serverBody.Velocity);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void ServerOrdinaryCorrectionRemainsSmoothedUntilUpdate() {
+        ComponentBody serverBody = CreateBody(new Vector3(0f, 70f, 0f));
+
+        NetworkBodyInterpolation.PushServerSnapshot(
+            serverBody,
+            positionChanged: true,
+            new Vector3(1f, 70f, 0f),
+            rotationChanged: true,
+            Quaternion.Identity,
+            velocityChanged: true,
+            Vector3.Zero);
+
+        Assert.Equal(0f, serverBody.Position.X);
+        NetworkBodyInterpolation.UpdateServer(serverBody, 0.1f);
+        Assert.InRange(serverBody.Position.X, 0.69f, 0.71f);
+    }
+
     private static ComponentBody CreateBody(Vector3 position) {
         return new ComponentBody {
             Position = position,

@@ -182,7 +182,7 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
     }
 
     [Fact, TestOrder(Priority = 8)]
-    public async Task TestCreatureSoundSync() {
+    public async Task TestCreatureSoundsAreDerivedLocallyOnEachPeer() {
         Dictionary<string, int> entityIds = await CreatureSyncTools.AddBehaviorSyncEntitiesAsync(server);
         Assert.True(entityIds.TryGetValue("Sound", out int entityId) && entityId > 0, "Server did not create a creature with sounds.");
         Assert.True(await CreatureSyncTools.WaitForEntityExistsAsync(client, entityId), $"Client did not receive sound test entity {entityId}.");
@@ -195,12 +195,25 @@ public sealed class CreatureSyncTest : IClassFixture<GameFixture> {
             CreatureSoundState serverState = await CreatureSyncTools.GetCreatureSoundStateAsync(server, entityId, soundType);
             Assert.True(serverState.Played, $"Server did not play {soundType} creature sound. State={serverState}.");
 
+            CreatureSoundState clientBeforeLocalTrigger = await CreatureSyncTools.GetCreatureSoundStateAsync(
+                client,
+                entityId,
+                soundType);
+            Assert.False(
+                clientBeforeLocalTrigger.Played,
+                string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"Server-local {soundType} sound unexpectedly mutated the client state. "
+                    + $"Server={serverState}, Client={clientBeforeLocalTrigger}."));
+
+            await CreatureSyncTools.TriggerCreatureSoundAsync(client, entityId, soundType);
             CreatureSoundState clientState = await CreatureSyncTools.WaitForCreatureSoundPlayedAsync(client, entityId, soundType);
             Assert.True(
                 clientState.Played,
                 string.Create(
                     CultureInfo.InvariantCulture,
-                    $"Client did not receive {soundType} creature sound for entity {entityId}. Server={serverState}, Client={clientState}."));
+                    $"Client did not derive {soundType} creature sound locally for entity {entityId}. "
+                    + $"Server={serverState}, Client={clientState}."));
         }
     }
 

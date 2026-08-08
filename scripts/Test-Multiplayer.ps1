@@ -32,7 +32,6 @@ $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $fastProject = Join-Path $repositoryRoot "Survivalcraft.Testing.Tests\Survivalcraft.Testing.Tests.csproj"
 $gameTestProject = Join-Path $repositoryRoot "Survivalcraft.Test\Survivalcraft.Test.csproj"
 $hostProject = Join-Path $repositoryRoot "Survivalcraft.TestHost\Survivalcraft.TestHost.csproj"
-$legacyBaselinePath = Join-Path $repositoryRoot "Survivalcraft.Testing\Coverage\legacy-known-failures.json"
 $runtimeDirectory = Join-Path $repositoryRoot "Survivalcraft.Test\bin\$Configuration\net10.0-windows\win-x64"
 $runStamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $coreArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
@@ -658,95 +657,10 @@ function Run-LegacyAudit {
     Write-Host "dotnet $($legacyTestArguments -join ' ')"
     & dotnet @legacyTestArguments
     $legacyExitCode = $LASTEXITCODE
-    $trxFile = Get-ChildItem -LiteralPath $legacyArtifactDirectory -Filter "legacy-audit*.trx" |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    if ($null -eq $trxFile) {
-        throw "Legacy audit did not produce a TRX result (dotnet exit code $legacyExitCode)."
-    }
-
-    [xml]$trx = Get-Content -LiteralPath $trxFile.FullName -Raw
-    $namespace = [System.Xml.XmlNamespaceManager]::new($trx.NameTable)
-    $namespace.AddNamespace("t", $trx.DocumentElement.NamespaceURI)
-    $counters = $trx.SelectSingleNode("//t:ResultSummary/t:Counters", $namespace)
-    if ($null -eq $counters) {
-        throw "Legacy audit TRX does not contain result counters."
-    }
-    $allResults = @($trx.SelectNodes("//t:UnitTestResult", $namespace))
-    $executedTests = @(
-        $allResults |
-            ForEach-Object { $_.GetAttribute("testName") } |
-            Sort-Object -Unique
-    )
-    $failedTests = @(
-        $allResults |
-            Where-Object { $_.GetAttribute("outcome") -eq "Failed" } |
-            ForEach-Object { $_.GetAttribute("testName") } |
-            Sort-Object -Unique
-    )
-    if (!(Test-Path -LiteralPath $legacyBaselinePath -PathType Leaf)) {
-        throw "Legacy failure baseline not found: $legacyBaselinePath"
-    }
-    $baseline = Get-Content -LiteralPath $legacyBaselinePath -Raw | ConvertFrom-Json
-    if ($baseline.schemaVersion -ne 1 -or $baseline.policy -ne "new-failures-block") {
-        throw "Legacy failure baseline has an unsupported schema or policy: $legacyBaselinePath"
-    }
-    $rawKnownFailures = @(
-        $baseline.groups |
-            ForEach-Object { $_.tests }
-    )
-    $knownFailures = @($rawKnownFailures | Sort-Object -Unique)
-    if ($knownFailures.Count -eq 0 -or $knownFailures.Count -ne $rawKnownFailures.Count) {
-        throw "Legacy failure baseline must contain a non-empty unique test inventory."
-    }
-    $unexpectedFailures = @(
-        $failedTests |
-            Where-Object { $knownFailures -notcontains $_ }
-    )
-    $knownFailuresObserved = @(
-        $failedTests |
-            Where-Object { $knownFailures -contains $_ }
-    )
-    $resolvedKnownFailures = @(
-        $knownFailures |
-            Where-Object { $failedTests -notcontains $_ }
-    )
-    $missingBaselineTests = @(
-        $knownFailures |
-            Where-Object { $executedTests -notcontains $_ }
-    )
-    $total = [int]$counters.GetAttribute("total")
-    $executed = [int]$counters.GetAttribute("executed")
-    $completed = $total -gt 0 -and $executed -eq $total
-    $baselineMatched = $unexpectedFailures.Count -eq 0 -and $missingBaselineTests.Count -eq 0
-    $gatePassed = $completed -and $baselineMatched -and ($legacyExitCode -eq 0 -or $legacyExitCode -eq 1)
-    $summary = [ordered]@{
-        schemaVersion = 2
-        policy = $baseline.policy
-        baseline = [System.IO.Path]::GetRelativePath($repositoryRoot, $legacyBaselinePath)
-        dotnetExitCode = $legacyExitCode
-        total = $total
-        executed = $executed
-        passed = [int]$counters.GetAttribute("passed")
-        failed = [int]$counters.GetAttribute("failed")
-        completed = $completed
-        knownFailureAllowance = $knownFailures.Count
-        knownFailuresObserved = $knownFailuresObserved
-        unexpectedFailures = $unexpectedFailures
-        resolvedKnownFailures = $resolvedKnownFailures
-        missingBaselineTests = $missingBaselineTests
-        baselineMatched = $baselineMatched
-        gatePassed = $gatePassed
-        failedTests = $failedTests
-        trx = $trxFile.Name
-    }
-    $summaryPath = Join-Path $legacyArtifactDirectory "legacy-audit-summary.json"
-    $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Encoding utf8
-    Write-Host "Legacy audit: total=$($summary.total), passed=$($summary.passed), failed=$($summary.failed), known=$($knownFailuresObserved.Count), unexpected=$($unexpectedFailures.Count), resolved=$($resolvedKnownFailures.Count), summary=$summaryPath"
-    if (!$gatePassed) {
-        throw "Legacy audit gate failed: completed=$completed, unexpectedFailures=$($unexpectedFailures.Count), missingBaselineTests=$($missingBaselineTests.Count), dotnetExitCode=$legacyExitCode"
-    }
-    Write-Host "LEGACY AUDIT BASELINE MATCHED"
+    & (Join-Path $PSScriptRoot "Summarize-LegacyAudit.ps1") `
+        -ArtifactDirectory $legacyArtifactDirectory `
+        -RepositoryRoot $repositoryRoot `
+        -DotnetExitCode $legacyExitCode
 }
 
 Push-Location $repositoryRoot

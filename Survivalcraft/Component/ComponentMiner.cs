@@ -195,8 +195,8 @@ namespace Game {
             PokingPhase = forceRestart ? 0.0001f : MathUtils.Max(0.0001f, PokingPhase);
         }
 
-        public bool Dig(TerrainRaycastResult raycastResult) {
-            if (AnyIsPending) {
+        public bool Dig(TerrainRaycastResult raycastResult, bool forceComplete = false) {
+            if (AnyIsPending && !forceComplete) {
                 return false;
             }
             bool result = false;
@@ -217,9 +217,11 @@ namespace Game {
                 DigCellFaceChanged = true;
             }
             float digTimeWithActiveTool = CalculateDigTime(cellValue, activeBlockValue);
-            m_digProgress = digTimeWithActiveTool > 0f
-                ? MathUtils.Saturate((float)(m_subsystemTime.GameTime - m_digStartTime) / digTimeWithActiveTool)
-                : 1f;
+            m_digProgress = forceComplete
+                ? 1f
+                : digTimeWithActiveTool > 0f
+                    ? MathUtils.Saturate((float)(m_subsystemTime.GameTime - m_digStartTime) / digTimeWithActiveTool)
+                    : 1f;
             if (!IsLevelSufficientForTool(activeBlockValue)) {
                 m_digProgress = 0f;
                 if (m_subsystemTime.PeriodicGameTimeEvent(5.0, m_digStartTime + 1.0)) {
@@ -271,7 +273,7 @@ namespace Game {
                     m_lastToolHintTime = Time.FrameStartTime;
                 }
             }
-            if (flag2 || (m_lastPokingPhase <= 0.5f && PokingPhase > 0.5f)) {
+            if (forceComplete || flag2 || (m_lastPokingPhase <= 0.5f && PokingPhase > 0.5f)) {
                 if (m_digProgress >= 1f) {
                     DigCellFace = null;
                     if (flag2) {
@@ -320,6 +322,62 @@ namespace Game {
                 }
             }
             return result;
+        }
+
+        /// <summary>
+        /// Completes a server-side dig using an already validated absolute cell
+        /// coordinate. This path is used when the client ray no longer matches
+        /// the server's interpolated player position.
+        /// </summary>
+        public bool DigAtCell(CellFace cellFace, int newValue) {
+            m_lastDigFrameIndex = Time.FrameIndex;
+            int cellValue = m_subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
+            int cellContents = Terrain.ExtractContents(cellValue);
+            if (cellContents == 0) {
+                return false;
+            }
+
+            int activeBlockValue = ActiveBlockValue;
+            Block activeBlock = BlocksManager.Blocks[Terrain.ExtractContents(activeBlockValue)];
+            if (!IsLevelSufficientForTool(activeBlockValue)) {
+                return false;
+            }
+
+            DigCellFace = null;
+            BlockPlacementData digValue = new() {
+                CellFace = cellFace,
+                Value = newValue
+            };
+            m_subsystemTerrain.DestroyCell(
+                activeBlock.GetToolLevel(activeBlockValue),
+                cellFace.X,
+                cellFace.Y,
+                cellFace.Z,
+                digValue.Value,
+                false,
+                false
+            );
+
+            int durabilityReduction = 1;
+            int playerDataAdd = 1;
+            bool mute_ = false;
+            ModsManager.HookAction(
+                "OnBlockDug",
+                modLoader => {
+                    bool mute = false;
+                    modLoader.OnBlockDug(this, digValue, cellValue, ref durabilityReduction, ref mute, ref playerDataAdd);
+                    mute_ |= mute;
+                    return false;
+                }
+            );
+            if (!mute_) {
+                m_subsystemSoundMaterials.PlayImpactSound(cellValue, new Vector3(cellFace.X, cellFace.Y, cellFace.Z), 2f);
+            }
+            DamageActiveTool(durabilityReduction);
+            if (ComponentCreature.PlayerStats != null) {
+                ComponentCreature.PlayerStats.BlocksDug += playerDataAdd;
+            }
+            return true;
         }
 
         public bool Place(TerrainRaycastResult raycastResult) {
@@ -593,9 +651,6 @@ namespace Game {
             if (AnyIsPending) {
                 return;
             }
-            if (NetworkManager.IsClientRunning) {
-                predictionOnly = true;
-            }
             double hitInterval = HitInterval;
             ModsManager.HookAction(
                 "SetHitInterval",
@@ -710,18 +765,10 @@ namespace Game {
                         return false;
                     }
                 );
-                if (predictionOnly) {
-                    attackment.EnableTargetDamage = false;
-                    attackment.EnableAttackedEvent = false;
-                    attackment.EnableArmorProtection = false;
-                }
-                attackment.EnableHitValueParticleSystem = showHitValue;
                 AttackBody(attackment);
-                if (!predictionOnly) {
-                    DamageActiveTool(durabilityReduction);
-                }
+                DamageActiveTool(durabilityReduction);
             }
-            else if (ComponentCreature is ComponentPlayer && showHitValue) {
+            else if (ComponentCreature is ComponentPlayer) {
                 HitValueParticleSystem particleSystem = new(
                     hitPoint + 0.75f * hitDirection,
                     1f * hitDirection + ComponentCreature.ComponentBody.Velocity,
@@ -740,7 +787,7 @@ namespace Game {
                 );
                 Project.FindSubsystem<SubsystemParticles>(true).AddParticleSystem(particleSystem);
             }
-            if (!predictionOnly && ComponentCreature.PlayerStats != null) {
+            if (ComponentCreature.PlayerStats != null) {
                 ComponentCreature.PlayerStats.MeleeAttacks++;
                 if (flag) {
                     ComponentCreature.PlayerStats.MeleeHits++;

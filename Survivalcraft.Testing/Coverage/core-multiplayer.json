@@ -119,7 +119,7 @@
       "status": "covered",
       "risk": "critical",
       "confidence": "behavioral",
-      "productionEntry": "ComponentInput -> ComponentPlayer -> ComponentMiner -> PlayerInteractPacket / PlayerDigPacket",
+      "productionEntry": "ComponentInput -> ComponentPlayer -> ComponentMiner -> PlayerInteractPacket / PlayerDigPacket / PlayerDigRequestPacket / PlayerDigConfirmationPacket",
       "fixtureCommand": "fixture.player.prepareTerrainInteraction / fixture.player.applyTerrainInteraction",
       "actionCommand": "player.place / player.dig / player.use",
       "snapshotDomains": ["players", "terrain", "events"],
@@ -128,7 +128,7 @@
       "lateJoinTest": "terrain-late-join-convergence",
       "reconnectTest": "terrain-reconnect-convergence",
       "authorityTest": "dig-server-authority-observer-convergence",
-      "faultTest": "terrain-action-under-network-faults",
+      "faultTest": "terrain-action-under-network-faults / dig-confirmation-recovery-after-lost-player-dig",
       "persistenceTest": "terrain-save-reload-persistence",
       "productionPathTest": "typed-use-place-dig-through-component-miner",
       "observerTest": "terrain-action-observer-convergence",
@@ -280,6 +280,29 @@
       "observerTest": "furnace-processing-fuel-result-convergence",
       "mutationTest": "furnace-stale-duplicate-reorder-convergence",
       "gaps": []
+    },
+    {
+      "featureId": "inventory.furniture-hammer",
+      "status": "partial",
+      "risk": "high",
+      "confidence": "partial",
+      "productionEntry": "SubsystemFurnitureBlockBehavior.OnNetworkFurnitureHammerRequest -> FurnitureHammerPacket -> server design validation and authoritative commit",
+      "fixtureCommand": null,
+      "actionCommand": null,
+      "snapshotDomains": ["terrain", "inventories", "pickables", "network", "events"],
+      "directTest": null,
+      "relayTest": null,
+      "lateJoinTest": null,
+      "reconnectTest": null,
+      "authorityTest": "FurnitureHammerPacketCodecTest validates bounded request/design/reject wire shapes",
+      "faultTest": null,
+      "persistenceTest": null,
+      "note": "Wire bounds and malformed event types are automated; real gameplay execution is intentionally not claimed yet.",
+      "gaps": [
+        "no typed furniture-hammer gameplay action currently traverses Direct and Relay transports",
+        "server range, equipped-tool, source-block, rate-limit and forged-design rejection need behavioral assertions",
+        "registered design, terrain mutation and produced pickable convergence need late-join, reconnect, fault and persistence coverage"
+      ]
     },
     {
       "featureId": "health-damage-respawn",

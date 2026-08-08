@@ -59,8 +59,6 @@ namespace Game {
         public string CauseOfDeath;
         public bool EnableArmorProtection = true;
         public bool EnableResilienceFactor = true;
-        public bool EnableTargetDamage = true;
-        public bool EnableAttackedEvent = true;
         public bool EnableHitValueParticleSystem = true;
         public string AttackSoundName = "Audio/Impacts/Body";
         public float AttackSoundVolume = 1f;
@@ -152,16 +150,6 @@ namespace Game {
                 return;
             }
             injuryAmount = CalculateInjuryAmount();
-            if (!EnableTargetDamage) {
-                if (injuryAmount > 0f) {
-                    if (AttackSoundName != "") {
-                        Target.Project.FindSubsystem<SubsystemAudio>()
-                            ?.PlayRandomSound(AttackSoundName, AttackSoundVolume, AttackSoundPitch, componentBody.Position, 4f, false);
-                    }
-                    AddHitValueParticleSystem(injuryAmount * componentHealth.AttackResilience);
-                }
-                return;
-            }
             float healthBeforeAttack = componentHealth.Health;
             componentHealth.Injure(new AttackInjury(injuryAmount, this));
             if (injuryAmount > 0f) {
@@ -186,15 +174,6 @@ namespace Game {
             }
             injuryAmount = CalculateInjuryAmount();
             m_injuryAmount = injuryAmount;
-            if (!EnableTargetDamage) {
-                AddHitValueParticleSystem(injuryAmount * componentDamage.AttackResilience);
-                if (injuryAmount > 0f
-                    && AttackSoundName != "") {
-                    Target.Project.FindSubsystem<SubsystemAudio>()
-                        ?.PlayRandomSound(AttackSoundName, AttackSoundVolume, AttackSoundPitch, componentBody.Position, 4f, false);
-                }
-                return;
-            }
             float hitPointsBeforeAttack = componentDamage.Hitpoints;
             componentDamage.Damage(injuryAmount);
             float damage = (hitPointsBeforeAttack - componentDamage.Hitpoints) * componentDamage.AttackResilience;
@@ -251,9 +230,7 @@ namespace Game {
             float injuryAmount = 0f;
             if (AttackPower > 0f) {
                 ComponentBody componentBody = Target.FindComponent<ComponentBody>();
-                if (EnableAttackedEvent) {
-                    componentBody?.Attacked?.Invoke(this);
-                }
+                componentBody?.Attacked?.Invoke(this);
                 ComponentHealth componentHealth = Target.FindComponent<ComponentHealth>();
                 if (componentHealth != null) {
                     ProcessAttackmentToCreature(out injuryAmount);

@@ -17,6 +17,7 @@ public class NetworkServer : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
+            ChannelsCount = NetworkChannels.Count,
             UnconnectedMessagesEnabled = true,
             ReuseAddress = true
         };
@@ -88,7 +89,7 @@ public class NetworkServer : INetEventListener {
                 NetPeer targetPeer = peer;
                 NetworkFaultInjector.Send(
                     chunk,
-                    data => targetPeer.Send(data, DeliveryMethod.ReliableOrdered),
+                    data => targetPeer.Send(data, packet.Channel, DeliveryMethod.ReliableOrdered),
                     packet.GetType().Name);
             }
         }
@@ -96,7 +97,7 @@ public class NetworkServer : INetEventListener {
 
     public void OnConnectionRequest(ConnectionRequest request) {
         Log.Information($"Connection request by: {request.RemoteEndPoint}");
-        request.AcceptIfKey("x26.06.01");
+        request.AcceptIfKey("x26.08.01");
     }
 
     public void OnNetworkError(IPEndPoint endPoint, SocketError socketError) {
@@ -156,7 +157,6 @@ public class NetworkServer : INetEventListener {
         }
 
         ClientSessions.Remove(peer);
-
         if (!_disconnectByUser) {
             Log.Information($"Disconnected: {peer}, {disconnectInfo}");
         }
@@ -189,8 +189,12 @@ public class NetworkServer : INetEventListener {
         if (session == null || session.NetworkState == NetworkState.NotConnected) {
             return;
         }
+        int playerIndex = session.PlayerIndex;
         GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
         PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
+        NetworkDigConfirmationRuntime.ClearServerSession(playerIndex);
+        FurnitureHammerPacket.ClearPlayerState(playerIndex);
+        PlayerPacketBase.ClearHitThrottleState(playerIndex);
         ModNetworkManager.ClearSession(session);
         session.DisconnectedUtc = DateTime.UtcNow;
         session.DisconnectReason = reason ?? string.Empty;

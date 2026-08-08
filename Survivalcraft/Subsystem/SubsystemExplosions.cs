@@ -303,7 +303,6 @@ namespace Game {
                 m_surroundingPressureByPoint = null;
             }
             if (!NetworkManager.IsClientRunning) {
-                ModsManager.HookAction("OnNetworkExplosionCell", loader => loader.OnNetworkExplosionCell(m_explosionCells));
                 //清空爆炸点
                 m_explosionCells.Clear();
             }
@@ -830,58 +829,56 @@ namespace Game {
             float delay = m_subsystemAudio.CalculateDelay(num);
             if (!NetworkManager.IsClientRunning) {
                 PlayExplosionSound(position, pressure, delay, playExplosionSound);
-                if (playExplosionSound) {
-                    ModsManager.HookAction("OnNetworkExplosionSound", loader => loader.OnNetworkExplosionSound(position, pressure, delay));
-                }
             }
             if (pressure > 2000000f) {
-                if (playExplosionSound) {
-                    m_subsystemAudio.PlaySound("Audio/Explosion7", 1f, m_random.Float(-0.1f, 0.1f), position, 53f, delay);
-                }
                 m_subsystemNoise.MakeNoise(position, 1f, 130f);
             }
             else if (pressure > 400000f) {
-                if (playExplosionSound) {
-                    m_subsystemAudio.PlaySound("Audio/Explosion6", 1f, m_random.Float(-0.1f, 0.1f), position, 45f, delay);
-                }
                 m_subsystemNoise.MakeNoise(position, 1f, 100f);
             }
             else if (pressure > 80000f) {
-                if (playExplosionSound) {
-                    m_subsystemAudio.PlaySound("Audio/Explosion5", 1f, m_random.Float(-0.1f, 0.1f), position, 38f, delay);
-                }
                 m_subsystemNoise.MakeNoise(position, 1f, 70f);
             }
             else if (pressure > 16000f) {
-                if (playExplosionSound) {
-                    m_subsystemAudio.PlaySound("Audio/Explosion4", 1f, m_random.Float(-0.1f, 0.1f), position, 32f, delay);
-                }
                 m_subsystemNoise.MakeNoise(position, 1f, 50f);
             }
             else if (pressure > 3500f) {
-                if (playExplosionSound) {
-                    m_subsystemAudio.PlaySound("Audio/Explosion3", 1f, m_random.Float(-0.1f, 0.1f), position, 27f, delay);
-                }
                 m_subsystemNoise.MakeNoise(position, 1f, 40f);
             }
             else if (pressure > 80f) {
-                if (playExplosionSound) {
-                    m_subsystemAudio.PlaySound("Audio/Explosion2", 1f, m_random.Float(-0.1f, 0.1f), position, 23f, delay);
-                }
                 m_subsystemNoise.MakeNoise(position, 1f, 35f);
             }
             else if (pressure > 0f) {
-                if (playExplosionSound) {
-                    m_subsystemAudio.PlaySound("Audio/Explosion1", 1f, m_random.Float(-0.1f, 0.1f), position, 20f, delay);
-                }
                 m_subsystemNoise.MakeNoise(position, 1f, 30f);
+            }
+
+            if (!NetworkManager.IsClientRunning) {
+                ModsManager.HookAction(
+                    "OnNetworkExplosion",
+                    loader => loader.OnNetworkExplosion(m_explosionCells, position, pressure, playExplosionSound)
+                );
             }
         }
 
         public virtual void PlayExplosionSound(Vector3 position, float level, float delay, bool playExplosionSound) {
-            if (playExplosionSound) {
-                m_subsystemAudio.PlaySound("Audio/Explosion1", 1f, m_random.Float(-0.1f, 0.1f), position, level, delay);
-            }
+            if (!playExplosionSound) return;
+
+            (string soundName, float minDistance) = level switch {
+                > 2000000f => ("Audio/Explosion7", 53f),
+                > 400000f => ("Audio/Explosion6", 45f),
+                > 80000f => ("Audio/Explosion5", 38f),
+                > 16000f => ("Audio/Explosion4", 32f),
+                > 3500f => ("Audio/Explosion3", 27f),
+                > 80f => ("Audio/Explosion2", 23f),
+                > 0f => ("Audio/Explosion1", 20f),
+                _ => (null, 0f)
+            };
+            if (soundName == null) return;
+            m_subsystemAudio.PlaySound(soundName, 1f, m_random.Float(-0.1f, 0.1f), position, minDistance, delay);
+        }
+
+        public virtual void PlayExplosionSound(Vector3 position, float level, bool playExplosionSound) {
+            PlayExplosionSound(position, level, m_subsystemAudio.CalculateDelay(position), playExplosionSound);
         }
 
         public virtual void CalculateImpulseAndDamage(ComponentBody componentBody, float? obstaclePressure, out Vector3 impulse, out float damage) {

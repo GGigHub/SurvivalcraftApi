@@ -57,7 +57,7 @@ M7 将容器开启结果、所有权/距离拒绝、真实熔炉投料、燃料�
 
 覆盖契约由此把 `inventory.furnace-container` 从 `partial` 提升为 `covered/mutation`，当前计数为 15 covered、1 partial、5 planned；生产面精确库存为 104 个 hook 和 110 个 packet class。首轮完整 L2 在并行负载下捕获到“槽位内容已相同但客户端 revision 尚未到达最终值”的等待竞态；加入最终 revision 下限后，定点 2/2 与最终完整 L2 25/25 均通过，门禁不再把内容巧合相等误判为版本收敛。
 
-## M8 爆炸与世界火焰验收（2026-07-31；2026-08-08 快速复验）
+## M8 爆炸与世界火焰验收（2026-07-31，母仓同步前历史证据）
 
 M8 将 revisioned world-fire add/remove、移除墓碑、服务端权威模拟，以及共享 64 位 event ID 的爆炸格分块/音效事件纳入 wire revision 11 和 Automation API v11。环境/mechanics 场景扩展为严格十动作，Direct、Relay 及二者独立 replay 均通过；late join、同身份重连和保存重载只恢复当前存在的世界火焰，雷电、爆炸和已移除火焰不重放。持久火焰在重载后从地形重建，陈旧 add、重复/过期爆炸分块和伪造客户端权威状态均被拒绝。
 
@@ -66,6 +66,24 @@ M8 将 revisioned world-fire add/remove、移除墓碑、服务端权威模拟�
 额外 Direct L3 使用 seed `20260730`，在 40 ms latency、8 ms jitter、100% duplicate、25% reorder 和 66 ms reorder delay 下通过。server/client-a/client-b/client-c 峰值工作集约 436.5–476.9 MiB、私有内存 513.5–540.6 MiB、句柄峰值 991、线程峰值 36，最终故障待发队列为零；全部节点继续使用 `--headless`、`CreateNoWindow=true` 和隔离数据目录。
 
 本轮全量测试还反向改进了 autotest 与生产同步稳定性：熔炉判据同时要求源/目标 revision 前进，并只允许输入槽继续演化；动物位置只比较客户端已加载区块，以 20 次 100 ms 轮询做有界收敛，同时把远端身体播放延迟降为 0.25 秒并在落后最新权威位置超过 3 格时清空旧缓冲；沙子只有在落点已占用、原点为空且折叠集合归零时才完成；Relay 把 `GameLoading` 切换排到下一帧。legacy `GameContext` 也改用共享的非临时端口租约器，并为每个历史测试设置 5 分钟 hang watchdog。动物位置连续隔离三跑、沙子定点双跑以及最终 full 套件均通过；没有扩大玩法容差、修改权威结果或增加 legacy 失败白名单。
+
+## 母仓同步后 M8/API 联机支线验收（2026-08-08）
+
+本轮把母仓 `SCAPI1.9_MP` 的 `3f3fc8fd` 合入支线，并将上游新增行为与既有 API 联机安全模型统一到 wire revision 12；Automation API 保持 v11。爆炸格和声音合并为一个带共享 event ID 的 `ExplosionPacket`，地形流量使用独立有序 channel，联机模组只从 `InternalMods` 装载。世界火焰 revision/墓碑、爆炸分块上限、重复/过期事件抑制及客户端伪造权威模拟拒绝仍保持有效。
+
+挖掘恢复链路改为服务端有界、按玩家隔离的请求窗口：总计最多 256 项、每玩家最多 16 项，断线和 Project 重载清理。服务端忽略客户端声称的方块值，以真实眼位、正常 reach、terrain-only raycast、首个命中格和当前地形重新计算权威 dig。terrain-interaction v3 对普通 `PlayerDigPacket` 注入 100% 定向丢包；Direct、Relay 及二者严格 replay 均记录 dropped=2、dig=2、request=1、confirmation=1，并最终收敛。
+
+当前源码的最终无窗口证据如下：
+
+- fast：平台 L0/L1 114/114、游戏 L0/L1 84/84；
+- trust：22 个 feature 中 16 covered、2 partial、4 planned；置信分布为 behavioral 10、mutation 3、soak 3、partial 2、planned 4；生产面精确库存为 103 个 hook 和 111 个 packet class；
+- doctor：唯一 `InternalMods/Survivalcraft.Multiplayer.scmod` 装载成功，旧 `Mods` 副本不存在，隐藏节点到达 `MainMenuScreen`；
+- 真实玩法：兼容、核心、中继和 11 条玩法主线的 Direct/Relay 组合共 25 个 `outcome.json`，25/25 为 `passed`；
+- legacy：140/140 完整执行，125 通过、15 个已登记失败、0 个新增失败、0 个基线测试漏跑、5 个历史失败恢复，`baselineMatched=true`、`gatePassed=true`。生物声音测试按上游“各节点本地派生”语义更新后通过，没有扩大失败允许集合。
+
+单次 `full` 调用的外层工具在进入 legacy 尾段后达到 30 分钟调用上限，因此没有生成顶层汇总；退出前已落盘的 25 个真实玩法结果全部通过。随后在同一当前二进制上独立重跑完整 legacy，并由 `Summarize-LegacyAudit.ps1` 生成通过的 schema v2 门禁结论。该独立汇总器也能在外层编排中断但 TRX 已完整落盘时恢复结果，仍严格检查新增失败、漏跑和套件完整性。
+
+上游同步还暴露了“服务端收到大幅玩家位置校正后，同帧权限请求仍读取旧插值位置”的竞态。现在大于 4 格的 discontinuity 在收包时立即落地以供同帧权威校验，普通小位移继续平滑；两项 L0 防回退测试以及 inventory-health Direct/Relay 的近距成功、远距拒绝均通过。所有上述真实游戏节点继续使用 `--headless`、`CreateNoWindow=true` 和隔离数据目录。
 
 ## 当前可重复命令
 

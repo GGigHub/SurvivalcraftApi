@@ -136,6 +136,50 @@ public sealed class ProductionPathSourceGuardTests {
 
     [Fact]
     [Trait("Layer", "L0")]
+    public void LegacyAuditCanBeResummarizedAfterOuterHarnessInterruption() {
+        string root = FindRepositoryRoot();
+        string harnessSource = File.ReadAllText(Path.Combine(
+            root,
+            "scripts",
+            "Test-Multiplayer.ps1"));
+        string summarizerSource = File.ReadAllText(Path.Combine(
+            root,
+            "scripts",
+            "Summarize-LegacyAudit.ps1"));
+
+        Assert.Contains("Summarize-LegacyAudit.ps1", harnessSource, StringComparison.Ordinal);
+        Assert.Contains("[int]$DotnetExitCode = -1", summarizerSource, StringComparison.Ordinal);
+        Assert.Contains("$executed -eq $total", summarizerSource, StringComparison.Ordinal);
+        Assert.Contains("$unexpectedFailures.Count -eq 0", summarizerSource, StringComparison.Ordinal);
+        Assert.Contains("$missingBaselineTests.Count -eq 0", summarizerSource, StringComparison.Ordinal);
+        Assert.Contains("exitCodeInferred = $DotnetExitCode -lt 0", summarizerSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void RuntimePackagingKeepsMultiplayerModInternalAndUnique() {
+        string root = FindRepositoryRoot();
+        string targetSource = File.ReadAllText(Path.Combine(
+            root,
+            "build",
+            "NetworkMod.targets"));
+        string doctorSource = File.ReadAllText(Path.Combine(
+            root,
+            "Survivalcraft.TestHost",
+            "Program.cs"));
+
+        Assert.Contains("$(OutputPath)InternalMods\\", targetSource, StringComparison.Ordinal);
+        Assert.Contains("LegacyNetworkModDestinationFile", targetSource, StringComparison.Ordinal);
+        Assert.Contains("<Delete Files=\"$(LegacyNetworkModDestinationFile)\"", targetSource, StringComparison.Ordinal);
+        Assert.Contains(
+            "Path.Combine(\"InternalMods\", \"Survivalcraft.Multiplayer.scmod\")",
+            doctorSource,
+            StringComparison.Ordinal);
+        Assert.Contains("Multiplayer mod is duplicated in Mods and InternalMods", doctorSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void PeriodicPlayerBodySyncRemainsSelfHealingAfterReorderOrLoss() {
         string root = FindRepositoryRoot();
         string source = File.ReadAllText(Path.Combine(

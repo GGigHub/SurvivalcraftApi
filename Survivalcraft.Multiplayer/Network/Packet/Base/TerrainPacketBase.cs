@@ -6,6 +6,8 @@ using Engine;
 namespace Game.Network;
 
 public abstract class TerrainPacketBase : Packet {
+    public override byte Channel => NetworkChannels.Terrain;
+
     public class TerrainChunkSyncData {
         public Point2 Coords;
         public long Revision;
@@ -240,6 +242,11 @@ public abstract class TerrainPacketBase : Packet {
             updateModificationCounter: true,
             movingBlock: null,
             fromNetwork: true);
+        NetworkDigConfirmationRuntime.ObserveClientTerrainChange(
+            change.X,
+            change.Y,
+            change.Z,
+            change.Value);
     }
 
     private static void WriteChunk(PacketSerializer archive, TerrainChunk chunk) {

@@ -11,6 +11,10 @@ namespace Game {
         public override int[] HandledBlocks => [158];
 
         public override bool OnUse(Ray3 ray, ComponentMiner componentMiner) {
+            if (NetworkManager.IsClientRunning) {
+                return true;
+            }
+
             BodyRaycastResult? bodyRaycastResult = componentMiner.Raycast<BodyRaycastResult>(ray, RaycastMode.Interaction);
             if (bodyRaycastResult.HasValue) {
                 ComponentHealth componentHealth = bodyRaycastResult.Value.ComponentBody.Entity.FindComponent<ComponentHealth>();

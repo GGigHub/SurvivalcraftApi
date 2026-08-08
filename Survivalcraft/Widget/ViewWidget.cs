@@ -67,8 +67,9 @@ namespace Game {
                 int removeCount = MathUtils.Min(inventory.GetSlotCount(slotIndex), count);
                 int num = inventory.RemoveSlotItems(slotIndex, removeCount);
                 if (num > 0) {
-                    Vector3 velocity = Vector3.Normalize(hitPosition - GameWidget.ActiveCamera.ViewPosition) * 12f;
-                    subsystemPickables.AddPickable(slotValue, num, GameWidget.ActiveCamera.ViewPosition, velocity, null, componentPlayer.Entity);
+                    Vector3 position = PlayerItemUsePosition.Calculate(componentPlayer.ComponentBody, 0f, 0f, 0.25f);
+                    Vector3 velocity = Vector3.Normalize(hitPosition) * 12f;
+                    subsystemPickables.AddPickable(slotValue, num, position, velocity, null, componentPlayer.Entity);
                 }
             }
         }
@@ -88,7 +89,10 @@ namespace Game {
                     MathUtils.Min(inventoryDragData.Inventory.GetSlotCount(inventoryDragData.SlotIndex), 1);
 
                 Vector2 screenPos = dragWidget.WidgetToScreen(dragWidget.ActualSize / 2f);
-                Vector3 worldPos = Vector3.Normalize(GameWidget.ActiveCamera.ScreenToWorld(new Vector3(screenPos.X, screenPos.Y, 1f), Matrix.Identity));
+                Vector3 worldPos = Vector3.Normalize(
+                    GameWidget.ActiveCamera.ScreenToWorld(new Vector3(screenPos.X, screenPos.Y, 1f), Matrix.Identity)
+                    - GameWidget.ActiveCamera.ViewPosition
+                ) * 12f;
                 if (inventoryDragData != null && GameManager.Project != null) {
                     DragDrop(worldPos, inventoryDragData, count);
                 }

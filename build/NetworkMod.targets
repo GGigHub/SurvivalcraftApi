@@ -2,12 +2,22 @@
   <PropertyGroup>
     <NetworkModProject Condition="'$(NetworkModProject)' == ''">$(MSBuildThisFileDirectory)..\Survivalcraft.Multiplayer\Survivalcraft.Multiplayer.csproj</NetworkModProject>
     <NetworkModPackagePath Condition="'$(NetworkModPackagePath)' == ''">$(MSBuildThisFileDirectory)..\Survivalcraft.Multiplayer\bin\$(Configuration)\net10.0-windows\win-x64\scmod\Survivalcraft.Multiplayer.scmod</NetworkModPackagePath>
+    <NetworkModPackageName Condition="'$(NetworkModPackageName)' == ''">Survivalcraft.Multiplayer.scmod</NetworkModPackageName>
+    <NetworkModDestinationDirectory Condition="'$(NetworkModDestinationDirectory)' == '' and '$(OutputPath)' != ''">$(OutputPath)InternalMods\</NetworkModDestinationDirectory>
+    <NetworkModDestinationFile Condition="'$(NetworkModDestinationFile)' == '' and '$(NetworkModDestinationDirectory)' != ''">$(NetworkModDestinationDirectory)$(NetworkModPackageName)</NetworkModDestinationFile>
+    <LegacyNetworkModDestinationFile Condition="'$(LegacyNetworkModDestinationFile)' == '' and '$(OutputPath)' != ''">$(OutputPath)Mods\$(NetworkModPackageName)</LegacyNetworkModDestinationFile>
   </PropertyGroup>
 
-  <Target Name="PackageAndCopyNetworkMod" AfterTargets="Build" Condition="'$(SkipNetworkModPackage)' != 'true'">
+  <Target Name="PackageAndCopyNetworkMod" BeforeTargets="_ComputeAndroidAssetsPaths" AfterTargets="Build" Condition="'$(SkipNetworkModPackage)' != 'true'">
+    <PropertyGroup>
+      <NetworkModDestinationDirectory Condition="'$(NetworkModDestinationDirectory)' == ''">$(TargetDir)InternalMods\</NetworkModDestinationDirectory>
+      <NetworkModDestinationFile Condition="'$(NetworkModDestinationFile)' == ''">$(NetworkModDestinationDirectory)$(NetworkModPackageName)</NetworkModDestinationFile>
+      <LegacyNetworkModDestinationFile Condition="'$(LegacyNetworkModDestinationFile)' == ''">$(TargetDir)Mods\$(NetworkModPackageName)</LegacyNetworkModDestinationFile>
+    </PropertyGroup>
     <MSBuild Projects="$(NetworkModProject)" Targets="Build" Properties="Configuration=$(Configuration);GenerateModPackage=true" BuildInParallel="false" />
-    <MakeDir Directories="$(OutputPath)Mods\" />
-    <Copy SourceFiles="$(NetworkModPackagePath)" DestinationFolder="$(OutputPath)Mods\" />
-    <Message Importance="high" Text="Copied Network mod to $(OutputPath)Mods\Survivalcraft.Multiplayer.scmod" />
+    <Delete Files="$(LegacyNetworkModDestinationFile)" Condition="'$(LegacyNetworkModDestinationFile)' != '' and Exists('$(LegacyNetworkModDestinationFile)')" />
+    <MakeDir Directories="$(NetworkModDestinationDirectory)" />
+    <Copy SourceFiles="$(NetworkModPackagePath)" DestinationFiles="$(NetworkModDestinationFile)" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Copied Network mod to $(NetworkModDestinationFile)" />
   </Target>
 </Project>

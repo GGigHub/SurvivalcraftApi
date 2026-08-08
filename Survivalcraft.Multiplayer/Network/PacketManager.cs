@@ -10,6 +10,8 @@ public abstract class Packet {
     public abstract void Handle(bool isServer);
     public abstract void Serialize(PacketSerializer archive);
 
+    public virtual byte Channel => NetworkChannels.Default;
+
     public ClientSession From { get; set; } = null;
     public ClientSession To { get; set; } = null;
     public ClientSession Except { get; set; } = null;
@@ -27,10 +29,10 @@ public enum PacketType : byte {
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
-    ApplyImpulse = 34, BodyCollision = 35,
+    BodyCollision = 35,
     BehaviorLookAround = 54, BehaviorStubbornSteed = 55,
     BehaviorChase = 56, BehaviorRandomPeck = 57, BehaviorRandomFeed = 58, BehaviorEatPickable = 59,
-    BehaviorHumanRow = 60, BehaviorCreatureSound = 61, BehaviorDigInMud = 62, BehaviorFishOutOfWater = 63,
+    BehaviorHumanRow = 60, BehaviorDigInMud = 62, BehaviorFishOutOfWater = 63,
     EntityOnFire = 68, BehaviorSync = 112,
 
     // Health
@@ -58,21 +60,22 @@ public enum PacketType : byte {
     Sickness = 9, Flu = 10, Projectile = 11,
     OpenInventoryByID = 15, OpenInventoryByPoint = 16, CrossbowPull = 17,
     SleepRequest = 19, SleepStatus = 20, WakeupRequest = 21, WakeupStatus = 22,
-    ExplosionSound = 23, ExplosionCell = 24,
+    Explosion = 23,
     FireBlockAdd = 69, FireBlockRemove = 70,
 
     // Player
     PlayerCreate = 41, PlayerModify = 42, PlayerDelete = 43, PlayerAdd = 44, PlayerKnown = 45,
-    ServerCloseTime = 47, PlayerBugle = 48, PlayerCount = 49,
+    PlayerBugle = 48,
     PlayerNoMsgAdd = 50, PlayerNoMsgRemove = 51,
     PlayerBodyUpdate = 71, PlayerInteract = 72, PlayerAim = 73, PlayerDig = 74, PlayerHit = 75,
     PlayerCreativeFly = 76, PlayerIntoPlaying = 77, PlayerRestart = 78, PlayerAddExperience = 79,
     PlayerDragDrop = 80, PlayerStatSync = 81, PlayerPositionSet = 82, PlayerDrop = 107,
     PlayerEntityRequest = 117,
+    FurnitureHammer = 120, PlayerDigRequest = 121, PlayerDigConfirmation = 122,
 
     // Terrain
     Time = 4, Sky = 5,
-    Weather = 6, Season = 14,
+    Weather = 6,
     TerrainSyncChunkList = 102,
     TerrainViewDistance = 103,
     TerrainChangeCell = 104, TerrainChangeCellList = 105,
@@ -105,7 +108,6 @@ public static class PacketManager {
         RegisterPacket<BehaviorSyncPacket>();
         RegisterPacket<BodyCollisionPacket>();
         RegisterPacket<ChaseBehaviorPacket>();
-        RegisterPacket<CreatureSoundPacket>();
         RegisterPacket<DigInMudBehaviorPacket>();
         RegisterPacket<EatPickableBehaviorPacket>();
         RegisterPacket<EntityLoadPacket>();
@@ -144,6 +146,7 @@ public static class PacketManager {
         RegisterPacket<PickableSetFlyToPositionPacket>();
         RegisterPacket<PickableSyncListPacket>();
         RegisterPacket<PickableUpdatePacket>();
+        RegisterPacket<FurnitureHammerPacket>();
         RegisterPacket<ReplySkinPacket>();
         RegisterPacket<RequestSkinPacket>();
         RegisterPacket<SetSlotItemPacket>();
@@ -170,8 +173,7 @@ public static class PacketManager {
         RegisterPacket<ComponentSicknessPacket>();
         RegisterPacket<CrossbowPullPacket>();
         RegisterPacket<EntityOnFirePacket>();
-        RegisterPacket<ExplosionCellPacket>();
-        RegisterPacket<ExplosionSoundPacket>();
+        RegisterPacket<ExplosionPacket>();
         RegisterPacket<FireBlockAddPacket>();
         RegisterPacket<FireBlockRemovePacket>();
         RegisterPacket<ProjectilePacket>();
@@ -190,6 +192,8 @@ public static class PacketManager {
         RegisterPacket<PlayerCreativeFlyPacket>();
         RegisterPacket<PlayerDeletePacket>();
         RegisterPacket<PlayerDigPacket>();
+        RegisterPacket<PlayerDigRequestPacket>();
+        RegisterPacket<PlayerDigConfirmationPacket>();
         RegisterPacket<PlayerDropPacket>();
         RegisterPacket<PlayerEntityRequestPacket>();
         RegisterPacket<PlayerDragDropPacket>();

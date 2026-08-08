@@ -46,6 +46,9 @@ public class MovingBlockAddPacket : Packet {
         SubsystemMovingBlocks.MovingBlockSet movingSet,
         bool baseline) {
         ArgumentNullException.ThrowIfNull(movingSet);
+        if (GameManager.Project == null) {
+            return;
+        }
         m_addPosition = movingSet.Position;
         m_addTargetPosition = movingSet.TargetPosition;
         m_addSpeed = movingSet.Speed;

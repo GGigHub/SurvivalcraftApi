@@ -47,7 +47,7 @@ public sealed class TerrainInteractionMultiplayerScenarioException : Exception {
 
 public sealed class TerrainInteractionMultiplayerScenario {
     public const string ScenarioName = "terrain-interaction-multiplayer";
-    public const int ScenarioVersion = 2;
+    public const int ScenarioVersion = 3;
 
     private static readonly string[] NodeRoles = [
         "server",
@@ -95,12 +95,15 @@ public sealed class TerrainInteractionMultiplayerScenario {
         new("disconnect-actor", ControlCommandNames.Disconnect),
         new("reconnect-actor", "network.connect(client-a)"),
         new("verify-reconnected-state", ControlCommandNames.GetSnapshotV2),
+        new("enable-dig-recovery-fault", ControlCommandNames.SetNetworkFaults),
         new("prepare-dig-fixture", ControlCommandNames.PrepareTerrainInteractionFixture),
         new("apply-dig-fixture", ControlCommandNames.ApplyTerrainInteractionFixture),
         new("verify-dig-baseline", ControlCommandNames.GetSnapshotV2),
         new("execute-dig", ControlCommandNames.PlayerDig),
         new("verify-dig-convergence", ControlCommandNames.GetSnapshotV2),
         new("verify-dig-events", ControlCommandNames.GetEvents),
+        new("verify-dig-recovery-traffic", ControlCommandNames.GetSnapshotV2),
+        new("disable-dig-recovery-fault", ControlCommandNames.SetNetworkFaults),
         new("capture-pre-save-state", ControlCommandNames.GetSnapshotV2),
         new("save-and-stop-world", ControlCommandNames.SaveWorld),
         new("reload-saved-world", ControlCommandNames.ReloadWorld),
@@ -449,6 +452,24 @@ public sealed class TerrainInteractionMultiplayerScenario {
                 allNodes.Select(node => node.Role).ToArray(),
                 $"cells={expectedTerrain.Count}; uniquePlayerIndexes=true; playerIndex={actorPlayerIndex}"));
 
+            NetworkFaultProfile digRecoveryFault = new(
+                Seed: unchecked(faultProfile.Seed + 701),
+                LossRate: 1,
+                TargetPacketTypes: ["PlayerDigPacket"]);
+            await runner.RunAsync(
+                "enable-dig-recovery-fault",
+                ControlCommandNames.SetNetworkFaults,
+                async token => {
+                    NetworkFaultState state = await actorClient.SendAsync<
+                        SetNetworkFaultsCommand,
+                        NetworkFaultState>(
+                        ControlCommandNames.SetNetworkFaults,
+                        new SetNetworkFaultsCommand(digRecoveryFault),
+                        cancellationToken: token).ConfigureAwait(false);
+                    VerifyFaultProfile(state.Profile, digRecoveryFault, actorClient.Role);
+                },
+                scenarioToken).ConfigureAwait(false);
+
             TerrainInteractionFixture digFixture = await RunInteractionAsync(
                 cluster,
                 allNodes,
@@ -464,6 +485,46 @@ public sealed class TerrainInteractionMultiplayerScenario {
                 observedCells,
                 scenarioToken).ConfigureAwait(false);
             expectedTerrain[digFixture.ExpectedCell] = digFixture.ExpectedValue;
+
+            DigRecoveryEvidence digRecoveryEvidence = await runner.RunAsync(
+                "verify-dig-recovery-traffic",
+                ControlCommandNames.GetSnapshotV2,
+                token => WaitForDigRecoveryEvidenceAsync(
+                    actorClient,
+                    cluster.Server,
+                    stepTimeout,
+                    token),
+                evidence => $"dropped={evidence.Dropped}; requests={evidence.Requests}; confirmations={evidence.Confirmations}",
+                scenarioToken).ConfigureAwait(false);
+            snapshots["client-a-dig-recovery"] = digRecoveryEvidence.Actor;
+            snapshots["server-dig-recovery"] = digRecoveryEvidence.Server;
+            (long dropped, long requests, long confirmations) = (
+                digRecoveryEvidence.Dropped,
+                digRecoveryEvidence.Requests,
+                digRecoveryEvidence.Confirmations);
+            metrics["digRecovery.droppedPlayerDigPackets"] = dropped.ToString(CultureInfo.InvariantCulture);
+            metrics["digRecovery.requests"] = requests.ToString(CultureInfo.InvariantCulture);
+            metrics["digRecovery.confirmations"] = confirmations.ToString(CultureInfo.InvariantCulture);
+            assertions.Add(new ScenarioAssertionRecordV2(
+                "dig-confirmation-recovery-after-lost-player-dig",
+                "passed",
+                ["client-a", "server"],
+                $"dropped={dropped}; requests={requests}; confirmations={confirmations}"));
+
+            await runner.RunAsync(
+                "disable-dig-recovery-fault",
+                ControlCommandNames.SetNetworkFaults,
+                async token => {
+                    NetworkFaultProfile disabled = new(Seed: unchecked(digRecoveryFault.Seed + 1));
+                    NetworkFaultState state = await actorClient.SendAsync<
+                        SetNetworkFaultsCommand,
+                        NetworkFaultState>(
+                        ControlCommandNames.SetNetworkFaults,
+                        new SetNetworkFaultsCommand(disabled),
+                        cancellationToken: token).ConfigureAwait(false);
+                    VerifyFaultProfile(state.Profile, disabled, actorClient.Role);
+                },
+                scenarioToken).ConfigureAwait(false);
 
             StateSnapshotV2 preSaveSnapshot = await runner.RunAsync(
                 "capture-pre-save-state",
@@ -970,6 +1031,79 @@ public sealed class TerrainInteractionMultiplayerScenario {
             }
         }
         return duplicatedByRole.Values.Sum();
+    }
+
+    private sealed record DigRecoveryEvidence(
+        StateSnapshotV2 Actor,
+        StateSnapshotV2 Server,
+        long Dropped,
+        long Requests,
+        long Confirmations);
+
+    private static async Task<DigRecoveryEvidence> WaitForDigRecoveryEvidenceAsync(
+        GameNodeProcess actor,
+        GameNodeProcess server,
+        TimeSpan timeout,
+        CancellationToken cancellationToken) {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        StateSnapshotV2? lastActor = null;
+        StateSnapshotV2? lastServer = null;
+        long dropped = 0;
+        long queuedDig = 0;
+        long requests = 0;
+        long confirmations = 0;
+        while (DateTimeOffset.UtcNow < deadline) {
+            cancellationToken.ThrowIfCancellationRequested();
+            StateSnapshotV2[] captured = await Task.WhenAll(
+                CaptureNetworkSnapshotAsync(actor, cancellationToken),
+                CaptureNetworkSnapshotAsync(server, cancellationToken)).ConfigureAwait(false);
+            lastActor = captured[0];
+            lastServer = captured[1];
+            dropped = lastActor.Network?.FaultDropped ?? 0;
+            queuedDig = lastActor.Network?.QueuedPacketsByType
+                ?.GetValueOrDefault("PlayerDigPacket") ?? 0;
+            requests = lastActor.Network?.QueuedPacketsByType
+                ?.GetValueOrDefault("PlayerDigRequestPacket") ?? 0;
+            confirmations = lastServer.Network?.QueuedPacketsByType
+                ?.GetValueOrDefault("PlayerDigConfirmationPacket") ?? 0;
+            if (dropped > 0 && queuedDig > 0 && requests > 0 && confirmations > 0) {
+                return new DigRecoveryEvidence(
+                    lastActor,
+                    lastServer,
+                    dropped,
+                    requests,
+                    confirmations);
+            }
+            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        throw new TimeoutException(
+            "The lost dig did not expose the complete recovery packet chain before timeout. "
+            + $"Dropped={dropped}; queuedDig={queuedDig}; requests={requests}; "
+            + $"confirmations={confirmations}; actorSnapshot={lastActor != null}; "
+            + $"serverSnapshot={lastServer != null}.");
+    }
+
+    private static Task<StateSnapshotV2> CaptureNetworkSnapshotAsync(
+        GameNodeProcess node,
+        CancellationToken cancellationToken) =>
+        node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+            ControlCommandNames.GetSnapshotV2,
+            new GetSnapshotV2Command([SnapshotDomain.Network]),
+            cancellationToken: cancellationToken);
+
+    private static void VerifyFaultProfile(
+        NetworkFaultProfile actual,
+        NetworkFaultProfile expected,
+        string role) {
+        string[] actualTargets = actual.TargetPacketTypes ?? [];
+        string[] expectedTargets = expected.TargetPacketTypes ?? [];
+        if (actual with { TargetPacketTypes = null }
+                != expected with { TargetPacketTypes = null }
+            || !actualTargets.SequenceEqual(expectedTargets, StringComparer.Ordinal)) {
+            throw new InvalidOperationException(
+                $"Node '{role}' did not apply its deterministic targeted fault profile.");
+        }
     }
 
     private static async Task<Dictionary<string, StateSnapshotV2>> WaitForTerrainOnAllAsync(

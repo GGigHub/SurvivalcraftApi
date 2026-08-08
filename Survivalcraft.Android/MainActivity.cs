@@ -10,9 +10,7 @@ using Android.Views.Animations;
 using Android.Widget;
 using Android.Window;
 using Engine;
-using System;
-using System.Collections.Generic;
-using System.Threading;
+using Game;
 using Environment = Android.OS.Environment;
 using Permission = Android.Content.PM.Permission;
 using Resource = _Microsoft.Android.Resource.Designer.Resource;
@@ -48,6 +46,8 @@ namespace SC4Android {
     public class MainActivity : EngineActivity {
         public static bool GraterThanAndroid11 { get; } = Build.VERSION.SdkInt >= BuildVersionCodes.R;
         public static bool GraterThanAndroid6 { get; } = Build.VERSION.SdkInt >= BuildVersionCodes.M;
+
+        public static Dictionary<string, string> m_startupParameters;
 
         public static bool CheckAndRequestPermission(Activity activity) {
             bool arePermissionsGranted = true;
@@ -93,29 +93,23 @@ namespace SC4Android {
         }
 
         protected override void OnRun() {
-            try {
-                base.OnRun();
-                if (CheckAndRequestPermission(this)) {
-                    RunRequired = true;
-                }
-                else {
-                    while (true) {
-                        Thread.Sleep(100);
-                        if (RunRequired) {
-                            break;
-                        }
-                        RunRequired = IsPermissionGranted(this);
-                        if (RunRequired) {
-                            break;
-                        }
+            base.OnRun();
+            if (CheckAndRequestPermission(this)) {
+                RunRequired = true;
+            }
+            else {
+                while (true) {
+                    Thread.Sleep(100);
+                    if (RunRequired) {
+                        break;
+                    }
+                    RunRequired = IsPermissionGranted(this);
+                    if (RunRequired) {
+                        break;
                     }
                 }
-                AndroidGameLauncher.Run();
             }
-            catch (Exception ex) {
-                AndroidGameLauncher.Trace(ex.ToString());
-                throw;
-            }
+            Program.EntryPoint();
         }
 
         static bool RunRequired { get; set; }
@@ -135,10 +129,6 @@ namespace SC4Android {
             }
         }
 
-        protected override void OnDestroy() {
-            base.OnDestroy();
-        }
-
         protected override void OnCreate(Bundle savedInstanceState) {
             base.OnCreate(savedInstanceState);
             Window?.DecorView.ViewTreeObserver?.AddOnPreDrawListener(new ViewTreeObserverListener());
@@ -147,18 +137,18 @@ namespace SC4Android {
             }
             ICollection<string> keySet = Intent?.Extras?.KeySet();
             if (keySet != null && keySet.Count > 0) {
-                StartupParameters = new Dictionary<string, string>(keySet.Count);
+                m_startupParameters = new Dictionary<string, string>(keySet.Count);
                 foreach (string key in keySet) {
                     string value = Intent?.Extras?.GetString(key);
                     if (value != null) {
-                        StartupParameters.Add(key, value);
+                        m_startupParameters.Add(key, value);
                     }
                 }
             }
         }
 
         public class ViewTreeObserverListener : Java.Lang.Object, ViewTreeObserver.IOnPreDrawListener {
-            public bool OnPreDraw() => AndroidGameLauncher.IsFirstFramePrepared;
+            public bool OnPreDraw() => Program.m_firstFramePrepared;
         }
 
         public class SplashScreenOnExitAnimationListener : Java.Lang.Object, ISplashScreenOnExitAnimationListener {

@@ -164,26 +164,21 @@ public sealed class EnvironmentMechanicsPacketCodecTest {
     [Fact]
     [Trait("Layer", "L0")]
     public void ExplosionAndWorldFirePacketsPreserveCorrelatedLifecycleState() {
-        ExplosionCellPacket sourceCells = new() {
+        ExplosionPacket sourceExplosion = new() {
             m_eventId = 4_294_967_801L,
             m_chunkIndex = 1,
-            m_chunkCount = 3
+            m_chunkCount = 3,
+            m_position = new Vector3(17.5f, 64.5f, -2.5f),
+            m_pressure = 24_000f,
+            m_playExplosionSound = true
         };
-        sourceCells.m_cells.Add(new ExplosionCellPacket.CellData {
+        sourceExplosion.m_cells.Add(new ExplosionPacket.CellData {
             Point = new Point3(17, 64, -3),
             Intensity = 0.75f
         });
-        ExplosionCellPacket cells = RoundTrip(
-            sourceCells,
-            static () => new ExplosionCellPacket());
-        ExplosionSoundPacket sound = RoundTrip(
-            new ExplosionSoundPacket {
-                m_eventId = 4_294_967_801L,
-                m_position = new Vector3(17.5f, 64.5f, -2.5f),
-                m_level = 24_000f,
-                m_delay = 0.125f
-            },
-            static () => new ExplosionSoundPacket());
+        ExplosionPacket explosion = RoundTrip(
+            sourceExplosion,
+            static () => new ExplosionPacket());
         FireBlockAddPacket add = RoundTrip(
             new FireBlockAddPacket {
                 x = 18,
@@ -203,15 +198,15 @@ public sealed class EnvironmentMechanicsPacketCodecTest {
             },
             static () => new FireBlockRemovePacket());
 
-        ExplosionCellPacket.CellData cell = Assert.Single(cells.m_cells);
+        ExplosionPacket.CellData cell = Assert.Single(explosion.m_cells);
         Assert.Equal((4_294_967_801L, 1, 3),
-            (cells.m_eventId, cells.m_chunkIndex, cells.m_chunkCount));
+            (explosion.m_eventId, explosion.m_chunkIndex, explosion.m_chunkCount));
         Assert.Equal(new Point3(17, 64, -3), cell.Point);
         Assert.Equal(0.75f, cell.Intensity);
-        Assert.True(cells.IsValidState());
-        Assert.Equal((4_294_967_801L, 24_000f, 0.125f),
-            (sound.m_eventId, sound.m_level, sound.m_delay));
-        Assert.True(sound.IsValidState());
+        Assert.Equal((new Vector3(17.5f, 64.5f, -2.5f), 24_000f, true),
+            (explosion.m_position, explosion.m_pressure,
+                explosion.m_playExplosionSound));
+        Assert.True(explosion.IsValidState());
         Assert.Equal((18, 65, -3, 0.85f, 4_294_967_802L, true),
             (add.x, add.y, add.z, add.m_expandability, add.m_revision,
                 add.m_forceRefresh));
@@ -225,20 +220,24 @@ public sealed class EnvironmentMechanicsPacketCodecTest {
     [Trait("Layer", "L0")]
     public void ExplosionChunkingIsBoundedAndDeterministic() {
         Dictionary<Point2, List<(Point3, float)>> cells = new() {
-            [new Point2(0, 0)] = Enumerable.Range(0, ExplosionCellPacket.MaximumCellsPerChunk + 1)
+            [new Point2(0, 0)] = Enumerable.Range(0, ExplosionPacket.MaximumCellsPerChunk + 1)
                 .Select(index => (new Point3(index % 16, 64 + index / 256, index / 16), 0.5f))
                 .ToList()
         };
 
-        IReadOnlyList<ExplosionCellPacket> packets =
-            ExplosionCellPacket.CreateChunks(cells, 71);
+        Vector3 position = new(0.5f, 64.5f, 0.5f);
+        IReadOnlyList<ExplosionPacket> packets =
+            ExplosionPacket.CreateChunks(cells, 71, position, 80f, true);
 
         Assert.Equal(2, packets.Count);
-        Assert.Equal(ExplosionCellPacket.MaximumCellsPerChunk, packets[0].m_cells.Count);
+        Assert.Equal(ExplosionPacket.MaximumCellsPerChunk, packets[0].m_cells.Count);
         Assert.Single(packets[1].m_cells);
         Assert.All(packets, packet => {
             Assert.Equal(71, packet.m_eventId);
             Assert.Equal(2, packet.m_chunkCount);
+            Assert.Equal(position, packet.m_position);
+            Assert.Equal(80f, packet.m_pressure);
+            Assert.True(packet.m_playExplosionSound);
             Assert.True(packet.IsValidState());
         });
     }
@@ -264,7 +263,7 @@ public sealed class EnvironmentMechanicsPacketCodecTest {
         Assert.False(window.TryAcceptCells(
             6,
             0,
-            ExplosionCellPacket.MaximumChunksPerEvent + 1,
+            ExplosionPacket.MaximumChunksPerEvent + 1,
             1));
         Assert.Equal(2, window.AcceptedEvents);
 

@@ -5,6 +5,10 @@ namespace Game.Network;
 public class PickableCreatePacket : Packet {
     public override byte ID => (byte)PacketType.PickableCreate;
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
+
+    public override byte Channel => Terrain.ExtractContents(m_pickable.Value) == 227
+        ? NetworkChannels.Terrain
+        : NetworkChannels.Default;
     public Pickable m_pickable = new();
     public long m_revision;
 

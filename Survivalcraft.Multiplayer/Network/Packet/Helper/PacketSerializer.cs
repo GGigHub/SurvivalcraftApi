@@ -215,7 +215,6 @@ public sealed class PacketSerializer {
             }
         }
     }
-
     public void Value(ref Matrix? value) {
         if (IsWriting) {
             m_writer.Write(value.HasValue);

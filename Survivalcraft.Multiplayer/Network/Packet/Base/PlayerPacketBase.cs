@@ -39,12 +39,23 @@ public abstract class PlayerPacketBase : Packet {
             return false;
         }
         double time = GameManager.Project.FindSubsystem<SubsystemTime>().GameTime;
-        int pIndex = playerData.PlayerIndex;
-        if (s_lastHitTimes.TryGetValue(pIndex, out double last) && time - last < ServerHitCooldown) {
+        int playerIndex = playerData.PlayerIndex;
+        if (s_lastHitTimes.TryGetValue(playerIndex, out double last)
+            && time - last < ServerHitCooldown) {
             return true;
         }
-        s_lastHitTimes[pIndex] = time;
+        s_lastHitTimes[playerIndex] = time;
         return false;
+    }
+
+    public static void ClearHitThrottleState(int playerIndex) {
+        if (playerIndex >= 0) {
+            s_lastHitTimes.Remove(playerIndex);
+        }
+    }
+
+    public static void ClearHitThrottleState() {
+        s_lastHitTimes.Clear();
     }
 
     public static void QueuePlayerPacket(Packet packet, bool isServer) {

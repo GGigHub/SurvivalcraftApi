@@ -27,6 +27,7 @@ public sealed class RelayHost : INetEventListener {
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
+            ChannelsCount = NetworkChannels.Count,
         };
 
         if (!_netManager.Start()) {
@@ -93,7 +94,7 @@ public sealed class RelayHost : INetEventListener {
                 NetPeer relayPeer = _relayPeer;
                 NetworkFaultInjector.Send(
                     frame,
-                    data => relayPeer.Send(data, DeliveryMethod.ReliableOrdered),
+                    data => relayPeer.Send(data, packet.Channel, DeliveryMethod.ReliableOrdered),
                     packet.GetType().Name);
             }
         }
@@ -252,8 +253,12 @@ public sealed class RelayHost : INetEventListener {
         if (session == null || session.NetworkState == NetworkState.NotConnected) {
             return;
         }
+        int playerIndex = session.PlayerIndex;
         GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
         PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
+        NetworkDigConfirmationRuntime.ClearServerSession(playerIndex);
+        FurnitureHammerPacket.ClearPlayerState(playerIndex);
+        PlayerPacketBase.ClearHitThrottleState(playerIndex);
         ModNetworkManager.ClearSession(session);
         session.DisconnectedUtc = DateTime.UtcNow;
         session.DisconnectReason = reason ?? string.Empty;

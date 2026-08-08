@@ -682,24 +682,22 @@ public partial class TestAutomationModLoader {
                 "Client-side AddExplosion entered the authoritative simulation queue.");
         }
 
-        ExplosionCellPacket cells = new() {
+        ExplosionPacket forged = new() {
             m_eventId = command.ForgedEventId,
             m_chunkIndex = 0,
-            m_chunkCount = 1
-        };
-        cells.m_cells.Add(new ExplosionCellPacket.CellData {
-            Point = ToPoint(command.Cell),
-            Intensity = 0.5f
-        });
-        QueueFaultInjection(cells);
-        QueueFaultInjection(new ExplosionSoundPacket(
-            command.ForgedEventId,
-            new Vector3(
+            m_chunkCount = 1,
+            m_position = new Vector3(
                 command.Cell.X + 0.5f,
                 command.Cell.Y + 0.5f,
                 command.Cell.Z + 0.5f),
-            command.Pressure,
-            0f));
+            m_pressure = command.Pressure,
+            m_playExplosionSound = true
+        };
+        forged.m_cells.Add(new ExplosionPacket.CellData {
+            Point = ToPoint(command.Cell),
+            Intensity = 0.5f
+        });
+        QueueFaultInjection(forged);
         RecordMechanicsAction(
             context.RequestId,
             "explosionAuthority",

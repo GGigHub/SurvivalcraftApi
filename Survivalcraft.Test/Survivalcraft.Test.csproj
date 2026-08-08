@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Survivalcraft.Windows\Survivalcraft.Windows.csproj">
-      <AdditionalProperties>SkipNetworkModPackage=true</AdditionalProperties>
+      <AdditionalProperties>SkipNetworkModPackage=true;SkipContentZip=true</AdditionalProperties>
     </ProjectReference>
     <ProjectReference Include="..\Survivalcraft.Multiplayer\Survivalcraft.Multiplayer.csproj" />
     <ProjectReference Include="..\Survivalcraft.Testing\Survivalcraft.Testing.csproj" />

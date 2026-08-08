@@ -7,8 +7,8 @@ namespace Survivalcraft.Testing.Tests;
 public sealed class NetworkCompatibilityTests {
     [Fact]
     [Trait("Layer", "L0")]
-    public void ProtocolRevisionIncludesExplosionAndWorldFireLifecycle() {
-        Assert.Equal(11, NetworkCompatibility.ProtocolRevision);
+    public void ProtocolRevisionIncludesConsolidatedExplosionAndWorldFireLifecycle() {
+        Assert.Equal(12, NetworkCompatibility.ProtocolRevision);
     }
 
     [Fact]

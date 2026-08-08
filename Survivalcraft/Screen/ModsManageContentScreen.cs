@@ -15,6 +15,42 @@ public class ModsManageContentScreen : Screen {
     public int m_fixedModsCount;
     public bool m_needRestart;
 
+    public static bool IsFixedMod(ModEntity entity) => entity.IsSystemMod
+        || entity is SurvivalCraftModEntity
+        || entity is FastDebugModEntity;
+
+    public static int GetVisibleListIndex(ModEntity entity) {
+        int visibleIndex = 0;
+        foreach (ModEntity modEntity in ModsManager.ModListAll) {
+            if (modEntity.IsSystemMod) {
+                continue;
+            }
+            if (ReferenceEquals(modEntity, entity)) {
+                return visibleIndex;
+            }
+            visibleIndex++;
+        }
+        return -1;
+    }
+
+    public static int FindPreviousVisibleIndex(int index) {
+        for (int i = index - 1; i >= 0; i--) {
+            if (!ModsManager.ModListAll[i].IsSystemMod) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static int FindNextVisibleIndex(int index) {
+        for (int i = index + 1; i < ModsManager.ModListAll.Count; i++) {
+            if (!ModsManager.ModListAll[i].IsSystemMod) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public static bool IsOldApiVersionMod(ModEntity modEntity, out string description) {
         ModInfo modInfo = modEntity.modInfo;
         if (modInfo == null || string.IsNullOrEmpty(modInfo.ApiVersion)) {
@@ -55,7 +91,7 @@ public class ModsManageContentScreen : Screen {
     }
 
     public ModsManageContentScreen() {
-        m_fixedModsCount = ModsManager.ModListAll.IndexOf(ModsManager.FastDebugModEntity) == 1 ? 2 : 1;
+        m_fixedModsCount = ModsManager.ModListAll.TakeWhile(IsFixedMod).Count();
         XElement node = ContentManager.Get<XElement>("Screens/ModsManageContentScreen");
         LoadContents(this, node);
         m_modsContentList = Children.Find<ListPanelWidget>("ModsContentList");
@@ -107,9 +143,10 @@ public class ModsManageContentScreen : Screen {
             }
             else {
                 m_viewDetailButton.IsEnabled = true;
-                m_triggerEnableButton.IsEnabled = entity.IsDisabled
-                    ? entity.DisableReason == ModDisableReason.Manually
-                    : entity.modInfo.PackageName is not "survivalcraft" and not "fastdebug";
+                m_triggerEnableButton.IsEnabled = !entity.IsSystemMod
+                    && (entity.IsDisabled
+                        ? entity.DisableReason == ModDisableReason.Manually
+                        : entity.modInfo.PackageName is not "survivalcraft" and not "fastdebug");
                 m_triggerEnableButton.Text = LanguageControl.Get(fName, GetTrigger(entity) ? "19" : "18");
                 m_openHomepageButton.IsEnabled = true;
                 UpdateMoveUpAndDownEnable(ModsManager.ModListAll.FindIndex(x => ReferenceEquals(x, entity)));
@@ -128,7 +165,7 @@ public class ModsManageContentScreen : Screen {
     }
 
     public override void Enter(object[] parameters) {
-        m_modsContentList.AddItems(ModsManager.ModListAll);
+        m_modsContentList.AddItems(ModsManager.ModListAll.Where(entity => !entity.IsSystemMod).ToList());
     }
 
     public override void Leave() {
@@ -202,6 +239,9 @@ public class ModsManageContentScreen : Screen {
     }
 
     public void TriggerEnable(ModEntity entity) {
+        if (entity.IsSystemMod) {
+            return;
+        }
         if (entity.IsDisabled) {
             if (entity.DisableReason == ModDisableReason.Manually) {
                 if (ModsManager.DisabledMods.TryGetValue(entity.modInfo!.PackageName, out HashSet<string> versions)) {
@@ -280,56 +320,78 @@ public class ModsManageContentScreen : Screen {
     public void MoveUp(ModEntity entity) {
         // ModEntity 重写了 Equals（基于包名+版本），同包名同版本的重复模组会撞键，因此必须按引用定位
         int index = ModsManager.ModListAll.FindIndex(x => ReferenceEquals(x, entity));
-        if (index <= m_fixedModsCount) {
+        if (index < 0 || IsFixedMod(entity)) {
             return;
         }
-        ModEntity upEntity = ModsManager.ModListAll[index - 1];
+        int upIndex = FindPreviousVisibleIndex(index);
+        if (upIndex < 0 || IsFixedMod(ModsManager.ModListAll[upIndex])) {
+            return;
+        }
+        ModEntity upEntity = ModsManager.ModListAll[upIndex];
         if (entity.modInfo.DependencyRanges.ContainsKey(upEntity.modInfo.PackageName)) {
             return;
         }
+        int visibleIndex = GetVisibleListIndex(entity);
+        int previousIndex = FindPreviousVisibleIndex(upIndex);
+        int nextIndex = FindNextVisibleIndex(index);
         m_needRestart = true;
-        ModsManager.ModListAll[index - 1] = entity;
+        ModsManager.ModListAll[upIndex] = entity;
         ModsManager.ModListAll[index] = upEntity;
-        entity.LoadAfter = ModsManager.ModListAll[index - 2].modInfo.PackageName;
+        entity.LoadAfter = previousIndex >= 0 ? ModsManager.ModListAll[previousIndex].modInfo.PackageName : null;
         upEntity.LoadAfter = entity.modInfo.PackageName;
-        if (index + 1 < ModsManager.ModListAll.Count) {
-            ModsManager.ModListAll[index + 1].LoadAfter = upEntity.modInfo.PackageName;
+        if (nextIndex >= 0) {
+            ModsManager.ModListAll[nextIndex].LoadAfter = upEntity.modInfo.PackageName;
         }
-        m_modsContentList.SwapItemsAt(index, index - 1);
-        UpdateMoveUpAndDownEnable(index - 1);
+        if (visibleIndex > 0) {
+            m_modsContentList.SwapItemsAt(visibleIndex - 1, visibleIndex);
+        }
+        UpdateMoveUpAndDownEnable(upIndex);
     }
 
     public void MoveDown(ModEntity entity) {
         // ModEntity 重写了 Equals（基于包名+版本），同包名同版本的重复模组会撞键，因此必须按引用定位
         int index = ModsManager.ModListAll.FindIndex(x => ReferenceEquals(x, entity));
-        if (index < m_fixedModsCount || index >= ModsManager.ModListAll.Count - 1) {
+        if (index < 0 || IsFixedMod(entity)) {
             return;
         }
-        ModEntity downEntity = ModsManager.ModListAll[index + 1];
+        int downIndex = FindNextVisibleIndex(index);
+        if (downIndex < 0 || IsFixedMod(ModsManager.ModListAll[downIndex])) {
+            return;
+        }
+        ModEntity downEntity = ModsManager.ModListAll[downIndex];
         if (entity.modInfo.DependencyRanges.ContainsKey(downEntity.modInfo.PackageName)) {
             return;
         }
+        int visibleIndex = GetVisibleListIndex(entity);
+        int previousIndex = FindPreviousVisibleIndex(index);
+        int nextIndex = FindNextVisibleIndex(downIndex);
         m_needRestart = true;
-        ModsManager.ModListAll[index + 1] = entity;
+        ModsManager.ModListAll[downIndex] = entity;
         ModsManager.ModListAll[index] = downEntity;
         entity.LoadAfter = downEntity.modInfo.PackageName;
-        downEntity.LoadAfter = ModsManager.ModListAll[index - 1].modInfo.PackageName;
-        if (index + 2 < ModsManager.ModListAll.Count) {
-            ModsManager.ModListAll[index + 2].LoadAfter = entity.modInfo.PackageName;
+        downEntity.LoadAfter = previousIndex >= 0 ? ModsManager.ModListAll[previousIndex].modInfo.PackageName : null;
+        if (nextIndex >= 0) {
+            ModsManager.ModListAll[nextIndex].LoadAfter = entity.modInfo.PackageName;
         }
-        m_modsContentList.SwapItemsAt(index, index + 1);
-        UpdateMoveUpAndDownEnable(index + 1);
+        if (visibleIndex >= 0) {
+            m_modsContentList.SwapItemsAt(visibleIndex, visibleIndex + 1);
+        }
+        UpdateMoveUpAndDownEnable(downIndex);
     }
-
     public void UpdateMoveUpAndDownEnable(int index) {
-        if (index < m_fixedModsCount) {
+        if (index < 0 || index >= ModsManager.ModListAll.Count || IsFixedMod(ModsManager.ModListAll[index])) {
             m_moveUpButton.IsEnabled = false;
             m_moveDownButton.IsEnabled = false;
+            return;
         }
-        else {
-            ModEntity entity = ModsManager.ModListAll[index];
-            m_moveUpButton.IsEnabled = index > m_fixedModsCount && !entity.modInfo.DependencyRanges.ContainsKey(ModsManager.ModListAll[index - 1].modInfo.PackageName);
-            m_moveDownButton.IsEnabled = index < ModsManager.ModListAll.Count - 1 && !ModsManager.ModListAll[index + 1].modInfo.DependencyRanges.ContainsKey(entity.modInfo.PackageName);
-        }
+        ModEntity entity = ModsManager.ModListAll[index];
+        int upIndex = FindPreviousVisibleIndex(index);
+        int downIndex = FindNextVisibleIndex(index);
+        m_moveUpButton.IsEnabled = upIndex >= 0
+            && !IsFixedMod(ModsManager.ModListAll[upIndex])
+            && !entity.modInfo.DependencyRanges.ContainsKey(ModsManager.ModListAll[upIndex].modInfo.PackageName);
+        m_moveDownButton.IsEnabled = downIndex >= 0
+            && !IsFixedMod(ModsManager.ModListAll[downIndex])
+            && !ModsManager.ModListAll[downIndex].modInfo.DependencyRanges.ContainsKey(entity.modInfo.PackageName);
     }
 }

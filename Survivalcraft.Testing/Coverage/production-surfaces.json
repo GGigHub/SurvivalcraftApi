@@ -121,13 +121,6 @@
       "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
     },
     {
-      "surfaceId": "hook:OnNetworkCreatureSound",
-      "kind": "hook",
-      "symbol": "OnNetworkCreatureSound",
-      "featureId": "entity-creature.behavior-sound",
-      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
-    },
-    {
       "surfaceId": "hook:OnNetworkCrossbowPull",
       "kind": "hook",
       "symbol": "OnNetworkCrossbowPull",
@@ -184,16 +177,9 @@
       "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
     },
     {
-      "surfaceId": "hook:OnNetworkExplosionCell",
+      "surfaceId": "hook:OnNetworkExplosion",
       "kind": "hook",
-      "symbol": "OnNetworkExplosionCell",
-      "featureId": "mechanics.explosion-world-fire",
-      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
-    },
-    {
-      "surfaceId": "hook:OnNetworkExplosionSound",
-      "kind": "hook",
-      "symbol": "OnNetworkExplosionSound",
+      "symbol": "OnNetworkExplosion",
       "featureId": "mechanics.explosion-world-fire",
       "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
     },
@@ -279,6 +265,13 @@
       "kind": "hook",
       "symbol": "OnNetworkFurnaceUpdate",
       "featureId": "inventory.furnace-container",
+      "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
+    },
+    {
+      "surfaceId": "hook:OnNetworkFurnitureHammerRequest",
+      "kind": "hook",
+      "symbol": "OnNetworkFurnitureHammerRequest",
+      "featureId": "inventory.furniture-hammer",
       "sourcePath": "Survivalcraft.Multiplayer/NetworkModLoader.cs"
     },
     {
@@ -835,13 +828,6 @@
       "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/ConnectPacket.cs"
     },
     {
-      "surfaceId": "packet:CreatureSoundPacket",
-      "kind": "packet",
-      "symbol": "CreatureSoundPacket",
-      "featureId": "entity-creature.behavior-sound",
-      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/CreatureSoundPacket.cs"
-    },
-    {
       "surfaceId": "packet:CrossbowPullPacket",
       "kind": "packet",
       "symbol": "CrossbowPullPacket",
@@ -919,18 +905,11 @@
       "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/EntitySyncRequestPacket.cs"
     },
     {
-      "surfaceId": "packet:ExplosionCellPacket",
+      "surfaceId": "packet:ExplosionPacket",
       "kind": "packet",
-      "symbol": "ExplosionCellPacket",
+      "symbol": "ExplosionPacket",
       "featureId": "mechanics.explosion-world-fire",
-      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/ExplosionCellPacket.cs"
-    },
-    {
-      "surfaceId": "packet:ExplosionSoundPacket",
-      "kind": "packet",
-      "symbol": "ExplosionSoundPacket",
-      "featureId": "mechanics.explosion-world-fire",
-      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/ExplosionSoundPacket.cs"
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Mechanics/ExplosionPacket.cs"
     },
     {
       "surfaceId": "packet:FireBlockAddPacket",
@@ -952,6 +931,13 @@
       "symbol": "FishOutOfWaterBehaviorPacket",
       "featureId": "entity-creature.behavior-sound",
       "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Entity/FishOutOfWaterBehaviorPacket.cs"
+    },
+    {
+      "surfaceId": "packet:FurnitureHammerPacket",
+      "kind": "packet",
+      "symbol": "FurnitureHammerPacket",
+      "featureId": "inventory.furniture-hammer",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Inventory/FurnitureHammerPacket.cs"
     },
     {
       "surfaceId": "packet:HealthSyncPacket",
@@ -1218,6 +1204,20 @@
       "symbol": "PlayerDigPacket",
       "featureId": "player.place-dig-use",
       "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerDigPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerDigConfirmationPacket",
+      "kind": "packet",
+      "symbol": "PlayerDigConfirmationPacket",
+      "featureId": "player.place-dig-use",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerDigConfirmationPacket.cs"
+    },
+    {
+      "surfaceId": "packet:PlayerDigRequestPacket",
+      "kind": "packet",
+      "symbol": "PlayerDigRequestPacket",
+      "featureId": "player.place-dig-use",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Player/PlayerDigRequestPacket.cs"
     },
     {
       "surfaceId": "packet:PlayerDragDropPacket",

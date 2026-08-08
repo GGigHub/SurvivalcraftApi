@@ -17,6 +17,13 @@ namespace Game {
         public override int[] HandledBlocks => [];
 
         public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem) {
+            // In multiplayer, the client simulates the synchronized projectile so that
+            // it can render the impact, but creature creation must remain server-authoritative.
+            // Returning true still consumes the projectile on the client without creating
+            // a duplicate creature that will later arrive through EntityLoadPacket.
+            if (NetworkManager.IsClientRunning) {
+                return true;
+            }
             int data = Terrain.ExtractData(worldItem.Value);
             bool isCooked = EggBlock.GetIsCooked(data);
             bool isLaid = EggBlock.GetIsLaid(data);

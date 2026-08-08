@@ -102,19 +102,12 @@ namespace Game {
         public override void Enter(object[] parameters) {
             MusicManager.CurrentMix = MusicManager.Mix.Menu;
             Children.Find<MotdWidget>().Restart();
-
             if (SettingsManager.IsolatedStorageMigrationCounter < 3) {
                 SettingsManager.IsolatedStorageMigrationCounter++;
                 VersionConverter126To127.MigrateDataFromIsolatedStorageWithDialog();
             }
             if (MotdManager.CanShowBulletin) {
                 MotdManager.ShowBulletin();
-            }
-            if (!string.IsNullOrEmpty(SettingsManager.PendingHotUpdateReleaseNotes)) {
-                string releaseNotes = SettingsManager.PendingHotUpdateReleaseNotes;
-                SettingsManager.PendingHotUpdateReleaseNotes = string.Empty;
-                SettingsManager.SaveSettings();
-                DialogsManager.ShowDialog(null, new MessageDialog("更新内容", releaseNotes, LanguageControl.Ok, null, null));
             }
             if (SettingsManager.SafeMode) {
                 m_disableSafeModeButton.IsVisible = true;
@@ -149,11 +142,6 @@ namespace Game {
             if (m_languageSwitchButton?.IsClicked ?? false) {
                 LanguageControl.CreateLanguageSelectionDialog(null);
             }
-
-            if (HotUpdateManager.State == HotUpdateState.UpdateAvailable) {
-                DialogsManager.ShowDialog(null, new HotUpdateDialog());
-            }
-
             //更新控制
             if (!APIUpdateManager.IsNeedUpdate.HasValue) {
                 float angle = (float)Time.RealTime * 2; //获取更新时旋转图标

@@ -13,10 +13,11 @@ namespace Survivalcraft.Multiplayer {
 
             string[] hookNames = [
                 "IsNetworkMode",
+                "OnMinerDig",
+                "OnBlockDug",
                 "OnEntityAdd",
                 "OnEntityRemove",
                 "OnNetworkChaseBehaviorAttackChanged",
-                "OnNetworkCreatureSound",
                 "OnNetworkDamage",
                 "OnNetworkDigInMudBehaviorChanged",
                 "OnNetworkEatPickableBehaviorChanged",
@@ -66,8 +67,7 @@ namespace Survivalcraft.Multiplayer {
                 "OnNetworkButtonItemVoltageEdited",
                 "OnNetworkElectricityPersistentVoltageChanged",
                 "OnNetworkOpenInventoryRequest",
-                "OnNetworkExplosionCell",
-                "OnNetworkExplosionSound",
+                "OnNetworkExplosion",
                 "OnNetworkFireBlockAdded",
                 "OnNetworkFireBlockRemoved",
                 "OnNetworkFurnacesUpdate",
@@ -77,6 +77,7 @@ namespace Survivalcraft.Multiplayer {
                 "OnNetworkMemoryBankDataHarvested",
                 "OnNetworkMovingBlockAdded",
                 "OnNetworkMovingBlockRemoved",
+                "OnNetworkFurnitureHammerRequest",
                 "OnNetworkPickableCreated",
                 "OnNetworkPickableDeleted",
                 "OnNetworkPickableRequestSync",
@@ -152,9 +153,11 @@ namespace Survivalcraft.Multiplayer {
                         "Multiplayer session rejected",
                         admissionRejection.ToDisplayMessage());
                 }
+                NetworkDigConfirmationRuntime.Tick();
             };
             NetworkManager.StopClientAction = () => {
                 ModNetworkManager.ClearSession(NetworkManager.MySession);
+                NetworkDigConfirmationRuntime.ClearClientState();
                 (NetworkManager.NetworkClient as NetworkClient)?.Disconnect();
                 (NetworkManager.RelayClient as RelayClient)?.Disconnect();
                 NetworkManager.NetworkClient = null;
@@ -171,6 +174,9 @@ namespace Survivalcraft.Multiplayer {
                 BehaviorSyncPacket.Clear();
                 PlayerBodyUpdatePacket.ClearSnapshots();
                 NetworkFaultInjector.ClearPending();
+                FurnitureHammerPacket.ClearState();
+                NetworkDigConfirmationRuntime.Reset();
+                PlayerPacketBase.ClearHitThrottleState();
             };
             NetworkManager.IsServerRunningFunc = () =>
                 ((NetworkManager.NetworkServer as NetworkServer)?.IsRunning ?? false) || ((NetworkManager.RelayHost as RelayHost)?.IsConnected ?? false);
@@ -349,11 +355,6 @@ namespace Survivalcraft.Multiplayer {
     public override void OnNetworkChaseBehaviorAttackChanged(ComponentChaseBehavior behavior, bool isAttack) {
         if (!NetworkManager.IsClientRunning)
             NetworkManager.Queue(new ChaseBehaviorPacket(behavior, isAttack));
-    }
-
-    public override void OnNetworkCreatureSound(ComponentCreatureSounds sounds, byte type, bool skipIfRecentlyPlayed) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new CreatureSoundPacket(sounds, type, skipIfRecentlyPlayed));
     }
 
     public override void OnNetworkDamage(ComponentDamage damage) {
@@ -585,7 +586,26 @@ namespace Survivalcraft.Multiplayer {
         }
     }
 
+    public override void OnMinerDig(ComponentMiner miner, TerrainRaycastResult raycastResult, ref float digProgress, out bool digged) {
+        digged = false;
+        NetworkDigConfirmationRuntime.ObserveMinerDig(miner, raycastResult);
+    }
+
+    public override void OnBlockDug(
+        ComponentMiner componentMiner,
+        BlockPlacementData digValue,
+        int cellValue,
+        ref int durabilityReduction,
+        ref bool mute,
+        ref int playerDataDugAdd
+    ) {
+        NetworkDigConfirmationRuntime.ObserveBlockDug(componentMiner, digValue, cellValue);
+    }
+
     public override void OnNetworkPlayerAim(ComponentPlayer player) {
+        if (NetworkManager.IsClientRunning) {
+            NetworkManager.Queue(new PlayerBodyUpdatePacket(player));
+        }
         NetworkManager.Queue(new PlayerAimPacket(player));
     }
 
@@ -603,6 +623,9 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkPlayerDrop(ComponentPlayer player) {
+        if (NetworkManager.IsClientRunning) {
+            NetworkManager.Queue(new PlayerBodyUpdatePacket(player));
+        }
         NetworkManager.Queue(new PlayerDropPacket(player));
     }
 
@@ -707,7 +730,11 @@ namespace Survivalcraft.Multiplayer {
             NetworkManager.Queue(new OpenInventoryByPointPacket(point));
     }
 
-    public override void OnNetworkExplosionCell(Dictionary<Point2, List<(Point3, float)>> explosionCells) {
+    public override void OnNetworkExplosion(
+        Dictionary<Point2, List<(Point3, float)>> explosionCells,
+        Vector3 position,
+        float pressure,
+        bool playExplosionSound) {
         if (!NetworkManager.IsServerRunning || GameManager.Project == null) {
             return;
         }
@@ -716,9 +743,12 @@ namespace Survivalcraft.Multiplayer {
         if (eventId <= 0) {
             return;
         }
-        IReadOnlyList<ExplosionCellPacket> packets = ExplosionCellPacket.CreateChunks(
+        IReadOnlyList<ExplosionPacket> packets = ExplosionPacket.CreateChunks(
             explosionCells,
-            eventId);
+            eventId,
+            position,
+            pressure,
+            playExplosionSound);
         if (packets.Count == 0) {
             return;
         }
@@ -727,22 +757,14 @@ namespace Survivalcraft.Multiplayer {
             eventId,
             packets.Count,
             packets.Sum(packet => packet.m_cells.Count));
-        foreach (ExplosionCellPacket packet in packets) {
+        if (playExplosionSound) {
+            ExplosionEventTracker.RecordGeneratedSound(
+                GameManager.Project,
+                eventId);
+        }
+        foreach (ExplosionPacket packet in packets) {
             NetworkManager.Queue(packet);
         }
-    }
-
-    public override void OnNetworkExplosionSound(Vector3 position, float pressure, float delay) {
-        if (!NetworkManager.IsServerRunning || GameManager.Project == null) {
-            return;
-        }
-        SubsystemExplosions subsystem = GameManager.Project.FindSubsystem<SubsystemExplosions>();
-        long eventId = subsystem?.NetworkEventId ?? 0;
-        if (eventId <= 0) {
-            return;
-        }
-        ExplosionEventTracker.RecordGeneratedSound(GameManager.Project, eventId);
-        NetworkManager.Queue(new ExplosionSoundPacket(eventId, position, pressure, delay));
     }
 
     public override void OnNetworkFireBlockAdded(int x, int y, int z, float expandability) {
@@ -815,6 +837,11 @@ namespace Survivalcraft.Multiplayer {
             NetworkManager.Queue(new MovingBlockRemovePacket(movingBlockSet, isCrash));
     }
 
+    public override void OnNetworkFurnitureHammerRequest(FurnitureDesign design, CellFace start) {
+        if (NetworkManager.IsClientRunning) {
+            NetworkManager.Queue(new FurnitureHammerPacket(design, start));
+        }
+    }
     public override void OnNetworkPickableCreated(Pickable pickable) {
         long revision = PickableLifecycleTracker.AdvanceAuthoritativeRevision(
             GameManager.Project,
@@ -956,6 +983,9 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkPlayerDragDrop(PlayerData playerData, int inventoryId, int slotIndex, Vector3 worldPos, int count) {
+        if (NetworkManager.IsClientRunning && playerData.ComponentPlayer != null) {
+            NetworkManager.Queue(new PlayerBodyUpdatePacket(playerData.ComponentPlayer));
+        }
         NetworkManager.Queue(new PlayerDragDropPacket(playerData, inventoryId, slotIndex, worldPos, count));
     }
 
@@ -1028,7 +1058,24 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkBodyUpdate(ComponentBody body, float dt) {
-        NetworkBodyInterpolation.Update(body, dt);
+        if (NetworkManager.IsServerRunning) {
+            NetworkBodyInterpolation.UpdateServer(body, dt);
+        }
+        else {
+            NetworkBodyInterpolation.Update(body, dt);
+        }
+
+        body.UpdateImmersionData();
+
+        Vector3 position = body.Position;
+        int value = body.m_subsystemTerrain.Terrain.GetCellValue(
+            Terrain.ToCell(position.X),
+            Terrain.ToCell(position.Y - 0.01f),
+            Terrain.ToCell(position.Z)
+        );
+        body.StandingOnValue = BlocksManager.Blocks[Terrain.ExtractContents(value)].GetIsCollidable(body, value)
+            ? value
+            : null;
     }
 
     public override void OnNetworkBodyRemoved(ComponentBody body) {

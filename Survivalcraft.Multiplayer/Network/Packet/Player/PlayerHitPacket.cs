@@ -40,6 +40,10 @@ public class PlayerHitPacket : PlayerPacketBase {
             return;
         }
         player.ComponentCreatureModel.Update(0f);
+        if (!isServer) {
+            player.ComponentMiner.Poke(false);
+            return;
+        }
         Vector3 eye = player.ComponentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
         Vector3 dir = m_hitDirection;
         if (!IsFinite(m_hitPosition)
@@ -83,7 +87,7 @@ public class PlayerHitPacket : PlayerPacketBase {
                 }
                 m_hitPosition = authoritativeHit.Value.HitPoint();
             }
-            player.ComponentMiner.Hit(body, m_hitPosition, dir, !isServer, isServer);
+            player.ComponentMiner.Hit(body, m_hitPosition, dir);
             QueuePlayerPacket(this, isServer);
         });
     }

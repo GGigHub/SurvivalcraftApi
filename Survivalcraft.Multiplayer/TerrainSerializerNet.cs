@@ -4,11 +4,9 @@ namespace Game.Network;
 
 public class TerrainSerializerNet : TerrainSerializer23 {
 
-#if ANDROID
-    static readonly string path = Storage.CombinePaths(RunPath.AndroidFilePath, "NetChunks.tmp");
-#else
-    static readonly string path = Storage.CombinePaths("app:/", "NetChunks24");
-#endif
+    static readonly string path = ModsManager.IsAndroid
+        ? Storage.CombinePaths(RunPath.AndroidFilePath, "NetChunks.tmp")
+        : Storage.CombinePaths("app:/", "NetChunks24");
 
     public TerrainSerializerNet() {
         if (Storage.DirectoryExists(path)) Delete(path);

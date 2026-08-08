@@ -609,7 +609,7 @@ Survivalcraft.TestAutomation/
 
 本切片不新增玩法捷径，而是为全部强类型玩法建立不能虚高的共同证据层：
 
-- Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 104 个 hook 和 110 个 packet class。
+- Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 103 个 hook 和 111 个 packet class。
 - Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v11。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
 - `ProductionPathGateway` 成为测试模组唯一的直接 packet queue 边界，源码哨兵同时禁止私有旁路；fixture synchronization、production request、authoritative state 与 fault injection 四类路径被明确区分。
 - revision/lifecycle 旧状态注入在最终权威包稳定 30 个游戏帧后再交付，消除故障重排导致“旧包先到”的非确定性假阴性。
@@ -667,16 +667,27 @@ Survivalcraft.TestAutomation/
 
 ## 34. M8 爆炸与世界火焰完整覆盖实施记录
 
-本切片把世界火焰的持久状态与爆炸的瞬态事件同时纳入服务端权威生产链，把 Automation API 和联机协议 revision 均提升到 11：
+本切片把世界火焰的持久状态与爆炸的瞬态事件同时纳入服务端权威生产链，最初把 Automation API 和联机协议 revision 均提升到 11；后续母仓同步保持 Automation API v11，并因生产 wire 形态变化把联机协议提升到 revision 12：
 
 - `FireBlockAddPacket` 与 `FireBlockRemovePacket` 携带 Project 内全局单调（因此每格同样单调）的 revision。`WorldFireStateTracker` 分离服务端权威窗口与客户端应用窗口，保留活动火焰及最近 4096 次变更内的移除墓碑；裁剪水位继续拒绝超窗旧 add，相同 revision 下墓碑优先，因此有界内存不会换来陈旧火焰复活。
 - 世界火焰模拟及网络广播由服务端负责。连接基线只发送当前存在的火焰，late join、同身份重连和 Project 重载都不重放移除历史；保存后的持久火焰从地形重建，已移除火焰保持不存在。`SubsystemExplosions.AddExplosion` 同样在客户端硬拒绝，避免本地投射物或引信进入地形、身体和火焰模拟。
-- 每次爆炸由服务端生成 64 位 event ID。所有 `ExplosionCellPacket` 分块和 `ExplosionSoundPacket` 共用该 ID；客户端 `ExplosionEventTracker` 允许分块乱序到达，但对格分块、音效、过期事件和重复事件分别去重。分块数量、格数量、索引和坐标先校验再建立事件窗口，恶意计数不能诱导无界分配或污染指标。
+- 每次爆炸由服务端生成 64 位 event ID。revision 12 使用一个 `ExplosionPacket` 承载有界格分块及仅一次播放的音效标记；客户端 `ExplosionEventTracker` 允许分块乱序到达，但对格分块、音效、过期事件和重复事件分别去重。分块数量、格数量、索引和坐标先校验再建立事件窗口，恶意计数不能诱导无界分配或污染指标。
 - Snapshot v2 的 mechanics 域新增世界火焰当前集、revision/墓碑指标，以及爆炸活动窗口、应用格数、音效数和重复/过期拒绝计数；非法分块会在进入窗口与指标前直接拒绝。规范化器稳定排序火焰格，比较器能显式区分持久火焰与瞬态爆炸证据。
-- 强类型命令新增 `fixture.mechanics.prepareWorld`、`mechanics.runWorldFireLifecycleBurst`、`mechanics.triggerExplosion`、`mechanics.probeExplosionAuthority` 和 `mechanics.forgeWorldFireState`。权限探针在真实客户端同时尝试本地 `AddExplosion` 与伪造爆炸格/音效包，并要求本地队列、服务端事件窗口和目标地形保持不变。十动作严格序列为 time、precipitation、fog、lightning、sleep、environment revision burst、player-fire revision burst、world-fire lifecycle burst、explosion、wake；回放还要求陈旧 fire add 与重复/过期 explosion part 注入保持启用。
+- 强类型命令新增 `fixture.mechanics.prepareWorld`、`mechanics.runWorldFireLifecycleBurst`、`mechanics.triggerExplosion`、`mechanics.probeExplosionAuthority` 和 `mechanics.forgeWorldFireState`。权限探针在真实客户端同时尝试本地 `AddExplosion` 与伪造爆炸状态包，并要求本地队列、服务端事件窗口和目标地形保持不变。十动作严格序列为 time、precipitation、fog、lightning、sleep、environment revision burst、player-fire revision burst、world-fire lifecycle burst、explosion、wake；回放还要求陈旧 fire add 与重复/过期 explosion part 注入保持启用。
 - 一服三客 Direct/Relay 场景验证非创造环境拒绝、会话/跨玩家权限、观察者收敛、100% 复制与 50% 重排、世界火焰墓碑、爆炸格/音效关联、late join、稳定身份重连和保存重载。只有当前火焰进入基线；雷电、爆炸和已移除火焰均保持瞬态边界。
 - 全量门禁真实暴露并修复了多类稳定性问题：熔炉判据改为以源/目标 revision 证明接收并只允许输入槽继续演化；动物位置只比较客户端已加载区块，并把远端身体播放延迟降为 0.25 秒、在落后最新权威位置超过 3 格时清空旧插值缓冲；沙子必须同时满足落点已占用、原点为空且折叠集合归零才算稳定；Relay 切入 `GameLoading` 改为下一帧排队。legacy 启动也改用共享非临时端口租约和逐测试 5 分钟 hang watchdog。这些修复没有扩大玩法容差或增加 legacy 失败白名单。
 - 2026-07-31 的最终 `v4` 无窗口证据为平台 L0/L1 112/112、游戏 L0/L1 78/78、完整游戏 L2 25/25；环境/mechanics Direct、Relay 与各自严格 replay 均通过。legacy 审计完整执行 140 项，121 通过、19 个已登记失败、0 个新增、0 个漏跑、1 个历史失败恢复。2026-08-08 又在当前源码上复验 fast，仍为 112/112 与 78/78。
 - 单场景 L3 使用 Direct、seed `20260730`、40 ms latency、8 ms jitter、100% duplicate、25% reorder 和 66 ms reorder delay 通过。四个节点峰值工作集约 436.5–476.9 MiB、私有内存 513.5–540.6 MiB、句柄不超过 991、线程不超过 36，最终故障队列归零。
 
-`mechanics.explosion-world-fire` 现已从 `planned` 提升为 `covered/mutation`。覆盖契约当前为 21 个 feature：16 个 `covered`、1 个 `partial`、4 个 `planned`；置信分布为 10 个 `behavioral`、3 个 `mutation`、3 个 `soak`、1 个 `partial`、4 个 `planned`，生产面库存仍为 104 个 hook 和 110 个 packet class。
+`mechanics.explosion-world-fire` 现已从 `planned` 提升为 `covered/mutation`。母仓同步后的覆盖契约当前为 22 个 feature：16 个 `covered`、2 个 `partial`、4 个 `planned`；置信分布为 10 个 `behavioral`、3 个 `mutation`、3 个 `soak`、2 个 `partial`、4 个 `planned`，生产面库存为 103 个 hook 和 111 个 packet class。新增的 `inventory.furniture-hammer` 只声明为 `partial`：已有有界 wire/malformed codec 自动测试，但在补齐真实 Direct/Relay 动作、权限拒绝、故障、重连与持久化证据前不会借用 terrain-interaction 的覆盖等级。
+
+## 35. 2026-08-08 母仓同步与丢包挖掘恢复
+
+本轮将母仓 `SCAPI1.9_MP` 的 `3f3fc8fd` 合入 API 联机支线，并保持所有真实游戏测试无窗口运行：
+
+- 母仓将地形流量拆到独立有序 channel、把联机模块打包到 `InternalMods`、合并爆炸事件、增加家具锤同步、寻路/声音/睡眠/投掷等修复，并加入 `PlayerDigRequestPacket` 与 `PlayerDigConfirmationPacket` 兜底。构建目标现在每次删除旧 `Mods/Survivalcraft.Multiplayer.scmod`，doctor 同时要求内部包存在且不存在双份加载。
+- 挖掘兜底改为有界请求窗口：服务端总计最多记住 256 项、每玩家最多 16 项，拒绝重复、过期和跨玩家状态，断线与 Project 重载清理。服务端不采信客户端 `ExpectedValue`，而是用真实眼位、正常 reach、terrain-only raycast 和当前方块重新计算权威 dig value。
+- terrain-interaction 升至 version 3。场景对 client-a 定向施加 `PlayerDigPacket` 100% loss，要求普通 dig 确实被丢弃，同时观测 `PlayerDigRequestPacket` 与服务端 `PlayerDigConfirmationPacket` 后才算通过；Direct、Relay 及二者严格 replay 的证据均为 dropped=2、request=1、confirmation=1。
+- 上游服务端玩家平滑首次暴露同帧权限竞态：大幅位置包之后紧随的容器请求可能仍按旧位置授权。现在小位移仍平滑，大于 4 格的 discontinuity 在收包时立即落地；新增纯测试固定该语义，inventory-health Direct/Relay 的近距成功与远距拒绝均重新通过。
+- 当前源码最终 fast 为平台 114/114、游戏 84/84；trust 为 22 个 feature、103 个 hook、111 个 packet class，状态 16 covered / 2 partial / 4 planned；doctor 验证联机模组只存在于 `InternalMods` 且隐藏节点成功到达主菜单。兼容、核心、中继及所有玩法 Direct/Relay 共 25 个真实场景结果全部通过。
+- 最终 legacy 审计完整执行 140 项：125 通过、15 个已登记失败、0 个新增失败、0 个漏跑、5 个历史失败恢复，且新的“生物声音由各 peer 本地派生”测试通过，没有扩大允许集合。旧审计汇总已拆成 `Summarize-LegacyAudit.ps1`：正常路径由 `Test-Multiplayer.ps1` 调用；若外层长任务在完整 TRX 落盘后退出，也可独立恢复相同的 fail-closed schema v2 结论。

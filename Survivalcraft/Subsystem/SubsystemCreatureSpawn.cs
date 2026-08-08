@@ -67,6 +67,10 @@ namespace Game {
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
         public virtual void Update(float dt) {
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
+
             if (m_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode == EnvironmentBehaviorMode.Living) {
                 if (m_newSpawnChunks.Count > 0) {
                     m_newSpawnChunks.RandomShuffle(max => m_random.Int(0, max - 1));
@@ -1132,6 +1136,10 @@ namespace Game {
         }
 
         public virtual Entity SpawnCreature(string templateName, Vector3 position, bool constantSpawn) {
+            if (NetworkManager.IsClientRunning) {
+                return null;
+            }
+
             try {
                 Entity entity = DatabaseManager.CreateEntity(Project, templateName, true);
                 entity.FindComponent<ComponentBody>(true).Position = position;

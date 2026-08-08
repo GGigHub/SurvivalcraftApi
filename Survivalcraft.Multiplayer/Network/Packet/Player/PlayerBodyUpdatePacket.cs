@@ -133,16 +133,31 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
             NetworkBodyInterpolation.RemoveTarget(body);
         }
         if (interpolateBody) {
-            NetworkBodyInterpolation.PushSnapshot(
-                body,
-                changeFlag.HasFlag(ChangeFlag.PositionChange),
-                Position,
-                changeFlag.HasFlag(ChangeFlag.RotationChange),
-                Rotation,
-                changeFlag.HasFlag(ChangeFlag.VelocityChange),
-                Velocity,
-                SendTime,
-                NetworkBodyInterpolation.RemotePlayerDelay);
+            bool positionChanged = changeFlag.HasFlag(ChangeFlag.PositionChange);
+            bool rotationChanged = changeFlag.HasFlag(ChangeFlag.RotationChange);
+            bool velocityChanged = changeFlag.HasFlag(ChangeFlag.VelocityChange);
+            if (isServer) {
+                NetworkBodyInterpolation.PushServerSnapshot(
+                    body,
+                    positionChanged,
+                    Position,
+                    rotationChanged,
+                    Rotation,
+                    velocityChanged,
+                    Velocity);
+            }
+            else {
+                NetworkBodyInterpolation.PushSnapshot(
+                    body,
+                    positionChanged,
+                    Position,
+                    rotationChanged,
+                    Rotation,
+                    velocityChanged,
+                    Velocity,
+                    SendTime,
+                    NetworkBodyInterpolation.RemotePlayerDelay);
+            }
         }
         else if (changeFlag.HasFlag(ChangeFlag.VelocityChange)) {
             body.Velocity = Velocity;

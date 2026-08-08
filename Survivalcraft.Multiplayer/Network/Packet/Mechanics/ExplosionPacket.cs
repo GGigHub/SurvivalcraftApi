@@ -3,44 +3,62 @@ using GameEntitySystem;
 
 namespace Game.Network;
 
-public class ExplosionCellPacket : Packet {
+public class ExplosionPacket : Packet {
     public const int MaximumCellsPerChunk = 512;
     public const int MaximumChunksPerEvent = 64;
     public const int MaximumCellsPerEvent = MaximumCellsPerChunk * MaximumChunksPerEvent;
 
-    public override byte ID => (byte)PacketType.ExplosionCell;
+    public override byte ID => (byte)PacketType.Explosion;
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
 
     public long m_eventId;
     public int m_chunkIndex;
     public int m_chunkCount;
     public readonly List<CellData> m_cells = [];
+    public Vector3 m_position;
+    public float m_pressure;
+    public bool m_playExplosionSound;
 
     public struct CellData {
         public Point3 Point;
         public float Intensity;
     }
 
-    public ExplosionCellPacket() { }
+    public ExplosionPacket() { }
 
-    private ExplosionCellPacket(
+    private ExplosionPacket(
         long eventId,
         int chunkIndex,
         int chunkCount,
-        IEnumerable<CellData> cells) {
+        IEnumerable<CellData> cells,
+        Vector3 position,
+        float pressure,
+        bool playExplosionSound) {
         m_eventId = eventId;
         m_chunkIndex = chunkIndex;
         m_chunkCount = chunkCount;
         m_cells.AddRange(cells);
+        m_position = position;
+        m_pressure = pressure;
+        m_playExplosionSound = playExplosionSound;
     }
 
-    public static IReadOnlyList<ExplosionCellPacket> CreateChunks(
+    public static IReadOnlyList<ExplosionPacket> CreateChunks(
         Dictionary<Point2, List<(Point3, float)>> cells,
-        long eventId) {
+        long eventId,
+        Vector3 position,
+        float pressure,
+        bool playExplosionSound) {
         ArgumentNullException.ThrowIfNull(cells);
         if (eventId <= 0) {
             throw new ArgumentOutOfRangeException(nameof(eventId));
         }
+        if (!IsValidPosition(position)
+            || !float.IsFinite(pressure)
+            || pressure is <= 0f or > 100_000_000f) {
+            throw new ArgumentOutOfRangeException(nameof(pressure));
+        }
+
         CellData[] flattened = cells
             .OrderBy(pair => pair.Key.X)
             .ThenBy(pair => pair.Key.Y)
@@ -58,14 +76,21 @@ public class ExplosionCellPacket : Packet {
         if (flattened.Length == 0) {
             return [];
         }
-        int chunkCount = (flattened.Length + MaximumCellsPerChunk - 1) / MaximumCellsPerChunk;
-        List<ExplosionCellPacket> packets = new(chunkCount);
+
+        int chunkCount = (flattened.Length + MaximumCellsPerChunk - 1)
+            / MaximumCellsPerChunk;
+        List<ExplosionPacket> packets = new(chunkCount);
         for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
-            packets.Add(new ExplosionCellPacket(
+            packets.Add(new ExplosionPacket(
                 eventId,
                 chunkIndex,
                 chunkCount,
-                flattened.Skip(chunkIndex * MaximumCellsPerChunk).Take(MaximumCellsPerChunk)));
+                flattened
+                    .Skip(chunkIndex * MaximumCellsPerChunk)
+                    .Take(MaximumCellsPerChunk),
+                position,
+                pressure,
+                playExplosionSound));
         }
         return packets;
     }
@@ -77,7 +102,8 @@ public class ExplosionCellPacket : Packet {
         int count = archive.IsWriting ? m_cells.Count : 0;
         archive.Value(ref count);
         if (count is < 1 or > MaximumCellsPerChunk) {
-            throw new InvalidDataException($"ExplosionCellPacket contains invalid cell count: {count}.");
+            throw new InvalidDataException(
+                $"ExplosionPacket contains invalid cell count: {count}.");
         }
         if (archive.IsReading) {
             m_cells.Clear();
@@ -90,14 +116,15 @@ public class ExplosionCellPacket : Packet {
                 m_cells.Add(data);
             }
         }
+        archive.Value(ref m_position);
+        archive.Value(ref m_pressure);
+        archive.Value(ref m_playExplosionSound);
     }
 
     public override void Handle(bool isServer) {
         Project project = GameManager.Project;
-        if (isServer) {
-            return;
-        }
-        if (project == null
+        if (isServer
+            || project == null
             || !IsValidState()
             || !ExplosionEventTracker.TryAcceptCells(
                 project,
@@ -107,12 +134,22 @@ public class ExplosionCellPacket : Packet {
                 m_cells.Count)) {
             return;
         }
+
         SubsystemExplosions subsystem = project.FindSubsystem<SubsystemExplosions>();
         if (subsystem == null) {
             return;
         }
         foreach (CellData cell in m_cells) {
-            subsystem.m_explosionParticleSystem.SetExplosionCell(cell.Point, cell.Intensity);
+            subsystem.m_explosionParticleSystem.SetExplosionCell(
+                cell.Point,
+                cell.Intensity);
+        }
+        if (m_playExplosionSound
+            && ExplosionEventTracker.TryAcceptSound(project, m_eventId)) {
+            subsystem.PlayExplosionSound(
+                m_position,
+                m_pressure,
+                playExplosionSound: true);
         }
     }
 
@@ -122,7 +159,10 @@ public class ExplosionCellPacket : Packet {
         && m_chunkIndex >= 0
         && m_chunkIndex < m_chunkCount
         && m_cells.Count is > 0 and <= MaximumCellsPerChunk
-        && m_cells.All(IsValidCell);
+        && m_cells.All(IsValidCell)
+        && IsValidPosition(m_position)
+        && float.IsFinite(m_pressure)
+        && m_pressure is > 0f and <= 100_000_000f;
 
     private static bool IsValidCell(CellData cell) =>
         cell.Point.Y is >= 0 and < 256
@@ -130,4 +170,12 @@ public class ExplosionCellPacket : Packet {
         && Math.Abs((long)cell.Point.Z) <= 16_777_216
         && float.IsFinite(cell.Intensity)
         && cell.Intensity is > 0f and <= 1024f;
+
+    private static bool IsValidPosition(Vector3 position) =>
+        float.IsFinite(position.X)
+        && float.IsFinite(position.Y)
+        && float.IsFinite(position.Z)
+        && Math.Abs((double)position.X) <= 16_777_216
+        && position.Y is >= -256f and <= 512f
+        && Math.Abs((double)position.Z) <= 16_777_216;
 }

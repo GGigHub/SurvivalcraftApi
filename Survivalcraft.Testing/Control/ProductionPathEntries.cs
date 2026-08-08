@@ -40,7 +40,7 @@ public static class ProductionPathEntries {
     public const string WorldFireLifecycle =
         "SubsystemFireBlockBehavior.AddFire/RemoveFire -> FireBlockAddPacket/FireBlockRemovePacket.Handle";
     public const string ExplosionEvent =
-        "SubsystemExplosions.AddExplosion -> ExplosionCellPacket/ExplosionSoundPacket.Handle";
+        "SubsystemExplosions.AddExplosion -> ExplosionPacket.Handle";
     public const string MountState = "ComponentMountPacket.Handle";
     public const string LogicEdit = "Editable logic Packet.Handle";
     public const string LogicInteract = "PlayerInteractPacket.Handle";

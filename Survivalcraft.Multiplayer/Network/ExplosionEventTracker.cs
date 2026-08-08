@@ -37,10 +37,10 @@ internal sealed class ExplosionEventWindow {
         int chunkIndex,
         int chunkCount,
         int cellCount) {
-        if (chunkCount is <= 0 or > ExplosionCellPacket.MaximumChunksPerEvent
+        if (chunkCount is <= 0 or > ExplosionPacket.MaximumChunksPerEvent
             || chunkIndex < 0
             || chunkIndex >= chunkCount
-            || cellCount is <= 0 or > ExplosionCellPacket.MaximumCellsPerChunk
+            || cellCount is <= 0 or > ExplosionPacket.MaximumCellsPerChunk
             || !TryGetParts(eventId, out AcceptedParts parts)) {
             return false;
         }
@@ -111,8 +111,8 @@ public static class ExplosionEventTracker {
         int cellCount) {
         ArgumentNullException.ThrowIfNull(project);
         if (eventId <= 0
-            || chunkCount is <= 0 or > ExplosionCellPacket.MaximumChunksPerEvent
-            || cellCount is <= 0 or > ExplosionCellPacket.MaximumCellsPerEvent) {
+            || chunkCount is <= 0 or > ExplosionPacket.MaximumChunksPerEvent
+            || cellCount is <= 0 or > ExplosionPacket.MaximumCellsPerEvent) {
             return;
         }
         ExplosionEventContext context = Context(project);
