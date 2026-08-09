@@ -1,8 +1,8 @@
 namespace Survivalcraft.Testing.Control;
 
 public static class AutomationProtocol {
-    public const int CurrentApiVersion = 14;
-    public const int CurrentSnapshotSchemaVersion = 3;
+    public const int CurrentApiVersion = 15;
+    public const int CurrentSnapshotSchemaVersion = 4;
     public const int MaximumSnapshotEntities = 2048;
     public const int MaximumSnapshotTerrainCells = 4096;
     // A single creative inventory exposes more than 1600 catalog slots.

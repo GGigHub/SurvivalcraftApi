@@ -431,7 +431,15 @@ public sealed record NetworkSnapshotV2(
     IReadOnlyDictionary<string, long>? FaultBytesByType = null,
     NetworkSessionSnapshotV2[]? Sessions = null,
     NetworkSessionLifecycleSnapshotV2? SessionLifecycle = null,
-    ModNetworkRuntimeSnapshotV2? ModChannel = null);
+    ModNetworkRuntimeSnapshotV2? ModChannel = null,
+    long ReliableCreated = 0,
+    long ReliableRetried = 0,
+    long ReliableAcknowledged = 0,
+    long ReliableDuplicateDeliveries = 0,
+    long ReliableTimedOut = 0,
+    long ReliableFailed = 0,
+    int ReliablePending = 0,
+    long ReliablePendingBytes = 0);
 
 public sealed record NetworkSessionSnapshotV2(
     string SessionId,

@@ -86,7 +86,7 @@ public sealed class CoverageManifestTests {
         Assert.Empty(ProductionSurfaceCoverage.Validate(coverage, inventory));
         ProductionSurface[] discovered = ProductionSurfaceCoverage.Discover(FindRepositoryRoot());
         Assert.Equal(103, discovered.Count(surface => surface.Kind == "hook"));
-        Assert.Equal(111, discovered.Count(surface => surface.Kind == "packet"));
+        Assert.Equal(113, discovered.Count(surface => surface.Kind == "packet"));
         Assert.Empty(ProductionSurfaceCoverage.CompareInventory(inventory, discovered));
     }
 
@@ -162,7 +162,7 @@ public sealed class CoverageManifestTests {
         Assert.True(report.IsStructurallyValid);
         Assert.Equal(coverage.Features.Length, report.TotalFeatures);
         Assert.Equal(103, report.HookSurfaces);
-        Assert.Equal(111, report.PacketSurfaces);
+        Assert.Equal(113, report.PacketSurfaces);
         Assert.True(report.Statuses["covered"] > 0);
         Assert.False(report.Statuses.ContainsKey("planned"));
         Assert.Contains(report.Features, feature =>

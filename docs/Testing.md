@@ -2,7 +2,7 @@
 
 本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会按场景启动隔离的 Survivalcraft 进程：核心场景完成建服、两阶段兼容握手、模组消息、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、分阶段超时与恢复；会话生命周期场景在 Direct/Relay 上验证四客户端并发加入/重连、实体创建期断线、稳定身份、API 通道晚加入、限流、背压和隔离；中继场景另外启动真实 RelayServer。所有场景都会把可回放的诊断材料写入 `TestResults`。
 
-强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已推进到 M11；除既有主线外，生物行为/本地声音、服装/自定义皮肤、流感/疾病以及经验/玩家统计/生存指标也已进入统一的服务器权威覆盖契约。Coverage Contract 的 22 个 feature 当前全部为 `covered`。
+强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已推进到 M12：Coverage Contract 的 22 个 feature 全部为 `covered`，并在已接受会话上增加有界的应用层确认/重试，使全部核心场景能够用确定性的 1–3% 丢包自动验收。
 
 ## 一键运行
 
@@ -62,7 +62,7 @@
 - `session`：依次运行 Direct/Relay，覆盖五类兼容性拒绝、并发加入/重连风暴、latest-session-wins、重复 `PlayerCreatePacket` 幂等、实体创建期断线、晚加入目录、逐会话限流恢复、背压和异常隔离。
 - `survival-state-direct` / `survival-state-relay`：分别运行一服三客的生物行为/声音、服装/皮肤、状态效果、成长/生存指标综合场景。
 - `survival-state`：依次运行 Direct/Relay，覆盖服务器权威与客户端伪造拒绝、16 类包的 100% 重复与 50% 重排、旧 revision、观察者、晚加入、皮肤按需传输、声音不跨节点/不重放、同身份但新实体世代的重连、保存重载和严格八动作回放。
-- `soak`：运行 L3 随机但可重放的故障轮转。默认按十二条高价值场景生成种子固定的 schedule，每轮保存场景种子、故障类别和完整 profile，并对每个隐藏节点的工作集、私有内存、句柄、线程、CPU、样本数与故障待发队列执行预算门禁。`-SoakIterations`、`-SoakTransport`、`-SoakSeed` 和 `-SoakIncludeLoss` 可调整生成计划；`-SoakReplaySchedule PATH` 会原样重放已有 `fault-schedule.json`。
+- `soak`：运行 L3 随机但可重放的故障轮转。默认按十二条高价值场景生成种子固定的 schedule，每轮保存场景种子、故障类别和完整 profile，并对每个隐藏节点的工作集、私有内存、句柄、线程、CPU、样本数、故障待发队列和应用可靠队列执行预算门禁。`-SoakIterations`、`-SoakTransport`、`-SoakSeed` 和 `-SoakIncludeLoss` 可调整生成计划；loss 模式会设置 `GuaranteeReliableLoss`，`-SoakReplaySchedule PATH` 会原样重放包括该保证位在内的 `fault-schedule.json`。
 - `legacy`：单独运行全部未分层历史测试，同时输出控制台日志、`legacy-audit.trx` 和 `legacy-audit-summary.json`。门禁按 `legacy-known-failures.json` 的测试全名比较，不按失败数量猜测：任何新增失败、基线测试被改名/漏跑或套件未完整执行都会返回非零；已知失败仍逐项出现在结果中。每个测试另有 5 分钟 hang watchdog，卡死会被终止并留下 Sequence 诊断。若外层编排器在完整 TRX 落盘后意外退出，可运行 `./scripts/Summarize-LegacyAudit.ps1 -ArtifactDirectory <legacy 产物目录>` 恢复同一份 schema v2 严格门禁结论，无需重跑游戏。
 - `full`：依次执行 fast、trust、doctor、compatibility、core、relay、全部十二条玩法主线（含 survival-state）的直连/中继场景和全部未分层原有测试；同一次调用只构建一次运行时，也不会重复执行 L0/L1。legacy 允许集合不是“全绿”声明，但属于新增回归硬门禁。
 - `-UseAngle`：构建 Windows ANGLE 兼容运行时，适合没有完整 OpenGL 驱动的 CI 机器。
@@ -180,7 +180,9 @@ Entity Snapshot v2 支持按 ID 投影实体存在性、模板、生物/玩家�
 - 核心 L2 场景在加载和 LiteNetLib 传输阶段使用真实时间，因为窗口事件循环和底层传输需要持续轮询；它通过固定世界种子、固定游戏随机计数器、关闭音频和多线程地形更新来降低抖动。
 - 生产路径上的网络故障注入器作用于直连和中继的应用层出站帧，可设置固定种子的延迟、抖动、丢包、重复、重排和带宽限制。中继建房/入房控制帧和测试控制管道不经过故障注入，因此即使游戏数据网络异常，测试仍能取回状态与日志。
 
-核心验收默认使用 12 ms 延迟和 3 ms 确定性抖动，不启用丢包。强类型玩法场景默认使用可回放的 18 ms 延迟、4 ms 抖动、100% 应用层复制和 50% 重排，不启用丢包；这样能稳定验证重复/乱序幂等性，同时避免单次动作帧被不可恢复地丢弃。L3 在安全范围内随机化 latency、jitter、reorder、delay 和 bandwidth，同时保持必经的 duplicate/reorder 哨兵；`-SoakIncludeLoss` 另外启用确定性的 1–3% 应用层丢包，用于暴露尚未具备重试语义的真实缺口。
+核心验收默认使用 12 ms 延迟和 3 ms 确定性抖动，不启用丢包。强类型玩法场景默认使用可回放的 18 ms 延迟、4 ms 抖动、100% 应用层复制和 50% 重排，以稳定验证重复/乱序幂等性。M12 在兼容与 admission 完成后，把不可替代的业务包封装为按原通道有序的 Data/ACK 帧；发送和接收窗口各限制为 4096 项与 64 MiB，0.25 秒开始指数退避、最多 2 秒，30 秒仍未确认则 fail closed。姿态、瞄准、行为、电力/天气等高频可替代流，以及已有专用恢复状态机的握手和普通挖掘包不进入该层；新的 revision、完整快照或相关确认协议负责修复丢失样本。
+
+L3 在安全范围内随机化 latency、jitter、reorder、delay 和 bandwidth，同时保持必经的 duplicate/reorder 哨兵。`-SoakIncludeLoss` 启用确定性的 1–3% 应用层丢包，并通过 TestAutomation 唯一生产网关发送无玩法副作用的 `ApplicationReliabilityProbePacket`；`GuaranteeReliableLoss` 只强制丢弃可靠 Data 帧而不丢 ACK，即使场景目标包过滤器不包含探针，也能保证观察到真实丢包、重试和确认。缺少任一证据、发生可靠投递失败/超时或最终待发项/字节不为零都会使轮次失败。缺失实体恢复请求另有 0.25、0.5、1、2 秒有界退避，避免乱序/丢包下形成请求反馈风暴。
 
 ## 核心验收场景
 
@@ -306,14 +308,14 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## Autotest 可信度门禁
 
-当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，当前 Automation API 为 v14、Snapshot schema 为 3、多人联机 wire revision 为 15：
+当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，当前 Automation API 为 v15、Snapshot schema 为 4、多人联机 wire revision 为 16：
 
-- `production-surfaces.json` 对源码发现到的 103 个联机 hook 与 111 个 packet class 做精确库存；新增、删除或改名必须显式更新库存，避免生产面悄悄脱离测试计划。
-- `core-multiplayer.json` 使用 Coverage Contract v2。一个 feature 只有同时具备 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 且没有 open gap 时才能标为 `covered`；当前 22 个 feature 全部 covered。M11 四域以独立 typed action、schema 3 生存快照、有界 codec、客户端伪造与旧修订哨兵达到 `covered/mutation`。
-- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry；M6 新增流量 burst、PlayerCreate replay 与会话快照后为 v9，M7 为 v10，M8 为 v11，M9 为 v12，M10 为 v13，M11 新增生存状态夹具、八动作回放和 schema 3 投影后为 v14。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
+- `production-surfaces.json` 对源码发现到的 103 个联机 hook 与 113 个 packet class 做精确库存；新增、删除或改名必须显式更新库存，避免生产面悄悄脱离测试计划。
+- `core-multiplayer.json` 使用 Coverage Contract v2。一个 feature 只有同时具备 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 且没有 open gap 时才能标为 `covered`；当前 22 个 feature 全部 covered。M11 四域以独立 typed action、schema 3 生存快照、有界 codec、客户端伪造与旧修订哨兵达到 `covered/mutation`；M12 再用通用可靠 envelope、服务端幂等和十二场景 loss 轮转验证跨领域收敛。
+- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry；M6 新增流量 burst、PlayerCreate replay 与会话快照后为 v9，M7 为 v10，M8 为 v11，M9 为 v12，M10 为 v13，M11 新增生存状态夹具、八动作回放和 schema 3 投影后为 v14，M12 新增可靠投递指标、必丢探针和 schema 4 网络投影后为 v15。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
 - `ProductionPathGateway` 是 TestAutomation 唯一允许直接调用 `NetworkManager.Queue` 的位置。源码哨兵禁止旁路，并要求 fixture、production request、authoritative state、fault injection 这几类 API 都有真实调用点；延迟旧状态注入使用固定游戏帧 settle，避免重排让“旧包”先到而产生伪随机结果。
-- `GameNodeProcess` 从控制通道就绪后每 250 ms 旁路采样进程资源。每个 v2 `metrics.json` 都包含各角色的初始/最终/峰值工作集、私有内存、增长量、句柄、线程、CPU 与采样时长；采样失败不会伪装成 0 通过，L3 的 minimum-samples 门禁会拒绝无观测结果。
-- `MultiplayerSoakSchedule` 使用稳定 PRNG 生成场景、场景种子及故障 profile，开跑前先持久化。`MultiplayerSoakRunner` 每轮立即原子更新 summary，玩法失败、生产路径证明失败、进程资源超预算或任一节点故障队列超过默认 10000 包都会让 L3 返回非零；门槛不会为迁就失败而自动放宽。第一次完整精确回放据此抓到了生命值每帧广播的生产流量风暴，修复后原九场景计划以相同 SHA-256 在隔离目录 9/9 无窗口重放通过。
+- `GameNodeProcess` 从控制通道就绪后每 250 ms 旁路采样进程资源。每个 v2 `metrics.json` 都包含各角色的初始/最终/峰值工作集、私有内存、增长量、句柄、线程、CPU 与采样时长；Snapshot schema 4 还包含可靠投递的 created/retried/acknowledged/duplicate/timed-out/failed、pending 和 pending bytes。采样失败不会伪装成 0 通过，L3 的 minimum-samples 门禁会拒绝无观测结果。
+- `MultiplayerSoakSchedule` 使用稳定 PRNG 生成场景、场景种子及故障 profile，开跑前先持久化。`MultiplayerSoakRunner` 每轮立即原子更新 summary，玩法失败、生产路径证明失败、进程资源超预算、任一节点故障队列超过默认 10000 包或可靠证据不闭环都会让 L3 返回非零；门槛不会为迁就失败而自动放宽。M12 最终使用 seed `20260809` 分别完成 Direct 与 Relay 十二场景 loss 轮转：两边均为 12/12，通过轮次都观测到至少三次可靠重试，最终可靠失败、超时、待发项/字节、证据失败和预算违规全部为零。证据位于 `TestResults/m12-loss-full-direct-final-v3` 与 `TestResults/m12-loss-full-relay-final-v5`。
 - 游戏运行时构建使用 `-m:1`，消除同一 MSBuild 图并行写入 `EntitySystem.dll` 的机器负载相关自锁。该约束只降低构建并发，不改变游戏节点并行运行。
 
-默认 L3 不启用 loss，因为当前强类型动作帧并非全部具备应用层确认/重试；这不是把丢包问题排除在外。`-SoakIncludeLoss` 会生成确定性的 1–3% 丢包计划，失败会保留完整 schedule 和场景证据，作为下一阶段补齐可靠请求语义的输入。
+默认 L3 仍不启用 loss，以保留快速的延迟/抖动/重复/重排基线；`-SoakIncludeLoss` 现在是完整的 M12 可靠性门禁，会生成确定性的 1–3% 丢包计划并保证至少丢失一帧可靠 Data。失败会保留完整 schedule、逐节点可靠指标、资源样本和场景证据，可直接严格回放，不再把 loss 仅作为缺口探测。

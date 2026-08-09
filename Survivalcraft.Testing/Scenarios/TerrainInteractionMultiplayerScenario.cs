@@ -1357,19 +1357,26 @@ public sealed class TerrainInteractionMultiplayerScenario {
                 continue;
             }
             try {
-                snapshots[$"{node.Role}-final"] = await node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
-                    ControlCommandNames.GetSnapshotV2,
-                    new GetSnapshotV2Command(
-                        [
-                            SnapshotDomain.Network,
-                            SnapshotDomain.Players,
-                            SnapshotDomain.Terrain,
-                            SnapshotDomain.Events
-                        ],
-                        TerrainCells: observedCells.ToArray(),
-                        EventLimit: AutomationProtocol.MaximumEventQueryCount),
-                    timeout: TimeSpan.FromSeconds(5),
-                    cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                GetSnapshotV2Command command = new(
+                    [
+                        SnapshotDomain.Network,
+                        SnapshotDomain.Players,
+                        SnapshotDomain.Terrain,
+                        SnapshotDomain.Events
+                    ],
+                    TerrainCells: observedCells.ToArray(),
+                    EventLimit: AutomationProtocol.MaximumEventQueryCount);
+                snapshots[$"{node.Role}-final"] =
+                    await MultiplayerScenarioOperations
+                        .CaptureAfterApplicationReliabilityIdleAsync(
+                            node,
+                            token => node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+                                ControlCommandNames.GetSnapshotV2,
+                                command,
+                                timeout: TimeSpan.FromSeconds(5),
+                                cancellationToken: token),
+                            TimeSpan.FromSeconds(10),
+                            CancellationToken.None).ConfigureAwait(false);
             }
             catch {
                 // Evidence collection must not replace the original scenario failure.

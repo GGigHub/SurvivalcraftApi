@@ -1864,6 +1864,8 @@ public partial class TestAutomationModLoader {
         RelayStatus relay = BuildRelayStatus();
         NetworkFaultMetrics metrics = NetworkFaultInjector.Metrics;
         NetworkPacketTrafficMetrics traffic = NetworkPacketTrafficTracker.Metrics;
+        ApplicationReliabilityMetrics reliability =
+            ApplicationReliabilityRuntime.Metrics;
         List<ClientSession> sessions = NetworkManager.ServerSessions
             .Where(session => session != null)
             .ToList();
@@ -1935,7 +1937,15 @@ public partial class TestAutomationModLoader {
                 modMetrics.Duplicates,
                 modMetrics.RateLimited,
                 modMetrics.HandlerErrors,
-                modMetrics.ActivePeerStates));
+                modMetrics.ActivePeerStates),
+            reliability.Created,
+            reliability.Retried,
+            reliability.Acknowledged,
+            reliability.DuplicateDeliveries,
+            reliability.TimedOut,
+            reliability.Failed,
+            reliability.Pending,
+            reliability.PendingBytes);
     }
 
     private static SurvivalStateSnapshotV2 BuildSurvivalStateSnapshotV2(

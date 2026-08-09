@@ -44,7 +44,18 @@ public sealed record SoakNodeFaultEvidence(
     int PeakPending,
     string? TopFaultPacketType = null,
     long MaximumFaultTransmissions = 0,
-    long MaximumFaultBytes = 0);
+    long MaximumFaultBytes = 0,
+    long MaximumReliableCreated = 0,
+    long MaximumReliableRetried = 0,
+    long MaximumReliableAcknowledged = 0,
+    long MaximumReliableDuplicateDeliveries = 0,
+    long MaximumReliableTimedOut = 0,
+    long MaximumReliableFailed = 0,
+    int PeakReliablePending = 0,
+    long PeakReliablePendingBytes = 0,
+    int FinalSnapshotCount = 0,
+    int MaximumFinalReliablePending = 0,
+    long MaximumFinalReliablePendingBytes = 0);
 
 public sealed record MultiplayerSoakResourceHighWatermark(
     string Role,
@@ -150,7 +161,9 @@ public sealed class MultiplayerSoakRunner {
             string[] evidenceFailures = ValidateFaultEvidence(
                 entry,
                 faultEvidence,
-                options.ResourceBudget.MaximumPendingFaultPackets);
+                options.ResourceBudget.MaximumPendingFaultPackets,
+                options.ResourceBudget.MaximumPendingReliablePackets,
+                options.ResourceBudget.MaximumPendingReliableBytes);
             string outcome = failure == null
                 && violations.Length == 0
                 && evidenceFailures.Length == 0
@@ -414,6 +427,9 @@ public sealed class MultiplayerSoakRunner {
                 continue;
             }
             NetworkSnapshotV2 network = snapshot.Network;
+            bool isFinalSnapshot = IsTerminalReliabilitySnapshotPath(
+                path,
+                snapshot.Node.Role);
             SoakNodeFaultEvidence current = evidence.GetValueOrDefault(
                 snapshot.Node.Role,
                 new SoakNodeFaultEvidence(snapshot.Node.Role, 0, 0, 0, 0, 0));
@@ -440,20 +456,79 @@ public sealed class MultiplayerSoakRunner {
                 PeakPending = Math.Max(current.PeakPending, network.FaultPending),
                 TopFaultPacketType = topPacketType,
                 MaximumFaultTransmissions = maximumFaultTransmissions,
-                MaximumFaultBytes = maximumFaultBytes
+                MaximumFaultBytes = maximumFaultBytes,
+                MaximumReliableCreated = Math.Max(
+                    current.MaximumReliableCreated,
+                    network.ReliableCreated),
+                MaximumReliableRetried = Math.Max(
+                    current.MaximumReliableRetried,
+                    network.ReliableRetried),
+                MaximumReliableAcknowledged = Math.Max(
+                    current.MaximumReliableAcknowledged,
+                    network.ReliableAcknowledged),
+                MaximumReliableDuplicateDeliveries = Math.Max(
+                    current.MaximumReliableDuplicateDeliveries,
+                    network.ReliableDuplicateDeliveries),
+                MaximumReliableTimedOut = Math.Max(
+                    current.MaximumReliableTimedOut,
+                    network.ReliableTimedOut),
+                MaximumReliableFailed = Math.Max(
+                    current.MaximumReliableFailed,
+                    network.ReliableFailed),
+                PeakReliablePending = Math.Max(
+                    current.PeakReliablePending,
+                    network.ReliablePending),
+                PeakReliablePendingBytes = Math.Max(
+                    current.PeakReliablePendingBytes,
+                    network.ReliablePendingBytes),
+                FinalSnapshotCount = current.FinalSnapshotCount
+                    + (isFinalSnapshot ? 1 : 0),
+                MaximumFinalReliablePending = isFinalSnapshot
+                    ? Math.Max(
+                        current.MaximumFinalReliablePending,
+                        network.ReliablePending)
+                    : current.MaximumFinalReliablePending,
+                MaximumFinalReliablePendingBytes = isFinalSnapshot
+                    ? Math.Max(
+                        current.MaximumFinalReliablePendingBytes,
+                        network.ReliablePendingBytes)
+                    : current.MaximumFinalReliablePendingBytes
             };
         }
         return evidence.Values.OrderBy(value => value.Role, StringComparer.Ordinal).ToArray();
     }
 
+    internal static bool IsTerminalReliabilitySnapshotPath(
+        string path,
+        string role) =>
+        string.Equals(
+            Path.GetFileName(path),
+            $"snapshot-{SanitizeFileName(role)}-final.v2.json",
+            StringComparison.Ordinal);
+
+    private static string SanitizeFileName(string value) {
+        foreach (char invalid in Path.GetInvalidFileNameChars()) {
+            value = value.Replace(invalid, '_');
+        }
+        return value;
+    }
+
     public static string[] ValidateFaultEvidence(
         MultiplayerSoakScheduleEntry entry,
         IReadOnlyCollection<SoakNodeFaultEvidence> evidence,
-        int maximumPendingFaultPackets) {
+        int maximumPendingFaultPackets,
+        int maximumPendingReliablePackets = 16_384,
+        long maximumPendingReliableBytes = 256L * 1024 * 1024) {
         ArgumentNullException.ThrowIfNull(entry);
         ArgumentNullException.ThrowIfNull(evidence);
         if (maximumPendingFaultPackets <= 0) {
             throw new ArgumentOutOfRangeException(nameof(maximumPendingFaultPackets));
+        }
+        if (maximumPendingReliablePackets <= 0) {
+            throw new ArgumentOutOfRangeException(nameof(maximumPendingReliablePackets));
+        }
+        if (maximumPendingReliableBytes <= 0) {
+            throw new ArgumentOutOfRangeException(nameof(maximumPendingReliableBytes));
         }
         List<string> failures = [];
         if (evidence.Count == 0) {
@@ -469,6 +544,47 @@ public sealed class MultiplayerSoakRunner {
             && evidence.Sum(item => item.MaximumDropped) == 0) {
             failures.Add(
                 "Loss fault profile was enabled, but no snapshot observed a dropped packet.");
+        }
+        if (entry.NetworkFaults.LossRate > 0
+            && evidence.Sum(item => item.MaximumReliableRetried) == 0) {
+            failures.Add(
+                "Loss fault profile was enabled, but no application-reliable retry was observed.");
+        }
+        if (entry.NetworkFaults.LossRate > 0
+            && (evidence.Sum(item => item.MaximumReliableCreated) == 0
+                || evidence.Sum(item => item.MaximumReliableAcknowledged) == 0)) {
+            failures.Add(
+                "Loss fault profile emitted no acknowledged application-reliable delivery evidence.");
+        }
+        foreach (SoakNodeFaultEvidence node in evidence) {
+            if (node.MaximumReliableTimedOut > 0) {
+                failures.Add(
+                    $"Node '{node.Role}' recorded {node.MaximumReliableTimedOut} timed-out application-reliable deliveries.");
+            }
+            if (node.MaximumReliableFailed > 0) {
+                failures.Add(
+                    $"Node '{node.Role}' recorded {node.MaximumReliableFailed} failed application-reliable deliveries.");
+            }
+            if (node.FinalSnapshotCount == 0) {
+                failures.Add(
+                    $"Node '{node.Role}' emitted no final application-reliability snapshot.");
+            }
+            else if (node.MaximumFinalReliablePending != 0
+                || node.MaximumFinalReliablePendingBytes != 0) {
+                failures.Add(
+                    $"Node '{node.Role}' ended with {node.MaximumFinalReliablePending} pending application-reliable deliveries "
+                    + $"({node.MaximumFinalReliablePendingBytes} bytes).");
+            }
+            if (node.PeakReliablePending > maximumPendingReliablePackets) {
+                failures.Add(
+                    $"Node '{node.Role}' observed {node.PeakReliablePending} pending application-reliable deliveries; "
+                    + $"maximum is {maximumPendingReliablePackets}.");
+            }
+            if (node.PeakReliablePendingBytes > maximumPendingReliableBytes) {
+                failures.Add(
+                    $"Node '{node.Role}' observed {node.PeakReliablePendingBytes} pending application-reliable bytes; "
+                    + $"maximum is {maximumPendingReliableBytes}.");
+            }
         }
         foreach (SoakNodeFaultEvidence node in evidence.Where(item =>
                      item.PeakPending > maximumPendingFaultPackets)) {

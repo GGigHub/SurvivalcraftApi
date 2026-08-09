@@ -311,7 +311,15 @@ public sealed record NetworkFaultState(
     long Sent,
     long Dropped,
     long Duplicated,
-    int Pending);
+    int Pending,
+    long ReliableCreated = 0,
+    long ReliableRetried = 0,
+    long ReliableAcknowledged = 0,
+    long ReliableDuplicateDeliveries = 0,
+    long ReliableTimedOut = 0,
+    long ReliableFailed = 0,
+    int ReliablePending = 0,
+    long ReliablePendingBytes = 0);
 
 public sealed record CompatibilityModDescriptor(
     string PackageName,

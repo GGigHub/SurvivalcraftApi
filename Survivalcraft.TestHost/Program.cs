@@ -1815,7 +1815,17 @@ internal static class Program {
             GetInt32(
                 options,
                 "max-pending-fault-packets",
-                defaults.MaximumPendingFaultPackets));
+                defaults.MaximumPendingFaultPackets),
+            GetInt32(
+                options,
+                "max-pending-reliable-packets",
+                defaults.MaximumPendingReliablePackets),
+            ToBytesFromMebibytes(
+                GetInt32(
+                    options,
+                    "max-pending-reliable-mib",
+                    checked((int)(defaults.MaximumPendingReliableBytes / 1024 / 1024))),
+                "max-pending-reliable-mib"));
 
         TimeSpan? stepTimeout = options.ContainsKey("step-timeout")
             ? GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(60))
@@ -2068,6 +2078,8 @@ internal static class Program {
         Console.WriteLine("  --max-handles N            Per-node peak handle budget (default 8192)");
         Console.WriteLine("  --max-threads N            Per-node peak thread budget (default 512)");
         Console.WriteLine("  --max-pending-fault-packets N  Per-node fault queue budget (default 10000)");
+        Console.WriteLine("  --max-pending-reliable-packets N  Per-node reliable queue budget (default 16384)");
+        Console.WriteLine("  --max-pending-reliable-mib N  Per-node reliable byte budget (default 256)");
         Console.WriteLine("  --fail-fast                Stop after the first failed soak iteration");
         Console.WriteLine("  --transport direct|relay   Multiplayer transport for v2 gameplay scenarios");
     }

@@ -76,23 +76,40 @@ public class NetworkServer : INetEventListener {
     }
 
     public void Send(Packet packet, ClientSession session) {
-        if (packet.MinNeedState <= session.NetworkState
+        if (ClientSessions.Values.Contains(session)
+            && packet.MinNeedState <= session.NetworkState
             && CanSend(session, packet)) {
-            PacketStreamWriter writer = new();
-            writer.Write(PacketFragment.VerifyByte);
-            writer.Write(packet.ID);
-            packet.Serialize(new PacketSerializer(writer));
-
-            NetPeer peer = ClientSessions.FirstOrDefault(kvp => kvp.Value == session).Key;
-            if (peer == null) return;
-            foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
-                NetPeer targetPeer = peer;
-                NetworkFaultInjector.Send(
-                    chunk,
-                    data => targetPeer.Send(data, packet.Channel, DeliveryMethod.ReliableOrdered),
-                    packet.GetType().Name);
+            string logicalPacketType = packet.GetType().Name;
+            Packet outbound = ApplicationReliabilityRuntime.ProtectServer(packet, session);
+            if (outbound != null) {
+                SendPrepared(outbound, session, logicalPacketType);
             }
         }
+    }
+
+    internal bool SendPrepared(
+        Packet packet,
+        ClientSession session,
+        string logicalPacketType) {
+        if (packet.MinNeedState > session.NetworkState || !CanSend(session, packet)) {
+            return false;
+        }
+        PacketStreamWriter writer = new();
+        writer.Write(PacketFragment.VerifyByte);
+        writer.Write(packet.ID);
+        packet.Serialize(new PacketSerializer(writer));
+
+        NetPeer peer = ClientSessions.FirstOrDefault(kvp => kvp.Value == session).Key;
+        if (peer == null) return false;
+        foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
+            NetPeer targetPeer = peer;
+            NetworkFaultInjector.Send(
+                chunk,
+                data => targetPeer.Send(data, packet.Channel, DeliveryMethod.ReliableOrdered),
+                logicalPacketType,
+                packet is ApplicationReliablePacket { Kind: ApplicationReliableFrameKind.Data });
+        }
+        return true;
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {
@@ -193,6 +210,7 @@ public class NetworkServer : INetEventListener {
         GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
         PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
         NetworkDigConfirmationRuntime.ClearServerSession(playerIndex);
+        ApplicationReliabilityRuntime.ClearServerSession(session);
         FurnitureHammerPacket.ClearPlayerState(playerIndex);
         PlayerPacketBase.ClearHitThrottleState(playerIndex);
         ModNetworkManager.ClearSession(session);

@@ -79,9 +79,27 @@ public sealed class RelayHost : INetEventListener {
     }
 
     public void Send(Packet packet, ClientSession session) {
-        if (packet.MinNeedState > session.NetworkState || !CanSend(session, packet)) return;
+        if (!_sessions.Values.Contains(session)
+            || packet.MinNeedState > session.NetworkState
+            || !CanSend(session, packet)) {
+            return;
+        }
+        string logicalPacketType = packet.GetType().Name;
+        Packet outbound = ApplicationReliabilityRuntime.ProtectServer(packet, session);
+        if (outbound != null) {
+            SendPrepared(outbound, session, logicalPacketType);
+        }
+    }
+
+    internal bool SendPrepared(
+        Packet packet,
+        ClientSession session,
+        string logicalPacketType) {
+        if (packet.MinNeedState > session.NetworkState || !CanSend(session, packet)) {
+            return false;
+        }
         int connectionId = _sessions.FirstOrDefault(p => p.Value == session).Key;
-        if (connectionId == 0) return;
+        if (connectionId == 0) return false;
         PacketStreamWriter payload = new();
         payload.Write(PacketFragment.VerifyByte);
         payload.Write(packet.ID);
@@ -95,9 +113,11 @@ public sealed class RelayHost : INetEventListener {
                 NetworkFaultInjector.Send(
                     frame,
                     data => relayPeer.Send(data, packet.Channel, DeliveryMethod.ReliableOrdered),
-                    packet.GetType().Name);
+                    logicalPacketType,
+                    packet is ApplicationReliablePacket { Kind: ApplicationReliableFrameKind.Data });
             }
         }
+        return _relayPeer != null;
     }
 
     public void OnPeerConnected(NetPeer peer) {
@@ -257,6 +277,7 @@ public sealed class RelayHost : INetEventListener {
         GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
         PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
         NetworkDigConfirmationRuntime.ClearServerSession(playerIndex);
+        ApplicationReliabilityRuntime.ClearServerSession(session);
         FurnitureHammerPacket.ClearPlayerState(playerIndex);
         PlayerPacketBase.ClearHitThrottleState(playerIndex);
         ModNetworkManager.ClearSession(session);

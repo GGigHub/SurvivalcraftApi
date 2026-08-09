@@ -18,6 +18,13 @@ internal readonly record struct EntityLifecycleDecision(
     long Revision);
 
 internal sealed class EntityLifecycleWindow {
+    internal const double InitialLoadRequestRetrySeconds = 0.25;
+    internal const double MaximumLoadRequestRetrySeconds = 2.0;
+
+    private long requestedRevision = -1;
+    private int loadRequestAttempts;
+    private double nextLoadRequestTime;
+
     public bool HasState { get; private set; }
 
     public bool Present { get; private set; }
@@ -34,6 +41,7 @@ internal sealed class EntityLifecycleWindow {
         HasState = true;
         Present = true;
         AppliedRevision = revision;
+        ClearLoadRequest();
         return AppliedDecision();
     }
 
@@ -47,17 +55,51 @@ internal sealed class EntityLifecycleWindow {
         HasState = true;
         Present = false;
         AppliedRevision = revision;
+        ClearLoadRequest();
         return AppliedDecision();
     }
 
     public bool CanApplyState(long revision) =>
         HasState && Present && revision == AppliedRevision;
 
-    public bool ShouldRequestLoad(long revision, bool entityExists) =>
-        revision >= 0
-        && (!HasState
-            || revision > AppliedRevision
-            || revision == AppliedRevision && Present && !entityExists);
+    public bool ShouldRequestLoad(
+        long revision,
+        bool entityExists,
+        double now) {
+        if (!double.IsFinite(now)) {
+            throw new ArgumentOutOfRangeException(nameof(now));
+        }
+        bool needsLoad = revision >= 0
+            && (!HasState
+                || revision > AppliedRevision
+                || revision == AppliedRevision && Present && !entityExists);
+        if (!needsLoad) {
+            ClearLoadRequest();
+            return false;
+        }
+        if (requestedRevision != revision) {
+            requestedRevision = revision;
+            loadRequestAttempts = 0;
+            nextLoadRequestTime = now;
+        }
+        if (now < nextLoadRequestTime) {
+            return false;
+        }
+
+        double retryDelay = Math.Min(
+            MaximumLoadRequestRetrySeconds,
+            InitialLoadRequestRetrySeconds
+                * Math.Pow(2, Math.Min(loadRequestAttempts, 3)));
+        loadRequestAttempts++;
+        nextLoadRequestTime = now + retryDelay;
+        return true;
+    }
+
+    private void ClearLoadRequest() {
+        requestedRevision = -1;
+        loadRequestAttempts = 0;
+        nextLoadRequestTime = 0;
+    }
 
     private EntityLifecycleDecision AppliedDecision() =>
         new(
@@ -156,9 +198,10 @@ public static class EntityLifecycleTracker {
         long revision,
         bool entityExists) {
         EntityLifecycleContext context = Context(project);
-        return !context.ClientWindows.TryGetValue(entityId, out EntityLifecycleWindow window)
-            ? revision >= 0
-            : window.ShouldRequestLoad(revision, entityExists);
+        return GetOrCreateWindow(context, entityId).ShouldRequestLoad(
+            revision,
+            entityExists,
+            Engine.Time.RealTime);
     }
 
     public static EntityLifecycleMetrics GetMetrics(Project project) {

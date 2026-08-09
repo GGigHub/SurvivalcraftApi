@@ -19,6 +19,7 @@ public class NetworkClient : INetEventListener {
     public bool IsRunning => _netManager?.IsRunning == true;
 
     public void Connect(IPEndPoint serverAddress) {
+        ApplicationReliabilityRuntime.ClearClient();
         _packetDispatcher.Reset();
         ContainerOpenResultTracker.Reset();
         FurnitureHammerResultTracker.Reset();
@@ -66,20 +67,32 @@ public class NetworkClient : INetEventListener {
                 return;
             }
         }
+        string logicalPacketType = packet.GetType().Name;
+        Packet outbound = ApplicationReliabilityRuntime.ProtectClient(packet, MySession);
+        if (outbound != null) {
+            SendPrepared(outbound, logicalPacketType);
+        }
+    }
+
+    internal bool SendPrepared(Packet packet, string logicalPacketType) {
         PacketStreamWriter writer = new();
         writer.Write(PacketFragment.VerifyByte);
         writer.Write(packet.ID);
         packet.Serialize(new PacketSerializer(writer));
 
+        bool sent = false;
         foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(writer.Data())) {
             if (_serverPeer != null) {
                 NetPeer peer = _serverPeer;
                 NetworkFaultInjector.Send(
                     chunk,
                     data => peer.Send(data, packet.Channel, DeliveryMethod.ReliableOrdered),
-                    packet.GetType().Name);
+                    logicalPacketType,
+                    packet is ApplicationReliablePacket { Kind: ApplicationReliableFrameKind.Data });
+                sent = true;
             }
         }
+        return sent;
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {
@@ -117,6 +130,7 @@ public class NetworkClient : INetEventListener {
     }
 
     public void OnPeerConnected(NetPeer peer) {
+        ApplicationReliabilityRuntime.ClearClient();
         _packetDispatcher.Reset();
         ContainerOpenResultTracker.Reset();
         FurnitureHammerResultTracker.Reset();
@@ -139,6 +153,7 @@ public class NetworkClient : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
+        ApplicationReliabilityRuntime.ClearClient();
         _packetDispatcher.Reset();
         ContainerOpenResultTracker.Reset();
         FurnitureHammerResultTracker.Reset();

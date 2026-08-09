@@ -19,6 +19,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
     public bool IsRunning => _netManager?.IsRunning == true;
 
     public void Connect(IPEndPoint relayAddress) {
+        ApplicationReliabilityRuntime.ClearClient();
         _packetDispatcher.Reset();
         ContainerOpenResultTracker.Reset();
         FurnitureHammerResultTracker.Reset();
@@ -62,10 +63,19 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
                 return;
             }
         }
+        string logicalPacketType = packet.GetType().Name;
+        Packet outbound = ApplicationReliabilityRuntime.ProtectClient(packet, MySession);
+        if (outbound != null) {
+            SendPrepared(outbound, logicalPacketType);
+        }
+    }
+
+    internal bool SendPrepared(Packet packet, string logicalPacketType) {
         PacketStreamWriter payload = new();
         payload.Write(PacketFragment.VerifyByte);
         payload.Write(packet.ID);
         packet.Serialize(new PacketSerializer(payload));
+        bool sent = false;
         foreach (NetDataWriter chunk in PacketFragment.FragmentPayload(payload.Data())) {
             NetDataWriter frame = RelayProtocol.Begin(RelayMessageType.DataToHost);
             frame.PutBytesWithLength(chunk.CopyData());
@@ -74,9 +84,12 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
                 NetworkFaultInjector.Send(
                     frame,
                     data => relayPeer.Send(data, packet.Channel, DeliveryMethod.ReliableOrdered),
-                    packet.GetType().Name);
+                    logicalPacketType,
+                    packet is ApplicationReliablePacket { Kind: ApplicationReliableFrameKind.Data });
+                sent = true;
             }
         }
+        return sent;
     }
 
     public void OnPeerConnected(NetPeer peer) {
@@ -90,6 +103,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
     public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channelNumber, DeliveryMethod deliveryMethod) {
         if (!RelayProtocol.TryReadHeader(reader, out RelayMessageType type)) return;
         if (type == RelayMessageType.JoinAccepted) {
+            ApplicationReliabilityRuntime.ClearClient();
             _packetDispatcher.Reset();
             ContainerOpenResultTracker.Reset();
             FurnitureHammerResultTracker.Reset();
@@ -139,6 +153,7 @@ public sealed class RelayClient(string roomCode) : INetEventListener {
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
         IsConnected = false;
+        ApplicationReliabilityRuntime.ClearClient();
         _packetDispatcher.Reset();
         ContainerOpenResultTracker.Reset();
         FurnitureHammerResultTracker.Reset();

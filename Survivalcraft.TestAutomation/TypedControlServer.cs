@@ -403,7 +403,11 @@ public partial class TestAutomationModLoader {
             profile.ReorderRate,
             profile.ReorderDelayMilliseconds,
             profile.BandwidthBytesPerSecond,
-            profile.TargetPacketTypes));
+            profile.TargetPacketTypes,
+            profile.GuaranteeReliableLoss));
+        if (profile.GuaranteeReliableLoss) {
+            QueueApplicationReliabilityProbe();
+        }
         return BuildNetworkFaultState();
     }
 
@@ -516,6 +520,8 @@ public partial class TestAutomationModLoader {
     private NetworkFaultState BuildNetworkFaultState() {
         NetworkFaultSettings settings = NetworkFaultInjector.Settings;
         NetworkFaultMetrics metrics = NetworkFaultInjector.Metrics;
+        ApplicationReliabilityMetrics reliability =
+            ApplicationReliabilityRuntime.Metrics;
         return new NetworkFaultState(
             new NetworkFaultProfile(
                 settings.Seed,
@@ -526,11 +532,20 @@ public partial class TestAutomationModLoader {
                 settings.ReorderRate,
                 settings.ReorderDelayMilliseconds,
                 settings.BandwidthBytesPerSecond,
-                settings.TargetPacketTypes),
+                settings.TargetPacketTypes,
+                settings.GuaranteeReliableLoss),
             metrics.Sent,
             metrics.Dropped,
             metrics.Duplicated,
-            metrics.Pending);
+            metrics.Pending,
+            reliability.Created,
+            reliability.Retried,
+            reliability.Acknowledged,
+            reliability.DuplicateDeliveries,
+            reliability.TimedOut,
+            reliability.Failed,
+            reliability.Pending,
+            reliability.PendingBytes);
     }
 
     private void ReturnToMainMenu(bool saveWorld) {

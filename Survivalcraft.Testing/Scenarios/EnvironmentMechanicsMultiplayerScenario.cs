@@ -1802,11 +1802,17 @@ public sealed class EnvironmentMechanicsMultiplayerScenario {
                 continue;
             }
             try {
-                snapshots[$"{node.Role}-final"] = await CaptureAsync(
-                    node,
-                    fixture?.PlayerEntityId ?? -1,
-                    actorPlayerIndex,
-                    CancellationToken.None).ConfigureAwait(false);
+                snapshots[$"{node.Role}-final"] =
+                    await MultiplayerScenarioOperations
+                        .CaptureAfterApplicationReliabilityIdleAsync(
+                            node,
+                            token => CaptureAsync(
+                                node,
+                                fixture?.PlayerEntityId ?? -1,
+                                actorPlayerIndex,
+                                token),
+                            TimeSpan.FromSeconds(10),
+                            CancellationToken.None).ConfigureAwait(false);
             }
             catch {
                 // Preserve the original scenario failure.

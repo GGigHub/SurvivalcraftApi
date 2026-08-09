@@ -2462,16 +2462,14 @@ public sealed class InventoryHealthMultiplayerScenario {
                 continue;
             }
             try {
-                snapshots[$"{node.Role}-final"] = await CaptureAsync(
-                    node,
-                    inventoryFixture == null
+                int[] inventoryIds = inventoryFixture == null
                         ? []
                         : [
                             inventoryFixture.PlayerInventoryId,
                             inventoryFixture.ChestInventoryId,
                             inventoryFixture.FurnaceInventoryId
-                        ],
-                    healthFixture == null
+                        ];
+                int[] entityIds = healthFixture == null
                         ? []
                         : persistenceHealthFixture == null
                             ? [healthFixture.PlayerEntityId, healthFixture.TargetEntityId]
@@ -2479,9 +2477,20 @@ public sealed class InventoryHealthMultiplayerScenario {
                                 healthFixture.PlayerEntityId,
                                 healthFixture.TargetEntityId,
                                 persistenceHealthFixture.TargetEntityId
-                            ],
-                    actorPlayerIndex < 0 ? [] : [actorPlayerIndex],
-                    CancellationToken.None).ConfigureAwait(false);
+                            ];
+                int[] playerIndexes = actorPlayerIndex < 0 ? [] : [actorPlayerIndex];
+                snapshots[$"{node.Role}-final"] =
+                    await MultiplayerScenarioOperations
+                        .CaptureAfterApplicationReliabilityIdleAsync(
+                            node,
+                            token => CaptureAsync(
+                                node,
+                                inventoryIds,
+                                entityIds,
+                                playerIndexes,
+                                token),
+                            TimeSpan.FromSeconds(10),
+                            CancellationToken.None).ConfigureAwait(false);
             }
             catch {
                 // Preserve the original scenario failure.

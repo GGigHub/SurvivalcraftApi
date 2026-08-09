@@ -71,6 +71,22 @@ public sealed class EntityLifecycleWindowTest {
 
         Assert.False(window.HasState);
         Assert.Equal(-1, window.AppliedRevision);
-        Assert.False(window.ShouldRequestLoad(-1, entityExists: false));
+        Assert.False(window.ShouldRequestLoad(-1, entityExists: false, now: 0));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void MissingEntityLoadRequestsUseBoundedExponentialRetry() {
+        EntityLifecycleWindow window = new();
+
+        Assert.True(window.ShouldRequestLoad(1, entityExists: false, now: 0));
+        Assert.False(window.ShouldRequestLoad(1, entityExists: false, now: 0.249));
+        Assert.True(window.ShouldRequestLoad(1, entityExists: false, now: 0.25));
+        Assert.False(window.ShouldRequestLoad(1, entityExists: false, now: 0.749));
+        Assert.True(window.ShouldRequestLoad(1, entityExists: false, now: 0.75));
+        Assert.True(window.ShouldRequestLoad(2, entityExists: false, now: 0.751));
+
+        Assert.True(window.ReceiveLoad(2).Apply);
+        Assert.False(window.ShouldRequestLoad(2, entityExists: true, now: 10));
     }
 }

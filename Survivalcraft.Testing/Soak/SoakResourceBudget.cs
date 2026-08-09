@@ -9,7 +9,9 @@ public sealed record SoakResourceBudget(
     int MaximumPeakHandles = 8192,
     int MaximumPeakThreads = 512,
     int MinimumSamples = 2,
-    int MaximumPendingFaultPackets = 10_000) {
+    int MaximumPendingFaultPackets = 10_000,
+    int MaximumPendingReliablePackets = 16_384,
+    long MaximumPendingReliableBytes = 256L * 1024 * 1024) {
 
     public SoakResourceBudget Validate() {
         if (MaximumPeakWorkingSetBytes <= 0
@@ -18,7 +20,9 @@ public sealed record SoakResourceBudget(
             || MaximumPeakHandles <= 0
             || MaximumPeakThreads <= 0
             || MinimumSamples <= 0
-            || MaximumPendingFaultPackets <= 0) {
+            || MaximumPendingFaultPackets <= 0
+            || MaximumPendingReliablePackets <= 0
+            || MaximumPendingReliableBytes <= 0) {
             throw new ArgumentOutOfRangeException(
                 nameof(SoakResourceBudget),
                 "Soak resource limits must be positive (growth may be zero).");

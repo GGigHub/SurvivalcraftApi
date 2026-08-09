@@ -96,7 +96,8 @@ public sealed record MultiplayerSoakSchedule(
                         SurvivalStateMultiplayerScenario.ScenarioName =>
                             SurvivalStateMultiplayerScenario.CreateFaultPacketTypes(),
                         _ => null
-                    }));
+                    },
+                    GuaranteeReliableLoss: includeLoss));
         }
 
         return new MultiplayerSoakSchedule(

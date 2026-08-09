@@ -1238,15 +1238,22 @@ public sealed class CreativeFlyMultiplayerScenario {
                 continue;
             }
             try {
-                snapshots[$"{node.Role}-final"] = await node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
-                    ControlCommandNames.GetSnapshotV2,
-                    new GetSnapshotV2Command([
+                GetSnapshotV2Command command = new([
                         SnapshotDomain.Network,
                         SnapshotDomain.Players,
                         SnapshotDomain.Events
-                    ], EventLimit: AutomationProtocol.MaximumEventQueryCount),
-                    timeout: TimeSpan.FromSeconds(5),
-                    cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                    ], EventLimit: AutomationProtocol.MaximumEventQueryCount);
+                snapshots[$"{node.Role}-final"] =
+                    await MultiplayerScenarioOperations
+                        .CaptureAfterApplicationReliabilityIdleAsync(
+                            node,
+                            token => node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+                                ControlCommandNames.GetSnapshotV2,
+                                command,
+                                timeout: TimeSpan.FromSeconds(5),
+                                cancellationToken: token),
+                            TimeSpan.FromSeconds(10),
+                            CancellationToken.None).ConfigureAwait(false);
             }
             catch {
                 // Best-effort evidence collection must not replace the scenario failure.

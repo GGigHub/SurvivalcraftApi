@@ -42,7 +42,11 @@ public class PlayerInteractPacket : PlayerPacketBase {
                 return;
             }
         }
-        if (!TryResolvePlayer(isServer, out PlayerData playerData)) {
+        if (!TryResolvePlayer(isServer, out PlayerData playerData)
+            || playerData.ComponentPlayer == null) {
+            if (!isServer) {
+                NetworkManager.RequestPlayerEntity(m_fromPlayerIndex);
+            }
             return;
         }
         playerData.ComponentPlayer.AddInteractEvent(m_interactEvent, m_netInteractRay, m_netInteractRaycast);

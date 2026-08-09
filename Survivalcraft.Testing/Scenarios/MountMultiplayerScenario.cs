@@ -1357,15 +1357,22 @@ public sealed class MountMultiplayerScenario {
             }
             if (entityIds.Count > 0) {
                 try {
-                    snapshots[$"{node.Role}-final"] = await node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
-                        ControlCommandNames.GetSnapshotV2,
-                        new GetSnapshotV2Command(
-                            [SnapshotDomain.Network, SnapshotDomain.Entities,
-                                SnapshotDomain.Mechanics, SnapshotDomain.Events],
-                            EventLimit: AutomationProtocol.MaximumEventQueryCount,
-                            EntityIds: entityIds.ToArray()),
-                        timeout: TimeSpan.FromSeconds(5),
-                        cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                    GetSnapshotV2Command command = new(
+                        [SnapshotDomain.Network, SnapshotDomain.Entities,
+                            SnapshotDomain.Mechanics, SnapshotDomain.Events],
+                        EventLimit: AutomationProtocol.MaximumEventQueryCount,
+                        EntityIds: entityIds.ToArray());
+                    snapshots[$"{node.Role}-final"] =
+                        await MultiplayerScenarioOperations
+                            .CaptureAfterApplicationReliabilityIdleAsync(
+                                node,
+                                token => node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+                                    ControlCommandNames.GetSnapshotV2,
+                                    command,
+                                    timeout: TimeSpan.FromSeconds(5),
+                                    cancellationToken: token),
+                                TimeSpan.FromSeconds(10),
+                                CancellationToken.None).ConfigureAwait(false);
                 }
                 catch {
                     // Preserve the original scenario failure.

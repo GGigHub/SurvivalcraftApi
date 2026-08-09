@@ -26,6 +26,8 @@ public enum PacketType : byte {
     ModChannelCatalog = 115, ModChannelCatalogResult = 116,
     SessionAdmissionResult = 118,
     OpenInventoryResult = 119,
+    ApplicationReliable = 123,
+    ApplicationReliabilityProbe = 124,
 
     // Entity
     EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
@@ -99,6 +101,8 @@ public static class PacketManager {
         RegisterPacket<ModChannelCatalogPacket>();
         RegisterPacket<ModChannelCatalogResultPacket>();
         RegisterPacket<SessionAdmissionResultPacket>();
+        RegisterPacket<ApplicationReliablePacket>();
+        RegisterPacket<ApplicationReliabilityProbePacket>();
         RegisterPacket<IndexPacket>();
         RegisterPacket<LatencyProbePacket>();
         RegisterPacket<ProjectPacket>();
@@ -259,13 +263,42 @@ public static class PacketManager {
             return packets;
         }
         try {
-            PacketStreamReader preader = new(payload);
+            using PacketStreamReader preader = new(payload);
             return DecodePacketsFromReader(preader, ref packetID);
         }
         catch {
             Log.Information("接收到不规范的数据包:" + packetID);
             return packets;
         }
+    }
+
+    internal static byte[] EncodeRawPacket(Packet packet) {
+        ArgumentNullException.ThrowIfNull(packet);
+        using PacketStreamWriter writer = new();
+        writer.Write(VerifyByte);
+        writer.Write(packet.ID);
+        packet.Serialize(new PacketSerializer(writer));
+        return writer.RawData();
+    }
+
+    internal static Packet DecodeRawPacket(byte[] payload) {
+        ArgumentNullException.ThrowIfNull(payload);
+        using PacketStreamReader reader = new(payload, compressed: false);
+        if (reader.ReadByte() != VerifyByte) {
+            throw new InvalidDataException(
+                "A reliable frame has an invalid inner packet marker.");
+        }
+        byte packetID = reader.ReadByte();
+        Func<Packet> factory = m_factories[packetID]
+            ?? throw new InvalidDataException(
+                $"A reliable frame contains unknown inner packet ID {packetID}.");
+        Packet packet = factory();
+        packet.Serialize(new PacketSerializer(reader));
+        if (reader.BaseStream.Position != reader.BaseStream.Length) {
+            throw new InvalidDataException(
+                "A reliable frame must contain exactly one packet without trailing data.");
+        }
+        return packet;
     }
 
     private static List<Packet> DecodePacketsFromReader(PacketStreamReader preader, ref byte packetID, NetPeer netPeer = null, ConnectionRequest request = null, IPEndPoint iPEndPoint = null) {

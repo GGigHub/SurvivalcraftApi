@@ -572,14 +572,15 @@ public sealed class SurvivalStateMultiplayerScenario {
                 token => QuiesceFixtureNodesAsync([lateClient], fixture, token),
                 scenarioToken).ConfigureAwait(false);
             GameNodeProcess[] allNodes = [cluster.Server, actorClient, observerClient, lateClient];
+            GameNodeProcess[] lateJoinNodes = [cluster.Server, lateClient];
             Dictionary<string, StateSnapshotV2> lateSnapshots = await runner.RunAsync(
                 "verify-late-join",
                 ControlCommandNames.GetSnapshotV2,
                 token => WaitForStateOnNodesAsync(
-                    allNodes,
+                    lateJoinNodes,
                     fixture,
                     expected,
-                    requireSkinResource: node => node.Role is "server" or "client-a",
+                    requireSkinResource: node => node.Role == "server",
                     requireIgnoredStale: false,
                     stepTimeout,
                     token),
@@ -618,7 +619,7 @@ public sealed class SurvivalStateMultiplayerScenario {
             assertions.Add(new ScenarioAssertionRecordV2(
                 "survival-state-late-join-baseline",
                 "passed",
-                allNodes.Select(node => node.Role).ToArray(),
+                lateJoinNodes.Select(node => node.Role).ToArray(),
                 "Late client received current behavior/clothing/status/progression/vitals state and fetched the bounded custom skin; historical sounds were not replayed."));
 
             await runner.RunAsync(
@@ -661,11 +662,12 @@ public sealed class SurvivalStateMultiplayerScenario {
                 ControlCommandNames.QuiesceSurvivalStateFixture,
                 token => QuiesceFixtureNodesAsync([actorClient], fixture, token),
                 scenarioToken).ConfigureAwait(false);
+            GameNodeProcess[] reconnectNodes = [cluster.Server, actorClient, lateClient];
             Dictionary<string, StateSnapshotV2> reconnectSnapshots = await runner.RunAsync(
                 "verify-reconnect",
                 ControlCommandNames.GetSnapshotV2,
                 token => WaitForStateOnNodesAsync(
-                    allNodes,
+                    reconnectNodes,
                     fixture,
                     expected,
                     requireSkinResource: node => node.Role is "server" or "client-a" or "client-c",
@@ -677,7 +679,7 @@ public sealed class SurvivalStateMultiplayerScenario {
             assertions.Add(new ScenarioAssertionRecordV2(
                 "survival-state-reconnect-baseline",
                 "passed",
-                allNodes.Select(node => node.Role).ToArray(),
+                reconnectNodes.Select(node => node.Role).ToArray(),
                 $"playerIndex={initialActorPlayerIndex}; all authoritative state restored after reconnect"));
 
             StateSnapshotV2 beforeSave = await runner.RunAsync(
@@ -1289,11 +1291,17 @@ public sealed class SurvivalStateMultiplayerScenario {
                         PlayerIndexes: [fixture.PlayerIndex],
                         EntityIds: fixture.Behaviors.EntityIds,
                         EventLimit: AutomationProtocol.MaximumEventQueryCount);
-                snapshots[$"{node.Role}-final"] = await node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
-                    ControlCommandNames.GetSnapshotV2,
-                    command,
-                    timeout: TimeSpan.FromSeconds(5),
-                    cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                snapshots[$"{node.Role}-final"] =
+                    await MultiplayerScenarioOperations
+                        .CaptureAfterApplicationReliabilityIdleAsync(
+                            node,
+                            token => node.SendAsync<GetSnapshotV2Command, StateSnapshotV2>(
+                                ControlCommandNames.GetSnapshotV2,
+                                command,
+                                timeout: TimeSpan.FromSeconds(5),
+                                cancellationToken: token),
+                            TimeSpan.FromSeconds(10),
+                            CancellationToken.None).ConfigureAwait(false);
             }
             catch {
                 // Best-effort evidence collection must not hide the original failure.

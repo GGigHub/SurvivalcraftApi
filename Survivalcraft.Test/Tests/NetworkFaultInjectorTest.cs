@@ -98,4 +98,41 @@ public sealed class NetworkFaultInjectorTest {
             NetworkFaultInjector.Configure(new NetworkFaultSettings());
         }
     }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void LossSoakGuaranteeSkipsAcknowledgementsAndDropsReliableData() {
+        int delivered = 0;
+        try {
+            NetworkFaultInjector.Configure(new NetworkFaultSettings(
+                Seed: 7,
+                LossRate: 0.01,
+                TargetPacketTypes: [nameof(CompatibilityHelloPacket)],
+                GuaranteeReliableLoss: true));
+            NetDataWriter acknowledgement = new();
+            acknowledgement.Put((byte)0);
+            NetworkFaultInjector.Send(
+                acknowledgement,
+                _ => delivered++,
+                nameof(StatePacket),
+                applicationReliableData: false);
+            Assert.Equal(0, NetworkFaultInjector.Metrics.Dropped);
+            Assert.Equal(1, delivered);
+            Assert.Equal(0, NetworkFaultInjector.Metrics.Pending);
+            NetDataWriter writer = new();
+            writer.Put((byte)1);
+
+            NetworkFaultInjector.Send(
+                writer,
+                _ => delivered++,
+                nameof(StatePacket),
+                applicationReliableData: true);
+
+            Assert.Equal(1, delivered);
+            Assert.Equal(1, NetworkFaultInjector.Metrics.Dropped);
+        }
+        finally {
+            NetworkFaultInjector.Configure(new NetworkFaultSettings());
+        }
+    }
 }

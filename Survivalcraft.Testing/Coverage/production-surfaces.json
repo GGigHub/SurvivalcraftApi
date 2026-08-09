@@ -737,6 +737,20 @@
       "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Logic/AdjustableDelayGatePacket.cs"
     },
     {
+      "surfaceId": "packet:ApplicationReliablePacket",
+      "kind": "packet",
+      "symbol": "ApplicationReliablePacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/ApplicationReliablePacket.cs"
+    },
+    {
+      "surfaceId": "packet:ApplicationReliabilityProbePacket",
+      "kind": "packet",
+      "symbol": "ApplicationReliabilityProbePacket",
+      "featureId": "network.session-compatibility",
+      "sourcePath": "Survivalcraft.Multiplayer/Network/Packet/Connect/ApplicationReliabilityProbePacket.cs"
+    },
+    {
       "surfaceId": "packet:BatteryVoltagePacket",
       "kind": "packet",
       "symbol": "BatteryVoltagePacket",

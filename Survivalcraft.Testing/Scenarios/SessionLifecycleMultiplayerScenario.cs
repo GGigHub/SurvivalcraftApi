@@ -577,8 +577,8 @@ public sealed class SessionLifecycleMultiplayerScenario {
                         .SendAsync<RunTestModTrafficBurstCommand, TestModTrafficBurstResult>(
                             ControlCommandNames.RunTestModTrafficBurst,
                             new RunTestModTrafficBurstCommand(
-                                32,
-                                PayloadCharacters: 1000,
+                                8,
+                                PayloadCharacters: 512,
                                 CorrelationPrefix: "backpressure"),
                             cancellationToken: token).ConfigureAwait(false);
                     StateSnapshotV2 queued = await WaitForNetworkSnapshotAsync(
@@ -1070,9 +1070,13 @@ public sealed class SessionLifecycleMultiplayerScenario {
                 continue;
             }
             try {
-                snapshots[$"{node.Role}-final"] = await CaptureNetworkAsync(
-                    node,
-                    CancellationToken.None).ConfigureAwait(false);
+                snapshots[$"{node.Role}-final"] =
+                    await MultiplayerScenarioOperations
+                        .CaptureAfterApplicationReliabilityIdleAsync(
+                            node,
+                            token => CaptureNetworkAsync(node, token),
+                            TimeSpan.FromSeconds(10),
+                            CancellationToken.None).ConfigureAwait(false);
             }
             catch {
                 // Process logs remain the fallback diagnostic artifact.

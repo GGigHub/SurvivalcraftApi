@@ -28,8 +28,10 @@ public class PlayerAddPacket : Packet {
 
     public override void Handle(bool isServer) {
         if (isServer) return;
-        var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>();
-        var playerData = new PlayerData(GameManager.Project);
+        Project project = GameManager.Project;
+        if (project == null) return;
+        var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>();
+        var playerData = new PlayerData(project);
         playerData.Load(m_vd);
 
         PlayerData[] sameIndex = subsystemPlayers.PlayersData

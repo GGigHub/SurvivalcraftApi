@@ -12,7 +12,8 @@ public sealed record NetworkFaultSettings(
     double ReorderRate = 0,
     int ReorderDelayMilliseconds = 0,
     int BandwidthBytesPerSecond = 0,
-    string[] TargetPacketTypes = null) {
+    string[] TargetPacketTypes = null,
+    bool GuaranteeReliableLoss = false) {
 
     public bool Enabled =>
         BaseLatencyMilliseconds > 0
@@ -34,6 +35,11 @@ public sealed record NetworkFaultSettings(
         ValidateProbability(LossRate, nameof(LossRate));
         ValidateProbability(DuplicationRate, nameof(DuplicationRate));
         ValidateProbability(ReorderRate, nameof(ReorderRate));
+        if (GuaranteeReliableLoss && LossRate <= 0) {
+            throw new ArgumentException(
+                "Guaranteed reliable loss requires a positive loss rate.",
+                nameof(GuaranteeReliableLoss));
+        }
         if (TargetPacketTypes is { Length: > 64 }) {
             throw new ArgumentOutOfRangeException(
                 nameof(TargetPacketTypes),
@@ -83,6 +89,7 @@ public static class NetworkFaultInjector {
     static long m_duplicated;
     static double m_linkAvailableAt;
     static double m_orderedAvailableAt;
+    static bool m_guaranteedReliableLossConsumed;
 
     public static NetworkFaultSettings Settings => m_settings;
 
@@ -100,22 +107,34 @@ public static class NetworkFaultInjector {
         m_duplicated = 0;
         m_linkAvailableAt = Time.RealTime;
         m_orderedAvailableAt = Time.RealTime;
+        m_guaranteedReliableLossConsumed = false;
     }
 
     public static void Send(
         NetDataWriter writer,
         Action<NetDataWriter> sendImmediately,
-        string packetType = null) {
+        string packetType = null,
+        bool applicationReliableData = false) {
         ArgumentNullException.ThrowIfNull(writer);
         ArgumentNullException.ThrowIfNull(sendImmediately);
-        if (!m_settings.Enabled || !AppliesTo(packetType)) {
+        bool forceReliableLoss = m_settings.Enabled
+            && m_settings.GuaranteeReliableLoss
+            && applicationReliableData
+            && !m_guaranteedReliableLossConsumed;
+        bool appliesToPacket = AppliesTo(packetType);
+        if (!m_settings.Enabled || (!appliesToPacket && !forceReliableLoss)) {
             sendImmediately(writer);
             m_sent++;
             return;
         }
 
         byte[] data = writer.CopyData();
-        if (m_random.NextProbability() < m_settings.LossRate) {
+        bool randomLoss = appliesToPacket
+            && m_random.NextProbability() < m_settings.LossRate;
+        if (forceReliableLoss) {
+            m_guaranteedReliableLossConsumed = true;
+        }
+        if (forceReliableLoss || randomLoss) {
             m_dropped++;
             return;
         }

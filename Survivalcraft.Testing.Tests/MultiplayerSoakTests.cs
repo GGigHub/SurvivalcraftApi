@@ -78,11 +78,16 @@ public sealed class MultiplayerSoakTests {
             Assert.Equal(expected.ScenarioSeed, actual.ScenarioSeed);
             Assert.Equal(
                 expected.NetworkFaults with { TargetPacketTypes = null },
-                actual.NetworkFaults with { LossRate = 0, TargetPacketTypes = null });
+                actual.NetworkFaults with {
+                    LossRate = 0,
+                    TargetPacketTypes = null,
+                    GuaranteeReliableLoss = false
+                });
             Assert.Equal(
                 expected.NetworkFaults.TargetPacketTypes ?? [],
                 actual.NetworkFaults.TargetPacketTypes ?? []);
             Assert.True(actual.NetworkFaults.LossRate > 0);
+            Assert.True(actual.NetworkFaults.GuaranteeReliableLoss);
         }
     }
 
@@ -195,6 +200,78 @@ public sealed class MultiplayerSoakTests {
             failure.Contains(
                 "VitalStatSyncPacket (40000 transmissions, 960000 bytes)",
                 StringComparison.Ordinal));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void LossEvidenceRequiresReliableRetryTimeoutFreedomAndFinalDrain() {
+        MultiplayerSoakScheduleEntry entry = new(
+            0,
+            TerrainInteractionMultiplayerScenario.ScenarioName,
+            1,
+            "loss-latency-reorder",
+            new NetworkFaultProfile(
+                LossRate: 0.01,
+                DuplicationRate: 1,
+                ReorderRate: 0.5));
+        SoakNodeFaultEvidence valid = new(
+            Role: "server",
+            SnapshotCount: 3,
+            MaximumSent: 100,
+            MaximumDropped: 1,
+            MaximumDuplicated: 10,
+            PeakPending: 4,
+            MaximumReliableCreated: 12,
+            MaximumReliableRetried: 2,
+            MaximumReliableAcknowledged: 12,
+            MaximumReliableTimedOut: 0,
+            PeakReliablePending: 3,
+            PeakReliablePendingBytes: 1024,
+            FinalSnapshotCount: 1,
+            MaximumFinalReliablePending: 0,
+            MaximumFinalReliablePendingBytes: 0);
+
+        Assert.Empty(MultiplayerSoakRunner.ValidateFaultEvidence(
+            entry,
+            [valid],
+            maximumPendingFaultPackets: 100));
+
+        string[] failures = MultiplayerSoakRunner.ValidateFaultEvidence(
+            entry,
+            [valid with {
+                MaximumReliableRetried = 0,
+                MaximumReliableTimedOut = 1,
+                MaximumReliableFailed = 1,
+                MaximumFinalReliablePending = 1,
+                MaximumFinalReliablePendingBytes = 64
+            }],
+            maximumPendingFaultPackets: 100);
+        Assert.Contains(failures, failure => failure.Contains(
+            "no application-reliable retry",
+            StringComparison.Ordinal));
+        Assert.Contains(failures, failure => failure.Contains(
+            "timed-out application-reliable deliveries",
+            StringComparison.Ordinal));
+        Assert.Contains(failures, failure => failure.Contains(
+            "failed application-reliable deliveries",
+            StringComparison.Ordinal));
+        Assert.Contains(failures, failure => failure.Contains(
+            "ended with 1 pending application-reliable deliveries",
+            StringComparison.Ordinal));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void OnlyRoleTerminalSnapshotCountsAsFinalReliabilityEvidence() {
+        Assert.True(MultiplayerSoakRunner.IsTerminalReliabilitySnapshotPath(
+            @"C:\artifacts\snapshot-client-a-final.v2.json",
+            "client-a"));
+        Assert.False(MultiplayerSoakRunner.IsTerminalReliabilitySnapshotPath(
+            @"C:\artifacts\snapshot-client-a-place-final.v2.json",
+            "client-a"));
+        Assert.False(MultiplayerSoakRunner.IsTerminalReliabilitySnapshotPath(
+            @"C:\artifacts\snapshot-client-b-final.v2.json",
+            "client-a"));
     }
 
     private static void AssertSchedulesEquivalent(

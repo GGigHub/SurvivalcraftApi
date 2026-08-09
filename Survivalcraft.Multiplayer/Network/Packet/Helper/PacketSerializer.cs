@@ -395,8 +395,16 @@ public sealed class PacketSerializer {
 }
 
 public class PacketStreamReader : BinaryReader {
-    public PacketStreamReader(byte[] CompressedData) : base(new MemoryStream()) {
-        byte[] data = PacketStreamHelper.Decompress(CompressedData);
+    public PacketStreamReader(byte[] compressedData) : this(compressedData, compressed: true) {
+    }
+
+    internal PacketStreamReader(byte[] data, bool compressed) : base(new MemoryStream()) {
+        ArgumentNullException.ThrowIfNull(data);
+        if (!compressed && data.Length > PacketStreamHelper.MaximumDecompressedLength) {
+            throw new InvalidDataException(
+                $"Packet payload cannot exceed {PacketStreamHelper.MaximumDecompressedLength} uncompressed bytes.");
+        }
+        data = compressed ? PacketStreamHelper.Decompress(data) : data;
         BaseStream.Write(data, 0, data.Length);
         BaseStream.Position = 0L;
     }
@@ -410,6 +418,15 @@ public class PacketStreamWriter : BinaryWriter {
         Flush();
         BaseStream.Seek(0, SeekOrigin.Begin);
         return PacketStreamHelper.Compress(BaseStream);
+    }
+
+    internal byte[] RawData() {
+        Flush();
+        if (BaseStream.Length > PacketStreamHelper.MaximumDecompressedLength) {
+            throw new InvalidDataException(
+                $"Packet payload cannot exceed {PacketStreamHelper.MaximumDecompressedLength} uncompressed bytes.");
+        }
+        return ((MemoryStream)BaseStream).ToArray();
     }
 }
 

@@ -9,7 +9,8 @@ public sealed record NetworkFaultProfile(
     double ReorderRate = 0,
     int ReorderDelayMilliseconds = 0,
     int BandwidthBytesPerSecond = 0,
-    string[]? TargetPacketTypes = null) {
+    string[]? TargetPacketTypes = null,
+    bool GuaranteeReliableLoss = false) {
 
     public NetworkFaultProfile Validate() {
         if (BaseLatencyMilliseconds < 0) {
@@ -27,6 +28,11 @@ public sealed record NetworkFaultProfile(
         ValidateProbability(LossRate, nameof(LossRate));
         ValidateProbability(DuplicationRate, nameof(DuplicationRate));
         ValidateProbability(ReorderRate, nameof(ReorderRate));
+        if (GuaranteeReliableLoss && LossRate <= 0) {
+            throw new ArgumentException(
+                "Guaranteed reliable loss requires a positive loss rate.",
+                nameof(GuaranteeReliableLoss));
+        }
         if (TargetPacketTypes is { Length: > 64 }) {
             throw new ArgumentOutOfRangeException(nameof(TargetPacketTypes));
         }

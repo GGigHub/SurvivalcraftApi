@@ -125,6 +125,7 @@ namespace Survivalcraft.Multiplayer {
             NetworkManager.InitializeAction = () => {
                 PacketManager.Initialize();
                 NetworkSessionLifecycleTracker.Reset();
+                ApplicationReliabilityRuntime.Reset();
             };
             NetworkManager.UpdateAction = () => {
                 NetworkFaultInjector.Update();
@@ -135,6 +136,7 @@ namespace Survivalcraft.Multiplayer {
                 PacketManager.PackageFragment.CleanupStates();
                 NetworkCompatibilityRuntime.UpdateClientHandshake(NetworkManager.MySession);
                 NetworkSessionAdmissionRuntime.UpdateClientAdmission(NetworkManager.MySession);
+                ApplicationReliabilityRuntime.Update();
                 if (NetworkCompatibilityRuntime.TryTakePendingClientRejection(
                         out NetworkCompatibilityResult rejection)) {
                     NetworkManager.StopClient();
@@ -159,6 +161,7 @@ namespace Survivalcraft.Multiplayer {
             NetworkManager.StopClientAction = () => {
                 ModNetworkManager.ClearSession(NetworkManager.MySession);
                 NetworkDigConfirmationRuntime.ClearClientState();
+                ApplicationReliabilityRuntime.ClearClient();
                 CreativeFlyResultTracker.Reset();
                 (NetworkManager.NetworkClient as NetworkClient)?.Disconnect();
                 (NetworkManager.RelayClient as RelayClient)?.Disconnect();
@@ -176,6 +179,7 @@ namespace Survivalcraft.Multiplayer {
                 BehaviorSyncPacket.Clear();
                 PlayerBodyUpdatePacket.ClearSnapshots();
                 NetworkFaultInjector.ClearPending();
+                ApplicationReliabilityRuntime.Reset();
                 FurnitureHammerPacket.ClearState();
                 NetworkDigConfirmationRuntime.Reset();
                 PlayerPacketBase.ClearHitThrottleState();

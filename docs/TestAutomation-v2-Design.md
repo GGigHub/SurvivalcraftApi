@@ -1,6 +1,6 @@
 # TestAutomation v2 设计
 
-状态：设计基线；M10 已推进至创造飞行完整覆盖契约
+状态：设计基线；M12 已推进至十二场景确定性丢包可靠性契约
 目标分支：`codex/api-mp-integration`
 适用范围：核心玩法联机自动化、直连与中继、多客户端、失败取证和长期稳定性测试
 
@@ -9,7 +9,7 @@
 TestAutomation v2 不重写现有测试框架，而是在已经稳定的命名管道控制面、无界面进程模型和场景产物之上增加完整的领域驱动能力。设计采用以下决定：
 
 1. 保持长度前缀 JSON 的 wire protocol v1，不因增加命令或快照字段破坏现有 TestHost 与运行时配对。
-2. 单独引入可演进的 Automation API（当前为 v14）和 `StateSnapshotV2.SchemaVersion = 3`；能力版本、线协议版本和快照版本彼此独立。
+2. 单独引入可演进的 Automation API（当前为 v15）和 `StateSnapshotV2.SchemaVersion = 4`；能力版本、线协议版本和快照版本彼此独立。
 3. 保留所有现有 v1 命令和 `state.getSnapshot`，以新增命令的方式演进，不修改旧 DTO 的含义。
 4. 明确区分 `fixture.*` 布置命令和玩家动作命令。前者用于构造确定性前置条件；后者必须经过真实客户端玩法路径，不能直接伪造最终状态或网络包。
 5. 新稳定场景不得使用 `legacy.executeScript`、`FUNC`、`EXEC` 或 UI 点击来验证非 UI 玩法。
@@ -90,8 +90,8 @@ flowchart LR
 ```text
 AutomationDescription
 ├── wireProtocolVersion        = 1
-├── automationApiVersion       = 4
-├── snapshotSchemaVersions     = [1, 2]
+├── automationApiVersion       = 15
+├── snapshotSchemaVersions     = [1, 4]
 ├── supportedCommands          = [...]
 ├── supportedDomains           = [...]
 ├── limits                     = {...}
@@ -465,7 +465,7 @@ Survivalcraft.TestAutomation/
 
 已实现并进入自动门禁的内容：
 
-- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 为 v8，会话/通道生命周期为 v9，熔炉/容器结果为 v10，世界火焰/爆炸事件为 v11，家具锤夹具、动作与快照为 v12，创造飞行结构化结果与 revision burst 为 v13，生存状态四域及 schema 3 投影后当前为 v14；
+- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 为 v8，会话/通道生命周期为 v9，熔炉/容器结果为 v10，世界火焰/爆炸事件为 v11，家具锤夹具、动作与快照为 v12，创造飞行结构化结果与 revision burst 为 v13，生存状态四域及 schema 3 投影后为 v14，可靠投递证据及 schema 4 网络投影后当前为 v15；
 - 现有控制命令由注册式 `TypedCommandRouter` 统一分派，重复命令名在初始化阶段失败；
 - 新增有界 `ActionEventJournal`、`state.getEvents` 和 `state.resetEvents`；
 - 新增 Node、Network、Players、Events 投影的 Snapshot v2、稳定排序和玩家领域容差比较；
@@ -610,7 +610,7 @@ M0 当时的创飞覆盖尚未标记为完整：它仍缺少 late join、重连�
 本切片不新增玩法捷径，而是为全部强类型玩法建立不能虚高的共同证据层：
 
 - Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 103 个 hook 和 111 个 packet class。
-- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v14。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
+- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v15。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
 - `ProductionPathGateway` 成为测试模组唯一的直接 packet queue 边界，源码哨兵同时禁止私有旁路；fixture synchronization、production request、authoritative state 与 fault injection 四类路径被明确区分。
 - revision/lifecycle 旧状态注入在最终权威包稳定 30 个游戏帧后再交付，消除故障重排导致“旧包先到”的非确定性假阴性。
 - 每个游戏节点从控制通道 ready 起每 250 ms 采样工作集、私有内存、句柄、线程与 CPU。当前十二个 v2 场景在 dispose 前把资源摘要写入 metrics；L3 对无样本、峰值、增长量和故障待发队列实行硬预算。Snapshot v2 还记录按 packet class 聚合的排队次数、故障传输次数和字节数，soak 失败会指出最高流量包型，避免只得到一个不可诊断的队列数字。
@@ -726,3 +726,15 @@ M0 当时的创飞覆盖尚未标记为完整：它仍缺少 late join、重连�
 - Snapshot schema 3 增加 `survivalState` 投影，按玩家、实体和服装槽稳定排序，并记录各领域 revision 与声音时间戳；Direct、Relay 及二者严格 replay 已用相同八动作和生产路径 attestation 通过。该场景进入十二项默认 soak 轮转。
 
 Coverage Contract 当前为 22/22 `covered`、0 `partial`、0 `planned`。四个新增领域均为 `covered/mutation`；这表示核心无 UI 联机语义有真实进程与有界 codec 证据，不声称替代像素级界面或人工 reality 验收。所有游戏与中继节点继续强制 `--headless`、`CreateNoWindow=true` 和隔离数据目录。
+
+## 39. M12 应用可靠投递与十二场景丢包闭环
+
+本切片把丢包从“缺口探测”升级为可合并门禁，并把 Automation API 提升到 v15、Snapshot schema 提升到 4、多人联机 wire revision 提升到 16：
+
+- Direct client/server 与 Relay client/host 共用按原网络通道排序的 `ApplicationReliablePacket` Data/ACK envelope。已接受会话上的不可替代业务包获得单调 delivery ID、0.25–2 秒指数重试与 30 秒截止；发送/接收窗口均为最多 4096 项、64 MiB，接收序号最大前跳 16384。重复帧只确认不重复生效，乱序帧有界缓存，容量、codec 或超时错误都关闭对应会话。
+- 高频可替代状态和已有专用状态机的握手、admission、普通挖掘不进入通用 ACK 层；Health 等终态稀疏包仍受保护。稳定请求/事件 ID 继续承担领域幂等。丢包回放暴露的 `EntitySyncRequestPacket` 恢复风暴由 0.25、0.5、1、2 秒重试冷却修复，避免可靠有序队列的队头阻塞被恢复提示放大。
+- 通用包入口增加 16 MiB 压缩帧与 64 MiB 解压结果硬上限，可靠 envelope 的内层包在分配和生产处理器前完成边界、通道、状态和 trailing-data 校验。协议包 ID 123/124 分别用于可靠 envelope 与无副作用测试探针。
+- `NetworkFaultProfile.GuaranteeReliableLoss` 只对可靠 Data 强制一次丢失，绝不吞 ACK；TestAutomation 通过唯一 `ProductionPathGateway` 排入分类探针，因此带目标包过滤器的场景也必然产生真实 drop/retry/ack。Snapshot 与 soak summary 记录 created、retried、acknowledged、duplicate delivery、timed out、failed、pending count/bytes，任何缺失重试、失败/超时或最终非零窗口均 fail closed。
+- seed `20260809` 的最终真实无窗口轮转在 Direct 与 Relay 分别 12/12 通过。每一轮都观察到至少三次可靠重试；两套结果均为零可靠失败、零超时、零最终待发、零生产证据失败和零资源预算违规。严格 replay 还单独锁定 survival late join/reconnect、motion 必丢重试、entity recovery 限流与 terminal health revision。
+
+该里程碑证明本地真实 Direct/Relay 进程中的 22 项核心协议能力能在确定性 1–3% 应用层丢包下自动收敛。它仍不替代公网 NAT/路由器、跨机器时延、像素级 UI/输入手感或任意第三方模组的发布 reality 矩阵。
