@@ -113,6 +113,14 @@ M10 将 `player.creative-fly` 从双动作观察者演示推进为完整服务�
 
 提交前统一门禁结果为：平台 L0/L1 117/117、游戏 L0/L1 92/92；coverage trust 为 22 个 feature 中 18 covered、4 planned，103 个 hook 与 111 个 packet surface 全部对账；doctor 验证隐藏运行时、内置联机模组唯一性和控制通道；兼容矩阵的协议/API/能力/模组/通道不匹配及六个握手/准入超时全部通过；core-multiplayer 与 relay-mod-channel 也再次通过。对应最终产物位于 `TestResults/m10-host-authority-*`、`TestResults/creative-fly-soak-direct-final-20260809-092624`、`TestResults/coverage-trust-20260809-092832.json`、`TestResults/m10-final-compatibility-20260809-092900`、`TestResults/m10-final-core-20260809-093045` 和 `TestResults/m10-final-relay-20260809-093104`。
 
+## M11 生存状态四域验收（2026-08-09）
+
+M11 完成 `entity-creature.behavior-sound`、`inventory.clothing-skin`、`mechanics.status-effects` 和 `player.progression-vitals`。生产协议提升到 wire revision 15，Automation API 提升到 14，Snapshot schema 提升到 3；四域共享实体 lifecycle、单调 revision、有界序列化、服务器权威拒绝和完整连接基线。
+
+综合 `survival-state-multiplayer` 场景以一服三客在 Direct 与 Relay 上运行严格八动作，定向覆盖 16 类包的 100% duplicate 与 50% reorder，并检查本地声音隔离、客户端伪造拒绝、旧 revision、observer、late join、按需皮肤传输、同身份新实体世代重连和保存重载。Direct 原生、Relay 原生及二者严格 replay 四次均通过；最终原生运行分别约 17 秒和 20 秒，动作数均为 8，生产路径 attestation 无失败。所有进程都以 headless/no-window 方式启动，测试期间没有弹出游戏窗口。
+
+Coverage Contract 因此达到 22 covered、0 partial、0 planned；四域均以 `mutation` 置信级别登记。默认 L3 轮转从 11 条扩展为 12 条并保存 survival-state 的 16 类精确 packet 过滤器。最终平台 L0/L1 120/120、游戏 L0/L1 106/106、游戏构建、Direct/Relay 与严格回放均纳入本切片提交前门禁。
+
 ## 当前可重复命令
 
 ```powershell
@@ -122,7 +130,8 @@ M10 将 `player.creative-fly` 从双动作观察者演示推进为完整服务�
 ./scripts/Test-Multiplayer.ps1 -Mode core
 ./scripts/Test-Multiplayer.ps1 -Mode environment-mechanics
 ./scripts/Test-Multiplayer.ps1 -Mode session
-./scripts/Test-Multiplayer.ps1 -Mode soak -SoakIterations 11
+./scripts/Test-Multiplayer.ps1 -Mode survival-state
+./scripts/Test-Multiplayer.ps1 -Mode soak -SoakIterations 12
 ./scripts/Test-Multiplayer.ps1 -Mode legacy
 ./scripts/Test-Multiplayer.ps1 -Mode full
 dotnet test ./Survivalcraft.Test/Survivalcraft.Test.csproj -c Release --filter "Layer=L2" -p:UseAngle=true

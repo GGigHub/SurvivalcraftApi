@@ -136,6 +136,14 @@ public static class ControlCommandNames {
     public const string ResetEvents = "state.resetEvents";
     public const string SetCreativeFly = "player.setCreativeFly";
     public const string RunCreativeFlyRevisionBurst = "player.runCreativeFlyRevisionBurst";
+    public const string PrepareSurvivalStateFixture = "fixture.survivalState.prepare";
+    public const string QuiesceSurvivalStateFixture = "fixture.survivalState.quiesce";
+    public const string SetCreatureBehaviorState = "entity.setCreatureBehaviorState";
+    public const string TriggerCreatureSound = "entity.triggerCreatureSound";
+    public const string SetPlayerSurvivalState = "player.setSurvivalState";
+    public const string RequestSkinTransfer = "player.requestSkinTransfer";
+    public const string RunSurvivalStateRevisionBurst = "state.runSurvivalRevisionBurst";
+    public const string ForgeSurvivalState = "state.forgeSurvivalState";
     public const string PreparePlayerMotionFixture = "fixture.player.prepareMotion";
     public const string ApplyPlayerMotionFixture = "fixture.player.applyMotion";
     public const string PlayerMove = "player.move";

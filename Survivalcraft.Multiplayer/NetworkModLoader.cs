@@ -154,6 +154,7 @@ namespace Survivalcraft.Multiplayer {
                         admissionRejection.ToDisplayMessage());
                 }
                 NetworkDigConfirmationRuntime.Tick();
+                QueuePeriodicPlayerStats();
             };
             NetworkManager.StopClientAction = () => {
                 ModNetworkManager.ClearSession(NetworkManager.MySession);
@@ -335,11 +336,8 @@ namespace Survivalcraft.Multiplayer {
                 entity.Project,
                 entity.Id);
             NetworkManager.Queue(new EntityLoadPacket(entity));
-            ComponentRider rider = entity.FindComponent<ComponentRider>();
-            if (rider != null) {
-                NetworkManager.Queue(ComponentMountPacket.CreateState(
-                    rider,
-                    rider.AuthoritativeMount));
+            foreach (Packet state in NetworkEntityStateBaselineFactory.Create(entity)) {
+                NetworkManager.Queue(state);
             }
         }
     }
@@ -354,8 +352,13 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkChaseBehaviorAttackChanged(ComponentChaseBehavior behavior, bool isAttack) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new ChaseBehaviorPacket(behavior, isAttack));
+        if (!NetworkManager.IsClientRunning && behavior.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                behavior.Entity.Project,
+                NetworkStateRevisionDomain.CreatureChase,
+                behavior.Entity.Id);
+            NetworkManager.Queue(new ChaseBehaviorPacket(behavior, isAttack, revision));
+        }
     }
 
     public override void OnNetworkDamage(ComponentDamage damage) {
@@ -369,48 +372,71 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkDigInMudBehaviorChanged(ComponentDigInMudBehavior behavior, bool isDigIn) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new DigInMudBehaviorPacket(behavior, isDigIn));
+        if (!NetworkManager.IsClientRunning && behavior.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                behavior.Entity.Project,
+                NetworkStateRevisionDomain.CreatureDigInMud,
+                behavior.Entity.Id);
+            NetworkManager.Queue(new DigInMudBehaviorPacket(behavior, isDigIn, revision));
+        }
     }
 
     public override void OnNetworkEatPickableBehaviorChanged(ComponentEatPickableBehavior behavior, bool isFeed) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new EatPickableBehaviorPacket(behavior, isFeed));
+        if (!NetworkManager.IsClientRunning && behavior.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                behavior.Entity.Project,
+                NetworkStateRevisionDomain.CreatureEatPickable,
+                behavior.Entity.Id);
+            NetworkManager.Queue(new EatPickableBehaviorPacket(behavior, isFeed, revision));
+        }
     }
 
     public override void OnNetworkFishOutOfWaterBehaviorChanged(ComponentFishOutOfWaterBehavior behavior, bool isBend) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new FishOutOfWaterBehaviorPacket(behavior, isBend));
+        if (!NetworkManager.IsClientRunning && behavior.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                behavior.Entity.Project,
+                NetworkStateRevisionDomain.CreatureFishOutOfWater,
+                behavior.Entity.Id);
+            NetworkManager.Queue(new FishOutOfWaterBehaviorPacket(behavior, isBend, revision));
+        }
     }
 
     public override void OnNetworkLookAroundBehaviorChanged(ComponentLookAroundBehavior behavior, bool isLookRandom) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new LookAroundBehaviorPacket(behavior, isLookRandom));
+        if (!NetworkManager.IsClientRunning && behavior.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                behavior.Entity.Project,
+                NetworkStateRevisionDomain.CreatureLookAround,
+                behavior.Entity.Id);
+            NetworkManager.Queue(new LookAroundBehaviorPacket(behavior, isLookRandom, revision));
+        }
     }
 
     public override void OnNetworkFluEffect(ComponentFlu flu) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.FluEffect));
+        QueueFluState(flu, ComponentFluPacket.EventType.FluEffect);
     }
 
     public override void OnNetworkFluUpdate(ComponentFlu flu) {
-        if (!NetworkManager.IsClientRunning && Time.PeriodicEvent(1.0, 0.5))
-            NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.SyncStat));
+        if (!NetworkManager.IsClientRunning && Time.PeriodicEvent(1.0, 0.5)) {
+            QueueFluState(flu, ComponentFluPacket.EventType.SyncStat);
+        }
     }
 
     public override void OnNetworkFluSneeze(ComponentFlu flu) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.Sneeze));
+        QueueFluState(flu, ComponentFluPacket.EventType.Sneeze);
     }
 
     public override void OnNetworkFluStarted(ComponentFlu flu) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new ComponentFluPacket(flu, ComponentFluPacket.EventType.StartFlu));
+        QueueFluState(flu, ComponentFluPacket.EventType.StartFlu);
     }
 
     public override void OnNetworkFluImpulse(ComponentFlu flu, Vector3 impulse) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new ComponentFluPacket(flu, impulse));
+        if (!NetworkManager.IsClientRunning && flu.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                flu.Entity.Project,
+                NetworkStateRevisionDomain.Flu,
+                flu.Entity.Id);
+            NetworkManager.Queue(new ComponentFluPacket(flu, impulse, revision));
+        }
     }
 
     public override void OnNetworkFurnaceUpdate(ComponentFurnace furnace) {
@@ -512,7 +538,13 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkHumanModelRow(ComponentHumanModel model) {
-        NetworkManager.Queue(new HumanRowBehaviorPacket(model));
+        if (!NetworkManager.IsClientRunning && model.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                model.Entity.Project,
+                NetworkStateRevisionDomain.HumanRow,
+                model.Entity.Id);
+            NetworkManager.Queue(new HumanRowBehaviorPacket(model, revision));
+        }
     }
 
     public override void OnNetworkInventorySlotChanged(IInventory inventory, int slotIndex) {
@@ -528,13 +560,31 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkClothingSlotChanged(IInventory inventory, int slotIndex) {
-        if (!NetworkManager.IsClientRunning && inventory is ComponentClothing clothing && clothing.Id > 0)
-            NetworkManager.Queue(new ClothingSyncPacket(clothing));
+        if (!NetworkManager.IsClientRunning
+            && inventory is ComponentClothing clothing
+            && clothing.Id > 0
+            && clothing.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                clothing.Entity.Project,
+                NetworkStateRevisionDomain.Clothing,
+                clothing.Entity.Id);
+            NetworkManager.Queue(new ClothingSyncPacket(clothing, revision));
+        }
     }
 
     public override void OnNetworkLevelExperience(ComponentLevel level, int count, bool playSound) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new PlayerAddExperiencePacket(level.m_componentPlayer.PlayerData, count, playSound, level.m_componentPlayer.PlayerData.Level));
+        if (!NetworkManager.IsClientRunning && level.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                level.Entity.Project,
+                NetworkStateRevisionDomain.PlayerProgression,
+                level.Entity.Id);
+            NetworkManager.Queue(new PlayerAddExperiencePacket(
+                level.m_componentPlayer.PlayerData,
+                count,
+                playSound,
+                level.m_componentPlayer.PlayerData.Level,
+                revision));
+        }
     }
 
     public override void OnNetworkSetOnFire(ComponentOnFire onFire, ComponentCreature attacker, float duration) {
@@ -643,13 +693,23 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkRandomFeedBehaviorChanged(ComponentRandomFeedBehavior behavior, bool isFeed) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new RandomFeedBehaviorPacket(behavior, isFeed));
+        if (!NetworkManager.IsClientRunning && behavior.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                behavior.Entity.Project,
+                NetworkStateRevisionDomain.CreatureRandomFeed,
+                behavior.Entity.Id);
+            NetworkManager.Queue(new RandomFeedBehaviorPacket(behavior, isFeed, revision));
+        }
     }
 
     public override void OnNetworkRandomPeckBehaviorChanged(ComponentRandomPeckBehavior behavior, bool isPeck) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new RandomPeckBehaviorPacket(behavior, isPeck));
+        if (!NetworkManager.IsClientRunning && behavior.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                behavior.Entity.Project,
+                NetworkStateRevisionDomain.CreatureRandomPeck,
+                behavior.Entity.Id);
+            NetworkManager.Queue(new RandomPeckBehaviorPacket(behavior, isPeck, revision));
+        }
     }
 
     public override void OnNetworkRiderDismounting(ComponentRider rider, bool isRequest) {
@@ -679,18 +739,64 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkSicknessChanged(ComponentSickness sickness) {
-        if (NetworkManager.IsServerRunning)
-            NetworkManager.Queue(new ComponentSicknessPacket(sickness, ComponentSicknessPacket.EventType.SyncStat));
+        QueueSicknessState(sickness, ComponentSicknessPacket.EventType.SyncStat);
     }
 
     public override void OnNetworkNauseaEffect(ComponentSickness sickness) {
-        if (NetworkManager.IsServerRunning)
-            NetworkManager.Queue(new ComponentSicknessPacket(sickness, ComponentSicknessPacket.EventType.NauseaEffect));
+        QueueSicknessState(sickness, ComponentSicknessPacket.EventType.NauseaEffect);
+    }
+
+    private static void QueueFluState(
+        ComponentFlu flu,
+        ComponentFluPacket.EventType eventType) {
+        if (!NetworkManager.IsServerRunning || flu?.Entity.Id <= 0) return;
+        long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+            flu.Entity.Project,
+            NetworkStateRevisionDomain.Flu,
+            flu.Entity.Id);
+        NetworkManager.Queue(new ComponentFluPacket(flu, eventType, revision));
+    }
+
+    private static void QueueSicknessState(
+        ComponentSickness sickness,
+        ComponentSicknessPacket.EventType eventType) {
+        if (!NetworkManager.IsServerRunning || sickness?.Entity.Id <= 0) return;
+        long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+            sickness.Entity.Project,
+            NetworkStateRevisionDomain.Sickness,
+            sickness.Entity.Id);
+        NetworkManager.Queue(new ComponentSicknessPacket(sickness, eventType, revision));
+    }
+
+    private static void QueuePeriodicPlayerStats() {
+        if (!NetworkManager.IsServerRunning
+            || !Time.PeriodicEvent(2.0, 0.75)
+            || GameManager.Project is not Project project) {
+            return;
+        }
+        SubsystemPlayers players = project.FindSubsystem<SubsystemPlayers>();
+        if (players == null) return;
+        foreach (ComponentPlayer player in players.ComponentPlayers.Where(player =>
+                     player?.Entity.Id > 0)) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                project,
+                NetworkStateRevisionDomain.PlayerStats,
+                player.Entity.Id);
+            NetworkManager.Queue(new PlayerStatSyncPacket(player, revision));
+        }
     }
 
     public override void OnNetworkStubbornSteedHeadShakeOrder(ComponentStubbornSteedBehavior behavior, float headShakeOrder) {
-        if (NetworkManager.IsServerRunning)
-            NetworkManager.Queue(new StubbornSteedBehaviorPacket(behavior, headShakeOrder));
+        if (NetworkManager.IsServerRunning && behavior.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                behavior.Entity.Project,
+                NetworkStateRevisionDomain.CreatureStubbornSteed,
+                behavior.Entity.Id);
+            NetworkManager.Queue(new StubbornSteedBehaviorPacket(
+                behavior,
+                headShakeOrder,
+                revision));
+        }
     }
 
     public override void OnNetworkVitalStatsUpdate(ComponentVitalStats stats) {

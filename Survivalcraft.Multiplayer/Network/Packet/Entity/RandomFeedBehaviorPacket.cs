@@ -8,23 +8,36 @@ public class RandomFeedBehaviorPacket : Packet {
     public override NetworkState MinNeedState => NetworkState.Playing;
     public int m_entityId;
     public bool m_isFeed;
+    public long m_lifecycleRevision = -1;
+    public long m_revision;
     public RandomFeedBehaviorPacket() { }
-    public RandomFeedBehaviorPacket(ComponentRandomFeedBehavior behavior, bool isFeed) {
+    public RandomFeedBehaviorPacket(
+        ComponentRandomFeedBehavior behavior,
+        bool isFeed,
+        long revision = -1) {
         m_entityId = behavior.Entity.Id;
         m_isFeed = isFeed;
+        m_lifecycleRevision = NetworkEntityStatePacketHelpers.LifecycleRevision(behavior);
+        m_revision = NetworkEntityStatePacketHelpers.StateRevision(
+            behavior,
+            NetworkStateRevisionDomain.CreatureRandomFeed,
+            revision);
     }
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref m_entityId);
         archive.Value(ref m_isFeed);
+        archive.Value(ref m_lifecycleRevision);
+        archive.Value(ref m_revision);
     }
     public override void Handle(bool isServer) {
-        if (isServer) return;
-        GameManager.Project.FindEntity(m_entityId, entity => {
-            ComponentRandomFeedBehavior behavior = entity.FindComponent<ComponentRandomFeedBehavior>();
-            if (behavior != null) {
-                behavior.IsFeed = m_isFeed;
-            }
-        });
+        if (!NetworkEntityStatePacketHelpers.TryResolveComponent(
+                isServer,
+                m_entityId,
+                m_lifecycleRevision,
+                m_revision,
+                NetworkStateRevisionDomain.CreatureRandomFeed,
+                out ComponentRandomFeedBehavior behavior)) return;
+        behavior.IsFeed = m_isFeed;
     }
 }
 

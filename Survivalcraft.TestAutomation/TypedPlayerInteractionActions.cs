@@ -91,6 +91,7 @@ public partial class TestAutomationModLoader {
         ResetMountFixtures();
         ResetLogicFixtures();
         ResetCreativeFlyActions();
+        ResetSurvivalStateFixtures();
         InputHijackState.ResetGameplayInputs();
     }
 

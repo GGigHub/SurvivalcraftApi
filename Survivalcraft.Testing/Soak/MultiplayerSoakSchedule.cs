@@ -26,6 +26,7 @@ public sealed record MultiplayerSoakSchedule(
         TerrainInteractionMultiplayerScenario.ScenarioName,
         PlayerMotionMultiplayerScenario.ScenarioName,
         CreativeFlyMultiplayerScenario.ScenarioName,
+        SurvivalStateMultiplayerScenario.ScenarioName,
         TerrainStreamingMultiplayerScenario.ScenarioName,
         EntityCreatureMultiplayerScenario.ScenarioName,
         PickableProjectileMultiplayerScenario.ScenarioName,
@@ -89,9 +90,13 @@ public sealed record MultiplayerSoakSchedule(
                     ReorderRate: reorderRate,
                     ReorderDelayMilliseconds: reorderDelay,
                     BandwidthBytesPerSecond: bandwidth,
-                    TargetPacketTypes: scenario == CreativeFlyMultiplayerScenario.ScenarioName
-                        ? [CreativeFlyMultiplayerScenario.FaultPacketType]
-                        : null));
+                    TargetPacketTypes: scenario switch {
+                        CreativeFlyMultiplayerScenario.ScenarioName =>
+                            [CreativeFlyMultiplayerScenario.FaultPacketType],
+                        SurvivalStateMultiplayerScenario.ScenarioName =>
+                            SurvivalStateMultiplayerScenario.CreateFaultPacketTypes(),
+                        _ => null
+                    }));
         }
 
         return new MultiplayerSoakSchedule(

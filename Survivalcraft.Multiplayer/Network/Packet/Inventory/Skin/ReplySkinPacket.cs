@@ -20,12 +20,14 @@ public class ReplySkinPacket : SkinPacketBase {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        archive.Value(ref SkinName);
+        archive.Value(ref SkinName, MaximumSkinNameUtf8Bytes);
         SerializeSkinData(archive, ref m_skinData);
     }
 
     public override void Handle(bool isServer) {
-        SaveSkin(SkinName, m_skinData);
+        if (!isServer) {
+            SaveSkin(SkinName, m_skinData);
+        }
     }
 }
 

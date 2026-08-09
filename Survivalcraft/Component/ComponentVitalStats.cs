@@ -188,6 +188,13 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            if (NetworkManager.IsClientRunning) {
+                m_componentPlayer.ComponentGui.FoodBarWidget.Value = Food;
+                m_componentPlayer.ComponentScreenOverlays.IceFactor =
+                    MathUtils.Saturate(1f - Temperature / 6f);
+                m_pantingSound.Stop();
+                return;
+            }
             if (m_componentPlayer.ComponentHealth.Health > 0f) {
                 UpdateFood();
                 UpdateStamina();

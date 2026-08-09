@@ -79,15 +79,25 @@ namespace Game {
                 null,
                 delegate {
                     if (m_componentSteedBehavior.WasOrderIssued) {
-                        float headShakeOrder = m_random.Float(0.6f, 1f);
-                        m_componentCreature.ComponentCreatureModel.HeadShakeOrder = headShakeOrder;
-                        ModsManager.HookAction("OnNetworkStubbornSteedHeadShakeOrder", loader => loader.OnNetworkStubbornSteedHeadShakeOrder(this, headShakeOrder));
+                        SetHeadShakeOrder(m_random.Float(0.6f, 1f));
                         m_componentCreature.ComponentCreatureSounds.PlayPainSound();
                     }
                 },
                 null
             );
             m_stateMachine.TransitionTo("Inactive");
+        }
+
+        public virtual void SetHeadShakeOrder(float headShakeOrder, bool fromNetwork = false) {
+            if (!float.IsFinite(headShakeOrder) || headShakeOrder is < 0f or > 8f) {
+                throw new ArgumentOutOfRangeException(nameof(headShakeOrder));
+            }
+            m_componentCreature.ComponentCreatureModel.HeadShakeOrder = headShakeOrder;
+            if (!fromNetwork) {
+                ModsManager.HookAction(
+                    "OnNetworkStubbornSteedHeadShakeOrder",
+                    loader => loader.OnNetworkStubbornSteedHeadShakeOrder(this, headShakeOrder));
+            }
         }
 
         public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap) {

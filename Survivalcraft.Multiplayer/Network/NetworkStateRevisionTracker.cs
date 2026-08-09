@@ -5,6 +5,7 @@ namespace Game.Network;
 
 public enum NetworkStateRevisionDomain : byte {
     Inventory,
+    Clothing,
     Furnace,
     Health,
     Damage,
@@ -15,7 +16,20 @@ public enum NetworkStateRevisionDomain : byte {
     Fire,
     Mount,
     VitalStats,
-    CreativeFly
+    CreativeFly,
+    PlayerProgression,
+    PlayerStats,
+    Flu,
+    Sickness,
+    CreatureChase,
+    CreatureDigInMud,
+    CreatureEatPickable,
+    CreatureFishOutOfWater,
+    CreatureLookAround,
+    CreatureRandomFeed,
+    CreatureRandomPeck,
+    CreatureStubbornSteed,
+    HumanRow
 }
 
 public readonly record struct NetworkStateRevisionMetrics(

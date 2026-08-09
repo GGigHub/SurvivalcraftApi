@@ -6,6 +6,11 @@ using TemplatesDatabase;
 namespace Game.Network;
 
 public sealed class PacketSerializer {
+    private static readonly System.Text.Encoding StrictUtf8 =
+        new System.Text.UTF8Encoding(
+            encoderShouldEmitUTF8Identifier: false,
+            throwOnInvalidBytes: true);
+
     private readonly PacketStreamWriter m_writer;
     private readonly PacketStreamReader m_reader;
 
@@ -70,6 +75,34 @@ public sealed class PacketSerializer {
     public void Value(ref string value) {
         if (IsWriting) m_writer.Write(value ?? string.Empty);
         else value = m_reader.ReadString();
+    }
+
+    public void Value(ref string value, int maximumUtf8Bytes) {
+        if (maximumUtf8Bytes < 0) {
+            throw new ArgumentOutOfRangeException(nameof(maximumUtf8Bytes));
+        }
+        if (IsWriting) {
+            string text = value ?? string.Empty;
+            int byteCount = StrictUtf8.GetByteCount(text);
+            if (byteCount > maximumUtf8Bytes) {
+                throw new InvalidOperationException(
+                    $"String length {byteCount} bytes exceeds maximum {maximumUtf8Bytes}.");
+            }
+            m_writer.Write(text);
+        }
+        else {
+            int byteCount = m_reader.Read7BitEncodedInt();
+            if (byteCount < 0 || byteCount > maximumUtf8Bytes) {
+                throw new InvalidOperationException(
+                    $"String length {byteCount} bytes exceeds maximum {maximumUtf8Bytes}.");
+            }
+            byte[] bytes = m_reader.ReadBytes(byteCount);
+            if (bytes.Length != byteCount) {
+                throw new EndOfStreamException(
+                    $"Expected {byteCount} string bytes, received {bytes.Length}.");
+            }
+            value = StrictUtf8.GetString(bytes);
+        }
     }
 
     public void Value(ref Color value) {

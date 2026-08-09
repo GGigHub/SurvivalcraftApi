@@ -8,26 +8,39 @@ public class ChaseBehaviorPacket : Packet {
     public override NetworkState MinNeedState => NetworkState.Playing;
     public int m_entityId;
     public bool m_isAttack;
+    public long m_lifecycleRevision = -1;
+    public long m_revision;
 
     public ChaseBehaviorPacket() { }
-    public ChaseBehaviorPacket(ComponentChaseBehavior behavior, bool isAttack) {
+    public ChaseBehaviorPacket(
+        ComponentChaseBehavior behavior,
+        bool isAttack,
+        long revision = -1) {
         m_entityId = behavior.Entity.Id;
         m_isAttack = isAttack;
+        m_lifecycleRevision = NetworkEntityStatePacketHelpers.LifecycleRevision(behavior);
+        m_revision = NetworkEntityStatePacketHelpers.StateRevision(
+            behavior,
+            NetworkStateRevisionDomain.CreatureChase,
+            revision);
     }
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref m_entityId);
         archive.Value(ref m_isAttack);
+        archive.Value(ref m_lifecycleRevision);
+        archive.Value(ref m_revision);
     }
     public override void Handle(bool isServer) {
-        if (isServer) {
+        if (!NetworkEntityStatePacketHelpers.TryResolveComponent(
+                isServer,
+                m_entityId,
+                m_lifecycleRevision,
+                m_revision,
+                NetworkStateRevisionDomain.CreatureChase,
+                out ComponentChaseBehavior behavior)) {
             return;
         }
-        GameManager.Project.FindEntity(m_entityId, entity => {
-            ComponentChaseBehavior behavior = entity.FindComponent<ComponentChaseBehavior>();
-            if (behavior != null) {
-                behavior.IsAttack = m_isAttack;
-            }
-        });
+        behavior.IsAttack = m_isAttack;
     }
 }
 

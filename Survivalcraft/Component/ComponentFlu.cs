@@ -45,31 +45,48 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        public virtual void StartFlu() {
-            if (m_fluDuration == 0f) {
+        public virtual void StartFlu(bool fromNetwork = false) {
+            if (NetworkManager.IsClientRunning && !fromNetwork) return;
+            if (m_fluDuration == 0f && !fromNetwork) {
                 m_componentPlayer.PlayerStats.TimesHadFlu++;
             }
             m_fluDuration = 900f;
-            m_subsystemTime.QueueGameTimeDelayedExecution(
-                m_subsystemTime.GameTime + 10.0,
-                delegate { m_componentPlayer.ComponentVitalStats.MakeSleepy(0.2f); }
-            );
+            if (!fromNetwork) {
+                m_subsystemTime.QueueGameTimeDelayedExecution(
+                    m_subsystemTime.GameTime + 10.0,
+                    delegate { m_componentPlayer.ComponentVitalStats.MakeSleepy(0.2f); }
+                );
+            }
         }
 
-        public virtual void Sneeze() {
+        public virtual void Sneeze(bool fromNetwork = false) {
             m_sneezeDuration = 1f;
-            m_componentPlayer.ComponentCreatureSounds.PlaySneezeSound();
-            Project.FindSubsystem<SubsystemNoise>(true).MakeNoise(m_componentPlayer.ComponentBody.Position, 0.25f, 10f);
+            m_componentPlayer.ComponentCreatureSounds.PlaySneezeSound(fromNetwork);
+            if (!fromNetwork) {
+                Project.FindSubsystem<SubsystemNoise>(true).MakeNoise(
+                    m_componentPlayer.ComponentBody.Position,
+                    0.25f,
+                    10f);
+            }
         }
 
-        public virtual void Cough() {
+        public virtual void Cough(bool fromNetwork = false) {
             m_lastCoughTime = m_subsystemTime.GameTime;
             m_coughDuration = 4f;
-            m_componentPlayer.ComponentCreatureSounds.PlayCoughSound();
-            Project.FindSubsystem<SubsystemNoise>(true).MakeNoise(m_componentPlayer.ComponentBody.Position, 0.25f, 10f);
+            m_componentPlayer.ComponentCreatureSounds.PlayCoughSound(fromNetwork);
+            if (!fromNetwork) {
+                Project.FindSubsystem<SubsystemNoise>(true).MakeNoise(
+                    m_componentPlayer.ComponentBody.Position,
+                    0.25f,
+                    10f);
+            }
         }
 
         public virtual void Update(float dt) {
+            if (NetworkManager.IsClientRunning) {
+                UpdatePresentation(dt);
+                return;
+            }
             ModsManager.HookAction("OnNetworkFluUpdate", loader => loader.OnNetworkFluUpdate(this));
             if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
                 || !m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled) {
@@ -125,6 +142,18 @@ namespace Game {
             }
             if ((m_coughDuration > 0f || m_sneezeDuration > 0f)
                 && m_componentPlayer.ComponentHealth.Health > 0f
+                && !m_componentPlayer.ComponentSleep.IsSleeping
+                && m_random.Bool(2f * dt)) {
+                Vector3 impulse = -1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector();
+                m_componentPlayer.ComponentBody.ApplyImpulse(impulse);
+                ModsManager.HookAction("OnNetworkFluImpulse", loader => loader.OnNetworkFluImpulse(this, impulse));
+            }
+            UpdatePresentation(dt);
+        }
+
+        private void UpdatePresentation(float dt) {
+            if ((m_coughDuration > 0f || m_sneezeDuration > 0f)
+                && m_componentPlayer.ComponentHealth.Health > 0f
                 && !m_componentPlayer.ComponentSleep.IsSleeping) {
                 m_coughDuration = MathUtils.Max(m_coughDuration - dt, 0f);
                 m_sneezeDuration = MathUtils.Max(m_sneezeDuration - dt, 0f);
@@ -135,13 +164,6 @@ namespace Game {
                     m_componentPlayer.ComponentLocomotion.LookOrder.X,
                     Math.Clamp(num3 - m_componentPlayer.ComponentLocomotion.LookAngles.Y, -3f, 3f)
                 );
-                if (m_random.Bool(2f * dt)) {
-                    if (!NetworkManager.IsClientRunning) {
-                        Vector3 impulse = -1.2f * m_componentPlayer.ComponentCreatureModel.EyeRotation.GetForwardVector();
-                        m_componentPlayer.ComponentBody.ApplyImpulse(impulse);
-                        ModsManager.HookAction("OnNetworkFluImpulse", loader => loader.OnNetworkFluImpulse(this, impulse));
-                    }
-                }
             }
             if (m_blackoutDuration > 0f) {
                 m_blackoutDuration = MathUtils.Max(m_blackoutDuration - dt, 0f);
@@ -172,11 +194,11 @@ namespace Game {
             valuesDictionary.SetValue("FluOnset", m_fluOnset);
         }
 
-        public virtual void FluEffect() {
+        public virtual void FluEffect(bool fromNetwork = false) {
             m_lastEffectTime = m_subsystemTime.GameTime;
             m_blackoutDuration = MathUtils.Lerp(4f, 2f, m_componentPlayer.ComponentHealth.Health);
             float injury = MathUtils.Min(0.1f, m_componentPlayer.ComponentHealth.Health - 0.175f);
-            if (injury > 0f) {
+            if (!fromNetwork && injury > 0f) {
                 m_subsystemTime.QueueGameTimeDelayedExecution(
                     m_subsystemTime.GameTime + 0.75,
                     delegate { m_componentPlayer.ComponentHealth.Injure(injury, null, false, LanguageControl.Get(fName, 4)); }
@@ -198,10 +220,10 @@ namespace Game {
             }
             if (m_coughDuration == 0f
                 && (m_subsystemTime.GameTime - m_lastCoughTime > 40.0 || m_random.Bool(0.5f))) {
-                Cough();
+                Cough(fromNetwork);
             }
             else if (m_sneezeDuration == 0f) {
-                Sneeze();
+                Sneeze(fromNetwork);
             }
         }
     }

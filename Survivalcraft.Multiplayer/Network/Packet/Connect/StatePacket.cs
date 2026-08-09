@@ -140,56 +140,7 @@ public class StatePacket : ClientPacketBase {
                         }
                     }
                     foreach (Entity entity in GameManager.Project.Entities) {
-                        ComponentPlayer componentPlayer = entity.FindComponent<ComponentPlayer>();
-                        if (componentPlayer != null && entity.Id > 0) {
-                            PlayerCreativeFlyPacket creativeFlyState = PlayerCreativeFlyPacket.CreateState(
-                                componentPlayer,
-                                componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled);
-                            creativeFlyState.To = From;
-                            NetworkManager.Queue(creativeFlyState);
-                        }
-                        ComponentHealth health = entity.FindComponent<ComponentHealth>();
-                        if (health != null && entity.Id > 0) {
-                            NetworkManager.Queue(new HealthSyncPacket(health) { To = From });
-                        }
-                        ComponentDamage damage = entity.FindComponent<ComponentDamage>();
-                        if (damage != null && entity.Id > 0) {
-                            NetworkManager.Queue(new DamageSyncPacket(damage) { To = From });
-                        }
-                        ComponentVitalStats vitalStats =
-                            entity.FindComponent<ComponentVitalStats>();
-                        if (vitalStats != null && entity.Id > 0) {
-                            NetworkManager.Queue(new VitalStatSyncPacket(vitalStats) {
-                                To = From
-                            });
-                        }
-                        ComponentSleep sleep = entity.FindComponent<ComponentSleep>();
-                        if (sleep != null && entity.Id > 0) {
-                            NetworkManager.Queue(new SleepStatusPacket(
-                                sleep,
-                                sleep.m_allowManualWakeUp,
-                                true) { To = From });
-                        }
-                        ComponentOnFire onFire = entity.FindComponent<ComponentOnFire>();
-                        if (onFire != null && entity.Id > 0) {
-                            NetworkManager.Queue(new EntityOnFirePacket(onFire) { To = From });
-                        }
-                        ComponentRider rider = entity.FindComponent<ComponentRider>();
-                        if (rider != null && entity.Id > 0) {
-                            ComponentMountPacket mountState = ComponentMountPacket.CreateState(
-                                rider,
-                                rider.AuthoritativeMount);
-                            mountState.To = From;
-                            NetworkManager.Queue(mountState);
-                        }
-                        foreach (IInventory inventory in entity.FindComponents<IInventory>()) {
-                            if (inventory is ComponentClothing clothing) {
-                                NetworkManager.Queue(new ClothingSyncPacket(clothing) { To = From });
-                            }
-                            else {
-                                NetworkManager.Queue(new InventorySyncPacket(inventory) { To = From });
-                            }
-                        }
+                        NetworkEntityStateBaselineFactory.QueueForSession(entity, From);
                     }
                     break;
             }

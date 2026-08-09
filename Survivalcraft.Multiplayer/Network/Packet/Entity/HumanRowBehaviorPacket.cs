@@ -9,28 +9,37 @@ public class HumanRowBehaviorPacket : Packet {
     public int m_entityId;
     public bool m_rowLeft;
     public bool m_rowRight;
+    public long m_lifecycleRevision = -1;
+    public long m_revision;
     public HumanRowBehaviorPacket() { }
-    public HumanRowBehaviorPacket(ComponentHumanModel model) {
+    public HumanRowBehaviorPacket(ComponentHumanModel model, long revision = -1) {
         m_entityId = model.Entity.Id;
         m_rowLeft = model.m_rowLeft;
         m_rowRight = model.m_rowRight;
+        m_lifecycleRevision = NetworkEntityStatePacketHelpers.LifecycleRevision(model);
+        m_revision = NetworkEntityStatePacketHelpers.StateRevision(
+            model,
+            NetworkStateRevisionDomain.HumanRow,
+            revision);
     }
     public override void Serialize(PacketSerializer archive) {
         archive.Value(ref m_entityId);
         archive.Value(ref m_rowLeft);
         archive.Value(ref m_rowRight);
+        archive.Value(ref m_lifecycleRevision);
+        archive.Value(ref m_revision);
     }
     public override void Handle(bool isServer) {
-        if (isServer) {
+        if (!NetworkEntityStatePacketHelpers.TryResolveComponent(
+                isServer,
+                m_entityId,
+                m_lifecycleRevision,
+                m_revision,
+                NetworkStateRevisionDomain.HumanRow,
+                out ComponentHumanModel humanModel)) {
             return;
         }
-
-        GameManager.Project.FindEntity(m_entityId, entity => {
-            ComponentHumanModel humanModel = entity.FindComponent<ComponentHumanModel>();
-            if (humanModel != null) {
-                ApplyRow(humanModel);
-            }
-        });
+        ApplyRow(humanModel);
     }
 
     public void ApplyRow(ComponentHumanModel humanModel) {

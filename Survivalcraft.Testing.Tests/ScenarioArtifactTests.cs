@@ -129,7 +129,7 @@ public sealed class ScenarioArtifactTests {
                 ReorderRate: 0.5,
                 ReorderDelayMilliseconds: 18);
             StateSnapshotV2 snapshot = new(
-                2,
+                AutomationProtocol.CurrentSnapshotSchemaVersion,
                 "capture",
                 1,
                 0.05,
@@ -147,9 +147,9 @@ public sealed class ScenarioArtifactTests {
                     42,
                     "runtime",
                     "direct",
-                    1,
-                    2,
-                    2,
+                    ControlProtocol.CurrentVersion,
+                    AutomationProtocol.CurrentApiVersion,
+                    AutomationProtocol.CurrentSnapshotSchemaVersion,
                     faultProfile),
                 new ScenarioTopologyV2("direct", "server", ["client-a", "client-b"], false, null),
                 [],

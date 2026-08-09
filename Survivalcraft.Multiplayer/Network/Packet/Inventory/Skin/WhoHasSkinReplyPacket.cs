@@ -13,15 +13,21 @@ public class WhoHasSkinReplyPacket : SkinPacketBase {
         SkinName = skinName;
         m_skinData = LoadSkinData(skinName);
     }
+    public WhoHasSkinReplyPacket(string skinName, byte[] skinData) {
+        SkinName = skinName;
+        m_skinData = skinData;
+    }
 
     public override void Serialize(PacketSerializer archive) {
-        archive.Value(ref SkinName);
+        archive.Value(ref SkinName, MaximumSkinNameUtf8Bytes);
         SerializeSkinData(archive, ref m_skinData);
     }
 
     public override void Handle(bool isServer) {
-        SaveSkin(SkinName, m_skinData);
-        if (isServer) {
+        if (isServer
+            && From != null
+            && RequestSkinPacket.IsPending(SkinName)
+            && SaveSkin(SkinName, m_skinData)) {
             RequestSkinPacket.ReplyPendingSessions(SkinName, m_skinData, From);
         }
     }

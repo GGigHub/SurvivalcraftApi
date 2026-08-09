@@ -13,12 +13,17 @@ public class WhoHasSkinPacket : Packet {
     }
 
     public override void Serialize(PacketSerializer archive) {
-        archive.Value(ref SkinName);
+        archive.Value(ref SkinName, SkinPacketBase.MaximumSkinNameUtf8Bytes);
     }
 
     public override void Handle(bool isServer) {
-        if (CharacterSkinsManager.HasSkinRes(SkinName)) {
-            NetworkManager.Queue(new WhoHasSkinReplyPacket(SkinName));
+        if (isServer
+            || !SkinPacketBase.TryValidateSkinName(
+                SkinName,
+                out string normalizedName)) return;
+        byte[] data = SkinPacketBase.LoadSkinData(normalizedName);
+        if (data != null) {
+            NetworkManager.Queue(new WhoHasSkinReplyPacket(normalizedName, data));
         }
     }
 }

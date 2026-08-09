@@ -28,7 +28,7 @@ namespace Game {
 
         public virtual void StartSickness(bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) return;
-            if (m_sicknessDuration == 0f) {
+            if (m_sicknessDuration == 0f && !fromNetwork) {
                 m_componentPlayer.PlayerStats.TimesWasSick++;
             }
             m_sicknessDuration = 900f;
@@ -37,9 +37,9 @@ namespace Game {
 
         public virtual void NauseaEffect(bool fromNetwork = false) {
             m_lastNauseaTime = m_subsystemTime.GameTime;
-            m_componentPlayer.ComponentCreatureSounds.PlayMoanSound();
+            m_componentPlayer.ComponentCreatureSounds.PlayMoanSound(fromNetwork);
             float injury = MathUtils.Min(0.1f, m_componentPlayer.ComponentHealth.Health - 0.075f);
-            if (injury > 0f) {
+            if (!fromNetwork && injury > 0f) {
                 m_subsystemTime.QueueGameTimeDelayedExecution(
                     m_subsystemTime.GameTime + 0.75,
                     delegate { m_componentPlayer.ComponentHealth.Injure(injury, null, false, LanguageControl.Get(fName, 1)); }
@@ -50,10 +50,17 @@ namespace Game {
                 m_lastPukeTime = m_subsystemTime.GameTime;
                 m_pukeParticleSystem = new PukeParticleSystem(m_subsystemTerrain);
                 m_subsystemParticles.AddParticleSystem(m_pukeParticleSystem);
-                m_componentPlayer.ComponentCreatureSounds.PlayPukeSound();
-                Project.FindSubsystem<SubsystemNoise>(true).MakeNoise(m_componentPlayer.ComponentBody.Position, 0.25f, 10f);
+                m_componentPlayer.ComponentCreatureSounds.PlayPukeSound(fromNetwork);
+                if (!fromNetwork) {
+                    Project.FindSubsystem<SubsystemNoise>(true).MakeNoise(
+                        m_componentPlayer.ComponentBody.Position,
+                        0.25f,
+                        10f);
+                }
                 m_greenoutDuration = 0.8f;
-                m_componentPlayer.PlayerStats.TimesPuked++;
+                if (!fromNetwork) {
+                    m_componentPlayer.PlayerStats.TimesPuked++;
+                }
             }
             else {
                 m_greenoutDuration = MathUtils.Lerp(4f, 2f, m_componentPlayer.ComponentHealth.Health);
@@ -72,19 +79,30 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
-            if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
-                || !m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled) {
-                m_sicknessDuration = 0f;
-                return;
-            }
-            if (m_sicknessDuration > 0f) {
-                //开服后，睡觉疾病恢复速度x5
-                if (m_componentPlayer.ComponentSleep.IsSleeping && m_componentPlayer.ComponentSleep.m_subsystemUpdate.UpdatesPerFrame == 1 && !NetworkManager.IsClientRunning) dt *= m_subsystemGameInfo.WorldSettings.RecoverFator;
-                m_sicknessDuration = MathUtils.Max(m_sicknessDuration - dt, 0f);
-                if (m_componentPlayer.ComponentHealth.Health > 0f && !m_componentPlayer.ComponentSleep.IsSleeping && m_subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821) && (!m_lastNauseaTime.HasValue || m_subsystemTime.GameTime - m_lastNauseaTime > 15.0)) {
-                    NauseaEffect();
-                    ModsManager.HookAction("OnNetworkSicknessChanged", loader => loader.OnNetworkSicknessChanged(this));
+            if (!NetworkManager.IsClientRunning) {
+                if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
+                    || !m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled) {
+                    m_sicknessDuration = 0f;
+                    NotifyPeriodicNetworkState();
+                    return;
                 }
+                if (m_sicknessDuration > 0f) {
+                    //开服后，睡觉疾病恢复速度x5
+                    if (m_componentPlayer.ComponentSleep.IsSleeping
+                        && m_componentPlayer.ComponentSleep.m_subsystemUpdate.UpdatesPerFrame == 1) {
+                        dt *= m_subsystemGameInfo.WorldSettings.RecoverFator;
+                    }
+                    m_sicknessDuration = MathUtils.Max(m_sicknessDuration - dt, 0f);
+                    if (m_componentPlayer.ComponentHealth.Health > 0f
+                        && !m_componentPlayer.ComponentSleep.IsSleeping
+                        && m_subsystemTime.PeriodicGameTimeEvent(3.0, -0.0099999997764825821)
+                        && (!m_lastNauseaTime.HasValue
+                            || m_subsystemTime.GameTime - m_lastNauseaTime > 15.0)) {
+                        NauseaEffect();
+                        ModsManager.HookAction("OnNetworkSicknessChanged", loader => loader.OnNetworkSicknessChanged(this));
+                    }
+                }
+                NotifyPeriodicNetworkState();
             }
             if (m_pukeParticleSystem != null) {
                 float num = MathUtils.DegToRad(
@@ -113,6 +131,14 @@ namespace Game {
                 m_greenoutFactor,
                 m_componentPlayer.ComponentScreenOverlays.GreenoutFactor
             );
+        }
+
+        private void NotifyPeriodicNetworkState() {
+            if (Time.PeriodicEvent(1.0, 0.65)) {
+                ModsManager.HookAction(
+                    "OnNetworkSicknessChanged",
+                    loader => loader.OnNetworkSicknessChanged(this));
+            }
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {

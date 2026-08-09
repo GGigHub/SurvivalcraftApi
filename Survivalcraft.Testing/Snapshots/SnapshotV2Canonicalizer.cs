@@ -209,6 +209,47 @@ public static class SnapshotV2Canonicalizer {
                 })
                 .OrderBy(state => state.EventId)
                 .ToArray(),
+            SurvivalState = snapshot.SurvivalState == null
+                ? null
+                : snapshot.SurvivalState with {
+                    Players = snapshot.SurvivalState.Players
+                        .Select(player => player with {
+                            Level = Round(player.Level, decimalPlaces),
+                            ClothingSlots = player.ClothingSlots
+                                .OrderBy(slot => slot.SlotIndex)
+                                .ToArray(),
+                            Food = Round(player.Food, decimalPlaces),
+                            Stamina = Round(player.Stamina, decimalPlaces),
+                            Sleep = Round(player.Sleep, decimalPlaces),
+                            Wetness = Round(player.Wetness, decimalPlaces),
+                            Temperature = Round(player.Temperature, decimalPlaces),
+                            FluOnset = Round(player.FluOnset, decimalPlaces),
+                            FluDuration = Round(player.FluDuration, decimalPlaces),
+                            CoughDuration = Round(player.CoughDuration, decimalPlaces),
+                            SneezeDuration = Round(player.SneezeDuration, decimalPlaces),
+                            SicknessDuration = Round(player.SicknessDuration, decimalPlaces),
+                            HighestLevel = Round(player.HighestLevel, decimalPlaces)
+                        })
+                        .OrderBy(player => player.PlayerIndex)
+                        .ToArray(),
+                    Creatures = snapshot.SurvivalState.Creatures
+                        .Select(creature => creature with {
+                            HeadShakeOrder = creature.HeadShakeOrder.HasValue
+                                ? Round(creature.HeadShakeOrder.Value, decimalPlaces)
+                                : null,
+                            LastSoundTime = creature.LastSoundTime.HasValue
+                                ? Round(creature.LastSoundTime.Value, decimalPlaces)
+                                : null,
+                            LastCoughSoundTime = creature.LastCoughSoundTime.HasValue
+                                ? Round(creature.LastCoughSoundTime.Value, decimalPlaces)
+                                : null,
+                            LastPukeSoundTime = creature.LastPukeSoundTime.HasValue
+                                ? Round(creature.LastPukeSoundTime.Value, decimalPlaces)
+                                : null
+                        })
+                        .OrderBy(creature => creature.EntityId)
+                        .ToArray()
+                },
             RecentEvents = snapshot.RecentEvents
                 .OrderBy(item => item.Sequence)
                 .Select(item => item with { Data = ToSortedDictionary(item.Data) })

@@ -98,6 +98,82 @@ public partial class TestAutomationModLoader {
                 requiresNetwork: true,
                 stability: AutomationCommandStability.Experimental),
             RunCreativeFlyRevisionBurst);
+        router.Register<PrepareSurvivalStateFixtureCommand, SurvivalStateFixture>(
+            Metadata(
+                ControlCommandNames.PrepareSurvivalStateFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => PrepareSurvivalStateFixture(command));
+        router.Register<QuiesceSurvivalStateFixtureCommand, ControlAck>(
+            Metadata(
+                ControlCommandNames.QuiesceSurvivalStateFixture,
+                AutomationCommandDomain.Fixture,
+                true,
+                allowedRoles: ["server", "client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => QuiesceSurvivalStateFixture(command));
+        router.Register<SetCreatureBehaviorStateCommand, CreatureBehaviorStateResult>(
+            Metadata(
+                ControlCommandNames.SetCreatureBehaviorState,
+                AutomationCommandDomain.Entity,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true),
+            SetCreatureBehaviorState);
+        router.Register<TriggerCreatureSoundCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.TriggerCreatureSound,
+                AutomationCommandDomain.Entity,
+                true,
+                allowedRoles: ["server", "client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true),
+            TriggerCreatureSound);
+        router.Register<SetPlayerSurvivalStateCommand, PlayerSurvivalStateResult>(
+            Metadata(
+                ControlCommandNames.SetPlayerSurvivalState,
+                AutomationCommandDomain.Player,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true),
+            SetPlayerSurvivalState);
+        router.Register<RequestSkinTransferCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.RequestSkinTransfer,
+                AutomationCommandDomain.Player,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true),
+            RequestSkinTransfer);
+        router.Register<RunSurvivalStateRevisionBurstCommand, SurvivalStateRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunSurvivalStateRevisionBurst,
+                AutomationCommandDomain.State,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunSurvivalStateRevisionBurst);
+        router.Register<ForgeSurvivalStateCommand, ActionReceipt>(
+            Metadata(
+                ControlCommandNames.ForgeSurvivalState,
+                AutomationCommandDomain.State,
+                true,
+                allowedRoles: ["client", "client-a", "client-b", "client-c"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            ForgeSurvivalState);
         router.Register<PreparePlayerMotionFixtureCommand, PlayerMotionFixture>(
             Metadata(
                 ControlCommandNames.PreparePlayerMotionFixture,
@@ -1055,9 +1131,18 @@ public partial class TestAutomationModLoader {
                 || domains.Contains(SnapshotDomain.Health)
                 || domains.Contains(SnapshotDomain.Environment)
                 || domains.Contains(SnapshotDomain.Mechanics)
-                || domains.Contains(SnapshotDomain.Players))
+                || domains.Contains(SnapshotDomain.Players)
+                || domains.Contains(SnapshotDomain.SurvivalState))
             && project != null
                 ? BuildStateRevisionMetricsSnapshotV2(project)
+                : null;
+        SurvivalStateSnapshotV2? survivalState =
+            domains.Contains(SnapshotDomain.SurvivalState)
+            && project != null
+                ? BuildSurvivalStateSnapshotV2(
+                    project,
+                    command.PlayerIndexes,
+                    command.EntityIds)
                 : null;
         ActionEventRecord[] events = domains.Contains(SnapshotDomain.Events)
             ? actionEventJournal.Query(new GetEventsCommand(
@@ -1105,7 +1190,8 @@ public partial class TestAutomationModLoader {
             worldFires,
             worldFireMetrics,
             explosionEvents,
-            furnitureDesigns);
+            furnitureDesigns,
+            survivalState);
     }
 
     private static WorldFireStateSnapshotV2[] BuildWorldFireSnapshotsV2(Project project) {
@@ -1549,15 +1635,21 @@ public partial class TestAutomationModLoader {
             ComponentInventory _ when entity?.FindComponent<ComponentPlayer>() != null => "player",
             _ => "inventory"
         };
+        NetworkStateRevisionDomain revisionDomain = inventory is ComponentClothing
+            ? NetworkStateRevisionDomain.Clothing
+            : NetworkStateRevisionDomain.Inventory;
+        int revisionStateId = inventory is ComponentClothing clothing
+            ? clothing.Entity.Id
+            : inventory.Id;
         long revision = NetworkManager.IsClientRunning
             ? NetworkStateRevisionTracker.GetAppliedRevision(
                 inventory.Project,
-                NetworkStateRevisionDomain.Inventory,
-                inventory.Id)
+                revisionDomain,
+                revisionStateId)
             : NetworkStateRevisionTracker.GetAuthoritativeRevision(
                 inventory.Project,
-                NetworkStateRevisionDomain.Inventory,
-                inventory.Id);
+                revisionDomain,
+                revisionStateId);
         InventorySlotSnapshotV2[] slots = Enumerable.Range(0, inventory.SlotsCount)
             .Select(index => {
                 int value = inventory.GetSlotValue(index);
@@ -1844,6 +1936,114 @@ public partial class TestAutomationModLoader {
                 modMetrics.RateLimited,
                 modMetrics.HandlerErrors,
                 modMetrics.ActivePeerStates));
+    }
+
+    private static SurvivalStateSnapshotV2 BuildSurvivalStateSnapshotV2(
+        Project project,
+        int[]? selectedPlayerIndexes,
+        int[]? selectedEntityIds) {
+        HashSet<int>? selectedPlayers = selectedPlayerIndexes?.ToHashSet();
+        SubsystemPlayers players = project.FindSubsystem<SubsystemPlayers>(true);
+        SurvivalPlayerStateSnapshotV2[] playerStates = players.PlayersData
+            .Where(player => player.ComponentPlayer != null
+                && (selectedPlayers == null || selectedPlayers.Contains(player.PlayerIndex)))
+            .Select(BuildSurvivalPlayerStateSnapshotV2)
+            .OrderBy(player => player.PlayerIndex)
+            .ToArray();
+        CreatureBehaviorStateSnapshotV2[] creatures = (selectedEntityIds ?? [])
+            .Where(entityId => entityId > 0)
+            .Distinct()
+            .Take(AutomationProtocol.MaximumSnapshotEntities)
+            .Select(entityId => BuildCreatureBehaviorStateSnapshotV2(project, entityId))
+            .OrderBy(creature => creature.EntityId)
+            .ToArray();
+        return new SurvivalStateSnapshotV2(playerStates, creatures);
+    }
+
+    private static SurvivalPlayerStateSnapshotV2 BuildSurvivalPlayerStateSnapshotV2(
+        PlayerData player) {
+        ComponentPlayer componentPlayer = player.ComponentPlayer;
+        Entity entity = componentPlayer.Entity;
+        ComponentClothing clothing = entity.FindComponent<ComponentClothing>(true);
+        ComponentVitalStats vitalStats = componentPlayer.ComponentVitalStats;
+        ComponentFlu flu = componentPlayer.ComponentFlu;
+        ComponentSickness sickness = componentPlayer.ComponentSickness;
+        PlayerStats stats = componentPlayer.PlayerStats;
+        long Revision(NetworkStateRevisionDomain domain) => NetworkManager.IsClientRunning
+            ? NetworkStateRevisionTracker.GetAppliedRevision(entity.Project, domain, entity.Id)
+            : NetworkStateRevisionTracker.GetAuthoritativeRevision(entity.Project, domain, entity.Id);
+        ClothingSlotStateSnapshotV2[] slots = ClothingSlot.ClothingSlots.Values
+            .OrderBy(slot => slot.StableId)
+            .Select(slot => new ClothingSlotStateSnapshotV2(
+                slot.StableId,
+                [.. clothing.GetClothes(slot)]))
+            .ToArray();
+        return new SurvivalPlayerStateSnapshotV2(
+            player.PlayerIndex,
+            entity.Id,
+            player.Level,
+            player.CharacterSkinName ?? string.Empty,
+            CharacterSkinsManager.HasSkinRes(player.CharacterSkinName ?? string.Empty),
+            clothing.Id,
+            slots,
+            vitalStats.Food,
+            vitalStats.Stamina,
+            vitalStats.Sleep,
+            vitalStats.Wetness,
+            vitalStats.Temperature,
+            flu.m_fluOnset,
+            flu.m_fluDuration,
+            flu.m_coughDuration,
+            flu.m_sneezeDuration,
+            flu.HasFlu,
+            sickness.m_sicknessDuration,
+            sickness.IsSick,
+            sickness.IsPuking,
+            stats.BlocksDug,
+            stats.FoodItemsEaten,
+            stats.TimesWasSick,
+            stats.TimesHadFlu,
+            stats.TimesPuked,
+            stats.HighestLevel,
+            Revision(NetworkStateRevisionDomain.Clothing),
+            Revision(NetworkStateRevisionDomain.PlayerProgression),
+            Revision(NetworkStateRevisionDomain.PlayerStats),
+            Revision(NetworkStateRevisionDomain.VitalStats),
+            Revision(NetworkStateRevisionDomain.Flu),
+            Revision(NetworkStateRevisionDomain.Sickness));
+    }
+
+    private static CreatureBehaviorStateSnapshotV2 BuildCreatureBehaviorStateSnapshotV2(
+        Project project,
+        int entityId) {
+        Entity? entity = project.FindEntity(entityId);
+        ComponentCreatureSounds? sounds = entity?.FindComponent<ComponentCreatureSounds>();
+        ComponentCreatureModel? model = entity?.FindComponent<ComponentCreatureModel>();
+        long Revision(NetworkStateRevisionDomain domain) => NetworkManager.IsClientRunning
+            ? NetworkStateRevisionTracker.GetAppliedRevision(project, domain, entityId)
+            : NetworkStateRevisionTracker.GetAuthoritativeRevision(project, domain, entityId);
+        return new CreatureBehaviorStateSnapshotV2(
+            entityId,
+            entity?.ValuesDictionary.DatabaseObject.Name,
+            entity?.FindComponent<ComponentChaseBehavior>()?.IsAttack,
+            entity?.FindComponent<ComponentDigInMudBehavior>()?.IsDigIn,
+            entity?.FindComponent<ComponentEatPickableBehavior>()?.IsFeed,
+            entity?.FindComponent<ComponentFishOutOfWaterBehavior>()?.IsBend,
+            entity?.FindComponent<ComponentLookAroundBehavior>()?.IsLookRandom,
+            entity?.FindComponent<ComponentRandomFeedBehavior>()?.IsFeed,
+            entity?.FindComponent<ComponentRandomPeckBehavior>()?.IsFeed,
+            model?.HeadShakeOrder,
+            sounds?.m_lastSoundTime,
+            sounds?.m_lastCoughingSoundTime,
+            sounds?.m_lastPukeSoundTime,
+            Revision(NetworkStateRevisionDomain.CreatureChase),
+            Revision(NetworkStateRevisionDomain.CreatureDigInMud),
+            Revision(NetworkStateRevisionDomain.CreatureEatPickable),
+            Revision(NetworkStateRevisionDomain.CreatureFishOutOfWater),
+            Revision(NetworkStateRevisionDomain.CreatureLookAround),
+            Revision(NetworkStateRevisionDomain.CreatureRandomFeed),
+            Revision(NetworkStateRevisionDomain.CreatureRandomPeck),
+            Revision(NetworkStateRevisionDomain.CreatureStubbornSteed));
     }
 
     private static PlayerSnapshotV2 BuildPlayerSnapshotV2(PlayerData player) {

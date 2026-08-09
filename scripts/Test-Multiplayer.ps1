@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("fast", "trust", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "entity-direct", "entity-relay", "entity", "pickable-projectile-direct", "pickable-projectile-relay", "pickable-projectile", "inventory-health-direct", "inventory-health-relay", "inventory-health", "environment-mechanics-direct", "environment-mechanics-relay", "environment-mechanics", "mount-direct", "mount-relay", "mount", "logic-direct", "logic-relay", "logic", "session-direct", "session-relay", "session", "soak", "legacy", "full")]
+    [ValidateSet("fast", "trust", "doctor", "core", "compatibility", "relay", "v2-direct", "v2-relay", "v2", "m1-direct", "m1-relay", "m1", "motion-direct", "motion-relay", "motion", "streaming-direct", "streaming-relay", "streaming", "entity-direct", "entity-relay", "entity", "pickable-projectile-direct", "pickable-projectile-relay", "pickable-projectile", "inventory-health-direct", "inventory-health-relay", "inventory-health", "environment-mechanics-direct", "environment-mechanics-relay", "environment-mechanics", "mount-direct", "mount-relay", "mount", "logic-direct", "logic-relay", "logic", "session-direct", "session-relay", "session", "survival-state-direct", "survival-state-relay", "survival-state", "soak", "legacy", "full")]
     [string]$Mode = "fast",
 
     [ValidateSet("Debug", "Release")]
@@ -9,7 +9,7 @@ param(
     [string]$Artifacts,
 
     [ValidateRange(1, 10000)]
-    [int]$SoakIterations = 11,
+    [int]$SoakIterations = 12,
 
     [ValidateSet("direct", "relay")]
     [string]$SoakTransport = "direct",
@@ -255,6 +255,24 @@ $sessionRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
 }
 elseif ($Mode -eq "session" -or $Mode -eq "full") {
     Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "session-lifecycle-relay"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$survivalStateDirectArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\survival-state-direct-$runStamp"
+}
+elseif ($Mode -eq "survival-state" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "survival-state-direct"
+}
+else {
+    [System.IO.Path]::GetFullPath($Artifacts)
+}
+$survivalStateRelayArtifactDirectory = if ([string]::IsNullOrWhiteSpace($Artifacts)) {
+    Join-Path $repositoryRoot "TestResults\survival-state-relay-$runStamp"
+}
+elseif ($Mode -eq "survival-state" -or $Mode -eq "full") {
+    Join-Path ([System.IO.Path]::GetFullPath($Artifacts)) "survival-state-relay"
 }
 else {
     [System.IO.Path]::GetFullPath($Artifacts)
@@ -639,6 +657,26 @@ function Run-SessionLifecycleScenario {
     )
 }
 
+function Run-SurvivalStateScenario {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("direct", "relay")]
+        [string]$Transport,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ArtifactDirectory
+    )
+
+    Build-CoreRuntime
+    Invoke-DotNet -CommandArguments @(
+        "run", "--project", $hostProject, "--no-build", "-c", $Configuration,
+        "--", "run", "survival-state-multiplayer",
+        "--transport", $Transport,
+        "--runtime", $runtimeDirectory,
+        "--artifacts", $ArtifactDirectory
+    )
+}
+
 function Run-LegacyAudit {
     New-Item -ItemType Directory -Force -Path $legacyArtifactDirectory | Out-Null
     $legacyTestArguments = @(
@@ -794,6 +832,16 @@ try {
             Run-SessionLifecycleScenario -Transport "direct" -ArtifactDirectory $sessionDirectArtifactDirectory
             Run-SessionLifecycleScenario -Transport "relay" -ArtifactDirectory $sessionRelayArtifactDirectory
         }
+        "survival-state-direct" {
+            Run-SurvivalStateScenario -Transport "direct" -ArtifactDirectory $survivalStateDirectArtifactDirectory
+        }
+        "survival-state-relay" {
+            Run-SurvivalStateScenario -Transport "relay" -ArtifactDirectory $survivalStateRelayArtifactDirectory
+        }
+        "survival-state" {
+            Run-SurvivalStateScenario -Transport "direct" -ArtifactDirectory $survivalStateDirectArtifactDirectory
+            Run-SurvivalStateScenario -Transport "relay" -ArtifactDirectory $survivalStateRelayArtifactDirectory
+        }
         "soak" {
             Run-Soak
         }
@@ -829,6 +877,8 @@ try {
             Run-LogicScenario -Transport "relay" -ArtifactDirectory $logicRelayArtifactDirectory
             Run-SessionLifecycleScenario -Transport "direct" -ArtifactDirectory $sessionDirectArtifactDirectory
             Run-SessionLifecycleScenario -Transport "relay" -ArtifactDirectory $sessionRelayArtifactDirectory
+            Run-SurvivalStateScenario -Transport "direct" -ArtifactDirectory $survivalStateDirectArtifactDirectory
+            Run-SurvivalStateScenario -Transport "relay" -ArtifactDirectory $survivalStateRelayArtifactDirectory
             Run-LegacyAudit
         }
     }

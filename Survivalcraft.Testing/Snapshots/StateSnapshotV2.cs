@@ -14,7 +14,8 @@ public enum SnapshotDomain {
     Mechanics,
     Logic,
     Pickables,
-    Projectiles
+    Projectiles,
+    SurvivalState
 }
 
 public sealed record GetSnapshotV2Command(
@@ -60,7 +61,73 @@ public sealed record StateSnapshotV2(
     WorldFireStateSnapshotV2[]? WorldFires = null,
     WorldFireMetricsSnapshotV2? WorldFireMetrics = null,
     ExplosionEventSnapshotV2? ExplosionEvents = null,
-    FurnitureDesignSnapshotV2[]? FurnitureDesigns = null);
+    FurnitureDesignSnapshotV2[]? FurnitureDesigns = null,
+    SurvivalStateSnapshotV2? SurvivalState = null);
+
+public sealed record SurvivalStateSnapshotV2(
+    SurvivalPlayerStateSnapshotV2[] Players,
+    CreatureBehaviorStateSnapshotV2[] Creatures);
+
+public sealed record ClothingSlotStateSnapshotV2(
+    int SlotIndex,
+    int[] Values);
+
+public sealed record SurvivalPlayerStateSnapshotV2(
+    int PlayerIndex,
+    int EntityId,
+    double Level,
+    string SkinName,
+    bool HasSkinResource,
+    int ClothingInventoryId,
+    ClothingSlotStateSnapshotV2[] ClothingSlots,
+    double Food,
+    double Stamina,
+    double Sleep,
+    double Wetness,
+    double Temperature,
+    double FluOnset,
+    double FluDuration,
+    double CoughDuration,
+    double SneezeDuration,
+    bool HasFlu,
+    double SicknessDuration,
+    bool IsSick,
+    bool IsPuking,
+    long BlocksDug,
+    long FoodItemsEaten,
+    long TimesWasSick,
+    long TimesHadFlu,
+    long TimesPuked,
+    double HighestLevel,
+    long ClothingRevision,
+    long ProgressionRevision,
+    long PlayerStatsRevision,
+    long VitalStatsRevision,
+    long FluRevision,
+    long SicknessRevision);
+
+public sealed record CreatureBehaviorStateSnapshotV2(
+    int EntityId,
+    string? TemplateName,
+    bool? ChaseAttack,
+    bool? DigInMud,
+    bool? EatPickable,
+    bool? FishOutOfWater,
+    bool? LookAround,
+    bool? RandomFeed,
+    bool? RandomPeck,
+    double? HeadShakeOrder,
+    double? LastSoundTime,
+    double? LastCoughSoundTime,
+    double? LastPukeSoundTime,
+    long ChaseRevision,
+    long DigInMudRevision,
+    long EatPickableRevision,
+    long FishOutOfWaterRevision,
+    long LookAroundRevision,
+    long RandomFeedRevision,
+    long RandomPeckRevision,
+    long StubbornSteedRevision);
 
 public sealed record FurnitureDesignSnapshotV2(
     int DesignIndex,

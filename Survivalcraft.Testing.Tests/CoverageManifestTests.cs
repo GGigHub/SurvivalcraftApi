@@ -23,8 +23,8 @@ public sealed class CoverageManifestTests {
         CoverageFeature[] covered = manifest.Features
             .Where(feature => feature.Status == "covered")
             .ToArray();
-        Assert.Equal(18, covered.Length);
-        Assert.Equal(4, manifest.Features.Count(feature => feature.Status == "planned"));
+        Assert.Equal(22, covered.Length);
+        Assert.Equal(0, manifest.Features.Count(feature => feature.Status == "planned"));
         Assert.Equal(0, manifest.Features.Count(feature => feature.Status == "partial"));
         Assert.Contains(manifest.Features, feature =>
             feature.FeatureId == "inventory.furniture-hammer"
@@ -164,7 +164,7 @@ public sealed class CoverageManifestTests {
         Assert.Equal(103, report.HookSurfaces);
         Assert.Equal(111, report.PacketSurfaces);
         Assert.True(report.Statuses["covered"] > 0);
-        Assert.True(report.Statuses["planned"] > 0);
+        Assert.False(report.Statuses.ContainsKey("planned"));
         Assert.Contains(report.Features, feature =>
             feature.FeatureId == "player.session-lifecycle"
             && feature.Risk == "critical"
@@ -192,10 +192,12 @@ public sealed class CoverageManifestTests {
         string[] tests = LegacyAuditBaselineValidator.FlattenTests(baseline);
         Assert.Equal(20, tests.Length);
         Assert.Equal(tests.Length, tests.Distinct(StringComparer.Ordinal).Count());
+        Assert.DoesNotContain(baseline.Groups, group =>
+            group.Disposition == "coverage-gap");
         Assert.Contains(baseline.Groups, group =>
-            group.Disposition == "coverage-gap"
+            group.Disposition == "superseded"
             && group.FeatureId == "player.progression-vitals"
-            && group.Replacements.Length == 0);
+            && group.Replacements.Length == 2);
         Assert.All(
             baseline.Groups.Where(group => group.Disposition == "superseded"),
             group => Assert.NotEmpty(group.Replacements));

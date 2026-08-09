@@ -7,6 +7,19 @@ namespace Survivalcraft.Testing.Control;
 public static class ProductionPathEntries {
     public const string CreativeFly = "ComponentGui.TrySetCreativeFlyEnabled";
     public const string CreativeFlyState = "PlayerCreativeFlyPacket.Handle";
+    public const string CreatureBehaviorState =
+        "ComponentBehavior state -> NetworkModLoader -> behavior Packet.Handle";
+    public const string CreatureSoundLocal = "ComponentCreatureSounds.Play*";
+    public const string ClothingState =
+        "ComponentClothing.SetClothes -> ClothingSyncPacket.Handle";
+    public const string SkinTransfer =
+        "RequestSkinPacket -> ReplySkinPacket.Handle";
+    public const string StatusEffects =
+        "ComponentFlu/ComponentSickness -> status Packet.Handle";
+    public const string PlayerProgressionVitals =
+        "ComponentLevel/ComponentVitalStats/PlayerStats -> authoritative Packet.Handle";
+    public const string SurvivalStateFault =
+        "server-authoritative survival state Packet.Handle";
     public const string PlayerMotion = "ComponentInput -> ComponentPlayer.Update";
     public const string PlayerTerrainInteraction = "ComponentInput -> ComponentMiner.Update";
     public const string EntityImpulse = "ComponentBody.ApplyImpulse";

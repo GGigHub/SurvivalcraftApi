@@ -29,10 +29,13 @@ public sealed class MultiplayerSoakTests {
             Assert.Equal(1, entry.NetworkFaults.DuplicationRate);
             Assert.True(entry.NetworkFaults.ReorderRate > 0);
             Assert.Equal(0, entry.NetworkFaults.LossRate);
-            string[] expectedTargets = entry.Scenario
-                    == CreativeFlyMultiplayerScenario.ScenarioName
-                ? [CreativeFlyMultiplayerScenario.FaultPacketType]
-                : [];
+            string[] expectedTargets = entry.Scenario switch {
+                CreativeFlyMultiplayerScenario.ScenarioName =>
+                    [CreativeFlyMultiplayerScenario.FaultPacketType],
+                SurvivalStateMultiplayerScenario.ScenarioName =>
+                    SurvivalStateMultiplayerScenario.CreateFaultPacketTypes(),
+                _ => []
+            };
             Assert.Equal(expectedTargets, entry.NetworkFaults.TargetPacketTypes ?? []);
             _ = entry.NetworkFaults.Validate();
         });

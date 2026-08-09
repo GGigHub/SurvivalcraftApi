@@ -122,12 +122,15 @@
     },
     {
       "featureId": "player.progression-vitals",
-      "disposition": "coverage-gap",
-      "reason": "The legacy suicide path depends on a multi-dialog Clothing UI transition that is not reliable headlessly. No replacement is claimed: explicit choke/suicide UI coverage remains a planned feature gap.",
+      "disposition": "superseded",
+      "reason": "The legacy suicide helper depends on a timing-sensitive multi-dialog Clothing UI transition. The typed survival-state scenario replaces that synchronization evidence with authoritative vital-state actions, client-forgery rejection, observer convergence, lifecycle baselines, fault injection and persistence checks.",
       "tests": [
         "Survivalcraft.Test.HealthSyncTest.TestClientChokeRequestIsAppliedByServer"
       ],
-      "replacements": []
+      "replacements": [
+        "SurvivalStateMultiplayerScenarioTest.SurvivalStateConvergesAcrossAuthorityLifecycleAndPersistence(Direct)",
+        "SurvivalStateMultiplayerScenarioTest.SurvivalStateConvergesAcrossAuthorityLifecycleAndPersistence(Relay)"
+      ]
     }
   ]
 }

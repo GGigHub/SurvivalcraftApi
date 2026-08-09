@@ -34,7 +34,7 @@ public sealed class LogicProtocolTests {
             ControlCommandNames.RunMovingBlockLifecycleBurst,
             moving).DeserializePayload<RunMovingBlockLifecycleBurstCommand>();
 
-        Assert.Equal(13, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(14, AutomationProtocol.CurrentApiVersion);
         Assert.Equal(edit, decodedEdit);
         Assert.Equal(moving, decodedMoving);
         Assert.Equal("Logic", AutomationCommandDomain.Logic.ToString());
