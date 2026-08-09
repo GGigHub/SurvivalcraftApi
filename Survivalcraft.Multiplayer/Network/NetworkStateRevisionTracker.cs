@@ -14,7 +14,8 @@ public enum NetworkStateRevisionDomain : byte {
     Sleep,
     Fire,
     Mount,
-    VitalStats
+    VitalStats,
+    CreativeFly
 }
 
 public readonly record struct NetworkStateRevisionMetrics(

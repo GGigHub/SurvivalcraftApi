@@ -1,7 +1,7 @@
 namespace Survivalcraft.Testing.Control;
 
 public static class AutomationProtocol {
-    public const int CurrentApiVersion = 12;
+    public const int CurrentApiVersion = 13;
     public const int CurrentSnapshotSchemaVersion = 2;
     public const int MaximumSnapshotEntities = 2048;
     public const int MaximumSnapshotTerrainCells = 4096;
@@ -155,4 +155,32 @@ public sealed record ActionReceipt(
     ActionProvenance Provenance = ActionProvenance.Unknown,
     string? ProductionEntry = null);
 
-public sealed record SetCreativeFlyCommand(bool Enabled, int? PlayerIndex = null);
+public enum CreativeFlyExpectedResult {
+    Accepted,
+    AlreadyApplied,
+    InvalidRequest,
+    InvalidGameMode,
+    Mounted,
+    StaleRequest
+}
+
+public sealed record SetCreativeFlyCommand(
+    bool Enabled,
+    int? PlayerIndex = null,
+    CreativeFlyExpectedResult ExpectedResult = CreativeFlyExpectedResult.Accepted,
+    int DuplicateCount = 1);
+
+public sealed record RunCreativeFlyRevisionBurstCommand(
+    int PlayerIndex,
+    bool IntermediateEnabled = true,
+    bool FinalEnabled = false,
+    bool SendStaleState = true);
+
+public sealed record CreativeFlyRevisionBurstResult(
+    ActionReceipt Receipt,
+    int PlayerIndex,
+    int EntityId,
+    bool IntermediateEnabled,
+    bool FinalEnabled,
+    long IntermediateRevision,
+    long FinalRevision);

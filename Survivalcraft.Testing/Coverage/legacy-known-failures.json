@@ -45,7 +45,7 @@
     {
       "featureId": "player.creative-fly",
       "disposition": "superseded",
-      "reason": "The old shared UI fixture can lose the headless widget transition. The v2 component-GUI action has explicit production-path evidence in both transports; the feature remains partial for its separately declared gaps.",
+      "reason": "The old shared UI fixture can lose the headless widget transition. The v2 component-GUI action now has authoritative results, targeted duplicate/reorder coverage, late join, stable-identity reconnect and save/reload evidence in both transports.",
       "tests": [
         "Survivalcraft.Test.PlayerSyncTest.TestCreativeFlyToggleBroadcastsToObserver"
       ],

@@ -158,6 +158,7 @@ namespace Survivalcraft.Multiplayer {
             NetworkManager.StopClientAction = () => {
                 ModNetworkManager.ClearSession(NetworkManager.MySession);
                 NetworkDigConfirmationRuntime.ClearClientState();
+                CreativeFlyResultTracker.Reset();
                 (NetworkManager.NetworkClient as NetworkClient)?.Disconnect();
                 (NetworkManager.RelayClient as RelayClient)?.Disconnect();
                 NetworkManager.NetworkClient = null;
@@ -453,7 +454,19 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkPlayerCreativeFly(ComponentGui gui, ComponentPlayer player) {
-        NetworkManager.Queue(new PlayerCreativeFlyPacket(player));
+        if (NetworkManager.IsServerRunning && player.Entity.Id > 0) {
+            long revision = NetworkStateRevisionTracker.AdvanceAuthoritativeRevision(
+                player.Entity.Project,
+                NetworkStateRevisionDomain.CreativeFly,
+                player.Entity.Id);
+            NetworkManager.Queue(PlayerCreativeFlyPacket.CreateState(
+                player,
+                player.ComponentLocomotion.IsCreativeFlyEnabled,
+                revision: revision));
+        }
+        else if (NetworkManager.IsClientRunning) {
+            NetworkManager.Queue(new PlayerCreativeFlyPacket(player));
+        }
     }
 
     public override void OnNetworkCreatureDied(ComponentHealth health) {

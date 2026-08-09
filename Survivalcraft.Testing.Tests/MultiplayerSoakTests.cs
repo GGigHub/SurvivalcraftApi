@@ -21,7 +21,7 @@ public sealed class MultiplayerSoakTests {
 
         Assert.Equal(first.Seed, second.Seed);
         Assert.Equal(first.Transport, second.Transport);
-        Assert.Equal(first.Entries, second.Entries);
+        AssertSchedulesEquivalent(first, second);
         Assert.Equal(
             MultiplayerSoakSchedule.DefaultScenarioRotation,
             first.Entries.Select(entry => entry.Scenario));
@@ -29,6 +29,11 @@ public sealed class MultiplayerSoakTests {
             Assert.Equal(1, entry.NetworkFaults.DuplicationRate);
             Assert.True(entry.NetworkFaults.ReorderRate > 0);
             Assert.Equal(0, entry.NetworkFaults.LossRate);
+            string[] expectedTargets = entry.Scenario
+                    == CreativeFlyMultiplayerScenario.ScenarioName
+                ? [CreativeFlyMultiplayerScenario.FaultPacketType]
+                : [];
+            Assert.Equal(expectedTargets, entry.NetworkFaults.TargetPacketTypes ?? []);
             _ = entry.NetworkFaults.Validate();
         });
     }
@@ -69,8 +74,11 @@ public sealed class MultiplayerSoakTests {
             Assert.Equal(expected.Scenario, actual.Scenario);
             Assert.Equal(expected.ScenarioSeed, actual.ScenarioSeed);
             Assert.Equal(
-                expected.NetworkFaults,
-                actual.NetworkFaults with { LossRate = 0 });
+                expected.NetworkFaults with { TargetPacketTypes = null },
+                actual.NetworkFaults with { LossRate = 0, TargetPacketTypes = null });
+            Assert.Equal(
+                expected.NetworkFaults.TargetPacketTypes ?? [],
+                actual.NetworkFaults.TargetPacketTypes ?? []);
             Assert.True(actual.NetworkFaults.LossRate > 0);
         }
     }
@@ -96,7 +104,7 @@ public sealed class MultiplayerSoakTests {
             Assert.Equal(expected.Seed, actual.Seed);
             Assert.Equal(expected.Transport, actual.Transport);
             Assert.True(actual.IncludesLoss);
-            Assert.Equal(expected.Entries, actual.Entries);
+            AssertSchedulesEquivalent(expected, actual);
         }
         finally {
             if (Directory.Exists(directory)) {
@@ -184,5 +192,25 @@ public sealed class MultiplayerSoakTests {
             failure.Contains(
                 "VitalStatSyncPacket (40000 transmissions, 960000 bytes)",
                 StringComparison.Ordinal));
+    }
+
+    private static void AssertSchedulesEquivalent(
+        MultiplayerSoakSchedule expected,
+        MultiplayerSoakSchedule actual) {
+        Assert.Equal(expected.Entries.Length, actual.Entries.Length);
+        for (int index = 0; index < expected.Entries.Length; index++) {
+            MultiplayerSoakScheduleEntry expectedEntry = expected.Entries[index];
+            MultiplayerSoakScheduleEntry actualEntry = actual.Entries[index];
+            Assert.Equal(expectedEntry.Iteration, actualEntry.Iteration);
+            Assert.Equal(expectedEntry.Scenario, actualEntry.Scenario);
+            Assert.Equal(expectedEntry.ScenarioSeed, actualEntry.ScenarioSeed);
+            Assert.Equal(expectedEntry.FaultClass, actualEntry.FaultClass);
+            Assert.Equal(
+                expectedEntry.NetworkFaults with { TargetPacketTypes = null },
+                actualEntry.NetworkFaults with { TargetPacketTypes = null });
+            Assert.Equal(
+                expectedEntry.NetworkFaults.TargetPacketTypes ?? [],
+                actualEntry.NetworkFaults.TargetPacketTypes ?? []);
+        }
     }
 }

@@ -101,6 +101,18 @@ M9 把 `inventory.furniture-hammer` 从有界 codec 覆盖推进到完整的服�
 
 覆盖契约因此把 `inventory.furniture-hammer` 提升为 `covered/mutation`。该等级表示家具锤的核心无 UI 生产动作已具备可重放、可归因的自动证据，不把对话框视觉呈现或未来家具组合配方的行为借算进本场景。所有节点继续使用 `--headless`、`CreateNoWindow=true` 与隔离数据目录，测试期间没有前台游戏窗口或残留游戏、中继进程。
 
+## M10 创造飞行权威协议与生命周期验收（2026-08-09）
+
+M10 将 `player.creative-fly` 从双动作观察者演示推进为完整服务端权威链，并把 Automation API 提升到 v13、多人联机 wire revision 提升到 14。生产包现在区分请求和状态，携带稳定 request ID、结构化结果、实体 lifecycle revision 与独立状态 revision；服务端校验会话所有权、Playing、Creative 模式和未骑乘条件，同 ID 重复只执行一次，乱序旧请求与旧状态不能覆盖最新意图。拒绝结果回送当前权威值，即使 revision 相同也能修复客户端的乐观本地切换。
+
+`creative-fly-multiplayer` v2 使用一服三客和严格六动作：先证明主机 UI 生产路径会推进权威 revision 并同步两个观察节点，同时拒绝非 owner 控制命令；再让仅服务端切换 Survival 并验证客户端请求得到 `InvalidGameMode` 与状态回滚。随后在定向 `PlayerCreativeFlyPacket` 的 100% 复制、50% 重排下完成启用/禁用，并用 revision burst 晚发旧状态。场景继续验证 late join、同身份断线重连和保存重载均保留最终启用状态。
+
+覆盖契约因此把 `player.creative-fly` 提升为 `covered/mutation`：22 个 feature 当前为 18 covered、0 partial、4 planned；置信分布为 behavioral 10、mutation 5、soak 3、partial 0、planned 4；生产面精确库存仍为 103 个 hook 和 111 个 packet class。所有游戏与中继节点继续使用 `--headless`、`CreateNoWindow=true` 和隔离数据目录。
+
+最终 M10 证据以补齐主机权威广播后的六动作版本重新生成。Direct 原生、Direct replay、Relay 原生和 Relay replay 四次均为 6 个动作、11 条结构化断言、14 次实际定向复制且无失败；正式 xUnit 场景包装层另行通过 2/2。单场 Direct L3 soak 也通过，服务端与 actor 分别观测到 9 和 7 次 `PlayerCreativeFlyPacket` 复制，所有节点故障待发峰值为 0；四节点峰值工作集约 413–478 MiB，均在硬预算内。
+
+提交前统一门禁结果为：平台 L0/L1 117/117、游戏 L0/L1 92/92；coverage trust 为 22 个 feature 中 18 covered、4 planned，103 个 hook 与 111 个 packet surface 全部对账；doctor 验证隐藏运行时、内置联机模组唯一性和控制通道；兼容矩阵的协议/API/能力/模组/通道不匹配及六个握手/准入超时全部通过；core-multiplayer 与 relay-mod-channel 也再次通过。对应最终产物位于 `TestResults/m10-host-authority-*`、`TestResults/creative-fly-soak-direct-final-20260809-092624`、`TestResults/coverage-trust-20260809-092832.json`、`TestResults/m10-final-compatibility-20260809-092900`、`TestResults/m10-final-core-20260809-093045` 和 `TestResults/m10-final-relay-20260809-093104`。
+
 ## 当前可重复命令
 
 ```powershell
@@ -110,7 +122,7 @@ M9 把 `inventory.furniture-hammer` 从有界 codec 覆盖推进到完整的服�
 ./scripts/Test-Multiplayer.ps1 -Mode core
 ./scripts/Test-Multiplayer.ps1 -Mode environment-mechanics
 ./scripts/Test-Multiplayer.ps1 -Mode session
-./scripts/Test-Multiplayer.ps1 -Mode soak -SoakIterations 10
+./scripts/Test-Multiplayer.ps1 -Mode soak -SoakIterations 11
 ./scripts/Test-Multiplayer.ps1 -Mode legacy
 ./scripts/Test-Multiplayer.ps1 -Mode full
 dotnet test ./Survivalcraft.Test/Survivalcraft.Test.csproj -c Release --filter "Layer=L2" -p:UseAngle=true

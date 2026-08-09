@@ -29,12 +29,19 @@ public sealed class CreativeFlyMultiplayerScenarioTest {
             await new CreativeFlyMultiplayerScenario().RunAsync(options);
 
         Assert.Equal(1, result.ActorPlayerIndex);
+        Assert.Equal(6, result.ActionCount);
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "actions.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "assertions.json")));
         Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "replay-v2.json")));
         Assert.True(File.Exists(Path.Combine(
             result.ArtifactDirectory,
-            "snapshot-client-b-enabled.v2.json")));
+            "snapshot-client-b-enable.v2.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-client-c-after-late-join.v2.json")));
+        Assert.True(File.Exists(Path.Combine(
+            result.ArtifactDirectory,
+            "snapshot-client-a-after-reload.v2.json")));
         if (transport == MultiplayerTransportKind.Relay) {
             Assert.False(string.IsNullOrWhiteSpace(result.RoomCode));
             Assert.True(File.Exists(Path.Combine(result.ArtifactDirectory, "relay.log")));

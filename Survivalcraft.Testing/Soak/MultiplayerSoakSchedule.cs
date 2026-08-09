@@ -25,6 +25,7 @@ public sealed record MultiplayerSoakSchedule(
     public static readonly string[] DefaultScenarioRotation = [
         TerrainInteractionMultiplayerScenario.ScenarioName,
         PlayerMotionMultiplayerScenario.ScenarioName,
+        CreativeFlyMultiplayerScenario.ScenarioName,
         TerrainStreamingMultiplayerScenario.ScenarioName,
         EntityCreatureMultiplayerScenario.ScenarioName,
         PickableProjectileMultiplayerScenario.ScenarioName,
@@ -60,6 +61,7 @@ public sealed record MultiplayerSoakSchedule(
         StableRandom random = new(unchecked((ulong)(uint)seed) ^ 0xA0761D6478BD642FUL);
         MultiplayerSoakScheduleEntry[] entries = new MultiplayerSoakScheduleEntry[iterations];
         for (int iteration = 0; iteration < iterations; iteration++) {
+            string scenario = scenarios[iteration % scenarios.Length];
             int latency = random.NextInt(12, 61);
             int jitter = random.NextInt(2, Math.Min(16, latency) + 1);
             int reorderDelay = random.NextInt(15, 91);
@@ -75,7 +77,7 @@ public sealed record MultiplayerSoakSchedule(
                 : bandwidthLimited ? "bandwidth-reorder" : "latency-reorder";
             entries[iteration] = new MultiplayerSoakScheduleEntry(
                 iteration,
-                scenarios[iteration % scenarios.Length],
+                scenario,
                 random.NextInt(1, int.MaxValue),
                 faultClass,
                 new NetworkFaultProfile(
@@ -86,7 +88,10 @@ public sealed record MultiplayerSoakSchedule(
                     DuplicationRate: 1,
                     ReorderRate: reorderRate,
                     ReorderDelayMilliseconds: reorderDelay,
-                    BandwidthBytesPerSecond: bandwidth));
+                    BandwidthBytesPerSecond: bandwidth,
+                    TargetPacketTypes: scenario == CreativeFlyMultiplayerScenario.ScenarioName
+                        ? [CreativeFlyMultiplayerScenario.FaultPacketType]
+                        : null));
         }
 
         return new MultiplayerSoakSchedule(

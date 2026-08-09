@@ -372,6 +372,57 @@ public sealed class ScenarioArtifactTests {
 
     [Fact]
     [Trait("Layer", "L0")]
+    public void CreativeFlyReplayParserPreservesAuthorityFaultRevisionAndPersistenceActions() {
+        SetCreativeFlyCommand hostEnable = new(true);
+        SetCreativeFlyCommand rejection = new(
+            true,
+            7,
+            CreativeFlyExpectedResult.InvalidGameMode);
+        SetCreativeFlyCommand enable = new(
+            true,
+            7,
+            CreativeFlyExpectedResult.Accepted,
+            DuplicateCount: 3);
+        SetCreativeFlyCommand disable = new(
+            false,
+            7,
+            CreativeFlyExpectedResult.Accepted,
+            DuplicateCount: 3);
+        RunCreativeFlyRevisionBurstCommand burst = new(7);
+        SetCreativeFlyCommand persistence = new(true, 7);
+        ScenarioActionRecordV2[] records = [
+            ServerActionRecord("host-enable", ControlCommandNames.SetCreativeFly, hostEnable),
+            TerrainActionRecord("reject", ControlCommandNames.SetCreativeFly, rejection),
+            TerrainActionRecord("enable", ControlCommandNames.SetCreativeFly, enable),
+            TerrainActionRecord("disable", ControlCommandNames.SetCreativeFly, disable),
+            ServerActionRecord("burst", ControlCommandNames.RunCreativeFlyRevisionBurst, burst),
+            TerrainActionRecord("persistence", ControlCommandNames.SetCreativeFly, persistence)
+        ];
+
+        CreativeFlyReplayPlan replay =
+            CreativeFlyMultiplayerScenario.ParseReplayActions(records);
+
+        Assert.Equal(hostEnable, replay.HostEnable);
+        Assert.Equal(rejection, replay.AuthorityRejection);
+        Assert.Equal(enable, replay.Enable);
+        Assert.Equal(disable, replay.Disable);
+        Assert.Equal(burst, replay.RevisionBurst);
+        Assert.Equal(persistence, replay.PersistenceEnable);
+        Assert.Throws<InvalidDataException>(() =>
+            CreativeFlyMultiplayerScenario.ParseReplayActions([
+                records[0],
+                records[1],
+                records[2],
+                records[3],
+                records[4] with { Role = "client-a" },
+                records[5]
+            ]));
+        Assert.Throws<InvalidDataException>(() =>
+            CreativeFlyMultiplayerScenario.ParseReplayActions(records[..5]));
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void TerrainInteractionReplayParserPreservesTypedActionPayloads() {
         PlayerUseCommand use = new(7, new TerrainCellCoordinate(10, 65, 11));
         PlayerPlaceCommand place = new(7, new TerrainCellCoordinate(12, 66, 13));

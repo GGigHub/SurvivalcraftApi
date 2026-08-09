@@ -90,6 +90,7 @@ public partial class TestAutomationModLoader {
         ResetPickableProjectileFixtures();
         ResetMountFixtures();
         ResetLogicFixtures();
+        ResetCreativeFlyActions();
         InputHijackState.ResetGameplayInputs();
     }
 

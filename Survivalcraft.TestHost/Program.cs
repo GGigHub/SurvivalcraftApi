@@ -270,30 +270,14 @@ internal static class Program {
                         ValidateReplayV2ScenarioVersion(
                             replayV2,
                             CreativeFlyMultiplayerScenario.ScenarioVersion);
-                        SetCreativeFlyCommand[] replayActions = actionRecords.Select(record => {
-                            if (!string.Equals(record.Role, "client-a", StringComparison.Ordinal)) {
-                                throw new InvalidDataException(
-                                    $"Replay v2 action role '{record.Role}' is not supported by "
-                                    + $"{CreativeFlyMultiplayerScenario.ScenarioName} version "
-                                    + $"{CreativeFlyMultiplayerScenario.ScenarioVersion}.");
-                            }
-                            if (!string.Equals(
-                                    record.Command,
-                                    ControlCommandNames.SetCreativeFly,
-                                    StringComparison.Ordinal)) {
-                                throw new InvalidDataException(
-                                    $"Replay v2 contains unsupported action '{record.Command}'.");
-                            }
-                            return record.Payload.Deserialize<SetCreativeFlyCommand>(ControlProtocol.JsonOptions)
-                                ?? throw new InvalidDataException(
-                                    $"Replay v2 action '{record.Receipt.ActionId}' has an invalid payload.");
-                        }).ToArray();
+                        CreativeFlyReplayPlan replayPlan =
+                            CreativeFlyMultiplayerScenario.ParseReplayActions(actionRecords);
                         CreativeFlyMultiplayerScenarioOptions v2Options =
                             BuildCreativeFlyScenarioOptions(
                                 repositoryRoot,
                                 options,
                                 replayV2,
-                                replayActions);
+                                replayPlan);
                         CreativeFlyMultiplayerScenarioResult v2Result =
                             await new CreativeFlyMultiplayerScenario()
                                 .RunAsync(v2Options)
@@ -686,7 +670,7 @@ internal static class Program {
         string repositoryRoot,
         IReadOnlyDictionary<string, string?> options,
         ScenarioReplayV2? replay,
-        SetCreativeFlyCommand[]? replayActions = null) {
+        CreativeFlyReplayPlan? replayPlan = null) {
         int seed = GetInt32(options, "seed", replay?.Seed ?? 20260729);
         MultiplayerTransportKind replayTransport = replay == null
             ? MultiplayerTransportKind.Direct
@@ -718,10 +702,14 @@ internal static class Program {
             seed,
             transport,
             StepTimeout: GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(60)),
-            ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(6)),
+            ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(10)),
             WorkDirectory: workDirectory,
             KeepData: GetFlag(options, "keep-data"),
-            ReplayActions: replayActions);
+            NetworkFaults: BuildGameplayNetworkFaults(
+                options,
+                replay,
+                CreativeFlyMultiplayerScenario.CreateDefaultNetworkFaults(seed)),
+            ReplayPlan: replayPlan);
     }
 
     private static TerrainInteractionMultiplayerScenarioOptions BuildTerrainInteractionScenarioOptions(
@@ -1501,6 +1489,7 @@ internal static class Program {
         Console.WriteLine($"artifacts={result.ArtifactDirectory}");
         Console.WriteLine($"transport={result.Transport}");
         Console.WriteLine($"actorPlayerIndex={result.ActorPlayerIndex}");
+        Console.WriteLine($"actionCount={result.ActionCount}");
         if (!string.IsNullOrWhiteSpace(result.RoomCode)) {
             Console.WriteLine($"room={result.RoomCode}");
         }

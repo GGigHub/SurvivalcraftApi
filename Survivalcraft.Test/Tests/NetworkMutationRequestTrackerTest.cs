@@ -56,4 +56,66 @@ public sealed class NetworkMutationRequestTrackerTest {
         long nextRequestId = NetworkMutationRequestTracker.CreateRequestId();
         Assert.True(nextRequestId > requestId);
     }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void LatestSequenceRejectsReorderedStateWithoutCrossDomainOrSessionLeakage() {
+        ClientSession firstSession = new();
+        ClientSession secondSession = new();
+
+        Assert.Equal(
+            NetworkMutationSequenceDecision.Accepted,
+            NetworkMutationRequestTracker.ReceiveLatest(
+                firstSession,
+                NetworkMutationDomain.PlayerCreativeFly,
+                102));
+        Assert.Equal(
+            NetworkMutationSequenceDecision.Stale,
+            NetworkMutationRequestTracker.ReceiveLatest(
+                firstSession,
+                NetworkMutationDomain.PlayerCreativeFly,
+                101));
+        Assert.Equal(
+            NetworkMutationSequenceDecision.Duplicate,
+            NetworkMutationRequestTracker.ReceiveLatest(
+                firstSession,
+                NetworkMutationDomain.PlayerCreativeFly,
+                102));
+        for (long requestId = 10_000; requestId < 14_096; requestId++) {
+            Assert.True(NetworkMutationRequestTracker.TryAccept(
+                firstSession,
+                NetworkMutationDomain.PlayerHit,
+                requestId));
+        }
+        Assert.Equal(
+            NetworkMutationSequenceDecision.Duplicate,
+            NetworkMutationRequestTracker.ReceiveLatest(
+                firstSession,
+                NetworkMutationDomain.PlayerCreativeFly,
+                102));
+        Assert.Equal(
+            NetworkMutationSequenceDecision.Accepted,
+            NetworkMutationRequestTracker.ReceiveLatest(
+                firstSession,
+                NetworkMutationDomain.PlayerMount,
+                101));
+        Assert.Equal(
+            NetworkMutationSequenceDecision.Accepted,
+            NetworkMutationRequestTracker.ReceiveLatest(
+                secondSession,
+                NetworkMutationDomain.PlayerCreativeFly,
+                101));
+        Assert.Equal(
+            NetworkMutationSequenceDecision.Invalid,
+            NetworkMutationRequestTracker.ReceiveLatest(
+                null!,
+                NetworkMutationDomain.PlayerCreativeFly,
+                101));
+        Assert.Equal(
+            NetworkMutationSequenceDecision.Invalid,
+            NetworkMutationRequestTracker.ReceiveLatest(
+                firstSession,
+                NetworkMutationDomain.PlayerCreativeFly,
+                0));
+    }
 }

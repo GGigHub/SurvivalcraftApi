@@ -135,6 +135,7 @@ public static class ControlCommandNames {
     public const string GetEvents = "state.getEvents";
     public const string ResetEvents = "state.resetEvents";
     public const string SetCreativeFly = "player.setCreativeFly";
+    public const string RunCreativeFlyRevisionBurst = "player.runCreativeFlyRevisionBurst";
     public const string PreparePlayerMotionFixture = "fixture.player.prepareMotion";
     public const string ApplyPlayerMotionFixture = "fixture.player.applyMotion";
     public const string PlayerMove = "player.move";

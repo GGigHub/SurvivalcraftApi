@@ -84,10 +84,20 @@ public partial class TestAutomationModLoader {
                 ControlCommandNames.SetCreativeFly,
                 AutomationCommandDomain.Player,
                 true,
-                allowedRoles: ["client", "client-a", "client-b"],
+                allowedRoles: ["server", "client", "client-a", "client-b", "client-c"],
                 requiresProject: true,
                 requiresNetwork: true),
             SetCreativeFly);
+        router.Register<RunCreativeFlyRevisionBurstCommand, CreativeFlyRevisionBurstResult>(
+            Metadata(
+                ControlCommandNames.RunCreativeFlyRevisionBurst,
+                AutomationCommandDomain.Player,
+                true,
+                allowedRoles: ["server"],
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            RunCreativeFlyRevisionBurst);
         router.Register<PreparePlayerMotionFixtureCommand, PlayerMotionFixture>(
             Metadata(
                 ControlCommandNames.PreparePlayerMotionFixture,
@@ -1044,7 +1054,8 @@ public partial class TestAutomationModLoader {
             (domains.Contains(SnapshotDomain.Inventories)
                 || domains.Contains(SnapshotDomain.Health)
                 || domains.Contains(SnapshotDomain.Environment)
-                || domains.Contains(SnapshotDomain.Mechanics))
+                || domains.Contains(SnapshotDomain.Mechanics)
+                || domains.Contains(SnapshotDomain.Players))
             && project != null
                 ? BuildStateRevisionMetricsSnapshotV2(project)
                 : null;
@@ -1876,92 +1887,4 @@ public partial class TestAutomationModLoader {
             : null;
     }
 
-    private ActionReceipt SetCreativeFly(
-        AutomationCommandContext context,
-        SetCreativeFlyCommand command) {
-        Project project = GameManager.Project
-            ?? throw new AutomationCommandException("invalid_state", "No project is loaded.");
-        if (!NetworkManager.IsClientRunning) {
-            throw new AutomationCommandException(
-                "permission_denied",
-                "Creative-fly gameplay actions must originate from a connected client node.");
-        }
-        SubsystemPlayers players = project.FindSubsystem<SubsystemPlayers>(true);
-        PlayerData? actor = command.PlayerIndex.HasValue
-            ? players.PlayersData.FirstOrDefault(player => player.PlayerIndex == command.PlayerIndex.Value)
-            : players.MainPlayerData;
-        if (actor?.ComponentPlayer == null) {
-            throw new AutomationCommandException("actor_not_found", "The requested player is not ready.");
-        }
-        if (!actor.IsMainPlayer) {
-            throw new AutomationCommandException(
-                "permission_denied",
-                "A client can only drive its main player.");
-        }
-
-        long tick = Time.FrameIndex;
-        bool previous = actor.ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled;
-        actionEventJournal.Record(
-            tick,
-            context.RequestId,
-            nodeRole,
-            AutomationCommandDomain.Player,
-            "creativeFly",
-            ActionEventPhase.Queued,
-            actor.PlayerIndex,
-            code: "queued",
-            data: new Dictionary<string, string> {
-                ["enabled"] = command.Enabled.ToString(CultureInfo.InvariantCulture)
-            },
-            provenance: ActionProvenance.ProductionInput,
-            productionEntry: ProductionPathEntries.CreativeFly);
-
-        if (previous == command.Enabled) {
-            actionEventJournal.Record(
-                tick,
-                context.RequestId,
-                nodeRole,
-                AutomationCommandDomain.Player,
-                "creativeFly",
-                ActionEventPhase.Observed,
-                actor.PlayerIndex,
-                code: "already_applied",
-                provenance: ActionProvenance.ProductionInput,
-                productionEntry: ProductionPathEntries.CreativeFly);
-            return new ActionReceipt(
-                context.RequestId,
-                true,
-                tick,
-                actor.PlayerIndex,
-                "already_applied",
-                Provenance: ActionProvenance.ProductionInput,
-                ProductionEntry: ProductionPathEntries.CreativeFly);
-        }
-
-        bool accepted = actor.ComponentPlayer.ComponentGui.TrySetCreativeFlyEnabled(command.Enabled);
-        string code = accepted ? "applied" : "action_rejected";
-        actionEventJournal.Record(
-            tick,
-            context.RequestId,
-            nodeRole,
-            AutomationCommandDomain.Player,
-            "creativeFly",
-            accepted ? ActionEventPhase.Applied : ActionEventPhase.Rejected,
-            actor.PlayerIndex,
-            code: code,
-            data: new Dictionary<string, string> {
-                ["enabled"] = command.Enabled.ToString(CultureInfo.InvariantCulture)
-            },
-            provenance: ActionProvenance.ProductionInput,
-            productionEntry: ProductionPathEntries.CreativeFly);
-        return new ActionReceipt(
-            context.RequestId,
-            accepted,
-            tick,
-            actor.PlayerIndex,
-            code,
-            accepted ? null : "The production gameplay path rejected the requested fly state.",
-            ActionProvenance.ProductionInput,
-            ProductionPathEntries.CreativeFly);
-    }
 }

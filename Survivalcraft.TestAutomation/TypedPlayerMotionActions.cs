@@ -366,6 +366,11 @@ public partial class TestAutomationModLoader {
                 "action_in_progress",
                 $"Action '{pendingProjectileAction.ActionId}' is still in progress.");
         }
+        if (pendingCreativeFlyAction != null) {
+            throw new AutomationCommandException(
+                "action_in_progress",
+                $"Action '{pendingCreativeFlyAction.ActionId}' is still in progress.");
+        }
     }
 
     private static void PreparePlayerForMotionFixture(

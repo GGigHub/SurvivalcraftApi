@@ -14,16 +14,18 @@ public sealed class CoverageManifestTests {
         Assert.NotEmpty(manifest.Features);
         Assert.Contains(manifest.Features, feature =>
             feature.FeatureId == "player.creative-fly"
-            && feature.Status == "partial"
+            && feature.Status == "covered"
+            && feature.Confidence == "mutation"
             && feature.DirectTest != null
             && feature.RelayTest != null
-            && feature.Gaps is { Length: > 0 });
+            && feature.MutationTest != null
+            && (feature.Gaps == null || feature.Gaps.Length == 0));
         CoverageFeature[] covered = manifest.Features
             .Where(feature => feature.Status == "covered")
             .ToArray();
-        Assert.Equal(17, covered.Length);
+        Assert.Equal(18, covered.Length);
         Assert.Equal(4, manifest.Features.Count(feature => feature.Status == "planned"));
-        Assert.Equal(1, manifest.Features.Count(feature => feature.Status == "partial"));
+        Assert.Equal(0, manifest.Features.Count(feature => feature.Status == "partial"));
         Assert.Contains(manifest.Features, feature =>
             feature.FeatureId == "inventory.furniture-hammer"
             && feature.Status == "covered"

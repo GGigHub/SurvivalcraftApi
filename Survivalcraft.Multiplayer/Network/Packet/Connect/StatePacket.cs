@@ -140,6 +140,14 @@ public class StatePacket : ClientPacketBase {
                         }
                     }
                     foreach (Entity entity in GameManager.Project.Entities) {
+                        ComponentPlayer componentPlayer = entity.FindComponent<ComponentPlayer>();
+                        if (componentPlayer != null && entity.Id > 0) {
+                            PlayerCreativeFlyPacket creativeFlyState = PlayerCreativeFlyPacket.CreateState(
+                                componentPlayer,
+                                componentPlayer.ComponentLocomotion.IsCreativeFlyEnabled);
+                            creativeFlyState.To = From;
+                            NetworkManager.Queue(creativeFlyState);
+                        }
                         ComponentHealth health = entity.FindComponent<ComponentHealth>();
                         if (health != null && entity.Id > 0) {
                             NetworkManager.Queue(new HealthSyncPacket(health) { To = From });

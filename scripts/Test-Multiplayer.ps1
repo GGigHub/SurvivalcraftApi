@@ -9,7 +9,7 @@ param(
     [string]$Artifacts,
 
     [ValidateRange(1, 10000)]
-    [int]$SoakIterations = 10,
+    [int]$SoakIterations = 11,
 
     [ValidateSet("direct", "relay")]
     [string]$SoakTransport = "direct",

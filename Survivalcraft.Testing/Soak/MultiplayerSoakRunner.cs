@@ -246,6 +246,19 @@ public sealed class MultiplayerSoakRunner {
                         NetworkFaults: entry.NetworkFaults),
                     cancellationToken).ConfigureAwait(false);
                 break;
+            case CreativeFlyMultiplayerScenario.ScenarioName:
+                _ = await new CreativeFlyMultiplayerScenario().RunAsync(
+                    new CreativeFlyMultiplayerScenarioOptions(
+                        runtimeDirectory,
+                        artifactDirectory,
+                        entry.ScenarioSeed,
+                        options.Schedule.Transport,
+                        options.StepTimeout,
+                        options.ScenarioTimeout,
+                        KeepData: options.KeepData,
+                        NetworkFaults: entry.NetworkFaults),
+                    cancellationToken).ConfigureAwait(false);
+                break;
             case TerrainStreamingMultiplayerScenario.ScenarioName:
                 _ = await new TerrainStreamingMultiplayerScenario().RunAsync(
                     new TerrainStreamingMultiplayerScenarioOptions(

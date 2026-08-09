@@ -6,6 +6,7 @@ namespace Survivalcraft.Testing.Control;
 /// </summary>
 public static class ProductionPathEntries {
     public const string CreativeFly = "ComponentGui.TrySetCreativeFlyEnabled";
+    public const string CreativeFlyState = "PlayerCreativeFlyPacket.Handle";
     public const string PlayerMotion = "ComponentInput -> ComponentPlayer.Update";
     public const string PlayerTerrainInteraction = "ComponentInput -> ComponentMiner.Update";
     public const string EntityImpulse = "ComponentBody.ApplyImpulse";
