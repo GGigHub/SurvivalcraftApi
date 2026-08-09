@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "generatedUtc": "2026-08-09T14:45:36.5323322+00:00",
+  "manifest": "tests/android-mod-corpus/manifest.json",
+  "mods": [
+    {
+      "id": "survivalcraft-ruins-0.4.0",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/05/21/25/SurvivalcraftRuins-0.4.0.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/08/05/21/25/SurvivalcraftRuins-0.4.0.scmod",
+      "sha256": "83f87a74137d3213c7458bb03ede6273b5f066c319749426323b651e3eef0d6a",
+      "bytes": 317009,
+      "packageName": "SurvivalcraftRuins",
+      "name": "Survivalcraft Ruins 生存战争·遗迹",
+      "version": "0.4.0",
+      "apiVersion": "1.9.2",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 16,
+        "expandedBytes": 1506202,
+        "decodedBytes": 317009,
+        "decodedSha256": "83f87a74137d3213c7458bb03ede6273b5f066c319749426323b651e3eef0d6a",
+        "deciphered": false,
+        "extensions": [
+          ".dll",
+          ".json"
+        ]
+      }
+    },
+    {
+      "id": "survivalcraft-travel-map-20260805",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/05/21/04/SurvivalcraftTravelMap.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/08/05/21/04/SurvivalcraftTravelMap.scmod",
+      "sha256": "e9652838a11b494d6970ad3b6c5972c66330b317310d254854765f1c57799241",
+      "bytes": 203373,
+      "packageName": "SurvivalcraftTravelMap",
+      "name": "Survivalcraft Travel Map",
+      "version": "1.0.0",
+      "apiVersion": "1.9.2.1",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 13,
+        "expandedBytes": 579934,
+        "decodedBytes": 203373,
+        "decodedSha256": "e9652838a11b494d6970ad3b6c5972c66330b317310d254854765f1c57799241",
+        "deciphered": false,
+        "extensions": [
+          ".dll",
+          ".json",
+          ".png",
+          ".xdb"
+        ]
+      }
+    }
+  ]
+}

@@ -202,7 +202,8 @@ try {
         "publish", (Join-Path $repositoryRoot "Survivalcraft.Android\Survivalcraft.Android.csproj"),
         "-c", "Release", "-f", "net10.0-android", "-r", $releaseSpec.android.runtimeIdentifier,
         "--nologo", "-p:SkipNetworkModPackage=true",
-        "-p:AndroidPackageFormat=apk", "-p:ContinuousIntegrationBuild=true")
+        "-p:AndroidPackageFormat=apk", "-p:ContinuousIntegrationBuild=true",
+        "-p:EnableAndroidDeviceTestAutomation=false")
     $androidApk = Get-ChildItem (Join-Path $repositoryRoot "Survivalcraft.Android\bin\Release") `
         -Filter "*-Signed.apk" -File -Recurse |
         Where-Object { $_.LastWriteTimeUtc -ge $androidBuildStarted } |
@@ -210,6 +211,20 @@ try {
         Select-Object -First 1
     if ($null -eq $androidApk) {
         throw "A newly signed Android APK was not produced."
+    }
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $androidArchive = [System.IO.Compression.ZipFile]::OpenRead($androidApk.FullName)
+    try {
+        $androidAutomationLeak = @($androidArchive.Entries | Where-Object {
+            $_.FullName -match "(?i)TestAutomation"
+        })
+        if ($androidAutomationLeak.Count -gt 0) {
+            throw "Public Android package contains test automation assets: $($androidAutomationLeak.FullName -join ', ')"
+        }
+    }
+    finally {
+        $androidArchive.Dispose()
     }
 
     $windowsArtifact = Join-Path $outputRoot $releaseSpec.artifacts.windowsX64

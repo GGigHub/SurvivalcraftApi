@@ -199,6 +199,12 @@ namespace Survivalcraft.Multiplayer {
                 (NetworkManager.RelayHost as RelayHost)?.GlobalCode;
             NetworkManager.RelayRoomCodeFunc = () =>
                 (NetworkManager.RelayHost as RelayHost)?.RoomCode;
+            NetworkManager.RelayHostEndPointFunc = () =>
+                (NetworkManager.RelayHost as RelayHost)?.RelayEndPoint?.ToString();
+            NetworkManager.RelayHostAttemptCountFunc = () =>
+                (NetworkManager.RelayHost as RelayHost)?.AttemptCount ?? 0;
+            NetworkManager.RelayHostLastFailureFunc = () =>
+                (NetworkManager.RelayHost as RelayHost)?.LastFailureReason;
             NetworkManager.ResolveRelayJoinInfoAsyncFunc = (globalCode) =>
                 CenterServerClient.ResolveRelayJoinInfoAsync(globalCode);
             NetworkManager.CreateTerrainSerializerNetFunc = () =>

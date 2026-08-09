@@ -32,6 +32,14 @@
 ./scripts/Test-Multiplayer.ps1 -Mode full
 ```
 
+Android ARM64 真机的无人值守总入口为：
+
+```powershell
+./scripts/Test-AndroidLocal.ps1 -DeviceId <adb-serial>
+```
+
+它使用独立测试 package/data，在设备休眠时自动唤醒并恢复原设置，执行 Pad 新世界/已有世界中继回归、ADB 故障恢复和 SHA-256 锁定的中文社区模组矩阵；不会启动 Windows 游戏窗口。详细用法、安全边界和失败产物见 [Android 真机无人值守测试](AndroidDeviceTesting.md)。
+
 ## API 联机预览版发布门禁
 
 `release/multiplayer-preview.json` 是预览版的唯一发布契约，统一 API、联机协议、Automation API、Snapshot schema、Android ABI/版本号和所有产物名称。`Survivalcraft.Multiplayer`、Relay Server、Android manifest 与发布脚本的漂移由 `ReleaseContractTests` 阻断。
@@ -46,7 +54,7 @@
 
 构建脚本生成 Windows x64 客户端、Windows x64 Relay Server、Android `arm64-v8a` APK、release manifest 和 `SHA256SUMS.txt`。Windows/Relay ZIP 使用排序条目与固定时间戳；Android 构建记录完整工具链与哈希，但不声明跨机器 bit-for-bit 一致。
 
-验证脚本先检查所有 SHA-256，再从全新目录解压 Windows 与 Relay。公开 Windows 包必须没有 TestAutomation；脚本只向一次性测试副本注入它，随后以隐藏窗口运行启动 doctor、Direct 核心场景和使用独立 Relay 发布目录的 Relay 模组通道场景。APK 门禁验证签名、versionCode/versionName、仅 `arm64-v8a` 原生库，以及 `assets/InternalMods/Survivalcraft.Multiplayer.scmod`。
+验证脚本先检查所有 SHA-256，再从全新目录解压 Windows 与 Relay。公开 Windows 包必须没有 TestAutomation；脚本只向一次性测试副本注入它，随后以隐藏窗口运行启动 doctor、Direct 核心场景和使用独立 Relay 发布目录的 Relay 模组通道场景。APK 门禁验证签名、versionCode/versionName、仅 `arm64-v8a` 原生库、`assets/InternalMods/Survivalcraft.Multiplayer.scmod`，并拒绝任何 Android TestAutomation 资产。
 
 本地开发阶段可用 `Build-MultiplayerPreview.ps1 -AllowDirty` 验证打包，但该 manifest 会明确记录 `sourceDirty=true`，发布脚本拒绝上传。正式发布必须从干净且已推送、已打注释标签的提交重新构建。所有实际游戏进程继续使用 `--headless` 和 `CreateNoWindow=true`，不会显示游戏窗口。
 

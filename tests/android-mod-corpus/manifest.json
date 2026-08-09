@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "description": "Curated, hash-locked Android smoke corpus sourced from the in-game Chinese community service.",
+  "listingApi": "https://m.suancaixianyu.cn/api/com/list",
+  "allowedHosts": [
+    "file.suancaixianyu.cn"
+  ],
+  "limits": {
+    "maximumDownloadBytes": 67108864,
+    "maximumExpandedBytes": 268435456,
+    "maximumEntries": 4096,
+    "maximumCompressionRatio": 500
+  },
+  "mods": [
+    {
+      "id": "survivalcraft-ruins-0.4.0",
+      "enabled": true,
+      "communityCollectionId": 2214,
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/05/21/25/SurvivalcraftRuins-0.4.0.scmod",
+      "expectedBytes": 317009,
+      "expectedPackageName": "SurvivalcraftRuins",
+      "expectedVersion": "0.4.0"
+    },
+    {
+      "id": "survivalcraft-travel-map-20260805",
+      "enabled": true,
+      "communityCollectionId": 2094,
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/05/21/04/SurvivalcraftTravelMap.scmod",
+      "expectedBytes": 203373,
+      "expectedPackageName": "SurvivalcraftTravelMap",
+      "expectedVersion": "1.0.0"
+    }
+  ],
+  "testCases": [
+    {
+      "id": "ruins-single",
+      "mods": [
+        "survivalcraft-ruins-0.4.0"
+      ],
+      "mode": "relay-reentry-pad",
+      "reentryCount": 1,
+      "gate": true
+    },
+    {
+      "id": "travel-map-single",
+      "mods": [
+        "survivalcraft-travel-map-20260805"
+      ],
+      "mode": "relay-reentry-pad",
+      "reentryCount": 1,
+      "gate": true
+    },
+    {
+      "id": "ruins-travel-map",
+      "mods": [
+        "survivalcraft-ruins-0.4.0",
+        "survivalcraft-travel-map-20260805"
+      ],
+      "mode": "relay-reentry-pad",
+      "reentryCount": 1,
+      "gate": true
+    }
+  ]
+}

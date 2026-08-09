@@ -130,6 +130,12 @@ namespace SC4Android {
         }
 
         protected override void OnCreate(Bundle savedInstanceState) {
+#if ANDROID_DEVICE_TEST_AUTOMATION
+            // Test APKs must never touch the developer's normal worlds or settings.
+            RunPath.AndroidFilePath = "android:Survivalcraft2.4_API1.9_AutoTest";
+            EngineActivity.BasePath = RunPath.AndroidFilePath;
+            EngineActivity.ConfigPath = RunPath.AndroidFilePath;
+#endif
             base.OnCreate(savedInstanceState);
             Window?.DecorView.ViewTreeObserver?.AddOnPreDrawListener(new ViewTreeObserverListener());
             if (Build.VERSION.SdkInt >= BuildVersionCodes.S) {

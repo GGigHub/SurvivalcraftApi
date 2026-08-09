@@ -61,6 +61,9 @@ public static class NetworkManager {
     public static Func<IEnumerable<ClientSession>> ServerSessionsFunc { get; set; }
     public static Func<string> RelayGlobalCodeFunc { get; set; }
     public static Func<string> RelayRoomCodeFunc { get; set; }
+    public static Func<string> RelayHostEndPointFunc { get; set; }
+    public static Func<int> RelayHostAttemptCountFunc { get; set; }
+    public static Func<string> RelayHostLastFailureFunc { get; set; }
     public static Func<string, Task<RelayJoinInfo>> ResolveRelayJoinInfoAsyncFunc { get; set; }
     public static Func<TerrainSerializer23> CreateTerrainSerializerNetFunc { get; set; }
 
@@ -97,6 +100,9 @@ public static class NetworkManager {
     public static NetworkState MyState => MySession?.NetworkState ?? NetworkState.NotConnected;
     public static string RelayGlobalCode => RelayGlobalCodeFunc?.Invoke();
     public static string RelayRoomCode => RelayRoomCodeFunc?.Invoke();
+    public static string RelayHostEndPoint => RelayHostEndPointFunc?.Invoke();
+    public static int RelayHostAttemptCount => RelayHostAttemptCountFunc?.Invoke() ?? 0;
+    public static string RelayHostLastFailure => RelayHostLastFailureFunc?.Invoke();
     public static void SetPlayerIndex(int index) { if (MySession != null) MySession.PlayerIndex = index; }
     public static void SetState(NetworkState state) { if (MySession != null) MySession.NetworkState = state; }
     public static IEnumerable<ClientSession> ServerSessions => ServerSessionsFunc?.Invoke() ?? Array.Empty<ClientSession>();

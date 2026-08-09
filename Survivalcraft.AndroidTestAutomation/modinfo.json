@@ -1,0 +1,11 @@
+{
+  "PackageName": "Survivalcraft.AndroidTestAutomation",
+  "Name": "Survivalcraft Android Device Test Automation",
+  "Version": "1.0.0",
+  "Author": "Test",
+  "ApiVersion": "1.9.3.1",
+  "ScVersion": "2.4.0.0",
+  "NonPersistentMod": true,
+  "LoadOrder": 1000,
+  "Description": "Test-build-only semantic ADB bridge. Never package in public releases."
+}

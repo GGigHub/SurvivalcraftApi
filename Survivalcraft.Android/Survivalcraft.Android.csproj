@@ -28,6 +28,11 @@
         <EnableLLVM>false</EnableLLVM>
         <RunAOTCompilation>false</RunAOTCompilation>
         <NetworkModDestinationDirectory Condition="'$(NetworkModDestinationDirectory)' == ''">$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\InternalMods\</NetworkModDestinationDirectory>
+        <EnableAndroidDeviceTestAutomation Condition="'$(EnableAndroidDeviceTestAutomation)' == ''">false</EnableAndroidDeviceTestAutomation>
+        <AndroidDeviceTestModPackage Condition="'$(AndroidDeviceTestModPackage)' == ''">$(MSBuildProjectDirectory)\..\Survivalcraft.AndroidTestAutomation\bin\$(Configuration)\net10.0-windows\win-x64\scmod\Survivalcraft.AndroidTestAutomation.scmod</AndroidDeviceTestModPackage>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(EnableAndroidDeviceTestAutomation)' == 'true'">
+        <DefineConstants>$(DefineConstants);ANDROID_DEVICE_TEST_AUTOMATION</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\EntitySystem.Android\EntitySystem.Android.csproj" />
@@ -45,12 +50,24 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </AndroidAsset>
     </ItemGroup>
+    <ItemGroup Condition="'$(EnableAndroidDeviceTestAutomation)' == 'true'">
+        <AndroidAsset Include="$(AndroidDeviceTestModPackage)">
+            <Link>Assets\InternalMods\Survivalcraft.AndroidTestAutomation.scmod</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </AndroidAsset>
+    </ItemGroup>
     <ItemGroup>
         <Compile Include="MainActivity.cs"/>
         <Compile Include="ImportExternalContentActivity.cs"/>
     </ItemGroup>
 
     <Import Project="..\build\NetworkMod.targets" />
+    <Target Name="ValidateAndroidDeviceTestAutomationPackage"
+            BeforeTargets="_ComputeAndroidAssetsPaths"
+            Condition="'$(EnableAndroidDeviceTestAutomation)' == 'true'">
+        <Error Condition="!Exists('$(AndroidDeviceTestModPackage)')"
+               Text="Android device test automation mod was not found: $(AndroidDeviceTestModPackage)" />
+    </Target>
     <ItemGroup>
         <AndroidAsset Include="$(NetworkModDestinationFile)">
             <Link>Assets\InternalMods\$(NetworkModPackageName)</Link>

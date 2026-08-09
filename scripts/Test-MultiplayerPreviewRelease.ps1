@@ -113,6 +113,12 @@ function Assert-AndroidApk {
         if ($nativeAbis.Count -ne 1 -or $nativeAbis[0] -ne $releaseSpec.android.abi) {
             throw "APK native ABIs are '$($nativeAbis -join ',')'; expected only '$($releaseSpec.android.abi)'."
         }
+        $automationLeak = @($archive.Entries | Where-Object {
+            $_.FullName -match "(?i)TestAutomation"
+        })
+        if ($automationLeak.Count -gt 0) {
+            throw "Public APK contains test automation assets: $($automationLeak.FullName -join ', ')"
+        }
         $modEntry = $archive.Entries | Where-Object {
             $_.FullName.Equals(
                 "assets/InternalMods/Survivalcraft.Multiplayer.scmod",

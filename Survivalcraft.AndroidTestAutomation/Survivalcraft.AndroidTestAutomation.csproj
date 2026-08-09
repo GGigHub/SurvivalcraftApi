@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\build\Windows.props" />
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <GenerateModPackage Condition="'$(GenerateModPackage)' == ''">false</GenerateModPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Engine\Engine.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\EntitySystem\EntitySystem.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Survivalcraft.Windows\Survivalcraft.Windows.csproj">
+      <Private>false</Private>
+      <AdditionalProperties>SkipNetworkModPackage=true;SkipContentZip=true</AdditionalProperties>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Target Name="PackageMod" AfterTargets="Build" Condition="'$(GenerateModPackage)' == 'true'">
+    <PropertyGroup>
+      <ModPackageDirectory Condition="'$(ModPackageDirectory)' == ''">$(OutputPath)scmod\</ModPackageDirectory>
+      <ModPackageFile Condition="'$(ModPackageFile)' == ''">$(ModPackageDirectory)$(AssemblyName).scmod</ModPackageFile>
+      <ModPackageStagingDirectory>$(IntermediateOutputPath)scmod\</ModPackageStagingDirectory>
+    </PropertyGroup>
+    <RemoveDir Directories="$(ModPackageStagingDirectory)" />
+    <MakeDir Directories="$(ModPackageStagingDirectory);$(ModPackageDirectory)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModPackageStagingDirectory)" />
+    <Copy SourceFiles="modinfo.json" DestinationFolder="$(ModPackageStagingDirectory)" />
+    <ZipDirectory SourceDirectory="$(ModPackageStagingDirectory)" DestinationFile="$(ModPackageFile)" Overwrite="true" />
+    <Message Importance="high" Text="Created Android device test mod: $(ModPackageFile)" />
+  </Target>
+
+</Project>

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Game.Network;
 using Survivalcraft.Testing.Control;
@@ -81,6 +82,151 @@ public sealed class ReleaseContractTests {
             manifest.Root?.Attribute(androidNamespace + "versionCode")?.Value);
         Assert.Equal(release.GetProperty("android").GetProperty("versionName").GetString(),
             manifest.Root?.Attribute(androidNamespace + "versionName")?.Value);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void AndroidDeviceAutomationIsOptInAndPublicBuildFailsClosed() {
+        string root = FindRepositoryRoot();
+        string androidProjectPath = Path.Combine(
+            root, "Survivalcraft.Android", "Survivalcraft.Android.csproj");
+        XDocument androidProject = XDocument.Load(androidProjectPath);
+        XElement defaultSwitch = androidProject.Descendants("EnableAndroidDeviceTestAutomation")
+            .Single(element => (string?)element.Attribute("Condition") is { } condition
+                && condition.Contains("== ''", StringComparison.Ordinal));
+        Assert.Equal("false", defaultSwitch.Value.Trim());
+
+        XElement testAssetGroup = androidProject.Descendants("ItemGroup")
+            .Single(element => (string?)element.Attribute("Condition") is { } condition
+                && condition.Contains("EnableAndroidDeviceTestAutomation", StringComparison.Ordinal)
+                && element.Descendants("AndroidAsset").Any(asset =>
+                    asset.Value.Contains("AndroidTestAutomation", StringComparison.Ordinal)));
+        Assert.Contains("== 'true'", (string?)testAssetGroup.Attribute("Condition") ?? string.Empty,
+            StringComparison.Ordinal);
+
+        string activitySource = File.ReadAllText(
+            Path.Combine(root, "Survivalcraft.Android", "MainActivity.cs"));
+        Assert.Contains("#if ANDROID_DEVICE_TEST_AUTOMATION", activitySource,
+            StringComparison.Ordinal);
+        Assert.Contains("android:Survivalcraft2.4_API1.9_AutoTest", activitySource,
+            StringComparison.Ordinal);
+
+        string testBuild = File.ReadAllText(
+            Path.Combine(root, "scripts", "Build-AndroidDeviceTest.ps1"));
+        Assert.Contains("com.candy.survivalcraftAPI1_9.autotest", testBuild,
+            StringComparison.Ordinal);
+        Assert.Contains("-p:EnableAndroidDeviceTestAutomation=true", testBuild,
+            StringComparison.Ordinal);
+        Assert.Contains("Survivalcraft2.4_API1.9_AutoTest", testBuild,
+            StringComparison.Ordinal);
+
+        string publicBuild = File.ReadAllText(
+            Path.Combine(root, "scripts", "Build-MultiplayerPreview.ps1"));
+        Assert.Contains("-p:EnableAndroidDeviceTestAutomation=false", publicBuild,
+            StringComparison.Ordinal);
+        Assert.Contains("Public Android package contains test automation assets", publicBuild,
+            StringComparison.Ordinal);
+        string publicVerifier = File.ReadAllText(
+            Path.Combine(root, "scripts", "Test-MultiplayerPreviewRelease.ps1"));
+        Assert.Contains("Public APK contains test automation assets", publicVerifier,
+            StringComparison.Ordinal);
+
+        string bridgeSource = File.ReadAllText(Path.Combine(
+            root,
+            "Survivalcraft.AndroidTestAutomation",
+            "AndroidDeviceTestAutomationModLoader.cs"));
+        Assert.Contains("\"system.ping\"", bridgeSource, StringComparison.Ordinal);
+        Assert.Contains("\"mods.list\"", bridgeSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("CSharpScript", bridgeSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("Process.Start", bridgeSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("Assembly.Load", bridgeSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void AndroidCommunityModCorpusIsHashLockedAndHasSingleModCoverage() {
+        string root = FindRepositoryRoot();
+        string corpusDirectory = Path.Combine(root, "tests", "android-mod-corpus");
+        using JsonDocument manifestDocument = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(corpusDirectory, "manifest.json")));
+        using JsonDocument lockDocument = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(corpusDirectory, "lock.json")));
+        JsonElement manifest = manifestDocument.RootElement;
+        JsonElement corpusLock = lockDocument.RootElement;
+        Assert.Equal(1, manifest.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal(1, corpusLock.GetProperty("schemaVersion").GetInt32());
+
+        HashSet<string> allowedHosts = manifest.GetProperty("allowedHosts")
+            .EnumerateArray()
+            .Select(value => value.GetString() ?? string.Empty)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        Assert.NotEmpty(allowedHosts);
+
+        Dictionary<string, JsonElement> lockedById = corpusLock.GetProperty("mods")
+            .EnumerateArray()
+            .ToDictionary(
+                mod => mod.GetProperty("id").GetString() ?? string.Empty,
+                mod => mod,
+                StringComparer.OrdinalIgnoreCase);
+        JsonElement[] enabledMods = manifest.GetProperty("mods")
+            .EnumerateArray()
+            .Where(mod => !mod.TryGetProperty("enabled", out JsonElement enabled)
+                || enabled.GetBoolean())
+            .ToArray();
+        Assert.Equal(enabledMods.Length, lockedById.Count);
+
+        HashSet<string> manifestIds = new(StringComparer.OrdinalIgnoreCase);
+        foreach (JsonElement mod in enabledMods) {
+            string id = mod.GetProperty("id").GetString() ?? string.Empty;
+            Assert.Matches("^[a-z0-9][a-z0-9._-]{0,63}$", id);
+            Assert.True(manifestIds.Add(id), $"Duplicate corpus id '{id}'.");
+            string sourceUrl = mod.GetProperty("sourceUrl").GetString() ?? string.Empty;
+            Assert.True(Uri.TryCreate(sourceUrl, UriKind.Absolute, out Uri? uri));
+            Assert.Equal(Uri.UriSchemeHttps, uri!.Scheme);
+            Assert.Contains(uri.Host, allowedHosts);
+
+            Assert.True(lockedById.TryGetValue(id, out JsonElement locked),
+                $"Corpus lock is missing '{id}'.");
+            Assert.Equal(sourceUrl, locked.GetProperty("sourceUrl").GetString());
+            Assert.Equal(mod.GetProperty("expectedBytes").GetInt64(),
+                locked.GetProperty("bytes").GetInt64());
+            Assert.Equal(mod.GetProperty("expectedPackageName").GetString(),
+                locked.GetProperty("packageName").GetString());
+            Assert.Equal(mod.GetProperty("expectedVersion").GetString(),
+                locked.GetProperty("version").GetString());
+            Assert.Matches("^[0-9a-f]{64}$",
+                locked.GetProperty("sha256").GetString() ?? string.Empty);
+            Assert.InRange(locked.GetProperty("archive").GetProperty("entryCount").GetInt32(),
+                1,
+                manifest.GetProperty("limits").GetProperty("maximumEntries").GetInt32());
+            Assert.InRange(locked.GetProperty("archive").GetProperty("expandedBytes").GetInt64(),
+                1,
+                manifest.GetProperty("limits").GetProperty("maximumExpandedBytes").GetInt64());
+        }
+
+        HashSet<string> caseIds = new(StringComparer.OrdinalIgnoreCase);
+        List<string[]> cases = [];
+        foreach (JsonElement testCase in manifest.GetProperty("testCases").EnumerateArray()) {
+            string caseId = testCase.GetProperty("id").GetString() ?? string.Empty;
+            Assert.True(caseIds.Add(caseId), $"Duplicate corpus case '{caseId}'.");
+            Assert.Contains(testCase.GetProperty("mode").GetString() ?? string.Empty,
+                new[] { "doctor", "relay-reentry-pad" });
+            Assert.True(testCase.GetProperty("gate").GetBoolean());
+            string[] modIds = testCase.GetProperty("mods").EnumerateArray()
+                .Select(value => value.GetString() ?? string.Empty)
+                .ToArray();
+            Assert.NotEmpty(modIds);
+            Assert.Equal(modIds.Length, modIds.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+            foreach (string modId in modIds) {
+                Assert.Contains(modId, manifestIds);
+            }
+            cases.Add(modIds);
+        }
+        Assert.Contains(cases, testCase => testCase.Length > 1);
+        foreach (string modId in manifestIds) {
+            Assert.Single(cases.Where(testCase => testCase.Length == 1
+                && string.Equals(testCase[0], modId, StringComparison.OrdinalIgnoreCase)));
+        }
     }
 
     private static string Property(XDocument document, string name) =>
