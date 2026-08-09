@@ -16,14 +16,30 @@ public sealed class RelayHost : INetEventListener {
     private bool _disconnectByUser;
     private NetManager _netManager;
     private NetPeer _relayPeer;
-    private bool _isRetryed;
+    private readonly HashSet<string> _attemptedRelayEndpoints = new(StringComparer.OrdinalIgnoreCase);
+    private bool _retryPending;
+    private int _attemptCount;
     public bool IsConnected { get; private set; }
     public bool IsDisconnected { get; private set; }
     public string RoomCode { get; set; }
     public string GlobalCode { get; set; }
+    public IPEndPoint RelayEndPoint { get; private set; }
+    public int AttemptCount => _attemptCount;
+    public string LastFailureReason { get; private set; } = string.Empty;
     public IEnumerable<ClientSession> Sessions => _sessions.Values;
 
     public void Start(IPEndPoint relayAddress) {
+        ArgumentNullException.ThrowIfNull(relayAddress);
+        _retryPending = true;
+        _netManager?.Stop();
+        RelayEndPoint = relayAddress;
+        _attemptedRelayEndpoints.Add(CenterServerClient.GetRelayEndpointKey(relayAddress));
+        _attemptCount++;
+        _retryPending = false;
+        IsConnected = false;
+        IsDisconnected = false;
+        RoomCode = null;
+        GlobalCode = null;
         _netManager = new NetManager(this) {
             MaxConnectAttempts = 6,
             DisconnectTimeout = 10000,
@@ -68,9 +84,11 @@ public sealed class RelayHost : INetEventListener {
 
     public void Disconnect() {
         _disconnectByUser = true;
-        _netManager.DisconnectAll();
-        _netManager.PollEvents();
-        _netManager.Stop();
+        if (_netManager != null) {
+            _netManager.DisconnectAll();
+            _netManager.PollEvents();
+            _netManager.Stop();
+        }
     }
 
     public void Board(Packet packet) {
@@ -208,18 +226,56 @@ public sealed class RelayHost : INetEventListener {
         _sessions.Clear();
 
         NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Failed;
+        LastFailureReason = $"{RelayEndPoint}: {disconnectInfo.Reason}";
         Log.Information($"Relay disconnected: {peer.Address}, Reason: {disconnectInfo.Reason}");
 
-        if (!_isRetryed && !_disconnectByUser) {
-            _isRetryed = true;
-            Log.Information("Attempting to retry to create relay host.");
-            NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Creating;
-
-            Task.Run(async () => {
-                IPEndPoint endPoint = await CenterServerClient.GetBestRelayEndPointAsync(2);
-                Dispatcher.Dispatch(() => Start(endPoint));
-            });
+        if (!_disconnectByUser) {
+            ScheduleRelayFailover();
         }
+    }
+
+    private void ScheduleRelayFailover() {
+        if (_retryPending || _disconnectByUser) {
+            return;
+        }
+        _retryPending = true;
+        string[] attempted = _attemptedRelayEndpoints.ToArray();
+        Log.Information(
+            $"Attempting relay failover after {attempted.Length} distinct endpoint(s).");
+        NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Creating;
+
+        Task.Run(async () => {
+            try {
+                IPEndPoint endPoint = await CenterServerClient.GetBestUntriedRelayEndPointAsync(attempted);
+                Dispatcher.Dispatch(() => {
+                    _retryPending = false;
+                    if (_disconnectByUser) {
+                        return;
+                    }
+                    try {
+                        Log.Information($"Failing over relay host to {endPoint}.");
+                        Start(endPoint);
+                    }
+                    catch (Exception ex) {
+                        LastFailureReason = $"{endPoint}: {ex.Message}";
+                        NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Failed;
+                        Log.Warning($"Failed to start relay failover endpoint {endPoint}: {ex.Message}");
+                        ScheduleRelayFailover();
+                    }
+                });
+            }
+            catch (Exception ex) {
+                Dispatcher.Dispatch(() => {
+                    _retryPending = false;
+                    if (_disconnectByUser) {
+                        return;
+                    }
+                    LastFailureReason = ex.Message;
+                    NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Failed;
+                    Log.Warning($"Relay failover exhausted: {ex.Message}");
+                });
+            }
+        });
     }
 
     public void OnConnectionRequest(ConnectionRequest request) {

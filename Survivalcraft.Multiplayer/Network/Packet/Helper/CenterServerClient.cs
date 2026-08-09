@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
@@ -51,20 +52,63 @@ public static class CenterServerClient {
         return new IPEndPoint(address, candidate.UdpPort);
     }
 
+    public static async Task<IPEndPoint> GetBestUntriedRelayEndPointAsync(
+        IEnumerable<string> excludedEndpointKeys) {
+        HashSet<string> excluded = new(
+            excludedEndpointKeys ?? [],
+            StringComparer.OrdinalIgnoreCase);
+        RelayCandidateInfo[] candidates = RankRelayCandidates(
+            await GetRelayCandidatesAsync(),
+            excluded);
+        foreach (RelayCandidateInfo candidate in candidates) {
+            IPAddress address = await ResolveAddressAsync(candidate.Host);
+            IPEndPoint endPoint = new(address, candidate.UdpPort);
+            if (!excluded.Contains(GetRelayEndpointKey(endPoint))) {
+                return endPoint;
+            }
+        }
+        throw new InvalidOperationException(
+            "Center server did not return an untried relay endpoint.");
+    }
+
     public static async Task<RelayCandidateInfo> GetBestRelayCandidateAsync(int bestRank = 1) {
         if (bestRank < 1)
             throw new ArgumentOutOfRangeException(nameof(bestRank), "Relay rank is 1-based.");
 
-        return (await GetRelayCandidatesAsync())
-            .Where(c => !c.IsBusy)
-            .OrderBy(c => c.Priority)
-            .ThenBy(c => c.RoomCount)
-            .ThenBy(c => c.PeerCount)
-            .ThenBy(c => c.LastSeenSecondsAgo)
+        return RankRelayCandidates(await GetRelayCandidatesAsync())
             .Skip(bestRank - 1)
             .FirstOrDefault()
             ?? throw new InvalidOperationException($"Center server did not return relay candidate rank {bestRank}.");
     }
+
+    public static RelayCandidateInfo[] RankRelayCandidates(
+        IEnumerable<RelayCandidateInfo> candidates,
+        IEnumerable<string> excludedEndpointKeys = null) {
+        HashSet<string> excluded = new(
+            excludedEndpointKeys ?? [],
+            StringComparer.OrdinalIgnoreCase);
+        return (candidates ?? [])
+            .Where(candidate => candidate != null
+                && !candidate.IsBusy
+                && !string.IsNullOrWhiteSpace(candidate.Host)
+                && candidate.UdpPort is > 0 and <= 65535
+                && !excluded.Contains(GetRelayEndpointKey(candidate.Host, candidate.UdpPort)))
+            .OrderBy(c => c.Priority)
+            .ThenBy(c => c.RoomCount)
+            .ThenBy(c => c.PeerCount)
+            .ThenBy(c => c.LastSeenSecondsAgo)
+            .GroupBy(
+                candidate => GetRelayEndpointKey(candidate.Host, candidate.UdpPort),
+                StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToArray();
+    }
+
+    public static string GetRelayEndpointKey(IPEndPoint endPoint) =>
+        endPoint == null ? string.Empty : GetRelayEndpointKey(endPoint.Address.ToString(), endPoint.Port);
+
+    public static string GetRelayEndpointKey(string host, int port) =>
+        $"{(host ?? string.Empty).Trim().Trim('[', ']').ToLowerInvariant()}|{port}";
 
     private static string NormalizeCenterUrl(string url) => string.IsNullOrWhiteSpace(url) ? string.Empty : url.Trim().TrimEnd('/');
 
