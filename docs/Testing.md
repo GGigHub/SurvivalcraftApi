@@ -300,7 +300,7 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## CI
 
-`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行三层门禁：先执行 L0/L1；再校验 Coverage Contract/生产面库存，并用 ANGLE 运行 doctor 与全部 L2；每周计划任务随后执行十场景 L3 直连故障轮转。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2/L3 无论成功失败都会上传 `TestResults`，L3 证据保留 30 天，便于 AI 或开发者下载后精确重放。
+`.github/workflows/multiplayer-tests.yml` 在 Windows 上运行三层门禁：先执行 L0/L1；再校验 Coverage Contract/生产面库存，并用 ANGLE 运行 doctor 与全部 L2；每周计划任务随后执行完整十二场景 L3 直连故障轮转。CI 从根目录 `global.json` 安装确定的 .NET SDK 特性带；L2/L3 无论成功失败都会上传 `TestResults`，L3 证据保留 30 天，便于 AI 或开发者下载后精确重放。
 
 当前远端位于 CNB，而 GitHub Workflow 只有在仓库镜像到 GitHub 后才会自动执行。CNB 支持由组织启用的 Windows 自托管构建节点，启用后可把脚本中的同样命令接入 `.cnb.yml`；在节点尚未配置前不提交一个必然排队或失败的 CNB 任务。测试框架和 PowerShell 入口本身不依赖 GitHub API。参见 [CNB 构建节点文档](https://docs.cnb.cool/zh/build/build-node.html)。
 

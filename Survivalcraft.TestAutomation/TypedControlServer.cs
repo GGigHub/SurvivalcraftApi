@@ -20,7 +20,8 @@ public partial class TestAutomationModLoader {
         string[] args = Environment.GetCommandLineArgs();
         string? pipeName = GetArgument(args, "--control-pipe");
         nodeRole = GetArgument(args, "--role") ?? "unknown";
-        if (string.IsNullOrWhiteSpace(pipeName)) {
+        if (!HasSwitch(args, "--test-automation")
+            || string.IsNullOrWhiteSpace(pipeName)) {
             return;
         }
 
@@ -569,4 +570,8 @@ public partial class TestAutomationModLoader {
         }
         return null;
     }
+
+    private static bool HasSwitch(string[] args, string name) =>
+        args.Any(argument =>
+            string.Equals(argument, name, StringComparison.OrdinalIgnoreCase));
 }

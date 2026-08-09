@@ -414,19 +414,63 @@ public class PacketStreamWriter : BinaryWriter {
 }
 
 public class PacketStreamHelper {
+    public const int MaximumCompressedLength = PacketFragment.MaxPayloadLength;
+    public const int MaximumDecompressedLength = 64 * 1024 * 1024;
+
     public static byte[] Compress(Stream input) {
+        ArgumentNullException.ThrowIfNull(input);
+        if (input.CanSeek
+            && input.Length - input.Position > MaximumDecompressedLength) {
+            throw new InvalidDataException(
+                $"Packet payload cannot exceed {MaximumDecompressedLength} uncompressed bytes.");
+        }
         using MemoryStream output = new();
         using (System.IO.Compression.DeflateStream dstream = new(output, System.IO.Compression.CompressionLevel.Fastest, true)) {
-            input.CopyTo(dstream);
+            CopyBounded(input, dstream, MaximumDecompressedLength);
+        }
+        if (output.Length > MaximumCompressedLength) {
+            throw new InvalidDataException(
+                $"Compressed packet cannot exceed {MaximumCompressedLength} bytes.");
         }
         return output.ToArray();
     }
-    public static byte[] Decompress(byte[] input) {
+
+    public static byte[] Decompress(
+        byte[] input,
+        int maximumOutputLength = MaximumDecompressedLength) {
+        ArgumentNullException.ThrowIfNull(input);
+        if (input.Length > MaximumCompressedLength) {
+            throw new InvalidDataException(
+                $"Compressed packet cannot exceed {MaximumCompressedLength} bytes.");
+        }
+        if (maximumOutputLength < 0 || maximumOutputLength > MaximumDecompressedLength) {
+            throw new ArgumentOutOfRangeException(
+                nameof(maximumOutputLength),
+                maximumOutputLength,
+                $"Decompressed packet limit must be between 0 and {MaximumDecompressedLength} bytes.");
+        }
         using MemoryStream inputStream = new(input);
         using System.IO.Compression.DeflateStream dstream = new(inputStream, System.IO.Compression.CompressionMode.Decompress);
         using MemoryStream output = new();
-        dstream.CopyTo(output);
+        CopyBounded(dstream, output, maximumOutputLength);
         return output.ToArray();
+    }
+
+    private static void CopyBounded(Stream input, Stream output, int maximumLength) {
+        byte[] buffer = new byte[64 * 1024];
+        int total = 0;
+        while (true) {
+            int read = input.Read(buffer, 0, buffer.Length);
+            if (read == 0) {
+                return;
+            }
+            if (read > maximumLength - total) {
+                throw new InvalidDataException(
+                    $"Packet payload exceeds the {maximumLength}-byte uncompressed limit.");
+            }
+            output.Write(buffer, 0, read);
+            total += read;
+        }
     }
 }
 

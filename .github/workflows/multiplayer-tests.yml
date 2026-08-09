@@ -91,7 +91,7 @@ jobs:
           ./scripts/Test-Multiplayer.ps1
           -Mode soak
           -UseAngle
-          -SoakIterations 10
+          -SoakIterations 12
           -SoakTransport direct
           -Artifacts ./TestResults/l3
       - name: Upload replayable soak evidence

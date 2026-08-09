@@ -335,7 +335,7 @@ resource-metrics.json
 - 所有游戏进程继续强制 `--headless`、`CreateNoWindow=true`、独立 `--data-dir` 和唯一实例 ID。
 - 游戏、命令、日志与 Relay 共享跨进程 UDP 端口租约器；新框架与 legacy `GameContext` 使用同一非系统临时端口范围、独占可绑定性检查和退出后冷却，支持连续及并行 TestHost 而不发生端口抢占。
 - legacy 审计为每个测试启用 5 分钟 hang watchdog 且不生成 dump；单例卡死会留下 Sequence 诊断并被门禁终止，不再无限占用游戏进程和端口。
-- TestAutomation 控制服务只有提供随机 `--control-pipe` 时才启动；后续应增加显式 `--test-automation` 开关作为第二条件。
+- TestAutomation 控制服务只有同时提供显式 `--test-automation` 开关和随机 `--control-pipe` 时才启动；正常游戏即使意外收到管道参数也不会开放控制入口。
 - fixture 命令只能作用于当前测试 Project，不接受任意文件路径、类型名或 C# 代码。
 - 路径参数必须解析并验证位于当前节点数据目录内。
 - 所有集合、字符串、区域、事件和快照都有上限，先验证再分配。

@@ -92,6 +92,7 @@ public sealed class GameNodeProcess : IAsyncDisposable {
         AddArgument(startInfo, "--cmd-port", CommandPort.ToString());
         AddArgument(startInfo, "--game-port", GamePort.ToString());
         AddArgument(startInfo, "--control-pipe", ControlPipeName);
+        startInfo.ArgumentList.Add("--test-automation");
         AddArgument(startInfo, "--instance-id", InstanceId);
         AddArgument(startInfo, "--data-dir", DataDirectory);
         AddArgument(startInfo, "--role", Role);
