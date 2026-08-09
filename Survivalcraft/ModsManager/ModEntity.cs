@@ -263,7 +263,7 @@ namespace Game {
                 }
                 if (filename.StartsWith("Assets/")) {
                     MemoryStream memoryStream = new();
-                    ContentInfo contentInfo = new(filename.Substring(7));
+                    ContentInfo contentInfo = new(filename.Substring(7), modInfo.PackageName);
                     ModArchive.ExtractFile(zipArchiveEntry, memoryStream);
                     contentInfo.SetContentStream(memoryStream);
                     ContentManager.Add(contentInfo);

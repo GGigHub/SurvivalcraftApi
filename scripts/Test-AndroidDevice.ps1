@@ -25,7 +25,11 @@ param(
     [ValidateRange(0, 1000)]
     [int]$InjectAdbFailureAtSequence = 0,
     [string[]]$ModPackagePath = @(),
-    [string[]]$ExpectedModPackageName = @()
+    [string[]]$ExpectedModPackageName = @(),
+    [ValidateRange(1, 536870912)]
+    [long]$MaximumModPackageBytes = 67108864,
+    [object[]]$ClassSubstituteSelection = @(),
+    [object[]]$StartupDialogAction = @()
 )
 
 Set-StrictMode -Version Latest
@@ -36,6 +40,7 @@ $packageName = "com.candy.survivalcraftAPI1_9.autotest"
 $remoteDataRoot = "/sdcard/Survivalcraft2.4_API1.9_AutoTest"
 $remoteModsRoot = "$remoteDataRoot/Mods"
 $remoteBridgeRoot = "$remoteDataRoot/AutoTest"
+$remoteStartupClassSubstitutesPath = "$remoteBridgeRoot/startup-class-substitutes.json"
 $buildMetadataPath = Join-Path $repositoryRoot "artifacts\android-device-autotest\android-device-autotest.json"
 $runId = "{0:yyyyMMdd-HHmmss}-{1}" -f [DateTime]::Now, $Mode
 $testResultsRoot = Join-Path $repositoryRoot "TestResults"
@@ -72,7 +77,13 @@ $script:DeviceInteractive = $null
 $script:CurrentPhase = "preflight"
 $script:LastBridgeCommand = ""
 $script:LastBridgeRequestId = ""
+$script:LastState = $null
 $script:StagedModPackages = [System.Collections.Generic.List[object]]::new()
+$script:ClassSubstituteSelections = [System.Collections.Generic.List[object]]::new()
+$script:AppliedClassSubstituteSelections = [System.Collections.Generic.List[object]]::new()
+$script:StartupDialogActions = [System.Collections.Generic.List[object]]::new()
+$script:AppliedStartupDialogActions = [System.Collections.Generic.List[object]]::new()
+$script:PendingStartupDialogAction = $null
 $runtimeLogAudit = $null
 $startedUtc = [DateTimeOffset]::UtcNow
 $succeeded = $false
@@ -80,6 +91,7 @@ $worldName = ""
 $worldDirectory = ""
 $relayRuns = [System.Collections.Generic.List[object]]::new()
 $adbPath = (Get-Command adb -ErrorAction Stop).Source
+$startupClassSubstitutesPath = Join-Path $artifactDirectory "startup-class-substitutes.json"
 
 function Test-AdbTransportFailure {
     param([int]$ExitCode, [string[]]$Output)
@@ -414,6 +426,79 @@ function Write-Utf8Json {
         [System.Text.UTF8Encoding]::new($false))
 }
 
+function Get-ObjectPropertyValue {
+    param([object]$Object, [string]$Name)
+    if ($null -eq $Object) {
+        return $null
+    }
+    if ($Object -is [System.Collections.IDictionary]) {
+        foreach ($key in $Object.Keys) {
+            if ([string]::Equals([string]$key, $Name, [System.StringComparison]::OrdinalIgnoreCase)) {
+                return $Object[$key]
+            }
+        }
+        return $null
+    }
+    $property = $Object.PSObject.Properties | Where-Object {
+        [string]::Equals($_.Name, $Name, [System.StringComparison]::OrdinalIgnoreCase)
+    } | Select-Object -First 1
+    if ($null -eq $property) {
+        return $null
+    }
+    return $property.Value
+}
+
+function Resolve-ClassSubstituteInputs {
+    $seenGuids = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($selection in @($ClassSubstituteSelection)) {
+        $guid = ([string](Get-ObjectPropertyValue $selection "guid")).Trim()
+        $packageName = ([string](Get-ObjectPropertyValue $selection "packageName")).Trim()
+        $className = ([string](Get-ObjectPropertyValue $selection "className")).Trim()
+        if ($guid -notmatch "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$") {
+            throw "ClassSubstituteSelection guid '$guid' is invalid."
+        }
+        if ([string]::IsNullOrWhiteSpace($packageName) -or
+            $packageName.Length -gt 200 -or $packageName -match "[,;\r\n]") {
+            throw "ClassSubstituteSelection packageName '$packageName' is invalid."
+        }
+        if ($className -notmatch "^[\p{L}_][\p{L}\p{N}_.+]{0,299}$") {
+            throw "ClassSubstituteSelection className '$className' is invalid."
+        }
+        if (-not $seenGuids.Add($guid)) {
+            throw "ClassSubstituteSelection guid '$guid' was specified more than once."
+        }
+        $script:ClassSubstituteSelections.Add([ordered]@{
+            guid = $guid
+            packageName = $packageName
+            className = $className
+        })
+    }
+}
+
+function Resolve-StartupDialogActionInputs {
+    $seenDialogTypes = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::Ordinal)
+    foreach ($action in @($StartupDialogAction)) {
+        $dialogType = ([string](Get-ObjectPropertyValue $action "dialogType")).Trim()
+        $query = ([string](Get-ObjectPropertyValue $action "query")).Trim()
+        if ($dialogType -notmatch "^[A-Za-z_][A-Za-z0-9_.+]{0,199}$") {
+            throw "StartupDialogAction dialogType '$dialogType' is invalid."
+        }
+        if ([string]::IsNullOrWhiteSpace($query) -or
+            $query.Length -gt 200 -or $query -match "[\r\n]") {
+            throw "StartupDialogAction query '$query' is invalid."
+        }
+        if (-not $seenDialogTypes.Add($dialogType)) {
+            throw "StartupDialogAction dialogType '$dialogType' was specified more than once."
+        }
+        $script:StartupDialogActions.Add([ordered]@{
+            dialogType = $dialogType
+            query = $query
+        })
+    }
+}
+
 function Resolve-ModPackageInputs {
     $resolvedPaths = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase)
@@ -446,8 +531,8 @@ function Resolve-ModPackageInputs {
             throw "Mod package '$resolvedPath' was specified more than once."
         }
         $file = Get-Item -LiteralPath $resolvedPath
-        if ($file.Length -le 0 -or $file.Length -gt 64MB) {
-            throw "Mod package '$resolvedPath' has invalid size $($file.Length); allowed range is 1 byte through 64 MiB."
+        if ($file.Length -le 0 -or $file.Length -gt $MaximumModPackageBytes) {
+            throw "Mod package '$resolvedPath' has invalid size $($file.Length); allowed range is 1 byte through $MaximumModPackageBytes bytes."
         }
         $index++
         $remoteFileName = "corpus-{0:D3}.scmod" -f $index
@@ -559,7 +644,12 @@ function Add-StateObservation {
         utc = [DateTimeOffset]::UtcNow.ToString("O")
         phase = $Phase
         screen = $State.screen
+        screenName = $State.screenName
         dialog = $State.dialog
+        loadingCanContinue = $State.loadingCanContinue
+        classSubstituteGuid = $State.classSubstituteGuid
+        classSubstituteGroupCount = @($State.classSubstitutes).Count
+        selectedClassSubstituteCount = @($State.selectedClassSubstitutes).Count
         projectLoaded = $State.projectLoaded
         playerReady = $State.playerReady
         moveControlMode = $State.moveControlMode
@@ -576,6 +666,7 @@ function Add-StateObservation {
 function Get-BridgeState {
     param([string]$Phase = "poll")
     $state = (Send-BridgeCommand "state.get").data
+    $script:LastState = $state
     Add-StateObservation $state $Phase
     return $state
 }
@@ -586,6 +677,11 @@ function Wait-ForPlayableWorld {
     $playerEnterSent = $false
     while ([DateTime]::UtcNow -lt $deadline) {
         $state = Get-BridgeState $Phase
+        if ($state.screenName -eq "MainMenu" -and
+            -not [bool]$state.projectLoaded -and
+            $state.dialog -eq "MessageDialog") {
+            throw "World loading returned to the main menu with a MessageDialog during '$Phase'."
+        }
         if ($state.screen -eq "PlayerScreen" -and -not $playerEnterSent) {
             Send-BridgeCommand "player.enter" ([ordered]@{ name = "AndroidAutoTest" }) | Out-Null
             $playerEnterSent = $true
@@ -640,12 +736,185 @@ function Wait-ForRelayCode {
     throw "Timed out waiting for a relay code during '$Phase'."
 }
 
+function Sync-AppliedClassSubstituteSelections {
+    param([object]$State, [string]$Phase)
+    foreach ($selection in $script:ClassSubstituteSelections) {
+        $guid = [string]$selection['guid']
+        $packageName = [string]$selection['packageName']
+        $className = [string]$selection['className']
+        $selectedMatches = @($State.selectedClassSubstitutes | Where-Object {
+            [string]::Equals([string]$_.guid, $guid, [System.StringComparison]::OrdinalIgnoreCase) -and
+            [string]::Equals([string]$_.packageName, $packageName, [System.StringComparison]::Ordinal) -and
+            [string]::Equals([string]$_.className, $className, [System.StringComparison]::Ordinal)
+        })
+        $candidateMatches = @($State.classSubstitutes | Where-Object {
+            [string]::Equals([string]$_.guid, $guid, [System.StringComparison]::OrdinalIgnoreCase)
+        } | ForEach-Object { @($_.candidates) } | Where-Object {
+            [string]::Equals([string]$_.packageName, $packageName, [System.StringComparison]::Ordinal) -and
+            [string]::Equals([string]$_.className, $className, [System.StringComparison]::Ordinal)
+        })
+        if ($selectedMatches.Count -eq 1 -and $candidateMatches.Count -ge 1) {
+            $alreadyApplied = @($script:AppliedClassSubstituteSelections | Where-Object {
+                [string]::Equals(
+                    [string]$_['guid'],
+                    $guid,
+                    [System.StringComparison]::OrdinalIgnoreCase)
+            }).Count -gt 0
+            if (-not $alreadyApplied) {
+                $script:AppliedClassSubstituteSelections.Add([ordered]@{
+                    guid = $guid
+                    packageName = $packageName
+                    className = $className
+                    method = "startup-preselection"
+                    phase = $Phase
+                    utc = [DateTimeOffset]::UtcNow.ToString("O")
+                })
+            }
+        }
+    }
+}
+
+function Assert-MainMenuConfigurationApplied {
+    param([object]$State, [string]$Phase)
+    Sync-AppliedClassSubstituteSelections $State $Phase
+    $unusedSelections = @($script:ClassSubstituteSelections | Where-Object {
+        $configuredGuid = [string]$_['guid']
+        -not @($script:AppliedClassSubstituteSelections | Where-Object {
+            [string]::Equals(
+                [string]$_['guid'],
+                $configuredGuid,
+                [System.StringComparison]::OrdinalIgnoreCase)
+        })
+    })
+    if ($unusedSelections.Count -gt 0) {
+        throw "Configured class-substitute selection(s) were not requested during '$Phase': " +
+            ((@($unusedSelections | ForEach-Object { [string]$_['guid'] })) -join ", ")
+    }
+    $unusedDialogActions = @($script:StartupDialogActions | Where-Object {
+        $configuredDialogType = [string]$_['dialogType']
+        -not @($script:AppliedStartupDialogActions | Where-Object {
+            [string]::Equals(
+                [string]$_['dialogType'],
+                $configuredDialogType,
+                [System.StringComparison]::Ordinal)
+        })
+    })
+    if ($unusedDialogActions.Count -gt 0) {
+        throw "Configured startup-dialog action(s) were not requested during '$Phase': " +
+            ((@($unusedDialogActions | ForEach-Object { [string]$_['dialogType'] })) -join ", ")
+    }
+}
+
 function Wait-ForMainMenu {
     param([string]$Phase)
-    $deadline = [DateTime]::UtcNow.AddSeconds(30)
+    $deadline = [DateTime]::UtcNow.AddSeconds($BridgeTimeoutSeconds)
     while ([DateTime]::UtcNow -lt $deadline) {
         $state = Get-BridgeState $Phase
-        if ($state.screen -eq "MainMenuScreen" -and -not $state.projectLoaded) {
+        if ([string]::IsNullOrWhiteSpace([string]$state.dialog)) {
+            $script:PendingStartupDialogAction = $null
+        }
+        if ($state.dialog -eq "SelectClassSubstituteDialog") {
+            $activeGuid = ([string]$state.classSubstituteGuid).Trim()
+            $matches = @($script:ClassSubstituteSelections | Where-Object {
+                [string]::Equals(
+                    [string]$_['guid'],
+                    $activeGuid,
+                    [System.StringComparison]::OrdinalIgnoreCase)
+            })
+            if ($matches.Count -ne 1) {
+                throw "Class-substitute dialog '$activeGuid' has no unique configured selection during '$Phase'."
+            }
+            $alreadyApplied = @($script:AppliedClassSubstituteSelections | Where-Object {
+                [string]::Equals(
+                    [string]$_['guid'],
+                    $activeGuid,
+                    [System.StringComparison]::OrdinalIgnoreCase)
+            }).Count -gt 0
+            if (-not $alreadyApplied) {
+                $selection = $matches[0]
+                Send-BridgeCommand "mods.selectClassSubstitute" ([ordered]@{
+                    guid = [string]$selection['guid']
+                    packageName = [string]$selection['packageName']
+                    className = [string]$selection['className']
+                }) | Out-Null
+                $script:AppliedClassSubstituteSelections.Add([ordered]@{
+                    guid = [string]$selection['guid']
+                    packageName = [string]$selection['packageName']
+                    className = [string]$selection['className']
+                    method = "active-dialog"
+                    phase = $Phase
+                    utc = [DateTimeOffset]::UtcNow.ToString("O")
+                })
+            }
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace([string]$state.dialog)) {
+            $dialogType = [string]$state.dialog
+            $matches = @($script:StartupDialogActions | Where-Object {
+                [string]::Equals(
+                    [string]$_['dialogType'],
+                    $dialogType,
+                    [System.StringComparison]::Ordinal)
+            })
+            if ($matches.Count -eq 0 -and
+                $script:StartupDialogActions.Count -eq 0 -and
+                $state.screenName -eq "MainMenu" -and
+                -not $state.projectLoaded) {
+                Assert-MainMenuConfigurationApplied $state $Phase
+                return $state
+            }
+            if ($matches.Count -ne 1) {
+                throw "Unexpected startup dialog '$dialogType' has no unique configured action during '$Phase'."
+            }
+            $pending = $script:PendingStartupDialogAction
+            $pendingMatches = $null -ne $pending -and [string]::Equals(
+                [string]$pending['dialogType'],
+                $dialogType,
+                [System.StringComparison]::Ordinal)
+            if ($pendingMatches) {
+                $clickedUtc = [DateTimeOffset]::Parse([string]$pending['clickedUtc'])
+                if ([DateTimeOffset]::UtcNow - $clickedUtc -gt [TimeSpan]::FromSeconds(5)) {
+                    throw "Configured action did not close startup dialog '$dialogType' during '$Phase'."
+                }
+            }
+            else {
+                $action = $matches[0]
+                Send-BridgeCommand "ui.click" ([ordered]@{
+                    query = [string]$action['query']
+                }) | Out-Null
+                $applied = [ordered]@{
+                    dialogType = $dialogType
+                    query = [string]$action['query']
+                    phase = $Phase
+                    clickedUtc = [DateTimeOffset]::UtcNow.ToString("O")
+                }
+                $script:PendingStartupDialogAction = $applied
+                $script:AppliedStartupDialogActions.Add($applied)
+            }
+        }
+        elseif (-not [bool]$state.loadingCanContinue) {
+            $unresolvedGroups = @($state.classSubstitutes | Where-Object {
+                $groupGuid = [string]$_.guid
+                $selectedCount = @($state.selectedClassSubstitutes | Where-Object {
+                    [string]::Equals(
+                        [string]$_.guid,
+                        $groupGuid,
+                        [System.StringComparison]::OrdinalIgnoreCase)
+                }).Count
+                @($_.candidates).Count -ge 2 -and $selectedCount -eq 0
+            })
+            if ($unresolvedGroups.Count -gt 0) {
+                $details = @($unresolvedGroups | ForEach-Object {
+                    $candidateText = @($_.candidates | ForEach-Object {
+                        "$($_.packageName):$($_.className)"
+                    }) -join ", "
+                    "$($_.guid) => $candidateText"
+                }) -join " | "
+                throw "Game loading is blocked by unresolved class-substitute selection(s) during '$Phase': $details"
+            }
+            throw "Game loading is blocked during '$Phase' and no selectable class-substitute dialog is active."
+        }
+        elseif ($state.screenName -eq "MainMenu" -and -not $state.projectLoaded) {
+            Assert-MainMenuConfigurationApplied $state $Phase
             return $state
         }
         Start-Sleep -Milliseconds 500
@@ -779,6 +1048,12 @@ if ($remoteDataRoot -ne "/sdcard/Survivalcraft2.4_API1.9_AutoTest") {
 New-Item -ItemType Directory -Path $requestDirectory -Force | Out-Null
 New-Item -ItemType Directory -Path $responseDirectory -Force | Out-Null
 $null = Resolve-ModPackageInputs
+Resolve-ClassSubstituteInputs
+Resolve-StartupDialogActionInputs
+Write-Utf8Json $startupClassSubstitutesPath ([ordered]@{
+    schemaVersion = 1
+    selections = @($script:ClassSubstituteSelections)
+})
 Resolve-Device
 
 $deviceModel = (@(Invoke-Adb @("shell", "getprop", "ro.product.model")) -join "").Trim()
@@ -839,6 +1114,7 @@ try {
     Invoke-Adb @("shell", "mkdir", "-p", "$remoteBridgeRoot/inbox") | Out-Null
     Invoke-Adb @("shell", "mkdir", "-p", "$remoteBridgeRoot/responses") | Out-Null
     Invoke-Adb @("shell", "mkdir", "-p", "$remoteBridgeRoot/processed") | Out-Null
+    Invoke-Adb @("push", $startupClassSubstitutesPath, $remoteStartupClassSubstitutesPath) | Out-Null
     $null = Invoke-AdbRaw @("logcat", "-c")
 
     $resolvedActivityOutput = Invoke-Adb @("shell", "cmd", "package", "resolve-activity", "--brief", $packageName)
@@ -901,6 +1177,16 @@ try {
             mods = $mods.data.mods
             stagedModPackages = $script:StagedModPackages
             expectedModPackageNames = @($ExpectedModPackageName)
+            maximumModPackageBytes = $MaximumModPackageBytes
+            startupClassSubstituteConfiguration = [ordered]@{
+                localPath = $startupClassSubstitutesPath
+                remotePath = $remoteStartupClassSubstitutesPath
+                selectionCount = $script:ClassSubstituteSelections.Count
+            }
+            configuredClassSubstituteSelections = $script:ClassSubstituteSelections
+            appliedClassSubstituteSelections = $script:AppliedClassSubstituteSelections
+            configuredStartupDialogActions = $script:StartupDialogActions
+            appliedStartupDialogActions = $script:AppliedStartupDialogActions
             stagedMods = $stagedStartupMods
             runtimeLogAudit = $runtimeLogAudit
             visibleWidgetCount = $tree.data.widgets.Count
@@ -1017,6 +1303,16 @@ try {
         mods = $finalMods
         stagedModPackages = $script:StagedModPackages
         expectedModPackageNames = @($ExpectedModPackageName)
+        maximumModPackageBytes = $MaximumModPackageBytes
+        startupClassSubstituteConfiguration = [ordered]@{
+            localPath = $startupClassSubstitutesPath
+            remotePath = $remoteStartupClassSubstitutesPath
+            selectionCount = $script:ClassSubstituteSelections.Count
+        }
+        configuredClassSubstituteSelections = $script:ClassSubstituteSelections
+        appliedClassSubstituteSelections = $script:AppliedClassSubstituteSelections
+        configuredStartupDialogActions = $script:StartupDialogActions
+        appliedStartupDialogActions = $script:AppliedStartupDialogActions
         stagedMods = $stagedFinalMods
         runtimeLogAudit = $runtimeLogAudit
         stateObservationCount = $script:StateTimeline.Count
@@ -1071,6 +1367,17 @@ catch {
         relayRuns = $relayRuns
         stagedModPackages = $script:StagedModPackages
         expectedModPackageNames = @($ExpectedModPackageName)
+        maximumModPackageBytes = $MaximumModPackageBytes
+        startupClassSubstituteConfiguration = [ordered]@{
+            localPath = $startupClassSubstitutesPath
+            remotePath = $remoteStartupClassSubstitutesPath
+            selectionCount = $script:ClassSubstituteSelections.Count
+        }
+        configuredClassSubstituteSelections = $script:ClassSubstituteSelections
+        appliedClassSubstituteSelections = $script:AppliedClassSubstituteSelections
+        configuredStartupDialogActions = $script:StartupDialogActions
+        appliedStartupDialogActions = $script:AppliedStartupDialogActions
+        lastState = $script:LastState
         runtimeLogAudit = $runtimeLogAudit
         failureArtifacts = $failureArtifacts
         stateObservationCount = $script:StateTimeline.Count

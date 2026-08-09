@@ -12,18 +12,34 @@ namespace Game.IContentReader {
         public override string[] DefaultSuffix => ["lst", "astc", "astcsrgb", "webp", "png"];
 
         public override object Get(ContentInfo[] contents) {
-            if (contents.Length != 2) {
-                throw new Exception("not matches content count");
+            ContentInfo[] glyphMatches = contents
+                .Where(content => content.ContentSuffix == ".lst")
+                .ToArray();
+            if (glyphMatches.Length != 1) {
+                throw new Exception(
+                    $"Bitmap font requires exactly one .lst resource, found {glyphMatches.Length}.");
             }
-            ContentInfo glyphs;
+            ContentInfo glyphs = glyphMatches[0];
+            ContentInfo[] textures = contents
+                .Where(content => content.ContentSuffix != ".lst")
+                .ToArray();
+            ContentInfo[] sameSourceTextures = textures
+                .Where(content => string.Equals(
+                    content.SourcePackageName,
+                    glyphs.SourcePackageName,
+                    StringComparison.Ordinal))
+                .ToArray();
             ContentInfo texture;
-            if (contents[0].ContentSuffix == ".lst") {
-                glyphs = contents[0];
-                texture = contents[1];
+            if (sameSourceTextures.Length == 1) {
+                texture = sameSourceTextures[0];
+            }
+            else if (sameSourceTextures.Length == 0 && textures.Length == 1) {
+                texture = textures[0];
             }
             else {
-                glyphs = contents[1];
-                texture = contents[0];
+                throw new Exception(
+                    $"Bitmap font texture is ambiguous for source '{glyphs.SourcePackageName}': "
+                    + $"{sameSourceTextures.Length} same-source candidates, {textures.Length} total candidates.");
             }
             return BitmapFont.Initialize(ContentManager.Get<Texture2D>(texture.ContentPath, texture.ContentSuffix), glyphs.Duplicate(), Vector2.Zero);
         }

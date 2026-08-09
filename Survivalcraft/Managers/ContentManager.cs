@@ -11,10 +11,12 @@ namespace Game {
         public string ContentPath;
         public string ContentSuffix;
         public string Filename;
+        public string SourcePackageName;
         public Lock InUse = new();
 
-        public ContentInfo(string AbsolutePath_) {
+        public ContentInfo(string AbsolutePath_, string sourcePackageName = "") {
             AbsolutePath = AbsolutePath_;
+            SourcePackageName = sourcePackageName ?? string.Empty;
             int pos = AbsolutePath_.LastIndexOf('.');
             ContentPath = pos > -1 ? AbsolutePath_.Substring(0, pos) : AbsolutePath_;
             ContentSuffix = pos > -1 ? AbsolutePath.Substring(pos) : null;

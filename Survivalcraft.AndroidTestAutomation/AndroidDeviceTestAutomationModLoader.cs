@@ -7,6 +7,8 @@ namespace Survivalcraft.AndroidTestAutomation;
 public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
     public const int ProtocolVersion = 1;
     public const int MaximumRequestBytes = 64 * 1024;
+    public const int MaximumStartupConfigurationBytes = 64 * 1024;
+    public const int MaximumStartupClassSubstituteSelections = 64;
     public const int MaximumWidgetCount = 512;
 
     private static readonly JsonSerializerOptions JsonOptions = new() {
@@ -19,12 +21,15 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
     private readonly string m_inboxDirectory;
     private readonly string m_processedDirectory;
     private readonly string m_responseDirectory;
+    private readonly string m_startupClassSubstitutesPath;
+    private static StartupClassSubstituteSelection[] s_startupClassSubstituteSelections = [];
     private int m_lastProcessedFrame = -1;
 
     public AndroidDeviceTestAutomationModLoader() {
         m_inboxDirectory = $"{m_rootDirectory}/inbox";
         m_processedDirectory = $"{m_rootDirectory}/processed";
         m_responseDirectory = $"{m_rootDirectory}/responses";
+        m_startupClassSubstitutesPath = $"{m_rootDirectory}/startup-class-substitutes.json";
     }
 
     public override void __ModInitialize() {
@@ -32,6 +37,7 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
         Storage.CreateDirectory(m_inboxDirectory);
         Storage.CreateDirectory(m_processedDirectory);
         Storage.CreateDirectory(m_responseDirectory);
+        LoadStartupClassSubstituteSelections();
         ModsManager.RegisterHook("BeforeWidgetUpdate", this);
         WriteAtomic(
             $"{m_rootDirectory}/bridge.json",
@@ -41,10 +47,71 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
                 transport = "adb-file-inbox",
                 commands = SupportedCommands,
                 maximumRequestBytes = MaximumRequestBytes,
+                maximumStartupConfigurationBytes = MaximumStartupConfigurationBytes,
+                maximumStartupClassSubstituteSelections = MaximumStartupClassSubstituteSelections,
                 maximumWidgetCount = MaximumWidgetCount
             });
         Log.Information(
             $"Android device test automation bridge ready at '{m_rootDirectory}'.");
+    }
+
+    private void LoadStartupClassSubstituteSelections() {
+        s_startupClassSubstituteSelections = [];
+        if (!Storage.FileExists(m_startupClassSubstitutesPath)) {
+            return;
+        }
+        long length = Storage.GetFileSize(m_startupClassSubstitutesPath);
+        if (length <= 0 || length > MaximumStartupConfigurationBytes) {
+            throw new InvalidDataException(
+                $"Startup class-substitute configuration size {length} is outside 1..{MaximumStartupConfigurationBytes} bytes.");
+        }
+        StartupClassSubstituteConfiguration configuration =
+            JsonSerializer.Deserialize<StartupClassSubstituteConfiguration>(
+                Storage.ReadAllText(m_startupClassSubstitutesPath),
+                JsonOptions)
+            ?? throw new InvalidDataException(
+                "Startup class-substitute configuration JSON is empty.");
+        if (configuration.SchemaVersion != ProtocolVersion) {
+            throw new InvalidDataException(
+                $"Unsupported startup class-substitute schemaVersion {configuration.SchemaVersion}; expected {ProtocolVersion}.");
+        }
+        StartupClassSubstituteSelection[] selections = configuration.Selections ?? [];
+        if (selections.Length > MaximumStartupClassSubstituteSelections) {
+            throw new InvalidDataException(
+                $"Startup class-substitute configuration contains {selections.Length} selections; maximum is {MaximumStartupClassSubstituteSelections}.");
+        }
+        HashSet<string> seenGuids = new(StringComparer.OrdinalIgnoreCase);
+        List<StartupClassSubstituteSelection> validated = [];
+        foreach (StartupClassSubstituteSelection input in selections) {
+            string guid = (input.Guid ?? string.Empty).Trim();
+            string packageName = (input.PackageName ?? string.Empty).Trim();
+            string className = (input.ClassName ?? string.Empty).Trim();
+            if (!Guid.TryParseExact(guid, "D", out _)) {
+                throw new InvalidDataException(
+                    $"Startup class-substitute guid '{guid}' is invalid.");
+            }
+            if (!IsSafePackageName(packageName)) {
+                throw new InvalidDataException(
+                    $"Startup class-substitute packageName '{packageName}' is invalid.");
+            }
+            if (!IsSafeClassName(className)) {
+                throw new InvalidDataException(
+                    $"Startup class-substitute className '{className}' is invalid.");
+            }
+            if (!seenGuids.Add(guid)) {
+                throw new InvalidDataException(
+                    $"Startup class-substitute guid '{guid}' is specified more than once.");
+            }
+            StartupClassSubstituteSelection selection = new(guid, packageName, className);
+            validated.Add(selection);
+            ModsManager.SelectedClassSubstitutes[guid] =
+                new ModsManager.ClassSubstitute(packageName, className);
+        }
+        s_startupClassSubstituteSelections = validated.ToArray();
+        if (validated.Count > 0) {
+            Log.Information(
+                $"Loaded {validated.Count} startup class-substitute selection(s) from the Android test harness.");
+        }
     }
 
     public override void BeforeWidgetUpdate(Widget widget) {
@@ -148,6 +215,7 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
             "player.enter" => EnterPlayer(arguments),
             "network.startrelayhost" => StartRelayHost(),
             "mods.list" => ListMods(),
+            "mods.selectclasssubstitute" => SelectClassSubstitute(arguments),
             "ui.tree" => BuildWidgetTree(),
             "ui.click" => ClickWidget(arguments),
             "ui.settext" => SetWidgetText(arguments),
@@ -161,6 +229,7 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
         protocolVersion = ProtocolVersion,
         transport = "adb-file-inbox",
         commands = SupportedCommands,
+        startupClassSubstituteSelectionCount = s_startupClassSubstituteSelections.Length,
         frameIndex = Time.FrameIndex,
         utc = DateTimeOffset.UtcNow
     };
@@ -173,8 +242,16 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
             : null;
         return new {
             contentLoaded = LoadingScreen.m_isContentLoaded,
+            loadingCanContinue = ModsManager.GetAllowContinue(),
             screen = ScreensManager.CurrentScreen?.GetType().Name ?? string.Empty,
+            screenName = ScreensManager.CurrentScreen == null
+                ? string.Empty
+                : ScreensManager.GetScreenName(ScreensManager.CurrentScreen),
             dialog = dialog?.GetType().Name ?? string.Empty,
+            classSubstituteGuid = (dialog as SelectClassSubstituteDialog)?.m_guid ?? string.Empty,
+            classSubstitutes = BuildClassSubstituteGroups(),
+            selectedClassSubstitutes = BuildSelectedClassSubstitutes(),
+            startupClassSubstituteSelections = s_startupClassSubstituteSelections,
             projectLoaded = GameManager.Project != null,
             networkProject = GameManager.IsNetworkProject,
             worldName = GameManager.WorldInfo?.WorldSettings?.Name ?? string.Empty,
@@ -196,6 +273,33 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
             realTime = Time.RealTime
         };
     }
+
+    private static object[] BuildClassSubstituteGroups() =>
+        ModsManager.ClassSubstitutes
+            .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(pair => (object)new {
+                guid = pair.Key,
+                candidates = pair.Value
+                    .Distinct()
+                    .Select(candidate => new {
+                        packageName = candidate.PackageName,
+                        className = candidate.ClassName
+                    })
+                    .OrderBy(candidate => candidate.packageName, StringComparer.Ordinal)
+                    .ThenBy(candidate => candidate.className, StringComparer.Ordinal)
+                    .ToArray()
+            })
+            .ToArray();
+
+    private static object[] BuildSelectedClassSubstitutes() =>
+        ModsManager.SelectedClassSubstitutes
+            .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(pair => (object)new {
+                guid = pair.Key,
+                packageName = pair.Value.PackageName,
+                className = pair.Value.ClassName
+            })
+            .ToArray();
 
     private static object SetSettings(JsonElement arguments) {
         if (TryGetProperty(arguments, "moveControlMode", out JsonElement moveMode)) {
@@ -369,6 +473,46 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
             .ThenBy(mod => mod.version, StringComparer.OrdinalIgnoreCase)
             .ToArray()
     };
+
+    private static object SelectClassSubstitute(JsonElement arguments) {
+        string guid = GetRequiredString(arguments, "guid");
+        string packageName = GetRequiredString(arguments, "packageName");
+        string className = GetRequiredString(arguments, "className");
+        Dialog? activeDialog = DialogsManager.Dialogs.Count > 0
+            ? DialogsManager.Dialogs[DialogsManager.Dialogs.Count - 1]
+            : null;
+        if (activeDialog is not SelectClassSubstituteDialog dialog) {
+            throw new InvalidOperationException(
+                "The active dialog is not a class-substitute selection dialog.");
+        }
+        if (!string.Equals(dialog.m_guid, guid, StringComparison.OrdinalIgnoreCase)) {
+            throw new InvalidOperationException(
+                $"Active class-substitute guid '{dialog.m_guid}' does not match requested '{guid}'.");
+        }
+        if (!ModsManager.ClassSubstitutes.TryGetValue(dialog.m_guid, out List<ModsManager.ClassSubstitute>? candidates)) {
+            throw new InvalidOperationException(
+                $"No class-substitute candidates are registered for '{dialog.m_guid}'.");
+        }
+        ModsManager.ClassSubstitute[] matches = candidates.Where(candidate =>
+            string.Equals(candidate.PackageName, packageName, StringComparison.Ordinal)
+            && string.Equals(candidate.ClassName, className, StringComparison.Ordinal))
+            .Distinct()
+            .ToArray();
+        if (matches.Length != 1) {
+            throw new InvalidOperationException(
+                $"Expected exactly one distinct class substitute '{packageName}:{className}' for '{guid}', found {matches.Length}.");
+        }
+        ModsManager.ClassSubstitute selected = matches[0];
+        ModsManager.SelectedClassSubstitutes[dialog.m_guid] = selected;
+        dialog.m_element.SetAttributeValue("Value", selected.ClassName);
+        DialogsManager.HideDialog(dialog);
+        dialog.m_handler?.Invoke();
+        return new {
+            guid = dialog.m_guid,
+            packageName = selected.PackageName,
+            className = selected.ClassName
+        };
+    }
 
     private static object BuildWidgetTree() {
         Widget root = GetAutomationRoot()
@@ -583,6 +727,20 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
             char.IsAsciiLetterOrDigit(character)
             || character is '.' or '_' or '-');
 
+    private static bool IsSafePackageName(string value) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.Length <= 200
+        && value.All(character =>
+            character is not ',' and not ';' and not '\r' and not '\n');
+
+    private static bool IsSafeClassName(string value) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.Length <= 300
+        && (char.IsLetter(value[0]) || value[0] == '_')
+        && value.All(character =>
+            char.IsLetterOrDigit(character)
+            || character is '_' or '.' or '+');
+
     private static readonly string[] SupportedCommands = [
         "system.ping",
         "state.get",
@@ -595,6 +753,7 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
         "player.enter",
         "network.startRelayHost",
         "mods.list",
+        "mods.selectClassSubstitute",
         "ui.tree",
         "ui.click",
         "ui.setText"
@@ -607,6 +766,16 @@ public sealed class AndroidAutomationRequest {
     public string Command { get; set; } = string.Empty;
     public JsonElement Arguments { get; set; }
 }
+
+public sealed class StartupClassSubstituteConfiguration {
+    public int SchemaVersion { get; set; }
+    public StartupClassSubstituteSelection[]? Selections { get; set; }
+}
+
+public sealed record StartupClassSubstituteSelection(
+    string Guid,
+    string PackageName,
+    string ClassName);
 
 public sealed record AndroidAutomationResponse(
     int SchemaVersion,

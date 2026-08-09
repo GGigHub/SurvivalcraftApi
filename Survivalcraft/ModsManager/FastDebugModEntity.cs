@@ -52,7 +52,7 @@ namespace Game {
             foreach ((string path, FileInfo fileInfo) in FModFiles) {
                 if (path.StartsWith("Assets/")) {
                     string name = path.Substring(7);
-                    ContentInfo contentInfo = new(name);
+                    ContentInfo contentInfo = new(name, modInfo?.PackageName ?? string.Empty);
                     MemoryStream memoryStream = new();
                     using (Stream stream = fileInfo.Open(FileMode.Open)) {
                         stream.CopyTo(memoryStream);

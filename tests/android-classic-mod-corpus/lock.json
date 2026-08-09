@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "generatedUtc": "2026-08-09T22:02:10.1751721+00:00",
+  "manifest": "tests/android-classic-mod-corpus/manifest.json",
+  "mods": [
+    {
+      "id": "wonderful-era-1.9.2a",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/07/16/10/44/[API1.9.3]美好时代V1.9.2a.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/07/16/10/44/[API1.9.3]%E7%BE%8E%E5%A5%BD%E6%97%B6%E4%BB%A3V1.9.2a.scmod",
+      "sha256": "9f89bfe4d515e6a4939b6e2eb67193264fe80f4c7bfc04ab85386def98906ecd",
+      "bytes": 24225892,
+      "packageName": "Tp.WonderfulEra",
+      "name": "美好时代(Wonderful Era)",
+      "version": "1.9.2",
+      "apiVersion": "1.9.3",
+      "scVersion": "2.4.0.0",
+      "dependencies": [
+        "Tp.Accessory",
+        "Tp.BuildingGeneration"
+      ],
+      "archive": {
+        "entryCount": 451,
+        "expandedBytes": 35071166,
+        "decodedBytes": 24225829,
+        "decodedSha256": "37bd23121b6a24e214f9017e1d4526c563865c95507cdb440fdc4e90f793c317",
+        "deciphered": true,
+        "extensions": [
+          ".bldg",
+          ".clo",
+          ".cr",
+          ".csv",
+          ".dae",
+          ".dll",
+          ".flac",
+          ".json",
+          ".ogg",
+          ".png",
+          ".txt",
+          ".wav",
+          ".webp",
+          ".xdb",
+          ".xml"
+        ]
+      }
+    },
+    {
+      "id": "bldg-1.2.1",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/06/16/09/04/[API1.9]构千形V1.2.1..scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/06/16/09/04/[API1.9]%E6%9E%84%E5%8D%83%E5%BD%A2V1.2.1..scmod",
+      "sha256": "652e44526083d1e6164f2f2c04e39a68fc23c6be5fbd866b61f6be7b27a5e7e1",
+      "bytes": 95422,
+      "packageName": "Tp.BuildingGeneration",
+      "name": "构千形(BLDG)",
+      "version": "1.2.1",
+      "apiVersion": "1.9.0.0",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 14,
+        "expandedBytes": 183504,
+        "decodedBytes": 95422,
+        "decodedSha256": "652e44526083d1e6164f2f2c04e39a68fc23c6be5fbd866b61f6be7b27a5e7e1",
+        "deciphered": false,
+        "extensions": [
+          ".csv",
+          ".dll",
+          ".json",
+          ".png",
+          ".txt",
+          ".xdb",
+          ".xml"
+        ]
+      }
+    },
+    {
+      "id": "accessory-1.2.1",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/07/08/14/36/[API1.9]服饰配件V1.2.1.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/07/08/14/36/[API1.9]%E6%9C%8D%E9%A5%B0%E9%85%8D%E4%BB%B6V1.2.1.scmod",
+      "sha256": "61b15968b816dd28984cfd775f5ccbaa42f1c2707b7813b5cdd11124304d9b18",
+      "bytes": 208895,
+      "packageName": "Tp.Accessory",
+      "name": "服饰配件(Accessory)",
+      "version": "1.2.1",
+      "apiVersion": "1.9.0.0",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 14,
+        "expandedBytes": 284317,
+        "decodedBytes": 208895,
+        "decodedSha256": "61b15968b816dd28984cfd775f5ccbaa42f1c2707b7813b5cdd11124304d9b18",
+        "deciphered": false,
+        "extensions": [
+          ".csv",
+          ".dae",
+          ".dll",
+          ".json",
+          ".png",
+          ".txt",
+          ".webp",
+          ".xdb",
+          ".xml"
+        ]
+      }
+    },
+    {
+      "id": "dayz-2.2.3.0-three-year",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/06/16/40/API1.5 DayZ v2.2.3.0（三周年）.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/08/06/16/40/API1.5%20DayZ%20v2.2.3.0%EF%BC%88%E4%B8%89%E5%91%A8%E5%B9%B4%EF%BC%89.scmod",
+      "sha256": "829b9331287344cc88a407c0aa22ccf1b06c0b28a28d094d381fd6d5c4fc8db5",
+      "bytes": 86321400,
+      "packageName": "DayZ",
+      "name": "DayZ",
+      "version": "2.2.3.0 三周年",
+      "apiVersion": "1.45",
+      "scVersion": "2.3.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 2305,
+        "expandedBytes": 170087271,
+        "decodedBytes": 86321337,
+        "decodedSha256": "23752c0f53c6107136a23ba22def409cb55ee1abeac3eb240bf2496664771fc8",
+        "deciphered": true,
+        "extensions": [
+          ".aseprite",
+          ".clo",
+          ".cr",
+          ".csv",
+          ".dae",
+          ".dll",
+          ".json",
+          ".lst",
+          ".png",
+          ".scskin",
+          ".txt",
+          ".wav",
+          ".xdb",
+          ".xml"
+        ]
+      }
+    },
+    {
+      "id": "firearms-2.8",
+      "sourceUrl": "https://down.suancaixianyu.cn/2024/0924/[2.3]枪械Mod2.8_最终版本.scmod",
+      "effectiveUrl": "https://down.suancaixianyu.cn/2024/0924/[2.3]%E6%9E%AA%E6%A2%B0Mod2.8_%E6%9C%80%E7%BB%88%E7%89%88%E6%9C%AC.scmod",
+      "sha256": "1b4529c8db2af29e0eb14fc570ab3ab7ff8440c10261cbdcb2d14b29bd703b28",
+      "bytes": 25522734,
+      "packageName": "gunsmod.ysf.scmod",
+      "name": "枪械Mod",
+      "version": "2.8",
+      "apiVersion": "1.45",
+      "scVersion": "2.3.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 467,
+        "expandedBytes": 37407500,
+        "decodedBytes": 25522671,
+        "decodedSha256": "bbe997b47729220309a1badec5f2e8af8217591a2bcb284f839a0e172c0e2d0c",
+        "deciphered": true,
+        "extensions": [
+          ".cr",
+          ".csv",
+          ".dae",
+          ".dll",
+          ".json",
+          ".png",
+          ".txt",
+          ".wav",
+          ".xdb",
+          ".xml"
+        ]
+      }
+    },
+    {
+      "id": "siyah-akrep-2.8",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/05/23/[2.3]SiyahAkrep黑蝎2.8.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/05/23/[2.3]SiyahAkrep%E9%BB%91%E8%9D%8E2.8.scmod",
+      "sha256": "8f8cc8b6c095f57f334d5368c232eec891d3da41b1f408607bbeff3712fb16aa",
+      "bytes": 44186198,
+      "packageName": "siyahakrep.ysf.scmod",
+      "name": "SiyahAkrep黑蝎Mod",
+      "version": "2.8",
+      "apiVersion": "1.45",
+      "scVersion": "2.3.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 356,
+        "expandedBytes": 85292755,
+        "decodedBytes": 44186135,
+        "decodedSha256": "159920f6ea0b4227a19f5f3b51530bbddefb8e52461006a2bcc1dc1cc49cc59f",
+        "deciphered": true,
+        "extensions": [
+          ".clo",
+          ".cr",
+          ".csv",
+          ".dae",
+          ".fr",
+          ".gdl",
+          ".json",
+          ".png",
+          ".txt",
+          ".wav",
+          ".xdb",
+          ".xml"
+        ]
+      }
+    }
+  ]
+}

@@ -60,6 +60,7 @@ $startedUtc = [DateTimeOffset]::UtcNow
 $caseResults = [System.Collections.Generic.List[object]]::new()
 $baselineResult = $null
 $cleanupResult = $null
+$script:MaximumModPackageBytes = 67108864
 
 function Test-PathInside {
     param([string]$Candidate, [string]$Parent)
@@ -100,6 +101,8 @@ function Invoke-DeviceRunner {
         [string]$Mode,
         [string[]]$ModPaths = @(),
         [string[]]$ExpectedPackages = @(),
+        [object[]]$ClassSubstituteSelections = @(),
+        [object[]]$StartupDialogActions = @(),
         [int]$ReentryCount = 1,
         [switch]$Install
     )
@@ -112,6 +115,7 @@ function Invoke-DeviceRunner {
         WorldTimeoutSeconds = $WorldTimeoutSeconds
         RelayTimeoutSeconds = $RelayTimeoutSeconds
         RelayRestartCount = $RelayRestartCount
+        MaximumModPackageBytes = $script:MaximumModPackageBytes
     }
     if (-not [string]::IsNullOrWhiteSpace($DeviceId)) {
         $parameters.DeviceId = $DeviceId
@@ -128,6 +132,12 @@ function Invoke-DeviceRunner {
     if ($ModPaths.Count -gt 0) {
         $parameters.ModPackagePath = $ModPaths
         $parameters.ExpectedModPackageName = $ExpectedPackages
+    }
+    if ($ClassSubstituteSelections.Count -gt 0) {
+        $parameters.ClassSubstituteSelection = $ClassSubstituteSelections
+    }
+    if ($StartupDialogActions.Count -gt 0) {
+        $parameters.StartupDialogAction = $StartupDialogActions
     }
     $runnerException = $null
     try {
@@ -165,6 +175,9 @@ function New-MatrixSummary {
     param([bool]$Passed, [string]$ErrorMessage = "")
     $gatedCases = @($caseResults | Where-Object { [bool]$_['gate'] })
     $failedGatedCases = @($gatedCases | Where-Object { -not [bool]$_['passed'] })
+    $observationalCases = @($caseResults | Where-Object { -not [bool]$_['gate'] })
+    $failedObservationalCases = @($observationalCases | Where-Object { -not [bool]$_['passed'] })
+    $failedCases = @($caseResults | Where-Object { -not [bool]$_['passed'] })
     $runtimeLogAudits = @($caseResults | ForEach-Object { $_['runtimeLogAudit'] } | Where-Object {
         $null -ne $_ -and [bool]$_.available
     })
@@ -174,11 +187,26 @@ function New-MatrixSummary {
             $relatedCases = @($caseResults | Where-Object {
                 @($_['modIds']) -contains [string]$mod.id
             })
+            $subjectCases = @($caseResults | Where-Object {
+                [string]::Equals(
+                    [string]$_['subjectModId'],
+                    [string]$mod.id,
+                    [System.StringComparison]::OrdinalIgnoreCase)
+            })
+            $supportCases = @($relatedCases | Where-Object {
+                -not [string]::Equals(
+                    [string]$_['subjectModId'],
+                    [string]$mod.id,
+                    [System.StringComparison]::OrdinalIgnoreCase)
+            })
             $modOutcomes.Add([ordered]@{
                 id = $mod.id
                 packageName = $mod.packageName
                 version = $mod.version
                 sha256 = $mod.sha256
+                subjectCaseId = if ($subjectCases.Count -eq 1) { [string]$subjectCases[0]['id'] } else { "" }
+                subjectCasePassed = if ($subjectCases.Count -eq 1) { [bool]$subjectCases[0]['passed'] } else { $null }
+                supportCaseCount = $supportCases.Count
                 caseCount = $relatedCases.Count
                 passedCaseCount = @($relatedCases | Where-Object { [bool]$_['passed'] }).Count
                 failedCaseIds = @($relatedCases | Where-Object { -not [bool]$_['passed'] } | ForEach-Object { $_['id'] })
@@ -199,9 +227,15 @@ function New-MatrixSummary {
         baseline = $baselineResult
         cleanup = $cleanupResult
         selectedCaseCount = $caseResults.Count
+        allCasesPassed = $failedCases.Count -eq 0
+        failedCaseCount = $failedCases.Count
+        failedCaseIds = @($failedCases | ForEach-Object { $_['id'] })
         gatedCaseCount = $gatedCases.Count
         failedGatedCaseCount = $failedGatedCases.Count
         failedGatedCaseIds = @($failedGatedCases | ForEach-Object { $_['id'] })
+        observationalCaseCount = $observationalCases.Count
+        failedObservationalCaseCount = $failedObservationalCases.Count
+        failedObservationalCaseIds = @($failedObservationalCases | ForEach-Object { $_['id'] })
         gameLogAuditedCaseCount = $runtimeLogAudits.Count
         gameLogErrorCount = @($runtimeLogAudits | ForEach-Object { [int]$_.errorCount } | Measure-Object -Sum).Sum
         gameLogWarningCount = @($runtimeLogAudits | ForEach-Object { [int]$_.warningCount } | Measure-Object -Sum).Sum
@@ -245,6 +279,14 @@ try {
         throw "Corpus resolver reported failure."
     }
     $manifest = Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json -Depth 64
+    $manifestLimits = Get-PropertyValue $manifest "limits" $null
+    [long]$script:MaximumModPackageBytes = Get-PropertyValue `
+        $manifestLimits `
+        "maximumDownloadBytes" `
+        67108864
+    if ($script:MaximumModPackageBytes -le 0 -or $script:MaximumModPackageBytes -gt 512MB) {
+        throw "Manifest maximumDownloadBytes is outside the device runner safety bounds."
+    }
 
     $resolvedById = @{}
     $resolvedIdByPackage = @{}
@@ -292,23 +334,80 @@ try {
                 }
             }
         }
+        $subjectModId = ([string](Get-PropertyValue $case "subjectMod" "")).Trim()
+        if ([string]::IsNullOrWhiteSpace($subjectModId) -and $caseModIds.Count -eq 1) {
+            $subjectModId = $caseModIds[0]
+        }
+        if (-not [string]::IsNullOrWhiteSpace($subjectModId) -and
+            $caseModIds -notcontains $subjectModId) {
+            throw "Manifest test case '$id' subjectMod '$subjectModId' must also appear in mods."
+        }
+        $classSubstitutions = [System.Collections.Generic.List[object]]::new()
+        $classSubstitutionGuids = [System.Collections.Generic.HashSet[string]]::new(
+            [System.StringComparer]::OrdinalIgnoreCase)
+        foreach ($selection in @((Get-PropertyValue $case "classSubstitutions" @()))) {
+            $guid = ([string](Get-PropertyValue $selection "guid" "")).Trim()
+            $packageName = ([string](Get-PropertyValue $selection "packageName" "")).Trim()
+            $className = ([string](Get-PropertyValue $selection "className" "")).Trim()
+            if ($guid -notmatch "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" -or
+                -not $classSubstitutionGuids.Add($guid)) {
+                throw "Manifest test case '$id' has an invalid or duplicate class-substitute guid '$guid'."
+            }
+            if (-not $resolvedIdByPackage.ContainsKey($packageName) -or
+                $caseModIds -notcontains [string]$resolvedIdByPackage[$packageName]) {
+                throw "Manifest test case '$id' class substitute package '$packageName' is not staged by the case."
+            }
+            if ($className -notmatch "^[\p{L}_][\p{L}\p{N}_.+]{0,299}$") {
+                throw "Manifest test case '$id' has invalid class substitute '$className'."
+            }
+            $classSubstitutions.Add([ordered]@{
+                guid = $guid
+                packageName = $packageName
+                className = $className
+            })
+        }
+        $startupDialogActions = [System.Collections.Generic.List[object]]::new()
+        $startupDialogTypes = [System.Collections.Generic.HashSet[string]]::new(
+            [System.StringComparer]::Ordinal)
+        foreach ($action in @((Get-PropertyValue $case "startupDialogActions" @()))) {
+            $dialogType = ([string](Get-PropertyValue $action "dialogType" "")).Trim()
+            $query = ([string](Get-PropertyValue $action "query" "")).Trim()
+            if ($dialogType -notmatch "^[A-Za-z_][A-Za-z0-9_.+]{0,199}$" -or
+                -not $startupDialogTypes.Add($dialogType)) {
+                throw "Manifest test case '$id' has invalid or duplicate startup dialog '$dialogType'."
+            }
+            if ([string]::IsNullOrWhiteSpace($query) -or
+                $query.Length -gt 200 -or $query -match "[\r\n]") {
+                throw "Manifest test case '$id' has invalid startup-dialog query '$query'."
+            }
+            $startupDialogActions.Add([ordered]@{
+                dialogType = $dialogType
+                query = $query
+            })
+        }
         $allCases.Add([ordered]@{
             id = $id
             mode = $mode
             reentryCount = $reentryCount
             gate = [bool](Get-PropertyValue $case "gate" $true)
+            subjectModId = $subjectModId
             modIds = $caseModIds
+            classSubstitutions = @($classSubstitutions)
+            startupDialogActions = @($startupDialogActions)
         })
     }
     if ($allCases.Count -eq 0) {
         throw "Manifest has no testCases."
     }
     foreach ($resolvedId in $resolvedById.Keys) {
-        $singleCases = @($allCases | Where-Object {
-            @($_['modIds']).Count -eq 1 -and @($_['modIds']) -contains $resolvedId
+        $subjectCases = @($allCases | Where-Object {
+            [string]::Equals(
+                [string]$_['subjectModId'],
+                [string]$resolvedId,
+                [System.StringComparison]::OrdinalIgnoreCase)
         })
-        if ($singleCases.Count -ne 1) {
-            throw "Resolved mod '$resolvedId' must appear in exactly one single-mod test case; found $($singleCases.Count)."
+        if ($subjectCases.Count -ne 1) {
+            throw "Resolved mod '$resolvedId' must be the subject of exactly one test case; found $($subjectCases.Count)."
         }
     }
 
@@ -350,6 +449,8 @@ try {
             -Mode ([string]$case['mode']) `
             -ModPaths $paths `
             -ExpectedPackages $packages `
+            -ClassSubstituteSelections @($case['classSubstitutions']) `
+            -StartupDialogActions @($case['startupDialogActions']) `
             -ReentryCount ([int]$case['reentryCount'])
         $childSummary = $run['summary']
         $failureArtifacts = if ($null -ne $childSummary -and
@@ -375,7 +476,24 @@ try {
             gate = [bool]$case['gate']
             mode = [string]$case['mode']
             reentryCount = [int]$case['reentryCount']
+            subjectModId = [string]$case['subjectModId']
             modIds = @($case['modIds'])
+            configuredClassSubstitutions = @($case['classSubstitutions'])
+            appliedClassSubstitutions = if ($null -eq $childSummary -or
+                $null -eq $childSummary.PSObject.Properties['appliedClassSubstituteSelections']) {
+                @()
+            }
+            else {
+                @($childSummary.appliedClassSubstituteSelections)
+            }
+            configuredStartupDialogActions = @($case['startupDialogActions'])
+            appliedStartupDialogActions = if ($null -eq $childSummary -or
+                $null -eq $childSummary.PSObject.Properties['appliedStartupDialogActions']) {
+                @()
+            }
+            else {
+                @($childSummary.appliedStartupDialogActions)
+            }
             expectedPackages = $packages
             passed = [bool]$run['passed']
             classification = if ($null -eq $failureArtifacts) {
@@ -420,7 +538,16 @@ try {
     if (-not $passed) {
         throw $errorMessage
     }
-    Write-Host "ANDROID MOD MATRIX PASSED"
+    $failedObservationalCases = @($caseResults | Where-Object {
+        -not [bool]$_['gate'] -and -not [bool]$_['passed']
+    })
+    if ($failedObservationalCases.Count -gt 0) {
+        Write-Host "ANDROID MOD MATRIX GATE PASSED WITH OBSERVATIONAL FAILURES"
+        Write-Host "observationalFailures=$($failedObservationalCases.Count)"
+    }
+    else {
+        Write-Host "ANDROID MOD MATRIX PASSED"
+    }
     Write-Host "cases=$($caseResults.Count)"
     Write-Host "summary=$summaryPath"
 }

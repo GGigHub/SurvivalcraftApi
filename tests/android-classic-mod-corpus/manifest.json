@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "description": "Hash-locked observational Android corpus for classic community mods and their required support mods. These cases do not gate the default release corpus.",
+  "listingApi": "https://m.suancaixianyu.cn/api/com/list",
+  "allowedHosts": [
+    "file.suancaixianyu.cn",
+    "down.suancaixianyu.cn"
+  ],
+  "limits": {
+    "maximumDownloadBytes": 134217728,
+    "maximumExpandedBytes": 268435456,
+    "maximumEntries": 4096,
+    "maximumCompressionRatio": 500
+  },
+  "mods": [
+    {
+      "id": "bldg-1.2.1",
+      "enabled": true,
+      "communityCollectionId": 1694,
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/06/16/09/04/[API1.9]构千形V1.2.1..scmod",
+      "expectedBytes": 95422,
+      "expectedPackageName": "Tp.BuildingGeneration",
+      "expectedVersion": "1.2.1"
+    },
+    {
+      "id": "accessory-1.2.1",
+      "enabled": true,
+      "communityCollectionId": 1593,
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/07/08/14/36/[API1.9]服饰配件V1.2.1.scmod",
+      "expectedBytes": 208895,
+      "expectedPackageName": "Tp.Accessory",
+      "expectedVersion": "1.2.1"
+    },
+    {
+      "id": "wonderful-era-1.9.2a",
+      "enabled": true,
+      "communityCollectionId": 1059,
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/07/16/10/44/[API1.9.3]美好时代V1.9.2a.scmod",
+      "expectedBytes": 24225892,
+      "expectedPackageName": "Tp.WonderfulEra",
+      "expectedVersion": "1.9.2"
+    },
+    {
+      "id": "dayz-2.2.3.0-three-year",
+      "enabled": true,
+      "communityCollectionId": 2007,
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/06/16/40/API1.5 DayZ v2.2.3.0（三周年）.scmod",
+      "expectedBytes": 86321400,
+      "expectedPackageName": "DayZ",
+      "expectedVersion": "2.2.3.0 三周年"
+    },
+    {
+      "id": "firearms-2.8",
+      "enabled": true,
+      "communityCollectionId": 30,
+      "sourceUrl": "https://down.suancaixianyu.cn/2024/0924/[2.3]枪械Mod2.8_最终版本.scmod",
+      "expectedBytes": 25522734,
+      "expectedPackageName": "gunsmod.ysf.scmod",
+      "expectedVersion": "2.8"
+    },
+    {
+      "id": "siyah-akrep-2.8",
+      "enabled": true,
+      "communityCollectionId": 31,
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/05/23/[2.3]SiyahAkrep黑蝎2.8.scmod",
+      "expectedBytes": 44186198,
+      "expectedPackageName": "siyahakrep.ysf.scmod",
+      "expectedVersion": "2.8"
+    }
+  ],
+  "testCases": [
+    {
+      "id": "bldg-subject",
+      "subjectMod": "bldg-1.2.1",
+      "mods": [
+        "bldg-1.2.1"
+      ],
+      "mode": "relay-reentry-pad",
+      "reentryCount": 1,
+      "gate": false
+    },
+    {
+      "id": "accessory-subject",
+      "subjectMod": "accessory-1.2.1",
+      "mods": [
+        "accessory-1.2.1"
+      ],
+      "mode": "relay-reentry-pad",
+      "reentryCount": 1,
+      "gate": false
+    },
+    {
+      "id": "wonderful-era-with-dependencies",
+      "subjectMod": "wonderful-era-1.9.2a",
+      "mods": [
+        "bldg-1.2.1",
+        "accessory-1.2.1",
+        "wonderful-era-1.9.2a"
+      ],
+      "mode": "relay-reentry-pad",
+      "reentryCount": 1,
+      "gate": false
+    },
+    {
+      "id": "dayz-subject",
+      "subjectMod": "dayz-2.2.3.0-three-year",
+      "mods": [
+        "dayz-2.2.3.0-three-year"
+      ],
+      "classSubstitutions": [
+        {
+          "guid": "0bb9a8b6-796f-4aa7-bb73-543259efe513",
+          "packageName": "DayZ",
+          "className": "Game.NewChaseBehavior"
+        },
+        {
+          "guid": "5bdf979f-df04-4ef1-b367-743533acabb4",
+          "packageName": "DayZ",
+          "className": "Game.DayZComponentScreenOverlays"
+        },
+        {
+          "guid": "aa7f845d-165e-4fff-95f0-453cd4e14cea",
+          "packageName": "DayZ",
+          "className": "Game.DayZComponentVitalStats"
+        },
+        {
+          "guid": "bb0d545a-b76e-48a9-8966-022d79b4769a",
+          "packageName": "DayZ",
+          "className": "Game.DayZComponentFirstPersonModel"
+        },
+        {
+          "guid": "dafb8e14-11b9-44b7-a208-424b770aeaa9",
+          "packageName": "DayZ",
+          "className": "Game.Subsystem新抛射体行为"
+        },
+        {
+          "guid": "e2636c38-f179-4aa1-b087-ed6920d66e8e",
+          "packageName": "DayZ",
+          "className": "Game.SubsystemNewTerrain"
+        }
+      ],
+      "startupDialogActions": [
+        {
+          "dialogType": "BulletinDialog",
+          "query": "OkButton"
+        }
+      ],
+      "mode": "relay-reentry-pad",
+      "reentryCount": 1,
+      "gate": false
+    },
+    {
+      "id": "firearms-subject",
+      "subjectMod": "firearms-2.8",
+      "mods": [
+        "firearms-2.8"
+      ],
+      "classSubstitutions": [
+        {
+          "guid": "dafb8e14-11b9-44b7-a208-424b770aeaa9",
+          "packageName": "gunsmod.ysf.scmod",
+          "className": "Game.SubsystemNewProjectiles"
+        },
+        {
+          "guid": "96e79f99-a082-4190-9ab6-835dc49ebbdd",
+          "packageName": "gunsmod.ysf.scmod",
+          "className": "Game.SubsystemNewExplosions"
+        }
+      ],
+      "mode": "relay-reentry-pad",
+      "reentryCount": 1,
+      "gate": false
+    },
+    {
+      "id": "siyah-akrep-with-firearms",
+      "subjectMod": "siyah-akrep-2.8",
+      "mods": [
+        "firearms-2.8",
+        "siyah-akrep-2.8"
+      ],
+      "classSubstitutions": [
+        {
+          "guid": "dafb8e14-11b9-44b7-a208-424b770aeaa9",
+          "packageName": "gunsmod.ysf.scmod",
+          "className": "Game.SubsystemNewProjectiles"
+        },
+        {
+          "guid": "96e79f99-a082-4190-9ab6-835dc49ebbdd",
+          "packageName": "gunsmod.ysf.scmod",
+          "className": "Game.SubsystemNewExplosions"
+        },
+        {
+          "guid": "1df4e627-c959-4e6a-bfa2-b7ee3ef08c99",
+          "packageName": "siyahakrep.ysf.scmod",
+          "className": "Game.ComponentSAClothing"
+        }
+      ],
+      "mode": "relay-reentry-pad",
+      "reentryCount": 1,
+      "gate": false
+    }
+  ]
+}

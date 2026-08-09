@@ -97,6 +97,33 @@
 
 第三方模组是可执行代码。即使框架做了压缩包检查，也不能证明其行为安全；社区语料只应在无个人数据的专用设备或模拟器中运行。下载包保存在 Git 忽略的 `artifacts/`，仓库只提交来源和哈希锁。
 
+## 经典模组观察性语料
+
+`tests/android-classic-mod-corpus/manifest.json` 与 `lock.json` 另外锁定了美好时代、DayZ、枪械 2.8、黑蝎 2.8 及美好时代的两个依赖。该语料用于回答“旧模组在当前 API 上实际能走到哪一步”，默认 `gate: false`，不会把已知的 API 1.45 二进制断层伪装成联机核心回归。矩阵汇总会同时给出 `passed`（阻断门禁）、`allCasesPassed`、`failedObservationalCaseCount` 和失败用例 ID；存在观察性失败时控制台会明确显示 `GATE PASSED WITH OBSERVATIONAL FAILURES`。
+
+| 观察对象 | 包内 API / SC | 真机结果 | 当前结论 |
+|---|---|---|---|
+| 构千形 1.2.1 | 1.9 / 2.4 | 单独完成新世界、建房、退出重进，Game.log 0 错误/警告 | 通过生命周期观察 |
+| 服饰配件 1.2.1 | 1.9 / 2.4 | 单独完成同一流程；曾因中心服务网络不可达失败，网络恢复后复测通过 | 通过生命周期观察 |
+| 美好时代 1.9.2 + 两个依赖 | 1.9.3 / 2.4 | 三模组同时加载并完成新世界、建房、退出重进，Game.log 0 错误/警告 | 当前运行时兼容；不代表模组玩法状态已联机同步 |
+| DayZ 2.2.3.0 三周年 | 1.45 / 2.3 | 6 组类冲突和公告框均自动处理；世界加载因缺少 `Game.SubsystemSeasons` 返回主菜单，记录 1358 个错误 | 当前 API 1.9.3.1 不可玩 |
+| 枪械 2.8 | 1.45 / 2.3 | 进入世界和玩家界面后出现旧字段、旧方法和旧物品 ID 错误，随后 Mono `SIGSEGV` | 当前 API 1.9.3.1 不稳定且不可玩 |
+| 黑蝎 2.8 + 枪械 2.8 | 1.45 / 2.3 | 3 组类冲突自动处理；世界加载因 `Game.SubsystemWorldChest` VTable 建立失败而中止，记录 137 个错误 | 当前 API 1.9.3.1 不可玩 |
+
+[美好时代的社区说明](https://www.scmod.cn/2739.html/)本身标注“暂不支持联机”，所以上述通过只证明模组加载、世界生命周期和本分支建房路径可以共存，不证明它新增的方块、实体、配方或行为已跨客户端同步。要声称玩法联机，需要第二客户端和针对该模组的声明式状态探针。
+
+观察性复测示例：
+
+```powershell
+./scripts/Test-AndroidModMatrix.ps1 `
+  -ManifestPath ./tests/android-classic-mod-corpus/manifest.json `
+  -CorpusDirectory ./artifacts/android-classic-mod-corpus `
+  -Offline `
+  -CaseId wonderful-era-with-dependencies
+```
+
+框架支持在清单中声明 `subjectMod`、精确 `classSubstitutions` 和 `startupDialogActions`。启动前的类替换配置只在独立自动测试包中读取；未知冲突、候选不唯一和动作未发生都会 fail closed。自定义主菜单通过稳定的注册屏幕名识别。旧模组同时提供同名字体的 `.lst`/`.png`、而本体提供 `.webp` 时，内容系统优先配对同一 `PackageName` 来源，无法唯一配对则明确拒绝，避免跨模组静默混合资源。
+
 ## 诊断材料
 
 总结果位于 `TestResults/android-local/<run>/summary.json`。子目录保留各层汇总与每次协议请求/响应。失败用例还会生成：
@@ -108,7 +135,7 @@
 - `state-timeline.json`：屏幕、世界、玩家、中继端点/尝试次数和联机码时间线；
 - `summary.json/failureArtifacts`：最后命令、失败阶段、进程是否存活及分类。
 
-常见分类包括启动期进程退出、自动化桥不可达、模组清单拒绝、世界运行期退出和断言/超时。矩阵会继续执行后续模组，并把失败归因到包含它的单模组或组合用例。
+常见分类包括启动期进程退出、自动化桥不可达、模组清单拒绝、世界运行期退出和断言/超时。世界加载若返回主菜单并显示 `MessageDialog` 会立即失败，不再等待完整世界超时。矩阵会继续执行后续模组，并把失败归因到声明的 `subjectMod`；依赖模组只计为支持用例，不会被误报为被测主体。
 
 ## 公开包隔离
 
