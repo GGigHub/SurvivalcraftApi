@@ -1,10 +1,20 @@
 # Project Status
 
-- Status: M14 MULTIPLAYER PREVIEW 1 + ANDROID LOCAL AUTOMATION COMPLETE
+- Status: ACTIVE — API 1.45 COMPATIBILITY SPIKE
 - Updated: 2026-08-10 Asia/Shanghai
-- Project path: `C:\Users\Hao\Documents\New project 2\worktrees\SurvivalcraftApi-MPCore`
-- Branch or Worktree: `codex/api-mp-integration`
+- Project path: `C:\Users\Hao\Documents\New project 2\worktrees\SurvivalcraftApi-API145Compat`
+- Branch or Worktree: `codex/api145-compat`
+- Base commit: `72653e5690a925000354cac16e7a353875819f29` (`codex/api-mp-integration`)
 - Release tag: `API_1.9.3.1_MP-preview.1`
+
+## Active compatibility track
+
+- State transition: `SCOPED -> ACTIVE`.
+- Goal: provide narrowly scoped, additive compatibility for the hash-locked API 1.45 / Survivalcraft 2.3 DayZ, Guns 2.8 and Siyah Akrep 2.8 packages without regressing API 1.9.3.1 or the multiplayer core.
+- Out of scope for the first milestone: arbitrary API 1.x binary emulation, silent fallback for unknown packages, and multiplayer synchronization of each legacy mod's custom gameplay state.
+- Completion evidence: automated upstream/API-only A/B attribution, deterministic compatibility tests for each shim, stable Android world load/reentry for each target package, clean process exit and unchanged 9-mod API 1.9 gated matrix.
+- Exact next action: build the API-only A/B harness and produce a symbol/data/subsystem compatibility ledger from the existing DayZ, Guns and Siyah Akrep failures before implementing the first shim.
+- Detailed plan: `docs/LegacyApi145Compatibility.md`.
 
 ## Goal
 
