@@ -55,7 +55,7 @@
 - `Test-AndroidModMatrix.ps1`：空环境基线、每个模组单独运行、显式兼容组运行、空环境清理。
 - `Test-AndroidLocal.ps1`：串联以上门禁并生成一个总汇总。
 
-所有轮询都等待结构化状态并设有截止时间。中继传输失败会尝试当前会话中尚未使用的候选端点；ADB offline、daemon 重启或连接中断会执行有界恢复。每次运行都会 `force-stop` 测试 package，不会在电脑桌面留下游戏窗口。
+所有轮询都等待结构化状态并设有截止时间。中继传输失败会尝试当前会话中尚未使用的候选端点；ADB offline、daemon 重启或连接中断会执行有界恢复。每个成功用例也会拉取 `Bugs/Game.log`，任何 `ERROR`、`FATAL` 或未处理异常都会使门禁失败，避免把被游戏捕获的模组异常误判为成功。每次运行都会 `force-stop` 测试 package，不会在电脑桌面留下游戏窗口。
 
 ## 中文社区模组语料
 
@@ -63,6 +63,22 @@
 
 - `tests/android-mod-corpus/manifest.json`：来源 URL、大小、预期包名/版本和测试组合；
 - `tests/android-mod-corpus/lock.json`：实际 SHA-256、最终 URL、包元数据、依赖和归档统计。
+
+当前阻断门禁包含以下真实 API 模组。版本列以包内 `modinfo.json` 为准，而不是社区文件名：
+
+| 语料 ID | PackageName | 包内版本 / API | 主要覆盖面 |
+|---|---|---|---|
+| `survivalcraft-ruins-0.4.0` | `SurvivalcraftRuins` | `0.4.0 / 1.9.2` | 世界生成与结构资源 |
+| `survivalcraft-travel-map-20260805` | `SurvivalcraftTravelMap` | `1.0.0 / 1.9.2.1` | 地图状态与 UI |
+| `better-vanilla-1.1a` | `MainUIButtonsMod` | `1.0.0 / 1.9.3.0` | 原版界面与行为钩子 |
+| `fragile-body-0.2.7` | `Fragile body` | `0.1. / 1.9.2.1` | 玩家组件与分部位生命 |
+| `kill-report-1.2` | `KillReport` | `1.2 / 1.9.3` | 击杀事件、音频和 UI |
+| `time-rewind-20260807` | `timerewindmod.TimeRewind` | `1.0.0 / 1.9.3` | 玩家状态与时间回溯 |
+| `transmutation-dye-1.11` | `captey.sbrsj` | `1.1 / 1.9.3.1` | 配方、物品和资源定义 |
+| `blueprint-1.0.0` | `lantudapao` | `1.00 / 1.9.3` | 投影、背包和配置 UI |
+| `seven-deadly-sins-0.2` | `SevenSins` | `0.1 / 1.9.3.1` | 实体 AI、战斗和掉落 |
+
+其中部分社区文件名版本高于包内版本，这是上游元数据现状；清单会锁定真实包内值，防止后续文件在同名 URL 下静默漂移。每个模组有且仅有一个单体用例，另有 UI/信息四模组栈和玩法五模组栈用于发现钩子、资源及注册冲突。
 
 新增模组的标准流程：
 
@@ -77,7 +93,7 @@
 ./scripts/Test-AndroidModMatrix.ps1 -DeviceId <adb-serial> -Offline
 ```
 
-解析器仅允许清单白名单中的 HTTPS 主机，并强制下载大小、ZIP 条目数、展开体积和压缩比上限；拒绝路径穿越、缺失根级 `modinfo.json`、保留包名和元数据漂移。普通运行必须匹配锁定 SHA-256，同一 URL 被替换也会立即失败。
+解析器仅允许清单白名单中的 HTTPS 主机，并强制下载大小、ZIP 条目数、展开体积和压缩比上限；拒绝路径穿越、规范化后的重复路径、缺失根级 `modinfo.json`、保留包名和元数据漂移。普通运行必须匹配锁定 SHA-256，同一 URL 被替换也会立即失败。社区常见的 `[]` URL 文件名和 Windows ZIP 反斜杠会先安全规范化，再执行同一套检查。
 
 第三方模组是可执行代码。即使框架做了压缩包检查，也不能证明其行为安全；社区语料只应在无个人数据的专用设备或模拟器中运行。下载包保存在 Git 忽略的 `artifacts/`，仓库只提交来源和哈希锁。
 
@@ -88,6 +104,7 @@
 - `failure-logcat.txt`：本次启动后清空并重新采集的 Android 日志；
 - `failure-exit-info.txt`：Android `ApplicationExitInfo`；
 - `failure-screen.png`：只在失败时采集，不参与自动判断；
+- `game.log`：每个成功或失败用例拉取的游戏日志；成功门禁要求没有 `ERROR`、`FATAL` 或未处理异常；
 - `state-timeline.json`：屏幕、世界、玩家、中继端点/尝试次数和联机码时间线；
 - `summary.json/failureArtifacts`：最后命令、失败阶段、进程是否存活及分类。
 
@@ -99,4 +116,4 @@
 
 ## 当前边界
 
-真机框架已经覆盖启动、存储、Pad 设置、新世界/已有世界建房、重复运行、ADB 恢复、中继故障转移和代表性社区模组加载；它仍不等同于第二台 Android 客户端实际入房、跨运营商 NAT、像素级渲染验收、长时间温控/电耗或每个模组玩法动作。多人玩法协议的确定性 Direct/Relay 覆盖继续由 `Test-Multiplayer.ps1` 的无窗口多进程场景负责。
+真机框架已经覆盖启动、存储、Pad 设置、新世界/已有世界建房、重复运行、ADB 恢复、中继故障转移和代表性社区模组加载；它仍不等同于第二台 Android 客户端实际入房、跨运营商 NAT、像素级渲染验收、长时间温控/电耗或每个模组玩法动作。例如蓝图投影、染色剂合成、击杀播报和七宗罪战斗仍需要后续声明式专用探针。多人玩法协议的确定性 Direct/Relay 覆盖继续由 `Test-Multiplayer.ps1` 的无窗口多进程场景负责。

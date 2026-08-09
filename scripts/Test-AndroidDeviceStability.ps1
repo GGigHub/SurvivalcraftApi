@@ -142,6 +142,11 @@ function New-AggregateSummary {
     $recoveries = @($runSummaries | ForEach-Object { @($_.summary.adbRecoveryEvents) })
     $faults = @($runSummaries | ForEach-Object { @($_.summary.faultInjectionEvents) })
     $relayRecoveries = @($runSummaries | ForEach-Object { @($_.summary.relayRecoveryEvents) })
+    $runtimeLogAudits = @($runSummaries | ForEach-Object {
+        if ($null -ne $_.summary.PSObject.Properties['runtimeLogAudit']) {
+            $_.summary.runtimeLogAudit
+        }
+    } | Where-Object { $null -ne $_ -and [bool]$_.available })
     $deviceRestoreFailures = @($runSummaries | Where-Object {
         $null -eq $_.summary.PSObject.Properties['deviceInteractive'] -or
         -not [bool]$_.summary.deviceInteractive.restored -or
@@ -190,6 +195,9 @@ function New-AggregateSummary {
         adbRecoveryCount = $recoveries.Count
         faultInjectionCount = $faults.Count
         relayRecoveryCount = $relayRecoveries.Count
+        gameLogAuditedRunCount = $runtimeLogAudits.Count
+        gameLogErrorCount = @($runtimeLogAudits | ForEach-Object { [int]$_.errorCount } | Measure-Object -Sum).Sum
+        gameLogWarningCount = @($runtimeLogAudits | ForEach-Object { [int]$_.warningCount } | Measure-Object -Sum).Sum
         relayRuns = $relayRuns
         runs = @($runSummaries | ForEach-Object {
             [ordered]@{
@@ -198,6 +206,7 @@ function New-AggregateSummary {
                 passed = $_.summary.passed
                 startedUtc = $_.summary.startedUtc
                 completedUtc = $_.summary.completedUtc
+                runtimeLogAudit = $_.summary.runtimeLogAudit
                 summaryPath = $_.summaryPath
             }
         })
@@ -234,6 +243,10 @@ try {
     }
     if ($summary.deviceRestoreFailureCount -ne 0) {
         throw "Device interactive settings were not restored after: $($summary.deviceRestoreFailureRuns -join ', ')."
+    }
+    if ($summary.gameLogAuditedRunCount -ne $summary.childRunCount -or
+        $summary.gameLogErrorCount -ne 0) {
+        throw "Game.log audit coverage or error count is invalid across stability runs."
     }
     Write-Utf8Json $summaryPath $summary
     Write-Host "ANDROID DEVICE STABILITY PASSED"

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedUtc": "2026-08-09T14:45:36.5323322+00:00",
+  "generatedUtc": "2026-08-09T16:12:15.8142745+00:00",
   "manifest": "tests/android-mod-corpus/manifest.json",
   "mods": [
     {
@@ -49,6 +49,200 @@
           ".dll",
           ".json",
           ".png",
+          ".xdb"
+        ]
+      }
+    },
+    {
+      "id": "better-vanilla-1.1a",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/07/25/10/45/[API1.9.3]Better原版优化1.1a.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/07/25/10/45/[API1.9.3]Better%E5%8E%9F%E7%89%88%E4%BC%98%E5%8C%961.1a.scmod",
+      "sha256": "f8877443ea4bfa248bfcae27f13041c3735f9e8a312e7159ae490ea989296eef",
+      "bytes": 170965,
+      "packageName": "MainUIButtonsMod",
+      "name": "Better原版优化",
+      "version": "1.0.0",
+      "apiVersion": "1.9.3.0",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 2,
+        "expandedBytes": 300534,
+        "decodedBytes": 170965,
+        "decodedSha256": "f8877443ea4bfa248bfcae27f13041c3735f9e8a312e7159ae490ea989296eef",
+        "deciphered": false,
+        "extensions": [
+          ".dll",
+          ".json"
+        ]
+      }
+    },
+    {
+      "id": "fragile-body-0.2.7",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/07/25/14/11/[1.9.2.1] 脆弱的肉体 v0.2.7.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/07/25/14/11/[1.9.2.1]%20%E8%84%86%E5%BC%B1%E7%9A%84%E8%82%89%E4%BD%93%20v0.2.7.scmod",
+      "sha256": "0c5fdf9ac20ea32a5e0d1d637ef16f6e425bed79dfb3f20143eb73faf9398e5b",
+      "bytes": 361445,
+      "packageName": "Fragile body",
+      "name": "脆弱的肉体",
+      "version": "0.1.",
+      "apiVersion": "1.9.2.1",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 58,
+        "expandedBytes": 456705,
+        "decodedBytes": 361445,
+        "decodedSha256": "0c5fdf9ac20ea32a5e0d1d637ef16f6e425bed79dfb3f20143eb73faf9398e5b",
+        "deciphered": false,
+        "extensions": [
+          ".b64",
+          ".cr",
+          ".csv",
+          ".dll",
+          ".json",
+          ".png",
+          ".wav",
+          ".xdb"
+        ]
+      }
+    },
+    {
+      "id": "kill-report-1.2",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/07/24/23/04/[API1.9.3]KilReport-击杀播报_v1.2.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/07/24/23/04/[API1.9.3]KilReport-%E5%87%BB%E6%9D%80%E6%92%AD%E6%8A%A5_v1.2.scmod",
+      "sha256": "0132d96d4353721ea3247ce1be06d8506d8e5d094fbf2539cf424120d5eaaccb",
+      "bytes": 1439008,
+      "packageName": "KillReport",
+      "name": "KillReport-击杀播报",
+      "version": "1.2",
+      "apiVersion": "1.9.3",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 15,
+        "expandedBytes": 1503513,
+        "decodedBytes": 1439008,
+        "decodedSha256": "0132d96d4353721ea3247ce1be06d8506d8e5d094fbf2539cf424120d5eaaccb",
+        "deciphered": false,
+        "extensions": [
+          ".dll",
+          ".json",
+          ".png",
+          ".wav"
+        ]
+      }
+    },
+    {
+      "id": "time-rewind-20260807",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/07/04/29/[API1.9.3.1]时间回溯.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/08/07/04/29/[API1.9.3.1]%E6%97%B6%E9%97%B4%E5%9B%9E%E6%BA%AF.scmod",
+      "sha256": "4aa262719e37aa2ebc246797876a7367f52074e3216d37add292957adb1ae6c0",
+      "bytes": 6102,
+      "packageName": "timerewindmod.TimeRewind",
+      "name": "Time Rewind Mod 时间回溯模组",
+      "version": "1.0.0",
+      "apiVersion": "1.9.3",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 2,
+        "expandedBytes": 11964,
+        "decodedBytes": 6102,
+        "decodedSha256": "4aa262719e37aa2ebc246797876a7367f52074e3216d37add292957adb1ae6c0",
+        "deciphered": false,
+        "extensions": [
+          ".dll",
+          ".json"
+        ]
+      }
+    },
+    {
+      "id": "transmutation-dye-1.11",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/09/16/43/[1.9.3.1]嬗变染色剂v1.11（依旧配方修复）.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/08/09/16/43/[1.9.3.1]%E5%AC%97%E5%8F%98%E6%9F%93%E8%89%B2%E5%89%82v1.11%EF%BC%88%E4%BE%9D%E6%97%A7%E9%85%8D%E6%96%B9%E4%BF%AE%E5%A4%8D%EF%BC%89.scmod",
+      "sha256": "c28093c5d05def869262b693aced1bfa16770b907db90f985f284a12e1eba906",
+      "bytes": 61210,
+      "packageName": "captey.sbrsj",
+      "name": "嬗变染色剂",
+      "version": "1.1",
+      "apiVersion": "1.9.3.1",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 54,
+        "expandedBytes": 511467,
+        "decodedBytes": 61210,
+        "decodedSha256": "c28093c5d05def869262b693aced1bfa16770b907db90f985f284a12e1eba906",
+        "deciphered": false,
+        "extensions": [
+          ".cr",
+          ".csv",
+          ".dll",
+          ".json",
+          ".png",
+          ".webp"
+        ]
+      }
+    },
+    {
+      "id": "blueprint-1.0.0",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/08/12/08/[API1.9.3]蓝图1.0.0.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/08/08/12/08/[API1.9.3]%E8%93%9D%E5%9B%BE1.0.0.scmod",
+      "sha256": "d1cb27567e3bb8b62a7f1ac9011cebcfbf5d258c0290d0189b10cfc0e0567c1f",
+      "bytes": 424426,
+      "packageName": "lantudapao",
+      "name": "蓝图",
+      "version": "1.00",
+      "apiVersion": "1.9.3",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 29,
+        "expandedBytes": 1641665,
+        "decodedBytes": 424363,
+        "decodedSha256": "73ff3098df6bc96e8b3700a9133547d695067861ef7b1d37b4c32132abee0662",
+        "deciphered": true,
+        "extensions": [
+          ".config",
+          ".cr",
+          ".csproj",
+          ".csv",
+          ".dae",
+          ".dll",
+          ".json",
+          ".webp",
+          ".xdb",
+          ".xml"
+        ]
+      }
+    },
+    {
+      "id": "seven-deadly-sins-0.2",
+      "sourceUrl": "https://file.suancaixianyu.cn/2026/08/09/21/46/[API1.9.3.1]七大罪 V0.2.scmod",
+      "effectiveUrl": "https://file.suancaixianyu.cn/2026/08/09/21/46/[API1.9.3.1]%E4%B8%83%E5%A4%A7%E7%BD%AA%20V0.2.scmod",
+      "sha256": "b2708bc89313e7da0b1402ae5e4bcab2644b2a7ae4c43375598e68d13960b9fa",
+      "bytes": 1418212,
+      "packageName": "SevenSins",
+      "name": "七宗罪",
+      "version": "0.1",
+      "apiVersion": "1.9.3.1",
+      "scVersion": "2.4.0.0",
+      "dependencies": [],
+      "archive": {
+        "entryCount": 25,
+        "expandedBytes": 2802720,
+        "decodedBytes": 1418212,
+        "decodedSha256": "b2708bc89313e7da0b1402ae5e4bcab2644b2a7ae4c43375598e68d13960b9fa",
+        "deciphered": false,
+        "extensions": [
+          ".cr",
+          ".csv",
+          ".dae",
+          ".dll",
+          ".json",
+          ".png",
+          ".wav",
           ".xdb"
         ]
       }

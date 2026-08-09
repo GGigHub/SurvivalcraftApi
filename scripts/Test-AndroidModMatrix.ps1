@@ -165,6 +165,9 @@ function New-MatrixSummary {
     param([bool]$Passed, [string]$ErrorMessage = "")
     $gatedCases = @($caseResults | Where-Object { [bool]$_['gate'] })
     $failedGatedCases = @($gatedCases | Where-Object { -not [bool]$_['passed'] })
+    $runtimeLogAudits = @($caseResults | ForEach-Object { $_['runtimeLogAudit'] } | Where-Object {
+        $null -ne $_ -and [bool]$_.available
+    })
     $modOutcomes = [System.Collections.Generic.List[object]]::new()
     if ($null -ne $script:ResolvedCorpus) {
         foreach ($mod in @($script:ResolvedCorpus.mods)) {
@@ -199,6 +202,9 @@ function New-MatrixSummary {
         gatedCaseCount = $gatedCases.Count
         failedGatedCaseCount = $failedGatedCases.Count
         failedGatedCaseIds = @($failedGatedCases | ForEach-Object { $_['id'] })
+        gameLogAuditedCaseCount = $runtimeLogAudits.Count
+        gameLogErrorCount = @($runtimeLogAudits | ForEach-Object { [int]$_.errorCount } | Measure-Object -Sum).Sum
+        gameLogWarningCount = @($runtimeLogAudits | ForEach-Object { [int]$_.warningCount } | Measure-Object -Sum).Sum
         cases = $caseResults
         mods = $modOutcomes
         sourceCommit = (& git -C $repositoryRoot rev-parse HEAD).Trim()
@@ -353,6 +359,17 @@ try {
         else {
             $null
         }
+        $runtimeLogAudit = if ($null -ne $childSummary -and
+            $null -ne $childSummary.PSObject.Properties['runtimeLogAudit']) {
+            $childSummary.runtimeLogAudit
+        }
+        elseif ($null -ne $failureArtifacts -and
+            $null -ne $failureArtifacts.PSObject.Properties['gameLogAudit']) {
+            $failureArtifacts.gameLogAudit
+        }
+        else {
+            $null
+        }
         $caseResults.Add([ordered]@{
             id = $caseIdValue
             gate = [bool]$case['gate']
@@ -376,6 +393,7 @@ try {
             else {
                 @($childSummary.stagedMods)
             }
+            runtimeLogAudit = $runtimeLogAudit
             error = [string]$run['error']
             summaryPath = [string]$run['summaryPath']
         })

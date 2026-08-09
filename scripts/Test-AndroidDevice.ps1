@@ -73,6 +73,7 @@ $script:CurrentPhase = "preflight"
 $script:LastBridgeCommand = ""
 $script:LastBridgeRequestId = ""
 $script:StagedModPackages = [System.Collections.Generic.List[object]]::new()
+$runtimeLogAudit = $null
 $startedUtc = [DateTimeOffset]::UtcNow
 $succeeded = $false
 $worldName = ""
@@ -720,6 +721,54 @@ function Capture-FailureArtifacts {
         screenshotPath = $screenshotPath
         crashMarkers = $crashMarkers
         modMarkerLines = @($modMarkerLines | Select-Object -Last 120)
+        gameLogAudit = Capture-GameLogAudit
+    }
+}
+
+function Capture-GameLogAudit {
+    $remotePath = "$remoteDataRoot/Bugs/Game.log"
+    $localPath = Join-Path $artifactDirectory "game.log"
+    $pull = Invoke-AdbRaw @("pull", $remotePath, $localPath)
+    if ($pull.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $localPath -PathType Leaf)) {
+        return [ordered]@{
+            available = $false
+            path = $localPath
+            lineCount = 0
+            errorCount = 0
+            warningCount = 0
+            errors = @()
+            pullError = ($pull.Output -join " ").Trim()
+        }
+    }
+
+    $lines = [System.IO.File]::ReadAllLines(
+        $localPath,
+        [System.Text.UTF8Encoding]::new($false))
+    $errorPattern = "(?i)(^\d{2}:\d{2}:\d{2}\.\d{3}\s+(ERROR|FATAL):|" +
+        "FATAL EXCEPTION|Unhandled exception)"
+    $warningPattern = "(?i)^\d{2}:\d{2}:\d{2}\.\d{3}\s+WARNING:"
+    $errors = @($lines | Where-Object { $_ -match $errorPattern })
+    $warnings = @($lines | Where-Object { $_ -match $warningPattern })
+    return [ordered]@{
+        available = $true
+        path = $localPath
+        lineCount = $lines.Count
+        errorCount = $errors.Count
+        warningCount = $warnings.Count
+        errors = @($errors | Select-Object -Last 50)
+        pullError = ""
+    }
+}
+
+function Assert-GameLogClean {
+    param([object]$Audit)
+    if ($null -eq $Audit -or -not [bool]$Audit['available']) {
+        $reason = if ($null -eq $Audit) { "audit did not run" } else { [string]$Audit['pullError'] }
+        throw "Android Game.log is unavailable: $reason"
+    }
+    if ([int]$Audit['errorCount'] -gt 0) {
+        throw "Android Game.log contains $($Audit['errorCount']) ERROR/FATAL line(s): " +
+            ((@($Audit['errors']) | Select-Object -First 5) -join " | ")
     }
 }
 
@@ -826,6 +875,9 @@ try {
         if ($InjectAdbFailureAtSequence -gt 0 -and -not $script:AdbFailureInjected) {
             throw "Requested ADB fault injection at sequence $InjectAdbFailureAtSequence was not reached."
         }
+        $script:CurrentPhase = "runtime-log-audit"
+        $runtimeLogAudit = Capture-GameLogAudit
+        Assert-GameLogClean $runtimeLogAudit
         $summary = [ordered]@{
             schemaVersion = 1
             mode = $Mode
@@ -850,6 +902,7 @@ try {
             stagedModPackages = $script:StagedModPackages
             expectedModPackageNames = @($ExpectedModPackageName)
             stagedMods = $stagedStartupMods
+            runtimeLogAudit = $runtimeLogAudit
             visibleWidgetCount = $tree.data.widgets.Count
             artifactDirectory = $artifactDirectory
         }
@@ -933,6 +986,9 @@ try {
     if ($InjectAdbFailureAtSequence -gt 0 -and -not $script:AdbFailureInjected) {
         throw "Requested ADB fault injection at sequence $InjectAdbFailureAtSequence was not reached."
     }
+    $script:CurrentPhase = "runtime-log-audit"
+    $runtimeLogAudit = Capture-GameLogAudit
+    Assert-GameLogClean $runtimeLogAudit
     $summary = [ordered]@{
         schemaVersion = 1
         mode = $Mode
@@ -962,6 +1018,7 @@ try {
         stagedModPackages = $script:StagedModPackages
         expectedModPackageNames = @($ExpectedModPackageName)
         stagedMods = $stagedFinalMods
+        runtimeLogAudit = $runtimeLogAudit
         stateObservationCount = $script:StateTimeline.Count
         artifactDirectory = $artifactDirectory
     }
@@ -1014,6 +1071,7 @@ catch {
         relayRuns = $relayRuns
         stagedModPackages = $script:StagedModPackages
         expectedModPackageNames = @($ExpectedModPackageName)
+        runtimeLogAudit = $runtimeLogAudit
         failureArtifacts = $failureArtifacts
         stateObservationCount = $script:StateTimeline.Count
         cleanup = $cleanup

@@ -119,6 +119,10 @@ public sealed class ReleaseContractTests {
             StringComparison.Ordinal);
         Assert.Contains("Survivalcraft2.4_API1.9_AutoTest", testBuild,
             StringComparison.Ordinal);
+        string deviceRunner = File.ReadAllText(
+            Path.Combine(root, "scripts", "Test-AndroidDevice.ps1"));
+        Assert.Contains("Bugs/Game.log", deviceRunner, StringComparison.Ordinal);
+        Assert.Contains("runtimeLogAudit", deviceRunner, StringComparison.Ordinal);
 
         string publicBuild = File.ReadAllText(
             Path.Combine(root, "scripts", "Build-MultiplayerPreview.ps1"));
@@ -162,6 +166,10 @@ public sealed class ReleaseContractTests {
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         Assert.NotEmpty(allowedHosts);
 
+        string corpusResolver = File.ReadAllText(
+            Path.Combine(root, "scripts", "Resolve-AndroidModCorpus.ps1"));
+        Assert.Contains("\"--globoff\"", corpusResolver, StringComparison.Ordinal);
+
         Dictionary<string, JsonElement> lockedById = corpusLock.GetProperty("mods")
             .EnumerateArray()
             .ToDictionary(
@@ -173,6 +181,8 @@ public sealed class ReleaseContractTests {
             .Where(mod => !mod.TryGetProperty("enabled", out JsonElement enabled)
                 || enabled.GetBoolean())
             .ToArray();
+        Assert.True(enabledMods.Length >= 8,
+            "The Android corpus must retain a representative set of real API mods.");
         Assert.Equal(enabledMods.Length, lockedById.Count);
 
         HashSet<string> manifestIds = new(StringComparer.OrdinalIgnoreCase);
@@ -196,12 +206,21 @@ public sealed class ReleaseContractTests {
                 locked.GetProperty("version").GetString());
             Assert.Matches("^[0-9a-f]{64}$",
                 locked.GetProperty("sha256").GetString() ?? string.Empty);
+            Assert.Matches("^1\\.9(?:\\.|$)",
+                locked.GetProperty("apiVersion").GetString() ?? string.Empty);
+            Assert.StartsWith("2.4", locked.GetProperty("scVersion").GetString() ?? string.Empty,
+                StringComparison.Ordinal);
             Assert.InRange(locked.GetProperty("archive").GetProperty("entryCount").GetInt32(),
                 1,
                 manifest.GetProperty("limits").GetProperty("maximumEntries").GetInt32());
             Assert.InRange(locked.GetProperty("archive").GetProperty("expandedBytes").GetInt64(),
                 1,
                 manifest.GetProperty("limits").GetProperty("maximumExpandedBytes").GetInt64());
+            Assert.Contains(".dll",
+                locked.GetProperty("archive").GetProperty("extensions")
+                    .EnumerateArray()
+                    .Select(extension => extension.GetString() ?? string.Empty),
+                StringComparer.OrdinalIgnoreCase);
         }
 
         HashSet<string> caseIds = new(StringComparer.OrdinalIgnoreCase);

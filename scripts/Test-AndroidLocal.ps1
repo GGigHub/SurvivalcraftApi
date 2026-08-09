@@ -147,6 +147,9 @@ function New-LocalSummary {
                 adbRecoveryCount = $stabilitySummary.adbRecoveryCount
                 transportFailoverCount = $stabilitySummary.transportFailoverCount
                 deviceRestoreFailureCount = $stabilitySummary.deviceRestoreFailureCount
+                gameLogAuditedRunCount = $stabilitySummary.gameLogAuditedRunCount
+                gameLogErrorCount = $stabilitySummary.gameLogErrorCount
+                gameLogWarningCount = $stabilitySummary.gameLogWarningCount
                 summaryPath = Join-Path $stabilityDirectory "summary.json"
             }
         }
@@ -160,6 +163,9 @@ function New-LocalSummary {
                 gatedCaseCount = $matrixSummary.gatedCaseCount
                 failedGatedCaseCount = $matrixSummary.failedGatedCaseCount
                 failedGatedCaseIds = $matrixSummary.failedGatedCaseIds
+                gameLogAuditedCaseCount = $matrixSummary.gameLogAuditedCaseCount
+                gameLogErrorCount = $matrixSummary.gameLogErrorCount
+                gameLogWarningCount = $matrixSummary.gameLogWarningCount
                 summaryPath = Join-Path $matrixDirectory "summary.json"
             }
         }

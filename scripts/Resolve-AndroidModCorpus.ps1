@@ -144,12 +144,17 @@ function Read-ModArchiveMetadata {
         [long]$expandedBytes = 0
         $extensions = [System.Collections.Generic.HashSet[string]]::new(
             [System.StringComparer]::OrdinalIgnoreCase)
+        $normalizedEntryNames = [System.Collections.Generic.HashSet[string]]::new(
+            [System.StringComparer]::OrdinalIgnoreCase)
         foreach ($entry in $entries) {
             $entryName = [string]$entry.FullName
+            $normalizedEntryName = $entryName.Replace("\", "/")
             if ([string]::IsNullOrWhiteSpace($entryName) -or
-                $entryName.Contains("\") -or
-                $entryName -match "(^/|^[A-Za-z]:|(^|/)\.\.(/|$)|[\x00])") {
+                $normalizedEntryName -match "(^/|^[A-Za-z]:|(^|/)\.\.(/|$)|[\x00])") {
                 throw "'$Path' contains unsafe archive entry '$entryName'."
+            }
+            if (-not $normalizedEntryNames.Add($normalizedEntryName)) {
+                throw "'$Path' contains duplicate normalized archive entry '$normalizedEntryName'."
             }
             if ($entry.Length -lt 0 -or $entry.Length -gt $MaximumExpandedBytes) {
                 throw "Archive entry '$entryName' has invalid expanded size $($entry.Length)."
@@ -167,12 +172,14 @@ function Read-ModArchiveMetadata {
                     throw "Archive entry '$entryName' exceeds compression-ratio limit $MaximumCompressionRatio (actual $([Math]::Round($ratio, 2)))."
                 }
             }
-            $extension = [System.IO.Path]::GetExtension($entryName)
+            $extension = [System.IO.Path]::GetExtension($normalizedEntryName)
             if (-not [string]::IsNullOrWhiteSpace($extension)) {
                 $null = $extensions.Add($extension.ToLowerInvariant())
             }
         }
-        $modInfoEntries = @($entries | Where-Object { $_.FullName -ceq "modinfo.json" })
+        $modInfoEntries = @($entries | Where-Object {
+            ([string]$_.FullName).Replace("\", "/") -ceq "modinfo.json"
+        })
         if ($modInfoEntries.Count -ne 1) {
             throw "'$Path' must contain exactly one case-sensitive root entry named 'modinfo.json'."
         }
@@ -289,6 +296,7 @@ function Invoke-DirectDownload {
     $curlPath = (Get-Command curl.exe -ErrorAction Stop).Source
     $arguments = @(
         "--noproxy", "*",
+        "--globoff",
         "--fail-with-body",
         "--silent",
         "--show-error",
