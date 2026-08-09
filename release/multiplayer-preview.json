@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "tag": "API_1.9.3.1_MP-preview.1",
+  "title": "Survivalcraft API 1.9.3.1 Multiplayer Preview 1",
+  "releaseVersion": "1.9.3.1-mp-preview.1",
+  "apiVersion": "1.9.3.1",
+  "gameVersion": "2.4.0.0",
+  "protocolRevision": 17,
+  "automationApiVersion": 16,
+  "snapshotSchemaVersion": 5,
+  "prerelease": true,
+  "android": {
+    "runtimeIdentifier": "android-arm64",
+    "abi": "arm64-v8a",
+    "versionCode": 19311,
+    "versionName": "API1.9.3.1-MP-preview.1",
+    "signing": "development"
+  },
+  "artifacts": {
+    "windowsX64": "Survivalcraft-API-1.9.3.1-MP-preview.1-Windows-x64.zip",
+    "relayWindowsX64": "Survivalcraft-RelayServer-1.9.3.1-MP-preview.1-win-x64.zip",
+    "androidArm64": "Survivalcraft-API-1.9.3.1-MP-preview.1-Android-arm64.apk",
+    "releaseManifest": "API_1.9.3.1_MP-preview.1-release-manifest.json",
+    "releaseNotes": "API_1.9.3.1_MP-preview.1-release-notes.md",
+    "checksums": "SHA256SUMS.txt"
+  }
+}

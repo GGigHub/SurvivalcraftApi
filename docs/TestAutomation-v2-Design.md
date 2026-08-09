@@ -1,6 +1,6 @@
 # TestAutomation v2 设计
 
-状态：设计基线；M12 已推进至十二场景确定性丢包可靠性契约
+状态：设计基线；M13 已推进至 Required/Optional/LocalOnly 模组范围与逐会话通道隔离契约
 目标分支：`codex/api-mp-integration`
 适用范围：核心玩法联机自动化、直连与中继、多客户端、失败取证和长期稳定性测试
 

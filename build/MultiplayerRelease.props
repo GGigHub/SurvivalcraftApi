@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <MultiplayerReleaseVersion>1.9.3.1-mp-preview.1</MultiplayerReleaseVersion>
+    <MultiplayerReleaseTag>API_1.9.3.1_MP-preview.1</MultiplayerReleaseTag>
+    <Version>$(MultiplayerReleaseVersion)</Version>
+    <AssemblyVersion>1.9.3.1</AssemblyVersion>
+    <FileVersion>1.9.3.1</FileVersion>
+    <InformationalVersion>$(MultiplayerReleaseTag)</InformationalVersion>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(ContinuousIntegrationBuild)' == ''">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+</Project>

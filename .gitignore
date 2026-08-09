@@ -19,6 +19,8 @@ Survivalcraft/Content.zip
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+!/release/
+!/release/**
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/

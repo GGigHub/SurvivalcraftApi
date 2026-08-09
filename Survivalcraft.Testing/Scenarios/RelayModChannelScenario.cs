@@ -15,7 +15,8 @@ public sealed record RelayModChannelScenarioOptions(
     TimeSpan? StepTimeout = null,
     TimeSpan? ScenarioTimeout = null,
     string? WorkDirectory = null,
-    bool KeepData = false);
+    bool KeepData = false,
+    string? RelayRuntimeDirectory = null);
 
 public sealed record RelayModChannelScenarioResult(
     string ArtifactDirectory,
@@ -68,8 +69,11 @@ public sealed class RelayModChannelScenario {
         CancellationToken cancellationToken = default) {
         ArgumentNullException.ThrowIfNull(options);
         string runtimeDirectory = Path.GetFullPath(options.RuntimeDirectory);
+        string relayRuntimeDirectory = Path.GetFullPath(
+            options.RelayRuntimeDirectory ?? runtimeDirectory);
         string artifactDirectory = Path.GetFullPath(options.ArtifactDirectory);
-        ValidateRuntime(runtimeDirectory);
+        ValidateGameRuntime(runtimeDirectory);
+        ValidateRelayRuntime(relayRuntimeDirectory);
 
         TimeSpan stepTimeout = options.StepTimeout ?? TimeSpan.FromSeconds(60);
         if (stepTimeout <= TimeSpan.Zero) {
@@ -160,7 +164,7 @@ public sealed class RelayModChannelScenario {
 
         try {
             relay = new RelayServerProcess(new RelayServerOptions(
-                runtimeDirectory,
+                relayRuntimeDirectory,
                 StartupTimeout: stepTimeout));
             await StepActionAsync(
                 "start-relay-server",
@@ -970,7 +974,7 @@ public sealed class RelayModChannelScenario {
     private static bool IsScreen(NodeStatus status, string name) =>
         string.Equals(status.Screen, name, StringComparison.Ordinal);
 
-    private static void ValidateRuntime(string runtimeDirectory) {
+    private static void ValidateGameRuntime(string runtimeDirectory) {
         if (!Directory.Exists(runtimeDirectory)) {
             throw new DirectoryNotFoundException(
                 $"Game runtime directory '{runtimeDirectory}' does not exist.");
@@ -979,7 +983,6 @@ public sealed class RelayModChannelScenario {
             "Survivalcraft.exe",
             "Survivalcraft.dll",
             "Survivalcraft.Networking.dll",
-            "Survivalcraft.RelayServer.dll",
             "Content.zip",
             Path.Combine("Mods", "Survivalcraft.TestAutomation.scmod")
         ];
@@ -989,6 +992,19 @@ public sealed class RelayModChannelScenario {
         if (missing.Length > 0) {
             throw new FileNotFoundException(
                 $"Runtime '{runtimeDirectory}' is incomplete. Missing: {string.Join(", ", missing)}");
+        }
+    }
+
+    private static void ValidateRelayRuntime(string runtimeDirectory) {
+        if (!Directory.Exists(runtimeDirectory)) {
+            throw new DirectoryNotFoundException(
+                $"Relay runtime directory '{runtimeDirectory}' does not exist.");
+        }
+        string relayAssembly = Path.Combine(runtimeDirectory, "Survivalcraft.RelayServer.dll");
+        if (!File.Exists(relayAssembly)) {
+            throw new FileNotFoundException(
+                $"Relay runtime '{runtimeDirectory}' is incomplete. Missing: Survivalcraft.RelayServer.dll",
+                relayAssembly);
         }
     }
 

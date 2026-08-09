@@ -8,6 +8,10 @@
 
 [点击此处](https://gitee.com/SC-SPM/SurvivalcraftApi/releases/latest) 进入发布页来下载
 
+### API 联机开发预览版
+
+`API_1.9.3.1_MP-preview.1` 是 API 插件版与联机核心合并后的开发者预览版，同时提供 Windows x64、Relay Server 和 Android ARM64 (`arm64-v8a`) 产物。它用于联机功能与真机兼容性测试，不等同于正式稳定版；Android 包使用开发者密钥签名，安装和载入旧世界前请先备份。下载后请先用同一发布页中的 `SHA256SUMS.txt` 校验文件，并将设备型号、系统版本、连接方式、`Game.log` 和复现步骤一起用于问题反馈。
+
 ### Android 安卓系统看这里
 > 需要 64 位 ARM 架构 CPU，最低 Android 6.0
 

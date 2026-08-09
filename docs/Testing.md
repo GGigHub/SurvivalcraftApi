@@ -2,7 +2,7 @@
 
 本分支已经具备不需要鼠标、键盘或人工观察日志的联机验收链路。它会按场景启动隔离的 Survivalcraft 进程：核心场景完成建服、两阶段兼容握手、模组消息、地形同步、断线重连、保存和重载；兼容矩阵验证拒绝、分阶段超时与恢复；会话生命周期场景在 Direct/Relay 上验证四客户端并发加入/重连、实体创建期断线、稳定身份、API 通道晚加入、限流、背压和隔离；中继场景另外启动真实 RelayServer。所有场景都会把可回放的诊断材料写入 `TestResults`。
 
-强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已推进到 M12：Coverage Contract 的 22 个 feature 全部为 `covered`，并在已接受会话上增加有界的应用层确认/重试，使全部核心场景能够用确定性的 1–3% 丢包自动验收。
+强类型玩法驱动、Snapshot v2、多客户端拓扑和 legacy 迁移方案见 [TestAutomation v2 设计](TestAutomation-v2-Design.md)。当前已推进到 M13：Coverage Contract 的 22 个 feature 全部为 `covered`；已接受会话具备有界应用层确认/重试，Required/Optional/LocalOnly 模组范围和逐会话通道交集也进入 Direct/Relay 自动验收。
 
 ## 一键运行
 
@@ -31,6 +31,24 @@
 ./scripts/Test-Multiplayer.ps1 -Mode legacy
 ./scripts/Test-Multiplayer.ps1 -Mode full
 ```
+
+## API 联机预览版发布门禁
+
+`release/multiplayer-preview.json` 是预览版的唯一发布契约，统一 API、联机协议、Automation API、Snapshot schema、Android ABI/版本号和所有产物名称。`Survivalcraft.Multiplayer`、Relay Server、Android manifest 与发布脚本的漂移由 `ReleaseContractTests` 阻断。
+
+在仓库根目录依次执行：
+
+```powershell
+./scripts/Build-MultiplayerPreview.ps1
+./scripts/Test-MultiplayerPreviewRelease.ps1
+./scripts/Publish-CnbMultiplayerPreview.ps1
+```
+
+构建脚本生成 Windows x64 客户端、Windows x64 Relay Server、Android `arm64-v8a` APK、release manifest 和 `SHA256SUMS.txt`。Windows/Relay ZIP 使用排序条目与固定时间戳；Android 构建记录完整工具链与哈希，但不声明跨机器 bit-for-bit 一致。
+
+验证脚本先检查所有 SHA-256，再从全新目录解压 Windows 与 Relay。公开 Windows 包必须没有 TestAutomation；脚本只向一次性测试副本注入它，随后以隐藏窗口运行启动 doctor、Direct 核心场景和使用独立 Relay 发布目录的 Relay 模组通道场景。APK 门禁验证签名、versionCode/versionName、仅 `arm64-v8a` 原生库，以及 `assets/InternalMods/Survivalcraft.Multiplayer.scmod`。
+
+本地开发阶段可用 `Build-MultiplayerPreview.ps1 -AllowDirty` 验证打包，但该 manifest 会明确记录 `sourceDirty=true`，发布脚本拒绝上传。正式发布必须从干净且已推送、已打注释标签的提交重新构建。所有实际游戏进程继续使用 `--headless` 和 `CreateNoWindow=true`，不会显示游戏窗口。
 
 - `fast`：运行不启动游戏进程的纯协议测试和游戏程序集内生命周期 L0/L1，适合每次 AI 修改后立即执行。
 - `trust`：校验 Coverage Contract v2 与生产面库存。报告精确列出 hook、packet、feature、状态和缺口，不输出会掩盖缺口的综合覆盖率百分比。

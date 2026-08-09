@@ -1317,6 +1317,10 @@ internal static class Program {
             && !string.IsNullOrWhiteSpace(runtimeValue)
                 ? Path.GetFullPath(runtimeValue)
                 : replay?.RuntimeDirectory ?? ResolveRuntime(repositoryRoot, options);
+        string? relayRuntime = options.TryGetValue("relay-runtime", out string? relayRuntimeValue)
+            && !string.IsNullOrWhiteSpace(relayRuntimeValue)
+                ? Path.GetFullPath(relayRuntimeValue)
+                : null;
         string artifactDirectory = options.TryGetValue("artifacts", out string? artifactValue)
             && !string.IsNullOrWhiteSpace(artifactValue)
                 ? Path.GetFullPath(artifactValue)
@@ -1373,7 +1377,8 @@ internal static class Program {
             StepTimeout: GetTimeSpan(options, "step-timeout", TimeSpan.FromSeconds(60)),
             ScenarioTimeout: GetTimeSpan(options, "scenario-timeout", TimeSpan.FromMinutes(6)),
             WorkDirectory: workDirectory,
-            KeepData: GetFlag(options, "keep-data"));
+            KeepData: GetFlag(options, "keep-data"),
+            RelayRuntimeDirectory: relayRuntime);
     }
 
     private static CompatibilityMatrixScenarioOptions BuildCompatibilityScenarioOptions(
@@ -2053,6 +2058,7 @@ internal static class Program {
         Console.WriteLine();
         Console.WriteLine("Common options:");
         Console.WriteLine("  --runtime PATH             Built Survivalcraft.Test runtime");
+        Console.WriteLine("  --relay-runtime PATH       Separate Relay Server runtime (relay-mod-channel)");
         Console.WriteLine("  --artifacts PATH           Durable result bundle directory");
         Console.WriteLine("  --seed INTEGER             Deterministic scenario seed");
         Console.WriteLine("  --fault-seed INTEGER       Deterministic network-fault seed");
