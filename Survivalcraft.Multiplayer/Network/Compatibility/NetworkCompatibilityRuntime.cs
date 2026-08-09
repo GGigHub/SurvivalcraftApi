@@ -29,13 +29,15 @@ public static class NetworkCompatibilityRuntime {
             if (info == null
                 || modEntity is SurvivalCraftModEntity
                 || modEntity is FastDebugModEntity
-                || s_builtinPackages.Contains(info.PackageName ?? string.Empty)) {
+                || s_builtinPackages.Contains(info.PackageName ?? string.Empty)
+                || info.NetworkScope == ModNetworkScope.LocalOnly) {
                 continue;
             }
             mods.Add(new NetworkModIdentity(
                 info.PackageName,
                 info.Version,
-                info.ApiVersion));
+                info.ApiVersion,
+                info.NetworkScope));
         }
 
         NetworkCompatibilityManifest manifest = new(
@@ -73,7 +75,9 @@ public static class NetworkCompatibilityRuntime {
         session.CompatibilityState = NetworkCompatibilityState.AwaitingHello;
         session.CompatibilityResult = null;
         session.ChannelCompatibilityResult = null;
-        session.ModChannelCatalogFingerprint = string.Empty;
+        session.LocalCompatibilityManifest = manifest.Clone();
+        session.RemoteCompatibilityManifest = null;
+        ModNetworkManager.ClearNegotiatedCatalog(session);
         session.CompatibilityStartedUtc = DateTime.UtcNow;
         return manifest;
     }

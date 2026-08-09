@@ -37,3 +37,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyInformationalVersion("2.4.0.0")]
 [assembly: InternalsVisibleTo("Survivalcraft.Test")]
 [assembly: InternalsVisibleTo("Survivalcraft.TestAutomation")]
+[assembly: InternalsVisibleTo("Survivalcraft.Multiplayer")]

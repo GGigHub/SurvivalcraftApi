@@ -122,6 +122,56 @@ public partial class TestAutomationModLoader {
             payload.Length);
     }
 
+    private TestModSendResult InjectTestModEnvelope(
+        InjectTestModEnvelopeCommand command) {
+        ModNetworkChannel channel = testModChannel
+            ?? throw new InvalidOperationException("The test mod channel is not registered.");
+        string correlationId = string.IsNullOrWhiteSpace(command.CorrelationId)
+            ? Guid.NewGuid().ToString("N")
+            : command.CorrelationId.Trim();
+        byte[] payload = EncodeTestModMessage(new TestModWireMessage(
+            correlationId,
+            command.Payload ?? string.Empty,
+            EchoRequested: false,
+            HandlerFailureRequested: false));
+        ModNetworkEnvelope envelope = new(
+            Guid.NewGuid(),
+            channel.Descriptor.PackageName,
+            channel.Descriptor.ChannelName,
+            channel.Descriptor.Version,
+            payload);
+
+        if (NetworkManager.IsClientRunning) {
+            NetworkManager.SendModMessageToServer(envelope);
+            return new TestModSendResult(
+                correlationId,
+                "raw-client-to-server",
+                1,
+                payload.Length);
+        }
+        if (!NetworkManager.IsServerRunning) {
+            throw new InvalidOperationException("No multiplayer connection is active.");
+        }
+        Guid targetIdentity = Guid.Empty;
+        if (!string.IsNullOrWhiteSpace(command.TargetNetworkIdentity)
+            && !Guid.TryParse(command.TargetNetworkIdentity, out targetIdentity)) {
+            throw new ArgumentException(
+                $"Target network identity '{command.TargetNetworkIdentity}' is not a GUID.");
+        }
+        ClientSession recipient = NetworkManager.ServerSessions.FirstOrDefault(
+            session => session.AdmissionState == NetworkSessionAdmissionState.Accepted
+                && session.NetworkState >= NetworkState.ProjectLoaded
+                && (targetIdentity == Guid.Empty || session.NetworkGuid == targetIdentity))
+            ?? throw new InvalidOperationException(
+                "No admitted client session can receive the raw test envelope.");
+        NetworkManager.SendModMessageToClient(envelope, recipient);
+        return new TestModSendResult(
+            correlationId,
+            "raw-server-to-client",
+            1,
+            payload.Length);
+    }
+
     private TestModTrafficBurstResult RunTestModTrafficBurst(
         RunTestModTrafficBurstCommand command) {
         if (command.Count is < 1 or > 4096) {
@@ -255,7 +305,11 @@ public partial class TestAutomationModLoader {
                     dispatch.Code.ToString(),
                     dispatch.IsServer,
                     dispatch.PayloadBytes,
-                    dispatch.Detail));
+                    dispatch.Detail),
+            NetworkManager.IsClientRunning
+                ? NetworkManager.MySession?.NegotiatedModChannelCount ?? 0
+                : NetworkManager.ServerSessions.Sum(
+                    session => session.NegotiatedModChannelCount));
     }
 
     private TestModMessagesStatus BuildTestModMessagesStatus() {

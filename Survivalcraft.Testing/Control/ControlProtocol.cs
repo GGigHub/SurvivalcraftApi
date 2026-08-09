@@ -214,6 +214,7 @@ public static class ControlCommandNames {
     public const string ConfigureModChannels = "network.configureModChannels";
     public const string GetModChannels = "network.getModChannels";
     public const string SendTestModMessage = "network.sendTestModMessage";
+    public const string InjectTestModEnvelope = "network.injectTestModEnvelope";
     public const string RunTestModTrafficBurst = "network.runTestModTrafficBurst";
     public const string ReplayPlayerCreate = "network.replayPlayerCreate";
     public const string GetTestModMessages = "network.getTestModMessages";
@@ -324,7 +325,8 @@ public sealed record NetworkFaultState(
 public sealed record CompatibilityModDescriptor(
     string PackageName,
     string Version,
-    string ApiVersion);
+    string ApiVersion,
+    string NetworkScope = "Required");
 
 public sealed record ConfigureCompatibilityCommand(
     bool ClearOverride = false,
@@ -388,13 +390,19 @@ public sealed record ModChannelStatus(
     string Fingerprint,
     ModChannelDescriptorState[] Channels,
     ModNetworkMetricsState Metrics,
-    ModNetworkDispatchState? LastDispatch);
+    ModNetworkDispatchState? LastDispatch,
+    int NegotiatedChannelCount = 0);
 
 public sealed record SendTestModMessageCommand(
     string Payload,
     bool Broadcast = false,
     bool FailHandler = false,
     string? CorrelationId = null);
+
+public sealed record InjectTestModEnvelopeCommand(
+    string Payload,
+    string? CorrelationId = null,
+    string? TargetNetworkIdentity = null);
 
 public sealed record TestModMessageState(
     DateTimeOffset Timestamp,

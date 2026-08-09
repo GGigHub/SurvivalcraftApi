@@ -11,7 +11,14 @@ public enum NetworkCapabilities {
     None = 0,
     ApiModManifest = 1 << 0,
     StructuredCompatibilityResult = 1 << 1,
-    ModPacketChannel = 1 << 2
+    ModPacketChannel = 1 << 2,
+    ScopedModManifest = 1 << 3
+}
+
+public enum ModNetworkScope : byte {
+    Required,
+    Optional,
+    LocalOnly
 }
 
 public enum NetworkCompatibilityState : byte {
@@ -41,24 +48,31 @@ public enum NetworkCompatibilityIssueCode : byte {
     ExtraClientChannel,
     ChannelVersionMismatch,
     ChannelDirectionMismatch,
-    ChannelPayloadLimitMismatch
+    ChannelPayloadLimitMismatch,
+    ModNetworkScopeMismatch
 }
 
 public sealed class NetworkModIdentity {
     public string PackageName = string.Empty;
     public string Version = string.Empty;
     public string ApiVersion = string.Empty;
+    public ModNetworkScope Scope = ModNetworkScope.Required;
 
     public NetworkModIdentity() {
     }
 
-    public NetworkModIdentity(string packageName, string version, string apiVersion) {
+    public NetworkModIdentity(
+        string packageName,
+        string version,
+        string apiVersion,
+        ModNetworkScope scope = ModNetworkScope.Required) {
         PackageName = packageName;
         Version = version;
         ApiVersion = apiVersion;
+        Scope = scope;
     }
 
-    public NetworkModIdentity Clone() => new(PackageName, Version, ApiVersion);
+    public NetworkModIdentity Clone() => new(PackageName, Version, ApiVersion, Scope);
 }
 
 public sealed class NetworkCompatibilityManifest {
@@ -151,7 +165,7 @@ public sealed class NetworkCompatibilityResult {
 }
 
 public static class NetworkCompatibility {
-    public const int ProtocolRevision = 16;
+    public const int ProtocolRevision = 17;
     public const int MaximumModCount = 256;
     public const int MaximumIssueCount = 32;
     public const int MaximumFieldLength = 256;
@@ -159,12 +173,14 @@ public static class NetworkCompatibility {
     public const NetworkCapabilities CurrentCapabilities =
         NetworkCapabilities.ApiModManifest
         | NetworkCapabilities.StructuredCompatibilityResult
-        | NetworkCapabilities.ModPacketChannel;
+        | NetworkCapabilities.ModPacketChannel
+        | NetworkCapabilities.ScopedModManifest;
 
     public const NetworkCapabilities RequiredCapabilities =
         NetworkCapabilities.ApiModManifest
         | NetworkCapabilities.StructuredCompatibilityResult
-        | NetworkCapabilities.ModPacketChannel;
+        | NetworkCapabilities.ModPacketChannel
+        | NetworkCapabilities.ScopedModManifest;
 
     public static NetworkCompatibilityResult Evaluate(
         NetworkCompatibilityManifest serverManifest,
@@ -226,13 +242,23 @@ public static class NetworkCompatibility {
 
         foreach (NetworkModIdentity expected in server.Mods) {
             if (!clientMods.TryGetValue(expected.PackageName, out NetworkModIdentity actual)) {
-                issues.Add(new NetworkCompatibilityIssue(
-                    NetworkCompatibilityIssueCode.MissingClientMod,
-                    expected.PackageName,
-                    FormatMod(expected),
-                    "missing",
-                    $"Client is missing required mod '{expected.PackageName}' ({expected.Version})."));
+                if (expected.Scope == ModNetworkScope.Required) {
+                    issues.Add(new NetworkCompatibilityIssue(
+                        NetworkCompatibilityIssueCode.MissingClientMod,
+                        expected.PackageName,
+                        FormatMod(expected),
+                        "missing",
+                        $"Client is missing required mod '{expected.PackageName}' ({expected.Version})."));
+                }
                 continue;
+            }
+            if (expected.Scope != actual.Scope) {
+                issues.Add(new NetworkCompatibilityIssue(
+                    NetworkCompatibilityIssueCode.ModNetworkScopeMismatch,
+                    expected.PackageName,
+                    expected.Scope.ToString(),
+                    actual.Scope.ToString(),
+                    $"Mod '{expected.PackageName}' network scope mismatch (server {expected.Scope}, client {actual.Scope})."));
             }
             if (!string.Equals(expected.Version, actual.Version, StringComparison.Ordinal)) {
                 issues.Add(new NetworkCompatibilityIssue(
@@ -252,7 +278,8 @@ public static class NetworkCompatibility {
             }
         }
         foreach (NetworkModIdentity actual in client.Mods) {
-            if (!serverMods.ContainsKey(actual.PackageName)) {
+            if (!serverMods.ContainsKey(actual.PackageName)
+                && actual.Scope == ModNetworkScope.Required) {
                 issues.Add(new NetworkCompatibilityIssue(
                     NetworkCompatibilityIssueCode.ExtraClientMod,
                     actual.PackageName,
@@ -340,7 +367,18 @@ public static class NetworkCompatibility {
                 error = $"duplicate package '{packageName}'";
                 return false;
             }
-            mods.Add(new NetworkModIdentity(packageName, version, modApiVersion));
+            if (source.Scope != ModNetworkScope.Required
+                && source.Scope != ModNetworkScope.Optional) {
+                error = source.Scope == ModNetworkScope.LocalOnly
+                    ? $"local-only mod '{packageName}' cannot appear in a network manifest"
+                    : $"mod '{packageName}' has invalid network scope {(byte)source.Scope}";
+                return false;
+            }
+            mods.Add(new NetworkModIdentity(
+                packageName,
+                version,
+                modApiVersion,
+                source.Scope));
         }
 
         mods.Sort((left, right) => string.CompareOrdinal(left.PackageName, right.PackageName));
@@ -359,7 +397,7 @@ public static class NetworkCompatibility {
         value?.Trim() ?? string.Empty;
 
     private static string FormatMod(NetworkModIdentity mod) =>
-        $"{mod.PackageName}@{mod.Version} (API {mod.ApiVersion})";
+        $"{mod.PackageName}@{mod.Version} (API {mod.ApiVersion}, {mod.Scope})";
 }
 
 public static class NetworkCompatibilityWireCodec {
@@ -382,6 +420,18 @@ public static class NetworkCompatibilityWireCodec {
                 WriteString(writer, mod.PackageName, NetworkCompatibility.MaximumFieldLength, "package name");
                 WriteString(writer, mod.Version, NetworkCompatibility.MaximumFieldLength, "mod version");
                 WriteString(writer, mod.ApiVersion, NetworkCompatibility.MaximumFieldLength, "mod API version");
+                if (mod.Scope != ModNetworkScope.Required
+                    && mod.Scope != ModNetworkScope.Optional) {
+                    throw new InvalidDataException(
+                        $"Compatibility manifest contains invalid network scope {(byte)mod.Scope}.");
+                }
+                if (manifest.ProtocolRevision >= 17) {
+                    writer.Write((byte)mod.Scope);
+                }
+                else if (mod.Scope != ModNetworkScope.Required) {
+                    throw new InvalidDataException(
+                        "Compatibility manifest revisions before 17 cannot encode non-required mod scopes.");
+                }
             }
         });
     }
@@ -398,7 +448,10 @@ public static class NetworkCompatibilityWireCodec {
                 mods.Add(new NetworkModIdentity(
                     ReadString(reader, NetworkCompatibility.MaximumFieldLength, "package name"),
                     ReadString(reader, NetworkCompatibility.MaximumFieldLength, "mod version"),
-                    ReadString(reader, NetworkCompatibility.MaximumFieldLength, "mod API version")));
+                    ReadString(reader, NetworkCompatibility.MaximumFieldLength, "mod API version"),
+                    protocolRevision >= 17
+                        ? ReadScope(reader)
+                        : ModNetworkScope.Required));
             }
             return new NetworkCompatibilityManifest(
                 protocolRevision,
@@ -406,6 +459,15 @@ public static class NetworkCompatibilityWireCodec {
                 capabilities,
                 mods);
         });
+
+    private static ModNetworkScope ReadScope(BinaryReader reader) {
+        ModNetworkScope scope = (ModNetworkScope)reader.ReadByte();
+        if (scope != ModNetworkScope.Required && scope != ModNetworkScope.Optional) {
+            throw new InvalidDataException(
+                $"Compatibility manifest contains invalid network scope {(byte)scope}.");
+        }
+        return scope;
+    }
 
     public static byte[] EncodeResult(NetworkCompatibilityResult result) {
         ArgumentNullException.ThrowIfNull(result);

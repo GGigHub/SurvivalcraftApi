@@ -24,7 +24,8 @@ public enum ModNetworkDispatchCode : byte {
     PayloadTooLarge,
     RateLimited,
     ProjectUnavailable,
-    HandlerFailed
+    HandlerFailed,
+    UnnegotiatedChannel
 }
 
 public sealed class ModNetworkChannelDescriptor {
@@ -67,6 +68,18 @@ public sealed class ModNetworkChannelCatalog {
     }
 
     public ModNetworkChannelCatalog Clone() => new(Channels);
+}
+
+public sealed class ModNetworkCatalogNegotiation {
+    public NetworkCompatibilityResult Result;
+    public ModNetworkChannelCatalog Catalog;
+
+    public ModNetworkCatalogNegotiation(
+        NetworkCompatibilityResult result,
+        ModNetworkChannelCatalog catalog) {
+        Result = result ?? throw new ArgumentNullException(nameof(result));
+        Catalog = catalog?.Clone() ?? new ModNetworkChannelCatalog();
+    }
 }
 
 public sealed class ModNetworkEnvelope {
@@ -192,6 +205,178 @@ public static class ModNetworkProtocol {
         return issues.Count == 0
             ? NetworkCompatibilityResult.Accept()
             : NetworkCompatibilityResult.Reject(issues);
+    }
+
+    public static ModNetworkCatalogNegotiation NegotiateCatalogs(
+        ModNetworkChannelCatalog serverCatalog,
+        ModNetworkChannelCatalog clientCatalog,
+        NetworkCompatibilityManifest serverManifest,
+        NetworkCompatibilityManifest clientManifest) {
+        NetworkCompatibilityResult manifestResult = NetworkCompatibility.Evaluate(
+            serverManifest,
+            clientManifest);
+        if (!manifestResult.Accepted) {
+            return new ModNetworkCatalogNegotiation(
+                manifestResult,
+                new ModNetworkChannelCatalog());
+        }
+
+        _ = NetworkCompatibility.TryCanonicalize(
+            serverManifest,
+            out NetworkCompatibilityManifest serverModsManifest,
+            out _);
+        _ = NetworkCompatibility.TryCanonicalize(
+            clientManifest,
+            out NetworkCompatibilityManifest clientModsManifest,
+            out _);
+        if (!TryCanonicalizeCatalog(
+                serverCatalog,
+                out ModNetworkChannelCatalog server,
+                out string serverError)) {
+            return new ModNetworkCatalogNegotiation(
+                NetworkCompatibilityResult.Reject([
+                    new NetworkCompatibilityIssue(
+                        NetworkCompatibilityIssueCode.InvalidServerChannelCatalog,
+                        string.Empty,
+                        "valid channel catalog",
+                        serverError,
+                        $"Server mod channel catalog is invalid: {serverError}")
+                ]),
+                new ModNetworkChannelCatalog());
+        }
+        if (!TryCanonicalizeCatalog(
+                clientCatalog,
+                out ModNetworkChannelCatalog client,
+                out string clientError)) {
+            return new ModNetworkCatalogNegotiation(
+                NetworkCompatibilityResult.Reject([
+                    new NetworkCompatibilityIssue(
+                        NetworkCompatibilityIssueCode.InvalidClientChannelCatalog,
+                        string.Empty,
+                        "valid channel catalog",
+                        clientError,
+                        $"Client mod channel catalog is invalid: {clientError}")
+                ]),
+                new ModNetworkChannelCatalog());
+        }
+
+        Dictionary<string, NetworkModIdentity> serverMods =
+            serverModsManifest.Mods.ToDictionary(
+                mod => mod.PackageName,
+                StringComparer.Ordinal);
+        Dictionary<string, NetworkModIdentity> clientMods =
+            clientModsManifest.Mods.ToDictionary(
+                mod => mod.PackageName,
+                StringComparer.Ordinal);
+        Dictionary<string, ModNetworkChannelDescriptor> serverChannels =
+            server.Channels.ToDictionary(BuildKey, StringComparer.Ordinal);
+        Dictionary<string, ModNetworkChannelDescriptor> clientChannels =
+            client.Channels.ToDictionary(BuildKey, StringComparer.Ordinal);
+        List<NetworkCompatibilityIssue> issues = [];
+        List<ModNetworkChannelDescriptor> negotiated = [];
+
+        foreach (ModNetworkChannelDescriptor expected in server.Channels) {
+            if (IsPackageOmitted(expected.PackageName, serverMods, clientMods)) {
+                continue;
+            }
+            if (!clientChannels.TryGetValue(
+                    BuildKey(expected),
+                    out ModNetworkChannelDescriptor actual)) {
+                issues.Add(new NetworkCompatibilityIssue(
+                    NetworkCompatibilityIssueCode.MissingClientChannel,
+                    expected.QualifiedName,
+                    FormatDescriptor(expected),
+                    "missing",
+                    $"Client is missing mod channel '{expected.QualifiedName}'."));
+                continue;
+            }
+
+            bool matches = true;
+            if (expected.Version != actual.Version) {
+                matches = false;
+                issues.Add(new NetworkCompatibilityIssue(
+                    NetworkCompatibilityIssueCode.ChannelVersionMismatch,
+                    expected.QualifiedName,
+                    expected.Version.ToString(),
+                    actual.Version.ToString(),
+                    $"Mod channel '{expected.QualifiedName}' version mismatch (server {expected.Version}, client {actual.Version})."));
+            }
+            if (expected.Directions != actual.Directions) {
+                matches = false;
+                issues.Add(new NetworkCompatibilityIssue(
+                    NetworkCompatibilityIssueCode.ChannelDirectionMismatch,
+                    expected.QualifiedName,
+                    expected.Directions.ToString(),
+                    actual.Directions.ToString(),
+                    $"Mod channel '{expected.QualifiedName}' direction mismatch (server {expected.Directions}, client {actual.Directions})."));
+            }
+            if (expected.MaximumPayloadBytes != actual.MaximumPayloadBytes) {
+                matches = false;
+                issues.Add(new NetworkCompatibilityIssue(
+                    NetworkCompatibilityIssueCode.ChannelPayloadLimitMismatch,
+                    expected.QualifiedName,
+                    expected.MaximumPayloadBytes.ToString(),
+                    actual.MaximumPayloadBytes.ToString(),
+                    $"Mod channel '{expected.QualifiedName}' payload limit mismatch (server {expected.MaximumPayloadBytes}, client {actual.MaximumPayloadBytes})."));
+            }
+            if (matches) {
+                negotiated.Add(expected.Clone());
+            }
+        }
+
+        foreach (ModNetworkChannelDescriptor actual in client.Channels) {
+            if (IsPackageOmitted(actual.PackageName, serverMods, clientMods)
+                || serverChannels.ContainsKey(BuildKey(actual))) {
+                continue;
+            }
+            issues.Add(new NetworkCompatibilityIssue(
+                NetworkCompatibilityIssueCode.ExtraClientChannel,
+                actual.QualifiedName,
+                "absent",
+                FormatDescriptor(actual),
+                $"Client has extra mod channel '{actual.QualifiedName}'."));
+        }
+
+        return issues.Count == 0
+            ? new ModNetworkCatalogNegotiation(
+                NetworkCompatibilityResult.Accept(),
+                new ModNetworkChannelCatalog(negotiated))
+            : new ModNetworkCatalogNegotiation(
+                NetworkCompatibilityResult.Reject(issues),
+                new ModNetworkChannelCatalog());
+    }
+
+    public static bool TryValidateNegotiatedCatalog(
+        ModNetworkChannelCatalog localCatalog,
+        ModNetworkChannelCatalog negotiatedCatalog,
+        out ModNetworkChannelCatalog canonical,
+        out string error) {
+        canonical = null;
+        error = string.Empty;
+        if (!TryCanonicalizeCatalog(localCatalog, out ModNetworkChannelCatalog local, out error)) {
+            error = $"local catalog is invalid: {error}";
+            return false;
+        }
+        if (!TryCanonicalizeCatalog(negotiatedCatalog, out canonical, out error)) {
+            error = $"negotiated catalog is invalid: {error}";
+            return false;
+        }
+
+        Dictionary<string, ModNetworkChannelDescriptor> localChannels =
+            local.Channels.ToDictionary(BuildKey, StringComparer.Ordinal);
+        foreach (ModNetworkChannelDescriptor channel in canonical.Channels) {
+            if (!localChannels.TryGetValue(BuildKey(channel), out ModNetworkChannelDescriptor localChannel)) {
+                error = $"negotiated channel '{channel.QualifiedName}' is not declared locally";
+                canonical = null;
+                return false;
+            }
+            if (!DescriptorsEqual(channel, localChannel)) {
+                error = $"negotiated channel '{channel.QualifiedName}' differs from the local contract";
+                canonical = null;
+                return false;
+            }
+        }
+        return true;
     }
 
     public static bool TryCanonicalizeCatalog(
@@ -414,6 +599,30 @@ public static class ModNetworkProtocol {
 
     public static string BuildKey(ModNetworkChannelDescriptor descriptor) =>
         BuildKey(descriptor.PackageName, descriptor.ChannelName);
+
+    private static bool IsPackageOmitted(
+        string packageName,
+        IReadOnlyDictionary<string, NetworkModIdentity> serverMods,
+        IReadOnlyDictionary<string, NetworkModIdentity> clientMods) {
+        bool onServer = serverMods.TryGetValue(
+            packageName,
+            out NetworkModIdentity serverMod);
+        bool onClient = clientMods.TryGetValue(
+            packageName,
+            out NetworkModIdentity clientMod);
+        if (onServer == onClient) {
+            return false;
+        }
+        return (onServer ? serverMod : clientMod).Scope == ModNetworkScope.Optional;
+    }
+
+    private static bool DescriptorsEqual(
+        ModNetworkChannelDescriptor left,
+        ModNetworkChannelDescriptor right) =>
+        left.Version == right.Version
+        && left.Directions == right.Directions
+        && left.MaximumPayloadBytes == right.MaximumPayloadBytes
+        && string.Equals(BuildKey(left), BuildKey(right), StringComparison.Ordinal);
 
     private static void ValidateEnvelope(ModNetworkEnvelope envelope) {
         ArgumentNullException.ThrowIfNull(envelope);

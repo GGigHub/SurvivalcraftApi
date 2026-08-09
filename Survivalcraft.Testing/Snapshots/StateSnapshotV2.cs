@@ -454,7 +454,8 @@ public sealed record NetworkSessionSnapshotV2(
     string ModChannelCatalogFingerprint,
     int PlayerCreateRequests,
     int DuplicatePlayerCreateRequests,
-    int PlayerEntityRequests);
+    int PlayerEntityRequests,
+    int NegotiatedModChannelCount = 0);
 
 public sealed record NetworkSessionLifecycleEventSnapshotV2(
     long Sequence,

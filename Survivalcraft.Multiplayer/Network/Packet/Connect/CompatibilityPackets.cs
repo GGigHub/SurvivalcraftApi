@@ -31,8 +31,13 @@ public sealed class CompatibilityHelloPacket : Packet {
             || From.CompatibilityState != NetworkCompatibilityState.AwaitingHello) {
             return;
         }
+        NetworkCompatibilityManifest localManifest =
+            NetworkCompatibilityRuntime.GetLocalManifest();
+        From.LocalCompatibilityManifest = localManifest.Clone();
+        From.RemoteCompatibilityManifest = Manifest.Clone();
+        ModNetworkManager.ClearNegotiatedCatalog(From);
         NetworkCompatibilityResult result = NetworkCompatibility.Evaluate(
-            NetworkCompatibilityRuntime.GetLocalManifest(),
+            localManifest,
             Manifest);
         From.CompatibilityResult = result;
         From.CompatibilityState = result.Accepted
@@ -84,8 +89,6 @@ public sealed class CompatibilityResultPacket : Packet {
         if (Result.Accepted) {
             Log.Information("Server accepted API/mod compatibility; negotiating mod channels.");
             ModNetworkChannelCatalog catalog = ModNetworkManager.GetLocalCatalog();
-            session.ModChannelCatalogFingerprint =
-                ModNetworkProtocol.ComputeCatalogFingerprint(catalog);
             NetworkManager.Queue(new ModChannelCatalogPacket(catalog));
         }
         else {

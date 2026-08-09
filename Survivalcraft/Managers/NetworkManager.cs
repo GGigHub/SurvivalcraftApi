@@ -30,7 +30,11 @@ public class ClientSession {
     public NetworkCompatibilityState CompatibilityState { get; set; }
     public NetworkCompatibilityResult CompatibilityResult { get; set; }
     public NetworkCompatibilityResult ChannelCompatibilityResult { get; set; }
+    public NetworkCompatibilityManifest LocalCompatibilityManifest { get; set; }
+    public NetworkCompatibilityManifest RemoteCompatibilityManifest { get; set; }
     public string ModChannelCatalogFingerprint { get; set; } = string.Empty;
+    internal HashSet<string> NegotiatedModChannelKeys { get; } = new(StringComparer.Ordinal);
+    public int NegotiatedModChannelCount => NegotiatedModChannelKeys.Count;
     public DateTime CompatibilityStartedUtc { get; set; }
     public NetworkSessionAdmissionState AdmissionState { get; set; }
     public NetworkSessionAdmissionResult AdmissionResult { get; set; }

@@ -30,16 +30,26 @@ public sealed class ModChannelCatalogPacket : Packet {
             || From.CompatibilityState != NetworkCompatibilityState.AwaitingChannels) {
             return;
         }
-        NetworkCompatibilityResult result = ModNetworkProtocol.EvaluateCatalogs(
+        ModNetworkCatalogNegotiation negotiation = ModNetworkProtocol.NegotiateCatalogs(
             ModNetworkManager.GetLocalCatalog(),
-            Catalog);
+            Catalog,
+            From.LocalCompatibilityManifest,
+            From.RemoteCompatibilityManifest);
+        NetworkCompatibilityResult result = negotiation.Result;
         From.ChannelCompatibilityResult = result;
-        From.ModChannelCatalogFingerprint = ModNetworkProtocol.ComputeCatalogFingerprint(Catalog);
         From.CompatibilityResult = result;
         From.CompatibilityState = result.Accepted
             ? NetworkCompatibilityState.Accepted
             : NetworkCompatibilityState.Rejected;
-        NetworkManager.Queue(new ModChannelCatalogResultPacket(result) { To = From });
+        if (result.Accepted) {
+            ModNetworkManager.SetNegotiatedCatalog(From, negotiation.Catalog);
+        }
+        else {
+            ModNetworkManager.ClearNegotiatedCatalog(From);
+        }
+        NetworkManager.Queue(new ModChannelCatalogResultPacket(
+            result,
+            negotiation.Catalog) { To = From });
         if (result.Accepted) {
             NetworkSessionAdmissionRuntime.BeginServerAdmission(From);
             NetworkSessionLifecycleTracker.RecordCompatibilityAccepted(From);
@@ -58,12 +68,16 @@ public sealed class ModChannelCatalogResultPacket : Packet {
     public override byte ID => (byte)PacketType.ModChannelCatalogResult;
 
     public NetworkCompatibilityResult Result = new();
+    public ModNetworkChannelCatalog Catalog = new();
 
     public ModChannelCatalogResultPacket() {
     }
 
-    public ModChannelCatalogResultPacket(NetworkCompatibilityResult result) {
+    public ModChannelCatalogResultPacket(
+        NetworkCompatibilityResult result,
+        ModNetworkChannelCatalog catalog = null) {
         Result = result ?? throw new ArgumentNullException(nameof(result));
+        Catalog = catalog?.Clone() ?? new ModNetworkChannelCatalog();
     }
 
     public override void Serialize(PacketSerializer serializer) {
@@ -74,6 +88,13 @@ public sealed class ModChannelCatalogResultPacket : Packet {
         if (serializer.IsReading) {
             Result = NetworkCompatibilityWireCodec.DecodeResult(payload);
         }
+        byte[] catalogPayload = serializer.IsWriting
+            ? ModNetworkProtocol.EncodeCatalog(Catalog)
+            : null;
+        serializer.Buffer(ref catalogPayload, ModNetworkProtocol.MaximumCatalogEncodedBytes);
+        if (serializer.IsReading) {
+            Catalog = ModNetworkProtocol.DecodeCatalog(catalogPayload);
+        }
     }
 
     public override void Handle(bool isServer) {
@@ -83,13 +104,37 @@ public sealed class ModChannelCatalogResultPacket : Packet {
             || session.CompatibilityState != NetworkCompatibilityState.AwaitingChannels) {
             return;
         }
-        NetworkCompatibilityRuntime.RecordClientChannelResult(session, Result);
         if (Result.Accepted) {
+            if (!ModNetworkProtocol.TryValidateNegotiatedCatalog(
+                    ModNetworkManager.GetLocalCatalog(),
+                    Catalog,
+                    out ModNetworkChannelCatalog negotiated,
+                    out string error)) {
+                NetworkCompatibilityResult invalidCatalog =
+                    NetworkCompatibilityResult.Reject([
+                        new NetworkCompatibilityIssue(
+                            NetworkCompatibilityIssueCode.InvalidServerChannelCatalog,
+                            string.Empty,
+                            "a subset of the local channel catalog",
+                            error,
+                            $"Server returned an invalid negotiated channel catalog: {error}")
+                    ]);
+                ModNetworkManager.ClearNegotiatedCatalog(session);
+                NetworkCompatibilityRuntime.RecordClientChannelResult(
+                    session,
+                    invalidCatalog);
+                Log.Warning(invalidCatalog.Summary);
+                return;
+            }
+            ModNetworkManager.SetNegotiatedCatalog(session, negotiated);
+            NetworkCompatibilityRuntime.RecordClientChannelResult(session, Result);
             Log.Information("Server accepted mod channel catalog.");
             NetworkSessionAdmissionRuntime.BeginClientAdmission(session);
             NetworkManager.Queue(new ConnectPacket(NetworkManager.NetworkGuid));
         }
         else {
+            ModNetworkManager.ClearNegotiatedCatalog(session);
+            NetworkCompatibilityRuntime.RecordClientChannelResult(session, Result);
             Log.Warning($"Server rejected mod channel catalog: {Result.Summary}");
         }
     }

@@ -12,6 +12,7 @@ using Engine.Graphics;
 using Engine.Serialization;
 using Game;
 using Game.IContentReader;
+using Game.Network;
 using NuGet.Versioning;
 using XmlUtilities;
 using ZipArchive = Game.ZipArchive;
@@ -328,6 +329,19 @@ public static class ModsManager {
             && gameplayImpactLevel.ValueKind == JsonValueKind.String
             && Enum.TryParse(gameplayImpactLevel.GetString(), out GameplayImpactLevel impactLevel)) {
             modInfo.GameplayImpactLevel = impactLevel;
+        }
+        if (jsonElement.TryGetProperty("NetworkScope", out JsonElement networkScope)
+            && networkScope.ValueKind == JsonValueKind.String) {
+            string scopeName = networkScope.GetString()?.Trim();
+            if (string.Equals(scopeName, nameof(ModNetworkScope.Required), StringComparison.OrdinalIgnoreCase)) {
+                modInfo.NetworkScope = ModNetworkScope.Required;
+            }
+            else if (string.Equals(scopeName, nameof(ModNetworkScope.Optional), StringComparison.OrdinalIgnoreCase)) {
+                modInfo.NetworkScope = ModNetworkScope.Optional;
+            }
+            else if (string.Equals(scopeName, nameof(ModNetworkScope.LocalOnly), StringComparison.OrdinalIgnoreCase)) {
+                modInfo.NetworkScope = ModNetworkScope.LocalOnly;
+            }
         }
         if (jsonElement.TryGetProperty("Settings", out JsonElement settingsArray)
             && settingsArray.ValueKind == JsonValueKind.Array) {

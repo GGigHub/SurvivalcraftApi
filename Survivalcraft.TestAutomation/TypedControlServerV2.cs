@@ -818,6 +818,15 @@ public partial class TestAutomationModLoader {
         router.Register<SendTestModMessageCommand, TestModSendResult>(
             Metadata(ControlCommandNames.SendTestModMessage, AutomationCommandDomain.Network, true),
             (_, command) => SendTestModMessage(command));
+        router.Register<InjectTestModEnvelopeCommand, TestModSendResult>(
+            Metadata(
+                ControlCommandNames.InjectTestModEnvelope,
+                AutomationCommandDomain.Network,
+                true,
+                requiresProject: true,
+                requiresNetwork: true,
+                stability: AutomationCommandStability.Experimental),
+            (_, command) => InjectTestModEnvelope(command));
         router.Register<RunTestModTrafficBurstCommand, TestModTrafficBurstResult>(
             Metadata(
                 ControlCommandNames.RunTestModTrafficBurst,
@@ -1904,7 +1913,8 @@ public partial class TestAutomationModLoader {
                 session.ModChannelCatalogFingerprint ?? string.Empty,
                 session.PlayerCreateRequests,
                 session.DuplicatePlayerCreateRequests,
-                session.PlayerEntityRequests)).ToArray(),
+                session.PlayerEntityRequests,
+                session.NegotiatedModChannelCount)).ToArray(),
             new NetworkSessionLifecycleSnapshotV2(
                 lifecycle.Connected,
                 lifecycle.CompatibilityAccepted,

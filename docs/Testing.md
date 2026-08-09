@@ -308,13 +308,13 @@ dotnet run --project ./Survivalcraft.TestHost -- replay `
 
 ## Autotest 可信度门禁
 
-当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，当前 Automation API 为 v15、Snapshot schema 为 4、多人联机 wire revision 为 16：
+当前框架把“场景通过”与“场景真的覆盖生产行为”分成两道独立门禁，当前 Automation API 为 v16、Snapshot schema 为 5、多人联机 wire revision 为 17：
 
 - `production-surfaces.json` 对源码发现到的 103 个联机 hook 与 113 个 packet class 做精确库存；新增、删除或改名必须显式更新库存，避免生产面悄悄脱离测试计划。
 - `core-multiplayer.json` 使用 Coverage Contract v2。一个 feature 只有同时具备 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 且没有 open gap 时才能标为 `covered`；当前 22 个 feature 全部 covered。M11 四域以独立 typed action、schema 3 生存快照、有界 codec、客户端伪造与旧修订哨兵达到 `covered/mutation`；M12 再用通用可靠 envelope、服务端幂等和十二场景 loss 轮转验证跨领域收敛。
-- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry；M6 新增流量 burst、PlayerCreate replay 与会话快照后为 v9，M7 为 v10，M8 为 v11，M9 为 v12，M10 为 v13，M11 新增生存状态夹具、八动作回放和 schema 3 投影后为 v14，M12 新增可靠投递指标、必丢探针和 schema 4 网络投影后为 v15。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
+- Automation API 自 v7 起由 `ActionReceipt` 与动作事件携带 provenance 和 production entry；M6 新增流量 burst、PlayerCreate replay 与会话快照后为 v9，M7 为 v10，M8 为 v11，M9 为 v12，M10 为 v13，M11 新增生存状态夹具、八动作回放和 schema 3 投影后为 v14，M12 新增可靠投递指标、必丢探针和 schema 4 网络投影后为 v15，M13 新增模组范围、协商通道计数和原始信封隔离探针后为 v16 / schema 5。成功场景在产物落盘时重新构建 `ProductionPathAttestation` 并 fail closed；夹具证据、观察证据、空入口、回执/事件不一致或缺明确 `applied` terminal event 都会把原本的 passed 结果改写为 failed。
 - `ProductionPathGateway` 是 TestAutomation 唯一允许直接调用 `NetworkManager.Queue` 的位置。源码哨兵禁止旁路，并要求 fixture、production request、authoritative state、fault injection 这几类 API 都有真实调用点；延迟旧状态注入使用固定游戏帧 settle，避免重排让“旧包”先到而产生伪随机结果。
-- `GameNodeProcess` 从控制通道就绪后每 250 ms 旁路采样进程资源。每个 v2 `metrics.json` 都包含各角色的初始/最终/峰值工作集、私有内存、增长量、句柄、线程、CPU 与采样时长；Snapshot schema 4 还包含可靠投递的 created/retried/acknowledged/duplicate/timed-out/failed、pending 和 pending bytes。采样失败不会伪装成 0 通过，L3 的 minimum-samples 门禁会拒绝无观测结果。
+- `GameNodeProcess` 从控制通道就绪后每 250 ms 旁路采样进程资源。每个 v2 `metrics.json` 都包含各角色的初始/最终/峰值工作集、私有内存、增长量、句柄、线程、CPU 与采样时长；Snapshot schema 5 包含可靠投递的 created/retried/acknowledged/duplicate/timed-out/failed、pending、pending bytes，以及每个会话的协商模组通道计数。采样失败不会伪装成 0 通过，L3 的 minimum-samples 门禁会拒绝无观测结果。
 - `MultiplayerSoakSchedule` 使用稳定 PRNG 生成场景、场景种子及故障 profile，开跑前先持久化。`MultiplayerSoakRunner` 每轮立即原子更新 summary，玩法失败、生产路径证明失败、进程资源超预算、任一节点故障队列超过默认 10000 包或可靠证据不闭环都会让 L3 返回非零；门槛不会为迁就失败而自动放宽。M12 最终使用 seed `20260809` 分别完成 Direct 与 Relay 十二场景 loss 轮转：两边均为 12/12，通过轮次都观测到至少三次可靠重试，最终可靠失败、超时、待发项/字节、证据失败和预算违规全部为零。证据位于 `TestResults/m12-loss-full-direct-final-v3` 与 `TestResults/m12-loss-full-relay-final-v5`。
 - 游戏运行时构建使用 `-m:1`，消除同一 MSBuild 图并行写入 `EntitySystem.dll` 的机器负载相关自锁。该约束只降低构建并发，不改变游戏节点并行运行。
 

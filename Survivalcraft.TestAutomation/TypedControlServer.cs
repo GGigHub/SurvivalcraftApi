@@ -425,7 +425,8 @@ public partial class TestAutomationModLoader {
             : command.Mods.Select(mod => new NetworkModIdentity(
                 mod.PackageName,
                 mod.Version,
-                mod.ApiVersion));
+                mod.ApiVersion,
+                ParseNetworkScope(mod.NetworkScope)));
         NetworkCompatibilityManifest manifest = new(
             command.ProtocolRevision ?? loaded.ProtocolRevision,
             command.ApiVersion ?? loaded.ApiVersion,
@@ -451,7 +452,8 @@ public partial class TestAutomationModLoader {
             (manifest.Mods ?? []).Select(mod => new CompatibilityModDescriptor(
                 mod.PackageName ?? string.Empty,
                 mod.Version ?? string.Empty,
-                mod.ApiVersion ?? string.Empty)).ToArray(),
+                mod.ApiVersion ?? string.Empty,
+                mod.Scope.ToString())).ToArray(),
             result?.Accepted,
             result?.PrimaryCode.ToString(),
             result?.Summary,
@@ -461,6 +463,19 @@ public partial class TestAutomationModLoader {
                 issue.Expected ?? string.Empty,
                 issue.Actual ?? string.Empty,
                 issue.Message ?? string.Empty)).ToArray());
+    }
+
+    private static ModNetworkScope ParseNetworkScope(string value) {
+        if (Enum.TryParse(
+                value,
+                ignoreCase: true,
+                out ModNetworkScope scope)
+            && (scope == ModNetworkScope.Required
+                || scope == ModNetworkScope.Optional)) {
+            return scope;
+        }
+        throw new ArgumentException(
+            $"Compatibility manifest network scope '{value}' must be Required or Optional.");
     }
 
     private static string BuildCompatibilityStateName() {

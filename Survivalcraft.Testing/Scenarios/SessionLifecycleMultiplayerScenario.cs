@@ -41,7 +41,7 @@ public sealed class SessionLifecycleMultiplayerScenarioException : Exception {
 
 public sealed class SessionLifecycleMultiplayerScenario {
     public const string ScenarioName = "session-lifecycle-multiplayer";
-    public const int ScenarioVersion = 2;
+    public const int ScenarioVersion = 3;
 
     private static readonly string[] NodeRoles = [
         "server", "client-a", "client-b", "client-c", "client-d"
@@ -65,7 +65,9 @@ public sealed class SessionLifecycleMultiplayerScenario {
         new("verify-mod-backpressure", ControlCommandNames.SetNetworkFaults),
         new("disconnect-during-player-creation", ControlCommandNames.Disconnect),
         new("recover-player-creation", "network.connect(client-d)"),
-        new("simultaneous-reconnect-storm", ControlCommandNames.Disconnect),
+        new("verify-mixed-optional-session-isolation", ControlCommandNames.InjectTestModEnvelope),
+        new("restore-exact-mod-session-contracts", ControlCommandNames.Disconnect),
+        new("simultaneous-reconnect-storm", "network.connect(all)"),
         new("verify-stable-identities", ControlCommandNames.GetSnapshotV2),
         new("supersede-duplicate-identity", ControlCommandNames.ConfigureNode),
         new("verify-session-scoped-cleanup", ControlCommandNames.GetSnapshotV2)
@@ -164,6 +166,7 @@ public sealed class SessionLifecycleMultiplayerScenario {
                     ControlCommandNames.GetModChannels,
                     ControlCommandNames.ResetTestModMessages,
                     ControlCommandNames.RunTestModTrafficBurst,
+                    ControlCommandNames.InjectTestModEnvelope,
                     ControlCommandNames.ReplayPlayerCreate
                 ],
                 Domains: [
@@ -686,7 +689,131 @@ public sealed class SessionLifecycleMultiplayerScenario {
                 scenarioToken).ConfigureAwait(false);
 
             await runner.RunAsync(
-                "simultaneous-reconnect-storm",
+                "verify-mixed-optional-session-isolation",
+                ControlCommandNames.InjectTestModEnvelope,
+                async token => {
+                    CompatibilityStatus baseline =
+                        await cluster.Clients[0]
+                            .SendAsync<EmptyCommand, CompatibilityStatus>(
+                                ControlCommandNames.GetCompatibility,
+                                new EmptyCommand(),
+                                cancellationToken: token).ConfigureAwait(false);
+                    const string testAutomationPackage = "survivalcraft.testautomation";
+                    CompatibilityModDescriptor[] optionalMods = baseline.Mods
+                        .Select(mod => string.Equals(
+                                mod.PackageName,
+                                testAutomationPackage,
+                                StringComparison.OrdinalIgnoreCase)
+                            ? mod with { NetworkScope = "Optional" }
+                            : mod)
+                        .ToArray();
+                    if (!optionalMods.Any(mod => string.Equals(
+                            mod.PackageName,
+                            testAutomationPackage,
+                            StringComparison.OrdinalIgnoreCase))) {
+                        throw new InvalidOperationException(
+                            "TestAutomation mod is missing from the session compatibility baseline.");
+                    }
+                    CompatibilityModDescriptor[] withoutTestMod = baseline.Mods
+                        .Where(mod => !string.Equals(
+                            mod.PackageName,
+                            testAutomationPackage,
+                            StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+
+                    await Task.WhenAll(cluster.Clients.Select(client =>
+                        client.SendAsync<DisconnectCommand, ControlAck>(
+                            ControlCommandNames.Disconnect,
+                            new DisconnectCommand(),
+                            cancellationToken: token))).ConfigureAwait(false);
+                    _ = await WaitForNetworkSnapshotAsync(
+                        cluster.Server,
+                        value => value.Network?.ServerSessionCount == 0
+                            && value.Network.ModChannel?.ActivePeerStates == 0,
+                        stepTimeout,
+                        "Server retained state before the mixed optional-mod matrix.",
+                        token).ConfigureAwait(false);
+
+                    _ = await cluster.Server
+                        .SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                            ControlCommandNames.ConfigureCompatibility,
+                            new ConfigureCompatibilityCommand(Mods: optionalMods),
+                            cancellationToken: token).ConfigureAwait(false);
+                    for (int index = 0; index < cluster.Clients.Length; index++) {
+                        GameNodeProcess client = cluster.Clients[index];
+                        bool hasTestMod = index < cluster.Clients.Length - 1;
+                        _ = await client
+                            .SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                                ControlCommandNames.ConfigureCompatibility,
+                                new ConfigureCompatibilityCommand(
+                                    Mods: hasTestMod ? optionalMods : withoutTestMod),
+                                cancellationToken: token).ConfigureAwait(false);
+                        _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                            ControlCommandNames.ConfigureModChannels,
+                            hasTestMod
+                                ? new ConfigureModChannelsCommand(ClearOverride: true)
+                                : new ConfigureModChannelsCommand(Channels: []),
+                            cancellationToken: token).ConfigureAwait(false);
+                    }
+
+                    await Task.WhenAll(cluster.Clients.Select((client, index) =>
+                        MultiplayerGameplayBootstrap.ConnectClientAndEnterAsync(
+                            cluster,
+                            client,
+                            $"Optional{(char)('A' + index)}",
+                            stepTimeout,
+                            token))).ConfigureAwait(false);
+                    StateSnapshotV2 mixed = await WaitForNetworkSnapshotAsync(
+                        cluster.Server,
+                        value => value.Network?.ServerSessionCount == 4
+                            && value.Network.Sessions?.Count(session =>
+                                session.NegotiatedModChannelCount == 1) == 3
+                            && value.Network.Sessions?.Count(session =>
+                                session.NegotiatedModChannelCount == 0) == 1,
+                        stepTimeout,
+                        "Server did not expose three negotiated and one isolated mod session.",
+                        token).ConfigureAwait(false);
+                    snapshots["server-mixed-optional-sessions"] = mixed;
+
+                    ModChannelStatus serverChannels =
+                        await cluster.Server.SendAsync<EmptyCommand, ModChannelStatus>(
+                            ControlCommandNames.GetModChannels,
+                            new EmptyCommand(),
+                            cancellationToken: token).ConfigureAwait(false);
+                    ModChannelStatus[] clientChannels = await Task.WhenAll(
+                        cluster.Clients.Select(client =>
+                            client.SendAsync<EmptyCommand, ModChannelStatus>(
+                                ControlCommandNames.GetModChannels,
+                                new EmptyCommand(),
+                                cancellationToken: token))).ConfigureAwait(false);
+                    if (serverChannels.NegotiatedChannelCount != 3
+                        || clientChannels.Take(3).Any(status =>
+                            status.NegotiatedChannelCount != 1)
+                        || clientChannels[3].NegotiatedChannelCount != 0) {
+                        throw new InvalidOperationException(
+                            "Mixed optional-mod session channel counts did not remain peer-scoped.");
+                    }
+
+                    await ModChannelIsolationAssertions.VerifyAsync(
+                        cluster.Server,
+                        cluster.Clients[3],
+                        metrics,
+                        $"optional.session.{options.Transport.ToString().ToLowerInvariant()}",
+                        options.Seed,
+                        stepTimeout,
+                        token,
+                        expectedBroadcastRecipients: 3,
+                        targetNetworkIdentity: identities[3],
+                        expectedRecipients: cluster.Clients.Take(3).ToArray()).ConfigureAwait(false);
+                },
+                scenarioToken).ConfigureAwait(false);
+            assertions.Add(Passed(
+                "mixed-optional-mod-session-isolation",
+                NodeRoles,
+                "Three peers negotiated the mod channel while the absent peer joined with zero channels; broadcasts and raw ingress remained session-scoped."));
+
+            await runner.RunAsync(
+                "restore-exact-mod-session-contracts",
                 ControlCommandNames.Disconnect,
                 async token => {
                     await Task.WhenAll(cluster.Clients.Select(client =>
@@ -694,6 +821,37 @@ public sealed class SessionLifecycleMultiplayerScenario {
                             ControlCommandNames.Disconnect,
                             new DisconnectCommand(),
                             cancellationToken: token))).ConfigureAwait(false);
+                    StateSnapshotV2 empty = await WaitForNetworkSnapshotAsync(
+                        cluster.Server,
+                        value => value.Network?.ServerSessionCount == 0
+                            && value.Network.ModChannel?.ActivePeerStates == 0,
+                        stepTimeout,
+                        "Server retained mixed optional-mod session state.",
+                        token).ConfigureAwait(false);
+                    snapshots["server-mixed-optional-cleaned"] = empty;
+                    _ = await cluster.Server
+                        .SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                            ControlCommandNames.ConfigureCompatibility,
+                            new ConfigureCompatibilityCommand(ClearOverride: true),
+                            cancellationToken: token).ConfigureAwait(false);
+                    foreach (GameNodeProcess client in cluster.Clients) {
+                        _ = await client
+                            .SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                                ControlCommandNames.ConfigureCompatibility,
+                                new ConfigureCompatibilityCommand(ClearOverride: true),
+                                cancellationToken: token).ConfigureAwait(false);
+                        _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                            ControlCommandNames.ConfigureModChannels,
+                            new ConfigureModChannelsCommand(ClearOverride: true),
+                            cancellationToken: token).ConfigureAwait(false);
+                    }
+                },
+                scenarioToken).ConfigureAwait(false);
+
+            await runner.RunAsync(
+                "simultaneous-reconnect-storm",
+                "network.connect(all)",
+                async token => {
                     StateSnapshotV2 empty = await WaitForNetworkSnapshotAsync(
                         cluster.Server,
                         value => value.Network?.ServerSessionCount == 0

@@ -33,7 +33,7 @@ public sealed class FurnitureHammerProtocolTests {
             ProbeRateLimit: false,
             DuplicateCount: 3);
 
-        Assert.Equal(15, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(16, AutomationProtocol.CurrentApiVersion);
         Assert.Equal(
             prepare,
             ControlProtocol.CreateRequest(

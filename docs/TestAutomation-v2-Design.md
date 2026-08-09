@@ -9,7 +9,7 @@
 TestAutomation v2 不重写现有测试框架，而是在已经稳定的命名管道控制面、无界面进程模型和场景产物之上增加完整的领域驱动能力。设计采用以下决定：
 
 1. 保持长度前缀 JSON 的 wire protocol v1，不因增加命令或快照字段破坏现有 TestHost 与运行时配对。
-2. 单独引入可演进的 Automation API（当前为 v15）和 `StateSnapshotV2.SchemaVersion = 4`；能力版本、线协议版本和快照版本彼此独立。
+2. 单独引入可演进的 Automation API（当前为 v16）和 `StateSnapshotV2.SchemaVersion = 5`；能力版本、线协议版本和快照版本彼此独立。
 3. 保留所有现有 v1 命令和 `state.getSnapshot`，以新增命令的方式演进，不修改旧 DTO 的含义。
 4. 明确区分 `fixture.*` 布置命令和玩家动作命令。前者用于构造确定性前置条件；后者必须经过真实客户端玩法路径，不能直接伪造最终状态或网络包。
 5. 新稳定场景不得使用 `legacy.executeScript`、`FUNC`、`EXEC` 或 UI 点击来验证非 UI 玩法。
@@ -465,7 +465,7 @@ Survivalcraft.TestAutomation/
 
 已实现并进入自动门禁的内容：
 
-- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 为 v8，会话/通道生命周期为 v9，熔炉/容器结果为 v10，世界火焰/爆炸事件为 v11，家具锤夹具、动作与快照为 v12，创造飞行结构化结果与 revision burst 为 v13，生存状态四域及 schema 3 投影后为 v14，可靠投递证据及 schema 4 网络投影后当前为 v15；
+- 控制 wire protocol 仍为 v1，新增 `system.describe` 与独立 Automation API 能力校验；库存/生命阶段为 v3，环境/mechanics 为 v4，骑乘为 v5，逻辑为 v6，生产路径证明为 v7，pickable/projectile 为 v8，会话/通道生命周期为 v9，熔炉/容器结果为 v10，世界火焰/爆炸事件为 v11，家具锤夹具、动作与快照为 v12，创造飞行结构化结果与 revision burst 为 v13，生存状态四域及 schema 3 投影后为 v14，可靠投递证据及 schema 4 网络投影后为 v15，模组范围、协商通道计数和原始信封隔离探针及 schema 5 网络投影后当前为 v16；
 - 现有控制命令由注册式 `TypedCommandRouter` 统一分派，重复命令名在初始化阶段失败；
 - 新增有界 `ActionEventJournal`、`state.getEvents` 和 `state.resetEvents`；
 - 新增 Node、Network、Players、Events 投影的 Snapshot v2、稳定排序和玩家领域容差比较；
@@ -610,7 +610,7 @@ M0 当时的创飞覆盖尚未标记为完整：它仍缺少 late join、重连�
 本切片不新增玩法捷径，而是为全部强类型玩法建立不能虚高的共同证据层：
 
 - Coverage Contract v2 把 action、snapshot、production path、Direct、Relay、observer、authority、late join、reconnect、fault、persistence 与 open gaps 变成 `covered` 的硬条件；生产面库存当前精确覆盖 103 个 hook 和 111 个 packet class。
-- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v15。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
+- Automation API 自 v7 起在 action receipt 与 event journal 中加入 provenance 和 production entry，当前 API 为 v16。`ScenarioArtifactWriter.WriteV2Async` 对成功结果执行 fail-closed attestation，任何夹具/观察证据冒充生产动作、入口不一致、缺 queued 或缺明确 `applied` terminal event 都会失败。
 - `ProductionPathGateway` 成为测试模组唯一的直接 packet queue 边界，源码哨兵同时禁止私有旁路；fixture synchronization、production request、authoritative state 与 fault injection 四类路径被明确区分。
 - revision/lifecycle 旧状态注入在最终权威包稳定 30 个游戏帧后再交付，消除故障重排导致“旧包先到”的非确定性假阴性。
 - 每个游戏节点从控制通道 ready 起每 250 ms 采样工作集、私有内存、句柄、线程与 CPU。当前十二个 v2 场景在 dispose 前把资源摘要写入 metrics；L3 对无样本、峰值、增长量和故障待发队列实行硬预算。Snapshot v2 还记录按 packet class 聚合的排队次数、故障传输次数和字节数，soak 失败会指出最高流量包型，避免只得到一个不可诊断的队列数字。
@@ -649,7 +649,7 @@ M0 当时的创飞覆盖尚未标记为完整：它仍缺少 late join、重连�
 - `MultiplayerSoakSchedule` 当前轮转十二个场景。session-lifecycle 在 loss 计划下额外强制一个 `PlayerCreatePacket` 100% 丢包哨兵，避免低概率 profile 因样本恰巧未丢包而形成假证据；只有 `faultDropped >= 1`、待发队列归零和所有资源预算同时满足才通过。
 - 2026-07-30 的最终无窗口证据包括平台 L0/L1 109/109、游戏 L0/L1 68/68、完整游戏 L2 25/25（含兼容矩阵与 Direct/Relay 生命周期），以及一轮带 loss 的 session-only L3。Direct/Relay 都返回 5 类拒绝、4 个稳定身份、至少 18 次重复创建抑制和 32 次限流；L3 五节点峰值工作集约 471–505 MiB。
 
-`network.session-compatibility`、`api.mod-channel` 和 `player.session-lifecycle` 现均标记为 `covered/soak`。当前 21 个 feature 为 14 个 `covered`、2 个 `partial`、5 个 `planned`；该等级表示已有可重放自动证据，不代表人工 reality 验收或所有未来模组协议都自动正确。
+`network.session-compatibility`、`api.mod-channel` 和 `player.session-lifecycle` 现均标记为 `covered/soak`。当前 22 个核心 headless feature 全部为 `covered`；该等级表示已有可重放自动证据，不代表人工 reality 验收、真实公网/NAT 与设备图形输入验证，或所有未来第三方模组协议都自动正确。
 
 ## 33. M7 熔炉与容器交互完整覆盖实施记录
 

@@ -151,6 +151,10 @@ public static class ModNetworkManager {
             throw new InvalidOperationException(
                 "A mod network channel can only be registered by an initialized ModLoader with a package identity.");
         }
+        if (owner.Entity.modInfo.NetworkScope == ModNetworkScope.LocalOnly) {
+            throw new InvalidOperationException(
+                $"Local-only mod '{packageName}' cannot register multiplayer network channels.");
+        }
 
         ModNetworkChannelDescriptor requested = new(
             packageName,
@@ -217,6 +221,49 @@ public static class ModNetworkManager {
                 throw new InvalidOperationException($"Registered mod channel catalog is invalid: {error}");
             }
             return canonical;
+        }
+    }
+
+    internal static void SetNegotiatedCatalog(
+        ClientSession session,
+        ModNetworkChannelCatalog catalog) {
+        ArgumentNullException.ThrowIfNull(session);
+        if (!ModNetworkProtocol.TryCanonicalizeCatalog(
+                catalog,
+                out ModNetworkChannelCatalog canonical,
+                out string error)) {
+            throw new InvalidOperationException(
+                $"Negotiated mod channel catalog is invalid: {error}");
+        }
+        lock (s_sync) {
+            session.NegotiatedModChannelKeys.Clear();
+            foreach (ModNetworkChannelDescriptor channel in canonical.Channels) {
+                session.NegotiatedModChannelKeys.Add(ModNetworkProtocol.BuildKey(channel));
+            }
+            session.ModChannelCatalogFingerprint =
+                ModNetworkProtocol.ComputeCatalogFingerprint(canonical);
+        }
+    }
+
+    internal static void ClearNegotiatedCatalog(ClientSession session) {
+        if (session == null) {
+            return;
+        }
+        lock (s_sync) {
+            session.NegotiatedModChannelKeys.Clear();
+            session.ModChannelCatalogFingerprint = string.Empty;
+        }
+    }
+
+    public static bool IsChannelNegotiated(
+        ClientSession session,
+        ModNetworkChannelDescriptor descriptor) {
+        if (session == null || descriptor == null) {
+            return false;
+        }
+        string key = ModNetworkProtocol.BuildKey(descriptor);
+        lock (s_sync) {
+            return session.NegotiatedModChannelKeys.Contains(key);
         }
     }
 
@@ -291,6 +338,10 @@ public static class ModNetworkManager {
             throw new InvalidOperationException(
                 $"Mod channel '{registration.Descriptor.QualifiedName}' cannot send before the client project is loaded.");
         }
+        if (!IsChannelNegotiated(session, registration.Descriptor)) {
+            throw new InvalidOperationException(
+                $"Mod channel '{registration.Descriptor.QualifiedName}' was not negotiated for this server session.");
+        }
 
         ModNetworkEnvelope envelope = CreateEnvelope(registration.Descriptor, payload);
         NetworkManager.SendModMessageToServer(envelope);
@@ -312,6 +363,10 @@ public static class ModNetworkManager {
             throw new InvalidOperationException(
                 $"Mod channel '{registration.Descriptor.QualifiedName}' cannot send to an inactive client session.");
         }
+        if (!IsChannelNegotiated(session, registration.Descriptor)) {
+            throw new InvalidOperationException(
+                $"Mod channel '{registration.Descriptor.QualifiedName}' was not negotiated for this client session.");
+        }
 
         ModNetworkEnvelope envelope = CreateEnvelope(registration.Descriptor, payload);
         NetworkManager.SendModMessageToClient(envelope, session);
@@ -328,7 +383,8 @@ public static class ModNetworkManager {
         ClientSession[] recipients = NetworkManager.ServerSessions
             .Where(session => session != except
                 && session.CompatibilityState == NetworkCompatibilityState.Accepted
-                && session.NetworkState >= NetworkState.ProjectLoaded)
+                && session.NetworkState >= NetworkState.ProjectLoaded
+                && IsChannelNegotiated(session, registration.Descriptor))
             .Distinct()
             .ToArray();
         if (recipients.Length == 0) {
@@ -336,7 +392,9 @@ public static class ModNetworkManager {
         }
 
         ModNetworkEnvelope envelope = CreateEnvelope(registration.Descriptor, payload);
-        NetworkManager.BroadcastModMessage(envelope, except);
+        foreach (ClientSession recipient in recipients) {
+            NetworkManager.SendModMessageToClient(envelope, recipient);
+        }
         RecordSent(registration.Descriptor, envelope, isServer: true);
         return recipients.Length;
     }
@@ -378,6 +436,17 @@ public static class ModNetworkManager {
                     ModNetworkDispatchCode.Duplicate,
                     isServer,
                     "Duplicate message identity was ignored.",
+                    timestamp);
+            }
+            if (!peer.NegotiatedModChannelKeys.Contains(
+                    ModNetworkProtocol.BuildKey(
+                        envelope.PackageName,
+                        envelope.ChannelName))) {
+                return RecordDispatchLocked(
+                    envelope,
+                    ModNetworkDispatchCode.UnnegotiatedChannel,
+                    isServer,
+                    "Channel was not negotiated for this peer session.",
                     timestamp);
             }
             if (!s_registrations.TryGetValue(
@@ -466,6 +535,8 @@ public static class ModNetworkManager {
         }
         lock (s_sync) {
             s_peerStates.Remove(session);
+            session.NegotiatedModChannelKeys.Clear();
+            session.ModChannelCatalogFingerprint = string.Empty;
         }
     }
 

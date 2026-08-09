@@ -37,7 +37,7 @@ public sealed class RelayModChannelScenarioException : Exception {
 
 public sealed class RelayModChannelScenario {
     public const string ScenarioName = "relay-mod-channel";
-    public const int ScenarioVersion = 1;
+    public const int ScenarioVersion = 3;
 
     private static readonly ScenarioStepDefinition[] StepDefinitions = [
         new("start-relay-server", "process.start(relay)"),
@@ -53,6 +53,12 @@ public sealed class RelayModChannelScenario {
         new("exchange-and-deduplicate", ControlCommandNames.SendTestModMessage),
         new("isolate-handler-failure", ControlCommandNames.SendTestModMessage),
         new("disconnect-and-clean-session", ControlCommandNames.Disconnect),
+        new("connect-with-server-only-optional-mod", ControlCommandNames.ConfigureCompatibility),
+        new("verify-relay-server-only-channel-isolation", ControlCommandNames.InjectTestModEnvelope),
+        new("disconnect-server-only-optional-session", ControlCommandNames.Disconnect),
+        new("connect-with-client-only-optional-mod", ControlCommandNames.ConfigureCompatibility),
+        new("verify-relay-client-only-channel-isolation", ControlCommandNames.InjectTestModEnvelope),
+        new("disconnect-client-only-and-restore", ControlCommandNames.Disconnect),
         new("reconnect-relay-client", ControlCommandNames.ConnectRelay),
         new("verify-channel-after-reconnect", ControlCommandNames.SendTestModMessage)
     ];
@@ -199,6 +205,12 @@ public sealed class RelayModChannelScenario {
                         new ConfigureNodeCommand("relay-client", options.Seed),
                         cancellationToken: scenarioToken).ConfigureAwait(false);
                 }).ConfigureAwait(false);
+
+            CompatibilityStatus baseline =
+                await client.SendAsync<EmptyCommand, CompatibilityStatus>(
+                    ControlCommandNames.GetCompatibility,
+                    new EmptyCommand(),
+                    cancellationToken: scenarioToken).ConfigureAwait(false);
 
             _ = await StepAsync(
                 "create-server-world",
@@ -437,6 +449,207 @@ public sealed class RelayModChannelScenario {
                         stepTimeout,
                         "Relay host retained the disconnected client session.",
                         scenarioToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
+
+            const string testAutomationPackage = "survivalcraft.testautomation";
+            CompatibilityModDescriptor[] serverOptionalMods = baseline.Mods
+                .Select(mod => string.Equals(
+                        mod.PackageName,
+                        testAutomationPackage,
+                        StringComparison.OrdinalIgnoreCase)
+                    ? mod with { NetworkScope = "Optional" }
+                    : mod)
+                .ToArray();
+            if (!serverOptionalMods.Any(mod => string.Equals(
+                    mod.PackageName,
+                    testAutomationPackage,
+                    StringComparison.OrdinalIgnoreCase))) {
+                throw new InvalidOperationException(
+                    "TestAutomation mod is missing from the relay compatibility baseline.");
+            }
+            CompatibilityModDescriptor[] clientWithoutTestMod = baseline.Mods
+                .Where(mod => !string.Equals(
+                    mod.PackageName,
+                    testAutomationPackage,
+                    StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            await StepActionAsync(
+                "connect-with-server-only-optional-mod",
+                ControlCommandNames.ConfigureCompatibility,
+                async () => {
+                    _ = await server.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(Mods: serverOptionalMods),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(Mods: clientWithoutTestMod),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                        ControlCommandNames.ConfigureModChannels,
+                        new ConfigureModChannelsCommand(Channels: []),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    relay.ThrowIfUnhealthy();
+                    _ = await client.SendAsync<ConnectRelayCommand, ControlAck>(
+                        ControlCommandNames.ConnectRelay,
+                        new ConnectRelayCommand("127.0.0.1", relay.Port, roomCode),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await WaitForWorldEntryAsync(
+                        client,
+                        serverSide: false,
+                        stepTimeout,
+                        scenarioToken).ConfigureAwait(false);
+                    await EnsureClientPlayingAsync(
+                        client,
+                        "RelayLearner",
+                        stepTimeout,
+                        scenarioToken).ConfigureAwait(false);
+                    CompatibilityStatus compatibility =
+                        await client.SendAsync<EmptyCommand, CompatibilityStatus>(
+                            ControlCommandNames.GetCompatibility,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    ModChannelStatus serverChannels =
+                        await server.SendAsync<EmptyCommand, ModChannelStatus>(
+                            ControlCommandNames.GetModChannels,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    ModChannelStatus clientChannels =
+                        await client.SendAsync<EmptyCommand, ModChannelStatus>(
+                            ControlCommandNames.GetModChannels,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    if (compatibility.Accepted != true
+                        || serverChannels.NegotiatedChannelCount != 0
+                        || clientChannels.NegotiatedChannelCount != 0) {
+                        throw new InvalidOperationException(
+                            "Relay optional-mod session was not accepted with an empty negotiated catalog.");
+                    }
+                    metrics["optional.relay.serverOnly.negotiatedChannels"] = "0";
+                }).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "verify-relay-server-only-channel-isolation",
+                ControlCommandNames.InjectTestModEnvelope,
+                () => ModChannelIsolationAssertions.VerifyAsync(
+                    server,
+                    client,
+                    metrics,
+                    "optional.relay.serverOnly",
+                    options.Seed,
+                    stepTimeout,
+                    scenarioToken)).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "disconnect-server-only-optional-session",
+                ControlCommandNames.Disconnect,
+                async () => {
+                    _ = await client.SendAsync<DisconnectCommand, ControlAck>(
+                        ControlCommandNames.Disconnect,
+                        new DisconnectCommand(),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await WaitForRelayStatusAsync(
+                        server,
+                        status => status.HostConnected && status.HostSessionCount == 0,
+                        stepTimeout,
+                        "Relay host retained the optional-mod client session.",
+                        scenarioToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "connect-with-client-only-optional-mod",
+                ControlCommandNames.ConfigureCompatibility,
+                async () => {
+                    _ = await server.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(Mods: clientWithoutTestMod),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(Mods: serverOptionalMods),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                        ControlCommandNames.ConfigureModChannels,
+                        new ConfigureModChannelsCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    relay.ThrowIfUnhealthy();
+                    _ = await client.SendAsync<ConnectRelayCommand, ControlAck>(
+                        ControlCommandNames.ConnectRelay,
+                        new ConnectRelayCommand("127.0.0.1", relay.Port, roomCode),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await WaitForWorldEntryAsync(
+                        client,
+                        serverSide: false,
+                        stepTimeout,
+                        scenarioToken).ConfigureAwait(false);
+                    await EnsureClientPlayingAsync(
+                        client,
+                        "RelayLearner",
+                        stepTimeout,
+                        scenarioToken).ConfigureAwait(false);
+                    CompatibilityStatus compatibility =
+                        await client.SendAsync<EmptyCommand, CompatibilityStatus>(
+                            ControlCommandNames.GetCompatibility,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    ModChannelStatus serverChannels =
+                        await server.SendAsync<EmptyCommand, ModChannelStatus>(
+                            ControlCommandNames.GetModChannels,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    ModChannelStatus clientChannels =
+                        await client.SendAsync<EmptyCommand, ModChannelStatus>(
+                            ControlCommandNames.GetModChannels,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    if (compatibility.Accepted != true
+                        || serverChannels.NegotiatedChannelCount != 0
+                        || clientChannels.NegotiatedChannelCount != 0) {
+                        throw new InvalidOperationException(
+                            "Relay client-only optional-mod session was not accepted with an empty negotiated catalog.");
+                    }
+                    metrics["optional.relay.clientOnly.negotiatedChannels"] = "0";
+                }).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "verify-relay-client-only-channel-isolation",
+                ControlCommandNames.InjectTestModEnvelope,
+                () => ModChannelIsolationAssertions.VerifyAsync(
+                    server,
+                    client,
+                    metrics,
+                    "optional.relay.clientOnly",
+                    unchecked(options.Seed + 1),
+                    stepTimeout,
+                    scenarioToken)).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "disconnect-client-only-and-restore",
+                ControlCommandNames.Disconnect,
+                async () => {
+                    _ = await client.SendAsync<DisconnectCommand, ControlAck>(
+                        ControlCommandNames.Disconnect,
+                        new DisconnectCommand(),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await WaitForRelayStatusAsync(
+                        server,
+                        status => status.HostConnected && status.HostSessionCount == 0,
+                        stepTimeout,
+                        "Relay host retained the client-only optional-mod session.",
+                        scenarioToken).ConfigureAwait(false);
+                    _ = await server.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                        ControlCommandNames.ConfigureModChannels,
+                        new ConfigureModChannelsCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
                 }).ConfigureAwait(false);
 
             await StepActionAsync(

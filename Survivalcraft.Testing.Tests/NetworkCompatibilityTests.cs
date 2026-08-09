@@ -7,8 +7,10 @@ namespace Survivalcraft.Testing.Tests;
 public sealed class NetworkCompatibilityTests {
     [Fact]
     [Trait("Layer", "L0")]
-    public void ProtocolRevisionIncludesApplicationReliableDelivery() {
-        Assert.Equal(16, NetworkCompatibility.ProtocolRevision);
+    public void ProtocolRevisionIncludesScopedModNegotiation() {
+        Assert.Equal(17, NetworkCompatibility.ProtocolRevision);
+        Assert.True(NetworkCompatibility.CurrentCapabilities.HasFlag(
+            NetworkCapabilities.ScopedModManifest));
     }
 
     [Fact]
@@ -61,6 +63,64 @@ public sealed class NetworkCompatibilityTests {
         Assert.Equal(["alpha.mod", "zeta.mod"], canonical.Mods.Select(mod => mod.PackageName));
         Assert.Equal("2.0", canonical.Mods[1].Version);
         Assert.Equal("1.9.3", canonical.ApiVersion);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void OptionalModsMayExistOnOnlyOnePeerButCommonCopiesRemainExact() {
+        NetworkCompatibilityManifest server = Manifest(
+            new NetworkModIdentity(
+                "server.optional",
+                "1.0",
+                "1.9.3",
+                ModNetworkScope.Optional));
+        NetworkCompatibilityManifest client = Manifest(
+            new NetworkModIdentity(
+                "client.optional",
+                "1.0",
+                "1.9.3",
+                ModNetworkScope.Optional));
+
+        Assert.True(NetworkCompatibility.Evaluate(server, client).Accepted);
+
+        client.Mods.Add(new NetworkModIdentity(
+            "server.optional",
+            "2.0",
+            "1.9.3",
+            ModNetworkScope.Optional));
+        NetworkCompatibilityResult mismatch = NetworkCompatibility.Evaluate(server, client);
+
+        Assert.False(mismatch.Accepted);
+        Assert.Equal(NetworkCompatibilityIssueCode.ModVersionMismatch, mismatch.PrimaryCode);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void CommonModScopeMismatchAndLocalOnlyWireEntriesFailClosed() {
+        NetworkCompatibilityManifest server = Manifest(
+            new NetworkModIdentity(
+                "scoped.mod",
+                "1.0",
+                "1.9.3",
+                ModNetworkScope.Optional));
+        NetworkCompatibilityManifest client = Manifest(
+            new NetworkModIdentity("scoped.mod", "1.0", "1.9.3"));
+
+        NetworkCompatibilityResult mismatch = NetworkCompatibility.Evaluate(server, client);
+
+        Assert.False(mismatch.Accepted);
+        Assert.Equal(NetworkCompatibilityIssueCode.ModNetworkScopeMismatch, mismatch.PrimaryCode);
+
+        NetworkCompatibilityManifest invalid = Manifest(
+            new NetworkModIdentity(
+                "local.mod",
+                "1.0",
+                "1.9.3",
+                ModNetworkScope.LocalOnly));
+        Assert.False(NetworkCompatibility.TryCanonicalize(invalid, out _, out string error));
+        Assert.Contains("local-only", error, StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(
+            () => NetworkCompatibilityWireCodec.EncodeManifest(invalid));
     }
 
     [Fact]
@@ -147,7 +207,11 @@ public sealed class NetworkCompatibilityTests {
     [Trait("Layer", "L1")]
     public void ManifestWireCodecRoundTripsEveryHandshakeField() {
         NetworkCompatibilityManifest expected = Manifest(
-            new NetworkModIdentity("example.mod", "1.2.3", "1.9.3"));
+            new NetworkModIdentity(
+                "example.mod",
+                "1.2.3",
+                "1.9.3",
+                ModNetworkScope.Optional));
 
         byte[] payload = NetworkCompatibilityWireCodec.EncodeManifest(expected);
         NetworkCompatibilityManifest actual = NetworkCompatibilityWireCodec.DecodeManifest(payload);
@@ -159,6 +223,25 @@ public sealed class NetworkCompatibilityTests {
         Assert.Equal("example.mod", mod.PackageName);
         Assert.Equal("1.2.3", mod.Version);
         Assert.Equal("1.9.3", mod.ApiVersion);
+        Assert.Equal(ModNetworkScope.Optional, mod.Scope);
+    }
+
+    [Fact]
+    [Trait("Layer", "L1")]
+    public void LegacyManifestDecodesRequiredScopeWithoutSilentlyDowngradingOptional() {
+        NetworkCompatibilityManifest legacy = Manifest(
+            new NetworkModIdentity("legacy.mod", "1", "1.9.3"));
+        legacy.ProtocolRevision = 16;
+
+        NetworkCompatibilityManifest decoded = NetworkCompatibilityWireCodec.DecodeManifest(
+            NetworkCompatibilityWireCodec.EncodeManifest(legacy));
+
+        Assert.Equal(16, decoded.ProtocolRevision);
+        Assert.Equal(ModNetworkScope.Required, Assert.Single(decoded.Mods).Scope);
+
+        legacy.Mods[0].Scope = ModNetworkScope.Optional;
+        Assert.Throws<InvalidDataException>(
+            () => NetworkCompatibilityWireCodec.EncodeManifest(legacy));
     }
 
     [Fact]

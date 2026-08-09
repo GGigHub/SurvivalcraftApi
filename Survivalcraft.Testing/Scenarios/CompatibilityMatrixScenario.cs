@@ -35,7 +35,7 @@ public sealed class CompatibilityMatrixScenarioException : Exception {
 
 public sealed class CompatibilityMatrixScenario {
     public const string ScenarioName = "compatibility-matrix";
-    public const int ScenarioVersion = 3;
+    public const int ScenarioVersion = 5;
 
     private static readonly ScenarioStepDefinition[] StepDefinitions = [
         new("start-nodes", "process.start(server, client)"),
@@ -53,6 +53,12 @@ public sealed class CompatibilityMatrixScenario {
         new("blackhole-mod-channel-catalog-result", ControlCommandNames.SetNetworkFaults),
         new("blackhole-session-connect", ControlCommandNames.SetNetworkFaults),
         new("blackhole-session-admission-result", ControlCommandNames.SetNetworkFaults),
+        new("accept-server-optional-mod-absent-on-client", ControlCommandNames.ConfigureCompatibility),
+        new("verify-server-only-channel-isolation", ControlCommandNames.InjectTestModEnvelope),
+        new("disconnect-server-only-session", ControlCommandNames.Disconnect),
+        new("accept-client-optional-mod-absent-on-server", ControlCommandNames.ConfigureCompatibility),
+        new("verify-client-only-channel-isolation", ControlCommandNames.InjectTestModEnvelope),
+        new("disconnect-client-only-session", ControlCommandNames.Disconnect),
         new("recover-with-matching-manifest", ControlCommandNames.ConfigureCompatibility),
         new("stop-nodes", ControlCommandNames.Disconnect)
     ];
@@ -438,6 +444,189 @@ public sealed class CompatibilityMatrixScenario {
                         admission),
                     result => result).ConfigureAwait(false);
             }
+
+            const string testAutomationPackage = "survivalcraft.testautomation";
+            CompatibilityModDescriptor[] serverOptionalMods = baseline.Mods
+                .Select(mod => string.Equals(
+                        mod.PackageName,
+                        testAutomationPackage,
+                        StringComparison.OrdinalIgnoreCase)
+                    ? mod with { NetworkScope = "Optional" }
+                    : mod)
+                .ToArray();
+            if (!serverOptionalMods.Any(mod => string.Equals(
+                    mod.PackageName,
+                    testAutomationPackage,
+                    StringComparison.OrdinalIgnoreCase))) {
+                throw new InvalidOperationException(
+                    "TestAutomation mod is missing from the compatibility baseline.");
+            }
+            CompatibilityModDescriptor[] clientWithoutTestMod = baseline.Mods
+                .Where(mod => !string.Equals(
+                    mod.PackageName,
+                    testAutomationPackage,
+                    StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            _ = await StepAsync(
+                "accept-server-optional-mod-absent-on-client",
+                ControlCommandNames.ConfigureCompatibility,
+                async () => {
+                    _ = await server.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(Mods: serverOptionalMods),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(Mods: clientWithoutTestMod),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                        ControlCommandNames.ConfigureModChannels,
+                        new ConfigureModChannelsCommand(Channels: []),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConnectClientCommand, ControlAck>(
+                        ControlCommandNames.ConnectClient,
+                        new ConnectClientCommand("127.0.0.1", server.GamePort),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    CompatibilityStatus accepted = await WaitForCompatibilityAsync(
+                        client,
+                        "None",
+                        accepted: true,
+                        requireProjectLoaded: true,
+                        stepTimeout,
+                        scenarioToken).ConfigureAwait(false);
+                    ModChannelStatus serverChannels =
+                        await server.SendAsync<EmptyCommand, ModChannelStatus>(
+                            ControlCommandNames.GetModChannels,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    ModChannelStatus clientChannels =
+                        await client.SendAsync<EmptyCommand, ModChannelStatus>(
+                            ControlCommandNames.GetModChannels,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    if (serverChannels.NegotiatedChannelCount != 0
+                        || clientChannels.NegotiatedChannelCount != 0) {
+                        throw new InvalidOperationException(
+                            "Optional-mod session negotiated a channel that is absent on the client.");
+                    }
+                    metrics["optional.direct.serverOnly.negotiatedChannels"] = "0";
+                    return accepted;
+                },
+                result => result.State).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "verify-server-only-channel-isolation",
+                ControlCommandNames.InjectTestModEnvelope,
+                () => ModChannelIsolationAssertions.VerifyAsync(
+                    server,
+                    client,
+                    metrics,
+                    "optional.direct.serverOnly",
+                    options.Seed,
+                    stepTimeout,
+                    scenarioToken)).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "disconnect-server-only-session",
+                ControlCommandNames.Disconnect,
+                async () => {
+                    _ = await client.SendAsync<DisconnectCommand, ControlAck>(
+                        ControlCommandNames.Disconnect,
+                        new DisconnectCommand(),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await server.WaitForStatusAsync(
+                        status => status.ServerSessionCount == 0,
+                        stepTimeout,
+                        "Server retained the optional-mod test session.",
+                        scenarioToken).ConfigureAwait(false);
+                    _ = await server.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
+
+            _ = await StepAsync(
+                "accept-client-optional-mod-absent-on-server",
+                ControlCommandNames.ConfigureCompatibility,
+                async () => {
+                    _ = await server.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(Mods: clientWithoutTestMod),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(Mods: serverOptionalMods),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureModChannelsCommand, ModChannelStatus>(
+                        ControlCommandNames.ConfigureModChannels,
+                        new ConfigureModChannelsCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConnectClientCommand, ControlAck>(
+                        ControlCommandNames.ConnectClient,
+                        new ConnectClientCommand("127.0.0.1", server.GamePort),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    CompatibilityStatus accepted = await WaitForCompatibilityAsync(
+                        client,
+                        "None",
+                        accepted: true,
+                        requireProjectLoaded: true,
+                        stepTimeout,
+                        scenarioToken).ConfigureAwait(false);
+                    ModChannelStatus serverChannels =
+                        await server.SendAsync<EmptyCommand, ModChannelStatus>(
+                            ControlCommandNames.GetModChannels,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    ModChannelStatus clientChannels =
+                        await client.SendAsync<EmptyCommand, ModChannelStatus>(
+                            ControlCommandNames.GetModChannels,
+                            new EmptyCommand(),
+                            cancellationToken: scenarioToken).ConfigureAwait(false);
+                    if (serverChannels.NegotiatedChannelCount != 0
+                        || clientChannels.NegotiatedChannelCount != 0) {
+                        throw new InvalidOperationException(
+                            "Client-only optional-mod session negotiated a channel absent from the server manifest.");
+                    }
+                    metrics["optional.direct.clientOnly.negotiatedChannels"] = "0";
+                    return accepted;
+                },
+                result => result.State).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "verify-client-only-channel-isolation",
+                ControlCommandNames.InjectTestModEnvelope,
+                () => ModChannelIsolationAssertions.VerifyAsync(
+                    server,
+                    client,
+                    metrics,
+                    "optional.direct.clientOnly",
+                    unchecked(options.Seed + 1),
+                    stepTimeout,
+                    scenarioToken)).ConfigureAwait(false);
+
+            await StepActionAsync(
+                "disconnect-client-only-session",
+                ControlCommandNames.Disconnect,
+                async () => {
+                    _ = await client.SendAsync<DisconnectCommand, ControlAck>(
+                        ControlCommandNames.Disconnect,
+                        new DisconnectCommand(),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await server.WaitForStatusAsync(
+                        status => status.ServerSessionCount == 0,
+                        stepTimeout,
+                        "Server retained the client-only optional-mod test session.",
+                        scenarioToken).ConfigureAwait(false);
+                    _ = await server.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                    _ = await client.SendAsync<ConfigureCompatibilityCommand, CompatibilityStatus>(
+                        ControlCommandNames.ConfigureCompatibility,
+                        new ConfigureCompatibilityCommand(ClearOverride: true),
+                        cancellationToken: scenarioToken).ConfigureAwait(false);
+                }).ConfigureAwait(false);
 
             _ = await StepAsync(
                 "recover-with-matching-manifest",

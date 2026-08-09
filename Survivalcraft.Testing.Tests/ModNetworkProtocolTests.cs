@@ -55,6 +55,104 @@ public sealed class ModNetworkProtocolTests {
     }
 
     [Fact]
+    [Trait("Layer", "L0")]
+    public void OptionalOneSidedPackagesNegotiateNoChannels() {
+        NetworkCompatibilityManifest serverManifest = Manifest(
+            new NetworkModIdentity(
+                "server.optional",
+                "1",
+                "1.9.3",
+                ModNetworkScope.Optional));
+        NetworkCompatibilityManifest clientManifest = Manifest(
+            new NetworkModIdentity(
+                "client.optional",
+                "1",
+                "1.9.3",
+                ModNetworkScope.Optional));
+        ModNetworkChannelCatalog server = new([
+            Channel("server.optional", "state", 1, ModNetworkDirection.Bidirectional, 64)
+        ]);
+        ModNetworkChannelCatalog client = new([
+            Channel("client.optional", "overlay", 1, ModNetworkDirection.ServerToClient, 64),
+            // A stale or test-overridden catalog entry must not resurrect a package
+            // that the client's manifest says is absent.
+            Channel("server.optional", "state", 1, ModNetworkDirection.Bidirectional, 64)
+        ]);
+
+        ModNetworkCatalogNegotiation negotiation = ModNetworkProtocol.NegotiateCatalogs(
+            server,
+            client,
+            serverManifest,
+            clientManifest);
+
+        Assert.True(negotiation.Result.Accepted);
+        Assert.Empty(negotiation.Catalog.Channels);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void CommonOptionalPackageStillRequiresAnExactChannelContract() {
+        NetworkModIdentity shared = new(
+            "shared.optional",
+            "1",
+            "1.9.3",
+            ModNetworkScope.Optional);
+        NetworkCompatibilityManifest serverManifest = Manifest(shared);
+        NetworkCompatibilityManifest clientManifest = Manifest(shared);
+        ModNetworkChannelCatalog server = new([
+            Channel("shared.optional", "state", 1, ModNetworkDirection.Bidirectional, 64)
+        ]);
+
+        ModNetworkCatalogNegotiation missing = ModNetworkProtocol.NegotiateCatalogs(
+            server,
+            new ModNetworkChannelCatalog(),
+            serverManifest,
+            clientManifest);
+
+        Assert.False(missing.Result.Accepted);
+        Assert.Equal(
+            NetworkCompatibilityIssueCode.MissingClientChannel,
+            missing.Result.PrimaryCode);
+        Assert.Empty(missing.Catalog.Channels);
+
+        ModNetworkCatalogNegotiation exact = ModNetworkProtocol.NegotiateCatalogs(
+            server,
+            server.Clone(),
+            serverManifest,
+            clientManifest);
+        Assert.True(exact.Result.Accepted);
+        Assert.Equal("shared.optional:state", Assert.Single(exact.Catalog.Channels).QualifiedName);
+    }
+
+    [Fact]
+    [Trait("Layer", "L1")]
+    public void ClientRejectsNegotiatedCatalogOutsideItsLocalContract() {
+        ModNetworkChannelCatalog local = new([
+            Channel("shared.mod", "state", 1, ModNetworkDirection.Bidirectional, 64)
+        ]);
+        ModNetworkChannelCatalog injected = new([
+            Channel("other.mod", "admin", 1, ModNetworkDirection.Bidirectional, 64)
+        ]);
+
+        Assert.False(ModNetworkProtocol.TryValidateNegotiatedCatalog(
+            local,
+            injected,
+            out _,
+            out string unknownError));
+        Assert.Contains("not declared locally", unknownError, StringComparison.Ordinal);
+
+        ModNetworkChannelCatalog altered = new([
+            Channel("shared.mod", "state", 2, ModNetworkDirection.Bidirectional, 64)
+        ]);
+        Assert.False(ModNetworkProtocol.TryValidateNegotiatedCatalog(
+            local,
+            altered,
+            out _,
+            out string alteredError));
+        Assert.Contains("differs", alteredError, StringComparison.Ordinal);
+    }
+
+    [Fact]
     [Trait("Layer", "L1")]
     public void CatalogCodecRoundTripsCanonicalContractAndFingerprint() {
         ModNetworkChannelCatalog source = new([
@@ -270,4 +368,12 @@ public sealed class ModNetworkProtocolTests {
         ModNetworkDirection directions,
         int maximumPayloadBytes) =>
         new(packageName, channelName, version, directions, maximumPayloadBytes);
+
+    private static NetworkCompatibilityManifest Manifest(
+        params NetworkModIdentity[] mods) =>
+        new(
+            NetworkCompatibility.ProtocolRevision,
+            "1.9.3",
+            NetworkCompatibility.CurrentCapabilities,
+            mods);
 }

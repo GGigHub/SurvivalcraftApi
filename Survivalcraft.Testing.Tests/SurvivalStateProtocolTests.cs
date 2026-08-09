@@ -32,8 +32,8 @@ public sealed class SurvivalStateProtocolTests {
             ControlCommandNames.QuiesceSurvivalStateFixture,
             new QuiesceSurvivalStateFixtureCommand(fixture.Behaviors));
 
-        Assert.Equal(15, AutomationProtocol.CurrentApiVersion);
-        Assert.Equal(4, AutomationProtocol.CurrentSnapshotSchemaVersion);
+        Assert.Equal(16, AutomationProtocol.CurrentApiVersion);
+        Assert.Equal(5, AutomationProtocol.CurrentSnapshotSchemaVersion);
         Assert.Equal(
             behavior,
             behaviorRequest.DeserializePayload<SetCreatureBehaviorStateCommand>());

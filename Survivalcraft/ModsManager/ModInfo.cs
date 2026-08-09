@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Game.Network;
 using NuGet.Versioning;
 
 namespace Game {
@@ -56,6 +57,12 @@ namespace Game {
         ///     玩法影响等级，用于标识模组对游戏平衡性的影响程度
         /// </summary>
         public GameplayImpactLevel GameplayImpactLevel = GameplayImpactLevel.Cosmetic;
+
+        /// <summary>
+        /// 联机安装范围。Required 要求服务端与客户端同时安装；Optional 允许单边缺席，
+        /// 但双方均安装时仍要求版本和通道契约完全一致；LocalOnly 不进入联机清单且不能注册网络通道。
+        /// </summary>
+        public ModNetworkScope NetworkScope = ModNetworkScope.Required;
 
         /// <summary>
         ///     数据驱动设置页面树，由 ModsManager.ParseAllModSettings 在模组 dll 加载后解析 RawSettings 填充

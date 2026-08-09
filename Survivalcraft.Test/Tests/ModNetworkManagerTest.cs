@@ -68,6 +68,38 @@ public sealed class ModNetworkManagerTest : IDisposable {
 
     [Fact]
     [Trait("Layer", "L0")]
+    public void LocalOnlyModCannotRegisterNetworkChannels() {
+        TestLoader loader = CreateLoader("local.mod");
+        loader.Entity.modInfo.NetworkScope = ModNetworkScope.LocalOnly;
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+            loader.RegisterNetworkChannel(
+                "local",
+                1,
+                ModNetworkDirection.Bidirectional,
+                (_, _) => { }));
+
+        Assert.Contains("Local-only", exception.Message, StringComparison.Ordinal);
+        Assert.Empty(ModNetworkManager.GetLocalCatalog().Channels);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void ModInfoNetworkScopeDefaultsRequiredAndParsesNamedValuesSafely() {
+        ModInfo defaultInfo = ModsManager.DeserializeJson(
+            "{\"PackageName\":\"default.mod\"}");
+        ModInfo optionalInfo = ModsManager.DeserializeJson(
+            "{\"PackageName\":\"optional.mod\",\"NetworkScope\":\"optional\"}");
+        ModInfo invalidInfo = ModsManager.DeserializeJson(
+            "{\"PackageName\":\"invalid.mod\",\"NetworkScope\":\"1\"}");
+
+        Assert.Equal(ModNetworkScope.Required, defaultInfo.NetworkScope);
+        Assert.Equal(ModNetworkScope.Optional, optionalInfo.NetworkScope);
+        Assert.Equal(ModNetworkScope.Required, invalidInfo.NetworkScope);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
     public void CompatibilityHelloCannotRestartAnAcceptedSession() {
         NetworkCompatibilityResult accepted = NetworkCompatibilityResult.Accept();
         ClientSession session = new() {
@@ -82,6 +114,36 @@ public sealed class ModNetworkManagerTest : IDisposable {
 
         Assert.Equal(NetworkCompatibilityState.Accepted, session.CompatibilityState);
         Assert.Same(accepted, session.CompatibilityResult);
+    }
+
+    [Fact]
+    [Trait("Layer", "L1")]
+    public void ChannelResultPacketRoundTripsNegotiatedCatalog() {
+        ModChannelCatalogResultPacket source = new(
+            NetworkCompatibilityResult.Accept(),
+            new ModNetworkChannelCatalog([
+                new ModNetworkChannelDescriptor(
+                    "example.mod",
+                    "state",
+                    2,
+                    ModNetworkDirection.Bidirectional,
+                    512)
+            ]));
+
+        byte[] payload;
+        using (PacketStreamWriter writer = new()) {
+            source.Serialize(new PacketSerializer(writer));
+            payload = writer.Data();
+        }
+        ModChannelCatalogResultPacket decoded = new();
+        using PacketStreamReader reader = new(payload);
+        decoded.Serialize(new PacketSerializer(reader));
+
+        Assert.True(decoded.Result.Accepted);
+        ModNetworkChannelDescriptor channel = Assert.Single(decoded.Catalog.Channels);
+        Assert.Equal("example.mod:state", channel.QualifiedName);
+        Assert.Equal(2, channel.Version);
+        Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);
     }
 
     [Fact]
@@ -195,10 +257,12 @@ public sealed class ModNetworkManagerTest : IDisposable {
             1,
             [1, 2, 3]);
 
+        ClientSession session = new();
+        NegotiateLocalCatalog(session);
         ModNetworkDispatchCode result = ModNetworkManager.Dispatch(
             envelope,
             isServer: true,
-            new ClientSession());
+            session);
 
         Assert.Equal(ModNetworkDispatchCode.ProjectUnavailable, result);
         Assert.False(called);
@@ -223,6 +287,7 @@ public sealed class ModNetworkManagerTest : IDisposable {
             (_, _) => called = true,
             maximumPayloadBytes: 1);
         ClientSession session = new();
+        NegotiateLocalCatalog(session);
 
         ModNetworkDispatchCode direction = ModNetworkManager.Dispatch(
             new ModNetworkEnvelope(
@@ -258,6 +323,7 @@ public sealed class ModNetworkManagerTest : IDisposable {
             ModNetworkDirection.ClientToServer,
             (_, _) => { });
         ClientSession session = new();
+        NegotiateLocalCatalog(session);
         ModNetworkEnvelope envelope = new(
             Guid.NewGuid(),
             "cleanup.mod",
@@ -282,9 +348,94 @@ public sealed class ModNetworkManagerTest : IDisposable {
 
         ModNetworkManager.ClearSession(session);
         Assert.Equal(
-            ModNetworkDispatchCode.ProjectUnavailable,
+            ModNetworkDispatchCode.UnnegotiatedChannel,
             ModNetworkManager.Dispatch(envelope, isServer: true, session));
+        NegotiateLocalCatalog(session);
+        Assert.Equal(
+            ModNetworkDispatchCode.Duplicate,
+            ModNetworkManager.Dispatch(envelope, isServer: true, session));
+        Assert.Equal(
+            ModNetworkDispatchCode.ProjectUnavailable,
+            ModNetworkManager.Dispatch(
+                new ModNetworkEnvelope(
+                    Guid.NewGuid(),
+                    "cleanup.mod",
+                    "input",
+                    1,
+                    [1]),
+                isServer: true,
+                session));
     }
+
+    [Fact]
+    [Trait("Layer", "L1")]
+    public void DispatchRejectsRegisteredButUnnegotiatedChannelBeforeHandler() {
+        bool called = false;
+        TestLoader loader = CreateLoader("isolated.mod");
+        _ = loader.RegisterNetworkChannel(
+            "input",
+            1,
+            ModNetworkDirection.ClientToServer,
+            (_, _) => called = true);
+
+        ModNetworkDispatchCode result = ModNetworkManager.Dispatch(
+            new ModNetworkEnvelope(
+                Guid.NewGuid(),
+                "isolated.mod",
+                "input",
+                1,
+                [1]),
+            isServer: true,
+            new ClientSession());
+
+        Assert.Equal(ModNetworkDispatchCode.UnnegotiatedChannel, result);
+        Assert.False(called);
+    }
+
+    [Fact]
+    [Trait("Layer", "L1")]
+    public void UnnegotiatedTrafficStillConsumesPerPeerRateLimit() {
+        TestLoader loader = CreateLoader("bounded.mod");
+        _ = loader.RegisterNetworkChannel(
+            "input",
+            1,
+            ModNetworkDirection.ClientToServer,
+            (_, _) => { });
+        ClientSession session = new();
+
+        for (int index = 0;
+             index < ModNetworkTrafficLimiter.DefaultMaximumMessagesPerWindow;
+             index++) {
+            Assert.Equal(
+                ModNetworkDispatchCode.UnnegotiatedChannel,
+                ModNetworkManager.Dispatch(
+                    new ModNetworkEnvelope(
+                        Guid.NewGuid(),
+                        "bounded.mod",
+                        "input",
+                        1,
+                        [1]),
+                    isServer: true,
+                    session));
+        }
+        Assert.Equal(
+            ModNetworkDispatchCode.RateLimited,
+            ModNetworkManager.Dispatch(
+                new ModNetworkEnvelope(
+                    Guid.NewGuid(),
+                    "bounded.mod",
+                    "input",
+                    1,
+                    [1]),
+                isServer: true,
+                session));
+        Assert.Equal(1, ModNetworkManager.Metrics.RateLimited);
+    }
+
+    private static void NegotiateLocalCatalog(ClientSession session) =>
+        ModNetworkManager.SetNegotiatedCatalog(
+            session,
+            ModNetworkManager.GetLocalCatalog());
 
     private static TestLoader CreateLoader(string packageName) =>
         new() { Entity = CreateEntity(packageName) };
