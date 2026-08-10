@@ -1,25 +1,25 @@
 # Project Status
 
-- Status: ACTIVE — API 1.4–1.8 LAYERED COMPATIBILITY
+- Status: ACTIVE — PREVIEW 2 RELEASE PREPARATION
 - Updated: 2026-08-10 Asia/Shanghai
-- Project path: `C:\Users\Hao\Documents\New project 2\worktrees\SurvivalcraftApi-API145Compat`
-- Branch or Worktree: `codex/api145-compat`
-- Base commit: `72653e5690a925000354cac16e7a353875819f29` (`codex/api-mp-integration`)
-- Release tag: `API_1.9.3.1_MP-preview.1`
+- Project path: `C:\Users\Hao\Documents\New project 2\worktrees\SurvivalcraftApi-MPCore`
+- Branch or Worktree: `codex/api-mp-integration`
+- Integrated compatibility commit: `c46f05abf01ed5ebe30e47a3bf1102da5e9ed04d` (`codex/api145-compat`, fast-forwarded without conflicts)
+- Release state: `API_1.9.3.1_MP-preview.1` is the current contract; Preview 2 preparation is next.
 
 ## Active compatibility track
 
-- State transition: `C1 FIREARMS -> C2 DAYZ`（枪械核心加载、世界重进和弹道探针已收敛，兼容主线转入 DayZ）。
+- State transition: `ACTIVE COMPATIBILITY -> ACTIVE PREVIEW 2 RELEASE PREPARATION`（枪械核心加载、世界重进和弹道探针已收敛；DayZ 在 Preview 2 后继续）。
 - Goal: preserve API 1.9.3.1 while providing additive common shims for API 1.8, a loader/member bridge for API 1.7, and exact-break adapters for API 1.4–1.6. All third-party packages and their DLLs remain immutable inputs.
-- Priority: Guns 2.8 has completed stable Android world creation, exit, reentry and functional projectile probes. DayZ is now the active target. Siyah Akrep remains observation-only and receives no package-specific work because it is a single-player story add-on; only the shared firearms dependency remains in scope.
+- Priority: Guns 2.8 has completed stable Android world creation, exit, reentry and functional projectile probes. Preview 2 packaging is now the active target; DayZ remains the next compatibility target. Siyah Akrep remains observation-only and receives no package-specific work because it is a single-player story add-on; only the shared firearms dependency remains in scope.
 - Out of scope for the first milestone: arbitrary API 1.x binary emulation, silent fallback for unknown members, Siyah Akrep gameplay, and multiplayer synchronization of legacy custom weapon state.
 - Completion evidence for C1: 24 deterministic compatibility tests, a hash-locked Android Guns 2.8 new-world/reentry run with two successful projectile probes and clean logs, plus clean API 1.9 binary and runtime regressions.
-- Exact next action: perform a read-only DayZ DLL/XDB gap inventory, record the first deterministic breaks in `tests/legacy-api-compatibility/ledger.json`, then run `dayz-subject` in the background against the dedicated Android device.
+- Exact next action: bump the release contract to Preview 2, rebuild all public artifacts from a clean commit, and rerun the release and Android compatibility gates before tagging or publishing.
 - Detailed plan: `docs/LegacyApi145Compatibility.md`.
 
 ## Goal
 
-Ship the first developer preview that combines Survivalcraft API 1.9.3.1 with the completed M1–M13 multiplayer core, using one release contract for Windows x64, a separately deployable Relay Server, and an Android ARM64 APK, then prove the public packages through checksums, static inspection and background-only fresh-extract smoke tests.
+Ship the next developer preview that combines Survivalcraft API 1.9.3.1, the completed M1–M13 multiplayer core and the verified layered legacy-mod compatibility host, using one release contract for Windows x64, a separately deployable Relay Server and an Android ARM64 APK.
 
 ## Completed
 
@@ -79,10 +79,10 @@ The final publishable copies are generated under `artifacts/releases/API_1.9.3.1
 - This is a developer preview, not a stable release. “Complete” means the scripted packaging and core headless Direct/Relay contract are green, not that every UI path, device, router, NAT or third-party mod is proven.
 - Android is ARM64-only and development-key signed. The .NET Android build succeeds and the APK passes static validation, but the dependency build emits an upstream warning that MonoMod.Core does not declare Android ARM64 support. Only real-device launch/gameplay can resolve that compatibility risk.
 - Android evidence currently comes from one Huawei NOH-AN01 on Android 12. A second Android client actually joining the room, broader vendors/OS versions, graphics correctness, thermal/power soak and upgrade/install-over-old-data behavior remain device-test responsibilities.
-- Public-internet relay creation and endpoint failover are covered on the device; cross-machine firewall/NAT, cross-carrier joins, dependency-heavy overhaul mods and mod-specific gameplay actions remain the next release-reality track.
+- Historical device evidence covers public-internet relay creation and endpoint failover. Current public relay availability is externally operated and is not treated as a client-code release gate; local Relay packaging and protocol gates remain mandatory.
 - Wonderful Era can coexist with the multiplayer host lifecycle, but its community page states that it does not currently support multiplayer. No claim is made that its custom gameplay state synchronizes. Guns now passes local lifecycle and projectile probes through deliberate host compatibility, but its custom state is not yet proven across clients; DayZ remains under compatibility development and Siyah Akrep remains deferred.
 - Every automated game launch remains headless with `CreateNoWindow=true`; no foreground game window is permitted in release automation.
 
 ## Next action
 
-- Inventory DayZ's locked DLL/XDB inputs without modifying them, implement only evidence-backed host compatibility for its first deterministic break, and keep the Guns lifecycle/probe plus modern API 1.9 binary/runtime matrices green after every change. Siyah Akrep remains observational and out of the implementation gate.
+- Prepare Preview 2 from the merged main development line: update the release contract and notes, produce clean Windows/Relay/Android artifacts, run release verification and background Android compatibility gates, then tag and publish only after all mandatory checks pass.
