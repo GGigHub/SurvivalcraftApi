@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
-    <MultiplayerReleaseVersion>1.9.3.1-mp-preview.1</MultiplayerReleaseVersion>
-    <MultiplayerReleaseTag>API_1.9.3.1_MP-preview.1</MultiplayerReleaseTag>
+    <MultiplayerReleaseVersion>1.9.3.1-mp-preview.2</MultiplayerReleaseVersion>
+    <MultiplayerReleaseTag>API_1.9.3.1_MP-preview.2</MultiplayerReleaseTag>
     <Version>$(MultiplayerReleaseVersion)</Version>
     <AssemblyVersion>1.9.3.1</AssemblyVersion>
     <FileVersion>1.9.3.1</FileVersion>

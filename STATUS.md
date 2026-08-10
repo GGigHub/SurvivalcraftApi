@@ -1,11 +1,11 @@
 # Project Status
 
-- Status: ACTIVE — PREVIEW 2 RELEASE PREPARATION
+- Status: ACTIVE — PREVIEW 2 RELEASE EXECUTION
 - Updated: 2026-08-10 Asia/Shanghai
 - Project path: `C:\Users\Hao\Documents\New project 2\worktrees\SurvivalcraftApi-MPCore`
 - Branch or Worktree: `codex/api-mp-integration`
 - Integrated compatibility commit: `c46f05abf01ed5ebe30e47a3bf1102da5e9ed04d` (`codex/api145-compat`, fast-forwarded without conflicts)
-- Release state: `API_1.9.3.1_MP-preview.1` is the current contract; Preview 2 preparation is next.
+- Release state: `API_1.9.3.1_MP-preview.2` is the active candidate; Preview 1 remains immutable.
 
 ## Active compatibility track
 
@@ -23,8 +23,8 @@ Ship the next developer preview that combines Survivalcraft API 1.9.3.1, the com
 
 ## Completed
 
-- API compatibility remains `1.9.3.1`; Multiplayer and Relay share release version `1.9.3.1-mp-preview.1`, assembly/file version `1.9.3.1`, and tag `API_1.9.3.1_MP-preview.1` through `build/MultiplayerRelease.props`.
-- `release/multiplayer-preview.json` is the authoritative release contract for tag/title, API/game versions, wire revision 17, Automation API 16, Snapshot schema 5, Android `arm64-v8a`, versionCode 19311, versionName, and artifact names.
+- API compatibility remains `1.9.3.1`; Multiplayer and Relay share release version `1.9.3.1-mp-preview.2`, assembly/file version `1.9.3.1`, and tag `API_1.9.3.1_MP-preview.2` through `build/MultiplayerRelease.props`.
+- `release/multiplayer-preview.json` is the authoritative release contract for tag/title, API/game versions, wire revision 17, Automation API 16, Snapshot schema 5, Android `arm64-v8a`, versionCode 19312, versionName, and artifact names.
 - Release notes summarize M1–M13, the 22/22 covered core feature contract, install/test cautions and the remaining real-device/public-network limits.
 - `Build-MultiplayerPreview.ps1` produces deterministic-container Windows/Relay ZIPs, an Android ARM64 APK, a source/toolchain manifest and `SHA256SUMS.txt`. Dirty builds are explicitly marked and cannot be published.
 - `Test-MultiplayerPreviewRelease.ps1` validates every checksum, public-package isolation, APK ABI/version/signature/internal scmod, then injects TestAutomation only into a disposable Windows extraction for hidden startup, Direct and separate-runtime Relay tests.

@@ -17,8 +17,8 @@ public sealed class ReleaseContractTests {
         JsonElement release = document.RootElement;
 
         Assert.Equal(1, release.GetProperty("schemaVersion").GetInt32());
-        Assert.Equal("API_1.9.3.1_MP-preview.1", release.GetProperty("tag").GetString());
-        Assert.Equal("1.9.3.1-mp-preview.1", release.GetProperty("releaseVersion").GetString());
+        Assert.Equal("API_1.9.3.1_MP-preview.2", release.GetProperty("tag").GetString());
+        Assert.Equal("1.9.3.1-mp-preview.2", release.GetProperty("releaseVersion").GetString());
         Assert.Equal("1.9.3.1", release.GetProperty("apiVersion").GetString());
         Assert.Equal(NetworkCompatibility.ProtocolRevision, release.GetProperty("protocolRevision").GetInt32());
         Assert.Equal(AutomationProtocol.CurrentApiVersion, release.GetProperty("automationApiVersion").GetInt32());
@@ -28,8 +28,8 @@ public sealed class ReleaseContractTests {
         JsonElement android = release.GetProperty("android");
         Assert.Equal("android-arm64", android.GetProperty("runtimeIdentifier").GetString());
         Assert.Equal("arm64-v8a", android.GetProperty("abi").GetString());
-        Assert.Equal(19311, android.GetProperty("versionCode").GetInt32());
-        Assert.Equal("API1.9.3.1-MP-preview.1", android.GetProperty("versionName").GetString());
+        Assert.Equal(19312, android.GetProperty("versionCode").GetInt32());
+        Assert.Equal("API1.9.3.1-MP-preview.2", android.GetProperty("versionName").GetString());
         Assert.Equal("development", android.GetProperty("signing").GetString());
 
         XDocument common = XDocument.Load(Path.Combine(root, "build", "Common.props"));
@@ -44,9 +44,9 @@ public sealed class ReleaseContractTests {
         AssertModInfo(root, Path.Combine("Survivalcraft", "Content", "modinfo.json"),
             version: "1.9.3.1", apiVersion: "1.9.3.1");
         AssertModInfo(root, Path.Combine("Survivalcraft.Multiplayer", "modinfo.json"),
-            version: "1.9.3.1-mp-preview.1", apiVersion: "1.9.3.1");
+            version: "1.9.3.1-mp-preview.2", apiVersion: "1.9.3.1");
         AssertModInfo(root, Path.Combine("Survivalcraft.TestAutomation", "modinfo.json"),
-            version: "1.9.3.1-mp-preview.1", apiVersion: "1.9.3.1");
+            version: "1.9.3.1-mp-preview.2", apiVersion: "1.9.3.1");
 
         string modsManager = File.ReadAllText(
             Path.Combine(root, "Survivalcraft", "ModsManager", "ModsManager.cs"));
@@ -63,11 +63,11 @@ public sealed class ReleaseContractTests {
         JsonElement release = document.RootElement;
         JsonElement artifacts = release.GetProperty("artifacts");
 
-        Assert.Equal("Survivalcraft-API-1.9.3.1-MP-preview.1-Windows-x64.zip",
+        Assert.Equal("Survivalcraft-API-1.9.3.1-MP-preview.2-Windows-x64.zip",
             artifacts.GetProperty("windowsX64").GetString());
-        Assert.Equal("Survivalcraft-RelayServer-1.9.3.1-MP-preview.1-win-x64.zip",
+        Assert.Equal("Survivalcraft-RelayServer-1.9.3.1-MP-preview.2-win-x64.zip",
             artifacts.GetProperty("relayWindowsX64").GetString());
-        Assert.Equal("Survivalcraft-API-1.9.3.1-MP-preview.1-Android-arm64.apk",
+        Assert.Equal("Survivalcraft-API-1.9.3.1-MP-preview.2-Android-arm64.apk",
             artifacts.GetProperty("androidArm64").GetString());
         Assert.DoesNotContain("TestAutomation", string.Join('\n',
             artifacts.EnumerateObject().Select(property => property.Value.GetString())));
