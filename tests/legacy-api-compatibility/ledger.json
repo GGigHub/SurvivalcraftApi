@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "currentApi": "1.9.3.1",
+  "updatedUtc": "2026-08-10T00:00:00Z",
+  "policy": {
+    "strategy": "additive-shims-and-signature-specific-rewrites",
+    "unknownBreakBehavior": "fail-closed",
+    "packageMutationPolicy": "forbidden",
+    "activeMilestone": "dayz-world-lifecycle",
+    "siyahAkrepPolicy": "observation-only"
+  },
+  "bands": [
+    {
+      "id": "native-1.9",
+      "priority": 0,
+      "versions": [
+        "1.9.x"
+      ],
+      "mode": "native",
+      "assemblyRewrite": false
+    },
+    {
+      "id": "common-1.8",
+      "priority": 1,
+      "versions": [
+        "1.8.x"
+      ],
+      "mode": "common-shims",
+      "assemblyRewrite": "only-known-pre-1.8.1-signatures"
+    },
+    {
+      "id": "bridge-1.7",
+      "priority": 2,
+      "versions": [
+        "1.7x"
+      ],
+      "mode": "loader-and-member-bridge",
+      "assemblyRewrite": "only-known-signatures"
+    },
+    {
+      "id": "exact-1.4-1.6",
+      "priority": 3,
+      "versions": [
+        "1.4x",
+        "1.5x",
+        "1.6x"
+      ],
+      "mode": "exact-break-or-package-adapter",
+      "assemblyRewrite": "only-known-signatures"
+    }
+  ],
+  "targets": [
+    {
+      "id": "firearms-2.8",
+      "priority": 1,
+      "active": false,
+      "completed": true,
+      "observationOnly": false,
+      "packageName": "gunsmod.ysf.scmod",
+      "version": "2.8",
+      "apiVersion": "1.45",
+      "packageSha256": "1b4529c8db2af29e0eb14fc570ab3ab7ff8440c10261cbdcb2d14b29bd703b28",
+      "assemblyName": "#Guns.dll",
+      "assemblySha256": "fcd878f569ac4c825402c15d0ffc0af2a5df6e12ec7809b01969b360aa013559",
+      "validationTarget": "android-world-create-exit-reentry-and-projectile-probe",
+      "validationStatus": "android-passed",
+      "validationEvidence": {
+        "path": "TestResults/android-mod-matrix/legacy-firearms-double-hash-final/summary.json",
+        "mode": "world-reentry-pad",
+        "worldEntryCount": 2,
+        "functionalProbeCount": 2,
+        "runtimeErrorCount": 0,
+        "runtimeWarningCount": 0,
+        "sourcePackageModified": false
+      }
+    },
+    {
+      "id": "dayz-2.2.3.0-three-year",
+      "priority": 2,
+      "active": true,
+      "completed": false,
+      "observationOnly": false,
+      "packageName": "DayZ",
+      "version": "2.2.3.0 三周年",
+      "apiVersion": "1.45",
+      "packageSha256": "829b9331287344cc88a407c0aa22ccf1b06c0b28a28d094d381fd6d5c4fc8db5",
+      "validationTarget": "android-world-create-exit-reentry",
+      "validationStatus": "baseline-failing"
+    },
+    {
+      "id": "siyah-akrep-2.8",
+      "priority": 99,
+      "active": false,
+      "completed": false,
+      "observationOnly": true,
+      "deferredByUser": true,
+      "packageName": "siyahakrep.ysf.scmod",
+      "version": "2.8",
+      "apiVersion": "1.45",
+      "packageSha256": "8f8cc8b6c095f57f334d5368c232eec891d3da41b1f408607bbeff3712fb16aa",
+      "validationTarget": "none",
+      "validationStatus": "deferred-single-player-story-addon"
+    }
+  ],
+  "breaks": [
+    {
+      "id": "block-is-explosion-transparent",
+      "kind": "public-field-rename",
+      "oldSignature": "System.Boolean Game.Block.IsExplosionTransparent",
+      "currentMember": "System.Boolean Game.Block.ExplosionKeepsPickables",
+      "compatibilityMember": "System.Boolean Game.Block.IsExplosionTransparent",
+      "strategy": "additive-field-alias-consumed-by-explosion-semantics",
+      "historicalCommit": "6657de6b16ea176242ad2927fe48c6ab5bf617d1",
+      "affectedTargets": [
+        "firearms-2.8"
+      ],
+      "implementationStatus": "implemented",
+      "validationStatus": "unit-and-android-passed"
+    },
+    {
+      "id": "mods-screen-decipher-stream",
+      "kind": "public-static-method-move",
+      "oldSignature": "System.IO.Stream ModsManageContentScreen.GetDecipherStream(System.IO.Stream)",
+      "currentMember": "System.IO.Stream Game.ModsManager.GetDecipherStream(System.IO.Stream)",
+      "compatibilityMember": "System.IO.Stream ModsManageContentScreen.GetDecipherStream(System.IO.Stream)",
+      "strategy": "additive-forwarder",
+      "affectedTargets": [
+        "firearms-2.8"
+      ],
+      "implementationStatus": "implemented",
+      "validationStatus": "unit-and-android-passed"
+    },
+    {
+      "id": "crafting-recipes-readonly-getter",
+      "kind": "property-return-type-change",
+      "oldSignature": "Engine.ReadOnlyList<Game.CraftingRecipe> Game.CraftingRecipesManager.get_Recipes()",
+      "currentMember": "System.Collections.Generic.List<Game.CraftingRecipe> Game.CraftingRecipesManager.get_Recipes()",
+      "compatibilityMember": "Engine.ReadOnlyList<Game.CraftingRecipe> Game.CraftingRecipesManager.GetRecipes1()",
+      "strategy": "pre-1.8.1-equal-length-member-reference-name-patch-to-readonly-view",
+      "historicalCommit": "25f27620f1733e6ded2da7269d88e06930328326",
+      "affectedTargets": [
+        "firearms-2.8"
+      ],
+      "implementationStatus": "implemented",
+      "validationStatus": "unit-and-android-passed"
+    },
+    {
+      "id": "legacy-particle-system-one-argument",
+      "kind": "method-signature-change-with-reflection-collision",
+      "oldSignatures": [
+        "System.Void Game.SubsystemParticles.AddParticleSystem(Game.ParticleSystemBase)",
+        "System.Void Game.SubsystemParticles.RemoveParticleSystem(Game.ParticleSystemBase)"
+      ],
+      "currentMembers": [
+        "System.Void Game.SubsystemParticles.AddParticleSystem(Game.ParticleSystemBase,System.Boolean)",
+        "System.Void Game.SubsystemParticles.RemoveParticleSystem(Game.ParticleSystemBase,System.Boolean)"
+      ],
+      "compatibilityMembers": [
+        "System.Void Game.SubsystemParticles.AddLegacyParticleSystem(Game.ParticleSystemBase)",
+        "System.Void Game.SubsystemParticles.RemoveLegacyParticleSystem(Game.ParticleSystemBase)"
+      ],
+      "strategy": "pre-1.8.1-in-memory-member-reference-rename-avoids-name-only-harmony-overload-ambiguity",
+      "affectedTargets": [
+        "firearms-2.8",
+        "dayz-2.2.3.0-three-year"
+      ],
+      "sourcePackageModified": false,
+      "implementationStatus": "implemented",
+      "validationStatus": "unit-and-android-passed"
+    },
+    {
+      "id": "firearms-2.8-exact-runtime-adapter",
+      "kind": "exact-hash-in-memory-rewrite-and-hosted-runtime",
+      "packageSha256": "1b4529c8db2af29e0eb14fc570ab3ab7ff8440c10261cbdcb2d14b29bd703b28",
+      "assemblySha256": "fcd878f569ac4c825402c15d0ffc0af2a5df6e12ec7809b01969b360aa013559",
+      "strategy": "match-package-and-assembly-hash-then-rewrite-decoded-assembly-in-memory",
+      "runtimeBreakIds": [
+        "crafting-recipes-readonly-getter",
+        "legacy-particle-system-one-argument",
+        "firearms-2.8-disable-siyah-akrep-bootstrap",
+        "firearms-2.8-disable-siyah-akrep-structures",
+        "firearms-2.8-host-guns-data",
+        "firearms-2.8-host-map-initialization",
+        "firearms-2.8-host-projectile-update",
+        "firearms-2.8-host-recipes",
+        "firearms-2.8-remap-dynamic-block-indices",
+        "firearms-2.8-remap-gamewidget-type",
+        "firearms-2.8-remap-legacy-field-shapes",
+        "firearms-2.8-remap-player-callbacks",
+        "firearms-2.8-remap-temperature-adjustment",
+        "firearms-2.8-reset-animation-steps",
+        "firearms-2.8-reset-lightsaber-colors"
+      ],
+      "affectedTargets": [
+        "firearms-2.8"
+      ],
+      "sourcePackageModified": false,
+      "implementationStatus": "implemented",
+      "validationStatus": "unit-and-android-passed",
+      "validationEvidence": "TestResults/android-mod-matrix/legacy-firearms-double-hash-final/summary.json"
+    },
+    {
+      "id": "api19-classic-host-binary-surface",
+      "kind": "additive-host-member-restoration",
+      "strategy": "restore-historical-public-signatures-with-forwarding-shims-and-no-mod-rewrite",
+      "compatibilityMembers": [
+        "Game.ComponentCreatureSounds.PlayIdleSound(System.Boolean)",
+        "Game.ComponentCreatureSounds.PlayPainSound()",
+        "Game.ComponentCreatureSounds.PlayMoanSound()",
+        "Game.ComponentCreatureSounds.PlaySneezeSound()",
+        "Game.ComponentCreatureSounds.PlayCoughSound()",
+        "Game.ComponentCreatureSounds.PlayPukeSound()",
+        "Game.ComponentCreatureSounds.PlayAttackSound()",
+        "System.Boolean Game.SubsystemPlayers.PlayerStartedPlaying",
+        "System.Nullable<System.Double> Game.PlayerData.m_playerDeathTime",
+        "Game.ComponentFlu.StartFlu()",
+        "Game.ComponentSickness.StartSickness()",
+        "Game.ComponentHealth.Injure(Game.Injury)",
+        "Game.ComponentMiner.Hit(Game.ComponentBody,Engine.Vector3,Engine.Vector3)",
+        "Game.ContentInfo..ctor(System.String)",
+        "Game.SubsystemSky.MakeLightningStrike(Engine.Vector3,System.Boolean)",
+        "Game.SubsystemTerrain.ChangeCell(System.Int32,System.Int32,System.Int32,System.Int32,System.Boolean,Game.MovingBlock)"
+      ],
+      "affectedTargets": [
+        "wonderful-era-1.9.2a"
+      ],
+      "sourcePackageModified": false,
+      "implementationStatus": "implemented",
+      "validationStatus": "static-and-android-passed",
+      "validationEvidence": {
+        "binaryAudit": "TestResults/android-mod-matrix/classic-api19-double-hash-final/binary-compatibility.json",
+        "androidMatrix": "TestResults/android-mod-matrix/classic-api19-double-hash-final/summary.json"
+      }
+    }
+  ],
+  "memberReferenceScan": {
+    "scannedCorpora": [
+      "android-mod-corpus",
+      "android-classic-mod-corpus"
+    ],
+    "modernReferenceCount": 0,
+    "firearmsReferences": [
+      "System.IO.Stream ModsManageContentScreen.GetDecipherStream(System.IO.Stream)",
+      "Engine.ReadOnlyList<Game.CraftingRecipe> Game.CraftingRecipesManager.get_Recipes()"
+    ],
+    "binaryCompatibilityAudit": {
+      "path": "TestResults/android-mod-matrix/classic-api19-double-hash-final/binary-compatibility.json",
+      "readOnly": true,
+      "packageCount": 3,
+      "assemblyCount": 3,
+      "memberReferenceCount": 2350,
+      "typeReferenceCount": 621,
+      "nameOnlyHarmonyPatchCount": 0,
+      "ambiguousNameOnlyHarmonyPatchCount": 0,
+      "unresolvedMemberCount": 0,
+      "unresolvedTypeCount": 0
+    },
+    "modernCorpusBinaryCompatibilityAudit": {
+      "path": "TestResults/android-mod-matrix/main-corpus-double-hash-final/binary-compatibility.json",
+      "readOnly": true,
+      "packageCount": 9,
+      "assemblyCount": 31,
+      "memberReferenceCount": 1919,
+      "typeReferenceCount": 2929,
+      "nameOnlyHarmonyPatchCount": 35,
+      "ambiguousNameOnlyHarmonyPatchCount": 0,
+      "unresolvedMemberCount": 0,
+      "unresolvedTypeCount": 0
+    }
+  }
+}

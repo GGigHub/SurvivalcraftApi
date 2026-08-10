@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("doctor", "relay-reentry-pad")]
+    [ValidateSet("doctor", "world-reentry-pad", "relay-reentry-pad")]
     [string]$Mode = "relay-reentry-pad",
     [string]$DeviceId,
     [string]$ApkPath,
@@ -29,7 +29,8 @@ param(
     [ValidateRange(1, 536870912)]
     [long]$MaximumModPackageBytes = 67108864,
     [object[]]$ClassSubstituteSelection = @(),
-    [object[]]$StartupDialogAction = @()
+    [object[]]$StartupDialogAction = @(),
+    [string[]]$WorldProbe = @()
 )
 
 Set-StrictMode -Version Latest
@@ -83,6 +84,7 @@ $script:ClassSubstituteSelections = [System.Collections.Generic.List[object]]::n
 $script:AppliedClassSubstituteSelections = [System.Collections.Generic.List[object]]::new()
 $script:StartupDialogActions = [System.Collections.Generic.List[object]]::new()
 $script:AppliedStartupDialogActions = [System.Collections.Generic.List[object]]::new()
+$script:WorldProbeResults = [System.Collections.Generic.List[object]]::new()
 $script:PendingStartupDialogAction = $null
 $runtimeLogAudit = $null
 $startedUtc = [DateTimeOffset]::UtcNow
@@ -652,6 +654,21 @@ function Add-StateObservation {
         selectedClassSubstituteCount = @($State.selectedClassSubstitutes).Count
         projectLoaded = $State.projectLoaded
         playerReady = $State.playerReady
+        playerState = $State.playerState
+        playerComponentPresent = $State.playerComponentPresent
+        playerSpawnProgress = $State.playerSpawnProgress
+        playerSpawnMode = $State.playerSpawnMode
+        spawnLargeMessage = $State.spawnLargeMessage
+        spawnSmallMessage = $State.spawnSmallMessage
+        spawnDialogProgress = $State.spawnDialogProgress
+        updateTick = $State.updateTick
+        updateExceptionCount = $State.updateExceptionCount
+        lastUpdateExceptionTick = $State.lastUpdateExceptionTick
+        lastFailedUpdateable = $State.lastFailedUpdateable
+        lastUpdateExceptionType = $State.lastUpdateExceptionType
+        lastUpdateExceptionMessage = $State.lastUpdateExceptionMessage
+        lastUpdateExceptionRootType = $State.lastUpdateExceptionRootType
+        lastUpdateExceptionRootMessage = $State.lastUpdateExceptionRootMessage
         moveControlMode = $State.moveControlMode
         serverRunning = $State.serverRunning
         relayStatus = $State.relayStatus
@@ -671,12 +688,61 @@ function Get-BridgeState {
     return $state
 }
 
+function Assert-NoUpdateExceptions {
+    param([object]$State, [string]$Phase)
+    if ([long]$State.updateExceptionCount -gt 0) {
+        $exceptionType = if (-not [string]::IsNullOrWhiteSpace([string]$State.lastUpdateExceptionRootType)) {
+            [string]$State.lastUpdateExceptionRootType
+        }
+        else {
+            [string]$State.lastUpdateExceptionType
+        }
+        $exceptionMessage = if (-not [string]::IsNullOrWhiteSpace([string]$State.lastUpdateExceptionRootMessage)) {
+            [string]$State.lastUpdateExceptionRootMessage
+        }
+        else {
+            [string]$State.lastUpdateExceptionMessage
+        }
+        throw "Game update failed during '$Phase' at tick " +
+            "'$($State.lastUpdateExceptionTick)' in '$($State.lastFailedUpdateable)': " +
+            "'${exceptionType}: $exceptionMessage'."
+    }
+}
+
+function Invoke-WorldProbes {
+    param([string]$Phase)
+    foreach ($probe in @($WorldProbe)) {
+        switch ($probe) {
+            "firearms-2.8" {
+                $start = Send-BridgeCommand "compat.firearms28.probe" ([ordered]@{
+                    projectilePhase = "start"
+                })
+                $probeState = Get-BridgeState "$Phase-firearms-projectile-frame"
+                Assert-NoUpdateExceptions $probeState "$Phase-firearms-projectile-frame"
+                $verify = Send-BridgeCommand "compat.firearms28.probe" ([ordered]@{
+                    projectilePhase = "verify"
+                })
+                $script:WorldProbeResults.Add([ordered]@{
+                    target = $probe
+                    phase = $Phase
+                    started = $start.data
+                    verified = $verify.data
+                })
+            }
+            default {
+                throw "Unsupported world probe '$probe'."
+            }
+        }
+    }
+}
+
 function Wait-ForPlayableWorld {
     param([string]$Phase)
     $deadline = [DateTime]::UtcNow.AddSeconds($WorldTimeoutSeconds)
     $playerEnterSent = $false
     while ([DateTime]::UtcNow -lt $deadline) {
         $state = Get-BridgeState $Phase
+        Assert-NoUpdateExceptions $state $Phase
         if ($state.screenName -eq "MainMenu" -and
             -not [bool]$state.projectLoaded -and
             $state.dialog -eq "MessageDialog") {
@@ -686,12 +752,17 @@ function Wait-ForPlayableWorld {
             Send-BridgeCommand "player.enter" ([ordered]@{ name = "AndroidAutoTest" }) | Out-Null
             $playerEnterSent = $true
         }
-        elseif ($state.screen -eq "GameScreen" -and $state.projectLoaded) {
+        elseif ($state.screen -eq "GameScreen" -and
+            [bool]$state.projectLoaded -and
+            [bool]$state.playerReady) {
             return $state
         }
         Start-Sleep -Milliseconds 750
     }
-    throw "Timed out waiting for a playable world during '$Phase'."
+    throw "Timed out waiting for a playable world during '$Phase'. " +
+        "screen='$($script:LastState.screen)', dialog='$($script:LastState.dialog)', " +
+        "projectLoaded='$($script:LastState.projectLoaded)', " +
+        "playerReady='$($script:LastState.playerReady)'."
 }
 
 function Wait-ForRelayCode {
@@ -700,6 +771,7 @@ function Wait-ForRelayCode {
     $restartCount = 0
     while ([DateTime]::UtcNow -lt $deadline) {
         $state = Get-BridgeState $Phase
+        Assert-NoUpdateExceptions $state $Phase
         $code = if (-not [string]::IsNullOrWhiteSpace([string]$state.relayGlobalCode)) {
             [string]$state.relayGlobalCode
         }
@@ -1076,6 +1148,17 @@ if ([string]::IsNullOrWhiteSpace($ApkPath)) {
 $ApkPath = (Resolve-Path -LiteralPath $ApkPath).Path
 
 try {
+    if ($Mode -eq "doctor" -and @($WorldProbe).Count -gt 0) {
+        throw "WorldProbe cannot be used in doctor mode."
+    }
+    if (@($WorldProbe | Sort-Object -Unique).Count -ne @($WorldProbe).Count) {
+        throw "WorldProbe values must be unique."
+    }
+    foreach ($probe in @($WorldProbe)) {
+        if ($probe -notin @("firearms-2.8")) {
+            throw "Unsupported world probe '$probe'."
+        }
+    }
     $script:CurrentPhase = "device-interactive"
     $script:DeviceInteractive = Enable-UnattendedDeviceSession
     $script:CurrentPhase = "install"
@@ -1187,6 +1270,8 @@ try {
             appliedClassSubstituteSelections = $script:AppliedClassSubstituteSelections
             configuredStartupDialogActions = $script:StartupDialogActions
             appliedStartupDialogActions = $script:AppliedStartupDialogActions
+            configuredWorldProbes = @($WorldProbe)
+            worldProbes = $script:WorldProbeResults
             stagedMods = $stagedStartupMods
             runtimeLogAudit = $runtimeLogAudit
             visibleWidgetCount = $tree.data.widgets.Count
@@ -1200,37 +1285,45 @@ try {
         return
     }
 
-    $script:CurrentPhase = "relay-settings"
+    $relayEnabled = $Mode -eq "relay-reentry-pad"
+    $script:CurrentPhase = if ($relayEnabled) { "relay-settings" } else { "world-settings" }
     Send-BridgeCommand "settings.set" ([ordered]@{
         moveControlMode = "Pad"
-        playWithFriendsEnabled = $true
+        playWithFriendsEnabled = $relayEnabled
         showPlayWithFriendsDialog = $false
         save = $true
     }) | Out-Null
 
     $script:CurrentPhase = "new-world"
-    $worldName = "AutoRelayPad-$([DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss'))"
+    $worldPrefix = if ($relayEnabled) { "AutoRelayPad" } else { "AutoWorldPad" }
+    $worldName = "$worldPrefix-$([DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss'))"
     $create = Send-BridgeCommand "world.create" ([ordered]@{
         name = $worldName
-        seed = "android-relay-pad-regression"
+        seed = "android-world-pad-regression"
         creative = $false
         flatTerrain = $true
-        playWithFriends = $true
+        playWithFriends = $relayEnabled
     })
     $worldDirectory = [string]$create.data.directoryName
-    $null = Wait-ForPlayableWorld "new-world"
-    $firstRelay = Wait-ForRelayCode "new-world-relay"
-    $relayRuns.Add([ordered]@{
-        iteration = 0
-        kind = "new-world"
-        code = $firstRelay.Code
-        roomCode = $firstRelay.State.relayRoomCode
-        moveControlMode = $firstRelay.State.moveControlMode
-        relayEndPoint = $firstRelay.State.relayEndPoint
-        relayAttemptCount = $firstRelay.State.relayAttemptCount
-        relayLastFailure = $firstRelay.State.relayLastFailure
-        restartCount = $firstRelay.RestartCount
-    })
+    $newWorldState = Wait-ForPlayableWorld "new-world"
+    if ($newWorldState.moveControlMode -ne "Pad") {
+        throw "MoveControlMode is '$($newWorldState.moveControlMode)' in the new world, expected 'Pad'."
+    }
+    Invoke-WorldProbes "new-world"
+    if ($relayEnabled) {
+        $firstRelay = Wait-ForRelayCode "new-world-relay"
+        $relayRuns.Add([ordered]@{
+            iteration = 0
+            kind = "new-world"
+            code = $firstRelay.Code
+            roomCode = $firstRelay.State.relayRoomCode
+            moveControlMode = $firstRelay.State.moveControlMode
+            relayEndPoint = $firstRelay.State.relayEndPoint
+            relayAttemptCount = $firstRelay.State.relayAttemptCount
+            relayLastFailure = $firstRelay.State.relayLastFailure
+            restartCount = $firstRelay.RestartCount
+        })
+    }
 
     for ($iteration = 1; $iteration -le $ReentryCount; $iteration++) {
         $script:CurrentPhase = "reentry-$iteration"
@@ -1238,25 +1331,28 @@ try {
         $null = Wait-ForMainMenu "exit-$iteration"
         Send-BridgeCommand "world.play" ([ordered]@{
             directoryName = $worldDirectory
-            playWithFriends = $true
+            playWithFriends = $relayEnabled
             saveCurrent = $false
         }) | Out-Null
-        $null = Wait-ForPlayableWorld "reentry-$iteration"
-        $relay = Wait-ForRelayCode "reentry-$iteration-relay"
-        if ($relay.State.moveControlMode -ne "Pad") {
-            throw "MoveControlMode drifted to '$($relay.State.moveControlMode)' during reentry $iteration."
+        $reentryState = Wait-ForPlayableWorld "reentry-$iteration"
+        if ($reentryState.moveControlMode -ne "Pad") {
+            throw "MoveControlMode drifted to '$($reentryState.moveControlMode)' during reentry $iteration."
         }
-        $relayRuns.Add([ordered]@{
-            iteration = $iteration
-            kind = "existing-world"
-            code = $relay.Code
-            roomCode = $relay.State.relayRoomCode
-            moveControlMode = $relay.State.moveControlMode
-            relayEndPoint = $relay.State.relayEndPoint
-            relayAttemptCount = $relay.State.relayAttemptCount
-            relayLastFailure = $relay.State.relayLastFailure
-            restartCount = $relay.RestartCount
-        })
+        Invoke-WorldProbes "reentry-$iteration"
+        if ($relayEnabled) {
+            $relay = Wait-ForRelayCode "reentry-$iteration-relay"
+            $relayRuns.Add([ordered]@{
+                iteration = $iteration
+                kind = "existing-world"
+                code = $relay.Code
+                roomCode = $relay.State.relayRoomCode
+                moveControlMode = $relay.State.moveControlMode
+                relayEndPoint = $relay.State.relayEndPoint
+                relayAttemptCount = $relay.State.relayAttemptCount
+                relayLastFailure = $relay.State.relayLastFailure
+                restartCount = $relay.RestartCount
+            })
+        }
     }
 
     $script:CurrentPhase = "final-cleanup"
@@ -1298,6 +1394,8 @@ try {
         worldName = $worldName
         worldDirectory = $worldDirectory
         worldRetained = [bool]$KeepTestWorld
+        relayEnabled = $relayEnabled
+        worldEntryCount = $ReentryCount + 1
         relayRuns = $relayRuns
         finalState = $finalState
         mods = $finalMods
@@ -1313,6 +1411,8 @@ try {
         appliedClassSubstituteSelections = $script:AppliedClassSubstituteSelections
         configuredStartupDialogActions = $script:StartupDialogActions
         appliedStartupDialogActions = $script:AppliedStartupDialogActions
+        configuredWorldProbes = @($WorldProbe)
+        worldProbes = $script:WorldProbeResults
         stagedMods = $stagedFinalMods
         runtimeLogAudit = $runtimeLogAudit
         stateObservationCount = $script:StateTimeline.Count
@@ -1321,8 +1421,9 @@ try {
     Write-Utf8Json (Join-Path $artifactDirectory "summary.json") $summary
     Write-Utf8Json (Join-Path $artifactDirectory "state-timeline.json") $script:StateTimeline
     $succeeded = $true
-    Write-Host "ANDROID RELAY REENTRY PAD REGRESSION PASSED"
-    Write-Host "runs=$($relayRuns.Count)"
+    Write-Host "ANDROID $($Mode.ToUpperInvariant()) REGRESSION PASSED"
+    Write-Host "worldEntries=$($ReentryCount + 1)"
+    Write-Host "relayRuns=$($relayRuns.Count)"
     Write-Host "artifacts=$artifactDirectory"
 }
 catch {
@@ -1377,6 +1478,8 @@ catch {
         appliedClassSubstituteSelections = $script:AppliedClassSubstituteSelections
         configuredStartupDialogActions = $script:StartupDialogActions
         appliedStartupDialogActions = $script:AppliedStartupDialogActions
+        configuredWorldProbes = @($WorldProbe)
+        worldProbes = $script:WorldProbeResults
         lastState = $script:LastState
         runtimeLogAudit = $runtimeLogAudit
         failureArtifacts = $failureArtifacts

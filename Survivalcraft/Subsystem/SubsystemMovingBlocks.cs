@@ -280,6 +280,12 @@ namespace Game {
             return null;
         }
 
+        public MovingBlocksRaycastResult? Raycast(
+            Vector3 start,
+            Vector3 end,
+            bool extendToFillCells) =>
+            Raycast(start, end, extendToFillCells, null);
+
         public MovingBlocksRaycastResult? Raycast(Vector3 start, Vector3 end, bool extendToFillCells, Func<int, float, bool> action = null) {
             Ray3 ray = new(start, Vector3.Normalize(end - start));
             BoundingBox boundingBox = new(Vector3.Min(start, end), Vector3.Max(start, end));

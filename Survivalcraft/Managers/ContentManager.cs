@@ -14,7 +14,10 @@ namespace Game {
         public string SourcePackageName;
         public Lock InUse = new();
 
-        public ContentInfo(string AbsolutePath_, string sourcePackageName = "") {
+        // Preserves the historical single-path constructor used by community mods.
+        public ContentInfo(string AbsolutePath_) : this(AbsolutePath_, string.Empty) { }
+
+        public ContentInfo(string AbsolutePath_, string sourcePackageName) {
             AbsolutePath = AbsolutePath_;
             SourcePackageName = sourcePackageName ?? string.Empty;
             int pos = AbsolutePath_.LastIndexOf('.');

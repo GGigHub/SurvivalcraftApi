@@ -45,7 +45,10 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        public virtual void StartFlu(bool fromNetwork = false) {
+        // Preserves the pre-networking binary entry point used by community mods.
+        public virtual void StartFlu() => StartFlu(false);
+
+        public virtual void StartFlu(bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) return;
             if (m_fluDuration == 0f && !fromNetwork) {
                 m_componentPlayer.PlayerStats.TimesHadFlu++;

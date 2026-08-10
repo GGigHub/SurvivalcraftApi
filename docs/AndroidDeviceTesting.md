@@ -49,9 +49,10 @@
 ## 分层入口
 
 - `Build-AndroidDeviceTest.ps1`：构建并静态检查独立 package 的 ARM64 测试 APK。
-- `Test-AndroidDevice.ps1`：单次 doctor 或 `relay-reentry-pad`；支持外部 `.scmod` 精准装载、预期包名检查、ADB 故障注入和失败归因。
+- `Test-AndroidDevice.ps1`：单次 doctor、`world-reentry-pad` 或 `relay-reentry-pad`；本地世界/模组回归与公网中继门禁可独立运行，并支持外部 `.scmod` 精准装载、预期包名检查、ADB 故障注入和失败归因。
 - `Test-AndroidDeviceStability.ps1`：构建一次后重复 doctor、故障恢复和 Pad 中继重进。
 - `Resolve-AndroidModCorpus.ps1`：直接连接下载、SHA-256 锁定、压缩包安全检查、解码和 `modinfo.json` 校验。
+- `Test-ModBinaryCompatibility.ps1`：只在内存中解码模组，用 Mono.Cecil 将 DLL 的宿主类型/成员引用对照当前 `Survivalcraft`、`Engine` 和 `EntitySystem` 解析，并检查未指定参数的 Harmony 补丁是否会命中多个同名宿主方法；不修改包或包内 DLL。
 - `Test-AndroidModMatrix.ps1`：空环境基线、每个模组单独运行、显式兼容组运行、空环境清理。
 - `Test-AndroidLocal.ps1`：串联以上门禁并生成一个总汇总。
 
@@ -99,7 +100,9 @@
 
 ## 经典模组观察性语料
 
-`tests/android-classic-mod-corpus/manifest.json` 与 `lock.json` 另外锁定了美好时代、DayZ、枪械 2.8、黑蝎 2.8 及美好时代的两个依赖。该语料用于回答“旧模组在当前 API 上实际能走到哪一步”，默认 `gate: false`，不会把已知的 API 1.45 二进制断层伪装成联机核心回归。矩阵汇总会同时给出 `passed`（阻断门禁）、`allCasesPassed`、`failedObservationalCaseCount` 和失败用例 ID；存在观察性失败时控制台会明确显示 `GATE PASSED WITH OBSERVATIONAL FAILURES`。
+`tests/android-classic-mod-corpus/manifest.json` 与 `lock.json` 另外锁定了美好时代、DayZ、枪械 2.8、黑蝎 2.8 及美好时代的两个依赖。该语料用于回答“旧模组在当前 API 上实际能走到哪一步”，默认 `gate: false`，不会把 API 1.45 二进制断层伪装成联机核心回归。矩阵汇总会同时给出 `passed`（阻断门禁）、`allCasesPassed`、`failedObservationalCaseCount` 和失败用例 ID；存在观察性失败时控制台会明确显示 `GATE PASSED WITH OBSERVATIONAL FAILURES`。
+
+所选 API 1.9 经典模组在设备基线之前会自动执行只读二进制预检。当前 BLDG、Accessory 和 Wonderful Era 共 3 个程序集的 2,350 个宿主成员引用和 621 个类型引用全部可解析，未解析数量为 0。现行 9 模组语料还覆盖 35 个仅按方法名定位的 Harmony 补丁；宿主重载歧义必须为 0。API 1.45 枪械不套用原生“全部引用直接解析”门禁，因为它走精确包/程序集哈希锁定的宿主内存迁移；其原始 `.scmod` 和 DLL 同样保持不变。
 
 | 观察对象 | 包内 API / SC | 真机结果 | 当前结论 |
 |---|---|---|---|
@@ -107,8 +110,8 @@
 | 服饰配件 1.2.1 | 1.9 / 2.4 | 单独完成同一流程；曾因中心服务网络不可达失败，网络恢复后复测通过 | 通过生命周期观察 |
 | 美好时代 1.9.2 + 两个依赖 | 1.9.3 / 2.4 | 三模组同时加载并完成新世界、建房、退出重进，Game.log 0 错误/警告 | 当前运行时兼容；不代表模组玩法状态已联机同步 |
 | DayZ 2.2.3.0 三周年 | 1.45 / 2.3 | 6 组类冲突和公告框均自动处理；世界加载因缺少 `Game.SubsystemSeasons` 返回主菜单，记录 1358 个错误 | 当前 API 1.9.3.1 不可玩 |
-| 枪械 2.8 | 1.45 / 2.3 | 进入世界和玩家界面后出现旧字段、旧方法和旧物品 ID 错误，随后 Mono `SIGSEGV` | 当前 API 1.9.3.1 不稳定且不可玩 |
-| 黑蝎 2.8 + 枪械 2.8 | 1.45 / 2.3 | 3 组类冲突自动处理；世界加载因 `Game.SubsystemWorldChest` VTable 建立失败而中止，记录 137 个错误 | 当前 API 1.9.3.1 不可玩 |
+| 枪械 2.8 | 1.45 / 2.3 | 精确哈希宿主适配后完成新世界和一次重进；两次均通过枪械数据、配方、地图和弹道创建/移除探针，Game.log 0 错误/警告 | 核心加载与本地世界生命周期通过；尚不代表枪械自定义状态已跨客户端同步 |
+| 黑蝎 2.8（依赖枪械 2.8） | 1.45 / 2.3 | 旧基线在世界加载时因 `Game.SubsystemWorldChest` VTable 建立失败而中止；按当前范围不再继续做黑蝎专用适配 | 延后且仅保留观察记录；不影响枪械 2.8 的独立兼容门禁 |
 
 [美好时代的社区说明](https://www.scmod.cn/2739.html/)本身标注“暂不支持联机”，所以上述通过只证明模组加载、世界生命周期和本分支建房路径可以共存，不证明它新增的方块、实体、配方或行为已跨客户端同步。要声称玩法联机，需要第二客户端和针对该模组的声明式状态探针。
 
@@ -119,10 +122,11 @@
   -ManifestPath ./tests/android-classic-mod-corpus/manifest.json `
   -CorpusDirectory ./artifacts/android-classic-mod-corpus `
   -Offline `
+  -WorldOnly `
   -CaseId wonderful-era-with-dependencies
 ```
 
-框架支持在清单中声明 `subjectMod`、精确 `classSubstitutions` 和 `startupDialogActions`。启动前的类替换配置只在独立自动测试包中读取；未知冲突、候选不唯一和动作未发生都会 fail closed。自定义主菜单通过稳定的注册屏幕名识别。旧模组同时提供同名字体的 `.lst`/`.png`、而本体提供 `.webp` 时，内容系统优先配对同一 `PackageName` 来源，无法唯一配对则明确拒绝，避免跨模组静默混合资源。
+框架支持在清单中声明 `subjectMod`、精确 `classSubstitutions`、`startupDialogActions` 和 `worldProbes`。启动前的类替换配置只在独立自动测试包中读取；未知冲突、候选不唯一、动作未发生或功能探针未完成都会 fail closed。自定义主菜单通过稳定的注册屏幕名识别。旧模组同时提供同名字体的 `.lst`/`.png`、而本体提供 `.webp` 时，内容系统优先配对同一 `PackageName` 来源，无法唯一配对则明确拒绝，避免跨模组静默混合资源。
 
 ## 诊断材料
 
@@ -143,4 +147,4 @@
 
 ## 当前边界
 
-真机框架已经覆盖启动、存储、Pad 设置、新世界/已有世界建房、重复运行、ADB 恢复、中继故障转移和代表性社区模组加载；它仍不等同于第二台 Android 客户端实际入房、跨运营商 NAT、像素级渲染验收、长时间温控/电耗或每个模组玩法动作。例如蓝图投影、染色剂合成、击杀播报和七宗罪战斗仍需要后续声明式专用探针。多人玩法协议的确定性 Direct/Relay 覆盖继续由 `Test-Multiplayer.ps1` 的无窗口多进程场景负责。
+真机框架已经覆盖启动、存储、Pad 设置、新世界/已有世界建房、重复运行、ADB 恢复、中继故障转移、代表性社区模组加载和枪械弹道的声明式功能探针；它仍不等同于第二台 Android 客户端实际入房、跨运营商 NAT、像素级渲染验收、长时间温控/电耗或每个模组的全部玩法动作。例如蓝图投影、染色剂合成、击杀播报、七宗罪战斗以及枪械自定义状态同步仍需要后续专用探针。多人玩法协议的确定性 Direct/Relay 覆盖继续由 `Test-Multiplayer.ps1` 的无窗口多进程场景负责。

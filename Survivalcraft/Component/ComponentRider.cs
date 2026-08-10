@@ -70,6 +70,10 @@ namespace Game {
             return result;
         }
 
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual void StartMounting(ComponentMount componentMount) =>
+            StartMounting(componentMount, false);
+
         public virtual void StartMounting(ComponentMount componentMount, bool fromNetwork = false) {
             if (!m_isAnimating
                 && Mount == null
@@ -86,6 +90,9 @@ namespace Game {
                 }
             }
         }
+
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual void StartDismounting() => StartDismounting(false);
 
         public virtual void StartDismounting(bool fromNetwork = false) {
             if (!m_isAnimating

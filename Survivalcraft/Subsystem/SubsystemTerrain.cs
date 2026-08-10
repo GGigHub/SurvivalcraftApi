@@ -352,6 +352,20 @@ namespace Game {
             return null;
         }
 
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual void ChangeCell(int x, int y, int z, int value, bool updateModificationCounter) =>
+            ChangeCell(x, y, z, value, updateModificationCounter, null, false);
+
+        // API 1.9 community mods also bind the moving-block overload directly.
+        public virtual void ChangeCell(
+            int x,
+            int y,
+            int z,
+            int value,
+            bool updateModificationCounter,
+            MovingBlock movingBlock) =>
+            ChangeCell(x, y, z, value, updateModificationCounter, movingBlock, false);
+
         public virtual void ChangeCell(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null, bool fromNetwork = false) {
             bool pass = false;
             ModsManager.HookAction(
@@ -426,6 +440,24 @@ namespace Game {
                 }
             }
         }
+
+        public virtual void DestroyCell(
+            int toolLevel,
+            int x,
+            int y,
+            int z,
+            int newValue,
+            bool noDrop,
+            bool noParticleSystem) =>
+            DestroyCell(
+                toolLevel,
+                x,
+                y,
+                z,
+                newValue,
+                noDrop,
+                noParticleSystem,
+                null);
 
         public virtual void DestroyCell(int toolLevel,
             int x,

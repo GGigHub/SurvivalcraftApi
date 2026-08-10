@@ -7,6 +7,10 @@ namespace Game {
     public static class CraftingRecipesManager {
         public static List<CraftingRecipe> m_recipes = [];
         public static List<CraftingRecipe> Recipes => m_recipes;
+
+        [Obsolete("Compatibility view for API versions older than 1.8.1. Use Recipes instead.")]
+        public static ReadOnlyList<CraftingRecipe> GetRecipes1() => new(m_recipes);
+
         public static string fName = "CraftingRecipesManager";
 
         /// <summary>

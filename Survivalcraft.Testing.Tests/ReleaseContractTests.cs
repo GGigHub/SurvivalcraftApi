@@ -145,6 +145,8 @@ public sealed class ReleaseContractTests {
         Assert.Contains("\"system.ping\"", bridgeSource, StringComparison.Ordinal);
         Assert.Contains("\"mods.list\"", bridgeSource, StringComparison.Ordinal);
         Assert.Contains("\"mods.selectClassSubstitute\"", bridgeSource, StringComparison.Ordinal);
+        Assert.Contains("\"compat.firearms28.probe\"", bridgeSource,
+            StringComparison.Ordinal);
         Assert.Contains("startup-class-substitutes.json", bridgeSource, StringComparison.Ordinal);
         Assert.Contains("selectedClassSubstitutes", bridgeSource, StringComparison.Ordinal);
         Assert.Contains("loadingCanContinue", bridgeSource, StringComparison.Ordinal);
@@ -152,6 +154,7 @@ public sealed class ReleaseContractTests {
         Assert.DoesNotContain("CSharpScript", bridgeSource, StringComparison.Ordinal);
         Assert.DoesNotContain("Process.Start", bridgeSource, StringComparison.Ordinal);
         Assert.DoesNotContain("Assembly.Load", bridgeSource, StringComparison.Ordinal);
+        Assert.Contains("WorldProbe", deviceRunner, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -237,7 +240,7 @@ public sealed class ReleaseContractTests {
             string caseId = testCase.GetProperty("id").GetString() ?? string.Empty;
             Assert.True(caseIds.Add(caseId), $"Duplicate corpus case '{caseId}'.");
             Assert.Contains(testCase.GetProperty("mode").GetString() ?? string.Empty,
-                new[] { "doctor", "relay-reentry-pad" });
+                new[] { "doctor", "world-reentry-pad", "relay-reentry-pad" });
             Assert.True(testCase.GetProperty("gate").GetBoolean());
             string[] modIds = testCase.GetProperty("mods").EnumerateArray()
                 .Select(value => value.GetString() ?? string.Empty)
@@ -381,6 +384,12 @@ public sealed class ReleaseContractTests {
         Assert.Contains("firearms-2.8", siyahAkrepCase.GetProperty("mods")
             .EnumerateArray()
             .Select(value => value.GetString() ?? string.Empty));
+        JsonElement firearmsCase = testCases.Single(testCase =>
+            testCase.GetProperty("id").GetString() == "firearms-subject");
+        Assert.Equal("firearms-2.8", Assert.Single(
+            firearmsCase.GetProperty("worldProbes")
+                .EnumerateArray()
+                .Select(value => value.GetString() ?? string.Empty)));
         foreach (JsonElement testCase in testCases.Where(testCase =>
             testCase.GetProperty("id").GetString() is "firearms-subject" or "siyah-akrep-with-firearms")) {
             Dictionary<string, JsonElement> selections = testCase
@@ -422,8 +431,29 @@ public sealed class ReleaseContractTests {
         Assert.Contains("MaximumModPackageBytes", matrixRunner, StringComparison.Ordinal);
         Assert.Contains("classSubstitutions", matrixRunner, StringComparison.Ordinal);
         Assert.Contains("startupDialogActions", matrixRunner, StringComparison.Ordinal);
+        Assert.Contains("worldProbes", matrixRunner, StringComparison.Ordinal);
+        Assert.Contains("WorldOnly", matrixRunner, StringComparison.Ordinal);
+        Assert.Contains("world-reentry-pad", matrixRunner, StringComparison.Ordinal);
+        Assert.Contains("Test-ModBinaryCompatibility.ps1", matrixRunner,
+            StringComparison.Ordinal);
+        Assert.Contains("binaryCompatibility", matrixRunner, StringComparison.Ordinal);
         Assert.Contains("failedObservationalCaseCount", matrixRunner, StringComparison.Ordinal);
         Assert.Contains("allCasesPassed", matrixRunner, StringComparison.Ordinal);
+
+        string binaryCompatibilityRunner = File.ReadAllText(
+            Path.Combine(root, "scripts", "Test-ModBinaryCompatibility.ps1"));
+        Assert.Contains("Get-DecipheredModBytes", binaryCompatibilityRunner,
+            StringComparison.Ordinal);
+        Assert.Contains("GetMemberReferences", binaryCompatibilityRunner,
+            StringComparison.Ordinal);
+        Assert.Contains("GetTypeReferences", binaryCompatibilityRunner,
+            StringComparison.Ordinal);
+        Assert.Contains("HarmonyLib.HarmonyPatch", binaryCompatibilityRunner,
+            StringComparison.Ordinal);
+        Assert.Contains("ambiguousNameOnlyHarmonyPatchCount", binaryCompatibilityRunner,
+            StringComparison.Ordinal);
+        Assert.Contains("readOnly = $true", binaryCompatibilityRunner,
+            StringComparison.Ordinal);
 
         string contentManager = File.ReadAllText(
             Path.Combine(root, "Survivalcraft", "Managers", "ContentManager.cs"));
@@ -440,6 +470,183 @@ public sealed class ReleaseContractTests {
             StringComparison.Ordinal);
         Assert.Contains("sameSourceTextures", bitmapFontReader, StringComparison.Ordinal);
         Assert.Contains("glyphs.SourcePackageName", bitmapFontReader, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    [Trait("Layer", "L0")]
+    public void LegacyApiCompatibilityLedgerAdvancesToDayzAfterFirearmsValidation() {
+        string root = FindRepositoryRoot();
+        using JsonDocument ledgerDocument = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(root, "tests", "legacy-api-compatibility", "ledger.json")));
+        using JsonDocument classicLockDocument = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(root, "tests", "android-classic-mod-corpus", "lock.json")));
+        JsonElement ledger = ledgerDocument.RootElement;
+        Assert.Equal(1, ledger.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal("1.9.3.1", ledger.GetProperty("currentApi").GetString());
+        Assert.Equal("fail-closed",
+            ledger.GetProperty("policy").GetProperty("unknownBreakBehavior").GetString());
+        Assert.Equal("forbidden",
+            ledger.GetProperty("policy").GetProperty("packageMutationPolicy").GetString());
+        Assert.Equal("dayz-world-lifecycle",
+            ledger.GetProperty("policy").GetProperty("activeMilestone").GetString());
+        Assert.Equal("observation-only",
+            ledger.GetProperty("policy").GetProperty("siyahAkrepPolicy").GetString());
+
+        JsonElement[] bands = ledger.GetProperty("bands").EnumerateArray().ToArray();
+        Assert.Equal(
+            new[] { "native-1.9", "common-1.8", "bridge-1.7", "exact-1.4-1.6" },
+            bands.Select(band => band.GetProperty("id").GetString()).ToArray());
+        Assert.Equal(
+            new[] { 0, 1, 2, 3 },
+            bands.Select(band => band.GetProperty("priority").GetInt32()).ToArray());
+        Assert.False(bands[0].GetProperty("assemblyRewrite").GetBoolean());
+
+        Dictionary<string, JsonElement> lockedById = classicLockDocument.RootElement
+            .GetProperty("mods")
+            .EnumerateArray()
+            .ToDictionary(
+                mod => mod.GetProperty("id").GetString() ?? string.Empty,
+                mod => mod,
+                StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, JsonElement> targets = ledger.GetProperty("targets")
+            .EnumerateArray()
+            .ToDictionary(
+                target => target.GetProperty("id").GetString() ?? string.Empty,
+                target => target,
+                StringComparer.OrdinalIgnoreCase);
+        Assert.Equal(3, targets.Count);
+        foreach ((string id, JsonElement target) in targets) {
+            Assert.Equal(
+                lockedById[id].GetProperty("packageName").GetString(),
+                target.GetProperty("packageName").GetString());
+            Assert.Equal(
+                lockedById[id].GetProperty("sha256").GetString(),
+                target.GetProperty("packageSha256").GetString());
+            Assert.Matches("^[0-9a-f]{64}$",
+                target.GetProperty("packageSha256").GetString() ?? string.Empty);
+        }
+
+        JsonElement firearms = targets["firearms-2.8"];
+        Assert.Equal(1, firearms.GetProperty("priority").GetInt32());
+        Assert.False(firearms.GetProperty("active").GetBoolean());
+        Assert.True(firearms.GetProperty("completed").GetBoolean());
+        Assert.False(firearms.GetProperty("observationOnly").GetBoolean());
+        Assert.Equal("android-world-create-exit-reentry-and-projectile-probe",
+            firearms.GetProperty("validationTarget").GetString());
+        Assert.Equal("android-passed",
+            firearms.GetProperty("validationStatus").GetString());
+        Assert.Matches("^[0-9a-f]{64}$",
+            firearms.GetProperty("assemblySha256").GetString() ?? string.Empty);
+        JsonElement firearmsEvidence = firearms.GetProperty("validationEvidence");
+        Assert.Equal(2, firearmsEvidence.GetProperty("worldEntryCount").GetInt32());
+        Assert.Equal(2, firearmsEvidence.GetProperty("functionalProbeCount").GetInt32());
+        Assert.Equal(0, firearmsEvidence.GetProperty("runtimeErrorCount").GetInt32());
+        Assert.Equal(0, firearmsEvidence.GetProperty("runtimeWarningCount").GetInt32());
+        Assert.False(firearmsEvidence.GetProperty("sourcePackageModified").GetBoolean());
+
+        JsonElement dayz = targets["dayz-2.2.3.0-three-year"];
+        Assert.True(dayz.GetProperty("active").GetBoolean());
+        Assert.False(dayz.GetProperty("completed").GetBoolean());
+        Assert.Equal("android-world-create-exit-reentry",
+            dayz.GetProperty("validationTarget").GetString());
+
+        JsonElement siyahAkrep = targets["siyah-akrep-2.8"];
+        Assert.False(siyahAkrep.GetProperty("active").GetBoolean());
+        Assert.True(siyahAkrep.GetProperty("observationOnly").GetBoolean());
+        Assert.True(siyahAkrep.GetProperty("deferredByUser").GetBoolean());
+        Assert.Equal("none", siyahAkrep.GetProperty("validationTarget").GetString());
+
+        Dictionary<string, JsonElement> breaks = ledger.GetProperty("breaks")
+            .EnumerateArray()
+            .ToDictionary(
+                item => item.GetProperty("id").GetString() ?? string.Empty,
+                item => item,
+                StringComparer.OrdinalIgnoreCase);
+        Assert.Equal(6, breaks.Count);
+        foreach (JsonElement item in breaks.Values) {
+            Assert.Equal("implemented",
+                item.GetProperty("implementationStatus").GetString());
+        }
+        foreach (string breakId in new[] {
+            "block-is-explosion-transparent",
+            "mods-screen-decipher-stream",
+            "crafting-recipes-readonly-getter",
+            "legacy-particle-system-one-argument",
+            "firearms-2.8-exact-runtime-adapter"
+        }) {
+            Assert.Contains("firearms-2.8",
+                breaks[breakId].GetProperty("affectedTargets")
+                    .EnumerateArray()
+                    .Select(value => value.GetString() ?? string.Empty));
+        }
+        JsonElement runtimeAdapter = breaks["firearms-2.8-exact-runtime-adapter"];
+        string[] runtimeBreakIds = runtimeAdapter.GetProperty("runtimeBreakIds")
+            .EnumerateArray()
+            .Select(value => value.GetString() ?? string.Empty)
+            .ToArray();
+        Assert.Equal(15, runtimeBreakIds.Length);
+        Assert.Equal(runtimeBreakIds.Length,
+            runtimeBreakIds.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Contains("firearms-2.8-host-projectile-update", runtimeBreakIds);
+        Assert.Contains("firearms-2.8-host-recipes", runtimeBreakIds);
+        Assert.Contains("firearms-2.8-remap-dynamic-block-indices", runtimeBreakIds);
+        Assert.Contains("legacy-particle-system-one-argument", runtimeBreakIds);
+        Assert.False(runtimeAdapter.GetProperty("sourcePackageModified").GetBoolean());
+        Assert.Equal(firearms.GetProperty("packageSha256").GetString(),
+            runtimeAdapter.GetProperty("packageSha256").GetString());
+        Assert.Equal(firearms.GetProperty("assemblySha256").GetString(),
+            runtimeAdapter.GetProperty("assemblySha256").GetString());
+
+        JsonElement api19Surface = breaks["api19-classic-host-binary-surface"];
+        Assert.Equal(16,
+            api19Surface.GetProperty("compatibilityMembers").GetArrayLength());
+        Assert.False(api19Surface.GetProperty("sourcePackageModified").GetBoolean());
+        Assert.Equal(0,
+            ledger.GetProperty("memberReferenceScan")
+                .GetProperty("modernReferenceCount").GetInt32());
+        JsonElement binaryAudit = ledger.GetProperty("memberReferenceScan")
+            .GetProperty("binaryCompatibilityAudit");
+        Assert.True(binaryAudit.GetProperty("readOnly").GetBoolean());
+        Assert.Equal(2350, binaryAudit.GetProperty("memberReferenceCount").GetInt32());
+        Assert.Equal(621, binaryAudit.GetProperty("typeReferenceCount").GetInt32());
+        Assert.Equal(0, binaryAudit.GetProperty("unresolvedMemberCount").GetInt32());
+        Assert.Equal(0, binaryAudit.GetProperty("unresolvedTypeCount").GetInt32());
+        JsonElement modernBinaryAudit = ledger.GetProperty("memberReferenceScan")
+            .GetProperty("modernCorpusBinaryCompatibilityAudit");
+        Assert.True(modernBinaryAudit.GetProperty("readOnly").GetBoolean());
+        Assert.Equal(9, modernBinaryAudit.GetProperty("packageCount").GetInt32());
+        Assert.Equal(31, modernBinaryAudit.GetProperty("assemblyCount").GetInt32());
+        Assert.Equal(35,
+            modernBinaryAudit.GetProperty("nameOnlyHarmonyPatchCount").GetInt32());
+        Assert.Equal(0,
+            modernBinaryAudit.GetProperty("ambiguousNameOnlyHarmonyPatchCount").GetInt32());
+        Assert.Equal(0,
+            modernBinaryAudit.GetProperty("unresolvedMemberCount").GetInt32());
+        Assert.Equal(0,
+            modernBinaryAudit.GetProperty("unresolvedTypeCount").GetInt32());
+
+        string block = File.ReadAllText(
+            Path.Combine(root, "Survivalcraft", "Block", "Block.cs"));
+        string modsScreen = File.ReadAllText(
+            Path.Combine(root, "Survivalcraft", "Screen", "ModsManageContentScreen.cs"));
+        string recipes = File.ReadAllText(
+            Path.Combine(root, "Survivalcraft", "Managers", "CraftingRecipesManager.cs"));
+        string assemblyCompatibility = File.ReadAllText(Path.Combine(
+            root,
+            "Survivalcraft",
+            "ModsManager",
+            "LegacyModAssemblyCompatibility.cs"));
+        Assert.Contains("public bool IsExplosionTransparent", block, StringComparison.Ordinal);
+        Assert.Contains("public static Stream GetDecipherStream(Stream stream)", modsScreen,
+            StringComparison.Ordinal);
+        Assert.Contains("ReadOnlyList<CraftingRecipe> GetRecipes1()", recipes,
+            StringComparison.Ordinal);
+        Assert.Contains("CompatibilityRecipesMethodName = \"GetRecipes1\"", assemblyCompatibility,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            firearms.GetProperty("packageSha256").GetString() ?? string.Empty,
+            assemblyCompatibility,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private static string Property(XDocument document, string name) =>

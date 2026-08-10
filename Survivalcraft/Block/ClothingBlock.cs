@@ -9,6 +9,8 @@ namespace Game {
 
         public Dictionary<int, ClothingData> m_clothingData = [];
 
+        public DynamicArray<ClothingData> m_legacyClothingData = [];
+
         public BlockMesh m_innerMesh;
 
         public int m_displayIndex;
@@ -51,6 +53,10 @@ namespace Game {
                     clothingData.DisplayIndex = m_displayIndex++;
                 }
                 m_clothingData[clothIndex] = clothingData;
+                if (clothIndex >= m_legacyClothingData.Count) {
+                    m_legacyClothingData.Count = clothIndex + 1;
+                }
+                m_legacyClothingData[clothIndex] = clothingData;
             }
             foreach (XElement xElement1 in item.Elements()) {
                 LoadClothingData(xElement1);

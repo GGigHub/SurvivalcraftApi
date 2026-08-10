@@ -408,6 +408,7 @@ namespace Game {
             foreach (ModEntity modEntity in ModsManager.ModList) {
                 modEntity.LoadBlocksData();
             }
+            LegacyModRuntimeCompatibility.InitializeBeforeBlocks();
             foreach (Block block in m_blocks) {
                 try {
                     block.Initialize();
@@ -427,6 +428,7 @@ namespace Game {
                     return false;
                 }
             );
+            LegacyModRuntimeCompatibility.InitializeAfterBlocks();
         }
 
         public static void AddCategory(string category) {
@@ -996,6 +998,9 @@ namespace Game {
                 triangleIndices.Array[count5++] = count3 + array2[j];
             }
         }
+
+        public static int DamageItem(int value, int damageCount) =>
+            DamageItem(value, damageCount, null);
 
         public static int DamageItem(int value, int damageCount, Entity owner = null) {
             int num = Terrain.ExtractContents(value);

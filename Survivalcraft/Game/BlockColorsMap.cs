@@ -56,6 +56,15 @@ namespace Game {
 
         public static BlockColorsMap Seagrass = new(new Color(50, 120, 110), new Color(80, 120, 70), new Color(50, 120, 110), new Color(80, 120, 70));
 
+        public static BlockColorsMap WaterColorsMap = Water;
+        public static BlockColorsMap GrassColorsMap = Grass;
+        public static BlockColorsMap OakLeavesColorsMap = OakLeaves;
+        public static BlockColorsMap BirchLeavesColorsMap = BirchLeaves;
+        public static BlockColorsMap MimosaLeavesColorsMap = MimosaLeaves;
+        public static BlockColorsMap SpruceLeavesColorsMap = SpruceLeaves;
+        public static BlockColorsMap TallSpruceLeavesColorsMap = TallSpruceLeaves;
+        public static BlockColorsMap IvyColorsMap = Ivy;
+
         public BlockColorsMap(Color th11, Color th21, Color th12, Color th22) {
             for (int i = 0; i < 16; i++) {
                 for (int j = 0; j < 16; j++) {

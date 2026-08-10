@@ -167,6 +167,9 @@
           "className": "Game.SubsystemNewExplosions"
         }
       ],
+      "worldProbes": [
+        "firearms-2.8"
+      ],
       "mode": "relay-reentry-pad",
       "reentryCount": 1,
       "gate": false

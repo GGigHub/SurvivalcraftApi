@@ -686,7 +686,7 @@ namespace Game {
                             if (block2 is FluidBlock) {
                                 continue;
                             }
-                            float num8 = m_projectilesCount < 40 || block2.ExplosionKeepsPickables ? 1f :
+                            float num8 = m_projectilesCount < 40 || block2.KeepsPickablesOnExplosion ? 1f :
                                 m_projectilesCount < 60 ? 0.5f :
                                 m_projectilesCount >= 80 ? 0.125f : 0.25f;
                             if (!(m_random.Float(0f, 1f) < num8)) {
@@ -698,7 +698,7 @@ namespace Game {
                                 velocity += m_random.Vector3(0.2f * velocity.Length());
                             }
                             float num9 = flag2 ? 0f :
-                                block2.ExplosionKeepsPickables ? 1f : MathUtils.Lerp(1f, 0f, m_projectilesCount / 25f);
+                                block2.KeepsPickablesOnExplosion ? 1f : MathUtils.Lerp(1f, 0f, m_projectilesCount / 25f);
                             Projectile projectile = m_subsystemProjectiles.AddProjectile(
                                 item.Value,
                                 new Vector3(x + 0.5f, y + 0.5f, z + 0.5f),

@@ -238,8 +238,15 @@ namespace Game {
 
         public Matrix? GetBoneTransform(Model model, int boneIndex) => m_boneTransforms[model][boneIndex];
 
+        public Matrix? GetBoneTransform(int boneIndex) =>
+            GetBoneTransform(Models[0], boneIndex);
+
         public void SetBoneTransform(Model model, int boneIndex, Matrix? transformation) {
             m_boneTransforms[model][boneIndex] = transformation;
+        }
+
+        public void SetBoneTransform(int boneIndex, Matrix? transformation) {
+            SetBoneTransform(Models[0], boneIndex, transformation);
         }
 
         public override void Draw(DrawContext dc) {

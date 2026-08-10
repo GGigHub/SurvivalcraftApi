@@ -88,6 +88,21 @@ namespace Game {
 
         public static float ViewAngle { get; set; }
 
+        // Keep the discrete pre-slider API used by legacy mod assemblies.
+        public static ViewAngleMode ViewAngleMode {
+            get => ViewAngle switch {
+                < 0.95f => ViewAngleMode.Narrow,
+                > 1.05f => ViewAngleMode.Wide,
+                _ => ViewAngleMode.Normal
+            };
+            set => ViewAngle = value switch {
+                ViewAngleMode.Narrow => 0.9f,
+                ViewAngleMode.Normal => 1f,
+                ViewAngleMode.Wide => 1.125f,
+                _ => 1f
+            };
+        }
+
         public static SkyRenderingMode SkyRenderingMode { get; set; }
 
         public static bool TerrainMipmapsEnabled { get; set; }

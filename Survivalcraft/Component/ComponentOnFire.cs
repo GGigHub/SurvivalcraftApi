@@ -39,6 +39,10 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual void SetOnFire(ComponentCreature attacker, float duration) =>
+            SetOnFire(attacker, duration, false);
+
         public virtual void SetOnFire(ComponentCreature attacker, float duration, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
                 ModsManager.HookAction("OnNetworkSetOnFire", loader => loader.OnNetworkSetOnFire(this, attacker, duration));
@@ -50,6 +54,9 @@ namespace Game {
             m_fireDuration = MathUtils.Max(m_fireDuration, duration);
             if (!fromNetwork) ModsManager.HookAction("OnNetworkSetOnFire", loader => loader.OnNetworkSetOnFire(this, attacker, duration));
         }
+
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual void Extinguish() => Extinguish(false);
 
         public virtual void Extinguish(bool fromNetwork = false) {
             bool wasOnFire = IsOnFire;

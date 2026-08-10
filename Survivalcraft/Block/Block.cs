@@ -166,6 +166,17 @@ namespace Game {
 
         public bool ExplosionKeepsPickables;
 
+        [Obsolete("Use ExplosionKeepsPickables instead.")]
+        public bool IsExplosionTransparent;
+
+        public bool KeepsPickablesOnExplosion {
+            get {
+#pragma warning disable CS0618
+                return ExplosionKeepsPickables || IsExplosionTransparent;
+#pragma warning restore CS0618
+            }
+        }
+
         public float DefaultNutritionalValue;
 
         public FoodType FoodType;

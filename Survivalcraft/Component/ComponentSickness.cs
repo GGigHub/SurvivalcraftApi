@@ -26,7 +26,10 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        public virtual void StartSickness(bool fromNetwork = false) {
+        // Preserves the pre-networking binary entry point used by community mods.
+        public virtual void StartSickness() => StartSickness(false);
+
+        public virtual void StartSickness(bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) return;
             if (m_sicknessDuration == 0f && !fromNetwork) {
                 m_componentPlayer.PlayerStats.TimesWasSick++;
@@ -34,6 +37,9 @@ namespace Game {
             m_sicknessDuration = 900f;
             if (!fromNetwork) ModsManager.HookAction("OnNetworkSicknessChanged", loader => loader.OnNetworkSicknessChanged(this));
         }
+
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual void NauseaEffect() => NauseaEffect(false);
 
         public virtual void NauseaEffect(bool fromNetwork = false) {
             m_lastNauseaTime = m_subsystemTime.GameTime;

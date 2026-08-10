@@ -53,7 +53,13 @@ namespace Game {
 
         public double m_lastPukeSoundTime = -1000.0;
 
-        public virtual void PlayIdleSound(bool skipIfRecentlyPlayed, bool fromNetwork = false) {
+        /// <summary>
+        /// Preserves the pre-API-1.9 binary entry point used by community mods.
+        /// </summary>
+        public virtual void PlayIdleSound(bool skipIfRecentlyPlayed) =>
+            PlayIdleSound(skipIfRecentlyPlayed, false);
+
+        public virtual void PlayIdleSound(bool skipIfRecentlyPlayed, bool fromNetwork) {
             bool flag = !string.IsNullOrEmpty(m_rareIdleSound) && m_random.Bool(m_rareIdleSoundProbability);
             string text = (flag ? m_rareIdleSound : m_idleSound);
             float num = (flag ? m_rareIdleSoundMinDistance : m_idleSoundMinDistance);
@@ -71,42 +77,72 @@ namespace Game {
             }
         }
 
-        public virtual void PlayPainSound(bool fromNetwork = false) {
+        /// <summary>
+        /// Preserves the pre-API-1.9 binary entry point used by community mods.
+        /// </summary>
+        public virtual void PlayPainSound() => PlayPainSound(false);
+
+        public virtual void PlayPainSound(bool fromNetwork) {
             if (!string.IsNullOrEmpty(m_painSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_painSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_painSoundMinDistance, autoDelay: false);
             }
         }
 
-        public virtual void PlayMoanSound(bool fromNetwork = false) {
+        /// <summary>
+        /// Preserves the pre-API-1.9 binary entry point used by community mods.
+        /// </summary>
+        public virtual void PlayMoanSound() => PlayMoanSound(false);
+
+        public virtual void PlayMoanSound(bool fromNetwork) {
             if (!string.IsNullOrEmpty(m_moanSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_moanSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_moanSoundMinDistance, autoDelay: false);
             }
         }
 
-        public virtual void PlaySneezeSound(bool fromNetwork = false) {
+        /// <summary>
+        /// Preserves the pre-API-1.9 binary entry point used by community mods.
+        /// </summary>
+        public virtual void PlaySneezeSound() => PlaySneezeSound(false);
+
+        public virtual void PlaySneezeSound(bool fromNetwork) {
             if (!string.IsNullOrEmpty(m_sneezeSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_sneezeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_sneezeSoundMinDistance, autoDelay: false);
             }
         }
 
-        public void PlayCoughSound(bool fromNetwork = false) {
+        /// <summary>
+        /// Preserves the pre-API-1.9 binary entry point used by community mods.
+        /// </summary>
+        public void PlayCoughSound() => PlayCoughSound(false);
+
+        public void PlayCoughSound(bool fromNetwork) {
             if (!string.IsNullOrEmpty(m_coughSound) && m_subsystemTime.GameTime > m_lastCoughingSoundTime + 1.0) {
                 m_lastCoughingSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_coughSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_coughSoundMinDistance, autoDelay: false);
             }
         }
 
-        public virtual void PlayPukeSound(bool fromNetwork = false) {
+        /// <summary>
+        /// Preserves the pre-API-1.9 binary entry point used by community mods.
+        /// </summary>
+        public virtual void PlayPukeSound() => PlayPukeSound(false);
+
+        public virtual void PlayPukeSound(bool fromNetwork) {
             if (!string.IsNullOrEmpty(m_pukeSound) && m_subsystemTime.GameTime > m_lastPukeSoundTime + 1.0) {
                 m_lastPukeSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_pukeSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_pukeSoundMinDistance, autoDelay: false);
             }
         }
 
-        public virtual void PlayAttackSound(bool fromNetwork = false) {
+        /// <summary>
+        /// Preserves the pre-API-1.9 binary entry point used by community mods.
+        /// </summary>
+        public virtual void PlayAttackSound() => PlayAttackSound(false);
+
+        public virtual void PlayAttackSound(bool fromNetwork) {
             if (!string.IsNullOrEmpty(m_attackSound) && m_subsystemTime.GameTime > m_lastSoundTime + 1.0) {
                 m_lastSoundTime = m_subsystemTime.GameTime;
                 m_subsystemAudio.PlayRandomSound(m_attackSound, 1f, m_random.Float(-0.1f, 0.1f), m_componentCreature.ComponentBody.Position, m_attackSoundMinDistance, autoDelay: false);

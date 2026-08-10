@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Reflection;
 using System.Text.Json;
 using Engine;
 using Game;
@@ -23,6 +25,27 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
     private readonly string m_responseDirectory;
     private readonly string m_startupClassSubstitutesPath;
     private static StartupClassSubstituteSelection[] s_startupClassSubstituteSelections = [];
+    private static Projectile? s_firearms28ProbeProjectile;
+    private static SubsystemProjectiles? s_firearms28ProbeSubsystem;
+    private static string s_firearms28ProbeWorldDirectory = string.Empty;
+    private static bool s_firearms28ProbeRemovalObserved;
+    private static readonly string[] Firearms28ExpectedBreakIds = [
+        LegacyModAssemblyCompatibility.CraftingRecipesReadOnlyGetterBreakId,
+        LegacyModAssemblyCompatibility.LegacyParticleSystemOneArgumentBreakId,
+        LegacyModAssemblyCompatibility.FirearmsDisableSiyahAkrepBootstrapBreakId,
+        LegacyModAssemblyCompatibility.FirearmsHostGunsDataBreakId,
+        LegacyModAssemblyCompatibility.FirearmsHostRecipesBreakId,
+        LegacyModAssemblyCompatibility.FirearmsHostProjectileUpdateBreakId,
+        LegacyModAssemblyCompatibility.FirearmsHostMapInitializationBreakId,
+        LegacyModAssemblyCompatibility.FirearmsDisableSiyahAkrepStructuresBreakId,
+        LegacyModAssemblyCompatibility.FirearmsResetLightsaberColorsBreakId,
+        LegacyModAssemblyCompatibility.FirearmsRemapDynamicBlockIndicesBreakId,
+        LegacyModAssemblyCompatibility.FirearmsResetAnimationStepsBreakId,
+        LegacyModAssemblyCompatibility.FirearmsRemapGameWidgetTypeBreakId,
+        LegacyModAssemblyCompatibility.FirearmsRemapTemperatureAdjustmentBreakId,
+        LegacyModAssemblyCompatibility.FirearmsRemapLegacyFieldShapesBreakId,
+        LegacyModAssemblyCompatibility.FirearmsRemapPlayerCallbacksBreakId
+    ];
     private int m_lastProcessedFrame = -1;
 
     public AndroidDeviceTestAutomationModLoader() {
@@ -216,6 +239,7 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
             "network.startrelayhost" => StartRelayHost(),
             "mods.list" => ListMods(),
             "mods.selectclasssubstitute" => SelectClassSubstitute(arguments),
+            "compat.firearms28.probe" => ProbeFirearms28(arguments),
             "ui.tree" => BuildWidgetTree(),
             "ui.click" => ClickWidget(arguments),
             "ui.settext" => SetWidgetText(arguments),
@@ -237,9 +261,14 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
     private static object BuildState() {
         SubsystemPlayers? players = GameManager.Project?.FindSubsystem<SubsystemPlayers>();
         PlayerData? mainPlayer = players?.MainPlayerData;
+        SubsystemUpdate? subsystemUpdate =
+            GameManager.Project?.FindSubsystem<SubsystemUpdate>();
         Dialog? dialog = DialogsManager.Dialogs.Count > 0
             ? DialogsManager.Dialogs[DialogsManager.Dialogs.Count - 1]
             : null;
+        SpawnDialog? spawnDialog = dialog as SpawnDialog;
+        Exception? updateException = subsystemUpdate?.LastUpdateException;
+        Exception? rootUpdateException = updateException?.GetBaseException();
         return new {
             contentLoaded = LoadingScreen.m_isContentLoaded,
             loadingCanContinue = ModsManager.GetAllowContinue(),
@@ -258,6 +287,23 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
             worldDirectory = GameManager.WorldInfo?.DirectoryName ?? string.Empty,
             playerReady = mainPlayer?.IsReadyForPlaying == true
                 && mainPlayer.ComponentPlayer != null,
+            playerState = mainPlayer?.m_stateMachine.CurrentState ?? string.Empty,
+            playerComponentPresent = mainPlayer?.ComponentPlayer != null,
+            playerSpawnProgress = mainPlayer?.m_progress ?? 0f,
+            playerSpawnMode = mainPlayer?.m_spawnMode.ToString() ?? string.Empty,
+            spawnLargeMessage = spawnDialog?.LargeMessage ?? string.Empty,
+            spawnSmallMessage = spawnDialog?.SmallMessage ?? string.Empty,
+            spawnDialogProgress = spawnDialog?.Progress ?? 0f,
+            updateTick = subsystemUpdate?.UpdateTick ?? 0,
+            updateExceptionCount = subsystemUpdate?.UpdateExceptionCount ?? 0,
+            lastUpdateExceptionTick = subsystemUpdate?.LastUpdateExceptionTick ?? 0,
+            lastFailedUpdateable = subsystemUpdate?.LastFailedUpdateable?.GetType().FullName
+                ?? string.Empty,
+            lastUpdateExceptionType = updateException?.GetType().FullName ?? string.Empty,
+            lastUpdateExceptionMessage = updateException?.Message ?? string.Empty,
+            lastUpdateExceptionRootType = rootUpdateException?.GetType().FullName ?? string.Empty,
+            lastUpdateExceptionRootMessage = rootUpdateException?.Message ?? string.Empty,
+            lastUpdateExceptionDetails = updateException?.ToString() ?? string.Empty,
             moveControlMode = SettingsManager.MoveControlMode.ToString(),
             playWithFriendsEnabled = SettingsManager.PlayWithFriendsEnabled,
             showPlayWithFriendsDialog = SettingsManager.ShowPlayWithFriendsDialog,
@@ -449,6 +495,261 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
             _ = NetworkManager.StartRelayHostAsync();
         }
         return BuildState();
+    }
+
+    private static object ProbeFirearms28(JsonElement arguments) {
+        EnsureContentLoaded();
+        if (GameManager.Project == null) {
+            throw new InvalidOperationException(
+                "Firearms 2.8 compatibility probing requires a loaded world.");
+        }
+
+        ModEntity[] matchingMods = ModsManager.ModList.Where(mod =>
+            !mod.IsDisabled
+            && string.Equals(
+                mod.modInfo?.PackageName,
+                "gunsmod.ysf.scmod",
+                StringComparison.Ordinal)
+            && string.Equals(mod.modInfo?.Version, "2.8", StringComparison.Ordinal)
+            && string.Equals(mod.modInfo?.ApiVersion, "1.45", StringComparison.Ordinal))
+            .ToArray();
+        if (matchingMods.Length != 1) {
+            throw new InvalidOperationException(
+                $"Expected one enabled Firearms 2.8 mod, found {matchingMods.Length}.");
+        }
+        ModEntity mod = matchingMods[0];
+        KeyValuePair<Assembly, HashSet<string>>[] compatibilityAssemblies =
+            mod.LegacyCompatibilityBreakIdsByAssembly.Where(pair =>
+                pair.Value.Contains(
+                    LegacyModAssemblyCompatibility.FirearmsHostProjectileUpdateBreakId))
+            .ToArray();
+        if (compatibilityAssemblies.Length != 1) {
+            throw new InvalidOperationException(
+                "Firearms 2.8 does not have exactly one hash-locked compatibility assembly.");
+        }
+        Assembly assembly = compatibilityAssemblies[0].Key;
+        HashSet<string> appliedBreakIds = compatibilityAssemblies[0].Value;
+        if (!string.Equals(assembly.GetName().Name, "#Guns", StringComparison.Ordinal)) {
+            throw new InvalidOperationException(
+                $"Unexpected Firearms 2.8 compatibility assembly '{assembly.GetName().Name}'.");
+        }
+        string[] missingBreakIds = Firearms28ExpectedBreakIds
+            .Where(id => !appliedBreakIds.Contains(id))
+            .ToArray();
+        if (missingBreakIds.Length > 0) {
+            throw new InvalidOperationException(
+                $"Firearms 2.8 compatibility markers are missing: {string.Join(", ", missingBreakIds)}.");
+        }
+
+        IList gunData = RequireStaticList(assembly, "Game.Functions", "dataList");
+        IList recipes = RequireStaticList(
+            assembly,
+            "Game.FirearmsRecipesManager",
+            "m_recipes");
+        IDictionary lightsaberColors = RequireStaticDictionary(
+            assembly,
+            "Game.Lightsaber",
+            "Colors");
+        IDictionary animationSteps = RequireStaticDictionary(
+            assembly,
+            "Game.Functions",
+            "AllSteps");
+        if (gunData.Count != 21
+            || recipes.Count != 51
+            || lightsaberColors.Count != 4
+            || animationSteps.Count == 0) {
+            throw new InvalidOperationException(
+                $"Firearms 2.8 runtime counts are invalid: guns={gunData.Count}, "
+                + $"recipes={recipes.Count}, lightsaberColors={lightsaberColors.Count}, "
+                + $"animationSteps={animationSteps.Count}.");
+        }
+
+        HashSet<int> gunBlockIndices = [];
+        HashSet<int> bulletBlockIndices = [];
+        int bulletValue = 0;
+        foreach (object? entry in gunData) {
+            if (entry == null) {
+                throw new InvalidOperationException(
+                    "Firearms 2.8 gun data contains a null entry.");
+            }
+            Type entryType = entry.GetType();
+            int blockIndex = GetInstanceInt32(entryType, entry, "Index");
+            if (blockIndex <= 0
+                || blockIndex >= BlocksManager.Blocks.Length
+                || BlocksManager.Blocks[blockIndex].GetType().Assembly != assembly) {
+                throw new InvalidOperationException(
+                    $"Firearms 2.8 gun data index {blockIndex} does not resolve to its own block.");
+            }
+            if (!gunBlockIndices.Add(blockIndex)) {
+                throw new InvalidOperationException(
+                    $"Firearms 2.8 gun data index {blockIndex} is duplicated.");
+            }
+            int entryBulletValue = GetInstanceInt32(entryType, entry, "BulletValue");
+            int bulletBlockIndex = Terrain.ExtractContents(entryBulletValue);
+            if (bulletBlockIndex <= 0
+                || bulletBlockIndex >= BlocksManager.Blocks.Length
+                || BlocksManager.Blocks[bulletBlockIndex].GetType().Assembly != assembly) {
+                throw new InvalidOperationException(
+                    $"Firearms 2.8 bullet value content {bulletBlockIndex} does not resolve "
+                    + "to its own block.");
+            }
+            bulletBlockIndices.Add(bulletBlockIndex);
+            if (bulletValue == 0) {
+                bulletValue = entryBulletValue;
+            }
+        }
+
+        SubsystemProjectiles projectileSubsystem = GameManager.Project.Subsystems
+            .OfType<SubsystemProjectiles>()
+            .Single();
+        SubsystemExplosions explosionSubsystem = GameManager.Project.Subsystems
+            .OfType<SubsystemExplosions>()
+            .Single();
+        if (projectileSubsystem.GetType().Assembly != assembly
+            || projectileSubsystem.GetType().FullName != "Game.SubsystemNewProjectiles"
+            || explosionSubsystem.GetType().Assembly != assembly
+            || explosionSubsystem.GetType().FullName != "Game.SubsystemNewExplosions") {
+            throw new InvalidOperationException(
+                "Firearms 2.8 projectile/explosion class substitutions are not active.");
+        }
+
+        string projectilePhase = GetString(arguments, "projectilePhase", "inspect")
+            .Trim()
+            .ToLowerInvariant();
+        object projectileExercise;
+        if (projectilePhase == "start") {
+            if (s_firearms28ProbeProjectile != null) {
+                throw new InvalidOperationException(
+                    "A previous Firearms 2.8 projectile probe is still pending.");
+            }
+            ComponentPlayer player = GameManager.Project
+                .FindSubsystem<SubsystemPlayers>(true)
+                .MainPlayerData?.ComponentPlayer
+                ?? throw new InvalidOperationException(
+                    "The main player is not ready for the Firearms 2.8 projectile probe.");
+            Vector3 position = player.ComponentBody.Position + new Vector3(0f, 1.5f, 0f);
+            Projectile probe = projectileSubsystem.CreateProjectile(
+                    bulletValue,
+                    position,
+                    Vector3.Zero,
+                    Vector3.Zero,
+                    (ComponentCreature?)null)
+                ?? throw new InvalidOperationException(
+                    "Could not create a controlled Firearms 2.8 projectile.");
+            Projectile added = projectileSubsystem.AddProjectile(probe)
+                ?? throw new InvalidOperationException(
+                    "Could not add a controlled Firearms 2.8 projectile.");
+            s_firearms28ProbeRemovalObserved = false;
+            added.OnRemove += () => s_firearms28ProbeRemovalObserved = true;
+            added.ToRemove = true;
+            s_firearms28ProbeProjectile = added;
+            s_firearms28ProbeSubsystem = projectileSubsystem;
+            s_firearms28ProbeWorldDirectory = GameManager.WorldInfo?.DirectoryName
+                ?? string.Empty;
+            projectileExercise = new {
+                phase = projectilePhase,
+                scheduledForRemoval = true,
+                projectileType = added.GetType().FullName ?? string.Empty,
+                projectileCount = projectileSubsystem.Projectiles.Count
+            };
+        }
+        else if (projectilePhase == "verify") {
+            if (s_firearms28ProbeProjectile == null
+                || !ReferenceEquals(s_firearms28ProbeSubsystem, projectileSubsystem)
+                || !string.Equals(
+                    s_firearms28ProbeWorldDirectory,
+                    GameManager.WorldInfo?.DirectoryName,
+                    StringComparison.Ordinal)) {
+                throw new InvalidOperationException(
+                    "No matching Firearms 2.8 projectile probe is pending in this world.");
+            }
+            bool stillPresent = projectileSubsystem.m_projectiles.Contains(
+                s_firearms28ProbeProjectile);
+            bool removalObserved = s_firearms28ProbeRemovalObserved;
+            s_firearms28ProbeProjectile = null;
+            s_firearms28ProbeSubsystem = null;
+            s_firearms28ProbeWorldDirectory = string.Empty;
+            s_firearms28ProbeRemovalObserved = false;
+            if (stillPresent || !removalObserved) {
+                throw new InvalidOperationException(
+                    "The host projectile update path did not remove the controlled projectile.");
+            }
+            projectileExercise = new {
+                phase = projectilePhase,
+                removed = true,
+                removalCallbackObserved = true,
+                projectileCount = projectileSubsystem.Projectiles.Count
+            };
+        }
+        else if (projectilePhase == "inspect") {
+            projectileExercise = new {
+                phase = projectilePhase,
+                projectileCount = projectileSubsystem.Projectiles.Count
+            };
+        }
+        else {
+            throw new ArgumentException(
+                $"Unknown projectilePhase '{projectilePhase}'. Expected inspect, start or verify.");
+        }
+
+        int firearmsBlockCount = BlocksManager.Blocks.Count(block =>
+            block.GetType().Assembly == assembly);
+        return new {
+            packageName = mod.modInfo.PackageName,
+            version = mod.modInfo.Version,
+            apiVersion = mod.modInfo.ApiVersion,
+            assemblyName = assembly.GetName().Name,
+            appliedBreakIds = appliedBreakIds.OrderBy(id => id, StringComparer.Ordinal).ToArray(),
+            gunDataCount = gunData.Count,
+            gunBlockCount = gunBlockIndices.Count,
+            bulletBlockIndices = bulletBlockIndices.OrderBy(index => index).ToArray(),
+            firearmsBlockCount,
+            recipeCount = recipes.Count,
+            lightsaberColorCount = lightsaberColors.Count,
+            animationStepCount = animationSteps.Count,
+            projectileSubsystem = projectileSubsystem.GetType().FullName,
+            explosionSubsystem = explosionSubsystem.GetType().FullName,
+            projectileExercise
+        };
+    }
+
+    private static IList RequireStaticList(
+        Assembly assembly,
+        string typeName,
+        string fieldName) => RequireStaticField(assembly, typeName, fieldName)
+        .GetValue(null) as IList
+        ?? throw new InvalidOperationException(
+            $"Field '{typeName}.{fieldName}' is not a list.");
+
+    private static IDictionary RequireStaticDictionary(
+        Assembly assembly,
+        string typeName,
+        string fieldName) => RequireStaticField(assembly, typeName, fieldName)
+        .GetValue(null) as IDictionary
+        ?? throw new InvalidOperationException(
+            $"Field '{typeName}.{fieldName}' is not a dictionary.");
+
+    private static FieldInfo RequireStaticField(
+        Assembly assembly,
+        string typeName,
+        string fieldName) {
+        Type type = assembly.GetType(typeName, throwOnError: true, ignoreCase: false)
+            ?? throw new TypeLoadException(typeName);
+        return type.GetField(
+                fieldName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new MissingFieldException(typeName, fieldName);
+    }
+
+    private static int GetInstanceInt32(Type type, object instance, string fieldName) {
+        FieldInfo field = type.GetField(
+                fieldName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new MissingFieldException(type.FullName, fieldName);
+        return field.GetValue(instance) is int value
+            ? value
+            : throw new InvalidOperationException(
+                $"Field '{type.FullName}.{fieldName}' is not an Int32.");
     }
 
     private static object ListMods() => new {
@@ -754,6 +1055,7 @@ public sealed class AndroidDeviceTestAutomationModLoader : ModLoader {
         "network.startRelayHost",
         "mods.list",
         "mods.selectClassSubstitute",
+        "compat.firearms28.probe",
         "ui.tree",
         "ui.click",
         "ui.setText"

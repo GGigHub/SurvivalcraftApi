@@ -69,6 +69,7 @@ namespace Game {
             }
             projectile.CreationTime = m_subsystemGameInfo.TotalElapsedGameTime;
             projectile.IsInFluid = IsWater(projectile.Position);
+            projectile.LegacyIsInWater = projectile.IsInFluid;
             ModsManager.HookAction(
                 "OnProjectileAdded",
                 loader => {
@@ -86,6 +87,10 @@ namespace Game {
             ProjectileAdded?.Invoke(projectile);
             return projectile;
         }
+
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual Projectile AddProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) =>
+            AddProjectile(value, position, velocity, angularVelocity, owner, false);
 
         public virtual Projectile AddProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
@@ -133,6 +138,10 @@ namespace Game {
                 return null;
             }
         }
+
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual Projectile FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) =>
+            FireProjectile(value, position, velocity, angularVelocity, owner, false);
 
         public virtual Projectile FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork = false) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
@@ -233,6 +242,10 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            UpdateProjectilesCore(dt);
+        }
+
+        internal void UpdateProjectilesCore(float dt) {
             lock (m_lock) {
                 foreach (Projectile projectile in m_projectiles) {
                     if (projectile != null) {

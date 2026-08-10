@@ -21,6 +21,10 @@ namespace Game {
 
         public double m_lastJumpTime;
 
+        public float m_lastLeftTrigger;
+
+        public float m_lastRightTrigger;
+
         public Vector2 m_vrSmoothLook;
         public bool m_vrSnapTurning;
         public float m_vrSnapFadeTimer;
@@ -75,6 +79,8 @@ namespace Game {
             UpdateInputFromGamepad(m_componentPlayer.GameWidget.Input);
             UpdateInputFromVrControllers(m_componentPlayer.GameWidget.Input);
             UpdateInputFromWidgets(m_componentPlayer.GameWidget.Input);
+            m_playerInput.CrouchMove += m_playerInput.SneakMove;
+            m_playerInput.ToggleCrouch |= m_playerInput.ToggleSneak;
             if (m_playerInput.Jump) {
                 if (Time.RealTime - m_lastJumpTime < 0.3 && ToggleFlyInDoubleJump) {
                     m_playerInput.ToggleCreativeFly = true;

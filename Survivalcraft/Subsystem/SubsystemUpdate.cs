@@ -30,6 +30,10 @@ namespace Game {
         public int UpdateablesCount => m_updateables.Count;
         public int UpdatesPerFrame { get; set; }
         public long UpdateTick { get; private set; }
+        internal long UpdateExceptionCount { get; private set; }
+        internal long LastUpdateExceptionTick { get; private set; }
+        internal IUpdateable LastFailedUpdateable { get; private set; }
+        internal Exception LastUpdateException { get; private set; }
 
         public virtual void Update() {
             for (int i = 0; i < UpdatesPerFrame; i++) {
@@ -111,10 +115,16 @@ namespace Game {
                 try {
                     lock (sortedUpdateable) {
                         sortedUpdateable.Update(dt);
+                        LegacyModRuntimeCompatibility.UpdateAfterLegacyEntryPoint(
+                            sortedUpdateable,
+                            dt);
                     }
                 }
-                catch (Exception) {
-                    // ignored
+                catch (Exception exception) {
+                    UpdateExceptionCount++;
+                    LastUpdateExceptionTick = UpdateTick;
+                    LastFailedUpdateable = sortedUpdateable;
+                    LastUpdateException = exception;
                 }
                 finally {
                     if (UpdateTimeDebug) {

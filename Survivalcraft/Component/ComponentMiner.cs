@@ -647,6 +647,10 @@ namespace Game {
             return false;
         }
 
+        // Preserves the pre-networking binary entry point used by community mods.
+        public void Hit(ComponentBody componentBody, Vector3 hitPoint, Vector3 hitDirection) =>
+            Hit(componentBody, hitPoint, hitDirection, false, true);
+
         public void Hit(ComponentBody componentBody, Vector3 hitPoint, Vector3 hitDirection, bool predictionOnly = false, bool showHitValue = true) {
             if (AnyIsPending) {
                 return;
@@ -1064,6 +1068,21 @@ namespace Game {
             return false;
         }
 
+        /// <summary>Legacy five-argument overload.</summary>
+        public virtual object Raycast(
+            Ray3 ray,
+            RaycastMode mode,
+            bool raycastTerrain,
+            bool raycastBodies,
+            bool raycastMovingBlocks) =>
+            Raycast(
+                ray,
+                mode,
+                raycastTerrain,
+                raycastBodies,
+                raycastMovingBlocks,
+                null);
+
         /// <summary>
         ///     发出射线检测，检测玩家点击到的目标
         /// </summary>
@@ -1159,6 +1178,20 @@ namespace Game {
             }
             return new Ray3(start, direction);
         }
+
+        public T? Raycast<T>(
+            Ray3 ray,
+            RaycastMode mode,
+            bool raycastTerrain,
+            bool raycastBodies,
+            bool raycastMovingBlocks) where T : struct =>
+            Raycast<T>(
+                ray,
+                mode,
+                raycastTerrain,
+                raycastBodies,
+                raycastMovingBlocks,
+                null);
 
         public T? Raycast<T>(Ray3 ray,
             RaycastMode mode,

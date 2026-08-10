@@ -37,6 +37,10 @@ namespace Game {
 
         public string ResourcesMd5 = string.Empty;
 
+        internal string SourcePackageSha256 = string.Empty;
+
+        internal Dictionary<Assembly, HashSet<string>> LegacyCompatibilityBreakIdsByAssembly = [];
+
         /// <summary>
         ///     是否为随游戏一起加载的系统模组。
         ///     该标志由模组扫描入口设置，派生类也可以重写此属性。
@@ -367,15 +371,40 @@ namespace Game {
                     if (!filename.StartsWith("Assets/")) {
                         string fileNameWithoutDirectory = Storage.GetFileName(filename);
                         if (!InvalidDllNames.Contains(fileNameWithoutDirectory)) {
+                            byte[] assemblyBytes = ModsManager.StreamToBytes(stream);
+                            assemblyBytes = LegacyModAssemblyCompatibility.Apply(
+                                modInfo,
+                                fileNameWithoutDirectory,
+                                assemblyBytes,
+                                out string[] appliedBreakIds,
+                                SourcePackageSha256);
+                            if (appliedBreakIds.Length > 0) {
+                                Log.Information(
+                                    $"[{modInfo.Name}] Applied legacy API compatibility [{string.Join(", ", appliedBreakIds)}] to [{fileNameWithoutDirectory}]."
+                                );
+                            }
 #pragma warning disable IL2026
-                            assemblies.Add(Assembly.Load(ModsManager.StreamToBytes(stream)));
+                            Assembly assembly = Assembly.Load(assemblyBytes);
 #pragma warning restore IL2026
+                            assemblies.Add(assembly);
+                            if (appliedBreakIds.Length > 0) {
+                                LegacyCompatibilityBreakIdsByAssembly[assembly] = new HashSet<string>(
+                                    appliedBreakIds,
+                                    StringComparer.Ordinal);
+                            }
                         }
                     }
                 }
             ); //获取mod文件内的dll文件（不包括Assets目录内的dll）
             return assemblies.ToArray();
         }
+
+        internal bool HasLegacyCompatibilityBreak(Assembly assembly, string breakId) =>
+            assembly != null
+            && LegacyCompatibilityBreakIdsByAssembly.TryGetValue(
+                assembly,
+                out HashSet<string> breakIds)
+            && breakIds.Contains(breakId);
 
         public virtual void HandleAssembly(Assembly assembly) {
             List<Type> blockTypes = [];

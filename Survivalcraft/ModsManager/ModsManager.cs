@@ -69,6 +69,7 @@ public static class ModsManager {
     public static string ConfigsPath { get; } = $"{DocPath}/Configs.xml";
     public static string LogPath { get; } = $"{DataPath}/Bugs";
     public static string ModsPath = $"{ExternalPath}/Mods";
+    public static string path;
 #if ANDROID
     public static string InternalModsPath => "app:/InternalMods";
 #else
@@ -642,8 +643,11 @@ public static class ModsManager {
                 string filePath = Storage.CombinePaths(path, item);
                 using Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read);
                 try {
-                    Stream keepOpenStream = GetDecipherStream(stream);
+                    Stream keepOpenStream = GetDecipherStreamAndHash(
+                        stream,
+                        out string sourcePackageSha256);
                     ModEntity modEntity = new(filePath, ZipArchive.Open(keepOpenStream, true), isSystemMod);
+                    modEntity.SourcePackageSha256 = sourcePackageSha256;
                     if (modEntity.modInfo == null) {
                         LoadingScreen.Warning(
                             $"The modinfo.json is missing or broken from [{Storage.GetFileName(modEntity.ModFilePath)}], and this mod will be disabled."
@@ -1125,7 +1129,12 @@ public static class ModsManager {
     public static string HeadingCode = "有头有脸天才少年,耍猴表演敢为人先";
     public static string HeadingCode2 = "修改他人mod请获得原作者授权，否则小心出名！";
 
-    public static Stream GetDecipherStream(Stream stream) {
+    public static Stream GetDecipherStream(Stream stream) =>
+        GetDecipherStreamAndHash(stream, out _);
+
+    internal static Stream GetDecipherStreamAndHash(
+        Stream stream,
+        out string sourcePackageSha256) {
         using MemoryStream sourceStream = new();
         if (stream.CanSeek) {
             stream.Position = 0L;
@@ -1134,6 +1143,7 @@ public static class ModsManager {
         stream.Dispose();
 
         byte[] buff = sourceStream.ToArray();
+        sourcePackageSha256 = Convert.ToHexString(SHA256.HashData(buff));
         MemoryStream keepOpenStream = new();
         byte[] hc = Encoding.UTF8.GetBytes(HeadingCode);
         bool decipher = buff.Length >= hc.Length;

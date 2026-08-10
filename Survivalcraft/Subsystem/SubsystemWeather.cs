@@ -98,6 +98,9 @@ namespace Game {
         public static Func<int, int> GetTemperatureAdjustmentAtHeight =
             y => (int)MathF.Round(y > 64 ? -0.0008f * MathUtils.Sqr(y - 64) : 0.1f * (64 - y));
 
+        public static int GetLegacyTemperatureAdjustmentAtHeight(int y) =>
+            GetTemperatureAdjustmentAtHeight(y);
+
         public static Func<int, int, bool> IsPlaceFrozen = (temperature, y) => temperature + GetTemperatureAdjustmentAtHeight(y) <= 0;
         public static Func<int, int, bool> ShaftHasSnowOnIce = (x, z) => MathUtils.Hash((uint)((x & 0xFFFF) | (z << 16))) > 429496729;
 

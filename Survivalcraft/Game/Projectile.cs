@@ -17,10 +17,15 @@ namespace Game {
 
         public bool IsInFluid;
 
+        public bool LegacyIsInWater;
+
         [Obsolete("Use IsInFluid instead.")]
         public bool IsInWater {
             get => IsInFluid;
-            set => IsInFluid = value;
+            set {
+                IsInFluid = value;
+                LegacyIsInWater = value;
+            }
         }
 
         public double LastNoiseTime;
@@ -84,9 +89,17 @@ namespace Game {
 
         public Entity OwnerEntity;
 
+        public ComponentCreature LegacyOwner;
+
         public ComponentCreature Owner {
-            get => OwnerEntity?.FindComponent<ComponentCreature>();
-            set => OwnerEntity = value?.Entity;
+            get {
+                LegacyOwner ??= OwnerEntity?.FindComponent<ComponentCreature>();
+                return LegacyOwner;
+            }
+            set {
+                LegacyOwner = value;
+                OwnerEntity = value?.Entity;
+            }
         }
 
         /// <summary>
@@ -137,6 +150,7 @@ namespace Game {
             if (ownerEntityID != 0
                 && Project != null) {
                 OwnerEntity = Project.FindEntity(ownerEntityID);
+                LegacyOwner = OwnerEntity?.FindComponent<ComponentCreature>();
             }
         }
 
@@ -185,6 +199,7 @@ namespace Game {
             Rotation = Vector3.Zero;
             AngularVelocity = angularVelocity;
             OwnerEntity = owner;
+            LegacyOwner = owner?.FindComponent<ComponentCreature>();
             Damping = block.GetProjectileDamping(value);
             ProjectileStoppedAction = ProjectileStoppedAction.TurnIntoPickable;
         }
@@ -589,6 +604,7 @@ namespace Game {
                 }
             }
             IsInFluid = isProjectileInFluid;
+            LegacyIsInWater = isProjectileInFluid;
             if (SubsystemProjectiles != null
                 && SubsystemAudio != null) {
                 if (!IsFireProof

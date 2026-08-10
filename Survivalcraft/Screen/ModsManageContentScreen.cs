@@ -90,6 +90,9 @@ public class ModsManageContentScreen : Screen {
         return index == -1 ? input : span.Slice(0, index).TrimEnd('\r').ToString();
     }
 
+    [Obsolete("Use ModsManager.GetDecipherStream(Stream) instead.")]
+    public static Stream GetDecipherStream(Stream stream) => ModsManager.GetDecipherStream(stream);
+
     public ModsManageContentScreen() {
         m_fixedModsCount = ModsManager.ModListAll.TakeWhile(IsFixedMod).Count();
         XElement node = ContentManager.Get<XElement>("Screens/ModsManageContentScreen");

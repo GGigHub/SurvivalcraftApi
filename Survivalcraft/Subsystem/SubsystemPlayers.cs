@@ -13,6 +13,9 @@ namespace Game {
 
         public int m_nextPlayerIndex;
 
+        // Preserves the historical API field read by community component hooks.
+        public bool PlayerStartedPlaying;
+
         public ReadOnlyList<PlayerData> PlayersData => new(m_playersData);
 
         public ReadOnlyList<ComponentPlayer> ComponentPlayers => new(m_componentPlayers);
@@ -26,6 +29,10 @@ namespace Game {
         public event Action<PlayerData> PlayerAdded;
 
         public event Action<PlayerData> PlayerRemoved;
+
+        public Action<PlayerData> LegacyPlayerAdded { get; set; }
+
+        public Action<PlayerData> LegacyPlayerRemoved { get; set; }
 
         private PlayerData m_mainPlayer;
 
@@ -115,6 +122,7 @@ namespace Game {
             }
 
             PlayerAdded?.Invoke(playerData);
+            LegacyPlayerAdded?.Invoke(playerData);
 
             if (playerData.m_stateMachine.CurrentState == null) {
                 playerData.m_stateMachine.TransitionTo("FirstUpdate");
@@ -139,6 +147,7 @@ namespace Game {
                 }
             }
             PlayerRemoved?.Invoke(playerData);
+            LegacyPlayerRemoved?.Invoke(playerData);
             playerData.Dispose();
             m_subsystemTerrain?.TerrainUpdater?.SetLastChunksUpdateCenter(-1, null);
         }

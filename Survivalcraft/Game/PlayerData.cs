@@ -37,6 +37,9 @@ namespace Game {
 
         public long? m_playerDeathTick;
 
+        // Legacy real-time representation retained for binary-compatible mods.
+        public double? m_playerDeathTime;
+
         public long m_loadingWaitStartTick;
         public long m_loadingLastPollTick;
         public long m_lastPlayerEntityRequestTick;
@@ -249,6 +252,7 @@ namespace Game {
             }, null);
             m_stateMachine.AddState("Playing", delegate {
                 HideSpawnDialog();
+                SubsystemPlayers.PlayerStartedPlaying = true;
                 if (NetworkManager.IsClientRunning) {
                     ModsManager.HookAction("OnNetworkPlayerPlaying", loader => loader.OnNetworkPlayerPlaying(this));
                 }
@@ -260,11 +264,13 @@ namespace Game {
                     }
                     m_stateMachine.TransitionTo("PrepareSpawn");
                 }
-                else if (m_playerDeathTick.HasValue) {
+                else if (m_playerDeathTick.HasValue || m_playerDeathTime.HasValue) {
+                    m_playerDeathTime ??= Time.RealTime;
                     m_stateMachine.TransitionTo("PlayerDead");
                 }
                 else if (ComponentPlayer.ComponentHealth.Health <= 0f) {
                     m_playerDeathTick = m_subsystemUpdate.UpdateTick;
+                    m_playerDeathTime = Time.RealTime;
                 }
 
             }, null);
@@ -275,6 +281,11 @@ namespace Game {
                     return false;
                 });
             }, delegate {
+                bool deathDelayElapsed = m_playerDeathTick.HasValue
+                    ? m_subsystemUpdate.UpdateTick - m_playerDeathTick.Value
+                        >= GetTicksForSeconds(1.5)
+                    : m_playerDeathTime.HasValue
+                        && Time.RealTime - m_playerDeathTime.Value >= 1.5;
                 // 联机下非主玩家的死亡重生流程由网络同步驱动。
                 if (!NetworkManager.IsClientRunning && !IsMainPlayer) {
                     Vector2 center = (ComponentPlayer != null) ? ComponentPlayer.ComponentBody.Position.XZ : SpawnPosition.XZ;
@@ -282,6 +293,7 @@ namespace Game {
                 if (NetworkManager.IsClientRunning && !IsMainPlayer) {
                     if (ComponentPlayer != null && ComponentPlayer.ComponentHealth.Health > 0f) {
                         m_playerDeathTick = null;
+                        m_playerDeathTime = null;
                         IsDead = false;
                         readyToRestart = false;
                         m_stateMachine.TransitionTo("Playing");
@@ -295,7 +307,7 @@ namespace Game {
                         m_stateMachine.TransitionTo("PrepareSpawn");
                     }
                 }
-                else if ((IsMainPlayer && m_playerDeathTick.HasValue && m_subsystemUpdate.UpdateTick - m_playerDeathTick.Value >= GetTicksForSeconds(1.5) && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any) || readyToRestart) {
+                else if ((IsMainPlayer && deathDelayElapsed && !DialogsManager.HasDialogs(ComponentPlayer.GuiWidget) && ComponentPlayer.GameWidget.Input.Any) || readyToRestart) {
                     if (NetworkManager.IsClientRunning && IsMainPlayer) {
                         ModsManager.HookAction("OnNetworkPlayerRestart", loader => loader.OnNetworkPlayerRestart(this));
                     }
@@ -435,6 +447,7 @@ namespace Game {
             if (ComponentPlayer != null && entity == ComponentPlayer.Entity) {
                 ComponentPlayer = null;
                 m_playerDeathTick = null;
+                m_playerDeathTime = null;
             }
         }
 
@@ -576,6 +589,7 @@ namespace Game {
                 m_project.RemoveEntity(LastDeadPlayer, false);
             }
             m_playerDeathTick = null;
+            m_playerDeathTime = null;
             ComponentMount componentMount = null;
             if (spawnMode != SpawnMode.Respawn
                 && CheckIsPointInWater(Terrain.ToCell(position))) {

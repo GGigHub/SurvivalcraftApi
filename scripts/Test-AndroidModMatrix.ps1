@@ -9,6 +9,7 @@ param(
     [switch]$Offline,
     [switch]$NoBuild,
     [switch]$NoInstall,
+    [switch]$WorldOnly,
     [switch]$SkipDeviceConfiguration,
     [ValidateRange(10, 180)]
     [int]$BridgeTimeoutSeconds = 90,
@@ -56,6 +57,7 @@ $runsDirectory = Join-Path $artifactDirectory "runs"
 $summaryPath = Join-Path $artifactDirectory "summary.json"
 $runner = Join-Path $PSScriptRoot "Test-AndroidDevice.ps1"
 $resolver = Join-Path $PSScriptRoot "Resolve-AndroidModCorpus.ps1"
+$binaryCompatibilityRunner = Join-Path $PSScriptRoot "Test-ModBinaryCompatibility.ps1"
 $startedUtc = [DateTimeOffset]::UtcNow
 $caseResults = [System.Collections.Generic.List[object]]::new()
 $baselineResult = $null
@@ -103,6 +105,7 @@ function Invoke-DeviceRunner {
         [string[]]$ExpectedPackages = @(),
         [object[]]$ClassSubstituteSelections = @(),
         [object[]]$StartupDialogActions = @(),
+        [string[]]$WorldProbes = @(),
         [int]$ReentryCount = 1,
         [switch]$Install
     )
@@ -126,7 +129,7 @@ function Invoke-DeviceRunner {
     if ($SkipDeviceConfiguration) {
         $parameters.SkipDeviceConfiguration = $true
     }
-    if ($Mode -eq "relay-reentry-pad") {
+    if ($Mode -in @("world-reentry-pad", "relay-reentry-pad")) {
         $parameters.ReentryCount = $ReentryCount
     }
     if ($ModPaths.Count -gt 0) {
@@ -138,6 +141,9 @@ function Invoke-DeviceRunner {
     }
     if ($StartupDialogActions.Count -gt 0) {
         $parameters.StartupDialogAction = $StartupDialogActions
+    }
+    if ($WorldProbes.Count -gt 0) {
+        $parameters.WorldProbe = $WorldProbes
     }
     $runnerException = $null
     try {
@@ -223,7 +229,9 @@ function New-MatrixSummary {
         lockPath = $LockPath
         corpusDirectory = $corpusRoot
         offline = [bool]$Offline
+        worldOnly = [bool]$WorldOnly
         deviceId = $DeviceId
+        binaryCompatibility = $script:BinaryCompatibility
         baseline = $baselineResult
         cleanup = $cleanupResult
         selectedCaseCount = $caseResults.Count
@@ -256,6 +264,7 @@ if (-not (Test-PathInside $corpusRoot $artifactsRoot)) {
 New-Item -ItemType Directory -Path $runsDirectory -Force | Out-Null
 
 $script:ResolvedCorpus = $null
+$script:BinaryCompatibility = $null
 try {
     if (!$NoBuild) {
         & (Join-Path $PSScriptRoot "Build-AndroidDeviceTest.ps1")
@@ -307,7 +316,7 @@ try {
             throw "Manifest test case id '$id' is invalid or duplicated."
         }
         $mode = ([string](Get-PropertyValue $case "mode" "doctor")).Trim()
-        if ($mode -notin @("doctor", "relay-reentry-pad")) {
+        if ($mode -notin @("doctor", "world-reentry-pad", "relay-reentry-pad")) {
             throw "Manifest test case '$id' has unsupported mode '$mode'."
         }
         [int]$reentryCount = Get-PropertyValue $case "reentryCount" 1
@@ -385,6 +394,23 @@ try {
                 query = $query
             })
         }
+        $worldProbes = @((Get-PropertyValue $case "worldProbes" @()) | ForEach-Object {
+            ([string]$_).Trim()
+        })
+        if (@($worldProbes | Sort-Object -Unique).Count -ne $worldProbes.Count) {
+            throw "Manifest test case '$id' contains duplicate world probes."
+        }
+        foreach ($worldProbe in $worldProbes) {
+            if ($worldProbe -notin @("firearms-2.8")) {
+                throw "Manifest test case '$id' has unsupported world probe '$worldProbe'."
+            }
+            if ($caseModIds -notcontains $worldProbe) {
+                throw "Manifest test case '$id' world probe '$worldProbe' requires that mod id in the case."
+            }
+            if ($mode -notin @("world-reentry-pad", "relay-reentry-pad")) {
+                throw "Manifest test case '$id' world probes require a world-reentry mode."
+            }
+        }
         $allCases.Add([ordered]@{
             id = $id
             mode = $mode
@@ -394,6 +420,7 @@ try {
             modIds = $caseModIds
             classSubstitutions = @($classSubstitutions)
             startupDialogActions = @($startupDialogActions)
+            worldProbes = $worldProbes
         })
     }
     if ($allCases.Count -eq 0) {
@@ -429,6 +456,29 @@ try {
         throw "No matrix cases were selected."
     }
 
+    $selectedModernModIds = @($selectedCases |
+        ForEach-Object { @($_['modIds']) } |
+        Sort-Object -Unique |
+        Where-Object {
+            [string]$apiVersion = [string]$resolvedById[[string]$_].apiVersion
+            $apiVersion -match "^1\.9(?:\.|$)"
+        })
+    if ($selectedModernModIds.Count -gt 0) {
+        $binaryCompatibilityPath = Join-Path $artifactDirectory "binary-compatibility.json"
+        $modernModPaths = @($selectedModernModIds | ForEach-Object {
+            [string]$resolvedById[[string]$_].path
+        })
+        & $binaryCompatibilityRunner `
+            -ModPackagePath $modernModPaths `
+            -OutputPath $binaryCompatibilityPath
+        $script:BinaryCompatibility = Get-Content `
+            -LiteralPath $binaryCompatibilityPath `
+            -Raw | ConvertFrom-Json -Depth 64
+        if (-not [bool]$script:BinaryCompatibility.passed) {
+            throw "Selected API 1.9 mod binaries are incompatible with the current host."
+        }
+    }
+
     Write-Host "Starting empty-corpus Android baseline."
     $baselineResult = Invoke-DeviceRunner -Name "00-baseline" -Mode "doctor" -Install:(-not $NoInstall)
     if (-not [bool]$baselineResult['passed']) {
@@ -443,14 +493,22 @@ try {
         $paths = @($mods | ForEach-Object { [string]$_.path })
         $packages = @($mods | ForEach-Object { [string]$_.packageName })
         $runName = "{0:D2}-{1}" -f $ordinal, $caseIdValue
-        Write-Host "Starting Android mod matrix case '$caseIdValue' with $($mods.Count) mod(s)."
+        $requestedMode = [string]$case['mode']
+        $effectiveMode = if ($WorldOnly -and $requestedMode -eq "relay-reentry-pad") {
+            "world-reentry-pad"
+        }
+        else {
+            $requestedMode
+        }
+        Write-Host "Starting Android mod matrix case '$caseIdValue' with $($mods.Count) mod(s) in '$effectiveMode'."
         $run = Invoke-DeviceRunner `
             -Name $runName `
-            -Mode ([string]$case['mode']) `
+            -Mode $effectiveMode `
             -ModPaths $paths `
             -ExpectedPackages $packages `
             -ClassSubstituteSelections @($case['classSubstitutions']) `
             -StartupDialogActions @($case['startupDialogActions']) `
+            -WorldProbes @($case['worldProbes']) `
             -ReentryCount ([int]$case['reentryCount'])
         $childSummary = $run['summary']
         $failureArtifacts = if ($null -ne $childSummary -and
@@ -474,7 +532,8 @@ try {
         $caseResults.Add([ordered]@{
             id = $caseIdValue
             gate = [bool]$case['gate']
-            mode = [string]$case['mode']
+            requestedMode = $requestedMode
+            mode = $effectiveMode
             reentryCount = [int]$case['reentryCount']
             subjectModId = [string]$case['subjectModId']
             modIds = @($case['modIds'])
@@ -493,6 +552,14 @@ try {
             }
             else {
                 @($childSummary.appliedStartupDialogActions)
+            }
+            configuredWorldProbes = @($case['worldProbes'])
+            worldProbes = if ($null -eq $childSummary -or
+                $null -eq $childSummary.PSObject.Properties['worldProbes']) {
+                @()
+            }
+            else {
+                @($childSummary.worldProbes)
             }
             expectedPackages = $packages
             passed = [bool]$run['passed']

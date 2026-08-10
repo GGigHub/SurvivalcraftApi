@@ -147,12 +147,19 @@ namespace Game {
             }
         }
 
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual void Injure(float amount, ComponentCreature attacker, bool ignoreInvulnerability, string cause) =>
+            Injure(amount, attacker, ignoreInvulnerability, cause, false);
+
         public virtual void Injure(float amount, ComponentCreature attacker, bool ignoreInvulnerability, string cause, bool fromNetwork = false) {
             Injury injury = new(amount, attacker, ignoreInvulnerability, cause);
             Injure(injury, fromNetwork);
         }
 
-        public virtual void Injure(Injury injury, bool fromNetwork = false) {
+        // Preserves the pre-networking binary entry point used by community mods.
+        public virtual void Injure(Injury injury) => Injure(injury, false);
+
+        public virtual void Injure(Injury injury, bool fromNetwork) {
             if (injury == null) {
                 return;
             }

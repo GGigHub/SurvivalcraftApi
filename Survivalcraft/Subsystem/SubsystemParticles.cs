@@ -25,6 +25,12 @@ namespace Game {
 
         public int[] DrawOrders => m_drawOrders;
 
+        // Legacy one-argument calls are renamed in memory before assembly load.
+        // Keeping an AddParticleSystem overload here breaks Harmony patches that
+        // intentionally target the current method by name.
+        public void AddLegacyParticleSystem(ParticleSystemBase particleSystem) =>
+            AddParticleSystem(particleSystem, false);
+
         public void AddParticleSystem(ParticleSystemBase particleSystem, bool throwOnAlreadyAdded = false) {
             if (particleSystem.SubsystemParticles == null) {
                 m_particleSystems.Add(particleSystem, true);
@@ -37,6 +43,9 @@ namespace Game {
                 throw new InvalidOperationException("Particle system is already added.");
             }
         }
+
+        public void RemoveLegacyParticleSystem(ParticleSystemBase particleSystem) =>
+            RemoveParticleSystem(particleSystem, false);
 
         public void RemoveParticleSystem(ParticleSystemBase particleSystem, bool throwOnNotFound = false) {
             if (particleSystem.SubsystemParticles == this) {

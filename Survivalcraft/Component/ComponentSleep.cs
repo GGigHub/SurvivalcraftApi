@@ -64,6 +64,10 @@ namespace Game {
             return true;
         }
 
+        // Keep the pre-networking binary shape used by legacy mod assemblies.
+        public virtual void Sleep(bool allowManualWakeup) =>
+            Sleep(allowManualWakeup, false);
+
         public virtual void Sleep(bool allowManualWakeup, bool fromNetwork = false) {
             if (!NetworkManager.IsClientRunning || fromNetwork) {
                 if (!IsSleeping) {
