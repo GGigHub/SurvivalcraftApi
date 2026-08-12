@@ -107,6 +107,18 @@ namespace Game {
                 m_debugStopwatch.Start();
             }
             foreach (IUpdateable sortedUpdateable in m_sortedUpdateables) {
+                bool skipVanilla = false;
+                ModsManager.HookAction(
+                    "OnIUpdateableUpdate",
+                    loader => {
+                        loader.OnIUpdateableUpdate(this, sortedUpdateable, dt, out bool skip);
+                        skipVanilla |= skip;
+                        return false;
+                    }
+                );
+                if (skipVanilla) {
+                    continue;
+                }
                 long ticks = UpdateTimeDebug ? m_debugStopwatch.ElapsedTicks : 0;
                 try {
                     lock (sortedUpdateable) {

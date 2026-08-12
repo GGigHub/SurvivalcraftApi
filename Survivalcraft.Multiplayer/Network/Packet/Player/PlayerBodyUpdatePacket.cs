@@ -156,7 +156,7 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
                     velocityChanged,
                     Velocity,
                     SendTime,
-                    NetworkBodyInterpolation.RemotePlayerDelay);
+                    NetworkBodyInterpolation.RemoteBodyDelay);
             }
         }
         else if (changeFlag.HasFlag(ChangeFlag.VelocityChange)) {

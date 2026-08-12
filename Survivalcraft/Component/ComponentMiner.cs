@@ -898,6 +898,10 @@ namespace Game {
 
         [Obsolete("Use AddHitValueParticleSystem() in Attackment instead.", true)]
         public static void AddHitValueParticleSystem(float damage, Entity attacker, Entity attacked, Vector3 hitPoint, Vector3 hitDirection) {
+            // 客户端不本地生成伤害数字，统一由服务端通过 HitValuePacket 广播显示，避免与本地模拟命中重复显示
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             ComponentBody attackerBody = attacker?.FindComponent<ComponentBody>();
             ComponentPlayer attackerComponentPlayer = attacker?.FindComponent<ComponentPlayer>();
             ComponentHealth attackedComponentHealth = attacked?.FindComponent<ComponentHealth>();

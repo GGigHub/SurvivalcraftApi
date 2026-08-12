@@ -139,6 +139,11 @@ namespace Game {
         public virtual Action<Injury> Injured { get; set; }
 
         public virtual void Heal(float amount) {
+            // 远程客户端只显示服务端的生命值，不参与生命值模拟。
+            // 否则客户端和服务端会分别计算回血，经过一段时间后产生漂移。
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             lock (this) {
                 if (amount > 0f
                     && Health < 1f) {
@@ -154,6 +159,11 @@ namespace Game {
 
         public virtual void Injure(Injury injury, bool fromNetwork = false) {
             if (injury == null) {
+                return;
+            }
+            // 伤害由服务端权威计算。网络包通过 fromNetwork=true 绕过此限制，
+            // 以便客户端应用服务端已经结算好的结果。
+            if (NetworkManager.IsClientRunning && !fromNetwork) {
                 return;
             }
             injury.ComponentHealth ??= this;
@@ -262,7 +272,6 @@ namespace Game {
                 if (m_regenerateLifeEnabled
                     && Health > 0f
                     && Health < 1f) {
-                    ModsManager.HookAction("OnNetworkHealthHealUpdate", loader => loader.OnNetworkHealthHealUpdate(this));
                     float num = 0f;
 
                     if (m_componentPlayer != null) {
@@ -281,6 +290,10 @@ namespace Game {
                         num = 0.00111111114f;
                     }
                     Heal(m_subsystemGameInfo.TotalElapsedGameTimeDelta * num);
+                    // 在 Heal 之后采样，发送当前最终血量，而不是回血前的旧值。
+                    if (!NetworkManager.IsClientRunning) {
+                        ModsManager.HookAction("OnNetworkHealthHealUpdate", loader => loader.OnNetworkHealthHealUpdate(this));
+                    }
                 }
                 //溺水空气值
                 if (BreathingMode == BreathingMode.Air) {

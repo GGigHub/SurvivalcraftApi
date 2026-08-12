@@ -62,6 +62,8 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
+        private bool IsServerAuthoritativeClient => NetworkManager.IsServerAuthoritativeCreatureBody(m_componentCreature?.ComponentBody);
+
         public virtual void SetDestination(Vector3? destination,
             float speed,
             float range,
@@ -69,6 +71,9 @@ namespace Game {
             bool raycastDestination,
             bool takeRisks,
             ComponentBody doNotAvoidBody) {
+            if (IsServerAuthoritativeClient) {
+                return;
+            }
             bool flag = true;
             if (Destination.HasValue
                 && destination.HasValue) {
@@ -104,6 +109,9 @@ namespace Game {
         }
 
         public virtual void Update(float dt) {
+            if (IsServerAuthoritativeClient) {
+                return;
+            }
             if (m_subsystemTime.GameTime >= m_nextUpdateTime) {
                 m_nextUpdateTime = m_subsystemTime.GameTime + m_random.Float(0.09f, 0.11f);
                 m_walkOrder = null;

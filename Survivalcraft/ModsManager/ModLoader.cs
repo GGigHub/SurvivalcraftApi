@@ -1194,6 +1194,20 @@ namespace Game {
         }
 
         /// <summary>
+        ///     在IUpdateable执行Update前调用，用于模组接管单个IUpdateable的更新行为
+        /// </summary>
+        /// <param name="subsystemUpdate"></param>
+        /// <param name="updateable"></param>
+        /// <param name="dt"></param>
+        /// <param name="skip">宣布接管，则不会执行原版的Update()</param>
+        public virtual void OnIUpdateableUpdate(SubsystemUpdate subsystemUpdate,
+            IUpdateable updateable,
+            float dt,
+            out bool skip) {
+            skip = false;
+        }
+
+        /// <summary>
         ///     在IDrawable添加或删除时执行，用于模组接管IDrawable的绘制行为
         /// </summary>
         /// <param name="subsystemDrawing"></param>
@@ -1903,6 +1917,14 @@ namespace Game {
         public virtual void OnProjectileRaycastBody(ComponentBody componentBody, Projectile projectile, float distance, out bool ignore) {
             ignore = false;
         }
+
+        /// <summary>
+        ///     射弹进行身体射线检测前执行。模组可以替换包围盒提供器，
+        ///     例如用于网络回溯补偿：用目标身体在历史时间点的包围盒代替当前包围盒做检测。
+        /// </summary>
+        /// <param name="projectile">触发判定的射弹</param>
+        /// <param name="boundingBoxProvider">为每个可能命中的Body提供射线检测用的包围盒；不设置则使用Body当前包围盒</param>
+        public virtual void OnProjectileRaycastBodyBox(Projectile projectile, ref Func<ComponentBody, BoundingBox> boundingBoxProvider) { }
 
         /// <summary>
         ///     将物品拖动到衣物界面玩家身上时执行

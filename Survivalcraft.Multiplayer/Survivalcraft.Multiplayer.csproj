@@ -17,7 +17,7 @@
     </ProjectReference>
     <ProjectReference Include="..\Survivalcraft.Windows\Survivalcraft.Windows.csproj">
       <Private>false</Private>
-      <AdditionalProperties>SkipNetworkModPackage=true;SkipContentZip=true;SkipProbeModPackageWhenReferenced=true</AdditionalProperties>
+      <AdditionalProperties>SkipNetworkModPackage=true;SkipContentZip=true</AdditionalProperties>
     </ProjectReference>
   </ItemGroup>
 

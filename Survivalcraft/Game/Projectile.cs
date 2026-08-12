@@ -214,10 +214,19 @@ namespace Game {
                 terrainRaycastResult = null;
             }
             if (BodyCollidable && Project != null) {
+                Func<ComponentBody, BoundingBox> boundingBoxProvider = null;
+                ModsManager.HookAction(
+                    "OnProjectileRaycastBodyBox",
+                    loader => {
+                        loader.OnProjectileRaycastBodyBox(this, ref boundingBoxProvider);
+                        return false;
+                    }
+                );
                 bodyRaycastResult = SubsystemProjectiles?.m_subsystemBodies.Raycast(
                     position + v,
                     positionAtdt + v,
                     0.2f,
+                    boundingBoxProvider,
                     (body, distance) => {
                         bool ignore = false;
                         ModsManager.HookAction(

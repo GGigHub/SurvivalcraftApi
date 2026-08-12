@@ -112,6 +112,10 @@ namespace Game {
         }
 
         public virtual void AddHitValueParticleSystem(float damage) {
+            // 客户端不本地生成伤害数字，统一由服务端通过 HitValuePacket 广播显示，避免与本地模拟命中重复显示
+            if (NetworkManager.IsClientRunning) {
+                return;
+            }
             if (!EnableHitValueParticleSystem) {
                 return;
             }

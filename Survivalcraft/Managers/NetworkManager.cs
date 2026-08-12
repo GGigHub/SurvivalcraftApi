@@ -69,6 +69,36 @@ public static class NetworkManager {
     public static void SetState(NetworkState state) { if (MySession != null) MySession.NetworkState = state; }
     public static IEnumerable<ClientSession> ServerSessions => ServerSessionsFunc != null ? ServerSessionsFunc() : Array.Empty<ClientSession>();
 
+    /// <summary>
+    /// Determines whether an ordinary creature is simulated exclusively by the
+    /// server while this process is running as a client. Player entities are
+    /// intentionally excluded because their input/presentation path is handled
+    /// separately, as are mounts controlled by the local player.
+    /// </summary>
+    public static bool IsServerAuthoritativeCreatureBody(ComponentBody body) {
+        if (!IsClientRunning
+            || body?.Entity == null
+            || body.Entity.FindComponent<ComponentCreature>() == null
+            || body.Entity.FindComponent<ComponentPlayer>() != null) {
+            return false;
+        }
+
+        bool hasChildPlayer = false;
+        bool hasNonMainChildPlayer = false;
+        for (int i = 0; i < body.ChildBodies.Count; i++) {
+            ComponentPlayer childPlayer = body.ChildBodies[i].Entity.FindComponent<ComponentPlayer>();
+            if (childPlayer == null) {
+                continue;
+            }
+            hasChildPlayer = true;
+            if (childPlayer.PlayerData?.IsMainPlayer == false) {
+                hasNonMainChildPlayer = true;
+            }
+        }
+
+        return !hasChildPlayer || hasNonMainChildPlayer;
+    }
+
     public static void Initialize() {
         InitializeAction?.Invoke();
     }

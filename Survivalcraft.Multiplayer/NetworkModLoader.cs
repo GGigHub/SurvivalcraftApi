@@ -88,6 +88,7 @@ namespace Survivalcraft.Multiplayer {
                 "OnNetworkPistonBlockEdited",
                 "OnNetworkPistonItemEdited",
                 "OnNetworkProjectileFired",
+                "OnProjectileRaycastBodyBox",
                 "OnNetworkSignEditRequested",
                 "OnNetworkSignDataChanged",
                 "OnNetworkSkyLightning",
@@ -120,6 +121,7 @@ namespace Survivalcraft.Multiplayer {
                 "OnNetworkBodyUpdate",
                 "OnNetworkBodyRemoved",
                 "OnNetworkBodyUpdated",
+                "OnIUpdateableUpdate",
                 "OnNetworkEditableItemDataHarvested"
             ];
             foreach (string hookName in hookNames) {
@@ -149,11 +151,14 @@ namespace Survivalcraft.Multiplayer {
                 NetworkManager.RelayHost = null;
                 NetworkManager.RelayClient = null;
                 NetworkBodyInterpolation.Clear();
+                NetworkBodyHistory.Clear();
                 PlayerBodyUpdatePacket.ClearSnapshots();
+                EntityBodyUpdatePacket.Clear();
                 FurnitureHammerPacket.ClearState();
                 NetworkDigConfirmationRuntime.Reset();
                 NetworkPlaceConfirmationRuntime.Reset();
                 InventoryPacketHelpers.ClearPendingSync();
+                ChatManager.Clear();
             };
             NetworkManager.IsServerRunningFunc = () =>
                 ((NetworkManager.NetworkServer as NetworkServer)?.IsRunning ?? false) || ((NetworkManager.RelayHost as RelayHost)?.IsConnected ?? false);
@@ -196,7 +201,7 @@ namespace Survivalcraft.Multiplayer {
                     host.Start(endPoint);
                 }
                 catch (Exception ex) {
-                    Engine.Log.Warning($"Failed to start relay host: {ex.Message}");
+                    Log.Warning($"Failed to start relay host: {ex.Message}");
                     NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Failed;
                 }
             };
@@ -263,6 +268,28 @@ namespace Survivalcraft.Multiplayer {
             playerNameArrowWidget.MarginRight = 10f;
             playerNameArrowWidget.MarginBottom = 10f;
             playerNameArrowWidget.SetGameWidget(gameWidget);
+
+            // Keep the chat in the same control layer and position as the
+            // original NetMessageWidget: top-right, 68 px from the edge.
+            CanvasWidget controlsWidget = guiWidget.Children.Find<CanvasWidget>("ControlsContainer", false);
+            ChatWidget chatWidget = controlsWidget?.Children.Find<ChatWidget>(false)
+                ?? guiWidget.Children.Find<ChatWidget>(false);
+            if (chatWidget == null) {
+                chatWidget = new ChatWidget();
+            }
+            if (controlsWidget != null && chatWidget.ParentWidget != controlsWidget) {
+                chatWidget.ParentWidget?.RemoveChildren(chatWidget);
+                controlsWidget.AddChildren(chatWidget);
+            }
+            else if (controlsWidget == null && chatWidget.ParentWidget != guiWidget) {
+                chatWidget.ParentWidget?.RemoveChildren(chatWidget);
+                guiWidget.AddChildren(chatWidget);
+            }
+
+            chatWidget.HorizontalAlignment = WidgetAlignment.Far;
+            chatWidget.VerticalAlignment = WidgetAlignment.Near;
+            chatWidget.Margin = new Vector2(68f, 5f);
+            chatWidget.SetGameWidget(gameWidget);
         }
 
         static T FindOrMoveToGuiRoot<T>(ContainerWidget guiWidget) where T : Widget {
@@ -304,6 +331,37 @@ namespace Survivalcraft.Multiplayer {
         }
     public override bool IsNetworkMode(ComponentBody body) => NetworkBodySyncHelpers.ShouldBeNetworkControlled(body);
 
+    public override void OnIUpdateableUpdate(SubsystemUpdate subsystemUpdate,
+        IUpdateable updateable,
+        float dt,
+        out bool skip) {
+        skip = false;
+        if (!NetworkManager.IsClientRunning) {
+            return;
+        }
+
+        if (updateable is (ComponentChaseBehavior
+                or ComponentDigInMudBehavior
+                or ComponentEatPickableBehavior
+                or ComponentFishOutOfWaterBehavior
+                or ComponentLookAroundBehavior
+                or ComponentRandomFeedBehavior
+                or ComponentRandomPeckBehavior)) {
+            return;
+        }
+
+        if (updateable is not (ComponentBehavior
+                or ComponentBehaviorSelector
+                or ComponentPathfinding
+                or ComponentPilot
+                or ComponentLocomotion)) {
+            return;
+        }
+
+        ComponentBody body = (updateable as Component)?.Entity?.FindComponent<ComponentBody>();
+        skip = NetworkManager.IsServerAuthoritativeCreatureBody(body);
+    }
+
     public override void OnEntityAdd(Entity entity) {
         if (!NetworkManager.IsClientRunning) {
             NetworkManager.Queue(new EntityLoadPacket(entity));
@@ -318,7 +376,10 @@ namespace Survivalcraft.Multiplayer {
 
     public override void OnNetworkChaseBehaviorAttackChanged(ComponentChaseBehavior behavior, bool isAttack) {
         if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new ChaseBehaviorPacket(behavior, isAttack));
+            EntityBodyUpdatePacket.QueueBehaviorEvent(
+                behavior.Entity.Id,
+                NetworkBehaviorEventType.ChaseAttackChanged,
+                value: isAttack);
     }
 
     public override void OnNetworkDamage(ComponentDamage damage) {
@@ -328,22 +389,34 @@ namespace Survivalcraft.Multiplayer {
 
     public override void OnNetworkDigInMudBehaviorChanged(ComponentDigInMudBehavior behavior, bool isDigIn) {
         if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new DigInMudBehaviorPacket(behavior, isDigIn));
+            EntityBodyUpdatePacket.QueueBehaviorEvent(
+                behavior.Entity.Id,
+                NetworkBehaviorEventType.DigInMudChanged,
+                value: isDigIn);
     }
 
     public override void OnNetworkEatPickableBehaviorChanged(ComponentEatPickableBehavior behavior, bool isFeed) {
         if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new EatPickableBehaviorPacket(behavior, isFeed));
+            EntityBodyUpdatePacket.QueueBehaviorEvent(
+                behavior.Entity.Id,
+                NetworkBehaviorEventType.EatPickableChanged,
+                value: isFeed);
     }
 
     public override void OnNetworkFishOutOfWaterBehaviorChanged(ComponentFishOutOfWaterBehavior behavior, bool isBend) {
         if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new FishOutOfWaterBehaviorPacket(behavior, isBend));
+            EntityBodyUpdatePacket.QueueBehaviorEvent(
+                behavior.Entity.Id,
+                NetworkBehaviorEventType.FishOutOfWaterChanged,
+                value: isBend);
     }
 
     public override void OnNetworkLookAroundBehaviorChanged(ComponentLookAroundBehavior behavior, bool isLookRandom) {
         if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new LookAroundBehaviorPacket(behavior, isLookRandom));
+            EntityBodyUpdatePacket.QueueBehaviorEvent(
+                behavior.Entity.Id,
+                NetworkBehaviorEventType.LookAroundChanged,
+                value: isLookRandom);
     }
 
     public override void OnNetworkFluEffect(ComponentFlu flu) {
@@ -412,7 +485,13 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkHumanModelRow(ComponentHumanModel model) {
-        NetworkManager.Queue(new HumanRowBehaviorPacket(model));
+        if (NetworkManager.IsServerRunning) {
+            EntityBodyUpdatePacket.QueueBehaviorEvent(
+                model.Entity.Id,
+                NetworkBehaviorEventType.HumanRow,
+                value: model.m_rowLeft,
+                secondaryValue: model.m_rowRight);
+        }
     }
 
     public override void OnNetworkInventorySlotChanged(IInventory inventory, int slotIndex) {
@@ -521,12 +600,18 @@ namespace Survivalcraft.Multiplayer {
 
     public override void OnNetworkRandomFeedBehaviorChanged(ComponentRandomFeedBehavior behavior, bool isFeed) {
         if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new RandomFeedBehaviorPacket(behavior, isFeed));
+            EntityBodyUpdatePacket.QueueBehaviorEvent(
+                behavior.Entity.Id,
+                NetworkBehaviorEventType.RandomFeedChanged,
+                value: isFeed);
     }
 
     public override void OnNetworkRandomPeckBehaviorChanged(ComponentRandomPeckBehavior behavior, bool isPeck) {
         if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new RandomPeckBehaviorPacket(behavior, isPeck));
+            EntityBodyUpdatePacket.QueueBehaviorEvent(
+                behavior.Entity.Id,
+                NetworkBehaviorEventType.RandomPeckChanged,
+                value: isPeck);
     }
 
     public override void OnNetworkRiderDismounting(ComponentRider rider, bool isRequest) {
@@ -548,8 +633,12 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkStubbornSteedHeadShakeOrder(ComponentStubbornSteedBehavior behavior, float headShakeOrder) {
-        if (NetworkManager.IsServerRunning)
-            NetworkManager.Queue(new StubbornSteedBehaviorPacket(behavior, headShakeOrder));
+        if (NetworkManager.IsServerRunning) {
+            EntityBodyUpdatePacket.QueueBehaviorEvent(
+                behavior.Entity.Id,
+                NetworkBehaviorEventType.StubbornSteedHeadShake,
+                amount: headShakeOrder);
+        }
     }
 
     public override void OnNetworkVitalStatsUpdate(ComponentVitalStats stats) {
@@ -832,6 +921,9 @@ namespace Survivalcraft.Multiplayer {
         else {
             NetworkBodyInterpolation.Update(body, dt);
         }
+        if (NetworkManager.IsServerRunning && NetworkBodyHistory.ShouldRecord(body)) {
+            NetworkBodyHistory.Record(body);
+        }
 
         body.UpdateImmersionData();
 
@@ -848,10 +940,34 @@ namespace Survivalcraft.Multiplayer {
 
     public override void OnNetworkBodyRemoved(ComponentBody body) {
         NetworkBodyInterpolation.RemoveTarget(body);
+        NetworkBodyHistory.RemoveTarget(body);
     }
 
     public override void OnNetworkBodyUpdated(ComponentBody body, float dt) {
-        BehaviorSyncPacket.CollectBehaviorForSync(body, dt);
+        if (NetworkManager.IsServerRunning && NetworkBodyHistory.ShouldRecord(body)) {
+            NetworkBodyHistory.Record(body);
+        }
+        EntityBodyUpdatePacket.CollectBodyForSync(body, dt);
+    }
+
+    public override void OnProjectileRaycastBodyBox(Projectile projectile, ref Func<ComponentBody, BoundingBox> boundingBoxProvider) {
+        if (!NetworkManager.IsServerRunning || projectile?.OwnerEntity == null) {
+            return;
+        }
+        // 只有远程玩家发射的弹射物需要回溯补偿：
+        // 房主本人看到的生物是实时位置，远程玩家的视角则渲染在延迟时间线上。
+        ComponentPlayer ownerPlayer = projectile.OwnerEntity.FindComponent<ComponentPlayer>();
+        if (ownerPlayer == null || ownerPlayer.PlayerData.IsMainPlayer) {
+            return;
+        }
+        // 客户端实际渲染延迟在 [RemoteBodyDelay, RemoteBodyDelay + DefaultSnapshotInterval] 附近摆动，
+        // 因此在延迟窗口内采样并合并包围盒，覆盖客户端屏幕上目标可能出现的位置。
+        // 发射者本人的身体在其客户端是实时渲染的，不参与补偿。
+        ComponentBody ownerBody = ownerPlayer.ComponentBody;
+        boundingBoxProvider = body =>
+            NetworkBodyHistory.TryGetCompensatedBoxAt(body, Engine.Time.RealTime, ownerBody, out BoundingBox box)
+                ? box
+                : body.BoundingBox;
     }
 
     public override void OnNetworkEditableItemDataHarvested<T>(int id, T data) {

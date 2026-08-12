@@ -3,10 +3,10 @@ using Engine;
 namespace Game.Network;
 
 public static class NetworkBodyInterpolation {
-    public const double RemotePlayerDelay = 0.5;
-    public const double RemoteBodyDelay = 0.5;
+    public const double RemoteBodyDelay = 0.6;
+    public const double RemotePlayerDelay = RemoteBodyDelay;
     public const double DefaultSnapshotInterval = 0.2;
-    public const double MaxExtrapolationTime = 0.5;
+    public const double MaxExtrapolationTime = 0.6;
     public const double MaxServerPredictionTime = 0.35;
     public const double MaxBufferedTime = 2.0;
     public const int MaxSnapshots = 150;
@@ -22,11 +22,29 @@ public static class NetworkBodyInterpolation {
         public Vector3 Velocity;
     }
 
+    public readonly struct BehaviorSnapshot(double time, int sequence, NetworkBehaviorState state) {
+        public double Time { get; } = time;
+        public int Sequence { get; } = sequence;
+        public NetworkBehaviorState State { get; } = state?.Clone();
+    }
+
     public sealed class BodyInterpolationState {
         public double PlaybackDelay;
         public double PlaybackTime;
         public bool HasPlaybackTime;
         public readonly List<BodySnapshot> Snapshots = [];
+        public double LatestTimelineTime;
+        public bool HasLatestTimelineTime;
+        public double FirstTimelineTime;
+        public bool HasFirstTimelineTime;
+        public readonly List<BehaviorSnapshot> BehaviorSnapshots = [];
+        public readonly List<NetworkBehaviorEvent> BehaviorEvents = [];
+        public double LastBehaviorStateTime;
+        public int LastBehaviorStateSequence;
+        public bool HasLastBehaviorState;
+        public double LastBehaviorEventTime;
+        public int LastBehaviorEventSequence;
+        public bool HasLastBehaviorEvent;
 
         // Server-side movement uses the latest received state directly and
         // predicts forward from it. These fields are intentionally separate
@@ -49,12 +67,26 @@ public static class NetworkBodyInterpolation {
         bool velocityChanged,
         Vector3 velocity,
         double snapshotTime,
-        double playbackDelay) {
-        if (body == null || (!positionChanged && !rotationChanged && !velocityChanged)) {
+        double playbackDelay,
+        NetworkBehaviorState behaviorState = null,
+        IReadOnlyList<NetworkBehaviorEvent> behaviorEvents = null,
+        int sequence = 0) {
+        if (body == null) {
             return;
         }
 
         BodyInterpolationState state = GetOrCreateState(body, playbackDelay);
+        RegisterTimelineTime(state, snapshotTime);
+        if (behaviorState != null) {
+            QueueBehaviorState(state, snapshotTime, sequence, behaviorState);
+        }
+        if (behaviorEvents != null) {
+            QueueBehaviorEvents(state, behaviorEvents);
+        }
+        if (!positionChanged && !rotationChanged && !velocityChanged) {
+            return;
+        }
+
         BodySnapshot snapshot = state.Snapshots.Count > 0
             ? state.Snapshots[^1]
             : new BodySnapshot {
@@ -91,8 +123,10 @@ public static class NetworkBodyInterpolation {
             }
         }
         else {
-            state.PlaybackTime = snapshot.Time;
-            state.HasPlaybackTime = true;
+            // Apply the first authoritative state immediately so a newly
+            // created entity does not remain at its spawn position while the
+            // presentation timeline is being primed. Playback itself starts
+            // only after enough timeline data has been buffered.
             ApplySnapshot(body, snapshot);
         }
 
@@ -101,11 +135,18 @@ public static class NetworkBodyInterpolation {
     }
 
     public static void Update(ComponentBody body, float dt) {
-        if (body == null || !s_states.TryGetValue(body, out BodyInterpolationState state) || state.Snapshots.Count == 0) {
+        if (body == null
+            || !s_states.TryGetValue(body, out BodyInterpolationState state)
+            || !HasPresentationData(state)) {
             return;
         }
 
         double playbackTime = AdvancePlaybackTime(state, dt);
+        if (!state.HasPlaybackTime) {
+            // The presentation clock is intentionally held during startup
+            // until a complete interpolation delay is available.
+            return;
+        }
         while (state.Snapshots.Count >= 2 && state.Snapshots[1].Time <= playbackTime) {
             state.Snapshots.RemoveAt(0);
         }
@@ -113,24 +154,48 @@ public static class NetworkBodyInterpolation {
         if (state.Snapshots.Count >= 2) {
             BodySnapshot a = state.Snapshots[0];
             BodySnapshot b = state.Snapshots[1];
-            if (playbackTime < a.Time) {
-                return;
+            if (playbackTime >= a.Time) {
+                double duration = b.Time - a.Time;
+                float factor = duration > 0.0
+                    ? MathUtils.Saturate((float)((playbackTime - a.Time) / duration))
+                    : 1f;
+                ApplySnapshot(body, Interpolate(a, b, factor));
             }
+        }
+        else if (state.Snapshots.Count == 1) {
+            BodySnapshot latest = state.Snapshots[0];
+            double extrapolationTime = MathUtils.Max(0.0, playbackTime - latest.Time);
+            if (extrapolationTime <= MaxExtrapolationTime) {
+                latest.Position += latest.Velocity * (float)extrapolationTime;
+            }
+            ApplySnapshot(body, latest);
+        }
 
-            double duration = b.Time - a.Time;
-            float factor = duration > 0.0
-                ? MathUtils.Saturate((float)((playbackTime - a.Time) / duration))
-                : 1f;
-            ApplySnapshot(body, Interpolate(a, b, factor));
+        ApplyBehaviorSnapshots(body, state, playbackTime);
+        ApplyBehaviorEvents(body, state, playbackTime);
+    }
+
+    public static void QueueBehaviorState(
+        ComponentBody body,
+        double stateTime,
+        int sequence,
+        NetworkBehaviorState state) {
+        if (body == null || state == null) {
             return;
         }
+        BodyInterpolationState interpolationState = GetOrCreateState(body, RemoteBodyDelay);
+        RegisterTimelineTime(interpolationState, stateTime);
+        QueueBehaviorState(interpolationState, stateTime, sequence, state);
+    }
 
-        BodySnapshot latest = state.Snapshots[0];
-        double extrapolationTime = MathUtils.Max(0.0, playbackTime - latest.Time);
-        if (extrapolationTime <= MaxExtrapolationTime) {
-            latest.Position += latest.Velocity * (float)extrapolationTime;
+    public static void QueueBehaviorEvents(
+        ComponentBody body,
+        IReadOnlyList<NetworkBehaviorEvent> behaviorEvents) {
+        if (body == null || behaviorEvents == null || behaviorEvents.Count == 0) {
+            return;
         }
-        ApplySnapshot(body, latest);
+        BodyInterpolationState state = GetOrCreateState(body, RemoteBodyDelay);
+        QueueBehaviorEvents(state, behaviorEvents);
     }
 
     public static void PushServerSnapshot(
@@ -193,20 +258,34 @@ public static class NetworkBodyInterpolation {
     }
 
     public static double AdvancePlaybackTime(BodyInterpolationState state, float dt) {
-        BodySnapshot first = state.Snapshots[0];
-        BodySnapshot latest = state.Snapshots[^1];
+        if (!state.HasLatestTimelineTime) {
+            return state.PlaybackTime;
+        }
+
+        double firstTime = state.Snapshots.Count > 0
+            ? state.Snapshots[0].Time
+            : state.FirstTimelineTime;
         if (!state.HasPlaybackTime) {
-            state.PlaybackTime = first.Time;
+            double bufferedDuration = state.LatestTimelineTime - firstTime;
+            if (bufferedDuration < state.PlaybackDelay) {
+                return state.PlaybackTime;
+            }
+
+            // Start from the delayed presentation point once the initial
+            // buffer is ready. This prevents a live stream from following the
+            // newest snapshot first and only becoming delayed later.
+            state.PlaybackTime = state.LatestTimelineTime - state.PlaybackDelay;
             state.HasPlaybackTime = true;
         }
 
-        double bufferedDuration = latest.Time - first.Time;
-        double targetTime = bufferedDuration > state.PlaybackDelay
-            ? latest.Time - state.PlaybackDelay
-            : latest.Time;
-        if (state.PlaybackTime < first.Time) {
-            state.PlaybackTime = first.Time;
+        if (state.PlaybackTime < firstTime && state.Snapshots.Count > 0) {
+            state.PlaybackTime = firstTime;
         }
+
+        // Once playback has started, the amount of available future data is
+        // measured from the playback cursor. Using the oldest retained
+        // snapshot here becomes incorrect after the queue has been pruned.
+        double targetTime = state.LatestTimelineTime - state.PlaybackDelay;
         if (state.PlaybackTime < targetTime) {
             double lag = targetTime - state.PlaybackTime;
             float speed = lag > DefaultSnapshotInterval ? CatchUpSpeed : 1f;
@@ -261,5 +340,118 @@ public static class NetworkBodyInterpolation {
         while (state.Snapshots.Count > 2 && state.Snapshots[0].Time < now - MaxBufferedTime) {
             state.Snapshots.RemoveAt(0);
         }
+    }
+
+    private static bool HasPresentationData(BodyInterpolationState state) {
+        return state.Snapshots.Count > 0
+            || state.BehaviorSnapshots.Count > 0
+            || state.BehaviorEvents.Count > 0;
+    }
+
+    private static void RegisterTimelineTime(BodyInterpolationState state, double time) {
+        if (!state.HasLatestTimelineTime || time > state.LatestTimelineTime) {
+            state.LatestTimelineTime = time;
+            state.HasLatestTimelineTime = true;
+        }
+        if (!state.HasFirstTimelineTime || time < state.FirstTimelineTime) {
+            state.FirstTimelineTime = time;
+            state.HasFirstTimelineTime = true;
+        }
+    }
+
+    private static void QueueBehaviorState(
+        BodyInterpolationState state,
+        double stateTime,
+        int sequence,
+        NetworkBehaviorState behaviorState) {
+        if (state.HasLastBehaviorState
+            && CompareKey(stateTime, sequence, state.LastBehaviorStateTime, state.LastBehaviorStateSequence) < 0) {
+            return;
+        }
+
+        int index = state.BehaviorSnapshots.Count;
+        while (index > 0
+            && CompareKey(
+                state.BehaviorSnapshots[index - 1].Time,
+                state.BehaviorSnapshots[index - 1].Sequence,
+                stateTime,
+                sequence) > 0) {
+            index--;
+        }
+        state.BehaviorSnapshots.Insert(index, new BehaviorSnapshot(stateTime, sequence, behaviorState));
+    }
+
+    private static void QueueBehaviorEvents(
+        BodyInterpolationState state,
+        IReadOnlyList<NetworkBehaviorEvent> behaviorEvents) {
+        foreach (NetworkBehaviorEvent behaviorEvent in behaviorEvents) {
+            RegisterTimelineTime(state, behaviorEvent.Time);
+            if (state.HasLastBehaviorEvent
+                && CompareKey(
+                    behaviorEvent.Time,
+                    behaviorEvent.Sequence,
+                    state.LastBehaviorEventTime,
+                    state.LastBehaviorEventSequence) < 0) {
+                continue;
+            }
+
+            int index = state.BehaviorEvents.Count;
+            while (index > 0
+                && CompareKey(
+                    state.BehaviorEvents[index - 1].Time,
+                    state.BehaviorEvents[index - 1].Sequence,
+                    behaviorEvent.Time,
+                    behaviorEvent.Sequence) > 0) {
+                index--;
+            }
+            state.BehaviorEvents.Insert(index, behaviorEvent);
+        }
+    }
+
+    private static void ApplyBehaviorSnapshots(
+        ComponentBody body,
+        BodyInterpolationState state,
+        double playbackTime) {
+        while (state.BehaviorSnapshots.Count > 0
+            && state.BehaviorSnapshots[0].Time <= playbackTime) {
+            BehaviorSnapshot snapshot = state.BehaviorSnapshots[0];
+            state.BehaviorSnapshots.RemoveAt(0);
+            if (state.HasLastBehaviorState
+                && CompareKey(snapshot.Time, snapshot.Sequence, state.LastBehaviorStateTime, state.LastBehaviorStateSequence) < 0) {
+                continue;
+            }
+            NetworkBehaviorSyncHelpers.ApplyState(body, snapshot.State);
+            state.LastBehaviorStateTime = snapshot.Time;
+            state.LastBehaviorStateSequence = snapshot.Sequence;
+            state.HasLastBehaviorState = true;
+        }
+    }
+
+    private static void ApplyBehaviorEvents(
+        ComponentBody body,
+        BodyInterpolationState state,
+        double playbackTime) {
+        while (state.BehaviorEvents.Count > 0
+            && state.BehaviorEvents[0].Time <= playbackTime) {
+            NetworkBehaviorEvent behaviorEvent = state.BehaviorEvents[0];
+            state.BehaviorEvents.RemoveAt(0);
+            if (state.HasLastBehaviorEvent
+                && CompareKey(
+                    behaviorEvent.Time,
+                    behaviorEvent.Sequence,
+                    state.LastBehaviorEventTime,
+                    state.LastBehaviorEventSequence) < 0) {
+                continue;
+            }
+            NetworkBehaviorSyncHelpers.ApplyEvent(body, behaviorEvent);
+            state.LastBehaviorEventTime = behaviorEvent.Time;
+            state.LastBehaviorEventSequence = behaviorEvent.Sequence;
+            state.HasLastBehaviorEvent = true;
+        }
+    }
+
+    private static int CompareKey(double leftTime, int leftSequence, double rightTime, int rightSequence) {
+        int timeResult = leftTime.CompareTo(rightTime);
+        return timeResult != 0 ? timeResult : leftSequence.CompareTo(rightSequence);
     }
 }

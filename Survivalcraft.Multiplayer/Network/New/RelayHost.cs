@@ -80,6 +80,7 @@ public sealed class RelayHost : INetEventListener {
             RoomCode = reader.GetString();
             GlobalCode = reader.AvailableBytes > 0 ? reader.GetString() : null;
             IsConnected = true;
+            _isRetryed = false;
             Log.Information(string.IsNullOrWhiteSpace(GlobalCode)
                 ? $"Relay room created: {RoomCode}"
                 : $"Relay room created: {RoomCode}, global={GlobalCode}");
@@ -99,6 +100,7 @@ public sealed class RelayHost : INetEventListener {
             int id = reader.GetInt();
             if (_sessions.Remove(id, out ClientSession session)) {
                 PlayerBodyUpdatePacket.RemoveSnapshotsForSession(session);
+                EntityBodyUpdatePacket.RemoveSnapshotsForSession(session);
                 GameManager.Project?.FindSubsystem<SubsystemNetwork>().MakePlayerOffline(session);
             }
         }
@@ -144,8 +146,16 @@ public sealed class RelayHost : INetEventListener {
             NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Creating;
 
             Task.Run(async () => {
-                IPEndPoint endPoint = await CenterServerClient.GetBestRelayEndPointAsync(2);
-                Dispatcher.Dispatch(() => Start(endPoint));
+                try {
+                    IPEndPoint endPoint =
+                        await CenterServerClient.GetBestRelayEndPointAsync(2);
+
+                    Dispatcher.Dispatch(() => Start(endPoint));
+                }
+                catch (Exception ex) {
+                    Log.Warning($"Failed to retry relay host: {ex.Message}");
+                    NetworkManager.RelayHostCodeStatus = RelayHostCodeStatus.Failed;
+                }
             });
         }
     }

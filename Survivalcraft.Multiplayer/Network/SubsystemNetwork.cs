@@ -29,6 +29,12 @@ public class SubsystemNetwork : Subsystem {
         Guid guid = session.NetworkGuid;
         var pd = m_subsystemPlayers.m_playersData.Find(p => p.PlayerIndex == index);
         if (pd != null) {
+            // 广播 "离开游戏" 系统消息（仅服务端）；房主未以客户端身份加入时本地回显。
+            string leaveName = string.IsNullOrEmpty(pd.Name) ? $"Player {index}" : pd.Name;
+            NetworkManager.Queue(new ChatMessagePacket(ChatMessageType.Leave, index, leaveName, string.Empty));
+            if (!NetworkManager.IsClientRunning) {
+                Survivalcraft.Multiplayer.ChatManager.Add(ChatMessageType.Leave, index, leaveName, string.Empty);
+            }
             var updater = m_subsystemTerrain.TerrainUpdater;
             updater?.RemovePlayerChunkSendState(pd.PlayerIndex);
             var componentPlayer = pd.ComponentPlayer;

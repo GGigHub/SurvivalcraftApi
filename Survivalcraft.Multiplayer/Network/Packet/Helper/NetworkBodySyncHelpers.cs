@@ -9,7 +9,7 @@ public static class NetworkBodySyncHelpers {
     public const float RotationDotEpsilon = 0.000001f;
 
     public static bool ShouldBeNetworkControlled(ComponentBody body) {
-        if (body == null || (!NetworkManager.IsClientRunning && !NetworkManager.IsServerRunning)) {
+        if (body == null || body.Entity == null || (!NetworkManager.IsClientRunning && !NetworkManager.IsServerRunning)) {
             return false;
         }
 
@@ -18,7 +18,8 @@ public static class NetworkBodySyncHelpers {
 
         bool hasNonMainChildPlayer = false;
         for (int i = 0; i < body.ChildBodies.Count; i++) {
-            ComponentPlayer childPlayer = body.ChildBodies[i].Entity.FindComponent<ComponentPlayer>();
+            GameEntitySystem.Entity childEntity = body.ChildBodies[i]?.Entity;
+            ComponentPlayer childPlayer = childEntity?.FindComponent<ComponentPlayer>();
             if (childPlayer?.PlayerData?.IsMainPlayer == false) {
                 hasNonMainChildPlayer = true;
                 break;
@@ -27,11 +28,25 @@ public static class NetworkBodySyncHelpers {
 
         if (NetworkManager.IsClientRunning) {
             return (componentPlayer != null && !isMainPlayer && body.ParentBody == null)
-                || hasNonMainChildPlayer;
+                || hasNonMainChildPlayer
+                || (componentPlayer == null && HasSyncableCreatureBody(body));
         }
 
         return (componentPlayer != null && !isMainPlayer && body.ParentBody == null)
             || (componentPlayer == null && hasNonMainChildPlayer);
+    }
+
+    private static bool HasSyncableCreatureBody(ComponentBody body) {
+        if (body == null || body.Entity == null || body.Entity.FindComponent<ComponentCreature>() == null) {
+            return false;
+        }
+        for (int i = 0; i < body.ChildBodies.Count; i++) {
+            GameEntitySystem.Entity childEntity = body.ChildBodies[i]?.Entity;
+            if (childEntity != null && childEntity.FindComponent<ComponentPlayer>() != null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static bool HasVector3Changed(Vector3 current, Vector3 previous, float epsilonSquared) {

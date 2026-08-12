@@ -166,8 +166,42 @@ namespace Game {
 
             bool isNetworkMode = false;
             ModsManager.HookAction("IsNetworkMode", loader => isNetworkMode |= loader.IsNetworkMode(m_componentCreature.ComponentBody));
+            if (NetworkManager.IsServerAuthoritativeCreatureBody(m_componentCreature.ComponentBody)) {
+                // The server owns movement integration for remote creatures.
+                // Keep the locally generated input orders from reaching any
+                // body/locomotion code; authoritative orders are written to
+                // Last*Order by EntityBodyUpdatePacket.
+                WalkOrder = null;
+                FlyOrder = null;
+                SwimOrder = null;
+                TurnOrder = Vector2.Zero;
+                JumpOrder = 0f;
+                VrMoveOrder = null;
+                VrLookOrder = null;
+                LookOrder = Vector2.Zero;
+                return;
+            }
             if (isNetworkMode) {
+                StunTime = MathUtils.Max(StunTime - dt, 0f);
+                if (m_componentCreature.ComponentHealth.Health > 0f
+                    && StunTime <= 0f) {
+                    LookAngles += LookSpeed * LookOrder * dt;
+                    m_swimBurstRemaining = MathUtils.Saturate(0.1f * m_swimBurstRemaining + dt);
+                }
                 NormalMovement(dt);
+                LastWalkOrder = WalkOrder;
+                LastFlyOrder = FlyOrder;
+                LastSwimOrder = SwimOrder;
+                LastTurnOrder = TurnOrder;
+                LastJumpOrder = JumpOrder;
+                WalkOrder = null;
+                FlyOrder = null;
+                SwimOrder = null;
+                TurnOrder = Vector2.Zero;
+                JumpOrder = 0f;
+                VrMoveOrder = null;
+                VrLookOrder = null;
+                LookOrder = new Vector2(m_lookAutoLevelX ? -10f * LookAngles.X / LookSpeed : 0f, m_lookAutoLevelY ? -10f * LookAngles.Y / LookSpeed : 0f);
                 return;
             }
 

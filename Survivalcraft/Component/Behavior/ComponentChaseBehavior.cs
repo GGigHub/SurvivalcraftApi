@@ -154,7 +154,7 @@ namespace Game {
 
         public virtual void Update(float dt) {
             if (NetworkManager.IsClientRunning) {
-                m_componentCreatureModel.AttackOrder = IsActive && IsAttack;
+                m_componentCreatureModel.AttackOrder = IsAttack;
                 return;
             }
             if (m_target == null) {

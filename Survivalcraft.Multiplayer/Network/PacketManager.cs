@@ -19,62 +19,103 @@ public abstract class Packet {
 }
 
 public enum PacketType : byte {
-    // Connect
-    ConnectInfo = 0, IndexInfo = 1, ProjectInfo = 2, StateInfo = 3, LatencyProbe = 111,
-
-    // Entity
-    EntityRemove = 25, EntityLoad = 26, EntitySyncRequest = 27,
-    BodyCollision = 35,
-    BehaviorLookAround = 54, BehaviorStubbornSteed = 55,
-    BehaviorChase = 56, BehaviorRandomPeck = 57, BehaviorRandomFeed = 58, BehaviorEatPickable = 59,
-    BehaviorHumanRow = 60, BehaviorDigInMud = 62, BehaviorFishOutOfWater = 63,
-    EntityOnFire = 68, BehaviorSync = 112,
-
-    // Health
-    HealthSync = 28, InjureEvent = 29, InjureRequest = 30, HitResult = 31, DamageSync = 32,
-    VitalStatSync = 83,
-
-    // Inventory
-    Furnace = 12,
-    Dispenser = 13,
-    ActiveSlotChange = 36, InventorySync = 37, MoveItem = 38, DragDropItem = 39, SetSlotItem = 40, ClothingSync = 110,
-    ClothingRequestSkin = 64, ClothingReplySkin = 65, ClothingWhoHas = 66, ClothingWhoHasReply = 67,
-    PickableCreate = 93, PickableUpdate = 94, PickableDelete = 95, PickableRequestSync = 96,
-    PickableSetFlyToPosition = 97, PickableCreateList = 98, PickableDeleteList = 99, PickableSyncList = 100,
-
-    // Logic
-    Electricity = 7,
-    SignBlock = 109,
-    EditSign = 18,
-    EditableMemoryBank = 84, EditableTruthTable = 85, EditableAdjustableDelayGate = 86,
-    EditableBattery = 87, EditablePiston = 88, EditableSwitch = 89, EditableButton = 90,
-    MovingBlockAdd = 91, MovingBlockRemove = 92,
-
-    // Mechanics
-    Mount = 8,
-    Sickness = 9, Flu = 10, Projectile = 11,
-    OpenInventoryByID = 15, OpenInventoryByPoint = 16, CrossbowPull = 17,
-    SleepRequest = 19, SleepStatus = 20, WakeupRequest = 21, WakeupStatus = 22,
-    Explosion = 23,
-    FireBlockAdd = 69, FireBlockRemove = 70,
-
-    // Player
-    PlayerCreate = 41, PlayerModify = 42, PlayerDelete = 43, PlayerAdd = 44, PlayerKnown = 45,
-    PlayerBugle = 48,
-    PlayerNoMsgAdd = 50, PlayerNoMsgRemove = 51,
-    PlayerBodyUpdate = 71, PlayerInteract = 72, PlayerAim = 73, PlayerDig = 74, PlayerHit = 75,
-    PlayerCreativeFly = 76, PlayerIntoPlaying = 77, PlayerRestart = 78, PlayerAddExperience = 79,
-    PlayerDragDrop = 80, PlayerStatSync = 81, PlayerPositionSet = 82, PlayerDrop = 107, FurnitureHammer = 108,
-    PlayerDigRequest = 113, PlayerDigConfirmation = 114, PlayerPlaceConfirmation = 115,
-
-    // Terrain
-    Time = 4, Sky = 5,
-    Weather = 6,
-    TerrainSyncChunkList = 102,
-    TerrainViewDistance = 103,
-    TerrainChangeCell = 104, TerrainChangeCellList = 105,
-
-    ModPacket = 255
+    ConnectInfo,
+    IndexInfo,
+    ProjectInfo,
+    StateInfo,
+    Time,
+    Sky,
+    Weather,
+    Electricity,
+    Mount,
+    Sickness,
+    Flu,
+    Projectile,
+    Furnace,
+    Dispenser,
+    OpenInventoryByID,
+    OpenInventoryByPoint,
+    CrossbowPull,
+    EditSign,
+    SleepRequest,
+    SleepStatus,
+    WakeupRequest,
+    WakeupStatus,
+    Explosion,
+    EntityRemove,
+    EntityLoad,
+    EntitySyncRequest,
+    HealthSync,
+    InjureEvent,
+    InjureRequest,
+    HitResult,
+    DamageSync,
+    BodyCollision,
+    ActiveSlotChange,
+    InventorySync,
+    MoveItem,
+    DragDropItem,
+    SetSlotItem,
+    PlayerCreate,
+    PlayerModify,
+    PlayerDelete,
+    PlayerAdd,
+    PlayerKnown,
+    Chat,
+    PlayerBugle,
+    PlayerNoMsgAdd,
+    PlayerNoMsgRemove,
+    ClothingRequestSkin,
+    ClothingReplySkin,
+    ClothingWhoHas,
+    ClothingWhoHasReply,
+    EntityOnFire,
+    FireBlockAdd,
+    FireBlockRemove,
+    PlayerBodyUpdate,
+    PlayerInteract,
+    PlayerAim,
+    PlayerDig,
+    PlayerHit,
+    PlayerCreativeFly,
+    PlayerIntoPlaying,
+    PlayerRestart,
+    PlayerAddExperience,
+    PlayerDragDrop,
+    PlayerStatSync,
+    PlayerPositionSet,
+    VitalStatSync,
+    EditableMemoryBank,
+    EditableTruthTable,
+    EditableAdjustableDelayGate,
+    EditableBattery,
+    EditablePiston,
+    EditableSwitch,
+    EditableButton,
+    MovingBlockAdd,
+    MovingBlockRemove,
+    PickableCreate,
+    PickableUpdate,
+    PickableDelete,
+    PickableRequestSync,
+    PickableSetFlyToPosition,
+    PickableCreateList,
+    PickableDeleteList,
+    PickableSyncList,
+    TerrainSyncChunkList,
+    TerrainViewDistance,
+    TerrainChangeCell,
+    TerrainChangeCellList,
+    PlayerDrop,
+    FurnitureHammer,
+    SignBlock,
+    ClothingSync,
+    LatencyProbe,
+    PlayerDigRequest,
+    PlayerDigConfirmation,
+    PlayerPlaceConfirmation,
+    EntityBodyUpdate,
+    ModPacket
 }
 
 public static class PacketManager {
@@ -94,20 +135,11 @@ public static class PacketManager {
         RegisterPacket<StatePacket>();
 
         // Entity
-        RegisterPacket<BehaviorSyncPacket>();
         RegisterPacket<BodyCollisionPacket>();
-        RegisterPacket<ChaseBehaviorPacket>();
-        RegisterPacket<DigInMudBehaviorPacket>();
-        RegisterPacket<EatPickableBehaviorPacket>();
         RegisterPacket<EntityLoadPacket>();
         RegisterPacket<EntityRemovePacket>();
         RegisterPacket<EntitySyncRequestPacket>();
-        RegisterPacket<FishOutOfWaterBehaviorPacket>();
-        RegisterPacket<HumanRowBehaviorPacket>();
-        RegisterPacket<LookAroundBehaviorPacket>();
-        RegisterPacket<RandomFeedBehaviorPacket>();
-        RegisterPacket<RandomPeckBehaviorPacket>();
-        RegisterPacket<StubbornSteedBehaviorPacket>();
+        RegisterPacket<EntityBodyUpdatePacket>();
 
         // Health
         RegisterPacket<HealthSyncPacket>();
@@ -174,6 +206,7 @@ public static class PacketManager {
         RegisterPacket<PlayerAddExperiencePacket>();
         RegisterPacket<PlayerAddPacket>();
         RegisterPacket<PlayerAimPacket>();
+        RegisterPacket<ChatMessagePacket>();
         RegisterPacket<PlayerBodyUpdatePacket>();
         RegisterPacket<PlayerBuglePacket>();
         RegisterPacket<PlayerCreatePacket>();

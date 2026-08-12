@@ -79,6 +79,7 @@
         <BitmapButtonWidget Name="CrouchButton" HorizontalAlignment="Far" Size="64, 64" NormalSubtexture="{Textures/Atlas/SneakButton}" ClickedSubtexture="{Textures/Atlas/SneakButton_Pressed}" Margin="0, 3" IsAutoCheckingEnabled="true"/>
         <BitmapButtonWidget Name="MountButton" HorizontalAlignment="Far" Size="64, 64" NormalSubtexture="{Textures/Atlas/MountButton}" ClickedSubtexture="{Textures/Atlas/MountButton_Pressed}" Margin="0, 3" IsAutoCheckingEnabled="true"/>
         <BitmapButtonWidget Name="EditItemButton" HorizontalAlignment="Far" Size="64, 64" NormalSubtexture="{Textures/Atlas/EditItemButton}" ClickedSubtexture="{Textures/Atlas/EditItemButton_Pressed}" Margin="0, 3" />
+        <BitmapButtonWidget Name="MsgButton" HorizontalAlignment="Far" Size="64, 64" NormalSubtexture="{Textures/Gui/Msg}" ClickedSubtexture="{Textures/Gui/Msg_Pressed}" Margin="0, 3" />
       </StackPanelWidget>
 
       <DragHostWidget Name="DragHost" />

@@ -55,6 +55,10 @@ namespace Game {
         }
 
         public BodyRaycastResult? Raycast(Vector3 start, Vector3 end, float inflateAmount, Func<ComponentBody, float, bool> action) {
+            return Raycast(start, end, inflateAmount, null, action);
+        }
+
+        public BodyRaycastResult? Raycast(Vector3 start, Vector3 end, float inflateAmount, Func<ComponentBody, BoundingBox> boundingBoxProvider, Func<ComponentBody, float, bool> action) {
             float num = Vector3.Distance(start, end);
             Ray3 ray = new(start, num > 0f ? (end - start) / num : Vector3.UnitX);
             Vector2 corner = new(start.X, start.Z);
@@ -84,15 +88,12 @@ namespace Game {
                     }
                 );
                 if (!skipVanilla_) {
+                    BoundingBox boundingBox = boundingBoxProvider?.Invoke(componentBody) ?? componentBody.BoundingBox;
                     if (inflateAmount > 0f) {
-                        BoundingBox boundingBox = componentBody.BoundingBox;
                         boundingBox.Min -= new Vector3(inflateAmount);
                         boundingBox.Max += new Vector3(inflateAmount);
-                        num2 = ray.Intersection(boundingBox);
                     }
-                    else {
-                        num2 = ray.Intersection(componentBody.BoundingBox);
-                    }
+                    num2 = ray.Intersection(boundingBox);
                 }
                 if (num2.HasValue
                     && num2.Value <= num

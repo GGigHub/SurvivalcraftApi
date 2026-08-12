@@ -36,5 +36,12 @@ public class PlayerCreatePacket : Packet {
 
         From.PlayerIndex = playerData.PlayerIndex;
         NetworkManager.Queue(new IndexPacket(From.PlayerIndex) { To = From });
+
+        // 广播 "加入游戏" 系统消息，并在主机本地回显。
+        string joinName = string.IsNullOrEmpty(playerData.Name) ? $"Player {playerData.PlayerIndex}" : playerData.Name;
+        NetworkManager.Queue(new ChatMessagePacket(ChatMessageType.Join, playerData.PlayerIndex, joinName, string.Empty));
+        if (!NetworkManager.IsClientRunning) {
+            Survivalcraft.Multiplayer.ChatManager.Add(ChatMessageType.Join, playerData.PlayerIndex, joinName, string.Empty);
+        }
     }
 }
