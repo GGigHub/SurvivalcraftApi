@@ -1,4 +1,5 @@
 using Engine.Animation.RootMotion;
+using System.Text.Json.Serialization;
 
 namespace Engine.Animation {
     /// <summary>
@@ -6,19 +7,9 @@ namespace Engine.Animation {
     /// </summary>
     public class OnCompleteAction {
         /// <summary>
-        /// 动作类型：setState 或 trigger
+        /// 动作类型：trigger
         /// </summary>
         public string Type { get; set; }
-
-        /// <summary>
-        /// 目标状态轨道名称（setState 使用）
-        /// </summary>
-        public string State { get; set; }
-
-        /// <summary>
-        /// 要设置的值（setState 使用）
-        /// </summary>
-        public object Value { get; set; }
 
         /// <summary>
         /// 事件名称（trigger 使用）
@@ -72,6 +63,16 @@ namespace Engine.Animation {
         /// </summary>
         public object BlendDurationValue { get; set; } = 0.3f;
 
+        // 以下 HasXxx 标记对应字段是否在 JSON 中显式设置。
+        // 用于别名合并：caller（状态规则/手动 API）显式设置的字段覆盖 alias 默认，
+        // 未设置的字段回退到 alias。由 AnimationReferenceConverter.Read 置位。
+        public bool HasSpeed;
+        public bool HasLoop;
+        public bool HasStartPhase;
+        public bool HasEndPhase;
+        public bool HasBlendDuration;
+        public bool HasPreservePose;
+
         /// <summary>
         /// 驱动器参数（当 Source 为 driver: 时使用）
         /// </summary>
@@ -88,9 +89,31 @@ namespace Engine.Animation {
         public OnCompleteAction OnComplete { get; set; }
 
         /// <summary>
+        /// 动画被打断时执行的动作（非循环动画播放中被规则切换或层停用，即未自然播完即被切走）。
+        /// null 表示该动画不关心打断。触发由 AnimationController.TriggerOnInterruptIfActive 检测。
+        /// </summary>
+        public OnCompleteAction OnInterrupt { get; set; }
+
+        /// <summary>
         /// 根运动配置
         /// </summary>
         public RootMotionConfig RootMotion { get; set; }
+
+        /// <summary>
+        /// 根骨骼旋转覆盖（度）。未设置（HasRootBoneRotation=false）时回退顶层。
+        /// 可为 float（绕 Y）或 Vector3（绕 X/Y/Z）。静态值，不支持 NCalc。
+        /// 不变量：HasRootBoneRotation == true 时此值必非 null（ReadRootBoneRotationValue 从不返回 null，
+        /// MergeWithAlias 保持该不变量）。判过 HasRootBoneRotation 即可直接取值，无需重复判空。
+        /// </summary>
+        public object RootBoneRotationValue { get; set; }
+
+        /// <summary>
+        /// 根骨骼平移覆盖。null=回退顶层。
+        /// </summary>
+        public Vector3? RootBoneTranslation { get; set; }
+
+        public bool HasRootBoneRotation;
+        public bool HasRootBoneTranslation;
 
         // Cached dynamic properties (avoid repeated allocations)
         public DynamicProperty<float> m_cachedSpeedProperty;
@@ -120,9 +143,19 @@ namespace Engine.Animation {
         public string BlendMode { get; set; } = "override";
 
         /// <summary>
-        /// 影响的骨骼名称列表
+        /// 影响的骨骼名称列表（按子树展开：含该骨 + 全部后代）
         /// </summary>
         public string[] Bones { get; set; }
+
+        /// <summary>
+        /// 排除的骨骼名称列表（同子树语义，从结果集中扣除）
+        /// </summary>
+        public string[] BonesExclude { get; set; }
+
+        /// <summary>
+        /// 层权重（0-1）。null 表示未设，保留模板值；≤0 视为 1。
+        /// </summary>
+        public float? Weight { get; set; }
 
         /// <summary>
         /// 层驱动器配置
@@ -148,12 +181,21 @@ namespace Engine.Animation {
         /// 目标动画配置
         /// </summary>
         public AnimationReference Animation { get; set; }
+
+        /// <summary>
+        /// 嵌套子规则（与 Animation 互斥）。非空时为分组节点：匹配 Condition 后递归评估子 rules，
+        /// 实现"外层失败短路整组"的决策树优化（如 [CrouchFactor]>0.0 失败时跳过所有 crouch 变体）。
+        /// </summary>
+        public List<StateRuleConfig> Rules { get; set; }
+
+        /// <summary>是否为分组节点（有非空子规则）。与 Animation 互斥。</summary>
+        public bool HasRules => Rules != null && Rules.Count > 0;
     }
 
     /// <summary>
-    /// 状态轨道配置（新格式）
+    /// 状态层配置
     /// </summary>
-    public class StateTrackConfig {
+    public class StateLayerConfig {
         /// <summary>
         /// 所属层名称
         /// </summary>
@@ -183,11 +225,19 @@ namespace Engine.Animation {
         public string Template { get; set; } = "Simple";
 
         /// <summary>
-        /// 根骨骼旋转角度（度），用于修正模型朝向
-        /// 某些 glTF 模型的前方方向可能与游戏不一致，需要旋转修正
-        /// 例如：Fox 模型的前方是 +X，需要旋转 90 度使其面向 +Z
+        /// 根骨骼旋转（度），用于修正模型朝向。
+        /// 单数字 = 绕 Y 轴（向后兼容）；Vector3 = 绕 X/Y/Z（数组 [x,y,z] 或对象 {"X":..,"Y":..,"Z":..}）。
+        /// 例如：Fox 模型前方 +X，需绕 Y 旋转 90 度面向 +Z。
         /// </summary>
-        public float RootBoneRotation { get; set; } = 0f;
+        [JsonConverter(typeof(RootBoneEulerConverter))]
+        public Vector3? RootBoneRotation { get; set; }
+
+        /// <summary>
+        /// 根骨骼平移（米），用于修正模型原点偏移。
+        /// 沿实体本地坐标轴（Y 恒指上方；X/Z 随实体朝向旋转），不被 RootBoneRotation 旋转（R*T 顺序）。
+        /// 数组或对象两种写法。
+        /// </summary>
+        public Vector3? RootBoneTranslation { get; set; }
 
         /// <summary>
         /// 模型缩放比例
@@ -206,7 +256,7 @@ namespace Engine.Animation {
         /// <summary>
         /// 状态配置
         /// </summary>
-        public Dictionary<string, StateTrackConfig> States { get; set; } = new();
+        public Dictionary<string, StateLayerConfig> States { get; set; } = new();
 
         /// <summary>
         /// 动画引用映射（别名 -> 引用）
@@ -217,5 +267,11 @@ namespace Engine.Animation {
         /// 初始参数值
         /// </summary>
         public Dictionary<string, object> Parameters { get; set; } = new();
+
+        /// <summary>
+        /// 骨骼别名表（别名 -> 真实骨骼名），由 ComponentModel.SetModel 写入 Model.BoneAliases。
+        /// JSON 键名 "boneAliases"（大小写不敏感，自动反序列化）。
+        /// </summary>
+        public Dictionary<string, string> BoneAliases { get; set; }
     }
 }

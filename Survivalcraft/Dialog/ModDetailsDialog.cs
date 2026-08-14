@@ -118,6 +118,13 @@ namespace Game {
                                 )) {
                                 valid = false;
                                 sb.AppendLine($"      {LanguageControl.Get(fName, "15")}");
+                                ModEntity[] entities = ModsManager.ModListAll
+                                    .Where(px => px.modInfo != null && px.modInfo.PackageName == dependency.Key)
+                                    .ToArray();
+                                if (entities.Length > 0) {
+                                    sb.Append($"      {LanguageControl.Get(fName, "16")}");
+                                    sb.AppendJoin(',', entities.Select(e => e.modInfo.Version));
+                                }
                             }
                         }
                         m_contentPanel.Children.Add(new LabelWidget { Text = sb.ToString(), Color = valid ? Color.White : Color.Red });
@@ -152,8 +159,9 @@ namespace Game {
                                 try {
                                     Storage.DeleteFile(m_entity.ModFilePath);
                                     m_screen.m_needRestart = true;
-                                    ModsManager.ModListAll.Remove(m_entity);
-                                    ModsManager.ModList.Remove(m_entity);
+                                    // ModEntity 重写了 Equals（基于包名+版本），同包名同版本的重复模组会撞键，因此必须按引用移除
+                                    RemoveModEntityByReference(ModsManager.ModListAll, m_entity);
+                                    RemoveModEntityByReference(ModsManager.ModList, m_entity);
                                     if (m_entity.modInfo != null && !string.IsNullOrEmpty(m_entity.modInfo.PackageName)) {
                                         ModsManager.PackageNameToModEntity.Remove(m_entity.modInfo.PackageName);
                                         if (ModsManager.DisabledMods.TryGetValue(m_entity.modInfo.PackageName, out HashSet<string> versions)) {
@@ -163,7 +171,16 @@ namespace Game {
                                             }
                                         }
                                     }
-                                    m_screen.m_modsContentList.RemoveItem(m_entity);
+                                    int listIndex = -1;
+                                    for (int i = 0; i < m_screen.m_modsContentList.Items.Count; i++) {
+                                        if (ReferenceEquals(m_screen.m_modsContentList.Items[i], m_entity)) {
+                                            listIndex = i;
+                                            break;
+                                        }
+                                    }
+                                    if (listIndex >= 0) {
+                                        m_screen.m_modsContentList.RemoveItemAt(listIndex);
+                                    }
                                     DialogsManager.HideDialog(this);
                                     DialogsManager.ShowDialog(
                                         null,
@@ -198,6 +215,14 @@ namespace Game {
             m_titleLabel.Text = title;
             m_titleLabel.Color = titleColor;
             m_triggerEnableButton.Text = LanguageControl.Get("ModsManageContentScreen", canBeEnabled ? "19" : "18");
+        }
+
+        // ModEntity 重写了 Equals（基于包名+版本），同包名同版本的重复模组会撞键，因此必须按引用移除
+        static void RemoveModEntityByReference(List<ModEntity> list, ModEntity entity) {
+            int index = list.FindIndex(x => ReferenceEquals(x, entity));
+            if (index >= 0) {
+                list.RemoveAt(index);
+            }
         }
     }
 }

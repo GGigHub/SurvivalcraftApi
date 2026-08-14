@@ -120,7 +120,7 @@ namespace Game {
             ApiVersionRange = new VersionRange(ModsManager.APINuGetVersion),
             Link = "https://gitee.com/SC-SPM/SurvivalcraftApi",
             Author = "SC-SPM",
-            Description = "Debug uncompressed mod. 调试未压缩模组",
+            Description = "For mod developers to debug uncompressed mod. 用于模组开发者调试未压缩的模组",
             ScVersion = "2.4.0.0",
             PackageName = "fastdebug"
         };

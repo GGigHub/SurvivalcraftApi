@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
@@ -71,10 +72,13 @@ namespace Game {
                 if (blockAllocate != 0) {
                     return blockAllocate;
                 }
-                //然后比对mod信息
-                int modEntitySub = u1.ModEntity.GetHashCode() - u2.ModEntity.GetHashCode();
-                if (modEntitySub != 0) {
-                    return modEntitySub;
+                //然后比对mod信息：同 mod 的方块聚到一起，保证连续分配 BlockIndex
+                //用引用哈希(RuntimeHelpers.GetHashCode)做稳定标识，与 ModEntity 重写的值相等语义解耦；
+                //比较而非相减，避免 int 溢出破坏传递性导致排序异常
+                int modHash1 = RuntimeHelpers.GetHashCode(u1.ModEntity);
+                int modHash2 = RuntimeHelpers.GetHashCode(u2.ModEntity);
+                if (modHash1 != modHash2) {
+                    return modHash1 < modHash2 ? -1 : 1;
                 }
                 //mod相同，则比对BlockIndex
                 int blockIndexSub = u1.Block.BlockIndex - u2.Block.BlockIndex;
@@ -312,7 +316,7 @@ namespace Game {
                                 Index = 0,
                                 Allocated = false,
                                 StaticBlockIndex = !block.IsIndexDynamic
-                                    || Equals(entity, ModsManager.SurvivalCraftModEntity)
+                                    || ReferenceEquals(entity, ModsManager.SurvivalCraftModEntity)
                                     || staticBlockIndexBefore,
                                 ModEntity = entity
                             }
@@ -869,20 +873,69 @@ namespace Game {
 
         public static void DrawMeshBlock(PrimitivesRenderer3D primitivesRenderer,
             BlockMesh blockMesh,
+            Color color,
+            float size,
+            ref Matrix matrix,
+            DrawBlockEnvironmentData environmentData,
+            GeometrySubsetType subsetType) {
+            environmentData = environmentData ?? m_defaultEnvironmentData;
+            Texture2D texture = environmentData.SubsystemTerrain != null
+                ? environmentData.SubsystemTerrain.SubsystemAnimatedTextures.AnimatedBlocksTexture
+                : BlocksTexturesManager.DefaultBlocksTexture;
+            DrawMeshBlock(
+                primitivesRenderer,
+                blockMesh,
+                texture,
+                color,
+                size,
+                ref matrix,
+                environmentData,
+                subsetType
+            );
+        }
+
+        public static void DrawMeshBlock(PrimitivesRenderer3D primitivesRenderer,
+            BlockMesh blockMesh,
             Texture2D texture,
             Color color,
             float size,
             ref Matrix matrix,
             DrawBlockEnvironmentData environmentData) {
+            DrawMeshBlock(
+                primitivesRenderer,
+                blockMesh,
+                texture,
+                color,
+                size,
+                ref matrix,
+                environmentData,
+                GeometrySubsetType.AlphaTest
+            );
+        }
+
+        public static void DrawMeshBlock(PrimitivesRenderer3D primitivesRenderer,
+            BlockMesh blockMesh,
+            Texture2D texture,
+            Color color,
+            float size,
+            ref Matrix matrix,
+            DrawBlockEnvironmentData environmentData,
+            GeometrySubsetType subsetType) {
             environmentData = environmentData ?? m_defaultEnvironmentData;
             float num = LightingManager.LightIntensityByLightValue[environmentData.Light];
             Vector4 vector = new(color);
             Vector4 vector2 = new(new Vector3(vector.X, vector.Y, vector.Z) * num, vector.W);
+            // AlphaTest：cutout 着色器，写深度（镂空边缘硬边）。Transparent：关闭 alpha-test 走 blend，
+            // 且不写深度（DepthRead），避免半透明体素互相 z-reject 导致后绘背面不混合。Opaque：普通不透明。
+            bool useAlphaTest = subsetType == GeometrySubsetType.AlphaTest;
+            DepthStencilState depthStencilState = subsetType == GeometrySubsetType.Transparent
+                ? DepthStencilState.DepthRead
+                : DepthStencilState.Default;
             TexturedBatch3D texturedBatch3D = primitivesRenderer.TexturedBatch(
                 texture,
-                true,
+                useAlphaTest,
                 0,
-                null,
+                depthStencilState,
                 RasterizerState.CullCounterClockwiseScissor,
                 null,
                 SamplerState.PointClamp
@@ -1015,8 +1068,9 @@ namespace Game {
                             string refTypeName = data.Substring(1);
                             obj = !string.IsNullOrEmpty(refTypeName)
                                 ? (m_blocks.FirstOrDefault(v => v.GetType().Name == refTypeName)
-                                    ?? throw new InvalidOperationException(string.Format(LanguageControl.Get("BlocksManager", "9"), refTypeName, typeName, fieldName)))
-                                .BlockIndex
+                                    ?? throw new InvalidOperationException(
+                                        string.Format(LanguageControl.Get("BlocksManager", "9"), refTypeName, typeName, fieldName)
+                                    )).BlockIndex
                                 : (object)block.BlockIndex;
                         }
                         else {

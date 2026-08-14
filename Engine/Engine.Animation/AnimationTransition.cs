@@ -58,6 +58,9 @@ namespace Engine.Animation {
         // 停用过渡模式：淡出到无
         public bool m_isDeactivateTransition;
 
+        RootStripInfo m_sourceStripInfo;   // crossfade/deactivate 源快照剥离需求
+        RootStripInfo m_targetStripInfo;   // crossfade 目标 player 剥离需求（deactivate 不用）
+
         /// <summary>
         /// 过渡时长（秒）
         /// </summary>
@@ -133,6 +136,7 @@ namespace Engine.Animation {
         /// <param name="duration">过渡时长</param>
         /// <param name="interruptMode">中断模式</param>
         /// <param name="priority">优先级</param>
+        /// <param name="sourceTransformsOverride">可选的源姿态快照；中断现有过渡时由调用方传入当前实际渲染姿态，避免源退化为主 player 首帧。为 null 时从 sourcePlayer 采样</param>
         /// <returns>是否成功开始过渡</returns>
         public bool StartTransition(AnimationPlayer sourcePlayer,
             Model targetModel,
@@ -140,7 +144,8 @@ namespace Engine.Animation {
             bool loop,
             float duration,
             TransitionInterruptMode interruptMode = TransitionInterruptMode.CanInterrupt,
-            int priority = 0) {
+            int priority = 0,
+            Matrix?[] sourceTransformsOverride = null) {
             // 检查是否可以被中断
             if (m_isActive) {
                 if (InterruptMode == TransitionInterruptMode.CannotInterrupt) {
@@ -154,14 +159,21 @@ namespace Engine.Animation {
 
             // 保存源状态
             m_sourcePlayer = sourcePlayer;
-            // 即使源动画已经停止播放，也要采样当前姿态用于过渡
-            // 这样非循环动画播放完成后，过渡到下一个动画时可以正确混合
-            if (m_sourcePlayer != null
-                && m_sourcePlayer.Animation != null) {
-                // 确保源变换缓冲区足够大
-                int boneCount = targetModel != null ? targetModel.Bones.Count : 0;
-                if (boneCount > 0) {
-                    EnsureSourceBufferSize(boneCount);
+            // 源姿态来源：
+            // - sourceTransformsOverride：中断现有过渡时，由调用方采样的当前实际渲染姿态
+            //   （旧过渡的混合输出），避免源退化为已被 SetAnimation 切换的主 player 首帧
+            // - 否则：从源 player 采样当前姿态（即使源动画已停止，也能正确混合）
+            int boneCount = targetModel != null ? targetModel.Bones.Count : 0;
+            if (boneCount > 0) {
+                EnsureSourceBufferSize(boneCount);
+                if (sourceTransformsOverride != null) {
+                    int copyLen = Math.Min(boneCount, sourceTransformsOverride.Length);
+                    for (int i = 0; i < copyLen; i++) {
+                        m_sourceTransforms[i] = sourceTransformsOverride[i];
+                    }
+                }
+                else if (m_sourcePlayer != null
+                    && m_sourcePlayer.Animation != null) {
                     m_sourcePlayer.SampleBoneTransforms(m_sourceTransforms);
                 }
             }
@@ -190,6 +202,7 @@ namespace Engine.Animation {
             m_isActive = true;
             m_priority = priority;
             InterruptMode = interruptMode;
+            m_isDeactivateTransition = false;
             return true;
         }
 
@@ -213,6 +226,14 @@ namespace Engine.Animation {
         }
 
         /// <summary>
+        /// 盖戳源/目标剥离需求（config 切换时由层调用）。info 寿命 == blend 状态寿命。
+        /// </summary>
+        public void SetStripInfo(RootStripInfo source, RootStripInfo target) {
+            m_sourceStripInfo = source;
+            m_targetStripInfo = target;
+        }
+
+        /// <summary>
         /// 采样当前过渡状态的骨骼变换
         /// </summary>
         /// <param name="boneTransforms">输出骨骼变换数组</param>
@@ -226,6 +247,9 @@ namespace Engine.Animation {
                 return;
             }
             int boneCount = model.Bones.Count;
+
+            // 入口统一剥源快照（幂等）：源冻结，首帧剥后 translation=rest，后续帧再剥无变化
+            RootMotionStrip.StripRootTranslation(m_sourceTransforms, model, m_sourceStripInfo);
 
             // 停用过渡模式：淡出源动画到 Identity
             if (m_isDeactivateTransition) {
@@ -249,18 +273,21 @@ namespace Engine.Animation {
             if (Progress <= 0f
                 || m_sourceTransforms == null) {
                 m_targetPlayer?.SampleBoneTransforms(boneTransforms);
+                RootMotionStrip.StripRootTranslation(boneTransforms, model, m_targetStripInfo);
                 return;
             }
 
             // 如果进度为 1，使用目标变换
             if (Progress >= 1f) {
                 m_targetPlayer?.SampleBoneTransforms(boneTransforms);
+                RootMotionStrip.StripRootTranslation(boneTransforms, model, m_targetStripInfo);
                 return;
             }
 
             // 混合源和目标变换
             Matrix?[] targetTransforms = new Matrix?[boneCount];
             m_targetPlayer?.SampleBoneTransforms(targetTransforms);
+            RootMotionStrip.StripRootTranslation(targetTransforms, model, m_targetStripInfo);
             for (int i = 0; i < boneCount; i++) {
                 if (targetTransforms[i].HasValue) {
                     if (m_sourceTransforms[i].HasValue) {
@@ -286,6 +313,8 @@ namespace Engine.Animation {
             m_sourcePlayer = null;
             m_sourceTransforms = null;
             m_isDeactivateTransition = false;
+            m_sourceStripInfo = default;
+            m_targetStripInfo = default;
         }
 
         /// <summary>
@@ -308,6 +337,20 @@ namespace Engine.Animation {
             m_targetPlayer = null;
             m_targetPlayerEventHandler = null;
             m_isDeactivateTransition = false;
+            m_sourceStripInfo = default;
+            m_targetStripInfo = default;
+        }
+
+        /// <summary>
+        /// 仅摘除目标播放器的事件 relay（不动 m_targetPlayer/m_isActive）。
+        /// promote target→主播放器时调用：摘 relay 防双触发，由 AnimationLayer 接管事件订阅。
+        /// </summary>
+        public void DetachTargetRelay() {
+            if (m_targetPlayer != null
+                && m_targetPlayerEventHandler != null) {
+                m_targetPlayer.OnAnimationEvent -= m_targetPlayerEventHandler;
+            }
+            m_targetPlayerEventHandler = null;
         }
 
         /// <summary>

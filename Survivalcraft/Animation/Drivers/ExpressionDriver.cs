@@ -76,9 +76,6 @@ namespace Game.Animation.Drivers {
         // 缓存每个表达式需要的参数名，避免每次求值时重新提取
         public readonly Dictionary<string, string[]> m_requiredParameters = new();
 
-        // 可复用的参数字典（避免每次求值分配新字典）
-        public readonly Dictionary<string, object> m_reusableParams = new();
-
         // 目标骨骼列表缓存
         public string[] m_cachedTargetBones;
 
@@ -216,14 +213,12 @@ namespace Game.Animation.Drivers {
                 string[] requiredParams = m_requiredParameters.TryGetValue(expression, out string[] params2) ? params2 : null;
                 if (requiredParams != null
                     && requiredParams.Length > 0) {
-                    m_reusableParams.Clear();
                     foreach (string paramName in requiredParams) {
-                        m_reusableParams[paramName] = _currentParameters.GetValue(paramName);
+                        expr.Parameters[paramName] = _currentParameters.GetValue(paramName);
                     }
-                    expr.Parameters = m_reusableParams;
                 }
                 else {
-                    expr.Parameters = null;
+                    expr.Parameters.Clear();
                 }
 
                 // 求值（函数已在预编译时注册）
@@ -245,7 +240,6 @@ namespace Game.Animation.Drivers {
             }
             m_expressionCache.Clear();
             m_requiredParameters.Clear();
-            m_reusableParams.Clear();
         }
     }
 }

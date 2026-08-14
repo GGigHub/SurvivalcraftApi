@@ -117,6 +117,12 @@ namespace Game {
         /// </summary>
         static Dictionary<CacheKey, Dictionary<int, InstancedModelData>> m_cache = new();
 
+        /// <summary>
+        /// 每个缓存条目构建时的可见性签名。
+        /// 任一 mesh 的 IsVisible 翻转（如 KHR_node_visibility 动画）→ 签名变化 → 该条目重建。
+        /// </summary>
+        static Dictionary<CacheKey, int> m_visibilitySignatures = new();
+
         static InstancedModelsManager() {
             Display.DeviceReset += delegate {
                 foreach (Dictionary<int, InstancedModelData> dict in m_cache.Values) {
@@ -126,7 +132,30 @@ namespace Game {
                     }
                 }
                 m_cache.Clear();
+                m_visibilitySignatures.Clear();
             };
+        }
+
+        /// <summary>
+        /// 计算 meshDrawOrders 中各 mesh 的 IsVisible 组合签名。IsVisible 任一翻转 → 签名变化。
+        /// </summary>
+        static int ComputeVisibilitySignature(Model model, int[] meshDrawOrders) {
+            int hash = 17;
+            for (int i = 0; i < meshDrawOrders.Length; i++) {
+                int meshIndex = meshDrawOrders[i];
+                bool visible = meshIndex >= 0
+                    && meshIndex < model.Meshes.Count
+                    && model.Meshes[meshIndex].IsVisible;
+                hash = hash * 31 + (visible ? 1 : 0);
+            }
+            return hash;
+        }
+
+        static void DisposeDataByMaterial(Dictionary<int, InstancedModelData> dataByMaterial) {
+            foreach (InstancedModelData value in dataByMaterial.Values) {
+                value.VertexBuffer?.Dispose();
+                value.IndexBuffer?.Dispose();
+            }
         }
 
         /// <summary>
@@ -134,9 +163,21 @@ namespace Game {
         /// </summary>
         public static Dictionary<int, InstancedModelData> GetInstancedModelDataByMaterial(Model model, int[] meshDrawOrders) {
             CacheKey key = new CacheKey(model, meshDrawOrders);
-            if (!m_cache.TryGetValue(key, out Dictionary<int, InstancedModelData> dataByMaterial)) {
+            int signature = ComputeVisibilitySignature(model, meshDrawOrders);
+            if (m_cache.TryGetValue(key, out Dictionary<int, InstancedModelData> dataByMaterial)) {
+                // 可见性变化（KHR_node_visibility 动画等）→ 丢弃旧缓冲，按当前可见性重建
+                if (!m_visibilitySignatures.TryGetValue(key, out int builtSignature)
+                    || builtSignature != signature) {
+                    DisposeDataByMaterial(dataByMaterial);
+                    dataByMaterial = CreateInstancedModelDataByMaterial(model, meshDrawOrders);
+                    m_cache[key] = dataByMaterial;
+                    m_visibilitySignatures[key] = signature;
+                }
+            }
+            else {
                 dataByMaterial = CreateInstancedModelDataByMaterial(model, meshDrawOrders);
-                m_cache.Add(key, dataByMaterial);
+                m_cache[key] = dataByMaterial;
+                m_visibilitySignatures[key] = signature;
             }
             return dataByMaterial;
         }
@@ -165,6 +206,9 @@ namespace Game {
 
             for (int i = 0; i < meshDrawOrders.Length; i++) {
                 ModelMesh modelMesh = model.Meshes[meshDrawOrders[i]];
+                if (!modelMesh.IsVisible) {
+                    continue;
+                }
                 foreach (ModelMeshPart meshPart in modelMesh.MeshParts) {
                     int materialIndex = meshPart.MaterialIndex;
                     if (!partsByMaterial.TryGetValue(materialIndex, out List<(int, ModelMeshPart)> list)) {
@@ -260,6 +304,9 @@ namespace Game {
             DynamicArray<int> dynamicArray2 = new();
             for (int i = 0; i < meshDrawOrders.Length; i++) {
                 ModelMesh modelMesh = model.Meshes[meshDrawOrders[i]];
+                if (!modelMesh.IsVisible) {
+                    continue;
+                }
                 foreach (ModelMeshPart meshPart in modelMesh.MeshParts) {
                     _ = dynamicArray.Count;
                     VertexBuffer vertexBuffer = meshPart.VertexBuffer;

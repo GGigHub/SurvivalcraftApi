@@ -499,7 +499,7 @@ namespace Engine {
             }
 #if !MOBILE
             catch (GlfwException e) {
-                if (e.ErrorCode == ErrorCode.VersionUnavailable) {
+                if (e.ErrorCode is ErrorCode.VersionUnavailable or ErrorCode.ApiUnavailable) {
                     const string str =
                         "Your graphics card driver does not support the graphics API used by the current program. Please try updating your graphics card driver or using the compatible patch.\n你的显卡驱动不支持当前程序使用的图形API，请尝试更新显卡驱动，或使用兼容补丁。";
                     Log.Error($"str\n{e}");

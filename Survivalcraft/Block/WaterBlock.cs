@@ -27,5 +27,7 @@ namespace Game {
                 texture == null ? geometry.TransparentSubsetsByFace : geometry.GetGeometry(texture).TransparentSubsetsByFace
             );
         }
+
+        public override Color GetFurnitureColor(int value, SubsystemPalette subsystemPalette) => BlockColorsMap.Water.Lookup(12, 12);
     }
 }

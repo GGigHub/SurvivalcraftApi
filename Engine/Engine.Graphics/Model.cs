@@ -22,6 +22,13 @@ namespace Engine.Graphics {
 
         public ReadOnlyList<ModelBone> Bones => new(m_bones);
 
+        /// <summary>
+        /// 骨骼别名表（别名 -> 真实骨骼名）。
+        /// FindBone 找不到精确匹配时会查此表作回退。null 表示不启用别名（dae 模型默认）。
+        /// 由 AnimationConfig.boneAliases 在 ComponentModel.SetModel 中写入。
+        /// </summary>
+        public Dictionary<string, string> BoneAliases { get; set; }
+
         public ReadOnlyList<ModelMesh> Meshes => new(m_meshes);
 
         public ModelData ModelData { get; set; }
@@ -231,11 +238,21 @@ namespace Engine.Graphics {
         }
 
         public ModelBone FindBone(string name, bool throwIfNotFound = true) {
+            // 1. 精确匹配（原逻辑，dae 模型 BoneAliases==null 时零行为变化）
             foreach (ModelBone bone in m_bones) {
                 if (bone.Name == name) {
                     return bone;
                 }
             }
+            // 2. 别名回退：别名表存在且含此名时，用真实骨骼名再查一次
+            if (BoneAliases != null && BoneAliases.TryGetValue(name, out string realName)) {
+                foreach (ModelBone bone in m_bones) {
+                    if (bone.Name == realName) {
+                        return bone;
+                    }
+                }
+            }
+            // 3. 原 throw/null 逻辑
             return throwIfNotFound ? throw new InvalidOperationException("ModelBone not found.") : null;
         }
 

@@ -51,6 +51,10 @@ graph TB
             FPM[ComponentFirstPersonModel]
         end
 
+        subgraph "动画参与者"
+            CAP[ComponentAnimationParticipant<br/>参与者基类<br/>组合式扩展]
+        end
+
         subgraph "渲染系统"
             SMR[SubsystemModelsRenderer<br/>渲染子系统]
             MSh[ModelShader<br/>着色器]
@@ -82,6 +86,8 @@ graph TB
     SM --> CM
     FPM --> M
 
+    CM -.收集并转发.-> CAP
+
     SMR --> CM
     SMR --> MSh
     SMR --> IMM
@@ -98,8 +104,9 @@ graph TB
 | **ModelBone** | 引擎层 | 骨骼节点，树形结构存储变换矩阵 |
 | **ModelSkin** | 引擎层 | 蒙皮数据：关节索引、逆绑定矩阵、骨骼根节点 |
 | **AnimationController** | 动画层 | 动画控制器：状态规则、层级混合、IK、Root Motion |
-| **ComponentModel** | 游戏层 | Entity组件，管理模型渲染状态和动画调度 |
-| **ComponentCreatureModel** | 游戏层 | 生物模型抽象基类，定义动画参数同步接口 |
+| **ComponentModel** | 游戏层 | Entity组件，管理模型渲染状态、动画调度，定义参数同步/事件处理接口并由基类统一转发给参与者 |
+| **ComponentCreatureModel** | 游戏层 | 生物模型抽象基类，override 参数同步/事件处理以同步生物参数（接口定义在 ComponentModel） |
+| **ComponentAnimationParticipant** | 游戏层 | 动画参与者抽象基类。挂到任意实体参与参数同步、事件处理、控制器就绪通知，组合式替代"继承 override 模型组件" |
 | **SubsystemModelsRenderer** | 游戏层 | 模型渲染子系统，管理所有模型的绘制（含蒙皮渲染） |
 | **ModelShader** | 游戏层 | 着色器参数封装，支持实例化和蒙皮渲染 |
 
@@ -291,6 +298,7 @@ classDiagram
         +AnimationController AnimationController
         +AnimationPlayer m_animationPlayer
         +Matrix?[] m_boneTransforms
+        +List~ComponentAnimationParticipant~ m_animationParticipants
         +Matrix[] AbsoluteBoneTransformsForCamera
         +float Transparent
         +float ModelScale
@@ -298,6 +306,9 @@ classDiagram
         +ModelRenderingMode RenderingMode
         +SetModel(Model)
         +Animate()
+        +virtual SyncAnimationParameters()
+        +virtual HandleAnimationEvent(AnimationEvent)
+        +virtual SetupDefaultAnimationEvents()
         +CalculateAbsoluteBonesTransforms(Camera)
         +DrawExtras(Camera)
     }
@@ -310,10 +321,17 @@ classDiagram
         +bool AttackOrder
         +bool FeedOrder
         +Animate()
-        +SyncAnimationParameters()
-        +HandleAnimationEvent(AnimationEvent)
+        +override SyncAnimationParameters()
+        +override HandleAnimationEvent(AnimationEvent)
         +abstract AnimateCreature()
         +Update(float dt)
+    }
+
+    class ComponentAnimationParticipant {
+        +virtual ShouldApplyTo(model)
+        +virtual OnControllerCreated(controller)
+        +virtual SyncAnimationParameters(controller)
+        +virtual HandleAnimationEvent(controller, evt)
     }
 
     class ComponentHumanModel
@@ -329,6 +347,7 @@ classDiagram
     ComponentCreatureModel <|-- ComponentFourLeggedModel
     ComponentCreatureModel <|-- ComponentBirdModel
     ComponentCreatureModel <|-- ComponentFishModel
+    Component <|-- ComponentAnimationParticipant
 ```
 
 ### 3.2 ComponentModel - 基础模型组件
@@ -342,6 +361,8 @@ public class ComponentModel : Component {
     public AnimationPlayer m_animationPlayer;
     public Matrix?[] m_boneTransforms;
     public Matrix[] AbsoluteBoneTransformsForCamera;
+    // 同实体的动画参与者（OnEntityAdded 收集），每帧转发参数同步，事件触发时转发事件
+    public List<ComponentAnimationParticipant> m_animationParticipants;
     public float m_boundingSphereRadius;
     public float Transparent { get; set; }
     public float ModelScale { get; set; }
@@ -351,6 +372,12 @@ public class ComponentModel : Component {
     public bool CastsShadow { get; set; }
     public bool IsVisibleForCamera { get; set; }
     public bool Animated { get; set; }
+
+    // 以下三个虚方法在基类定义，便于任意模型组件（含非生物）参与动画。
+    // 生物模型子类 override 以同步生物参数 / 处理内置事件；参与者由基类统一转发。
+    public virtual void SyncAnimationParameters();
+    public virtual void HandleAnimationEvent(AnimationEvent animationEvent);
+    public virtual void SetupDefaultAnimationEvents();
 }
 ```
 
@@ -363,8 +390,8 @@ public class ComponentModel : Component {
 ```cs
 // ComponentCreatureModel.Animate()
 public override void Animate() {
-    // 0. 同步动画参数到 AnimationController
-    SyncAnimationParameters();
+    // 0. 参数同步已由 base.Animate() 完成（自身 virtual SyncAnimationParameters +
+    //    参与者转发），必须在 controller.Update 之前
 
     // 1. 调用基类 Animate()（处理 AnimationController / AnimationPlayer / Mod hooks）
     base.Animate();
@@ -386,11 +413,17 @@ public override void Animate() {
 
 ```cs
 public virtual void Animate() {
+    // 0. 同步参数：自身 virtual（生物子类 override 链）+ 转发给所有参与者。
+    //    须在 controller.Update 之前，确保状态规则评估时有正确参数
+    SyncAnimationParameters();
+    SyncParticipants();
+
     // 1. Mod 钩子（最先执行，可设置 Animated = true 跳过后续处理）
     ModsManager.HookAction("OnAnimateModel", ...);
 
     // 2. AnimationController（新系统，glTF 配置驱动）
     if (AnimationController != null) {
+        // 清上帧骨骼变换；Update 前无条件关联 body.Velocity/Rotation，Update 后仅 HasRootMotion 时写回（详见 Root Motion）
         AnimationController.Update(Time.FrameDuration);
         AnimationController.ComputeBoneTransforms(m_boneTransforms);
         Animated = true;
@@ -406,8 +439,6 @@ public virtual void Animate() {
     }
 }
 ```
-}
-```
 
 ### 3.4 模型加载与控制器创建
 
@@ -415,6 +446,14 @@ public virtual void Animate() {
 
 ```cs
 public virtual void SetModel(Model model) {
+    // Mod 钩子可设 IsSet 接管（接管时保持原订阅）
+    ModsManager.HookAction("OnSetModel", ...);
+    if (IsSet) return;
+
+    // 取消旧控制器订阅（在下方重建 controller 之前）
+    if (AnimationController != null)
+        AnimationController.OnAnimationEvent -= HandleAnimationEvent;
+
     m_model = model;
     if (m_model != null) {
         // 1. AnimationConfigPath（JSON 配置文件）→ 创建 AnimationController
@@ -433,9 +472,18 @@ public virtual void SetModel(Model model) {
             m_animationPlayer.SetAnimation(m_model, m_model.Animations[0]);
             m_animationPlayer.Play(loop: true);
         }
+
+        // 订阅新控制器事件 + 通知参与者控制器已就绪
+        if (AnimationController != null) {
+            AnimationController.OnAnimationEvent += HandleAnimationEvent;
+            SetupDefaultAnimationEvents();
+            NotifyControllerCreated();
+        }
     }
 }
 ```
+
+> `OnAnimationEvent` 的订阅/取消订阅统一在 `ComponentModel.SetModel` 处理。生物模型子类不再 override `SetModel`，事件经 `base.HandleAnimationEvent` 转发给参与者后再处理内置事件（Footstep/Attack 等）。
 
 ### 3.5 骨骼变换处理
 
@@ -484,22 +532,97 @@ public abstract class ComponentCreatureModel : ComponentModel, IUpdateable {
     // 动画事件
     public bool IsAttackHitMoment { get; set; }
 
-    // 重写 Animate：同步参数 → 基类动画 → glTF 根骨骼 → 旧过程式
+    // 重写 Animate：基类动画（含参数同步 + 参与者转发）→ glTF 根骨骼 → 旧过程式
     public override void Animate();
 
-    // 设置模型时自动订阅/取消订阅事件
-    public override void SetModel(Model model);
+    // 同步动画参数到 AnimationController（override ComponentModel 空 virtual，
+    // 须 base.SyncAnimationParameters() 开头以保留生物参数链）
+    public override void SyncAnimationParameters();
 
-    // 新系统：同步动画参数到 AnimationController
-    public virtual void SyncAnimationParameters();
-
-    // 动画事件处理（基类已处理 AttackHit/Footstep/AttackStart/AttackEnd）
-    public virtual void HandleAnimationEvent(AnimationEvent animationEvent);
+    // 动画事件处理（override ComponentModel：先 base 转发参与者，再处理内置事件
+    // AttackHit/Footstep/AttackStart/AttackEnd）
+    public override void HandleAnimationEvent(AnimationEvent animationEvent);
 
     // 旧系统：过程式骨骼动画（子类实现）
     public abstract void AnimateCreature();
 }
 ```
+
+> `SetModel` 与 `SetupDefaultAnimationEvents` 不在 `ComponentCreatureModel` override——订阅/默认事件注册由 `ComponentModel` 统一处理。生物子类只需 override `HandleAnimationEvent`（先调 `base` 转发参与者）即可追加自定义事件处理。
+
+### 3.7 ComponentAnimationParticipant - 动画参与者
+
+`ComponentAnimationParticipant` 是组合式扩展动画的抽象基类。挂在任意实体上，由同实体的 `ComponentModel` 自动收集，参与 `AnimationController` 的参数同步、事件处理、控制器就绪通知。**替代"继承并 override 模型组件"** 的侵入式写法。
+
+```cs
+public abstract class ComponentAnimationParticipant : Component {
+    // 是否纳入指定 model 的参与者列表（OnEntityAdded 收集时评估一次）。默认 true
+    public virtual bool ShouldApplyTo(ComponentModel componentModel) => true;
+    // AnimationController 创建/重建后调用，用于设置初始参数（如状态机初值）或注册 IK 链
+    public virtual void OnControllerCreated(AnimationController controller) { }
+    // 每帧动画更新前调用（controller.Update 之前），同步参数驱动状态规则
+    public virtual void SyncAnimationParameters(AnimationController controller) { }
+    // 动画事件转发（含 onComplete trigger 触发的事件）
+    public virtual void HandleAnimationEvent(AnimationController controller, AnimationEvent animationEvent) { }
+}
+```
+
+#### 生命周期（由 ComponentModel 驱动）
+
+```mermaid
+sequenceDiagram
+    participant CM as ComponentModel
+    participant P as ComponentAnimationParticipant
+    participant AC as AnimationController
+
+    Note over CM: OnEntityAdded（所有组件 Load 完）
+    CM->>CM: 收集 FindComponents<ComponentAnimationParticipant>()
+    CM->>P: OnControllerCreated(controller)（补发：首次 SetModel 在 Load 内时参与者未收集）
+
+    Note over CM: 每帧 Animate()
+    CM->>P: SyncAnimationParameters(controller)（controller.Update 之前）
+
+    Note over AC: 动画事件触发
+    AC->>CM: HandleAnimationEvent(evt)
+    CM->>P: HandleAnimationEvent(controller, evt)
+
+    Note over CM: 换模型 SetModel()
+    CM->>P: OnControllerCreated(controller)（重发：新控制器）
+```
+
+四个钩子时刻（`ShouldApplyTo` 带 `ComponentModel` 参数，其余三个带 `AnimationController` 参数）：
+
+| 钩子 | 触发时机 | 典型用途 |
+|------|----------|----------|
+| `ShouldApplyTo` | `OnEntityAdded` 收集时（每个 model 各评一次） | 决定是否纳入该 model 的转发列表，多 model 实体限定目标 model |
+| `OnControllerCreated` | `OnEntityAdded`（补发）+ 每次换模型 `SetModel` | 设置状态机初始参数、注册 IK 链、缓存 controller 引用 |
+| `SyncAnimationParameters` | 每帧 `Animate` 内、`controller.Update` 之前 | 同步游戏状态到参数（驱动状态规则） |
+| `HandleAnimationEvent` | `AnimationController.OnAnimationEvent` 触发时 | 响应动画事件/onComplete trigger |
+
+#### 多 model 实体
+
+每个 `ComponentModel` 独立收集参与者（`Entity.FindComponents<ComponentAnimationParticipant>()`），默认全部纳入。`ShouldApplyTo` 用于过滤：
+
+```cs
+// 仅参与有 controller 的 model（服装 model 无 controller 自动排除）
+public override bool ShouldApplyTo(ComponentModel componentModel)
+    => componentModel.AnimationController != null;
+```
+
+> **为何重要**：参与者每帧被纳入它的**每个** model 调用一次。若参与者 `SyncAnimationParameters` 有状态推进（如相位机 `m_prevOnGround` 边沿检测），被多个 model 调用会一帧推进多次 → 状态机错乱。override `ShouldApplyTo` 限定到单一 model 后每帧只调一次 → 安全。`ShouldApplyTo` 仅在 `OnEntityAdded` 评估一次，依赖需此时已就绪（config 驱动的 controller 在 `Load` 内已创建）。
+
+#### 与 ComponentCreatureModel 子类的关系
+
+| 方式 | 适用 | 特点 |
+|------|------|------|
+| **参与者**（推荐） | 只想追加少量参数同步/事件处理，不想改模型组件 | 不替换模型类，可挂多个，互不干扰；组合优于继承 |
+| **继承模型组件** | 需要大量改写模型渲染逻辑、或要复用 `m_componentCreature` 等基类字段 | 替换 `Class`，侵入性强，单继承 |
+
+> `OnControllerCreated`/`SyncAnimationParameters`/`HandleAnimationEvent` 三个钩子均带 `AnimationController` 参数——独立组件没有该属性，由 `ComponentModel` 直接传入，避免每帧 `FindComponent` 开销。`ShouldApplyTo` 带 `ComponentModel` 参数，用于多 model 过滤。参与者**不缓存** `ComponentCreature` 等依赖，按需在 `Load` 里 `Entity.FindComponent` 自取。
+
+#### 何时该上移到 ComponentModel
+
+`SyncAnimationParameters` / `HandleAnimationEvent` / `SetupDefaultAnimationEvents` 原本只在 `ComponentCreatureModel` 体系，现已上移到 `ComponentModel`。这样**非生物实体**（如 `ComponentSimpleModel`）也能通过参与者机制参与动画：`ComponentSimpleModel.Animate` 调 `base.Animate` 自动获得参数同步 + 参与者转发。
 
 #### SyncAnimationParameters()
 
@@ -535,7 +658,7 @@ public abstract class ComponentCreatureModel : ComponentModel, IUpdateable {
 
 #### HandleAnimationEvent()
 
-基类 `SetModel()` 自动将 `AnimationController.OnAnimationEvent` 订阅到 `HandleAnimationEvent`。子类 override 此方法处理自定义事件，调用 `base.HandleAnimationEvent()` 保留内置事件处理。
+`ComponentModel.SetModel()` 自动将 `AnimationController.OnAnimationEvent` 订阅到 `HandleAnimationEvent`。`ComponentModel.HandleAnimationEvent` 默认把事件转发给所有参与者；`ComponentCreatureModel` override 此方法先调 `base`（转发参与者）再处理内置事件（Footstep/AttackHit/AttackStart/AttackEnd）。子类 override 时调用 `base.HandleAnimationEvent()` 保留链路。
 
 ---
 
@@ -561,7 +684,7 @@ flowchart TD
 ```
 
 **关键概念**：
-- **模板（Template）**：预定义层级和状态轨道（Simple/FourLegged/Human/Bird/Fish/FlightlessBird）
+- **模板（Template）**：预定义层级（Simple/FourLegged/Human/Bird/Fish/FlightlessBird）
 - **层级（Layer）**：独立的动画播放上下文，支持 Override/Additive 混合
 - **状态规则（State Rules）**：条件表达式 → 动画映射的有序规则列表
 - **参数（Parameters）**：类型化的运行时值，驱动表达式和状态规则
@@ -886,7 +1009,9 @@ glTF 模型不使用上述过程式动画类。模组开发者可以：
 
 1. **纯数据驱动**：在数据库模板中使用 `FourLeggedModel` 等内置组件，配合 `AnimationConfigPath` 参数指向 JSON 配置文件。无需 C# 代码。
 
-2. **自定义组件**：继承 `ComponentCreatureModel`，重写 `SyncAnimationParameters()` 将游戏状态同步到 AnimationController 参数。在数据库模板中通过 `Class` 参数指定自定义类名。
+2. **动画参与者（推荐，轻量）**：新建 `ComponentAnimationParticipant` 子类，override `SyncAnimationParameters`/`HandleAnimationEvent`/`OnControllerCreated`。挂在实体上即可参与动画，**不替换模型组件类**。适合只需追加少量参数同步或事件处理的场景（如跳跃相位状态机）。详见 [3.7 节](#37-componentanimationparticipant---动画参与者)。
+
+3. **自定义模型组件（重量级）**：继承 `ComponentCreatureModel`，override `SyncAnimationParameters()` 将游戏状态同步到 AnimationController 参数。在数据库模板中通过 `Class` 参数替换模型组件类。适合需要大量改写模型渲染逻辑的场景。
 
 详细指南参见 [GltfCreatureModTutorial.md](GltfCreatureModTutorial.md)。
 

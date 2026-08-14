@@ -668,6 +668,7 @@ namespace Game {
                 }
                 BlockMesh blockMesh = new();
                 BlockMesh blockMesh2 = new();
+                BlockMesh blockMeshTransparent = new();
                 for (int j = 0; j < m_resolution; j++) {
                     Cell[] array = new Cell[m_resolution * m_resolution];
                     for (int k = 0; k < m_resolution; k++) {
@@ -721,29 +722,14 @@ namespace Game {
                                 BlockMesh blockMesh3 = blockMesh;
                                 int num13 = Terrain.ExtractContents(value2);
                                 Block block = BlocksManager.Blocks[num13];
-                                int num14 = block.GetFaceTextureSlot(num, value2);
                                 bool isEmissive = block.IsFurnitureEmissive(value2);
-                                if (isEmissive) {
-                                    num14 = 31;
-                                }
-                                Color color = Color.White;
-                                bool isAlphaTest = block.IsFurnitureAlphaTest(value2);
-                                if (block is IPaintableBlock paintableBlock) {
-                                    int? paintColor = paintableBlock.GetPaintColor(value2);
-                                    color = SubsystemPalette.GetColor(m_subsystemTerrain, paintColor);
-                                }
-                                else if (block is WaterBlock) {
-                                    color = BlockColorsMap.Water.Lookup(12, 12);
-                                    num14 = 189;
-                                }
-                                else if (block is CarpetBlock) {
-                                    int color2 = CarpetBlock.GetColor(Terrain.ExtractData(value2));
-                                    color = SubsystemPalette.GetFabricColor(m_subsystemTerrain, color2);
-                                }
+                                int faceTextureSlot = isEmissive ? 31 : block is WaterBlock ? 189 : block.GetFaceTextureSlot(num, value2);
+                                Color color = block.GetFurnitureColor(value2, m_subsystemTerrain.SubsystemPalette);
+                                GeometrySubsetType subsetType = block.GetFurnitureSubsetType(value2);
                                 ModsManager.HookAction(
                                     "SetFurnitureDesignColor",
                                     loader => {
-                                        loader.SetFurnitureDesignColor(this, block, value2, ref num14, ref color);
+                                        loader.SetFurnitureDesignColor(this, block, value2, ref faceTextureSlot, ref color);
                                         return false;
                                     }
                                 );
@@ -757,20 +743,29 @@ namespace Game {
                                         subGeo = new FurnitureGeometry();
                                         m_geometry.Draws.Add(texture, subGeo);
                                     }
-                                    if (isAlphaTest) {
-                                        subGeo.SubsetAlphaTestByFace[i] ??= new BlockMesh();
-                                        blockMesh3 = subGeo.SubsetAlphaTestByFace[i];
-                                    }
-                                    else {
-                                        subGeo.SubsetOpaqueByFace[i] ??= new BlockMesh();
-                                        blockMesh3 = subGeo.SubsetOpaqueByFace[i];
+                                    switch (subsetType) {
+                                        case GeometrySubsetType.AlphaTest:
+                                            subGeo.SubsetAlphaTestByFace[i] ??= new BlockMesh();
+                                            blockMesh3 = subGeo.SubsetAlphaTestByFace[i];
+                                            break;
+                                        case GeometrySubsetType.Transparent:
+                                            subGeo.SubsetTransparentByFace[i] ??= new BlockMesh();
+                                            blockMesh3 = subGeo.SubsetTransparentByFace[i];
+                                            break;
+                                        default:
+                                            subGeo.SubsetOpaqueByFace[i] ??= new BlockMesh();
+                                            blockMesh3 = subGeo.SubsetOpaqueByFace[i];
+                                            break;
                                     }
                                 }
-                                else if (isAlphaTest) {
+                                else if (subsetType == GeometrySubsetType.Transparent) {
+                                    blockMesh3 = blockMeshTransparent;
+                                }
+                                else if (subsetType == GeometrySubsetType.AlphaTest) {
                                     blockMesh3 = blockMesh2;
                                 }
-                                int num15 = num14 % slotCount;
-                                int num16 = num14 / slotCount;
+                                int num15 = faceTextureSlot % slotCount;
+                                int num16 = faceTextureSlot / slotCount;
                                 int count = blockMesh3.Vertices.Count;
                                 blockMesh3.Vertices.Count += 4;
                                 BlockMeshVertex[] array2 = blockMesh3.Vertices.Array;
@@ -829,6 +824,11 @@ namespace Game {
                     blockMesh2.GenerateSidesData();
                     m_geometry.SubsetAlphaTestByFace[i] = blockMesh2;
                 }
+                if (blockMeshTransparent.Indices.Count > 0) {
+                    blockMeshTransparent.Trim();
+                    blockMeshTransparent.GenerateSidesData();
+                    m_geometry.SubsetTransparentByFace[i] = blockMeshTransparent;
+                }
                 if (m_geometry.Draws != null) {
                     foreach (var kv in m_geometry.Draws) {
                         BlockMesh opaqueMesh = kv.Value.SubsetOpaqueByFace[i];
@@ -840,6 +840,11 @@ namespace Game {
                         if (alphaMesh != null && alphaMesh.Indices.Count > 0) {
                             alphaMesh.Trim();
                             alphaMesh.GenerateSidesData();
+                        }
+                        BlockMesh transparentMesh = kv.Value.SubsetTransparentByFace[i];
+                        if (transparentMesh != null && transparentMesh.Indices.Count > 0) {
+                            transparentMesh.Trim();
+                            transparentMesh.GenerateSidesData();
                         }
                     }
                 }

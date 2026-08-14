@@ -89,6 +89,27 @@ namespace Engine {
             }
         }
 
+        public Vector3 Scale {
+            get {
+                float num = (M11 * M12 * M13 * M14 >= 0f) ? 1 : -1;
+                float num2 = (M21 * M22 * M23 * M24 >= 0f) ? 1 : -1;
+                float num3 = (M31 * M32 * M33 * M34 >= 0f) ? 1 : -1;
+                float x = num * MathF.Sqrt(M11 * M11 + M12 * M12 + M13 * M13);
+                if (x == 0f) {
+                    return Vector3.Zero;
+                }
+                float y = num2 * MathF.Sqrt(M21 * M21 + M22 * M22 + M23 * M23);
+                if (y == 0f) {
+                    return Vector3.Zero;
+                }
+                float z = num3 * MathF.Sqrt(M31 * M31 + M32 * M32 + M33 * M33);
+                if (z == 0f) {
+                    return Vector3.Zero;
+                }
+                return new Vector3(x, y, z);
+            }
+        }
+
         public Matrix TranslationMatrix {
             get => new(
                 1f,

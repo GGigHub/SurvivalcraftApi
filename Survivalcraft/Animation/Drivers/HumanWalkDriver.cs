@@ -178,9 +178,6 @@ namespace Game.Animation.Drivers {
             // 计算身体位置（考虑蹲下）
             Vector3 bodyPosition = new(_position.X, _position.Y + _currentBob - MathUtils.Lerp(0f, CrouchBodyDrop, crouchSigmoid), _position.Z);
 
-            // 腿部平移和缩放（蹲下时）
-            Vector3 legTranslate = new(0f, MathUtils.Lerp(0f, 7f, crouchSigmoid), MathUtils.Lerp(0f, 28f, crouchSigmoid));
-            Vector3 legScale = new(1f, 1f, MathUtils.Lerp(1f, CrouchLegScale, crouchSigmoid));
 
             // 设置 Body 骨骼
             ModelBone bodyBone = model.FindBone("Body", false);
@@ -206,6 +203,11 @@ namespace Game.Animation.Drivers {
             if (hand2Bone != null) {
                 boneTransforms[hand2Bone.Index] = Matrix.CreateRotationY(_currentHandAngles2.Y) * Matrix.CreateRotationX(_currentHandAngles2.X);
             }
+
+            // 腿部平移和缩放（蹲下时）
+            Vector3 bodyBoneScale = bodyBone?.Transform.Scale ?? Vector3.One;
+            Vector3 legTranslate = new(0f, MathUtils.Lerp(0f, 0.16891f / bodyBoneScale.Y, crouchSigmoid), MathUtils.Lerp(0f, 0.67564f / bodyBoneScale.Z, crouchSigmoid));
+            Vector3 legScale = new(1f, 1f, MathUtils.Lerp(1f, CrouchLegScale, crouchSigmoid));
 
             // 设置 Leg1 骨骼
             ModelBone leg1Bone = model.FindBone("Leg1", false);

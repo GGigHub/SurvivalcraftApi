@@ -58,6 +58,8 @@ namespace Game {
 
         public bool DefaultIsInteractive;
 
+        public bool DefaultIsUseable;
+
         public bool IsEditable;
 
         public bool IsNonDuplicable;
@@ -277,6 +279,8 @@ namespace Game {
         public virtual bool IsNonDuplicable_(int value) => IsNonDuplicable;
 
         public virtual bool IsPlaceable_(int value) => IsPlaceable;
+
+        public virtual bool IsUseable_(int value) => DefaultIsUseable;
 
         public virtual bool IsPlacementTransparent_(int value) => IsPlacementTransparent;
 
@@ -570,7 +574,7 @@ namespace Game {
 
         public virtual bool CanBlockBeBuiltIntoFurniture(int value) => CanBeBuiltIntoFurniture;
 
-        public virtual int GetPriorityUse(int value, ComponentMiner componentMiner) => PriorityUse;
+        public virtual int GetPriorityUse(int value, ComponentMiner componentMiner) => IsUseable_(value) ? PriorityUse : 0;
 
         public virtual int GetPriorityInteract(int value, ComponentMiner componentMiner) {
             if (componentMiner.m_subsystemTerrain != null
@@ -602,10 +606,28 @@ namespace Game {
         public virtual Texture2D GetDefaultTexture(int value) => null;
 
         /// <summary>
-        /// 家具中此方块的体素是否使用 alpha-test 渲染（透明镂空）。<br />
-        /// 返回 true 时写入 SubsetAlphaTestByFace，否则写入 SubsetOpaqueByFace。
+        /// 获取此方块在家具中的渲染类型
         /// </summary>
-        public virtual bool IsFurnitureAlphaTest(int value) => false;
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public virtual GeometrySubsetType GetFurnitureSubsetType(int value) => GeometrySubsetType.Opaque;
+
+        /// <summary>
+        /// 获取此方块在家具中的颜色
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="subsystemPalette"></param>
+        /// <returns></returns>
+        public virtual Color GetFurnitureColor(int value, SubsystemPalette subsystemPalette) {
+            if (this is IPaintableBlock paintableBlock
+                && subsystemPalette != null) {
+                int? paintColor = paintableBlock.GetPaintColor(value);
+                if (paintColor.HasValue) {
+                    return subsystemPalette.GetColor(paintColor.Value);
+                }
+            }
+            return Color.White;
+        }
 
         /// <summary>
         /// 家具中此方块是否为发光体素（如火把、灯）。<br />

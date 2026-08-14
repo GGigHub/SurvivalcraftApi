@@ -265,6 +265,7 @@ namespace Game {
 #elif ANDROID
                 VrManager.SetBackend(new Engine.VR.AndroidOpenXrVrBackend());
 #endif
+                VrManager.Initialize();
                 Log.Information("Program Initialize Success");
             }
             catch (Exception e) {

@@ -16,7 +16,7 @@ namespace Game {
 
         public void Clear() {
             foreach (Texture2D value in m_textures.Values) {
-                if (!ContentManager.IsContent(value)) {
+                if (value != null && !ContentManager.IsContent(value)) {
                     value.Dispose();
                 }
             }

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
@@ -170,14 +170,17 @@ namespace Game {
             );
             AddLoadAction(
                 delegate {
-                    VrManager.Initialize();
 #if ANDROID
                     // On Android VR headsets, force enable VR when available
                     if (VrManager.IsVrAvailable && !SettingsManager.UseVr) {
                         SettingsManager.UseVr = true;
                     }
 #endif
-                    if (VrManager.IsVrAvailable && SettingsManager.UseVr) {
+                    if (SettingsManager.UseVr) {
+                        // StartVr waits for the background init (Windows) to finish
+                        // and returns false if VR ended up unavailable. Don't gate on
+                        // IsVrAvailable here — that flag is still resolving async at
+                        // this early load step and would skip VR auto-start.
                         try {
                             VrManager.StartVr();
                             if (!VrManager.IsVrStarted) {
@@ -430,6 +433,7 @@ namespace Game {
 #endif
                 }
             );
+            AddLoadAction(ModsManager.ParseAllModSettings); //语言已加载（日志可国际化）+ 模组 dll 已加载（类型可解析）
 #if !IOS && !BROWSER
             AddLoadAction(
                 delegate { // 读取所有的ModEntity的JavaScript
@@ -537,12 +541,11 @@ namespace Game {
             AddLoadAction(
                 delegate {
                     ModsManager.ModListAllDo(modEntity => {
-                        if (modEntity.Loader != null) {
+                        if (modEntity.Loaders.Count > 0) {//modEntity.Loader不为空表示至少设置过一次，即Loaders长度不为0
                             Info($"[{modEntity.modInfo?.Name}] {LanguageControl.Get(fName, "6")}");
-                            modEntity.Loader.OnLoadingFinished(ModLoadingActoins);
+                            modEntity.Loaders.ForEach(item => item.OnLoadingFinished(ModLoadingActoins));
                         }
-                    }
-                    );
+                    });
                 }
             );
             AddLoadAction(KeyCompatibleGroupsManager.Initialize); // 初始化按键兼容组
@@ -602,6 +605,7 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("VrControllerMapping", new VrControllerMappingScreen()); });
             AddLoadAction(delegate { AddScreen("CameraManage", new CameraManageScreen()); });
             AddLoadAction(delegate { AddScreen("ManageClassSubstitutes", new ManageClassSubstitutesScreen()); });
+            AddLoadAction(delegate { AddScreen("ModSettings", new ModSettingsScreen()); });
         }
 
         public void AddScreen(string name, Screen screen) {

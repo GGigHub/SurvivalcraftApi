@@ -6,7 +6,7 @@ namespace Game {
 
         public GlassBlock() => CanBeBuiltIntoFurniture = true;
 
-        public override bool IsFurnitureAlphaTest(int value) => true;
+        public override GeometrySubsetType GetFurnitureSubsetType(int value) => GeometrySubsetType.AlphaTest;
 
         public override bool ShouldGenerateFace(SubsystemTerrain subsystemTerrain,
             int face,

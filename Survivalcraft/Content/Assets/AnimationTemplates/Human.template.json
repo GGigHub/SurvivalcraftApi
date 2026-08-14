@@ -18,28 +18,5 @@
             "index": 3,
             "blendMode": "Override"
         }
-    },
-    "stateTracks": {
-        "Locomotion": {
-            "type": "Enum",
-            "defaultValue": "Idle",
-            "enumValues": [ "Idle", "Walk", "Fly" ]
-        },
-        "Activity": {
-            "type": "Enum",
-            "defaultValue": "None",
-            "enumValues": [ "None", "Attack", "Aim" ]
-        },
-        "Ride": {
-            "type": "Enum",
-            "defaultValue": "None",
-            "enumValues": [ "None", "Riding" ]
-        },
-        "Death": {
-            "type": "Float",
-            "defaultValue": 0,
-            "minValue": 0,
-            "maxValue": 1
-        }
     }
 }

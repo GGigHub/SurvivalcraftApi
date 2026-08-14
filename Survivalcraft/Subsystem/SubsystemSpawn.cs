@@ -247,7 +247,7 @@ namespace Game {
                     "OnSaveSpawnData",
                     loader => {
                         loader.OnSaveSpawnData(item, data);
-                        return true;
+                        return false;
                     }
                 );
                 GetOrCreateSpawnChunk(point).SpawnsData.Add(data);
@@ -268,7 +268,7 @@ namespace Game {
                     "OnReadSpawnData",
                     loader => {
                         loader.OnReadSpawnData(entity, data);
-                        return true;
+                        return false;
                     }
                 );
                 entity.FindComponent<ComponentBody>(true).Position = data.Position;

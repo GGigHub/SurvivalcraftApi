@@ -73,26 +73,25 @@ namespace Game.Animation.Drivers {
             float handAngleX1, handAngleX2;
             float handAngleY1, handAngleY2;
             if (_isBoat) {
-                // 船上姿势 - 原始代码: num3=1.1f(Leg X), x2=1.1f(Leg X), num4=0.4f(Hand X), num6=0.4f(Hand X)
-                legAngleX1 = 1.1f; // num3 = Leg1 X
-                legAngleX2 = 1.1f; // x2 = Leg2 X
-                legAngleY1 = 0.2f; // y2 = Leg1 Y
-                legAngleY2 = -0.2f; // y3 = Leg2 Y
-                handAngleX1 = 0.4f; // num4 = Hand1 X
-                handAngleX2 = 0.4f; // num6 = Hand2 X
-                handAngleY1 = 0.2f; // num5 = Hand1 Y
-                handAngleY2 = -0.2f; // num7 = Hand2 Y
+                legAngleX1 = 1.1f;
+                legAngleX2 = 1.1f;
+                legAngleY1 = 0.2f;
+                legAngleY2 = -0.2f;
+                handAngleX1 = 0.4f;
+                handAngleX2 = 0.4f;
+                handAngleY1 = 0.2f;
+                handAngleY2 = -0.2f;
             }
             else {
                 // 普通骑乘姿势
-                legAngleY1 = 0.15f;
-                legAngleY2 = -0.15f;
-                legAngleX1 = 0.5f;
-                legAngleX2 = 0.5f;
-                handAngleX1 = 0f;
-                handAngleX2 = 0f;
-                handAngleY1 = 0.55f;
-                handAngleY2 = -0.55f;
+                legAngleX1 = 0f;
+                legAngleX2 = 0f;
+                legAngleY1 = 0.55f;
+                legAngleY2 = -0.55f;
+                handAngleX1 = 0.5f;
+                handAngleX2 = 0.5f;
+                handAngleY1 = 0.15f;
+                handAngleY2 = -0.15f;
             }
 
             // 划船动画

@@ -326,8 +326,12 @@ namespace Game {
         }
 
         public virtual void RandomizeCharacterSkin() {
-            Random random = new();
             CharacterSkinsManager.UpdateCharacterSkinsList();
+            if (CharacterSkinsManager.UseEmptySkinAsDefault) {
+                CharacterSkinName = "$Empty";
+                return;
+            }
+            Random random = new();
             string[] array = CharacterSkinsManager.CharacterSkinsNames
                 .Where(n => CharacterSkinsManager.IsBuiltIn(n) && CharacterSkinsManager.GetPlayerClass(n) == m_playerClass)
                 .ToArray();

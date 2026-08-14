@@ -49,6 +49,9 @@ namespace Engine.Media {
             BYTES FileReaderCallback(string assetName) {
                 string path = basePath == null ? assetName : Storage.CombinePaths(basePath.Replace('\\', '/'), assetName);
                 Stream resourceStream = LoadExternalStreamCallback(path);
+                if (resourceStream == null) {
+                    return null;
+                }
                 byte[] bytes = new byte[resourceStream.Length];
                 int totalRead = 0;
                 while (totalRead < bytes.Length) {

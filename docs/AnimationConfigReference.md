@@ -37,18 +37,19 @@
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `template` | string | `"Simple"` | 动画模板名称或自定义模板路径 |
-| `rootBoneRotation` | float | `0` | 根骨骼旋转修正（度数）。模型朝向不对时使用，常见值 `0` 或 `180` |
+| `rootBoneRotation` | float 或 Vector3 | `0` | 根骨骼旋转修正（度）。单数字=绕 Y；`[x,y,z]` 或 `{"X":..,"Y":..,"Z":..}`=绕 X/Y/Z。详见 [根骨骼变换覆盖与混合](#根骨骼变换覆盖与混合) |
+| `rootBoneTranslation` | Vector3 | `[0,0,0]` | 根骨骼平移修正（米）。`[x,y,z]` 或 `{"X":..,"Y":..,"Z":..}`。沿实体本地坐标轴（Y 恒上；X/Z 随实体朝向），不受 rootBoneRotation 旋转影响 |
 | `modelScale` | float | `1` | 模型缩放。厘米单位模型用 `0.01`，米单位模型用 `1.0` |
 | `layers` | object | `{}` | 层级配置，覆盖或补充模板中的层级 |
 | `animations` | object | `{}` | 动画别名到 AnimationReference 的映射 |
-| `states` | object | `{}` | 状态轨道到状态规则的映射 |
+| `states` | object | `{}` | 状态名到状态层配置（layer + rules）的映射 |
 | `parameters` | object | `{}` | 参数初始值 |
 
 ---
 
 ## 2. 模板系统
 
-模板预定义了层级、状态轨道和驱动器配置。选择合适的模板可大幅简化配置。
+模板预定义了层级和驱动器配置。选择合适的模板可大幅简化配置。
 
 ### 内置模板
 
@@ -61,9 +62,6 @@
   "name": "Simple",
   "layers": {
     "Base": { "index": 0, "blendMode": "Override" }
-  },
-  "stateTracks": {
-    "Gait": { "type": "Enum", "defaultValue": "Idle", "enumValues": ["Idle"] }
   }
 }
 ```
@@ -79,11 +77,6 @@
     "Base": { "index": 0, "blendMode": "Override" },
     "Head": { "index": 1, "blendMode": "Override", "boneMask": ["Head", "Neck"] },
     "Death": { "index": 2, "blendMode": "Override" }
-  },
-  "stateTracks": {
-    "Gait": { "type": "Enum", "defaultValue": "Idle", "enumValues": ["Idle", "Walk", "Trot", "Canter"] },
-    "Activity": { "type": "Enum", "defaultValue": "None", "enumValues": ["None", "Feed", "Attack"] },
-    "Death": { "type": "Float", "defaultValue": 0, "minValue": 0, "maxValue": 1 }
   }
 }
 ```
@@ -100,12 +93,6 @@
     "Activity": { "index": 1, "blendMode": "Additive", "boneMask": ["Hand1", "Hand2"] },
     "Ride": { "index": 2, "blendMode": "Override" },
     "Death": { "index": 3, "blendMode": "Override" }
-  },
-  "stateTracks": {
-    "Locomotion": { "type": "Enum", "defaultValue": "Idle", "enumValues": ["Idle", "Walk", "Fly"] },
-    "Activity": { "type": "Enum", "defaultValue": "None", "enumValues": ["None", "Attack", "Aim"] },
-    "Ride": { "type": "Enum", "defaultValue": "None", "enumValues": ["None", "Riding"] },
-    "Death": { "type": "Float", "defaultValue": 0, "minValue": 0, "maxValue": 1 }
   }
 }
 ```
@@ -121,11 +108,6 @@
     "Base": { "index": 0, "blendMode": "Override" },
     "Head": { "index": 1, "blendMode": "Override", "boneMask": ["Head", "Neck"] },
     "Death": { "index": 2, "blendMode": "Override" }
-  },
-  "stateTracks": {
-    "Locomotion": { "type": "Enum", "defaultValue": "Idle", "enumValues": ["Idle", "Walk", "Fly"] },
-    "Activity": { "type": "Enum", "defaultValue": "None", "enumValues": ["None", "Peck", "Attack"] },
-    "Death": { "type": "Float", "defaultValue": 0, "minValue": 0, "maxValue": 1 }
   }
 }
 ```
@@ -141,11 +123,6 @@
     "Base": { "index": 0, "blendMode": "Override" },
     "Head": { "index": 1, "blendMode": "Override", "boneMask": ["Head", "Neck"] },
     "Death": { "index": 2, "blendMode": "Override" }
-  },
-  "stateTracks": {
-    "Locomotion": { "type": "Enum", "defaultValue": "Idle", "enumValues": ["Idle", "Walk"] },
-    "Activity": { "type": "Enum", "defaultValue": "None", "enumValues": ["None", "Feed", "Attack"] },
-    "Death": { "type": "Float", "defaultValue": 0, "minValue": 0, "maxValue": 1 }
   }
 }
 ```
@@ -161,11 +138,6 @@
     "Base": { "index": 0, "blendMode": "Override" },
     "Head": { "index": 1, "blendMode": "Override", "boneMask": ["Jaw"] },
     "Death": { "index": 2, "blendMode": "Override" }
-  },
-  "stateTracks": {
-    "Swim": { "type": "Float", "defaultValue": 0 },
-    "Activity": { "type": "Enum", "defaultValue": "None", "enumValues": ["None", "Bite"] },
-    "Death": { "type": "Float", "defaultValue": 0, "minValue": 0, "maxValue": 1 }
   }
 }
 ```
@@ -183,22 +155,6 @@
     "Base": { "index": 0, "blendMode": "Override" },
     "UpperBodyAction": { "index": 1, "blendMode": "Override" },
     "Death": { "index": 2, "blendMode": "Override" }
-  },
-  "stateTracks": {
-    "Gait": {
-      "type": "Enum",
-      "defaultValue": "Idle",
-      "enumValues": ["Idle", "Walk", "Run", "Jump", "Fall", "Sit"]
-    },
-    "Activity": {
-      "type": "Enum",
-      "defaultValue": "None",
-      "enumValues": ["None", "Feed", "Attack", "Bark", "Howl"]
-    },
-    "Death": {
-      "type": "Bool",
-      "defaultValue": false
-    }
   }
 }
 ```
@@ -218,15 +174,9 @@
 |------|------|------|
 | `index` | int | 层级索引，决定混合顺序（从小到大） |
 | `blendMode` | string | `"Override"`（覆盖）或 `"Additive"`（叠加） |
-| `boneMask` | string[] | 骨骼过滤列表。仅影响指定骨骼 |
-
-### 状态轨道类型
-
-| type | 字段 | 说明 |
-|------|------|------|
-| `"Enum"` | `enumValues` (string[]), `defaultValue` | 离散枚举值，如步态 |
-| `"Bool"` | `defaultValue` | 布尔开关，如死亡 |
-| `"Float"` | `minValue`, `maxValue`, `defaultValue` | 连续浮点值 |
+| `boneMask` | string[] | 骨骼过滤列表。列出的骨 + 其全部后代 |
+| `boneMaskExclude` | string[] | 排除骨骼（同子树语义，从结果集扣除） |
+| `weight` | float? | 层权重（0-1）。null/<=0 回退默认 1。Override 控制覆盖强度，Additive 控制叠加强度 |
 
 ---
 
@@ -264,7 +214,9 @@
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `bones` | string[] | 骨骼过滤列表（覆盖模板中的 boneMask） |
+| `bones` | string[] | 骨骼过滤列表，按子树展开。**省略则保留模板 `boneMask`**；设为非空数组则覆盖 |
+| `bonesExclude` | string[] | 排除骨骼（同子树语义）。**省略则保留模板 `boneMaskExclude`**；设为 `[]`（空数组）清除 |
+| `weight` | float? | 层权重（0-1）。**省略则保留模板 `weight`**；<=0 视为 1 |
 | `driver` | object | 驱动器配置（详见[驱动器章节](#6-驱动器drivers)） |
 | `blendMode` | string | 混合模式：`"override"` 或 `"additive"` |
 | `blendCurve` | string | 混合曲线：`"linear"` 或 `"smoothstep"` |
@@ -277,6 +229,28 @@
 ### 混合规则
 
 层级按 `index` 从小到大处理。每一层的结果与前一层的输出按混合模式和权重混合。最终的骨骼变换用于渲染。
+
+### 骨骼遮罩（子树展开）
+
+`boneMask`/`bones` 与 `boneMaskExclude`/`bonesExclude` 按**子树**展开：列出一个骨 = 该骨 + 它的全部后代。最终影响范围 = include 子树并集 − exclude 子树并集。
+
+- 两者皆空 = 影响全部骨骼。
+- include 空 + exclude 非空 = 除 exclude 子树外的全部骨骼。
+- 未知骨名忽略（无匹配则 no-op）。
+
+> **⚠ 行为变更（相对旧版本）**：`boneMask`/`bones` 此前为**精确名匹配**（仅列出的骨骼受影响，不含后代），现为**子树匹配**。若模板列出的骨骼带有需独立动画的后代（例如 SC Human 模板配 `Hand1/Hand2` 且装备带手指骨骼），这些后代会一并纳入该层。内置模板的蒙版骨骼多为叶节点，不受影响；第三方模板如出现非预期骨骼被纳入，请复核此点。
+
+示例（人形上下半身分层）：
+
+````json
+{
+  "Activity": { "boneMask": [ "spine_01" ] },
+  "Ride": { "boneMask": [ "pelvis" ], "boneMaskExclude": [ "spine_01" ] }
+}
+````
+
+- `spine_01` 子树 = 整个上半身（躯干/颈/头/双臂/手指）。
+- `pelvis` 子树 − `spine_01` 子树 = pelvis + 双腿（pelvis 是 spine_01 的父，扣掉 spine_01 即移除上半身，剩下下半身）。
 
 ---
 
@@ -317,6 +291,8 @@
 | `events` | array | `[]` | 动画事件列表 |
 | `onComplete` | object | null | 动画完成时的动作 |
 | `rootMotion` | object | null | Root Motion 配置 |
+| `rootBoneRotation` | float 或 Vector3 | null | 根骨骼旋转覆盖（度）。覆盖顶层。静态值，不支持表达式 |
+| `rootBoneTranslation` | Vector3 | null | 根骨骼平移覆盖（米）。覆盖顶层 |
 
 ### source 格式
 
@@ -328,6 +304,31 @@
 | animation:// 协议 | `"animation://Walk"` | 显式指定动画片段（与裸名等效） |
 | driver: 协议 | `"driver:LookAt"` | 使用驱动器替代动画片段 |
 | 外部文件 | `"file:path/to/file.glb#AnimName"` | 从外部 GLB 文件加载动画 |
+| 参数插值 | `"[GaitState]"` | 从 string 参数取值作为 source（见[参数插值](#参数插值)） |
+
+#### 参数插值
+
+`source` 形如 `"[paramName]"`（整体用方括号包裹）时，引擎从 `Parameters` 取名为 `paramName` 的 **string** 参数值作为实际 source。纯字符串取值，**不走表达式计算**（不支持算术/函数）。
+
+```json
+{
+  "condition": "[RandomIdleEvent] != ''",
+  "animation": {
+    "source": "[RandomIdleEvent]",
+    "loop": false,
+    "onComplete": { "type": "trigger", "name": "RandomIdleComplete" }
+  }
+}
+```
+
+C# 侧 `p.SetString("RandomIdleEvent", "Dance_Loop")` 即让该规则播放 `Dance_Loop`，改值即换动画。
+
+行为要点：
+
+- **参数须为 string 类型**。配置方负责保证：`parameters` 中默认值声明为字符串（如 `"RandomIdleEvent": ""`），C# 用 `SetString` 设值。非 string 参数取值行为未定义。
+- **空字符串**：参数为 `""` 时解析后 source 为空 → 该规则不播新动画也**不停旧**，层维持上一帧输出（非停用）。配合 `condition` 判空（如 `[RandomIdleEvent] != ''`）控制是否进入。
+- **换值触发重切**：字面量 source 规则在匹配路径不变时跳过重切（去重优化）；`[param]` source 解析后的实际动画名随参数值变化，名变即打破去重、强制层重新从起始相位播放——这是改参数值就能换动画的底层机制。
+- **未注册参数**：参数名未声明时取值返回空串（不报错），效果同空字符串。
 
 ### 相位裁剪（startPhase / endPhase）
 
@@ -362,6 +363,34 @@
 }
 ```
 
+### 根骨骼变换覆盖与混合
+
+`rootBoneRotation` 与 `rootBoneTranslation` 既可顶层配置（全局默认），也可在单个动画（AnimationReference）上覆盖。典型用途：复用动画（如把地面爬行旋转 90° 当作爬梯姿态）。
+
+```json
+"climb": {
+  "source": "Crawl",
+  "rootBoneRotation": [90, 0, 0],
+  "rootBoneTranslation": [0, 0.2, 0],
+  "blendDuration": 0.3
+}
+```
+
+**两种写法**（rotation 单数字 = 绕 Y，向后兼容；translation 仅 Vector3）：
+- 数组：`[x, y, z]`
+- 对象：`{ "X": x, "Y": y, "Z": z }`
+
+**覆盖与回退**：动画显式设置 → 用该值；未设置 → 回退顶层；顶层也未设 → 无变换（Identity）。
+
+**平滑混合**：切入带覆盖的动画时，根骨骼变换随该动画的 `blendDuration` 平滑过渡（smoothstep 曲线）。从当前有效姿态出发，到达目标正好与姿态过渡同步；切出（回到无覆盖动画）同样平滑回正。
+
+- **中断安全**：过渡未完成又切换动画，从当前姿态继续，不突跳。
+- **旋转序**：`Yaw(Y) · Pitch(X) · Roll(Z)`（单轴 Y=90 等价旧 `rootBoneRotation: 90`）。
+- **平移序**：`R*T`（先旋转后平移）——平移在旋转前的坐标架应用，故不被 `rootBoneRotation` 旋转。轴为实体本地坐标轴（Y 恒指上方；X/Z 随实体朝向），即 `[0, 0.5, 0]` 恒向实体上方抬升 0.5 米。
+- **静态值**：不支持表达式（NCalc）。旋转/平移必须是数字或 Vector3 字面量。
+- **根运动方向**：旋转同时变换 root motion 方向（绕 Y 旋转后前进方向跟随）；平移不参与根运动。
+- **层级停用**：状态规则把某层切到 `animation: null` 时，该层根骨骼变换以 0.2s 过渡回退顶层默认。
+
 ---
 
 ## 5. 状态规则（States）
@@ -383,11 +412,11 @@
 }
 ```
 
-每个状态轨道包含：
+每个状态层包含：
 - `layer`：控制哪个层级
 - `rules`：有序规则列表，从上到下评估，第一个匹配的规则生效
 
-### StateTrackConfig 字段
+### StateLayerConfig 字段
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -399,7 +428,8 @@
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `condition` | string | NCalc 布尔表达式 |
-| `animation` | object 或 null | 匹配时的 AnimationReference。`null` 表示停用该层 |
+| `animation` | object、string 或 null | 匹配时的 AnimationReference。`null` 表示停用该层；字符串简写等价于 `{ "source": <字符串> }`（见[动画简写](#动画简写)）。与 `rules` 互斥 |
+| `rules` | array | 嵌套子规则（决策树）。非空时为分组节点：匹配 `condition` 后递归评估子规则。与 `animation` 互斥 |
 
 ### 条件表达式
 
@@ -446,6 +476,24 @@
 }
 ```
 
+#### 动画简写
+
+`animation` 为字符串时等价于 `{ "source": <字符串> }`，仅需指定来源时使用：
+
+```json
+{ "condition": "[IsDead] == true", "animation": "death" }
+```
+
+等价于：
+
+```json
+{ "condition": "[IsDead] == true", "animation": { "source": "death" } }
+```
+
+需覆盖其他属性（speed、loop 等）时仍用对象形式。简写对 `animations` 别名定义同样生效。
+
+`null` 同样适用：`"animation": null` 等价于 `{ "source": null }`，表示停用该层。
+
 ### 停用层级
 
 将 `animation` 设为 `null` 可在特定条件下停用整个层级：
@@ -457,7 +505,40 @@
 }
 ```
 
-### 多状态轨道示例
+### 嵌套规则（决策树）
+
+规则可嵌套 `rules` 形成决策树。外层 `condition` 匹配后递归评估子规则，取子规则中首个匹配的叶子；外层不匹配则**短路整组**（跳过所有子规则评估）。
+
+适用场景：一组共享前缀条件的变体（如蹲下的 idle/walk/run）。外层条件失败时避免逐条评估组内规则。
+
+```json
+"rules": [
+  {
+    "condition": "[CrouchFactor] > 0.0",
+    "rules": [
+      { "condition": "[SpeedAbs] > 0.2", "animation": { "source": "crouch_walk", "speed": "[Speed] * 1.25" } },
+      { "condition": "true", "animation": { "source": "crouch_idle" } }
+    ]
+  },
+  { "condition": "[SpeedAbs] > 0.2", "animation": { "source": "walk", "speed": "[Speed]" } },
+  { "condition": "true", "animation": { "source": "idle" } }
+]
+```
+
+- 站立走：`[CrouchFactor] > 0.0` 失败 → 短路整组 → 匹配 `walk`（仅评估 2 条）
+- 蹲下走：外层匹配 → 子规则 `[SpeedAbs] > 0.2` → `crouch_walk`
+- 蹲下静止：外层匹配 → 子规则 `true` → `crouch_idle`
+
+#### 嵌套规则要点
+
+- `rules` 与 `animation` 互斥：分组节点（有 `rules`）不能同时设 `animation`，否则加载报错
+- `rules` 不可为空数组：`"rules": []` 会加载报错（应省略字段或添加子规则）
+- 子规则末尾建议放 `"condition": "true"` 兜底。组内全不匹配时会回溯：跳过整组，继续同层下一规则
+- 嵌套深度无限制（实际 2 层够用）
+- 子规则的 `animation` 属性覆盖与扁平规则一致（可覆盖 speed/loop 等）
+- 状态切换（组切换或组内切换）的过渡与扁平规则相同，走层过渡逻辑
+
+### 多状态层示例
 
 ```json
 "states": {
@@ -620,21 +701,7 @@
 
 ### OnComplete 动作
 
-非循环动画结束时可以自动触发状态变更或事件：
-
-```json
-{
-  "source": "Bark",
-  "loop": false,
-  "onComplete": {
-    "type": "setState",
-    "state": "Activity",
-    "value": "None"
-  }
-}
-```
-
-或触发事件：
+非循环动画结束时可以自动触发事件：
 
 ```json
 {
@@ -650,11 +717,9 @@
 
 | onComplete 字段 | 说明 |
 |-----------------|------|
-| `type` | `"setState"` — 设置状态轨道值；`"trigger"` — 触发事件 |
-| `state` | 目标状态轨道名（仅 setState） |
-| `value` | 设置的值（仅 setState） |
-| `name` | 事件名称（仅 trigger） |
-| `data` | 事件附加数据（仅 trigger） |
+| `type` | `"trigger"` — 触发事件 |
+| `name` | 事件名称 |
+| `data` | 事件附加数据 |
 
 ---
 
@@ -712,8 +777,10 @@ Root Motion 允许动画驱动生物的实际移动。最常见的用途是实�
 | `impulseMethod` | `"Average"` | 脉冲计算方法：`"Average"`、`"Peak"`、`"Weighted"` |
 | `impulseScale` | `1.0` | 脉冲缩放因子 |
 | `velocityMask` | `[1, 1, 1]` | 各轴是否受影响（0 = 不受影响，1 = 受影响） |
+| `impulseOverride` | `null` | AddImpulse：直接指定脉冲向量（body-local，覆盖动画位移计算）。设此项后忽略 `impulseMethod`/`impulseScale` |
+| `impulseSpeedOverride` | `null` | AddImpulse：脉冲速度向量（m/s，body-local，由物理体旋转转世界）。覆盖动画位移，可组合方向如 `[0, 2, -6]`（前 6 + 上 2，上扬轻微浮空减地面阻力） |
 | `maxSpeed` | `20` | 最大速度限制 |
-| `maxImpulse` | `10` | 最大脉冲限制 |
+| `maxImpulse` | `50` | 最大脉冲限制（脉冲速度模长上限） |
 
 详细的 Root Motion 用法参见 [AnimationAdvancedTopics.md](AnimationAdvancedTopics.md)。
 
@@ -877,22 +944,6 @@ NCalc 引擎原生提供的数学函数也可直接使用：`abs`, `min`, `max`,
     "Base": { "index": 0, "blendMode": "Override" },
     "UpperBodyAction": { "index": 1, "blendMode": "Override" },
     "Death": { "index": 2, "blendMode": "Override" }
-  },
-  "stateTracks": {
-    "Gait": {
-      "type": "Enum",
-      "defaultValue": "Idle",
-      "enumValues": ["Idle", "Walk", "Run", "Jump", "Fall", "Sit"]
-    },
-    "Activity": {
-      "type": "Enum",
-      "defaultValue": "None",
-      "enumValues": ["None", "Feed", "Attack"]
-    },
-    "Death": {
-      "type": "Bool",
-      "defaultValue": false
-    }
   }
 }
 ```

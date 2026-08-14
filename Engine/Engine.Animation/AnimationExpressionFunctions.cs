@@ -23,35 +23,32 @@ namespace Engine.Animation {
             expression.EvaluateFunction -= s_evaluateFunctionHandler;
         }
 
-        public static void EvaluateFunction(string name, FunctionArgs args) {
+        public static void EvaluateFunction(string name, FunctionEventArgs args) {
             switch (name.ToLowerInvariant()) {
                 case "lerp": {
-                    object[] values = args.EvaluateParameters(default);
-                    float a = Convert.ToSingle(values[0]);
-                    float b = Convert.ToSingle(values[1]);
-                    float t = Convert.ToSingle(values[2]);
+                    float a = Convert.ToSingle(args.Parameters.Evaluate(0));
+                    float b = Convert.ToSingle(args.Parameters.Evaluate(1));
+                    float t = Convert.ToSingle(args.Parameters.Evaluate(2));
                     args.Result = a + (b - a) * t;
                 }
                     break;
                 case "smoothstep": {
-                    object[] values = args.EvaluateParameters(default);
-                    float t = Convert.ToSingle(values[0]);
+                    float t = Convert.ToSingle(args.Parameters.Evaluate(0));
                     args.Result = t * t * (3 - 2 * t);
                 }
                     break;
                 case "degtorad": {
-                    object[] values = args.EvaluateParameters(default);
-                    args.Result = Convert.ToSingle(values[0]) * MathF.PI / 180f;
+                    args.Result = Convert.ToSingle(args.Parameters.Evaluate(0)) * MathF.PI / 180f;
                 }
                     break;
                 case "radtodeg": {
-                    object[] values = args.EvaluateParameters(default);
-                    args.Result = Convert.ToSingle(values[0]) * 180f / MathF.PI;
+                    args.Result = Convert.ToSingle(args.Parameters.Evaluate(0)) * 180f / MathF.PI;
                 }
                     break;
                 case "clamp": {
-                    object[] values = args.EvaluateParameters(default);
-                    args.Result = Math.Clamp(Convert.ToSingle(values[0]), Convert.ToSingle(values[1]), Convert.ToSingle(values[2]));
+                    args.Result = Math.Clamp(Convert.ToSingle(args.Parameters.Evaluate(0)),
+                                             Convert.ToSingle(args.Parameters.Evaluate(1)),
+                                             Convert.ToSingle(args.Parameters.Evaluate(2)));
                 }
                     break;
                 case "pi": args.Result = MathF.PI; break;

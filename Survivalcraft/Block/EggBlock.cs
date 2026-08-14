@@ -105,7 +105,7 @@ namespace Game {
             if (!isLaid) {
                 return eggType.DisplayName;
             }
-            return LanguageControl.Get(fName, 6) + eggType.DisplayName;
+            return string.Format(LanguageControl.Get(fName, 6), eggType.DisplayName);
         }
 
         public override string GetCategory(int value) => "Spawner Eggs";

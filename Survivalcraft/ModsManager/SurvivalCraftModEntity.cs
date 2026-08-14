@@ -90,7 +90,10 @@ namespace Game {
                     }
                     modLoader.Entity = this;
                     modLoader.__ModInitialize();
-                    Loader = modLoader;
+                    Loaders.Add(modLoader);
+                    if (modLoader is SurvivalCraftModLoader) {
+                        Loader = modLoader;
+                    }
                     ModsManager.ModLoaders.Add(modLoader);
                 }
                 else if (type.IsSubclassOf(typeof(Block))

@@ -29,10 +29,13 @@ namespace Game {
                     rootTransform = Model.RootBone.Transform;
                 }
 
-                // 应用根骨骼旋转修正（某些 glTF 模型的前方方向与游戏不一致）
-                if (AnimationController != null && AnimationController.RootBoneRotation != 0f) {
-                    Matrix correctionRotation = Matrix.CreateRotationY(AnimationController.RootBoneRotation);
-                    rootTransform = correctionRotation * rootTransform;
+                // 应用根骨骼变换修正（旋转 + 平移，已混合）
+                // 顺序 R*T（行向量约定=先 R 后 T）：先绕骨骼原点旋转模型，再平移。
+                // 平移在实体轴（不被 R 旋转），即 [0,1,0] 恒指实体上方。
+                if (AnimationController != null) {
+                    Matrix correction = Matrix.CreateFromQuaternion(AnimationController.EffectiveRootRotation)
+                                      * Matrix.CreateTranslation(AnimationController.EffectiveRootTranslation);
+                    rootTransform = correction * rootTransform;
                 }
 
                 // 叠加实体变换

@@ -35,8 +35,8 @@ namespace Engine.Animation {
                 Array.Clear(m_layerTransformsBuffer, 0, boneCount);
                 layer.SampleTransforms(m_layerTransformsBuffer, model);
                 for (int i = 0; i < boneCount; i++) {
-                    // 检查骨骼是否在该层的遮罩中
-                    if (!IsBoneInMask(i, layer.BoneMask, model)) {
+                    // 检查骨骼是否在该层的遮罩中（子树展开 + exclude，逻辑在 AnimationLayer）
+                    if (!layer.IsBoneInMask(i, model)) {
                         continue;
                     }
                     if (!m_layerTransformsBuffer[i].HasValue) {
@@ -52,8 +52,19 @@ namespace Engine.Animation {
                         );
                     }
                     else {
-                        // 首次设置
-                        outputTransforms[i] = m_layerTransformsBuffer[i].Value;
+                        // 首次设置：底层（无下层 existing）按 Weight 与骨骼默认姿态（rest）混合，
+                        // 使底层 Weight 渐降有效（状态规则停用 Base 层时平滑过渡到 rest pose，而非硬切）。
+                        // Weight>=1 直接用动画（与原行为一致）；<1 时与 model.Bones[i].Transform 插值。
+                        // 上层（有 Base 兜底）不走此分支（existing 非 null），行为不变。
+                        if (layer.Weight >= 1f) {
+                            outputTransforms[i] = m_layerTransformsBuffer[i].Value;
+                        }
+                        else {
+                            outputTransforms[i] = BlendMatrix(
+                                model.Bones[i].Transform,
+                                m_layerTransformsBuffer[i].Value,
+                                layer.Weight);
+                        }
                     }
                 }
             }
@@ -68,20 +79,6 @@ namespace Engine.Animation {
                 m_bufferSize = Math.Max(requiredSize, 64); // 最小 64 个骨骼
                 m_layerTransformsBuffer = new Matrix?[m_bufferSize];
             }
-        }
-
-        bool IsBoneInMask(int boneIndex, string[] boneMask, Model model) {
-            if (boneMask == null
-                || boneMask.Length == 0) {
-                return true; // null 表示所有骨骼
-            }
-            ModelBone bone = model.Bones[boneIndex];
-            foreach (string maskName in boneMask) {
-                if (bone.Name == maskName) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         Matrix BlendTransforms(Matrix existing, Matrix incoming, AnimationBlendMode mode, float weight) {

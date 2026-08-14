@@ -136,6 +136,13 @@ namespace Game {
 
         public float StunTime { get; set; }
 
+        /// <summary>
+        /// 禁用输入移动（走路/飞行/跳跃/游泳/梯子）。true 时跳过 Update 主动移动块，
+        /// 由 root motion 物理副作用（ComponentModel.ApplyRootMotionPhysics）设置。
+        /// 不自减，切出 root motion 时由 API 清 false。
+        /// </summary>
+        public bool DisableInputMovement;
+
         public Vector2? LastWalkOrder { get; set; }
 
         public float LastJumpOrder { get; set; }
@@ -207,7 +214,8 @@ namespace Game {
 
             StunTime = MathUtils.Max(StunTime - dt, 0f);
             if (m_componentCreature.ComponentHealth.Health > 0f
-                && StunTime <= 0f) {
+                && StunTime <= 0f
+                && !DisableInputMovement) {
                 Vector3 position = m_componentCreature.ComponentBody.Position;
                 PlayerStats playerStats = m_componentCreature.PlayerStats;
                 if (playerStats != null) {
