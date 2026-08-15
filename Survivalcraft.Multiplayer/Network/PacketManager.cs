@@ -115,6 +115,8 @@ public enum PacketType : byte {
     PlayerDigConfirmation,
     PlayerPlaceConfirmation,
     EntityBodyUpdate,
+    DisplayMessage,
+    PlayerPickBlock,
     ModPacket
 }
 
@@ -151,6 +153,7 @@ public static class PacketManager {
         // Inventory
         RegisterPacket<ActiveSlotChangePacket>();
         RegisterPacket<ComponentFurnacePacket>();
+        RegisterPacket<DisplayMessagePacket>();
         RegisterPacket<DispenserPacket>();
         RegisterPacket<DragDropItemPacket>();
         RegisterPacket<ClothingSyncPacket>();
@@ -220,6 +223,7 @@ public static class PacketManager {
         RegisterPacket<PlayerDragDropPacket>();
         RegisterPacket<PlayerHitPacket>();
         RegisterPacket<PlayerInteractPacket>();
+        RegisterPacket<PlayerPickBlockPacket>();
         RegisterPacket<PlayerIntoPlayingPacket>();
         RegisterPacket<PlayerKnownPacket>();
         RegisterPacket<PlayerModifyPacket>();
@@ -249,25 +253,8 @@ public static class PacketManager {
         m_factories[id] = () => new T();
     }
 
-    public static void RegisterPacket(Packet packet) {
-        byte id = packet.ID;
-        if (m_factories[id] != null) {
-            throw new Exception($"Duplicate packet ID: {id}");
-        }
-        // This is for dynamic registration (e.g. from mods)
-        // Since we can't easily get a generic factory here without reflection,
-        // we store the type and use Activator only for these cases, or better, 
-        // encourage mods to use RegisterPacket<T>().
-        // For simplicity in this transition, we'll use a capture if it's already an instance.
-        m_factories[id] = () => (Packet)Activator.CreateInstance(packet.GetType());
-    }
-
     public static void UnRegisterPacket(byte id) {
         m_factories[id] = null;
-    }
-
-    public static void UnRegisterPacket(Packet packet) {
-        UnRegisterPacket(packet.ID);
     }
 
     public static List<Packet> DecodePackets(byte[] payload) {

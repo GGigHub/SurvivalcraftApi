@@ -69,7 +69,7 @@ namespace Survivalcraft.Multiplayer {
             IsHitTestVisible = false
         };
         readonly BevelledButtonWidget m_sendButton = new() {
-            Size = new Vector2(SendButtonSize, InputHeight),
+            Size = new Vector2(SendButtonSize, SendButtonSize),
             CenterColor = Color.SkyBlue,
             BevelColor = Color.White,
             Text = "发送"
@@ -93,7 +93,7 @@ namespace Survivalcraft.Multiplayer {
             // with the input row anchored to the panel's bottom edge.
             m_panel.SetWidgetPosition(m_messageList, new Vector2(5f, 5f));
             m_panel.SetWidgetPosition(m_inputArea, new Vector2(0f, PanelHeight - InputHeight));
-            m_panel.SetWidgetPosition(m_sendButton, new Vector2(PanelWidth - SendButtonSize, PanelHeight - SendButtonSize + 6f));
+            m_panel.SetWidgetPosition(m_sendButton, new Vector2(PanelWidth - SendButtonSize, PanelHeight - InputHeight - 6f));
 
             m_messageList.AddChildren(m_history);
             m_inputArea.AddChildren(m_inputBackground);
@@ -124,9 +124,11 @@ namespace Survivalcraft.Multiplayer {
                 return;
             }
 
+            SetGameplayInputBlocked(false);
             ChatManager.MessageAdded -= OnMessageAdded;
             m_messageButton = null;
             m_gameWidget = gameWidget;
+            SetGameplayInputBlocked(m_panel.IsVisible);
             if (m_gameWidget != null) {
                 ChatManager.MessageAdded += OnMessageAdded;
                 RebuildHistory();
@@ -198,8 +200,16 @@ namespace Survivalcraft.Multiplayer {
             }
 
             m_hint.IsVisible = string.IsNullOrEmpty(m_input.Text);
+            SetGameplayInputBlocked(m_panel.IsVisible);
             m_gameWidget.PlayerData.ComponentPlayer.ComponentInput.AllowHandleInput = !m_input.HasFocus;
             Input.IsMouseCursorVisible = m_panel.IsVisible;
+        }
+
+        void SetGameplayInputBlocked(bool blocked) {
+            ComponentPlayer componentPlayer = m_gameWidget?.PlayerData?.ComponentPlayer;
+            if (componentPlayer?.ComponentInput != null) {
+                componentPlayer.ComponentInput.GameplayInputBlocked = blocked;
+            }
         }
 
         void UpdateAvailability() {
@@ -226,6 +236,7 @@ namespace Survivalcraft.Multiplayer {
 
         void OpenPanel(bool focusInput) {
             m_panel.IsVisible = true;
+            SetGameplayInputBlocked(true);
             if (focusInput) {
                 m_input.HasFocus = true;
             }
@@ -234,6 +245,7 @@ namespace Survivalcraft.Multiplayer {
 
         void ClosePanel() {
             m_panel.IsVisible = false;
+            SetGameplayInputBlocked(false);
             Input.IsMouseCursorVisible = false;
             if (m_input.HasFocus) {
                 m_input.HasFocus = false;
@@ -300,6 +312,7 @@ namespace Survivalcraft.Multiplayer {
         }
 
         public override void Dispose() {
+            SetGameplayInputBlocked(false);
             ChatManager.MessageAdded -= OnMessageAdded;
             if (m_input.HasFocus) {
                 m_input.HasFocus = false;

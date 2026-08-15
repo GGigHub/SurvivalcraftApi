@@ -9,8 +9,7 @@ namespace Game {
 
         public override bool OnUse(Ray3 ray, ComponentMiner componentMiner) {
             if (NetworkManager.IsServerRunning
-                && (!NetworkManager.IsClientRunning
-                    || componentMiner.ComponentPlayer?.PlayerData.IsMainPlayer != true)) {
+                && componentMiner.ComponentPlayer?.PlayerData.IsMainPlayer != true) {
                 return true;
             }
             TerrainRaycastResult? terrainRaycastResult = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Digging);

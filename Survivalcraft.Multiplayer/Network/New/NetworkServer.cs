@@ -30,6 +30,15 @@ public class NetworkServer : INetEventListener {
         Log.Information("Server started");
     }
 
+    public void Disconnect(ClientSession session) {
+        if (session != null) {
+            NetPeer peer = ClientSessions.FirstOrDefault(kvp => kvp.Value == session).Key;
+            if (peer != null) {
+                _netManager.DisconnectPeer(peer);
+            }
+        }
+    }
+
     public void Stop() {
         _disconnectByUser = true;
         _netManager.DisconnectAll();

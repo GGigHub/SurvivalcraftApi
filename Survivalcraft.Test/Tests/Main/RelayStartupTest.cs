@@ -409,7 +409,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
 
     private static async Task<string> WaitForRoomCodeAsync(GameContext server) {
         return await TestWaiter.UntilAsync(
-            async () => (string?)await server.PushCommandAsync("FUNC return Game.NetworkManager.RelayHost?.RoomCode;") ?? string.Empty,
+            async () => (string?)await server.PushCommandAsync("FUNC return Game.NetworkManager.RelayRoomCode;") ?? string.Empty,
             code => !string.IsNullOrWhiteSpace(code),
             TestTimeouts.LongEventually,
             $"Relay did not allocate a room code. Logs:{server.GetRecentLogText()}",
@@ -419,7 +419,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
     private static async Task<bool> WaitForRelayClientDisconnectedAsync(GameContext client) {
         WaitResult<object?> result = await TestWaiter.TryUntilAsync(
             () => client.PushCommandAsync(
-                "FUNC return Game.NetworkManager.RelayClient == null || !Game.NetworkManager.RelayClient.IsConnected || Game.NetworkManager.MyState == Game.NetworkState.NotConnected;"),
+                "FUNC return !Game.NetworkManager.IsClientRunning || Game.NetworkManager.MyState == Game.NetworkState.NotConnected;"),
             result => result is true,
             TestTimeouts.LongEventually,
             TestTimeouts.PollInterval);
@@ -454,7 +454,7 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
 
     private static async Task<bool> WaitForRelaySessionCountAsync(GameContext server, Func<int, bool> predicate) {
         WaitResult<int> result = await TestWaiter.TryUntilAsync(
-            async () => Convert.ToInt32(await server.PushCommandAsync("FUNC return Game.NetworkManager.RelayHost?.Sessions.Count() ?? 0;"), CultureInfo.InvariantCulture),
+            async () => Convert.ToInt32(await server.PushCommandAsync("FUNC return Game.NetworkManager.ServerSessions.Count();"), CultureInfo.InvariantCulture),
             predicate,
             TestTimeouts.LongEventually,
             TestTimeouts.PollInterval);
@@ -570,11 +570,10 @@ public sealed class RelayStartupTest : IClassFixture<GameFixture> {
             "FUNC " +
             "var game = ScreensManager.FindScreen<GameScreen>(\"Game\");" +
             "var label = game?.Children.Find<LabelWidget>(\"RelayCodeLabel\", false);" +
-            "var relay = Game.NetworkManager.RelayHost;" +
             "return string.Format(System.Globalization.CultureInfo.InvariantCulture, \"screen={0};room={1};display={2};labelVisible={3};labelText={4}\"," +
             "ScreensManager.CurrentScreen?.GetType().Name ?? \"null\"," +
-            "relay?.RoomCode ?? string.Empty," +
-            "relay?.GlobalCode ?? string.Empty," +
+            "Game.NetworkManager.RelayRoomCode ?? string.Empty," +
+            "Game.NetworkManager.RelayGlobalCode ?? string.Empty," +
             "label?.IsVisible ?? false," +
             "(label?.Text ?? string.Empty).Replace(\";\", \",\"));")
             ?? string.Empty;

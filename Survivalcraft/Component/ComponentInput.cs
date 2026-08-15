@@ -44,6 +44,11 @@ namespace Game {
 
         public bool AllowHandleInput { get; set; } = true;
 
+        /// <summary>
+        ///     Blocks all gameplay input while an in-game UI such as chat owns the input.
+        /// </summary>
+        public bool GameplayInputBlocked { get; set; }
+
         public IInventory SplitSourceInventory { get; set; }
 
         public int SplitSourceSlotIndex { get; set; }
@@ -71,6 +76,7 @@ namespace Game {
         public virtual void Update(float dt) {
             m_playerInput = default;
             if (!m_componentPlayer.PlayerData.IsMainPlayer) return;
+            if (GameplayInputBlocked) return;
             UpdateInputFromMouseAndKeyboard(m_componentPlayer.GameWidget.Input);
             UpdateInputFromGamepad(m_componentPlayer.GameWidget.Input);
             UpdateInputFromVrControllers(m_componentPlayer.GameWidget.Input);

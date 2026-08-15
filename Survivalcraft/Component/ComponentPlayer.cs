@@ -802,7 +802,7 @@ namespace Game {
                     if (shouldSyncPlayerEvents) {
                         interactEvent.action = action;
                     }
-                    m_lastActionTime = m_subsystemTime.GameTime;
+                    m_lastActionTime = timeIntervalLastActionTime;
                 }
             }
             float timeIntervalAim = m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ? 0.1f : 1.4f;
@@ -1037,69 +1037,104 @@ namespace Game {
             if (!playerInput.PickBlockType.HasValue || flag) {
                 return;
             }
-            if (ComponentMiner.Inventory is not ComponentCreativeInventory componentCreativeInventory) {
-                return;
+            Ray3 pickBlockRay = playerInput.PickBlockType.Value;
+            if (TryPickBlock(pickBlockRay, out int pickedSlotIndex)) {
+                ModsManager.HookAction(
+                    "OnNetworkPlayerPickBlock",
+                    loader => loader.OnNetworkPlayerPickBlock(this, pickBlockRay, pickedSlotIndex)
+                );
             }
-            TerrainRaycastResult? terrainRaycastResult3 = ComponentMiner.Raycast<TerrainRaycastResult>(
-                playerInput.PickBlockType.Value,
+        }
+
+        /// <summary>
+        ///     在创造模式中选取方块。网络请求也会调用此方法，但网络请求必须在服务端重新进行射线检测。
+        /// </summary>
+        /// <param name="ray">选取方块的射线。</param>
+        /// <param name="selectedSlotIndex">实际写入的快捷栏槽位。</param>
+        /// <param name="displayFeedback">是否显示本地提示和播放提示音。</param>
+        /// <param name="preferredSlotIndex">服务端请求指定的槽位；无效时使用正常的选槽逻辑。</param>
+        public virtual bool TryPickBlock(
+            Ray3 ray,
+            out int selectedSlotIndex,
+            bool displayFeedback = true,
+            int preferredSlotIndex = -1
+        ) {
+            selectedSlotIndex = -1;
+            if (ComponentMiner.Inventory is not ComponentCreativeInventory componentCreativeInventory) {
+                return false;
+            }
+            TerrainRaycastResult? terrainRaycastResult = ComponentMiner.Raycast<TerrainRaycastResult>(
+                ray,
                 RaycastMode.Digging,
                 true,
                 false,
                 false
             );
-            if (!terrainRaycastResult3.HasValue) {
-                return;
+            if (!terrainRaycastResult.HasValue) {
+                return false;
             }
-            int value3 = terrainRaycastResult3.Value.Value;
-            value3 = Terrain.ReplaceLight(value3, 0);
-            int num4 = Terrain.ExtractContents(value3);
-            Block block2 = BlocksManager.Blocks[num4];
-            int num5 = 0;
-            IEnumerable<int> creativeValues = block2.GetCreativeValues();
-            if (block2.GetCreativeValues().Contains(value3)) {
-                num5 = value3;
+            int value = Terrain.ReplaceLight(terrainRaycastResult.Value.Value, 0);
+            int contents = Terrain.ExtractContents(value);
+            Block block = BlocksManager.Blocks[contents];
+            int pickedValue = 0;
+            IEnumerable<int> creativeValues = block.GetCreativeValues();
+            if (creativeValues.Contains(value)) {
+                pickedValue = value;
             }
-            if (num5 == 0
-                && !block2.IsNonDuplicable_(value3)) {
-                List<BlockDropValue> list = new();
-                block2.GetDropValues(m_subsystemTerrain, value3, 0, int.MaxValue, list, out bool _);
-                if (list.Count > 0
-                    && list[0].Count > 0) {
-                    num5 = list[0].Value;
+            if (pickedValue == 0
+                && !block.IsNonDuplicable_(value)) {
+                List<BlockDropValue> dropValues = new();
+                block.GetDropValues(m_subsystemTerrain, value, 0, int.MaxValue, dropValues, out bool _);
+                if (dropValues.Count > 0
+                    && dropValues[0].Count > 0) {
+                    pickedValue = dropValues[0].Value;
                 }
             }
-            if (num5 == 0) {
-                num5 = creativeValues.FirstOrDefault();
+            if (pickedValue == 0) {
+                pickedValue = creativeValues.FirstOrDefault();
             }
-            if (num5 == 0) {
-                return;
+            if (pickedValue == 0) {
+                return false;
             }
-            int num6 = -1;
-            for (int i = 0; i < 10; i++) {
-                if (componentCreativeInventory.GetSlotCapacity(i, num5) > 0
-                    && componentCreativeInventory.GetSlotCount(i) > 0
-                    && componentCreativeInventory.GetSlotValue(i) == num5) {
-                    num6 = i;
-                    break;
-                }
+
+            int slotIndex = -1;
+            if (preferredSlotIndex >= 0
+                && preferredSlotIndex < 10
+                && componentCreativeInventory.GetSlotCapacity(preferredSlotIndex, pickedValue) > 0) {
+                slotIndex = preferredSlotIndex;
             }
-            if (num6 < 0) {
-                for (int j = 0; j < 10; j++) {
-                    if (componentCreativeInventory.GetSlotCapacity(j, num5) > 0
-                        && (componentCreativeInventory.GetSlotCount(j) == 0 || componentCreativeInventory.GetSlotValue(j) == 0)) {
-                        num6 = j;
+            if (slotIndex < 0) {
+                for (int i = 0; i < 10; i++) {
+                    if (componentCreativeInventory.GetSlotCapacity(i, pickedValue) > 0
+                        && componentCreativeInventory.GetSlotCount(i) > 0
+                        && componentCreativeInventory.GetSlotValue(i) == pickedValue) {
+                        slotIndex = i;
                         break;
                     }
                 }
             }
-            if (num6 < 0) {
-                num6 = componentCreativeInventory.ActiveSlotIndex;
+            if (slotIndex < 0) {
+                for (int i = 0; i < 10; i++) {
+                    if (componentCreativeInventory.GetSlotCapacity(i, pickedValue) > 0
+                        && (componentCreativeInventory.GetSlotCount(i) == 0
+                            || componentCreativeInventory.GetSlotValue(i) == 0)) {
+                        slotIndex = i;
+                        break;
+                    }
+                }
             }
-            componentCreativeInventory.RemoveSlotItems(num6, int.MaxValue);
-            componentCreativeInventory.AddSlotItems(num6, num5, 1);
-            componentCreativeInventory.ActiveSlotIndex = num6;
-            ComponentGui.DisplaySmallMessage(block2.GetDisplayName(m_subsystemTerrain, value3), Color.White, false, false);
-            m_subsystemAudio.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f, 0f);
+            if (slotIndex < 0) {
+                slotIndex = componentCreativeInventory.ActiveSlotIndex;
+            }
+            componentCreativeInventory.RemoveSlotItems(slotIndex, int.MaxValue);
+            componentCreativeInventory.AddSlotItems(slotIndex, pickedValue, 1);
+            componentCreativeInventory.ActiveSlotIndex = slotIndex;
+            selectedSlotIndex = slotIndex;
+            if (displayFeedback) {
+                ComponentGui.DisplaySmallMessage(block.GetDisplayName(m_subsystemTerrain, value), Color.White, false, false);
+                m_subsystemAudio.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f, 0f);
+            }
+            return true;
         }
 
         public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap) {

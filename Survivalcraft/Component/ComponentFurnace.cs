@@ -288,7 +288,14 @@ namespace Game {
                 }
                 if (craftingRecipe != null
                     && !string.IsNullOrEmpty(craftingRecipe.Message)) {
-                    componentPlayer?.ComponentGui.DisplaySmallMessage(craftingRecipe.Message, Color.White, true, true);
+                    if (componentPlayer != null) {
+                        if (componentPlayer.PlayerData == null || componentPlayer.PlayerData.IsMainPlayer) {
+                            componentPlayer.ComponentGui.DisplaySmallMessage(craftingRecipe.Message, Color.White, true, true);
+                        }
+                        else {
+                            ModsManager.HookAction("OnNetworkFurnaceSmeltingMessage", loader => loader.OnNetworkFurnaceSmeltingMessage(this, componentPlayer, craftingRecipe.Message));
+                        }
+                    }
                 }
                 return craftingRecipe;
             }

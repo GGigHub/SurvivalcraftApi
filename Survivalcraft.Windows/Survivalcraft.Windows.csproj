@@ -46,4 +46,10 @@
         <ZipDirectory SourceDirectory="..\Survivalcraft\Content" DestinationFile="..\Survivalcraft\Content.zip" Overwrite="true" />
     </Target>
   <Import Project="..\build\NetworkMod.targets" />
+  <ItemGroup>
+    <None Include="$(NetworkModPackagePath)" Link="InternalMods\$(NetworkModPackageName)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
 </Project>

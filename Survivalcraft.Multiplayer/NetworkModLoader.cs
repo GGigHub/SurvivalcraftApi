@@ -32,6 +32,7 @@ namespace Survivalcraft.Multiplayer {
                 "OnNetworkFluStarted",
                 "OnNetworkFluImpulse",
                 "OnNetworkFurnaceUpdate",
+                "OnNetworkFurnaceSmeltingMessage",
                 "OnNetworkManualLightingStrike",
                 "OnNetworkManualTimeChange",
                 "OnNetworkManualWeatherChange",
@@ -48,6 +49,7 @@ namespace Survivalcraft.Multiplayer {
                 "OnNetworkParticleSystemAdded",
                 "OnNetworkPickableAttract",
                 "OnNetworkActiveSlotChanged",
+                "OnNetworkPlayerPickBlock",
                 "OnNetworkPlayerAim",
                 "OnNetworkPlayerDig",
                 "OnNetworkPlayerHit",
@@ -538,6 +540,10 @@ namespace Survivalcraft.Multiplayer {
             NetworkManager.Queue(new ActiveSlotChangePacket(player.ComponentMiner.Inventory));
     }
 
+    public override void OnNetworkPlayerPickBlock(ComponentPlayer player, Ray3 ray, int slotIndex) {
+        NetworkManager.Queue(new PlayerPickBlockPacket(player, ray, slotIndex));
+    }
+
     public override void OnMinerDig(ComponentMiner miner, TerrainRaycastResult raycastResult, ref float digProgress, out bool digged) {
         digged = false;
         NetworkDigConfirmationRuntime.ObserveMinerDig(miner, raycastResult);
@@ -701,6 +707,14 @@ namespace Survivalcraft.Multiplayer {
     public override void OnNetworkFurnacesUpdate(SubsystemFurnaceBlockBehavior subsystem, List<ComponentFurnace> furnaces) {
         if (NetworkManager.IsServerRunning)
             NetworkManager.Queue(new ComponentFurnacePacket(furnaces));
+    }
+
+    public override void OnNetworkFurnaceSmeltingMessage(ComponentFurnace furnace, ComponentPlayer player, string message) {
+        if (!NetworkManager.IsServerRunning || player?.PlayerData == null) return;
+        ClientSession session = NetworkManager.ServerSessions.FirstOrDefault(s => s.PlayerIndex == player.PlayerData.PlayerIndex);
+        if (session != null) {
+            NetworkManager.Queue(new DisplayMessagePacket(player.Entity.Id, message) { To = session });
+        }
     }
 
     public override void OnNetworkTimeUpdate(double totalElapsedGameTime, double timeOfDayOffset) {
@@ -915,6 +929,7 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkBodyUpdate(ComponentBody body, float dt) {
+        body.UpdateCrouchFactor(dt);
         if (NetworkManager.IsServerRunning) {
             NetworkBodyInterpolation.UpdateServer(body, dt);
         }

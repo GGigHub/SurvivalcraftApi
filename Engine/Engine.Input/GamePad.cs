@@ -68,6 +68,7 @@ namespace Engine.Input {
         const float TRIGGER_UP_THRESHOLD = 0.4f;
 #elif !IOS && !BROWSER
         public static IReadOnlyList<IGamepad> m_gamepads;
+        public static IReadOnlyList<IJoystick> m_joysticks;
 #endif
         public static double m_buttonFirstRepeatTime = 0.2;
 
@@ -78,6 +79,7 @@ namespace Engine.Input {
         internal static void Initialize() {
 #if !MOBILE && !BROWSER
             m_gamepads = Window.m_inputContext.Gamepads;
+            m_joysticks = Window.m_inputContext.Joysticks;
 #endif
         }
 
@@ -240,6 +242,63 @@ namespace Engine.Input {
 #elif IOS || BROWSER
         internal static void BeforeFrame() {}
 #else
+        static IJoystick FindJoystickForGamepad(IGamepad gamepad) {
+            if (m_joysticks == null) {
+                return null;
+            }
+            // GLFW exposes the same physical device through both the gamepad
+            // and joystick collections. Prefer the device index, then fall
+            // back to its name for backends that do not keep the indices in
+            // sync.
+            foreach (IJoystick joystick in m_joysticks) {
+                if (joystick != null
+                    && joystick.Index == gamepad.Index
+                    && joystick.IsConnected) {
+                    return joystick;
+                }
+            }
+            foreach (IJoystick joystick in m_joysticks) {
+                if (joystick != null
+                    && joystick.Name == gamepad.Name
+                    && joystick.IsConnected) {
+                    return joystick;
+                }
+            }
+            return null;
+        }
+
+        static void UpdateDpadFromJoystick(State state, IJoystick joystick) {
+            if (joystick == null) {
+                return;
+            }
+            foreach (Hat hat in joystick.Hats) {
+                switch (hat.Position) {
+                    case Position2D.Left:
+                    case Position2D.UpLeft:
+                    case Position2D.DownLeft:
+                        state.Buttons[(int)GamePadButton.DPadLeft] = true;
+                        break;
+                    case Position2D.Right:
+                    case Position2D.UpRight:
+                    case Position2D.DownRight:
+                        state.Buttons[(int)GamePadButton.DPadRight] = true;
+                        break;
+                }
+                switch (hat.Position) {
+                    case Position2D.Up:
+                    case Position2D.UpLeft:
+                    case Position2D.UpRight:
+                        state.Buttons[(int)GamePadButton.DPadUp] = true;
+                        break;
+                    case Position2D.Down:
+                    case Position2D.DownLeft:
+                    case Position2D.DownRight:
+                        state.Buttons[(int)GamePadButton.DPadDown] = true;
+                        break;
+                }
+            }
+        }
+
         internal static void BeforeFrame() {
             for (int padIndex = 0; padIndex < 4; padIndex++) {
                 if (padIndex >= m_gamepads.Count) {
@@ -249,43 +308,53 @@ namespace Engine.Input {
                 if (gamepad == null) {
                     continue;
                 }
-                string name = gamepad.Name;
-                if (!name.Contains("Unmapped")) {
-                    State state = m_states[padIndex];
-                    if (gamepad.IsConnected) {
-                        state.IsConnected = true;
-                        if (Window.IsActive) {
-                            IReadOnlyList<Thumbstick> thumbsticks = gamepad.Thumbsticks;
-                            for (int i = 0; i < 2; i++) {
-                                state.Sticks[i] = new Vector2(thumbsticks[i].X, -thumbsticks[i].Y);
-                            }
-                            IReadOnlyList<Trigger> triggers = gamepad.Triggers;
-                            for (int i = 0; i < 2; i++) {
-                                state.Triggers[i] = triggers[i].Position;
-                            }
-                            foreach (Button button in gamepad.Buttons) {
-                                switch (button.Name) {
-                                    case ButtonName.A: state.Buttons[0] = button.Pressed; break;
-                                    case ButtonName.B: state.Buttons[1] = button.Pressed; break;
-                                    case ButtonName.X: state.Buttons[2] = button.Pressed; break;
-                                    case ButtonName.Y: state.Buttons[3] = button.Pressed; break;
-                                    case ButtonName.Back: state.Buttons[4] = button.Pressed; break;
-                                    case ButtonName.Start: state.Buttons[5] = button.Pressed; break;
-                                    case ButtonName.LeftStick: state.Buttons[6] = button.Pressed; break;
-                                    case ButtonName.RightStick: state.Buttons[7] = button.Pressed; break;
-                                    case ButtonName.LeftBumper: state.Buttons[8] = button.Pressed; break;
-                                    case ButtonName.RightBumper: state.Buttons[9] = button.Pressed; break;
-                                    case ButtonName.DPadLeft: state.Buttons[10] = button.Pressed; break;
-                                    case ButtonName.DPadRight: state.Buttons[12] = button.Pressed; break;
-                                    case ButtonName.DPadUp: state.Buttons[11] = button.Pressed; break;
-                                    case ButtonName.DPadDown: state.Buttons[13] = button.Pressed; break;
-                                }
+                State state = m_states[padIndex];
+                if (gamepad.IsConnected) {
+                    // A controller reported as "Unmapped" can still expose
+                    // usable buttons, sticks, or a joystick hat. Do not drop
+                    // the whole device before trying those inputs.
+                    state.IsConnected = true;
+                    if (Window.IsActive) {
+                        state.Buttons[(int)GamePadButton.DPadLeft] = false;
+                        state.Buttons[(int)GamePadButton.DPadUp] = false;
+                        state.Buttons[(int)GamePadButton.DPadRight] = false;
+                        state.Buttons[(int)GamePadButton.DPadDown] = false;
+
+                        IReadOnlyList<Thumbstick> thumbsticks = gamepad.Thumbsticks;
+                        for (int i = 0; i < state.Sticks.Length; i++) {
+                            state.Sticks[i] = i < thumbsticks.Count
+                                ? new Vector2(thumbsticks[i].X, -thumbsticks[i].Y)
+                                : Vector2.Zero;
+                        }
+                        IReadOnlyList<Trigger> triggers = gamepad.Triggers;
+                        for (int i = 0; i < state.Triggers.Length; i++) {
+                            state.Triggers[i] = i < triggers.Count ? triggers[i].Position : 0f;
+                        }
+                        foreach (Button button in gamepad.Buttons) {
+                            switch (button.Name) {
+                                case ButtonName.A: state.Buttons[0] = button.Pressed; break;
+                                case ButtonName.B: state.Buttons[1] = button.Pressed; break;
+                                case ButtonName.X: state.Buttons[2] = button.Pressed; break;
+                                case ButtonName.Y: state.Buttons[3] = button.Pressed; break;
+                                case ButtonName.Back: state.Buttons[4] = button.Pressed; break;
+                                case ButtonName.Start: state.Buttons[5] = button.Pressed; break;
+                                case ButtonName.LeftStick: state.Buttons[6] = button.Pressed; break;
+                                case ButtonName.RightStick: state.Buttons[7] = button.Pressed; break;
+                                case ButtonName.LeftBumper: state.Buttons[8] = button.Pressed; break;
+                                case ButtonName.RightBumper: state.Buttons[9] = button.Pressed; break;
+                                case ButtonName.DPadLeft: state.Buttons[10] = button.Pressed; break;
+                                case ButtonName.DPadRight: state.Buttons[12] = button.Pressed; break;
+                                case ButtonName.DPadUp: state.Buttons[11] = button.Pressed; break;
+                                case ButtonName.DPadDown: state.Buttons[13] = button.Pressed; break;
                             }
                         }
+                        // Some desktop backends expose the D-pad as a
+                        // joystick hat instead of ButtonName.DPad*.
+                        UpdateDpadFromJoystick(state, FindJoystickForGamepad(gamepad));
                     }
-                    else {
-                        state.IsConnected = false;
-                    }
+                }
+                else {
+                    state.IsConnected = false;
                 }
             }
         }

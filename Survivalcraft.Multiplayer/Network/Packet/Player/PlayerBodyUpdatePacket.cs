@@ -174,7 +174,6 @@ public class PlayerBodyUpdatePacket : PlayerPacketBase {
         if (changeFlag.HasFlag(ChangeFlag.SneakChange)) {
             float crouchFactor = m_sneaking ? 1f : 0f;
             body.TargetCrouchFactor = crouchFactor;
-            body.CrouchFactor = crouchFactor;
         }
         if (isServer && HasRelayableChange()) {
             QueueBodyUpdateToObservers(player);

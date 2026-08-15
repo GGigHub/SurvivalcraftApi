@@ -2258,6 +2258,7 @@ namespace Game {
         public virtual void OnNetworkParticleSystemAdded(ParticleSystemBase particleSystem) { }
         public virtual void OnNetworkPickableAttract(Pickable pickable) { }
         public virtual void OnNetworkActiveSlotChanged(ComponentPlayer player) { }
+        public virtual void OnNetworkPlayerPickBlock(ComponentPlayer player, Ray3 ray, int slotIndex) { }
         public virtual void OnNetworkPlayerAim(ComponentPlayer player) { }
         public virtual void OnNetworkPlayerDig(ComponentPlayer player) { }
         public virtual void OnNetworkPlayerHit(ComponentPlayer player, ComponentBody hitBody, Vector3 hitPoint, Vector3 direction) { }
@@ -2284,6 +2285,7 @@ namespace Game {
         public virtual void OnNetworkFireBlockAdded(int x, int y, int z, float expandability) { }
         public virtual void OnNetworkFireBlockRemoved(int x, int y, int z) { }
         public virtual void OnNetworkFurnacesUpdate(SubsystemFurnaceBlockBehavior subsystem, List<ComponentFurnace> furnaces) { }
+        public virtual void OnNetworkFurnaceSmeltingMessage(ComponentFurnace furnace, ComponentPlayer player, string message) { }
         public virtual void OnNetworkTimeUpdate(double totalElapsedGameTime, double timeOfDayOffset) { }
         public virtual void OnNetworkMemoryBankBlockEdited(SubsystemMemoryBankBlockBehavior subsystem, CellFace cell, MemoryBankData data) { }
         public virtual void OnNetworkMemoryBankItemEdited(SubsystemMemoryBankBlockBehavior subsystem, int inventoryId, int slotIndex, MemoryBankData data) { }

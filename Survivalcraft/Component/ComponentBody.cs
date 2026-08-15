@@ -466,14 +466,7 @@ namespace Game {
                     return;
                 }
             }
-            if (m_targetCrouchFactor > m_crouchFactor) {
-                m_crouchFactor = MathUtils.Min(m_crouchFactor + 2f * dt, m_targetCrouchFactor);
-            }
-            if (m_targetCrouchFactor < m_crouchFactor) {
-                if (Entity.FindComponent<ComponentRider>().Mount == null) {
-                    m_crouchFactor = MathUtils.Max(m_crouchFactor - 2f * dt, m_targetCrouchFactor);
-                }
-            }
+            UpdateCrouchFactor(dt);
             Vector3 position = Position;
             TerrainChunk chunkAtCell = m_subsystemTerrain.Terrain.GetChunkAtCell(Terrain.ToCell(position.X), Terrain.ToCell(position.Z));
             if (chunkAtCell == null
@@ -631,6 +624,22 @@ namespace Game {
                 ImmersionDepth = 0f;
                 ImmersionFactor = 0f;
                 ImmersionFluidBlock = null;
+            }
+        }
+
+        /// <summary>
+        /// 将当前蹲姿因子平滑推进到目标值。
+        /// 网络控制实体不会执行完整的物理更新，因此网络更新路径也必须调用此方法，
+        /// 否则远程玩家收到蹲姿状态后会直接跳变到目标姿态。
+        /// </summary>
+        public virtual void UpdateCrouchFactor(float dt) {
+            if (m_targetCrouchFactor > m_crouchFactor) {
+                m_crouchFactor = MathUtils.Min(m_crouchFactor + 2f * dt, m_targetCrouchFactor);
+            }
+            if (m_targetCrouchFactor < m_crouchFactor) {
+                if (Entity.FindComponent<ComponentRider>().Mount == null) {
+                    m_crouchFactor = MathUtils.Max(m_crouchFactor - 2f * dt, m_targetCrouchFactor);
+                }
             }
         }
 
