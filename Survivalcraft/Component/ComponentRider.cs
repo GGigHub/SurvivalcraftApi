@@ -62,7 +62,11 @@ namespace Game {
             return result;
         }
 
-        public virtual void StartMounting(ComponentMount componentMount, bool fromNetwork = false) {
+        public virtual void StartMounting(ComponentMount componentMount) {
+            StartMounting(componentMount, false);
+        }
+
+        public virtual void StartMounting(ComponentMount componentMount, bool fromNetwork) {
             if (!m_isAnimating
                 && Mount == null) {
                 if (NetworkManager.IsClientRunning && !fromNetwork) {
@@ -87,7 +91,11 @@ namespace Game {
             }
         }
 
-        public virtual void StartDismounting(bool fromNetwork = false) {
+        public virtual void StartDismounting() {
+            StartDismounting(false);
+        }
+
+        public virtual void StartDismounting(bool fromNetwork) {
             if (!m_isAnimating
                 && Mount != null) {
                 if (NetworkManager.IsClientRunning && !fromNetwork) {

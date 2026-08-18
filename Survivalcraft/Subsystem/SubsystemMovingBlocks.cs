@@ -203,7 +203,11 @@ namespace Game {
             return movingBlockSet;
         }
 
-        public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet, bool fromNetwork = false) {
+        public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet) {
+            RemoveMovingBlockSet(movingBlockSet, false);
+        }
+
+        public void RemoveMovingBlockSet(IMovingBlockSet movingBlockSet, bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
                 ModsManager.HookAction("OnNetworkMovingBlockRemoved", loader => loader.OnNetworkMovingBlockRemoved(movingBlockSet, false));
                 return;

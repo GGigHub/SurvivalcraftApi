@@ -36,7 +36,7 @@ public class TerrainChangeCellPacket : Packet {
         int chunkZ = m_Z >> 4;
         TerrainChunk chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
         if (chunk != null) {
-            subsystemTerrain.ChangeCell(m_X, m_Y, m_Z, m_value, true, fromNetwork: true);
+            subsystemTerrain.ChangeCell(m_X, m_Y, m_Z, m_value, true, movingBlock: null, fromNetwork: true);
             NetworkDigConfirmationRuntime.ObserveClientTerrainChange(m_X, m_Y, m_Z, m_value);
             NetworkPlaceConfirmationRuntime.ObserveClientTerrainChange(m_X, m_Y, m_Z, m_value);
         }

@@ -352,7 +352,11 @@ namespace Game {
             return null;
         }
 
-        public virtual void ChangeCell(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null, bool fromNetwork = false) {
+        public virtual void ChangeCell(int x, int y, int z, int value, bool updateModificationCounter = true, MovingBlock movingBlock = null) {
+            ChangeCell(x, y, z, value, updateModificationCounter, movingBlock, false);
+        }
+
+        public virtual void ChangeCell(int x, int y, int z, int value, bool updateModificationCounter, MovingBlock movingBlock, bool fromNetwork) {
             bool pass = false;
             ModsManager.HookAction(
                 "TerrainChangeCell",

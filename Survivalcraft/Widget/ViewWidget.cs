@@ -49,7 +49,11 @@ namespace Game {
             Utilities.Dispose(ref m_scalingRenderTarget);
         }
 
-        public virtual void DragDrop(Vector3 hitPosition, InventoryDragData inventoryDragData, int count, bool fromNetwork = false) {
+        public virtual void DragDrop(Vector3 hitPosition, InventoryDragData inventoryDragData, int count) {
+            DragDrop(hitPosition, inventoryDragData, count, false);
+        }
+
+        public virtual void DragDrop(Vector3 hitPosition, InventoryDragData inventoryDragData, int count, bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
                 ModsManager.HookAction("OnNetworkPlayerDragDrop", loader => loader.OnNetworkPlayerDragDrop(GameWidget.PlayerData, inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, hitPosition, count));
                 return;

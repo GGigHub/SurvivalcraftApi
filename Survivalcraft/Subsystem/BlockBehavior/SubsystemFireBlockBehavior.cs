@@ -362,7 +362,11 @@ namespace Game {
             }
         }
 
-        public void AddFire(int x, int y, int z, float expandability, bool fromNetwork = false) {
+        public void AddFire(int x, int y, int z, float expandability) {
+            AddFire(x, y, z, expandability, false);
+        }
+
+        public void AddFire(int x, int y, int z, float expandability, bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
                 ModsManager.HookAction("OnNetworkFireBlockAdded", loader => loader.OnNetworkFireBlockAdded(x, y, z, expandability));
                 return;
@@ -379,7 +383,11 @@ namespace Game {
             }
         }
 
-        public void RemoveFire(int x, int y, int z, bool fromNetwork = false) {
+        public void RemoveFire(int x, int y, int z) {
+            RemoveFire(x, y, z, false);
+        }
+
+        public void RemoveFire(int x, int y, int z, bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
                 ModsManager.HookAction("OnNetworkFireBlockRemoved", loader => loader.OnNetworkFireBlockRemoved(x, y, z));
                 return;

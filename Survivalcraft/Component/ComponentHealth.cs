@@ -152,12 +152,21 @@ namespace Game {
             }
         }
 
-        public virtual void Injure(float amount, ComponentCreature attacker, bool ignoreInvulnerability, string cause, bool fromNetwork = false) {
+        public virtual void Injure(float amount, ComponentCreature attacker, bool ignoreInvulnerability, string cause) {
+            Injury injury = new(amount, attacker, ignoreInvulnerability, cause);
+            Injure(injury);
+        }
+
+        public virtual void Injure(float amount, ComponentCreature attacker, bool ignoreInvulnerability, string cause, bool fromNetwork) {
             Injury injury = new(amount, attacker, ignoreInvulnerability, cause);
             Injure(injury, fromNetwork);
         }
 
-        public virtual void Injure(Injury injury, bool fromNetwork = false) {
+        public virtual void Injure(Injury injury) {
+            Injure(injury, false);
+        }
+
+        public virtual void Injure(Injury injury, bool fromNetwork) {
             if (injury == null) {
                 return;
             }

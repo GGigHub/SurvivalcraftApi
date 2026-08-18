@@ -49,7 +49,11 @@ namespace Game {
         public static float FemaleSpeedFactor = 1.03f;
         public static float FemaleHungerFactor = 0.7f;
 
-        public virtual void AddExperience(int count, bool playSound, bool fromNetwork = false) {
+        public virtual void AddExperience(int count, bool playSound) {
+            AddExperience(count, playSound, false);
+        }
+
+        public virtual void AddExperience(int count, bool playSound, bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) return;
             if (playSound) {
                 m_subsystemAudio.PlaySound("Audio/ExperienceCollected", 0.2f, m_random.Float(-0.1f, 0.4f), 0f, 0f);

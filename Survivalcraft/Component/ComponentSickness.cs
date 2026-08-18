@@ -26,7 +26,11 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        public virtual void StartSickness(bool fromNetwork = false) {
+        public virtual void StartSickness() {
+            StartSickness(false);
+        }
+
+        public virtual void StartSickness(bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) return;
             if (m_sicknessDuration == 0f) {
                 m_componentPlayer.PlayerStats.TimesWasSick++;
@@ -35,7 +39,11 @@ namespace Game {
             if (!fromNetwork) ModsManager.HookAction("OnNetworkSicknessChanged", loader => loader.OnNetworkSicknessChanged(this));
         }
 
-        public virtual void NauseaEffect(bool fromNetwork = false) {
+        public virtual void NauseaEffect() {
+            NauseaEffect(false);
+        }
+
+        public virtual void NauseaEffect(bool fromNetwork) {
             m_lastNauseaTime = m_subsystemTime.GameTime;
             m_componentPlayer.ComponentCreatureSounds.PlayMoanSound();
             float injury = MathUtils.Min(0.1f, m_componentPlayer.ComponentHealth.Health - 0.075f);

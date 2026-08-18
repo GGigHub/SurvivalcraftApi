@@ -39,7 +39,11 @@ namespace Game {
 
         public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-        public virtual void SetOnFire(ComponentCreature attacker, float duration, bool fromNetwork = false) {
+        public virtual void SetOnFire(ComponentCreature attacker, float duration) {
+            SetOnFire(attacker, duration, false);
+        }
+
+        public virtual void SetOnFire(ComponentCreature attacker, float duration, bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
                 ModsManager.HookAction("OnNetworkSetOnFire", loader => loader.OnNetworkSetOnFire(this, attacker, duration));
                 return;

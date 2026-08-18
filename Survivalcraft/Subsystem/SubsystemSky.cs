@@ -187,7 +187,11 @@ namespace Game {
 
         public static bool DrawGalaxyEnabled = true;
 
-        public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual, bool fromNetwork = false) {
+        public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual) {
+            MakeLightningStrike(targetPosition, manual, false);
+        }
+
+        public virtual void MakeLightningStrike(Vector3 targetPosition, bool manual, bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
                 ModsManager.HookAction("OnNetworkSkyLightning", loader => loader.OnNetworkSkyLightning(targetPosition));
                 return;

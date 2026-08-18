@@ -129,6 +129,7 @@ public static class NetworkPlaceConfirmationRuntime {
             pending.CellFace.Z,
             packet.ActualValue,
             true,
+            movingBlock: null,
             fromNetwork: true
         );
     }
@@ -149,6 +150,7 @@ public static class NetworkPlaceConfirmationRuntime {
                     pending.CellFace.Z,
                     pending.OldValue,
                     true,
+                    movingBlock: null,
                     fromNetwork: true
                 );
             }

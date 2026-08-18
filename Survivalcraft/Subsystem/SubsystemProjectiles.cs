@@ -87,7 +87,11 @@ namespace Game {
             return projectile;
         }
 
-        public virtual Projectile AddProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork = false) {
+        public virtual Projectile AddProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
+            return AddProjectile(value, position, velocity, angularVelocity, owner, false);
+        }
+
+        public virtual Projectile AddProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
                 return null;
             }
@@ -134,7 +138,11 @@ namespace Game {
             }
         }
 
-        public virtual Projectile FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork = false) {
+        public virtual Projectile FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner) {
+            return FireProjectile(value, position, velocity, angularVelocity, owner, false);
+        }
+
+        public virtual Projectile FireProjectile(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity, ComponentCreature owner, bool fromNetwork) {
             if (NetworkManager.IsClientRunning && !fromNetwork) {
                 return null;
             }

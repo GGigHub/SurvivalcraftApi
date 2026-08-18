@@ -64,7 +64,11 @@ namespace Game {
             return true;
         }
 
-        public virtual void Sleep(bool allowManualWakeup, bool fromNetwork = false) {
+        public virtual void Sleep(bool allowManualWakeup) {
+            Sleep(allowManualWakeup, false);
+        }
+
+        public virtual void Sleep(bool allowManualWakeup, bool fromNetwork) {
             if (!NetworkManager.IsClientRunning || fromNetwork) {
                 if (!IsSleeping) {
                     m_sleepStartTime = m_subsystemGameInfo.TotalElapsedGameTime;
@@ -79,7 +83,11 @@ namespace Game {
             if (!fromNetwork) ModsManager.HookAction("OnNetworkSleep", loader => loader.OnNetworkSleep(this, allowManualWakeup));
         }
 
-        public virtual void WakeUp(bool fromNetwork = false) {
+        public virtual void WakeUp() {
+            WakeUp(false);
+        }
+
+        public virtual void WakeUp(bool fromNetwork) {
             if (!NetworkManager.IsClientRunning || fromNetwork) {
                 if (m_sleepStartTime.HasValue) {
                     m_sleepStartTime = null;
