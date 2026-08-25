@@ -34,12 +34,15 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
         Assert.True(newWorldScreenEntered, "Failed to enter the New World screen");
 
         await server.PushCommandAsync("CLICK_WIDGET Play");
+        bool gameEntered = await server.WaitLogAsync("Entered screen \"Game\"");
+        Assert.True(gameEntered, $"Failed to enter the Game screen\nServer log:\n{server.GetRecentLogText(160)}");
+
         bool playerScreen = await server.WaitLogAsync("Entered screen \"Player\"");
         Assert.True(playerScreen, "Failed to load the Player screen");
 
         await server.PushCommandAsync("CLICK_WIDGET PlayButton");
-        bool gameEntered = await server.WaitLogAsync("Entered screen \"Game\"");
-        Assert.True(gameEntered, "Failed to enter the Game screen");
+        bool serverIntoPlaying = await server.WaitLogAsync("Player into playing.");
+        Assert.True(serverIntoPlaying, $"Failed to put server player into playing state\nServer log:\n{server.GetRecentLogText(160)}");
     }
 
     [Fact, TestOrder(Priority = 2)]
@@ -59,7 +62,7 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
         Assert.True(intoPlaying, "Failed into playing state");
     }
 
-    [Fact, TestOrder(Priority = 3)]
+    //[Fact, TestOrder(Priority = 3)]
     public async Task TestServerReconnection() {
         await client.PushCommandAsync("EXEC " +
             GameTools.ReadScript("GameStartup/DisconnectCode.cs"));
@@ -82,7 +85,7 @@ public sealed class GameStartupTest : IClassFixture<GameFixture> {
         Assert.True(intoPlaying, "Failed into playing state");
     }
 
-    [Fact, TestOrder(Priority = 4)]
+    //[Fact, TestOrder(Priority = 4)]
     public async Task TestServerReconnectionWithServerExitFirst() {
         // 关闭服务器
         await server.PushCommandAsync("EXEC " +

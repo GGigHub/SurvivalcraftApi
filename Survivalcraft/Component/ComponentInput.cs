@@ -19,6 +19,10 @@ namespace Game {
 
         public bool m_isViewHoldStarted;
 
+        // Compatibility fields used by input components compiled against the 2.3 API.
+        public float m_lastLeftTrigger;
+        public float m_lastRightTrigger;
+
         public double m_lastJumpTime;
 
         public Vector2 m_vrSmoothLook;

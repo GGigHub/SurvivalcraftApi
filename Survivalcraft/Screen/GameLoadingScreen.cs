@@ -165,6 +165,14 @@ public class GameLoadingScreen : Screen {
             if (parameters[2] is RelayJoinInfo relayJoinInfo) m_relayJoinInfo = relayJoinInfo;
             else m_serverEndPoint = (IPEndPoint)parameters[2];
             if (parameters.Length == 4) m_password = (string)parameters[3];
+            // 网络客户端需要一个独立的临时世界来接收服务器下发的 Project。
+            if (Storage.DirectoryExists("TempNetworkWorld")) {
+                Storage.DeleteDirectory("TempNetworkWorld", true);
+            }
+            Storage.CreateDirectory("TempNetworkWorld");
+            m_worldInfo = new WorldInfo {
+                DirectoryName = "TempNetworkWorld"
+            };
         }
         m_stateMachine.TransitionTo("WaitingForFadeIn");
         ProgressManager.UpdateProgress("Loading World", 0f);

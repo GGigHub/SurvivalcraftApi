@@ -41,6 +41,12 @@ namespace Game {
         /// 注意：玩家能在游戏中手动修改顺序
         /// </summary>
         public int LoadOrder = (int)Game.LoadOrder.Default;
+
+        /// <summary>
+        ///     是否作为预加载模组运行。预加载模组会在普通模组程序集进入 CLR 前获得修改程序集镜像的机会。
+        /// </summary>
+        public bool Preload = false;
+
         public List<string> Dependencies = [];
         public NuGetVersion NuGetVersion;
         public VersionRange ApiVersionRange;

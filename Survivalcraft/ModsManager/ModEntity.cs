@@ -34,6 +34,8 @@ namespace Game {
 
         ModLoader ModLoader_;
 
+        private ModAssemblyImage[] assemblyImages;
+
         public string ResourcesMd5 = string.Empty;
 
         /// <summary>
@@ -351,11 +353,16 @@ namespace Game {
         }
 
         /// <summary>
-        ///     加载mod程序集
+        ///     获取模组程序集的内存镜像，但不将程序集加载到 CLR。
+        ///     预加载模组会在普通程序集进入 CLR 前修改这些镜像。
         /// </summary>
-        public virtual Assembly[] GetAssemblies() {
+        public virtual ModAssemblyImage[] GetAssemblyImages() {
+            if (assemblyImages != null) {
+                return assemblyImages;
+            }
+
             bool flag = true;
-            List<Assembly> assemblies = new();
+            List<ModAssemblyImage> assemblies = new();
             GetFiles(
                 ".dll",
                 (filename, stream) => {
@@ -366,20 +373,47 @@ namespace Game {
                     if (!filename.StartsWith("Assets/")) {
                         string fileNameWithoutDirectory = Storage.GetFileName(filename);
                         if (!InvalidDllNames.Contains(fileNameWithoutDirectory)) {
-#pragma warning disable IL2026
-                            assemblies.Add(Assembly.Load(ModsManager.StreamToBytes(stream)));
-#pragma warning restore IL2026
+                            assemblies.Add(new ModAssemblyImage(this, filename, ModsManager.StreamToBytes(stream)));
                         }
                     }
                 }
             ); //获取mod文件内的dll文件（不包括Assets目录内的dll）
-            return assemblies.ToArray();
+            assemblyImages = assemblies.ToArray();
+            return assemblyImages;
+        }
+
+        /// <summary>
+        ///     加载mod程序集。保留该方法以兼容已有的 ModEntity 派生类；新的加载流程使用
+        ///     <see cref="GetAssemblyImages" />，确保预加载回调有机会先修改程序集。
+        /// </summary>
+        public virtual Assembly[] GetAssemblies() {
+            return GetAssemblyImages()
+                .Where(image => !image.Skip)
+                .Select(image => {
+                    if (image.LoadedAssembly != null) {
+                        return image.LoadedAssembly;
+                    }
+#pragma warning disable IL2026
+                    image.LoadedAssembly = Assembly.Load(image.Bytes);
+#pragma warning restore IL2026
+                    return image.LoadedAssembly;
+                })
+                .ToArray();
         }
 
         public virtual void HandleAssembly(Assembly assembly) {
             List<Type> blockTypes = [];
 #pragma warning disable IL2026
-            Type[] types = assembly.GetTypes();
+            Type[] types;
+            try {
+                types = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException exception) {
+                foreach (Exception loaderException in exception.LoaderExceptions.Where(exception => exception != null)) {
+                    Log.Error($"Failed to load a type from assembly {assembly.FullName}: {loaderException}");
+                }
+                throw;
+            }
 #pragma warning restore IL2026
             foreach (Type type in types) {
                 if (type.IsSubclassOf(typeof(ModLoader))

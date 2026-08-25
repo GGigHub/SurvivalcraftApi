@@ -214,62 +214,76 @@ namespace Game {
             });
             AddLoadAction(ContentLoaded);
             AddLoadAction(() => {
-                Dictionary<string, Assembly[]> assemblies = [];
-                ModsManager.ModListAllDo(modEntity => {
-                    bool flag = true;
-                    assemblies[modEntity.modInfo.PackageName] = modEntity.GetAssemblies();
-                    foreach (Assembly assembly in assemblies[modEntity.modInfo.PackageName]) {
-                        if (flag) {
-                            Log.Information($"[{modEntity.modInfo.Name}] Getting assemblies.");
-                            flag = false;
-                        }
-                        AssemblyName assemblyName = assembly.GetName();
-                        string fullName = assemblyName.FullName;
-                        if (ModsManager.Dlls.TryGetValue(fullName, out Assembly existingAssembly)) {
-                            if (existingAssembly.GetName().Version < assemblyName.Version) {
-                                ModsManager.Dlls[fullName] = assembly;
-                            }
-                        }
-                        else {
-                            ModsManager.Dlls.Add(fullName, assembly);
-                        }
-                    }
-                }
-                );
-                // 加载 mod 程序集(.dll)文件
-                // 但不进行处理操作(如添加block等)
                 ModsManager.ModHooks.Clear();
                 ModsManager.m_tempModHooks.Clear();
-                ModsManager.ModListAllDo(modEntity => {
-                    if (!isLoadSucceed) {
-                        return;
+
+                Dictionary<ModEntity, List<ModAssemblyImage>> assemblyImages =
+                    new(ReferenceEqualityComparer.Instance);
+                List<ModAssemblyImage> ordinaryImages = [];
+
+                void RegisterAssembly(Assembly assembly) {
+                    AssemblyName assemblyName = assembly.GetName();
+                    string fullName = assemblyName.FullName;
+                    if (ModsManager.Dlls.TryGetValue(fullName, out Assembly existingAssembly)) {
+                        Version existingVersion = existingAssembly.GetName().Version;
+                        if (existingVersion == null || assemblyName.Version > existingVersion) {
+                            ModsManager.Dlls[fullName] = assembly;
+                        }
                     }
-                    foreach (Assembly asm in assemblies[modEntity.modInfo.PackageName]) {
-                        Log.Information($"[{modEntity.modInfo.Name}] Handling assembly [{asm.FullName}]");
-                        try {
-                            modEntity.HandleAssembly(asm);
-                        }
-                        catch (Exception e) {
-                            exception = e;
-                            string separator = new('-', 10); // 生成10个'-'连一起的字符串
-                            Log.Error($"{separator}Handle assembly failed{separator}");
-                            Log.Error(
-                                $"Loaded assembly:\n{string.Join("\n", AppDomain.CurrentDomain.GetAssemblies().Select(x => x.FullName ?? x.GetName().FullName))}"
-                            );
-                            Log.Error(separator);
-                            Log.Error($"Error assembly: {asm.FullName}");
-#pragma warning disable IL2026
-                            Log.Error($"Dependencies:\n{string.Join("\n", asm.GetReferencedAssemblies().Select(x => x.FullName))}");
-#pragma warning restore IL2026
-                            Log.Error(separator);
-                            Log.Error(e);
-                            isLoadSucceed = false;
-                            break;
-                        }
+                    else {
+                        ModsManager.Dlls.Add(fullName, assembly);
                     }
                 }
-                );
-                if (!isLoadSucceed) {
+
+                void FailAssembly(Exception e, ModEntity owner, ModAssemblyImage image, Assembly assembly) {
+                    exception = e;
+                    string separator = new('-', 10);
+                    Log.Error($"{separator}Handle assembly failed{separator}");
+                    Log.Error(
+                        $"Loaded assembly:\n{string.Join("\n", AppDomain.CurrentDomain.GetAssemblies().Select(x => x.FullName ?? x.GetName().FullName))}"
+                    );
+                    Log.Error(separator);
+                    Log.Error($"Error mod: {owner.modInfo?.Name}");
+                    Log.Error($"Error assembly: {image?.FileName ?? assembly?.FullName}");
+                    if (assembly != null) {
+#pragma warning disable IL2026
+                        Log.Error($"Dependencies:\n{string.Join("\n", assembly.GetReferencedAssemblies().Select(x => x.FullName))}");
+#pragma warning restore IL2026
+                    }
+                    Log.Error(separator);
+                    Log.Error(e);
+                    isLoadSucceed = false;
+                }
+
+                void LoadImage(ModEntity owner, ModAssemblyImage image) {
+                    if (!isLoadSucceed || image.Skip) {
+                        return;
+                    }
+                    try {
+#pragma warning disable IL2026
+                        image.LoadedAssembly = Assembly.Load(image.Bytes);
+#pragma warning restore IL2026
+                        RegisterAssembly(image.LoadedAssembly);
+                    }
+                    catch (Exception e) {
+                        FailAssembly(e, owner, image, null);
+                    }
+                }
+
+                void HandleImage(ModEntity owner, ModAssemblyImage image) {
+                    if (!isLoadSucceed || image.Skip || image.LoadedAssembly == null) {
+                        return;
+                    }
+                    Log.Information($"[{owner.modInfo.Name}] Handling assembly [{image.LoadedAssembly.FullName}]");
+                    try {
+                        owner.HandleAssembly(image.LoadedAssembly);
+                    }
+                    catch (Exception e) {
+                        FailAssembly(e, owner, image, image.LoadedAssembly);
+                    }
+                }
+
+                void ShowLoadingFailure() {
                     ModsManager.ModList.RemoveAll(entity => entity is not SurvivalCraftModEntity && entity is not FastDebugModEntity);
                     LoadingActoins.RemoveRange(1, LoadingActoins.Count - 1);
                     ModLoadingActoins.Clear();
@@ -279,15 +293,107 @@ namespace Game {
                             ["Exceptions: 异常信息：", .. exception?.ToString().Split('\n') ?? []],
                             [
                                 $"Check the API version required by mod is equal to the current API version ({ModsManager.APIVersionString}). Check and add missing mods. If not solved, please contact the developer of the mods or API with Game.log in the path below.",
-                                    $"检查模组是否缺失，并添加所缺失的模组。查看模组所需插件版版本与当前插件版版本（{ModsManager.APIVersionString}）是否一致。若以上方式都无法解决，请联系模组、插件版开发者，并发送下面路径中的 Game.log",
-                                    Storage.GetSystemPath(ModsManager.LogPath),
-                                    "And you can enable Safe Mode to stop loading any mod.",
-                                    "你还可以启用安全模式，停止加载任何模组。"
+                                $"检查模组是否缺失，并添加所缺失的模组。查看模组所需插件版版本与当前插件版版本（{ModsManager.APIVersionString}）是否一致。若以上方式都无法解决，请联系模组、插件版开发者，并发送下面路径中的 Game.log",
+                                Storage.GetSystemPath(ModsManager.LogPath),
+                                "And you can enable Safe Mode to stop loading any mod.",
+                                "你还可以启用安全模式，停止加载任何模组。"
                             ]
                         )
                     );
                 }
-                // 处理程序集
+
+                // 系统程序集不是来自模组包，但仍需保持原有的系统 ModLoader 初始化流程。
+                ModsManager.ModListAllDo(modEntity => {
+                    if (isLoadSucceed && modEntity is SurvivalCraftModEntity) {
+                        Assembly systemAssembly = typeof(BlocksManager).Assembly;
+                        RegisterAssembly(systemAssembly);
+                        try {
+                            modEntity.HandleAssembly(systemAssembly);
+                        }
+                        catch (Exception e) {
+                            FailAssembly(e, modEntity, null, systemAssembly);
+                        }
+                    }
+                });
+
+                // 预加载模组先加载自身；此阶段不触碰普通模组程序集。
+                List<ModEntity> preloadMods = ModsManager.ModList
+                    .Where(mod => mod.modInfo?.Preload == true)
+                    .ToList();
+                foreach (ModEntity modEntity in preloadMods) {
+                    if (!isLoadSucceed) {
+                        break;
+                    }
+                    List<ModAssemblyImage> images = modEntity.GetAssemblyImages().ToList();
+                    assemblyImages[modEntity] = images;
+                    foreach (ModAssemblyImage image in images) {
+                        LoadImage(modEntity, image);
+                    }
+                }
+                foreach (ModEntity modEntity in preloadMods) {
+                    if (!isLoadSucceed || !assemblyImages.TryGetValue(modEntity, out List<ModAssemblyImage> images)) {
+                        break;
+                    }
+                    foreach (ModAssemblyImage image in images) {
+                        HandleImage(modEntity, image);
+                    }
+                }
+
+                if (isLoadSucceed) {
+                    try {
+                        ModsManager.InvokePreloadStart();
+                    }
+                    catch (Exception e) {
+                        FailAssembly(e, preloadMods.FirstOrDefault(), null, null);
+                    }
+                }
+
+                // 普通模组现在只进入内存镜像，不执行 Assembly.Load。
+                if (isLoadSucceed) {
+                    ModsManager.ModListAllDo(modEntity => {
+                        if (!isLoadSucceed
+                            || modEntity is SurvivalCraftModEntity
+                            || modEntity.modInfo?.Preload == true) {
+                            return;
+                        }
+                        List<ModAssemblyImage> images = modEntity.GetAssemblyImages().ToList();
+                        assemblyImages[modEntity] = images;
+                        ordinaryImages.AddRange(images);
+                    });
+                }
+
+                // 所有普通程序集仍未进入 CLR，此时是兼容层修改它们的唯一窗口。
+                if (isLoadSucceed) {
+                    try {
+                        ModsManager.InvokePreloadAssemblies(ordinaryImages);
+                    }
+                    catch (Exception e) {
+                        FailAssembly(e, preloadMods.FirstOrDefault(), null, null);
+                    }
+                }
+
+                // 改写完成后才统一加载并处理普通程序集。
+                foreach (ModAssemblyImage image in ordinaryImages) {
+                    if (!isLoadSucceed) {
+                        break;
+                    }
+                    LoadImage(image.Owner, image);
+                }
+                ModsManager.ModListAllDo(modEntity => {
+                    if (!isLoadSucceed
+                        || modEntity is SurvivalCraftModEntity
+                        || modEntity.modInfo?.Preload == true
+                        || !assemblyImages.TryGetValue(modEntity, out List<ModAssemblyImage> images)) {
+                        return;
+                    }
+                    foreach (ModAssemblyImage image in images) {
+                        HandleImage(modEntity, image);
+                    }
+                });
+
+                if (!isLoadSucceed) {
+                    ShowLoadingFailure();
+                }
             }
             );
             AddLoadAction(
@@ -472,7 +578,9 @@ namespace Game {
                     try {
                         ModsManager.InitImportantDatabaseClasses();
                         DatabaseManager.Initialize();
-                        ModsManager.ModListAllDo(modEntity => { modEntity.LoadXdb(ref DatabaseManager.DatabaseNode); });
+                        ModsManager.ModListAllDo(modEntity => {
+                            modEntity.LoadXdb(ref DatabaseManager.DatabaseNode);
+                        });
                         ModsManager.DealWithClassSubstitutes();
                     }
                     catch (Exception e) {

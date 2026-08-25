@@ -349,7 +349,10 @@ namespace Game {
         /// <param name="mappingName"></param>
         /// <returns></returns>
         public bool IsKeyOrMouseDown(string mappingName) {
-            object key = SettingsManager.GetKeyboardMapping(mappingName);
+            // A mod may reference an optional mapping that is unavailable with
+            // the current API version. Treat that mapping as unbound so one
+            // input hook cannot abort the whole frame update.
+            object key = SettingsManager.GetKeyboardMapping(mappingName, false);
             if (key is MouseButton mouseButton) {
                 return IsMouseButtonDown(mouseButton);
             }
@@ -366,7 +369,7 @@ namespace Game {
         /// <param name="mappingName"></param>
         /// <returns></returns>
         public bool IsKeyOrMouseDownOnce(string mappingName) {
-            object key = SettingsManager.GetKeyboardMapping(mappingName);
+            object key = SettingsManager.GetKeyboardMapping(mappingName, false);
             if (key is MouseButton mouseButton) {
                 return IsMouseButtonDownOnce(mouseButton);
             }
@@ -383,7 +386,7 @@ namespace Game {
         /// <param name="mappingName"></param>
         /// <returns></returns>
         public bool IsGamepadDown(string mappingName) {
-            object key = SettingsManager.GetGamepadMapping(mappingName);
+            object key = SettingsManager.GetGamepadMapping(mappingName, false);
             if (key is GamePadTrigger trigger) {
                 return IsPadTriggerDown(trigger, 0f, SettingsManager.GamepadTriggerThreshold);
             }
@@ -402,7 +405,7 @@ namespace Game {
         public bool IsGamepadDownOnce(string mappingName) {
             //注意：组合键中行动键只能是GamePadButton，并且不能是肩键
             float threshold = SettingsManager.GamepadTriggerThreshold;
-            object key = SettingsManager.GetGamepadMapping(mappingName);
+            object key = SettingsManager.GetGamepadMapping(mappingName, false);
             if (key is GamePadTrigger trigger) {
                 return IsTriggerDownOnce(trigger, threshold);
             }

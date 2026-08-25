@@ -19,6 +19,23 @@ namespace Game {
         public virtual void __ModInitialize() { }
 
         /// <summary>
+        ///     预加载阶段开始时调用。此时普通模组程序集尚未进入 CLR。
+        /// </summary>
+        public virtual void OnPreloadStart(IReadOnlyList<ModEntity> mods) { }
+
+        /// <summary>
+        ///     普通模组程序集镜像收集完成后调用。可使用 Mono.Cecil 修改 image.Bytes，或将
+        ///     image.Skip 设为 true。原始模组文件不会被写回。
+        /// </summary>
+        public virtual void OnPreloadAssemblies(IList<ModAssemblyImage> assemblies) { }
+
+        /// <summary>
+        ///     在类替换冲突交给默认对话框前，让预加载模组做自动决策。
+        /// </summary>
+        public virtual void OnClassSubstitutes(
+            IReadOnlyDictionary<string, List<ModsManager.ClassSubstitute>> substitutions) { }
+
+        /// <summary>
         ///     在加载本模组的资源时触发。<br/>
         ///     只有模组中的主要 ModLoader 的该方法才会被执行。<br/>
         ///     注意：模组的 dll 只能由原版逻辑加载

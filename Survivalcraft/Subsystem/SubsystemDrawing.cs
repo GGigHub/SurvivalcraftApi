@@ -54,8 +54,8 @@ namespace Game {
                 try {
                     sortedDrawable.Draw(camera, drawOrder);
                 }
-                catch (Exception) {
-                    // ignored
+                catch (Exception e) {
+                    Log.Error($"SubsystemDrawing: Drawable [{sortedDrawable.GetType().ToString()}] Draw failed. {e}");
                 }
                 finally {
                     if (UpdateTimeDebug) {

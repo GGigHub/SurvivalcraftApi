@@ -225,6 +225,29 @@ public static class ModsManager {
         m_tempModHooks.Clear();
     }
 
+    /// <summary>
+    ///     调用所有预加载模组的程序集预处理入口。
+    /// </summary>
+    public static void InvokePreloadStart() {
+        IReadOnlyList<ModEntity> mods = ModList.AsReadOnly();
+        foreach (ModLoader loader in ModList
+                     .Where(mod => mod.modInfo?.Preload == true)
+                     .SelectMany(mod => mod.Loaders)) {
+            loader.OnPreloadStart(mods);
+        }
+    }
+
+    /// <summary>
+    ///     将尚未加载的普通模组程序集镜像交给预加载模组处理。
+    /// </summary>
+    public static void InvokePreloadAssemblies(IList<ModAssemblyImage> assemblies) {
+        foreach (ModLoader loader in ModList
+                     .Where(mod => mod.modInfo?.Preload == true)
+                     .SelectMany(mod => mod.Loaders)) {
+            loader.OnPreloadAssemblies(assemblies);
+        }
+    }
+
     public static T GetInPakOrStorageFile<T>(string filePath, string suffix = "txt") where T : class =>
         ContentManager.Get<T>(filePath, suffix);
 
@@ -317,6 +340,10 @@ public static class ModsManager {
             && loadOrder.ValueKind == JsonValueKind.Number) {
             modInfo.LoadOrder = loadOrder.GetInt32();
             //Log.Information("获取模组的Order：" + modInfo.LoadOrder);
+        }
+        if (jsonElement.TryGetProperty("Preload", out JsonElement preload)
+            && preload.ValueKind == JsonValueKind.True) {
+            modInfo.Preload = true;
         }
         if (jsonElement.TryGetProperty("NonPersistentMod", out JsonElement nonPersistentMod)
             && nonPersistentMod.ValueKind == JsonValueKind.True) {
@@ -529,6 +556,7 @@ public static class ModsManager {
         // 1. 基础排序：先单纯按照 LoadOrder 从小到大排
         List<ModEntity> orderedMods = ModListAll.Where(m => m.modInfo != null)
             .OrderBy(m => m is SurvivalCraftModEntity ? 0 : m.IsSystemMod ? 1 : 2)
+            .ThenBy(m => m.modInfo.Preload ? 0 : 1)
             .ThenBy(m => m.modInfo.LoadOrder)
             .ToList();
         // 2. 准备图结构：入度表 (InDegree) 和 邻接表 (AdjList)
@@ -816,20 +844,49 @@ public static class ModsManager {
     /// 仅用于合并 Database
     /// </summary>
     public static void Modify(XElement source, XElement change) {
-        if (FindElement(
-                source,
-                item => item.Name.LocalName == change.Name.LocalName
-                    && item.Attribute("Guid") != null
-                    && change.Attribute("Guid") != null
-                    && item.Attribute("Guid")?.Value == change.Attribute("Guid")?.Value,
-                out XElement xElement1
-            )) {
+        Dictionary<(string Name, string Guid), XElement> index = BuildModifyIndex(source);
+        Modify(source, change, index);
+    }
+
+    private static Dictionary<(string Name, string Guid), XElement> BuildModifyIndex(XElement source) {
+        Dictionary<(string Name, string Guid), XElement> index = [];
+        foreach (XElement element in source.Descendants()) {
+            string guid = element.Attribute("Guid")?.Value;
+            if (!string.IsNullOrEmpty(guid)) {
+                index.TryAdd((element.Name.LocalName, guid), element);
+            }
+        }
+        return index;
+    }
+
+    private static void AddToModifyIndex(
+        Dictionary<(string Name, string Guid), XElement> index,
+        XElement element
+    ) {
+        foreach (XElement item in element.DescendantsAndSelf()) {
+            string guid = item.Attribute("Guid")?.Value;
+            if (!string.IsNullOrEmpty(guid)) {
+                index.TryAdd((item.Name.LocalName, guid), item);
+            }
+        }
+    }
+
+    private static void Modify(
+        XElement source,
+        XElement change,
+        Dictionary<(string Name, string Guid), XElement> index
+    ) {
+        string guid = change.Attribute("Guid")?.Value;
+        if (!string.IsNullOrEmpty(guid)
+            && index.TryGetValue((change.Name.LocalName, guid), out XElement xElement1)
+            && !ReferenceEquals(xElement1, source)) {
             foreach (XElement xElement in change.Elements()) {
-                Modify(xElement1, xElement);
+                Modify(xElement1, xElement, index);
             }
         }
         else {
             source.Add(change);
+            AddToModifyIndex(index, change);
         }
     }
 
@@ -926,6 +983,9 @@ public static class ModsManager {
             }
         }
 
+        Dictionary<(string Name, string Guid), XElement> databaseIndex =
+            databaseObjects == null ? [] : BuildModifyIndex(databaseObjects);
+
         foreach (XElement element in toCombineRoot.Elements()) {
             if (element.Attribute("Remove") != null) {
                 XAttribute guidAttribute = element.Attribute("Guid");
@@ -948,7 +1008,10 @@ public static class ModsManager {
                     if (newAttributeName == "Value"
                         && oldElement.Attribute("Name")?.Value == "Class") {
                         if (ClassSubstitutes.TryGetValue(guid, out List<ClassSubstitute> classSubstitutes)) {
-                            classSubstitutes.Add(new ClassSubstitute(ModPacketName, newAttribute.Value));
+                            ClassSubstitute classSubstitute = new(ModPacketName, newAttribute.Value);
+                            if (!classSubstitutes.Contains(classSubstitute)) {
+                                classSubstitutes.Add(classSubstitute);
+                            }
                         }
                         else {
                             ClassSubstitutes.Add(
@@ -963,11 +1026,16 @@ public static class ModsManager {
                 }
             }
             else {
-                Modify(databaseObjects, element);
+                Modify(databaseObjects, element, databaseIndex);
             }
         }
     }
     public static void DealWithClassSubstitutes() {
+        foreach (ModLoader loader in ModList
+                     .Where(mod => mod.modInfo?.Preload == true)
+                     .SelectMany(mod => mod.Loaders)) {
+            loader.OnClassSubstitutes(ClassSubstitutes);
+        }
         if (ClassSubstitutes.Count > 0) {
             Queue<(string, XElement)> needToSolves = [];
             foreach ((string guid, List<ClassSubstitute> substitutes) in ClassSubstitutes) {

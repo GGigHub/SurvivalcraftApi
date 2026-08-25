@@ -141,6 +141,19 @@ namespace Game {
             }
         }
 
+        private static bool IsLegacyStaticIndexMod(ModEntity entity, FieldInfo indexField) {
+            if (entity?.modInfo == null
+                || indexField == null
+                || indexField.FieldType != typeof(int)) {
+                return false;
+            }
+
+            string version = entity.modInfo.ScVersion;
+            return version != null
+                && version.StartsWith("2.3", StringComparison.OrdinalIgnoreCase)
+                && (version.Length == 3 || version[3] == '.');
+        }
+
         public static void InitializeCategories() {
             m_categories.Clear();
             m_categories.Add("Terrain");
@@ -315,7 +328,11 @@ namespace Game {
                                 Block = block,
                                 Index = 0,
                                 Allocated = false,
-                                StaticBlockIndex = !block.IsIndexDynamic
+                                // Survivalcraft 2.3 mods used the public static Index field as
+                                // the actual contents ID. Preserve that contract for legacy mods;
+                                // modern mods continue to use dynamic IDs.
+                                StaticBlockIndex = IsLegacyStaticIndexMod(entity, fieldInfo)
+                                    || !block.IsIndexDynamic
                                     || ReferenceEquals(entity, ModsManager.SurvivalCraftModEntity)
                                     || staticBlockIndexBefore,
                                 ModEntity = entity
@@ -337,7 +354,17 @@ namespace Game {
                             originalIndex = allocateData.Block.BlockIndex;
                         }
                         if (allocateData.StaticBlockIndex) {
-                            AllocateBlock(allocateData, originalIndex);
+                            if (m_blocks[originalIndex] != null
+                                && !ReferenceEquals(m_blocks[originalIndex], allocateData.Block)) {
+                                Log.Warning(
+                                    $"[BlocksManager] Static block ID {originalIndex} is already occupied by "
+                                    + $"{m_blocks[originalIndex].GetType().Name}; "
+                                    + $"{allocateData.Block.GetType().Name} will use a dynamic ID."
+                                );
+                            }
+                            else {
+                                AllocateBlock(allocateData, originalIndex);
+                            }
                         }
                         else if (LoadBlocksStaticly && originalIndex >= 0) //负ID方块不进行分配
                         {

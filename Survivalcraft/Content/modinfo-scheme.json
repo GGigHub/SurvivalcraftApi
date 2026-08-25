@@ -133,6 +133,11 @@
       "default": 0,
       "description": "Mod loading priority. Smaller values load earlier. Default is 0. \nSuggested: Theme mod -100000~-10000, assistant mod 10000~100000. \n模组加载顺序，值越小越先加载，默认为 0。 \n建议：主题模组 -100000~-10000，辅助模组 10000~100000。"
     },
+    "Preload": {
+      "type": "boolean",
+      "default": false,
+      "description": "Load this mod before ordinary mod assemblies and allow its ModLoader to rewrite in-memory assembly images. The original mod package is never modified. \n预加载模组：在普通模组程序集进入 CLR 前加载，并允许其 ModLoader 修改内存程序集镜像；不会修改原始模组包。预加载模组应保持自包含。"
+    },
     "NonPersistentMod": {
       "type": "boolean",
       "default": false,

@@ -125,8 +125,8 @@ namespace Game {
                         sortedUpdateable.Update(dt);
                     }
                 }
-                catch (Exception) {
-                    // ignored
+                catch (Exception e) {
+                    Log.Error($"SubsystemUpdate: Updateable [{sortedUpdateable.GetType().ToString()}] Update failed. {e}");
                 }
                 finally {
                     if (UpdateTimeDebug) {

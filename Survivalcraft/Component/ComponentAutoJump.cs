@@ -128,7 +128,10 @@ namespace Game {
             m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
             m_alwaysEnabled = valuesDictionary.GetValue<bool>("AlwaysEnabled");
             m_jumpStrength = valuesDictionary.GetValue<float>("JumpStrength");
-            m_componentCreature.ComponentBody.CollidedWithBody += delegate { m_collidedWithBody = true; };
+            // Modded player components can be loaded after AutoJump. Resolve the body
+            // directly instead of relying on ComponentCreature.Load having populated
+            // ComponentBody already.
+            Entity.FindComponent<ComponentBody>(true).CollidedWithBody += delegate { m_collidedWithBody = true; };
         }
     }
 }

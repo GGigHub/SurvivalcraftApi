@@ -106,7 +106,9 @@ namespace Game {
         void UpdateTimeOfYear(int value, int x, int y, int z, bool applyImmediately) {
             float num = 0.03f * MathUtils.Hash((uint)(x + y * 59 + z * 3319)) / 4.2949673E+09f;
             float timeOfYear = IntervalUtils.Normalize(m_subsystemGameInfo.WorldSettings.TimeOfYear + num);
-            DeciduousLeavesBlock obj = (DeciduousLeavesBlock)BlocksManager.Blocks[Terrain.ExtractContents(value)];
+            if (BlocksManager.Blocks[Terrain.ExtractContents(value)] is not DeciduousLeavesBlock obj) {
+                return;
+            }
             int num2 = Terrain.ExtractData(value);
             int num3 = obj.SetTimeOfYear(num2, timeOfYear);
             if (num3 != num2) {
@@ -121,7 +123,9 @@ namespace Game {
         }
 
         void QueueLeafParticles(int value, int x, int y, int z) {
-            DeciduousLeavesBlock deciduousLeavesBlock = (DeciduousLeavesBlock)BlocksManager.Blocks[Terrain.ExtractContents(value)];
+            if (BlocksManager.Blocks[Terrain.ExtractContents(value)] is not DeciduousLeavesBlock deciduousLeavesBlock) {
+                return;
+            }
             if (m_leafParticles.Count < 30000
                 && m_random.Bool(deciduousLeavesBlock.GetLeafDropProbability(value) / 60f * 60f)
                 && m_subsystemGameWidgets.CalculateDistanceFromNearestView(new Vector3(x, y, z)) < 128f) {

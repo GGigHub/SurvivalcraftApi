@@ -257,6 +257,9 @@ namespace TemplatesDatabase {
 
         public void SaveToDictionary(IDictionary<object, object> dictionary) {
             foreach (KeyValuePair<string, object> item in m_dictionary) {
+                if (item.Value == null) {
+                    continue;
+                }
                 ValuesDictionary valuesDictionary = item.Value as ValuesDictionary;
                 if (valuesDictionary != null) {
                     Dictionary<object, object> subDic = new Dictionary<object, object>();
