@@ -12,7 +12,7 @@
       <NetworkModDestinationDirectory Condition="'$(NetworkModDestinationDirectory)' == ''">$(TargetDir)InternalMods\</NetworkModDestinationDirectory>
       <NetworkModDestinationFile Condition="'$(NetworkModDestinationFile)' == ''">$(NetworkModDestinationDirectory)$(NetworkModPackageName)</NetworkModDestinationFile>
     </PropertyGroup>
-    <MSBuild Projects="$(NetworkModProject)" Targets="Build" Properties="Configuration=$(Configuration);GenerateModPackage=true;TargetFramework=net10.0-windows;RuntimeIdentifier=win-x64" BuildInParallel="false" />
+    <MSBuild Projects="$(NetworkModProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);GenerateModPackage=true;TargetFramework=net10.0-windows;RuntimeIdentifier=win-x64" BuildInParallel="false" />
     <MakeDir Directories="$(NetworkModDestinationDirectory)" />
     <Copy SourceFiles="$(NetworkModPackagePath)" DestinationFiles="$(NetworkModDestinationFile)" SkipUnchangedFiles="true" />
     <Message Importance="high" Text="Copied Network mod to $(NetworkModDestinationFile)" />

@@ -1,0 +1,12 @@
+{
+  "Name": "CompatNet Mod",
+  "Version": "1.0.0",
+  "ApiVersion": "1.9",
+  "ScVersion": "2.4.0.0",
+  "Description": "Adds multiplayer compatibility adapters for selected community mods. 选定模组的联机模块适配器",
+  "Author": "_Tk34",
+  "PackageName": "compatnet",
+  "Preload": true,
+  "LoadOrder": 3,
+  "Dependencies": [ "network" ]
+}

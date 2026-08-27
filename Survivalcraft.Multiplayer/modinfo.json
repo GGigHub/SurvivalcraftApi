@@ -6,5 +6,6 @@
   "ScVersion": "2.4",
   "Description": "Survivalcraft API Multiplayer Mod. 适用于生存战争插件版的联机模组",
   "Author": "_Tk34",
-  "LoadOrder": 2
+  "LoadOrder": 2,
+  "Preload": true
 }

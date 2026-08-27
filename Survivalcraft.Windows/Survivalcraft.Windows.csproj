@@ -52,4 +52,22 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
   </ItemGroup>
+  <PropertyGroup>
+    <CompatibilityModProject Condition="'$(CompatibilityModProject)' == ''">$(MSBuildProjectDirectory)\..\Survivalcraft.CompatNet\Survivalcraft.CompatNet.csproj</CompatibilityModProject>
+    <CompatibilityModPackageDirectory Condition="'$(CompatibilityModPackageDirectory)' == ''">$(MSBuildProjectDirectory)\..\Survivalcraft.CompatNet\bin\$(Configuration)\net10.0-windows\win-x64\scmod\</CompatibilityModPackageDirectory>
+    <CompatibilityModPackageName Condition="'$(CompatibilityModPackageName)' == ''">Survivalcraft.CompatNet.scmod</CompatibilityModPackageName>
+    <CompatibilityModPackagePath Condition="'$(CompatibilityModPackagePath)' == ''">$(CompatibilityModPackageDirectory)$(CompatibilityModPackageName)</CompatibilityModPackagePath>
+    <CompatibilityModDestinationDirectory Condition="'$(CompatibilityModDestinationDirectory)' == '' and '$(OutputPath)' != ''">$(OutputPath)InternalMods\</CompatibilityModDestinationDirectory>
+    <CompatibilityModDestinationFile Condition="'$(CompatibilityModDestinationFile)' == '' and '$(CompatibilityModDestinationDirectory)' != ''">$(CompatibilityModDestinationDirectory)$(CompatibilityModPackageName)</CompatibilityModDestinationFile>
+  </PropertyGroup>
+  <Target Name="PackageAndCopyCompatibilityMod" AfterTargets="PackageAndCopyNetworkMod" Condition="'$(SkipNetworkModPackage)' != 'true' and '$(SkipCompatibilityModPackage)' != 'true'">
+    <PropertyGroup>
+      <CompatibilityModDestinationDirectory Condition="'$(CompatibilityModDestinationDirectory)' == ''">$(TargetDir)InternalMods\</CompatibilityModDestinationDirectory>
+      <CompatibilityModDestinationFile Condition="'$(CompatibilityModDestinationFile)' == ''">$(CompatibilityModDestinationDirectory)$(CompatibilityModPackageName)</CompatibilityModDestinationFile>
+    </PropertyGroup>
+    <MSBuild Projects="$(CompatibilityModProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);GenerateModPackage=true;TargetFramework=net10.0-windows;RuntimeIdentifier=win-x64;ModOutputPath=$(CompatibilityModPackageDirectory)" BuildInParallel="false" />
+    <MakeDir Directories="$(CompatibilityModDestinationDirectory)" />
+    <Copy SourceFiles="$(CompatibilityModPackagePath)" DestinationFiles="$(CompatibilityModDestinationFile)" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Copied compatibility mod to $(CompatibilityModDestinationFile)" />
+  </Target>
 </Project>

@@ -74,6 +74,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Survivalcraft.CenterServer"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.Multiplayer", "Survivalcraft.Multiplayer\Survivalcraft.Multiplayer.csproj", "{9543DBD3-1FB9-4842-8A92-3660C140E914}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Survivalcraft.CompatNet", "Survivalcraft.CompatNet\Survivalcraft.CompatNet.csproj", "{689D3633-7691-4005-DD91-F21F1DE6E0DF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -355,6 +357,18 @@ Global
 		{9543DBD3-1FB9-4842-8A92-3660C140E914}.Release|x64.Build.0 = Release|Any CPU
 		{9543DBD3-1FB9-4842-8A92-3660C140E914}.Release|x86.ActiveCfg = Release|Any CPU
 		{9543DBD3-1FB9-4842-8A92-3660C140E914}.Release|x86.Build.0 = Release|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Debug|x64.Build.0 = Debug|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Debug|x86.Build.0 = Debug|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Release|x64.ActiveCfg = Release|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Release|x64.Build.0 = Release|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Release|x86.ActiveCfg = Release|Any CPU
+		{689D3633-7691-4005-DD91-F21F1DE6E0DF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
