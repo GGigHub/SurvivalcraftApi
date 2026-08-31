@@ -23,6 +23,7 @@ public sealed class GameContext : IDisposable {
     private readonly Task receiveTask;
     private readonly UdpPortLease cmdPortLease;
     private readonly UdpPortLease gamePortLease;
+    private readonly List<(string SourcePath, string DestinationFileName)> additionalModFiles = [];
 
     private Process? gameProcess;
     private bool disposed;
@@ -57,6 +58,23 @@ public sealed class GameContext : IDisposable {
     public Exception? FatalException { get; private set; }
     public event Action<GameContext, Exception>? OnFatalError;
 
+    public void InstallMod(string sourcePath, string? destinationFileName = null) {
+        if (IsStarted) {
+            throw new InvalidOperationException($"The {RoleName} game process has already been started.");
+        }
+
+        if (!File.Exists(sourcePath)) {
+            throw new FileNotFoundException($"Mod package not found at {sourcePath}", sourcePath);
+        }
+
+        string fileName = destinationFileName ?? Path.GetFileName(sourcePath);
+        if (string.IsNullOrWhiteSpace(fileName) || fileName != Path.GetFileName(fileName)) {
+            throw new ArgumentException("The mod destination must be a file name.", nameof(destinationFileName));
+        }
+
+        additionalModFiles.Add((sourcePath, fileName));
+    }
+
     public static GameContext Create(string roleName, string? runRootDirectory = null) {
         string sourceDirectory = AppContext.BaseDirectory;
         string runId = Guid.NewGuid().ToString("N")[..8];
@@ -72,6 +90,7 @@ public sealed class GameContext : IDisposable {
         }
 
         CopyRuntimeDirectory(SourceDirectory, RunDirectory);
+        InstallAdditionalModFiles();
 
         string exePath = Path.Combine(RunDirectory, "Survivalcraft.exe");
         if (!File.Exists(exePath)) {
@@ -276,6 +295,18 @@ public sealed class GameContext : IDisposable {
         return Array.Exists(
             RuntimeDirectoryNames,
             directoryName => string.Equals(directoryName, firstSegment, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void InstallAdditionalModFiles() {
+        if (additionalModFiles.Count == 0) {
+            return;
+        }
+
+        string modsDirectory = Path.Combine(RunDirectory, "Mods");
+        Directory.CreateDirectory(modsDirectory);
+        foreach ((string sourcePath, string destinationFileName) in additionalModFiles) {
+            File.Copy(sourcePath, Path.Combine(modsDirectory, destinationFileName), true);
+        }
     }
 
     private void DeleteRunDirectory() {

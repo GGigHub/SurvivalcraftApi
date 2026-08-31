@@ -11,6 +11,7 @@ public struct CellChange {
 
 
 public class TerrainChangeCellListPacket : TerrainPacketBase {
+    public const int MaximumCellChanges = 2048;
     public override byte ID => (byte)PacketType.TerrainChangeCellList;
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public List<CellChange> cellChanges = [];
@@ -18,6 +19,9 @@ public class TerrainChangeCellListPacket : TerrainPacketBase {
     public TerrainChangeCellListPacket() { }
 
     public TerrainChangeCellListPacket(List<CellChange> changeList) {
+        if (changeList == null || changeList.Count > MaximumCellChanges) {
+            throw new ArgumentOutOfRangeException(nameof(changeList));
+        }
         cellChanges = changeList;
     }
 
@@ -30,7 +34,13 @@ public class TerrainChangeCellListPacket : TerrainPacketBase {
             return;
         }
         SubsystemTerrain subsystemTerrain = GameManager.Project.FindSubsystem<SubsystemTerrain>();
+        if (subsystemTerrain == null) {
+            return;
+        }
         foreach (CellChange cellChange in cellChanges) {
+            if (!subsystemTerrain.Terrain.IsCellValid(cellChange.X, cellChange.Y, cellChange.Z)) {
+                continue;
+            }
             int chunkX = cellChange.X >> 4;
             int chunkZ = cellChange.Z >> 4;
             TerrainChunk chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);

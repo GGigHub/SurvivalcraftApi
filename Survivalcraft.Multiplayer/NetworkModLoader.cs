@@ -141,6 +141,7 @@ namespace Survivalcraft.Multiplayer {
                 PacketManager.PackageFragment.CleanupStates();
                 NetworkDigConfirmationRuntime.Tick();
                 NetworkPlaceConfirmationRuntime.Tick();
+                TerrainChangeBatchRuntime.Flush();
                 InventoryPacketHelpers.FlushPendingSync();
             };
             NetworkManager.StopAction = () => {
@@ -159,6 +160,7 @@ namespace Survivalcraft.Multiplayer {
                 FurnitureHammerPacket.ClearState();
                 NetworkDigConfirmationRuntime.Reset();
                 NetworkPlaceConfirmationRuntime.Reset();
+                TerrainChangeBatchRuntime.Clear();
                 InventoryPacketHelpers.ClearPendingSync();
                 ChatManager.Clear();
             };
@@ -800,8 +802,8 @@ namespace Survivalcraft.Multiplayer {
     }
 
     public override void OnNetworkTerrainCellChanged(SubsystemTerrain subsystem, int x, int y, int z, int value) {
-        if (!NetworkManager.IsClientRunning)
-            NetworkManager.Queue(new TerrainChangeCellPacket(x, y, z, value));
+        if (NetworkManager.IsServerRunning)
+            TerrainChangeBatchRuntime.Enqueue(x, y, z, value);
     }
 
     public override void OnNetworkTruthTableBlockEdited(SubsystemTruthTableCircuitBlockBehavior subsystem, CellFace cell, TruthTableData data) {

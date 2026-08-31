@@ -39,6 +39,26 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
 
     public void HandleRequest(CompatNetPacket packet, PlayerData playerData) {
         switch ((CommandCompatNetOperation)packet.Operation) {
+            case CommandCompatNetOperation.ExecuteCommand: {
+                CommandExecuteRequest request = new();
+                CompatNetPayload.Read(packet.Payload, request.Serialize);
+                CommandCompatNetRuntime.TryExecuteCommand(
+                    playerData,
+                    request,
+                    out int resultCode);
+                if (packet.From != null) {
+                    CommandExecuteResult result = new() {
+                        RequestId = request.RequestId,
+                        ResultCode = resultCode
+                    };
+                    CompatNetCore.QueueBroadcast(
+                        StableAdapterId,
+                        (ushort)CommandCompatNetOperation.ExecuteResult,
+                        CompatNetPayload.Write(result.Serialize),
+                        to: packet.From);
+                }
+                break;
+            }
             case CommandCompatNetOperation.EditBlock: {
                 CommandEditRequest request = new();
                 CompatNetPayload.Read(packet.Payload, request.Serialize);
@@ -52,17 +72,6 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
                         (ushort)CommandCompatNetOperation.EditBlock,
                         CompatNetPayload.Write(sync.Serialize));
                 }
-                break;
-            }
-            case CommandCompatNetOperation.Execute: {
-                CommandExecuteRequest request = new();
-                CompatNetPayload.Read(packet.Payload, request.Serialize);
-                CommandCompatNetRuntime.ExecuteCommandRequest(
-                    playerData.ComponentPlayer,
-                    request.Position,
-                    request.Line,
-                    request.Judge,
-                    request.Source);
                 break;
             }
             case CommandCompatNetOperation.RequestElectricSnapshot:
@@ -93,6 +102,12 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
                 }
                 break;
             }
+            case CommandCompatNetOperation.PlayerState: {
+                CommandPlayerStateSync state = new();
+                CompatNetPayload.Read(packet.Payload, state.Serialize);
+                CommandCompatNetRuntime.ApplyPlayerState(state);
+                break;
+            }
         }
     }
 
@@ -107,12 +122,18 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
                 new ReaderParameters { InMemory = true, ReadSymbols = false });
 
             ModuleDefinition module = assembly.MainModule;
-            MethodReference manualBridge = ResolveBridge(
-                module,
-                nameof(CommandCompatNetRuntime.SubmitCommandBridge));
             MethodReference electricBridge = ResolveBridge(
                 module,
                 nameof(CommandCompatNetRuntime.SubmitElectricCommandBridge));
+            MethodReference commandBridge = ResolveBridge(
+                module,
+                nameof(CommandCompatNetRuntime.SubmitCommandBridge));
+            MethodReference terrainBridge = ResolveBridge(
+                module,
+                nameof(CommandCompatNetRuntime.SetCommandTerrainCell));
+            MethodReference commandTaskBridge = ResolveBridge(
+                module,
+                nameof(CommandCompatNetRuntime.RunCommandTask));
             MethodReference electricSimulationGuard = ResolveBridge(
                 module,
                 nameof(CommandCompatNetRuntime.ShouldSkipElectricSimulation));
@@ -121,19 +142,14 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
 
             TypeDefinition electricElement = FindType(assembly, "Command.CommandElectricElement");
             changed |= ReplaceSubmitCalls(electricElement, electricBridge);
+            foreach (TypeDefinition type in assembly.MainModule.Types.SelectMany(FlattenTypes).ToArray()) {
+                changed |= ReplaceSubmitCalls(type, commandBridge);
+            }
+            changed |= ReplaceCommandTerrainWrites(
+                FindType(assembly, "Command.SubsystemCommandDef"),
+                terrainBridge);
+            changed |= ReplaceCommandTaskRuns(assembly, commandTaskBridge);
             changed |= InjectElectricSimulationGuard(electricElement, electricSimulationGuard);
-            changed |= ReplaceSubmitCalls(
-                FindType(assembly, "Command.SubsystemCmdRodBlockBehavior"),
-                manualBridge);
-            changed |= ReplaceSubmitCalls(
-                FindType(assembly, "Command.ComponentHotKey"),
-                manualBridge);
-            changed |= ReplaceSubmitCalls(
-                FindType(assembly, "Command.WithdrawBlockManager"),
-                manualBridge);
-            changed |= ReplaceSubmitCalls(
-                FindType(assembly, "Game.CommandEditWidget"),
-                manualBridge);
             changed |= InjectCommandEditNotification(
                 FindType(assembly, "Game.CommandEditWidget"),
                 editBridge);
@@ -198,6 +214,61 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
                 }
             }
 
+            return changed;
+        }
+
+        private static bool ReplaceCommandTerrainWrites(
+            TypeDefinition type,
+            MethodReference bridge) {
+            if (type == null) {
+                return false;
+            }
+
+            bool changed = false;
+            foreach (MethodDefinition method in FlattenTypes(type).SelectMany(item => item.Methods)) {
+                if (!method.HasBody || method.Name != "ChangeBlockValue") {
+                    continue;
+                }
+
+                foreach (Instruction instruction in method.Body.Instructions) {
+                    if (instruction.Operand is not MethodReference reference
+                        || reference.Name != "SetCellValueFast"
+                        || reference.Parameters.Count != 4
+                        || reference.ReturnType.FullName != "System.Void") {
+                        continue;
+                    }
+                    instruction.OpCode = OpCodes.Call;
+                    instruction.Operand = bridge;
+                    changed = true;
+                }
+            }
+            return changed;
+        }
+
+        private static bool ReplaceCommandTaskRuns(
+            AssemblyDefinition assembly,
+            MethodReference bridge) {
+            bool changed = false;
+            foreach (TypeDefinition type in assembly.MainModule.Types.SelectMany(FlattenTypes).ToArray()) {
+                foreach (MethodDefinition method in type.Methods) {
+                    if (!method.HasBody) {
+                        continue;
+                    }
+                    foreach (Instruction instruction in method.Body.Instructions) {
+                        if (instruction.Operand is not MethodReference reference
+                            || reference.Name != "Run"
+                            || reference.DeclaringType.FullName != "System.Threading.Tasks.Task"
+                            || reference.Parameters.Count != 1
+                            || reference.Parameters[0].ParameterType.FullName != "System.Action"
+                            || reference.ReturnType.FullName != "System.Threading.Tasks.Task") {
+                            continue;
+                        }
+                        instruction.OpCode = OpCodes.Call;
+                        instruction.Operand = bridge;
+                        changed = true;
+                    }
+                }
+            }
             return changed;
         }
 

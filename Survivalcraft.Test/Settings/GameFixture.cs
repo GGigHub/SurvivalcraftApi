@@ -57,11 +57,15 @@ public class GameFixture : IAsyncLifetime, IDisposable {
 
     public GameContext CreateContext(string roleName) {
         GameContext context = GameContext.Create(roleName, runRootDirectory);
+        ConfigureContext(context);
         context.OnFatalError += (ctx, ex) => {
             ErrorCts.Cancel();
         };
         contexts.Add(context);
         return context;
+    }
+
+    protected virtual void ConfigureContext(GameContext context) {
     }
 
     public void StartSpectator() {

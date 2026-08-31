@@ -40,9 +40,14 @@ public sealed class CompatNetModLoader : ModLoader {
         ModsManager.RegisterHook("OnProjectileAdded", this);
         ModsManager.RegisterHook("OnNetworkPlayerStateChanged", this);
         ModsManager.RegisterHook("OnIUpdateableUpdate", this);
+        ModsManager.RegisterHook("OnShowDialog", this);
         foreach (ICompatNetAdapter adapter in BuiltInAdapters) {
             CompatNetAdapterRegistry.Register(adapter);
         }
+    }
+
+    public override void OnShowDialog(ref ContainerWidget parentWidget, ref Dialog dialog) {
+        NeorxnaCompatNetRuntime.FixRecipeDialogParent(ref parentWidget, dialog);
     }
 
     public override void OnPreloadAssemblies(IList<ModAssemblyImage> assemblies) {
@@ -112,6 +117,7 @@ public sealed class CompatNetModLoader : ModLoader {
             return;
         }
 
+        CommandCompatNetRuntime.ResetPlayerStateSequences();
         ComponentPlayer player = GameManager.Project?
             .FindSubsystem<SubsystemPlayers>()?
             .MainPlayer;

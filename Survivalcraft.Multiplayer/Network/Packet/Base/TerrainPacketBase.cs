@@ -93,6 +93,9 @@ public abstract class TerrainPacketBase : Packet {
     public static void SerializeCellChangeList(PacketSerializer archive, ref List<CellChange> cellChanges) {
         int count = archive.IsWriting ? cellChanges.Count : 0;
         archive.Value(ref count);
+        if (count < 0 || count > TerrainChangeCellListPacket.MaximumCellChanges) {
+            throw new InvalidDataException($"Invalid terrain cell change count: {count}");
+        }
         if (archive.IsReading) {
             cellChanges = [];
             for (int i = 0; i < count; i++) {
