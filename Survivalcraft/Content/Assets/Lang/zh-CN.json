@@ -4640,5 +4640,9 @@
         "InternalNetworkUrlForbidden": "禁止访问内网/本机地址: {0}"
       }
     }
+  },
+  "ScbbsPlusHttpDownloader": {
+    "ReadCacheFileSizeFailed": "[ScbbsPlus] 读取缓存文件大小失败: {0}, {1}",
+    "GetCacheFileSizeFailed": "[ScbbsPlus] 获取缓存文件大小失败: {0}, {1}"
   }
 }

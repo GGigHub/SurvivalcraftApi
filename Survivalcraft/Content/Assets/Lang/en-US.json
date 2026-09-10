@@ -4630,5 +4630,9 @@
         "InternalNetworkUrlForbidden": "Access to internal/local network addresses is forbidden: {0}"
       }
     }
+  },
+  "ScbbsPlusHttpDownloader": {
+    "ReadCacheFileSizeFailed": "[ScbbsPlus] Failed to read the cached file size: {0}, {1}",
+    "GetCacheFileSizeFailed": "[ScbbsPlus] Failed to get the cached file size: {0}, {1}"
   }
 }
