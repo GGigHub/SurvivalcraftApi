@@ -4631,5 +4631,14 @@
     "ScanJsonTempFilesFailed": "[ScbbsPlus] 扫描 JSON 残留临时文件失败 root={0} error={1}",
     "RestoredJsonTempFile": "[ScbbsPlus] 已从残留 JSON 临时文件恢复: {0} → {1}",
     "RestoreJsonTempFileFailed": "[ScbbsPlus] 从残留 JSON 临时文件恢复失败: {0}, {1}"
+  },
+  "ScbbsPlusCommunityScreen": {
+    "Community": {
+      "Posts": {
+        "DownloadExceedsSizeLimit": "下载内容超过大小上限（{0} 字节）。",
+        "LocalHostUrlForbidden": "禁止访问本地主机地址: {0}",
+        "InternalNetworkUrlForbidden": "禁止访问内网/本机地址: {0}"
+      }
+    }
   }
 }

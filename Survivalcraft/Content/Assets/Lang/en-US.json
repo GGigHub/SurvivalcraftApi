@@ -4621,5 +4621,14 @@
     "ScanJsonTempFilesFailed": "[ScbbsPlus] Failed to scan residual JSON temporary files root={0} error={1}",
     "RestoredJsonTempFile": "[ScbbsPlus] Recovered from a residual JSON temporary file: {0} → {1}",
     "RestoreJsonTempFileFailed": "[ScbbsPlus] Failed to recover from a residual JSON temporary file: {0}, {1}"
+  },
+  "ScbbsPlusCommunityScreen": {
+    "Community": {
+      "Posts": {
+        "DownloadExceedsSizeLimit": "Download content exceeds the size limit ({0} bytes).",
+        "LocalHostUrlForbidden": "Access to local host address is forbidden: {0}",
+        "InternalNetworkUrlForbidden": "Access to internal/local network addresses is forbidden: {0}"
+      }
+    }
   }
 }
