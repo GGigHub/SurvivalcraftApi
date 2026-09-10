@@ -4634,5 +4634,9 @@
   "ScbbsPlusHttpDownloader": {
     "ReadCacheFileSizeFailed": "[ScbbsPlus] Failed to read the cached file size: {0}, {1}",
     "GetCacheFileSizeFailed": "[ScbbsPlus] Failed to get the cached file size: {0}, {1}"
+  },
+  "ScbbsPlusCredentialStore": {
+    "DecryptCredentialFileFailed": "[ScbbsPlus] Failed to decrypt the credential file, invalidating it: {0}",
+    "DeleteCredentialFileFailed": "[ScbbsPlus] Failed to delete the credential file: {0}, {1}"
   }
 }

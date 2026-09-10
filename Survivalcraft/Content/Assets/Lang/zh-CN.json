@@ -4644,5 +4644,9 @@
   "ScbbsPlusHttpDownloader": {
     "ReadCacheFileSizeFailed": "[ScbbsPlus] 读取缓存文件大小失败: {0}, {1}",
     "GetCacheFileSizeFailed": "[ScbbsPlus] 获取缓存文件大小失败: {0}, {1}"
+  },
+  "ScbbsPlusCredentialStore": {
+    "DecryptCredentialFileFailed": "[ScbbsPlus] 解密凭据文件失败，作废该文件: {0}",
+    "DeleteCredentialFileFailed": "[ScbbsPlus] 删除凭据文件失败: {0}, {1}"
   }
 }
