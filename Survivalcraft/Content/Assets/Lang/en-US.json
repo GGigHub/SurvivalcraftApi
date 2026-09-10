@@ -4614,5 +4614,12 @@
       "372": "Name of .NET class used to create component",
       "373": "No effect. Only for replacing a component to this."
     }
+  },
+  "ScbbsPlusJsonFileStore": {
+    "ReadJsonFileFailedUsingDefault": "[ScbbsPlus] Failed to read the JSON file; falling back to the default: {0}, error={1}",
+    "CleanJsonTempFileFailed": "[ScbbsPlus] Failed to clean up the JSON temporary file: {0}, {1}",
+    "ScanJsonTempFilesFailed": "[ScbbsPlus] Failed to scan residual JSON temporary files root={0} error={1}",
+    "RestoredJsonTempFile": "[ScbbsPlus] Recovered from a residual JSON temporary file: {0} → {1}",
+    "RestoreJsonTempFileFailed": "[ScbbsPlus] Failed to recover from a residual JSON temporary file: {0}, {1}"
   }
 }

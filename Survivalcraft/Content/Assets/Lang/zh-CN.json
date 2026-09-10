@@ -4624,5 +4624,12 @@
       "372": "用于创建组件的 .NET 类的名称",
       "373": "无作用，仅用于替换一个组件为空组件"
     }
+  },
+  "ScbbsPlusJsonFileStore": {
+    "ReadJsonFileFailedUsingDefault": "[ScbbsPlus] 读取 JSON 文件失败，回退默认值: {0}, error={1}",
+    "CleanJsonTempFileFailed": "[ScbbsPlus] 清理 JSON 临时文件失败: {0}, {1}",
+    "ScanJsonTempFilesFailed": "[ScbbsPlus] 扫描 JSON 残留临时文件失败 root={0} error={1}",
+    "RestoredJsonTempFile": "[ScbbsPlus] 已从残留 JSON 临时文件恢复: {0} → {1}",
+    "RestoreJsonTempFileFailed": "[ScbbsPlus] 从残留 JSON 临时文件恢复失败: {0}, {1}"
   }
 }
