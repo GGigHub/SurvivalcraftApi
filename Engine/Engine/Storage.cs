@@ -504,6 +504,61 @@ namespace Engine {
             return sanitized.ToString();
         }
 
+        private static readonly string[] s_windowsReservedSegmentNames = [
+            "CON", "PRN", "AUX", "NUL",
+            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+        ];
+
+        private const int MaxFileNameSegmentLength = 200;
+
+        /// <summary>
+        /// 段级文件名清洗：非法字符与引号/分隔符替换为 '_'、剥离结尾的空格与点
+        /// （Win32 会静默剥离，先行处理保证记录名与磁盘名一致）、Windows 保留设备名
+        /// 加 '_' 前缀、超长截断（不产出孤立代理项，截断后重剥尾点空格）。
+        /// 与 <see cref="SanitizeFileName"/> 不同：后者逐字符替换为给定 replacement，
+        /// 不处理保留名与长度。空输入返回 fallback。
+        /// </summary>
+        public static string SanitizeFileNameSegment(string name, string fallback = "resource") {
+            string safeName = string.IsNullOrWhiteSpace(name) ? fallback : name.Trim();
+            foreach (char c in InvalidFileNameChars) {
+                safeName = safeName.Replace(c, '_');
+            }
+            safeName = safeName.Replace('"', '_').Replace('\\', '_').Replace('/', '_');
+            safeName = safeName.TrimEnd(' ', '.');
+            if (string.IsNullOrWhiteSpace(safeName)) {
+                safeName = fallback;
+            }
+            if (IsWindowsReservedFileName(safeName)) {
+                safeName = "_" + safeName;
+            }
+            if (safeName.Length > MaxFileNameSegmentLength) {
+                safeName = safeName[..MaxFileNameSegmentLength];
+                if (safeName.Length > 0 && char.IsHighSurrogate(safeName[^1])) {
+                    safeName = safeName[..^1];
+                }
+                safeName = safeName.TrimEnd(' ', '.');
+                if (string.IsNullOrWhiteSpace(safeName)) {
+                    safeName = fallback;
+                }
+            }
+            return safeName;
+        }
+
+        /// <summary>
+        /// Windows 保留设备名判定（CON/PRN/AUX/NUL/COM1-9/LPT1-9）：
+        /// 按第一个点号前的茎名判断，与 Win32 行为一致。
+        /// </summary>
+        private static bool IsWindowsReservedFileName(string name) {
+            string stem = (name ?? string.Empty).Split('.')[0];
+            foreach (string reserved in s_windowsReservedSegmentNames) {
+                if (string.Equals(stem, reserved, StringComparison.OrdinalIgnoreCase)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         /*
          * <Summary>
          *  使用外部应用打开文件
