@@ -7,6 +7,7 @@ namespace Game {
         CharacterSkin = 4,
         FurniturePack = 5,
         Mod = 6,
+        [Obsolete]
         ModList = 7
     }
 }
