@@ -1,17 +1,18 @@
+using System;
 using System.Globalization;
-using System.Xml.Linq;
 using Engine;
 
 namespace Game
 {
     /// <summary>
-    /// 不应暴露在原生设置页面中的模组流程状态，随游戏 ModSettings.xml 保存。
-    /// setter 只写内存，落盘交给游戏本体的自动保存（Window.Deactivated/重启前的
-    /// ClosedHandler → SettingsManager.SaveSettings；游戏内定期存档；模组管理重启）。
+    /// 不应暴露在原生设置页面中的模组流程状态，随 data:ScbbsPlus/state.json 以 JSON 持久化
+    /// （JsonFileStore 临时文件原子替换写）。读取走 EnsureLoaded 惰性门闩（首次访问任意
+    /// 公开成员时读入）；写方法改完内存后同步落盘（Persist）——变更低频（用户改筛选/
+    /// 重启返回），同步写盘可接受。旧 ModSettings.xml 内的 ScbbsPlusState 元素不再迁移，
+    /// 升级后首次运行为全默认。
     /// </summary>
     internal static class ModSettingsState
     {
-        private const string ElementName = "ScbbsPlusState";
         private static bool s_loaded;
         private static bool s_firstDownloadSelfReviewPromptShown;
         private static string s_restartReturnScreen;
@@ -22,91 +23,83 @@ namespace Game
         private static int s_communitySection = 1;
         private static ScbbsPlusCommunityFileType s_myPublishedFileType = ScbbsPlusCommunityFileType.Mod;
 
-        public static bool FirstDownloadSelfReviewPromptShown => s_firstDownloadSelfReviewPromptShown;
-        public static ScbbsPlusCommunityFileType LocalFileType => s_localFileType;
-        public static ScbbsPlusCommunityFileType CommunityFileType => s_communityFileType;
-        public static CommunityOrderType CommunityOrderType => s_communityOrderType;
-        public static bool CommunityOnlyCurrentVersion => s_communityOnlyCurrentVersion;
-        public static int CommunitySection => s_communitySection;
-        public static ScbbsPlusCommunityFileType MyPublishedFileType => s_myPublishedFileType;
-
-        public static void Load(XElement modElement)
+        public static bool FirstDownloadSelfReviewPromptShown
         {
-            if (s_loaded)
-            {
-                return;
-            }
-
-            s_loaded = true;
-            XElement state = modElement?.Element(ElementName);
-            if (state == null)
-            {
-                return;
-            }
-
-            s_firstDownloadSelfReviewPromptShown = ReadBool(state, "FirstDownloadSelfReviewPromptShown", false);
-            s_localFileType = CommunityFileTypes.FromSettingValue(ReadInt(state, "LocalFileType", 5));
-            s_communityFileType = CommunityFileTypes.FromSettingValue(ReadInt(state, "CommunityFileType", 5));
-            // 旧版本存字符串 "1"-"4"，ReadInt 的 int.TryParse 直接兼容
-            s_communityOrderType = CommunityFileTypes.OrderFromSettingValue(ReadInt(state, "CommunityOrderType", 4));
-            s_communityOnlyCurrentVersion = ReadBool(state, "CommunityOnlyCurrentVersion", true);
-            s_communitySection = NormalizeSection(ReadInt(state, "CommunitySection", 1));
-            s_myPublishedFileType = CommunityFileTypes.FromSettingValue(ReadInt(state, "MyPublishedFileType", 5));
-
-            string screen = (string)state.Attribute("RestartReturnScreen");
-            if (ScreenNames.IsKnown(screen))
-            {
-                s_restartReturnScreen = screen;
-            }
+            get { EnsureLoaded(); return s_firstDownloadSelfReviewPromptShown; }
         }
 
-        public static void Save(XElement modElement)
+        public static ScbbsPlusCommunityFileType LocalFileType
         {
-            XElement state = new(ElementName);
-            state.SetAttributeValue("FirstDownloadSelfReviewPromptShown", s_firstDownloadSelfReviewPromptShown);
-            state.SetAttributeValue("LocalFileType", (int)s_localFileType);
-            state.SetAttributeValue("CommunityFileType", (int)s_communityFileType);
-            state.SetAttributeValue("CommunityOrderType", (int)s_communityOrderType);
-            state.SetAttributeValue("CommunityOnlyCurrentVersion", s_communityOnlyCurrentVersion);
-            state.SetAttributeValue("CommunitySection", s_communitySection);
-            state.SetAttributeValue("MyPublishedFileType", (int)s_myPublishedFileType);
-            if (s_restartReturnScreen != null)
-            {
-                state.SetAttributeValue("RestartReturnScreen", s_restartReturnScreen);
-            }
-            modElement.Add(state);
+            get { EnsureLoaded(); return s_localFileType; }
+        }
+
+        public static ScbbsPlusCommunityFileType CommunityFileType
+        {
+            get { EnsureLoaded(); return s_communityFileType; }
+        }
+
+        public static CommunityOrderType CommunityOrderType
+        {
+            get { EnsureLoaded(); return s_communityOrderType; }
+        }
+
+        public static bool CommunityOnlyCurrentVersion
+        {
+            get { EnsureLoaded(); return s_communityOnlyCurrentVersion; }
+        }
+
+        public static int CommunitySection
+        {
+            get { EnsureLoaded(); return s_communitySection; }
+        }
+
+        public static ScbbsPlusCommunityFileType MyPublishedFileType
+        {
+            get { EnsureLoaded(); return s_myPublishedFileType; }
         }
 
         public static void SetFirstDownloadSelfReviewPromptShown()
         {
+            EnsureLoaded();
             s_firstDownloadSelfReviewPromptShown = true;
+            Persist();
         }
 
-        public static bool HasPendingRestartReturnTarget() => s_restartReturnScreen != null;
+        public static bool HasPendingRestartReturnTarget()
+        {
+            EnsureLoaded();
+            return s_restartReturnScreen != null;
+        }
 
         public static bool TryGetRestartReturnTarget(out string screenName)
         {
+            EnsureLoaded();
             screenName = s_restartReturnScreen;
             return ScreenNames.IsKnown(screenName);
         }
 
         public static void SetRestartReturnTarget(string screenName)
         {
+            EnsureLoaded();
             if (!ScreenNames.IsKnown(screenName))
             {
                 Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModSettingsState", "RejectInvalidRestartTarget"), screenName));
                 return;
             }
             s_restartReturnScreen = screenName;
+            Persist();
         }
 
         public static void ClearRestartReturnTarget()
         {
+            EnsureLoaded();
             s_restartReturnScreen = null;
+            Persist();
         }
 
         public static bool TryGetScreenFileType(string screenName, out ScbbsPlusCommunityFileType fileType)
         {
+            EnsureLoaded();
             fileType = screenName switch
             {
                 ScreenNames.Local => s_localFileType,
@@ -119,6 +112,7 @@ namespace Game
 
         public static void SetScreenFileType(string screenName, ScbbsPlusCommunityFileType fileType)
         {
+            EnsureLoaded();
             switch (screenName)
             {
                 case ScreenNames.Local:
@@ -133,6 +127,7 @@ namespace Game
                 default:
                     return;
             }
+            Persist();
         }
 
         public static void SetCommunityDefaults(
@@ -141,20 +136,77 @@ namespace Game
             bool onlyCurrentVersion,
             int section)
         {
+            EnsureLoaded();
             s_communityFileType = fileType;
             s_communityOrderType = orderType;
             s_communityOnlyCurrentVersion = onlyCurrentVersion;
             s_communitySection = NormalizeSection(section);
+            Persist();
         }
 
-        private static int ReadInt(XElement element, string name, int fallback)
+        // 读失败时 JsonFileStore.Read 内部已记 Log.Warning 并返回 null，此处按全默认处理。
+        private static void EnsureLoaded()
         {
-            return int.TryParse((string)element.Attribute(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out int value) ? value : fallback;
+            if (s_loaded)
+            {
+                return;
+            }
+
+            s_loaded = true;
+            StateData state = JsonFileStore.Read<StateData>(StoragePaths.StateFile);
+            if (state == null)
+            {
+                return;
+            }
+
+            s_firstDownloadSelfReviewPromptShown = state.FirstDownloadSelfReviewPromptShown;
+            s_localFileType = CommunityFileTypes.FromSettingValue(state.LocalFileType);
+            s_communityFileType = CommunityFileTypes.FromSettingValue(state.CommunityFileType);
+            s_communityOrderType = CommunityFileTypes.OrderFromSettingValue(state.CommunityOrderType);
+            s_communityOnlyCurrentVersion = state.CommunityOnlyCurrentVersion;
+            s_communitySection = NormalizeSection(state.CommunitySection);
+            s_myPublishedFileType = CommunityFileTypes.FromSettingValue(state.MyPublishedFileType);
+
+            if (ScreenNames.IsKnown(state.RestartReturnScreen))
+            {
+                s_restartReturnScreen = state.RestartReturnScreen;
+            }
         }
 
-        private static bool ReadBool(XElement element, string name, bool fallback)
+        private static void Persist()
         {
-            return bool.TryParse((string)element.Attribute(name), out bool value) ? value : fallback;
+            try
+            {
+                JsonFileStore.Write(StoragePaths.StateFile, new StateData
+                {
+                    FirstDownloadSelfReviewPromptShown = s_firstDownloadSelfReviewPromptShown,
+                    LocalFileType = (int)s_localFileType,
+                    CommunityFileType = (int)s_communityFileType,
+                    CommunityOrderType = (int)s_communityOrderType,
+                    CommunityOnlyCurrentVersion = s_communityOnlyCurrentVersion,
+                    CommunitySection = s_communitySection,
+                    MyPublishedFileType = (int)s_myPublishedFileType,
+                    RestartReturnScreen = s_restartReturnScreen
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[ScbbsPlus] {ex.Message}");
+            }
+        }
+
+        // 数值初值对应旧 XElement.ReadInt 的回退值（文件类型 5、排序 4、节 1）：
+        // JSON 缺属性时退化语义与旧 XML 缺属性一致。
+        private sealed class StateData
+        {
+            public bool FirstDownloadSelfReviewPromptShown { get; set; }
+            public int LocalFileType { get; set; } = 5;
+            public int CommunityFileType { get; set; } = 5;
+            public int CommunityOrderType { get; set; } = 4;
+            public bool CommunityOnlyCurrentVersion { get; set; } = true;
+            public int CommunitySection { get; set; } = 1;
+            public int MyPublishedFileType { get; set; } = 5;
+            public string RestartReturnScreen { get; set; }
         }
 
         private static int NormalizeSection(int section) => section switch

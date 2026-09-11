@@ -10,6 +10,7 @@ namespace Game
         public static string RootDirectory { get; } = "data:ScbbsPlus";
 
         public static string AuthFile { get; } = Storage.CombinePaths(RootDirectory, "auth.bin");
+        public static string StateFile { get; } = Storage.CombinePaths(RootDirectory, "state.json");
         public static string LocalModReviewsFile { get; } = Storage.CombinePaths(RootDirectory, "local-mod-reviews.json");
         public static string LocalModPendingActionsFile { get; } = Storage.CombinePaths(RootDirectory, "local-mod-pending-actions.json");
         public static string LocalModpackStateFile { get; } = Storage.CombinePaths(RootDirectory, "local-integration-pack-state.json");
