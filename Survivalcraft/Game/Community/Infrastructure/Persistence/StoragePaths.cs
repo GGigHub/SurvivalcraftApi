@@ -16,6 +16,7 @@ namespace Game
         public static string LocalModpackStateFile { get; } = Storage.CombinePaths(RootDirectory, "local-integration-pack-state.json");
         public static string PlayedTimeFile { get; } = Storage.CombinePaths(RootDirectory, "playedtime.json");
         public static string DownloadQueueFile { get; } = Storage.CombinePaths(RootDirectory, "download-queue.json");
+        public static string AuthDirectory { get; } = Storage.CombinePaths(RootDirectory, "auth");
         public static string DownloadCacheDirectory { get; } = Storage.CombinePaths(RootDirectory, "download-cache");
         public static string ModpackBackupsDirectory { get; } = Storage.CombinePaths(RootDirectory, "integration-pack-backups");
     }

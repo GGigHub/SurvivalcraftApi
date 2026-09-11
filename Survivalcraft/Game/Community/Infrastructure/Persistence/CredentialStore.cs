@@ -11,12 +11,14 @@ namespace Game
     /// <summary>
     /// 负责凭据文件的加密、解密和旧格式迁移。
     ///
-    /// 当前格式（v3，魔数 SCBPAUTH3）：
+    /// 当前格式（v4）：每服一文件 data:ScbbsPlus/auth/&lt;sha256(归一化地址)&gt;.bin，魔数 SCBPAUTH4，
+    /// payload 为 JSON {apiBaseUrl, login}（自描述）；加密方式同 v3：
     /// - Windows：魔数 + DPAPI（CurrentUser 作用域，带应用专属 entropy）密文。
     /// - 其他平台：魔数 + salt(16) + nonce(12) + AES-GCM 密文 + tag(16)，
     ///   密钥由 PBKDF2-SHA256(600k) 派生。
     ///
-    /// 仍可读取的旧格式（用于一次性迁移，读取成功后由调用方重新保存为 v3）：
+    /// 仍可读取的旧格式（仅 legacy auth.bin 迁移路径）：SCBPAUTH3/SCBPAUTH2/无魔数 AES-CBC：
+    /// - 魔数 SCBPAUTH3：v3 单文件（Windows DPAPI / 非 Windows AES-GCM）。
     /// - 魔数 SCBPAUTH2：旧版 Windows DPAPI（无 entropy）。
     /// - 无魔数：旧版非 Windows AES-CBC（MachineName + 固定 salt + 1 万次 PBKDF2）。
     ///
@@ -25,9 +27,12 @@ namespace Game
     /// </summary>
     internal static class CredentialStore
     {
-        private static readonly byte[] s_authFileMagic = Encoding.ASCII.GetBytes("SCBPAUTH3");
+        private static readonly byte[] s_fileMagic = Encoding.ASCII.GetBytes("SCBPAUTH4");
+        private static readonly byte[] s_dpapiEntropy = Encoding.UTF8.GetBytes("ScbbsPlus.CredentialStore.v4");
+        // legacy 单文件（auth.bin）：v3 及更早格式，仅供 LoadLegacy 一次性迁移读取。
+        private static readonly byte[] s_legacyFileMagic = Encoding.ASCII.GetBytes("SCBPAUTH3");
         private static readonly byte[] s_legacyDpapiMagic = Encoding.ASCII.GetBytes("SCBPAUTH2");
-        private static readonly byte[] s_dpapiEntropy = Encoding.UTF8.GetBytes("ScbbsPlus.CredentialStore.v3");
+        private static readonly byte[] s_legacyDpapiEntropy = Encoding.UTF8.GetBytes("ScbbsPlus.CredentialStore.v3");
 
         private const int s_pbkdf2Iterations = 600_000;
         private const int s_saltSize = 16;
@@ -67,7 +72,8 @@ namespace Game
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr LocalFree(IntPtr memory);
 
-        public static void Save(string path, string token, UserData user)
+        // 旧 path-based 写入：仅供 AuthenticationSessionStore 暂留旧 API 与 legacy 迁移使用，Task 3 删除。
+        public static void SaveLegacyFile(string path, string token, UserData user)
         {
             string directory = Storage.GetDirectoryName(path);
             if (!string.IsNullOrWhiteSpace(directory))
@@ -79,7 +85,7 @@ namespace Game
                 Token = token,
                 User = user
             });
-            byte[] encrypted = EncryptString(json);
+            byte[] encrypted = EncryptLegacyString(json);
             AtomicWriteAllBytes(path, encrypted);
         }
 
@@ -124,13 +130,114 @@ namespace Game
             return JsonSerializer.Deserialize<LoginData>(json);
         }
 
-        public static void Delete(string path)
+        // 旧 path-based 删除：仅供 AuthenticationSessionStore 暂留旧 API 与 legacy 迁移使用，Task 3 删除。
+        public static void DeleteLegacyFile(string path)
         {
             // 登出须同时清理备份与临时文件：Load 在活动文件缺失时会回退 .bak，
             // 只删活动文件会让旧账号凭据在下次启动时复活。
             TryDeleteFile(path);
             TryDeleteFile(path + ".bak");
             TryDeleteFile(path + ".tmp");
+        }
+
+        // ===== 每服一文件（v4）=====
+
+        private static string GetCredentialPath(string apiBaseUrl)
+        {
+            string normalized = ApiUrls.NormalizeBaseUrl(apiBaseUrl);
+            byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
+            var hex = new System.Text.StringBuilder(hash.Length * 2);
+            foreach (byte b in hash)
+            {
+                hex.Append(b.ToString("x2", CultureInfo.InvariantCulture));
+            }
+            return Storage.CombinePaths(StoragePaths.AuthDirectory, hex + ".bin");
+        }
+
+        public static void Save(string apiBaseUrl, string token, UserData user)
+        {
+            string path = GetCredentialPath(apiBaseUrl);
+            string directory = Storage.GetDirectoryName(path);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Storage.CreateDirectory(directory);
+            }
+            string json = JsonSerializer.Serialize(new StoredCredential
+            {
+                ApiBaseUrl = ApiUrls.NormalizeBaseUrl(apiBaseUrl),
+                Login = new LoginData { Token = token, User = user }
+            });
+            byte[] encrypted = EncryptString(json);
+            AtomicWriteAllBytes(path, encrypted);
+        }
+
+        public static LoginData Load(string apiBaseUrl)
+        {
+            string path = GetCredentialPath(apiBaseUrl);
+            if (!Storage.FileExists(path))
+            {
+                // 活动文件缺失（如原子写硬崩溃后仅剩 .bak）时回退读取备份。
+                string backupPath = path + ".bak";
+                if (!Storage.FileExists(backupPath))
+                {
+                    return null;
+                }
+                path = backupPath;
+            }
+
+            byte[] encrypted = Storage.ReadAllBytes(path);
+            string json;
+            try
+            {
+                json = DecryptCurrentFileBytes(encrypted);
+            }
+            catch (CryptographicException ex)
+            {
+                // 本平台损坏（截断/坏 GCM tag/坏 DPAPI blob）：作废文件，用户干净重登后由 Save 重建。
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCredentialStore", "DecryptCredentialFileFailed"), ex.Message));
+                TryDeleteFile(path);
+                TryDeleteFile(path + ".bak");
+                return null;
+            }
+            if (json == null)
+            {
+                TryDeleteFile(path);
+                TryDeleteFile(path + ".bak");
+                return null;
+            }
+            StoredCredential stored = JsonSerializer.Deserialize<StoredCredential>(json);
+            if (stored?.Login == null)
+            {
+                return null;
+            }
+            if (!string.Equals(stored.ApiBaseUrl, ApiUrls.NormalizeBaseUrl(apiBaseUrl), StringComparison.OrdinalIgnoreCase))
+            {
+                // 文件名与 payload 归属不一致（正常不可能，防哈希碰撞/手拷文件）：按未找到处理。
+                Log.Warning($"[ScbbsPlus] Credential file server mismatch: {stored.ApiBaseUrl} != {ApiUrls.NormalizeBaseUrl(apiBaseUrl)}.");
+                return null;
+            }
+            return stored.Login;
+        }
+
+        public static void Delete(string apiBaseUrl)
+        {
+            // 登出须同时清理备份与临时文件：Load 在活动文件缺失时会回退 .bak。
+            string path = GetCredentialPath(apiBaseUrl);
+            TryDeleteFile(path);
+            TryDeleteFile(path + ".bak");
+            TryDeleteFile(path + ".tmp");
+        }
+
+        // ===== legacy 单文件 auth.bin（v3/v2/AES-CBC）只读迁移 =====
+
+        public static LoginData LoadLegacy(out bool legacyFormat)
+        {
+            return Load(StoragePaths.AuthFile, out legacyFormat);
+        }
+
+        public static void DeleteLegacy()
+        {
+            DeleteLegacyFile(StoragePaths.AuthFile);
         }
 
         private static void TryDeleteFile(string path)
@@ -212,6 +319,28 @@ namespace Game
             }
         }
 
+        private static byte[] EncryptLegacyString(string plainText)
+        {
+            byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
+            try
+            {
+                if (OperatingSystem.IsWindows())
+                {
+                    byte[] protectedBytes = ProtectWithDpapi(plainBytes, s_legacyDpapiEntropy);
+                    byte[] result = new byte[s_legacyFileMagic.Length + protectedBytes.Length];
+                    Buffer.BlockCopy(s_legacyFileMagic, 0, result, 0, s_legacyFileMagic.Length);
+                    Buffer.BlockCopy(protectedBytes, 0, result, s_legacyFileMagic.Length, protectedBytes.Length);
+                    return result;
+                }
+
+                return EncryptWithAesGcm(plainBytes);
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(plainBytes);
+            }
+        }
+
         private static byte[] EncryptString(string plainText)
         {
             byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
@@ -220,13 +349,35 @@ namespace Game
                 if (OperatingSystem.IsWindows())
                 {
                     byte[] protectedBytes = ProtectWithDpapi(plainBytes, s_dpapiEntropy);
-                    byte[] result = new byte[s_authFileMagic.Length + protectedBytes.Length];
-                    Buffer.BlockCopy(s_authFileMagic, 0, result, 0, s_authFileMagic.Length);
-                    Buffer.BlockCopy(protectedBytes, 0, result, s_authFileMagic.Length, protectedBytes.Length);
+                    byte[] result = new byte[s_fileMagic.Length + protectedBytes.Length];
+                    Buffer.BlockCopy(s_fileMagic, 0, result, 0, s_fileMagic.Length);
+                    Buffer.BlockCopy(protectedBytes, 0, result, s_fileMagic.Length, protectedBytes.Length);
                     return result;
                 }
 
                 return EncryptWithAesGcm(plainBytes);
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(plainBytes);
+            }
+        }
+
+        private static string DecryptCurrentFileBytes(byte[] data)
+        {
+            if (!StartsWithMagic(data, s_fileMagic))
+            {
+                // 每服文件只认 v4；v3 内容只可能出现在 legacy auth.bin（LoadLegacy 路径）。
+                throw new CryptographicException(LanguageControl.Get("ScbbsPlusLoginDialog", "CredentialFileFormatInvalid"));
+            }
+            byte[] body = new byte[data.Length - s_fileMagic.Length];
+            Buffer.BlockCopy(data, s_fileMagic.Length, body, 0, body.Length);
+            byte[] plainBytes = OperatingSystem.IsWindows()
+                ? UnprotectWithDpapi(body, s_dpapiEntropy)
+                : DecryptWithAesGcm(body);
+            try
+            {
+                return Encoding.UTF8.GetString(plainBytes);
             }
             finally
             {
@@ -247,10 +398,10 @@ namespace Game
                 using AesGcm aes = new(key, s_tagSize);
                 aes.Encrypt(nonce, plainBytes, ciphertext, tag);
                 byte[] result = new byte[
-                    s_authFileMagic.Length + salt.Length + nonce.Length + ciphertext.Length + tag.Length];
+                    s_fileMagic.Length + salt.Length + nonce.Length + ciphertext.Length + tag.Length];
                 int offset = 0;
-                Buffer.BlockCopy(s_authFileMagic, 0, result, offset, s_authFileMagic.Length);
-                offset += s_authFileMagic.Length;
+                Buffer.BlockCopy(s_fileMagic, 0, result, offset, s_fileMagic.Length);
+                offset += s_fileMagic.Length;
                 Buffer.BlockCopy(salt, 0, result, offset, salt.Length);
                 offset += salt.Length;
                 Buffer.BlockCopy(nonce, 0, result, offset, nonce.Length);
@@ -268,13 +419,13 @@ namespace Game
 
         private static string DecryptBytes(byte[] data, out bool legacyFormat)
         {
-            if (StartsWithMagic(data, s_authFileMagic))
+            if (StartsWithMagic(data, s_legacyFileMagic))
             {
                 legacyFormat = false;
-                byte[] body = new byte[data.Length - s_authFileMagic.Length];
-                Buffer.BlockCopy(data, s_authFileMagic.Length, body, 0, body.Length);
+                byte[] body = new byte[data.Length - s_legacyFileMagic.Length];
+                Buffer.BlockCopy(data, s_legacyFileMagic.Length, body, 0, body.Length);
                 byte[] plainBytes = OperatingSystem.IsWindows()
-                    ? UnprotectWithDpapi(body, s_dpapiEntropy)
+                    ? UnprotectWithDpapi(body, s_legacyDpapiEntropy)
                     : DecryptWithAesGcm(body);
                 try
                 {

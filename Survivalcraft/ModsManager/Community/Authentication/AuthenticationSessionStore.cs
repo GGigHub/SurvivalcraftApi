@@ -15,7 +15,7 @@ namespace Game
         {
             try
             {
-                CredentialStore.Save(m_path, token, user);
+                CredentialStore.SaveLegacyFile(m_path, token, user);
                 return null;
             }
             catch (Exception ex)
@@ -45,7 +45,56 @@ namespace Game
         {
             try
             {
-                CredentialStore.Delete(m_path);
+                CredentialStore.DeleteLegacyFile(m_path);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return ex;
+            }
+        }
+
+        public Exception TrySaveForServer(string apiBaseUrl, string token, UserData user)
+        {
+            try
+            {
+                CredentialStore.Save(apiBaseUrl, token, user);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return ex;
+            }
+        }
+
+        public LoginData LoadForServer(string apiBaseUrl)
+        {
+            return CredentialStore.Load(apiBaseUrl);
+        }
+
+        public Exception TryDeleteForServer(string apiBaseUrl)
+        {
+            try
+            {
+                CredentialStore.Delete(apiBaseUrl);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return ex;
+            }
+        }
+
+        public LoginData LoadLegacy(out bool legacyFormat)
+        {
+            return CredentialStore.LoadLegacy(out legacyFormat);
+        }
+
+        public Exception TryDeleteLegacy()
+        {
+            try
+            {
+                CredentialStore.DeleteLegacy();
                 return null;
             }
             catch (Exception ex)

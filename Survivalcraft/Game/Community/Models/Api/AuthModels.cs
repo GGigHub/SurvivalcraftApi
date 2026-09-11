@@ -12,6 +12,13 @@ namespace Game
         [JsonPropertyName("user")] public UserData User { get; set; }
     }
 
+    /// <summary>v4 凭据文件 payload：登录数据及其归属服务器（归一化地址，自描述）。</summary>
+    public class StoredCredential
+    {
+        [JsonPropertyName("apiBaseUrl")] public string ApiBaseUrl { get; set; }
+        [JsonPropertyName("login")] public LoginData Login { get; set; }
+    }
+
     public class UserData
     {
         [JsonPropertyName("id")] public int Id { get; set; }
