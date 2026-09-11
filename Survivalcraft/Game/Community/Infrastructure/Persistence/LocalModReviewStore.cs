@@ -1,0 +1,40 @@
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+using Engine;
+
+namespace Game
+{
+    internal static class LocalModReviewStore
+    {
+        private static readonly JsonSerializerOptions s_options = new() { WriteIndented = true };
+
+        public static Dictionary<string, LocalModReviewEntry> Load()
+        {
+            if (!Storage.FileExists(StoragePaths.LocalModReviewsFile))
+            {
+                return new Dictionary<string, LocalModReviewEntry>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            LocalModReviewsData data = JsonFileStore.Read<LocalModReviewsData>(
+                StoragePaths.LocalModReviewsFile,
+                s_options);
+            return data?.Reviews == null
+                ? new Dictionary<string, LocalModReviewEntry>(StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, LocalModReviewEntry>(data.Reviews, StringComparer.OrdinalIgnoreCase);
+        }
+
+        public static void Save(IReadOnlyDictionary<string, LocalModReviewEntry> reviews)
+        {
+            JsonFileStore.Write(
+                StoragePaths.LocalModReviewsFile,
+                new LocalModReviewsData
+                {
+                    Reviews = new Dictionary<string, LocalModReviewEntry>(
+                        reviews ?? new Dictionary<string, LocalModReviewEntry>(),
+                        StringComparer.OrdinalIgnoreCase)
+                },
+                s_options);
+        }
+    }
+}
