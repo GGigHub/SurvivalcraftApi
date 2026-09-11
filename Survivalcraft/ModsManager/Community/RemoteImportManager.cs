@@ -696,13 +696,13 @@ namespace Game
 
         private static string GetConfiguredApiBaseUrl()
         {
-            // 设置加载无锁且主线程可能正在并发加载：编组回游戏线程读（本任务运行在 Task.Run）。
+            // 设置为静态存储可直读，但 ApiBaseUrl 的权威写侧在主线程（屏 Enter/设置屏）：
+            // 编组回游戏线程读保证与写侧同线程（本任务运行在 Task.Run）。
             // wait:true 仅在主线程不会同步等待本任务结果时安全；否则与主线程互等死锁（PlayedTimeTracker 教训）。
             string apiBaseUrl = null;
             Dispatcher.Dispatch(() =>
             {
-                CommunitySettingsManager.Instance.EnsureLoaded();
-                apiBaseUrl = CommunitySettingsManager.Instance.ApiBaseUrl;
+                apiBaseUrl = ApiUrls.NormalizeBaseUrl(CommunitySettingsManager.ApiBaseUrl);
             }, waitUntilCompleted: true);
             return apiBaseUrl;
         }

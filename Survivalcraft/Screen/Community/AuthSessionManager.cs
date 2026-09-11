@@ -61,14 +61,15 @@ namespace Game
 
         public bool IsBusy => m_loginTask != null || m_logoutTask != null;
 
-        /// <summary>目标社区服务器地址；由设置加载/切换流程写入，登录登出请求读取。</summary>
+        /// <summary>目标社区服务器地址；由设置写入流程赋值，登录登出请求读取。
+        /// 读出内联归一化，兼容手改 Settings.xml 的未归一存储值。</summary>
         public string ApiBaseUrl
         {
-            get => string.IsNullOrWhiteSpace(m_apiBaseUrl) ? CommunitySettingsManager.DefaultApiBaseUrl : m_apiBaseUrl;
+            get => ApiUrls.NormalizeBaseUrl(string.IsNullOrWhiteSpace(m_apiBaseUrl) ? ApiUrls.DefaultBaseUrl : m_apiBaseUrl);
             set => m_apiBaseUrl = value;
         }
 
-        private string m_apiBaseUrl = CommunitySettingsManager.DefaultApiBaseUrl;
+        private string m_apiBaseUrl = ApiUrls.DefaultBaseUrl;
 
         /// <summary>认证入口：已登录弹登出确认，否则弹登录对话框。</summary>
         public void OpenAuthEntry()

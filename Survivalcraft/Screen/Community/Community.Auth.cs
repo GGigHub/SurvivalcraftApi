@@ -7,7 +7,6 @@ namespace Game
     {
         private void LoadSettings()
         {
-            CommunitySettingsManager.Instance.EnsureLoaded();
             m_firstDownloadSelfReviewPromptShown = ModSettingsState.FirstDownloadSelfReviewPromptShown;
             ApplyLoadedDefaultFilters();
         }

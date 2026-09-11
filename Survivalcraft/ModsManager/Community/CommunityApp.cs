@@ -13,7 +13,7 @@ namespace Game
     internal static class CommunityApp
     {
         /// <summary>
-        /// 进程级初始化：组合根接线（设置副作用订阅先于任何 OnModSettingChanged / EnsureLoaded）、
+        /// 进程级初始化：组合根接线（设置副作用订阅先于任何设置写入）、
         /// 崩溃残留恢复与启动期挂起动作。
         /// </summary>
         public static void Initialize()
@@ -82,11 +82,6 @@ namespace Game
             GlobalToastManager.DetachFromScreen(screen);
         }
 
-        public static void OnModSettingChanged(string[] idPath, object value)
-        {
-            CommunitySettingsManager.Instance.ApplySettingChange(idPath, value);
-        }
-
         public static void OnProjectLoaded(Project project)
         {
             PlayedTimeTracker.StartProject(project);
@@ -117,24 +112,28 @@ namespace Game
         }
 
         /// <summary>
-        /// 设置副作用接线：组合根（本类）订阅设置事件并驱动 Auth 与切服登出链，
-        /// CommunitySettingsManager 不反向依赖 Presentation/Integration。
-        /// 必须在任何 OnModSettingChanged / EnsureLoaded 之前订阅（Initialize 最早）。
+        /// 设置副作用接线：组合根（本类）订阅包装属性事件并驱动 Auth 切服登出链。
+        /// 原生 SettingsManager 无事件机制，事件由 CommunitySettingsManager 的
+        /// 包装属性 setter 触发；事件仅在赋值时发出（无初载爆发），订阅后回读
+        /// 一次现值完成初始同步。
         /// </summary>
         private static void WireSettingsSideEffects()
         {
-            CommunitySettingsManager settings = CommunitySettingsManager.Instance;
-            settings.ApiBaseUrlChanged += apiBaseUrl =>
+            AuthSessionManager auth = AuthSessionManager.Instance;
+            CommunitySettingsManager.ApiBaseUrlChanged += apiBaseUrl =>
             {
                 // 切换服务器即登出旧会话。顺序关键：BeginLogout 在赋新值之前捕获旧
                 // ApiBaseUrl，登出请求须发往旧服务器（新服务器上没有该会话）。
-                AuthSessionManager auth = AuthSessionManager.Instance;
-                if (auth.IsLoggedIn)
+                // 仅在地址真变时登出：同值赋值也会触发事件，若不比较，启动时恢复的
+                // 本地会话会被无变化的赋值踢下线并发失败登出请求。
+                if (auth.IsLoggedIn
+                    && !string.Equals(auth.ApiBaseUrl, apiBaseUrl, StringComparison.OrdinalIgnoreCase))
                 {
                     auth.BeginLogout();
                 }
                 auth.ApiBaseUrl = apiBaseUrl;
             };
+            auth.ApiBaseUrl = CommunitySettingsManager.ApiBaseUrl;
         }
     }
 }

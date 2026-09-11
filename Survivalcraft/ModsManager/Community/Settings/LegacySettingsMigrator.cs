@@ -12,12 +12,15 @@ namespace Game
     /// ModSettingsState（state.json），无论旧段是否存在都置位，保证只跑一次。
     /// AutoUpdateCheckEnabled 随自更新功能一并退役：读出即丢弃，不迁移、不进 UI。
     /// 单项解析失败跳过不中断；整体异常仅记日志（标志未置位，下次启动自动重试）。
-    /// 必须在 CommunitySettingsManager 首次 EnsureLoaded 之前、且在
-    /// ModSettingsManager.LoadModSettings（ModSettingsCache 填充点，LoadingScreen 加载 action）
-    /// 之后执行——现挂 CommunityApp.OnLoadingFinished 首行，两个条件均满足。
+    /// 必须在 ModSettingsManager.LoadModSettings（ModSettingsCache 填充点，LoadingScreen
+    /// 加载 action）之后执行——现挂 CommunityApp.OnLoadingFinished 首行，条件满足；
+    /// 此刻在主线程且凭据未恢复，API 地址经包装属性写入触发的事件无会话可误杀。
     /// </summary>
     internal static class LegacySettingsMigrator
     {
+        /// <summary>旧模组在 ModSettings.xml 里的段名（历史线上的包名，不再随本插件身份变化）。</summary>
+        private const string LegacyPackageName = "scbbsplus";
+
         internal static void Run()
         {
             try
@@ -39,7 +42,7 @@ namespace Game
 
             // 原生安装没有 scbbsplus 的 ModEntity（ModSettingsManager.Get<T> 会抛
             // KeyNotFoundException），必须走 ModSettingsCache 的原始 XElement 读。
-            if (!ModSettingsManager.ModSettingsCache.TryGetValue(CommunitySettingsManager.PackageName, out XElement modEl))
+            if (!ModSettingsManager.ModSettingsCache.TryGetValue(LegacyPackageName, out XElement modEl))
             {
                 // 没装过旧模组也置位：避免每次启动都扫描缓存。
                 ModSettingsState.MarkLegacySettingsMigrated();
@@ -57,7 +60,7 @@ namespace Game
 
             // 段已消费即删除（迁出 0 项也删）。SaveSettings 内部顺带 SaveModSettings，
             // 删段后的 ModSettings.xml 一并落盘。
-            ModSettingsManager.ModSettingsCache.Remove(CommunitySettingsManager.PackageName);
+            ModSettingsManager.ModSettingsCache.Remove(LegacyPackageName);
             SettingsManager.SaveSettings();
             ModSettingsState.MarkLegacySettingsMigrated();
             Log.Information($"[ScbbsPlus] Legacy settings migrated: {migratedCount} item(s).");
@@ -77,25 +80,27 @@ namespace Game
                 string itemId = path.Substring(path.LastIndexOf('/') + 1);
                 switch (itemId)
                 {
-                    case CommunitySettingsManager.ApiBaseUrlId:
+                    // Item 键名为旧模组线上的历史键名（路径尾段），与本插件现用代码标识无关。
+                    case "ApiBaseUrl":
                         if (value.Length == 0)
                         {
                             return false;
                         }
-                        // 归一化由 EnsureLoaded 兜底，这里存原值。
-                        SettingsManager.CommunityApiBaseUrl = value;
+                        // 经包装属性写入：setter 归一化并触发 ApiBaseUrlChanged（组合根据此
+                        // 同步 AuthSessionManager.ApiBaseUrl；此刻凭据未恢复，登出分支不触发）。
+                        CommunitySettingsManager.ApiBaseUrl = value;
                         return true;
-                    case CommunitySettingsManager.DownloadSourceSelectionModeId:
+                    case "DownloadSourceSelectionMode":
                         return TryMigrateEnum<DownloadSourceSelectionMode>(item, value,
                             parsed => SettingsManager.CommunityDownloadSourceSelectionMode = parsed);
-                    case CommunitySettingsManager.DefaultDownloadSourceId:
+                    case "DefaultDownloadSource":
                         return TryMigrateEnum<DownloadSourceOption>(item, value,
                             parsed => SettingsManager.CommunityDefaultDownloadSource = parsed);
-                    case CommunitySettingsManager.ApplyDownloadSourceToUpdatesId:
+                    case "ApplyDownloadSourceToUpdates":
                         return TryMigrateBool(value, parsed => SettingsManager.CommunityApplyDownloadSourceToUpdates = parsed);
-                    case CommunitySettingsManager.ShowImportFromWebLinkEntryId:
-                        return TryMigrateBool(value, parsed => SettingsManager.CommunityShowImportFromWebLinkEntry = parsed);
-                    case CommunitySettingsManager.PlayedTimeReportingEnabledId:
+                    case "ShowImportFromWebLinkEntry":
+                        return TryMigrateBool(value, parsed => CommunitySettingsManager.ShowImportFromWebLinkEntry = parsed);
+                    case "PlayedTimeReportingEnabled":
                         return TryMigrateBool(value, parsed => SettingsManager.CommunityPlayedTimeReportingEnabled = parsed);
                     default:
                         // AutoUpdateCheckEnabled 等遗留项：读出即丢弃（自更新功能已退役）。

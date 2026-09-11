@@ -43,7 +43,6 @@ namespace Game
 
         public override void Enter(object[] parameters)
         {
-            CommunitySettingsManager.Instance.EnsureLoaded();
             s_current = this;
             RefreshControls();
             RefreshSettingsUi();
@@ -53,7 +52,7 @@ namespace Game
             AcquireRemoteImportHost();
             InstallDownloadFlowCallbacks(
                 SetSharedStatus,
-                () => CommunitySettingsManager.Instance.DownloadSourceSelectionMode,
+                () => SettingsManager.CommunityDownloadSourceSelectionMode,
                 ResolveEffectiveDownloadSource);
         }
 
@@ -94,7 +93,7 @@ namespace Game
                     item => EnumDisplayName.GetEnumDisplayName((DownloadSourceSelectionMode)item),
                     item =>
                     {
-                        CommunitySettingsManager.Instance.ApplySettingChange([CommunitySettingsManager.DownloadSourceSelectionModeId], (DownloadSourceSelectionMode)item);
+                        SettingsManager.CommunityDownloadSourceSelectionMode = (DownloadSourceSelectionMode)item;
                         RefreshSettingsUi();
                     }));
             }
@@ -107,32 +106,28 @@ namespace Game
                     item => EnumDisplayName.GetEnumDisplayName((DownloadSourceOption)item),
                     item =>
                     {
-                        CommunitySettingsManager.Instance.ApplySettingChange([CommunitySettingsManager.DefaultDownloadSourceId], (DownloadSourceOption)item);
+                        SettingsManager.CommunityDefaultDownloadSource = (DownloadSourceOption)item;
                         RefreshSettingsUi();
                     }));
             }
             if (m_applyDownloadSourceToUpdatesButton.IsClicked)
             {
-                CommunitySettingsManager.Instance.ApplySettingChange(
-                    [CommunitySettingsManager.ApplyDownloadSourceToUpdatesId],
-                    !CommunitySettingsManager.Instance.ApplyDownloadSourceToUpdates);
+                SettingsManager.CommunityApplyDownloadSourceToUpdates = !SettingsManager.CommunityApplyDownloadSourceToUpdates;
                 RefreshSettingsUi();
             }
             if (m_playedTimeReportingButton.IsClicked)
             {
-                CommunitySettingsManager.Instance.ApplySettingChange(
-                    [CommunitySettingsManager.PlayedTimeReportingEnabledId],
-                    !CommunitySettingsManager.Instance.PlayedTimeReportingEnabled);
+                SettingsManager.CommunityPlayedTimeReportingEnabled = !SettingsManager.CommunityPlayedTimeReportingEnabled;
                 RefreshSettingsUi();
             }
             if (m_apiBaseUrlApplyButton.IsClicked)
             {
-                // TextBoxWidget 无提交型事件，Text 输入过程不触发设置变更；点"应用"才走
-                // ApplySettingChange（触发 ApiBaseUrlChanged → 切服登出链）。
+                // TextBoxWidget 无提交型事件，Text 输入过程不触发设置变更；点"应用"才经
+                // 包装属性赋值（setter 归一化并触发 ApiBaseUrlChanged → 切服登出链）。
                 string apiBaseUrl = m_apiBaseUrlBox.Text;
                 if (!string.IsNullOrWhiteSpace(apiBaseUrl))
                 {
-                    CommunitySettingsManager.Instance.ApplySettingChange([CommunitySettingsManager.ApiBaseUrlId], apiBaseUrl);
+                    CommunitySettingsManager.ApiBaseUrl = apiBaseUrl;
                     SetStatus(LanguageControl.Get("ScbbsPlusMoreScreen", "SettingsApplied"));
                     RefreshSettingsUi();
                 }
@@ -160,17 +155,23 @@ namespace Game
         }
 
         /// <summary>
-        /// 设置区控件即时刷新。ApiBaseUrl 用 ChangeTextNoEvent 回填（Text 变化不触发
-        /// TextChanged/设置变更）；应用后的按钮文本在每次 ApplySettingChange 后即时同步。
+        /// 设置区控件即时刷新，直读 SettingsManager.Community*。ApiBaseUrl 用
+        /// ChangeTextNoEvent 回填（Text 变化不触发 TextChanged/设置变更）；存储值
+        /// 只经包装属性 setter 写入（归一化），此处显示仍内联枚举兜底防手改 XML。
         /// </summary>
         private void RefreshSettingsUi()
         {
-            CommunitySettingsManager settings = CommunitySettingsManager.Instance;
-            m_apiBaseUrlBox.ChangeTextNoEvent(settings.ApiBaseUrl);
-            m_downloadSourceSelectionModeButton.Text = LanguageControl.Get("DownloadSourceSelectionMode", settings.DownloadSourceSelectionMode.ToString());
-            m_defaultDownloadSourceButton.Text = LanguageControl.Get("DownloadSourceOption", settings.DefaultDownloadSource.ToString());
-            m_applyDownloadSourceToUpdatesButton.Text = settings.ApplyDownloadSourceToUpdates ? LanguageControl.Yes : LanguageControl.No;
-            m_playedTimeReportingButton.Text = settings.PlayedTimeReportingEnabled ? LanguageControl.Yes : LanguageControl.No;
+            m_apiBaseUrlBox.ChangeTextNoEvent(ApiUrls.NormalizeBaseUrl(SettingsManager.CommunityApiBaseUrl));
+            DownloadSourceSelectionMode sourceMode = SettingsManager.CommunityDownloadSourceSelectionMode;
+            m_downloadSourceSelectionModeButton.Text = LanguageControl.Get(
+                "DownloadSourceSelectionMode",
+                (Enum.IsDefined(sourceMode) ? sourceMode : DownloadSourceSelectionMode.Default).ToString());
+            DownloadSourceOption downloadSource = SettingsManager.CommunityDefaultDownloadSource;
+            m_defaultDownloadSourceButton.Text = LanguageControl.Get(
+                "DownloadSourceOption",
+                (Enum.IsDefined(downloadSource) ? downloadSource : DownloadSourceOption.DefaultCn).ToString());
+            m_applyDownloadSourceToUpdatesButton.Text = SettingsManager.CommunityApplyDownloadSourceToUpdates ? LanguageControl.Yes : LanguageControl.No;
+            m_playedTimeReportingButton.Text = SettingsManager.CommunityPlayedTimeReportingEnabled ? LanguageControl.Yes : LanguageControl.No;
         }
 
         private string GetAccountInfoText()
@@ -201,10 +202,16 @@ namespace Game
 
         private static DownloadSourceOption ResolveEffectiveDownloadSource()
         {
-            CommunitySettingsManager settings = CommunitySettingsManager.Instance;
-            return settings.DownloadSourceSelectionMode == DownloadSourceSelectionMode.CustomDefault
-                ? settings.DefaultDownloadSource
+            // 枚举成员可非连续，未定义值不会等于任何具名成员，模式无须兜底；
+            // 源读取兜底防手改 Settings.xml。
+            return SettingsManager.CommunityDownloadSourceSelectionMode == DownloadSourceSelectionMode.CustomDefault
+                ? NormalizeSource(SettingsManager.CommunityDefaultDownloadSource)
                 : DownloadSourceOption.DefaultCn;
+        }
+
+        private static DownloadSourceOption NormalizeSource(DownloadSourceOption value)
+        {
+            return Enum.IsDefined(value) ? value : DownloadSourceOption.DefaultCn;
         }
 
         private void SetBusy(bool busy)

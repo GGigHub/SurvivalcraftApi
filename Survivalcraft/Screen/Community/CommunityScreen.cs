@@ -68,15 +68,21 @@ namespace Game
 
         // 认证会话（登录/登出/token 失效）见 AuthSessionManager，屏幕经 LoginStateChanged 订阅刷新界面。
 
-        // 生产单例接线见各域类自身（CommunitySettingsManager.Instance / CommunityManager.ApiClient 等）。
+        // 生产单例接线见各域类自身（AuthSessionManager.Instance / CommunityManager.ApiClient 等）。
         private string CurrentApiBaseUrl => AuthSessionManager.Instance.ApiBaseUrl;
 
         private DownloadSourceOption ResolveEffectiveDownloadSource()
         {
-            CommunitySettingsManager settings = CommunitySettingsManager.Instance;
-            return settings.DownloadSourceSelectionMode == DownloadSourceSelectionMode.CustomDefault
-                ? settings.DefaultDownloadSource
+            // 枚举成员可非连续，未定义值不会等于任何具名成员，模式无须兜底；
+            // 源读取兜底防手改 Settings.xml。
+            return SettingsManager.CommunityDownloadSourceSelectionMode == DownloadSourceSelectionMode.CustomDefault
+                ? NormalizeSource(SettingsManager.CommunityDefaultDownloadSource)
                 : DownloadSourceOption.DefaultCn;
+        }
+
+        private static DownloadSourceOption NormalizeSource(DownloadSourceOption value)
+        {
+            return Enum.IsDefined(value) ? value : DownloadSourceOption.DefaultCn;
         }
 
         public CommunityScreen()
@@ -126,22 +132,21 @@ namespace Game
 
         public override void Enter(object[] parameters)
         {
-            CommunitySettingsManager.Instance.EnsureLoaded();
             if (parameters != null
                 && parameters.Length > 0
                 && parameters[0] is string apiUrl
                 && !string.IsNullOrWhiteSpace(apiUrl)
-                && string.Equals(CommunitySettingsManager.Instance.ApiBaseUrl, CommunitySettingsManager.DefaultApiBaseUrl, StringComparison.OrdinalIgnoreCase))
+                && string.Equals(ApiUrls.NormalizeBaseUrl(CommunitySettingsManager.ApiBaseUrl), ApiUrls.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase))
             {
                 // 中文社区入口带入的 API 地址仅作初始值：设置里改过则设置优先。
-                CommunitySettingsManager.Instance.ApplySettingChange([CommunitySettingsManager.ApiBaseUrlId], apiUrl);
+                // 经包装属性赋值（setter 归一化并触发 ApiBaseUrlChanged → 切服登出链）。
+                CommunitySettingsManager.ApiBaseUrl = apiUrl;
             }
             AcquireRemoteImportHost();
             InstallDownloadFlowCallbacks(
                 MoreScreen.SetSharedStatus,
-                () => CommunitySettingsManager.Instance.DownloadSourceSelectionMode,
+                () => SettingsManager.CommunityDownloadSourceSelectionMode,
                 ResolveEffectiveDownloadSource);
-            CommunitySettingsManager.Instance.EnsureLoaded();
             PlayedTimeTracker.StartSelfPage();
             UpdateTopBarTitle();
             // 首进先只搭骨架并让出 2 帧给首屏绘制，避免解密凭据/拉列表/读本地资源堵在同一帧造成黑屏。

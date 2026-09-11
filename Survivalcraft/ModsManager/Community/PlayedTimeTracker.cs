@@ -430,35 +430,33 @@ namespace Game
                 return;
             }
 
-            // 设置加载无锁且主线程可能正在并发加载：编组回游戏线程读（同 FindInstalledMod 的
-            // 编组模式；已在主线程时 Dispatcher 走同线程快速路径），避免读到半初始化配置。
+            // 设置读取与上报任务启动编组回游戏线程（已在主线程时 Dispatcher 走同线程快速路径），
+            // 与 RefreshReportIdentitySnapshot 的主线程写侧互斥。
             Dispatcher.Dispatch(() => QueueReportsOnMainThread(reports));
         }
 
         private static void QueueReportsOnMainThread(List<ModPlayRecordItem> reports)
         {
-            CommunitySettingsManager settings = CommunitySettingsManager.Instance;
-            settings.EnsureLoaded();
-            if (!settings.PlayedTimeReportingEnabled)
+            if (!SettingsManager.CommunityPlayedTimeReportingEnabled)
             {
                 Log.Information(LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PlayedTimeReportingDisabledSkipping"));
                 return;
             }
 
             string token = s_reportToken;
-            _ = ReportAsync(settings, reports, token);
+            _ = ReportAsync(reports, token);
         }
 
-        private static async Task ReportAsync(CommunitySettingsManager settings, List<ModPlayRecordItem> reports, string token)
+        private static async Task ReportAsync(List<ModPlayRecordItem> reports, string token)
         {
             // 发送前再查一次开关：排队与真正发送之间用户可能刚把它关掉。
-            if (!settings.PlayedTimeReportingEnabled)
+            if (!SettingsManager.CommunityPlayedTimeReportingEnabled)
             {
                 Log.Information(LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PlayedTimeReportingDisabledCancelingPending"));
                 return;
             }
 
-            await s_playedTimeClient.ReportAsync(settings.ApiBaseUrl, token, reports);
+            await s_playedTimeClient.ReportAsync(AuthSessionManager.Instance.ApiBaseUrl, token, reports);
         }
 
         /// <summary>主线程入口调用：把当前登录态拍成上报身份快照，供任意结算线程消费。</summary>
