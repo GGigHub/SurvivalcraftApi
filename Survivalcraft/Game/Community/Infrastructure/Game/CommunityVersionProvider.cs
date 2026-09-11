@@ -3,7 +3,7 @@ using Engine;
 
 namespace Game
 {
-    internal static class VersionProvider {
+    internal static class CommunityVersionProvider {
         static string m_version;
         public static string GetCurrentVersion()
         {
