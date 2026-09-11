@@ -14,7 +14,6 @@ namespace Game
         private ButtonWidget m_authButton;
         private ButtonWidget m_importButton;
         private ButtonWidget m_downloadQueueButton;
-        private ButtonWidget m_aboutModButton;
         private TextBoxWidget m_apiBaseUrlBox;
         private ButtonWidget m_apiBaseUrlApplyButton;
         private ButtonWidget m_downloadSourceSelectionModeButton;
@@ -32,7 +31,6 @@ namespace Game
             m_authButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.AuthButton");
             m_importButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ImportButton");
             m_downloadQueueButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadQueueButton");
-            m_aboutModButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.AboutModButton");
             m_apiBaseUrlBox = Children.Find<TextBoxWidget>("ScbbsPlusMoreScreen.ApiBaseUrlBox");
             m_apiBaseUrlApplyButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ApiBaseUrlApplyButton");
             m_downloadSourceSelectionModeButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadSourceSelectionModeButton");
@@ -84,21 +82,26 @@ namespace Game
             if (m_authButton.IsClicked) AuthSessionManager.Instance.OpenAuthEntry();
             if (m_importButton.IsClicked) RemoteImportManager.OpenImportLinkDialog();
             if (m_downloadQueueButton.IsClicked) DownloadFlowManager.Instance.ShowQueueDialog();
-            if (m_aboutModButton.IsClicked) OpenAboutMod();
 
             if (m_downloadSourceSelectionModeButton.IsClicked)
             {
-                // 循环切换（SettingsUiScreen CommunityContentMode 先例：IndexOf+1 取模，成员值可非连续）。
-                IList<int> modeValues = EnumUtils.GetEnumValues<DownloadSourceSelectionMode>();
-                DownloadSourceSelectionMode newMode = (DownloadSourceSelectionMode)((modeValues.IndexOf(
-                    (int)CommunitySettingsManager.Instance.DownloadSourceSelectionMode) + 1) % modeValues.Count);
-                CommunitySettingsManager.Instance.ApplySettingChange([CommunitySettingsManager.DownloadSourceSelectionModeId], newMode);
-                RefreshSettingsUi();
+                // 弹出选单（与模组一致；勿用 IndexOf+1 取模循环——本枚举成员 1 起始，
+                // 索引空间取模回投枚举会原地打转）。标题复用行标签键。
+                DialogsManager.ShowDialog(null, new ListSelectionDialog(
+                    LanguageControl.GetContentWidgets("ScbbsPlusMoreScreen", "DownloadSourceSelectionMode"),
+                    EnumUtils.GetEnumValues<DownloadSourceSelectionMode>(),
+                    60f,
+                    item => EnumDisplayName.GetEnumDisplayName((DownloadSourceSelectionMode)item),
+                    item =>
+                    {
+                        CommunitySettingsManager.Instance.ApplySettingChange([CommunitySettingsManager.DownloadSourceSelectionModeId], (DownloadSourceSelectionMode)item);
+                        RefreshSettingsUi();
+                    }));
             }
             if (m_defaultDownloadSourceButton.IsClicked)
             {
                 DialogsManager.ShowDialog(null, new ListSelectionDialog(
-                    LanguageControl.Get("ScbbsPlusMoreScreen", "Text", "SelectDownloadSource"),
+                    LanguageControl.GetContentWidgets("ScbbsPlusMoreScreen", "DefaultDownloadSource"),
                     EnumUtils.GetEnumValues<DownloadSourceOption>(),
                     60f,
                     item => EnumDisplayName.GetEnumDisplayName((DownloadSourceOption)item),
@@ -194,13 +197,6 @@ namespace Game
         {
             ModSettingsState.SetRestartReturnTarget(ScreenNames.More);
             Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "RecordRestartReturnScreen"), ScreenNames.More));
-        }
-
-        private void OpenAboutMod()
-        {
-            // 原生无本插件 ModEntity（内置编译）：删探测循环与 try/catch，ModInfoDialog 对 null
-            // 全容错显示 Unknown + 项目链接；版本行收尾批再定。
-            DialogsManager.ShowDialog(null, new ModInfoDialog(null, null, ModIdentity.ProjectPageUrl));
         }
 
         private static DownloadSourceOption ResolveEffectiveDownloadSource()

@@ -75,13 +75,6 @@
               </StackPanelWidget>
               <BevelledButtonWidget Name="ScbbsPlusMoreScreen.PlayedTimeReportingButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
             </UniformSpacingPanelWidget>
-            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:AboutMod]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:AboutModDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
-              </StackPanelWidget>
-              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.AboutModButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[ScbbsPlusMoreScreen:View]" />
-            </UniformSpacingPanelWidget>
           </StackPanelWidget>
         </ScrollPanelWidget>
       </CanvasWidget>

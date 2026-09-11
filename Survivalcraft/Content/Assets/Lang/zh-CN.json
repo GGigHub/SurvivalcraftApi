@@ -2911,7 +2911,7 @@
   },
   "Help": {
     "1": {
-      "value": "\\nAPI版本发布的模组格式为scmod，只有在主页-内容-模组管理器中有显示的模组才是有效的。\\n在Android系统和Windows系统，你能在打开格式为scmod的文件时选择插件版，即可完成模组的安装。\\n手动安装路径：\\n安卓：\/storage\/emulated\/0\/Survivalcraft2.4_API1.9\/Mods\\n其他系统：(解压到的目录)/Mods \\n\\n手动安装模组具体操作：\\n用系统自带的文件管理器或任何你喜欢的文件管理器，找到你下载的格式为scmod的模组文件，复制粘贴到前述手动安装路径，最后重启游戏即可。\\n删除模组同样需要重启游戏才生效。",
+      "value": "\\nAPI版本发布的模组格式为scmod，只有在主页-内容-模组管理器中有显示的模组才是有效的。\\n在Android系统和Windows系统，你能在打开格式为scmod的文件时选择插件版，即可完成模组的安装。\\n手动安装路径：\\n安卓：/storage/emulated/0/Survivalcraft2.4_API1.9/Mods\\n其他系统：(解压到的目录)/Mods \\n\\n手动安装模组具体操作：\\n用系统自带的文件管理器或任何你喜欢的文件管理器，找到你下载的格式为scmod的模组文件，复制粘贴到前述手动安装路径，最后重启游戏即可。\\n删除模组同样需要重启游戏才生效。",
       "Name": "TutorialOfInstallingMods",
       "Title": "安装模组教程"
     },
@@ -3520,8 +3520,8 @@
       "1": "更改世界选项",
       "2": "地形类型：",
       "3": "",
-      "4": "岛屿大小 东\/西：",
-      "5": "岛屿大小 南\/北：",
+      "4": "岛屿大小 东/西：",
+      "5": "岛屿大小 南/北：",
       "6": "平坦地面高度：",
       "7": "平坦海岸粗糙度：",
       "8": "平坦地面方块：",
@@ -3579,7 +3579,7 @@
       "2": "背包"
     },
     "ClothingWidget": {
-      "1": "身体\/吃食物",
+      "1": "身体/吃食物",
       "2": "背包",
       "3": "",
       "4": ""
@@ -4143,10 +4143,6 @@
       "LogIn": "登录",
       "Register": "注册"
     },
-    "ScbbsPlusModInfoDialog": {
-      "AboutModTitle": "关于 ScbbsPlus",
-      "ProjectAddress": "项目地址："
-    },
     "ScbbsPlusModpackFileConflictDialog": {
       "DuplicateFileFound": "发现同名文件",
       "Overwrite": "覆盖",
@@ -4174,8 +4170,6 @@
       "ModSettings": "模组设置",
       "ModSettingsDescription": "打开游戏原生模组设置",
       "Open": "打开",
-      "AboutMod": "关于",
-      "AboutModDescription": "查看本模组的版本、作者和适配信息",
       "ApiBaseUrl": "API 地址",
       "ApiBaseUrlDescription": "社区服务接口地址，点击应用后将与当前服务器断开连接",
       "DownloadSourceSelectionMode": "下载源选择",
@@ -5624,15 +5618,7 @@
     }
   },
   "ScbbsPlusMoreScreen": {
-    "ModName": "模组名称：{0}",
-    "ModVersion": "模组版本：{0}",
-    "GameVersion": "适配游戏版本：{0}",
-    "ApiVersion": "适配 API 版本：{0}",
-    "ModAuthor": "作者：{0}",
-    "ModDescription": "简介：{0}",
-    "CheckingProgress": "检查中...",
     "StatusReady": "设置已就绪。",
-    "ModInfoProbeFailed": "[ScbbsPlus] 读取自身 modinfo 失败: {0}",
     "SettingsApplied": "设置已应用。",
     "Text": {
       "LogOut": "登出",
