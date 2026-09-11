@@ -60,7 +60,7 @@ namespace Game
         {
             return file != null
                 && (CommunityFileTypes.IsModLike(file.Type)
-                    || (file.Type == ScbbsPlusCommunityFileType.Unknown && CommunityFileTypes.IsModLike(version.FileType)));
+                    || (file.Type == CommunityFileType.Unknown && CommunityFileTypes.IsModLike(version.FileType)));
         }
     }
 }

@@ -287,7 +287,7 @@ namespace Game
             }
         }
 
-        private static void ApplyNodeFileTypeIcon(TreeViewNode node, ScbbsPlusCommunityFileType fileType)
+        private static void ApplyNodeFileTypeIcon(TreeViewNode node, CommunityFileType fileType)
         {
             if (node == null)
             {
@@ -303,13 +303,13 @@ namespace Game
             SetNodeIcon(node, iconSubtexture);
         }
 
-        public static Subtexture GetFileTypeIconSubtexture(ScbbsPlusCommunityFileType fileType)
+        public static Subtexture GetFileTypeIconSubtexture(CommunityFileType fileType)
         {
             return fileType switch
             {
-                ScbbsPlusCommunityFileType.Image => ContentManager.Get<Subtexture>("Textures/Atlas/PhotoButton"),
-                ScbbsPlusCommunityFileType.Other => ContentManager.Get<Subtexture>("Textures/Atlas/QuestionMarkIcon"),
-                ScbbsPlusCommunityFileType.Modpack => ContentManager.Get<Subtexture>("Textures/Atlas/QuestionMarkIcon"),
+                CommunityFileType.Image => ContentManager.Get<Subtexture>("Textures/Atlas/PhotoButton"),
+                CommunityFileType.Other => ContentManager.Get<Subtexture>("Textures/Atlas/QuestionMarkIcon"),
+                CommunityFileType.Modpack => ContentManager.Get<Subtexture>("Textures/Atlas/QuestionMarkIcon"),
                 _ => ExternalContentManager.GetEntryTypeIcon(CommunityFileRules.MapFileTypeToExternalContentType(fileType))
             };
         }

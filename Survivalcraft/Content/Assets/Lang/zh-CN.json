@@ -5475,6 +5475,18 @@
         "NetMod": "联机模组",
         "Modpack": "整合包"
       },
+      "CommunityFileType": {
+        "Unknown": "资源",
+        "World": "存档",
+        "Furniture": "家具",
+        "Texture": "材质",
+        "Skin": "皮肤",
+        "Mod": "模组",
+        "Image": "图片",
+        "Other": "其他文件",
+        "NetMod": "联机模组",
+        "Modpack": "整合包"
+      },
       "ScbbsPlusCommunityOrderType": {
         "Latest": "最新",
         "Oldest": "最早",

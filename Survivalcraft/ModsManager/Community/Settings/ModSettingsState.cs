@@ -17,12 +17,12 @@ namespace Game
         private static bool s_firstDownloadSelfReviewPromptShown;
         private static bool s_legacySettingsMigrated;
         private static string s_restartReturnScreen;
-        private static ScbbsPlusCommunityFileType s_localFileType = ScbbsPlusCommunityFileType.Mod;
-        private static ScbbsPlusCommunityFileType s_communityFileType = ScbbsPlusCommunityFileType.Mod;
+        private static CommunityFileType s_localFileType = CommunityFileType.Mod;
+        private static CommunityFileType s_communityFileType = CommunityFileType.Mod;
         private static CommunityOrderType s_communityOrderType = CommunityOrderType.Hot;
         private static bool s_communityOnlyCurrentVersion = true;
         private static int s_communitySection = 1;
-        private static ScbbsPlusCommunityFileType s_myPublishedFileType = ScbbsPlusCommunityFileType.Mod;
+        private static CommunityFileType s_myPublishedFileType = CommunityFileType.Mod;
 
         public static bool FirstDownloadSelfReviewPromptShown
         {
@@ -35,12 +35,12 @@ namespace Game
             get { EnsureLoaded(); return s_legacySettingsMigrated; }
         }
 
-        public static ScbbsPlusCommunityFileType LocalFileType
+        public static CommunityFileType LocalFileType
         {
             get { EnsureLoaded(); return s_localFileType; }
         }
 
-        public static ScbbsPlusCommunityFileType CommunityFileType
+        public static CommunityFileType CommunityFileType
         {
             get { EnsureLoaded(); return s_communityFileType; }
         }
@@ -60,7 +60,7 @@ namespace Game
             get { EnsureLoaded(); return s_communitySection; }
         }
 
-        public static ScbbsPlusCommunityFileType MyPublishedFileType
+        public static CommunityFileType MyPublishedFileType
         {
             get { EnsureLoaded(); return s_myPublishedFileType; }
         }
@@ -111,7 +111,7 @@ namespace Game
             Persist();
         }
 
-        public static bool TryGetScreenFileType(string screenName, out ScbbsPlusCommunityFileType fileType)
+        public static bool TryGetScreenFileType(string screenName, out CommunityFileType fileType)
         {
             EnsureLoaded();
             fileType = screenName switch
@@ -119,12 +119,12 @@ namespace Game
                 ScreenNames.Local => s_localFileType,
                 ScreenNames.Community => s_communityFileType,
                 ScreenNames.MyPublished => s_myPublishedFileType,
-                _ => ScbbsPlusCommunityFileType.Unknown
+                _ => CommunityFileType.Unknown
             };
             return ScreenNames.IsKnown(screenName);
         }
 
-        public static void SetScreenFileType(string screenName, ScbbsPlusCommunityFileType fileType)
+        public static void SetScreenFileType(string screenName, CommunityFileType fileType)
         {
             EnsureLoaded();
             switch (screenName)
@@ -145,7 +145,7 @@ namespace Game
         }
 
         public static void SetCommunityDefaults(
-            ScbbsPlusCommunityFileType fileType,
+            CommunityFileType fileType,
             CommunityOrderType orderType,
             bool onlyCurrentVersion,
             int section)

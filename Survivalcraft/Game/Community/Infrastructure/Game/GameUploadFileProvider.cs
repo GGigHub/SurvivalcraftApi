@@ -23,7 +23,7 @@ namespace Game
                     FilePath = tempPath,
                     FileName = UploadFileNaming.MakeWorldFileName(worldName),
                     FileSize = GetExistingFileSize(tempPath),
-                    FileType = ScbbsPlusCommunityFileType.World,
+                    FileType = CommunityFileType.World,
                     IsTemporary = true
                 };
             }
@@ -42,7 +42,7 @@ namespace Game
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "WorldUpload", "NoLocalResourceSelected"));
             }
 
-            ScbbsPlusCommunityFileType fileType = GetUploadFileType(resourceItem);
+            CommunityFileType fileType = GetUploadFileType(resourceItem);
             switch (resourceItem.Type)
             {
                 case ExternalContentType.FurniturePack:
@@ -140,7 +140,7 @@ namespace Game
             };
         }
 
-        public static string GetUploadExtensionText(string filePath, ScbbsPlusCommunityFileType fileType)
+        public static string GetUploadExtensionText(string filePath, CommunityFileType fileType)
         {
             string extension = FileNameRules.GetExtension(filePath);
             if (!string.IsNullOrWhiteSpace(extension))
@@ -150,22 +150,22 @@ namespace Game
 
             return fileType switch
             {
-                ScbbsPlusCommunityFileType.World => "scworld",
-                ScbbsPlusCommunityFileType.Furniture => "scfpack",
-                ScbbsPlusCommunityFileType.Texture => "png/scbtex",
-                ScbbsPlusCommunityFileType.Skin => "scskin",
-                ScbbsPlusCommunityFileType.Mod => "scmod",
-                ScbbsPlusCommunityFileType.Modpack => "zip/json",
+                CommunityFileType.World => "scworld",
+                CommunityFileType.Furniture => "scfpack",
+                CommunityFileType.Texture => "png/scbtex",
+                CommunityFileType.Skin => "scskin",
+                CommunityFileType.Mod => "scmod",
+                CommunityFileType.Modpack => "zip/json",
                 _ => "-"
             };
         }
 
-        public static ScbbsPlusCommunityFileType GetUploadFileType(LocalResourceItem resourceItem)
+        public static CommunityFileType GetUploadFileType(LocalResourceItem resourceItem)
         {
-            ScbbsPlusCommunityFileType fileType = CommunityFileRules.MapExternalContentTypeToFileType(resourceItem?.Type ?? ExternalContentType.Unknown);
-            return fileType != ScbbsPlusCommunityFileType.Unknown
+            CommunityFileType fileType = CommunityFileRules.MapExternalContentTypeToFileType(resourceItem?.Type ?? ExternalContentType.Unknown);
+            return fileType != CommunityFileType.Unknown
                 ? fileType
-                : IsModpack(resourceItem) ? CommunityFileTypes.ModpackFileType : ScbbsPlusCommunityFileType.Unknown;
+                : IsModpack(resourceItem) ? CommunityFileTypes.ModpackFileType : CommunityFileType.Unknown;
         }
 
         public static string GetUploadFileName(LocalResourceItem resourceItem, string filePath)
@@ -176,7 +176,7 @@ namespace Game
         private PreparedUploadFile CreateExistingFileUpload(
             LocalResourceItem resourceItem,
             string filePath,
-            ScbbsPlusCommunityFileType fileType,
+            CommunityFileType fileType,
             string fallbackExtension)
         {
             if (string.IsNullOrWhiteSpace(filePath))
@@ -214,7 +214,7 @@ namespace Game
             return UploadFileNaming.SanitizeFileName(fileName);
         }
 
-        private static string GetFallbackUploadExtension(ScbbsPlusCommunityFileType fileType)
+        private static string GetFallbackUploadExtension(CommunityFileType fileType)
         {
             ExternalContentType type = CommunityFileRules.MapFileTypeToExternalContentType(fileType);
             if (type != ExternalContentType.Unknown)
@@ -224,7 +224,7 @@ namespace Game
 
             return fileType switch
             {
-                ScbbsPlusCommunityFileType.Modpack => ".json",
+                CommunityFileType.Modpack => ".json",
                 _ => ".dat"
             };
         }

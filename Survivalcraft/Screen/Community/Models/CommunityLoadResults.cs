@@ -5,7 +5,7 @@ namespace Game
     public class PostsLoadResult
     {
         public int RequestId { get; set; }
-        public ScbbsPlusCommunityFileType FileType { get; set; }
+        public CommunityFileType FileType { get; set; }
         public ResourceSource Source { get; set; }
         // 发起加载的服务器地址：目录缓存据此绑定来源。
         public string ApiBaseUrl { get; set; }

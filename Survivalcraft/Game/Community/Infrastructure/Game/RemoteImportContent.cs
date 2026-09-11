@@ -169,7 +169,7 @@ namespace Game
 
         public static string GetContentTypeDisplayName(ExternalContentType type)
         {
-            return EnumDisplayName.GetEnumDisplayName(type, EnumDisplayName.GetEnumDisplayName(ScbbsPlusCommunityFileType.Unknown));
+            return EnumDisplayName.GetEnumDisplayName(type, EnumDisplayName.GetEnumDisplayName(CommunityFileType.Unknown));
         }
 
         internal static ExternalContentType ResolveType(string fileName)

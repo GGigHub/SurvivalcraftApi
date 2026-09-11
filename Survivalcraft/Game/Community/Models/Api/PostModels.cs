@@ -18,7 +18,7 @@ namespace Game
         [JsonPropertyName("creatorId")] public int CreatorId { get; set; }
         [JsonPropertyName("fileType")]
         [JsonConverter(typeof(CommunityFileTypeJsonConverter))]
-        public ScbbsPlusCommunityFileType FileType { get; set; }
+        public CommunityFileType FileType { get; set; }
         [JsonPropertyName("downloadCount")] public int DownloadCount { get; set; }
         [JsonPropertyName("type")] public int Type { get; set; }
         [JsonPropertyName("cover")] public string Cover { get; set; }
@@ -77,7 +77,7 @@ namespace Game
         [JsonPropertyName("gameVersionIds")] public int[] GameVersionIds { get; set; }
         [JsonPropertyName("fileType")]
         [JsonConverter(typeof(CommunityFileTypeJsonConverter))]
-        public ScbbsPlusCommunityFileType FileType { get; set; }
+        public CommunityFileType FileType { get; set; }
         [JsonPropertyName("createdAt")] public string CreatedAt { get; set; }
         [JsonPropertyName("updatedAt")] public string UpdatedAt { get; set; }
         [JsonPropertyName("files")] public PostFileItem[] Files { get; set; }
@@ -98,7 +98,7 @@ namespace Game
         [JsonPropertyName("icon")] public string Icon { get; set; }
         [JsonPropertyName("type")]
         [JsonConverter(typeof(CommunityFileTypeJsonConverter))]
-        public ScbbsPlusCommunityFileType Type { get; set; }
+        public CommunityFileType Type { get; set; }
         [JsonPropertyName("size")]
         [JsonConverter(typeof(FlexibleStringJsonConverter))]
         public string Size { get; set; }

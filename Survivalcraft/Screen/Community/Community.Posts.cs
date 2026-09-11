@@ -12,11 +12,11 @@ namespace Game
         {
             m_postsPresenter.InvalidatePostDetailLoad();
             m_postsPresenter.Clear(disposeIcons: true);
-            ScbbsPlusCommunityFileType fileType = m_selectedFileType;
+            CommunityFileType fileType = m_selectedFileType;
             string token = AuthSessionManager.Instance.CurrentToken;
             string searchTitle = m_searchTitle?.Trim() ?? string.Empty;
             bool useSearchIgnore = !string.IsNullOrEmpty(searchTitle);
-            ScbbsPlusCommunityFileType resultFileType = useSearchIgnore && m_ignoreFileTypeFilter ? ScbbsPlusCommunityFileType.Unknown : fileType;
+            CommunityFileType resultFileType = useSearchIgnore && m_ignoreFileTypeFilter ? CommunityFileType.Unknown : fileType;
             string apiBaseUrl = CurrentApiBaseUrl;
             m_postsPresenter.TotalPages = MathUtils.Max(m_postsPresenter.Page, 1);
             m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "CommunityFormat"), EnumDisplayName.GetEnumDisplayName(resultFileType)));

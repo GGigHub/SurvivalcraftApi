@@ -7,7 +7,7 @@ namespace Game
     {
         internal struct State
         {
-            public ScbbsPlusCommunityFileType FileType;
+            public CommunityFileType FileType;
             public CommunityOrderType OrderType;
             public bool OnlyCurrentVersion;
             public CommunitySection Section;
@@ -32,7 +32,7 @@ namespace Game
         private readonly BevelledButtonWidget m_saveDefaultButton;
         private readonly BevelledButtonWidget m_confirmButton;
         private readonly BevelledButtonWidget m_cancelButton;
-        private ScbbsPlusCommunityFileType m_fileType;
+        private CommunityFileType m_fileType;
         private CommunityOrderType m_orderType;
         private bool m_onlyCurrentVersion;
         private CommunitySection m_section;
@@ -87,9 +87,9 @@ namespace Game
 
             if (m_fileTypeButton.IsClicked)
             {
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectFileType"), CommunityFileTypes.FilterableValues(), 60f, item => EnumDisplayName.GetEnumDisplayName((ScbbsPlusCommunityFileType)item), item =>
+                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectFileType"), CommunityFileTypes.FilterableValues(), 60f, item => EnumDisplayName.GetEnumDisplayName((CommunityFileType)item), item =>
                 {
-                    m_fileType = (ScbbsPlusCommunityFileType)item;
+                    m_fileType = (CommunityFileType)item;
                     MarkDefaultsChanged();
                 }));
                 return;

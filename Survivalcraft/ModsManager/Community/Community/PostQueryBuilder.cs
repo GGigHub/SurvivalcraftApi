@@ -8,7 +8,7 @@ namespace Game
     {
         public static List<string> BuildCommunityQueryParts(
             int page,
-            ScbbsPlusCommunityFileType fileType,
+            CommunityFileType fileType,
             CommunityOrderType orderType,
             string searchTitle,
             bool ignoreOrder,

@@ -108,7 +108,7 @@ namespace Game
 
         private static bool IsModVersion(PostVersionItem version)
         {
-            return version != null && (version.FileType == ScbbsPlusCommunityFileType.Unknown || CommunityFileTypes.IsModLike(version.FileType));
+            return version != null && (version.FileType == CommunityFileType.Unknown || CommunityFileTypes.IsModLike(version.FileType));
         }
 
         public static int CompareVersions(PostVersionItem left, PostVersionItem right)

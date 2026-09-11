@@ -31,7 +31,7 @@ namespace Game
         public string FilePath { get; init; }
         public string FileName { get; init; }
         public long FileSize { get; init; }
-        public ScbbsPlusCommunityFileType FileType { get; init; }
+        public CommunityFileType FileType { get; init; }
         public bool IsTemporary { get; init; }
     }
 }

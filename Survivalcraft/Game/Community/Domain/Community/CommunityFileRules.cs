@@ -31,29 +31,29 @@ namespace Game
             return $"download_{file.Id}";
         }
 
-        public static ExternalContentType MapFileTypeToExternalContentType(ScbbsPlusCommunityFileType fileType)
+        public static ExternalContentType MapFileTypeToExternalContentType(CommunityFileType fileType)
         {
             return fileType switch
             {
-                ScbbsPlusCommunityFileType.World => ExternalContentType.World,
-                ScbbsPlusCommunityFileType.Furniture => ExternalContentType.FurniturePack,
-                ScbbsPlusCommunityFileType.Texture => ExternalContentType.BlocksTexture,
-                ScbbsPlusCommunityFileType.Skin => ExternalContentType.CharacterSkin,
-                ScbbsPlusCommunityFileType.Mod or ScbbsPlusCommunityFileType.NetMod => ExternalContentType.Mod,
+                CommunityFileType.World => ExternalContentType.World,
+                CommunityFileType.Furniture => ExternalContentType.FurniturePack,
+                CommunityFileType.Texture => ExternalContentType.BlocksTexture,
+                CommunityFileType.Skin => ExternalContentType.CharacterSkin,
+                CommunityFileType.Mod or CommunityFileType.NetMod => ExternalContentType.Mod,
                 _ => ExternalContentType.Unknown
             };
         }
 
-        public static ScbbsPlusCommunityFileType MapExternalContentTypeToFileType(ExternalContentType type)
+        public static CommunityFileType MapExternalContentTypeToFileType(ExternalContentType type)
         {
             return type switch
             {
-                ExternalContentType.World => ScbbsPlusCommunityFileType.World,
-                ExternalContentType.FurniturePack => ScbbsPlusCommunityFileType.Furniture,
-                ExternalContentType.BlocksTexture => ScbbsPlusCommunityFileType.Texture,
-                ExternalContentType.CharacterSkin => ScbbsPlusCommunityFileType.Skin,
-                ExternalContentType.Mod => ScbbsPlusCommunityFileType.Mod,
-                _ => ScbbsPlusCommunityFileType.Unknown
+                ExternalContentType.World => CommunityFileType.World,
+                ExternalContentType.FurniturePack => CommunityFileType.Furniture,
+                ExternalContentType.BlocksTexture => CommunityFileType.Texture,
+                ExternalContentType.CharacterSkin => CommunityFileType.Skin,
+                ExternalContentType.Mod => CommunityFileType.Mod,
+                _ => CommunityFileType.Unknown
             };
         }
     }

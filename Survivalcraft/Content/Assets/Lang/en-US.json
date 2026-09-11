@@ -5465,6 +5465,18 @@
         "NetMod": "Net Mod",
         "Modpack": "Modpack"
       },
+      "CommunityFileType": {
+        "Unknown": "Resource",
+        "World": "World",
+        "Furniture": "Furniture",
+        "Texture": "Texture",
+        "Skin": "Skin",
+        "Mod": "Mod",
+        "Image": "Image",
+        "Other": "Other Files",
+        "NetMod": "Net Mod",
+        "Modpack": "Modpack"
+      },
       "ScbbsPlusCommunityOrderType": {
         "Latest": "Latest",
         "Oldest": "Oldest",

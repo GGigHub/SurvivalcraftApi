@@ -21,7 +21,7 @@ namespace Game
         private readonly BevelledButtonWidget m_nextPageButton;
         private readonly TextBoxWidget m_pageJumpBox;
         private readonly BevelledButtonWidget m_pageJumpButton;
-        private readonly Func<ScbbsPlusCommunityFileType, string> m_fileTypeNameProvider;
+        private readonly Func<CommunityFileType, string> m_fileTypeNameProvider;
         private readonly Func<PostVersionItem, PostFileItem> m_singleVersionFileProvider;
         private readonly Func<PostVersionItem, bool> m_showCompatibilityProvider;
         private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot;
@@ -40,7 +40,7 @@ namespace Game
             BevelledButtonWidget nextPageButton,
             TextBoxWidget pageJumpBox,
             BevelledButtonWidget pageJumpButton,
-            Func<ScbbsPlusCommunityFileType, string> fileTypeNameProvider,
+            Func<CommunityFileType, string> fileTypeNameProvider,
             Func<PostVersionItem, PostFileItem> singleVersionFileProvider,
             Func<PostVersionItem, bool> showCompatibilityProvider,
             TaskSlot<PostDetailLoadResult> postDetailSlot)
@@ -279,7 +279,7 @@ namespace Game
                         continue;
                     }
                     post.ShowLocalModInstallStatus = loadResult.Source == ResourceSource.Community
-                        && (loadResult.FileType == ScbbsPlusCommunityFileType.Mod || (loadResult.FileType == ScbbsPlusCommunityFileType.Unknown && post.FileType == ScbbsPlusCommunityFileType.Mod));
+                        && (loadResult.FileType == CommunityFileType.Mod || (loadResult.FileType == CommunityFileType.Unknown && post.FileType == CommunityFileType.Mod));
                     m_tree.AddRoot(CreatePostNode(post, ref snapshot));
                 }
                 int total = result.Data.Total > 0 ? result.Data.Total : result.Data.List.Length;

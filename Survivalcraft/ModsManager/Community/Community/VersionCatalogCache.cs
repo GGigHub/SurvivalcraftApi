@@ -128,9 +128,9 @@ namespace Game
         /// Unknown 也返回 true：列表级类型缺失时逐帖仍可能是 Mod，不能简化为 IsModLike。
         /// 社区屏与我的发布屏的列表加载共用这一判定。
         /// </summary>
-        public static bool ShouldLoadVersionCatalogForFileType(ScbbsPlusCommunityFileType fileType)
+        public static bool ShouldLoadVersionCatalogForFileType(CommunityFileType fileType)
         {
-            return fileType is ScbbsPlusCommunityFileType.Unknown or ScbbsPlusCommunityFileType.Mod or ScbbsPlusCommunityFileType.NetMod;
+            return fileType is CommunityFileType.Unknown or CommunityFileType.Mod or CommunityFileType.NetMod;
         }
 
         public static bool TryGetCachedVersionCatalog(

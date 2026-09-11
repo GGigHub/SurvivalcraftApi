@@ -16,7 +16,7 @@ namespace Game
             string apiBaseUrl,
             string token,
             int page,
-            ScbbsPlusCommunityFileType fileType,
+            CommunityFileType fileType,
             CommunityOrderType orderType,
             string searchTitle,
             bool ignoreOrder,
@@ -49,7 +49,7 @@ namespace Game
             int userId,
             int page,
             int limit,
-            ScbbsPlusCommunityFileType fileType,
+            CommunityFileType fileType,
             CancellationToken cancellationToken = default)
         {
             return apiClient.GetJsonResultAsync<PostsResponse>(
@@ -208,7 +208,7 @@ namespace Game
             int userId,
             int page,
             int limit,
-            ScbbsPlusCommunityFileType fileType,
+            CommunityFileType fileType,
             bool loadVersionCatalog,
             VersionListItem[] cachedCatalog,
             Dictionary<int, string> cachedVersionMap)
@@ -253,7 +253,7 @@ namespace Game
         public string ApiBaseUrl { get; set; }
         public string Token { get; set; }
         public int Page { get; set; }
-        public ScbbsPlusCommunityFileType FileType { get; set; }
+        public CommunityFileType FileType { get; set; }
         public CommunityOrderType OrderType { get; set; }
         public string SearchTitle { get; set; }
         public bool IgnoreOrder { get; set; }
