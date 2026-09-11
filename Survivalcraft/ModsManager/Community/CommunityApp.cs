@@ -40,9 +40,6 @@ namespace Game
 
         public static void OnLoadingFinished()
         {
-            // 旧模组设置一次性迁移：此 action 在 LoadingScreen 的 ModSettingsManager.LoadModSettings
-            // （ModSettingsCache 填充点）之后、末尾 SwitchScreen（任何屏 Enter / EnsureLoaded）之前执行。
-            LegacySettingsMigrator.Run();
             PendingLocalModActions.Process("startup");
             // 全局帧泵：下载收尾/自动更新/认证轮询改由引擎 Window.Frame 驱动，不再依赖 mod 屏 Update。
             GlobalFramePump.Initialize();
