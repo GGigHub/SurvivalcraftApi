@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Threading;
@@ -33,12 +34,23 @@ namespace Game
         // 认证客户端与会话存储本控制器独占（登录/登出/凭据持久化），不再经共享组合根转发。
         // static readonly：控制器是进程单例，存储须同样进程级，不随实例重建。
         private static readonly AuthClient s_authClient = new(HttpClientProvider.Community);
-        private static readonly AuthenticationSessionStore s_authenticationSessionStore = new(StoragePaths.AuthFile);
+        private static readonly AuthenticationSessionStore s_authenticationSessionStore = new();
         private Task<LoginResponse> m_loginTask;
         private CancellationTokenSource m_loginCancellation;
+        // 登录/登出目标服快照：请求在途时用户可能已切服，完成回调按快照读写，
+        // 不得触碰当前服的会话与凭据文件。
+        private string m_loginApiBaseUrl;
+        private string m_logoutApiBaseUrl;
         private Task<bool> m_logoutTask;
         private CommunityLoginDialog m_loginDialog;
         private bool m_storedAuthLoaded;
+        // legacy auth.bin 一次性迁移闩：完成前 EnsureCurrentSessionLoaded 不读盘
+        // （旧凭据尚未归因，当前服会查空）。
+        private bool m_legacyCredentialChecked;
+        // 内存会话表：归一化地址 → 该服登录数据。任意时刻只有当前地址是活跃上下文。
+        private readonly Dictionary<string, LoginData> m_sessions = new(StringComparer.OrdinalIgnoreCase);
+        // 每 URL 每进程只读一次盘（含查空结果）。
+        private readonly HashSet<string> m_sessionLoadAttempted = new(StringComparer.OrdinalIgnoreCase);
         // 401/403 并发多请求只处理一次：首个触发置 1 并派发，派发执行后复位允许下次过期再触发。
         private int m_unauthorizedHandled;
 
@@ -53,23 +65,43 @@ namespace Game
             remove => m_loginStateChanged.Unsubscribe(value);
         }
 
-        public string CurrentToken { get; private set; }
+        private LoginData CurrentSession => m_sessions.TryGetValue(ApiBaseUrl, out LoginData session) ? session : null;
 
-        public UserData CurrentUser { get; private set; }
+        public string CurrentToken => CurrentSession?.Token;
 
-        public bool IsLoggedIn { get; private set; }
+        public UserData CurrentUser => CurrentSession?.User;
+
+        public bool IsLoggedIn => CurrentSession != null;
 
         public bool IsBusy => m_loginTask != null || m_logoutTask != null;
 
-        /// <summary>目标社区服务器地址；由设置写入流程赋值，登录登出请求读取。
+        /// <summary>当前社区服务器地址（归一化）。唯一写入口是 OnServerSwitched；
         /// 读出内联归一化，兼容手改 Settings.xml 的未归一存储值。</summary>
-        public string ApiBaseUrl
-        {
-            get => ApiUrls.NormalizeBaseUrl(string.IsNullOrWhiteSpace(m_apiBaseUrl) ? ApiUrls.DefaultBaseUrl : m_apiBaseUrl);
-            set => m_apiBaseUrl = value;
-        }
+        public string ApiBaseUrl => ApiUrls.NormalizeBaseUrl(string.IsNullOrWhiteSpace(m_apiBaseUrl) ? ApiUrls.DefaultBaseUrl : m_apiBaseUrl);
 
         private string m_apiBaseUrl = ApiUrls.DefaultBaseUrl;
+
+        /// <summary>切换当前服务器：置指针并激活目标服会话。per-URL 会话下切服不登出——
+        /// 各服登录态独立保存、独立恢复；同值赋值（如进屏带入同地址）为 no-op。</summary>
+        public void OnServerSwitched(string apiBaseUrl)
+        {
+            string normalized = ApiUrls.NormalizeBaseUrl(apiBaseUrl);
+            if (string.Equals(m_apiBaseUrl, normalized, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+            m_apiBaseUrl = normalized;
+            EnsureCurrentSessionLoaded();
+            m_loginStateChanged.Raise(IsLoggedIn ? AuthChangeKind.LoggedIn : AuthChangeKind.LoggedOut);
+        }
+
+        private void EnsureCurrentSessionLoaded()
+        {
+            if (m_legacyCredentialChecked)
+            {
+                LoadSessionFromDisk(ApiBaseUrl);
+            }
+        }
 
         /// <summary>认证入口：已登录弹登出确认，否则弹登录对话框。</summary>
         public void OpenAuthEntry()
@@ -123,16 +155,19 @@ namespace Game
             }
 
             m_loginCancellation = new CancellationTokenSource();
+            string loginApiBaseUrl = ApiBaseUrl;
+            m_loginApiBaseUrl = loginApiBaseUrl;
             try
             {
                 m_loginTask = s_authClient.LoginAsync(
-                    ApiBaseUrl,
+                    loginApiBaseUrl,
                     account,
                     password,
                     m_loginCancellation.Token);
             }
             catch (Exception ex)
             {
+                m_loginApiBaseUrl = null;
                 // 服务创建任务时若同步失败，也要释放 CTS 并恢复登录对话框。
                 m_loginCancellation.Dispose();
                 m_loginCancellation = null;
@@ -151,13 +186,19 @@ namespace Game
                 return;
             }
 
-            string token = CurrentToken;
-            string apiBaseUrl = ApiBaseUrl;
-            m_logoutTask = s_authClient.LogoutAsync(apiBaseUrl, token);
+            LoginData session = CurrentSession;
+            if (session == null)
+            {
+                return;
+            }
 
-            // 本地凭据等服务端登出成功后删除（见 Update 的 m_logoutTask 轮询）：
-            // 服务端失败时保留本地凭据供重试，避免删了本地却残留服务端会话。
-            ResetSession(clearStoredAuth: false);
+            string apiBaseUrl = ApiBaseUrl;
+            m_logoutApiBaseUrl = apiBaseUrl;
+            m_logoutTask = s_authClient.LogoutAsync(apiBaseUrl, session.Token);
+
+            // 内存先清该服条目；凭据文件等服务端登出成功后删除（见 Update 轮询）：
+            // 服务端失败时保留文件供重试，避免删了本地却残留服务端会话。
+            m_sessions.Remove(apiBaseUrl);
             m_loginStateChanged.Raise(AuthChangeKind.LoggedOut);
         }
 
@@ -173,7 +214,78 @@ namespace Game
                 return;
             }
             m_storedAuthLoaded = true;
-            LoadStoredAuth();
+            MigrateLegacyCredential();
+            LoadSessionFromDisk(ApiBaseUrl);
+        }
+
+        private void MigrateLegacyCredential()
+        {
+            m_legacyCredentialChecked = true;
+            try
+            {
+                LoginData legacy = s_authenticationSessionStore.LoadLegacy(out bool _);
+                if (legacy == null || string.IsNullOrEmpty(legacy.Token) || legacy.User == null)
+                {
+                    // 文件缺失/不可读一律清掉：缺失时 TryDeleteLegacy 是 no-op，
+                    // 不可读时清掉可终止每次启动的重试循环。
+                    s_authenticationSessionStore.TryDeleteLegacy();
+                    return;
+                }
+                string apiBaseUrl = ApiBaseUrl;
+                m_sessions[apiBaseUrl] = legacy;
+                s_authenticationSessionStore.TrySave(apiBaseUrl, legacy.Token, legacy.User);
+                s_authenticationSessionStore.TryDeleteLegacy();
+                Log.Information($"[ScbbsPlus] Legacy auth.bin migrated to per-server credential file for {apiBaseUrl}.");
+            }
+            catch (PlatformNotSupportedException ex)
+            {
+                Log.Warning($"[ScbbsPlus] {ex.Message}");
+                s_authenticationSessionStore.TryDeleteLegacy();
+            }
+            catch (CryptographicException)
+            {
+                Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "CredentialDecryptionFailedClearedOld"));
+                s_authenticationSessionStore.TryDeleteLegacy();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoadCredentialsFailed"), ex.Message));
+            }
+        }
+
+        private void LoadSessionFromDisk(string apiBaseUrl)
+        {
+            if (!m_sessionLoadAttempted.Add(apiBaseUrl))
+            {
+                return;
+            }
+            try
+            {
+                LoginData data = s_authenticationSessionStore.Load(apiBaseUrl);
+                if (data != null && !string.IsNullOrEmpty(data.Token) && data.User != null)
+                {
+                    m_sessions[apiBaseUrl] = data;
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginStateRestoredFromLocal"), data.User.Nickname));
+                    if (string.Equals(apiBaseUrl, ApiBaseUrl, StringComparison.OrdinalIgnoreCase))
+                    {
+                        m_loginStateChanged.Raise(AuthChangeKind.LoggedIn);
+                    }
+                }
+            }
+            catch (PlatformNotSupportedException ex)
+            {
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "ClearedUnreadableCredentials"), ex.Message));
+                s_authenticationSessionStore.TryDelete(apiBaseUrl);
+            }
+            catch (CryptographicException)
+            {
+                Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "CredentialDecryptionFailedClearedOld"));
+                s_authenticationSessionStore.TryDelete(apiBaseUrl);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoadCredentialsFailed"), ex.Message));
+            }
         }
 
         public void Update()
@@ -200,16 +312,20 @@ namespace Game
                 m_loginCancellation = null;
                 if (loginAbandoned)
                 {
+                    m_loginApiBaseUrl = null;
                     // 登录对话框已关闭：迟到结果不写入登录态，也不弹错误窗。
                     return;
                 }
 
                 if (result != null && result.Code == 200 && result.Data?.User != null)
                 {
-                    // 登录成功
-                    CurrentToken = result.Data.Token;
-                    CurrentUser = result.Data.User;
-                    IsLoggedIn = true;
+                    // 登录成功：按发起时快照写入目标服（在途期间可能已切服）。
+                    string loginApiBaseUrl = m_loginApiBaseUrl ?? ApiBaseUrl;
+                    m_sessions[loginApiBaseUrl] = new LoginData
+                    {
+                        Token = result.Data.Token,
+                        User = result.Data.User
+                    };
                     if (m_loginDialog != null)
                     {
                         DialogsManager.HideDialog(m_loginDialog);
@@ -219,7 +335,7 @@ namespace Game
                     Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginSucceeded"), CurrentUser.Nickname, CurrentUser.Level));
 
                     // 持久化登录数据
-                    SaveStoredAuth();
+                    SaveStoredAuth(loginApiBaseUrl);
 
                     m_loginStateChanged.Raise(AuthChangeKind.LoggedIn);
                 }
@@ -248,6 +364,8 @@ namespace Game
                         DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, errorMessage, LanguageControl.Ok, null, null));
                     }
                 }
+                // 登录结果处理完毕（成功/失败均至此）：清除目标服快照。
+                m_loginApiBaseUrl = null;
             }
 
             if (m_logoutTask != null && m_logoutTask.IsCompleted)
@@ -256,8 +374,8 @@ namespace Game
                 {
                     if (m_logoutTask.Result)
                     {
-                        // 服务端登出成功：删除本地凭据（BeginLogout 阶段仅清了内存态）。
-                        DeleteStoredAuth();
+                        // 服务端登出成功：删除该服本地凭据（BeginLogout 阶段仅清了内存态）。
+                        DeleteStoredAuth(m_logoutApiBaseUrl ?? ApiBaseUrl);
                     }
                     else
                     {
@@ -272,82 +390,32 @@ namespace Game
                     Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LogoutRequestFailed"), ex.Message));
                 }
                 m_logoutTask = null;
+                m_logoutApiBaseUrl = null;
             }
         }
 
-        public void LoadStoredAuth()
+        private bool SaveStoredAuth(string apiBaseUrl)
         {
+            LoginData session = m_sessions.TryGetValue(ApiUrls.NormalizeBaseUrl(apiBaseUrl), out LoginData value) ? value : null;
+            if (session == null)
+            {
+                return false;
+            }
             try
             {
-                AuthenticationSessionLoadResult loadResult = s_authenticationSessionStore.Load();
-                if (loadResult.Error != null)
-                {
-                    throw loadResult.Error;
-                }
-                LoginData data = loadResult.Data;
-                bool legacyFormat = loadResult.IsLegacyFormat;
-
-                if (data != null && !string.IsNullOrEmpty(data.Token) && data.User != null)
-                {
-                    CurrentToken = data.Token;
-                    CurrentUser = data.User;
-                    IsLoggedIn = true;
-
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginStateRestoredFromLocal"), CurrentUser.Nickname));
-
-                    if (legacyFormat)
-                    {
-                        if (OperatingSystem.IsWindows())
-                        {
-                            if (SaveStoredAuth())
-                            {
-                                Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "LegacyCredentialsMigratedToDpapi"));
-                            }
-                        }
-                        else
-                        {
-                            // 非 Windows 平台把旧 AES-CBC 凭据迁移为 AES-GCM 格式。
-                            SaveStoredAuth();
-                        }
-                    }
-
-                    m_loginStateChanged.Raise(AuthChangeKind.LoggedIn);
-                }
-            }
-            catch (PlatformNotSupportedException ex)
-            {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "ClearedUnreadableCredentials"), ex.Message));
-                s_authenticationSessionStore.TryDelete();
-            }
-            catch (CryptographicException)
-            {
-                // DPAPI 用户/机器不匹配、旧文件损坏或密文被篡改时，清除并要求重新登录。
-                Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "CredentialDecryptionFailedClearedOld"));
-                s_authenticationSessionStore.TryDelete();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoadCredentialsFailed"), ex.Message));
-            }
-        }
-
-        public bool SaveStoredAuth()
-        {
-            try
-            {
-                Exception error = s_authenticationSessionStore.TrySave(CurrentToken, CurrentUser);
+                Exception error = s_authenticationSessionStore.TrySave(apiBaseUrl, session.Token, session.User);
                 if (error != null)
                 {
                     throw error;
                 }
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginCredentialsSavedEncrypted"), StoragePaths.AuthFile));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginCredentialsSavedEncrypted"), StoragePaths.AuthDirectory));
                 return true;
             }
             catch (PlatformNotSupportedException ex)
             {
                 try
                 {
-                    s_authenticationSessionStore.TryDelete();
+                    s_authenticationSessionStore.TryDelete(apiBaseUrl);
                 }
                 catch
                 {
@@ -362,11 +430,11 @@ namespace Game
             }
         }
 
-        public void DeleteStoredAuth()
+        private void DeleteStoredAuth(string apiBaseUrl)
         {
             try
             {
-                Exception error = s_authenticationSessionStore.TryDelete();
+                Exception error = s_authenticationSessionStore.TryDelete(apiBaseUrl);
                 if (error != null)
                 {
                     throw error;
@@ -401,18 +469,6 @@ namespace Game
             return false;
         }
 
-        private void ResetSession(bool clearStoredAuth)
-        {
-            IsLoggedIn = false;
-            CurrentToken = null;
-            CurrentUser = null;
-
-            if (clearStoredAuth)
-            {
-                DeleteStoredAuth();
-            }
-        }
-
         private static void HandleUnauthorizedResponse(string token)
         {
             Instance.HandleUnauthorizedResponseCore(token);
@@ -420,8 +476,8 @@ namespace Game
 
         private void HandleUnauthorizedResponseCore(string token)
         {
-            // 后台请求线程回调。先做廉价状态判定：已不在 LoggedIn 不打扰用户（如登出流程中）。
-            if (!IsLoggedIn)
+            // 后台请求线程回调。token 为空无从定位归属，忽略。
+            if (token == null)
             {
                 return;
             }
@@ -433,23 +489,34 @@ namespace Game
             Dispatcher.Dispatch(() =>
             {
                 m_unauthorizedHandled = 0;
-                // token 身份比对：旧 token 的在途请求（发起时按值复制了 token）在重新登录后
-                // 才返回 401，不得误杀新会话。
-                if (!IsLoggedIn
-                    || token == null
-                    || !string.Equals(token, CurrentToken, StringComparison.Ordinal))
+                // token 全表定位归属服：旧 token 的在途请求（发起时按值复制了 token）在重新登录/
+                // 切服后才返回 401，只清其所属会话，不误杀其他服与当前服。
+                string ownerUrl = null;
+                foreach (KeyValuePair<string, LoginData> kvp in m_sessions)
+                {
+                    if (string.Equals(kvp.Value.Token, token, StringComparison.Ordinal))
+                    {
+                        ownerUrl = kvp.Key;
+                        break;
+                    }
+                }
+                if (ownerUrl == null)
                 {
                     return;
                 }
-                Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "TokenInvalidatedClearingLocalState"));
-                ResetSession(clearStoredAuth: true);
-                m_loginStateChanged.Raise(AuthChangeKind.SessionExpired);
-                DialogsManager.ShowDialog(null, new MessageDialog(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "Ui", "TokenExpiredTitle"),
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "Ui", "TokenExpired"),
-                    LanguageControl.Ok,
-                    null,
-                    null));
+                m_sessions.Remove(ownerUrl);
+                DeleteStoredAuth(ownerUrl);
+                if (string.Equals(ownerUrl, ApiBaseUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "TokenInvalidatedClearingLocalState"));
+                    m_loginStateChanged.Raise(AuthChangeKind.SessionExpired);
+                    DialogsManager.ShowDialog(null, new MessageDialog(
+                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "Ui", "TokenExpiredTitle"),
+                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "Ui", "TokenExpired"),
+                        LanguageControl.Ok,
+                        null,
+                        null));
+                }
             }, waitUntilCompleted: true);
         }
     }

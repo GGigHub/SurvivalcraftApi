@@ -72,74 +72,6 @@ namespace Game
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr LocalFree(IntPtr memory);
 
-        // 旧 path-based 写入：仅供 AuthenticationSessionStore 暂留旧 API 与 legacy 迁移使用，Task 3 删除。
-        public static void SaveLegacyFile(string path, string token, UserData user)
-        {
-            string directory = Storage.GetDirectoryName(path);
-            if (!string.IsNullOrWhiteSpace(directory))
-            {
-                Storage.CreateDirectory(directory);
-            }
-            string json = JsonSerializer.Serialize(new LoginData
-            {
-                Token = token,
-                User = user
-            });
-            byte[] encrypted = EncryptLegacyString(json);
-            AtomicWriteAllBytes(path, encrypted);
-        }
-
-        public static LoginData Load(string path, out bool legacyFormat)
-        {
-            legacyFormat = false;
-            if (!Storage.FileExists(path))
-            {
-                // 活动文件缺失（如原子写硬崩溃后仅剩 .bak）时回退读取备份，避免无谓强制重登；
-                // 仅在 path 缺失时回退，不在解密失败时回退，以免削弱对篡改的响应。
-                string backupPath = path + ".bak";
-                if (!Storage.FileExists(backupPath))
-                {
-                    return null;
-                }
-                path = backupPath;
-            }
-
-            byte[] encrypted = Storage.ReadAllBytes(path);
-            string json;
-            try
-            {
-                json = DecryptBytes(encrypted, out legacyFormat);
-            }
-            catch (CryptographicException ex)
-            {
-                // 本平台损坏（截断/坏 GCM tag/坏 DPAPI blob）与跨平台不可解同待：作废文件，
-                // 避免每次启动重复失败，用户干净重登后由 Save 重建。
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCredentialStore", "DecryptCredentialFileFailed"), ex.Message));
-                TryDeleteFile(path);
-                TryDeleteFile(path + ".bak");
-                return null;
-            }
-            if (json == null)
-            {
-                // 本平台无法解开的凭据（如非 Windows 读 DPAPI 文件）：作废文件，
-                // 避免每次启动重复失败，用户干净重登后由 Save 重建。
-                TryDeleteFile(path);
-                TryDeleteFile(path + ".bak");
-                return null;
-            }
-            return JsonSerializer.Deserialize<LoginData>(json);
-        }
-
-        // 旧 path-based 删除：仅供 AuthenticationSessionStore 暂留旧 API 与 legacy 迁移使用，Task 3 删除。
-        public static void DeleteLegacyFile(string path)
-        {
-            // 登出须同时清理备份与临时文件：Load 在活动文件缺失时会回退 .bak，
-            // 只删活动文件会让旧账号凭据在下次启动时复活。
-            TryDeleteFile(path);
-            TryDeleteFile(path + ".bak");
-            TryDeleteFile(path + ".tmp");
-        }
-
         // ===== 每服一文件（v4）=====
 
         private static string GetCredentialPath(string apiBaseUrl)
@@ -232,12 +164,53 @@ namespace Game
 
         public static LoginData LoadLegacy(out bool legacyFormat)
         {
-            return Load(StoragePaths.AuthFile, out legacyFormat);
+            legacyFormat = false;
+            string path = StoragePaths.AuthFile;
+            if (!Storage.FileExists(path))
+            {
+                // 活动文件缺失（如原子写硬崩溃后仅剩 .bak）时回退读取备份，避免无谓强制重登；
+                // 仅在 path 缺失时回退，不在解密失败时回退，以免削弱对篡改的响应。
+                string backupPath = path + ".bak";
+                if (!Storage.FileExists(backupPath))
+                {
+                    return null;
+                }
+                path = backupPath;
+            }
+
+            byte[] encrypted = Storage.ReadAllBytes(path);
+            string json;
+            try
+            {
+                json = DecryptBytes(encrypted, out legacyFormat);
+            }
+            catch (CryptographicException ex)
+            {
+                // 本平台损坏（截断/坏 GCM tag/坏 DPAPI blob）与跨平台不可解同待：作废文件，
+                // 避免每次启动重复失败，用户干净重登后由 Save 重建。
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCredentialStore", "DecryptCredentialFileFailed"), ex.Message));
+                TryDeleteFile(path);
+                TryDeleteFile(path + ".bak");
+                return null;
+            }
+            if (json == null)
+            {
+                // 本平台无法解开的凭据（如非 Windows 读 DPAPI 文件）：作废文件，
+                // 避免每次启动重复失败，用户干净重登后由 Save 重建。
+                TryDeleteFile(path);
+                TryDeleteFile(path + ".bak");
+                return null;
+            }
+            return JsonSerializer.Deserialize<LoginData>(json);
         }
 
         public static void DeleteLegacy()
         {
-            DeleteLegacyFile(StoragePaths.AuthFile);
+            // 登出须同时清理备份与临时文件：Load 在活动文件缺失时会回退 .bak，
+            // 只删活动文件会让旧账号凭据在下次启动时复活。
+            TryDeleteFile(StoragePaths.AuthFile);
+            TryDeleteFile(StoragePaths.AuthFile + ".bak");
+            TryDeleteFile(StoragePaths.AuthFile + ".tmp");
         }
 
         private static void TryDeleteFile(string path)
@@ -316,28 +289,6 @@ namespace Game
                     // 回滚也失败时只能放弃，交由调用方捕获并提示重新登录。
                 }
                 throw;
-            }
-        }
-
-        private static byte[] EncryptLegacyString(string plainText)
-        {
-            byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
-            try
-            {
-                if (OperatingSystem.IsWindows())
-                {
-                    byte[] protectedBytes = ProtectWithDpapi(plainBytes, s_legacyDpapiEntropy);
-                    byte[] result = new byte[s_legacyFileMagic.Length + protectedBytes.Length];
-                    Buffer.BlockCopy(s_legacyFileMagic, 0, result, 0, s_legacyFileMagic.Length);
-                    Buffer.BlockCopy(protectedBytes, 0, result, s_legacyFileMagic.Length, protectedBytes.Length);
-                    return result;
-                }
-
-                return EncryptWithAesGcm(plainBytes);
-            }
-            finally
-            {
-                CryptographicOperations.ZeroMemory(plainBytes);
             }
         }
 

@@ -109,28 +109,15 @@ namespace Game
         }
 
         /// <summary>
-        /// 设置副作用接线：组合根（本类）订阅包装属性事件并驱动 Auth 切服登出链。
-        /// 原生 SettingsManager 无事件机制，事件由 CommunitySettingsManager 的
-        /// 包装属性 setter 触发；事件仅在赋值时发出（无初载爆发），订阅后回读
-        /// 一次现值完成初始同步。
+        /// 设置副作用接线：组合根订阅包装属性事件驱动切服。per-URL 会话下切服
+        /// 不再登出——只更新会话指针并激活目标服会话；同值赋值由 OnServerSwitched
+        /// 内部比较 no-op。订阅后回读一次现值完成初始同步（置指针；实际读盘在
+        /// GlobalFramePump 首帧 EnsureStoredAuthLoaded 的 legacy 迁移之后）。
         /// </summary>
         private static void WireSettingsSideEffects()
         {
-            AuthSessionManager auth = AuthSessionManager.Instance;
-            CommunitySettingsManager.ApiBaseUrlChanged += apiBaseUrl =>
-            {
-                // 切换服务器即登出旧会话。顺序关键：BeginLogout 在赋新值之前捕获旧
-                // ApiBaseUrl，登出请求须发往旧服务器（新服务器上没有该会话）。
-                // 仅在地址真变时登出：同值赋值也会触发事件，若不比较，启动时恢复的
-                // 本地会话会被无变化的赋值踢下线并发失败登出请求。
-                if (auth.IsLoggedIn
-                    && !string.Equals(auth.ApiBaseUrl, apiBaseUrl, StringComparison.OrdinalIgnoreCase))
-                {
-                    auth.BeginLogout();
-                }
-                auth.ApiBaseUrl = apiBaseUrl;
-            };
-            auth.ApiBaseUrl = CommunitySettingsManager.ApiBaseUrl;
+            CommunitySettingsManager.ApiBaseUrlChanged += apiBaseUrl => AuthSessionManager.Instance.OnServerSwitched(apiBaseUrl);
+            AuthSessionManager.Instance.OnServerSwitched(CommunitySettingsManager.ApiBaseUrl);
         }
     }
 }

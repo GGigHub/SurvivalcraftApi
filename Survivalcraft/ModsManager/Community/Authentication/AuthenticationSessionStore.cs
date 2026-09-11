@@ -2,59 +2,13 @@ using System;
 
 namespace Game
 {
+    /// <summary>
+    /// 按归一化服务器地址读写各服凭据文件（data:ScbbsPlus/auth/&lt;sha256&gt;.bin，v4）；
+    /// legacy auth.bin 仅供一次性迁移。
+    /// </summary>
     internal sealed class AuthenticationSessionStore
     {
-        private readonly string m_path;
-
-        public AuthenticationSessionStore(string path)
-        {
-            m_path = path ?? throw new ArgumentNullException(nameof(path));
-        }
-
-        public Exception TrySave(string token, UserData user)
-        {
-            try
-            {
-                CredentialStore.SaveLegacyFile(m_path, token, user);
-                return null;
-            }
-            catch (Exception ex)
-            {
-                return ex;
-            }
-        }
-
-        public AuthenticationSessionLoadResult Load()
-        {
-            try
-            {
-                LoginData data = CredentialStore.Load(m_path, out bool legacyFormat);
-                return new AuthenticationSessionLoadResult
-                {
-                    Data = data,
-                    IsLegacyFormat = legacyFormat
-                };
-            }
-            catch (Exception ex)
-            {
-                return new AuthenticationSessionLoadResult { Error = ex };
-            }
-        }
-
-        public Exception TryDelete()
-        {
-            try
-            {
-                CredentialStore.DeleteLegacyFile(m_path);
-                return null;
-            }
-            catch (Exception ex)
-            {
-                return ex;
-            }
-        }
-
-        public Exception TrySaveForServer(string apiBaseUrl, string token, UserData user)
+        public Exception TrySave(string apiBaseUrl, string token, UserData user)
         {
             try
             {
@@ -67,12 +21,12 @@ namespace Game
             }
         }
 
-        public LoginData LoadForServer(string apiBaseUrl)
+        public LoginData Load(string apiBaseUrl)
         {
             return CredentialStore.Load(apiBaseUrl);
         }
 
-        public Exception TryDeleteForServer(string apiBaseUrl)
+        public Exception TryDelete(string apiBaseUrl)
         {
             try
             {
@@ -102,12 +56,5 @@ namespace Game
                 return ex;
             }
         }
-    }
-
-    internal sealed class AuthenticationSessionLoadResult
-    {
-        public LoginData Data { get; set; }
-        public bool IsLegacyFormat { get; set; }
-        public Exception Error { get; set; }
     }
 }
