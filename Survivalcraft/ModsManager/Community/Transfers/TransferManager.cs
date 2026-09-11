@@ -8,7 +8,7 @@ namespace Game
     ///
     /// 顺序约束：字段按声明顺序初始化，后项构造可引用前项，勿反转。
     /// 反馈客户端的 token/baseUrl 提供者不能在静态初始化中接线（认证控制器在 Presentation 层，
-    /// 本类不得反向引用），由组合根 ScbbsPlusApp.Initialize 经
+    /// 本类不得反向引用），由组合根 CommunityApp.Initialize 经
     /// <see cref="ConfigureFeedbackProviders"/> 显式注入；接线前反馈按匿名上报（尽力而为语义不变）。
     /// </summary>
     internal static class TransferManager
