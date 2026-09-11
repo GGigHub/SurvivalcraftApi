@@ -9,7 +9,7 @@ using SixLabors.ImageSharp.Processing;
 using Color = Engine.Color;
 
 namespace Game {
-    public class CommunityContentScreen : Screen {
+    public class OldCommunityContentScreen : Screen {
         public enum Order {
             ByRank = 0,
             ByTime = 1,
@@ -54,7 +54,7 @@ namespace Game {
 
         public const string fName = "CommunityContentScreen";
 
-        public CommunityContentScreen() {
+        public OldCommunityContentScreen() {
             XElement node = ContentManager.Get<XElement>("Screens/CommunityContentScreen");
             LoadContents(this, node);
             m_treePanel = Children.Find<TreeViewWidget>("Tree");

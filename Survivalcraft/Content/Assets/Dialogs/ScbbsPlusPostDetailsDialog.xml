@@ -1,0 +1,16 @@
+<CanvasWidget xmlns="runtime-namespace:Game" Size="920, 520" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="0, 10">
+    <LabelWidget Name="ScbbsPlusPostDetailsDialog.Title" Text="[ScbbsPlusPostDetailsDialog:PostDetails]" Color="255, 255, 255" HorizontalAlignment="Center" />
+    <ScrollPanelWidget Name="ScbbsPlusPostDetailsDialog.ScrollPanel" Direction="Vertical" Margin="5, 12">
+      <StackPanelWidget Direction="Vertical" Margin="5, 0" HorizontalAlignment="Stretch">
+        <LabelWidget Name="ScbbsPlusPostDetailsDialog.TranslateStatus" MarginBottom="8" Color="160, 210, 255" FontScale="0.7" WordWrap="true" IsVisible="false" />
+        <StackPanelWidget Name="ScbbsPlusPostDetailsDialog.HeaderPanel" Direction="Vertical" HorizontalAlignment="Stretch" IsVisible="false" />
+        <StackPanelWidget Name="ScbbsPlusPostDetailsDialog.ContentPanel" Direction="Vertical" HorizontalAlignment="Stretch" />
+      </StackPanelWidget>
+    </ScrollPanelWidget>
+    <CanvasWidget Name="ScbbsPlusPostDetailsDialog.ActionsRow" Size="Infinity, 60" Margin="10, 0">
+      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.PrimaryButton" Text="[ScbbsPlusPostDetailsDialog:Download]" Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Far" VerticalAlignment="Center" />
+    </CanvasWidget>
+  </StackPanelWidget>
+</CanvasWidget>

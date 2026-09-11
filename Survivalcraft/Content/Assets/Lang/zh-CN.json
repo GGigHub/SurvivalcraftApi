@@ -4040,6 +4040,151 @@
     "SelectClassSubstituteDialog": {
       "1": "选择要使用的类",
       "2": "说明：所有选项都有可能导致整个游戏无法正常运行"
+    },
+    "ScbbsPlusCommunityScreen": {
+      "SCChineseCommunity": "sc中文社区",
+      "Community": "社区",
+      "Filter": "筛选",
+      "Mod": "模组",
+      "Sort": "排序",
+      "RecentlyUpdated": "最近更新",
+      "CurrentVersion": "当前版本",
+      "All": "全部",
+      "Search": "搜索",
+      "World": "存档",
+      "Furniture": "家具",
+      "Texture": "材质",
+      "Skin": "皮肤",
+      "Modpack": "整合包",
+      "NoContent": "无内容",
+      "CommunityMods": "社区模组",
+      "SelectLeftToShowDetails": "选中左侧内容, 在此展示详情",
+      "WorldName": "存档名称：",
+      "WorldSize": "存档大小：",
+      "WorldSeed": "存档种子：",
+      "CopySeed": "复制种子",
+      "CurrentStatus": "当前状态：",
+      "EasiestMode": "最简单游戏模式：",
+      "CurrentMode": "当前游戏模式：",
+      "ChangeMode": "修改模式",
+      "Players": "玩家数量：",
+      "Days": "游戏天数：",
+      "CompatibleAPI": "适配API：",
+      "PackageName": "包名：",
+      "Dependencies": "引用依赖包：",
+      "Deaths": "死亡次数：",
+      "Review": "评价",
+      "Versions": "版本列表",
+      "CheckUpdate": "检查更新",
+      "Functions": "查看函数集",
+      "Download": "下载",
+      "Delete": "删除",
+      "Upload": "上传",
+      "Save": "保存",
+      "Page": "页码",
+      "Go": "跳转",
+      "ShareLink": "分享链接",
+      "Details": "查看详情",
+      "More": "...",
+      "LikeTheCommunityExpansionMod": "喜欢社区扩展模组吗?",
+      "Disable": "禁用",
+      "PendingRestartResources": "有0个资源需要重启加载"
+    },
+    "ScbbsPlusDownloadDialog": {
+      "DownloadingLabel": "正在下载",
+      "Close": "关闭",
+      "PreparingDownload": "准备下载...",
+      "CancelDownload": "取消下载",
+      "Background": "后台下载"
+    },
+    "ScbbsPlusDownloadFailureDialog": {
+      "UseAnotherSource": "使用其他源",
+      "CurrentDownloadLink": "当前下载链接",
+      "ErrorReason": "错误原因",
+      "CopyLink": "复制链接",
+      "DefaultMainlandChina": "默认/中国大陆",
+      "Source1Global": "下载源1/全球",
+      "Source2MainlandChina": "下载源2/中国大陆",
+      "Source3Global": "下载源3/全球",
+      "Source4Global": "下载源4/全球"
+    },
+    "ScbbsPlusDownloadQueueDialog": {
+      "DownloadQueue": "下载队列",
+      "SelectionHint": "点击任务即可选择，未选择时按钮会自动匹配任务。",
+      "PauseResume": "暂停/继续",
+      "CancelTask": "取消任务",
+      "Retry": "重试失败",
+      "ClearDone": "清理完成",
+      "Close": "关闭"
+    },
+    "ScbbsPlusFiltersDialog": {
+      "Title": "筛选",
+      "Filter": "筛选项",
+      "IgnoreSearch": "忽略",
+      "FileType": "文件类型",
+      "SortOrder": "排序方式",
+      "VersionRange": "版本范围",
+      "Section": "板块"
+    },
+    "ScbbsPlusImportLinkDialog": {
+      "ImportResourceLink": "导入资源链接",
+      "Import": "导入",
+      "Message": "支持 scworld / scfpack / png / scbtex / scskin / scmod / zip / json 直链"
+    },
+    "ScbbsPlusImportOverwriteDialog": {
+      "DuplicateResource": "发现同名资源",
+      "Overwrite": "覆盖",
+      "Rename": "重命名"
+    },
+    "ScbbsPlusLoginDialog": {
+      "LogInToCommunity": "登录社区",
+      "AccountLabel": "邮箱/用户名:",
+      "PasswordLabel": "密码:",
+      "LogIn": "登录",
+      "Register": "注册"
+    },
+    "ScbbsPlusModInfoDialog": {
+      "AboutModTitle": "关于 ScbbsPlus",
+      "ProjectAddress": "项目地址："
+    },
+    "ScbbsPlusModpackFileConflictDialog": {
+      "DuplicateFileFound": "发现同名文件",
+      "Overwrite": "覆盖",
+      "Skip": "跳过",
+      "SkipAll": "全部跳过",
+      "OverwriteAll": "全部覆盖"
+    },
+    "ScbbsPlusMoreScreen": {
+      "MoreScbbsPlus": "更多 ScbbsPlus",
+      "Close": "关闭",
+      "LoggedAccount": "当前登录账号",
+      "NotLoggedIn": "未登录",
+      "CommunityAccount": "社区账号",
+      "CommunityAccountDescription": "登录后可上传资源并管理已发布内容",
+      "LogIn": "登录",
+      "LinkImport": "链接导入",
+      "LinkImportDescription": "通过网络链接导入资源或整合包",
+      "Import": "导入",
+      "DownloadQueue": "下载队列",
+      "DownloadQueueDescription": "查看正在等待、暂停或失败的下载任务",
+      "View": "查看",
+      "ModUpdate": "ScbbsPlus 更新",
+      "ModUpdateDescription": "检查 ScbbsPlus 在代码仓库中的可用更新",
+      "CheckUpdate": "检查更新",
+      "ModSettings": "模组设置",
+      "ModSettingsDescription": "打开游戏原生模组设置",
+      "Open": "打开",
+      "AboutMod": "关于",
+      "AboutModDescription": "查看本模组的版本、作者和适配信息"
+    },
+    "ScbbsPlusPostDetailsDialog": {
+      "PostDetails": "帖子详情",
+      "Close": "关闭",
+      "Download": "下载"
+    },
+    "ScbbsPlusRestartConfirmDialog": {
+      "Restart": "重启",
+      "RebootHere": "重启到此"
     }
   },
   "FireworksBlock": {
@@ -5291,6 +5436,11 @@
         "Trending": "最近热门",
         "NewActivity": "最新动态"
       },
+      "CommunitySection": {
+        "All": "全部",
+        "Trending": "最近热门",
+        "NewActivity": "最新动态"
+      },
       "ScbbsPlusCommunityFileType": {
         "Unknown": "资源",
         "World": "存档",
@@ -5309,6 +5459,12 @@
         "Updated": "最近更新",
         "Hot": "热度"
       },
+      "CommunityOrderType": {
+        "Latest": "最新",
+        "Oldest": "最早",
+        "Updated": "最近更新",
+        "Hot": "热度"
+      },
       "ExternalContentType": {
         "World": "存档",
         "FurniturePack": "家具包",
@@ -5316,6 +5472,216 @@
         "CharacterSkin": "皮肤",
         "Mod": "模组"
       }
+    }
+  },
+  "ScbbsPlusApp": {
+    "Text": {
+      "SCChineseCommunity": "sc中文社区"
+    }
+  },
+  "ScbbsPlusDownloadDialog": {
+    "DownloadingLabel": "正在下载",
+    "DownloadComplete": "下载完成。",
+    "Text": {
+      "DownloadingProgress": "正在下载...",
+      "DownloadFailed": "下载失败：{0}",
+      "Canceled": "已取消"
+    }
+  },
+  "ScbbsPlusDownloadFailureDialog": {
+    "DownloadError": "下载出错",
+    "Text": {
+      "UnknownError": "未知错误"
+    }
+  },
+  "ScbbsPlusDownloadFlowManager": {
+    "StartModpackDownload": "[ScbbsPlus] 开始下载整合包 url={0} file={1}",
+    "DownloadModpackManifest": "[ScbbsPlus] 下载整合包清单 url={0}",
+    "ModpackManifestDownloadCompleted": "[ScbbsPlus] 整合包清单下载完成 长度={0}",
+    "UserConfirmedModpackDownload": "[ScbbsPlus] 用户确认开始下载整合包 total={0}",
+    "StartProcessingModpackItems": "[ScbbsPlus] 开始处理整合包子项",
+    "ModpackProcessingFaulted": "[ScbbsPlus] 整合包处理异常: {0}",
+    "BackgroundTaskFailed": "[ScbbsPlus] 后台任务失败: {0}, downloadFailed={1}, error={2}",
+    "DownloadQueueRestored": "[ScbbsPlus] 已恢复下载队列: {0} 项",
+    "SaveDownloadQueueFailed": "[ScbbsPlus] 保存下载队列失败: {0}",
+    "CleanDownloadTempFileFailed": "[ScbbsPlus] 清理下载临时文件失败: {0}",
+    "DownloadTaskFaulted": "[ScbbsPlus] 下载任务异常: {0}",
+    "UserChoseNormalRestartOnImportComplete": "[ScbbsPlus] 用户在导入完成提示中选择普通重启。file={0}",
+    "UserChoseRestartIntoItOnImportComplete": "[ScbbsPlus] 用户在导入完成提示中选择重启到此。file={0}",
+    "BackgroundManifestLoadTaskFaulted": "[ScbbsPlus] 后台加载整合包清单任务异常: {0}",
+    "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] 后台整合包子项下载任务异常: {0}",
+    "ImportCompletedCallbackFaulted": "[ScbbsPlus] 导入完成回调异常（导入本身已成功）: {0}",
+    "Text": {
+      "Failed": "失败",
+      "DefaultMainlandChina": "默认/中国大陆",
+      "Source1Global": "下载源1/全球",
+      "Source2MainlandChina": "下载源2/中国大陆",
+      "Source3Global": "下载源3/全球",
+      "Source4Global": "下载源4/全球",
+      "SkippedLocalDuplicates": "，另有 {0} 项因本地已有同名内容而跳过。",
+      "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
+      "HasNoDownloadLinkSkipped": "{0} 没有下载链接，已跳过。",
+      "UnknownItemCategory": "未知的子项类别：{0}",
+      "DataFileHostUnavailable": "{0} 无法导入：当前页面无法处理整合包数据文件，请在本地资源管理屏使用整合包下载。",
+      "Imported": "{0} 已导入。",
+      "UpdateComplete": "更新完成",
+      "ImportedRestartPrompt": "{0} 已导入，已标记为待重启加载，重启游戏后生效。是否立即重启？",
+      "ImportResource": "导入资源",
+      "Importing": "正在导入...",
+      "DownloadingFormat": "正在下载：{0}",
+      "TotalItemsDownloadAll": "共 {0} 个子项，是否全部下载？",
+      "StartDownload": "开始下载",
+      "DownloadPackPartialFailure": "整合包下载部分失败：成功 {0} 项，失败 {1} 项。",
+      "DownloadPackFailure": "整合包下载失败：成功 {0} 项，失败 {1} 项。",
+      "DownloadCanceled": "已取消下载：{0}",
+      "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
+      "DownloadPaused": "已暂停下载：{0}",
+      "DownloadFailed": "下载失败：{0}",
+      "ImportFailed": "导入失败：{0}",
+      "UnknownError": "未知错误",
+      "Canceled": "已取消"
+    }
+  },
+  "ScbbsPlusFiltersDialog": {
+    "SelectFileType": "选择文件类型",
+    "SelectSortOrder": "选择排序方式",
+    "SelectVersionRange": "选择版本范围",
+    "SelectSection": "选择板块",
+    "SaveDefault": "保存为默认值",
+    "Saved": "已保存"
+  },
+  "ScbbsPlusGameUploadFileProvider": {
+    "CleanUploadTempFileFailed": "[ScbbsPlus] 清理上传临时文件失败: {0}, {1}"
+  },
+  "ScbbsPlusGlobalFramePump": {
+    "FramePumpPollFaulted": "[ScbbsPlus] 全局帧泵轮询异常: {0}"
+  },
+  "ScbbsPlusModLoader": {
+    "Link": "链接",
+    "ScbbsPlusDescription": "更好用的中文社区查看界面",
+    "LocalResources": "本地资源管理",
+    "LocalResourcesDescription": "更好用的模组、材质、皮肤等资源的管理界面",
+    "MyPublished": "我发布的",
+    "MyPublishedDescription": "查看已发布到中文社区的资源",
+    "ImportFromWebLink": "从网络链接导入",
+    "ImportFromWebLinkDescription": "更好的从网络链接导入资源的工具",
+    "StartupRollbackResidualBackupFailed": "[ScbbsPlus] 启动回滚更新残留备份失败: {0}",
+    "GameLoaded": "[ScbbsPlus] 游戏已加载。",
+    "EnteredMainMenuRestoreFlag": "[ScbbsPlus] 进入主页，待恢复标记={0}",
+    "RequestingSwitchToPreRestartScreen": "[ScbbsPlus] 已进入主页，立即请求切换到重启前页面",
+    "RestartReturnScreenNotRegistered": "[ScbbsPlus] 重启返回目标页面未注册：{0}",
+    "AutoSwitchFromMainMenuToScreen": "[ScbbsPlus] 从主页自动切换到 {0} 页面"
+  },
+  "ScbbsPlusModVersionsDialog": {
+    "Current": "当前使用",
+    "NoVersions": "暂无版本。",
+    "NoDownloadableFiles": "暂无可下载文件。",
+    "DownloadsSize": "文件下载 {0}   大小 {1}",
+    "FullyCompatible": "完全兼容",
+    "PotentialCompatibilityIssues": "可能存在兼容性问题",
+    "Incompatible": "不兼容",
+    "NoCompatibilityVersionSpecified": "未标注适配版本",
+    "GameVersionsPublished": "{0}适配游戏版本：{1}   发布时间：{2}",
+    "Version": "版本",
+    "Published": "发布时间",
+    "Text": {
+      "UnnamedFile": "未命名文件",
+      "CommunityPost": "社区帖子"
+    }
+  },
+  "ScbbsPlusMoreScreen": {
+    "ModName": "模组名称：{0}",
+    "ModVersion": "模组版本：{0}",
+    "GameVersion": "适配游戏版本：{0}",
+    "ApiVersion": "适配 API 版本：{0}",
+    "ModAuthor": "作者：{0}",
+    "ModDescription": "简介：{0}",
+    "CheckingProgress": "检查中...",
+    "StatusReady": "设置已就绪。",
+    "ModInfoProbeFailed": "[ScbbsPlus] 读取自身 modinfo 失败: {0}",
+    "Text": {
+      "LogOut": "登出",
+      "UpdateFound": "发现更新",
+      "LogIn": "登录",
+      "CheckUpdate": "检查更新"
+    }
+  },
+  "ScbbsPlusPlayedTimeClient": {
+    "PlayedTimeReportCompleted": "[ScbbsPlus] 模组游玩时间上报完成: 成功 {0} 条，失败 {1} 条",
+    "PlayedTimeReportRejectedEntries": "[ScbbsPlus] 模组游玩时间上报被服务端拒绝的条目: {0}",
+    "PlayedTimeReportFailed": "[ScbbsPlus] 模组游玩时间上报失败: {0}"
+  },
+  "ScbbsPlusPostDetailsContentBuilder": {
+    "DisposePostDetailsTextureFailed": "[ScbbsPlus] 释放帖子详情纹理失败: {0}",
+    "DisposeLatePostDetailsTextureFailed": "[ScbbsPlus] 释放迟到帖子详情纹理失败: {0}",
+    "DisposeDuplicatePostDetailsTextureFailed": "[ScbbsPlus] 释放重复帖子详情纹理失败: {0}",
+    "DecodePostDetailsImageFailed": "[ScbbsPlus] 解析帖子详情图片失败: {0}, error={1}",
+    "RequestPostDetailsImageFailed": "[ScbbsPlus] 请求帖子详情图片失败: {0}, error={1}",
+    "Text": {
+      "Image": "图片"
+    }
+  },
+  "ScbbsPlusPostDetailsDialog": {
+    "TranslatingTo": "正在翻译为 {0}...",
+    "AutomaticallyTranslatedTo": "已自动翻译为 {0}。",
+    "AutomaticTranslationFailed": "自动翻译失败：{0}",
+    "FailedToLoad": "{0}加载失败",
+    "Loading": "{0}加载中...",
+    "AutoTranslateFailed": "[ScbbsPlus] 自动翻译失败: {0}",
+    "Text": {
+      "NoDetails": "暂无详情内容。",
+      "PostDetails": "帖子详情"
+    }
+  },
+  "ScbbsPlusPostDetailsHeaderBuilder": {
+    "Text": {
+      "DownloadFile": "下载文件",
+      "UnknownError": "未知错误",
+      "CurrentVersion": "当前版本",
+      "LatestVersion": "最新版本",
+      "UnnamedVersion": "未命名版本"
+    }
+  },
+  "ScbbsPlusPostIconDecoder": {
+    "DecodePackageIconFailed": "[ScbbsPlus] 解析包内图标失败: {0}"
+  },
+  "ScbbsPlusPostIconLoader": {
+    "SkipOversizedPostIcon": "[ScbbsPlus] 跳过过大的帖子图标: {0}, size={1}",
+    "DecodeRemoteIconFailed": "[ScbbsPlus] 解析远程图标失败: {0}, error={1}",
+    "CreatePostIconTextureFailed": "[ScbbsPlus] 创建帖子图标纹理失败: {0}, error={1}",
+    "RequestPostIconFailed": "[ScbbsPlus] 请求帖子图标失败: {0}, error={1}"
+  },
+  "ScbbsPlusPostTreePresenter": {
+    "GetPostDetailsFailed": "[ScbbsPlus] 获取帖子详情失败: {0}",
+    "LoadPostFailed": "[ScbbsPlus] 加载帖子失败: {0}",
+    "Text": {
+      "Files": "文件 {0}",
+      "UpdateAvailable": "有更新"
+    }
+  },
+  "ScbbsPlusRestartConfirmDialog": {
+    "Text": {
+      "RestartRequired": "重启加载"
+    }
+  },
+  "ScbbsPlusReviewSubmissionHandler": {
+    "ScoreSubmissionTaskFaulted": "[ScbbsPlus] 评分提交任务异常: {0}",
+    "Text": {
+      "PleaseWait": "请稍候"
+    }
+  },
+  "ScbbsPlusScreenRegistry": {
+    "ScreenRegistered": "[ScbbsPlus] 已注册 {0} 页面：source={1}",
+    "RegisterScreenFailed": "[ScbbsPlus] 注册 {0} 页面失败：source={1}, error={2}",
+    "UploadTargetProviderAdded": "[ScbbsPlus] 已添加 ScbbsPlus 上传目标提供者",
+    "RegisterUploadTargetFailed": "[ScbbsPlus] 注册 ScbbsPlus 上传目标失败: {0}"
+  },
+  "ScbbsPlusTreeViewWidget": {
+    "RowWidgetsRebuiltCallbackFaulted": "[ScbbsPlus] 行组件重建回调异常: {0}"
+  },
+  "ScbbsPlusVersionDetailFormatter": {
+    "Text": {
+      "UnnamedVersion": "未命名版本"
     }
   }
 }

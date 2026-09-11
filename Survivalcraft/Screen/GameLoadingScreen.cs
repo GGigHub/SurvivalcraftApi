@@ -100,7 +100,7 @@ namespace Game {
             m_worldSnapshotName = (string)parameters[1];
             m_stateMachine.TransitionTo("WaitingForFadeIn");
             ProgressManager.UpdateProgress("Loading World", 0f);
-            CommunityContentScreen screen = ScreensManager.FindScreen<CommunityContentScreen>("CommunityContent");
+            OldCommunityContentScreen screen = ScreensManager.FindScreen<OldCommunityContentScreen>("CommunityContent");
             if (screen != null) {
                 screen.m_treePanel.Clear();
                 screen.m_treePanel.ScrollPosition = 0f;

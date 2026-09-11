@@ -161,6 +161,7 @@ namespace Game {
                     ModsManager.Initialize();
                 }
             );
+            AddLoadAction(delegate { CommunityApp.Initialize(); });
             AddLoadAction(
                 delegate {
 #if ANDROID
@@ -542,6 +543,7 @@ namespace Game {
                 }
             );
             AddLoadAction(KeyCompatibleGroupsManager.Initialize); //初始化按键兼容组
+            AddLoadAction(delegate { CommunityApp.OnLoadingFinished(); });
             AddLoadAction(
                 delegate {
                     if (Program.StartupParameters.TryGetValue("play", out string worldDirectory)) {
@@ -577,8 +579,9 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("Game", new GameScreen()); });
             AddLoadAction(delegate { AddScreen("TrialEnded", new TrialEndedScreen()); });
             AddLoadAction(delegate { AddScreen("ExternalContent", new ExternalContentScreen()); });
-            AddLoadAction(delegate { AddScreen("CommunityContent", new CommunityContentScreen()); });
+            AddLoadAction(delegate { AddScreen("CommunityContent", new OldCommunityContentScreen()); });
             AddLoadAction(delegate { AddScreen("OriginalCommunityContent", new OriginalCommunityContentScreen()); });
+            AddLoadAction(delegate { CommunityScreenRegistry.EnsureAllScreensRegistered("loading"); });
             AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
             AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });
             AddLoadAction(delegate { AddScreen("ModsManageContent", new ModsManageContentScreen()); });

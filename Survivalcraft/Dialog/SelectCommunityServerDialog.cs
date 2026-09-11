@@ -72,7 +72,7 @@ namespace Game {
                     break;
                 case CommunityServerManager.Type.Chinese:
                     CommunityServerManager.ChangeChineseInfo(info);
-                    ScreensManager.SwitchScreen("CommunityContent");
+                    ScreensManager.SwitchScreen(ScreenNames.Community, info.ApiUrl);
                     break;
             }
         }
