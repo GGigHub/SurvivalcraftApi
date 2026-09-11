@@ -12,9 +12,9 @@ namespace Game
     /// ModSettingsState（state.json），无论旧段是否存在都置位，保证只跑一次。
     /// AutoUpdateCheckEnabled 随自更新功能一并退役：读出即丢弃，不迁移、不进 UI。
     /// 单项解析失败跳过不中断；整体异常仅记日志（标志未置位，下次启动自动重试）。
-    /// 必须在 CommunitySettingsManager 首次 EnsureLoaded 之前执行
-    /// （CommunityApp.Initialize 最早，此时 SettingsManager.Initialize 与 ModsManager.Initialize
-    /// 均已完成：Settings.xml 默认值已就绪、ModSettingsCache 已填充）。
+    /// 必须在 CommunitySettingsManager 首次 EnsureLoaded 之前、且在
+    /// ModSettingsManager.LoadModSettings（ModSettingsCache 填充点，LoadingScreen 加载 action）
+    /// 之后执行——现挂 CommunityApp.OnLoadingFinished 首行，两个条件均满足。
     /// </summary>
     internal static class LegacySettingsMigrator
     {
