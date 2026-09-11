@@ -23,15 +23,7 @@ namespace Game {
                     HorizontalAlignment = WidgetAlignment.Center,
                     VerticalAlignment = WidgetAlignment.Center
                 };
-                if (info == CommunityServerManager.DefaultOriginalInfo) {
-                    labelWidget.Text = LanguageControl.Get("ContentScreen", "CommunityType", "OriginalCommunity");
-                }
-                else if (info == CommunityServerManager.DefaultChineseInfo) {
-                    labelWidget.Text = LanguageControl.Get("ContentScreen", "CommunityType", "ChineseCommunity");
-                }
-                else {
-                    labelWidget.Text = info.Name;
-                }
+                labelWidget.Text = CommunityServerManager.GetDisplayName(info);
                 return labelWidget;
             };
             m_listPanel.ItemClicked = o => {

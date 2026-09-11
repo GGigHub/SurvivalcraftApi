@@ -54,6 +54,20 @@
         public static Info CurrentOriginalInfo = DefaultOriginalInfo;
         public static Info CurrentChineseInfo = DefaultChineseInfo;
 
+        /// <summary>服务器条目显示名：内置条目用本地化名，自建条目用用户命名。</summary>
+        public static string GetDisplayName(Info info) {
+            if (info == null) {
+                return string.Empty;
+            }
+            if (info == DefaultOriginalInfo) {
+                return LanguageControl.Get("ContentScreen", "CommunityType", "OriginalCommunity");
+            }
+            if (info == DefaultChineseInfo) {
+                return LanguageControl.Get("ContentScreen", "CommunityType", "ChineseCommunity");
+            }
+            return info.Name;
+        }
+
         public static IEnumerable<Info> GetAllInfos() {
             if (SettingsManager.OriginalCommunityContentMode == CommunityContentMode.Disabled) {
                 if (SettingsManager.CommunityContentMode != CommunityContentMode.Disabled) {

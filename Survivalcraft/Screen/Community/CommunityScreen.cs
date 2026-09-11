@@ -135,11 +135,12 @@ namespace Game
             if (parameters != null
                 && parameters.Length > 0
                 && parameters[0] is string apiUrl
-                && !string.IsNullOrWhiteSpace(apiUrl)
-                && string.Equals(ApiUrls.NormalizeBaseUrl(CommunitySettingsManager.ApiBaseUrl), ApiUrls.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase))
+                && !string.IsNullOrWhiteSpace(apiUrl))
             {
-                // 中文社区入口带入的 API 地址仅作初始值：设置里改过则设置优先。
-                // 经包装属性赋值（setter 归一化并触发 ApiBaseUrlChanged → 切服登出链）。
+                // 内容屏服务器选择器带入的 API 地址即本次要用的服务器：总是切换。
+                // per-URL 会话下切服无损，原"设置优先"守卫（防切服登出）已无存在理由；
+                // 经包装属性赋值（setter 归一化+别名升级并触发事件 → OnServerSwitched
+                // 激活目标服会话，同值 no-op）。
                 CommunitySettingsManager.ApiBaseUrl = apiUrl;
             }
             AcquireRemoteImportHost();
