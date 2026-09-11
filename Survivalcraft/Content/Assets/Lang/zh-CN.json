@@ -4175,7 +4175,17 @@
       "ModSettingsDescription": "打开游戏原生模组设置",
       "Open": "打开",
       "AboutMod": "关于",
-      "AboutModDescription": "查看本模组的版本、作者和适配信息"
+      "AboutModDescription": "查看本模组的版本、作者和适配信息",
+      "ApiBaseUrl": "API 地址",
+      "ApiBaseUrlDescription": "社区服务接口地址，点击应用后将与当前服务器断开连接",
+      "DownloadSourceSelectionMode": "下载源选择",
+      "DownloadSourceSelectionModeDescription": "下载资源时如何选择下载源",
+      "DefaultDownloadSource": "默认下载源",
+      "DefaultDownloadSourceDescription": "「使用下方默认下载源」模式下统一使用的下载源",
+      "ApplyDownloadSourceToUpdates": "应用到资源更新",
+      "ApplyDownloadSourceToUpdatesDescription": "下载已发布资源的更新时使用所选下载源",
+      "PlayedTimeReporting": "游玩时长统计",
+      "PlayedTimeReportingDescription": "向社区上报游玩时长，用于社区数据统计"
     },
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "帖子详情",
@@ -5390,7 +5400,7 @@
   "ScbbsPlusModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "已有整合包文件冲突等待用户处理。",
     "IdenticalFileChooseAction": "本地已存在一模一样的文件名：{0}\n请选择如何处理。"
-  },
+  },
   "ScbbsPlusTransactionalFileReplacement": {
     "ScanResidualBackupsFailed": "[ScbbsPlus] 扫描更新残留备份失败 root={0} error={1}",
     "CleanResidualBackup": "[ScbbsPlus] 清理更新残留备份 backup={0}",
@@ -5440,6 +5450,18 @@
         "All": "全部",
         "Trending": "最近热门",
         "NewActivity": "最新动态"
+      },
+      "DownloadSourceSelectionMode": {
+        "Default": "默认（自动选择）",
+        "ManualSelect": "每次手动选择",
+        "CustomDefault": "使用下方默认下载源"
+      },
+      "DownloadSourceOption": {
+        "DefaultCn": "默认线路（中国大陆）",
+        "Source1Global": "备用线路 1（全球）",
+        "Source2Cn": "备用线路 2（中国大陆）",
+        "Source3Global": "备用线路 3（全球）",
+        "Source4Global": "备用线路 4（全球）"
       },
       "ScbbsPlusCommunityFileType": {
         "Unknown": "资源",
@@ -5599,12 +5621,27 @@
     "CheckingProgress": "检查中...",
     "StatusReady": "设置已就绪。",
     "ModInfoProbeFailed": "[ScbbsPlus] 读取自身 modinfo 失败: {0}",
+    "SettingsApplied": "设置已应用。",
     "Text": {
       "LogOut": "登出",
       "UpdateFound": "发现更新",
       "LogIn": "登录",
-      "CheckUpdate": "检查更新"
+      "CheckUpdate": "检查更新",
+      "Apply": "应用",
+      "SelectDownloadSource": "选择下载源"
     }
+  },
+  "DownloadSourceSelectionMode": {
+    "Default": "默认（自动选择）",
+    "ManualSelect": "每次手动选择",
+    "CustomDefault": "使用下方默认下载源"
+  },
+  "DownloadSourceOption": {
+    "DefaultCn": "默认线路（中国大陆）",
+    "Source1Global": "备用线路 1（全球）",
+    "Source2Cn": "备用线路 2（中国大陆）",
+    "Source3Global": "备用线路 3（全球）",
+    "Source4Global": "备用线路 4（全球）"
   },
   "ScbbsPlusPlayedTimeClient": {
     "PlayedTimeReportCompleted": "[ScbbsPlus] 模组游玩时间上报完成: 成功 {0} 条，失败 {1} 条",

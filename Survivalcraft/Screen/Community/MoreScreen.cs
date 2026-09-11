@@ -15,6 +15,12 @@ namespace Game
         private ButtonWidget m_importButton;
         private ButtonWidget m_downloadQueueButton;
         private ButtonWidget m_aboutModButton;
+        private TextBoxWidget m_apiBaseUrlBox;
+        private ButtonWidget m_apiBaseUrlApplyButton;
+        private ButtonWidget m_downloadSourceSelectionModeButton;
+        private ButtonWidget m_defaultDownloadSourceButton;
+        private ButtonWidget m_applyDownloadSourceToUpdatesButton;
+        private ButtonWidget m_playedTimeReportingButton;
         private ButtonWidget m_topBarBackButton;
         private LabelWidget m_statusLabel;
 
@@ -27,6 +33,12 @@ namespace Game
             m_importButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ImportButton");
             m_downloadQueueButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadQueueButton");
             m_aboutModButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.AboutModButton");
+            m_apiBaseUrlBox = Children.Find<TextBoxWidget>("ScbbsPlusMoreScreen.ApiBaseUrlBox");
+            m_apiBaseUrlApplyButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ApiBaseUrlApplyButton");
+            m_downloadSourceSelectionModeButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadSourceSelectionModeButton");
+            m_defaultDownloadSourceButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DefaultDownloadSourceButton");
+            m_applyDownloadSourceToUpdatesButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ApplyDownloadSourceToUpdatesButton");
+            m_playedTimeReportingButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.PlayedTimeReportingButton");
             m_topBarBackButton = Children.Find<ButtonWidget>("TopBar.Back");
             m_statusLabel = Children.Find<LabelWidget>("ScbbsPlusMoreScreen.Status");
         }
@@ -36,6 +48,7 @@ namespace Game
             CommunitySettingsManager.Instance.EnsureLoaded();
             s_current = this;
             RefreshControls();
+            RefreshSettingsUi();
             SetStatus(string.IsNullOrWhiteSpace(s_sharedStatus)
                 ? LanguageControl.Get("ScbbsPlusMoreScreen", "StatusReady")
                 : s_sharedStatus);
@@ -72,6 +85,55 @@ namespace Game
             if (m_importButton.IsClicked) RemoteImportManager.OpenImportLinkDialog();
             if (m_downloadQueueButton.IsClicked) DownloadFlowManager.Instance.ShowQueueDialog();
             if (m_aboutModButton.IsClicked) OpenAboutMod();
+
+            if (m_downloadSourceSelectionModeButton.IsClicked)
+            {
+                // 循环切换（SettingsUiScreen CommunityContentMode 先例：IndexOf+1 取模，成员值可非连续）。
+                IList<int> modeValues = EnumUtils.GetEnumValues<DownloadSourceSelectionMode>();
+                DownloadSourceSelectionMode newMode = (DownloadSourceSelectionMode)((modeValues.IndexOf(
+                    (int)CommunitySettingsManager.Instance.DownloadSourceSelectionMode) + 1) % modeValues.Count);
+                CommunitySettingsManager.Instance.ApplySettingChange([CommunitySettingsManager.DownloadSourceSelectionModeId], newMode);
+                RefreshSettingsUi();
+            }
+            if (m_defaultDownloadSourceButton.IsClicked)
+            {
+                DialogsManager.ShowDialog(null, new ListSelectionDialog(
+                    LanguageControl.Get("ScbbsPlusMoreScreen", "Text", "SelectDownloadSource"),
+                    EnumUtils.GetEnumValues<DownloadSourceOption>(),
+                    60f,
+                    item => EnumDisplayName.GetEnumDisplayName((DownloadSourceOption)item),
+                    item =>
+                    {
+                        CommunitySettingsManager.Instance.ApplySettingChange([CommunitySettingsManager.DefaultDownloadSourceId], (DownloadSourceOption)item);
+                        RefreshSettingsUi();
+                    }));
+            }
+            if (m_applyDownloadSourceToUpdatesButton.IsClicked)
+            {
+                CommunitySettingsManager.Instance.ApplySettingChange(
+                    [CommunitySettingsManager.ApplyDownloadSourceToUpdatesId],
+                    !CommunitySettingsManager.Instance.ApplyDownloadSourceToUpdates);
+                RefreshSettingsUi();
+            }
+            if (m_playedTimeReportingButton.IsClicked)
+            {
+                CommunitySettingsManager.Instance.ApplySettingChange(
+                    [CommunitySettingsManager.PlayedTimeReportingEnabledId],
+                    !CommunitySettingsManager.Instance.PlayedTimeReportingEnabled);
+                RefreshSettingsUi();
+            }
+            if (m_apiBaseUrlApplyButton.IsClicked)
+            {
+                // TextBoxWidget 无提交型事件，Text 输入过程不触发设置变更；点"应用"才走
+                // ApplySettingChange（触发 ApiBaseUrlChanged → 切服登出链）。
+                string apiBaseUrl = m_apiBaseUrlBox.Text;
+                if (!string.IsNullOrWhiteSpace(apiBaseUrl))
+                {
+                    CommunitySettingsManager.Instance.ApplySettingChange([CommunitySettingsManager.ApiBaseUrlId], apiBaseUrl);
+                    SetStatus(LanguageControl.Get("ScbbsPlusMoreScreen", "SettingsApplied"));
+                    RefreshSettingsUi();
+                }
+            }
         }
 
         internal static void SetSharedStatus(string status)
@@ -92,6 +154,20 @@ namespace Game
             m_authButton.Text = AuthSessionManager.Instance.IsLoggedIn
                 ? LanguageControl.Get("ScbbsPlusMoreScreen", "Text", "LogOut")
                 : LanguageControl.Get("ScbbsPlusMoreScreen", "Text", "LogIn");
+        }
+
+        /// <summary>
+        /// 设置区控件即时刷新。ApiBaseUrl 用 ChangeTextNoEvent 回填（Text 变化不触发
+        /// TextChanged/设置变更）；应用后的按钮文本在每次 ApplySettingChange 后即时同步。
+        /// </summary>
+        private void RefreshSettingsUi()
+        {
+            CommunitySettingsManager settings = CommunitySettingsManager.Instance;
+            m_apiBaseUrlBox.ChangeTextNoEvent(settings.ApiBaseUrl);
+            m_downloadSourceSelectionModeButton.Text = LanguageControl.Get("DownloadSourceSelectionMode", settings.DownloadSourceSelectionMode.ToString());
+            m_defaultDownloadSourceButton.Text = LanguageControl.Get("DownloadSourceOption", settings.DefaultDownloadSource.ToString());
+            m_applyDownloadSourceToUpdatesButton.Text = settings.ApplyDownloadSourceToUpdates ? LanguageControl.Yes : LanguageControl.No;
+            m_playedTimeReportingButton.Text = settings.PlayedTimeReportingEnabled ? LanguageControl.Yes : LanguageControl.No;
         }
 
         private string GetAccountInfoText()

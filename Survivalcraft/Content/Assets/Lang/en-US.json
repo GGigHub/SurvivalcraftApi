@@ -4165,7 +4165,17 @@
       "ModSettingsDescription": "Open the game's native mod settings",
       "Open": "Open",
       "AboutMod": "About",
-      "AboutModDescription": "View this mod's version, author, and compatibility information"
+      "AboutModDescription": "View this mod's version, author, and compatibility information",
+      "ApiBaseUrl": "API Address",
+      "ApiBaseUrlDescription": "Community API endpoint. Applying a change signs you out of the current server",
+      "DownloadSourceSelectionMode": "Download Source Selection",
+      "DownloadSourceSelectionModeDescription": "How a download source is chosen when downloading resources",
+      "DefaultDownloadSource": "Default Download Source",
+      "DefaultDownloadSourceDescription": "The download source used when \"Use the default download source below\" is selected",
+      "ApplyDownloadSourceToUpdates": "Apply to Resource Updates",
+      "ApplyDownloadSourceToUpdatesDescription": "Use the selected download source when downloading updates for published resources",
+      "PlayedTimeReporting": "Playtime Reporting",
+      "PlayedTimeReportingDescription": "Report playtime to the community for statistics"
     },
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "Post Details",
@@ -5380,7 +5390,7 @@
   "ScbbsPlusModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "A modpack file conflict is already waiting for user action.",
     "IdenticalFileChooseAction": "A file with the exact same name already exists locally: {0}\nChoose how to handle it."
-  },
+  },
   "ScbbsPlusTransactionalFileReplacement": {
     "ScanResidualBackupsFailed": "[ScbbsPlus] Failed to scan residual update backups root={0} error={1}",
     "CleanResidualBackup": "[ScbbsPlus] Cleaning up a residual update backup backup={0}",
@@ -5430,6 +5440,18 @@
         "All": "All",
         "Trending": "Trending",
         "NewActivity": "New Activity"
+      },
+      "DownloadSourceSelectionMode": {
+        "Default": "Default (Auto)",
+        "ManualSelect": "Choose Manually Each Time",
+        "CustomDefault": "Use the Default Download Source Below"
+      },
+      "DownloadSourceOption": {
+        "DefaultCn": "Default Line (Mainland China)",
+        "Source1Global": "Backup Line 1 (Global)",
+        "Source2Cn": "Backup Line 2 (Mainland China)",
+        "Source3Global": "Backup Line 3 (Global)",
+        "Source4Global": "Backup Line 4 (Global)"
       },
       "ScbbsPlusCommunityFileType": {
         "Unknown": "Resource",
@@ -5589,12 +5611,27 @@
     "CheckingProgress": "Checking...",
     "StatusReady": "Settings are ready.",
     "ModInfoProbeFailed": "[ScbbsPlus] Failed to read own modinfo: {0}",
+    "SettingsApplied": "Settings applied.",
     "Text": {
       "LogOut": "Log Out",
       "UpdateFound": "Update Found",
       "LogIn": "Log In",
-      "CheckUpdate": "Check Update"
+      "CheckUpdate": "Check Update",
+      "Apply": "Apply",
+      "SelectDownloadSource": "Select Download Source"
     }
+  },
+  "DownloadSourceSelectionMode": {
+    "Default": "Default (Auto)",
+    "ManualSelect": "Choose Manually Each Time",
+    "CustomDefault": "Use the Default Download Source Below"
+  },
+  "DownloadSourceOption": {
+    "DefaultCn": "Default Line (Mainland China)",
+    "Source1Global": "Backup Line 1 (Global)",
+    "Source2Cn": "Backup Line 2 (Mainland China)",
+    "Source3Global": "Backup Line 3 (Global)",
+    "Source4Global": "Backup Line 4 (Global)"
   },
   "ScbbsPlusPlayedTimeClient": {
     "PlayedTimeReportCompleted": "[ScbbsPlus] Mod played time report completed: {0} succeeded, {1} failed",
