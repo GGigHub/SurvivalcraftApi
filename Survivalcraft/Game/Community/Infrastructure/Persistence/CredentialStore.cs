@@ -137,7 +137,19 @@ namespace Game
                 TryDeleteFile(path + ".bak");
                 return null;
             }
-            StoredCredential stored = JsonSerializer.Deserialize<StoredCredential>(json);
+            StoredCredential stored;
+            try
+            {
+                stored = JsonSerializer.Deserialize<StoredCredential>(json);
+            }
+            catch (JsonException ex)
+            {
+                // 可解密但 payload 非法（截断/手改）：与损坏文件同待，作废后由 Save 重建。
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCredentialStore", "DecryptCredentialFileFailed"), ex.Message));
+                TryDeleteFile(path);
+                TryDeleteFile(path + ".bak");
+                return null;
+            }
             if (stored?.Login == null)
             {
                 return null;

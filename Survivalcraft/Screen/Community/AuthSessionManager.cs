@@ -233,9 +233,18 @@ namespace Game
                 }
                 string apiBaseUrl = ApiBaseUrl;
                 m_sessions[apiBaseUrl] = legacy;
-                s_authenticationSessionStore.TrySave(apiBaseUrl, legacy.Token, legacy.User);
-                s_authenticationSessionStore.TryDeleteLegacy();
-                Log.Information($"[ScbbsPlus] Legacy auth.bin migrated to per-server credential file for {apiBaseUrl}.");
+                // v4 落盘失败（IO/磁盘满）时保留 auth.bin，下次首帧重试（spec 错误处理表）；
+                // 内存会话照常激活，本次运行不受影响。
+                Exception saveError = s_authenticationSessionStore.TrySave(apiBaseUrl, legacy.Token, legacy.User);
+                if (saveError == null)
+                {
+                    s_authenticationSessionStore.TryDeleteLegacy();
+                    Log.Information($"[ScbbsPlus] Legacy auth.bin migrated to per-server credential file for {apiBaseUrl}.");
+                }
+                else
+                {
+                    Log.Warning($"[ScbbsPlus] Legacy credential migration save failed, auth.bin kept for retry: {saveError.Message}");
+                }
             }
             catch (PlatformNotSupportedException ex)
             {
@@ -332,12 +341,17 @@ namespace Game
                         m_loginDialog = null;
                     }
 
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginSucceeded"), CurrentUser.Nickname, CurrentUser.Level));
+                    // 日志与事件用本次登录结果本体：写入目标是快照服，与当前服可能不同
+                    //（在途期间切服且取消回调未触发的边缘路径），当前服视图可能为空或他人。
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginSucceeded"), result.Data.User.Nickname, result.Data.User.Level));
 
                     // 持久化登录数据
                     SaveStoredAuth(loginApiBaseUrl);
 
-                    m_loginStateChanged.Raise(AuthChangeKind.LoggedIn);
+                    if (string.Equals(loginApiBaseUrl, ApiBaseUrl, StringComparison.OrdinalIgnoreCase))
+                    {
+                        m_loginStateChanged.Raise(AuthChangeKind.LoggedIn);
+                    }
                 }
                 else
                 {
