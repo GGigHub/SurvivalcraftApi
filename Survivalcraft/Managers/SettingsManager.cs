@@ -293,6 +293,18 @@ namespace Game {
 
         public static CommunityContentMode OriginalCommunityContentMode { get; set; }
 
+        public static string CommunityApiBaseUrl { get; set; } = ApiUrls.DefaultBaseUrl;
+
+        public static DownloadSourceSelectionMode CommunityDownloadSourceSelectionMode { get; set; } = DownloadSourceSelectionMode.Default;
+
+        public static DownloadSourceOption CommunityDefaultDownloadSource { get; set; } = DownloadSourceOption.DefaultCn;
+
+        public static bool CommunityApplyDownloadSourceToUpdates { get; set; }
+
+        public static bool CommunityShowImportFromWebLinkEntry { get; set; } = true;
+
+        public static bool CommunityPlayedTimeReportingEnabled { get; set; } = true;
+
         public static bool MultithreadedTerrainUpdate { get; set; }
 
         public static int IsolatedStorageMigrationCounter { get; set; }
@@ -595,6 +607,12 @@ namespace Game {
                 LastLaunchedVersion = string.Empty;
                 CommunityContentMode = CommunityContentMode.Normal;
                 OriginalCommunityContentMode = CommunityContentMode.Normal;
+                CommunityApiBaseUrl = ApiUrls.DefaultBaseUrl;
+                CommunityDownloadSourceSelectionMode = DownloadSourceSelectionMode.Default;
+                CommunityDefaultDownloadSource = DownloadSourceOption.DefaultCn;
+                CommunityApplyDownloadSourceToUpdates = false;
+                CommunityShowImportFromWebLinkEntry = true;
+                CommunityPlayedTimeReportingEnabled = true;
                 MultithreadedTerrainUpdate = true;
                 NewYearCelebrationLastYear = 2025;
                 ScreenLayout1 = ScreenLayout.Single;

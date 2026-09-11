@@ -15,6 +15,7 @@ namespace Game
     {
         private static bool s_loaded;
         private static bool s_firstDownloadSelfReviewPromptShown;
+        private static bool s_legacySettingsMigrated;
         private static string s_restartReturnScreen;
         private static ScbbsPlusCommunityFileType s_localFileType = ScbbsPlusCommunityFileType.Mod;
         private static ScbbsPlusCommunityFileType s_communityFileType = ScbbsPlusCommunityFileType.Mod;
@@ -26,6 +27,12 @@ namespace Game
         public static bool FirstDownloadSelfReviewPromptShown
         {
             get { EnsureLoaded(); return s_firstDownloadSelfReviewPromptShown; }
+        }
+
+        /// <summary>旧 ModSettings.xml scbbsplus 段的用户设置是否已一次性迁入 SettingsManager（旧 JSON 无此字段 = 未迁移）。</summary>
+        public static bool LegacySettingsMigrated
+        {
+            get { EnsureLoaded(); return s_legacySettingsMigrated; }
         }
 
         public static ScbbsPlusCommunityFileType LocalFileType
@@ -62,6 +69,13 @@ namespace Game
         {
             EnsureLoaded();
             s_firstDownloadSelfReviewPromptShown = true;
+            Persist();
+        }
+
+        public static void MarkLegacySettingsMigrated()
+        {
+            EnsureLoaded();
+            s_legacySettingsMigrated = true;
             Persist();
         }
 
@@ -160,6 +174,7 @@ namespace Game
             }
 
             s_firstDownloadSelfReviewPromptShown = state.FirstDownloadSelfReviewPromptShown;
+            s_legacySettingsMigrated = state.LegacySettingsMigrated;
             s_localFileType = CommunityFileTypes.FromSettingValue(state.LocalFileType);
             s_communityFileType = CommunityFileTypes.FromSettingValue(state.CommunityFileType);
             s_communityOrderType = CommunityFileTypes.OrderFromSettingValue(state.CommunityOrderType);
@@ -180,6 +195,7 @@ namespace Game
                 JsonFileStore.Write(StoragePaths.StateFile, new StateData
                 {
                     FirstDownloadSelfReviewPromptShown = s_firstDownloadSelfReviewPromptShown,
+                    LegacySettingsMigrated = s_legacySettingsMigrated,
                     LocalFileType = (int)s_localFileType,
                     CommunityFileType = (int)s_communityFileType,
                     CommunityOrderType = (int)s_communityOrderType,
@@ -200,6 +216,7 @@ namespace Game
         private sealed class StateData
         {
             public bool FirstDownloadSelfReviewPromptShown { get; set; }
+            public bool LegacySettingsMigrated { get; set; }
             public int LocalFileType { get; set; } = 5;
             public int CommunityFileType { get; set; } = 5;
             public int CommunityOrderType { get; set; } = 4;

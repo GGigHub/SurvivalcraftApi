@@ -5,10 +5,10 @@ using System.Globalization;
 namespace Game
 {
     /// <summary>
-    /// 原生模组设置的运行时缓存。持久化由 ModSettingsManager 负责；此类只提供
-    /// 热路径读取、ModLoader.OnModSettingChanged 的变更分发，以及设置落定后的
-    /// 事件。副作用（登出、自动更新开关、入口显隐）由 Integration 组合根订阅
-    /// 事件接线，本类不直接驱动 Presentation/Integration 控制器。
+    /// 社区用户设置的运行时缓存：底层存储为原生 SettingsManager.Community* 静态属性
+    /// （随 Settings.xml 反射持久化），本类只提供惰性装载、ApplySettingChange 分发，
+    /// 以及设置落定后的副作用事件。副作用（切服登出、入口显隐）由 Integration 组合根
+    /// 订阅事件接线，本类不直接驱动 Presentation/Integration 控制器。
     /// </summary>
     internal sealed class CommunitySettingsManager
     {
@@ -18,7 +18,6 @@ namespace Game
         public const string PackageName = ModIdentity.PackageName;
         public const string PageId = "General";
         public const string ApiBaseUrlId = "ApiBaseUrl";
-        public const string AutoUpdateCheckId = "AutoUpdateCheckEnabled";
         public const string DownloadSourceSelectionModeId = "DownloadSourceSelectionMode";
         public const string DefaultDownloadSourceId = "DefaultDownloadSource";
         public const string ApplyDownloadSourceToUpdatesId = "ApplyDownloadSourceToUpdates";
@@ -29,7 +28,6 @@ namespace Game
         private bool m_loaded;
 
         public string ApiBaseUrl { get; private set; } = DefaultApiBaseUrl;
-        public bool AutoUpdateCheckEnabled { get; private set; } = true;
         public bool ApplyDownloadSourceToUpdates { get; private set; }
         public bool ShowImportFromWebLinkEntry { get; private set; } = true;
         public bool PlayedTimeReportingEnabled { get; private set; } = true;
@@ -39,7 +37,6 @@ namespace Game
         // 值落定事件：首次 EnsureLoaded 与每次设置变更都会触发（即便值与现状相同，
         // 与旧 ApplyRuntimeSideEffects 语义一致）。订阅方不得在回调内再触发设置变更。
         public event Action<string> ApiBaseUrlChanged;
-        public event Action<bool> AutoUpdateCheckEnabledChanged;
         public event Action<bool> ShowImportFromWebLinkEntryChanged;
 
         public void EnsureLoaded()
@@ -52,13 +49,12 @@ namespace Game
             m_loaded = true;
             try
             {
-                ApiBaseUrl = NormalizeApiBaseUrl(ModSettingsManager.Get<string>(PackageName, PageId, ApiBaseUrlId));
-                AutoUpdateCheckEnabled = ModSettingsManager.Get<bool>(PackageName, PageId, AutoUpdateCheckId);
-                DownloadSourceSelectionMode = NormalizeSelectionMode(ModSettingsManager.Get<DownloadSourceSelectionMode>(PackageName, PageId, DownloadSourceSelectionModeId));
-                DefaultDownloadSource = NormalizeSource(ModSettingsManager.Get<DownloadSourceOption>(PackageName, PageId, DefaultDownloadSourceId));
-                ApplyDownloadSourceToUpdates = ModSettingsManager.Get<bool>(PackageName, PageId, ApplyDownloadSourceToUpdatesId);
-                ShowImportFromWebLinkEntry = ModSettingsManager.Get<bool>(PackageName, PageId, ShowImportFromWebLinkEntryId);
-                PlayedTimeReportingEnabled = ModSettingsManager.Get<bool>(PackageName, PageId, PlayedTimeReportingEnabledId);
+                ApiBaseUrl = NormalizeApiBaseUrl(SettingsManager.CommunityApiBaseUrl);
+                DownloadSourceSelectionMode = NormalizeSelectionMode(SettingsManager.CommunityDownloadSourceSelectionMode);
+                DefaultDownloadSource = NormalizeSource(SettingsManager.CommunityDefaultDownloadSource);
+                ApplyDownloadSourceToUpdates = SettingsManager.CommunityApplyDownloadSourceToUpdates;
+                ShowImportFromWebLinkEntry = SettingsManager.CommunityShowImportFromWebLinkEntry;
+                PlayedTimeReportingEnabled = SettingsManager.CommunityPlayedTimeReportingEnabled;
             }
             catch (Exception ex)
             {
@@ -80,24 +76,27 @@ namespace Game
             switch (itemId)
             {
                 case ApiBaseUrlId when value is string apiBaseUrl:
-                    ApiBaseUrl = NormalizeApiBaseUrl(apiBaseUrl);
-                    break;
-                case AutoUpdateCheckId when value is bool autoUpdate:
-                    AutoUpdateCheckEnabled = autoUpdate;
+                    SettingsManager.CommunityApiBaseUrl = NormalizeApiBaseUrl(apiBaseUrl);
+                    ApiBaseUrl = SettingsManager.CommunityApiBaseUrl;
                     break;
                 case DownloadSourceSelectionModeId when value is DownloadSourceSelectionMode sourceMode:
-                    DownloadSourceSelectionMode = NormalizeSelectionMode(sourceMode);
+                    SettingsManager.CommunityDownloadSourceSelectionMode = NormalizeSelectionMode(sourceMode);
+                    DownloadSourceSelectionMode = SettingsManager.CommunityDownloadSourceSelectionMode;
                     break;
                 case DefaultDownloadSourceId when value is DownloadSourceOption source:
-                    DefaultDownloadSource = NormalizeSource(source);
+                    SettingsManager.CommunityDefaultDownloadSource = NormalizeSource(source);
+                    DefaultDownloadSource = SettingsManager.CommunityDefaultDownloadSource;
                     break;
                 case ApplyDownloadSourceToUpdatesId when value is bool apply:
+                    SettingsManager.CommunityApplyDownloadSourceToUpdates = apply;
                     ApplyDownloadSourceToUpdates = apply;
                     break;
                 case ShowImportFromWebLinkEntryId when value is bool show:
+                    SettingsManager.CommunityShowImportFromWebLinkEntry = show;
                     ShowImportFromWebLinkEntry = show;
                     break;
                 case PlayedTimeReportingEnabledId when value is bool reporting:
+                    SettingsManager.CommunityPlayedTimeReportingEnabled = reporting;
                     PlayedTimeReportingEnabled = reporting;
                     break;
                 default:
@@ -110,7 +109,6 @@ namespace Game
         private void NotifyRuntimeEffects()
         {
             ApiBaseUrlChanged?.Invoke(ApiBaseUrl);
-            AutoUpdateCheckEnabledChanged?.Invoke(AutoUpdateCheckEnabled);
             ShowImportFromWebLinkEntryChanged?.Invoke(ShowImportFromWebLinkEntry);
         }
 

@@ -13,11 +13,16 @@ namespace Game
     internal static class CommunityApp
     {
         /// <summary>
-        /// 进程级初始化：组合根接线必须最早执行（设置副作用订阅先于任何
-        /// OnModSettingChanged / EnsureLoaded），随后是崩溃残留恢复与启动期挂起动作。
+        /// 进程级初始化：旧模组设置一次性迁移必须最早执行（直写 SettingsManager.Community*
+        /// 不触发事件链，且必须早于任何 EnsureLoaded），随后是组合根接线（设置副作用订阅
+        /// 先于任何 OnModSettingChanged / EnsureLoaded）、崩溃残留恢复与启动期挂起动作。
         /// </summary>
         public static void Initialize()
         {
+            // 迁移前置条件此刻已满足：SettingsManager.Initialize（Program.cs）已写入默认值，
+            // ModsManager.Initialize 的 LoadModSettings 已填充 ModSettingsCache。
+            // 必须先于 WireCompositionRoot：迁移直写 SettingsManager，不经 ApiBaseUrlChanged（切服登出链）。
+            LegacySettingsMigrator.Run();
             WireCompositionRoot();
             try
             {
