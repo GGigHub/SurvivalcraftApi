@@ -5235,18 +5235,7 @@
   "ScbbsPlusModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "A modpack file conflict is already waiting for user action.",
     "IdenticalFileChooseAction": "A file with the exact same name already exists locally: {0}\nChoose how to handle it."
-  },
-  "ScbbsPlusAutoUpdateController": {
-    "LoadAutoUpdateSettingsFailed": "[ScbbsPlus] Failed to load auto update settings: {0}",
-    "CurrentVersionUnavailableSkippingCheck": "[ScbbsPlus] Cannot determine the current version; skipping the automatic update check",
-    "UpdateCheckReturnedEmpty": "[ScbbsPlus] The automatic update check returned an empty result.",
-    "AutoUpdateCheckFailed": "[ScbbsPlus] Automatic update check failed: {0}",
-    "UpdateCheckVersionsIncomparable": "[ScbbsPlus] Automatic update check: cannot compare versions (current version {0}, latest version {1})",
-    "UpdateCheckCurrentVersionNewer": "[ScbbsPlus] Automatic update check: current version {0} is higher than the latest version {1}; this may be a development build",
-    "UpdateCheckAlreadyUpToDate": "[ScbbsPlus] Automatic update check: already up to date (current version {0}, latest version {1})",
-    "UpdateFoundNoScmodFile": "[ScbbsPlus] The automatic update check found version {0}, but no .scmod file.",
-    "UpdateFoundButPresentationNotReady": "[ScbbsPlus] Update found but the presentation layer is not ready; discarding this notice."
-  },
+  },
   "ScbbsPlusTransactionalFileReplacement": {
     "ScanResidualBackupsFailed": "[ScbbsPlus] Failed to scan residual update backups root={0} error={1}",
     "CleanResidualBackup": "[ScbbsPlus] Cleaning up a residual update backup backup={0}",

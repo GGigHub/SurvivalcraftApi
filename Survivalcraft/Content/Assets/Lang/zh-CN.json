@@ -5245,18 +5245,7 @@
   "ScbbsPlusModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "已有整合包文件冲突等待用户处理。",
     "IdenticalFileChooseAction": "本地已存在一模一样的文件名：{0}\n请选择如何处理。"
-  },
-  "ScbbsPlusAutoUpdateController": {
-    "LoadAutoUpdateSettingsFailed": "[ScbbsPlus] 加载自动更新设置失败: {0}",
-    "CurrentVersionUnavailableSkippingCheck": "[ScbbsPlus] 无法获取当前版本，跳过自动更新检查",
-    "UpdateCheckReturnedEmpty": "[ScbbsPlus] 自动更新检查返回了空结果。",
-    "AutoUpdateCheckFailed": "[ScbbsPlus] 自动检查更新失败: {0}",
-    "UpdateCheckVersionsIncomparable": "[ScbbsPlus] 自动检查更新：无法比较版本（当前版本 {0}，最新版本 {1}）",
-    "UpdateCheckCurrentVersionNewer": "[ScbbsPlus] 自动检查更新：当前版本 {0} 高于最新版本 {1}，可能是开发版本",
-    "UpdateCheckAlreadyUpToDate": "[ScbbsPlus] 自动检查更新：已是最新版本（当前版本 {0}，最新版本 {1}）",
-    "UpdateFoundNoScmodFile": "[ScbbsPlus] 自动检查更新发现版本 {0}，但未找到 .scmod 文件。",
-    "UpdateFoundButPresentationNotReady": "[ScbbsPlus] 发现更新但展示层未就绪，丢弃本次提示。"
-  },
+  },
   "ScbbsPlusTransactionalFileReplacement": {
     "ScanResidualBackupsFailed": "[ScbbsPlus] 扫描更新残留备份失败 root={0} error={1}",
     "CleanResidualBackup": "[ScbbsPlus] 清理更新残留备份 backup={0}",

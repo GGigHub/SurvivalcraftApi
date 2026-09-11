@@ -3,7 +3,7 @@ using System;
 namespace Game
 {
     /// <summary>
-    /// 传输基础设施静态域：下载器/上传/队列持久化/下载反馈/来源解析/发布版客户端的唯一接线，
+    /// 传输基础设施静态域：下载器/上传/队列持久化/下载反馈/来源解析的唯一接线，
     /// 对齐游戏本体 *Manager 静态域类风格（原组合根成员提升为静态成员）。
     ///
     /// 顺序约束：字段按声明顺序初始化，后项构造可引用前项，勿反转。
@@ -26,7 +26,6 @@ namespace Game
         internal static readonly ModpackSourceResolver ModpackSourceResolver = new(
             HttpClientProvider.Community,
             CommunityManager.ApiClient);
-        internal static readonly RepositoryReleaseClient RepositoryReleaseClient = new(HttpClientProvider.Community);
 
         /// <summary>
         /// 组合根接线：注入下载反馈的登录态回退提供者（延迟求值，注入时不得调用——
