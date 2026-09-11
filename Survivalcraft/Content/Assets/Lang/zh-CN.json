@@ -4170,8 +4170,6 @@
       "ModSettings": "模组设置",
       "ModSettingsDescription": "打开游戏原生模组设置",
       "Open": "打开",
-      "ApiBaseUrl": "API 地址",
-      "ApiBaseUrlDescription": "社区服务接口地址，点击应用后将与当前服务器断开连接",
       "DownloadSourceSelectionMode": "下载源选择",
       "DownloadSourceSelectionModeDescription": "下载资源时如何选择下载源",
       "DefaultDownloadSource": "默认下载源",
@@ -4179,7 +4177,8 @@
       "ApplyDownloadSourceToUpdates": "应用到资源更新",
       "ApplyDownloadSourceToUpdatesDescription": "下载已发布资源的更新时使用所选下载源",
       "PlayedTimeReporting": "游玩时长统计",
-      "PlayedTimeReportingDescription": "向社区上报游玩时长，用于社区数据统计"
+      "PlayedTimeReportingDescription": "向社区上报游玩时长，用于社区数据统计",
+      "CurrentServer": "当前服务器"
     },
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "帖子详情",

@@ -4160,8 +4160,6 @@
       "ModSettings": "Mod Settings",
       "ModSettingsDescription": "Open the game's native mod settings",
       "Open": "Open",
-      "ApiBaseUrl": "API Address",
-      "ApiBaseUrlDescription": "Community API endpoint. Applying a change signs you out of the current server",
       "DownloadSourceSelectionMode": "Download Source Selection",
       "DownloadSourceSelectionModeDescription": "How a download source is chosen when downloading resources",
       "DefaultDownloadSource": "Default Download Source",
@@ -4169,7 +4167,8 @@
       "ApplyDownloadSourceToUpdates": "Apply to Resource Updates",
       "ApplyDownloadSourceToUpdatesDescription": "Use the selected download source when downloading updates for published resources",
       "PlayedTimeReporting": "Playtime Reporting",
-      "PlayedTimeReportingDescription": "Report playtime to the community for statistics"
+      "PlayedTimeReportingDescription": "Report playtime to the community for statistics",
+      "CurrentServer": "Current Server"
     },
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "Post Details",

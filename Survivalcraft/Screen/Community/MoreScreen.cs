@@ -14,8 +14,7 @@ namespace Game
         private ButtonWidget m_authButton;
         private ButtonWidget m_importButton;
         private ButtonWidget m_downloadQueueButton;
-        private TextBoxWidget m_apiBaseUrlBox;
-        private ButtonWidget m_apiBaseUrlApplyButton;
+        private LabelWidget m_currentServerValue;
         private ButtonWidget m_downloadSourceSelectionModeButton;
         private ButtonWidget m_defaultDownloadSourceButton;
         private ButtonWidget m_applyDownloadSourceToUpdatesButton;
@@ -31,8 +30,7 @@ namespace Game
             m_authButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.AuthButton");
             m_importButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ImportButton");
             m_downloadQueueButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadQueueButton");
-            m_apiBaseUrlBox = Children.Find<TextBoxWidget>("ScbbsPlusMoreScreen.ApiBaseUrlBox");
-            m_apiBaseUrlApplyButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ApiBaseUrlApplyButton");
+            m_currentServerValue = Children.Find<LabelWidget>("ScbbsPlusMoreScreen.CurrentServerValue");
             m_downloadSourceSelectionModeButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadSourceSelectionModeButton");
             m_defaultDownloadSourceButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DefaultDownloadSourceButton");
             m_applyDownloadSourceToUpdatesButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ApplyDownloadSourceToUpdatesButton");
@@ -120,18 +118,6 @@ namespace Game
                 SettingsManager.CommunityPlayedTimeReportingEnabled = !SettingsManager.CommunityPlayedTimeReportingEnabled;
                 RefreshSettingsUi();
             }
-            if (m_apiBaseUrlApplyButton.IsClicked)
-            {
-                // TextBoxWidget 无提交型事件，Text 输入过程不触发设置变更；点"应用"才经
-                // 包装属性赋值（setter 归一化并触发 ApiBaseUrlChanged → 切服登出链）。
-                string apiBaseUrl = m_apiBaseUrlBox.Text;
-                if (!string.IsNullOrWhiteSpace(apiBaseUrl))
-                {
-                    CommunitySettingsManager.ApiBaseUrl = apiBaseUrl;
-                    SetStatus(LanguageControl.Get("ScbbsPlusMoreScreen", "SettingsApplied"));
-                    RefreshSettingsUi();
-                }
-            }
         }
 
         internal static void SetSharedStatus(string status)
@@ -155,13 +141,11 @@ namespace Game
         }
 
         /// <summary>
-        /// 设置区控件即时刷新，直读 SettingsManager.Community*。ApiBaseUrl 用
-        /// ChangeTextNoEvent 回填（Text 变化不触发 TextChanged/设置变更）；存储值
-        /// 只经包装属性 setter 写入（归一化），此处显示仍内联枚举兜底防手改 XML。
+        /// 设置区控件即时刷新，直读 SettingsManager.Community*，内联枚举兜底防手改 XML。
         /// </summary>
         private void RefreshSettingsUi()
         {
-            m_apiBaseUrlBox.ChangeTextNoEvent(ApiUrls.NormalizeBaseUrl(SettingsManager.CommunityApiBaseUrl));
+            m_currentServerValue.Text = GetCurrentServerDisplayText();
             DownloadSourceSelectionMode sourceMode = SettingsManager.CommunityDownloadSourceSelectionMode;
             m_downloadSourceSelectionModeButton.Text = LanguageControl.Get(
                 "DownloadSourceSelectionMode",
@@ -172,6 +156,22 @@ namespace Game
                 (Enum.IsDefined(downloadSource) ? downloadSource : DownloadSourceOption.DefaultCn).ToString());
             m_applyDownloadSourceToUpdatesButton.Text = SettingsManager.CommunityApplyDownloadSourceToUpdates ? LanguageControl.Yes : LanguageControl.No;
             m_playedTimeReportingButton.Text = SettingsManager.CommunityPlayedTimeReportingEnabled ? LanguageControl.Yes : LanguageControl.No;
+        }
+
+        /// <summary>当前服务器显示名：优先匹配服务器列表中的中文社区条目（含内置与自建），
+        /// 无匹配（如手改设置指向未知地址）显示归一化地址本身。</summary>
+        private static string GetCurrentServerDisplayText()
+        {
+            string normalized = ApiUrls.NormalizeBaseUrl(SettingsManager.CommunityApiBaseUrl);
+            foreach (CommunityServerManager.Info info in CommunityServerManager.GetAllInfos())
+            {
+                if (info.Type == CommunityServerManager.Type.Chinese
+                    && string.Equals(ApiUrls.NormalizeBaseUrl(info.ApiUrl), normalized, StringComparison.OrdinalIgnoreCase))
+                {
+                    return CommunityServerManager.GetDisplayName(info);
+                }
+            }
+            return normalized;
         }
 
         private string GetAccountInfoText()

@@ -37,15 +37,8 @@
               <BevelledButtonWidget Name="ScbbsPlusMoreScreen.DownloadQueueButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[ScbbsPlusMoreScreen:View]" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:ApiBaseUrl]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:ApiBaseUrlDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
-              </StackPanelWidget>
-              <CanvasWidget Size="310, 50" VerticalAlignment="Center" Margin="20, 0">
-                <BevelledRectangleWidget Size="Infinity, 50" Style="{Styles/TextBoxArea}" />
-                <TextBoxWidget Name="ScbbsPlusMoreScreen.ApiBaseUrlBox" Color="255, 255, 255" Margin="6, 0" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
-              </CanvasWidget>
-              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.ApiBaseUrlApplyButton" Style="{Styles/ButtonStyle_160x60}" VerticalAlignment="Center" Margin="20, 0" Text="[ScbbsPlusMoreScreen:Apply]" />
+              <LabelWidget Text="[ScbbsPlusMoreScreen:CurrentServer]" HorizontalAlignment="Far" Margin="20, 0" VerticalAlignment="Center" FontScale="0.95" Color="255, 255, 255" />
+              <LabelWidget Name="ScbbsPlusMoreScreen.CurrentServerValue" VerticalAlignment="Center" Margin="20, 0" FontScale="0.8" Color="255, 255, 255" MaxLines="1" Ellipsis="true" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
