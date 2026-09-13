@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using Engine;
 
 namespace Game
@@ -7,15 +6,15 @@ namespace Game
     /// <summary>
     /// 不应暴露在原生设置页面中的模组流程状态，随 data:ScbbsPlus/state.json 以 JSON 持久化
     /// （JsonFileStore 临时文件原子替换写）。读取走 EnsureLoaded 惰性门闩（首次访问任意
-    /// 公开成员时读入）；写方法改完内存后同步落盘（Persist）——变更低频（用户改筛选/
-    /// 重启返回），同步写盘可接受。旧 ModSettings.xml 内的 ScbbsPlusState 元素不再迁移，
-    /// 升级后首次运行为全默认。
+    /// 公开成员时读入）；写方法改完内存后同步落盘（Persist）——变更低频（用户改筛选），
+    /// 同步写盘可接受。旧 ModSettings.xml 内的 ScbbsPlusState 元素不再迁移，
+    /// 升级后首次运行为全默认。重启直达目标已改由 ScreensManager.RestartGameToScreen
+    /// 经 Settings.xml 承载，不再入 state.json。
     /// </summary>
     internal static class ModSettingsState
     {
         private static bool s_loaded;
         private static bool s_firstDownloadSelfReviewPromptShown;
-        private static string s_restartReturnScreen;
         private static CommunityFileType s_localFileType = CommunityFileType.Mod;
         private static CommunityFileType s_communityFileType = CommunityFileType.Mod;
         private static CommunityOrderType s_communityOrderType = CommunityOrderType.Hot;
@@ -65,71 +64,6 @@ namespace Game
             Persist();
         }
 
-        public static bool HasPendingRestartReturnTarget()
-        {
-            EnsureLoaded();
-            return s_restartReturnScreen != null;
-        }
-
-        public static bool TryGetRestartReturnTarget(out string screenName)
-        {
-            EnsureLoaded();
-            screenName = s_restartReturnScreen;
-            return CommunityScreenNames.IsKnown(screenName);
-        }
-
-        public static void SetRestartReturnTarget(string screenName)
-        {
-            EnsureLoaded();
-            if (!CommunityScreenNames.IsKnown(screenName))
-            {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModSettingsState", "RejectInvalidRestartTarget"), screenName));
-                return;
-            }
-            s_restartReturnScreen = screenName;
-            Persist();
-        }
-
-        public static void ClearRestartReturnTarget()
-        {
-            EnsureLoaded();
-            s_restartReturnScreen = null;
-            Persist();
-        }
-
-        public static bool TryGetScreenFileType(string screenName, out CommunityFileType fileType)
-        {
-            EnsureLoaded();
-            fileType = screenName switch
-            {
-                CommunityScreenNames.Local => s_localFileType,
-                CommunityScreenNames.Community => s_communityFileType,
-                CommunityScreenNames.MyPublished => s_myPublishedFileType,
-                _ => CommunityFileType.Unknown
-            };
-            return CommunityScreenNames.IsKnown(screenName);
-        }
-
-        public static void SetScreenFileType(string screenName, CommunityFileType fileType)
-        {
-            EnsureLoaded();
-            switch (screenName)
-            {
-                case CommunityScreenNames.Local:
-                    s_localFileType = fileType;
-                    break;
-                case CommunityScreenNames.Community:
-                    s_communityFileType = fileType;
-                    break;
-                case CommunityScreenNames.MyPublished:
-                    s_myPublishedFileType = fileType;
-                    break;
-                default:
-                    return;
-            }
-            Persist();
-        }
-
         public static void SetCommunityDefaults(
             CommunityFileType fileType,
             CommunityOrderType orderType,
@@ -167,11 +101,6 @@ namespace Game
             s_communityOnlyCurrentVersion = state.CommunityOnlyCurrentVersion;
             s_communitySection = NormalizeSection(state.CommunitySection);
             s_myPublishedFileType = CommunityFileTypes.FromSettingValue(state.MyPublishedFileType);
-
-            if (CommunityScreenNames.IsKnown(state.RestartReturnScreen))
-            {
-                s_restartReturnScreen = state.RestartReturnScreen;
-            }
         }
 
         private static void Persist()
@@ -186,8 +115,7 @@ namespace Game
                     CommunityOrderType = (int)s_communityOrderType,
                     CommunityOnlyCurrentVersion = s_communityOnlyCurrentVersion,
                     CommunitySection = s_communitySection,
-                    MyPublishedFileType = (int)s_myPublishedFileType,
-                    RestartReturnScreen = s_restartReturnScreen
+                    MyPublishedFileType = (int)s_myPublishedFileType
                 });
             }
             catch (Exception ex)
@@ -207,7 +135,6 @@ namespace Game
             public bool CommunityOnlyCurrentVersion { get; set; } = true;
             public int CommunitySection { get; set; } = 1;
             public int MyPublishedFileType { get; set; } = 5;
-            public string RestartReturnScreen { get; set; }
         }
 
         private static int NormalizeSection(int section) => section switch

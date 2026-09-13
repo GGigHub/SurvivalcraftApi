@@ -103,8 +103,7 @@ namespace Game
                                 {
                                     Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UserChoseRestartIntoItOnImportComplete"), result.FileName));
                                     PendingLocalModActions.Process("import-restart-continue");
-                                    RestartReturnRememberer?.Invoke();
-                                    Window.Restart();
+                                    ScreensManager.RestartGameToCurrentScreen();
                                 })
                         );
                     }

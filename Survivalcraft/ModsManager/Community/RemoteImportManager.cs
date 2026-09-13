@@ -308,8 +308,7 @@ namespace Game
                             {
                                 Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "UserChoseRestartIntoItOnImportComplete"), result.FileName));
                                 PendingLocalModActions.Process("remote-import-restart-continue");
-                                s_host?.RememberRestartReturnToCurrentPage();
-                                Window.Restart();
+                                ScreensManager.RestartGameToCurrentScreen();
                             }));
                 }
                 else

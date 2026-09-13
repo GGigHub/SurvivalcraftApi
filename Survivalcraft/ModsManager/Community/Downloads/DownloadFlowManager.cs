@@ -15,7 +15,6 @@ namespace Game
     /// 三屏共用；界面副作用通过事件与注入回调输出：
     /// - DownloadCompleted / PackDownloadCompleted → 订阅方刷新本地列表
     /// - StatusReporter → 订阅方写状态栏（关于对话框）
-    /// - RestartReturnRememberer → 重启前记录返回目标页
     /// - SourceModeResolver / EffectiveSourceResolver → 下载源设置由屏幕侧提供
     /// 控制器自持下载进度对话框与队列对话框（DialogsManager 全局），Toast 走全局 Toast 管理器。
     /// </summary>
@@ -84,9 +83,6 @@ namespace Game
 
         /// <summary>状态栏输出口（About Screen 持久状态标签）；屏幕注入。</summary>
         public Action<string> StatusReporter { get; set; }
-
-        /// <summary>重启前记录返回目标页的回调；屏幕注入（各屏记录自身页身份）。</summary>
-        public Action RestartReturnRememberer { get; set; }
 
         /// <summary>下载源选择模式；屏幕按设置提供。</summary>
         public Func<DownloadSourceSelectionMode> SourceModeResolver { get; set; }

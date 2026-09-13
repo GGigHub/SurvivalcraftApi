@@ -128,6 +128,9 @@ namespace Game
             LocalModStateStore.EnsurePendingActionsLoaded();
             DownloadFlowManager.Instance.LoadQueue();
             UpdatePaginationButtons();
+            // 初始远程导入主机：内容屏入口在任何社区屏 Enter 前也可发起导入；
+            // 引擎换语言整表重建时 ctor 重跑，自动重挂主机。
+            RemoteImportManager.RegisterHost(this);
         }
 
         public override void Enter(object[] parameters)
@@ -310,12 +313,6 @@ namespace Game
 
             // 轮询帖子请求
             UpdateSelfScoreTask();
-        }
-
-        override protected void RememberRestartReturnToCurrentPage()
-        {
-            ModSettingsState.SetRestartReturnTarget(CommunityScreenNames.Community);
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "RecordRestartReturnScreen"), CommunityScreenNames.Community));
         }
 
     }

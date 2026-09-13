@@ -5194,7 +5194,6 @@
     "DefaultFiltersSaved": "[ScbbsPlus] 已保存默认筛选: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] 加载推荐资源失败: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] 加载社区帖子失败: {0}",
-    "RecordRestartReturnScreen": "[ScbbsPlus] 记录重启返回页：{0}",
     "Text": {
       "SCChineseCommunity": "sc中文社区",
       "CurrentVersion": "当前版本",
@@ -5242,9 +5241,6 @@
   },
   "ScbbsPlusSettingsManager": {
     "LoadNativeModSettingsFailed": "[ScbbsPlus] 加载原生模组设置失败: {0}"
-  },
-  "ScbbsPlusModSettingsState": {
-    "RejectInvalidRestartTarget": "[ScbbsPlus] 拒绝记录非法重启返回目标：screen={0}"
   },
   "ScbbsPlusLocalModReviewState": {
     "ReadReviewsFailed": "[ScbbsPlus] 读取本地资源评价失败: {0}",
@@ -5593,11 +5589,7 @@
     "ImportFromWebLink": "从网络链接导入",
     "ImportFromWebLinkDescription": "更好的从网络链接导入资源的工具",
     "StartupRollbackResidualBackupFailed": "[ScbbsPlus] 启动回滚更新残留备份失败: {0}",
-    "GameLoaded": "[ScbbsPlus] 游戏已加载。",
-    "EnteredMainMenuRestoreFlag": "[ScbbsPlus] 进入主页，待恢复标记={0}",
-    "RequestingSwitchToPreRestartScreen": "[ScbbsPlus] 已进入主页，立即请求切换到重启前页面",
-    "RestartReturnScreenNotRegistered": "[ScbbsPlus] 重启返回目标页面未注册：{0}",
-    "AutoSwitchFromMainMenuToScreen": "[ScbbsPlus] 从主页自动切换到 {0} 页面"
+    "GameLoaded": "[ScbbsPlus] 游戏已加载。"
   },
   "ScbbsPlusModVersionsDialog": {
     "Current": "当前使用",
@@ -5703,12 +5695,6 @@
     "Text": {
       "PleaseWait": "请稍候"
     }
-  },
-  "ScbbsPlusScreenRegistry": {
-    "ScreenRegistered": "[ScbbsPlus] 已注册 {0} 页面：source={1}",
-    "RegisterScreenFailed": "[ScbbsPlus] 注册 {0} 页面失败：source={1}, error={2}",
-    "UploadTargetProviderAdded": "[ScbbsPlus] 已添加 ScbbsPlus 上传目标提供者",
-    "RegisterUploadTargetFailed": "[ScbbsPlus] 注册 ScbbsPlus 上传目标失败: {0}"
   },
   "ScbbsPlusTreeViewWidget": {
     "RowWidgetsRebuiltCallbackFaulted": "[ScbbsPlus] 行组件重建回调异常: {0}"

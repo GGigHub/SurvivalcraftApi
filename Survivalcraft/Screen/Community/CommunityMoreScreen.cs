@@ -194,12 +194,6 @@ namespace Game
             RefreshControls();
         }
 
-        override protected void RememberRestartReturnToCurrentPage()
-        {
-            ModSettingsState.SetRestartReturnTarget(CommunityScreenNames.More);
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "RecordRestartReturnScreen"), CommunityScreenNames.More));
-        }
-
         private static DownloadSourceOption ResolveEffectiveDownloadSource()
         {
             // 枚举成员可非连续，未定义值不会等于任何具名成员，模式无须兜底；

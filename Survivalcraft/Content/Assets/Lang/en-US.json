@@ -5184,7 +5184,6 @@
     "DefaultFiltersSaved": "[ScbbsPlus] Default filters saved: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] Failed to load featured resources: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] Failed to load community posts: {0}",
-    "RecordRestartReturnScreen": "[ScbbsPlus] Recorded the restart return screen: {0}",
     "Text": {
       "SCChineseCommunity": "SC Chinese Community",
       "CurrentVersion": "Current Version",
@@ -5232,9 +5231,6 @@
   },
   "ScbbsPlusSettingsManager": {
     "LoadNativeModSettingsFailed": "[ScbbsPlus] Failed to load native mod settings: {0}"
-  },
-  "ScbbsPlusModSettingsState": {
-    "RejectInvalidRestartTarget": "[ScbbsPlus] Refusing to record invalid restart return target: screen={0}"
   },
   "ScbbsPlusLocalModReviewState": {
     "ReadReviewsFailed": "[ScbbsPlus] Failed to read local resource reviews: {0}",
@@ -5583,11 +5579,7 @@
     "ImportFromWebLinkDescription": "A better tool for importing resources from web links",
     "Link": "Link",
     "StartupRollbackResidualBackupFailed": "[ScbbsPlus] Failed to roll back residual update backups at startup: {0}",
-    "GameLoaded": "[ScbbsPlus] Game Loaded.",
-    "EnteredMainMenuRestoreFlag": "[ScbbsPlus] Entered the main menu; pending restore flag={0}",
-    "RequestingSwitchToPreRestartScreen": "[ScbbsPlus] Entered the main menu; requesting the switch to the pre-restart screen",
-    "RestartReturnScreenNotRegistered": "[ScbbsPlus] The restart return target screen is not registered: {0}",
-    "AutoSwitchFromMainMenuToScreen": "[ScbbsPlus] Automatically switching from the main menu to the {0} screen"
+    "GameLoaded": "[ScbbsPlus] Game Loaded."
   },
   "ScbbsPlusModVersionsDialog": {
     "Current": "Current",
@@ -5693,12 +5685,6 @@
     "Text": {
       "PleaseWait": "Please Wait"
     }
-  },
-  "ScbbsPlusScreenRegistry": {
-    "ScreenRegistered": "[ScbbsPlus] Registered the {0} screen: source={1}",
-    "RegisterScreenFailed": "[ScbbsPlus] Failed to register the {0} screen: source={1}, error={2}",
-    "UploadTargetProviderAdded": "[ScbbsPlus] Added the ScbbsPlus upload target provider",
-    "RegisterUploadTargetFailed": "[ScbbsPlus] Failed to register the ScbbsPlus upload target: {0}"
   },
   "ScbbsPlusTreeViewWidget": {
     "RowWidgetsRebuiltCallbackFaulted": "[ScbbsPlus] Row widget rebuild callback faulted: {0}"

@@ -46,34 +46,6 @@ namespace Game
             Log.Information(LanguageControl.Get("ScbbsPlusModLoader", "GameLoaded"));
         }
 
-        public static void OnScreenEntered(Screen screen, object[] screenParameters)
-        {
-            if (screen is MainMenuScreen)
-            {
-                bool shouldRestoreScbbsPlusAfterRestart = ModSettingsState.HasPendingRestartReturnTarget();
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModLoader", "EnteredMainMenuRestoreFlag"), shouldRestoreScbbsPlusAfterRestart));
-                if (shouldRestoreScbbsPlusAfterRestart)
-                {
-                    Log.Information(LanguageControl.Get("ScbbsPlusModLoader", "RequestingSwitchToPreRestartScreen"));
-                    if (!ModSettingsState.TryGetRestartReturnTarget(out string targetScreenName))
-                    {
-                        return;
-                    }
-
-                    Screen targetScreen = ScreensManager.FindScreen<Screen>(targetScreenName);
-                    if (targetScreen == null)
-                    {
-                        Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModLoader", "RestartReturnScreenNotRegistered"), targetScreenName));
-                        return;
-                    }
-
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModLoader", "AutoSwitchFromMainMenuToScreen"), targetScreenName));
-                    ScreensManager.SwitchScreen(targetScreen);
-                    ModSettingsState.ClearRestartReturnTarget();
-                }
-            }
-        }
-
         public static void OnScreenLeaved(Screen screen)
         {
             CommunityToastManager.DetachFromScreen(screen);

@@ -10,7 +10,7 @@ namespace Game
         {
             if (m_moreButton.IsClicked)
             {
-                ScreensManager.SwitchScreen(CommunityScreenNames.More);
+                ScreensManager.SwitchScreen("ScbbsPlusMore");
             }
         }
 

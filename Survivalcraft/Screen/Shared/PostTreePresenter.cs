@@ -78,7 +78,7 @@ namespace Game
         /// <returns>true 表示归属屏仍存活，应继续处理事件。</returns>
         internal bool DetachIfOrphaned()
         {
-            if (CommunityScreenRegistry.IsOwningScreenLive(m_tree))
+            if (ScreensManager.IsScreenLive(m_tree))
             {
                 return true;
             }

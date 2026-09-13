@@ -89,6 +89,60 @@ namespace Game {
 
         public static void GoBack(params object[] parameters) => SwitchScreen(TopOfHistoryScreen, parameters);
 
+        /// <summary>
+        ///     重启进程并在重启后直达指定屏。目标屏名持久化于 Settings.xml，
+        ///     LoadingScreen 完成加载时经 ConsumeRestartReturnScreen 消费：目标屏
+        ///     已注册则直达，否则照常进主菜单。screenName 为空或未注册时仅重启。
+        /// </summary>
+        public static void RestartGameToScreen(string screenName) {
+            if (!string.IsNullOrEmpty(screenName) && m_screens.ContainsKey(screenName)) {
+                SettingsManager.RestartReturnScreen = screenName;
+                SettingsManager.SaveSettings();
+            }
+            Window.Restart();
+        }
+
+        /// <summary>
+        ///     RestartGameToScreen 的"回到当前屏"便捷封装（重启确认回调等场景）。
+        /// </summary>
+        public static void RestartGameToCurrentScreen() => RestartGameToScreen(GetScreenName(CurrentScreen));
+
+        /// <summary>
+        ///     取走并清除重启直达目标，返回目标屏名；null 表示无目标或目标未注册
+        ///     （如所属模组被卸载，落回主菜单）。LoadingScreen 完成加载时调用一次。
+        /// </summary>
+        public static string ConsumeRestartReturnScreen() {
+            string screenName = SettingsManager.RestartReturnScreen;
+            if (string.IsNullOrEmpty(screenName)) {
+                return null;
+            }
+            SettingsManager.RestartReturnScreen = string.Empty;
+            SettingsManager.SaveSettings();
+            if (m_screens.ContainsKey(screenName)) {
+                return screenName;
+            }
+            Log.Warning($"Restart return screen \"{screenName}\" is not registered, falling back to main menu.");
+            return null;
+        }
+
+        /// <summary>
+        ///     控件是否仍挂在某个已注册屏的子树下。引擎换语言时整表重建屏幕且不调用
+        ///     旧实例 Leave，静态事件 handler 据此判定自己是否已成弃实例并退订自救。
+        ///     上溯止步于 RootWidget 直接子级：屏在显示链上时其 ParentWidget 就是
+        ///     RootWidget，继续上溯会把存活屏误判成孤儿；休眠屏（不在显示链）
+        ///     ParentWidget 为空，root 即屏本身。
+        /// </summary>
+        public static bool IsScreenLive(Widget widget) {
+            if (widget == null) {
+                return false;
+            }
+            Widget root = widget;
+            while (root.ParentWidget != null && root.ParentWidget != RootWidget) {
+                root = root.ParentWidget;
+            }
+            return root is Screen screen && m_screens.ContainsValue(screen);
+        }
+
         public static void Initialize() {
             RootWidget = new CanvasWidget();
             RootWidget.WidgetsHierarchyInput = new WidgetInput();
@@ -208,7 +262,6 @@ namespace Game {
                             return false;
                         }
                     );
-                    CommunityApp.OnScreenEntered(m_animationData.NewScreen, m_animationData.Parameters);
                     RootWidget.IsUpdateEnabled = true;
                 }
             }

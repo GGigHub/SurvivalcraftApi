@@ -7,7 +7,5 @@ namespace Game
         bool IsModpackDataFilePresent(ModpackItem item);
 
         void ImportModpackDataFileSafe(byte[] data, ModpackItem item);
-
-        void RememberRestartReturnToCurrentPage();
     }
 }
