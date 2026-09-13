@@ -16,7 +16,7 @@ namespace Game
         private static readonly ModpackSourceResolver s_modpackSourceResolver =
             new(s_httpClient, new CommunityApiClient(HttpClientProvider.Community));
         private static TransferProgress s_progress;
-        private static DownloadDialog s_downloadDialog;
+        private static CommunityDownloadDialog s_downloadDialog;
         private static Task<RemoteImportPreparation> s_prepareTask;
         private static Task<FileDownloadResult> s_importTask;
         private static int s_prepareRequestId;
@@ -67,7 +67,7 @@ namespace Game
         {
             DialogsManager.ShowDialog(
                 null,
-                new ImportLinkDialog(
+                new CommunityImportLinkDialog(
                     string.Empty,
                     StartRemoteImportPreparation));
         }
@@ -99,7 +99,7 @@ namespace Game
                 {
                     DialogsManager.ShowDialog(
                         null,
-                        new ModpackFileConflictDialog(
+                        new CommunityModpackFileConflictDialog(
                             request.FileName,
                             action =>
                             {
@@ -228,7 +228,7 @@ namespace Game
                 bool canRename = result.Type == ExternalContentType.FurniturePack;
                 DialogsManager.ShowDialog(
                     null,
-                    new ImportOverwriteDialog(overwriteMessage, canRename, action =>
+                    new CommunityImportOverwriteDialog(overwriteMessage, canRename, action =>
                     {
                         if (result.RequestId != s_prepareRequestId || s_importTask != null)
                         {
@@ -295,7 +295,7 @@ namespace Game
                 {
                     DialogsManager.ShowDialog(
                         null,
-                        new RestartConfirmDialog(
+                        new CommunityRestartConfirmDialog(
                             LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "UpdateComplete"),
                             string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "ImportedRestartPrompt"), result.FileName),
                             restartAction: () =>
@@ -367,7 +367,7 @@ namespace Game
                 int requestId = ++s_prepareRequestId;
                 s_showDuplicatePrompt = showDuplicatePrompt;
                 s_progress = new TransferProgress();
-                s_downloadDialog = new DownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "ImportResource"), progress: s_progress);
+                s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "ImportResource"), progress: s_progress);
                 s_downloadDialog.SetProgress(s_progress);
                 DialogsManager.ShowDialog(null, s_downloadDialog);
                 s_prepareTask = Task.Run(async () =>
@@ -407,7 +407,7 @@ namespace Game
             if (s_downloadDialog == null)
             {
                 s_progress = new TransferProgress();
-                s_downloadDialog = new DownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "ImportResource"), progress: s_progress);
+                s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "ImportResource"), progress: s_progress);
                 s_downloadDialog.SetProgress(s_progress);
                 DialogsManager.ShowDialog(null, s_downloadDialog);
             }
@@ -486,7 +486,7 @@ namespace Game
             bool downloadArchiveOnly = string.Equals(FileNameRules.GetExtension(fileName), ".zip", StringComparison.OrdinalIgnoreCase);
 
             s_progress = new TransferProgress();
-            s_downloadDialog = new DownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportModpack"), progress: s_progress);
+            s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportModpack"), progress: s_progress);
             s_downloadDialog.SetProgress(s_progress);
             DialogsManager.ShowDialog(null, s_downloadDialog);
 
@@ -609,7 +609,7 @@ namespace Game
                                 return;
                             }
                             s_progress = new TransferProgress();
-                            s_downloadDialog = new DownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "Modpack"), progress: s_progress);
+                            s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "Modpack"), progress: s_progress);
                             s_downloadDialog.SetProgress(s_progress);
                             DialogsManager.ShowDialog(null, s_downloadDialog);
                             s_importTask = Task.Run(() => ProcessRemoteModpackItemsAsync(requestId, manifest, url, fileName, embeddedFiles, sourceData));

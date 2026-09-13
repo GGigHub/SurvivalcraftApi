@@ -42,7 +42,7 @@ namespace Game
         {
             PendingLocalModActions.Process("startup");
             // 全局帧泵：下载收尾/自动更新/认证轮询改由引擎 Window.Frame 驱动，不再依赖 mod 屏 Update。
-            GlobalFramePump.Initialize();
+            CommunityFramePump.Initialize();
             Log.Information(LanguageControl.Get("ScbbsPlusModLoader", "GameLoaded"));
         }
 
@@ -76,7 +76,7 @@ namespace Game
 
         public static void OnScreenLeaved(Screen screen)
         {
-            GlobalToastManager.DetachFromScreen(screen);
+            CommunityToastManager.DetachFromScreen(screen);
         }
 
         public static void OnProjectLoaded(Project project)
@@ -112,7 +112,7 @@ namespace Game
         /// 设置副作用接线：组合根订阅包装属性事件驱动切服。per-URL 会话下切服
         /// 不再登出——只更新会话指针并激活目标服会话；同值赋值由 OnServerSwitched
         /// 内部比较 no-op。订阅后回读一次现值完成初始同步（置指针；实际读盘在
-        /// GlobalFramePump 首帧 EnsureStoredAuthLoaded 的 legacy 迁移之后）。
+        /// CommunityFramePump 首帧 EnsureStoredAuthLoaded 的 legacy 迁移之后）。
         /// </summary>
         private static void WireSettingsSideEffects()
         {

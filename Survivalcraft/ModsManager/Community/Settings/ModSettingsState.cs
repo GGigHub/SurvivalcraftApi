@@ -75,13 +75,13 @@ namespace Game
         {
             EnsureLoaded();
             screenName = s_restartReturnScreen;
-            return ScreenNames.IsKnown(screenName);
+            return CommunityScreenNames.IsKnown(screenName);
         }
 
         public static void SetRestartReturnTarget(string screenName)
         {
             EnsureLoaded();
-            if (!ScreenNames.IsKnown(screenName))
+            if (!CommunityScreenNames.IsKnown(screenName))
             {
                 Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModSettingsState", "RejectInvalidRestartTarget"), screenName));
                 return;
@@ -102,12 +102,12 @@ namespace Game
             EnsureLoaded();
             fileType = screenName switch
             {
-                ScreenNames.Local => s_localFileType,
-                ScreenNames.Community => s_communityFileType,
-                ScreenNames.MyPublished => s_myPublishedFileType,
+                CommunityScreenNames.Local => s_localFileType,
+                CommunityScreenNames.Community => s_communityFileType,
+                CommunityScreenNames.MyPublished => s_myPublishedFileType,
                 _ => CommunityFileType.Unknown
             };
-            return ScreenNames.IsKnown(screenName);
+            return CommunityScreenNames.IsKnown(screenName);
         }
 
         public static void SetScreenFileType(string screenName, CommunityFileType fileType)
@@ -115,13 +115,13 @@ namespace Game
             EnsureLoaded();
             switch (screenName)
             {
-                case ScreenNames.Local:
+                case CommunityScreenNames.Local:
                     s_localFileType = fileType;
                     break;
-                case ScreenNames.Community:
+                case CommunityScreenNames.Community:
                     s_communityFileType = fileType;
                     break;
-                case ScreenNames.MyPublished:
+                case CommunityScreenNames.MyPublished:
                     s_myPublishedFileType = fileType;
                     break;
                 default:
@@ -168,7 +168,7 @@ namespace Game
             s_communitySection = NormalizeSection(state.CommunitySection);
             s_myPublishedFileType = CommunityFileTypes.FromSettingValue(state.MyPublishedFileType);
 
-            if (ScreenNames.IsKnown(state.RestartReturnScreen))
+            if (CommunityScreenNames.IsKnown(state.RestartReturnScreen))
             {
                 s_restartReturnScreen = state.RestartReturnScreen;
             }

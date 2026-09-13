@@ -3,14 +3,14 @@ using System.Xml.Linq;
 
 namespace Game
 {
-    public sealed class ImportLinkDialog : Dialog
+    public sealed class CommunityImportLinkDialog : Dialog
     {
         private readonly Action<string> m_submit;
         private readonly TextBoxWidget m_urlBox;
         private readonly BevelledButtonWidget m_confirmButton;
         private readonly BevelledButtonWidget m_cancelButton;
 
-        public ImportLinkDialog(string initialUrl, Action<string> submit)
+        public CommunityImportLinkDialog(string initialUrl, Action<string> submit)
         {
             m_submit = submit;
 

@@ -6,7 +6,7 @@ namespace Game
     /// 故屏名清单置于 Application；CommunityScreenRegistry（ModsManager/Community）引用本类
     /// 完成注册，避免 Application → Presentation 反向依赖。本类是屏名的唯一权威。
     /// </summary>
-    internal static class ScreenNames
+    internal static class CommunityScreenNames
     {
         public const string Local = "ScbbsPlusLocal";
         public const string Community = "ScbbsPlusCommunity";

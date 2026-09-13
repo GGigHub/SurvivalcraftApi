@@ -16,7 +16,7 @@ namespace Game
             ModSettingsState.SetFirstDownloadSelfReviewPromptShown();
         }
 
-        private void SaveDefaultFilters(FiltersDialog.State state)
+        private void SaveDefaultFilters(CommunityFiltersDialog.State state)
         {
             m_defaultSelectedFileType = state.FileType;
             m_defaultOrderType = state.OrderType;

@@ -3,7 +3,7 @@ using System.Xml.Linq;
 
 namespace Game
 {
-    internal sealed class FiltersDialog : Dialog
+    internal sealed class CommunityFiltersDialog : Dialog
     {
         internal struct State
         {
@@ -38,7 +38,7 @@ namespace Game
         private CommunitySection m_section;
         private bool m_defaultsSaved;
 
-        public FiltersDialog(
+        public CommunityFiltersDialog(
             State state,
             Action<State> saveDefault,
             Action<State> submit)

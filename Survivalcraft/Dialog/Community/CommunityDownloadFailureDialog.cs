@@ -4,14 +4,14 @@ using Engine;
 
 namespace Game
 {
-    public sealed class DownloadFailureDialog : Dialog
+    public sealed class CommunityDownloadFailureDialog : Dialog
     {
         private readonly ButtonWidget[] m_sourceButtons;
         private readonly ButtonWidget m_copyLinkButton;
         private readonly Action<DownloadSourceOption> m_useSource;
         private readonly string m_downloadUrl;
 
-        public DownloadFailureDialog(
+        public CommunityDownloadFailureDialog(
             string fileName,
             string downloadUrl,
             string error,

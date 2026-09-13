@@ -2,7 +2,7 @@ using System;
 
 namespace Game
 {
-    internal static class GlobalToastManager
+    internal static class CommunityToastManager
     {
         private static CommunityToastWidget s_widget;
         private static Screen s_screen;

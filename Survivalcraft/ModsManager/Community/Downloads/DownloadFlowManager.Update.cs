@@ -12,7 +12,7 @@ namespace Game
 {
     internal sealed partial class DownloadFlowManager
     {
-        /// <summary>每帧轮询：进度对话框、下载队列推进、三个后台任务的完成收尾。由全局帧泵（GlobalFramePump）驱动，离屏也持续收尾。</summary>
+        /// <summary>每帧轮询：进度对话框、下载队列推进、三个后台任务的完成收尾。由全局帧泵（CommunityFramePump）驱动，离屏也持续收尾。</summary>
         public void Update()
         {
             UpdateFileDownloadDialog();
@@ -90,7 +90,7 @@ namespace Game
                     {
                         DialogsManager.ShowDialog(
                             null,
-                            new RestartConfirmDialog(
+                            new CommunityRestartConfirmDialog(
                                 LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "UpdateComplete"),
                                 string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ImportedRestartPrompt"), result.FileName),
                                 restartAction: () =>

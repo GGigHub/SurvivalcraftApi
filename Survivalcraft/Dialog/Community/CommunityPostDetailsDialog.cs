@@ -8,7 +8,7 @@ using Engine.Graphics;
 
 namespace Game
 {
-    public sealed class PostDetailsDialog : Dialog
+    public sealed class CommunityPostDetailsDialog : Dialog
     {
         private readonly Widget m_actionsRow;
         private readonly StackPanelWidget m_contentPanel;
@@ -28,7 +28,7 @@ namespace Game
         private CancellationTokenSource m_autoTranslateCancellation;
         private int m_autoTranslateRequestId;
 
-        public PostDetailsDialog(
+        public CommunityPostDetailsDialog(
             string title,
             string html,
             string baseUrl = null,

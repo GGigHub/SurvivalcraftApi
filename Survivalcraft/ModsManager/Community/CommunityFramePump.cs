@@ -9,10 +9,10 @@ namespace Game
     /// 驱动不依赖特定屏幕的跨屏轮询——下载队列收尾、自动更新检查、认证会话轮询。
     /// 收尾逻辑（弹窗/事件/队列推进）此前只由四个 mod 屏的 Update() 调用，
     /// 用户切回原生屏后离屏完成的收尾会停摆到下次进入 mod 屏。
-    /// 弹窗/Toast 均自适应当前屏（DialogsManager/GlobalToastManager 以 CurrentScreen 为宿主），
+    /// 弹窗/Toast 均自适应当前屏（DialogsManager/CommunityToastManager 以 CurrentScreen 为宿主），
     /// 离屏收尾时通知落在当前所在屏上。
     /// </summary>
-    internal static class GlobalFramePump
+    internal static class CommunityFramePump
     {
         /// <summary>由 ModLoader.OnLoadingFinished 调用；先摘后挂，任何重启路径下都恰好一个订阅。</summary>
         internal static void Initialize()

@@ -10,7 +10,7 @@ namespace Game
         {
             if (m_moreButton.IsClicked)
             {
-                ScreensManager.SwitchScreen(ScreenNames.More);
+                ScreensManager.SwitchScreen(CommunityScreenNames.More);
             }
         }
 
@@ -21,13 +21,13 @@ namespace Game
                 return;
             }
 
-            FiltersDialog.State oldState = GetCurrentFiltersState();
+            CommunityFiltersDialog.State oldState = GetCurrentFiltersState();
             DialogsManager.ShowDialog(
                 null,
-                new FiltersDialog(
+                new CommunityFiltersDialog(
                     oldState,
                     SaveDefaultFilters,
-                    delegate(FiltersDialog.State state)
+                    delegate(CommunityFiltersDialog.State state)
                     {
                         if (FiltersStateEquals(state, oldState))
                         {
@@ -42,9 +42,9 @@ namespace Game
             );
         }
 
-        private FiltersDialog.State GetCurrentFiltersState()
+        private CommunityFiltersDialog.State GetCurrentFiltersState()
         {
-            return new FiltersDialog.State
+            return new CommunityFiltersDialog.State
             {
                 FileType = m_selectedFileType,
                 OrderType = m_orderType,
@@ -57,7 +57,7 @@ namespace Game
             };
         }
 
-        private void ApplyFiltersState(FiltersDialog.State state)
+        private void ApplyFiltersState(CommunityFiltersDialog.State state)
         {
             m_selectedFileType = state.FileType;
             m_orderType = state.OrderType;
@@ -90,7 +90,7 @@ namespace Game
             return !string.IsNullOrWhiteSpace(m_searchTitle);
         }
 
-        private static bool FiltersStateEquals(FiltersDialog.State state, FiltersDialog.State right)
+        private static bool FiltersStateEquals(CommunityFiltersDialog.State state, CommunityFiltersDialog.State right)
         {
             return state.FileType == right.FileType
                 && state.OrderType == right.OrderType

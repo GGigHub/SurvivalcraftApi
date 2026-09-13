@@ -32,9 +32,9 @@ namespace Game
 
         private Task<FileDownloadResult> m_fileDownloadTask;
         private TransferProgress m_fileDownloadProgress;
-        private DownloadDialog m_fileDownloadDialog;
+        private CommunityDownloadDialog m_fileDownloadDialog;
         // 队列覆盖确认框跟踪：切屏使对话框随宿主屏失联时，Update 泵据此重弹（ReshowLostQueuedOverwriteDialog）。
-        private ImportOverwriteDialog m_queuedOverwriteDialog;
+        private CommunityImportOverwriteDialog m_queuedOverwriteDialog;
         private DownloadQueueItem m_queuedOverwriteDialogItem;
         // true = 已对失联对话框发出 Hide，等引擎关闭动画摘除后再重 Show。
         private bool m_queuedOverwriteDialogHidePending;
@@ -125,7 +125,7 @@ namespace Game
 
         private void ShowToast(string message, double autoHideSeconds = 0.0)
         {
-            GlobalToastManager.Show(message, autoHideSeconds: autoHideSeconds);
+            CommunityToastManager.Show(message, autoHideSeconds: autoHideSeconds);
         }
 
         private DownloadSourceSelectionMode SourceMode => SourceModeResolver?.Invoke() ?? DownloadSourceSelectionMode.Default;

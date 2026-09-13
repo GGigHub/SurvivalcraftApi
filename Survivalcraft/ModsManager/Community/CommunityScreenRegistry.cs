@@ -6,7 +6,7 @@ using Engine;
 namespace Game
 {
     /// <summary>
-    /// 屏批两屏（社区/More）统一注册（屏名清单见 ScreenNames；Local/MyPublished 后续轮加回）。
+    /// 屏批两屏（社区/More）统一注册（屏名清单见 CommunityScreenNames；Local/MyPublished 后续轮加回）。
     /// 屏幕实例只 new 一次（幂等）；引擎换语言时用 Activator.CreateInstance 整表
     /// 重建 m_screens 且不调用旧实例 Leave，旧实例连同 ctor 订阅的静态事件一起成为
     /// 僵尸——故静态事件 handler 须以 IsOwningScreenLive 自检，发现归属屏被替换即退订。
@@ -15,8 +15,8 @@ namespace Game
     {
         private static readonly (string Name, Func<Screen> Factory)[] s_screenRegistrations =
         [
-            (ScreenNames.Community, static () => new CommunityScreen()),
-            (ScreenNames.More, static () => new MoreScreen())
+            (CommunityScreenNames.Community, static () => new CommunityScreen()),
+            (CommunityScreenNames.More, static () => new CommunityMoreScreen())
         ];
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace Game
                 }
             }
 
-            if (string.Equals(screenName, ScreenNames.Community, StringComparison.Ordinal)
+            if (string.Equals(screenName, CommunityScreenNames.Community, StringComparison.Ordinal)
                 && screen is CommunityScreen communityScreen)
             {
                 RemoteImportManager.RegisterHost(communityScreen);

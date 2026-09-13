@@ -277,7 +277,7 @@ namespace Game
 
         /// <summary>
         /// 按包名（其次磁盘文件名）在已加载模组中定位实体。枚举 ModListAll 封送主线程；
-        /// 主线程调用时 Dispatch 内联执行，无额外开销（MoreScreen 自更新入队即此用法）。
+        /// 主线程调用时 Dispatch 内联执行，无额外开销（CommunityMoreScreen 自更新入队即此用法）。
         /// </summary>
         internal static ModEntity FindInstalledMod(string packageName, string fileName)
         {

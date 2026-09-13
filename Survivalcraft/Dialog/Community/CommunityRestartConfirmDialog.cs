@@ -3,7 +3,7 @@ using System.Xml.Linq;
 
 namespace Game
 {
-    public sealed class RestartConfirmDialog : Dialog
+    public sealed class CommunityRestartConfirmDialog : Dialog
     {
         private readonly Action m_restartAction;
         private readonly Action m_restartAndContinueAction;
@@ -11,7 +11,7 @@ namespace Game
         private readonly BevelledButtonWidget m_restartAndContinueButton;
         private readonly BevelledButtonWidget m_cancelButton;
 
-        public RestartConfirmDialog(
+        public CommunityRestartConfirmDialog(
             string title,
             string message,
             Action restartAction,

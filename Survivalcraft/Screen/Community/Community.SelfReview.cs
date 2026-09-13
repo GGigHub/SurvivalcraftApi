@@ -46,7 +46,7 @@ namespace Game
             }
 
             m_selfReviewPromptActive = true;
-            GlobalToastManager.Show(
+            CommunityToastManager.Show(
                 message,
                 confirmAction,
                 closeAction,
@@ -64,7 +64,7 @@ namespace Game
         private void HideSelfReviewPrompt()
         {
             m_selfReviewPromptActive = false;
-            GlobalToastManager.Hide();
+            CommunityToastManager.Hide();
         }
 
         private void StartSelfReviewQuickScore()

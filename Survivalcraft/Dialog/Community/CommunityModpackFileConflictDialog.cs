@@ -13,7 +13,7 @@ namespace Game
         Close
     }
 
-    public sealed class ModpackFileConflictDialog : Dialog
+    public sealed class CommunityModpackFileConflictDialog : Dialog
     {
         private readonly ButtonWidget m_overwriteButton;
         private readonly ButtonWidget m_skipButton;
@@ -21,7 +21,7 @@ namespace Game
         private readonly ButtonWidget m_overwriteAllButton;
         private readonly Action<ModpackFileConflictAction> m_handler;
 
-        public ModpackFileConflictDialog(string fileName, Action<ModpackFileConflictAction> handler)
+        public CommunityModpackFileConflictDialog(string fileName, Action<ModpackFileConflictAction> handler)
         {
             m_handler = handler;
 

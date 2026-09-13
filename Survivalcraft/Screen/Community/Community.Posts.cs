@@ -133,7 +133,7 @@ namespace Game
             string title = string.IsNullOrWhiteSpace(version?.Title)
                 ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "VersionDetails")
                 : version.Title;
-            DialogsManager.ShowDialog(null, new PostDetailsDialog(title, VersionDetailFormatter.GetVersionDetailHtml(version), CurrentApiBaseUrl, enableAutoTranslate: true));
+            DialogsManager.ShowDialog(null, new CommunityPostDetailsDialog(title, VersionDetailFormatter.GetVersionDetailHtml(version), CurrentApiBaseUrl, enableAutoTranslate: true));
         }
 
         private void StartPostVersionDetailsDialogLoad(PostVersionItem version)
@@ -224,7 +224,7 @@ namespace Game
             }
 
             PostItem detail = result.Response?.Data ?? result.SourcePost;
-            DialogsManager.ShowDialog(null, new PostDetailsDialog(
+            DialogsManager.ShowDialog(null, new CommunityPostDetailsDialog(
                 detail?.Title ?? result.SourcePost?.Title,
                 detail?.Content,
                 CurrentApiBaseUrl,

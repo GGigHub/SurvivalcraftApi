@@ -13,14 +13,14 @@ namespace Game
     // 本地已存在同名资源时的选择对话框。MessageDialog 只支持两按钮，故自定义三按钮：
     // 覆盖（强制替换，走备份回滚）、重命名（按游戏原生导入、保留旧项）、取消。
     // 模组类型无法"重命名"（同名 scmod 导入会抛 FileAlreadyExists），构造时 canRename=false 只显示覆盖/取消。
-    public sealed class ImportOverwriteDialog : Dialog
+    public sealed class CommunityImportOverwriteDialog : Dialog
     {
         private readonly ButtonWidget m_overwriteButton;
         private readonly ButtonWidget m_renameButton;
         private readonly ButtonWidget m_cancelButton;
         private readonly Action<ImportOverwriteAction> m_handler;
 
-        public ImportOverwriteDialog(string message, bool canRename, Action<ImportOverwriteAction> handler)
+        public CommunityImportOverwriteDialog(string message, bool canRename, Action<ImportOverwriteAction> handler)
         {
             m_handler = handler;
 

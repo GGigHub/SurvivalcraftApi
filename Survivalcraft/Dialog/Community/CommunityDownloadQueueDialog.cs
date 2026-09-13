@@ -12,7 +12,7 @@ namespace Game
     /// </summary>
     public interface IDownloadQueueDialogHost
     {
-        IReadOnlyList<DownloadQueueDialog.DownloadQueueDialogItem> GetQueueDialogItems();
+        IReadOnlyList<CommunityDownloadQueueDialog.DownloadQueueDialogItem> GetQueueDialogItems();
 
         void PauseOrResumeDownloadQueueItem(int? itemId);
 
@@ -23,7 +23,7 @@ namespace Game
         void ClearFinishedDownloadQueueItems(int? itemId);
     }
 
-    public sealed class DownloadQueueDialog : Dialog
+    public sealed class CommunityDownloadQueueDialog : Dialog
     {
         private readonly IDownloadQueueDialogHost m_host;
         private readonly Action m_closedCallback;
@@ -55,7 +55,7 @@ namespace Game
             public bool CanClear { get; init; }
         }
 
-        public DownloadQueueDialog(IDownloadQueueDialogHost host, Action closedCallback)
+        public CommunityDownloadQueueDialog(IDownloadQueueDialogHost host, Action closedCallback)
         {
             ArgumentNullException.ThrowIfNull(host);
             m_host = host;

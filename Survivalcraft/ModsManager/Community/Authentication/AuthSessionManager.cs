@@ -12,7 +12,7 @@ namespace Game
     /// 社区认证会话的进程级控制器：登录/登出任务轮询、本地凭据持久化、token 失效（401/403）监听。
     /// 三屏共用——社区屏持有入口按钮；本地屏/我的发布屏只在需要 token 的操作前弹登录框。
     /// 界面刷新通过 LoginStateChanged 由订阅方处理，控制器不持有任何屏幕控件；
-    /// 唯一的直接 UI 输出是全局对话框与全局 Toast（DialogsManager / GlobalToastManager）。
+    /// 唯一的直接 UI 输出是全局对话框与全局 Toast（DialogsManager / CommunityToastManager）。
     /// </summary>
     internal sealed class AuthSessionManager
     {
@@ -394,7 +394,7 @@ namespace Game
                     else
                     {
                         // 服务端登出失败：本地凭据已保留（可重试登录/登出），Toast 说明。
-                        GlobalToastManager.Show(
+                        CommunityToastManager.Show(
                             LanguageControl.Get("ScbbsPlusCommunityScreen", "Auth", "Auth", "LogoutFailedToast"),
                             autoHideSeconds: 4.0);
                     }

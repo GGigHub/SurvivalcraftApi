@@ -255,7 +255,7 @@ namespace Game
                 return;
             }
 
-            ImportOverwriteDialog dialog = m_queuedOverwriteDialog;
+            CommunityImportOverwriteDialog dialog = m_queuedOverwriteDialog;
             if (dialog == null)
             {
                 return;
@@ -336,10 +336,10 @@ namespace Game
             });
         }
 
-        private static ImportOverwriteDialog ShowDownloadOverwriteDialog(string fileName, Action confirmAction, Action renameAction, Action cancelAction, bool canRename)
+        private static CommunityImportOverwriteDialog ShowDownloadOverwriteDialog(string fileName, Action confirmAction, Action renameAction, Action cancelAction, bool canRename)
         {
             string message = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "LocalAlreadyExistsChooseAction"), fileName);
-            ImportOverwriteDialog dialog = new(
+            CommunityImportOverwriteDialog dialog = new(
                 message,
                 canRename,
                 action =>
@@ -395,7 +395,7 @@ namespace Game
             }
 
             m_shouldShowRestoredDownloadPromptOnEnter = false;
-            GlobalToastManager.Show(
+            CommunityToastManager.Show(
                 string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Auth", "SelfReview", "UnfinishedDownloadsBadge"), m_restoredUnfinishedDownloadCount),
                 confirmAction: ShowQueueDialog,
                 dismissAction: () => m_restoredUnfinishedDownloadCount = 0);
@@ -405,17 +405,17 @@ namespace Game
         {
             foreach (Dialog dialog in DialogsManager.Dialogs)
             {
-                if (dialog is DownloadQueueDialog)
+                if (dialog is CommunityDownloadQueueDialog)
                 {
                     return;
                 }
             }
 
-            DialogsManager.ShowDialog(null, new DownloadQueueDialog(this, null));
+            DialogsManager.ShowDialog(null, new CommunityDownloadQueueDialog(this, null));
         }
 
         // IDownloadQueueDialogHost：队列对话框的宿主实现，委托到既有私有方法。
-        IReadOnlyList<DownloadQueueDialog.DownloadQueueDialogItem> IDownloadQueueDialogHost.GetQueueDialogItems()
+        IReadOnlyList<CommunityDownloadQueueDialog.DownloadQueueDialogItem> IDownloadQueueDialogHost.GetQueueDialogItems()
             => BuildDownloadQueueDialogItems();
 
         void IDownloadQueueDialogHost.PauseOrResumeDownloadQueueItem(int? itemId)
@@ -440,7 +440,7 @@ namespace Game
             string error = item.Result?.Error ?? item.Error ?? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "UnknownError");
             DialogsManager.ShowDialog(
                 null,
-                new DownloadFailureDialog(
+                new CommunityDownloadFailureDialog(
                     item.FileName,
                     item.Url,
                     error,
@@ -504,14 +504,14 @@ namespace Game
                 : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadPaused"), item?.FileName);
         }
 
-        private IReadOnlyList<DownloadQueueDialog.DownloadQueueDialogItem> BuildDownloadQueueDialogItems()
+        private IReadOnlyList<CommunityDownloadQueueDialog.DownloadQueueDialogItem> BuildDownloadQueueDialogItems()
         {
             if (m_downloadQueueItems.Count == 0)
             {
-                return Array.Empty<DownloadQueueDialog.DownloadQueueDialogItem>();
+                return Array.Empty<CommunityDownloadQueueDialog.DownloadQueueDialogItem>();
             }
 
-            List<DownloadQueueDialog.DownloadQueueDialogItem> items = [];
+            List<CommunityDownloadQueueDialog.DownloadQueueDialogItem> items = [];
             for (int i = 0; i < m_downloadQueueItems.Count; i++)
             {
                 DownloadQueueItem item = m_downloadQueueItems[i];
@@ -538,7 +538,7 @@ namespace Game
                     cache.Error = item.Error;
                     cache.Value = fraction;
                     cache.HasPercent = hasPercent;
-                    cache.Item = new DownloadQueueDialog.DownloadQueueDialogItem
+                    cache.Item = new CommunityDownloadQueueDialog.DownloadQueueDialogItem
                     {
                         Id = item.Id,
                         Title = string.Format(CultureInfo.InvariantCulture, "{0}. [{1}{2}] {3}", item.Id, status, percentText, item.FileName),
@@ -570,7 +570,7 @@ namespace Game
             public string Error;
             public float Value;
             public bool HasPercent;
-            public DownloadQueueDialog.DownloadQueueDialogItem Item;
+            public CommunityDownloadQueueDialog.DownloadQueueDialogItem Item;
         }
 
         private void CancelDownloadQueueItem(int? itemId = null)
@@ -789,7 +789,7 @@ namespace Game
                 DialogsManager.HideDialog(m_fileDownloadDialog);
             }
 
-            m_fileDownloadDialog = new DownloadDialog(
+            m_fileDownloadDialog = new CommunityDownloadDialog(
                 LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ImportResource"),
                 () => CancelDownloadQueueItem(item.Id),
                 HideQueuedDownloadProgressDialogToBackground);
@@ -809,7 +809,7 @@ namespace Game
                 return;
             }
 
-            DownloadDialog dialog = m_fileDownloadDialog;
+            CommunityDownloadDialog dialog = m_fileDownloadDialog;
             m_fileDownloadDialog = null;
             DialogsManager.HideDialog(dialog);
         }

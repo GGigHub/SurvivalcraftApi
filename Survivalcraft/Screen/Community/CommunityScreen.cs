@@ -53,7 +53,7 @@ namespace Game
         private double m_searchDebounceUntil;
         private readonly TaskSlot<PostsLoadResult> m_postsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostsList"));
         private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostNodeDetails"));
-        private readonly TaskSlot<PostDetailsDialogLoadResult> m_postDialogSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostDetailsDialog"));
+        private readonly TaskSlot<PostDetailsDialogLoadResult> m_postDialogSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "CommunityPostDetailsDialog"));
         private readonly TaskSlot<FeaturedLoadResult> m_featuredSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "Featured"));
         private FeaturedLoadResult m_featuredResult;
         private bool m_firstDownloadSelfReviewPromptShown;
@@ -145,7 +145,7 @@ namespace Game
             }
             AcquireRemoteImportHost();
             InstallDownloadFlowCallbacks(
-                MoreScreen.SetSharedStatus,
+                CommunityMoreScreen.SetSharedStatus,
                 () => SettingsManager.CommunityDownloadSourceSelectionMode,
                 ResolveEffectiveDownloadSource);
             PlayedTimeTracker.StartSelfPage();
@@ -314,8 +314,8 @@ namespace Game
 
         override protected void RememberRestartReturnToCurrentPage()
         {
-            ModSettingsState.SetRestartReturnTarget(ScreenNames.Community);
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "RecordRestartReturnScreen"), ScreenNames.Community));
+            ModSettingsState.SetRestartReturnTarget(CommunityScreenNames.Community);
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "RecordRestartReturnScreen"), CommunityScreenNames.Community));
         }
 
     }

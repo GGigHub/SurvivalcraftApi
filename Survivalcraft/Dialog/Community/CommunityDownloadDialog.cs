@@ -5,7 +5,7 @@ using Engine;
 
 namespace Game
 {
-    public sealed class DownloadDialog : Dialog
+    public sealed class CommunityDownloadDialog : Dialog
     {
         private readonly LabelWidget m_statusLabel;
         private readonly LabelWidget m_percentLabel;
@@ -17,7 +17,7 @@ namespace Game
         private readonly TransferProgress m_progress;
         private bool m_closable;
 
-        public DownloadDialog(string title, Action cancelAction = null, Action backgroundAction = null, TransferProgress progress = null)
+        public CommunityDownloadDialog(string title, Action cancelAction = null, Action backgroundAction = null, TransferProgress progress = null)
         {
             XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusDownloadDialog");
             LoadContents(this, node);

@@ -5,9 +5,9 @@ using Engine;
 
 namespace Game
 {
-    internal sealed class MoreScreen : CommunityScreenBase
+    internal sealed class CommunityMoreScreen : CommunityScreenBase
     {
-        private static MoreScreen s_current;
+        private static CommunityMoreScreen s_current;
         private static string s_sharedStatus = string.Empty;
 
         private LabelWidget m_accountInfo;
@@ -22,7 +22,7 @@ namespace Game
         private ButtonWidget m_topBarBackButton;
         private LabelWidget m_statusLabel;
 
-        public MoreScreen()
+        public CommunityMoreScreen()
         {
             XElement node = ContentManager.Get<XElement>("Screens/ScbbsPlusMoreScreen");
             LoadContents(this, node);
@@ -196,8 +196,8 @@ namespace Game
 
         override protected void RememberRestartReturnToCurrentPage()
         {
-            ModSettingsState.SetRestartReturnTarget(ScreenNames.More);
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "RecordRestartReturnScreen"), ScreenNames.More));
+            ModSettingsState.SetRestartReturnTarget(CommunityScreenNames.More);
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "RecordRestartReturnScreen"), CommunityScreenNames.More));
         }
 
         private static DownloadSourceOption ResolveEffectiveDownloadSource()
