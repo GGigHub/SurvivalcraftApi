@@ -10,8 +10,8 @@ namespace Game
     /// 单棵帖子树的渲染 presenter：节点创建、行组件刷新、分页状态机与按钮/跳页控件。
     /// 每棵树一个实例；树、状态标签、分页控件由构造传入。图标缓存/下载为进程级共享（PostIconLoader）。
     /// 行组件刷新时机：数据变化走 MarkDirty；行组件被引擎重建走 CommunityTreeViewWidget.RowWidgetsRebuilt。
-    /// 生命周期：ctor 订阅进程级图标事件；归属屏被换语言整表重建替换后，DetachIfOrphaned
-    /// 在下一个图标事件到达时退订自救，否则静态事件会把僵尸 presenter 连同整棵旧控件图钉在内存。
+    /// 生命周期：ctor 订阅进程级图标事件，宿主屏被换语言整表重建替换时经
+    /// CommunityScreen.Dispose → Detach 确定性退订，无孤儿 handler。
     /// </summary>
     internal sealed class PostTreePresenter
     {
@@ -69,21 +69,6 @@ namespace Game
         {
             PostIconLoader.IconUpdated -= HandleIconUpdated;
             PostIconLoader.IconCleared -= HandleIconCleared;
-        }
-
-        /// <summary>
-        /// 图标事件入口自检：归属屏已被换语言整表重建替换则退订并吞掉本事件
-        /// （此时整棵树是孤儿，遍历它只会给已弃节点刷图标、白白拖住内存）。
-        /// </summary>
-        /// <returns>true 表示归属屏仍存活，应继续处理事件。</returns>
-        internal bool DetachIfOrphaned()
-        {
-            if (ScreensManager.IsScreenLive(m_tree))
-            {
-                return true;
-            }
-            Detach();
-            return false;
         }
 
         public LabelWidget StatusLabel => m_statusLabel;
@@ -640,20 +625,12 @@ namespace Game
 
         private void HandleIconUpdated(string iconUrl, Texture2D texture)
         {
-            if (!DetachIfOrphaned())
-            {
-                return;
-            }
             // 更新节点模型并置引擎脏标记；重建后的行组件经 RowWidgetsRebuilt 重刷尺寸等定制。
             PostIconLoader.UpdateIconsInTree(m_tree, iconUrl, texture);
         }
 
         private void HandleIconCleared(string iconUrl)
         {
-            if (!DetachIfOrphaned())
-            {
-                return;
-            }
             PostIconLoader.ClearIconInTree(m_tree, iconUrl);
         }
 

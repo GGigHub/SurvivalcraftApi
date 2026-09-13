@@ -4,9 +4,9 @@ namespace Game
 {
     /// <summary>
     /// 四屏（社区/本地/我的发布/More）公共样板：
-    /// 登录态事件订阅与换语言僵尸屏自检退订、IRemoteImportHost 默认实现、
-    /// 下载控制器单槽委托（StatusReporter/远程导入主机）的 Enter 安装与
-    /// Leave 释放。ScreensManager 的 Enter/Leave 顺序不保证相邻帧配对，
+    /// ctor 订阅静态事件，Dispose（换语言整表重建的唯一生命周期终点）确定性退订；
+    /// IRemoteImportHost 默认实现；下载控制器单槽委托（StatusReporter/远程导入主机）
+    /// 的 Enter 安装与 Leave 释放。ScreensManager 的 Enter/Leave 顺序不保证相邻帧配对，
     /// 单槽委托释放一律“只在自己仍持有时清空”。
     /// </summary>
     internal abstract class CommunityScreenBase : Screen, IRemoteImportHost
@@ -17,18 +17,27 @@ namespace Game
             AuthSessionManager.Instance.LoginStateChanged += HandleLoginStateChanged;
         }
 
-        private void HandleLoginStateChanged(AuthSessionManager.AuthChangeKind kind)
+        private bool m_disposed;
+
+        public override void Dispose()
         {
-            if (!ScreensManager.IsScreenLive(this))
+            if (m_disposed)
             {
-                // 换语言整表重建后本屏是弃实例：退订自救，避免静态事件把僵尸屏钉在内存。
-                AuthSessionManager.Instance.LoginStateChanged -= HandleLoginStateChanged;
                 return;
             }
+            m_disposed = true;
+            // 换语言整表重建（LanguageControl.ChangeLanguage）不调 Leave，是本类实例
+            // 唯一的生命周期终点：在那里被 Dispose 时确定性退订 ctor 订阅的静态事件。
+            AuthSessionManager.Instance.LoginStateChanged -= HandleLoginStateChanged;
+            base.Dispose();
+        }
+
+        private void HandleLoginStateChanged(AuthSessionManager.AuthChangeKind kind)
+        {
             OnLoginStateChanged(kind);
         }
 
-        /// <summary>屏幕存活时的登录态变化处理；僵尸屏自检退订已由基类完成。</summary>
+        /// <summary>登录态变化处理；订阅退订由 Dispose 确定性完成。</summary>
         abstract protected void OnLoginStateChanged(AuthSessionManager.AuthChangeKind kind);
 
         bool IRemoteImportHost.HasExactLocalContent(ExternalContentType type, string fileName)

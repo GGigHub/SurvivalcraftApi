@@ -315,5 +315,13 @@ namespace Game
             UpdateSelfScoreTask();
         }
 
+        public override void Dispose()
+        {
+            // PostIconLoader 静态强引用事件的唯一解绑点随屏生命周期走：
+            // 换语言重建 Dispose 本屏时解绑，孤儿 handler 不复存在。
+            m_postsPresenter.Detach();
+            base.Dispose();
+        }
+
     }
 }
