@@ -56,7 +56,7 @@ namespace Game
 
         // 弱引用事件源：本单例与屏幕生命周期不对等——换语言时引擎
         // 整表重建屏幕且旧实例不获 Leave，强事件会把弃屏钉到进程退出。弱源只持目标弱引用，
-        // ScreenBase 的配对退订保留（显式 -== 与存活自救不变），死条目触发时自动剔除。
+        // 屏幕侧退订由 ScreenBase.Dispose 确定性完成，死条目触发时自动剔除。
         private readonly WeakEventSource<AuthChangeKind> m_loginStateChanged = new();
 
         public event Action<AuthChangeKind> LoginStateChanged

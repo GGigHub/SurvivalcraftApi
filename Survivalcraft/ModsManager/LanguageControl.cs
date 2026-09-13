@@ -393,8 +393,9 @@ namespace Game {
             SubsystemPalette.m_nameFormat = LanguageControl.Get("SubsystemPalette", "1");
             ScreensManager.SwitchScreen("MainMenu");
             // 旧屏实例的生命周期终点：整表重建不调 Leave，终局清理（退订 ctor 订阅的
-            // 静态事件等）统一走 Dispose。放在切屏后，当前显示屏的动画 Leave 已先行；
-            // 单屏清理故障不阻断重建。屏表常驻，常规切屏不 Dispose。
+            // 静态事件等）统一走 Dispose。放在切屏后：旧屏若曾是当前屏，其过渡动画过半
+            // 才触发的迟到 Leave 会晚于此处，但社区屏 Leave 仅释放实例级单槽，迟到即空
+            // 操作。单屏清理故障不阻断重建。屏表常驻，常规切屏不 Dispose。
             foreach (KeyValuePair<string, Screen> c in oldScreens) {
                 try {
                     c.Value.Dispose();
