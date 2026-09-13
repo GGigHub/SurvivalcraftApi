@@ -125,24 +125,6 @@ namespace Game {
             return null;
         }
 
-        /// <summary>
-        ///     控件是否仍挂在某个已注册屏的子树下。引擎换语言时整表重建屏幕且不调用
-        ///     旧实例 Leave，静态事件 handler 据此判定自己是否已成弃实例并退订自救。
-        ///     上溯止步于 RootWidget 直接子级：屏在显示链上时其 ParentWidget 就是
-        ///     RootWidget，继续上溯会把存活屏误判成孤儿；休眠屏（不在显示链）
-        ///     ParentWidget 为空，root 即屏本身。
-        /// </summary>
-        public static bool IsScreenLive(Widget widget) {
-            if (widget == null) {
-                return false;
-            }
-            Widget root = widget;
-            while (root.ParentWidget != null && root.ParentWidget != RootWidget) {
-                root = root.ParentWidget;
-            }
-            return root is Screen screen && m_screens.ContainsValue(screen);
-        }
-
         public static void Initialize() {
             RootWidget = new CanvasWidget();
             RootWidget.WidgetsHierarchyInput = new WidgetInput();

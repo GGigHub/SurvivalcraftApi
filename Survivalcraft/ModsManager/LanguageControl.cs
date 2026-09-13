@@ -374,6 +374,7 @@ namespace Game {
 #endif
             Window.TitlePrefix = title;
 #endif
+            List<KeyValuePair<string, Screen>> oldScreens = [.. ScreensManager.m_screens];
             Dictionary<string, object> objs = [];
             foreach (KeyValuePair<string, Screen> c in ScreensManager.m_screens) {
                 Type type = c.Value.GetType();
@@ -391,6 +392,17 @@ namespace Game {
             ClothingSlot.Initialize();
             SubsystemPalette.m_nameFormat = LanguageControl.Get("SubsystemPalette", "1");
             ScreensManager.SwitchScreen("MainMenu");
+            // 旧屏实例的生命周期终点：整表重建不调 Leave，终局清理（退订 ctor 订阅的
+            // 静态事件等）统一走 Dispose。放在切屏后，当前显示屏的动画 Leave 已先行；
+            // 单屏清理故障不阻断重建。屏表常驻，常规切屏不 Dispose。
+            foreach (KeyValuePair<string, Screen> c in oldScreens) {
+                try {
+                    c.Value.Dispose();
+                }
+                catch (Exception ex) {
+                    Log.Warning($"[ScbbsPlus] Disposing replaced screen \"{c.Key}\" failed: {ex.Message}");
+                }
+            }
         }
 
         public static Dictionary<string, string> CachedLanguageFullNames = [];
