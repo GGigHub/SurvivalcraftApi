@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using Engine;
 
 namespace Game
 {
@@ -56,7 +57,7 @@ namespace Game
                 return Error(requestId, data, sourceUrl, sourceFileName, LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "TheModpackManifestIsEmptyOrInvalid"));
             }
 
-            string sourceExtension = FileNameRules.GetExtension(sourceFileName ?? string.Empty);
+            string sourceExtension = Storage.GetExtensionBCL(sourceFileName ?? string.Empty);
             bool isJsonSource = string.Equals(sourceExtension, ".json", StringComparison.OrdinalIgnoreCase);
             bool isZipSource = string.Equals(sourceExtension, ".zip", StringComparison.OrdinalIgnoreCase);
             if (!isJsonSource && !isZipSource)
@@ -264,7 +265,7 @@ namespace Game
                 return true;
             }
             string tailName = ModpackRules.TryGetPathTailName(icon) ?? icon;
-            string extension = FileNameRules.GetExtension(tailName);
+            string extension = Storage.GetExtensionBCL(tailName);
             return string.Equals(extension, ".png", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(extension, ".webp", StringComparison.OrdinalIgnoreCase);
         }

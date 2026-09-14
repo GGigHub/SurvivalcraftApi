@@ -209,7 +209,7 @@ namespace Game
                 fileName = Storage.GetFileName(item.TargetPath);
             }
             fileName = string.IsNullOrWhiteSpace(fileName) ? "download" : Storage.GetFileName(fileName);
-            if (!string.IsNullOrWhiteSpace(FileNameRules.GetExtension(fileName)))
+            if (!string.IsNullOrWhiteSpace(Storage.GetExtensionBCL(fileName)))
             {
                 item.Filename = fileName;
                 return fileName;

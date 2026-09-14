@@ -53,7 +53,7 @@ namespace Game
                 AppendListItem(panel, string.Format(
                     CultureInfo.InvariantCulture,
                     LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "DailyDownloadsFormat"),
-                    DisplayTime.FormatDate(item.BucketStart),
+                    CommunityTimeFormatter.FormatDate(item.BucketStart),
                     item.DownloadCount));
             }
         }

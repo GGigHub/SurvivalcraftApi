@@ -10,7 +10,7 @@ namespace Game
     /// 不再硬编码 "yyyy-MM-dd" 模板。发服务器的字段（如 PlayedAt）自行用 "O" 序列化，
     /// 不得经此类。
     /// </summary>
-    internal static class DisplayTime
+    internal static class CommunityTimeFormatter
     {
         internal static string FormatTime(string value)
         {

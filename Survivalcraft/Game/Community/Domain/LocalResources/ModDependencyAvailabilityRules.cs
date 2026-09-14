@@ -4,7 +4,7 @@ using NuGet.Versioning;
 
 namespace Game
 {
-    internal enum LocalDependencyAvailability
+    internal enum ModDependencyAvailability
     {
         Missing,
         Incompatible,
@@ -12,9 +12,9 @@ namespace Game
         Loaded
     }
 
-    internal static class LocalDependencyAvailabilityRules
+    internal static class ModDependencyAvailabilityRules
     {
-        public static LocalDependencyAvailability Evaluate(
+        public static ModDependencyAvailability Evaluate(
             ModDependencyInfo dependency,
             ISet<string> loadedPackages,
             ISet<string> pendingPackages,
@@ -22,20 +22,20 @@ namespace Game
         {
             if (IsInstalledModMatching(dependency, loadedPackages))
             {
-                return LocalDependencyAvailability.Loaded;
+                return ModDependencyAvailability.Loaded;
             }
 
             if (IsInstalledModMatching(dependency, pendingPackages))
             {
-                return LocalDependencyAvailability.PendingRestart;
+                return ModDependencyAvailability.PendingRestart;
             }
 
             if (IsInstalledModMatching(dependency, incompatiblePackages))
             {
-                return LocalDependencyAvailability.Incompatible;
+                return ModDependencyAvailability.Incompatible;
             }
 
-            return LocalDependencyAvailability.Missing;
+            return ModDependencyAvailability.Missing;
         }
 
         public static string MakePackageVersionKey(string packageName, string version)

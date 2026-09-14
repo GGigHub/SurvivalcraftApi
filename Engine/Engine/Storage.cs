@@ -306,6 +306,33 @@ namespace Engine {
             return num >= 0 ? fileName.Substring(0, num) : fileName;
         }
 
+        /// <summary>
+        /// .NET BCL 语义的扩展名获取（System.IO.Path.GetExtension 同规则）：
+        /// 点文件（名字本身即 ".xxx"，如 ".gitignore"）判无扩展名返回空串。
+        /// GetExtension 是手写简化实现，会把点文件整体当扩展名，两者不可混用。
+        /// 输入允许完整路径，内部先取文件名末段。
+        /// </summary>
+        public static string GetExtensionBCL(string path) {
+            string fileName = GetFileName(path ?? string.Empty);
+            string extension = GetExtension(fileName);
+            return string.Equals(fileName, extension, StringComparison.Ordinal)
+                ? string.Empty
+                : extension;
+        }
+
+        /// <summary>
+        /// .NET BCL 语义的取文件名去扩展名（System.IO.Path.GetFileNameWithoutExtension
+        /// 同规则）：点文件保留全名。GetFileNameWithoutExtension 的手写简化实现会把
+        /// 点文件名清成空串。与 GetExtensionBCL 配对使用。
+        /// </summary>
+        public static string GetFileNameWithoutExtensionBCL(string path) {
+            string fileName = GetFileName(path ?? string.Empty);
+            string extension = GetExtensionBCL(fileName);
+            return string.IsNullOrEmpty(extension)
+                ? fileName
+                : fileName[..^extension.Length];
+        }
+
         public static string GetDirectoryName(string path) {
             if (string.IsNullOrEmpty(path)) {
                 return string.Empty;

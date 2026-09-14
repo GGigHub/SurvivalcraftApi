@@ -128,13 +128,13 @@ namespace Game
                         ? record.Name
                         : !string.IsNullOrWhiteSpace(record.PackageName)
                             ? record.PackageName
-                            : FileNameRules.GetFileNameWithoutExtension(manifestPath);
+                            : Storage.GetFileNameWithoutExtensionBCL(manifestPath);
                     items.Add(new LocalResourceItem
                     {
                         Type = ExternalContentType.Unknown,
                         Name = !string.IsNullOrWhiteSpace(record.PackageName)
                             ? record.PackageName
-                            : FileNameRules.GetFileNameWithoutExtension(manifestPath),
+                            : Storage.GetFileNameWithoutExtensionBCL(manifestPath),
                         DisplayName = displayName,
                         CreationTime = importedAt,
                         LocalFilePath = manifestPath,
@@ -159,7 +159,7 @@ namespace Game
             foreach (string fileName in Storage.ListFileNames(m_directory))
             {
                 string path = Storage.CombinePaths(m_directory, fileName);
-                string extension = FileNameRules.GetExtension(fileName);
+                string extension = Storage.GetExtensionBCL(fileName);
                 if ((string.Equals(extension, ".zip", StringComparison.OrdinalIgnoreCase)
                     || string.Equals(extension, ".json", StringComparison.OrdinalIgnoreCase))
                     && !path.EndsWith(".meta.json", StringComparison.OrdinalIgnoreCase))
@@ -230,7 +230,7 @@ namespace Game
         public string GetMetadataPath(string manifestPath)
         {
             string directory = Storage.GetDirectoryName(manifestPath);
-            string baseName = FileNameRules.GetFileNameWithoutExtension(manifestPath);
+            string baseName = Storage.GetFileNameWithoutExtensionBCL(manifestPath);
             return Storage.CombinePaths(string.IsNullOrWhiteSpace(directory) ? m_directory : directory, $"{baseName}.meta.json");
         }
 
@@ -345,13 +345,13 @@ namespace Game
         private string ResolveNonConflictingTargetPath(string targetPath, string sourceUrl)
         {
             string directory = Storage.GetDirectoryName(targetPath);
-            string originalBaseName = FileNameRules.GetFileNameWithoutExtension(targetPath);
+            string originalBaseName = Storage.GetFileNameWithoutExtensionBCL(targetPath);
             if (string.IsNullOrWhiteSpace(directory) || string.IsNullOrWhiteSpace(originalBaseName))
             {
                 return targetPath;
             }
             string baseName = originalBaseName;
-            string extension = FileNameRules.GetExtension(targetPath);
+            string extension = Storage.GetExtensionBCL(targetPath);
             string originalTargetPath = targetPath;
             for (int attempt = 2; ; attempt++)
             {
@@ -416,7 +416,7 @@ namespace Game
         private void DeleteConflictingFiles(string manifestPath)
         {
             string directory = Storage.GetDirectoryName(manifestPath);
-            string baseName = FileNameRules.GetFileNameWithoutExtension(manifestPath);
+            string baseName = Storage.GetFileNameWithoutExtensionBCL(manifestPath);
             if (string.IsNullOrWhiteSpace(directory) || string.IsNullOrWhiteSpace(baseName))
             {
                 return;
@@ -590,8 +590,8 @@ namespace Game
             string sourceFileName = Storage.GetFileName(record?.SourceFileName ?? string.Empty);
             if (!string.IsNullOrWhiteSpace(sourceFileName))
             {
-                string baseName = Storage.SanitizeFileNameSegment(FileNameRules.GetFileNameWithoutExtension(sourceFileName), "pack");
-                string extension = FileNameRules.GetExtension(sourceFileName);
+                string baseName = Storage.SanitizeFileNameSegment(Storage.GetFileNameWithoutExtensionBCL(sourceFileName), "pack");
+                string extension = Storage.GetExtensionBCL(sourceFileName);
                 if (!string.Equals(extension, ".json", StringComparison.OrdinalIgnoreCase)
                     && !string.Equals(extension, ".zip", StringComparison.OrdinalIgnoreCase))
                 {

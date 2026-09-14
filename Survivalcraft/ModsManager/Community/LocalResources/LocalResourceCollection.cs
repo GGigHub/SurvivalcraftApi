@@ -111,7 +111,7 @@ namespace Game
         }
 
         // pendingMods 为 null 表示缓存尚未就绪，保留原有同步扫描回退；空集合则是已完成且无待重启模组的缓存。
-        public static LocalDependencySnapshot CaptureDependencySnapshot(
+        public static ModDependencySnapshot CaptureDependencySnapshot(
             IEnumerable<LocalResourceItem> pendingMods,
             Func<IEnumerable<ModEntity>> loadedModEntities,
             Func<PendingModPackageSets> pendingPackageSetsProvider)
@@ -119,7 +119,7 @@ namespace Game
             PendingModPackageSets packageSets = pendingMods == null
                 ? pendingPackageSetsProvider()
                 : GetPendingPackageSets(pendingMods);
-            return new LocalDependencySnapshot(GetInstalledPackageKeys(loadedModEntities), packageSets);
+            return new ModDependencySnapshot(GetInstalledPackageKeys(loadedModEntities), packageSets);
         }
 
         public static void ApplyPendingAction(
@@ -159,7 +159,7 @@ namespace Game
                 packages.Add(packageName);
                 if (!string.IsNullOrWhiteSpace(localEntity.modInfo.Version))
                 {
-                    packages.Add(LocalDependencyAvailabilityRules.MakePackageVersionKey(
+                    packages.Add(ModDependencyAvailabilityRules.MakePackageVersionKey(
                         packageName,
                         localEntity.modInfo.Version));
                 }
@@ -175,7 +175,7 @@ namespace Game
                 PendingLocalModInfo info = item?.Tag as PendingLocalModInfo;
                 string packageName = !string.IsNullOrWhiteSpace(info?.PackageName)
                     ? info.PackageName.Trim()
-                    : FileNameRules.GetFileNameWithoutExtension(
+                    : Storage.GetFileNameWithoutExtensionBCL(
                         Storage.GetFileName(item?.LocalFilePath ?? string.Empty));
                 if (string.IsNullOrWhiteSpace(packageName))
                 {
@@ -188,20 +188,20 @@ namespace Game
                 target.Add(packageName);
                 if (!string.IsNullOrWhiteSpace(info?.Version))
                 {
-                    target.Add(LocalDependencyAvailabilityRules.MakePackageVersionKey(packageName, info.Version));
+                    target.Add(ModDependencyAvailabilityRules.MakePackageVersionKey(packageName, info.Version));
                 }
             }
             return result;
         }
     }
 
-    internal sealed class LocalDependencySnapshot
+    internal sealed class ModDependencySnapshot
     {
         private readonly ISet<string> m_loadedPackages;
         private readonly ISet<string> m_pendingRestartPackages;
         private readonly ISet<string> m_incompatiblePackages;
 
-        public LocalDependencySnapshot(
+        public ModDependencySnapshot(
             ISet<string> loadedPackages,
             PendingModPackageSets pendingPackageSets)
         {
@@ -212,9 +212,9 @@ namespace Game
                 ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
-        public LocalDependencyAvailability Evaluate(ModDependencyInfo dependency)
+        public ModDependencyAvailability Evaluate(ModDependencyInfo dependency)
         {
-            return LocalDependencyAvailabilityRules.Evaluate(
+            return ModDependencyAvailabilityRules.Evaluate(
                 dependency,
                 m_loadedPackages,
                 m_pendingRestartPackages,
@@ -225,8 +225,8 @@ namespace Game
         {
             foreach (ModDependencyInfo dependency in dependencies ?? [])
             {
-                LocalDependencyAvailability availability = Evaluate(dependency);
-                if (availability is LocalDependencyAvailability.Missing or LocalDependencyAvailability.Incompatible)
+                ModDependencyAvailability availability = Evaluate(dependency);
+                if (availability is ModDependencyAvailability.Missing or ModDependencyAvailability.Incompatible)
                 {
                     yield return dependency;
                 }

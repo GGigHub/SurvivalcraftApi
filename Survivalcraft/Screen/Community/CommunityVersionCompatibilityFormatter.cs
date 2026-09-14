@@ -5,22 +5,22 @@ using NuGet.Versioning;
 namespace Game
 {
     // 自模组 Presentation/Dialogs/ScbbsPlusModVersionsDialog.cs 原样抽出（成员零改动，
-    // 嵌套 CompatibilityDisplayInfo 提为命名空间级）：帖子树渲染需要静态兼容性显示方法，
-    // 而 ModVersionsDialog 对话框本体留待 Local 轮移植，故拆出本独立类型。
+    // 嵌套 CompatibilityDisplayInfo（现 VersionCompatibilityInfo）提为命名空间级）：帖子树渲染
+    // 需要静态兼容性显示方法，而 ModVersionsDialog 对话框本体留待 Local 轮移植，故拆出本独立类型。
 
     /// <summary>
     /// 版本兼容性显示信息（原 ModVersionsDialog 嵌套类型，提为命名空间级）。
     /// </summary>
-    public sealed class CompatibilityDisplayInfo
+    public sealed class VersionCompatibilityInfo
     {
         public string StatusText { get; init; }
         public string VersionNamesText { get; init; }
         public Color Color { get; init; }
     }
 
-    internal static class VersionCompatibilityDisplay
+    internal static class CommunityVersionCompatibilityFormatter
     {
-        public static CompatibilityDisplayInfo GetCompatibilityDisplayInfo(
+        public static VersionCompatibilityInfo GetVersionCompatibilityInfo(
             PostVersionItem version,
             string currentApiVersion,
             string currentGameVersion,
@@ -34,7 +34,7 @@ namespace Game
                 gameVersionsById,
                 versionCatalog);
 
-            return new CompatibilityDisplayInfo
+            return new VersionCompatibilityInfo
             {
                 StatusText = compatibility.HasCompatibilityTargets
                     ? GetCompatibilityStatusText(compatibility.Level)
@@ -104,7 +104,7 @@ namespace Game
 
             // version.Version 可能是后端列表序号（"1"、"2"），纯整数不作版本比对。
             string versionText = ExternalVersionParser.Normalize(version.Version);
-            return !VersionDetailFormatter.IsIntegerText(versionText)
+            return !CommunityVersionDetailFormatter.IsIntegerText(versionText)
                 && IsSameParsedVersion(versionText, current);
         }
 

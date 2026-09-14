@@ -159,7 +159,7 @@ namespace Game
                 int? matchedVersionId = null;
                 if (request.FilterToCurrentApiVersion)
                 {
-                    matchedVersionId = PluginVersionSelector.FindBestMatch(versionCatalog, request.CurrentApiVersion)?.Id;
+                    matchedVersionId = CommunityModVersionSelector.FindBestMatch(versionCatalog, request.CurrentApiVersion)?.Id;
                     if (!matchedVersionId.HasValue)
                     {
                         // 新目录已判定无匹配时不得回退过期缓存 id；仅当没有可用目录时才信任缓存。

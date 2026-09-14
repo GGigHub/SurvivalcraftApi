@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Engine;
 
 namespace Game
 {
@@ -15,11 +16,31 @@ namespace Game
 
         public static bool MatchesFileName(string left, string right)
         {
-            string normalizedLeft = FileNameRules.NormalizeRemoteFileName(left);
-            string normalizedRight = FileNameRules.NormalizeRemoteFileName(right);
+            string normalizedLeft = NormalizeRemoteFileName(left);
+            string normalizedRight = NormalizeRemoteFileName(right);
             return !string.IsNullOrWhiteSpace(normalizedLeft)
                 && !string.IsNullOrWhiteSpace(normalizedRight)
                 && string.Equals(normalizedLeft, normalizedRight, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // 社区可控文件名（Url/Filename）匹配前的归一化：去 URL 转义、统一分隔符、取末段。
+        private static string NormalizeRemoteFileName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            string text = value.Trim();
+            try
+            {
+                text = Uri.UnescapeDataString(text);
+            }
+            catch (UriFormatException)
+            {
+                // 非法转义序列（如单独 "%"），回退原始裁剪值继续比较。
+            }
+            return Storage.GetFileName(text);
         }
 
         private static bool MatchesLocalMod(PostVersionItem version, PostFileItem file, string packageName, string localFileName)

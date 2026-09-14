@@ -33,7 +33,7 @@ namespace Game
                 PendingLocalModInfo info = item?.Tag as PendingLocalModInfo;
                 string packageName = !string.IsNullOrWhiteSpace(info?.PackageName)
                     ? info.PackageName.Trim()
-                    : FileNameRules.GetFileNameWithoutExtension(Storage.GetFileName(item?.LocalFilePath ?? string.Empty));
+                    : Storage.GetFileNameWithoutExtensionBCL(Storage.GetFileName(item?.LocalFilePath ?? string.Empty));
                 if (string.IsNullOrWhiteSpace(packageName))
                 {
                     continue;
@@ -45,7 +45,7 @@ namespace Game
                 target.Add(packageName);
                 if (!string.IsNullOrWhiteSpace(info?.Version))
                 {
-                    target.Add(LocalDependencyAvailabilityRules.MakePackageVersionKey(packageName, info.Version));
+                    target.Add(ModDependencyAvailabilityRules.MakePackageVersionKey(packageName, info.Version));
                 }
             }
             return result;
@@ -82,8 +82,8 @@ namespace Game
                 items.Add(new LocalResourceItem
                 {
                     Type = ExternalContentType.Mod,
-                    Name = string.IsNullOrWhiteSpace(info?.PackageName) ? FileNameRules.GetFileNameWithoutExtension(fileName) : info.PackageName,
-                    DisplayName = string.IsNullOrWhiteSpace(info?.Name) ? FileNameRules.GetFileNameWithoutExtension(fileName) : info.Name,
+                    Name = string.IsNullOrWhiteSpace(info?.PackageName) ? Storage.GetFileNameWithoutExtensionBCL(fileName) : info.PackageName,
+                    DisplayName = string.IsNullOrWhiteSpace(info?.Name) ? Storage.GetFileNameWithoutExtensionBCL(fileName) : info.Name,
                     CreationTime = TryGetLastWriteTime(path),
                     LocalFilePath = path,
                     PackageName = info?.PackageName,
@@ -100,7 +100,7 @@ namespace Game
         {
             foreach (string fileName in Storage.ListFileNames(path))
             {
-                if (string.Equals(FileNameRules.GetExtension(fileName), ".scmod", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(Storage.GetExtensionBCL(fileName), ".scmod", StringComparison.OrdinalIgnoreCase))
                 {
                     yield return Storage.CombinePaths(path, fileName);
                 }

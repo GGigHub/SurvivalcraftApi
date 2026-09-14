@@ -363,7 +363,7 @@ namespace Game
         /// <summary>ref-snapshot 重载：批量构建（如整表加载）共享一次本地快照，避免每节点重建。</summary>
         public TreeViewNode CreatePostNode(PostItem post, ref List<LocalResourceItem> snapshot)
         {
-            string timeText = DisplayTime.FormatDate(post.CreatedAt);
+            string timeText = CommunityTimeFormatter.FormatDate(post.CreatedAt);
             string authorText = string.IsNullOrWhiteSpace(post.Creator?.Nickname) ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "UnknownUser") : post.Creator.Nickname.Trim();
             string subText = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "PostSummaryFormat"),
                 m_fileTypeNameProvider(post.FileType),
@@ -451,8 +451,8 @@ namespace Game
             bool isInstalledVersion = LocalModStateStore.IsInstalledCommunityModVersion(version, snapshot);
             string title = GetCommunityVersionDisplayTitle(version, isInstalledVersion);
             bool showCompatibility = m_showCompatibilityProvider(version);
-            CompatibilityDisplayInfo compatibility = showCompatibility
-                ? VersionCompatibilityDisplay.GetCompatibilityDisplayInfo(
+            VersionCompatibilityInfo compatibility = showCompatibility
+                ? CommunityVersionCompatibilityFormatter.GetVersionCompatibilityInfo(
                     version,
                     VersionCatalogCache.CurrentApiVersion,
                     VersionCatalogCache.CurrentGameVersion,
@@ -465,7 +465,7 @@ namespace Game
             if (singleFile != null)
             {
                 string sizeText = TryGetSizeText(singleFile.Size);
-                string timeText = DisplayTime.FormatDate(string.IsNullOrWhiteSpace(singleFile.CreatedAt) ? version?.CreatedAt : singleFile.CreatedAt);
+                string timeText = CommunityTimeFormatter.FormatDate(string.IsNullOrWhiteSpace(singleFile.CreatedAt) ? version?.CreatedAt : singleFile.CreatedAt);
                 subText = showCompatibility
                     ? $"{compatibility.StatusText}  {sizeText}  {timeText}"
                     : $"{version.Title ?? ""}  {sizeText}  {timeText}";
@@ -504,7 +504,7 @@ namespace Game
                 file.PostId = postId;
             }
             string sizeText = TryGetSizeText(file.Size);
-            string timeText = DisplayTime.FormatDate(file.CreatedAt);
+            string timeText = CommunityTimeFormatter.FormatDate(file.CreatedAt);
             string title = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "File"), file.Filename ?? string.Empty);
             TreeViewNode node = new TreeViewNode(title, new Color(180, 255, 180), $"{sizeText}  {string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "Downloads"), file.DownloadCount)}  {timeText}", new Color(140, 140, 140))
             {
@@ -651,17 +651,17 @@ namespace Game
             {
                 snapshot = LocalModStateStore.GetCommunityLocalModSnapshot();
             }
-            return LocalModInstallStatus.GetCommunityModInstallState(post, snapshot) == CommunityInstallState.None
+            return LocalModInstallStatus.GetCommunityModInstallState(post, snapshot) == LocalModInstallState.None
                 ? Color.White
                 : new Color(120, 220, 140);
         }
 
-        private static string GetInstallStatusText(CommunityInstallState state)
+        private static string GetInstallStatusText(LocalModInstallState state)
         {
             return state switch
             {
-                CommunityInstallState.UpdateAvailable => LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "UpdateAvailable"),
-                CommunityInstallState.Installed => LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "Installed"),
+                LocalModInstallState.UpdateAvailable => LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "UpdateAvailable"),
+                LocalModInstallState.Installed => LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "Installed"),
                 _ => null
             };
         }

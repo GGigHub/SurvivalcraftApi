@@ -142,7 +142,7 @@ namespace Game
 
         public static string GetUploadExtensionText(string filePath, CommunityFileType fileType)
         {
-            string extension = FileNameRules.GetExtension(filePath);
+            string extension = Storage.GetExtensionBCL(filePath);
             if (!string.IsNullOrWhiteSpace(extension))
             {
                 return extension.TrimStart('.').ToLowerInvariant();
@@ -207,7 +207,7 @@ namespace Game
                     fallbackExtension);
             }
 
-            if (string.IsNullOrWhiteSpace(FileNameRules.GetExtension(fileName)))
+            if (string.IsNullOrWhiteSpace(Storage.GetExtensionBCL(fileName)))
             {
                 fileName += fallbackExtension;
             }

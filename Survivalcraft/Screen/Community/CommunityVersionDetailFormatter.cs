@@ -9,7 +9,7 @@ namespace Game
     /// 帖子版本详情内容提取与版本文本格式化：Content/ExtensionData 里的服务端内容
     /// 原样透传给详情弹窗 content 区（弹窗与列表渲染复用其 helper）。
     /// </summary>
-    internal static class VersionDetailFormatter
+    internal static class CommunityVersionDetailFormatter
     {
         public static string GetVersionDetailHtml(PostVersionItem version)
         {
@@ -44,7 +44,7 @@ namespace Game
                 WebUtility.HtmlEncode(FormatVersionTitle(version)),
                 versionLine,
                 LanguageControl.Get("ScbbsPlusModVersionsDialog", "Published"),
-                WebUtility.HtmlEncode(DisplayTime.FormatTime(version?.CreatedAt)));
+                WebUtility.HtmlEncode(CommunityTimeFormatter.FormatTime(version?.CreatedAt)));
         }
 
         internal static string FormatVersionTitle(PostVersionItem version)

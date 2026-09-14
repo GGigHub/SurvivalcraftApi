@@ -355,7 +355,7 @@ namespace Game
             try
             {
                 string candidateFileName = ModpackRules.TryGetPathTailName(fileName ?? rawUrl);
-                string extension = FileNameRules.GetExtension(candidateFileName ?? string.Empty).ToLowerInvariant();
+                string extension = Storage.GetExtensionBCL(candidateFileName ?? string.Empty).ToLowerInvariant();
                 if (extension == ".zip" || extension == ".json")
                 {
                     StartRemoteModpackImport(rawUrl, fileName ?? candidateFileName);
@@ -482,7 +482,7 @@ namespace Game
         private static void StartRemoteModpackImport(string url, string fileName)
         {
             Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "StartModpackImport"), url, fileName));
-            bool downloadArchiveOnly = string.Equals(FileNameRules.GetExtension(fileName), ".zip", StringComparison.OrdinalIgnoreCase);
+            bool downloadArchiveOnly = string.Equals(Storage.GetExtensionBCL(fileName), ".zip", StringComparison.OrdinalIgnoreCase);
 
             s_progress = new TransferProgress();
             s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportModpack"), progress: s_progress);
@@ -574,7 +574,7 @@ namespace Game
         {
             int totalCount = manifest.Items.Length;
             string title = !string.IsNullOrWhiteSpace(manifest.Name) ? manifest.Name : fileName;
-            bool canImportManifestOnly = string.Equals(FileNameRules.GetExtension(fileName), ".json", StringComparison.OrdinalIgnoreCase);
+            bool canImportManifestOnly = string.Equals(Storage.GetExtensionBCL(fileName), ".json", StringComparison.OrdinalIgnoreCase);
             string actionPrompt = canImportManifestOnly
                 ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "SubitemsCountPrompt"), totalCount)
                 : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "TotalItemsDownloadAll"), totalCount);

@@ -66,7 +66,7 @@ namespace Game
                 FileName = request.FileName,
                 Type = request.Type,
                 FileData = fileData,
-                DisplayName = FileNameRules.GetFileNameWithoutExtension(request.FileName)
+                DisplayName = Storage.GetFileNameWithoutExtensionBCL(request.FileName)
             };
 
             using MemoryStream analysisStream = new(fileData, writable: false);
@@ -74,7 +74,7 @@ namespace Game
             {
                 ModInfo modInfo = ScmodArchive.ReadModInfoFromScmodData(analysisStream);
                 result.DisplayName = string.IsNullOrWhiteSpace(modInfo?.Name)
-                    ? FileNameRules.GetFileNameWithoutExtension(request.FileName)
+                    ? Storage.GetFileNameWithoutExtensionBCL(request.FileName)
                     : modInfo.Name;
                 ModEntity existingMod = FindInstalledMod(modInfo?.PackageName, request.FileName);
                 if (existingMod?.modInfo != null)
@@ -92,7 +92,7 @@ namespace Game
                 return result;
             }
 
-            string importName = FileNameRules.GetFileNameWithoutExtension(request.FileName);
+            string importName = Storage.GetFileNameWithoutExtensionBCL(request.FileName);
             string existingName = FindExistingExternalContentName(request.Type, importName);
             if (!string.IsNullOrWhiteSpace(existingName))
             {
@@ -175,7 +175,7 @@ namespace Game
         internal static ExternalContentType ResolveType(string fileName)
         {
             ExternalContentType type = ExternalContentManager.ExtensionToType(
-                FileNameRules.GetExtension(fileName ?? string.Empty));
+                Storage.GetExtensionBCL(fileName ?? string.Empty));
             return ExternalContentManager.IsEntryTypeDownloadSupported(type)
                 ? type
                 : ExternalContentType.Unknown;

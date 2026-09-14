@@ -68,7 +68,7 @@ namespace Game
                 return packageName.Trim();
             }
 
-            string fileName = FileNameRules.GetFileNameWithoutExtension(Storage.GetFileName(filePathOrName ?? string.Empty));
+            string fileName = Storage.GetFileNameWithoutExtensionBCL(Storage.GetFileName(filePathOrName ?? string.Empty));
             return string.IsNullOrWhiteSpace(fileName) ? string.Empty : fileName.Trim();
         }
     }

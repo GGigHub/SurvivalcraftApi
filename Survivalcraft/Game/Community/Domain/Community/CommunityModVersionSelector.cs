@@ -3,7 +3,7 @@ using NuGet.Versioning;
 
 namespace Game
 {
-    internal static class PluginVersionSelector
+    internal static class CommunityModVersionSelector
     {
         public static VersionListItem FindBestMatch(VersionListItem[] versions, string apiVersion)
         {

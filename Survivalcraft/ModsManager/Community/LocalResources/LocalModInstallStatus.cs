@@ -7,7 +7,7 @@ using NuGet.Versioning;
 namespace Game
 {
     /// <summary>社区帖子相对本机的安装状态；UI 文案由表现层按状态映射。</summary>
-    internal enum CommunityInstallState
+    internal enum LocalModInstallState
     {
         None,
         Installed,
@@ -161,11 +161,11 @@ namespace Game
         }
 
         /// <summary>带外部快照的重载：调用方在批量判定（如整树刷行组件）时复用同一份快照，避免每节点重建。</summary>
-        public static CommunityInstallState GetCommunityModInstallState(PostItem post, List<LocalResourceItem> communityLocalMods)
+        public static LocalModInstallState GetCommunityModInstallState(PostItem post, List<LocalResourceItem> communityLocalMods)
         {
             if (post?.ShowLocalModInstallStatus != true || post.Id <= 0)
             {
-                return CommunityInstallState.None;
+                return LocalModInstallState.None;
             }
 
             bool isInstalled = false;
@@ -201,7 +201,7 @@ namespace Game
                 isInstalled = true;
                 if (cachedStatus?.HasUpdate == true)
                 {
-                    return CommunityInstallState.UpdateAvailable;
+                    return LocalModInstallState.UpdateAvailable;
                 }
 
                 PostVersionItem latestVersion = ModUpdateSelector.FindLatestVersion(
@@ -216,11 +216,11 @@ namespace Game
                         VersionCatalogCache.CachedVersionCatalog));
                 if (latestVersion != null && ModUpdateSelector.IsNewer(latestVersion.NuGetVersion, currentNuGetVersion))
                 {
-                    return CommunityInstallState.UpdateAvailable;
+                    return LocalModInstallState.UpdateAvailable;
                 }
             }
 
-            return isInstalled ? CommunityInstallState.Installed : CommunityInstallState.None;
+            return isInstalled ? LocalModInstallState.Installed : LocalModInstallState.None;
         }
 
     }

@@ -43,7 +43,7 @@ namespace Game
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "VersionListResponseMalformed"), apiResult.Body));
             }
 
-            return PluginVersionSelector.FindBestMatch(apiResult.Value.Data, apiVersion);
+            return CommunityModVersionSelector.FindBestMatch(apiResult.Value.Data, apiVersion);
         }
 
         private static Task<CommunityApiResponse<VersionListResponse>> LoadVersionCatalogResultAsync(

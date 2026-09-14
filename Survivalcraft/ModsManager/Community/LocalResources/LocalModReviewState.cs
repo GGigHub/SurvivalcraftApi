@@ -70,7 +70,7 @@ namespace Game
                 resourceItem?.DisplayName,
                 resourceItem?.Name,
                 fileName,
-                FileNameRules.GetFileNameWithoutExtension(fileName)
+                Storage.GetFileNameWithoutExtensionBCL(fileName)
             ];
             foreach (string key in keys)
             {
@@ -100,7 +100,7 @@ namespace Game
                 resourceKey,
                 displayName,
                 fileName,
-                FileNameRules.GetFileNameWithoutExtension(fileName)
+                Storage.GetFileNameWithoutExtensionBCL(fileName)
             ];
             foreach (string key in keys)
             {
