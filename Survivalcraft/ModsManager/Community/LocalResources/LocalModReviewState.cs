@@ -63,7 +63,7 @@ namespace Game
         public static int GetCachedLocalModPostId(LocalResourceItem resourceItem)
         {
             string filePath = TransferManager.UploadFileProvider.GetLocalResourceFilePath(resourceItem);
-            string fileName = GameUploadFileProvider.GetUploadFileName(resourceItem, filePath);
+            string fileName = CommunityUploadFileProvider.GetUploadFileName(resourceItem, filePath);
             string[] keys =
             [
                 LocalResourceIdentity.MakeModReviewKey(resourceItem),

@@ -17,7 +17,7 @@ namespace Game
         private static Func<string> s_feedbackApiBaseUrlProvider;
 
         internal static readonly HttpDownloader HttpDownloader = new(HttpClientProvider.Community);
-        internal static readonly GameUploadFileProvider UploadFileProvider = new();
+        internal static readonly CommunityUploadFileProvider UploadFileProvider = new();
         internal static readonly DownloadQueuePersistence DownloadQueuePersistence = new();
         internal static readonly DownloadFeedbackClient DownloadFeedbackClient = new(
             HttpClientProvider.Community,

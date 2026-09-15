@@ -113,6 +113,21 @@ namespace Engine {
 
         public static long GetFileSize(string path) => new FileInfo(ProcessPath(path, false, m_isAndroidPlatform)).Length;
 
+        /// <summary>
+        /// 安全取文件大小：路径为空、文件不存在或读取失败时返回 0，不抛异常。
+        /// </summary>
+        public static long GetFileSizeSafely(string path) {
+            if (string.IsNullOrWhiteSpace(path)) {
+                return 0;
+            }
+            try {
+                return FileExists(path) ? GetFileSize(path) : 0;
+            }
+            catch {
+                return 0;
+            }
+        }
+
         public static DateTime GetFileLastWriteTime(string path) => File.GetLastWriteTimeUtc(ProcessPath(path, false, m_isAndroidPlatform));
 
         public static Stream OpenFile(string path, OpenFileMode openFileMode) {
@@ -142,6 +157,16 @@ namespace Engine {
 
         public static void DeleteFile(string path) {
             File.Delete(ProcessPath(path, true, m_isAndroidPlatform));
+        }
+
+        /// <summary>
+        /// 安全删除文件：路径为空或文件不存在时不做任何事；文件被占用等真实 IO 错误照常抛出。
+        /// </summary>
+        public static void DeleteFileSafely(string path) {
+            if (string.IsNullOrWhiteSpace(path) || !FileExists(path)) {
+                return;
+            }
+            DeleteFile(path);
         }
 
         public static void CopyFile(string sourcePath, string destinationPath) {
@@ -233,6 +258,16 @@ namespace Engine {
 
         public static void DeleteDirectory(string path, bool recursive) {
             Directory.Delete(ProcessPath(path, true, m_isAndroidPlatform), recursive);
+        }
+
+        /// <summary>
+        /// 安全删除目录：路径为空或目录不存在时不做任何事；目录被占用等真实 IO 错误照常抛出。
+        /// </summary>
+        public static void DeleteDirectorySafely(string path, bool recursive) {
+            if (string.IsNullOrWhiteSpace(path) || !DirectoryExists(path)) {
+                return;
+            }
+            DeleteDirectory(path, recursive);
         }
 
         public static IEnumerable<string> ListFileNames(string path) =>

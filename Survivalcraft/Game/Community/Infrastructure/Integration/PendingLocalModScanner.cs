@@ -10,7 +10,7 @@ namespace Game
     /// 磁盘递归枚举 .scmod（排除已加载路径）→ 待重启项投影 → 包集合汇总。
     /// 无实例状态，静态域类（对齐游戏本体风格）。
     /// </summary>
-    internal static class GamePendingLocalMods
+    internal static class PendingLocalModScanner
     {
         public static List<LocalResourceItem> Scan(
             Func<PendingLocalModInfo, bool> isIncompatible,

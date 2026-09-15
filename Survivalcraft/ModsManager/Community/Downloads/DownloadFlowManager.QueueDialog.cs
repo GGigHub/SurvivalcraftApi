@@ -498,7 +498,7 @@ namespace Game
 
         private static string FormatPausedDownloadMessage(DownloadQueueItem item)
         {
-            long length = DownloadCacheFile.GetLength(item?.TempFilePath);
+            long length = Storage.GetFileSizeSafely(item?.TempFilePath);
             return length > 0
                 ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "DownloadPausedDownloaded"), item.FileName, DataSizeFormatter.Format(length))
                 : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadPaused"), item?.FileName);
@@ -724,7 +724,7 @@ namespace Game
         {
             string fileName = item.FileName;
             TransferProgress progress = item.Progress;
-            bool isResuming = DownloadCacheFile.GetLength(item.TempFilePath) > 0;
+            bool isResuming = Storage.GetFileSizeSafely(item.TempFilePath) > 0;
             Progress<DownloadProgress> byteProgress = new(info =>
             {
                 if (info.TotalBytes is null && info.BytesDownloaded == 0)
@@ -760,7 +760,7 @@ namespace Game
 
         private static float GetResumeProgressValue(string tempFilePath)
         {
-            long length = DownloadCacheFile.GetLength(tempFilePath);
+            long length = Storage.GetFileSizeSafely(tempFilePath);
             return length > 0 ? 0.35f : 0f;
         }
 

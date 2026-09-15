@@ -6,7 +6,7 @@ using Engine;
 
 namespace Game
 {
-    internal sealed class GameUploadFileProvider : IUploadFileProvider
+    internal sealed class CommunityUploadFileProvider : IUploadFileProvider
     {
 
         public PreparedUploadFile PrepareWorld(string directoryName, string worldName)

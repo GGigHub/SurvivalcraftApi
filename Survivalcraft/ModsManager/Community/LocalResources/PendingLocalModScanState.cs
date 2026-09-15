@@ -75,7 +75,7 @@ namespace Game
 
         private static Task<List<LocalResourceItem>> StartScan()
         {
-            return Task.Run(() => GamePendingLocalMods.Scan(
+            return Task.Run(() => PendingLocalModScanner.Scan(
                 IsPendingLocalModIncompatibleWithCurrentGame,
                 HasPendingLocalModCompatibilityOverride));
         }
@@ -87,7 +87,7 @@ namespace Game
                 return s_cachedPendingLocalMods.Count;
             }
 
-            return GamePendingLocalMods.Scan(
+            return PendingLocalModScanner.Scan(
                 IsPendingLocalModIncompatibleWithCurrentGame,
                 HasPendingLocalModCompatibilityOverride).Count;
         }

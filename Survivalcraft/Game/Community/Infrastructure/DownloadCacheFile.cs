@@ -15,23 +15,6 @@ namespace Game
             public long? TotalLength { get; set; }
         }
 
-        public static long GetLength(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return 0;
-            }
-
-            try
-            {
-                return Storage.FileExists(path) ? Storage.GetFileSize(path) : 0;
-            }
-            catch
-            {
-                return 0;
-            }
-        }
-
         public static bool TryDelete(string path, out string error)
         {
             error = null;
@@ -42,8 +25,8 @@ namespace Game
 
             try
             {
-                DeleteIfExists(path);
-                DeleteIfExists(GetMetadataPath(path));
+                Storage.DeleteFileSafely(path);
+                Storage.DeleteFileSafely(GetMetadataPath(path));
                 return true;
             }
             catch (Exception ex)
@@ -96,14 +79,6 @@ namespace Game
         private static string GetMetadataPath(string path)
         {
             return path + ".meta.json";
-        }
-
-        private static void DeleteIfExists(string path)
-        {
-            if (Storage.FileExists(path))
-            {
-                Storage.DeleteFile(path);
-            }
         }
     }
 }
