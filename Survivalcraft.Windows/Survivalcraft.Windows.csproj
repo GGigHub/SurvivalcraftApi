@@ -26,35 +26,34 @@
             <Link>init.js</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="openal32.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="wrap_oal.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <!-- 来自 https://github.com/KhronosGroup/OpenXR-SDK/releases/tag/release-1.1.60 -->
-        <None Update="openxr_loader.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <!-- 原生 DLL 时间戳旧于输出目录（构建产物），必须 Always 强制覆盖。
+             按 $(WindowsRuntimeIdentifier) 自动选择 win-x64 / win-arm64 对应架构的库，
+             Link 展平到输出根目录。
+             - win-arm64 为 MSYS2 clangarm64 构建，openal32/openxr_loader 需依赖 libc++.dll；
+             - win-x64 为历史官方构建，不依赖 libc++（仅附 wrap_oal.dll）。
+             OpenAL Soft：win-arm64 1.25.2 clangarm64；OpenXR Loader：win-arm64 1.1.62 clangarm64. -->
+        <None Include="runtimes\$(WindowsRuntimeIdentifier)\native\*.dll"
+              Link="%(Filename)%(Extension)">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Include="..\README.md">
             <Link>Readme 请读我.md</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <!-- 来自 https://github.com/mmozeiko/build-angle/releases/tag/2026-01-04 -->
     </ItemGroup>
     <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(DesignTimeBuild)' != 'true' and '$(SkipContentZip)' != 'true'">
         <ZipDirectory SourceDirectory="..\Survivalcraft\Content" DestinationFile="..\Survivalcraft\Content.zip" Overwrite="true" />
     </Target>
   <Import Project="..\build\NetworkMod.targets" />
   <ItemGroup>
-    <None Include="$(NetworkModPackagePath)" Link="InternalMods\$(NetworkModPackageName)">
+    <None Include="$(NetworkModPackagePath)" Link="InternalMods\$(NetworkModPackageName)" Condition="Exists('$(NetworkModPackagePath)')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
   </ItemGroup>
   <PropertyGroup>
     <CompatibilityModProject Condition="'$(CompatibilityModProject)' == ''">$(MSBuildProjectDirectory)\..\Survivalcraft.CompatNet\Survivalcraft.CompatNet.csproj</CompatibilityModProject>
-    <CompatibilityModPackageDirectory Condition="'$(CompatibilityModPackageDirectory)' == ''">$(MSBuildProjectDirectory)\..\Survivalcraft.CompatNet\bin\$(Configuration)\net10.0-windows\win-x64\scmod\</CompatibilityModPackageDirectory>
+    <CompatibilityModPackageDirectory Condition="'$(CompatibilityModPackageDirectory)' == ''">$(MSBuildProjectDirectory)\..\Survivalcraft.CompatNet\bin\$(Configuration)\net10.0-windows\$(WindowsRuntimeIdentifier)\scmod\</CompatibilityModPackageDirectory>
     <CompatibilityModPackageName Condition="'$(CompatibilityModPackageName)' == ''">Survivalcraft.CompatNet.scmod</CompatibilityModPackageName>
     <CompatibilityModPackagePath Condition="'$(CompatibilityModPackagePath)' == ''">$(CompatibilityModPackageDirectory)$(CompatibilityModPackageName)</CompatibilityModPackagePath>
     <CompatibilityModDestinationDirectory Condition="'$(CompatibilityModDestinationDirectory)' == '' and '$(OutputPath)' != ''">$(OutputPath)InternalMods\</CompatibilityModDestinationDirectory>
@@ -65,7 +64,7 @@
       <CompatibilityModDestinationDirectory Condition="'$(CompatibilityModDestinationDirectory)' == ''">$(TargetDir)InternalMods\</CompatibilityModDestinationDirectory>
       <CompatibilityModDestinationFile Condition="'$(CompatibilityModDestinationFile)' == ''">$(CompatibilityModDestinationDirectory)$(CompatibilityModPackageName)</CompatibilityModDestinationFile>
     </PropertyGroup>
-    <MSBuild Projects="$(CompatibilityModProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);GenerateModPackage=true;TargetFramework=net10.0-windows;RuntimeIdentifier=win-x64;ModOutputPath=$(CompatibilityModPackageDirectory)" BuildInParallel="false" />
+    <MSBuild Projects="$(CompatibilityModProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);GenerateModPackage=true;TargetFramework=net10.0-windows;RuntimeIdentifier=$(WindowsRuntimeIdentifier);ModOutputPath=$(CompatibilityModPackageDirectory)" BuildInParallel="false" />
     <MakeDir Directories="$(CompatibilityModDestinationDirectory)" />
     <Copy SourceFiles="$(CompatibilityModPackagePath)" DestinationFiles="$(CompatibilityModDestinationFile)" SkipUnchangedFiles="true" />
     <Message Importance="high" Text="Copied compatibility mod to $(CompatibilityModDestinationFile)" />

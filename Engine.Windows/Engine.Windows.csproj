@@ -17,11 +17,13 @@
     </ItemGroup>
     <ItemGroup Condition="'$(UseAngle)' == 'true'">
         <Compile Include="..\Engine\Engine.Graphics\EGL.cs" Link="Engine.Graphics\EGL.cs" />
-        <None Update="libEGL.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="libGLESv2.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <!-- 原生 DLL 时间戳旧于输出目录（ANGLE 构建产物），必须 Always 强制覆盖。
+             按 $(WindowsRuntimeIdentifier) 自动选择 win-x64 / win-arm64 对应架构的库，
+             Link 展平到输出根目录；win-x64 未提供 d3dcompiler_47.dll 时由系统承担。
+             ANGLE 版本：win-arm64 来自 mmozeiko/build-angle，win-x64 为历史版本。 -->
+        <None Include="runtimes\$(WindowsRuntimeIdentifier)\native\*.dll"
+              Link="%(Filename)%(Extension)">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="Compatible Patch Note 兼容补丁使用说明.txt">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

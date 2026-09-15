@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WindowsRuntimeIdentifier Condition="'$(WindowsRuntimeIdentifier)' == ''">win-arm64</WindowsRuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,7 +29,7 @@
   <Target Name="PackageMod" AfterTargets="Build">
     <PropertyGroup>
       <ModTempDir>$(IntermediateOutputPath)ModTemp\</ModTempDir>
-      <ModOutputPath>..\Survivalcraft.Test\bin\$(Configuration)\net10.0-windows\win-x64\Mods\</ModOutputPath>
+      <ModOutputPath>..\Survivalcraft.Test\bin\$(Configuration)\net10.0-windows\$(WindowsRuntimeIdentifier)\Mods\</ModOutputPath>
     </PropertyGroup>
     <RemoveDir Directories="$(ModTempDir)" />
     <MakeDir Directories="$(ModTempDir)" />

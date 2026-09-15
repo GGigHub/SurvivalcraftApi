@@ -1,6 +1,16 @@
-﻿<Project>
+<Project>
+    <!-- 自动探测当前机器架构，选择对应的 RID（原生 DLL 目录 runtimes\$(WindowsRuntimeIdentifier)\native）。
+         ARM64 机器默认 win-arm64，其余默认 win-x64；
+         命令行可用 -p:WindowsRuntimeIdentifier=... 覆盖，也可在 .csproj.user 中固定某台机器。 -->
     <PropertyGroup>
         <TargetFramework>net10.0-windows</TargetFramework>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <HostArchitecture>$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)</HostArchitecture>
+        <WindowsRuntimeIdentifier Condition="'$(WindowsRuntimeIdentifier)' == '' and '$(HostArchitecture)' == 'Arm64'">win-arm64</WindowsRuntimeIdentifier>
+        <WindowsRuntimeIdentifier Condition="'$(WindowsRuntimeIdentifier)' == '' and '$(HostArchitecture)' != 'Arm64'">win-x64</WindowsRuntimeIdentifier>
+        <RuntimeIdentifier>$(WindowsRuntimeIdentifier)</RuntimeIdentifier>
+        <!-- Windows 驱动不一定支持原生 OpenGL ES 上下文（如部分 ARM 设备），
+             默认使用 ANGLE（Direct3D 后端）翻译 GLES，保证兼容性。
+             可用 -p:UseAngle=false 关闭 -->
+        <UseAngle Condition="'$(UseAngle)' == ''">true</UseAngle>
     </PropertyGroup>
 </Project>

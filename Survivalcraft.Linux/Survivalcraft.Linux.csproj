@@ -21,7 +21,7 @@
     </ItemGroup>
     <Import Project="..\build\NetworkMod.targets" />
     <ItemGroup>
-        <None Include="$(NetworkModPackagePath)" Link="InternalMods\$(NetworkModPackageName)">
+        <None Include="$(NetworkModPackagePath)" Link="InternalMods\$(NetworkModPackageName)" Condition="Exists('$(NetworkModPackagePath)')">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </None>
