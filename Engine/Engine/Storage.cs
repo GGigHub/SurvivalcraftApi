@@ -114,18 +114,19 @@ namespace Engine {
         public static long GetFileSize(string path) => new FileInfo(ProcessPath(path, false, m_isAndroidPlatform)).Length;
 
         /// <summary>
-        /// 安全取文件大小：路径为空、文件不存在或读取失败时返回 0，不抛异常。
+        /// 尝试获取文件大小：路径为空、文件不存在或读取失败时返回 false，不抛异常。
         /// </summary>
-        public static long GetFileSizeSafely(string path) {
-            if (string.IsNullOrWhiteSpace(path)) {
-                return 0;
-            }
+        public static bool TryGetFileSize(string path, out long size) {
             try {
-                return FileExists(path) ? GetFileSize(path) : 0;
+                if (!string.IsNullOrWhiteSpace(path) && FileExists(path)) {
+                    size = GetFileSize(path);
+                    return true;
+                }
             }
             catch {
-                return 0;
             }
+            size = 0;
+            return false;
         }
 
         public static DateTime GetFileLastWriteTime(string path) => File.GetLastWriteTimeUtc(ProcessPath(path, false, m_isAndroidPlatform));
@@ -160,13 +161,27 @@ namespace Engine {
         }
 
         /// <summary>
-        /// 安全删除文件：路径为空或文件不存在时不做任何事；文件被占用等真实 IO 错误照常抛出。
+        /// 删除已存在的文件：路径为空或文件不存在时不做任何事；文件被占用等真实 IO 错误照常抛出。
         /// </summary>
-        public static void DeleteFileSafely(string path) {
+        public static void DeleteFileIfExists(string path) {
             if (string.IsNullOrWhiteSpace(path) || !FileExists(path)) {
                 return;
             }
             DeleteFile(path);
+        }
+
+        /// <summary>
+        /// 尽力删除文件：任何失败（含真实 IO 错误）返回 false，不抛异常；
+        /// 返回 true 表示文件已删除或本就不存在。
+        /// </summary>
+        public static bool TryDeleteFile(string path) {
+            try {
+                DeleteFileIfExists(path);
+                return true;
+            }
+            catch {
+                return false;
+            }
         }
 
         public static void CopyFile(string sourcePath, string destinationPath) {
@@ -261,13 +276,27 @@ namespace Engine {
         }
 
         /// <summary>
-        /// 安全删除目录：路径为空或目录不存在时不做任何事；目录被占用等真实 IO 错误照常抛出。
+        /// 删除已存在的目录：路径为空或目录不存在时不做任何事；目录被占用等真实 IO 错误照常抛出。
         /// </summary>
-        public static void DeleteDirectorySafely(string path, bool recursive) {
+        public static void DeleteDirectoryIfExists(string path, bool recursive) {
             if (string.IsNullOrWhiteSpace(path) || !DirectoryExists(path)) {
                 return;
             }
             DeleteDirectory(path, recursive);
+        }
+
+        /// <summary>
+        /// 尽力删除目录：任何失败（含真实 IO 错误）返回 false，不抛异常；
+        /// 返回 true 表示目录已删除或本就不存在。
+        /// </summary>
+        public static bool TryDeleteDirectory(string path, bool recursive) {
+            try {
+                DeleteDirectoryIfExists(path, recursive);
+                return true;
+            }
+            catch {
+                return false;
+            }
         }
 
         public static IEnumerable<string> ListFileNames(string path) =>

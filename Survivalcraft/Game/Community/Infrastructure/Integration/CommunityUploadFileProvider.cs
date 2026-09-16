@@ -106,14 +106,7 @@ namespace Game
 
         public long? TryGetExistingFileSize(string filePath)
         {
-            try
-            {
-                return Storage.GetFileSize(filePath);
-            }
-            catch
-            {
-                return null;
-            }
+            return Storage.TryGetFileSize(filePath, out long size) ? size : null;
         }
 
         public string GetLocalResourceFilePath(LocalResourceItem resourceItem)
@@ -227,7 +220,7 @@ namespace Game
         {
             try
             {
-                Storage.DeleteFileSafely(path);
+                Storage.DeleteFileIfExists(path);
             }
             catch (Exception ex)
             {

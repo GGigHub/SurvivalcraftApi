@@ -74,7 +74,7 @@ namespace Game
             }
             catch
             {
-                TryDeleteFile(tempPath);
+                Storage.TryDeleteFile(tempPath);
                 throw;
             }
         }
@@ -101,21 +101,6 @@ namespace Game
                 Storage.GetFileName(fileName ?? string.Empty),
                 ModsManager.ModSuffix,
                 fallbackName);
-        }
-
-        private static void TryDeleteFile(string path)
-        {
-            try
-            {
-                if (Storage.FileExists(path))
-                {
-                    Storage.DeleteFile(path);
-                }
-            }
-            catch
-            {
-                // 清理失败不应掩盖真正的导入错误。
-            }
         }
     }
 }

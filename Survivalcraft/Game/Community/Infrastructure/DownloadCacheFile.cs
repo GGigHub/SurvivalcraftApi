@@ -25,8 +25,8 @@ namespace Game
 
             try
             {
-                Storage.DeleteFileSafely(path);
-                Storage.DeleteFileSafely(GetMetadataPath(path));
+                Storage.DeleteFileIfExists(path);
+                Storage.DeleteFileIfExists(GetMetadataPath(path));
                 return true;
             }
             catch (Exception ex)
