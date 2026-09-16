@@ -64,7 +64,9 @@ namespace Game
 
         internal static void ValidateModItem(byte[] scmodData, ModpackItem item)
         {
-            if (!ScmodArchive.TryReadModInfoFromScmodData(scmodData, out ModInfo modInfo))
+            // JSON 损坏时 TryReadModInfo 返回 true 但 modInfo 为 null：与条目缺失同按无效包跳过。
+            if (!ScmodArchiveReader.TryReadModInfo(new MemoryStream(scmodData, writable: false), out ModInfo modInfo)
+                || modInfo == null)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ModinfoMissingSkipped"), item.Filename));
             }

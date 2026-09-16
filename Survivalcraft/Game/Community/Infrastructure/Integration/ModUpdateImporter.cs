@@ -15,15 +15,15 @@ namespace Game
         // 后台裸枚举与主线程列表重建并发，靠吞异常降级会漏删旧文件。
         public static string ImportSelfUpdate(Stream stream, string fileName, string packageName, string existingModFilePath = null)
         {
-            byte[] normalizedData = ScmodArchive.NormalizeScmodArchiveData(stream);
-            ModInfo updateInfo = ScmodArchive.ReadModInfoFromScmodData(normalizedData);
+            byte[] data = ReadAllBytes(stream);
+            ModInfo updateInfo = ScmodArchiveReader.ReadModInfo(new MemoryStream(data, writable: false));
             if (updateInfo == null || !string.Equals(updateInfo.PackageName, packageName, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackageIsNotScbbsPlusMod"));
             }
 
             string targetPath = Storage.CombinePaths(ModsManager.ModsPath, GetSafeFileName(fileName, "ScbbsPlus.scmod"));
-            return ReplaceModFile(normalizedData, targetPath, existingModFilePath, "ScbbsPlus-update");
+            return ReplaceModFile(data, targetPath, existingModFilePath, "ScbbsPlus-update");
         }
 
         public static string ImportModUpdate(
@@ -37,7 +37,7 @@ namespace Game
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "CannotConfirmCurrentPackageName"));
             }
 
-            byte[] fileData = ScmodArchive.ReadStreamData(stream);
+            byte[] fileData = ReadAllBytes(stream);
             if (!TryReadModInfo(fileData, out ModInfo updateInfo) || updateInfo == null)
             {
                 // 与 ImportSelfUpdate 的强校验一致：损坏包直接拒绝，避免用坏包静默替换用户原 mod。
@@ -83,13 +83,33 @@ namespace Game
         {
             try
             {
-                modInfo = ScmodArchive.ReadModInfoFromScmodData(data);
-                return true;
+                return ScmodArchiveReader.TryReadModInfo(new MemoryStream(data, writable: false), out modInfo);
             }
             catch (InvalidScmodArchiveException)
             {
                 modInfo = null;
                 return false;
+            }
+        }
+
+        private static byte[] ReadAllBytes(Stream stream)
+        {
+            if (!stream.CanSeek)
+            {
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackageDataUnreadable"));
+            }
+
+            long originalPosition = stream.Position;
+            try
+            {
+                stream.Position = 0;
+                using MemoryStream dataStream = new();
+                stream.CopyTo(dataStream);
+                return dataStream.ToArray();
+            }
+            finally
+            {
+                stream.Position = originalPosition;
             }
         }
 

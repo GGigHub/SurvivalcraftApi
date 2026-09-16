@@ -72,7 +72,7 @@ namespace Game
             using MemoryStream analysisStream = new(fileData, writable: false);
             if (request.Type == ExternalContentType.Mod)
             {
-                ModInfo modInfo = ScmodArchive.ReadModInfoFromScmodData(analysisStream);
+                ModInfo modInfo = ScmodArchiveReader.ReadModInfo(analysisStream);
                 result.DisplayName = string.IsNullOrWhiteSpace(modInfo?.Name)
                     ? Storage.GetFileNameWithoutExtensionBCL(request.FileName)
                     : modInfo.Name;
@@ -128,8 +128,6 @@ namespace Game
                         result.ExistingModPackageName,
                         result.ExistingModPath);
                 }
-
-                return ScmodArchive.ImportExternalContentSyncNormalized(stream, result.Type, result.FileName);
             }
 
             if (overwriteExisting && !string.IsNullOrWhiteSpace(result.ExistingEntryName))
@@ -137,7 +135,8 @@ namespace Game
                 return ImportWithOverwriteRollback(stream, result.Type, result.ExistingEntryName, result.FileName);
             }
 
-            return ScmodArchive.ImportExternalContentSyncNormalized(stream, result.Type, result.FileName);
+            // 原始字节透传：密文落盘、密文安装，引擎加载期自解密（ModsManager.GetScmods）。
+            return ExternalContentManager.ImportExternalContentSync(stream, result.Type, result.FileName);
         }
 
         // 覆盖导入需保证"导入失败不丢用户原内容"。删不可逆，故按类型分策：

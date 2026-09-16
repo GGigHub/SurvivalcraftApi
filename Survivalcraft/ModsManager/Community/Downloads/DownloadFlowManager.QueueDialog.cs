@@ -926,7 +926,7 @@ namespace Game
                 {
                     FileName = item.FileName,
                     DownloadFailed = item.Type == ExternalContentType.Mod,
-                    Error = ScmodArchive.InvalidArchiveFriendlyMessage
+                    Error = ScmodArchiveReader.InvalidArchiveFriendlyMessage
                 };
             }
             catch (Exception ex)

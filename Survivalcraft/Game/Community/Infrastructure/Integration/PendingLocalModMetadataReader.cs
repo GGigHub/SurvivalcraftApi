@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
+using System.Text;
 using System.Threading;
 using Engine;
 
@@ -33,20 +35,23 @@ namespace Game
             try
             {
                 using Stream stream = Storage.OpenFile(path, OpenFileMode.Read);
-                if (stream.Length < ScmodArchive.MinEncryptedHeaderLength)
-                {
-                    // 短于弱加密头部的最小长度，GetDecipherStream 内会越界；直接按无效包处理。
-                    Cache(cacheKey, lastWriteTime, null);
-                    return null;
-                }
-                using Stream decodedStream = ModsManager.GetDecipherStream(stream);
-                if (!ScmodArchive.TryReadRootEntryText(decodedStream, "modinfo.json", out string modInfoJson))
+                using System.IO.Compression.ZipArchive archive = ScmodArchiveReader.OpenArchive(stream);
+                if (!ScmodArchiveReader.TryReadRootEntry(archive, "modinfo.json", out byte[] entryData))
                 {
                     Cache(cacheKey, lastWriteTime, null);
                     return null;
                 }
 
-                info = ParsePendingInfo(modInfoJson);
+                // 与读器同约定：BOM 检测并剥离，避免污染 JSON 反序列化。
+                using MemoryStream entryStream = new(entryData, writable: false);
+                using StreamReader reader = new(entryStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+                info = ParsePendingInfo(reader.ReadToEnd());
+            }
+            catch (InvalidScmodArchiveException)
+            {
+                // 非法/过短/非 zip 文件按无效包静默处理（不打日志刷屏）。
+                Cache(cacheKey, lastWriteTime, null);
+                return null;
             }
             catch (Exception ex)
             {
