@@ -15,15 +15,14 @@ namespace Game
         // 后台裸枚举与主线程列表重建并发，靠吞异常降级会漏删旧文件。
         public static string ImportSelfUpdate(Stream stream, string fileName, string packageName, string existingModFilePath = null)
         {
-            byte[] data = ReadAllBytes(stream);
-            ModInfo updateInfo = ScmodArchiveReader.ReadModInfo(new MemoryStream(data, writable: false));
+            ModInfo updateInfo = ScmodArchiveReader.ReadModInfo(stream);
             if (updateInfo == null || !string.Equals(updateInfo.PackageName, packageName, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackageIsNotScbbsPlusMod"));
             }
 
             string targetPath = Storage.CombinePaths(ModsManager.ModsPath, GetSafeFileName(fileName, "ScbbsPlus.scmod"));
-            return ReplaceModFile(data, targetPath, existingModFilePath, "ScbbsPlus-update");
+            return ReplaceModFile(stream, targetPath, existingModFilePath, "ScbbsPlus-update");
         }
 
         public static string ImportModUpdate(
@@ -37,8 +36,7 @@ namespace Game
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "CannotConfirmCurrentPackageName"));
             }
 
-            byte[] fileData = ReadAllBytes(stream);
-            if (!TryReadModInfo(fileData, out ModInfo updateInfo) || updateInfo == null)
+            if (!TryReadModInfo(stream, out ModInfo updateInfo) || updateInfo == null)
             {
                 // 与 ImportSelfUpdate 的强校验一致：损坏包直接拒绝，避免用坏包静默替换用户原 mod。
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackageInvalidOrCorrupted"));
@@ -51,10 +49,12 @@ namespace Game
             string targetPath = Storage.CombinePaths(
                 ModsManager.ModsPath,
                 GetSafeFileName(fileName, $"{expectedPackageName}.scmod"));
-            return ReplaceModFile(fileData, targetPath, oldModFilePath, "ScbbsPlus-mod-update");
+            return ReplaceModFile(stream, targetPath, oldModFilePath, "ScbbsPlus-mod-update");
         }
 
-        private static string ReplaceModFile(byte[] data, string targetPath, string existingPath, string tempFilePrefix)
+        // 原始字节直通：探测走读器（内存解密、复位流位置），落盘 CopyTo 流式写，
+        // 不再整包驻留 byte[]——大包导入期内存峰值从"数组+读器缓冲"两三份降到 80KB 缓冲。
+        private static string ReplaceModFile(Stream data, string targetPath, string existingPath, string tempFilePrefix)
         {
             if (!Storage.DirectoryExists(ModsManager.ModsPath))
             {
@@ -66,7 +66,7 @@ namespace Game
             {
                 using (Stream fileStream = Storage.OpenFile(tempPath, OpenFileMode.Create))
                 {
-                    fileStream.Write(data, 0, data.Length);
+                    data.CopyTo(fileStream);
                 }
 
                 TransactionalFileReplacement.Replace(tempPath, targetPath, existingPath);
@@ -79,37 +79,16 @@ namespace Game
             }
         }
 
-        private static bool TryReadModInfo(byte[] data, out ModInfo modInfo)
+        private static bool TryReadModInfo(Stream stream, out ModInfo modInfo)
         {
             try
             {
-                return ScmodArchiveReader.TryReadModInfo(new MemoryStream(data, writable: false), out modInfo);
+                return ScmodArchiveReader.TryReadModInfo(stream, out modInfo);
             }
             catch (InvalidScmodArchiveException)
             {
                 modInfo = null;
                 return false;
-            }
-        }
-
-        private static byte[] ReadAllBytes(Stream stream)
-        {
-            if (!stream.CanSeek)
-            {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackageDataUnreadable"));
-            }
-
-            long originalPosition = stream.Position;
-            try
-            {
-                stream.Position = 0;
-                using MemoryStream dataStream = new();
-                stream.CopyTo(dataStream);
-                return dataStream.ToArray();
-            }
-            finally
-            {
-                stream.Position = originalPosition;
             }
         }
 

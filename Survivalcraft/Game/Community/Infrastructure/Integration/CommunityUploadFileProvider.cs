@@ -22,7 +22,7 @@ namespace Game
                 {
                     FilePath = tempPath,
                     FileName = UploadFileNaming.MakeWorldFileName(worldName),
-                    FileSize = GetExistingFileSize(tempPath),
+                    FileSize = Storage.GetFileSize(tempPath),
                     FileType = CommunityFileType.World,
                     IsTemporary = true
                 };
@@ -58,7 +58,7 @@ namespace Game
                         {
                             FilePath = tempPath,
                             FileName = UploadFileNaming.MakeSafeFileName(resourceItem.DisplayName ?? resourceItem.Name, ".scfpack"),
-                            FileSize = GetExistingFileSize(tempPath),
+                            FileSize = Storage.GetFileSize(tempPath),
                             FileType = fileType,
                             IsTemporary = true
                         };
@@ -104,17 +104,11 @@ namespace Game
             }
         }
 
-        private long GetExistingFileSize(string filePath)
-        {
-            using Stream stream = OpenRead(filePath);
-            return stream.Length;
-        }
-
         public long? TryGetExistingFileSize(string filePath)
         {
             try
             {
-                return GetExistingFileSize(filePath);
+                return Storage.GetFileSize(filePath);
             }
             catch
             {
@@ -192,7 +186,7 @@ namespace Game
             {
                 FilePath = filePath,
                 FileName = GetUploadFileName(resourceItem, filePath, fallbackExtension),
-                FileSize = GetExistingFileSize(filePath),
+                FileSize = Storage.GetFileSize(filePath),
                 FileType = fileType
             };
         }
@@ -233,10 +227,7 @@ namespace Game
         {
             try
             {
-                if (Storage.FileExists(path))
-                {
-                    Storage.DeleteFile(path);
-                }
+                Storage.DeleteFileSafely(path);
             }
             catch (Exception ex)
             {
