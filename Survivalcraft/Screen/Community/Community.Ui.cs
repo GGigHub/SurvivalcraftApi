@@ -77,7 +77,10 @@ namespace Game
 
         private CommunitySection GetEffectiveSection()
         {
-            return HasSearchTitle() && m_ignoreSectionFilter ? CommunitySection.All : m_section;
+            // 搜索词非空 = 全局搜索：强制回帖子列表。原版把搜索生效绑在"忽略分区"开关上
+            //（默认关），热门/新动态分区下输入搜索词完全不起作用（精选内容原地不动），
+            // 实测即"搜索坏了"。
+            return HasSearchTitle() ? CommunitySection.All : m_section;
         }
 
         private void LoadCurrentPostsList()
