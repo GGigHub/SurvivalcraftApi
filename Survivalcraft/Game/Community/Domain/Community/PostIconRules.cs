@@ -26,25 +26,6 @@ namespace Game
                     : null;
         }
 
-        public static string GetArchiveIconUrl(PostItem post)
-        {
-            if (post?.PostVersions == null)
-            {
-                return null;
-            }
-            foreach (PostVersionItem version in post.PostVersions)
-            {
-                foreach (PostFileItem file in version?.Files ?? [])
-                {
-                    if (!string.IsNullOrWhiteSpace(file?.Url) && IsModArchiveUrl(file.Url))
-                    {
-                        return file.Url.Trim();
-                    }
-                }
-            }
-            return null;
-        }
-
         public static string NormalizeUrl(string value, string apiBaseUrl)
         {
             string text = value?.Trim();
@@ -66,17 +47,6 @@ namespace Game
                 return ApplyThumbnailSuffix(new Uri(rootUri, text.StartsWith("/", StringComparison.Ordinal) ? text : "/" + text).ToString());
             }
             return ApplyThumbnailSuffix(text);
-        }
-
-        public static bool IsModArchiveUrl(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-            {
-                return false;
-            }
-            string path = Uri.TryCreate(url, UriKind.Absolute, out Uri uri) ? uri.LocalPath : url;
-            path = path.TrimEnd().ToLowerInvariant();
-            return path.EndsWith(".scmod", StringComparison.Ordinal) || path.EndsWith(".netmod", StringComparison.Ordinal);
         }
 
         private static string ApplyThumbnailSuffix(string iconUrl)

@@ -5658,9 +5658,6 @@
       "UnnamedVersion": "Unnamed Version"
     }
   },
-  "ScbbsPlusPostIconDecoder": {
-    "DecodePackageIconFailed": "[ScbbsPlus] Failed to decode the package icon: {0}"
-  },
   "ScbbsPlusPostIconLoader": {
     "SkipOversizedPostIcon": "[ScbbsPlus] Skipping an oversized post icon: {0}, size={1}",
     "DecodeRemoteIconFailed": "[ScbbsPlus] Failed to decode a remote icon: {0}, error={1}",

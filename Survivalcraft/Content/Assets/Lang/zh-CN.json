@@ -5668,9 +5668,6 @@
       "UnnamedVersion": "未命名版本"
     }
   },
-  "ScbbsPlusPostIconDecoder": {
-    "DecodePackageIconFailed": "[ScbbsPlus] 解析包内图标失败: {0}"
-  },
   "ScbbsPlusPostIconLoader": {
     "SkipOversizedPostIcon": "[ScbbsPlus] 跳过过大的帖子图标: {0}, size={1}",
     "DecodeRemoteIconFailed": "[ScbbsPlus] 解析远程图标失败: {0}, error={1}",

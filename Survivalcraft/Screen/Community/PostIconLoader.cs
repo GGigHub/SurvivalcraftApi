@@ -94,13 +94,9 @@ namespace Game
 
         private static string GetPostIconUrl(PostItem post)
         {
-            string iconUrl = PostIconRules.GetRemoteIconUrl(post, AuthSessionManager.Instance.ApiBaseUrl);
-            if (!string.IsNullOrEmpty(iconUrl))
-            {
-                return iconUrl;
-            }
-
-            return PostIconRules.GetArchiveIconUrl(post);
+            // 只认服务器图标（文件/帖子/封面）。不为缺图帖子整包下载 .scmod 提取包内
+            // 图标——为列表里一枚缩略图拉取可达数百 MB 的包体不成比例；无图一律占位。
+            return PostIconRules.GetRemoteIconUrl(post, AuthSessionManager.Instance.ApiBaseUrl);
         }
 
         /// <summary>按节点 Tag 解析其图标 URL（与建节点时的 Apply*NodeIcon 同一规则），用于事件到达/驱逐时的全树匹配。</summary>
@@ -216,8 +212,8 @@ namespace Game
                     return;
                 }
 
-                // 独立图片使用缩略图后仍限制体积；模组包需保留包内 icon.webp/icon.png 兜底。
-                if (!PostIconRules.IsModArchiveUrl(iconUrl) && data.Length > 512 * 1024)
+                // 远程图标一律是图片：加缩略图后仍限制体积，超大即弃用占位。
+                if (data.Length > 512 * 1024)
                 {
                     Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostIconLoader", "SkipOversizedPostIcon"), iconUrl, data.Length));
                     Dispatcher.Dispatch(() => s_iconRequests.Remove(iconUrl));
@@ -228,9 +224,7 @@ namespace Game
                 {
                     try
                     {
-                        Image<Rgba32> image = PostIconDecoder.Decode(
-                            data,
-                            PostIconRules.IsModArchiveUrl(iconUrl));
+                        Image<Rgba32> image = PostIconDecoder.Decode(data);
                         return new DecodedPostIcon { Image = image };
                     }
                     catch (Exception ex)

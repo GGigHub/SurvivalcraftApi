@@ -37,9 +37,9 @@ namespace Game
 
     /// <summary>
     /// scmod 归档读取器：把"游戏内置弱加密前缀 + 可选杂质前缀 + zip 归档"统一为普通
-    /// ZipArchive 视图，再按需读取根目录条目（modinfo.json / icon.webp / icon.png）。
-    /// 只读不改盘——解密仅发生在内存，导入/更新一律透传原始字节（密文落盘，引擎加载期
-    /// 自解密，见 ModsManager.GetScmods）。读取入口两个原语：OpenArchive + TryReadRootEntry；
+    /// ZipArchive 视图，再按需读取根目录条目（如 modinfo.json）。只读不改盘——解密仅在
+    /// 内存发生，导入/更新一律透传原始字节（密文落盘，引擎加载期自解密，见
+    /// ModsManager.GetScmods）。读取入口两个原语：OpenArchive + TryReadRootEntry；
     /// ReadModInfo/TryReadModInfo 是"取 modinfo.json 并反序列化"的组合糖。
     /// </summary>
     internal static class ScmodArchiveReader
