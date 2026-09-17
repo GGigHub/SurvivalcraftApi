@@ -1,0 +1,13 @@
+var project = Game.GameManager.Project;
+var entity = project.FindEntity(__ENTITY_ID__);
+if (entity == null) return "missing";
+var comp = entity.FindComponent<Subnautica.ComponentEelShockAttack>();
+if (comp == null) return "no-component";
+var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+var type = typeof(Subnautica.ComponentEelShockAttack);
+type.GetField("m_isCharging", flags).SetValue(comp, true);
+type.GetField("m_isShocking", flags).SetValue(comp, true);
+type.GetField("m_chargeTimer", flags).SetValue(comp, 0.0f);
+type.GetField("m_shockTimer", flags).SetValue(comp, 5.0f);
+type.GetField("m_cooldownTimer", flags).SetValue(comp, 12.0f);
+return "forced";

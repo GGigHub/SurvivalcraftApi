@@ -1,0 +1,1 @@
+return string.Join(";", ModsManager.ModList.Select(m => m.modInfo?.PackageName ?? "?"));

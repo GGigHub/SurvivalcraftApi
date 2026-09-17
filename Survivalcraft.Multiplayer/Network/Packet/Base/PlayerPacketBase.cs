@@ -5,6 +5,10 @@ using System.Text;
 namespace Game.Network;
 
 public abstract class PlayerPacketBase : Packet {
+    public static Func<int, bool> ShouldApplyHealthSync { get; set; }
+    public static Func<int, bool> ShouldApplyVitalStatsSync { get; set; }
+    public static Func<int, bool> ShouldApplyCreatureHealthSync { get; set; }
+
     public override NetworkState MinNeedState => NetworkState.ProjectLoaded;
     public int m_fromPlayerIndex;
 
@@ -21,8 +25,8 @@ public abstract class PlayerPacketBase : Packet {
     }
 
     public static PlayerData ResolvePlayer(int playerIndex) {
-        return GameManager.Project.FindSubsystem<SubsystemPlayers>()
-            .FindPlayerData(playerData => playerData.PlayerIndex == playerIndex);
+        return GameManager.Project?.FindSubsystem<SubsystemPlayers>()
+            ?.FindPlayerData(playerData => playerData.PlayerIndex == playerIndex);
     }
 
     public static bool ValidateServerSender(PlayerData playerData, ClientSession from) {

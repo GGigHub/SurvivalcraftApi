@@ -1,0 +1,11 @@
+var asm = System.AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "SushiTool");
+if (asm == null) return "no-sushi-tool";
+var blockType = asm.GetType("{3}");
+if (blockType == null) return "no-block-type";
+var project = Game.GameManager.Project;
+if (project == null) return "no-project";
+int index = Game.BlocksManager.GetBlockIndex(blockType, false, false);
+if (index < 0) return "no-block-index";
+var terrain = project.FindSubsystem<Game.SubsystemTerrain>();
+terrain.ChangeCell({0}, {1}, {2}, Game.Terrain.MakeBlockValue(index, 0, {4}));
+return "placed:" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);

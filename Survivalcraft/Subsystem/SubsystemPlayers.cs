@@ -13,6 +13,8 @@ namespace Game {
 
         public int m_nextPlayerIndex;
 
+        public bool PlayerStartedPlaying;
+
         public ReadOnlyList<PlayerData> PlayersData => new(m_playersData);
 
         public ReadOnlyList<ComponentPlayer> ComponentPlayers => new(m_componentPlayers);

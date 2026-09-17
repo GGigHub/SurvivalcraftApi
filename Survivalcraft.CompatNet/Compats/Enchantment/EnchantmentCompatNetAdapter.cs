@@ -1,6 +1,7 @@
 using System.Reflection;
 using Engine;
 using Game.Network;
+using GameEntitySystem;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -14,11 +15,14 @@ public sealed class EnchantmentCompatNetAdapter : CompatNetAdapterLoader {
     public const string TargetPackageName = "Enchantment";
 
     private const string TargetAssemblyFileName = "Enchantment.dll";
+    private bool m_targetLoaded;
 
     public override ushort AdapterId => StableAdapterId;
     public override string AdapterName => TargetPackageName;
 
     public override void OnPreloadAssemblies(IList<ModAssemblyImage> assemblies) {
+        m_targetLoaded = false;
+        EnchantmentCompatNetRuntime.Reset();
         if (assemblies == null) {
             return;
         }
@@ -37,6 +41,8 @@ public sealed class EnchantmentCompatNetAdapter : CompatNetAdapterLoader {
                 continue;
             }
 
+            m_targetLoaded = true;
+
             try {
                 if (EnchantmentCompatNetPatcher.Patch(image)) {
                     Log.Information($"[Survivalcraft.CompatNet] Patched {image.FileName} in memory.");
@@ -47,6 +53,29 @@ public sealed class EnchantmentCompatNetAdapter : CompatNetAdapterLoader {
                 Log.Error($"[Survivalcraft.CompatNet] Failed to patch {image.FileName}: {e}");
             }
         }
+    }
+
+    public override void OnServerUpdate(float dt) {
+        if (m_targetLoaded) {
+            EnchantmentCompatNetRuntime.OnServerUpdate();
+        }
+    }
+
+    public override bool ShouldSkipClientUpdate(IUpdateable updateable) {
+        if (!m_targetLoaded
+            || !NetworkManager.IsClientRunning
+            || NetworkManager.IsServerRunning
+            || updateable == null
+            || updateable.GetType().Assembly.GetName().Name != "Enchantment") {
+            return false;
+        }
+
+        string name = updateable.GetType().Name;
+        return updateable is Subsystem
+            && (name.Contains("Walker", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("Ground", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("Magma", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("Ice", StringComparison.OrdinalIgnoreCase));
     }
 
     public override void HandleRequest(CompatNetPacket packet, PlayerData playerData) {

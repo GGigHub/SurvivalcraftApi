@@ -217,6 +217,7 @@ namespace Game {
                         if (ComponentPlayer == null) {
                             if (!NetworkManager.IsClientRunning) {
                                 SpawnPlayer(SpawnPosition, m_spawnMode);
+                                SubsystemPlayers.PlayerStartedPlaying = true;
                             }
                             else {
                                 m_stateMachine.TransitionTo("WaitForPlayerEntity");

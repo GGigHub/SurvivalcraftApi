@@ -30,6 +30,8 @@ public sealed class GameContext : IDisposable {
 
     private readonly ConcurrentQueue<string> recentLogs = new();
 
+    private readonly List<string> ignoredErrorSubstrings = [];
+
     public GameContext(string roleName, string sourceDirectory, string runDirectory) {
         RoleName = roleName;
         SourceDirectory = sourceDirectory;
@@ -57,6 +59,13 @@ public sealed class GameContext : IDisposable {
 
     public Exception? FatalException { get; private set; }
     public event Action<GameContext, Exception>? OnFatalError;
+
+    public void IgnoreErrorLogSubstring(string substring) {
+        if (string.IsNullOrWhiteSpace(substring)) {
+            throw new ArgumentException("The ignored error substring must not be empty.", nameof(substring));
+        }
+        ignoredErrorSubstrings.Add(substring);
+    }
 
     public void InstallMod(string sourcePath, string? destinationFileName = null) {
         if (IsStarted) {
@@ -232,7 +241,7 @@ public sealed class GameContext : IDisposable {
 
                 LogChannel.Writer.TryWrite(message);
 
-                if (IsErrorLog(message) && FatalException == null) {
+                if (IsErrorLog(message) && !IsIgnoredErrorLog(message) && FatalException == null) {
                     FatalException = new InvalidOperationException($"[{RoleName}] {message}{Environment.NewLine}{GetRecentLogText()}");
                     OnFatalError?.Invoke(this, FatalException);
                 }
@@ -262,6 +271,9 @@ public sealed class GameContext : IDisposable {
     private static bool IsErrorLog(string message) =>
         message.Contains("error", StringComparison.OrdinalIgnoreCase)
         || message.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsIgnoredErrorLog(string message) =>
+        ignoredErrorSubstrings.Exists(s => message.Contains(s, StringComparison.OrdinalIgnoreCase));
 
     private static void CopyRuntimeDirectory(string sourceDirectory, string destinationDirectory) {
         Directory.CreateDirectory(destinationDirectory);

@@ -22,15 +22,19 @@ public sealed class MCHszrCompatNetAdapter : CompatNetAdapterLoader, ICompatNetA
 
     public override void OnPreloadAssemblies(IList<ModAssemblyImage> assemblies) {
         foreach (ModAssemblyImage image in assemblies ?? Array.Empty<ModAssemblyImage>()) {
-            if (image?.Owner?.modInfo == null
-                || !string.Equals(
-                    image.Owner.modInfo.PackageName,
-                    TargetPackageName,
-                    StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(
-                    image.FileName,
-                    TargetAssemblyFileName,
-                    StringComparison.OrdinalIgnoreCase)) {
+            if (image == null) {
+                continue;
+            }
+
+            bool isTargetPackage = string.Equals(
+                image.Owner?.modInfo?.PackageName,
+                TargetPackageName,
+                StringComparison.OrdinalIgnoreCase);
+            bool isTargetAssembly = string.Equals(
+                Path.GetFileName(image.FileName),
+                TargetAssemblyFileName,
+                StringComparison.OrdinalIgnoreCase);
+            if (!isTargetPackage && !isTargetAssembly) {
                 continue;
             }
 
@@ -53,7 +57,6 @@ public sealed class MCHszrCompatNetAdapter : CompatNetAdapterLoader, ICompatNetA
         if (packet == null || playerData?.ComponentPlayer == null) {
             return;
         }
-
         MCHszrCompatNetRequest request = new();
         CompatNetPayload.Read(packet.Payload, request.Serialize);
 
@@ -70,6 +73,8 @@ public sealed class MCHszrCompatNetAdapter : CompatNetAdapterLoader, ICompatNetA
             case MCHszrCompatNetOperation.FoodConsume:
                 MCHszrCompatNetRuntime.TryConsumeFood(playerData, request);
                 break;
+            case MCHszrCompatNetOperation.StateSnapshot:
+                break;
             default:
                 // Unknown operations are intentionally ignored for forward
                 // compatibility and malformed-client containment.
@@ -77,8 +82,18 @@ public sealed class MCHszrCompatNetAdapter : CompatNetAdapterLoader, ICompatNetA
         }
     }
 
+    public override void HandleBroadcast(CompatNetPacket packet) {
+        if (packet?.Operation == (ushort)MCHszrCompatNetOperation.StateSnapshot) {
+            MCHszrCompatNetRuntime.ApplyStateSnapshot(packet.Payload);
+        }
+    }
+
     public override bool ShouldSkipClientUpdate(IUpdateable updateable) {
         return MCHszrCompatNetRuntime.ShouldSkipClientUpdate(updateable);
+    }
+
+    public override void OnServerUpdate(float dt) {
+        MCHszrCompatNetRuntime.OnServerUpdate(dt);
     }
 
     private static class MCHszrCompatNetPatcher {
@@ -106,14 +121,14 @@ public sealed class MCHszrCompatNetAdapter : CompatNetAdapterLoader, ICompatNetA
                 module,
                 nameof(MCHszrCompatNetRuntime.TryHandleFoodConsume));
 
-            bool changed = false;
-            changed |= PatchPlayerInput(FindType(assembly, LoaderTypeName), inputBridge);
-            changed |= PatchPoseToggle(
+            bool inputChanged = PatchPlayerInput(FindType(assembly, LoaderTypeName), inputBridge);
+            bool poseChanged = PatchPoseToggle(
                 FindType(assembly, PoseBehaviorTypeName),
                 poseBridge);
-            changed |= PatchFoodConsume(
+            bool foodChanged = PatchFoodConsume(
                 FindType(assembly, FoodBehaviorTypeName),
                 foodBridge);
+            bool changed = inputChanged || poseChanged || foodChanged;
 
             if (!changed) {
                 return false;
@@ -184,10 +199,7 @@ public sealed class MCHszrCompatNetAdapter : CompatNetAdapterLoader, ICompatNetA
             MethodDefinition method = type?.Methods.FirstOrDefault(candidate =>
                 candidate.Name == "OnEditInventoryItem"
                 && candidate.ReturnType.FullName == "System.Boolean"
-                && candidate.Parameters.Count == 3
-                && candidate.Parameters[0].ParameterType.FullName == InventoryTypeName
-                && candidate.Parameters[1].ParameterType.FullName == "System.Int32"
-                && candidate.Parameters[2].ParameterType.FullName == PlayerTypeName);
+                && candidate.Parameters.Count == 3);
             if (method == null || !method.HasBody || method.Body.Instructions.Count == 0) {
                 return false;
             }
@@ -252,9 +264,18 @@ public sealed class MCHszrCompatNetAdapter : CompatNetAdapterLoader, ICompatNetA
         private static TypeDefinition FindType(
             AssemblyDefinition assembly,
             string fullName) {
-            return assembly.MainModule.Types
+            TypeDefinition type = assembly.MainModule.Types
                 .SelectMany(FlattenTypes)
                 .FirstOrDefault(type => type.FullName == fullName);
+            if (type != null) {
+                return type;
+            }
+
+            int separator = fullName.LastIndexOf('.');
+            string shortName = separator >= 0 ? fullName[(separator + 1)..] : fullName;
+            return assembly.MainModule.Types
+                .SelectMany(FlattenTypes)
+                .FirstOrDefault(candidate => candidate.Name == shortName);
         }
 
         private static IEnumerable<TypeDefinition> FlattenTypes(TypeDefinition type) {

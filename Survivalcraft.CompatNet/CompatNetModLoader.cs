@@ -10,6 +10,7 @@ public sealed class CompatNetModLoader : ModLoader {
     private static readonly ElytronCompatNetAdapter s_elytronAdapter = new();
     private static readonly EnchantmentCompatNetAdapter s_enchantmentAdapter = new();
     private static readonly MCHszrCompatNetAdapter s_mchszrAdapter = new();
+    private static readonly GhoulCompatNetAdapter s_ghoulAdapter = new();
     private static readonly object s_preloadSync = new();
 
     private static readonly ICompatNetAdapter[] s_builtinAdapters = CreateBuiltInAdapters();
@@ -22,7 +23,8 @@ public sealed class CompatNetModLoader : ModLoader {
             s_commandAdapter,
             s_elytronAdapter,
             s_enchantmentAdapter,
-            s_mchszrAdapter
+            s_mchszrAdapter,
+            s_ghoulAdapter
         ];
         adapters.AddRange(
             ScopedUpdateGuardCompatNetAdapter.CreatePresets()
@@ -36,6 +38,7 @@ public sealed class CompatNetModLoader : ModLoader {
         ModsManager.RegisterHook("OnProjectileAdded", this);
         ModsManager.RegisterHook("OnNetworkPlayerStateChanged", this);
         ModsManager.RegisterHook("OnIUpdateableUpdate", this);
+        ModsManager.RegisterHook("SubsystemUpdate", this);
         ModsManager.RegisterHook("OnShowDialog", this);
         foreach (ICompatNetAdapter adapter in BuiltInAdapters) {
             CompatNetAdapterRegistry.Register(adapter);
@@ -126,9 +129,20 @@ public sealed class CompatNetModLoader : ModLoader {
         float dt,
         out bool skip) {
         skip = false;
-        if (!NetworkManager.IsClientRunning || NetworkManager.IsServerRunning) {
+        if (NetworkManager.IsServerRunning) {
+            foreach (ICompatNetAdapter adapter in CompatNetAdapterRegistry.Adapters) {
+                if (adapter.ShouldSkipServerUpdate(updateable)) {
+                    skip = true;
+                    return;
+                }
+            }
             return;
         }
+        if (!NetworkManager.IsClientRunning) {
+            return;
+        }
+
+        MCHszrCompatNetRuntime.OnClientUpdate();
 
         foreach (ICompatNetAdapter adapter in CompatNetAdapterRegistry.Adapters) {
             if (adapter.ShouldSkipClientUpdate(updateable)) {

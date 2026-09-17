@@ -39,6 +39,11 @@ public class VitalStatSyncPacket : Packet {
         GameManager.Project.FindEntity(m_entityId, entity => {
             var vitalStats = entity.FindComponent<ComponentVitalStats>();
             if (vitalStats != null) {
+                ComponentPlayer player = entity.FindComponent<ComponentPlayer>();
+                if (player?.PlayerData != null
+                    && PlayerPacketBase.ShouldApplyVitalStatsSync?.Invoke(player.PlayerData.PlayerIndex) == false) {
+                    return;
+                }
                 vitalStats.Food = Food;
                 vitalStats.Sleep = Sleep;
                 vitalStats.Wetness = Wetness;

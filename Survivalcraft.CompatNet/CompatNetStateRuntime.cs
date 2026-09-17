@@ -124,6 +124,10 @@ public static class CompatNetStateRuntime {
             }
 
             Entity entity = GameManager.Project?.FindEntity(record.EntityId);
+            if (!HasTargetComponent(entity, assemblyName, record.ComponentTypeName)
+                || !MatchesScope(entity, scope, true)) {
+                entity = FindEntityByIdentity(record, assemblyName, scope);
+            }
             if (entity == null || !MatchesScope(entity, scope, true)) {
                 continue;
             }
@@ -141,6 +145,7 @@ public static class CompatNetStateRuntime {
             foreach (CompatNetStateValue value in record.Values) {
                 ApplyValue(component, assemblyName, value);
             }
+            ApplyBodyState(entity, record);
         }
     }
 
@@ -195,6 +200,21 @@ public static class CompatNetStateRuntime {
             ComponentTypeName = component.GetType().FullName ?? string.Empty
         };
 
+        ComponentBody body = component.Entity.FindComponent<ComponentBody>();
+        ComponentFrame frame = component.Entity.FindComponent<ComponentFrame>();
+        if (body != null) {
+            record.HasEntityPosition = true;
+            record.EntityPosition = body.Position;
+            record.HasBodyState = true;
+            record.BodyPosition = body.Position;
+            record.BodyVelocity = body.Velocity;
+            record.BodyRotation = body.Rotation;
+        }
+        else if (frame != null) {
+            record.HasEntityPosition = true;
+            record.EntityPosition = frame.Position;
+        }
+
         for (Type current = component.GetType();
              current != null && current != typeof(object);
              current = current.BaseType) {
@@ -217,6 +237,76 @@ public static class CompatNetStateRuntime {
         return record.EntityId > 0
             && !string.IsNullOrEmpty(record.ComponentTypeName)
             && record.Values.Count > 0;
+    }
+
+    private static bool HasTargetComponent(
+        Entity entity,
+        string assemblyName,
+        string componentTypeName) {
+        return entity?.Components.Any(component =>
+            IsTargetComponent(component, assemblyName)
+            && string.Equals(
+                component.GetType().FullName,
+                componentTypeName,
+                StringComparison.Ordinal)) == true;
+    }
+
+    private static Entity FindEntityByIdentity(
+        CompatNetStateRecord record,
+        string assemblyName,
+        ScopedUpdateGuardScope scope) {
+        if (!record.HasEntityPosition || GameManager.Project == null) {
+            return null;
+        }
+
+        Entity best = null;
+        float bestDistance = 4f;
+        foreach (Entity candidate in GameManager.Project.Entities) {
+            if (!HasTargetComponent(candidate, assemblyName, record.ComponentTypeName)
+                || !MatchesScope(candidate, scope, true)) {
+                continue;
+            }
+
+            ComponentBody body = candidate.FindComponent<ComponentBody>();
+            ComponentFrame frame = candidate.FindComponent<ComponentFrame>();
+            Vector3 position = body?.Position
+                ?? frame?.Position
+                ?? new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            float distance = Vector3.DistanceSquared(position, record.EntityPosition);
+            if (distance <= bestDistance) {
+                best = candidate;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    private static void ApplyBodyState(Entity entity, CompatNetStateRecord record) {
+        if (!record.HasBodyState) {
+            return;
+        }
+
+        ComponentBody body = entity?.FindComponent<ComponentBody>();
+        if (body == null
+            || !IsFinite(record.BodyPosition)
+            || !IsFinite(record.BodyVelocity)) {
+            return;
+        }
+
+        try {
+            body.Position = record.BodyPosition;
+            body.Velocity = record.BodyVelocity;
+            body.Rotation = record.BodyRotation;
+        }
+        catch {
+            // A version-skewed body implementation must not break other state.
+        }
+    }
+
+    private static bool IsFinite(Vector3 value) {
+        return float.IsFinite(value.X)
+            && float.IsFinite(value.Y)
+            && float.IsFinite(value.Z);
     }
 
     private static bool IsTargetComponent(Component component, string assemblyName) {

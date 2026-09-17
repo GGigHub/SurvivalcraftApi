@@ -1,0 +1,11 @@
+var players = Game.GameManager.Project.FindSubsystem<Game.SubsystemPlayers>();
+var pd = players.PlayersData.FirstOrDefault(p => p.PlayerIndex == __PLAYER_INDEX__);
+var player = pd?.ComponentPlayer;
+if (player == null) return "missing";
+player.ComponentHealth.Health = __HEALTH__f;
+player.ComponentHealth.m_lastHealth = __HEALTH__f;
+player.ComponentHealth.IsInvulnerable = false;
+player.ComponentHealth.m_regenerateLifeEnabled = false;
+player.ComponentVitalStats.Food = __FOOD__f;
+player.ComponentVitalStats.Stamina = 1f;
+return "set";

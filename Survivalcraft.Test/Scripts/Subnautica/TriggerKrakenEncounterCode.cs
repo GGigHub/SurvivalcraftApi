@@ -1,0 +1,11 @@
+﻿var project = Game.GameManager.Project;
+var loader = ModsManager.ModLoaders.FirstOrDefault(l => l.GetType().FullName == "Subnautica.SubnauticaLoader");
+if (loader == null) return "no-loader";
+var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public;
+object manager = typeof(Subnautica.SubnauticaLoader).GetField("m_krakenEncounterManager", flags).GetValue(loader);
+var player = project.FindSubsystem<Game.SubsystemPlayers>().PlayersData.FirstOrDefault(p => p.PlayerIndex == __PLAYER_INDEX__)?.ComponentPlayer;
+if (player == null) return "no-player";
+var dig = new Game.BlockPlacementData { CellFace = new Game.CellFace(__TX__, __TY__, __TZ__, 4), Value = 0 };
+int coreIndex = Game.BlocksManager.GetBlockIndex(typeof(Subnautica.KrakenRelicCoreBlock), false);
+bool handled = (bool)manager.GetType().GetMethod("TryHandleTrigger", flags).Invoke(manager, new object[] { player.ComponentMiner, dig, coreIndex });
+return "handled=" + handled + ";core=" + coreIndex;

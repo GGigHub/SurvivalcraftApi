@@ -29,6 +29,14 @@ public class HealthSyncPacket : Packet {
         GameManager.Project.FindEntity(m_targetId, e => {
             ComponentHealth health = e.FindComponent<ComponentHealth>();
             if (health != null) {
+                if (PlayerPacketBase.ShouldApplyCreatureHealthSync?.Invoke(m_targetId) == false) {
+                    return;
+                }
+                ComponentPlayer player = e.FindComponent<ComponentPlayer>();
+                if (player?.PlayerData != null
+                    && PlayerPacketBase.ShouldApplyHealthSync?.Invoke(player.PlayerData.PlayerIndex) == false) {
+                    return;
+                }
                 health.Health = m_health;
                 health.CauseOfDeath = m_cause;
             }

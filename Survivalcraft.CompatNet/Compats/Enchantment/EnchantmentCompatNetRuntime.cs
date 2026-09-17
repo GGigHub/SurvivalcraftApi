@@ -1,5 +1,6 @@
 using System.Reflection;
 using Engine;
+using Game.Network;
 using GameEntitySystem;
 
 namespace Game;
@@ -10,6 +11,17 @@ namespace Game;
 /// </summary>
 public static class EnchantmentCompatNetRuntime {
     private const string RollMethodName = "RollEnchantment";
+    private static double s_nextServerRefresh;
+    private static readonly Dictionary<IInventory, int[]> s_inventorySnapshots =
+        new(ReferenceEqualityComparer.Instance);
+    private static readonly Dictionary<PlayerData, float> s_levelSnapshots =
+        new(ReferenceEqualityComparer.Instance);
+
+    public static void Reset() {
+        s_nextServerRefresh = 0;
+        s_inventorySnapshots.Clear();
+        s_levelSnapshots.Clear();
+    }
 
     /// <summary>
     /// On a client-only process, sends a compatibility request and prevents the
@@ -56,6 +68,9 @@ public static class EnchantmentCompatNetRuntime {
                 "Enchantment.ComponentMagicRemovalPlatform",
                 StringComparison.Ordinal));
         if (platform == null || !IsWithinUseDistance(requester, platform)) {
+            platform = FindInteractingPlatform(requester);
+        }
+        if (platform == null || !IsWithinUseDistance(requester, platform)) {
             return false;
         }
 
@@ -78,7 +93,48 @@ public static class EnchantmentCompatNetRuntime {
         }
 
         InvokeOriginalRoll(platform);
+        QueueRollCorrections(platform, requester);
         return true;
+    }
+
+    public static void OnServerUpdate() {
+        if (!NetworkManager.IsServerRunning || GameManager.Project == null
+            || Time.RealTime < s_nextServerRefresh) {
+            return;
+        }
+        s_nextServerRefresh = Time.RealTime + 0.25;
+
+        HashSet<IInventory> seen = new(ReferenceEqualityComparer.Instance);
+        foreach (Entity entity in GameManager.Project.Entities) {
+            foreach (IInventory inventory in entity.FindComponents<IInventory>()) {
+                seen.Add(inventory);
+                int[] current = CaptureInventory(inventory);
+                if (!s_inventorySnapshots.TryGetValue(inventory, out int[] previous)
+                    || !current.SequenceEqual(previous)) {
+                    s_inventorySnapshots[inventory] = current;
+                    InventoryPacketHelpers.QueueInventorySync(inventory);
+                }
+            }
+
+            ComponentPlayer player = entity.FindComponent<ComponentPlayer>();
+            if (player?.PlayerData == null) {
+                continue;
+            }
+            float level = player.PlayerData.Level;
+            if (!s_levelSnapshots.TryGetValue(player.PlayerData, out float previousLevel)
+                || previousLevel != level) {
+                s_levelSnapshots[player.PlayerData] = level;
+                NetworkManager.Queue(new PlayerAddExperiencePacket(
+                    player.PlayerData,
+                    0,
+                    false,
+                    level));
+            }
+        }
+
+        foreach (IInventory stale in s_inventorySnapshots.Keys.Where(item => !seen.Contains(item)).ToArray()) {
+            s_inventorySnapshots.Remove(stale);
+        }
     }
 
     /// <summary>
@@ -168,6 +224,56 @@ public static class EnchantmentCompatNetRuntime {
         }
 
         return Vector3.DistanceSquared(playerBody.Position, platformFrame.Position) <= 64f;
+    }
+
+    private static Component FindInteractingPlatform(ComponentPlayer requester) {
+        if (GameManager.Project == null) {
+            return null;
+        }
+
+        foreach (Entity entity in GameManager.Project.Entities) {
+            Component platform = entity.Components.FirstOrDefault(component =>
+                string.Equals(
+                    component.GetType().FullName,
+                    "Enchantment.ComponentMagicRemovalPlatform",
+                    StringComparison.Ordinal));
+            if (platform == null || !IsWithinUseDistance(requester, platform)) {
+                continue;
+            }
+
+            MethodInfo method = FindMethod(platform.GetType(), "FindInteractingPlayer", 0);
+            try {
+                if (method?.Invoke(platform, null) is ComponentPlayer player
+                    && ReferenceEquals(player, requester)) {
+                    return platform;
+                }
+            }
+            catch {
+            }
+        }
+        return null;
+    }
+
+    private static void QueueRollCorrections(Component platform, ComponentPlayer requester) {
+        if (platform is IInventory inventory) {
+            InventoryPacketHelpers.QueueInventorySync(inventory);
+        }
+        if (requester?.PlayerData != null) {
+            NetworkManager.Queue(new PlayerAddExperiencePacket(
+                requester.PlayerData,
+                0,
+                false,
+                requester.PlayerData.Level));
+        }
+    }
+
+    private static int[] CaptureInventory(IInventory inventory) {
+        int[] values = new int[inventory.SlotsCount * 2];
+        for (int i = 0; i < inventory.SlotsCount; i++) {
+            values[i * 2] = inventory.GetSlotValue(i);
+            values[i * 2 + 1] = inventory.GetSlotCount(i);
+        }
+        return values;
     }
 
     private static MethodInfo FindMethod(Type type, string name, int parameterCount) {

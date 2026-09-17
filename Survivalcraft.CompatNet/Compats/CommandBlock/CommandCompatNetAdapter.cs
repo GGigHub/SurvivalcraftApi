@@ -17,6 +17,18 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
     public ushort AdapterId => StableAdapterId;
     public string AdapterName => TargetPackageName;
 
+    public bool ShouldSkipClientUpdate(IUpdateable updateable) {
+        return CommandCompatNetRuntime.ShouldSkipClientUpdate(updateable);
+    }
+
+    public void OnServerUpdate(float dt) {
+        CommandCompatNetRuntime.OnServerUpdate(dt);
+    }
+
+    public bool ShouldSkipServerUpdate(IUpdateable updateable) {
+        return CommandCompatNetRuntime.ShouldSkipServerUpdate(updateable);
+    }
+
     public void OnPreloadAssemblies(IList<ModAssemblyImage> assemblies) {
         foreach (ModAssemblyImage image in assemblies) {
             if (!string.Equals(
@@ -42,10 +54,17 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
             case CommandCompatNetOperation.ExecuteCommand: {
                 CommandExecuteRequest request = new();
                 CompatNetPayload.Read(packet.Payload, request.Serialize);
-                CommandCompatNetRuntime.TryExecuteCommand(
+                CommandTerrainSnapshot before = CommandCompatNetRuntime.CaptureTerrainSnapshot(request.Position);
+                bool executed = CommandCompatNetRuntime.TryExecuteCommand(
                     playerData,
                     request,
                     out int resultCode);
+                if (executed) {
+                    CommandCompatNetRuntime.SendTerrainSnapshot(before, packet.From);
+                    CommandCompatNetRuntime.SendMovingBlockSnapshot(packet.From);
+                    CommandCompatNetRuntime.SendCreatureSnapshot(packet.From);
+                    CommandCompatNetRuntime.SendWorldStateSnapshot(packet.From);
+                }
                 if (packet.From != null) {
                     CommandExecuteResult result = new() {
                         RequestId = request.RequestId,
@@ -56,6 +75,13 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
                         (ushort)CommandCompatNetOperation.ExecuteResult,
                         CompatNetPayload.Write(result.Serialize),
                         to: packet.From);
+                    CommandCompatNetRuntime.SendMovingBlockSnapshot(packet.From);
+                    CommandCompatNetRuntime.SendCreatureSnapshot(packet.From);
+                    // Queue one final authoritative player snapshot after the
+                    // result marker. Legacy health/vital-stat packets can be
+                    // delivered independently and otherwise overwrite a
+                    // just-applied command result for one frame.
+                    CommandCompatNetRuntime.SendPlayerStateSnapshot();
                 }
                 break;
             }
@@ -82,6 +108,12 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
 
     public void HandleBroadcast(CompatNetPacket packet) {
         switch ((CommandCompatNetOperation)packet.Operation) {
+            case CommandCompatNetOperation.ExecuteResult: {
+                CommandExecuteResult result = new();
+                CompatNetPayload.Read(packet.Payload, result.Serialize);
+                CommandCompatNetRuntime.ApplyCommandResult(result);
+                break;
+            }
             case CommandCompatNetOperation.EditBlock: {
                 CommandBlockSync sync = new();
                 CompatNetPayload.Read(packet.Payload, sync.Serialize);
@@ -108,6 +140,30 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
                 CommandCompatNetRuntime.ApplyPlayerState(state);
                 break;
             }
+            case CommandCompatNetOperation.TerrainSnapshot: {
+                CommandTerrainSnapshot snapshot = new();
+                CompatNetPayload.Read(packet.Payload, snapshot.Serialize);
+                CommandCompatNetRuntime.ApplyTerrainSnapshot(snapshot);
+                break;
+            }
+            case CommandCompatNetOperation.MovingBlockSnapshot: {
+                CommandMovingBlockSnapshot snapshot = new();
+                CompatNetPayload.Read(packet.Payload, snapshot.Serialize);
+                CommandCompatNetRuntime.ApplyMovingBlockSnapshot(snapshot);
+                break;
+            }
+            case CommandCompatNetOperation.CreatureSnapshot: {
+                CommandCreatureSnapshot snapshot = new();
+                CompatNetPayload.Read(packet.Payload, snapshot.Serialize);
+                CommandCompatNetRuntime.ApplyCreatureSnapshot(snapshot);
+                break;
+            }
+            case CommandCompatNetOperation.WorldState: {
+                CommandWorldStateSync state = new();
+                CompatNetPayload.Read(packet.Payload, state.Serialize);
+                CommandCompatNetRuntime.ApplyWorldState(state);
+                break;
+            }
         }
     }
 
@@ -128,9 +184,15 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
             MethodReference commandBridge = ResolveBridge(
                 module,
                 nameof(CommandCompatNetRuntime.SubmitCommandBridge));
+            MethodReference commandMethodBridge = ResolveBridge(
+                module,
+                nameof(CommandCompatNetRuntime.SubmitCommandMethodBridge));
             MethodReference terrainBridge = ResolveBridge(
                 module,
                 nameof(CommandCompatNetRuntime.SetCommandTerrainCell));
+            MethodReference chunkUpdateBridge = ResolveBridge(
+                module,
+                nameof(CommandCompatNetRuntime.UpdateCommandChunks));
             MethodReference commandTaskBridge = ResolveBridge(
                 module,
                 nameof(CommandCompatNetRuntime.RunCommandTask));
@@ -141,6 +203,9 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
             bool changed = false;
 
             TypeDefinition electricElement = FindType(assembly, "Command.CommandElectricElement");
+            changed |= ReplaceSubmitImplementation(
+                FindType(assembly, "Command.SubsystemCommand"),
+                commandMethodBridge);
             changed |= ReplaceSubmitCalls(electricElement, electricBridge);
             foreach (TypeDefinition type in assembly.MainModule.Types.SelectMany(FlattenTypes).ToArray()) {
                 changed |= ReplaceSubmitCalls(type, commandBridge);
@@ -148,6 +213,9 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
             changed |= ReplaceCommandTerrainWrites(
                 FindType(assembly, "Command.SubsystemCommandDef"),
                 terrainBridge);
+            changed |= ReplaceCommandChunkUpdates(
+                FindType(assembly, "Command.SubsystemCommandDef"),
+                chunkUpdateBridge);
             changed |= ReplaceCommandTaskRuns(assembly, commandTaskBridge);
             changed |= InjectElectricSimulationGuard(electricElement, electricSimulationGuard);
             changed |= InjectCommandEditNotification(
@@ -161,6 +229,51 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
             using MemoryStream output = new();
             assembly.Write(output, new WriterParameters { WriteSymbols = false });
             image.Bytes = output.ToArray();
+            return true;
+        }
+
+        private static bool ReplaceSubmitImplementation(
+            TypeDefinition type,
+            MethodReference bridge) {
+            if (type == null) {
+                return false;
+            }
+
+            MethodDefinition original = type.Methods.FirstOrDefault(method =>
+                method.Name == "Submit"
+                && method.ReturnType.FullName == "Command.SubmitResult"
+                && method.Parameters.Count == 3
+                && method.Parameters[0].ParameterType.FullName == "System.String"
+                && method.Parameters[1].ParameterType.FullName == "Command.CommandData"
+                && method.Parameters[2].ParameterType.FullName == "System.Boolean");
+            if (original == null
+                || type.Methods.Any(method => method.Name == "SubmitCompatNetOriginal")) {
+                return false;
+            }
+
+            original.Name = "SubmitCompatNetOriginal";
+            MethodDefinition wrapper = new(
+                "Submit",
+                original.Attributes,
+                type.Module.ImportReference(original.ReturnType));
+            foreach (ParameterDefinition parameter in original.Parameters) {
+                wrapper.Parameters.Add(new ParameterDefinition(
+                    parameter.Name,
+                    parameter.Attributes,
+                    type.Module.ImportReference(parameter.ParameterType)));
+            }
+
+            ILProcessor il = wrapper.Body.GetILProcessor();
+            il.Append(Instruction.Create(OpCodes.Ldarg_0));
+            for (int i = 0; i < wrapper.Parameters.Count; i++) {
+                il.Append(Instruction.Create(OpCodes.Ldarg, wrapper.Parameters[i]));
+            }
+            il.Append(Instruction.Create(OpCodes.Call, bridge));
+            il.Append(wrapper.ReturnType.IsValueType
+                ? Instruction.Create(OpCodes.Unbox_Any, wrapper.ReturnType)
+                : Instruction.Create(OpCodes.Castclass, wrapper.ReturnType));
+            il.Append(Instruction.Create(OpCodes.Ret));
+            type.Methods.Add(wrapper);
             return true;
         }
 
@@ -185,7 +298,7 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
 
             bool changed = false;
             foreach (MethodDefinition method in FlattenTypes(type).SelectMany(item => item.Methods)) {
-                if (!method.HasBody) {
+                if (!method.HasBody || method.Name == "SubmitCompatNetOriginal") {
                     continue;
                 }
 
@@ -194,7 +307,7 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
                     Instruction instruction = method.Body.Instructions[i];
                     if (instruction.Operand is not MethodReference reference
                         || reference.Name != "Submit"
-                        || reference.DeclaringType.FullName != SubmitDeclaringTypeName
+                        || !IsSubmitDeclaringType(reference.DeclaringType.FullName)
                         || reference.Parameters.Count != 3
                         || reference.Parameters[0].ParameterType.FullName != "System.String"
                         || reference.Parameters[1].ParameterType.FullName != CommandDataTypeName
@@ -215,6 +328,12 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
             }
 
             return changed;
+        }
+
+        private static bool IsSubmitDeclaringType(string fullName) {
+            return string.Equals(fullName, SubmitDeclaringTypeName, StringComparison.Ordinal)
+                || fullName?.EndsWith(".SubsystemCommandDef", StringComparison.Ordinal) == true
+                || fullName?.EndsWith("+SubsystemCommandDef", StringComparison.Ordinal) == true;
         }
 
         private static bool ReplaceCommandTerrainWrites(
@@ -243,6 +362,43 @@ public sealed class CommandCompatNetAdapter : ICompatNetAdapter {
                 }
             }
             return changed;
+        }
+
+        private static bool ReplaceCommandChunkUpdates(
+            TypeDefinition type,
+            MethodReference bridge) {
+            if (type == null) {
+                return false;
+            }
+
+            MethodDefinition method = FlattenTypes(type)
+                .SelectMany(item => item.Methods)
+                .FirstOrDefault(item =>
+                    item.Name == "UpdateChunks"
+                    && item.ReturnType.FullName == "System.Void"
+                    && item.Parameters.Count == 2
+                    && item.Parameters.All(parameter =>
+                        parameter.ParameterType.FullName == "Engine.Point3"));
+            if (method == null || !method.HasBody) {
+                return false;
+            }
+
+            if (method.Body.Instructions.Any(instruction =>
+                    instruction.Operand is MethodReference reference
+                    && reference.Name == nameof(CommandCompatNetRuntime.UpdateCommandChunks))) {
+                return false;
+            }
+
+            method.Body.Instructions.Clear();
+            method.Body.ExceptionHandlers.Clear();
+            method.Body.Variables.Clear();
+            ILProcessor il = method.Body.GetILProcessor();
+            il.Append(Instruction.Create(OpCodes.Ldarg_0));
+            il.Append(Instruction.Create(OpCodes.Ldarg_1));
+            il.Append(Instruction.Create(OpCodes.Ldarg_2));
+            il.Append(Instruction.Create(OpCodes.Call, bridge));
+            il.Append(Instruction.Create(OpCodes.Ret));
+            return true;
         }
 
         private static bool ReplaceCommandTaskRuns(

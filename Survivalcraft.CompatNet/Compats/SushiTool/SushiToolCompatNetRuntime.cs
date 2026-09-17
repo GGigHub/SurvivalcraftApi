@@ -29,10 +29,12 @@ public static class SushiToolCompatNetRuntime {
 
     private static bool s_forceFullRefresh;
     private static bool s_replayingTrainCall;
+    private static readonly Dictionary<int, double> s_lastTrainMountRequests = [];
 
     public static void Reset() {
         s_forceFullRefresh = false;
         s_replayingTrainCall = false;
+        s_lastTrainMountRequests.Clear();
     }
 
     /// <summary>
@@ -204,6 +206,21 @@ public static class SushiToolCompatNetRuntime {
             || player.PlayerData?.IsMainPlayer != true
             || player.ComponentInput == null) {
             return;
+        }
+
+        double now = Time.RealTime;
+        if (!s_lastTrainMountRequests.TryGetValue(component.Entity.Id, out double previousMount)
+            || now - previousMount >= 0.5) {
+            if (CompatNetCore.QueueRequest(
+                    player,
+                    ScopedUpdateGuardCompatNetAdapter.SushiToolAdapterId,
+                    (ushort)SushiToolCompatNetOperation.TrainMountRequest,
+                    SushiToolCompatNetPayloads.WriteTrainMount(
+                        new SushiToolTrainMountRequest {
+                            TrainEntityId = component.Entity.Id
+                        }))) {
+                s_lastTrainMountRequests[component.Entity.Id] = now;
+            }
         }
 
         PlayerInput input = player.ComponentInput.PlayerInput;
@@ -530,6 +547,10 @@ public static class SushiToolCompatNetRuntime {
             HandleTrainCallRequest(packet.Payload, playerData);
             return;
         }
+        if (packet.Operation == (ushort)SushiToolCompatNetOperation.TrainMountRequest) {
+            HandleTrainMountRequest(packet.Payload, playerData);
+            return;
+        }
         if (packet.Operation == (ushort)SushiToolCompatNetOperation.InventoryActionRequest) {
             HandleInventoryActionRequest(packet.Payload, playerData);
             return;
@@ -678,6 +699,48 @@ public static class SushiToolCompatNetRuntime {
         }
 
         ApplyTrainControl(train, request);
+    }
+
+    private static void HandleTrainMountRequest(
+        byte[] payload,
+        PlayerData playerData) {
+        SushiToolTrainMountRequest request;
+        try {
+            request = SushiToolCompatNetPayloads.ReadTrainMount(payload);
+        }
+        catch {
+            return;
+        }
+
+        ComponentPlayer player = playerData.ComponentPlayer;
+        Component train = FindSushiTrain(GameManager.Project?.FindEntity(request.TrainEntityId));
+        if (train == null) {
+            Vector3 playerPosition = player.Entity.FindComponent<ComponentFrame>()?.Position ?? Vector3.Zero;
+            train = GameManager.Project?.Entities
+                .Select(FindSushiTrain)
+                .Where(candidate => candidate != null)
+                .OrderBy(candidate => Vector3.DistanceSquared(
+                    candidate.Entity.FindComponent<ComponentFrame>()?.Position ?? Vector3.Zero,
+                    playerPosition))
+                .FirstOrDefault();
+        }
+
+        ComponentMount mount = GetFieldValue(train, "m_componentMount") as ComponentMount;
+        if (train == null || mount == null || player.ComponentRider?.Mount != null) {
+            return;
+        }
+
+        MethodInfo startMounting = player.ComponentRider.GetType().GetMethods(InstanceFieldFlags)
+            .FirstOrDefault(method => method.Name == "StartMounting"
+                && method.GetParameters().Length == 2
+                && method.GetParameters()[0].ParameterType == typeof(ComponentMount)
+                && method.GetParameters()[1].ParameterType == typeof(bool));
+        try {
+            startMounting?.Invoke(player.ComponentRider, [mount, true]);
+        }
+        catch (Exception e) {
+            Log.Error($"[Survivalcraft.CompatNet] Failed to mount SushiTool train: {e}");
+        }
     }
 
     private static void HandleTrainRecycleRequest(
@@ -1646,10 +1709,12 @@ public static class SushiToolCompatNetRuntime {
             return;
         }
 
-        if (slots.Count != state.Slots.Count) {
-            // The slot count is part of the world/mod configuration. Refuse
-            // a partial update if the two sides disagree, otherwise a stale
-            // tail could remain in the shared channel inventory.
+        if (slots.Count != state.Slots.Count
+            && !TryResizeInventory(subsystem, inventory, state.Slots.Count, state.ChannelIndex)) {
+            return;
+        }
+        if (!TryGetSlots(inventory, out slots)
+            || slots.Count != state.Slots.Count) {
             return;
         }
 
@@ -1666,6 +1731,67 @@ public static class SushiToolCompatNetRuntime {
             NormalizeSlot(ref value, ref slotCount);
             SetIntField(targetSlot, "Value", value);
             SetIntField(targetSlot, "Count", slotCount);
+        }
+    }
+
+    private static bool TryResizeInventory(
+        object subsystem,
+        object inventory,
+        int slotCount,
+        int channelIndex) {
+        if (slotCount <= 0
+            || slotCount > SushiToolCompatNetPayloads.MaximumSlotsPerChannel
+            || subsystem == null
+            || inventory == null
+            || !TryGetChannelDictionary(subsystem, out IDictionary inventories)) {
+            return false;
+        }
+
+        Type inventoryType = inventory.GetType();
+        ConstructorInfo constructor = inventoryType.GetConstructor(
+            InstanceFieldFlags,
+            binder: null,
+            types: [typeof(Project), typeof(ValuesDictionary), typeof(int)],
+            modifiers: null);
+        if (constructor == null) {
+            return false;
+        }
+
+        try {
+            object replacement = constructor.Invoke([GameManager.Project, null, slotCount]);
+            if (replacement == null) {
+                return false;
+            }
+
+            if (TryGetSlots(inventory, out IList oldSlots)
+                && TryGetSlots(replacement, out IList newSlots)) {
+                int copied = Math.Min(oldSlots.Count, newSlots.Count);
+                for (int i = 0; i < copied; i++) {
+                    object oldSlot = oldSlots[i];
+                    object newSlot = newSlots[i];
+                    if (oldSlot == null || newSlot == null) {
+                        continue;
+                    }
+                    if (TryGetIntField(oldSlot, "Value", out int value)
+                        && TryGetIntField(oldSlot, "Count", out int count)) {
+                        SetIntField(newSlot, "Value", value);
+                        SetIntField(newSlot, "Count", count);
+                    }
+                }
+            }
+
+            inventories[channelIndex] = replacement;
+            MethodInfo ensureChannelOrder = subsystem.GetType().GetMethod(
+                "EnsureChannelOrder",
+                InstanceFieldFlags,
+                binder: null,
+                types: Type.EmptyTypes,
+                modifiers: null);
+            ensureChannelOrder?.Invoke(subsystem, null);
+            return true;
+        }
+        catch {
+            return false;
         }
     }
 

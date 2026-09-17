@@ -71,11 +71,27 @@ public sealed class CompatNetStateValue {
 public sealed class CompatNetStateRecord {
     public int EntityId;
     public string ComponentTypeName = string.Empty;
+    public bool HasEntityPosition;
+    public Vector3 EntityPosition;
+    public bool HasBodyState;
+    public Vector3 BodyPosition;
+    public Vector3 BodyVelocity;
+    public Quaternion BodyRotation;
     public List<CompatNetStateValue> Values = [];
 
     public void Serialize(PacketSerializer archive) {
         archive.Value(ref EntityId);
         archive.Value(ref ComponentTypeName);
+        archive.Value(ref HasEntityPosition);
+        if (HasEntityPosition) {
+            archive.Value(ref EntityPosition);
+        }
+        archive.Value(ref HasBodyState);
+        if (HasBodyState) {
+            archive.Value(ref BodyPosition);
+            archive.Value(ref BodyVelocity);
+            archive.Value(ref BodyRotation);
+        }
         int count = archive.IsWriting ? Values.Count : 0;
         archive.Value(ref count);
         if (count < 0 || count > CompatNetStatePayloads.MaximumValuesPerRecord) {

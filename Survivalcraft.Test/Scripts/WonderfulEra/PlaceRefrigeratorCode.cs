@@ -1,0 +1,11 @@
+var project = Game.GameManager.Project;
+var terrain = project.FindSubsystem<Game.SubsystemTerrain>();
+var blockEntities = project.FindSubsystem<Game.SubsystemBlockEntities>();
+var players = project.FindSubsystem<Game.SubsystemPlayers>();
+var position = players.GlobalSpawnPosition + new Engine.Vector3(__OFFSET_X__f, __OFFSET_Y__f, __OFFSET_Z__f);
+int x = (int)System.MathF.Floor(position.X);
+int y = (int)System.MathF.Floor(position.Y);
+int z = (int)System.MathF.Floor(position.Z);
+terrain.ChangeCell(x, y, z, Game.Terrain.MakeBlockValue(WonderfulEra.RefrigeratorBlock.Index));
+var blockEntity = blockEntities.GetBlockEntity(x, y, z);
+return blockEntity?.Entity.Id ?? 0;

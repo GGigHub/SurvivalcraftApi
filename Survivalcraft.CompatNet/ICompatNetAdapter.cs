@@ -40,6 +40,14 @@ public interface ICompatNetAdapter {
     }
 
     /// <summary>
+    /// Returns whether an adapter temporarily owns the specified update on the
+    /// server. This is used for stateful compatibility commands whose vanilla
+    /// update would otherwise advance before the authoritative snapshot is
+    /// observed by a client.
+    /// </summary>
+    bool ShouldSkipServerUpdate(IUpdateable updateable) => false;
+
+    /// <summary>
     /// Returns whether this adapter owns the specified update on a remote
     /// client and the game's local update should be skipped.
     /// </summary>
@@ -63,6 +71,14 @@ public abstract class CompatNetAdapterLoader : ModLoader, ICompatNetAdapter {
     }
 
     public abstract void HandleRequest(CompatNetPacket packet, PlayerData playerData);
+
+    public virtual void HandleBroadcast(CompatNetPacket packet) {
+    }
+
+    public virtual void OnServerUpdate(float dt) {
+    }
+
+    public virtual bool ShouldSkipServerUpdate(IUpdateable updateable) => false;
 
     public virtual bool ShouldSkipClientUpdate(IUpdateable updateable) => false;
 }

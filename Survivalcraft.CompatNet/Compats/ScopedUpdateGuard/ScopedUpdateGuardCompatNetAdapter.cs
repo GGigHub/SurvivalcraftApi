@@ -264,7 +264,8 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
                 || packet?.Operation == (ushort)SushiToolCompatNetOperation.MachineConfigRequest
                 || packet?.Operation == (ushort)SushiToolCompatNetOperation.TrainControlRequest
                 || packet?.Operation == (ushort)SushiToolCompatNetOperation.TrainRecycleRequest
-                || packet?.Operation == (ushort)SushiToolCompatNetOperation.TrainCallRequest)) {
+                || packet?.Operation == (ushort)SushiToolCompatNetOperation.TrainCallRequest
+                || packet?.Operation == (ushort)SushiToolCompatNetOperation.TrainMountRequest)) {
             SushiToolCompatNetRuntime.HandleRequest(packet, playerData);
         }
         else if (AdapterId == SubnauticaAdapterId

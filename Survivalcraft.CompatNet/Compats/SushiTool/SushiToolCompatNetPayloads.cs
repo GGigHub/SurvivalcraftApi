@@ -13,7 +13,8 @@ public enum SushiToolCompatNetOperation : ushort {
     TrainControlRequest = 7,
     TrainRecycleRequest = 8,
     TrainCallRequest = 9,
-    TrainCallEvent = 10
+    TrainCallEvent = 10,
+    TrainMountRequest = 11
 }
 
 public enum SushiToolInventoryActionKind : byte {
@@ -106,6 +107,17 @@ public sealed class SushiToolTrainCallRequest {
         archive.Value(ref TrainEntityId);
         if (TrainEntityId <= 0) {
             throw new InvalidDataException("Invalid SushiTool train call request.");
+        }
+    }
+}
+
+public sealed class SushiToolTrainMountRequest {
+    public int TrainEntityId;
+
+    public void Serialize(PacketSerializer archive) {
+        archive.Value(ref TrainEntityId);
+        if (TrainEntityId <= 0) {
+            throw new InvalidDataException("Invalid SushiTool train mount request.");
         }
     }
 }
@@ -344,6 +356,18 @@ public static class SushiToolCompatNetPayloads {
     public static SushiToolTrainCallRequest ReadTrainCall(byte[] payload) {
         ArgumentNullException.ThrowIfNull(payload);
         SushiToolTrainCallRequest request = new();
+        CompatNetPayload.Read(payload, request.Serialize);
+        return request;
+    }
+
+    public static byte[] WriteTrainMount(SushiToolTrainMountRequest request) {
+        ArgumentNullException.ThrowIfNull(request);
+        return CompatNetPayload.Write(request.Serialize);
+    }
+
+    public static SushiToolTrainMountRequest ReadTrainMount(byte[] payload) {
+        ArgumentNullException.ThrowIfNull(payload);
+        SushiToolTrainMountRequest request = new();
         CompatNetPayload.Read(payload, request.Serialize);
         return request;
     }

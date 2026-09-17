@@ -1,0 +1,16 @@
+var project = Game.GameManager.Project;
+if (project == null) return "no-project";
+var players = project.FindSubsystem<Game.SubsystemPlayers>();
+var player = players.PlayersData.FirstOrDefault(p => p.PlayerIndex == {0} && p.ComponentPlayer != null)?.ComponentPlayer;
+if (player == null) return "no-player";
+var trainEntity = project.FindEntity({1});
+if (trainEntity == null) return "no-train-entity";
+var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+var train = trainEntity.Components.FirstOrDefault(c => c != null && c.GetType().FullName == "Sushi.ComponentSushiTrain");
+if (train == null) return "no-train-component";
+var mount = train.GetType().GetField("m_componentMount", flags)?.GetValue(train) as Game.ComponentMount;
+if (mount == null) return "no-mount";
+var rider = player.Entity.FindComponent<Game.ComponentRider>();
+if (rider == null) return "no-rider";
+rider.StartMounting(mount, true);
+return "mounted:" + player.Entity.Id.ToString(System.Globalization.CultureInfo.InvariantCulture);

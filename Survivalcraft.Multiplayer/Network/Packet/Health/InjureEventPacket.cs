@@ -38,6 +38,7 @@ public class InjureEventPacket : Packet {
         GameManager.Project.FindEntity(m_targetId, entity => {
             var health = entity.FindComponent<ComponentHealth>();
             if (health == null) return;
+            if (PlayerPacketBase.ShouldApplyCreatureHealthSync?.Invoke(m_targetId) == false) return;
             if (m_attackerId == 0) {
                 health.Injure(m_amount, null, false, m_cause, true);
                 health.Health = m_health;

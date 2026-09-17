@@ -29,6 +29,15 @@ public static class MCHszrCompatNetRuntime {
     private static readonly Dictionary<ComponentPlayer, int> s_serverSequences = [];
     private static readonly Dictionary<ComponentPlayer, ClientChargeState> s_clientCharges = [];
     private static readonly Dictionary<ComponentPlayer, ServerChargeState> s_serverCharges = [];
+    private static double s_nextStatePublishTime;
+    private static int s_stateSequence;
+    private static int s_lastAppliedStateSequence;
+    private static double s_effectStateUntil;
+    private static readonly HashSet<Projectile> s_clientStateProjectiles = [];
+    private static ComponentPlayer s_clientDashPlayer;
+    private static Vector3 s_clientDashVelocity;
+    private static double s_clientDashUntil;
+
 
     private sealed class ClientChargeState {
         public MCHszrCompatNetAction Action;
@@ -63,6 +72,219 @@ public static class MCHszrCompatNetRuntime {
         return player?.PlayerData != null && !player.PlayerData.IsMainPlayer;
     }
 
+    public static void OnServerUpdate(float dt) {
+        if (!NetworkManager.IsServerRunning) {
+            return;
+        }
+
+        PublishServerState();
+
+        object loader = FindTargetLoader();
+        if (loader == null) {
+            return;
+        }
+
+        lock (s_stateLock) {
+            foreach ((ComponentPlayer player, ServerChargeState charge) in s_serverCharges) {
+                if (charge.Action != MCHszrCompatNetAction.SpearDash
+                    || player?.ComponentLocomotion == null) {
+                    continue;
+                }
+
+                // The client camera hook clamps the first visible charge
+                // stage to 5f. Keep the authoritative server value at that
+                // same stage; later dash power is measured from server time.
+                player.ComponentLocomotion.WalkSpeed = 5f;
+            }
+        }
+    }
+
+    public static void ApplyStateSnapshot(byte[] payload) {
+        MCHszrCompatNetStateSnapshot snapshot = new();
+        try {
+            CompatNetPayload.Read(payload, snapshot.Serialize);
+        }
+        catch {
+            return;
+        }
+
+        if (snapshot.Sequence <= 0
+            || (s_lastAppliedStateSequence != 0
+                && snapshot.Sequence <= s_lastAppliedStateSequence)) {
+            return;
+        }
+        s_lastAppliedStateSequence = snapshot.Sequence;
+
+        SubsystemPlayers players = GameManager.Project?.FindSubsystem<SubsystemPlayers>();
+        if (players == null) {
+            return;
+        }
+
+        foreach (MCHszrCompatNetPlayerState state in snapshot.Players) {
+            PlayerData playerData = players.PlayersData.FirstOrDefault(
+                candidate => candidate.PlayerIndex == state.PlayerIndex);
+            ComponentPlayer player = playerData?.ComponentPlayer;
+            if (player == null) {
+                continue;
+            }
+
+            if (state.HasBody && player.ComponentBody != null) {
+                player.ComponentBody.Position = state.Position;
+                player.ComponentBody.Velocity = state.IsDashing
+                    ? state.DashVelocity
+                    : state.Velocity;
+                if (state.IsDashing && player.PlayerData?.IsMainPlayer == true) {
+                    s_clientDashPlayer = player;
+                    s_clientDashVelocity = state.DashVelocity;
+                    s_clientDashUntil = Time.RealTime + 0.45;
+                }
+            }
+            if (player.ComponentLocomotion != null) {
+                player.ComponentLocomotion.WalkSpeed = state.WalkSpeed;
+                player.ComponentLocomotion.JumpSpeed = state.JumpSpeed;
+            }
+        }
+
+        ApplyStateProjectiles(snapshot.Projectiles);
+    }
+
+    public static void OnClientUpdate() {
+        if (!NetworkManager.IsClientRunning
+            || NetworkManager.IsServerRunning
+            || s_clientDashPlayer?.ComponentBody == null
+            || Time.RealTime > s_clientDashUntil) {
+            return;
+        }
+
+        s_clientDashPlayer.ComponentBody.Velocity = s_clientDashVelocity;
+    }
+
+    private static void ApplyStateProjectiles(
+        IReadOnlyList<MCHszrCompatNetProjectileState> states) {
+        if (GameManager.Project == null) {
+            return;
+        }
+
+        SubsystemProjectiles subsystem = GameManager.Project.FindSubsystem<SubsystemProjectiles>();
+        if (subsystem == null) {
+            return;
+        }
+
+        foreach (Projectile projectile in s_clientStateProjectiles) {
+            projectile.ToRemove = true;
+        }
+        s_clientStateProjectiles.Clear();
+
+        foreach (MCHszrCompatNetProjectileState state in states) {
+            Projectile projectile = subsystem.AddProjectile(
+                state.Value,
+                state.Position,
+                state.Velocity,
+                state.AngularVelocity,
+                owner: null,
+                fromNetwork: true);
+            if (projectile == null) {
+                continue;
+            }
+
+            projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+            projectile.Velocity = Vector3.Zero;
+            projectile.AngularVelocity = Vector3.Zero;
+            projectile.Gravity = 0f;
+            projectile.TerrainCollidable = false;
+            projectile.BodyCollidable = false;
+            s_clientStateProjectiles.Add(projectile);
+        }
+    }
+
+    private static void PublishServerState() {
+        if (Time.RealTime < s_nextStatePublishTime || GameManager.Project == null) {
+            return;
+        }
+
+        object loader = FindTargetLoader();
+        bool combatActive;
+        lock (s_stateLock) {
+            combatActive = s_serverCharges.Count > 0;
+        }
+        combatActive |= GetField(loader, "m_dashingPlayer") is ComponentPlayer;
+        combatActive |= GetField(loader, "m_chargingPlayer") is ComponentPlayer;
+        combatActive |= GetField(loader, "m_hammerChargePlayer") is ComponentPlayer;
+        combatActive |= Time.RealTime < s_effectStateUntil;
+        if (!combatActive) {
+            return;
+        }
+
+        s_nextStatePublishTime = Time.RealTime + 0.02;
+
+        MCHszrCompatNetStateSnapshot snapshot = new() {
+            Sequence = ++s_stateSequence
+        };
+        SubsystemPlayers players = GameManager.Project.FindSubsystem<SubsystemPlayers>();
+        if (players != null) {
+            foreach (PlayerData playerData in players.PlayersData) {
+                ComponentPlayer player = playerData?.ComponentPlayer;
+                if (player == null || player.PlayerData?.PlayerIndex < 0) {
+                    continue;
+                }
+
+                ComponentBody body = player.ComponentBody;
+                ComponentLocomotion locomotion = player.ComponentLocomotion;
+                ComponentPlayer dashingPlayer = GetField(loader, "m_dashingPlayer") as ComponentPlayer;
+                Vector3 dashDirection = GetField(loader, "m_dashDirection") is Vector3 direction
+                    ? direction
+                    : default;
+                float dashSpeed = GetField(loader, "m_dashSpeed") is float speed
+                    ? speed
+                    : 0f;
+                snapshot.Players.Add(new MCHszrCompatNetPlayerState {
+                    PlayerIndex = player.PlayerData.PlayerIndex,
+                    HasBody = body != null,
+                    Position = body?.Position ?? default,
+                    Velocity = body?.Velocity ?? default,
+                    IsDashing = ReferenceEquals(player, dashingPlayer),
+                    DashVelocity = ReferenceEquals(player, dashingPlayer)
+                        ? dashDirection * dashSpeed
+                        : default,
+                    WalkSpeed = locomotion?.WalkSpeed ?? 0f,
+                    JumpSpeed = locomotion?.JumpSpeed ?? 0f
+                });
+            }
+        }
+
+        SubsystemProjectiles projectileSubsystem = GameManager.Project.FindSubsystem<SubsystemProjectiles>();
+        List<Projectile> shockwaveProjectiles = projectileSubsystem?.Projectiles
+            .Where(projectile => snapshot.Players.Any(player =>
+                Vector3.DistanceSquared(projectile.Position, player.Position) <= 400f))
+            .ToList()
+            ?? [];
+        foreach (Projectile projectile in shockwaveProjectiles) {
+            if (snapshot.Projectiles.Count >= 512) {
+                break;
+            }
+            // The MCHszr debris is a visual side effect of the authoritative
+            // shockwave. Freeze the replicated copy at the server snapshot so
+            // both peers keep the same visible projectile set while the
+            // server-owned body damage remains authoritative.
+            projectile.Velocity = Vector3.Zero;
+            projectile.AngularVelocity = Vector3.Zero;
+            projectile.Gravity = 0f;
+            projectile.TerrainCollidable = false;
+            projectile.BodyCollidable = false;
+            snapshot.Projectiles.Add(new MCHszrCompatNetProjectileState {
+                Value = projectile.Value,
+                Position = projectile.Position,
+                Velocity = projectile.Velocity,
+                AngularVelocity = projectile.AngularVelocity
+            });
+        }
+
+        CompatNetCore.QueueBroadcast(
+            MCHszrCompatNetAdapter.StableAdapterId,
+            (ushort)MCHszrCompatNetOperation.StateSnapshot,
+            CompatNetPayload.Write(snapshot.Serialize));
+    }
+
     /// <summary>
     /// Called from the Cecil guard at the beginning of
     /// UnifiedMCHszrModLoader.UpdatePlayerInputAim. On a client, combat-pose
@@ -77,14 +299,12 @@ public static class MCHszrCompatNetRuntime {
         ref bool playerOperated,
         out bool skipVanilla) {
         skipVanilla = false;
-
         if (!IsClientOnly()
             || player?.PlayerData?.IsMainPlayer != true
             || player.Entity == null
             || !TryGetActiveAction(player, requireCombatPose: true, out MCHszrCompatNetAction action, out int slotIndex, out int itemValue)) {
             return false;
         }
-
         if (aiming) {
             lock (s_stateLock) {
                 if (s_clientCharges.TryGetValue(player, out ClientChargeState state)) {
@@ -168,7 +388,7 @@ public static class MCHszrCompatNetRuntime {
             || player.Entity == null
             || slotIndex < 0
             || slotIndex >= inventory.SlotsCount
-            || !TryGetWeaponAction(inventory.GetSlotValue(slotIndex), out _)) {
+            || inventory.GetSlotCount(slotIndex) <= 0) {
             return false;
         }
 
@@ -222,10 +442,10 @@ public static class MCHszrCompatNetRuntime {
         MCHszrCompatNetRequest request) {
         if (!TryResolvePlayer(playerData, request, out ComponentPlayer player)
             || player.ComponentMiner?.Inventory == null
-            || request.SlotIndex != player.ComponentMiner.Inventory.ActiveSlotIndex
+            || request.SlotIndex < 0
+            || request.SlotIndex >= player.ComponentMiner.Inventory.SlotsCount
             || !TryGetInventoryItem(player, request.SlotIndex, out int actualValue, out _)
-            || !SameContents(actualValue, request.ItemValue)
-            || !TryGetWeaponAction(actualValue, out _)) {
+            || !SameContents(actualValue, request.ItemValue)) {
             return false;
         }
 
@@ -238,19 +458,7 @@ public static class MCHszrCompatNetRuntime {
             return false;
         }
 
-        MethodInfo method = FindMethod(
-            poseBehavior.GetType(),
-            "OnEditInventoryItem",
-            parameterCount: 3);
-        if (method == null) {
-            return false;
-        }
-
-        return InvokeMethod(method, poseBehavior, [
-            player.ComponentMiner.Inventory,
-            request.SlotIndex,
-            player
-        ], out _);
+        return ToggleServerPose(poseBehavior, player, actualValue);
     }
 
     public static bool TryBeginCharge(
@@ -258,9 +466,8 @@ public static class MCHszrCompatNetRuntime {
         MCHszrCompatNetRequest request) {
         if (!IsSupportedAction(request.Action)
             || !TryResolvePlayer(playerData, request, out ComponentPlayer player)
-            || !TryGetActiveAction(player, requireCombatPose: true, out MCHszrCompatNetAction actualAction, out int slotIndex, out int itemValue)
+            || !TryGetRequestedAction(player, request.SlotIndex, requireCombatPose: true, out MCHszrCompatNetAction actualAction, out int itemValue)
             || actualAction != request.Action
-            || slotIndex != request.SlotIndex
             || !SameContents(itemValue, request.ItemValue)
             || HasMount(player)) {
             return false;
@@ -280,12 +487,86 @@ public static class MCHszrCompatNetRuntime {
             s_serverCharges[player] = new ServerChargeState {
                 Action = request.Action,
                 EntityId = request.EntityId,
-                SlotIndex = slotIndex,
+                SlotIndex = request.SlotIndex,
                 ItemValue = itemValue,
                 StartedAt = Time.FrameStartTime
             };
         }
+        DriveServerChargeInput(player, request.Action);
         return true;
+    }
+
+    private static bool ToggleServerPose(
+        object poseBehavior,
+        ComponentPlayer player,
+        int itemValue) {
+        MethodInfo getGroup = FindMethod(
+            poseBehavior?.GetType(),
+            "GetWeaponGroupFor",
+            parameterCount: 1);
+        FieldInfo poseStates = FindField(
+            poseBehavior?.GetType(),
+            "m_playerPoseStates");
+        if (getGroup == null || poseStates?.GetValue(poseBehavior) is not System.Collections.IDictionary dictionary) {
+            return false;
+        }
+
+        Block block = BlocksManager.Blocks[Terrain.ExtractContents(itemValue)];
+        string group = getGroup.Invoke(poseBehavior, [block]) as string;
+        if (string.IsNullOrWhiteSpace(group)) {
+            return false;
+        }
+
+        string key = player.PlayerData.Name + "_" + group;
+        int current = 0;
+        MethodInfo getPose = FindMethod(
+            poseBehavior.GetType(),
+            "GetPlayerPoseState",
+            parameterCount: 2);
+        if (getPose?.Invoke(poseBehavior, [player.PlayerData.Name, block]) is int value) {
+            current = value;
+        }
+        dictionary[key] = (current + 1) % 2;
+        return true;
+    }
+
+    private static void DriveServerChargeInput(
+        ComponentPlayer player,
+        MCHszrCompatNetAction action) {
+        object loader = FindTargetLoader();
+        MethodInfo method = FindMethod(loader?.GetType(), "UpdatePlayerInputAim", 6);
+        if (method == null) {
+            return;
+        }
+
+        if (action == MCHszrCompatNetAction.SpearDash
+            && player.ComponentLocomotion != null) {
+            // The mod normally raises WalkSpeed from RecalculateCameraProjection,
+            // which is a client-camera hook and never runs on a headless server.
+            // Seed the same authoritative charge state on the server so the
+            // replicated player state cannot lag behind the local camera.
+            SetField(loader, "m_originalPlayerSpeed", player.ComponentLocomotion.WalkSpeed);
+            SetField(loader, "m_originalJumpSpeed", player.ComponentLocomotion.JumpSpeed);
+            SetField(loader, "m_speedModified", true);
+            SetField(loader, "m_chargingPlayer", player);
+            SetField(loader, "m_lastChargingPlayer", player);
+            player.ComponentLocomotion.WalkSpeed = MathF.Max(5f, player.ComponentLocomotion.WalkSpeed * 1.1f);
+        }
+
+        object[] arguments = [
+            player,
+            true,
+            false,
+            0f,
+            false,
+            false
+        ];
+        try {
+            method.Invoke(loader, arguments);
+        }
+        catch (Exception e) {
+            Log.Warning($"[Survivalcraft.CompatNet] MCHszr server charge input failed: {e.Message}");
+        }
     }
 
     public static bool TryReleaseCharge(
@@ -293,9 +574,8 @@ public static class MCHszrCompatNetRuntime {
         MCHszrCompatNetRequest request) {
         if (!IsSupportedAction(request.Action)
             || !TryResolvePlayer(playerData, request, out ComponentPlayer player)
-            || !TryGetActiveAction(player, requireCombatPose: true, out MCHszrCompatNetAction actualAction, out int slotIndex, out int itemValue)
+            || !TryGetRequestedAction(player, request.SlotIndex, requireCombatPose: true, out MCHszrCompatNetAction actualAction, out int itemValue)
             || actualAction != request.Action
-            || slotIndex != request.SlotIndex
             || !SameContents(itemValue, request.ItemValue)
             || HasMount(player)) {
             return false;
@@ -310,7 +590,7 @@ public static class MCHszrCompatNetRuntime {
             if (!s_serverCharges.TryGetValue(player, out charge)
                 || charge.Action != request.Action
                 || charge.EntityId != request.EntityId
-                || charge.SlotIndex != slotIndex) {
+                || charge.SlotIndex != request.SlotIndex) {
                 return false;
             }
             s_serverCharges.Remove(player);
@@ -488,6 +768,22 @@ public static class MCHszrCompatNetRuntime {
         }
 
         if (action == MCHszrCompatNetAction.SpearDash) {
+            // RecalculateCameraProjection normally clears these client-only
+            // bookkeeping fields after the local release. The headless server
+            // has no camera pass, so clear them explicitly after invoking the
+            // authoritative dash method.
+            SetField(loader, "m_speedModified", false);
+            SetField(loader, "m_chargingPlayer", null);
+            SetField(loader, "m_lastChargingPlayer", null);
+        }
+        else {
+            // Keep the final authoritative debris snapshot alive just long
+            // enough for clients to receive it, then stop treating the old
+            // visual projectiles as active player state.
+            s_effectStateUntil = Time.RealTime + 1.25;
+        }
+
+        if (action == MCHszrCompatNetAction.SpearDash) {
             ScheduleServerDash(loader, player, 0);
         }
         return true;
@@ -537,8 +833,7 @@ public static class MCHszrCompatNetRuntime {
         player = playerData?.ComponentPlayer;
         return player?.Entity != null
             && request != null
-            && request.EntityId > 0
-            && player.Entity.Id == request.EntityId;
+            && request.EntityId > 0;
     }
 
     private static bool TryGetActiveAction(
@@ -570,6 +865,26 @@ public static class MCHszrCompatNetRuntime {
         return true;
     }
 
+    private static bool TryGetRequestedAction(
+        ComponentPlayer player,
+        int slotIndex,
+        bool requireCombatPose,
+        out MCHszrCompatNetAction action,
+        out int itemValue) {
+        action = default;
+        itemValue = 0;
+        if (!TryGetInventoryItem(player, slotIndex, out itemValue, out int count)
+            || count <= 0
+            || !TryGetWeaponAction(itemValue, out action)) {
+            return false;
+        }
+        if (!requireCombatPose) {
+            return true;
+        }
+        Block block = BlocksManager.Blocks[Terrain.ExtractContents(itemValue)];
+        return block != null && HasCombatPose(player, block);
+    }
+
     private static bool TryGetWeaponAction(
         int itemValue,
         out MCHszrCompatNetAction action) {
@@ -584,21 +899,27 @@ public static class MCHszrCompatNetRuntime {
         }
 
         Type type = block.GetType();
-        if (!IsMCHszrAssembly(type.Assembly)) {
-            return false;
-        }
-
-        if (string.Equals(type.Name, HammerBlockTypeName, StringComparison.Ordinal)) {
+        if (IsBlockTypeOrBase(type, HammerBlockTypeName)) {
             action = MCHszrCompatNetAction.HammerShockwave;
             return true;
         }
 
-        if (string.Equals(type.Name, SpearBlockTypeName, StringComparison.Ordinal)
+        if (IsBlockTypeOrBase(type, SpearBlockTypeName)
             || IsSpearCategory(block)) {
             action = MCHszrCompatNetAction.SpearDash;
             return true;
         }
 
+        return false;
+    }
+
+    private static bool IsBlockTypeOrBase(Type type, string expectedName) {
+        for (Type current = type; current != null; current = current.BaseType) {
+            if (string.Equals(current.Name, expectedName, StringComparison.Ordinal)
+                || string.Equals(current.FullName, "Game." + expectedName, StringComparison.Ordinal)) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -788,7 +1109,8 @@ public static class MCHszrCompatNetRuntime {
 
     private static bool SetField(object target, string name, object value) {
         FieldInfo field = FindField(target?.GetType(), name);
-        if (field == null || !field.FieldType.IsInstanceOfType(value)) {
+        if (field == null
+            || (value != null && !field.FieldType.IsInstanceOfType(value))) {
             return false;
         }
 

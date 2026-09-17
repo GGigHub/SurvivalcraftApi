@@ -1,0 +1,15 @@
+var players = Game.GameManager.Project.FindSubsystem<Game.SubsystemPlayers>();
+var player = players.ComponentPlayers.FirstOrDefault(p => p.PlayerData.IsMainPlayer);
+if (player == null) return "missing";
+var body = player.ComponentBody;
+body.Position = new Engine.Vector3(__X__f, __Y__f, __Z__f);
+body.Rotation = Engine.Quaternion.Identity;
+body.Velocity = Engine.Vector3.Zero;
+body.IsGravityEnabled = __GRAVITY__ == 1;
+body.IsSmoothRiseEnabled = false;
+player.ComponentLocomotion.IsCreativeFlyEnabled = __FLY__ == 1;
+player.ComponentLocomotion.LookAngles = Engine.Vector2.Zero;
+player.m_lastActionTime = -1000.0;
+player.Update(0f);
+player.ComponentCreatureModel.Update(0f);
+return player.Entity.Id.ToString(System.Globalization.CultureInfo.InvariantCulture);

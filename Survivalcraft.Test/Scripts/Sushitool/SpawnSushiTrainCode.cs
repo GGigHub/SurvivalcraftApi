@@ -1,0 +1,12 @@
+var project = Game.GameManager.Project;
+if (project == null) return "no-project";
+var entity = Game.DatabaseManager.CreateEntity(project, "SushiTrain", true);
+var frame = entity.FindComponent<Game.ComponentFrame>(true);
+var spawn = entity.FindComponent<Game.ComponentSpawn>(true);
+var position = new Engine.Vector3((float){0} + 0.5f, (float){1}, (float){2} + 0.5f);
+frame.Position = position;
+frame.Rotation = Engine.Quaternion.Identity;
+spawn.SpawnDuration = 0f;
+entity.ValuesDictionary.SetValue<int>("Direction", 0);
+project.AddEntity(entity);
+return "spawned:" + entity.Id.ToString(System.Globalization.CultureInfo.InvariantCulture);

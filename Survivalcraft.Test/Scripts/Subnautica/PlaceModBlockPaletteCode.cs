@@ -1,0 +1,17 @@
+var terrain = Game.GameManager.Project.FindSubsystem<Game.SubsystemTerrain>();
+Func<string, int> indexOf = n => Game.BlocksManager.GetBlockIndex(typeof(Subnautica.SoulTorchBlock).Assembly.GetType("Subnautica." + n), false);
+int crystal = indexOf("SoulCrystalBlock");
+int pendant = indexOf("SoulCrystalPendantBlock");
+int eelGun = indexOf("EelGunBlock");
+int pearl = indexOf("PearlHeartBlock");
+int whaleLung = indexOf("WhaleLungBlock");
+int whaleOil = indexOf("WhaleOilBlock");
+int ancientTooth = indexOf("AncientToothBlock");
+terrain.ChangeCell(__X__, __Y__, __Z__, Game.Terrain.MakeBlockValue(crystal));
+terrain.ChangeCell(__X__ + 1, __Y__, __Z__, Game.Terrain.MakeBlockValue(pendant));
+terrain.ChangeCell(__X__ + 2, __Y__, __Z__, Game.Terrain.MakeBlockValue(eelGun));
+terrain.ChangeCell(__X__ + 3, __Y__, __Z__, Game.Terrain.MakeBlockValue(pearl));
+terrain.ChangeCell(__X__ + 4, __Y__, __Z__, Game.Terrain.MakeBlockValue(whaleLung));
+terrain.ChangeCell(__X__ + 5, __Y__, __Z__, Game.Terrain.MakeBlockValue(whaleOil));
+terrain.ChangeCell(__X__ + 6, __Y__, __Z__, Game.Terrain.MakeBlockValue(ancientTooth));
+return "crystal=" + crystal + ";pendant=" + pendant + ";eelgun=" + eelGun + ";pearl=" + pearl + ";whalelung=" + whaleLung + ";whaleoil=" + whaleOil + ";ancienttooth=" + ancientTooth;

@@ -1,0 +1,14 @@
+var project = Game.GameManager.Project;
+if (project == null) return "no-project";
+var entity = project.FindEntity({0});
+if (entity == null) return "no-train-entity";
+var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+var train = entity.Components.FirstOrDefault(c => c != null && c.GetType().FullName == "Sushi.ComponentSushiTrain");
+if (train == null) return "no-train-component";
+train.GetType().GetField("m_speedIndex", flags)?.SetValue(train, 1);
+train.GetType().GetField("m_speed", flags)?.SetValue(train, 1f);
+var body = entity.FindComponent<Game.ComponentBody>();
+if (body == null) return "no-body";
+var velocity = body.GetType().GetProperty("Velocity", flags) ?? body.GetType().GetField("Velocity", flags);
+velocity?.SetValue(body, new Engine.Vector3(0f, 0f, -0.01f));
+return "driven";
