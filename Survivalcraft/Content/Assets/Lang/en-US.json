@@ -5248,10 +5248,6 @@
   "ScbbsPlusPendingLocalModMetadataReader": {
     "ReadPendingModMetadataFailed": "[ScbbsPlus] Failed to read pending mod metadata: {0}, error={1}"
   },
-  "ScbbsPlusExternalContentImporter": {
-    "RestoreReplacedFileFailed": "[ScbbsPlus] Failed to restore a replaced file: {0}",
-    "CleanReplacementBackupFailed": "[ScbbsPlus] Failed to clean up the replacement backup: {0}"
-  },
   "ScbbsPlusDownloadQueueManager": {
     "LoadDownloadQueueFailed": "[ScbbsPlus] Failed to load download queue: {0}",
     "RestoreQueueItemFailed": "[ScbbsPlus] Failed to restore a download queue item: {0}"
@@ -5388,7 +5384,9 @@
     "ScanResidualBackupSubdirectoryFailed": "[ScbbsPlus] Failed to scan a residual update backup subdirectory dir={0} error={1}",
     "CleanModUpdateBackupFailed": "[ScbbsPlus] Failed to clean up a mod update backup: {0}",
     "CleanIncompleteModUpdateFileFailed": "[ScbbsPlus] Failed to clean up an incomplete mod update file: {0}",
-    "RestoreModUpdateBackupFailed": "[ScbbsPlus] Failed to restore a mod update backup: {0}"
+    "RestoreModUpdateBackupFailed": "[ScbbsPlus] Failed to restore a mod update backup: {0}",
+    "CleanOverwriteBackupFailed": "[ScbbsPlus] Failed to clean up the pre-overwrite backup: {0}",
+    "RestoreOverwriteBackupFailed": "[ScbbsPlus] Failed to restore the pre-overwrite backup: {0}"
   },
   "ScbbsPlusPlayedTimeTracker": {
     "StartedTrackingModPlayedTime": "[ScbbsPlus] Started tracking mod played time: {0} mods",

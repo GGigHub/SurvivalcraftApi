@@ -52,15 +52,21 @@ namespace Game
                     stream =>
                     {
                         item.Progress.Set(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "Importing"), 1f, true);
-                        return item.ReplaceExistingScbbsPlusMod
-                            ? ModUpdateImporter.ImportSelfUpdate(stream, item.FileName, ModIdentity.PackageName, item.OverwriteExistingFilePath)
-                            : !string.IsNullOrWhiteSpace(item.ReplaceExistingModPackageName)
-                                ? ModUpdateImporter.ImportModUpdate(stream, item.FileName, item.ReplaceExistingModPackageName, item.ReplaceExistingModPath)
-                                : ExternalContentImporter.Import(
-                                    stream,
-                                    item.Type,
-                                    item.FileName,
-                                    item.OverwriteExistingFilePath);
+                        // 队列项字段拼装 Preparation 后统一走 RemoteImportContent.Import 决策树
+                        // （自更新/覆盖更新/覆盖回滚/普通导入），与链接导入共用一套分支口径。
+                        RemoteImportPreparation preparation = new()
+                        {
+                            Type = item.Type,
+                            FileName = item.FileName,
+                            ExistingModPackageName = item.ReplaceExistingScbbsPlusMod
+                                ? ModIdentity.PackageName
+                                : item.ReplaceExistingModPackageName,
+                            ExistingModPath = item.ReplaceExistingScbbsPlusMod
+                                ? item.OverwriteExistingFilePath
+                                : item.ReplaceExistingModPath,
+                            ExistingEntryFilePath = item.OverwriteExistingFilePath
+                        };
+                        return RemoteImportContent.Import(ModIdentity.PackageName, stream, preparation, overwriteExisting: true);
                     },
                     onImportCompleted: () =>
                     {

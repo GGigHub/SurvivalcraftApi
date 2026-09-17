@@ -219,6 +219,62 @@ namespace Game
             }
         }
 
+        // 覆盖式导入：无独立临时文件可走 Replace 的 temp-first 流程（导入器把新内容直接写进
+        // existingPath，各 Manager.ImportXxx 自行定位目标），改为先备份原件再放行导入，
+        // 成功清备份、失败清半成品并还原，保证覆盖导入中途失败不丢用户原内容。
+        // import 以委托注入，便于对回滚机制做磁盘级测试（无需游戏外部内容运行时）。
+        public static string OverwriteWithRollback(string existingPath, Func<string> import)
+        {
+            string backupPath = $"{existingPath}{BackupMarker}{Guid.NewGuid():N}";
+            if (Storage.FileExists(backupPath))
+            {
+                Storage.DeleteFile(backupPath);
+            }
+
+            Storage.MoveFile(existingPath, backupPath);
+            try
+            {
+                string importedName = import();
+                DeleteOverwriteBackup(backupPath);
+                return importedName;
+            }
+            catch
+            {
+                try
+                {
+                    // 导入可能已部分写入目标路径，还原前先清掉，确保备份能落回原位。
+                    if (Storage.FileExists(existingPath))
+                    {
+                        Storage.DeleteFile(existingPath);
+                    }
+                    if (Storage.FileExists(backupPath))
+                    {
+                        Storage.MoveFile(backupPath, existingPath);
+                    }
+                }
+                catch (Exception restoreEx)
+                {
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "RestoreOverwriteBackupFailed"), restoreEx.Message));
+                }
+                throw;
+            }
+        }
+
+        private static void DeleteOverwriteBackup(string backupPath)
+        {
+            try
+            {
+                if (Storage.FileExists(backupPath))
+                {
+                    Storage.DeleteFile(backupPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "CleanOverwriteBackupFailed"), ex.Message));
+            }
+        }
+
         private static void RollBack(string targetPath, bool installMoveStarted, List<FileBackup> backups)
         {
             if (installMoveStarted)

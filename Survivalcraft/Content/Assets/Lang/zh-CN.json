@@ -5258,10 +5258,6 @@
   "ScbbsPlusPendingLocalModMetadataReader": {
     "ReadPendingModMetadataFailed": "[ScbbsPlus] 读取未加载模组信息失败: {0}, error={1}"
   },
-  "ScbbsPlusExternalContentImporter": {
-    "RestoreReplacedFileFailed": "[ScbbsPlus] 还原被替换文件失败: {0}",
-    "CleanReplacementBackupFailed": "[ScbbsPlus] 清理替换备份失败: {0}"
-  },
   "ScbbsPlusDownloadQueueManager": {
     "LoadDownloadQueueFailed": "[ScbbsPlus] 加载下载队列失败: {0}",
     "RestoreQueueItemFailed": "[ScbbsPlus] 恢复下载队列单项失败: {0}"
@@ -5398,7 +5394,9 @@
     "ScanResidualBackupSubdirectoryFailed": "[ScbbsPlus] 扫描更新残留备份子目录失败 dir={0} error={1}",
     "CleanModUpdateBackupFailed": "[ScbbsPlus] 清理模组更新备份失败: {0}",
     "CleanIncompleteModUpdateFileFailed": "[ScbbsPlus] 清理未完成的模组更新文件失败: {0}",
-    "RestoreModUpdateBackupFailed": "[ScbbsPlus] 还原模组更新备份失败: {0}"
+    "RestoreModUpdateBackupFailed": "[ScbbsPlus] 还原模组更新备份失败: {0}",
+    "CleanOverwriteBackupFailed": "[ScbbsPlus] 清理覆盖前备份失败: {0}",
+    "RestoreOverwriteBackupFailed": "[ScbbsPlus] 还原覆盖前备份失败: {0}"
   },
   "ScbbsPlusPlayedTimeTracker": {
     "StartedTrackingModPlayedTime": "[ScbbsPlus] 已开始记录模组游玩时间: {0} 个模组",

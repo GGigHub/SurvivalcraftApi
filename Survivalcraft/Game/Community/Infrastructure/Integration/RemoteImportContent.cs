@@ -58,7 +58,13 @@ namespace Game
             RemoteImportRequest request,
             MemoryStream stream)
         {
-            byte[] fileData = stream.ToArray();
+            // 精确容量 MemoryStream（HttpDownloader 按 Content-Length 预分配、调用方按包数组
+            // 构造）TryGetBuffer 零拷贝接管底层缓冲；缓冲超配或短读时回退 ToArray 拷贝。
+            byte[] fileData = stream.TryGetBuffer(out ArraySegment<byte> buffer)
+                && buffer.Offset == 0
+                && buffer.Count == buffer.Array.Length
+                ? buffer.Array
+                : stream.ToArray();
             RemoteImportPreparation result = new()
             {
                 RequestId = requestId,
@@ -98,6 +104,7 @@ namespace Game
             {
                 result.ExistingEntryName = existingName;
                 result.ExistingDisplayName = existingName;
+                result.ExistingEntryFilePath = GetExistingExternalContentFilePath(request.Type, existingName);
             }
             return result;
         }
@@ -130,29 +137,24 @@ namespace Game
                 }
             }
 
+            // 内置物不可覆盖，按条目名判定（$ 前缀/空名）；队列导入的持久化项只带路径
+            // 不带名字，此时跳过判定——与收敛前队列直连导入器的行为一致。
             if (overwriteExisting && !string.IsNullOrWhiteSpace(result.ExistingEntryName))
             {
-                return ImportWithOverwriteRollback(stream, result.Type, result.ExistingEntryName, result.FileName);
+                EnsureExternalContentCanBeOverwritten(result.Type, result.ExistingEntryName);
+            }
+
+            // 覆盖导入需保证"导入失败不丢用户原内容"。删不可逆，故按类型分策：
+            // 文件型（家具包/材质/皮肤）导入会原地写目标 → 交带备份回滚的导入器，先备份再覆盖、失败还原。
+            // World 不参与覆盖（见 FindExistingExternalContentName 注释）：游戏原生导入总建新目录
+            // （World/World1/…自动编号），重复导入即天然副本，永远走普通导入。
+            if (overwriteExisting && !string.IsNullOrWhiteSpace(result.ExistingEntryFilePath))
+            {
+                return ExternalContentImporter.Import(stream, result.Type, result.FileName, result.ExistingEntryFilePath);
             }
 
             // 原始字节透传：密文落盘、密文安装，引擎加载期自解密（ModsManager.GetScmods）。
             return ExternalContentManager.ImportExternalContentSync(stream, result.Type, result.FileName);
-        }
-
-        // 覆盖导入需保证"导入失败不丢用户原内容"。删不可逆，故按类型分策：
-        // 文件型（家具包/材质/皮肤）导入会原地写目标 → 复用带备份回滚的导入器，先备份再覆盖、失败还原。
-        // World 不参与覆盖（见 FindExistingExternalContentName 注释）：游戏原生导入总建新目录
-        // （World/World1/…自动编号），重复导入即天然副本，永远走普通导入。
-        private static string ImportWithOverwriteRollback(
-            Stream stream,
-            ExternalContentType type,
-            string existingName,
-            string importFileName)
-        {
-            EnsureExternalContentCanBeOverwritten(type, existingName);
-
-            string existingPath = GetExistingExternalContentFilePath(type, existingName);
-            return ExternalContentImporter.Import(stream, type, importFileName, existingPath);
         }
 
         private static string GetExistingExternalContentFilePath(ExternalContentType type, string existingName)
@@ -336,6 +338,7 @@ namespace Game
         public byte[] FileData { get; set; }
         public string DisplayName { get; set; }
         public string ExistingEntryName { get; set; }
+        public string ExistingEntryFilePath { get; set; }
         public string ExistingDisplayName { get; set; }
         public string ExistingModPackageName { get; set; }
         public string ExistingModPath { get; set; }
