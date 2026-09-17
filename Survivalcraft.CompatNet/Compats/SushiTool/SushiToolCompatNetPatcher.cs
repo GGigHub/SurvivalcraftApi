@@ -378,7 +378,12 @@ public static class SushiToolCompatNetPatcher {
             binder: null,
             types: [typeof(int), typeof(object)],
             modifiers: null);
-        if (baseMethod != null) {
+        // Sushi.SushiSyncInventory implements IInventory directly and does not
+        // derive from ComponentInventoryBase. A MethodOverride targeting the
+        // component base type is invalid IL for such a type and aborts the
+        // whole SushiTool assembly with a ReflectionTypeLoadException. Only add
+        // that override when the patched type actually is a component box.
+        if (baseMethod != null && IsComponentInventoryBase(type)) {
             method.Overrides.Add(module.ImportReference(baseMethod));
         }
         MethodInfo interfaceMethod = typeof(IInventory).GetMethod(
@@ -582,6 +587,17 @@ public static class SushiToolCompatNetPatcher {
         return assembly.MainModule.Types
             .SelectMany(FlattenTypes)
             .FirstOrDefault(type => type.FullName == fullName);
+    }
+
+    private static bool IsComponentInventoryBase(TypeDefinition type) {
+        for (TypeReference current = type.BaseType;
+             current != null;
+             current = current.Resolve()?.BaseType) {
+            if (current.FullName == "Game.ComponentInventoryBase") {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static IEnumerable<TypeDefinition> FlattenTypes(TypeDefinition type) {

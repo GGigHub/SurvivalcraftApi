@@ -38,6 +38,31 @@ public static class WonderfulEraCompatNetRuntime {
     }
 
     /// <summary>
+    /// Called from WonderfulEra's ComponentRiderN.StartMounting(ComponentMount)
+    /// override. That override mounts locally and never triggers the vanilla
+    /// OnNetworkRiderMounting relay, so a pure client mounts its own player
+    /// without ever notifying the server. When invoked on a pure client, this
+    /// bridge forwards the mount as a MountRequest via the vanilla hook and
+    /// suppresses the local-only mount; the server then mounts and broadcasts
+    /// the Mount packet back.
+    /// </summary>
+    public static bool TrySyncRiderMounting(ComponentRider rider, ComponentMount mount) {
+        if (rider == null
+            || mount == null
+            || rider.m_isAnimating
+            || rider.Mount != null
+            || !NetworkManager.IsClientRunning
+            || NetworkManager.IsServerRunning) {
+            return false;
+        }
+
+        ModsManager.HookAction(
+            "OnNetworkRiderMounting",
+            loader => loader.OnNetworkRiderMounting(rider, mount, true));
+        return true;
+    }
+
+    /// <summary>
     /// Called from WonderfulEra's OnPlayerControlOtherMount hook. On a pure
     /// client it queues the current input while the scoped update guard keeps
     /// the vehicle simulation server-owned. On the server it applies the most

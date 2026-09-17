@@ -64,16 +64,6 @@ public sealed class EnchantmentCompatNetAdapter : CompatNetAdapterLoader {
                         playerData?.ComponentPlayer);
                     break;
                 }
-                case EnchantmentCompatNetOperation.RemoveEnchantingTableResult: {
-                    EnchantingTableResultRequest request = new();
-                    CompatNetPayload.Read(packet.Payload, request.Serialize);
-                    EnchantmentCompatNetRuntime.TryExecuteServerEnchantingTableResult(
-                        request.EntityId,
-                        request.SlotIndex,
-                        request.Count,
-                        playerData?.ComponentPlayer);
-                    break;
-                }
             }
         }
         catch (Exception e) {
@@ -105,9 +95,6 @@ public sealed class EnchantmentCompatNetAdapter : CompatNetAdapterLoader {
             }
 
             MethodReference bridge = assembly.MainModule.ImportReference(bridgeMethod);
-            MethodReference tableResultGuard = ResolveBridge(
-                assembly.MainModule,
-                nameof(EnchantmentCompatNetRuntime.TryQueueEnchantingTableResult));
             MethodReference mendingGuard = ResolveBridge(
                 assembly.MainModule,
                 nameof(EnchantmentCompatNetRuntime.ShouldSkipMendingRepairUpdate));
@@ -139,9 +126,6 @@ public sealed class EnchantmentCompatNetAdapter : CompatNetAdapterLoader {
                 }
             }
 
-            changed |= InjectEnchantingTableGuard(
-                FindType(assembly, EnchantingTableTypeName),
-                tableResultGuard);
             changed |= InjectUpdateGuard(
                 FindType(assembly, MendingRepairTypeName),
                 mendingGuard);
@@ -162,8 +146,6 @@ public sealed class EnchantmentCompatNetAdapter : CompatNetAdapterLoader {
             return true;
         }
 
-        private const string EnchantingTableTypeName =
-            "Enchantment.ComponentEnchantingTable";
         private const string MendingRepairTypeName =
             "Enchantment.ENSubsystemMendingRepairSystem";
         private const string FishingFloatsTypeName =
@@ -176,39 +158,6 @@ public sealed class EnchantmentCompatNetAdapter : CompatNetAdapterLoader {
                 methodName,
                 BindingFlags.Public | BindingFlags.Static);
             return module.ImportReference(method);
-        }
-
-        private static bool InjectEnchantingTableGuard(
-            TypeDefinition type,
-            MethodReference guard) {
-            if (type == null || guard == null) {
-                return false;
-            }
-
-            MethodDefinition method = FlattenTypes(type)
-                .SelectMany(item => item.Methods)
-                .FirstOrDefault(item =>
-                    !item.IsStatic
-                    && item.Name == "RemoveSlotItems"
-                    && item.ReturnType.FullName == "System.Int32"
-                    && item.Parameters.Count == 2
-                    && item.Parameters.All(parameter =>
-                        parameter.ParameterType.FullName == "System.Int32")
-                    && item.HasBody);
-            if (method == null || ContainsBridgeCall(method, guard.Name)) {
-                return false;
-            }
-
-            ILProcessor il = method.Body.GetILProcessor();
-            Instruction first = method.Body.Instructions[0];
-            il.InsertBefore(first, Instruction.Create(OpCodes.Ldarg_0));
-            il.InsertBefore(first, Instruction.Create(OpCodes.Ldarg_1));
-            il.InsertBefore(first, Instruction.Create(OpCodes.Ldarg_2));
-            il.InsertBefore(first, Instruction.Create(OpCodes.Call, guard));
-            il.InsertBefore(first, Instruction.Create(OpCodes.Brfalse, first));
-            il.InsertBefore(first, Instruction.Create(OpCodes.Ldc_I4_0));
-            il.InsertBefore(first, Instruction.Create(OpCodes.Ret));
-            return true;
         }
 
         private static bool InjectUpdateGuard(

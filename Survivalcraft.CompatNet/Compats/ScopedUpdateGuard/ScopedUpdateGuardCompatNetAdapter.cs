@@ -23,7 +23,6 @@ public enum ScopedUpdateGuardScope {
 public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
     public const ushort EnchantmentAdapterId = 5;
     public const ushort MchszrAdapterId = 6;
-    public const ushort SushiBaseAdapterId = 7;
     public const ushort SushiToolAdapterId = 8;
     public const ushort SubnauticaAdapterId = 9;
     public const ushort WonderfulEraAdapterId = 10;
@@ -111,7 +110,6 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
     public static readonly ScopedUpdateGuardCompatNetAdapter[] Presets = [
         new(EnchantmentAdapterId, "Enchantment", "Enchantment.dll"),
         new(MchszrAdapterId, "MCHszr", "MCHszr.dll"),
-        new(SushiBaseAdapterId, "SushiBase", "SushiBase.dll"),
         new(SushiToolAdapterId, "SushiTool", "SushiTool.dll", ScopedUpdateGuardScope.AllNonPlayerEntities),
         new(SubnauticaAdapterId, "Tp.Subnautica", "sc-subnautica-mod.dll", ScopedUpdateGuardScope.RemoteEntityBody),
         new(WonderfulEraAdapterId, "Tp.WonderfulEra", "WonderfulEra.dll", ScopedUpdateGuardScope.RemoteEntityBody),

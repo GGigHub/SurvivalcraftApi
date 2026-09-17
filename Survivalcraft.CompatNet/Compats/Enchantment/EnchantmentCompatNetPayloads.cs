@@ -7,8 +7,7 @@ namespace Game;
 /// </summary>
 public enum EnchantmentCompatNetOperation : ushort {
     None = 0,
-    RollEnchantment = 1,
-    RemoveEnchantingTableResult = 2
+    RollEnchantment = 1
 }
 
 public static class EnchantmentCompatNetPayloads {
@@ -20,25 +19,5 @@ public sealed class EnchantmentRollRequest {
 
     public void Serialize(PacketSerializer archive) {
         archive.Value(ref EntityId);
-    }
-}
-
-/// <summary>
-/// Requests taking the result from the Enchantment mod's enchanting table.
-/// The client supplies only the entity and the fixed result slot/count; the
-/// server re-checks the table contents, player and distance before invoking
-/// the original inventory method.
-/// </summary>
-public sealed class EnchantingTableResultRequest {
-    public int EntityId;
-
-    public int SlotIndex;
-
-    public int Count;
-
-    public void Serialize(PacketSerializer archive) {
-        archive.Value(ref EntityId);
-        archive.Value(ref SlotIndex);
-        archive.Value(ref Count);
     }
 }

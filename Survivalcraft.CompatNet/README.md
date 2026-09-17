@@ -12,16 +12,14 @@ electricity updates continue to use `Survivalcraft.Multiplayer` packets.
 |---|---|---:|---|
 | `gunsmod.ysf.scmod` | `gunsmod.dll` | 1 | Server-authoritative projectiles and missiles |
 | `zh.command` | `CommandBlock.dll` | 2 | Command edits, execution, and electric results |
-| `Elytron` | `Elytron.dll` | 3 | Server-authoritative double-jump gliding and firework intent; remote update guard |
-| `ysf.neorxna` | `neorxna.dll` | 4 | Server-authoritative dash intent with server-side state checks; remote update guard |
-| `Enchantment` | `Enchantment.dll` | 5 | Magic-removal and enchanting-table requests; disables duplicate repair/fishing/recall simulation |
+| `Elytron` | `Elytron.dll` | 3 | Remote update guard; the owner's gliding body stays client-authoritative through the standard player-body packet |
+| `ysf.neorxna` | `neorxna.dll` | — | No sync adapter (removed); only the recipe-dialog parent fix is applied as a plain UI patch |
+| `Enchantment` | `Enchantment.dll` | 5 | Magic-removal roll request; disables duplicate repair/fishing/recall simulation |
 | `MCHszr` | `MCHszr.dll` | 6 | Server-authoritative combat pose, charge/release, and food requests; remote update guard |
-| `SushiBase` | `SushiBase.dll` | 7 | Remote-player update guard; ordinary input/inventory uses standard packets |
 | `SushiTool` | `SushiTool.dll` | 8 | All non-player updates, bounded scalar snapshots, shared-channel inventory sync, machine controls/configuration, and train input/recycle requests |
 | `Tp.Subnautica` | `sc-subnautica-mod.dll` | 9 | Remote-body update guard, mermaid feed/quest requests, and bounded mermaid state snapshots |
 | `Tp.WonderfulEra` | `WonderfulEra.dll` | 10 | Remote-body update guard, server-authoritative custom vehicle control, and bounded scalar snapshots |
 | `com.IndustrialEra2` | `SCIENEW.dll` | 11 | All non-player updates, bounded scalar machine state, and entity tank contents; fluid/electric topology still needs typed sync |
-| `SushiTouch` | `SushiTouch.dll` | 12 | Marker adapter; local touch input follows standard input packets |
 
 The update guard is deliberately conservative: it applies only on a pure
 client. Player-only adapters affect
@@ -46,7 +44,7 @@ initial spawn/resync mechanism, not a live state replication protocol.
 
 ## Conservative state snapshot baseline
 
-The scoped adapters (IDs 7-11) now have a small server-to-client state bridge
+The scoped adapters (IDs 8-11) now have a small server-to-client state bridge
 for state that the normal multiplayer packets do not expose. The server samples target-mod
 `IUpdateable` components every 0.2 seconds, sends only changed fields, and
 performs a full refresh every 5 seconds. It accepts only bounded scalar values

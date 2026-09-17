@@ -23,7 +23,7 @@
   <Target Name="PackageMod" AfterTargets="Build">
     <PropertyGroup>
       <ModTempDir>$(IntermediateOutputPath)ModTemp\</ModTempDir>
-      <ModOutputPath Condition="'$(ModOutputPath)' == ''">..\Survivalcraft.Test\bin\$(Configuration)\net10.0-windows\win-x64\Mods\</ModOutputPath>
+      <ModOutputPath Condition="'$(ModOutputPath)' == ''">..\Survivalcraft.Test\bin\$(Configuration)\net10.0-windows\$(WindowsRuntimeIdentifier)\Mods\</ModOutputPath>
     </PropertyGroup>
     <RemoveDir Directories="$(ModTempDir)" />
     <MakeDir Directories="$(ModTempDir)" />

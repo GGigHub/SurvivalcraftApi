@@ -21,35 +21,74 @@ public static class WonderfulEraCompatNetPatcher {
             input,
             new ReaderParameters { InMemory = true, ReadSymbols = false });
         ModuleDefinition module = assembly.MainModule;
-        MethodReference bridge = ResolveBridge(
+        bool patched = false;
+        patched |= PatchMethod(
             module,
-            nameof(WonderfulEraCompatNetRuntime.TrySyncVehicleControl));
-        TypeDefinition loader = FindType(assembly, "WonderfulEra.WonderfulEraModLoader");
-        MethodDefinition method = loader?.Methods.FirstOrDefault(candidate =>
-            !candidate.IsStatic
-            && candidate.Name == "OnPlayerControlOtherMount"
-            && candidate.ReturnType.FullName == "System.Void"
-            && candidate.HasBody
-            && candidate.Parameters.Count == 3
-            && candidate.Parameters[0].ParameterType.FullName == typeof(ComponentPlayer).FullName
-            && candidate.Parameters[1].ParameterType.FullName == "System.Boolean"
-            && candidate.Parameters[2].ParameterType.FullName == "System.Boolean&");
-        if (method == null || bridge == null || ContainsBridgeCall(method, bridge)) {
+            "WonderfulEra.WonderfulEraModLoader",
+            "OnPlayerControlOtherMount",
+            nameof(WonderfulEraCompatNetRuntime.TrySyncVehicleControl),
+            candidate => !candidate.IsStatic
+                && candidate.ReturnType.FullName == "System.Void"
+                && candidate.HasBody
+                && candidate.Parameters.Count == 3
+                && candidate.Parameters[0].ParameterType.FullName == typeof(ComponentPlayer).FullName
+                && candidate.Parameters[1].ParameterType.FullName == "System.Boolean"
+                && candidate.Parameters[2].ParameterType.FullName == "System.Boolean&",
+            (method, processor, bridge) => {
+                Instruction originalStart = method.Body.Instructions[0];
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_1));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_2));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_3));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Call, bridge));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Brfalse, originalStart));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ret));
+            });
+        patched |= PatchMethod(
+            module,
+            "WonderfulEra.ComponentRiderN",
+            "StartMounting",
+            nameof(WonderfulEraCompatNetRuntime.TrySyncRiderMounting),
+            candidate => !candidate.IsStatic
+                && candidate.ReturnType.FullName == "System.Void"
+                && candidate.HasBody
+                && candidate.Parameters.Count == 1
+                && candidate.Parameters[0].ParameterType.FullName == typeof(ComponentMount).FullName,
+            (method, processor, bridge) => {
+                Instruction originalStart = method.Body.Instructions[0];
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_0));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_1));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Call, bridge));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Brfalse, originalStart));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ret));
+            });
+        if (!patched) {
             return false;
         }
-
-        ILProcessor il = method.Body.GetILProcessor();
-        Instruction originalStart = method.Body.Instructions[0];
-        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_1));
-        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_2));
-        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_3));
-        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Call, bridge));
-        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Brfalse, originalStart));
-        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ret));
 
         using MemoryStream output = new();
         assembly.Write(output, new WriterParameters { WriteSymbols = false });
         image.Bytes = output.ToArray();
+        return true;
+    }
+
+    private static bool PatchMethod(
+        ModuleDefinition module,
+        string typeFullName,
+        string methodName,
+        string bridgeMethodName,
+        Func<MethodDefinition, bool> predicate,
+        Action<MethodDefinition, ILProcessor, MethodReference> inject) {
+        MethodReference bridge = ResolveBridge(module, bridgeMethodName);
+        TypeDefinition type = FindType(module.Assembly, typeFullName);
+        MethodDefinition method = type?.Methods.FirstOrDefault(candidate =>
+            !candidate.IsStatic
+            && candidate.Name == methodName
+            && predicate(candidate));
+        if (method == null || bridge == null || ContainsBridgeCall(method, bridge)) {
+            return false;
+        }
+
+        inject(method, method.Body.GetILProcessor(), bridge);
         return true;
     }
 

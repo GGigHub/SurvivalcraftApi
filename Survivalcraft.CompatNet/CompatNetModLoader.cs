@@ -8,10 +8,8 @@ public sealed class CompatNetModLoader : ModLoader {
     private static readonly GunCompatNetAdapter s_gunAdapter = new();
     private static readonly CommandCompatNetAdapter s_commandAdapter = new();
     private static readonly ElytronCompatNetAdapter s_elytronAdapter = new();
-    private static readonly NeorxnaCompatNetAdapter s_neorxnaAdapter = new();
     private static readonly EnchantmentCompatNetAdapter s_enchantmentAdapter = new();
     private static readonly MCHszrCompatNetAdapter s_mchszrAdapter = new();
-    private static readonly SushiTouchCompatNetAdapter s_sushiTouchAdapter = new();
     private static readonly object s_preloadSync = new();
 
     private static readonly ICompatNetAdapter[] s_builtinAdapters = CreateBuiltInAdapters();
@@ -23,10 +21,8 @@ public sealed class CompatNetModLoader : ModLoader {
             s_gunAdapter,
             s_commandAdapter,
             s_elytronAdapter,
-            s_neorxnaAdapter,
             s_enchantmentAdapter,
-            s_mchszrAdapter,
-            s_sushiTouchAdapter
+            s_mchszrAdapter
         ];
         adapters.AddRange(
             ScopedUpdateGuardCompatNetAdapter.CreatePresets()
