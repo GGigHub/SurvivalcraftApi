@@ -2,7 +2,7 @@ using System.Text;
 using Engine;
 
 namespace Game {
-    public static class ExternalContentManager {
+    public static partial class ExternalContentManager {
         public static List<IExternalContentProvider> m_providers;
         public static string fName = "ExternalContentManager";
 

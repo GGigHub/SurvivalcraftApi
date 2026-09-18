@@ -41,9 +41,9 @@ namespace Game
                 Type = type
             };
             using MemoryStream analysisStream = new(data, writable: false);
-            RemoteImportPreparation preparation = RemoteImportContent.Analyze(m_selfPackageName, requestId, request, analysisStream);
+            ExternalContentPreparation preparation = ExternalContentManager.PrepareExternalContent(m_selfPackageName, requestId, request, analysisStream);
             using MemoryStream importStream = new(data, writable: false);
-            RemoteImportContent.Import(m_selfPackageName, importStream, preparation, overwriteExisting: true);
+            ExternalContentManager.ImportPreparedExternalContent(m_selfPackageName, importStream, preparation, overwriteExisting: true);
         }
 
         public bool ImportDataFile(byte[] data, ModpackItem item)

@@ -6,53 +6,10 @@ using Engine;
 
 namespace Game
 {
-    /// <summary>
-    /// 识别远程内容、检查本地冲突，并执行已准备内容的导入。
-    /// </summary>
-    internal static class RemoteImportContent
+    // 外部内容导入准备：识别类型、检测本地冲突，产出 ExternalContentPreparation 供 UI 确认与导入。
+    public static partial class ExternalContentManager
     {
-        public static RemoteImportRequest CreateRequest(string rawUrl, string preferredFileName = null)
-        {
-            string url = (rawUrl ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(url))
-            {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "EnterResourceLink"));
-            }
-            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri)
-                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-            {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "InvalidUrl"));
-            }
-
-            // 先解码再取文件名：%2F%2E%2E 等转义必须先展开，否则 ".." 段会随文件名
-            // 一路带入引擎 ImportMod 的 CombinePaths，构成远程链接任意路径写入。
-            string fileName = string.IsNullOrWhiteSpace(preferredFileName)
-                ? Storage.GetFileName(Uri.UnescapeDataString(uri.AbsolutePath ?? string.Empty))
-                : Storage.GetFileName(preferredFileName.Trim());
-            if (string.IsNullOrWhiteSpace(fileName)
-                || fileName.IndexOf('/') >= 0
-                || fileName.IndexOf('\\') >= 0
-                || fileName == "."
-                || fileName == "..")
-            {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "CannotRecognizeFileName"));
-            }
-
-            ExternalContentType type = ResolveType(fileName);
-            if (type == ExternalContentType.Unknown)
-            {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "UnsupportedFileExtension"));
-            }
-
-            return new RemoteImportRequest
-            {
-                Url = uri.ToString(),
-                FileName = fileName,
-                Type = type
-            };
-        }
-
-        public static RemoteImportPreparation Analyze(
+        public static ExternalContentPreparation PrepareExternalContent(
             string selfPackageName,
             int requestId,
             RemoteImportRequest request,
@@ -65,7 +22,7 @@ namespace Game
                 && buffer.Count == buffer.Array.Length
                 ? buffer.Array
                 : stream.ToArray();
-            RemoteImportPreparation result = new()
+            ExternalContentPreparation result = new()
             {
                 RequestId = requestId,
                 Url = request.Url,
@@ -109,77 +66,9 @@ namespace Game
             return result;
         }
 
-        public static string Import(
-            string selfPackageName,
-            Stream stream,
-            RemoteImportPreparation result,
-            bool overwriteExisting)
-        {
-            if (result == null)
-            {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportDataIsEmpty"));
-            }
-
-            if (result.Type == ExternalContentType.Mod)
-            {
-                if (string.Equals(result.ExistingModPackageName, selfPackageName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return ModUpdateImporter.ImportSelfUpdate(stream, result.FileName, selfPackageName, result.ExistingModPath);
-                }
-
-                if (overwriteExisting && !string.IsNullOrWhiteSpace(result.ExistingModPackageName))
-                {
-                    return ModUpdateImporter.ImportModUpdate(
-                        stream,
-                        result.FileName,
-                        result.ExistingModPackageName,
-                        result.ExistingModPath);
-                }
-            }
-
-            // 内置物不可覆盖，按条目名判定（$ 前缀/空名）；队列导入的持久化项只带路径
-            // 不带名字，此时跳过判定——与收敛前队列直连导入器的行为一致。
-            if (overwriteExisting && !string.IsNullOrWhiteSpace(result.ExistingEntryName))
-            {
-                EnsureExternalContentCanBeOverwritten(result.Type, result.ExistingEntryName);
-            }
-
-            // 覆盖导入需保证"导入失败不丢用户原内容"。删不可逆，故按类型分策：
-            // 文件型（家具包/材质/皮肤）导入会原地写目标 → 交带备份回滚的导入器，先备份再覆盖、失败还原。
-            // World 不参与覆盖（见 FindExistingExternalContentName 注释）：游戏原生导入总建新目录
-            // （World/World1/…自动编号），重复导入即天然副本，永远走普通导入。
-            if (overwriteExisting && !string.IsNullOrWhiteSpace(result.ExistingEntryFilePath))
-            {
-                return ExternalContentImporter.Import(stream, result.Type, result.FileName, result.ExistingEntryFilePath);
-            }
-
-            // 原始字节透传：密文落盘、密文安装，引擎加载期自解密（ModsManager.GetScmods）。
-            return ExternalContentManager.ImportExternalContentSync(stream, result.Type, result.FileName);
-        }
-
-        private static string GetExistingExternalContentFilePath(ExternalContentType type, string existingName)
-        {
-            return type switch
-            {
-                ExternalContentType.FurniturePack => FurniturePacksManager.GetFileName(existingName),
-                ExternalContentType.BlocksTexture => BlocksTexturesManager.GetFileName(existingName),
-                ExternalContentType.CharacterSkin => CharacterSkinsManager.GetFileName(existingName),
-                _ => null,
-            };
-        }
-
         public static string GetContentTypeDisplayName(ExternalContentType type)
         {
             return EnumDisplayName.GetEnumDisplayName(type, EnumDisplayName.GetEnumDisplayName(CommunityFileType.Unknown));
-        }
-
-        internal static ExternalContentType ResolveType(string fileName)
-        {
-            ExternalContentType type = ExternalContentManager.ExtensionToType(
-                Storage.GetExtensionBCL(fileName ?? string.Empty));
-            return ExternalContentManager.IsEntryTypeDownloadSupported(type)
-                ? type
-                : ExternalContentType.Unknown;
         }
 
         /// <summary>
@@ -205,7 +94,7 @@ namespace Game
             };
         }
 
-        // 这些查找均在 Analyze 中被调用，而 Analyze 经由远程导入预备（Task.Run）与整合包导入器
+        // 这些查找均在 PrepareExternalContent 中被调用，而本方法经由远程导入预备（Task.Run）与整合包导入器
         // （工作流后台 foreach）运行在后台线程。游戏的 Update*List() 对其内部 List 做 Clear()+Add()，
         // 主线程渲染/界面可能并发枚举同一列表 → InvalidOperationException 或脏读。
         // 故把 Update*List() 与枚举整体封送到主线程同步执行（Dispatch 内联于主线程、阻塞后台线程
@@ -312,6 +201,17 @@ namespace Game
             return found;
         }
 
+        private static string GetExistingExternalContentFilePath(ExternalContentType type, string existingName)
+        {
+            return type switch
+            {
+                ExternalContentType.FurniturePack => FurniturePacksManager.GetFileName(existingName),
+                ExternalContentType.BlocksTexture => BlocksTexturesManager.GetFileName(existingName),
+                ExternalContentType.CharacterSkin => CharacterSkinsManager.GetFileName(existingName),
+                _ => null,
+            };
+        }
+
         private static string NormalizeName(string name) => (name ?? string.Empty).Trim();
 
         private static bool NamesMatch(string left, string right)
@@ -320,37 +220,5 @@ namespace Game
                 && !string.IsNullOrWhiteSpace(right)
                 && string.Equals(NormalizeName(left), NormalizeName(right), StringComparison.OrdinalIgnoreCase);
         }
-    }
-
-    internal sealed class RemoteImportRequest
-    {
-        public string Url { get; set; }
-        public string FileName { get; set; }
-        public ExternalContentType Type { get; set; }
-    }
-
-    internal sealed class RemoteImportPreparation
-    {
-        public int RequestId { get; set; }
-        public string Url { get; set; }
-        public string FileName { get; set; }
-        public ExternalContentType Type { get; set; }
-        public byte[] FileData { get; set; }
-        public string DisplayName { get; set; }
-        public string ExistingEntryName { get; set; }
-        public string ExistingEntryFilePath { get; set; }
-        public string ExistingDisplayName { get; set; }
-        public string ExistingModPackageName { get; set; }
-        public string ExistingModPath { get; set; }
-        public bool RequiresRestart { get; set; }
-        public string Error { get; set; }
-        public bool ArchiveSaved { get; set; }
-        public ModpackManifest Manifest { get; set; }
-        public IReadOnlyDictionary<string, byte[]> EmbeddedFiles { get; set; }
-        public byte[] OriginalData { get; set; }
-
-        public bool RequiresOverwriteConfirmation =>
-            !string.IsNullOrWhiteSpace(ExistingEntryName)
-            || !string.IsNullOrWhiteSpace(ExistingModPackageName);
     }
 }

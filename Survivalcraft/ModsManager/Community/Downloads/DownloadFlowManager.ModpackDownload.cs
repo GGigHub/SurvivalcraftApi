@@ -180,7 +180,7 @@ namespace Game
                         // FindExistingExternalContentName 的归一匹配，Mod 补 ModsPath 文件名直查。
                         // World 不参与判定：游戏原生导入总建新目录（World/World1/…自动编号），
                         // 重复导入即天然副本，整合包的世界项每次都重新下载导入。
-                        RemoteImportContent.FindExistingExternalContentName(type, fileName) != null
+                        ExternalContentManager.FindExistingExternalContentName(type, fileName) != null
                         || LocalModStateStore.FindExactLocalDownloadFilePath(type, fileName) != null);
 
                 if (saveManifestRecord)

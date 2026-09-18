@@ -52,9 +52,9 @@ namespace Game
                     stream =>
                     {
                         item.Progress.Set(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "Importing"), 1f, true);
-                        // 队列项字段拼装 Preparation 后统一走 RemoteImportContent.Import 决策树
-                        // （自更新/覆盖更新/覆盖回滚/普通导入），与链接导入共用一套分支口径。
-                        RemoteImportPreparation preparation = new()
+                        // 队列项字段拼装准备结果后统一走 ExternalContentManager.ImportPreparedExternalContent
+                        // 决策树（自更新/覆盖更新/覆盖回滚/普通导入），与链接导入共用一套分支口径。
+                        ExternalContentPreparation preparation = new()
                         {
                             Type = item.Type,
                             FileName = item.FileName,
@@ -66,7 +66,7 @@ namespace Game
                                 : item.ReplaceExistingModPath,
                             ExistingEntryFilePath = item.OverwriteExistingFilePath
                         };
-                        return RemoteImportContent.Import(ModIdentity.PackageName, stream, preparation, overwriteExisting: true);
+                        return ExternalContentManager.ImportPreparedExternalContent(ModIdentity.PackageName, stream, preparation, overwriteExisting: true);
                     },
                     onImportCompleted: () =>
                     {

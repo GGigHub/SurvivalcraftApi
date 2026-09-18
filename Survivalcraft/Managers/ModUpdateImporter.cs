@@ -11,7 +11,7 @@ namespace Game
     internal static class ModUpdateImporter
     {
         // 旧安装文件路径由调用方在分析/确认阶段查得（封送主线程的权威口径，见
-        // RemoteImportContentService.FindInstalledMod），导入线程不再重扫 ModListAll：
+        // ExternalContentManager.FindInstalledMod），导入线程不再重扫 ModListAll：
         // 后台裸枚举与主线程列表重建并发，靠吞异常降级会漏删旧文件。
         public static string ImportSelfUpdate(Stream stream, string fileName, string packageName, string existingModFilePath = null)
         {
