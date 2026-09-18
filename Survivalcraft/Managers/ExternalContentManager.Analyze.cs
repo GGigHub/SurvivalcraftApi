@@ -9,6 +9,42 @@ namespace Game
     // 外部内容导入准备：识别类型、检测本地冲突，产出 ExternalContentPreparation 供 UI 确认与导入。
     public static partial class ExternalContentManager
     {
+        /// <summary>
+        /// 便捷重载：任意流（可为 provider/下载文件流）缓冲为内存流后走统一准备。
+        /// 已是 MemoryStream 则零拷贝接管（调用方此后不得再读写原流）；否则整体
+        /// 缓冲后立即释放原流。导入阶段只消费 preparation.FileData。
+        /// </summary>
+        public static ExternalContentPreparation PrepareExternalContent(
+            string selfPackageName,
+            int requestId,
+            string fileName,
+            ExternalContentType type,
+            Stream stream)
+        {
+            MemoryStream buffer = stream as MemoryStream;
+            if (buffer != null)
+            {
+                buffer.Position = 0;
+            }
+            else
+            {
+                buffer = new MemoryStream();
+                try
+                {
+                    stream.CopyTo(buffer);
+                }
+                finally
+                {
+                    stream.Dispose();
+                }
+            }
+            return PrepareExternalContent(selfPackageName, requestId, new RemoteImportRequest
+            {
+                FileName = fileName,
+                Type = type
+            }, buffer);
+        }
+
         public static ExternalContentPreparation PrepareExternalContent(
             string selfPackageName,
             int requestId,

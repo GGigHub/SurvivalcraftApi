@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Game
 {
@@ -29,5 +30,23 @@ namespace Game
         public bool RequiresOverwriteConfirmation =>
             !string.IsNullOrWhiteSpace(ExistingEntryName)
             || !string.IsNullOrWhiteSpace(ExistingModPackageName);
+
+        /// <summary>
+        /// 覆盖确认框是否提供"导入为副本"：仅家具包——引擎重名时自动另起新名保留旧包；
+        /// 材质/皮肤是原地覆盖、Mod 抛同名异常，均无安全的副本语义。
+        /// </summary>
+        public bool CanRenameOnOverwrite => Type == ExternalContentType.FurniturePack;
+
+        /// <summary>覆盖确认框文案：资源类型 + 已存在的本地项显示名回退链。</summary>
+        public string GetOverwriteConfirmationMessage()
+        {
+            string resourceTypeName = ExternalContentManager.GetContentTypeDisplayName(Type);
+            string existingName = ExistingDisplayName ?? ExistingEntryName ?? FileName;
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                LanguageControl.Get("ScbbsPlusRemoteImportManager", "LocalAlreadyExistsOverwriteIt"),
+                resourceTypeName,
+                existingName);
+        }
     }
 }

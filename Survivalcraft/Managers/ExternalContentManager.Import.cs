@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Engine;
 
 namespace Game
@@ -57,6 +58,33 @@ namespace Game
 
             // 原始字节透传：密文落盘、密文安装，引擎加载期自解密（ModsManager.GetScmods）。
             return ImportExternalContentSync(stream, result.Type, result.FileName);
+        }
+
+        /// <summary>
+        /// 异步壳：后台线程执行 ImportPreparedExternalContent，成功/失败经回调返回
+        ///（镜像 ImportExternalContent 的异步模式）。导入只消费 preparation.FileData。
+        /// </summary>
+        public static void ImportPreparedExternalContentAsync(
+            string selfPackageName,
+            ExternalContentPreparation preparation,
+            bool overwriteExisting,
+            Action<string> success,
+            Action<Exception> failure)
+        {
+            Task.Run(
+                delegate {
+                    try {
+                        if (preparation?.FileData == null) {
+                            throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportDataIsEmpty"));
+                        }
+                        using MemoryStream stream = new(preparation.FileData, writable: false);
+                        success?.Invoke(ImportPreparedExternalContent(selfPackageName, stream, preparation, overwriteExisting));
+                    }
+                    catch (Exception obj) {
+                        failure?.Invoke(obj);
+                    }
+                }
+            );
         }
 
         /// <summary>
