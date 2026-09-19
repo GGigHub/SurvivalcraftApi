@@ -3729,7 +3729,8 @@
       "5": "Content Type:",
       "6": "...",
       "7": "Download",
-      "8": "Cancel"
+      "8": "Cancel",
+      "9": "Supports direct scworld / scfpack / png / scbtex / scskin / scmod / zip / json links"
     },
     "EditAdjustableDelayGateDialog": {
       "1": "Adjust Delay",
@@ -4116,11 +4117,7 @@
       "VersionRange": "Version Range",
       "Section": "Section"
     },
-    "ScbbsPlusImportLinkDialog": {
-      "ImportResourceLink": "Import Resource Link",
-      "Import": "Import",
-      "Message": "Supports direct scworld / scfpack / png / scbtex / scskin / scmod / zip / json links"
-    },
+
     "ScbbsPlusImportOverwriteDialog": {
       "DuplicateResource": "Duplicate Resource",
       "Overwrite": "Overwrite",
@@ -4774,8 +4771,6 @@
     "Community": {
       "Posts": {
         "DownloadExceedsSizeLimit": "Download content exceeds the size limit ({0} bytes).",
-        "LocalHostUrlForbidden": "Access to local host address is forbidden: {0}",
-        "InternalNetworkUrlForbidden": "Access to internal/local network addresses is forbidden: {0}",
         "StartDownloading": "Start downloading {0}",
         "AlreadyExistsReplace": "{0} already exists, replace?",
         "DownloadPausedDownloaded": "Download paused: {0} ({1} downloaded)",

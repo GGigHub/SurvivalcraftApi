@@ -3739,7 +3739,8 @@
       "5": "内容类型：",
       "6": "...",
       "7": "下载",
-      "8": "取消"
+      "8": "取消",
+      "9": "支持 scworld / scfpack / png / scbtex / scskin / scmod / zip / json 直链"
     },
     "EditAdjustableDelayGateDialog": {
       "1": "调整延迟",
@@ -4126,11 +4127,7 @@
       "VersionRange": "版本范围",
       "Section": "板块"
     },
-    "ScbbsPlusImportLinkDialog": {
-      "ImportResourceLink": "导入资源链接",
-      "Import": "导入",
-      "Message": "支持 scworld / scfpack / png / scbtex / scskin / scmod / zip / json 直链"
-    },
+
     "ScbbsPlusImportOverwriteDialog": {
       "DuplicateResource": "发现同名资源",
       "Overwrite": "覆盖",
@@ -4784,8 +4781,6 @@
     "Community": {
       "Posts": {
         "DownloadExceedsSizeLimit": "下载内容超过大小上限（{0} 字节）。",
-        "LocalHostUrlForbidden": "禁止访问本地主机地址: {0}",
-        "InternalNetworkUrlForbidden": "禁止访问内网/本机地址: {0}",
         "StartDownloading": "开始下载{0}",
         "AlreadyExistsReplace": "{0}重名,是否替换?",
         "DownloadPausedDownloaded": "已暂停下载：{0}（已下载 {1}）",

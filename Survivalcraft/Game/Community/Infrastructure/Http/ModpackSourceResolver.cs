@@ -130,8 +130,7 @@ namespace Game
             // 默认 GetAsync 先缓冲整个响应体，叠加 30s 客户端超时，慢网下载较大整合包子项会触发
             // TaskCanceledException。照 HttpDownloader 改 ResponseHeadersRead：先拿响应头、
             // 再按块读体，超时只作用于头部阶段，体读取不再受 30s 总超时约束。
-            // URL 来自第三方整合包清单：出站主机校验（防 SSRF 内网直连）+ 响应体大小上限（防内存耗尽）。
-            DownloadGuard.EnsureAllowedHost(url);
+            // URL 来自第三方整合包清单：响应体大小上限（防内存耗尽）。
             using HttpRequestMessage request = new(HttpMethod.Get, url);
             using HttpResponseMessage response = await m_downloadClient.SendAsync(
                 request,

@@ -1,64 +1,18 @@
-<CanvasWidget xmlns="runtime-namespace:Game">
-
-  <CanvasWidget Size="640, 420" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
-    <BevelledRectangleWidget Style="{Styles/DialogArea}" />
-    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="0, 15">
-      
-      <LabelWidget  Text="[DownloadContentFromLinkDialog:1]" HorizontalAlignment="Center"/>
-
-      <CanvasWidget Size="0, 5" />
-
-      <CanvasWidget Size="Infinity, 40">
-        <LabelWidget  Color="128, 128, 128" Text="[DownloadContentFromLinkDialog:2]" HorizontalAlignment="Center" TextAnchor="HorizontalCenter" WordWrap="true" Margin="10, 0"/>
-      </CanvasWidget>
-
-      <CanvasWidget Size="0, Infinity" />
-
-      <StackPanelWidget>
-        <CanvasWidget Size="180, 70">
-          <LabelWidget Text="[DownloadContentFromLinkDialog:3]" Color="128, 128, 128" HorizontalAlignment="Far" VerticalAlignment="Center"/>
-        </CanvasWidget>
-        <CanvasWidget Size="20, 0" />
-        <CanvasWidget Size="Infinity, 45" VerticalAlignment="Center">
-          <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
-          <TextBoxWidget Name="DownloadContentFromLinkDialog.Link" Size="Infinity, 45" Margin="10, 0" MaximumLength="1024"/>
-        </CanvasWidget>
-        <CanvasWidget Size="30, 0" />
-      </StackPanelWidget>
-
-      <StackPanelWidget>
-        <CanvasWidget Size="180, 70">
-          <LabelWidget Text="[DownloadContentFromLinkDialog:4]" Color="128, 128, 128" HorizontalAlignment="Far" VerticalAlignment="Center"/>
-        </CanvasWidget>
-        <CanvasWidget Size="20, 0" />
-        <CanvasWidget Size="Infinity, 45" VerticalAlignment="Center">
-          <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
-          <TextBoxWidget Name="DownloadContentFromLinkDialog.Name" Size="Infinity, 45" Margin="10, 0" MaximumLength="50"/>
-        </CanvasWidget>
-        <CanvasWidget Size="30, 0" />
-      </StackPanelWidget>
-
-      <StackPanelWidget>
-        <CanvasWidget Size="180, 70">
-          <LabelWidget Text="[DownloadContentFromLinkDialog:5]" Color="128, 128, 128" HorizontalAlignment="Far" VerticalAlignment="Center"/>
-        </CanvasWidget>
-        <CanvasWidget Size="20, 0" />
-        <RectangleWidget Name="DownloadContentFromLinkDialog.TypeIcon" FillColor="255, 255, 255" OutlineColor="0, 0, 0, 0" Size="64, 64" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4, 0"/>
-        <CanvasWidget Size="4, 0" />
-        <LabelWidget Name="DownloadContentFromLinkDialog.Type" VerticalAlignment="Center"/>
-        <CanvasWidget Size="10, 0" />
-        <BevelledButtonWidget Name="DownloadContentFromLinkDialog.ChangeType" Text="[DownloadContentFromLinkDialog:6]" Style="{Styles/ButtonStyle_70x60}" VerticalAlignment="Center"/>
-      </StackPanelWidget>
-
-      <CanvasWidget Size="0, Infinity" />
-
-      <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
-        <BevelledButtonWidget Name="DownloadContentFromLinkDialog.Download" Style="{Styles/ButtonStyle_310x60}" Text="[DownloadContentFromLinkDialog:7]" />
-        <CanvasWidget Size="40, 0" />
-        <BevelledButtonWidget Name="DownloadContentFromLinkDialog.Cancel" Style="{Styles/ButtonStyle_160x60}" Text="[DownloadContentFromLinkDialog:8]"/>
-      </StackPanelWidget>
-      
+<CanvasWidget xmlns="runtime-namespace:Game" Size="600, 320" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
+    <LabelWidget Text="[DownloadContentFromLinkDialog:1]" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5" />
+    <LabelWidget Text="[DownloadContentFromLinkDialog:9]" Color="128, 128, 128" HorizontalAlignment="Center" WordWrap="true" Margin="10, 5" />
+    <CanvasWidget Size="0, Infinity" />
+    <CanvasWidget Margin="10, 10">
+      <BevelledRectangleWidget Size="Infinity, 50" Style="{Styles/TextBoxArea}" />
+      <TextBoxWidget Name="DownloadContentFromLinkDialog.UrlBox" Color="255, 255, 255" Margin="6, 0" VerticalAlignment="Center" HorizontalAlignment="Stretch" MaximumLength="2048" />
+    </CanvasWidget>
+    <CanvasWidget Size="0, Infinity" />
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
+      <BevelledButtonWidget Name="DownloadContentFromLinkDialog.ConfirmButton" Text="[DownloadContentFromLinkDialog:7]" Style="{Styles/ButtonStyle_160x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="DownloadContentFromLinkDialog.CancelButton" Text="[DownloadContentFromLinkDialog:8]" Style="{Styles/ButtonStyle_160x60}" />
     </StackPanelWidget>
-  </CanvasWidget>
-
+  </StackPanelWidget>
 </CanvasWidget>

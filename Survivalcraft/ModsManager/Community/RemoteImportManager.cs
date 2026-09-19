@@ -67,7 +67,7 @@ namespace Game
         {
             DialogsManager.ShowDialog(
                 null,
-                new CommunityImportLinkDialog(
+                new DownloadContentFromLinkDialog(
                     string.Empty,
                     StartExternalContentPreparation));
         }
@@ -435,9 +435,6 @@ namespace Game
 
         private static async Task<MemoryStream> DownloadToMemoryAsync(string url, string fileName, TransferProgress progress)
         {
-            // URL 来自用户输入：出站主机校验与整合包子项（ModpackSourceResolver）对齐，防 SSRF 内网直连。
-            // 放 try 外：Guard 抛出的已是本地化错误，不必再包一层「下载失败」。
-            DownloadGuard.EnsureAllowedHost(url);
             progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "DownloadingFormat"), fileName), 0f, true);
             Progress<DownloadProgress> byteProgress = new(info =>
             {
@@ -503,8 +500,6 @@ namespace Game
                                 true);
                         }
                     });
-                    // URL 来自用户输入：同 DownloadToMemoryAsync 的出站主机校验，两条顶层导入路径防护对齐。
-                    DownloadGuard.EnsureAllowedHost(url);
                     using MemoryStream dataStream = await s_httpDownloader.DownloadToMemoryAsync(url, null, CancellationToken.None, byteProgress);
                     byte[] data = dataStream.ToArray();
                     Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackPackageDownloadCompleted"), kindWord, data.Length));

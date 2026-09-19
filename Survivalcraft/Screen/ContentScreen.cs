@@ -179,7 +179,7 @@ namespace Game {
                 );*/
             }
             if (m_linkButton.IsClicked) {
-                DialogsManager.ShowDialog(null, new DownloadContentFromLinkDialog());
+                RemoteImportManager.OpenImportLinkDialog();
             }
             if (m_manageButton.IsClicked) {
                 ScreensManager.SwitchScreen("ManageContent");
