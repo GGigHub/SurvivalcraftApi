@@ -194,6 +194,9 @@ public static class OriginalCommunityContentManager {
             delegate(string downloadedName) {
                 m_idToAddressMap[MakeContentIdString(preparation.Type, downloadedName)] = address;
                 Feedback(address, "Success", null, hash, size, userId, progress, delegate { }, delegate { });
+                if (preparation.RequiresRestart) {
+                    RestartConfirmDialog.ShowModImportRestartConfirm(preparation.FileName, "original-community");
+                }
                 success();
             },
             delegate(Exception error) {

@@ -83,11 +83,9 @@ namespace Game
                         : existingMod.modInfo.Name;
                     result.ExistingModPackageName = existingMod.modInfo.PackageName;
                     result.ExistingModPath = existingMod.ModFilePath;
-                    result.RequiresRestart = string.Equals(
-                        existingMod.modInfo.PackageName,
-                        selfPackageName,
-                        StringComparison.OrdinalIgnoreCase);
                 }
+                // 模组一律重启后才加载（引擎启动期扫描 Mods 目录）：新装/覆盖/自更新都提示重启。
+                result.RequiresRestart = true;
                 return result;
             }
 

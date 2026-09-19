@@ -4177,7 +4177,7 @@
     },
     "ScbbsPlusRestartConfirmDialog": {
       "Restart": "Restart",
-      "RebootHere": "Reboot here"
+      "RestartToCurrentScreen": "Reboot here"
     }
   },
   "FireworksBlock": {
@@ -5312,8 +5312,6 @@
     "ShowConflictDialogFailed": "[ScbbsPlus] Failed to show the conflict dialog: {0}",
     "RemoteImportPrepareTaskFaulted": "[ScbbsPlus] Remote import preparation task faulted: {0}",
     "RemoteImportTaskFaulted": "[ScbbsPlus] Remote import task faulted: {0}",
-    "UserChoseNormalRestartOnImportComplete": "[ScbbsPlus] User chose a normal restart in the remote import completion prompt. file={0}",
-    "UserChoseRestartIntoItOnImportComplete": "[ScbbsPlus] User chose restart-into-it in the remote import completion prompt. file={0}",
     "RemoteImportCompletionFaulted": "[ScbbsPlus] Remote import completion handling faulted: {0}",
     "StartModpackImport": "[ScbbsPlus] Starting modpack import url={0} fileName={1}",
     "DownloadModpackPackage": "[ScbbsPlus] Downloading the modpack{0} url={1}",
@@ -5342,8 +5340,6 @@
       "DataFileHostUnavailable": "{0} cannot be imported: this page cannot handle modpack data files. Use the modpack download in Local Resources instead.",
       "Modpack": "Modpack",
       "Imported": "{0} imported.",
-      "UpdateComplete": "Update Complete",
-      "ImportedRestartPrompt": "{0} has been imported and marked as pending restart. Restart the game now to apply it?",
       "ImportResource": "Import Resource",
       "Importing": "Importing...",
       "DownloadingFormat": "Downloading: {0}",
@@ -5517,8 +5513,6 @@
     "SaveDownloadQueueFailed": "[ScbbsPlus] Failed to save the download queue: {0}",
     "CleanDownloadTempFileFailed": "[ScbbsPlus] Failed to clean up a download temporary file: {0}",
     "DownloadTaskFaulted": "[ScbbsPlus] Download task faulted: {0}",
-    "UserChoseNormalRestartOnImportComplete": "[ScbbsPlus] User chose a normal restart in the import completion prompt. file={0}",
-    "UserChoseRestartIntoItOnImportComplete": "[ScbbsPlus] User chose restart-into-it in the import completion prompt. file={0}",
     "BackgroundManifestLoadTaskFaulted": "[ScbbsPlus] Background modpack manifest loading task faulted: {0}",
     "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] Background modpack item download task faulted: {0}",
     "ImportCompletedCallbackFaulted": "[ScbbsPlus] Import completion callback faulted (the import itself succeeded): {0}",
@@ -5535,8 +5529,6 @@
       "UnknownItemCategory": "Unknown item category: {0}",
       "DataFileHostUnavailable": "{0} cannot be imported: this page cannot handle modpack data files. Use the modpack download in Local Resources instead.",
       "Imported": "{0} imported.",
-      "UpdateComplete": "Update Complete",
-      "ImportedRestartPrompt": "{0} has been imported and marked as pending restart. Restart the game now to apply it?",
       "ImportResource": "Import Resource",
       "Importing": "Importing...",
       "DownloadingFormat": "Downloading: {0}",
@@ -5671,8 +5663,12 @@
     }
   },
   "ScbbsPlusRestartConfirmDialog": {
+    "UserChoseNormalRestart": "[ScbbsPlus] User chose a normal restart in the import completion prompt. file={0}",
+    "UserChoseRestartIntoIt": "[ScbbsPlus] User chose restart-into-it in the import completion prompt. file={0}",
     "Text": {
-      "RestartRequired": "Restart Required"
+      "RestartRequired": "Restart Required",
+      "UpdateComplete": "Update Complete",
+      "ImportedRestartPrompt": "{0} has been imported and marked as pending restart. Restart the game now to apply it?"
     }
   },
   "ScbbsPlusReviewSubmissionHandler": {

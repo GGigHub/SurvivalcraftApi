@@ -88,24 +88,7 @@ namespace Game
                         autoHideSeconds: 2.4);
                     if (result.RequiresRestart)
                     {
-                        DialogsManager.ShowDialog(
-                            null,
-                            new CommunityRestartConfirmDialog(
-                                LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "UpdateComplete"),
-                                string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ImportedRestartPrompt"), result.FileName),
-                                restartAction: () =>
-                                {
-                                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UserChoseNormalRestartOnImportComplete"), result.FileName));
-                                    PendingLocalModActions.Process("import-restart");
-                                    Window.Restart();
-                                },
-                                restartAndContinueAction: () =>
-                                {
-                                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UserChoseRestartIntoItOnImportComplete"), result.FileName));
-                                    PendingLocalModActions.Process("import-restart-continue");
-                                    ScreensManager.RestartGameToCurrentScreen();
-                                })
-                        );
+                        RestartConfirmDialog.ShowModImportRestartConfirm(result.FileName, "import");
                     }
                 }
                 else

@@ -293,23 +293,7 @@ namespace Game
                 }
                 if (result.RequiresRestart)
                 {
-                    DialogsManager.ShowDialog(
-                        null,
-                        new CommunityRestartConfirmDialog(
-                            LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "UpdateComplete"),
-                            string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "ImportedRestartPrompt"), result.FileName),
-                            restartAction: () =>
-                            {
-                                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "UserChoseNormalRestartOnImportComplete"), result.FileName));
-                                PendingLocalModActions.Process("remote-import-restart");
-                                Window.Restart();
-                            },
-                            restartAndContinueAction: () =>
-                            {
-                                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "UserChoseRestartIntoItOnImportComplete"), result.FileName));
-                                PendingLocalModActions.Process("remote-import-restart-continue");
-                                ScreensManager.RestartGameToCurrentScreen();
-                            }));
+                    RestartConfirmDialog.ShowModImportRestartConfirm(result.FileName, "remote-import");
                 }
                 else
                 {

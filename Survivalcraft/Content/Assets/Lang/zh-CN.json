@@ -4187,7 +4187,7 @@
     },
     "ScbbsPlusRestartConfirmDialog": {
       "Restart": "重启",
-      "RebootHere": "重启到此"
+      "RestartToCurrentScreen": "重启到此"
     }
   },
   "FireworksBlock": {
@@ -5322,8 +5322,6 @@
     "ShowConflictDialogFailed": "[ScbbsPlus] 显示冲突对话框失败: {0}",
     "RemoteImportPrepareTaskFaulted": "[ScbbsPlus] 远程导入准备任务异常: {0}",
     "RemoteImportTaskFaulted": "[ScbbsPlus] 远程导入任务异常: {0}",
-    "UserChoseNormalRestartOnImportComplete": "[ScbbsPlus] 用户在远程导入完成提示中选择普通重启。file={0}",
-    "UserChoseRestartIntoItOnImportComplete": "[ScbbsPlus] 用户在远程导入完成提示中选择重启到此。file={0}",
     "RemoteImportCompletionFaulted": "[ScbbsPlus] 远程导入完成处理异常: {0}",
     "StartModpackImport": "[ScbbsPlus] 开始导入整合包 url={0} fileName={1}",
     "DownloadModpackPackage": "[ScbbsPlus] 下载整合包{0} url={1}",
@@ -5352,8 +5350,6 @@
       "DataFileHostUnavailable": "{0} 无法导入：当前页面无法处理整合包数据文件，请在本地资源管理屏使用整合包下载。",
       "Modpack": "整合包",
       "Imported": "{0} 已导入。",
-      "UpdateComplete": "更新完成",
-      "ImportedRestartPrompt": "{0} 已导入，已标记为待重启加载，重启游戏后生效。是否立即重启？",
       "ImportResource": "导入资源",
       "Importing": "正在导入...",
       "DownloadingFormat": "正在下载：{0}",
@@ -5527,8 +5523,6 @@
     "SaveDownloadQueueFailed": "[ScbbsPlus] 保存下载队列失败: {0}",
     "CleanDownloadTempFileFailed": "[ScbbsPlus] 清理下载临时文件失败: {0}",
     "DownloadTaskFaulted": "[ScbbsPlus] 下载任务异常: {0}",
-    "UserChoseNormalRestartOnImportComplete": "[ScbbsPlus] 用户在导入完成提示中选择普通重启。file={0}",
-    "UserChoseRestartIntoItOnImportComplete": "[ScbbsPlus] 用户在导入完成提示中选择重启到此。file={0}",
     "BackgroundManifestLoadTaskFaulted": "[ScbbsPlus] 后台加载整合包清单任务异常: {0}",
     "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] 后台整合包子项下载任务异常: {0}",
     "ImportCompletedCallbackFaulted": "[ScbbsPlus] 导入完成回调异常（导入本身已成功）: {0}",
@@ -5545,8 +5539,6 @@
       "UnknownItemCategory": "未知的子项类别：{0}",
       "DataFileHostUnavailable": "{0} 无法导入：当前页面无法处理整合包数据文件，请在本地资源管理屏使用整合包下载。",
       "Imported": "{0} 已导入。",
-      "UpdateComplete": "更新完成",
-      "ImportedRestartPrompt": "{0} 已导入，已标记为待重启加载，重启游戏后生效。是否立即重启？",
       "ImportResource": "导入资源",
       "Importing": "正在导入...",
       "DownloadingFormat": "正在下载：{0}",
@@ -5681,8 +5673,12 @@
     }
   },
   "ScbbsPlusRestartConfirmDialog": {
+    "UserChoseNormalRestart": "[ScbbsPlus] 用户在导入完成提示中选择普通重启。file={0}",
+    "UserChoseRestartIntoIt": "[ScbbsPlus] 用户在导入完成提示中选择重启到此。file={0}",
     "Text": {
-      "RestartRequired": "重启加载"
+      "RestartRequired": "重启加载",
+      "UpdateComplete": "更新完成",
+      "ImportedRestartPrompt": "{0} 已导入，已标记为待重启加载，重启游戏后生效。是否立即重启？"
     }
   },
   "ScbbsPlusReviewSubmissionHandler": {

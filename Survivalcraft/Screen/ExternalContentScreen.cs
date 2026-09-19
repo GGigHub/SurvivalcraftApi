@@ -312,6 +312,9 @@ namespace Game {
                 overwriteExisting,
                 delegate {
                     DialogsManager.HideDialog(busyDialog);
+                    if (preparation.RequiresRestart) {
+                        RestartConfirmDialog.ShowModImportRestartConfirm(preparation.FileName, "cloud-import");
+                    }
                     if (preparation.Type != ExternalContentType.Mod) {
                         DialogsManager.ShowDialog(
                             null,
