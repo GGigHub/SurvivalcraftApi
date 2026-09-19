@@ -46,17 +46,36 @@ namespace Game
             string url,
             string resumeFilePath,
             CancellationToken cancellationToken,
-            IProgress<DownloadProgress> progress = null)
+            IProgress<DownloadProgress> progress = null,
+            Action<string> serverFileName = null)
         {
             return string.IsNullOrWhiteSpace(resumeFilePath)
-                ? DownloadFreshToMemoryAsync(url, cancellationToken, progress)
-                : DownloadResumableToMemoryAsync(url, resumeFilePath, cancellationToken, progress);
+                ? DownloadFreshToMemoryAsync(url, cancellationToken, progress, serverFileName)
+                : DownloadResumableToMemoryAsync(url, resumeFilePath, cancellationToken, progress, serverFileName);
+        }
+
+        // 服务器指定文件名（Content-Disposition）：浏览器「另存为」名的同款来源，
+        // 动态下载端点（如 LocalSend /download?fileId=…）的 URL 本身不含扩展名时，
+        // 这是文件名与类型的唯一可靠依据。回调至多一次；服务器未提供则不回调。
+        private static void ReportServerFileName(HttpResponseMessage response, Action<string> serverFileName)
+        {
+            if (serverFileName == null)
+            {
+                return;
+            }
+            System.Net.Http.Headers.ContentDispositionHeaderValue disposition = response.Content.Headers.ContentDisposition;
+            string name = disposition?.FileNameStar ?? disposition?.FileName;
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                serverFileName(name.Trim('"'));
+            }
         }
 
         private async Task<MemoryStream> DownloadFreshToMemoryAsync(
             string url,
             CancellationToken cancellationToken,
-            IProgress<DownloadProgress> progress)
+            IProgress<DownloadProgress> progress,
+            Action<string> serverFileName)
         {
             using HttpRequestMessage request = new(HttpMethod.Get, url);
             using HttpResponseMessage response = await m_httpClient.SendAsync(
@@ -64,6 +83,7 @@ namespace Game
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
             await EnsureSuccessAsync(response, cancellationToken);
+            ReportServerFileName(response, serverFileName);
 
             long? totalLength = response.Content.Headers.ContentLength;
             DownloadGuard.EnsurePayloadWithinLimit(totalLength);
@@ -100,6 +120,7 @@ namespace Game
             string resumeFilePath,
             CancellationToken cancellationToken,
             IProgress<DownloadProgress> progress,
+            Action<string> serverFileName,
             bool allowCacheReset = true)
         {
             string directory = Storage.GetDirectoryName(resumeFilePath);
@@ -129,6 +150,7 @@ namespace Game
                 request,
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
+            ReportServerFileName(response, serverFileName);
             if (response.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable && existingLength > 0)
             {
                 // ContentRange.Length 是服务器认可的总长：等于缓存长度即缓存完整。
@@ -146,6 +168,7 @@ namespace Game
                     resumeFilePath,
                     cancellationToken,
                     progress,
+                    serverFileName,
                     allowCacheReset,
                     "The server rejected the resume range and the local cache is incomplete.");
             }
@@ -161,6 +184,7 @@ namespace Game
                     resumeFilePath,
                     cancellationToken,
                     progress,
+                    serverFileName,
                     allowCacheReset,
                     "The server returned an invalid Content-Range for the resume request.");
             }
@@ -173,6 +197,7 @@ namespace Game
                     resumeFilePath,
                     cancellationToken,
                     progress,
+                    serverFileName,
                     allowCacheReset,
                     "The download source changed while resuming the cache.");
             }
@@ -227,6 +252,7 @@ namespace Game
                     resumeFilePath,
                     cancellationToken,
                     progress,
+                    serverFileName,
                     allowCacheReset,
                     "The server response body does not match its Content-Range.");
             }
@@ -239,6 +265,7 @@ namespace Game
             string resumeFilePath,
             CancellationToken cancellationToken,
             IProgress<DownloadProgress> progress,
+            Action<string> serverFileName,
             bool allowCacheReset,
             string error)
         {
@@ -252,6 +279,7 @@ namespace Game
                 resumeFilePath,
                 cancellationToken,
                 progress,
+                serverFileName,
                 allowCacheReset: false);
         }
 

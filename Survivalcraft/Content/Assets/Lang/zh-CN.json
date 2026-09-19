@@ -5310,7 +5310,7 @@
     "EnterResourceLink": "请输入资源链接。",
     "InvalidUrl": "请输入有效的 http 或 https 链接。",
     "CannotRecognizeFileName": "无法从链接中识别文件名。",
-    "UnsupportedFileExtension": "暂不支持这个文件后缀。",
+    "UnsupportedFileExtension": "无法识别资源类型。",
     "ImportDataIsEmpty": "导入数据为空。",
     "CannotOverwriteBuiltInTexture": "不能覆盖内置材质：{0}",
     "CannotOverwriteBuiltInSkin": "不能覆盖内置皮肤：{0}",

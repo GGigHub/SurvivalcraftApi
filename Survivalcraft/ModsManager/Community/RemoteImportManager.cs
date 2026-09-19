@@ -357,8 +357,20 @@ namespace Game
                 {
                     try
                     {
-                        using MemoryStream stream = await DownloadToMemoryAsync(request.Url, request.FileName, s_progress);
+                        string serverFileName = null;
+                        using MemoryStream stream = await DownloadToMemoryAsync(request.Url, request.FileName, s_progress, name => serverFileName = name);
                         s_progress.Set(LanguageControl.Get("ScbbsPlusRemoteImportManager", "CheckingLocalResources"), 1f, false);
+                        ApplyServerFileName(request, serverFileName);
+                        if (request.Type == ExternalContentType.Unknown)
+                        {
+                            return new ExternalContentPreparation
+                            {
+                                RequestId = requestId,
+                                FileName = request.FileName,
+                                Type = request.Type,
+                                Error = LanguageControl.Get("ScbbsPlusRemoteImportManager", "UnsupportedFileExtension")
+                            };
+                        }
                         return ExternalContentManager.PrepareExternalContent(ModIdentity.PackageName, requestId, request, stream);
                     }
                     catch (Exception ex)
@@ -433,7 +445,34 @@ namespace Game
             AttachImportCompletion(s_importTask, s_prepareRequestId);
         }
 
-        private static async Task<MemoryStream> DownloadToMemoryAsync(string url, string fileName, TransferProgress progress)
+        // 类型待定（URL 无扩展名）时按响应头文件名二次定型；URL 已识别出类型则不
+        // 覆盖。服务器名过 CreateRequest 同款归一与穿越校验，识别仍失败维持 Unknown，
+        // 由 PrepareExternalContent 按不支持类型统一报错。
+        private static void ApplyServerFileName(RemoteImportRequest request, string serverFileName)
+        {
+            if (request.Type != ExternalContentType.Unknown || string.IsNullOrWhiteSpace(serverFileName))
+            {
+                return;
+            }
+            string fileName = Storage.GetFileName(serverFileName.Trim());
+            if (string.IsNullOrWhiteSpace(fileName)
+                || fileName.IndexOf('/') >= 0
+                || fileName.IndexOf('\\') >= 0
+                || fileName == "."
+                || fileName == "..")
+            {
+                return;
+            }
+            ExternalContentType type = ResolveType(fileName);
+            if (type == ExternalContentType.Unknown)
+            {
+                return;
+            }
+            request.FileName = fileName;
+            request.Type = type;
+        }
+
+        private static async Task<MemoryStream> DownloadToMemoryAsync(string url, string fileName, TransferProgress progress, Action<string> serverFileName = null)
         {
             progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "Text", "DownloadingFormat"), fileName), 0f, true);
             Progress<DownloadProgress> byteProgress = new(info =>
@@ -452,7 +491,7 @@ namespace Game
             });
             try
             {
-                return await s_httpDownloader.DownloadToMemoryAsync(url, null, CancellationToken.None, byteProgress);
+                return await s_httpDownloader.DownloadToMemoryAsync(url, null, CancellationToken.None, byteProgress, serverFileName);
             }
             catch (Exception ex)
             {

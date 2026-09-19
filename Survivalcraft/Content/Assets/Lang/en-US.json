@@ -5300,7 +5300,7 @@
     "EnterResourceLink": "Please enter a resource link.",
     "InvalidUrl": "Please enter a valid http or https link.",
     "CannotRecognizeFileName": "Unable to identify a file name from the link.",
-    "UnsupportedFileExtension": "This file extension is not supported.",
+    "UnsupportedFileExtension": "Cannot recognize the resource type.",
     "ImportDataIsEmpty": "Import data is empty.",
     "CannotOverwriteBuiltInTexture": "Cannot overwrite built-in texture: {0}",
     "CannotOverwriteBuiltInSkin": "Cannot overwrite built-in skin: {0}",

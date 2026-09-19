@@ -6,6 +6,8 @@ namespace Game
     // 远程导入请求构造：URL 校验、文件名安全提取与类型识别。
     public static partial class RemoteImportManager
     {
+        // 类型按扩展名就地识别；识别不出（动态下载端点的 URL 常不带扩展名）不拒绝，
+        // 置 Unknown 留待下载完成后按响应头文件名（Content-Disposition）二次定型。
         public static RemoteImportRequest CreateRequest(string rawUrl, string preferredFileName = null)
         {
             string url = (rawUrl ?? string.Empty).Trim();
@@ -33,17 +35,11 @@ namespace Game
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "CannotRecognizeFileName"));
             }
 
-            ExternalContentType type = ResolveType(fileName);
-            if (type == ExternalContentType.Unknown)
-            {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "UnsupportedFileExtension"));
-            }
-
             return new RemoteImportRequest
             {
                 Url = uri.ToString(),
                 FileName = fileName,
-                Type = type
+                Type = ResolveType(fileName)
             };
         }
 
