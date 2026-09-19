@@ -3733,11 +3733,6 @@
     },
     "DownloadContentFromLinkDialog": {
       "1": "输入文件链接",
-      "2": "一般名称和类型会从链接自动获取，如果不能请手动输入。",
-      "3": "链接：",
-      "4": "名称：",
-      "5": "内容类型：",
-      "6": "...",
       "7": "下载",
       "8": "取消",
       "9": "支持 scworld / scfpack / png / scbtex / scskin / scmod / zip / json 直链"
@@ -4127,7 +4122,6 @@
       "VersionRange": "版本范围",
       "Section": "板块"
     },
-
     "ScbbsPlusImportOverwriteDialog": {
       "DuplicateResource": "发现同名资源",
       "Overwrite": "覆盖",

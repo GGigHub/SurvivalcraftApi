@@ -56,7 +56,8 @@ namespace Game
 
         // 服务器指定文件名（Content-Disposition）：浏览器「另存为」名的同款来源，
         // 动态下载端点（如 LocalSend /download?fileId=…）的 URL 本身不含扩展名时，
-        // 这是文件名与类型的唯一可靠依据。回调至多一次；服务器未提供则不回调。
+        // 这是文件名与类型的唯一可靠依据。仅在成功响应上报；续传缓存失效重试时
+        // 整条链路可能回调多次，调用方须以幂等方式消费。服务器未提供则不回调。
         private static void ReportServerFileName(HttpResponseMessage response, Action<string> serverFileName)
         {
             if (serverFileName == null)
@@ -150,7 +151,6 @@ namespace Game
                 request,
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
-            ReportServerFileName(response, serverFileName);
             if (response.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable && existingLength > 0)
             {
                 // ContentRange.Length 是服务器认可的总长：等于缓存长度即缓存完整。
@@ -173,6 +173,7 @@ namespace Game
                     "The server rejected the resume range and the local cache is incomplete.");
             }
             await EnsureSuccessAsync(response, cancellationToken);
+            ReportServerFileName(response, serverFileName);
 
             bool isPartial = response.StatusCode == HttpStatusCode.PartialContent;
             ContentRangeHeaderValue contentRange = response.Content.Headers.ContentRange;
