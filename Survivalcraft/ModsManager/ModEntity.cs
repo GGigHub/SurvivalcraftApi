@@ -16,6 +16,14 @@ namespace Game {
         public bool IsDisabled;
         public ModDisableReason DisableReason = ModDisableReason.Unknown;
         public long Size;
+        // 待重启是“未生效”而非禁用，与 IsDisabled 正交：磁盘有文件、包有效，本进程未加载，重启后生效
+        public bool IsPendingRestart;
+        // 磁盘文件已消失的“运行中尸体”：本体仍在 ModList（运行中可能读包内资源），重启后随 Initialize() 重建自然消失
+        public bool IsFileDeleted;
+        // 构造时记录的文件修改时间（Utc），供 rescan 对账识别“同路径覆盖升级”
+        public DateTime LastWriteTimeUtc;
+        // icon 两段加载的中间产物：后台线程解出的图像数据，GPU 上传延迟到主线程 EnsureIconTexture
+        private byte[] m_iconData;
         public bool IsDependencyChecked;
         public string LoadAfter;
         public static HashSet<string> InvalidDllNames = ["Survivalcraft.dll", "Engine.dll", "EntitySystem.dll"];
@@ -45,6 +53,7 @@ namespace Game {
         public ModEntity(string FileName, ZipArchive zipArchive) {
             ModFilePath = FileName;
             Size = Storage.GetFileSize(FileName);
+            LastWriteTimeUtc = Storage.GetFileLastWriteTime(FileName);
             ModArchive = zipArchive;
             InitResources();
         }
@@ -52,6 +61,29 @@ namespace Game {
         public virtual void LoadIcon(Stream stream) {
             Icon = Texture2D.Load(stream);
             stream.Close();
+        }
+
+        // icon 两段加载的第一段：后台线程只能解数据（纯 CPU），GPU 上传直走 GL 必须留在主线程。
+        // guard 保证 webp 先到先得，保持原 "webp 优先于 png" 语义。
+        private void ReadIconData(Stream stream) {
+            if (m_iconData != null) {
+                stream.Close();
+                return;
+            }
+            using MemoryStream ms = new();
+            stream.CopyTo(ms);
+            m_iconData = ms.ToArray();
+            stream.Close();
+        }
+
+        /// <summary>
+        ///     主线程调用：icon 图像数据已解出而纹理未建时上传 GPU；无数据则保持 null（UI 有 null 兜底）。
+        /// </summary>
+        public void EnsureIconTexture() {
+            if (Icon == null && m_iconData != null) {
+                using MemoryStream ms = new(m_iconData, writable: false);
+                Icon = Texture2D.Load(ms);
+            }
         }
 
         /// <summary>
@@ -163,8 +195,8 @@ namespace Game {
                     ModFiles.Add(zipArchiveEntry.FilenameInZip, zipArchiveEntry);
                 }
             }
-            if (GetFile("icon.webp", LoadIcon)) {
-                GetFile("icon.png", LoadIcon);
+            if (GetFile("icon.webp", ReadIconData)) {
+                GetFile("icon.png", ReadIconData);
             }
             GetFile("modinfo.json",
                 stream => {

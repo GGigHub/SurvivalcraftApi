@@ -622,6 +622,8 @@ public static class ModsManager {
                         }
                     }
                     ModListAll.Add(modEntity);
+                    // InitResources 已在后台解出 icon 数据（两段加载），此处主线程补 GPU 上传（Texture2D.Load 直走 GL）
+                    modEntity.EnsureIconTexture();
                 }
                 catch (Exception e) {
                     AddException(new Exception($"Failed to load mod [{item}]: {e}"));
