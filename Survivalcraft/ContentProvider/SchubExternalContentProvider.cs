@@ -6,6 +6,10 @@ using Engine;
 using Game.IContentReader;
 
 namespace Game {
+    // 尸体类：旧接口族（/com/files/* 云盘、/com/api/login 登录）已死，注册已移除，
+    // 由 ChineseCommunityExternalContentProvider + AuthSessionManager（新社区接口）取代。
+    // 实现整体保留备查，请勿再新增调用或引用。
+    [Obsolete]
     public class SchubExternalContentProvider : IExternalContentProvider {
         public class LoginProcessData {
             public bool IsTokenFlow;

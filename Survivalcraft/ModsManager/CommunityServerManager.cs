@@ -98,11 +98,7 @@
             if (CurrentChineseInfo != info && info.Type == Type.Chinese) {
                 CommunityContentManager.m_feedbackCache.Clear();
                 CommunityContentManager.m_idToAddressMap.Clear();
-                foreach (IExternalContentProvider provider in ExternalContentManager.m_providers) {
-                    if (provider is SchubExternalContentProvider schubProvider) {
-                        provider.Logout();
-                    }
-                }
+                // 切服不登出：认证改由 AuthSessionManager per-URL 会话承载（OnServerSwitched 各服独立保存恢复）。
                 CurrentChineseInfo = info;
             }
         }

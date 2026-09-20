@@ -1,6 +1,7 @@
 using Engine;
 
 namespace Game {
+    // 仅剩 SchubExternalContentProvider（尸体类）使用；新社区登录走 CommunityLoginDialog + AuthClient。
     public class LoginDialog : Dialog {
         public Action<byte[]> succ;
         public Action<Exception> fail;

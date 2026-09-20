@@ -513,6 +513,8 @@ namespace Game {
             });
         }
 */
+        // 旧管理接口（/com/api/zh/* 族）已死；管理流程待新接口方案，仅剩 ManageUserScreen 调用（CS0612 同步清理待办）。
+        [Obsolete]
         public static void UpdateLockState(int id,
             int lockState,
             string reason,
@@ -545,6 +547,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口（/com/api/zh/userList）已死；仅剩 ManageUserScreen 调用。
+        [Obsolete]
         public static void ResetPassword(int id, CancellableProgress progress, Action<byte[]> success, Action<Exception> failure) {
             progress ??= new CancellableProgress();
             if (!WebManager.IsInternetConnectionAvailable()) {
@@ -566,6 +570,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口 /com/api/zh/boutique 已死，仅剩旧社区屏（OldCommunityContentScreen）调用。
+        [Obsolete]
         public static void UpdateBoutique(string type,
             int id,
             int boutique,
@@ -592,6 +598,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口 /com/api/zh/hide 已死，仅剩旧社区屏（OldCommunityContentScreen）调用。
+        [Obsolete]
         public static void UpdateHidePara(int id, int isShow, CancellableProgress progress, Action<byte[]> success, Action<Exception> failure) {
             progress ??= new CancellableProgress();
             if (!WebManager.IsInternetConnectionAvailable()) {
@@ -613,6 +621,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口 /com/api/zh/deleteFile 已死，仅剩旧社区屏（OldCommunityContentScreen）调用。
+        [Obsolete]
         public static void DeleteFile(int id, CancellableProgress progress, Action<byte[]> success, Action<Exception> failure) {
             progress ??= new CancellableProgress();
             if (!WebManager.IsInternetConnectionAvailable()) {
@@ -632,6 +642,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口（/com/api/zh/isadmin）已死，方法体已短路为 false；仅剩 ContentScreen/旧社区屏调用。
+        [Obsolete]
         public static void IsAdmin(CancellableProgress progress, Action<bool> success, Action<Exception> failure) {
             success(false);
             /*progress ??= new CancellableProgress();

@@ -3219,6 +3219,10 @@
       "6": "Search",
       "7": "x"
     },
+    "ChineseCommunityExternalContentProvider": {
+      "LoggedIn": "Logged in",
+      "NotLoggedIn": "Not logged in"
+    },
     "ContentScreen": {
       "1": "Choose Content Type",
       "2": "Access content previously uploaded to one of your public storage spaces",

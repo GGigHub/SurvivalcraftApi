@@ -3229,6 +3229,10 @@
       "6": "搜索",
       "7": "x"
     },
+    "ChineseCommunityExternalContentProvider": {
+      "LoggedIn": "已登录",
+      "NotLoggedIn": "未登录"
+    },
     "ContentScreen": {
       "1": "选择获取方式",
       "2": "获取已经放置在本地存储的内容",

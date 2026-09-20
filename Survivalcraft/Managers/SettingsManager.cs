@@ -273,9 +273,17 @@ namespace Game {
         public static string MotdUpdateUrl { get; set; }
 
         public static string MotdUpdateCheckUrl { get; set; }
-        public static string ScpboxAccessToken { get; set; }
 
-        public static string ScpboxUserInfo { get; set; }
+        // 已废置：getter 恒空、写值丢弃，仅为旧代码编译保留。社区认证改由
+        // AuthSessionManager + AuthenticationSessionStore（per-URL 加密凭据文件）承载。
+#pragma warning disable CS9266 // 属性 '{1}' 的 '{0}' 访问器应使用 'field'，因为另一个访问器正在使用它。
+        [Obsolete]
+        public static string ScpboxAccessToken { get => string.Empty; set; }
+
+        // 已废置：旧昵称/账号展示缓存（仅剩旧社区屏读取）；新栈用户信息在 AuthSessionManager.CurrentUser。
+        [Obsolete]
+        public static string ScpboxUserInfo { get => string.Empty; set; }
+#pragma warning restore CS9266 // 属性 '{1}' 的 '{0}' 访问器应使用 'field'，因为另一个访问器正在使用它。
 
         public static bool MotdUseBackupUrl { get; set; }
 
@@ -603,7 +611,7 @@ namespace Game {
                 MinimumDragDistance = 10f;
                 HorizontalCreativeFlight = false;
                 DropboxAccessToken = string.Empty;
-                ScpboxAccessToken = string.Empty;
+                //ScpboxAccessToken = string.Empty;
                 MotdUpdateUrl = $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/motd?v={0}&l={1}";
                 MotdUpdateCheckUrl = $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/motd?v={0}&cmd=version_check&platform={1}&apiv={2}&l={3}";
                 MotdUpdatePeriodHours = 12.0;
@@ -631,7 +639,6 @@ namespace Game {
                     : ScreenLayout.TripleHorizontal;
                 ScreenLayout4 = ScreenLayout.Quadruple;
                 BulletinTime = string.Empty;
-                ScpboxUserInfo = string.Empty;
                 HorizontalCreativeFlight = true;
                 CreativeDragMaxStacking = true;
                 LowFPSToTimeDeceleration = 10;

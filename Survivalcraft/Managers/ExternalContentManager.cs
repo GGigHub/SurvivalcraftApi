@@ -21,7 +21,7 @@ namespace Game {
 #if ANDROID
                 new AndroidSdCardExternalContentProvider(),
 #endif
-                new SchubExternalContentProvider(),
+                new ChineseCommunityExternalContentProvider(),
                 new DropboxExternalContentProvider()
             ];
         }
@@ -49,7 +49,7 @@ namespace Game {
                 case ExternalContentType.CharacterSkin: yield return ".scskin"; break;
                 case ExternalContentType.FurniturePack: yield return ".scfpack"; break;
                 case ExternalContentType.Mod: yield return ".scmod"; break;
-                case ExternalContentType.ModList: yield return ".scmodList"; break;
+                //case ExternalContentType.ModList: yield return ".scmodList"; break;
             }
         }
 

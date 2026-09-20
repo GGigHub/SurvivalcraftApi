@@ -64,7 +64,7 @@ namespace Game {
                     break;
                 case CommunityServerManager.Type.Chinese:
                     CommunityServerManager.ChangeChineseInfo(info);
-                    ScreensManager.SwitchScreen("ScbbsPlusCommunity", info.ApiUrl);
+                    ScreensManager.SwitchScreen("CommunityContent", info.ApiUrl);
                     break;
             }
         }

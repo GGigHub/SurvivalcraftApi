@@ -65,13 +65,13 @@ namespace Game {
                 Action?.Invoke();
                 DialogsManager.HideDialog(this);
             }
-            if (m_editButton.IsClicked) {
+            /*if (m_editButton.IsClicked) {
                 Action2?.Invoke(m_titleLabel, m_contentLabel);
             }
             if (m_updateButton.IsClicked) {
                 Action3?.Invoke(m_titleLabel, m_contentLabel);
                 DialogsManager.HideDialog(this);
-            }
+            }*/
         }
     }
 }

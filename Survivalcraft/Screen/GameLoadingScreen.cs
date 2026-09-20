@@ -100,12 +100,12 @@ namespace Game {
             m_worldSnapshotName = (string)parameters[1];
             m_stateMachine.TransitionTo("WaitingForFadeIn");
             ProgressManager.UpdateProgress("Loading World", 0f);
-            OldCommunityContentScreen screen = ScreensManager.FindScreen<OldCommunityContentScreen>("CommunityContent");
+            /*OldCommunityContentScreen screen = ScreensManager.FindScreen<OldCommunityContentScreen>("CommunityContent");
             if (screen != null) {
                 screen.m_treePanel.Clear();
                 screen.m_treePanel.ScrollPosition = 0f;
                 screen.m_contentExpiryTime = 0;
-            }
+            }*/
             OriginalCommunityContentScreen originalCommunityContentScreen = ScreensManager.FindScreen<OriginalCommunityContentScreen>("OriginalCommunityContent");
             if (originalCommunityContentScreen != null) {
                 originalCommunityContentScreen.m_listPanel.ClearItems();

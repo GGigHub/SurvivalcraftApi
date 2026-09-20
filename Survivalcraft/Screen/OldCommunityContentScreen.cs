@@ -9,6 +9,7 @@ using SixLabors.ImageSharp.Processing;
 using Color = Engine.Color;
 
 namespace Game {
+    [Obsolete]
     public class OldCommunityContentScreen : Screen {
         public enum Order {
             ByRank = 0,
@@ -50,7 +51,7 @@ namespace Game {
 
         public Dictionary<string, IEnumerable<object>> m_itemsCache = [];
 
-        public SchubExternalContentProvider m_provider;
+        public ChineseCommunityExternalContentProvider m_provider;
 
         public const string fName = "CommunityContentScreen";
 
@@ -118,7 +119,7 @@ namespace Game {
 
         public override void Enter(object[] parameters) {
             foreach (IExternalContentProvider provider in ExternalContentManager.m_providers) {
-                if (provider is SchubExternalContentProvider contentProvider) {
+                if (provider is ChineseCommunityExternalContentProvider contentProvider) {
                     m_provider = contentProvider;
                     break;
                 }
@@ -210,6 +211,7 @@ namespace Game {
                     select t) {
                     list.Add(item);
                 }
+                // ScpboxAccessToken 已废置（getter 恒空），此分支实际永不命中，随旧社区屏一并待清理。
                 if (!string.IsNullOrEmpty(SettingsManager.ScpboxAccessToken)) {
                     list.Add(SettingsManager.ScpboxAccessToken);
                 }
