@@ -16,6 +16,10 @@
     "7": "Not logged in to Dropbox in this app.",
     "8": "Share information not found."
   },
+  "ChineseCommunityExternalContentProvider": {
+    "LoggedIn": "Logged in",
+    "NotLoggedIn": "Not logged in"
+  },
   "FurnitureBlock": [
     "Combine furniture into interactive design",
     "Too many different furniture designs"
@@ -46,6 +50,14 @@
   },
   "AndroidSdCardExternalContentProvider": {
     "1": "SD Card"
+  },
+  "CommunityMyPublishedScreen": {
+    "LoadMyPublishedFailed": "[ScbbsPlus] Failed to load my published posts: {0}",
+    "Text": {
+      "LoadingFormat": "{0} · Loading...",
+      "Downloading": "Downloading...",
+      "MyPublishedFormat": "My {0}s"
+    }
   },
   "ContentScreen": {
     "1": "Mod Management",
@@ -3219,9 +3231,8 @@
       "6": "Search",
       "7": "x"
     },
-    "ChineseCommunityExternalContentProvider": {
-      "LoggedIn": "Logged in",
-      "NotLoggedIn": "Not logged in"
+    "CommunityMyPublished": {
+      "Title": "My Published"
     },
     "ContentScreen": {
       "1": "Choose Content Type",
@@ -4163,7 +4174,9 @@
       "ApplyDownloadSourceToUpdatesDescription": "Use the selected download source when downloading updates for published resources",
       "PlayedTimeReporting": "Playtime Reporting",
       "PlayedTimeReportingDescription": "Report playtime to the community for statistics",
-      "CurrentServer": "Current Server"
+      "CurrentServer": "Current Server",
+      "MyPublished": "My Published",
+      "MyPublishedDescription": "Browse resources you have published to the Chinese community"
     },
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "Post Details",

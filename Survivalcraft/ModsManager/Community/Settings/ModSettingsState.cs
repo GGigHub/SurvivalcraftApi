@@ -57,6 +57,14 @@ namespace Game
             get { EnsureLoaded(); return s_myPublishedFileType; }
         }
 
+        // 我的发布屏文件类型写入端（模组 SetScreenFileType 按屏名版式在游戏内收敛为本屏单方法）。
+        public static void SetMyPublishedFileType(CommunityFileType fileType)
+        {
+            EnsureLoaded();
+            s_myPublishedFileType = fileType;
+            Persist();
+        }
+
         public static void SetFirstDownloadSelfReviewPromptShown()
         {
             EnsureLoaded();

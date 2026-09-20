@@ -119,6 +119,12 @@ namespace Game {
                         LanguageControl.Get(fName, 7),
                         true,
                         delegate(IExternalContentProvider provider) {
+                            // 列举载体是专用屏的提供者（如中文社区）：跳转而非本屏承载，
+                            // 返回键经屏幕历史栈回到本屏。
+                            if (!string.IsNullOrEmpty(provider.ScreenNameForListing)) {
+                                ScreensManager.SwitchScreen(provider.ScreenNameForListing);
+                                return;
+                            }
                             m_externalContentProvider = provider;
                             m_listDirty = true;
                             SetPath(null);

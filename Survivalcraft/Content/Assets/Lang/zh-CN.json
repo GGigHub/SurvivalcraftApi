@@ -16,6 +16,10 @@
     "7": "尚未在此应用中登录 Dropbox。",
     "8": "未找到共享信息。"
   },
+  "ChineseCommunityExternalContentProvider": {
+    "LoggedIn": "已登录",
+    "NotLoggedIn": "未登录"
+  },
   "FurnitureBlock": [
     "将家具组合成交互式家具设计",
     "家具设计种类过多"
@@ -46,6 +50,14 @@
   },
   "AndroidSdCardExternalContentProvider": {
     "1": "内部存储"
+  },
+  "CommunityMyPublishedScreen": {
+    "LoadMyPublishedFailed": "[ScbbsPlus] 加载我发布的帖子失败: {0}",
+    "Text": {
+      "LoadingFormat": "{0} · 正在加载...",
+      "Downloading": "下载中...",
+      "MyPublishedFormat": "我发布的{0}"
+    }
   },
   "ContentScreen": {
     "1": "模组管理",
@@ -3229,9 +3241,8 @@
       "6": "搜索",
       "7": "x"
     },
-    "ChineseCommunityExternalContentProvider": {
-      "LoggedIn": "已登录",
-      "NotLoggedIn": "未登录"
+    "CommunityMyPublished": {
+      "Title": "我发布的"
     },
     "ContentScreen": {
       "1": "选择获取方式",
@@ -4173,7 +4184,9 @@
       "ApplyDownloadSourceToUpdatesDescription": "下载已发布资源的更新时使用所选下载源",
       "PlayedTimeReporting": "游玩时长统计",
       "PlayedTimeReportingDescription": "向社区上报游玩时长，用于社区数据统计",
-      "CurrentServer": "当前服务器"
+      "CurrentServer": "当前服务器",
+      "MyPublished": "我发布的",
+      "MyPublishedDescription": "查看已发布到中文社区的资源"
     },
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "帖子详情",

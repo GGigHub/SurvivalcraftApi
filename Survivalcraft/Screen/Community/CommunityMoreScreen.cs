@@ -12,6 +12,7 @@ namespace Game
 
         private LabelWidget m_accountInfo;
         private ButtonWidget m_authButton;
+        private ButtonWidget m_myPublishedButton;
         private ButtonWidget m_importButton;
         private ButtonWidget m_downloadQueueButton;
         private LabelWidget m_currentServerValue;
@@ -28,6 +29,7 @@ namespace Game
             LoadContents(this, node);
             m_accountInfo = Children.Find<LabelWidget>("ScbbsPlusMoreScreen.AccountInfo");
             m_authButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.AuthButton");
+            m_myPublishedButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.MyPublishedButton");
             m_importButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ImportButton");
             m_downloadQueueButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadQueueButton");
             m_currentServerValue = Children.Find<LabelWidget>("ScbbsPlusMoreScreen.CurrentServerValue");
@@ -77,6 +79,8 @@ namespace Game
             }
 
             if (m_authButton.IsClicked) AuthSessionManager.Instance.OpenAuthEntry();
+            // 我的发布屏入口（模组原挂在原生 ContentScreen 入口行，游戏内收口到 More 屏）。
+            if (m_myPublishedButton.IsClicked) ScreensManager.SwitchScreen("CommunityMyPublished");
             if (m_importButton.IsClicked) RemoteImportManager.OpenImportLinkDialog();
             if (m_downloadQueueButton.IsClicked) DownloadFlowManager.Instance.ShowQueueDialog();
 

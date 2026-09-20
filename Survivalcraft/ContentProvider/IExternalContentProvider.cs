@@ -6,6 +6,8 @@ namespace Game {
 
         bool SupportsListing { get; }
 
+        string ScreenNameForListing => null;
+
         bool RequiresLogin { get; }
 
         bool IsLoggedIn { get; }
