@@ -130,14 +130,24 @@ public class ModsManageContentScreen : Screen {
     }
 
     public override void Enter(object[] parameters) {
-        m_modsContentList.AddItems(ModsManager.ModListAll);
+        // 进屏触发 rescan 并订阅刷新：rescan 异步落地时列表可能已按旧数据装配，
+        // 订阅 ModListRescanned 重跑装配，新待重启实体与 IsFileDeleted 标记才可见
+        ModsManager.ModListRescanned += RefreshModList;
+        _ = ModsManager.RescanModsAsync();
+        RefreshModList();
     }
 
     public override void Leave() {
+        ModsManager.ModListRescanned -= RefreshModList;
         m_modsContentList.ClearItems();
         m_viewDetailButton.IsEnabled = false;
         m_triggerEnableButton.IsEnabled = false;
         m_openHomepageButton.IsEnabled = false;
+    }
+
+    private void RefreshModList() {
+        m_modsContentList.ClearItems();
+        m_modsContentList.AddItems(ModsManager.ModListAll);
     }
 
     public override void Update() {

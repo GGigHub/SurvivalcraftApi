@@ -70,6 +70,10 @@ namespace Game
                 }
 
                 TransactionalFileReplacement.Replace(tempPath, targetPath, existingPath);
+                // 更新替换落地即触发对账：覆盖升级/旧文件删除的磁盘变更只有此刻知道，
+                // 等 UI 进屏兜底会漏掉“导入后停留原屏”窗口。触发点放模组专属导入器而非
+                // TransactionalFileReplacement（通用工具，整合包数据文件也走它，不该触发模组对账）。
+                _ = ModsManager.RescanModsAsync();
                 return Storage.GetFileName(targetPath);
             }
             catch
