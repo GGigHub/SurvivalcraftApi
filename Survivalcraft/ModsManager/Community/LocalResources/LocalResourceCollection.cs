@@ -75,23 +75,107 @@ namespace Game
             return ModsManager.ModListAll
                 .Where(entity => entity?.modInfo != null)
                 .Where(entity => entity is not SurvivalCraftModEntity && entity is not FastDebugModEntity)
-                .Select(entity => new LocalResourceItem
-                {
-                    Type = ExternalContentType.Mod,
-                    Name = entity.modInfo.PackageName,
-                    DisplayName = entity.modInfo.Name,
-                    // 与其余 CreationTime 来源同 Kind：引擎主路径为 Utc（兜底 2000-01-01 哨兵为
-                    // Unspecified，tick 恒最小、ToLocalTime 原样，不影响排序/显示），显示端统一 ToLocalTime()。
-                    CreationTime = DateTime.UtcNow,
-                    LocalFilePath = entity.ModFilePath,
-                    PackageName = entity.modInfo.PackageName,
-                    Version = entity.modInfo.Version,
-                    ModEntity = entity,
-                    IsDisabled = entity.IsDisabled,
-                    DisableReason = entity.DisableReason
-                })
+                .Select(ToLocalResourceItem)
                 .OrderBy(item => item.DisplayName, StringComparer.InvariantCulture)
                 .ToList();
+        }
+
+        /// <summary>
+        ///     ModEntity → LocalResourceItem 投影。IsIncompatibleWithCurrentGame 展示时实时判定
+        ///     （NuGet ApiVersionRange + 旧前缀特判，叠加下载前兼容覆盖），不落实体字段。
+        /// </summary>
+        public static LocalResourceItem ToLocalResourceItem(ModEntity entity)
+        {
+            // 待重启实体的 icon 只解了数据未上传 GPU，投影供 UI 展示前在主线程补传
+            entity?.EnsureIconTexture();
+            return new LocalResourceItem
+            {
+                Type = ExternalContentType.Mod,
+                Name = entity?.modInfo?.PackageName,
+                DisplayName = string.IsNullOrWhiteSpace(entity?.modInfo?.Name)
+                    ? Storage.GetFileNameWithoutExtensionBCL(Storage.GetFileName(entity?.ModFilePath ?? string.Empty))
+                    : entity.modInfo.Name,
+                CreationTime = entity?.LastWriteTimeUtc ?? DateTime.UtcNow,
+                LocalFilePath = entity?.ModFilePath,
+                PackageName = entity?.modInfo?.PackageName,
+                Version = entity?.modInfo?.Version,
+                ModEntity = entity,
+                IsDisabled = entity?.IsDisabled == true,
+                DisableReason = entity?.DisableReason ?? ModDisableReason.Unknown,
+                RequiresRestartToLoad = entity?.IsPendingRestart == true,
+                IsIncompatibleWithCurrentGame = IsModIncompatibleWithCurrentGame(entity)
+                    // 下载前已判定兼容的版本沿用该结论（兼容覆盖缓存的判定点收敛在投影处），避免与下载提示前后不一致
+                    && !LocalModStateStore.HasPendingLocalModCompatibilityOverride(
+                        entity?.modInfo?.PackageName,
+                        entity?.ModFilePath,
+                        entity?.modInfo?.Version),
+                Tag = entity
+            };
+        }
+
+        // 兼容判定独立谓词：与展示文案解耦。无 ApiVersion 声明不判不兼容（展示层另有“未知”文案）。
+        private static bool IsModIncompatibleWithCurrentGame(ModEntity entity)
+        {
+            if (entity?.modInfo == null || string.IsNullOrEmpty(entity.modInfo.ApiVersion))
+            {
+                return false;
+            }
+            if (entity.modInfo.ApiVersion.StartsWith("1.4")
+                || entity.modInfo.ApiVersion.StartsWith("1.5")
+                || entity.modInfo.ApiVersion.StartsWith("1.6")
+                || entity.modInfo.ApiVersion.StartsWith("1.7"))
+            {
+                return true;
+            }
+            return entity.modInfo.ApiVersionRange != null
+                && !entity.modInfo.ApiVersionRange.Satisfies(ModsManager.APINuGetVersion);
+        }
+
+        public static List<LocalResourceItem> GetPendingRestartLocalMods()
+        {
+            List<LocalResourceItem> result = [];
+            // ModListAll 主线程排序时 Clear+AddRange 不可并发枚举，跨线程读必须封送
+            Dispatcher.Dispatch(delegate
+            {
+                foreach (ModEntity entity in ModsManager.ModListAll)
+                {
+                    if (entity?.IsPendingRestart == true)
+                    {
+                        result.Add(ToLocalResourceItem(entity));
+                    }
+                }
+            }, waitUntilCompleted: true);
+            return result;
+        }
+
+        /// <summary>
+        ///     待重启包集合（包名 + 包名@版本键），替代原扫描器的 GetPackageSets，同键规则；
+        ///     供依赖可用性快照在缓存未就绪时实时取数。
+        /// </summary>
+        public static PendingModPackageSets GetPendingPackageSetsFromEntities()
+        {
+            PendingModPackageSets result = new();
+            Dispatcher.Dispatch(delegate
+            {
+                foreach (ModEntity entity in ModsManager.ModListAll)
+                {
+                    if (entity?.IsPendingRestart != true || entity.modInfo == null)
+                    {
+                        continue;
+                    }
+                    HashSet<string> target = IsModIncompatibleWithCurrentGame(entity)
+                        ? result.IncompatiblePackages
+                        : result.PendingRestartPackages;
+                    target.Add(entity.modInfo.PackageName);
+                    if (!string.IsNullOrWhiteSpace(entity.modInfo.Version))
+                    {
+                        target.Add(ModDependencyAvailabilityRules.MakePackageVersionKey(
+                            entity.modInfo.PackageName,
+                            entity.modInfo.Version));
+                    }
+                }
+            }, waitUntilCompleted: true);
+            return result;
         }
 
         public static List<LocalResourceItem> BuildLocalMods(
@@ -117,7 +201,7 @@ namespace Game
             Func<PendingModPackageSets> pendingPackageSetsProvider)
         {
             PendingModPackageSets packageSets = pendingMods == null
-                ? pendingPackageSetsProvider()
+                ? GetPendingPackageSetsFromEntities()
                 : GetPendingPackageSets(pendingMods);
             return new ModDependencySnapshot(GetInstalledPackageKeys(loadedModEntities), packageSets);
         }
@@ -131,7 +215,7 @@ namespace Game
                 return;
             }
 
-            string key = PendingLocalModMetadataReader.NormalizeStoragePath(
+            string key = ModsManager.NormalizeStoragePath(
                 LocalResourceIdentity.GetModStoragePath(resourceItem));
             if (string.IsNullOrWhiteSpace(key)
                 || pendingActions == null
@@ -172,9 +256,8 @@ namespace Game
             PendingModPackageSets result = new();
             foreach (LocalResourceItem item in pendingMods)
             {
-                PendingLocalModInfo info = item?.Tag as PendingLocalModInfo;
-                string packageName = !string.IsNullOrWhiteSpace(info?.PackageName)
-                    ? info.PackageName.Trim()
+                string packageName = !string.IsNullOrWhiteSpace(item?.PackageName)
+                    ? item.PackageName.Trim()
                     : Storage.GetFileNameWithoutExtensionBCL(
                         Storage.GetFileName(item?.LocalFilePath ?? string.Empty));
                 if (string.IsNullOrWhiteSpace(packageName))
@@ -186,9 +269,9 @@ namespace Game
                     ? result.IncompatiblePackages
                     : result.PendingRestartPackages;
                 target.Add(packageName);
-                if (!string.IsNullOrWhiteSpace(info?.Version))
+                if (!string.IsNullOrWhiteSpace(item.Version))
                 {
-                    target.Add(ModDependencyAvailabilityRules.MakePackageVersionKey(packageName, info.Version));
+                    target.Add(ModDependencyAvailabilityRules.MakePackageVersionKey(packageName, item.Version));
                 }
             }
             return result;

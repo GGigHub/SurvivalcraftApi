@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using Engine;
 
 namespace Game
 {
@@ -6,12 +8,16 @@ namespace Game
     /// 本地模组状态的进程级存储门面：实现已按职责拆到
     /// LocalModReviewState（评价缓存与帖子 ID 映射）、
     /// LocalModPendingActionStore（重启后再执行的动作）、
-    /// PendingLocalModScanState（待加载模组后台扫描与兼容性覆盖）、
     /// LocalModInstallStatus（社区帖子安装/更新状态判定与社区侧缓存）。
+    /// 待重启模组信息直接投影 ModsManager.ModListAll（IsPendingRestart 实体），
+    /// 下载前兼容覆盖缓存由本类自持。
     /// 三屏（本地/社区/我的发布）共用；社区侧只读消费（已安装/可更新标记）。
     /// </summary>
     internal static class LocalModStateStore
     {
+        // 下载前兼容判定缓存自持实例：扫描基础设施删除后，判定点收敛在投影处（LocalResourceCollection.ToLocalResourceItem）
+        private static readonly PendingLocalModCompatibilityOverrideCache s_compatibilityOverrides = new();
+
         public static Dictionary<string, LocalModReviewEntry> LocalModReviews => LocalModReviewState.LocalModReviews;
 
         public static Dictionary<string, LocalModPendingActionEntry> LocalModPendingActions => LocalModPendingActionStore.LocalModPendingActions;
@@ -41,43 +47,51 @@ namespace Game
             LocalModPendingActionStore.SaveLocalModPendingActions();
         }
 
-        public static List<LocalResourceItem> CachedPendingLocalMods => PendingLocalModScanState.CachedPendingLocalMods;
-
-        public static bool IsScanRunning => PendingLocalModScanState.IsScanRunning;
-
-        public static void StartPendingLocalModsScan(bool invalidateCache = true)
-        {
-            PendingLocalModScanState.StartPendingLocalModsScan(invalidateCache);
-        }
-
-        public static bool UpdatePendingLocalModsScanTask()
-        {
-            return PendingLocalModScanState.UpdatePendingLocalModsScanTask();
-        }
-
         public static int GetPendingRestartLocalModCount()
         {
-            return PendingLocalModScanState.GetPendingRestartLocalModCount();
+            int count = 0;
+            // ModListAll 主线程排序时 Clear+AddRange 不可并发枚举，跨线程读必须封送
+            Dispatcher.Dispatch(delegate
+            {
+                foreach (ModEntity entity in ModsManager.ModListAll)
+                {
+                    if (entity?.IsPendingRestart == true)
+                    {
+                        count++;
+                    }
+                }
+            }, waitUntilCompleted: true);
+            return count;
         }
 
         public static bool HasPendingLocalModCompatibilityOverride(string packageName, string filePathOrName, string version)
         {
-            return PendingLocalModScanState.HasPendingLocalModCompatibilityOverride(packageName, filePathOrName, version);
+            return s_compatibilityOverrides.Matches(packageName, filePathOrName, version);
         }
 
+        // 下载前已经判定为兼容的版本，在“已下载但未重启”阶段沿用这份判断，避免重新扫本地包后出现前后提示不一致。
         public static void RememberPendingLocalModCompatibilityOverride(string packageName, string fileName, PostVersionItem version)
         {
-            PendingLocalModScanState.RememberPendingLocalModCompatibilityOverride(packageName, fileName, version);
-        }
+            if (version == null)
+            {
+                return;
+            }
 
-        public static bool IsPendingLocalModIncompatibleWithCurrentGame(PendingLocalModInfo info)
-        {
-            return PendingLocalModScanState.IsPendingLocalModIncompatibleWithCurrentGame(info);
-        }
+            bool isCompatible = ModCompatibility.IsCompatibleWithCurrentVersion(
+                version,
+                VersionCatalogCache.CurrentApiVersion,
+                VersionCatalogCache.CurrentGameVersion,
+                VersionCatalogCache.CachedGameVersionsById,
+                VersionCatalogCache.CachedVersionCatalog);
+            if (!isCompatible)
+            {
+                return;
+            }
 
-        public static bool IsVersionTextIncompatible(string currentVersion, string candidateVersion)
-        {
-            return PendingLocalModScanState.IsVersionTextIncompatible(currentVersion, candidateVersion);
+            string versionText = !string.IsNullOrWhiteSpace(version.Version)
+                ? version.Version
+                : version.Files?.FirstOrDefault(file => file != null)?.PackageVersion;
+            s_compatibilityOverrides.Remember(packageName, fileName, versionText);
         }
 
         public static string FindExactLocalDownloadFilePath(ExternalContentType type, string fileName)

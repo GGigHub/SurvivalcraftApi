@@ -83,20 +83,40 @@ namespace Game
 
         public static List<LocalResourceItem> GetCommunityLocalModSnapshot()
         {
-            List<LocalResourceItem> result = LocalResourceCollection.ScanLoadedMods();
-            // 待重启模组按规范化路径去重：同一文件既已加载又待重启时，状态判定只计一次。
-            HashSet<string> knownPaths = result
-                .Select(item => PendingLocalModMetadataReader.NormalizeStoragePath(item.LocalFilePath))
-                .Where(path => !string.IsNullOrWhiteSpace(path))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            foreach (LocalResourceItem pendingMod in PendingLocalModScanState.CachedPendingLocalMods ?? [])
+            // 已加载与待重启实体同在 ModListAll，投影直取；按规范化路径去重
+            //（覆盖升级同路径“已加载 + 待重启”双实体只计已加载那条，状态判定只计一次）。
+            // 内置实体沿用 ScanLoadedMods 的排除口径。
+            List<LocalResourceItem> result = [];
+            HashSet<string> knownPaths = new(StringComparer.OrdinalIgnoreCase);
+            // ModListAll 主线程排序时 Clear+AddRange 不可并发枚举，跨线程读必须封送
+            Dispatcher.Dispatch(delegate
             {
-                string path = PendingLocalModMetadataReader.NormalizeStoragePath(pendingMod?.LocalFilePath);
-                if (pendingMod != null && (string.IsNullOrWhiteSpace(path) || knownPaths.Add(path)))
+                foreach (ModEntity entity in ModsManager.ModListAll)
                 {
-                    result.Add(pendingMod);
+                    if (entity?.modInfo == null
+                        || entity is SurvivalCraftModEntity
+                        || entity is FastDebugModEntity)
+                    {
+                        continue;
+                    }
+                    string path = entity.ModFilePath == null
+                        ? string.Empty
+                        : ModsManager.NormalizeStoragePath(entity.ModFilePath);
+                    if (entity.IsPendingRestart)
+                    {
+                        if (!string.IsNullOrWhiteSpace(path) && !knownPaths.Add(path))
+                        {
+                            continue; // 覆盖升级：同路径已加载实体已计入，状态判定只计一次
+                        }
+                        result.Add(LocalResourceCollection.ToLocalResourceItem(entity));
+                    }
+                    else if (!entity.IsDisabled)
+                    {
+                        knownPaths.Add(path);
+                        result.Add(LocalResourceCollection.ToLocalResourceItem(entity));
+                    }
                 }
-            }
+            }, waitUntilCompleted: true);
             return result;
         }
 
