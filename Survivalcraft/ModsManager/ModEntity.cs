@@ -24,7 +24,7 @@ namespace Game {
         public DateTime LastWriteTimeUtc;
         // icon 两段加载的中间产物：后台线程解出的图像数据，GPU 上传延迟到主线程 EnsureIconTexture
         private byte[] m_iconData;
-        // 构造相态：true = 以待重启实体构造（rescan 路径），查重豁免与日志分支据此区分（构造参数在 Task 接线时引入）
+        // 构造相态：true = 以待重启实体构造（rescan 路径），查重豁免与日志分支据此区分
         private bool m_constructAsPending;
         public bool IsDependencyChecked;
         public string LoadAfter;
@@ -52,10 +52,12 @@ namespace Game {
             InitResources();
         }
 
-        public ModEntity(string FileName, ZipArchive zipArchive) {
+        // constructAsPending：以待重启实体构造（rescan 对账路径）。启动期构造保持 false。
+        public ModEntity(string FileName, ZipArchive zipArchive, bool constructAsPending = false) {
             ModFilePath = FileName;
             Size = Storage.GetFileSize(FileName);
             LastWriteTimeUtc = Storage.GetFileLastWriteTime(FileName);
+            m_constructAsPending = constructAsPending;
             ModArchive = zipArchive;
             InitResources();
         }
@@ -242,7 +244,11 @@ namespace Game {
                 return;
             }
             ModEntity temp = ModsManager.ModListAll.FirstOrDefault(x => x.modInfo?.PackageName == modInfo.PackageName);
-            if (temp != null) {
+            // 相态不同（本实体待重启、对手已加载，或反之）即"覆盖升级待重启"状态，合法豁免；
+            // 仅同相态互标 Duplicated（已加载 vs 已加载、待重启 vs 待重启，后者引导用户删一个）。
+            // 启动期 ModListAll 全重建，不会遇到上轮 rescan 残留的 pending 实体，此分支只为健壮性保留。
+            bool bothSamePhase = temp != null && (m_constructAsPending == temp.IsPendingRestart);
+            if (bothSamePhase) {
                 IsDisabled = true;
                 DisableReason = ModDisableReason.Duplicated;
                 temp.IsDisabled = true;
