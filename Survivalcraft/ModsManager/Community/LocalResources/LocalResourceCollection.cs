@@ -278,6 +278,13 @@ namespace Game
         }
     }
 
+    // 待重启包集合：依赖可用性快照的“待重启/不兼容”两分组（原随旧磁盘扫描器定义，扫描器删除后迁此）
+    internal sealed class PendingModPackageSets
+    {
+        public HashSet<string> PendingRestartPackages { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> IncompatiblePackages { get; } = new(StringComparer.OrdinalIgnoreCase);
+    }
+
     internal sealed class ModDependencySnapshot
     {
         private readonly ISet<string> m_loadedPackages;
