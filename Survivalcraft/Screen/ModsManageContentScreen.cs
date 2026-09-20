@@ -92,6 +92,8 @@ public class ModsManageContentScreen : Screen {
                     DataSizeFormatter.Format(entity.Size)
                 );
             }
+            // 待重启实体的 icon 只解了数据未上传 GPU，列表项展示前在主线程补传
+            entity.EnsureIconTexture();
             if (entity.Icon != null) {
                 result.Icon = entity.Icon;
             }
@@ -237,6 +239,17 @@ public class ModsManageContentScreen : Screen {
     public static bool GetTriggerAndTitle(ModEntity entity, out string title, out Color titleColor) {
         title = entity.modInfo?.Name ?? Storage.GetFileName(entity.ModFilePath);
         titleColor = Color.White;
+        // 文件已删除的运行中尸体与待重启实体优先于禁用态显示：这两类状态来自 rescan 对账，用户最需要先看到
+        if (entity.IsFileDeleted) {
+            title = $"[{LanguageControl.Get(fName, "FileDeletedTag")}] {title}";
+            titleColor = Color.Yellow;
+            return false;
+        }
+        if (entity.IsPendingRestart) {
+            title = $"[{LanguageControl.Get(fName, "PendingRestartTag")}] {title}";
+            titleColor = Color.LightGreen;
+            return false;
+        }
         if (entity.IsDisabled) {
             if (entity.DisableReason == ModDisableReason.Manually) {
                 if (ModsManager.DisabledMods.TryGetValue(entity.modInfo!.PackageName, out HashSet<string> versions1)
@@ -265,6 +278,10 @@ public class ModsManageContentScreen : Screen {
 
     /// <returns>true: mod能被启用，false：mod能被禁用</returns>
     public static bool GetTrigger(ModEntity entity) {
+        // 待重启/文件已删除实体不在本次加载进程内，禁用/启用按钮对它们无意义
+        if (entity.IsPendingRestart || entity.IsFileDeleted) {
+            return false;
+        }
         if (entity.IsDisabled) {
             if (entity.DisableReason == ModDisableReason.Manually) {
                 return ModsManager.DisabledMods.TryGetValue(entity.modInfo!.PackageName, out HashSet<string> versions1)

@@ -193,7 +193,8 @@ namespace Game {
                     //根据加载顺序排序后的结果
                     ModsManager.ModList.Clear();
                     foreach (ModEntity item in ModsManager.ModListAll) {
-                        if (item.IsDependencyChecked || item.IsDisabled) {
+                        // 待重启实体未生效，不参与依赖检查也不进 ModList（后续内容加载只遍历 ModList，自然不可达）
+                        if (item.IsDependencyChecked || item.IsDisabled || item.IsPendingRestart) {
                             continue;
                         }
                         item.CheckDependencies(ModsManager.ModList);

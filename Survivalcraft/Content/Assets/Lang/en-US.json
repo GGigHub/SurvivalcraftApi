@@ -159,7 +159,9 @@
     "78": "This mod has no homepage link set.",
     "79": "Module Version: {0}  API Version: {1}  Author: {2}  Size: {3}",
     "80": "Details",
-    "81": "*Requires Restart"
+    "81": "*Requires Restart",
+    "PendingRestartTag": "Pending Restart",
+    "FileDeletedTag": "File Deleted"
   },
   "ManageContentScreen": {
     "1": "Blocks Texture | {0}x{1}",

@@ -24,6 +24,8 @@ namespace Game {
         public DateTime LastWriteTimeUtc;
         // icon 两段加载的中间产物：后台线程解出的图像数据，GPU 上传延迟到主线程 EnsureIconTexture
         private byte[] m_iconData;
+        // 构造相态：true = 以待重启实体构造（rescan 路径），查重豁免与日志分支据此区分（构造参数在 Task 接线时引入）
+        private bool m_constructAsPending;
         public bool IsDependencyChecked;
         public string LoadAfter;
         public static HashSet<string> InvalidDllNames = ["Survivalcraft.dll", "Engine.dll", "EntitySystem.dll"];
@@ -253,7 +255,13 @@ namespace Game {
                 DisableReason = ModDisableReason.Manually;
                 return;
             }
-            LoadingScreen.Info($"[{modInfo.Name}](Version: {modInfo.Version}) Loaded {ModFiles.Count} resource files.");
+            if (m_constructAsPending) {
+                // 待重启实体尚未加载内容，不打"已加载"日志避免误导
+                LoadingScreen.Info($"[{modInfo.Name}](Version: {modInfo.Version}) Pending restart.");
+            }
+            else {
+                LoadingScreen.Info($"[{modInfo.Name}](Version: {modInfo.Version}) Loaded {ModFiles.Count} resource files.");
+            }
         }
 
         public virtual void CombineContent() {
@@ -441,7 +449,8 @@ namespace Game {
         ///     检查依赖项
         /// </summary>
         public virtual void CheckDependencies(List<ModEntity> modEntities = null) {
-            if (IsDisabled || modInfo == null) {
+            // 待重启实体未生效：不参与依赖检查，也不被加入 ModList
+            if (IsDisabled || modInfo == null || IsPendingRestart) {
                 return;
             }
             modEntities ??= ModsManager.ModList;
