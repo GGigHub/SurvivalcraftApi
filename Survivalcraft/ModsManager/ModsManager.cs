@@ -587,6 +587,150 @@ public static class ModsManager {
         }
     }
 
+    private static Task s_rescanTask;
+
+    /// <summary>
+    ///     rescan 合入完成后主线程触发；UI 订阅刷新。拉取式消费者不需要订阅（读 ModListAll 即最新）。
+    /// </summary>
+    public static event Action ModListRescanned;
+
+    /// <summary>
+    ///     路径归一化：统一分隔符与首尾空白，作为 ModListAll 实体与磁盘枚举两侧行对账的对齐键。
+    /// </summary>
+    public static string NormalizeStoragePath(string path) {
+        return string.IsNullOrWhiteSpace(path) ? string.Empty : path.Replace('\\', '/').Trim();
+    }
+
+    /// <summary>
+    ///     全量对账 Mods 目录与 ModListAll：新文件构造为待重启实体；实体文件消失标
+    ///     IsFileDeleted；路径相同但 Size/LastWriteTime 变化（覆盖升级）追加待重启实体。
+    ///     后台线程做 IO 与解析（不碰 GL，icon 只解数据），已加载快照读封送主线程，
+    ///     合入（Add/排序/释放未启用流/事件）全部主线程。进行中重复调用复用现有任务。
+    /// </summary>
+    public static Task RescanModsAsync() {
+        if (s_rescanTask != null) {
+            return s_rescanTask;
+        }
+        s_rescanTask = Task.Run(delegate {
+            try {
+                RunRescan();
+            }
+            catch (Exception e) {
+                // rescan 是后台兜底对账，失败只记日志：吞掉异常避免未观察任务异常，s_rescanTask 照常复位允许下轮重试
+                Log.Error($"Rescan mods failed: {e}");
+            }
+            finally {
+                s_rescanTask = null;
+            }
+        });
+        return s_rescanTask;
+    }
+
+    private static void RunRescan() {
+        if (!Storage.DirectoryExists(ModsPath)) {
+            return;
+        }
+
+        // 磁盘侧：normalized 路径为键；diskPaths 存原路径（构造实体用），diskMeta 存元数据（对账用）
+        Dictionary<string, string> diskPaths = new(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, (long Size, DateTime LastWrite)> diskMeta = new(StringComparer.OrdinalIgnoreCase);
+        foreach (string path in EnumerateScmodFilesRecursive(ModsPath)) {
+            string normalized = NormalizeStoragePath(path);
+            if (normalized.Length == 0 || diskPaths.ContainsKey(normalized)) {
+                continue;
+            }
+            try {
+                diskPaths[normalized] = path;
+                diskMeta[normalized] = (Storage.GetFileSize(path), Storage.GetFileLastWriteTime(path));
+            }
+            catch {
+                // 读取元数据失败的文件本轮跳过，下轮对账再试
+                diskPaths.Remove(normalized);
+                diskMeta.Remove(normalized);
+            }
+        }
+
+        // 已加载快照：封送主线程读（ModListAll 排序时 Clear+AddRange 不可并发枚举）
+        List<ModEntity> snapshot = null;
+        Dispatcher.Dispatch(() => snapshot = ModListAll.ToList(), waitUntilCompleted: true);
+
+        List<ModEntity> fileDeleted = [];
+        List<ModEntity> stalePending = [];
+        HashSet<string> knownPaths = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> replacedPaths = new(StringComparer.OrdinalIgnoreCase);
+        foreach (ModEntity entity in snapshot) {
+            if (entity?.ModFilePath == null) {
+                continue; // 内置实体（SurvivalCraft/FastDebug）无磁盘路径
+            }
+            string normalized = NormalizeStoragePath(entity.ModFilePath);
+            if (normalized.Length == 0) {
+                continue;
+            }
+            if (entity.IsPendingRestart) {
+                // 待重启实体的磁盘文件被手动删除：直接从列表移除（无运行中内容，不标 IsFileDeleted）
+                if (!diskPaths.ContainsKey(normalized)) {
+                    stalePending.Add(entity);
+                }
+                continue;
+            }
+            knownPaths.Add(normalized);
+            if (entity.IsFileDeleted) {
+                continue; // 已是尸体：幂等，等待重启收敛
+            }
+            if (!diskMeta.TryGetValue(normalized, out (long Size, DateTime LastWrite) meta)) {
+                fileDeleted.Add(entity);
+            }
+            else if (meta.Size != entity.Size || meta.LastWrite != entity.LastWriteTimeUtc) {
+                replacedPaths.Add(normalized); // 覆盖升级：旧实体保持已加载，路径追加待重启实体
+            }
+        }
+
+        // 后台构造新实体：全新路径 + 被覆盖路径
+        List<ModEntity> newEntities = [];
+        foreach (KeyValuePair<string, string> entry in diskPaths) {
+            if (knownPaths.Contains(entry.Key) && !replacedPaths.Contains(entry.Key)) {
+                continue;
+            }
+            if (TryCreateModEntity(entry.Value, constructAsPending: true, out ModEntity modEntity)) {
+                newEntities.Add(modEntity);
+            }
+        }
+
+        // 合入主线程：Add/排序/释放未启用流/事件全部主线程
+        Dispatcher.Dispatch(delegate {
+            foreach (ModEntity entity in stalePending) {
+                // ModEntity 重写了 Equals（包名+版本），必须按引用移除，避免误删同包名同版本的其他实体
+                for (int i = ModListAll.Count - 1; i >= 0; i--) {
+                    if (ReferenceEquals(ModListAll[i], entity)) {
+                        ModListAll.RemoveAt(i);
+                    }
+                }
+            }
+            foreach (ModEntity entity in fileDeleted) {
+                entity.IsFileDeleted = true;
+            }
+            ModListAll.AddRange(newEntities);
+            SortModListAll();
+            // rescan 构造的待重启实体不进 ModList，此处即时释放其包流（与启动尾段同一释放路径）
+            DisposeNotEnabledModsResources();
+            ModListRescanned?.Invoke();
+        }, waitUntilCompleted: true);
+    }
+
+    // 递归枚举 Mods 目录下全部 .scmod（对齐 GetScmods 的递归语义），供 rescan 磁盘侧对账
+    private static IEnumerable<string> EnumerateScmodFilesRecursive(string path) {
+        foreach (string item in Storage.ListFileNames(path)) {
+            if (Storage.GetExtension(item).ToLowerInvariant() == ModSuffix) {
+                yield return Storage.CombinePaths(path, item);
+            }
+        }
+        foreach (string dir in Storage.ListDirectoryNames(path)) {
+            foreach (string child in EnumerateScmodFilesRecursive(Storage.CombinePaths(path, dir))) {
+                yield return child;
+            }
+        }
+    }
+
     public static void AddException(Exception e, bool AllowContinue_ = false) {
         LoadingScreen.Error(e.ToString());
         AllowContinue = !SettingsManager.DisplayLog || AllowContinue_;
@@ -600,39 +744,50 @@ public static class ModsManager {
         foreach (string item in Storage.ListFileNames(path)) {
             if (Storage.GetExtension(item).ToLowerInvariant() == ModSuffix) {
                 string filePath = Storage.CombinePaths(path, item);
-                using Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read);
-                try {
-                    Stream keepOpenStream = GetDecipherStream(stream);
-                    ModEntity modEntity = new(filePath, ZipArchive.Open(keepOpenStream, true));
-                    if (modEntity.modInfo == null) {
-                        LoadingScreen.Warning(
-                            $"The modinfo.json is missing or broken from [{Storage.GetFileName(modEntity.ModFilePath)}], and this mod will be disabled."
-                        );
-                    }
-                    else if (modEntity.IsDisabled) {
-                        if (modEntity.DisableReason == ModDisableReason.InvalidPackageName) {
-                            LoadingScreen.Warning(
-                                $"The package name [{modEntity.modInfo.PackageName}] of [{Storage.GetFileName(modEntity.ModFilePath)}] is not allowed, and this mod will not be loaded."
-                            );
-                            continue;
-                        }
-                        if (modEntity.DisableReason == ModDisableReason.Duplicated) {
-                            // 包名重复通常由用户误操作导致，需要强引导；但仍加入 ModListAll 以便在管理界面查看/删除
-                            AddException(new Exception($"Multiple mods with PackageName [{modEntity.modInfo.PackageName}], please keep only one."));
-                        }
-                    }
-                    ModListAll.Add(modEntity);
-                    // InitResources 已在后台解出 icon 数据（两段加载），此处主线程补 GPU 上传（Texture2D.Load 直走 GL）
+                if (TryCreateModEntity(filePath, constructAsPending: false, out ModEntity modEntity)) {
+                    // InitResources 只在后台解出 icon 数据（两段加载），此处主线程补 GPU 上传（Texture2D.Load 直走 GL）
                     modEntity.EnsureIconTexture();
-                }
-                catch (Exception e) {
-                    AddException(new Exception($"Failed to load mod [{item}]: {e}"));
-                    stream.Close();
+                    ModListAll.Add(modEntity);
                 }
             }
         }
         foreach (string dir in Storage.ListDirectoryNames(path)) {
             GetScmods(Storage.CombinePaths(path, dir));
+        }
+    }
+
+    // 启动（GetScmods）与 rescan（RescanModsAsync）共用的实体构造路径：解密流、modinfo 校验、警告分支保持一致。
+    // GetDecipherStream 返回独立内存流并自行关闭传入流，磁盘文件流 using 关闭不影响 ModArchive 存活。
+    private static bool TryCreateModEntity(string filePath, bool constructAsPending, out ModEntity modEntity) {
+        modEntity = null;
+        try {
+            using Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read);
+            Stream keepOpenStream = GetDecipherStream(stream);
+            modEntity = new ModEntity(filePath, ZipArchive.Open(keepOpenStream, true), constructAsPending);
+            if (modEntity.modInfo == null) {
+                LoadingScreen.Warning(
+                    $"The modinfo.json is missing or broken from [{Storage.GetFileName(modEntity.ModFilePath)}], and this mod will be disabled."
+                );
+            }
+            else if (modEntity.IsDisabled) {
+                if (modEntity.DisableReason == ModDisableReason.InvalidPackageName) {
+                    LoadingScreen.Warning(
+                        $"The package name [{modEntity.modInfo.PackageName}] of [{Storage.GetFileName(modEntity.ModFilePath)}] is not allowed, and this mod will not be loaded."
+                    );
+                    modEntity = null;
+                    return false;
+                }
+                if (modEntity.DisableReason == ModDisableReason.Duplicated) {
+                    // 包名重复通常由用户误操作导致，需要强引导；但仍加入 ModListAll 以便在管理界面查看/删除
+                    AddException(new Exception($"Multiple mods with PackageName [{modEntity.modInfo.PackageName}], please keep only one."));
+                }
+            }
+            return true;
+        }
+        catch (Exception e) {
+            AddException(new Exception($"Failed to load mod [{Storage.GetFileName(filePath)}]: {e}"));
+            modEntity = null;
+            return false;
         }
     }
 
