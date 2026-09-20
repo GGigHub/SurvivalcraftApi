@@ -20,7 +20,7 @@ namespace Game
 
         public static PlayedTimeStore Load(string path = null)
         {
-            path ??= StoragePaths.PlayedTimeFile;
+            path ??= CommunityStoragePaths.PlayedTimeFile;
             if (!Storage.FileExists(path))
             {
                 return CreateEmpty();
@@ -34,7 +34,7 @@ namespace Game
 
         public void Save(string path = null)
         {
-            path ??= StoragePaths.PlayedTimeFile;
+            path ??= CommunityStoragePaths.PlayedTimeFile;
             Version = CurrentVersion;
             Mods ??= new Dictionary<string, ModPlayedTimeData>(StringComparer.OrdinalIgnoreCase);
             JsonFileStore.Write(path, this, s_jsonOptions);

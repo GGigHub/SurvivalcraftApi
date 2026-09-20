@@ -87,7 +87,7 @@ namespace Game
                 safeFileName = $"download_{id}";
             }
             safeFileName = UploadFileNaming.SanitizeFileName(safeFileName);
-            return Storage.CombinePaths(StoragePaths.DownloadCacheDirectory, $"{id}_{safeFileName}.part");
+            return Storage.CombinePaths(CommunityStoragePaths.DownloadCacheDirectory, $"{id}_{safeFileName}.part");
         }
 
         private static DownloadFeedbackInfo StripToken(DownloadFeedbackInfo info)
@@ -154,7 +154,7 @@ namespace Game
                 // 下载器按续传语义会对该路径读+写（截断写入任意文件），必须重建兜底。
                 if (!string.Equals(
                     Storage.GetDirectoryName(path),
-                    StoragePaths.DownloadCacheDirectory,
+                    CommunityStoragePaths.DownloadCacheDirectory,
                     StringComparison.OrdinalIgnoreCase))
                 {
                     return false;

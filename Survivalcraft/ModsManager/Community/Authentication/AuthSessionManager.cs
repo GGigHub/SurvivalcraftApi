@@ -214,52 +214,7 @@ namespace Game
                 return;
             }
             m_storedAuthLoaded = true;
-            MigrateLegacyCredential();
             LoadSessionFromDisk(ApiBaseUrl);
-        }
-
-        private void MigrateLegacyCredential()
-        {
-            m_legacyCredentialChecked = true;
-            try
-            {
-                LoginData legacy = s_authenticationSessionStore.LoadLegacy(out bool _);
-                if (legacy == null || string.IsNullOrEmpty(legacy.Token) || legacy.User == null)
-                {
-                    // 文件缺失/不可读一律清掉：缺失时 TryDeleteLegacy 是 no-op，
-                    // 不可读时清掉可终止每次启动的重试循环。
-                    s_authenticationSessionStore.TryDeleteLegacy();
-                    return;
-                }
-                string apiBaseUrl = ApiBaseUrl;
-                m_sessions[apiBaseUrl] = legacy;
-                // v4 落盘失败（IO/磁盘满）时保留 auth.bin，下次首帧重试（spec 错误处理表）；
-                // 内存会话照常激活，本次运行不受影响。
-                Exception saveError = s_authenticationSessionStore.TrySave(apiBaseUrl, legacy.Token, legacy.User);
-                if (saveError == null)
-                {
-                    s_authenticationSessionStore.TryDeleteLegacy();
-                    Log.Information($"[ScbbsPlus] Legacy auth.bin migrated to per-server credential file for {apiBaseUrl}.");
-                }
-                else
-                {
-                    Log.Warning($"[ScbbsPlus] Legacy credential migration save failed, auth.bin kept for retry: {saveError.Message}");
-                }
-            }
-            catch (PlatformNotSupportedException ex)
-            {
-                Log.Warning($"[ScbbsPlus] {ex.Message}");
-                s_authenticationSessionStore.TryDeleteLegacy();
-            }
-            catch (CryptographicException)
-            {
-                Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "CredentialDecryptionFailedClearedOld"));
-                s_authenticationSessionStore.TryDeleteLegacy();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoadCredentialsFailed"), ex.Message));
-            }
         }
 
         private void LoadSessionFromDisk(string apiBaseUrl)
@@ -422,7 +377,7 @@ namespace Game
                 {
                     throw error;
                 }
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginCredentialsSavedEncrypted"), StoragePaths.AuthDirectory));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginCredentialsSavedEncrypted"), CommunityStoragePaths.AuthDirectory));
                 return true;
             }
             catch (PlatformNotSupportedException ex)

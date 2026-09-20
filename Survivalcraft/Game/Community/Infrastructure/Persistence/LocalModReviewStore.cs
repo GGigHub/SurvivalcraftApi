@@ -11,13 +11,13 @@ namespace Game
 
         public static Dictionary<string, LocalModReviewEntry> Load()
         {
-            if (!Storage.FileExists(StoragePaths.LocalModReviewsFile))
+            if (!Storage.FileExists(CommunityStoragePaths.LocalModReviewsFile))
             {
                 return new Dictionary<string, LocalModReviewEntry>(StringComparer.OrdinalIgnoreCase);
             }
 
             LocalModReviewsData data = JsonFileStore.Read<LocalModReviewsData>(
-                StoragePaths.LocalModReviewsFile,
+                CommunityStoragePaths.LocalModReviewsFile,
                 s_options);
             return data?.Reviews == null
                 ? new Dictionary<string, LocalModReviewEntry>(StringComparer.OrdinalIgnoreCase)
@@ -27,7 +27,7 @@ namespace Game
         public static void Save(IReadOnlyDictionary<string, LocalModReviewEntry> reviews)
         {
             JsonFileStore.Write(
-                StoragePaths.LocalModReviewsFile,
+                CommunityStoragePaths.LocalModReviewsFile,
                 new LocalModReviewsData
                 {
                     Reviews = new Dictionary<string, LocalModReviewEntry>(

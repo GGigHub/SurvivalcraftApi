@@ -90,13 +90,13 @@ namespace Game
         // 文件存在但读失败时 JsonFileStore.Read 记 Log.Warning 并返回 null，同样按全默认处理。
         private static void EnsureLoaded()
         {
-            if (s_loaded || !Storage.FileExists(StoragePaths.StateFile))
+            if (s_loaded || !Storage.FileExists(CommunityStoragePaths.StateFile))
             {
                 return;
             }
 
             s_loaded = true;
-            StateData state = JsonFileStore.Read<StateData>(StoragePaths.StateFile);
+            StateData state = JsonFileStore.Read<StateData>(CommunityStoragePaths.StateFile);
             if (state == null)
             {
                 return;
@@ -115,7 +115,7 @@ namespace Game
         {
             try
             {
-                JsonFileStore.Write(StoragePaths.StateFile, new StateData
+                JsonFileStore.Write(CommunityStoragePaths.StateFile, new StateData
                 {
                 FirstDownloadSelfReviewPromptShown = s_firstDownloadSelfReviewPromptShown,
                 LocalFileType = (int)s_localFileType,

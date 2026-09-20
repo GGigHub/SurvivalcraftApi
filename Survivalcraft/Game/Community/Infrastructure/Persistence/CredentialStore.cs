@@ -83,7 +83,7 @@ namespace Game
             {
                 hex.Append(b.ToString("x2", CultureInfo.InvariantCulture));
             }
-            return Storage.CombinePaths(StoragePaths.AuthDirectory, hex + ".bin");
+            return Storage.CombinePaths(CommunityStoragePaths.AuthDirectory, hex + ".bin");
         }
 
         public static void Save(string apiBaseUrl, string token, UserData user)
@@ -170,59 +170,6 @@ namespace Game
             TryDeleteFile(path);
             TryDeleteFile(path + ".bak");
             TryDeleteFile(path + ".tmp");
-        }
-
-        // ===== legacy 单文件 auth.bin（v3/v2/AES-CBC）只读迁移 =====
-
-        public static LoginData LoadLegacy(out bool legacyFormat)
-        {
-            legacyFormat = false;
-            string path = StoragePaths.AuthFile;
-            if (!Storage.FileExists(path))
-            {
-                // 活动文件缺失（如原子写硬崩溃后仅剩 .bak）时回退读取备份，避免无谓强制重登；
-                // 仅在 path 缺失时回退，不在解密失败时回退，以免削弱对篡改的响应。
-                string backupPath = path + ".bak";
-                if (!Storage.FileExists(backupPath))
-                {
-                    return null;
-                }
-                path = backupPath;
-            }
-
-            byte[] encrypted = Storage.ReadAllBytes(path);
-            string json;
-            try
-            {
-                json = DecryptBytes(encrypted, out legacyFormat);
-            }
-            catch (CryptographicException ex)
-            {
-                // 本平台损坏（截断/坏 GCM tag/坏 DPAPI blob）与跨平台不可解同待：作废文件，
-                // 避免每次启动重复失败，用户干净重登后由 Save 重建。
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCredentialStore", "DecryptCredentialFileFailed"), ex.Message));
-                TryDeleteFile(path);
-                TryDeleteFile(path + ".bak");
-                return null;
-            }
-            if (json == null)
-            {
-                // 本平台无法解开的凭据（如非 Windows 读 DPAPI 文件）：作废文件，
-                // 避免每次启动重复失败，用户干净重登后由 Save 重建。
-                TryDeleteFile(path);
-                TryDeleteFile(path + ".bak");
-                return null;
-            }
-            return JsonSerializer.Deserialize<LoginData>(json);
-        }
-
-        public static void DeleteLegacy()
-        {
-            // 登出须同时清理备份与临时文件：Load 在活动文件缺失时会回退 .bak，
-            // 只删活动文件会让旧账号凭据在下次启动时复活。
-            TryDeleteFile(StoragePaths.AuthFile);
-            TryDeleteFile(StoragePaths.AuthFile + ".bak");
-            TryDeleteFile(StoragePaths.AuthFile + ".tmp");
         }
 
         private static void TryDeleteFile(string path)

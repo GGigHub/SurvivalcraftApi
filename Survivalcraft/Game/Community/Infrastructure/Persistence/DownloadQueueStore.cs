@@ -16,14 +16,14 @@ namespace Game
 
         public static DownloadQueuePersistedState Load()
         {
-            return Storage.FileExists(StoragePaths.DownloadQueueFile)
-                ? JsonFileStore.Read<DownloadQueuePersistedState>(StoragePaths.DownloadQueueFile, s_options)
+            return Storage.FileExists(CommunityStoragePaths.DownloadQueueFile)
+                ? JsonFileStore.Read<DownloadQueuePersistedState>(CommunityStoragePaths.DownloadQueueFile, s_options)
                 : null;
         }
 
         public static void Save(DownloadQueuePersistedState store)
         {
-            JsonFileStore.Write(StoragePaths.DownloadQueueFile, store, s_options);
+            JsonFileStore.Write(CommunityStoragePaths.DownloadQueueFile, store, s_options);
         }
     }
 }

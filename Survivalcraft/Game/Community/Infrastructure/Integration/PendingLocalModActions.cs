@@ -17,7 +17,7 @@ namespace Game
     internal static class PendingLocalModActions
     {
         private static readonly Lock s_sync = new();
-        private static readonly string s_filePath = StoragePaths.LocalModPendingActionsFile;
+        private static readonly string s_filePath = CommunityStoragePaths.LocalModPendingActionsFile;
         private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 
         public static void Save(IReadOnlyDictionary<string, LocalModPendingActionEntry> actions)

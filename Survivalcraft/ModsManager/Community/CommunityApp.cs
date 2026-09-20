@@ -31,7 +31,7 @@ namespace Game
             }
 
             // 先于一切业务读取：修复上次进程死于 MoveFile 两步之间时 data:ScbbsPlus 下的状态丢失。
-            JsonFileStore.RecoverLeftoverTempFiles(StoragePaths.RootDirectory);
+            JsonFileStore.RecoverLeftoverTempFiles(CommunityStoragePaths.RootDirectory);
             // ModPacks 主文件/meta 与 JsonFileStore 同款 .tmp 命名，同因写入：Move 阶段死亡时包文件唯一副本成孤儿 .tmp。
             JsonFileStore.RecoverLeftoverTempFiles(ModpackRegistry.Shared.DirectoryPath);
 

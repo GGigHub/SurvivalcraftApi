@@ -38,23 +38,5 @@ namespace Game
                 return ex;
             }
         }
-
-        public LoginData LoadLegacy(out bool legacyFormat)
-        {
-            return CredentialStore.LoadLegacy(out legacyFormat);
-        }
-
-        public Exception TryDeleteLegacy()
-        {
-            try
-            {
-                CredentialStore.DeleteLegacy();
-                return null;
-            }
-            catch (Exception ex)
-            {
-                return ex;
-            }
-        }
     }
 }
