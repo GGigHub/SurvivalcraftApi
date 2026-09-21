@@ -412,9 +412,9 @@ namespace Engine.Graphics {
         }
 
         /// <summary>
-        /// 由于Load方法有使用Image&lt;Rgba32&gt;类型参数的重载，因此无法被不规范模组项目直接调用，故增加此方法作为中转
+        /// 由于Load方法有使用Image&lt;Rgba32&gt;类型参数的重载，因此无法被模组项目直接调用，故增加此方法作为中转
         /// </summary>
-        public static Texture2D LoadFor阳三疯(Image image, int mipLevelsCount = 1) => Load(image, mipLevelsCount);
+        public static Texture2D LoadForYsf(Image image, int mipLevelsCount = 1) => Load(image, mipLevelsCount);
 
         public virtual void InitializeTexture2D(int width, int height, int mipLevelsCount, ColorFormat colorFormat) {
             if (width < 1) {
