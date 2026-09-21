@@ -164,6 +164,12 @@ namespace Game
                         continue;
                     }
                     HashSet<string> target = IsModIncompatibleWithCurrentGame(entity)
+                        // 与 ToLocalResourceItem 同款豁免：下载前已判定兼容的版本沿用该结论，
+                        // 否则依赖快照会把已确认兼容的待重启模组误收进 IncompatiblePackages
+                        && !LocalModStateStore.HasPendingLocalModCompatibilityOverride(
+                            entity.modInfo.PackageName,
+                            entity.ModFilePath,
+                            entity.modInfo.Version)
                         ? result.IncompatiblePackages
                         : result.PendingRestartPackages;
                     target.Add(entity.modInfo.PackageName);

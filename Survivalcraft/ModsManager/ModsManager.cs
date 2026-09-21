@@ -657,6 +657,7 @@ public static class ModsManager {
         List<ModEntity> fileDeleted = [];
         List<ModEntity> stalePending = [];
         HashSet<string> knownPaths = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> pendingPaths = new(StringComparer.OrdinalIgnoreCase);
         HashSet<string> replacedPaths = new(StringComparer.OrdinalIgnoreCase);
         foreach (ModEntity entity in snapshot) {
             if (entity?.ModFilePath == null) {
@@ -667,9 +668,14 @@ public static class ModsManager {
                 continue;
             }
             if (entity.IsPendingRestart) {
-                // 待重启实体的磁盘文件被手动删除：直接从列表移除（无运行中内容，不标 IsFileDeleted）
                 if (!diskPaths.ContainsKey(normalized)) {
+                    // 待重启实体的磁盘文件被手动删除：直接从列表移除（无运行中内容，不标 IsFileDeleted）
                     stalePending.Add(entity);
+                }
+                else {
+                    // 该路径已有待重启实体占位：构造循环不得重造，否则每轮 rescan 重复
+                    // 累积副本，且新副本查重时会与旧副本互标 Duplicated
+                    pendingPaths.Add(normalized);
                 }
                 continue;
             }
@@ -681,13 +687,18 @@ public static class ModsManager {
                 fileDeleted.Add(entity);
             }
             else if (meta.Size != entity.Size || meta.LastWrite != entity.LastWriteTimeUtc) {
-                replacedPaths.Add(normalized); // 覆盖升级：旧实体保持已加载，路径追加待重启实体
+                // 覆盖升级：旧实体保持已加载，路径追加待重启实体。
+                // 旧实体元数据不回写，此判定每轮都命中，靠 pendingPaths 占位防重复追加。
+                replacedPaths.Add(normalized);
             }
         }
 
         // 后台构造新实体：全新路径 + 被覆盖路径
         List<ModEntity> newEntities = [];
         foreach (KeyValuePair<string, string> entry in diskPaths) {
+            if (pendingPaths.Contains(entry.Key)) {
+                continue; // 该路径已有待重启实体，矩阵"一致→无操作"
+            }
             if (knownPaths.Contains(entry.Key) && !replacedPaths.Contains(entry.Key)) {
                 continue;
             }
@@ -764,8 +775,10 @@ public static class ModsManager {
             using Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read);
             Stream keepOpenStream = GetDecipherStream(stream);
             modEntity = new ModEntity(filePath, ZipArchive.Open(keepOpenStream, true), constructAsPending);
-            // rescan 构造即待重启：磁盘有文件而本进程未加载，重启后生效（启动期构造恒为 false）
-            modEntity.IsPendingRestart = constructAsPending;
+            // rescan 构造即待重启：磁盘有文件而本进程未加载，重启后生效（启动期构造恒为 false）。
+            // 已被判定禁用的实体（破损包 modInfo==null/包名非法/重复等）不置待重启——
+            // 否则管理屏"待重启"分支先于禁用分支，永不生效的坏包会显示成绿色待重启误导用户。
+            modEntity.IsPendingRestart = constructAsPending && !modEntity.IsDisabled;
             if (modEntity.modInfo == null) {
                 LoadingScreen.Warning(
                     $"The modinfo.json is missing or broken from [{Storage.GetFileName(modEntity.ModFilePath)}], and this mod will be disabled."
