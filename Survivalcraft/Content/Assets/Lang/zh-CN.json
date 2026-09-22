@@ -56,7 +56,9 @@
     "Text": {
       "LoadingFormat": "{0} · 正在加载...",
       "Downloading": "下载中...",
-      "MyPublishedFormat": "我发布的{0}"
+      "MyPublishedFormat": "我发布的{0}",
+      "PageUploads": "{0}  共 {3} 个文件",
+      "NoUploads": "{0} · 暂无文件"
     }
   },
   "ContentScreen": {

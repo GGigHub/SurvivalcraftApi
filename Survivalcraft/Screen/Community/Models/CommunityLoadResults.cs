@@ -43,4 +43,12 @@ namespace Game
         public IReadOnlyList<PostItem> TopResources { get; set; }
         public string Error { get; set; }
     }
+
+    public class UploadFilesLoadResult
+    {
+        public int RequestId { get; set; }
+        public CommunityFileType FileType { get; set; }
+        public UploadModsResponse Response { get; set; }
+        public string Error { get; set; }
+    }
 }

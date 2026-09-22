@@ -56,7 +56,9 @@
     "Text": {
       "LoadingFormat": "{0} · Loading...",
       "Downloading": "Downloading...",
-      "MyPublishedFormat": "My {0}s"
+      "MyPublishedFormat": "My {0}s",
+      "PageUploads": "{0}  {3} Files",
+      "NoUploads": "{0} · No Files"
     }
   },
   "ContentScreen": {

@@ -130,8 +130,14 @@ namespace Game
     {
         [JsonPropertyName("list")] public PostFileItem[] List { get; set; }
         [JsonPropertyName("total")] public int Total { get; set; }
-        [JsonPropertyName("page")] public int Page { get; set; }
-        [JsonPropertyName("limit")] public int Limit { get; set; }
+        // /upload/list 的 page/limit 返回字符串（"1"/"10"），/upload/mods 返回数字：
+        // 服务端同族接口类型不稳定，同 PostItem 计数字段走 FlexibleInt 归一化。
+        [JsonPropertyName("page")]
+        [JsonConverter(typeof(FlexibleIntJsonConverter))]
+        public int Page { get; set; }
+        [JsonPropertyName("limit")]
+        [JsonConverter(typeof(FlexibleIntJsonConverter))]
+        public int Limit { get; set; }
     }
 
     /// <summary>double? 版容错转换：服务端 score 类型不稳定，数字/字符串/其他一律归一化，解析失败归 null。</summary>

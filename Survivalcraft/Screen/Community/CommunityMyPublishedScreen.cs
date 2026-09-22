@@ -27,6 +27,7 @@ namespace Game
         private readonly PostTreePresenter m_postsPresenter;
         private CommunityFileType m_selectedFileType = CommunityFileType.Mod;
         private readonly TaskSlot<PostsLoadResult> m_postsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostsList"));
+        private readonly TaskSlot<UploadFilesLoadResult> m_uploadsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostsList"));
         private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostNodeDetails"));
         private bool m_pendingLoginOnEnter;
 
@@ -103,6 +104,7 @@ namespace Game
         public override void Leave()
         {
             m_postsLoadSlot.Invalidate();
+            m_uploadsLoadSlot.Invalidate();
             m_postDetailSlot.Invalidate();
             ReleaseDownloadFlowCallbacks(releaseRemoteImportHost: false);
             m_pendingLoginOnEnter = false;
@@ -147,8 +149,9 @@ namespace Game
                 UpdateTypeButtonsStyle();
             }
             HandlePaginationClicks();
-            // 翻页按钮可用性随加载状态刷新（同社区屏，经 PostTreePresenter.UpdatePaginationButtons）。
-            m_postsPresenter.UpdatePaginationButtons(() => m_postsLoadSlot.IsRunning);
+            // 翻页按钮可用性随加载状态刷新（同社区屏，经 PostTreePresenter.UpdatePaginationButtons）；
+            // 双槽任一在途都禁用，非 Mod 类别加载中不放开翻页。
+            m_postsPresenter.UpdatePaginationButtons(() => m_postsLoadSlot.IsRunning || m_uploadsLoadSlot.IsRunning);
             UpdateDownloadButtons();
             m_postsPresenter.Update();
 
@@ -164,14 +167,35 @@ namespace Game
                     loadResult,
                     string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(loadResult.FileType)));
             }
+
+            if (m_uploadsLoadSlot.TryTake(
+                    out UploadFilesLoadResult uploadsResult,
+                    error => new UploadFilesLoadResult
+                    {
+                        RequestId = m_uploadsLoadSlot.RequestId,
+                        Error = error.Message
+                    }))
+            {
+                m_postsPresenter.ApplyUploadFilesResult(
+                    uploadsResult,
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(uploadsResult.FileType)));
+            }
         }
 
         private void LoadMyPublishedPosts()
         {
             m_postsPresenter.Clear(disposeIcons: true);
             m_postsLoadSlot.Invalidate();
+            m_uploadsLoadSlot.Invalidate();
             m_postsPresenter.InvalidatePostDetailLoad();
             CommunityFileType fileType = m_selectedFileType;
+            if (fileType != CommunityFileType.Mod)
+            {
+                LoadMyUploads(fileType);
+                return;
+            }
+
+            // ↓↓ 以下为原实现，原样保留（Mod 类别继续走帖子维度）↓↓
             string token = AuthSessionManager.Instance.CurrentToken;
             int userId = AuthSessionManager.Instance.CurrentUser?.Id ?? 0;
             string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
@@ -206,6 +230,37 @@ namespace Game
                     Response = load.Response,
                     VersionCatalog = load.VersionCatalog,
                     GameVersionsById = load.GameVersionsById,
+                    Error = load.Error
+                };
+            });
+        }
+
+        // 非 Mod 类别：/upload/list 平铺文件列表（token 归属"我的上传"），不需要版本目录
+        // （无版本/兼容性展示，ShouldLoadVersionCatalogForFileType 对这些类型本就为 false）。
+        private void LoadMyUploads(CommunityFileType fileType)
+        {
+            string token = AuthSessionManager.Instance.CurrentToken;
+            string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
+            m_postsPresenter.TotalPages = MathUtils.Max(m_postsPresenter.Page, 1);
+            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(fileType)));
+            m_uploadsLoadSlot.Start(async (requestId, _) =>
+            {
+                CommunityUploadFilesLoad load = await CommunityManager.LoadMyUploadsAsync(
+                    CommunityManager.ApiClient,
+                    apiBaseUrl,
+                    token,
+                    m_postsPresenter.Page,
+                    10,
+                    fileType);
+                if (!string.IsNullOrEmpty(load.Error))
+                {
+                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "LoadMyPublishedFailed"), load.Error));
+                }
+                return new UploadFilesLoadResult
+                {
+                    RequestId = requestId,
+                    FileType = fileType,
+                    Response = load.Response,
                     Error = load.Error
                 };
             });

@@ -285,6 +285,43 @@ namespace Game
             MarkDirty();
         }
 
+        /// <summary>
+        /// 用"我的上传"平铺文件列表填充树（我的发布屏非 Mod 类别）：每行一个根级文件节点，
+        /// 无帖子/版本层级。分页与状态标签语义同 ApplyPostsResult；下载数/图标随行数据
+        /// 缺失而不显示（服务端 /upload/list 不下发）。
+        /// </summary>
+        public void ApplyUploadFilesResult(UploadFilesLoadResult loadResult, string statusPrefix)
+        {
+            UploadModsResponse result = loadResult.Response;
+            if (result != null && result.Code == 200 && result.Data?.List != null)
+            {
+                m_tree.Clear(false);
+                foreach (PostFileItem file in result.Data.List)
+                {
+                    TreeViewNode fileNode = CreateUploadFileNode(file);
+                    if (fileNode != null)
+                    {
+                        m_tree.AddRoot(fileNode);
+                    }
+                }
+                int total = result.Data.Total > 0 ? result.Data.Total : result.Data.List.Length;
+                TotalPages = CalculateTotalPages(total, result.Data.Limit);
+                SetPageJumpBoxText();
+                m_statusLabel.Text = result.Data.List.Length > 0
+                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "PageUploads"), statusPrefix, Page, TotalPages, total)
+                    : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "NoUploads"), statusPrefix);
+            }
+            else
+            {
+                TotalPages = MathUtils.Max(Page, 1);
+                SetPageJumpBoxText();
+                string error = loadResult.Error ?? result?.Msg ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "NoData");
+                m_statusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "LoadFailed"), statusPrefix);
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "LoadPostFailed"), error));
+            }
+            MarkDirty();
+        }
+
         public void SetPageJumpBoxText()
         {
             if (m_pageJumpBox != null)
@@ -507,6 +544,27 @@ namespace Game
             string timeText = CommunityTimeFormatter.FormatDate(file.CreatedAt);
             string title = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "File"), file.Filename ?? string.Empty);
             TreeViewNode node = new TreeViewNode(title, new Color(180, 255, 180), $"{sizeText}  {string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "Downloads"), file.DownloadCount)}  {timeText}", new Color(140, 140, 140))
+            {
+                Tag = file
+            };
+            PostIconLoader.ApplyFileNodeIcon(node, file);
+            return node;
+        }
+
+        /// <summary>
+        /// "我的上传"平铺文件节点：标题/大小/时间同文件节点，但不下载数（/upload/list 不下发，
+        /// 显示"下载：0"是误导）、不回填 postId（无帖子上下文）。file 为 null 返回 null。
+        /// </summary>
+        public TreeViewNode CreateUploadFileNode(PostFileItem file)
+        {
+            if (file == null)
+            {
+                return null;
+            }
+            string sizeText = TryGetSizeText(file.Size);
+            string timeText = CommunityTimeFormatter.FormatDate(file.CreatedAt);
+            string title = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "File"), file.Filename ?? string.Empty);
+            TreeViewNode node = new TreeViewNode(title, new Color(180, 255, 180), $"{sizeText}  {timeText}", new Color(140, 140, 140))
             {
                 Tag = file
             };
