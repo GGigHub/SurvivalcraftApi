@@ -58,7 +58,8 @@
       "Downloading": "Downloading...",
       "MyPublishedFormat": "My {0}s",
       "PageUploads": "{0}  {3} Files",
-      "NoUploads": "{0} · No Files"
+      "NoUploads": "{0} · No Files",
+      "MyUnpublishedFormat": "My Unpublished {0}s"
     }
   },
   "ContentScreen": {
@@ -4047,6 +4048,7 @@
       "2": "Note: Either option may cause the game to malfunction."
     },
     "ScbbsPlusCommunityScreen": {
+      "UnpublishedOnly": "Unpublished Only",
       "SCChineseCommunity": "SC Chinese Community",
       "Community": "Community",
       "Filter": "Filter",

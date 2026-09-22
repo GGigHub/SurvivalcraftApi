@@ -23,6 +23,7 @@ namespace Game
         public BevelledButtonWidget m_pageJumpButton;
         public BevelledButtonWidget m_shareLinkButton;
         public BevelledButtonWidget m_downloadButton;
+        public BevelledButtonWidget m_unpublishedButton;
 
         private readonly PostTreePresenter m_postsPresenter;
         private CommunityFileType m_selectedFileType = CommunityFileType.Mod;
@@ -30,6 +31,8 @@ namespace Game
         private readonly TaskSlot<UploadFilesLoadResult> m_uploadsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostsList"));
         private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostNodeDetails"));
         private bool m_pendingLoginOnEnter;
+        // 只看未发布开关：开=upload/list 平铺未发布文件；关=帖子树（全部类别）。
+        private bool m_showUnpublished;
 
         public CommunityMyPublishedScreen()
         {
@@ -60,6 +63,7 @@ namespace Game
                 Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.TypeModButton"),
                 Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.TypeModpackButton")
             ];
+            m_unpublishedButton = Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.UnpublishedButton");
 
             m_postsPresenter = new PostTreePresenter(
                 m_postsTree,
@@ -79,6 +83,8 @@ namespace Game
         {
             // 屏实例全局复用：每次进入都从第一页开始，防上次会话的页码残留。
             m_postsPresenter.Page = 1;
+            // 屏实例全局复用：防上次会话开关残留，同 Page 重置语义。
+            m_showUnpublished = false;
             // 游戏内 ModSettingsState 以 MyPublishedFileType 单属性承载本屏类型（无按屏名
             // TryGet 版式），恒有值，直接恢复即可。
             SetCurrentMyPublishedFileType(ModSettingsState.MyPublishedFileType);
@@ -142,15 +148,23 @@ namespace Game
             }
 
             HandleLocalTypeClicks();
+            HandleUnpublishedToggle();
             // 选中态（勾选样式/斜面着色）只在切换类型那一帧重写，避免每帧全量赋值。
             if (m_typeButtonsSelectionState != (int)m_selectedFileType)
             {
                 m_typeButtonsSelectionState = (int)m_selectedFileType;
                 UpdateTypeButtonsStyle();
             }
+            if (m_unpublishedButtonState != (m_showUnpublished ? 1 : 0))
+            {
+                m_unpublishedButtonState = m_showUnpublished ? 1 : 0;
+                m_unpublishedButton.IsChecked = m_showUnpublished;
+                m_unpublishedButton.BevelColor = m_showUnpublished ? new Color(50, 150, 35) : new Color(181, 172, 154);
+                m_unpublishedButton.CenterColor = m_showUnpublished ? new Color(50, 150, 35) : new Color(181, 172, 154);
+            }
             HandlePaginationClicks();
             // 翻页按钮可用性随加载状态刷新（同社区屏，经 PostTreePresenter.UpdatePaginationButtons）；
-            // 双槽任一在途都禁用，非 Mod 类别加载中不放开翻页。
+            // 帖子/未发布两路任一在途都禁用，加载中不放开翻页。
             m_postsPresenter.UpdatePaginationButtons(() => m_postsLoadSlot.IsRunning || m_uploadsLoadSlot.IsRunning);
             UpdateDownloadButtons();
             m_postsPresenter.Update();
@@ -178,7 +192,7 @@ namespace Game
             {
                 m_postsPresenter.ApplyUploadFilesResult(
                     uploadsResult,
-                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(uploadsResult.FileType)));
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyUnpublishedFormat"), EnumDisplayName.GetEnumDisplayName(uploadsResult.FileType)));
             }
         }
 
@@ -189,13 +203,14 @@ namespace Game
             m_uploadsLoadSlot.Invalidate();
             m_postsPresenter.InvalidatePostDetailLoad();
             CommunityFileType fileType = m_selectedFileType;
-            if (fileType != CommunityFileType.Mod)
+            // 开关开：/upload/list 未发布平铺；关：帖子树（全部类别）。
+            if (m_showUnpublished)
             {
                 LoadMyUploads(fileType);
                 return;
             }
 
-            // ↓↓ 以下为原实现，原样保留（Mod 类别继续走帖子维度）↓↓
+            // ↓↓ 以下为帖子树路径，全部类别生效 ↓↓
             string token = AuthSessionManager.Instance.CurrentToken;
             int userId = AuthSessionManager.Instance.CurrentUser?.Id ?? 0;
             string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
@@ -235,14 +250,14 @@ namespace Game
             });
         }
 
-        // 非 Mod 类别：/upload/list 平铺文件列表（token 归属"我的上传"），不需要版本目录
-        // （无版本/兼容性展示，ShouldLoadVersionCatalogForFileType 对这些类型本就为 false）。
+        // 开关开：/upload/list 未发布平铺文件列表（publishState=2，token 归属"我的上传"），
+        // 全类别可用；平铺行无版本/兼容性展示，不加载版本目录。
         private void LoadMyUploads(CommunityFileType fileType)
         {
             string token = AuthSessionManager.Instance.CurrentToken;
             string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
             m_postsPresenter.TotalPages = MathUtils.Max(m_postsPresenter.Page, 1);
-            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(fileType)));
+            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyUnpublishedFormat"), EnumDisplayName.GetEnumDisplayName(fileType)));
             m_uploadsLoadSlot.Start(async (requestId, _) =>
             {
                 CommunityUploadFilesLoad load = await CommunityManager.LoadMyUploadsAsync(
@@ -294,6 +309,19 @@ namespace Game
             }
         }
 
+        // 只看未发布开关：切换即回第一页，语义同 SetCurrentMyPublishedFileType。
+        private void HandleUnpublishedToggle()
+        {
+            if (m_unpublishedButton == null || !m_unpublishedButton.IsClicked)
+            {
+                return;
+            }
+
+            m_showUnpublished = !m_showUnpublished;
+            m_postsPresenter.Page = 1;
+            LoadMyPublishedPosts();
+        }
+
         private void SetCurrentMyPublishedFileType(CommunityFileType fileType)
         {
             m_selectedFileType = fileType;
@@ -332,6 +360,9 @@ namespace Game
 
         // 类型按钮选中态哨兵：与 m_selectedFileType 的枚举值比较，变化才重写按钮样式。
         private int m_typeButtonsSelectionState = -1;
+
+        // 只看未发布开关按钮样式哨兵：与 m_showUnpublished 比较，变化才重写按钮样式。
+        private int m_unpublishedButtonState = -1;
 
         private void UpdateDownloadButtons()
         {

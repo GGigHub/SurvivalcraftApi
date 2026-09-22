@@ -12,6 +12,7 @@
         <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeSkinButton" Text="[ScbbsPlusCommunityScreen:Skin]" Size="108, 48" Margin="5, 0" />
         <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeModButton" Text="[ScbbsPlusCommunityScreen:Mod]" Size="108, 48" Margin="5, 0" />
         <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeModpackButton" Text="[ScbbsPlusCommunityScreen:Modpack]" Size="108, 48" Margin="5, 0" />
+        <BevelledButtonWidget Name="CommunityMyPublishedScreen.UnpublishedButton" Text="[ScbbsPlusCommunityScreen:UnpublishedOnly]" Size="128, 48" FontScale="0.9" Margin="5, 0" />
       </StackPanelWidget>
       <CanvasWidget Size="Infinity, Infinity" Margin="10, 8">
         <BevelledRectangleWidget Style="{Styles/Area}" />
