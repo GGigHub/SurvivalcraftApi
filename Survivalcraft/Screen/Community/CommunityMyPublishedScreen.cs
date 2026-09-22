@@ -16,7 +16,7 @@ namespace Game
         public CommunityTreeViewWidget m_postsTree;
         public LabelWidget m_postsStatusLabel;
         public ButtonWidget m_topBarBackButton;
-        public BevelledButtonWidget[] m_localTypeButtons;
+        public BevelledButtonWidget m_typeButton;
         public BevelledButtonWidget m_prevPageButton;
         public BevelledButtonWidget m_nextPageButton;
         public TextBoxWidget m_pageJumpBox;
@@ -54,15 +54,7 @@ namespace Game
             m_pageJumpBox = Children.Find<TextBoxWidget>("CommunityMyPublishedScreen.PageJumpBox");
             m_pageJumpButton = Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.PageJumpButton");
             Children.Find<StackPanelWidget>("CommunityMyPublishedScreen.LocalTypeOptionsPanel");
-            m_localTypeButtons =
-            [
-                Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.TypeWorldButton"),
-                Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.TypeFurnitureButton"),
-                Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.TypeTextureButton"),
-                Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.TypeSkinButton"),
-                Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.TypeModButton"),
-                Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.TypeModpackButton")
-            ];
+            m_typeButton = Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.TypeButton");
             m_unpublishedButton = Children.Find<BevelledButtonWidget>("CommunityMyPublishedScreen.UnpublishedButton");
 
             m_postsPresenter = new PostTreePresenter(
@@ -147,14 +139,8 @@ namespace Game
                 ScreensManager.GoBack();
             }
 
-            HandleLocalTypeClicks();
+            HandleTypeButtonClick();
             HandleUnpublishedToggle();
-            // 选中态（勾选样式/斜面着色）只在切换类型那一帧重写，避免每帧全量赋值。
-            if (m_typeButtonsSelectionState != (int)m_selectedFileType)
-            {
-                m_typeButtonsSelectionState = (int)m_selectedFileType;
-                UpdateTypeButtonsStyle();
-            }
             if (m_unpublishedButtonState != (m_showUnpublished ? 1 : 0))
             {
                 m_unpublishedButtonState = m_showUnpublished ? 1 : 0;
@@ -281,32 +267,31 @@ namespace Game
             });
         }
 
-        private void HandleLocalTypeClicks()
+        // 小屏顶栏摆不下 6 个类型按钮：收进 ListSelectionDialog（ManageUserScreen 同款惯式）。
+        private void HandleTypeButtonClick()
         {
-            if (m_localTypeButtons == null)
+            if (m_typeButton == null || !m_typeButton.IsClicked)
             {
                 return;
             }
 
             CommunityFileType[] fileTypeValues = CommunityFileTypes.FilterableValues();
-            for (int i = 0; i < m_localTypeButtons.Length && i < fileTypeValues.Length; i++)
-            {
-                BevelledButtonWidget button = m_localTypeButtons[i];
-                if (!button.IsClicked)
+            DialogsManager.ShowDialog(null, new ListSelectionDialog(
+                LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectFileType"),
+                fileTypeValues,
+                60f,
+                item => EnumDisplayName.GetEnumDisplayName((CommunityFileType)item),
+                delegate (object result)
                 {
-                    continue;
-                }
+                    CommunityFileType newFileType = (CommunityFileType)result;
+                    if (newFileType == m_selectedFileType)
+                    {
+                        return;
+                    }
 
-                CommunityFileType newFileType = fileTypeValues[i];
-                if (newFileType == m_selectedFileType)
-                {
-                    return;
-                }
-
-                SetCurrentMyPublishedFileType(newFileType);
-                LoadMyPublishedPosts();
-                return;
-            }
+                    SetCurrentMyPublishedFileType(newFileType);
+                    LoadMyPublishedPosts();
+                }));
         }
 
         // 只看未发布开关：切换即回第一页，语义同 SetCurrentMyPublishedFileType。
@@ -332,20 +317,6 @@ namespace Game
             m_postsPresenter.Page = 1;
         }
 
-        // 选中态样式（勾选/斜面着色），与本地屏 UpdateLocalTypeButtonsStyle 同构；
-        // 由 m_typeButtonsSelectionState 哨兵守卫，仅在切换类型那一帧执行。
-        private void UpdateTypeButtonsStyle()
-        {
-            CommunityFileType[] fileTypeValues = CommunityFileTypes.FilterableValues();
-            for (int i = 0; i < m_localTypeButtons.Length && i < fileTypeValues.Length; i++)
-            {
-                bool isSelected = fileTypeValues[i] == m_selectedFileType;
-                m_localTypeButtons[i].IsChecked = isSelected;
-                m_localTypeButtons[i].BevelColor = isSelected ? new Color(50, 150, 35) : new Color(181, 172, 154);
-                m_localTypeButtons[i].CenterColor = isSelected ? new Color(50, 150, 35) : new Color(181, 172, 154);
-            }
-        }
-
         private void HandlePaginationClicks()
         {
             if (m_postsPresenter.HandlePaginationClicks())
@@ -357,9 +328,6 @@ namespace Game
         // Text/IsEnabled 完全由两个布尔输入决定；签名不变时跳过赋值，
         // 避免每帧 2 次 LanguageControl.Get（params 数组 + JsonNode 查找的堆分配）。
         private int m_downloadButtonsState = -1;
-
-        // 类型按钮选中态哨兵：与 m_selectedFileType 的枚举值比较，变化才重写按钮样式。
-        private int m_typeButtonsSelectionState = -1;
 
         // 只看未发布开关按钮样式哨兵：与 m_showUnpublished 比较，变化才重写按钮样式。
         private int m_unpublishedButtonState = -1;

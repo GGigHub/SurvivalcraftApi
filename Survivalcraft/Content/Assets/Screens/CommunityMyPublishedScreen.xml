@@ -4,15 +4,10 @@
     <CanvasWidget Style="{Widgets/TopBarContents}">
       <LabelWidget Name="TopBar.Label" Text="[CommunityMyPublished:Title]" />
     </CanvasWidget>
-    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0, 5">
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0, 8">
       <StackPanelWidget Name="CommunityMyPublishedScreen.LocalTypeOptionsPanel" Direction="Horizontal" VerticalAlignment="Center">
-        <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeWorldButton" Text="[ScbbsPlusCommunityScreen:World]" Size="108, 48" Margin="5, 0" />
-        <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeFurnitureButton" Text="[ScbbsPlusCommunityScreen:Furniture]" Size="108, 48" Margin="5, 0" />
-        <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeTextureButton" Text="[ScbbsPlusCommunityScreen:Texture]" Size="108, 48" Margin="5, 0" />
-        <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeSkinButton" Text="[ScbbsPlusCommunityScreen:Skin]" Size="108, 48" Margin="5, 0" />
-        <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeModButton" Text="[ScbbsPlusCommunityScreen:Mod]" Size="108, 48" Margin="5, 0" />
-        <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeModpackButton" Text="[ScbbsPlusCommunityScreen:Modpack]" Size="108, 48" Margin="5, 0" />
-        <BevelledButtonWidget Name="CommunityMyPublishedScreen.UnpublishedButton" Text="[ScbbsPlusCommunityScreen:UnpublishedOnly]" Size="128, 48" FontScale="0.9" Margin="5, 0" />
+        <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeButton" Text="[ScbbsPlusCommunityScreen:Type]" Style="{Styles/ButtonStyle_205x60}" Margin="5, 0" />
+        <BevelledButtonWidget Name="CommunityMyPublishedScreen.UnpublishedButton" Text="[ScbbsPlusCommunityScreen:UnpublishedOnly]" Style="{Styles/ButtonStyle_205x60}" Margin="5, 0" />
       </StackPanelWidget>
       <CanvasWidget Size="Infinity, Infinity" Margin="10, 8">
         <BevelledRectangleWidget Style="{Styles/Area}" />
@@ -26,7 +21,7 @@
       <StackPanelWidget Direction="Horizontal" Margin="5, 0">
         <StackPanelWidget Name="CommunityMyPublishedScreen.PaginationPanel" Direction="Horizontal" VerticalAlignment="Center">
           <BevelledButtonWidget Name="CommunityMyPublishedScreen.PrevPageButton" Style="{Styles/ButtonStyle_ArrowLeft}" />
-          <CanvasWidget Size="60, 46" VerticalAlignment="Center">
+          <CanvasWidget Size="60, 46" VerticalAlignment="Center" MarginLeft="6">
             <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
             <TextBoxWidget Name="CommunityMyPublishedScreen.PageJumpBox" Title="[ScbbsPlusCommunityScreen:Page]" Description="[ScbbsPlusCommunityScreen:Page]" Size="60, 46" MaximumLength="4" Margin="8, 0" />
           </CanvasWidget>

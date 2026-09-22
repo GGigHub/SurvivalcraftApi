@@ -27,7 +27,7 @@
       <StackPanelWidget Direction="Horizontal" Margin="5, 0">
           <StackPanelWidget Direction="Horizontal" VerticalAlignment="Center">
             <BevelledButtonWidget Name="CommunityPrevPageButton" Style="{Styles/ButtonStyle_ArrowLeft}" />
-            <CanvasWidget Size="60, 46" VerticalAlignment="Center">
+            <CanvasWidget Size="60, 46" VerticalAlignment="Center" MarginLeft="6">
               <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
               <TextBoxWidget Name="CommunityPageJumpBox" Title="[ScbbsPlusCommunityScreen:Page]" Description="[ScbbsPlusCommunityScreen:Page]" Size="60, 46" MaximumLength="4" Margin="8, 0" />
             </CanvasWidget>
