@@ -464,7 +464,8 @@ public static class ModsManager {
                 for (int i = 0; i < array.Length; i += 2) {
                     string packageName1 = array[i];
                     ModEntity modEntity1 = ModListAll.Find(x => {
-                            if (x.modInfo == null || x.IsDisabled) {
+                            // 排除待重启实体：LoadOrder 排序只对本进程实际加载的模组有意义
+                            if (x.modInfo == null || x.IsDisabled || x.IsPendingRestart) {
                                 return false;
                             }
                             return x.modInfo.PackageName == packageName1;
@@ -475,7 +476,7 @@ public static class ModsManager {
                     }
                     string packageName2 = array[i + 1];
                     ModEntity modEntity2 = ModListAll.Find(x => {
-                        if (x.modInfo == null || x.IsDisabled) {
+                        if (x.modInfo == null || x.IsDisabled || x.IsPendingRestart) {
                             return false;
                         }
                         return x.modInfo.PackageName == packageName2;

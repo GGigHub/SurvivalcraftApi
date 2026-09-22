@@ -474,7 +474,9 @@ namespace Game {
             }
             LoadingScreen.Info($"[{modInfo.Name}] Checking dependencies.");
             foreach ((string name, VersionRange range) in modInfo.DependencyRanges) {
+                // 排除待重启实体：其内容本进程未加载，当作依赖提供者会让依赖方带缺失依赖放行
                 ModEntity entity = ModsManager.ModListAll.Find(px => !px.IsDisabled
+                    && !px.IsPendingRestart
                     && px.modInfo != null
                     && px.modInfo.PackageName == name
                     && ((px.modInfo.NuGetVersion != null && range.Satisfies(px.modInfo.NuGetVersion)) || range.Equals(VersionRange.All) || px.modInfo.Version == range.OriginalString)
