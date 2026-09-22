@@ -56,10 +56,10 @@
     "Text": {
       "LoadingFormat": "{0} · Loading...",
       "Downloading": "Downloading...",
-      "MyPublishedFormat": "My {0}s",
-      "PageUploads": "{0}  {3} Files",
+      "MyPublishedFormat": "Published {0}s",
+      "PageUploads": "{0}, {3} Files",
       "NoUploads": "{0} · No Files",
-      "MyUnpublishedFormat": "My Unpublished {0}s"
+      "MyUnpublishedFormat": "Unpublished {0}s"
     }
   },
   "ContentScreen": {
@@ -4827,7 +4827,7 @@
         "VersionDownloads": "Version Downloads",
         "VersionLast30DaysTotalFiles": "Version {0}: last 30 days {1}, total {2}, files {3}",
         "LoadedResourcesFormat": "Loaded {0}s ({1})",
-        "PagePosts": "{0}  {3} Posts",
+        "PagePosts": "{0}, {3} Posts",
         "NoPosts": "{0} · No Posts",
         "LoadFailed": "{0} · Load Failed",
         "UnknownUser": "Unknown User",

@@ -267,8 +267,8 @@ namespace Game
                         && (loadResult.FileType == CommunityFileType.Mod || (loadResult.FileType == CommunityFileType.Unknown && post.FileType == CommunityFileType.Mod));
                     m_tree.AddRoot(CreatePostNode(post, ref snapshot));
                 }
-                int total = result.Data.Total > 0 ? result.Data.Total : result.Data.List.Length;
-                TotalPages = CalculateTotalPages(total, result.Data.Limit);
+                (int total, int totalPages) = ResolveListTotals(result.Data.Total, result.Data.Limit, Page, result.Data.List.Length);
+                TotalPages = totalPages;
                 SetPageJumpBoxText();
                 m_statusLabel.Text = result.Data.List.Length > 0
                     ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "PagePosts"), statusPrefix, Page, TotalPages, total)
@@ -304,8 +304,8 @@ namespace Game
                         m_tree.AddRoot(fileNode);
                     }
                 }
-                int total = result.Data.Total > 0 ? result.Data.Total : result.Data.List.Length;
-                TotalPages = CalculateTotalPages(total, result.Data.Limit);
+                (int total, int totalPages) = ResolveListTotals(result.Data.Total, result.Data.Limit, Page, result.Data.List.Length);
+                TotalPages = totalPages;
                 SetPageJumpBoxText();
                 m_statusLabel.Text = result.Data.List.Length > 0
                     ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "PageUploads"), statusPrefix, Page, TotalPages, total)
@@ -817,6 +817,23 @@ namespace Game
                 return DataSizeFormatter.Format(size);
             }
             return value ?? "";
+        }
+
+        /// <summary>
+        /// 服务端列表 total 字段会谎报（/user/posts 实测恒 2，与真实分页脱节）：已加载数
+        /// 超过 total 在分页语义上不可能，此时弃用 total，展示退回"已加载到哪算哪"口径，
+        /// 满页再放行 Page+1 继续翻页，翻到短页后由已加载数收敛出真实总数与页数。
+        /// total 诚实时（总 ≥ 已加载）两值与原 total 口径完全一致。
+        /// </summary>
+        private static (int Total, int TotalPages) ResolveListTotals(int serverTotal, int limit, int page, int loadedCount)
+        {
+            int safeLimit = MathUtils.Max(limit, 1);
+            int loadedTotal = MathUtils.Max(page - 1, 0) * safeLimit + loadedCount;
+            int total = MathUtils.Max(serverTotal, loadedTotal);
+            int totalPages = loadedTotal > serverTotal && loadedCount >= safeLimit
+                ? MathUtils.Max(page, 1) + 1
+                : CalculateTotalPages(total, limit);
+            return (total, totalPages);
         }
 
         private static int CalculateTotalPages(int total, int limit)

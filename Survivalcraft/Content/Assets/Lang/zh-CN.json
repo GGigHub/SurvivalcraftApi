@@ -56,10 +56,10 @@
     "Text": {
       "LoadingFormat": "{0} · 正在加载...",
       "Downloading": "下载中...",
-      "MyPublishedFormat": "我发布的{0}",
-      "PageUploads": "{0}  共 {3} 个文件",
+      "MyPublishedFormat": "已发布的{0}",
+      "PageUploads": "{0}，共 {3} 个文件",
       "NoUploads": "{0} · 暂无文件",
-      "MyUnpublishedFormat": "我未发布的{0}"
+      "MyUnpublishedFormat": "未发布的{0}"
     }
   },
   "ContentScreen": {
@@ -4837,7 +4837,7 @@
         "VersionDownloads": "版本下载",
         "VersionLast30DaysTotalFiles": "版本 {0}：近30天 {1}，累计 {2}，文件 {3}",
         "LoadedResourcesFormat": "已加载的{0} ({1})",
-        "PagePosts": "{0}  共 {3} 个帖子",
+        "PagePosts": "{0}，共 {3} 个帖子",
         "NoPosts": "{0} · 暂无帖子",
         "LoadFailed": "{0} · 加载失败",
         "UnknownUser": "未知用户",
