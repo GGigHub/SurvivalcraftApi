@@ -5518,6 +5518,7 @@
     "ModpackProcessingFaulted": "[ScbbsPlus] Modpack processing faulted: {0}",
     "BackgroundTaskFailed": "[ScbbsPlus] Background task failed: {0}, downloadFailed={1}, error={2}",
     "DownloadQueueRestored": "[ScbbsPlus] Download queue restored: {0} items",
+    "OldVersionDisabledPendingRestart": "Disabled old version {0}; the newly downloaded version takes effect after restart",
     "SaveDownloadQueueFailed": "[ScbbsPlus] Failed to save the download queue: {0}",
     "CleanDownloadTempFileFailed": "[ScbbsPlus] Failed to clean up a download temporary file: {0}",
     "DownloadTaskFaulted": "[ScbbsPlus] Download task faulted: {0}",

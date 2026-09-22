@@ -163,6 +163,32 @@ namespace Game
                 return;
             }
 
+            // 同包名但文件名不同：Mods 目录本就允许同包名多副本共存（引擎仅启用其一，其余手动禁用）。
+            // 恰有一个同包名模组时自动禁用旧版（持久化到 DisabledMods：重启后旧版失效、新版生效，
+            // 本进程旧版仍在运行不受影响，管理屏立即显示黄字"已禁用"）；已有多个副本时直接下载，
+            // 由用户自行管理启用。不走"替换并删除旧文件"的更新链——链接导入链保留该语义。
+            if (type == ExternalContentType.Mod
+                && !string.IsNullOrWhiteSpace(file.PackageName)
+                // 包名来自社区数据，挡掉内置模组名，防止服务端恶意/损坏数据禁用核心模组
+                && file.PackageName is not ("survivalcraft" or "fastdebug"))
+            {
+                List<ModEntity> samePackage = ModsManager.ModListAll
+                    .Where(entity => entity?.modInfo != null
+                        && string.Equals(entity.modInfo.PackageName, file.PackageName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                if (samePackage.Count == 1
+                    && !string.IsNullOrWhiteSpace(samePackage[0].modInfo.Version))
+                {
+                    ModEntity oldVersion = samePackage[0];
+                    // 禁用键用 modinfo 侧包名：DisabledMods 字典大小写敏感，社区侧包名与
+                    // 本地 modinfo 大小写不一致时禁用会静默失效
+                    PendingLocalModActions.SetManualDisabledState(oldVersion.modInfo.PackageName, oldVersion.modInfo.Version, isDisabled: true);
+                    ShowToast(string.Format(CultureInfo.InvariantCulture,
+                        LanguageControl.Get("ScbbsPlusDownloadFlowManager", "OldVersionDisabledPendingRestart"),
+                        Storage.GetFileName(oldVersion.ModFilePath)), autoHideSeconds: 3.0);
+                }
+            }
+
             StartFileDownload(file.Url, fileName, type, requiresRestart: false, feedbackInfo);
         }
 

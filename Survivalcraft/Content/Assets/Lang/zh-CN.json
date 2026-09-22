@@ -5528,6 +5528,7 @@
     "ModpackProcessingFaulted": "[ScbbsPlus] 整合包处理异常: {0}",
     "BackgroundTaskFailed": "[ScbbsPlus] 后台任务失败: {0}, downloadFailed={1}, error={2}",
     "DownloadQueueRestored": "[ScbbsPlus] 已恢复下载队列: {0} 项",
+    "OldVersionDisabledPendingRestart": "已禁用旧版本 {0}，新下载的版本将在重启后生效",
     "SaveDownloadQueueFailed": "[ScbbsPlus] 保存下载队列失败: {0}",
     "CleanDownloadTempFileFailed": "[ScbbsPlus] 清理下载临时文件失败: {0}",
     "DownloadTaskFaulted": "[ScbbsPlus] 下载任务异常: {0}",
