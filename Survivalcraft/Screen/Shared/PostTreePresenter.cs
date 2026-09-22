@@ -267,7 +267,12 @@ namespace Game
                         && (loadResult.FileType == CommunityFileType.Mod || (loadResult.FileType == CommunityFileType.Unknown && post.FileType == CommunityFileType.Mod));
                     m_tree.AddRoot(CreatePostNode(post, ref snapshot));
                 }
-                (int total, int totalPages) = ResolveListTotals(result.Data.Total, result.Data.Limit, Page, result.Data.List.Length);
+                // 服务端分页语义按端点漂移：/user/posts 的 total=页数、count=条数；
+                // /post/list 无 count、total=条数。count>0 视为权威条数，否则退回
+                // total 条数口径（total 谎报再由 ResolveListTotals 兜底）。
+                (int total, int totalPages) = ResolveListTotals(
+                    result.Data.Count > 0 ? result.Data.Count : result.Data.Total,
+                    result.Data.Limit, Page, result.Data.List.Length);
                 TotalPages = totalPages;
                 SetPageJumpBoxText();
                 m_statusLabel.Text = result.Data.List.Length > 0
