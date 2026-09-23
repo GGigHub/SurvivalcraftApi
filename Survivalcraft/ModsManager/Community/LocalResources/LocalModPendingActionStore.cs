@@ -53,5 +53,16 @@ namespace Game
         {
             PendingLocalModActions.Save(LocalModPendingActions);
         }
+
+        /// <summary>
+        /// 清空全部待处理动作并覆写落盘：整合包激活/停用改用手工禁用状态直写，
+        /// 旧的启用/禁用/删除意图若不清空，会在下次重启边界被重复兑现。
+        /// 空表覆写时 PendingLocalModActions.Save 内部会删除清单文件。
+        /// </summary>
+        public static void ClearPendingActions()
+        {
+            s_pendingActions.Clear();
+            SaveLocalModPendingActions();
+        }
     }
 }

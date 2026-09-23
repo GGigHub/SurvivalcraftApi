@@ -267,20 +267,587 @@ namespace Game
             // Task 9 接管：DialogsManager.ShowDialog(null, new ModpackDetailsDialog(this, resourceItem, GetModpackRecord(resourceItem)));
         }
 
-        // Task 8 接管：启停激活链（EnableSelectedLocalModpack/DisableSelectedLocalModpack 直系移植）。
-        private void ToggleSelectedModpackEnabled()
+        /// <summary>启停总入口：激活中 → 停用链，否则 → 启用链。</summary>
+        internal void ToggleSelectedModpackEnabled()
         {
+            LocalResourceItem resourceItem = m_selectedItem;
+            if (!IsModpackResource(resourceItem))
+            {
+                return;
+            }
+
+            if (IsModpackActive(resourceItem))
+            {
+                DisableSelectedModpack(resourceItem);
+            }
+            else
+            {
+                EnableSelectedModpack(resourceItem);
+            }
         }
 
-        // Task 8 接管：补装下载链（DownloadSelectedLocalModpackMissingItems 直系移植）。
-        private void DownloadSelectedModpackMissingItems()
+        private void EnableSelectedModpack(LocalResourceItem resourceItem)
         {
+            ModpackDecision gateDecision = m_modpackManager.EvaluateEnable(new ModpackDecisionInput
+            {
+                IsModpack = IsModpackResource(resourceItem),
+                IsBusy = DownloadFlowManager.Instance.ModpackDownloadBusy,
+                HasOtherActiveModpack = m_modpackManager.HasOtherActiveModpack(
+                    GetModpackRecord(resourceItem),
+                    resourceItem?.LocalFilePath,
+                    m_activeModpackState)
+            });
+            if (gateDecision.Kind == ModpackDecisionKind.Busy)
+            {
+                CommunityToastManager.Show(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "ModpackBusyWait"), autoHideSeconds: 2.5);
+                return;
+            }
+            if (gateDecision.Kind == ModpackDecisionKind.OtherModpackActive)
+            {
+                CommunityToastManager.Show(
+                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "AnotherModpackActive"),
+                    autoHideSeconds: 3.0);
+                return;
+            }
+
+            LocalModpackRecord record = GetModpackRecord(resourceItem);
+            ApplyCachedFileInfo(record);
+            StartModpackFileInfoLoad(resourceItem, record);
+            ModpackDecision decision = m_modpackManager.EvaluateEnable(new ModpackDecisionInput
+            {
+                IsModpack = record != null,
+                IsFileInfoLoading = IsModpackFileInfoLoading(resourceItem),
+                HasManagedMods = ModpackModMatcher.HasManagedMods(record)
+            });
+            if (decision.Kind == ModpackDecisionKind.FileInfoLoading)
+            {
+                CommunityToastManager.Show(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LoadingFileInfo"), autoHideSeconds: 2.5);
+                return;
+            }
+            if (decision.Kind == ModpackDecisionKind.NoManagedMods)
+            {
+                CommunityToastManager.Show(
+                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ThisModpackHasNoManagedModResources"),
+                    autoHideSeconds: 3.0);
+                return;
+            }
+
+            IReadOnlyList<ModpackItem> missingEmbeddedItems = m_modpackManager.GetMissingEmbeddedItems(
+                record,
+                item => ModpackPresenceRules.IsEmbeddedItemMissing(record, item));
+            ModpackPresenceSnapshot presenceSnapshot = EnsurePresenceSnapshot();
+            IReadOnlyList<ModpackItem> missingItems = m_modpackManager.GetMissingDownloadItems(
+                record,
+                item => ModpackPresenceRules.IsEmbeddedItemMissing(record, item),
+                item => ModpackPresenceRules.IsItemDownloaded(item, presenceSnapshot, record));
+            decision = m_modpackManager.EvaluateEnable(new ModpackDecisionInput
+            {
+                IsModpack = record != null,
+                HasManagedMods = true,
+                MissingEmbeddedItems = missingEmbeddedItems,
+                MissingDownloadItems = missingItems
+            });
+            if (decision.Kind == ModpackDecisionKind.MissingEmbeddedItems)
+            {
+                string missingNames = string.Join("、", missingEmbeddedItems
+                    .Take(3)
+                    .Select(GetModpackItemDisplayName));
+                if (missingEmbeddedItems.Count > 3)
+                {
+                    missingNames += string.Format(
+                        CultureInfo.InvariantCulture,
+                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "AndMore"),
+                        missingEmbeddedItems.Count);
+                }
+                DialogsManager.ShowDialog(
+                    null,
+                    new MessageDialog(
+                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingModpackFiles"),
+                        string.Format(
+                            CultureInfo.InvariantCulture,
+                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingInArchiveList"),
+                            missingNames),
+                        LanguageControl.Ok,
+                        null,
+                        null));
+                return;
+            }
+
+            if (decision.Kind == ModpackDecisionKind.MissingDownloadItems)
+            {
+                string displayName = resourceItem.DisplayName ?? resourceItem.Name ?? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Modpack");
+                DialogsManager.ShowDialog(
+                    null,
+                    new MessageDialog(
+                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingResources"),
+                        string.Format(
+                            CultureInfo.InvariantCulture,
+                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingResourcesDownloadPrompt"),
+                            displayName,
+                            missingItems.Count),
+                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DownloadAndLaunch"),
+                        LanguageControl.Cancel,
+                        button =>
+                        {
+                            if (button == MessageDialogButton.Button1)
+                            {
+                                StartMissingItemDownload(resourceItem, record, missingItems, startAfterDownload: true);
+                            }
+                        }));
+                return;
+            }
+
+            if (decision.CanActivate)
+            {
+                ImportEmbeddedItemsAndEnable(resourceItem, record);
+            }
         }
 
-        /// <summary>未选中 → 三钮禁用；选中 → 详情恒可用（完整启用态规则 Task 8 接管）。</summary>
+        /// <summary>补装下载入口：忙时拒绝，无缺失提示已齐，否则走缺项下载管线（startAfterDownload=false）。</summary>
+        internal void DownloadSelectedModpackMissingItems()
+        {
+            if (DownloadFlowManager.Instance.ModpackDownloadBusy)
+            {
+                CommunityToastManager.Show(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "ModpackBusyWait"), autoHideSeconds: 2.5);
+                return;
+            }
+
+            LocalResourceItem resourceItem = m_selectedItem;
+            LocalModpackRecord record = GetModpackRecord(resourceItem);
+            ApplyCachedFileInfo(record);
+            StartModpackFileInfoLoad(resourceItem, record);
+            if (IsModpackFileInfoLoading(resourceItem))
+            {
+                CommunityToastManager.Show(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LoadingFileInfo"), autoHideSeconds: 2.5);
+                return;
+            }
+
+            ModpackPresenceSnapshot presenceSnapshot = EnsurePresenceSnapshot();
+            IReadOnlyList<ModpackItem> missingItems = m_modpackManager.GetMissingDownloadItems(
+                record,
+                item => ModpackPresenceRules.IsEmbeddedItemMissing(record, item),
+                item => ModpackPresenceRules.IsItemDownloaded(item, presenceSnapshot, record));
+            if (missingItems.Count == 0)
+            {
+                CommunityToastManager.Show(
+                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "AllResourcesReady"),
+                    autoHideSeconds: 2.5);
+                RefreshActionButtons();
+                return;
+            }
+
+            StartMissingItemDownload(resourceItem, record, missingItems, startAfterDownload: false);
+        }
+
+        private void StartMissingItemDownload(
+            LocalResourceItem resourceItem,
+            LocalModpackRecord record,
+            IReadOnlyList<ModpackItem> missingItems,
+            bool startAfterDownload)
+        {
+            if (resourceItem == null || record?.Manifest == null || missingItems == null || missingItems.Count == 0)
+            {
+                return;
+            }
+
+            string recordPath = resourceItem.LocalFilePath;
+            bool downloadStarted = DownloadFlowManager.Instance.StartModpackItemsDownload(
+                record.Manifest,
+                missingItems,
+                record.SourceUrl,
+                record.SourceFileName,
+                embeddedFiles: null,
+                saveManifestRecord: false,
+                completedAction: progress =>
+                {
+                    DisableDownloadedMods(progress);
+                    RefreshModpackList();
+                    LocalResourceItem latestResourceItem = FindModpackByPath(recordPath);
+                    LocalModpackRecord latestRecord = GetModpackRecord(latestResourceItem) ?? record;
+                    ApplyCachedFileInfo(latestRecord);
+                    if (!startAfterDownload)
+                    {
+                        // 仅当下载期间用户未改选其他整合包时才切回刚下载的包，避免完成回调覆盖用户选择。
+                        if (latestResourceItem != null
+                            && m_modpackManager.IsCurrentResource(m_selectedItem?.LocalFilePath, recordPath))
+                        {
+                            m_selectedItem = latestResourceItem;
+                            m_selectionVersion++;
+                            m_modpacksList.SelectedItem = latestResourceItem;
+                            RefreshActionButtons();
+                        }
+                        CommunityToastManager.Show(
+                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingModpackResourcesDownloaded"),
+                            autoHideSeconds: 3.0);
+                        return;
+                    }
+
+                    ModpackPresenceSnapshot latestPresenceSnapshot = EnsurePresenceSnapshot();
+                    bool hasMissingItems = m_modpackManager.GetMissingDownloadItems(
+                        latestRecord,
+                        item => ModpackPresenceRules.IsEmbeddedItemMissing(latestRecord, item),
+                        item => ModpackPresenceRules.IsItemDownloaded(item, latestPresenceSnapshot, latestRecord)).Count > 0;
+                    ModpackDownloadCompletionKind completionKind = m_modpackManager.EvaluateDownloadCompletion(progress, hasMissingItems);
+                    if (latestResourceItem == null || completionKind != ModpackDownloadCompletionKind.ReadyToActivate)
+                    {
+                        bool hasUnavailableResources = completionKind == ModpackDownloadCompletionKind.Failed;
+                        if (hasUnavailableResources && latestResourceItem != null)
+                        {
+                            DialogsManager.ShowDialog(
+                                null,
+                                new MessageDialog(
+                                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "FailedToDownloadModpackResources"),
+                                    string.Format(
+                                        CultureInfo.InvariantCulture,
+                                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "UnavailableResourcesIgnorePrompt"),
+                                        progress.FailedCount),
+                                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "IgnoreAndLaunch"),
+                                    LanguageControl.Cancel,
+                                    button =>
+                                    {
+                                        if (button == MessageDialogButton.Button1)
+                                        {
+                                            Log.Warning(string.Format(
+                                                CultureInfo.InvariantCulture,
+                                                LanguageControl.Get("ScbbsPlusModpacks", "UserIgnoredUnavailableModpackResources"),
+                                                progress.FailedCount));
+                                            ImportEmbeddedItemsAndEnable(latestResourceItem, latestRecord);
+                                        }
+                                    }));
+                            return;
+                        }
+
+                        CommunityToastManager.Show(
+                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StartBlockedMissingResources"),
+                            autoHideSeconds: 3.0);
+                        return;
+                    }
+
+                    ImportEmbeddedItemsAndEnable(latestResourceItem, latestRecord);
+                },
+                allowStartAfterDownloadFailures: startAfterDownload);
+            if (downloadStarted)
+            {
+                CommunityToastManager.Show(
+                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DownloadingMissingModpackResources"),
+                    autoHideSeconds: 2.5);
+            }
+            RefreshActionButtons();
+        }
+
+        private void ImportEmbeddedItemsAndEnable(LocalResourceItem resourceItem, LocalModpackRecord record)
+        {
+            IReadOnlyList<ModpackItem> embeddedItems = ModpackPresenceRules.GetEmbeddedItems(record, EnsurePresenceSnapshot());
+            if (embeddedItems.Count == 0)
+            {
+                ApplyModpackEnabledState(resourceItem, record);
+                return;
+            }
+
+            string recordPath = resourceItem?.LocalFilePath;
+            bool downloadStarted = DownloadFlowManager.Instance.StartModpackItemsDownload(
+                record.Manifest,
+                embeddedItems,
+                record.SourceUrl,
+                record.SourceFileName,
+                record.EmbeddedFiles,
+                saveManifestRecord: false,
+                customFileBackupPreparer: (item, data, currentProgress) => ModpackDataFiles.PrepareForActivation(
+                    data,
+                    item,
+                    currentProgress.CustomFileBackups,
+                    record.PackageName ?? recordPath),
+                completedAction: progress =>
+                {
+                    DisableDownloadedMods(progress);
+                    if (progress == null || progress.FailedCount > 0 || !string.IsNullOrEmpty(progress.Error) || progress.Interrupted)
+                    {
+                        ModpackDataFiles.TryRestoreBackups(progress?.CustomFileBackups, out _);
+                        CommunityToastManager.Show(
+                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ExtractFailedNotStarted"),
+                            autoHideSeconds: 3.0);
+                        return;
+                    }
+
+                    RefreshModpackList();
+                    LocalResourceItem latestResourceItem = FindModpackByPath(recordPath) ?? resourceItem;
+                    LocalModpackRecord latestRecord = GetModpackRecord(latestResourceItem) ?? record;
+                    ApplyCachedFileInfo(latestRecord);
+                    ApplyModpackEnabledState(latestResourceItem, latestRecord, progress.CustomFileBackups);
+                },
+                allowStartAfterDownloadFailures: false);
+            if (downloadStarted)
+            {
+                CommunityToastManager.Show(
+                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ExtractingResourcesFromTheModpack"),
+                    autoHideSeconds: 2.5);
+            }
+            RefreshActionButtons();
+        }
+
+        private void ApplyModpackEnabledState(
+            LocalResourceItem resourceItem,
+            LocalModpackRecord record,
+            List<LocalModpackFileStateEntry> backupFiles = null)
+        {
+            if (resourceItem == null || record == null)
+            {
+                return;
+            }
+
+            ModpackOperationResult result = m_modpackManager.Activate(
+                new ModpackActivationRequest
+                {
+                    Record = record,
+                    RecordPath = resourceItem.LocalFilePath,
+                    DisplayName = resourceItem.DisplayName ?? resourceItem.Name,
+                    CurrentModStates = CaptureModStateSnapshot(),
+                    BackupFiles = backupFiles ?? []
+                },
+                clearPendingActions: LocalModPendingActionStore.ClearPendingActions,
+                saveSettings: SettingsManager.SaveSettings,
+                setDisabledState: PendingLocalModActions.SetManualDisabledState);
+            m_activeModpackState = result.State;
+            if (result.Kind == ModpackOperationKind.StateSaveFailed)
+            {
+                Log.Warning(string.Format(
+                    CultureInfo.InvariantCulture,
+                    LanguageControl.Get("ScbbsPlusModpacks", "SaveModpackEnabledStateFailed"),
+                    result.Error));
+                ShowModpackFileOperationError("FailedToSaveSettings", "SaveConfigFailed", result.Error);
+                return;
+            }
+            RefreshModpackList();
+            PromptRestartForModpackChange(
+                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "LaunchModpack"),
+                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "EnabledRestartPrompt"));
+        }
+
+        private void DisableSelectedModpack(LocalResourceItem resourceItem)
+        {
+            if (!IsModpackActive(resourceItem) || m_activeModpackState == null)
+            {
+                CommunityToastManager.Show(
+                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ThisModpackIsNotCurrentlyActive"),
+                    autoHideSeconds: 2.5);
+                return;
+            }
+
+            LocalModpackRecord record = GetModpackRecord(resourceItem);
+            ModpackOperationResult result = m_modpackManager.Deactivate(
+                new ModpackDeactivationRequest
+                {
+                    Record = record,
+                    ActiveState = m_activeModpackState,
+                    CurrentModStates = CaptureModStateSnapshot()
+                },
+                clearPendingActions: LocalModPendingActionStore.ClearPendingActions,
+                saveSettings: SettingsManager.SaveSettings,
+                setDisabledState: PendingLocalModActions.SetManualDisabledState);
+            if (result.Kind == ModpackOperationKind.PersistFailed)
+            {
+                ShowModpackFileOperationError("FailedToSaveSettings", "SaveConfigFailed", result.Error);
+                return;
+            }
+            if (result.Kind == ModpackOperationKind.RestoreFailed)
+            {
+                ShowModpackFileOperationError("FailedToRestoreFiles", "RestoreFilesFailed", result.Error);
+                return;
+            }
+            if (result.Kind == ModpackOperationKind.StateSaveFailed)
+            {
+                Log.Warning(string.Format(
+                    CultureInfo.InvariantCulture,
+                    LanguageControl.Get("ScbbsPlusModpacks", "ClearModpackEnabledStateFailed"),
+                    result.Error));
+                ShowModpackFileOperationError("FailedToSaveSettings", "SaveConfigFailed", result.Error);
+                return;
+            }
+
+            m_activeModpackState = null;
+            RefreshModpackList();
+            PromptRestartForModpackChange(
+                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "CloseModpack"),
+                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DisabledRestartPrompt"));
+        }
+
+        private void ShowModpackFileOperationError(string titleKey, string messageKey, string error)
+        {
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", titleKey),
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", messageKey),
+                        error),
+                    LanguageControl.Ok,
+                    null,
+                    null));
+        }
+
+        /// <summary>
+        /// 重启确认提示：两回调返回 true 后重启由 RestartConfirmDialog 自己执行（回调内不得再调 Window.Restart）。
+        /// </summary>
+        private void PromptRestartForModpackChange(string title, string message)
+        {
+            DialogsManager.ShowDialog(
+                null,
+                new RestartConfirmDialog(
+                    title,
+                    message,
+                    restartAction: () =>
+                    {
+                        PendingLocalModActions.Process("integration-pack-restart");
+                        return true;
+                    },
+                    restartToCurrentScreenAction: null));
+        }
+
+        /// <summary>
+        /// 删除整合包记录。返回 true 表示本次点击已被处理（含拒绝分支），详情对话框据此关闭自身。
+        /// </summary>
+        internal bool TryDeleteModpack(LocalResourceItem resourceItem, LocalModpackRecord record)
+        {
+            if (record == null || string.IsNullOrWhiteSpace(resourceItem?.LocalFilePath))
+            {
+                return false;
+            }
+
+            if (IsModpackActive(resourceItem))
+            {
+                DialogsManager.ShowDialog(
+                    null,
+                    new MessageDialog(
+                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "CannotDelete"),
+                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DisableBeforeDelete"),
+                        LanguageControl.Ok,
+                        null,
+                        null));
+                return true;
+            }
+
+            try
+            {
+                ModpackRegistry.Shared.DeleteFileSet(resourceItem.LocalFilePath);
+                // DeleteFileSet 内部触发 Changed → 作废清单缓存并延迟重读（Update 轮询后上屏）。
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DialogsManager.ShowDialog(
+                    null,
+                    new MessageDialog(
+                        LanguageControl.Error,
+                        string.Format(
+                            CultureInfo.InvariantCulture,
+                            LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "DeleteFailed"),
+                            ex.Message),
+                        LanguageControl.Ok,
+                        null,
+                        null));
+                return true;
+            }
+        }
+
+        /// <summary>清单条目的展示名（缺失对话框逐项列举用）：文件名 → fileId → 目标路径 → 包名。</summary>
+        private static string GetModpackItemDisplayName(ModpackItem item)
+        {
+            if (item == null)
+            {
+                return "-";
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.Filename))
+            {
+                return item.Filename;
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.FileId))
+            {
+                return $"fileId:{item.FileId}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.TargetDirectory))
+            {
+                return item.TargetDirectory;
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.TargetPath))
+            {
+                return item.TargetPath;
+            }
+
+            return item.PackageName ?? "-";
+        }
+
+        // 整合包补装的模组默认保持禁用，启动时临时启用，关闭时才能恢复为禁用状态。
+        private void DisableDownloadedMods(ModpackDownloadProgress progress)
+        {
+            m_modpackManager.DisableDownloadedMods(
+                progress,
+                LoadLocalMods(),
+                LocalResourceIdentity.GetModStoragePath,
+                SetModDisabledState,
+                SettingsManager.SaveSettings);
+        }
+
+        private IReadOnlyList<LocalModpackModStateEntry> CaptureModStateSnapshot()
+        {
+            return m_modpackManager.CaptureModStateSnapshot(
+                LoadLocalMods(),
+                LocalResourceIdentity.GetModStoragePath,
+                GetEffectiveModDisabledState).ToArray();
+        }
+
+        private static bool GetEffectiveModDisabledState(LocalResourceItem resourceItem)
+        {
+            return resourceItem?.PendingAction switch
+            {
+                LocalModPendingActionType.Enable => false,
+                LocalModPendingActionType.Disable => true,
+                LocalModPendingActionType.Delete => true,
+                _ => resourceItem?.IsDisabled == true
+            };
+        }
+
+        private static bool SetModDisabledState(string packageName, string version, bool isDisabled)
+        {
+            if (string.IsNullOrWhiteSpace(packageName) || string.IsNullOrWhiteSpace(version) || ModpackModMatcher.IsSelfPackage(packageName))
+            {
+                return false;
+            }
+
+            return PendingLocalModActions.SetManualDisabledState(packageName, version, isDisabled);
+        }
+
+        // 本地模组列表 = 已加载模组（运行时）+ 待重启模组（磁盘扫描），供模组状态快照/补装禁用取数。
+        private static List<LocalResourceItem> LoadLocalMods()
+        {
+            return LocalResourceCollection.BuildLocalMods(
+                LocalResourceCollection.GetPendingRestartLocalMods(),
+                LocalModPendingActionStore.LocalModPendingActions);
+        }
+
+        /// <summary>选中记录当前缺失（未落地且未内嵌缺失）的启用条目数，供按钮可用性与详情对话框共用。</summary>
+        internal int GetMissingDownloadItemCount(LocalModpackRecord record)
+        {
+            ModpackPresenceSnapshot snapshot = EnsurePresenceSnapshot();
+            return m_modpackManager.GetMissingDownloadItems(
+                record,
+                item => ModpackPresenceRules.IsEmbeddedItemMissing(record, item),
+                item => ModpackPresenceRules.IsItemDownloaded(item, snapshot, record)).Count;
+        }
+
+        /// <summary>
+        /// 底部三钮启用态：未选中 → 三钮禁用；选中 → 详情恒可用，启停钮文本随激活态切换，
+        /// 补装钮在缺失数 &gt; 0 且不忙且文件信息未在途时才可用，进行中切换提示文本。
+        /// </summary>
         private void RefreshActionButtons()
         {
-            if (m_selectedItem == null)
+            LocalResourceItem resourceItem = m_selectedItem;
+            LocalModpackRecord record = GetModpackRecord(resourceItem);
+            if (resourceItem == null || record == null)
             {
                 m_toggleEnabledButton.IsEnabled = false;
                 m_downloadMissingButton.IsEnabled = false;
@@ -288,9 +855,17 @@ namespace Game
                 return;
             }
 
+            bool busy = DownloadFlowManager.Instance.ModpackDownloadBusy;
+            bool fileInfoLoading = IsModpackFileInfoLoading(resourceItem);
             m_viewDetailButton.IsEnabled = true;
             m_toggleEnabledButton.IsEnabled = true;
-            m_downloadMissingButton.IsEnabled = true;
+            m_toggleEnabledButton.Text = LanguageControl.Get(fName, IsModpackActive(resourceItem) ? "5" : "2");
+            m_downloadMissingButton.IsEnabled = GetMissingDownloadItemCount(record) > 0 && !busy && !fileInfoLoading;
+            m_downloadMissingButton.Text = fileInfoLoading
+                ? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LoadingFileInfo")
+                : busy
+                    ? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Downloading")
+                    : LanguageControl.Get(fName, "3");
         }
 
         private void LoadActivationState()
@@ -306,7 +881,7 @@ namespace Game
             m_activeModpackState = load.State;
         }
 
-        private bool IsModpackActive(LocalResourceItem resourceItem)
+        internal bool IsModpackActive(LocalResourceItem resourceItem)
         {
             return m_modpackManager.IsActive(GetModpackRecord(resourceItem), resourceItem?.LocalFilePath, m_activeModpackState);
         }
@@ -340,7 +915,7 @@ namespace Game
                     && string.Equals(ModsManager.NormalizeStoragePath(item.LocalFilePath), normalizedPath, StringComparison.OrdinalIgnoreCase));
         }
 
-        private ModpackPresenceSnapshot EnsurePresenceSnapshot()
+        internal ModpackPresenceSnapshot EnsurePresenceSnapshot()
         {
             if (m_presenceSnapshot == null)
             {
@@ -457,7 +1032,7 @@ namespace Game
                 }));
         }
 
-        private bool IsModpackFileInfoLoading(LocalResourceItem resourceItem)
+        internal bool IsModpackFileInfoLoading(LocalResourceItem resourceItem)
         {
             return m_fileInfoSlot.IsRunning
                 && resourceItem != null
