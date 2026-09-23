@@ -1,0 +1,13 @@
+{
+  "Name": "ModStudio",
+  "Version": "1.0.0",
+  "ApiVersion": "1.9.3.1",
+  "Description": "In-game mod workshop with compile, pack, install, uninstall, and a localhost Agent API. 游戏内模组工坊：编译打包安装卸载，并提供本机 Agent API。",
+  "ScVersion": "2.4.0.0",
+  "PackageName": "com.scspm.modstudio",
+  "Author": "SC-SPM",
+  "NonPersistentMod": true,
+  "GameplayImpactLevel": "Cosmetic",
+  "LoadOrder": 80000,
+  "Link": "https://gitee.com/SC-SPM/SurvivalcraftApi"
+}

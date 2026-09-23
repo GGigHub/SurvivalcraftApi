@@ -1,0 +1,27 @@
+{
+  "ModStudio": {
+    "MenuButton": "Mod Studio",
+    "Title": "Mod Studio",
+    "Back": "Back",
+    "New": "New",
+    "Delete": "Delete workspace",
+    "Compile": "Compile",
+    "Pack": "Pack",
+    "Install": "Install",
+    "Uninstall": "Uninstall",
+    "Reload": "Reload game",
+    "CopyToken": "Copy token",
+    "CreateTitle": "New mod (display name)",
+    "EmptyList": "No workspace yet. Tap New to start.",
+    "LogEmpty": "Logs appear here.",
+    "ConfirmDelete": "Deleting a workspace does not uninstall an already installed .scmod. Continue?",
+    "ConfirmReload": "Reload returns to the loading screen and reloads every mod. Continue?",
+    "ConfirmUninstall": "This deletes the packed mod from the Mods folder. Continue?",
+    "Busy": "Wait for the current operation to finish.",
+    "SelectFirst": "Select a project first.",
+    "Created": "Workspace created.",
+    "NeedSdk": "dotnet was not found. Install the .NET 10 SDK.",
+    "AgentOn": "Agent running",
+    "AgentOff": "Agent stopped"
+  }
+}

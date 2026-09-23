@@ -1,0 +1,27 @@
+{
+  "ModStudio": {
+    "MenuButton": "模组工坊",
+    "Title": "模组工坊",
+    "Back": "返回",
+    "New": "新建",
+    "Delete": "删除工作区",
+    "Compile": "编译",
+    "Pack": "打包",
+    "Install": "安装",
+    "Uninstall": "卸载",
+    "Reload": "重载游戏",
+    "CopyToken": "复制 Token",
+    "CreateTitle": "新建模组（显示名）",
+    "EmptyList": "还没有工作区。点「新建」开始。",
+    "LogEmpty": "日志会显示在这里。",
+    "ConfirmDelete": "删除工作区不会自动卸载已安装的 .scmod。确定删除？",
+    "ConfirmReload": "重载会回到加载界面并重新装载全部模组。继续？",
+    "ConfirmUninstall": "将删除 Mods 目录中的该模组包。继续？",
+    "Busy": "请等待当前操作完成。",
+    "SelectFirst": "请先选择一个项目。",
+    "Created": "已创建工作区。",
+    "NeedSdk": "未找到 dotnet。请安装 .NET 10 SDK。",
+    "AgentOn": "Agent 已启动",
+    "AgentOff": "Agent 未启动"
+  }
+}
