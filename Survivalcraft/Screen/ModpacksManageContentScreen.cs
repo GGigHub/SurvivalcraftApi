@@ -264,7 +264,13 @@ namespace Game
 
         private void ShowModpackDetails(LocalResourceItem resourceItem)
         {
-            // Task 9 接管：DialogsManager.ShowDialog(null, new ModpackDetailsDialog(this, resourceItem, GetModpackRecord(resourceItem)));
+            LocalModpackRecord record = GetModpackRecord(resourceItem);
+            if (resourceItem == null || record == null)
+            {
+                return;
+            }
+
+            DialogsManager.ShowDialog(null, new ModpackDetailsDialog(this, resourceItem, record));
         }
 
         /// <summary>启停总入口：激活中 → 停用链，否则 → 启用链。</summary>
@@ -750,8 +756,8 @@ namespace Game
             }
         }
 
-        /// <summary>清单条目的展示名（缺失对话框逐项列举用）：文件名 → fileId → 目标路径 → 包名。</summary>
-        private static string GetModpackItemDisplayName(ModpackItem item)
+        /// <summary>清单条目的展示名（缺失对话框逐项列举/详情清单行共用）：文件名 → fileId → 目标路径 → 包名。</summary>
+        internal static string GetModpackItemDisplayName(ModpackItem item)
         {
             if (item == null)
             {

@@ -1,0 +1,20 @@
+<CanvasWidget xmlns="runtime-namespace:Game" Size="800, 460" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
+    <CanvasWidget Size="780, 60">
+      <LabelWidget Name="ModpackDetailsDialog.Title" Color="255, 255, 255" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 5"/>
+    </CanvasWidget>
+    <ScrollPanelWidget Direction="Vertical">
+      <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch">
+        <StackPanelWidget Name="ModpackDetailsDialog.Content" Direction="Vertical" Margin="20, 5"/>
+        <FlexPanelWidget Name="ModpackDetailsDialog.ActionsPanel" Direction="Horizontal" Wrap="Wrap" JustifyContent="Center" Gap="10, 8" HorizontalAlignment="Stretch" VerticalAlignment="Far">
+          <BevelledButtonWidget Name="ModpackDetailsDialog.ToggleEnabled" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModpackDetailsDialog.DownloadMissing" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModpackDetailsDialog.Delete" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModpackDetailsDialog.Upload" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModpackDetailsDialog.Close" Style="{Styles/ButtonStyle_160x60}"/>
+        </FlexPanelWidget>
+      </StackPanelWidget>
+    </ScrollPanelWidget>
+  </StackPanelWidget>
+</CanvasWidget>
