@@ -319,6 +319,17 @@ public partial class ModsManageContentScreen : Screen {
         return false;
     }
 
+    // 详情对话框「最新 x.y.z」后缀取数：社区状态缓存（首进屏自动扫描时全量写入），
+    // 键推导与 TryGetModUpdateTag 同源
+    internal static string GetLatestCommunityVersion(ModEntity entity) {
+        string key = !string.IsNullOrWhiteSpace(entity?.modInfo?.PackageName) ? entity.modInfo.PackageName : entity?.ModFilePath;
+        if (string.IsNullOrWhiteSpace(key)) return null;
+        return LocalModStateStore.LocalModCommunityStatusCache.TryGetValue(key, out LocalModCommunityStatusInfo status)
+            && status?.IsPublished == true && !string.IsNullOrWhiteSpace(status.LatestVersion)
+            ? status.LatestVersion
+            : null;
+    }
+
     /// <returns>true: mod能被启用，false：mod能被禁用</returns>
     public static bool GetTrigger(ModEntity entity) {
         // 待重启/文件已删除实体不在本次加载进程内，禁用/启用按钮对它们无意义

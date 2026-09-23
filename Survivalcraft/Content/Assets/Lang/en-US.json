@@ -729,7 +729,9 @@
     "13": "Failed to delete \"{0}\". Reason: {1}",
     "14": "Delete \"{0}\" Successfully.",
     "15": "Not Found / Not Enabled",
-    "16": "Found Version: "
+    "16": "Found Version: ",
+    "17": " (Latest: {0})",
+    "18": "Played for: "
   },
   "BlocksManager": {
     "1": "Block class \"{0}\" is not found in all loaded assemblies.",

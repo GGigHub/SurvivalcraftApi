@@ -1,7 +1,6 @@
-using System.Text;
+using System.Globalization;
 using System.Xml.Linq;
 using Engine;
-using NuGet.Versioning;
 
 namespace Game {
     public class ModDetailsDialog : Dialog {
@@ -63,7 +62,7 @@ namespace Game {
             else {
                 m_contentPanel.Children.Add(
                     new LabelWidget {
-                        Text = $"{LanguageControl.Get(fName, "2")}{(string.IsNullOrEmpty(modInfo.Version) ? LanguageControl.None : modInfo.Version)}",
+                        Text = $"{LanguageControl.Get(fName, "2")}{FormatVersionText(entity, modInfo)}",
                         Margin = margin
                     }
                 );
@@ -85,6 +84,15 @@ namespace Game {
                 m_contentPanel.Children.Add(
                     new LabelWidget { Text = $"{LanguageControl.Get(fName, "5")}{DataSizeFormatter.Format(entity.Size)}", Margin = margin }
                 );
+                double playedSeconds = PlayedTimeTracker.GetTotalSeconds(entity);
+                if (playedSeconds > 0.0 && ModsManager.ModList.Any(x => ReferenceEquals(x, entity))) {
+                    m_contentPanel.Children.Add(
+                        new LabelWidget {
+                            Text = $"{LanguageControl.Get(fName, "18")}{PlayedTimeTracker.FormatDuration(playedSeconds)}",
+                            Margin = margin
+                        }
+                    );
+                }
                 m_contentPanel.Children.Add(
                     new LabelWidget {
                         Text =
@@ -121,32 +129,24 @@ namespace Game {
                 if (modInfo.DependencyRanges.Count > 0) {
                     m_contentPanel.Children.Add(new CanvasWidget { Size = new Vector2(0f, 8f) });
                     m_contentPanel.Children.Add(new LabelWidget { Text = LanguageControl.Get(fName, "10") });
-                    foreach (KeyValuePair<string, VersionRange> dependency in modInfo.DependencyRanges) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.AppendLine($"    - {dependency.Key}");
-                        sb.AppendLine($"      {dependency.Value}");
-                        bool valid = true;
-                        if (entity.IsDisabled
-                            && entity.DisableReason == ModDisableReason.DependencyError) {
-                            if (!ModsManager.ModListAll.Any(px => !px.IsDisabled
-                                    && px.modInfo != null
-                                    && px.modInfo.PackageName == dependency.Key
-                                    && ((px.modInfo.NuGetVersion != null && dependency.Value.Satisfies(px.modInfo.NuGetVersion))
-                                        || dependency.Value.Equals(VersionRange.All)
-                                        || px.modInfo.Version == dependency.Value.OriginalString)
-                                )) {
-                                valid = false;
-                                sb.AppendLine($"      {LanguageControl.Get(fName, "15")}");
-                                ModEntity[] entities = ModsManager.ModListAll
-                                    .Where(px => px.modInfo != null && px.modInfo.PackageName == dependency.Key)
-                                    .ToArray();
-                                if (entities.Length > 0) {
-                                    sb.Append($"      {LanguageControl.Get(fName, "16")}");
-                                    sb.AppendJoin(',', entities.Select(e => e.modInfo.Version));
-                                }
-                            }
-                        }
-                        m_contentPanel.Children.Add(new LabelWidget { Text = sb.ToString(), Color = valid ? Color.White : Color.Red });
+                    // 依赖行可用性标注（模组 FormatLocalModDependencyLine 移植）：逐条按本地快照
+                    // 标注 已加载/待重启/不适配/缺失，缺失与不适配标红；取代旧仅禁用态校验
+                    var dependencySnapshot = LocalResourceCollection.CaptureDependencySnapshot(null, () => ModsManager.ModListAll, null);
+                    foreach (ModDependencyInfo dependency in ModDependencyParser.GetDependencies(entity)) {
+                        string displayName = string.IsNullOrWhiteSpace(dependency.VersionRangeString)
+                            ? dependency.PackageName
+                            : $"{dependency.PackageName} ({dependency.VersionRangeString})";
+                        ModDependencyAvailability availability = dependencySnapshot.Evaluate(dependency);
+                        string text = availability switch {
+                            ModDependencyAvailability.Loaded => displayName,
+                            ModDependencyAvailability.PendingRestart => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "RestartRequired"), displayName),
+                            ModDependencyAvailability.Incompatible => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "IncompatibleWithCurrentGame"), displayName),
+                            _ => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "MissingDependency"), displayName)
+                        };
+                        bool available = availability is ModDependencyAvailability.Loaded or ModDependencyAvailability.PendingRestart;
+                        m_contentPanel.Children.Add(
+                            new LabelWidget { Text = $"    - {text}", Color = available ? Color.White : Color.Red, WordWrap = true }
+                        );
                     }
                 }
             }
@@ -156,6 +156,16 @@ namespace Game {
             m_deleteButton.IsEnabled = entity.modInfo?.PackageName is not "survivalcraft" and not "fastdebug"
                 && !string.IsNullOrEmpty(entity.ModFilePath);
             UpdateTitleAndTriggerEnableButton();
+        }
+
+        // 版本行文本：版本号（缺省「无」）+ 社区已发布时的「最新 x.y.z」后缀
+        private static string FormatVersionText(ModEntity entity, ModInfo modInfo) {
+            string versionText = string.IsNullOrEmpty(modInfo.Version) ? LanguageControl.None : modInfo.Version;
+            string latestVersion = ModsManageContentScreen.GetLatestCommunityVersion(entity);
+            if (!string.IsNullOrWhiteSpace(latestVersion)) {
+                versionText += string.Format(CultureInfo.InvariantCulture, LanguageControl.Get(fName, "17"), latestVersion);
+            }
+            return versionText;
         }
 
         // 社区网络动作使能（spec §3.3）：内置黑名单/待重启/文件已删除禁用；上传恒可用。
@@ -250,7 +260,8 @@ namespace Game {
             }
             if (Input.Back
                 || Input.Cancel
-                || m_closeButton.IsClicked) {
+                || m_closeButton.IsClicked
+                || (Input.Tap.HasValue && !HitTest(Input.Tap.Value))) {
                 DialogsManager.HideDialog(this);
             }
         }
