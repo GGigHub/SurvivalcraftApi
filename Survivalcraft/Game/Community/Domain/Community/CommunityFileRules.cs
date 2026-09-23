@@ -13,8 +13,9 @@ namespace Game
             }
             if (!string.IsNullOrEmpty(file.Filename))
             {
-                // 社区可控文件名出口统一净化（保留名/非法字符/尾点/超长），防止污染本地落盘路径。
-                return UploadFileNaming.SanitizeFileName(file.Filename);
+                // 服务端 filename 可能由上传 saveKey（转义路径）反推，含 %5B %20 等转义：
+                // 落盘前先解码再净化；非法转义序列（如字面 "%"）按原值保留（与匹配侧归一同策略）。
+                return UploadFileNaming.SanitizeFileName(UnescapeFileName(file.Filename));
             }
             try
             {
@@ -29,6 +30,18 @@ namespace Game
                 // URL 尾段含非法转义等：回退 id 命名。
             }
             return $"download_{file.Id}";
+        }
+
+        private static string UnescapeFileName(string value)
+        {
+            try
+            {
+                return Uri.UnescapeDataString(value);
+            }
+            catch (UriFormatException)
+            {
+                return value;
+            }
         }
 
         public static ExternalContentType MapFileTypeToExternalContentType(CommunityFileType fileType)

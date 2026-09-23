@@ -65,7 +65,20 @@ namespace Game
                 return;
             }
             System.Net.Http.Headers.ContentDispositionHeaderValue disposition = response.Content.Headers.ContentDisposition;
-            string name = disposition?.FileNameStar ?? disposition?.FileName;
+            string name = disposition?.FileNameStar;
+            if (string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(disposition?.FileName))
+            {
+                // .NET 的 FileName（非 FileNameStar）不解码 %xx 转义：直接上报会把转义名一路带成落盘名；
+                // 非法转义序列（如字面 "%"）按原值保留。
+                try
+                {
+                    name = Uri.UnescapeDataString(disposition.FileName);
+                }
+                catch (UriFormatException)
+                {
+                    name = disposition.FileName;
+                }
+            }
             if (!string.IsNullOrWhiteSpace(name))
             {
                 serverFileName(name.Trim('"'));

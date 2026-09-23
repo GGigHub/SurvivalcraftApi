@@ -159,8 +159,22 @@ namespace Game
                 memory.Write(buffer, 0, read);
             }
             byte[] data = memory.ToArray();
-            string fileName = response.Content.Headers.ContentDisposition?.FileNameStar
-                ?? response.Content.Headers.ContentDisposition?.FileName;
+            System.Net.Http.Headers.ContentDispositionHeaderValue disposition =
+                response.Content.Headers.ContentDisposition;
+            string fileName = disposition?.FileNameStar;
+            if (string.IsNullOrWhiteSpace(fileName) && !string.IsNullOrWhiteSpace(disposition?.FileName))
+            {
+                // .NET 的 FileName（非 FileNameStar）不解码 %xx 转义（FileNameStar 按 RFC5987 已解码），
+                // 直接用会把转义名落盘；非法转义序列（如字面 "%"）保留原值。
+                try
+                {
+                    fileName = Uri.UnescapeDataString(disposition.FileName);
+                }
+                catch (UriFormatException)
+                {
+                    fileName = disposition.FileName;
+                }
+            }
             fileName = fileName?.Trim().Trim('"');
             return (data, string.IsNullOrWhiteSpace(fileName) ? null : Storage.GetFileName(fileName));
         }
