@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <RootNamespace>Game</RootNamespace>
+    <AssemblyName>Tetris3D</AssemblyName>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Survivalcraft\Survivalcraft.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="modinfo.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="PackageMod" AfterTargets="Build">
+    <PropertyGroup>
+      <ModPackDir>$(OutputPath)_modpack\</ModPackDir>
+      <ModPackFile>$(OutputPath)..\$(AssemblyName).scmod</ModPackFile>
+    </PropertyGroup>
+    <RemoveDir Directories="$(ModPackDir)" />
+    <MakeDir Directories="$(ModPackDir)" />
+    <ItemGroup>
+      <_ModDll Include="$(OutputPath)$(AssemblyName).dll" />
+      <_ModInfo Include="$(OutputPath)modinfo.json" />
+      <_ModAssets Include="$(OutputPath)Assets\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ModDll)" DestinationFolder="$(ModPackDir)" />
+    <Copy SourceFiles="@(_ModInfo)" DestinationFolder="$(ModPackDir)" />
+    <Copy SourceFiles="@(_ModAssets)" DestinationFiles="@(_ModAssets->'$(ModPackDir)Assets\%(RecursiveDir)%(Filename)%(Extension)')" Condition="'@(_ModAssets)' != ''" />
+    <ZipDirectory SourceDirectory="$(ModPackDir)" DestinationFile="$(ModPackFile)" Overwrite="true" />
+    <PropertyGroup>
+      <GameModsDir>$(MSBuildThisFileDirectory)..\..\Survivalcraft.Windows\bin\Debug\Mods\</GameModsDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(GameModsDir)" Condition="Exists('$(MSBuildThisFileDirectory)..\..\Survivalcraft.Windows')" />
+    <Copy SourceFiles="$(ModPackFile)" DestinationFolder="$(GameModsDir)" Condition="Exists('$(GameModsDir)')" ContinueOnError="true" />
+  </Target>
+</Project>

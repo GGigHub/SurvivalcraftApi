@@ -1,0 +1,13 @@
+{
+  "Name": "Tetris3D",
+  "Version": "1.0.0",
+  "ApiVersion": "1.9.3.1",
+  "Description": "Place a Tetris arcade cabinet in the world and play on its 3D screen. 世界内俄罗斯方块游戏机（机台 3D 画面）",
+  "ScVersion": "2.4.0.0",
+  "PackageName": "com.scspm.tetris3d",
+  "Author": "SC-SPM",
+  "NonPersistentMod": false,
+  "GameplayImpactLevel": "Assist",
+  "LoadOrder": 50000,
+  "Link": "https://gitee.com/SC-SPM/SurvivalcraftApi"
+}

@@ -1,0 +1,22 @@
+{
+  "Tetris3D": {
+    "MenuButton": "俄罗斯方块",
+    "Back": "返回",
+    "Pause": "暂停",
+    "Resume": "继续",
+    "Restart": "重新开始",
+    "Score": "分数",
+    "Level": "等级",
+    "Lines": "行数",
+    "HighScore": "最高分",
+    "Hold": "保留",
+    "Next": "下一个",
+    "GameOver": "游戏结束",
+    "Sound": "音效",
+    "NewRecord": "新纪录！",
+    "TooFar": "再靠近一点才能操作游戏机",
+    "Occupied": "这台游戏机正在被使用",
+    "PlayingHint": "方向键/AD 移动，空格硬降，P 暂停，再交互离开",
+    "LeftMachine": "已离开游戏机"
+  }
+}

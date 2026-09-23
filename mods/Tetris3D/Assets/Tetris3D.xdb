@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DatabaseObjects>
+  <SubsystemTemplate Name="TetrisArcadeBlockBehavior" Guid="7c3a1e20-9b44-4f6a-a8d1-2e5f8b0c1a10" InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
+    <Parameter Name="Class" Guid="7c3a1e20-9b44-4f6a-a8d1-2e5f8b0c1a11" Value="Game.SubsystemTetrisArcade" Type="string" />
+  </SubsystemTemplate>
+  <ProjectTemplate Guid="9e9a67f8-79df-4d05-8cfa-61bd8095661e">
+    <MemberSubsystemTemplate Name="TetrisArcadeBlockBehavior" Guid="7c3a1e20-9b44-4f6a-a8d1-2e5f8b0c1a12" InheritanceParent="7c3a1e20-9b44-4f6a-a8d1-2e5f8b0c1a10" />
+  </ProjectTemplate>
+</DatabaseObjects>

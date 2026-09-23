@@ -1,0 +1,22 @@
+{
+  "Tetris3D": {
+    "MenuButton": "Tetris",
+    "Back": "Back",
+    "Pause": "Pause",
+    "Resume": "Resume",
+    "Restart": "Restart",
+    "Score": "Score",
+    "Level": "Level",
+    "Lines": "Lines",
+    "HighScore": "High Score",
+    "Hold": "Hold",
+    "Next": "Next",
+    "GameOver": "Game Over",
+    "Sound": "Sound",
+    "NewRecord": "New Record!",
+    "TooFar": "Get closer to use the arcade",
+    "Occupied": "Someone is already using this arcade",
+    "PlayingHint": "Arrows/AD move, Space hard drop, P pause, interact again to leave",
+    "LeftMachine": "Left the arcade"
+  }
+}
