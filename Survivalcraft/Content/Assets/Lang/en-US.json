@@ -709,6 +709,11 @@
     "106": "VR Controls"
   },
   "ModDetailsDialog": {
+    "CheckUpdate": "Check Updates",
+    "Versions": "Versions",
+    "Dependencies": "Missing Dependencies",
+    "Review": "Review",
+    "Upload": "Upload",
     "1": "Disable Reason: ",
     "2": "Mod Ver:",
     "3": "API Ver: ",
@@ -3205,6 +3210,19 @@
     "ScreenLayout.QuadrupleOpposite.Description": "Opposite, for sharing touch devices"
   },
   "ContentWidgets": {
+    "ScbbsPlusModVersionsDialog": {
+      "AllVersions": "All Versions"
+    },
+    "ScbbsPlusModReviewDialog": {
+      "Rating": "Rating:",
+      "RestorePrevious": "Restore Previous",
+      "Submit": "Submit",
+      "ReviewContent": "Review Content",
+      "EnterReviewContent": "Enter review content"
+    },
+    "ScbbsPlusMissingDependenciesDialog": {
+      "DownloadAllDeps": "Download All Deps"
+    },
     "BestiaryDescriptionScreen": {
       "1": "Creature Description",
       "2": "Drops:"
@@ -4785,6 +4803,80 @@
     "RestoredJsonTempFile": "[ScbbsPlus] Recovered from a residual JSON temporary file: {0} → {1}",
     "RestoreJsonTempFileFailed": "[ScbbsPlus] Failed to recover from a residual JSON temporary file: {0}, {1}"
   },
+  "ScbbsPlusLocalScreen": {
+    "Buttons": {
+      "Update": "Update"
+    },
+    "Text": {
+      "Close": "Close",
+      "FurniturePack": "Furniture Pack",
+      "Skin": "Skin",
+      "Texture": "Texture",
+      "Versions": "Versions",
+      "LocalResourcesReadingModpacksFormat": "Local {0}s · Reading modpacks...",
+      "OtherFiles": "Other Files",
+      "Modpack": "Modpack",
+      "UpdateFound": "Update Found",
+      "ModpackBusyWait": "Another modpack is being processed. Please wait.",
+      "Canceled": "Canceled",
+      "PleaseWait": "Please Wait",
+      "LocalMod": "Local Mod",
+      "NoLoadedAssemblyReadable": "The current mod has no readable loaded assemblies.",
+      "LocalResource": "Local Resource",
+      "CommunityPost": "Community Post",
+      "RestartRequired": "Restart Required",
+      "CurrentVersion": "Current Version",
+      "LatestVersion": "Latest Version",
+      "PreparingUpload": "Preparing upload...",
+      "Downloading": "Downloading...",
+      "LoadingProgress": "Loading...",
+      "VersionDetails": "Version Details",
+      "CheckUpdate": "Check Update",
+      "LocalWorld": "Local World",
+      "LoadingFileInfo": "Loading File Info...",
+      "DeleteFailed": "Delete failed: {0}",
+      "Disabled": "Disabled",
+      "IncompatibleWithCurrentGame": "Incompatible with current game",
+      "RestartRequiredLabel": "Restart Required",
+      "NotLoaded": "Not loaded",
+      "Info": "{0} Info",
+      "LocalResourcesFormat": "Local {0}s ({1})",
+      "HasUpdate": "Update"
+    }
+  },
+  "ScbbsPlusLocalMods": {
+    "AutoUpdateScanFailed": "[ScbbsPlus] Automatic update scan of local mods failed: {0}",
+    "PublishedCheckTaskFaulted": "[ScbbsPlus] Published check task faulted: {0}"
+  },
+  "ScbbsPlusModReviewDialog": {
+    "ReviewLocalResource": "Review Local Resource",
+    "ThereIsNoPreviousContentToRestore": "There is no previous content to restore.",
+    "PreviousContentRestored": "Previous content restored.",
+    "PleaseSelectARating": "Please select a rating.",
+    "Text": {
+      "LocalResource": "Local Resource"
+    }
+  },
+  "ScbbsPlusMissingDependenciesDialog": {
+    "DependenciesFound": "Dependencies Found",
+    "PublishTimePackageVersionFormat": "Published: {0}   Package: {1}   Package Version: {2}",
+    "Collapse": "Collapse",
+    "ResourcePackageNameNotFound": "Resource Package Name Not Found",
+    "MoreModsWithTheSamePackageName": "{0} more mods with the same package name",
+    "MoreDuplicateFiles": "{0} more duplicate files",
+    "Expand": "Expand",
+    "CollapsedPackageGroupLatestInRange": "Hidden {0} mods with the same package name, prioritizing the newest one within range",
+    "CollapsedPackageGroupLatestOnly": "Hidden {0} mods with the same package name; only the latest is shown",
+    "CollapsedFileGroupLatestOnly": "Hidden {0} duplicate files; only the latest is shown",
+    "NoDownloadableFile": "No downloadable files were found in community resources.",
+    "Text": {
+      "LocalMod": "Local Mod",
+      "UnnamedFile": "Unnamed File"
+    }
+  },
+  "ScbbsPlusLocalModNetworkManager": {
+    "AutoUpdateCheckFailed": "[ScbbsPlus] Automatic update check failed for local mod: {0}, error={1}"
+  },
   "ScbbsPlusCommunityScreen": {
     "Community": {
       "Posts": {
@@ -5023,7 +5115,7 @@
           "CheckingPreviousModUpdate": "Checking the previous mod update.",
           "SearchingPreviousDependency": "Searching the previous dependency.",
           "NoDownloadableDependenciesWereFound": "No downloadable dependencies were found.",
-          "ModsCanBeUpdatedTapToView": "{0} mods can be updated. Tap to view.",
+          "ModsCanBeUpdatedTapToView": "{0} mod(s) can be updated",
           "UpdateCheckFailed": "Update check failed: {0}",
           "DependencySearchFailed": "Dependency search failed: {0}",
           "ModsFound": "Mods Found",
@@ -5584,6 +5676,13 @@
     "Link": "Link",
     "StartupRollbackResidualBackupFailed": "[ScbbsPlus] Failed to roll back residual update backups at startup: {0}",
     "GameLoaded": "[ScbbsPlus] Game Loaded."
+  },
+  "ScbbsPlusModVersionWidget": {
+    "Text": {
+      "Files": "Files {0}",
+      "Details": "Details",
+      "Collapse": "Collapse"
+    }
   },
   "ScbbsPlusModVersionsDialog": {
     "Current": "Current",

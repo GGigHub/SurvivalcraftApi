@@ -709,6 +709,11 @@
     "106": "VR 控制"
   },
   "ModDetailsDialog": {
+    "CheckUpdate": "检查更新",
+    "Versions": "版本列表",
+    "Dependencies": "缺失依赖",
+    "Review": "评分",
+    "Upload": "上传",
     "1": "禁用原因：",
     "2": "模组版本：",
     "3": "API 版本：",
@@ -3215,6 +3220,19 @@
     "ScreenLayout.QuadrupleOpposite.Description": "四名玩家共同面向设备，共享触摸屏"
   },
   "ContentWidgets": {
+    "ScbbsPlusModVersionsDialog": {
+      "AllVersions": "查看所有版本"
+    },
+    "ScbbsPlusModReviewDialog": {
+      "Rating": "评分：",
+      "RestorePrevious": "还原上次内容",
+      "Submit": "提交",
+      "ReviewContent": "评价内容",
+      "EnterReviewContent": "输入评价内容"
+    },
+    "ScbbsPlusMissingDependenciesDialog": {
+      "DownloadAllDeps": "一键下载所需依赖"
+    },
     "BestiaryDescriptionScreen": {
       "1": "生物信息",
       "2": "掉落物："
@@ -4795,6 +4813,80 @@
     "RestoredJsonTempFile": "[ScbbsPlus] 已从残留 JSON 临时文件恢复: {0} → {1}",
     "RestoreJsonTempFileFailed": "[ScbbsPlus] 从残留 JSON 临时文件恢复失败: {0}, {1}"
   },
+  "ScbbsPlusLocalScreen": {
+    "Buttons": {
+      "Update": "检查更新"
+    },
+    "Text": {
+      "Close": "关闭",
+      "FurniturePack": "家具包",
+      "Skin": "皮肤",
+      "Texture": "材质",
+      "Versions": "版本列表",
+      "LocalResourcesReadingModpacksFormat": "本地{0} · 正在读取整合包...",
+      "OtherFiles": "其他文件",
+      "Modpack": "整合包",
+      "UpdateFound": "发现更新",
+      "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
+      "Canceled": "已取消",
+      "PleaseWait": "请稍候",
+      "LocalMod": "本地模组",
+      "NoLoadedAssemblyReadable": "当前模组还没有可读取的已加载程序集。",
+      "LocalResource": "本地资源",
+      "CommunityPost": "社区帖子",
+      "RestartRequired": "重启加载",
+      "CurrentVersion": "当前版本",
+      "LatestVersion": "最新版本",
+      "PreparingUpload": "准备上传...",
+      "Downloading": "下载中...",
+      "LoadingProgress": "加载中...",
+      "VersionDetails": "版本详情",
+      "CheckUpdate": "检查更新",
+      "LocalWorld": "本地存档",
+      "LoadingFileInfo": "获取文件信息...",
+      "DeleteFailed": "删除失败：{0}",
+      "Disabled": "已禁用",
+      "IncompatibleWithCurrentGame": "不适配当前游戏",
+      "RestartRequiredLabel": "需要重启加载",
+      "NotLoaded": "未加载",
+      "Info": "{0}信息",
+      "LocalResourcesFormat": "本地{0} ({1})",
+      "HasUpdate": "有更新"
+    }
+  },
+  "ScbbsPlusLocalMods": {
+    "AutoUpdateScanFailed": "[ScbbsPlus] 本地模组自动更新扫描失败: {0}",
+    "PublishedCheckTaskFaulted": "[ScbbsPlus] 已发布检查任务异常: {0}"
+  },
+  "ScbbsPlusModReviewDialog": {
+    "ReviewLocalResource": "评价本地资源",
+    "ThereIsNoPreviousContentToRestore": "没有可还原的内容。",
+    "PreviousContentRestored": "已还原上次内容。",
+    "PleaseSelectARating": "请选择评分。",
+    "Text": {
+      "LocalResource": "本地资源"
+    }
+  },
+  "ScbbsPlusMissingDependenciesDialog": {
+    "DependenciesFound": "找到依赖",
+    "PublishTimePackageVersionFormat": "发布时间：{0}   包名：{1}   包版本：{2}",
+    "Collapse": "折叠",
+    "ResourcePackageNameNotFound": "未找到资源的包名",
+    "MoreModsWithTheSamePackageName": "还有 {0} 个同包名模组",
+    "MoreDuplicateFiles": "还有 {0} 个相同文件",
+    "Expand": "展开",
+    "CollapsedPackageGroupLatestInRange": "已隐藏 {0} 个同包名模组，优先显示范围内最新一个",
+    "CollapsedPackageGroupLatestOnly": "已隐藏 {0} 个同包名模组，仅显示最新一个",
+    "CollapsedFileGroupLatestOnly": "已隐藏 {0} 个相同文件，仅显示最新一个",
+    "NoDownloadableFile": "社区资源中未找到可下载文件。",
+    "Text": {
+      "LocalMod": "本地模组",
+      "UnnamedFile": "未命名文件"
+    }
+  },
+  "ScbbsPlusLocalModNetworkManager": {
+    "AutoUpdateCheckFailed": "[ScbbsPlus] 本地模组自动检查更新失败: {0}, error={1}"
+  },
   "ScbbsPlusCommunityScreen": {
     "Community": {
       "Posts": {
@@ -5033,7 +5125,7 @@
           "CheckingPreviousModUpdate": "正在检查上一项模组更新。",
           "SearchingPreviousDependency": "正在搜索上一项依赖。",
           "NoDownloadableDependenciesWereFound": "没有找到可下载的依赖。",
-          "ModsCanBeUpdatedTapToView": "发现 {0} 个模组可更新，点击查看",
+          "ModsCanBeUpdatedTapToView": "检测到 {0} 个模组可更新",
           "UpdateCheckFailed": "检查更新失败：{0}",
           "DependencySearchFailed": "搜索依赖失败：{0}",
           "ModsFound": "找到模组",
@@ -5594,6 +5686,13 @@
     "ImportFromWebLinkDescription": "更好的从网络链接导入资源的工具",
     "StartupRollbackResidualBackupFailed": "[ScbbsPlus] 启动回滚更新残留备份失败: {0}",
     "GameLoaded": "[ScbbsPlus] 游戏已加载。"
+  },
+  "ScbbsPlusModVersionWidget": {
+    "Text": {
+      "Files": "文件 {0}",
+      "Details": "详情",
+      "Collapse": "收起"
+    }
   },
   "ScbbsPlusModVersionsDialog": {
     "Current": "当前使用",
