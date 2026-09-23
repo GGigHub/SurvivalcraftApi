@@ -49,7 +49,8 @@ namespace Game
             {
                 ModpackRegistry.Shared.WriteBytes(temporaryPath, data);
                 // 模组走 ScbbsPlusTransactionalFileReplacement.Replace（Delete+Move），本体按 brief 改用
-                // Storage.MoveFileSafely（JsonFileStore.Write 同款先例）；Safely 对源缺失的容忍此处无害（tmp 必在）。
+                // Storage.MoveFileSafely（JsonFileStore.Write 同款先例）；Safely 不容忍源缺失（会抛），
+                // 其安全点是目标存在时先备份、失败回滚备份并重抛原始异常、不吞错；tmp 必在，故源缺失分支不可达。
                 Storage.MoveFileSafely(temporaryPath, targetPath);
             }
             finally

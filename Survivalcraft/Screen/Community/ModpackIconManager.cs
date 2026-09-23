@@ -205,8 +205,9 @@ namespace Game
                 return icon;
             }
 
-            // ScbbsPlusFileNameRules.GetExtension → Storage.GetExtension（Engine/Storage.cs，同名同义）。
-            if (string.Equals(Storage.GetExtension(item?.LocalFilePath ?? string.Empty), ".zip", StringComparison.OrdinalIgnoreCase)
+            // ScbbsPlusFileNameRules.GetExtension → Storage.GetExtensionBCL（Engine/Storage.cs，
+            // 点文件语义，先例映射 GetFileNameWithoutExtensionBCL）。
+            if (string.Equals(Storage.GetExtensionBCL(item?.LocalFilePath ?? string.Empty), ".zip", StringComparison.OrdinalIgnoreCase)
                 || !Uri.TryCreate(record?.SourceUrl, UriKind.Absolute, out Uri sourceUri)
                 || (sourceUri.Scheme != Uri.UriSchemeHttp && sourceUri.Scheme != Uri.UriSchemeHttps))
             {
