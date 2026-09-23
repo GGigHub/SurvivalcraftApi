@@ -1,0 +1,7 @@
+<StackPanelWidget xmlns="runtime-namespace:Game" Direction="Vertical" HorizontalAlignment="Stretch">
+  <CanvasWidget Name="ScbbsPlusMissingDependencyPackageHeaderWidget.FileGroupSpacer" Size="0, 10" IsVisible="false" />
+  <FixedSizePanelWidget Name="ScbbsPlusMissingDependencyPackageHeaderWidget.HeaderPanel" HorizontalAlignment="Stretch" Margin="10, 4">
+    <RectangleWidget Name="ScbbsPlusMissingDependencyPackageHeaderWidget.HeaderBackground" FillColor="36, 14, 14, 205" OutlineColor="112, 66, 66, 190" OutlineThickness="1" />
+    <LabelWidget Name="ScbbsPlusMissingDependencyPackageHeaderWidget.HeaderText" Color="255, 214, 170" FontScale="0.9" Margin="15, 5" />
+  </FixedSizePanelWidget>
+</StackPanelWidget>

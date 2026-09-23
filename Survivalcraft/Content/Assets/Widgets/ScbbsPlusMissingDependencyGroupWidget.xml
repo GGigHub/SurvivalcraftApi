@@ -1,0 +1,8 @@
+<FixedSizePanelWidget xmlns="runtime-namespace:Game" HorizontalAlignment="Stretch" Margin="10, 4">
+  <RectangleWidget Name="ScbbsPlusMissingDependencyGroupWidget.Background" FillColor="18, 18, 18, 215" OutlineColor="90, 90, 90, 190" OutlineThickness="1" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" Margin="15, 5">
+    <LabelWidget Name="ScbbsPlusMissingDependencyGroupWidget.GroupText" Margin4="0, 15, 148, 15" Color="180, 180, 180" FontScale="0.7" WordWrap="true" />
+    <StackPanelWidget Name="ScbbsPlusMissingDependencyGroupWidget.FilesPanel" Direction="Vertical" HorizontalAlignment="Stretch" IsVisible="false" />
+  </StackPanelWidget>
+  <BevelledButtonWidget Name="ScbbsPlusMissingDependencyGroupWidget.ToggleButton" Size="128, 48" FontScale="0.8" HorizontalAlignment="Far" Margin="15, 5" />
+</FixedSizePanelWidget>

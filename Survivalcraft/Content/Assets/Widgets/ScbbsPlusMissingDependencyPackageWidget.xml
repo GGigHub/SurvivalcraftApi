@@ -1,0 +1,9 @@
+<StackPanelWidget xmlns="runtime-namespace:Game" Direction="Vertical" HorizontalAlignment="Stretch">
+  <FixedSizePanelWidget Name="ScbbsPlusMissingDependencyPackageWidget.MessagePanel" HorizontalAlignment="Stretch" Margin="0, 3" IsVisible="false">
+    <RectangleWidget Name="ScbbsPlusMissingDependencyPackageWidget.MessageBackground" FillColor="22, 10, 10, 200" OutlineColor="88, 60, 60, 180" OutlineThickness="1" />
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" Margin="10, 5">
+      <LabelWidget Name="ScbbsPlusMissingDependencyPackageWidget.MessageText" Color="255, 226, 200" FontScale="0.7" WordWrap="true" />
+      <LabelWidget Name="ScbbsPlusMissingDependencyPackageWidget.DetailText" Color="172, 148, 148" FontScale="0.7" WordWrap="true" Margin4="0, 4, 0, 0" />
+    </StackPanelWidget>
+  </FixedSizePanelWidget>
+</StackPanelWidget>

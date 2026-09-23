@@ -11,6 +11,27 @@ namespace Game
     /// </summary>
     internal static class PostDetailsHeaderBuilder
     {
+        // 更新弹窗通用元信息：可选标题行 + 当前版本 / 最新版本 / 下载文件名。
+        public static void AppendUpdateInfo(StackPanelWidget panel, string title, string currentVersion, string latestVersion, string downloadFileName)
+        {
+            AppendHeading(panel, title);
+            AppendParagraph(panel, string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}：{1}",
+                LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "CurrentVersion"),
+                string.IsNullOrWhiteSpace(currentVersion) ? "-" : currentVersion));
+            AppendParagraph(panel, string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}：{1}",
+                LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "LatestVersion"),
+                string.IsNullOrWhiteSpace(latestVersion) ? "-" : latestVersion));
+            AppendParagraph(panel, string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}：{1}",
+                LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "DownloadFile"),
+                string.IsNullOrWhiteSpace(downloadFileName) ? "-" : downloadFileName));
+        }
+
         // 「我发布的」帖子详情：下载统计摘要 + 最近下载趋势 + 版本下载量。
         public static void AppendPublishStats(StackPanelWidget panel, PostDownloadTrendResponse stats, string statsError)
         {
