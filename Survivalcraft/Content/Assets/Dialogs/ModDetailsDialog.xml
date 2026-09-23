@@ -1,14 +1,21 @@
-<CanvasWidget xmlns="runtime-namespace:Game" Size="600, 400" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+<CanvasWidget xmlns="runtime-namespace:Game" Size="800, 460" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
   <BevelledRectangleWidget Style="{Styles/DialogArea}" />
   <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
     <LabelWidget Name="ModDetailsDialog.Title" Color="255, 255, 255" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="0, 5"/>
-    <ScrollPanelWidget Direction="Vertical" Margin="20, 5">
-      <StackPanelWidget Name="ModDetailsDialog.Content" Direction="Vertical"/>
+    <ScrollPanelWidget Direction="Vertical">
+      <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch">
+        <StackPanelWidget Name="ModDetailsDialog.Content" Direction="Vertical" Margin="20, 5"/>
+        <FlexPanelWidget Name="ModDetailsDialog.ActionsPanel" Direction="Horizontal" Wrap="Wrap" JustifyContent="Center" Gap="10, 8" HorizontalAlignment="Stretch" VerticalAlignment="Far">
+          <BevelledButtonWidget Name="ModDetailsDialog.CheckUpdate" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModDetailsDialog.Versions" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModDetailsDialog.Dependencies" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModDetailsDialog.Review" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModDetailsDialog.Upload" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModDetailsDialog.TriggerEnable" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModDetailsDialog.Delete" Style="{Styles/ButtonStyle_160x60}" Text="[CommunityContentScreen:7]"/>
+          <BevelledButtonWidget Name="ModDetailsDialog.Close" Style="{Styles/ButtonStyle_160x60}" Text="[ViewGameLogDialog:2]"/>
+        </FlexPanelWidget>
+      </StackPanelWidget>
     </ScrollPanelWidget>
-    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Far" Margin="0, 5">
-      <BevelledButtonWidget Name="ModDetailsDialog.TriggerEnable" Style="{Styles/ButtonStyle_160x60}" Margin="20, 0"/>
-      <BevelledButtonWidget Name="ModDetailsDialog.Delete" Style="{Styles/ButtonStyle_160x60}" Margin="20, 0" Text="[CommunityContentScreen:7]"/>
-      <BevelledButtonWidget Name="ModDetailsDialog.Close" Style="{Styles/ButtonStyle_160x60}" Margin="20, 0" Text="[ViewGameLogDialog:2]"/>
-    </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

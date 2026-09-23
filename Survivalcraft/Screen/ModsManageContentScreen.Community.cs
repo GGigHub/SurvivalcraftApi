@@ -209,7 +209,7 @@ public partial class ModsManageContentScreen
             return false;
         }
         return LocalResourceCollection.CaptureDependencySnapshot(null, () => ModsManager.ModListAll, null)
-            .GetUnavailableDependencies(ModDependencyParser.GetDependencies(entity)).ToArray().Count > 0;
+            .GetUnavailableDependencies(ModDependencyParser.GetDependencies(entity)).ToArray().Length > 0;
     }
 
     internal void LookupModDependencies(ModEntity entity)

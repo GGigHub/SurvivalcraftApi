@@ -13,6 +13,11 @@ namespace Game {
         public ButtonWidget m_triggerEnableButton;
         public ButtonWidget m_deleteButton;
         public ButtonWidget m_closeButton;
+        public ButtonWidget m_checkUpdateButton;
+        public ButtonWidget m_versionsButton;
+        public ButtonWidget m_dependenciesButton;
+        public ButtonWidget m_reviewButton;
+        public ButtonWidget m_uploadButton;
 
         public const string fName = "ModDetailsDialog";
 
@@ -26,6 +31,16 @@ namespace Game {
             m_triggerEnableButton = Children.Find<ButtonWidget>("ModDetailsDialog.TriggerEnable");
             m_deleteButton = Children.Find<ButtonWidget>("ModDetailsDialog.Delete");
             m_closeButton = Children.Find<ButtonWidget>("ModDetailsDialog.Close");
+            m_checkUpdateButton = Children.Find<BevelledButtonWidget>("ModDetailsDialog.CheckUpdate");
+            m_versionsButton = Children.Find<BevelledButtonWidget>("ModDetailsDialog.Versions");
+            m_dependenciesButton = Children.Find<BevelledButtonWidget>("ModDetailsDialog.Dependencies");
+            m_reviewButton = Children.Find<BevelledButtonWidget>("ModDetailsDialog.Review");
+            m_uploadButton = Children.Find<BevelledButtonWidget>("ModDetailsDialog.Upload");
+            m_checkUpdateButton.Text = LanguageControl.Get(fName, "CheckUpdate");
+            m_versionsButton.Text = LanguageControl.Get(fName, "Versions");
+            m_dependenciesButton.Text = LanguageControl.Get(fName, "Dependencies");
+            m_reviewButton.Text = LanguageControl.Get(fName, "Review");
+            m_uploadButton.Text = LanguageControl.Get(fName, "Upload");
             Vector2 margin = new Vector2(0f, 4f);
             if (entity.IsDisabled) {
                 m_contentPanel.Children.Add(
@@ -37,7 +52,13 @@ namespace Game {
             }
             ModInfo modInfo = entity.modInfo;
             if (modInfo == null) {
-                Size = new Vector2(600f, 250f);
+                Size = new Vector2(800f, 250f);
+                // 无 modInfo 的精简布局：社区五键就地隐藏（FlexPanel 与原生 启用/删除/关闭 保留）
+                m_checkUpdateButton.IsVisible = false;
+                m_versionsButton.IsVisible = false;
+                m_dependenciesButton.IsVisible = false;
+                m_reviewButton.IsVisible = false;
+                m_uploadButton.IsVisible = false;
             }
             else {
                 m_contentPanel.Children.Add(
@@ -137,6 +158,19 @@ namespace Game {
             UpdateTitleAndTriggerEnableButton();
         }
 
+        // 社区网络动作使能（spec §3.3）：内置黑名单/待重启/文件已删除禁用；上传恒可用。
+        private void ApplyCommunityButtonsEnabled() {
+            bool networkAllowed = m_entity.modInfo != null
+                && m_entity.modInfo.PackageName is not "survivalcraft" and not "fastdebug"
+                && !m_entity.IsPendingRestart && !m_entity.IsFileDeleted;
+            m_checkUpdateButton.IsEnabled = networkAllowed;
+            m_versionsButton.IsEnabled = networkAllowed;
+            // 无缺失依赖时「缺失依赖」按钮不显示（用户裁定）
+            m_dependenciesButton.IsVisible = networkAllowed && ModsManageContentScreen.HasMissingDependencies(m_entity);
+            m_reviewButton.IsEnabled = networkAllowed;
+            m_uploadButton.IsEnabled = true;
+        }
+
         public override void Update() {
             if (m_triggerEnableButton.IsClicked) {
                 m_screen.TriggerEnable(m_entity);
@@ -199,6 +233,21 @@ namespace Game {
                     )
                 );
             }
+            if (m_checkUpdateButton.IsClicked) {
+                m_screen?.CheckModUpdate(m_entity);
+            }
+            if (m_versionsButton.IsClicked) {
+                m_screen?.OpenModVersions(m_entity);
+            }
+            if (m_dependenciesButton.IsClicked) {
+                m_screen?.LookupModDependencies(m_entity);
+            }
+            if (m_reviewButton.IsClicked) {
+                m_screen?.OpenModReview(m_entity);
+            }
+            if (m_uploadButton.IsClicked) {
+                WebBrowserManager.LaunchBrowser(ModsManageContentScreen.GetChinesePublishPostUrl());
+            }
             if (Input.Back
                 || Input.Cancel
                 || m_closeButton.IsClicked) {
@@ -211,6 +260,7 @@ namespace Game {
             m_titleLabel.Text = title;
             m_titleLabel.Color = titleColor;
             m_triggerEnableButton.Text = LanguageControl.Get("ModsManageContentScreen", canBeEnabled ? "19" : "18");
+            ApplyCommunityButtonsEnabled();
         }
 
         // ModEntity 重写了 Equals（基于包名+版本），同包名同版本的重复模组会撞键，因此必须按引用移除
