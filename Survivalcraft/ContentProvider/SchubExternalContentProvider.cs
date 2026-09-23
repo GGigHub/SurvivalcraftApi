@@ -113,7 +113,7 @@ namespace Game {
                 };
                 MemoryStream data = new(Encoding.UTF8.GetBytes(jsonObject.ToJsonString()));
                 WebManager.Post(
-                    $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/files/list_folder",
+                    $"{CommunityServerManager.CurrentApiBaseUrl}/com/files/list_folder",
                     null,
                     dictionary,
                     data,
@@ -142,7 +142,7 @@ namespace Game {
                     { "Authorization", $"Bearer {SettingsManager.ScpboxAccessToken}" }, { "Dropbox-API-Arg", jsonObject.ToJsonString() }
                 };
                 WebManager.Get(
-                    $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/files/download",
+                    $"{CommunityServerManager.CurrentApiBaseUrl}/com/files/download",
                     null,
                     dictionary,
                     progress,
@@ -165,7 +165,7 @@ namespace Game {
                     { "Dropbox-API-Arg", jsonObject.ToJsonString() }
                 };
                 WebManager.Post(
-                    $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/files/upload",
+                    $"{CommunityServerManager.CurrentApiBaseUrl}/com/files/upload",
                     null,
                     dictionary,
                     stream,
@@ -188,7 +188,7 @@ namespace Game {
                 JsonObject jsonObject = new() { { "path", NormalizePath(path) }, { "short_url", false } };
                 MemoryStream data = new(Encoding.UTF8.GetBytes(jsonObject.ToJsonString()));
                 WebManager.Post(
-                    $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/sharing/create_shared_link",
+                    $"{CommunityServerManager.CurrentApiBaseUrl}/com/sharing/create_shared_link",
                     null,
                     dictionary,
                     data,

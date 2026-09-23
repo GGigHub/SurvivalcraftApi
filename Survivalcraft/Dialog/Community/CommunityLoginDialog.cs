@@ -58,7 +58,7 @@ namespace Game
             }
             else if (!m_isBusy && m_registerButton.IsClicked)
             {
-                WebBrowserManager.LaunchBrowser("https://www.scbbs.top");
+                WebBrowserManager.LaunchBrowser(CommunityServerManager.CurrentChineseInfo.WebsiteUrl);
             }
             else if (!m_isBusy && (Input.Ok || m_loginButton.IsClicked))
             {

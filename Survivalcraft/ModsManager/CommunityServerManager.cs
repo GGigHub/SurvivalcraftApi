@@ -44,23 +44,15 @@
         }
 #if BROWSER
         public static Info DefaultOriginalInfo = new(Type.Original, string.Empty, "https://cloudflare-cors-anywhere.weathered-shadow-6c41.workers.dev/?https://scresdir.appspot.com/resource");
-        public static Info DefaultChineseInfo = new(Type.Chinese, string.Empty, "https://m.suancaixianyu.cn/api/", "https://test.suancaixianyu.cn/#/modList/0");
+        public static Info DefaultChineseInfo = new(Type.Chinese, string.Empty, "https://m.suancaixianyu.cn/api", "https://test.suancaixianyu.cn/#/modList/0");
 #else
         public static Info DefaultOriginalInfo = new(Type.Original, string.Empty, "https://scresdir.appspot.com/resource");
-        public static Info DefaultChineseInfo = new(Type.Chinese, string.Empty, "https://m.suancaixianyu.cn/api/", "https://test.suancaixianyu.cn/#/modList/0");
+        public static Info DefaultChineseInfo = new(Type.Chinese, string.Empty, "https://m.suancaixianyu.cn/api", "https://test.suancaixianyu.cn/#/modList/0");
 #endif
 
         public static List<Info> UserInfos = [];
         public static Info CurrentOriginalInfo = DefaultOriginalInfo;
         public static Info CurrentChineseInfo = DefaultChineseInfo;
-
-        // 历史默认值（归一化形式）：m.schub.top 为最老默认，m.suancaixianyu.cn 根域为过渡默认。
-        // 只收历史默认值；模组时代的无斜杠 /api 常量归一化后即当前默认，无须入表。
-        private static readonly string[] s_legacyApiBaseUrls =
-        {
-            "https://m.schub.top",
-            "https://m.suancaixianyu.cn"
-        };
 
         /// <summary>默认社区 API 基址（fallback 常量）：归一化的 DefaultChineseInfo.ApiUrl。</summary>
         public static string DefaultApiBaseUrl => NormalizeApiBaseUrl(DefaultChineseInfo.ApiUrl);
@@ -72,7 +64,7 @@
         /// </summary>
         public static string CurrentApiBaseUrl => NormalizeApiBaseUrl(CurrentChineseInfo.ApiUrl);
 
-        /// <summary>归一化：去尾斜杠；空值与历史旧默认值升级为当前默认。</summary>
+        /// <summary>归一化：去尾斜杠；空值回退默认服务器。</summary>
         public static string NormalizeApiBaseUrl(string value)
         {
             string normalized = (value ?? string.Empty).Trim();
@@ -81,20 +73,7 @@
                 normalized = normalized[..^1];
             }
 
-            if (normalized.Length == 0)
-            {
-                return DefaultApiBaseUrl;
-            }
-
-            foreach (string legacyDefault in s_legacyApiBaseUrls)
-            {
-                if (string.Equals(normalized, legacyDefault, StringComparison.OrdinalIgnoreCase))
-                {
-                    return DefaultApiBaseUrl;
-                }
-            }
-
-            return normalized;
+            return normalized.Length == 0 ? DefaultApiBaseUrl : normalized;
         }
 
         /// <summary>服务器条目显示名：内置条目用本地化名，自建条目用用户命名。</summary>

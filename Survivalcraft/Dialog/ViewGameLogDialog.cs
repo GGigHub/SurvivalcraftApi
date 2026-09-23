@@ -106,7 +106,7 @@ namespace Game {
                     GameLogSink.m_stream.CopyTo(memoryStream);
                     memoryStream.Seek(0, SeekOrigin.Begin);
                     WebManager.Post(
-                        $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/files/upload",
+                        $"{CommunityServerManager.CurrentApiBaseUrl}/com/files/upload",
                         null,
                         dictionary,
                         memoryStream,

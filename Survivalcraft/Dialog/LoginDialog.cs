@@ -88,7 +88,7 @@ namespace Game {
                 Dictionary<string, string> par = new() { { "user", txa.Text }, { "pass", txb.Text } };
                 DialogsManager.ShowDialog(this, busyDialog);
                 WebManager.Post(
-                    $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/login",
+                    $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/login",
                     par,
                     null,
                     new MemoryStream(),
@@ -98,7 +98,7 @@ namespace Game {
                 );
             }
             if (btnb.IsClicked) {
-                WebBrowserManager.LaunchBrowser($"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/reg");
+                WebBrowserManager.LaunchBrowser($"{CommunityServerManager.CurrentApiBaseUrl}/com/reg");
             }
             if (btnc.IsClicked) {
                 cancel?.Invoke();

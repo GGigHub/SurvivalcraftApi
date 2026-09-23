@@ -69,7 +69,7 @@ namespace Game {
             dictionary.Add("key", keySearch);
             dictionary.Add("SearchType", searchType);
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/list",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/list",
                 null,
                 Header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -240,7 +240,7 @@ namespace Game {
                     delegate(byte[] data) {
                         string value = CalculateContentHashString(data);
                         WebManager.Post(
-                            $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/list",
+                            $"{CommunityServerManager.CurrentApiBaseUrl}/com/list",
                             null,
                             null,
                             WebManager.UrlParametersToStream(
@@ -280,7 +280,7 @@ namespace Game {
                 { "Version", VersionsManager.Version }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/list",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/list",
                 null,
                 null,
                 WebManager.UrlParametersToStream(dictionary),
@@ -402,7 +402,7 @@ namespace Game {
             dictionary.Add("Platform", VersionsManager.PlatformString);
             dictionary.Add("Version", VersionsManager.Version);
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/list",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/list",
                 null,
                 null,
                 WebManager.UrlParametersToStream(dictionary),
@@ -447,7 +447,7 @@ namespace Game {
                 { "Filter", filter },
                 { "Order", order.ToString() }
             };
-            WebManager.Post($"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/userList", null, Header, WebManager.UrlParametersToStream(dictionary), progress, delegate (byte[] result)
+            WebManager.Post($"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/userList", null, Header, WebManager.UrlParametersToStream(dictionary), progress, delegate (byte[] result)
             {
                 try
                 {
@@ -537,7 +537,7 @@ namespace Game {
                 { "Reason", reason }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/userList",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/userList",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -560,7 +560,7 @@ namespace Game {
                 { "Action", "ResetPassword" }, { "Id", id.ToString() }, { "Operater", SettingsManager.ScpboxAccessToken }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/userList",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/userList",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -588,7 +588,7 @@ namespace Game {
                 { "Type", type }, { "Id", id.ToString() }, { "Operater", SettingsManager.ScpboxAccessToken }, { "Boutique", boutique.ToString() }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/boutique",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/boutique",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -611,7 +611,7 @@ namespace Game {
                 { "Id", id.ToString() }, { "Operater", SettingsManager.ScpboxAccessToken }, { "IsShow", isShow.ToString() }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/hide",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/hide",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -632,7 +632,7 @@ namespace Game {
             Dictionary<string, string> header = new() { { "Content-Type", "application/x-www-form-urlencoded" } };
             Dictionary<string, string> dictionary = new() { { "Id", id.ToString() }, { "Operater", SettingsManager.ScpboxAccessToken } };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/deleteFile",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/deleteFile",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -654,7 +654,7 @@ namespace Game {
             Dictionary<string, string> header = new() { { "Content-Type", "application/x-www-form-urlencoded" } };
             Dictionary<string, string> dictionary = new() { { "Operater", SettingsManager.ScpboxAccessToken } };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/isadmin",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/isadmin",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
