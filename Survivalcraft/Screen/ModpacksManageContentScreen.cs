@@ -27,7 +27,9 @@ namespace Game
 
         private readonly ModpackManifestLoadManager m_manifestLoadManager =
             new(() => ModpackRegistry.Shared.ReadResources().ToList());
-        private readonly ModpackFileInfoManager m_fileInfoManager = new(TransferManager.ModpackSourceResolver);
+        // fileId 缓存跨屏实例共享：屏随换语言重建，重建瞬间不应丢失已补全的社区文件信息
+        //（与模组 ScbbsPlusModpackFileInfoManager 的 static readonly 单例语义一致）。
+        private static readonly ModpackFileInfoManager s_fileInfoManager = new(TransferManager.ModpackSourceResolver);
         private readonly ModpackManager m_modpackManager = new();
         private readonly ModpackPresenceManager m_presenceManager = new();
         private readonly ModpackIconManager m_iconManager = new(s_iconLoader);
@@ -87,6 +89,16 @@ namespace Game
             // 离开后轮询不再消费，就地回收已完成项；未完成项挂兜底 Dispose，防 Image 滞留到进程退出。
             s_iconLoader.ClearPending();
             ReleaseDownloadFlowCallbacks(releaseRemoteImportHost: false);
+        }
+
+        public override void Dispose()
+        {
+            // 换语言整表重建只走 Dispose 不走 Leave（CommunityScreenBase 文档：Dispose 是
+            // 实例唯一生命周期终点）：单例静态事件在此确定性退订，否则死屏被钉在内存。
+            // Leave 已退订时再退订为无操作，Enter/Leave/Dispose 任意顺序配对均安全。
+            DownloadFlowManager.Instance.PackDownloadCompleted -= OnPackDownloadCompleted;
+            ModpackRegistry.Shared.Changed -= OnRegistryChanged;
+            base.Dispose();
         }
 
         public override void Update()
@@ -194,6 +206,20 @@ namespace Game
             s_iconLoader.DisposeRetired();
             m_placeholderLabel.IsVisible = m_modpacksList.Items.Count == 0;
             RestoreSelection();
+        }
+
+        /// <summary>
+        /// 下载完成回调专用刷新：DownloadFlowManager.Update 里 PackDownloadCompleted 先于
+        /// completedAction 同帧触发，OnPackDownloadCompleted 已把清单缓存作废，直接刷新会拿到
+        /// 空列表（按路径回查恒 null、选中项被误清）。缓存未命中即同步重读后再上屏。
+        /// </summary>
+        private void RefreshModpackListWithReload()
+        {
+            if (!m_manifestLoadManager.HasCachedItems)
+            {
+                m_manifestLoadManager.GetOrLoadSynchronously();
+            }
+            RefreshModpackList();
         }
 
         /// <summary>按路径找回既有选中项（列表重建后对象实例已更换）；丢失即清空选中。</summary>
@@ -467,8 +493,8 @@ namespace Game
                 completedAction: progress =>
                 {
                     DisableDownloadedMods(progress);
-                    RefreshModpackList();
-                    LocalResourceItem latestResourceItem = FindModpackByPath(recordPath);
+                    RefreshModpackListWithReload();
+                    LocalResourceItem latestResourceItem = FindModpackByPath(recordPath) ?? resourceItem;
                     LocalModpackRecord latestRecord = GetModpackRecord(latestResourceItem) ?? record;
                     ApplyCachedFileInfo(latestRecord);
                     if (!startAfterDownload)
@@ -575,7 +601,7 @@ namespace Game
                         return;
                     }
 
-                    RefreshModpackList();
+                    RefreshModpackListWithReload();
                     LocalResourceItem latestResourceItem = FindModpackByPath(recordPath) ?? resourceItem;
                     LocalModpackRecord latestRecord = GetModpackRecord(latestResourceItem) ?? record;
                     ApplyCachedFileInfo(latestRecord);
@@ -961,7 +987,7 @@ namespace Game
             {
                 if (entry?.File != null)
                 {
-                    m_fileInfoManager.Cache(result.ApiBaseUrl, entry.FileId, entry.File);
+                    s_fileInfoManager.Cache(result.ApiBaseUrl, entry.FileId, entry.File);
                 }
                 else if (!string.IsNullOrWhiteSpace(entry?.Error))
                 {
@@ -985,7 +1011,7 @@ namespace Game
             foreach (ModpackItem item in record?.Manifest?.Items ?? [])
             {
                 if (item == null || string.IsNullOrWhiteSpace(item.FileId)
-                    || !m_fileInfoManager.TryGetCached(AuthSessionManager.Instance.ApiBaseUrl, item.FileId, out PostFileItem file))
+                    || !s_fileInfoManager.TryGetCached(AuthSessionManager.Instance.ApiBaseUrl, item.FileId, out PostFileItem file))
                 {
                     continue;
                 }
@@ -1008,7 +1034,7 @@ namespace Game
                 .Where(item => !ModpackPresenceRules.IsItemDownloaded(item, snapshot, record))
                 .Select(item => item.FileId.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Where(fileId => !m_fileInfoManager.TryGetCached(AuthSessionManager.Instance.ApiBaseUrl, fileId, out _))
+                .Where(fileId => !s_fileInfoManager.TryGetCached(AuthSessionManager.Instance.ApiBaseUrl, fileId, out _))
                 .ToArray();
             if (fileIds.Count == 0)
             {
@@ -1027,7 +1053,7 @@ namespace Game
             string token = AuthSessionManager.Instance.CurrentToken;
             m_fileInfoLoadingPath = resourcePath;
             m_fileInfoSelectionVersion = m_selectionVersion;
-            m_fileInfoSlot.Start((requestId, _) => m_fileInfoManager.LoadAsync(
+            m_fileInfoSlot.Start((requestId, _) => s_fileInfoManager.LoadAsync(
                 new ModpackFileInfoLoadRequest
                 {
                     RequestId = requestId,

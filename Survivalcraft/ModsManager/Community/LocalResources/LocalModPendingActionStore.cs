@@ -55,13 +55,31 @@ namespace Game
         }
 
         /// <summary>
-        /// 清空全部待处理动作并覆写落盘：整合包激活/停用改用手工禁用状态直写，
-        /// 旧的启用/禁用/删除意图若不清空，会在下次重启边界被重复兑现。
-        /// 空表覆写时 PendingLocalModActions.Save 内部会删除清单文件。
+        /// 清空启用/禁用类待处理动作并覆写落盘：整合包激活/停用改用手工禁用状态直写，
+        /// 旧的启用/禁用意图若不清空，会在下次重启边界被重复兑现；删除意图保留到重启边界兑现。
+        /// 先确保延迟加载（否则进程内首调会在 Clear 后经属性 getter 把盘上数据重载回来）。
+        /// 无可清条目时不覆写；空表覆写时 PendingLocalModActions.Save 内部会删除清单文件。
         /// </summary>
         public static void ClearPendingActions()
         {
-            s_pendingActions.Clear();
+            EnsurePendingActionsLoaded();
+            List<string> keysToRemove = null;
+            foreach (KeyValuePair<string, LocalModPendingActionEntry> pair in s_pendingActions)
+            {
+                if (pair.Value?.ActionType is LocalModPendingActionType.Enable or LocalModPendingActionType.Disable)
+                {
+                    (keysToRemove ??= []).Add(pair.Key);
+                }
+            }
+            if (keysToRemove == null)
+            {
+                return;
+            }
+
+            foreach (string key in keysToRemove)
+            {
+                s_pendingActions.Remove(key);
+            }
             SaveLocalModPendingActions();
         }
     }
