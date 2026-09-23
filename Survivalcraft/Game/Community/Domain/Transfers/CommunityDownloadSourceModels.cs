@@ -1,13 +1,13 @@
 namespace Game
 {
-    public enum DownloadSourceSelectionMode
+    public enum CommunityDownloadSourceSelectionMode
     {
         Default = 1,
         ManualSelect = 2,
         CustomDefault = 3
     }
 
-    public enum DownloadSourceOption
+    public enum CommunityDownloadSourceOption
     {
         DefaultCn = 0,
         Source1Global = 1,
@@ -16,7 +16,7 @@ namespace Game
         Source4Global = 4
     }
 
-    public class FileDownloadResult
+    public class CommunityFileDownloadResult
     {
         public string FileName { get; set; }
         public string ImportedName { get; set; }

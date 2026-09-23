@@ -71,8 +71,8 @@ namespace Game
         /// </summary>
         protected void InstallDownloadFlowCallbacks(
             Action<string> statusReporter,
-            Func<DownloadSourceSelectionMode> sourceModeResolver,
-            Func<DownloadSourceOption> effectiveSourceResolver)
+            Func<CommunityDownloadSourceSelectionMode> sourceModeResolver,
+            Func<CommunityDownloadSourceOption> effectiveSourceResolver)
         {
             DownloadFlowManager downloadManager = DownloadFlowManager.Instance;
             downloadManager.StatusReporter = statusReporter;

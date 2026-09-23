@@ -119,7 +119,7 @@ namespace Game
         }
 
         // 临时名格式 <原文件名>.<32位hex>.tmp，与 Write 的命名对齐；校验 hex 段，
-        // 避免误伤 auth.bin.tmp（CredentialStore 自带恢复）等非本类命名的临时文件。
+        // 避免误伤 auth.bin.tmp（CommunityCredentialStore 自带恢复）等非本类命名的临时文件。
         private static bool TryParseTempFileName(string fileName, out string originalFileName)
         {
             originalFileName = null;

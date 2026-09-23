@@ -98,10 +98,10 @@ namespace Game
 
         private static string GetSafeFileName(string fileName, string fallbackName)
         {
-            // 段级清洗统一走 UploadFileNaming（原手写版不清洗非法字符、
+            // 段级清洗统一走 CommunityUploadFileNaming（原手写版不清洗非法字符、
             // 不处理保留名、不截断长度，脏文件名会在 OpenFile(Create) 时写失败）。
             // fallback 全名自带 .scmod 后缀，清洗后即通过补扩展名检查原样返回。
-            return UploadFileNaming.MakeSafeFileName(
+            return CommunityUploadFileNaming.MakeSafeFileName(
                 Storage.GetFileName(fileName ?? string.Empty),
                 ModsManager.ModSuffix,
                 fallbackName);

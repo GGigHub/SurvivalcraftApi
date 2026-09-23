@@ -24,20 +24,20 @@ namespace Game
 
 
         private readonly DownloadQueueManager m_downloadQueue =
-            new(TransferManager.DownloadQueuePersistence);
+            new(TransferManager.CommunityDownloadQueuePersistence);
         private readonly ModpackItemImporter m_modpackItemImporter;
         private readonly ModpackDownloader m_modpackDownloader;
         private IRemoteImportHost m_remoteImportHost;
 
-        private Task<FileDownloadResult> m_fileDownloadTask;
-        private TransferProgress m_fileDownloadProgress;
+        private Task<CommunityFileDownloadResult> m_fileDownloadTask;
+        private CommunityTransferProgress m_fileDownloadProgress;
         private CommunityDownloadDialog m_fileDownloadDialog;
         // 队列覆盖确认框跟踪：切屏使对话框随宿主屏失联时，Update 泵据此重弹（ReshowLostQueuedOverwriteDialog）。
         private CommunityImportOverwriteDialog m_queuedOverwriteDialog;
-        private DownloadQueueItem m_queuedOverwriteDialogItem;
+        private CommunityDownloadQueueItem m_queuedOverwriteDialogItem;
         // true = 已对失联对话框发出 Hide，等引擎关闭动画摘除后再重 Show。
         private bool m_queuedOverwriteDialogHidePending;
-        private readonly ConditionalWeakTable<DownloadQueueItem, DownloadQueueDialogItemCache> m_downloadQueueDialogItemCache = new();
+        private readonly ConditionalWeakTable<CommunityDownloadQueueItem, DownloadQueueDialogItemCache> m_downloadQueueDialogItemCache = new();
         private Task<ModpackManifestLoadResult> m_modpackManifestLoadTask;
         private Task<ModpackDownloadProgress> m_modpackItemDownloadTask;
         private Action<ModpackDownloadProgress> m_modpackDownloadCompletedAction;
@@ -46,9 +46,9 @@ namespace Game
         private bool m_shouldShowRestoredDownloadPromptOnEnter;
         private int m_restoredUnfinishedDownloadCount;
 
-        private List<DownloadQueueItem> m_downloadQueueItems => m_downloadQueue.Items;
+        private List<CommunityDownloadQueueItem> m_downloadQueueItems => m_downloadQueue.Items;
 
-        private DownloadQueueItem m_currentDownloadItem
+        private CommunityDownloadQueueItem m_currentDownloadItem
         {
             get => m_downloadQueue.Current;
             set
@@ -76,7 +76,7 @@ namespace Game
         }
 
         /// <summary>文件下载（含导入）成功结束后触发；UI 线程。订阅方按 result.Type 刷新本地列表。</summary>
-        public event Action<FileDownloadResult> DownloadCompleted;
+        public event Action<CommunityFileDownloadResult> DownloadCompleted;
 
         /// <summary>整合包子项处理结束后触发；UI 线程。订阅方刷新各类型本地列表。</summary>
         public event Action PackDownloadCompleted;
@@ -85,10 +85,10 @@ namespace Game
         public Action<string> StatusReporter { get; set; }
 
         /// <summary>下载源选择模式；屏幕按设置提供。</summary>
-        public Func<DownloadSourceSelectionMode> SourceModeResolver { get; set; }
+        public Func<CommunityDownloadSourceSelectionMode> SourceModeResolver { get; set; }
 
         /// <summary>有效下载源解析；屏幕按设置提供。</summary>
-        public Func<DownloadSourceOption> EffectiveSourceResolver { get; set; }
+        public Func<CommunityDownloadSourceOption> EffectiveSourceResolver { get; set; }
 
         /// <summary>整合包清单/子项任务进行中。</summary>
         public bool ModpackDownloadBusy => m_modpackManifestLoadTask != null || m_modpackItemDownloadTask != null;
@@ -124,9 +124,9 @@ namespace Game
             CommunityToastManager.Show(message, autoHideSeconds: autoHideSeconds);
         }
 
-        private DownloadSourceSelectionMode SourceMode => SourceModeResolver?.Invoke() ?? DownloadSourceSelectionMode.Default;
+        private CommunityDownloadSourceSelectionMode SourceMode => SourceModeResolver?.Invoke() ?? CommunityDownloadSourceSelectionMode.Default;
 
-        private DownloadSourceOption EffectiveSource => EffectiveSourceResolver?.Invoke() ?? DownloadSourceOption.DefaultCn;
+        private CommunityDownloadSourceOption EffectiveSource => EffectiveSourceResolver?.Invoke() ?? CommunityDownloadSourceOption.DefaultCn;
 
         public void StartDownload(PostFileItem file, PostVersionItem version = null)
         {
@@ -141,7 +141,7 @@ namespace Game
             {
                 LocalModStateStore.RememberPendingLocalModCompatibilityOverride(file.PackageName, fileName, version);
             }
-            DownloadFeedbackInfo feedbackInfo = new()
+            CommunityDownloadFeedbackInfo feedbackInfo = new()
             {
                 ApiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl,
                 Token = AuthSessionManager.Instance.CurrentToken,
@@ -197,13 +197,13 @@ namespace Game
             string fileName,
             ExternalContentType type,
             bool requiresRestart,
-            DownloadFeedbackInfo feedbackInfo = null,
+            CommunityDownloadFeedbackInfo feedbackInfo = null,
             bool replaceExistingScbbsPlusMod = false,
             string replaceExistingModPackageName = null,
             string replaceExistingModPath = null,
             string overwriteExistingFilePath = null)
         {
-            if (SourceMode == DownloadSourceSelectionMode.ManualSelect)
+            if (SourceMode == CommunityDownloadSourceSelectionMode.ManualSelect)
             {
                 ShowDownloadSourceSelectionDialog(
                     source => EnqueueFileDownload(
@@ -238,21 +238,21 @@ namespace Game
             string fileName,
             ExternalContentType type,
             bool requiresRestart,
-            DownloadSourceOption source,
-            DownloadFeedbackInfo feedbackInfo = null,
+            CommunityDownloadSourceOption source,
+            CommunityDownloadFeedbackInfo feedbackInfo = null,
             bool replaceExistingScbbsPlusMod = false,
             string replaceExistingModPackageName = null,
             string replaceExistingModPath = null,
             string overwriteExistingFilePath = null)
         {
-            string downloadUrl = DownloadSourceResolver.ResolveUrl(url, source);
+            string downloadUrl = CommunityDownloadSourceResolver.ResolveUrl(url, source);
             if (string.IsNullOrWhiteSpace(downloadUrl))
             {
                 DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "DownloadSourceSwitchUnavailable"), LanguageControl.Ok, null, null));
                 return;
             }
 
-            DownloadQueueItem item = m_downloadQueue.Enqueue(
+            CommunityDownloadQueueItem item = m_downloadQueue.Enqueue(
                 downloadUrl,
                 url,
                 fileName,
@@ -275,17 +275,17 @@ namespace Game
             StartNextQueuedDownload();
         }
 
-        public void ShowDownloadSourceSelectionDialog(Action<DownloadSourceOption> selectSourceAction)
+        public void ShowDownloadSourceSelectionDialog(Action<CommunityDownloadSourceOption> selectSourceAction)
         {
-            DownloadSourceOption[] sourceOptions = Enum.GetValues<DownloadSourceOption>();
+            CommunityDownloadSourceOption[] sourceOptions = Enum.GetValues<CommunityDownloadSourceOption>();
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
                     LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "ChooseDownloadSource"),
                     sourceOptions,
                     60f,
-                    item => GetDownloadSourceText((DownloadSourceOption)item),
-                    item => selectSourceAction?.Invoke((DownloadSourceOption)item)));
+                    item => GetDownloadSourceText((CommunityDownloadSourceOption)item),
+                    item => selectSourceAction?.Invoke((CommunityDownloadSourceOption)item)));
         }
 
     }

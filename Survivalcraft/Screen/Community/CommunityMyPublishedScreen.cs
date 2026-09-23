@@ -82,8 +82,8 @@ namespace Game
             SetCurrentMyPublishedFileType(ModSettingsState.MyPublishedFileType);
             InstallDownloadFlowCallbacks(
                 status => { },
-                () => DownloadSourceSelectionMode.Default,
-                () => DownloadSourceOption.DefaultCn);
+                () => CommunityDownloadSourceSelectionMode.Default,
+                () => CommunityDownloadSourceOption.DefaultCn);
             DownloadFlowManager.Instance.LoadQueue();
             m_pendingLoginOnEnter = false;
             // 本屏 Update 轮询前的会话恢复：直奔本屏（不经过社区/More 屏）时只有这里

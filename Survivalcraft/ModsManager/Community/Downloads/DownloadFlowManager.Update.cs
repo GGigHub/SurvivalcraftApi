@@ -34,7 +34,7 @@ namespace Game
             {
                 return false;
             }
-            FileDownloadResult result;
+            CommunityFileDownloadResult result;
             try
             {
                 result = m_fileDownloadTask.Result;
@@ -43,7 +43,7 @@ namespace Game
             {
                 // 任务 Faulted（如导入器抛未预期异常）：不冒泡出 Update()，按下载失败路径展示。
                 Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadTaskFaulted"), ex.Message));
-                result = new FileDownloadResult
+                result = new CommunityFileDownloadResult
                 {
                     FileName = m_currentDownloadItem?.FileName,
                     DownloadFailed = true,
@@ -51,7 +51,7 @@ namespace Game
                 };
             }
             m_fileDownloadTask = null;
-            DownloadQueueItem completedDownloadItem = m_currentDownloadItem;
+            CommunityDownloadQueueItem completedDownloadItem = m_currentDownloadItem;
             bool wasQueuedDownload = completedDownloadItem != null;
             if (CompleteCurrentDownloadItem(result))
             {

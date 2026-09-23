@@ -1,6 +1,6 @@
 namespace Game
 {
-    internal enum UploadStage
+    internal enum CommunityUploadStage
     {
         Preparing,
         Exporting,
@@ -10,14 +10,14 @@ namespace Game
         Completed
     }
 
-    internal sealed class UploadProgressInfo
+    internal sealed class CommunityUploadProgressInfo
     {
-        public UploadStage Stage { get; init; }
+        public CommunityUploadStage Stage { get; init; }
         public float Value { get; init; }
         public string ResourceTypeName { get; init; }
     }
 
-    public sealed class WorldUploadResult
+    public sealed class CommunityWorldUploadResult
     {
         public string Url { get; set; }
         public string FileName { get; set; }
@@ -26,7 +26,7 @@ namespace Game
         public bool Canceled { get; set; }
     }
 
-    internal sealed class PreparedUploadFile
+    internal sealed class CommunityPreparedUploadFile
     {
         public string FilePath { get; init; }
         public string FileName { get; init; }

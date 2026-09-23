@@ -16,7 +16,7 @@ namespace Game
     /// <summary>
     /// 模组游玩时间上报客户端。上报属非关键路径：业务失败只记日志，不向调用方抛出。
     /// </summary>
-    internal sealed class PlayedTimeClient
+    internal sealed class CommunityPlayedTimeClient
     {
         // null 字段（未登录的 userId、无版本号）不参与序列化，与服务端约定一致。
         private static readonly JsonSerializerOptions s_jsonOptions = new()
@@ -29,7 +29,7 @@ namespace Game
 
         private readonly HttpClient m_httpClient;
 
-        public PlayedTimeClient(HttpClient httpClient)
+        public CommunityPlayedTimeClient(HttpClient httpClient)
         {
             m_httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
@@ -58,7 +58,7 @@ namespace Game
                 }
 
                 using HttpResponseMessage response = await m_httpClient.SendAsync(request, cancellationToken);
-                // 故意不做 401/403 登出广播（不像 DownloadFeedbackClient）：上报随自动保存
+                // 故意不做 401/403 登出广播（不像 CommunityDownloadFeedbackClient）：上报随自动保存
                 // 周期触发，token 过期时在游玩中反复弹「登录过期」属于打扰；仅记日志。
                 string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
                 ModPlayRecordResponse result = JsonSerializer.Deserialize<ModPlayRecordResponse>(responseBody);

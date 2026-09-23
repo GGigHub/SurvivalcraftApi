@@ -71,7 +71,7 @@ namespace Game
                 throw new InvalidOperationException($"{response.StatusCode}: {errorBody}");
             }
             // 空/非 JSON body（网关 200 空响应、HTML 错误页）归一化为 InvalidOperationException，
-            // 不让裸 JsonException 逃到调用方（同 AuthClient 的翻译约定）。
+            // 不让裸 JsonException 逃到调用方（同 CommunityAuthClient 的翻译约定）。
             if (string.IsNullOrWhiteSpace(responseBody))
             {
                 throw new InvalidOperationException($"{response.StatusCode}: <empty body>");
@@ -126,9 +126,9 @@ namespace Game
         // 带 Bearer 的请求收到 401/403 说明 token 已失效：广播给订阅方统一登出+提示。
         private static void NotifyIfUnauthorized(HttpStatusCode statusCode, string token)
         {
-            if (!string.IsNullOrWhiteSpace(token) && UnauthorizedNotifier.IsUnauthorized(statusCode))
+            if (!string.IsNullOrWhiteSpace(token) && CommunityUnauthorizedNotifier.IsUnauthorized(statusCode))
             {
-                UnauthorizedNotifier.Notify(token);
+                CommunityUnauthorizedNotifier.Notify(token);
             }
         }
 

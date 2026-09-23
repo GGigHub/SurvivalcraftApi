@@ -222,7 +222,7 @@ namespace Game
         {
             try
             {
-                TranslateClient client = TranslateClient.Shared;
+                CommunityTranslateClient client = CommunityTranslateClient.Shared;
                 // 标题与正文两请求相互独立，并行发出再逐项取结果（详情打开省一次串行往返）。
                 Task<string> titleTask = string.IsNullOrWhiteSpace(title)
                     ? Task.FromResult(title)

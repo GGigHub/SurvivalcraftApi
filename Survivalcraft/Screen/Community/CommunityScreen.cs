@@ -71,18 +71,18 @@ namespace Game
         // 生产单例接线见各域类自身（AuthSessionManager.Instance / CommunityManager.ApiClient 等）。
         private string CurrentApiBaseUrl => AuthSessionManager.Instance.ApiBaseUrl;
 
-        private DownloadSourceOption ResolveEffectiveDownloadSource()
+        private CommunityDownloadSourceOption ResolveEffectiveDownloadSource()
         {
             // 枚举成员可非连续，未定义值不会等于任何具名成员，模式无须兜底；
             // 源读取兜底防手改 Settings.xml。
-            return SettingsManager.CommunityDownloadSourceSelectionMode == DownloadSourceSelectionMode.CustomDefault
+            return SettingsManager.CommunityDownloadSourceSelectionMode == CommunityDownloadSourceSelectionMode.CustomDefault
                 ? NormalizeSource(SettingsManager.CommunityDefaultDownloadSource)
-                : DownloadSourceOption.DefaultCn;
+                : CommunityDownloadSourceOption.DefaultCn;
         }
 
-        private static DownloadSourceOption NormalizeSource(DownloadSourceOption value)
+        private static CommunityDownloadSourceOption NormalizeSource(CommunityDownloadSourceOption value)
         {
-            return Enum.IsDefined(value) ? value : DownloadSourceOption.DefaultCn;
+            return Enum.IsDefined(value) ? value : CommunityDownloadSourceOption.DefaultCn;
         }
 
         public CommunityScreen()

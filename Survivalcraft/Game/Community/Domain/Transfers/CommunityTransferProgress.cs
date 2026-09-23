@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace Game
 {
-    public sealed class TransferProgress
+    public sealed class CommunityTransferProgress
     {
         private readonly Lock m_lock = new();
         private string m_message = string.Empty;

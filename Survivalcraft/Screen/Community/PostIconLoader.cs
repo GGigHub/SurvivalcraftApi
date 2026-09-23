@@ -201,7 +201,7 @@ namespace Game
         {
             try
             {
-                using MemoryStream downloaded = await TransferManager.HttpDownloader.DownloadToMemoryAsync(
+                using MemoryStream downloaded = await TransferManager.CommunityHttpDownloader.DownloadToMemoryAsync(
                     iconUrl,
                     null,
                     CancellationToken.None).ConfigureAwait(false);

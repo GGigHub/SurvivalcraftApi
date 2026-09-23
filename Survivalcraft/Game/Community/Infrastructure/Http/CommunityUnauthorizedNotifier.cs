@@ -10,7 +10,7 @@ namespace Game
     /// 由 ScbbsPlusCommunityScreen 统一清除本地登录态并提示重新登录，各调用点无需逐个处理。
     /// 通知携带触发请求的 token：订阅方比对当前凭据，旧 token 的在途请求不会误杀新会话。
     /// </summary>
-    internal static class UnauthorizedNotifier
+    internal static class CommunityUnauthorizedNotifier
     {
         public static event Action<string> UnauthorizedResponse;
 

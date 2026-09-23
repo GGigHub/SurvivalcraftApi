@@ -14,10 +14,10 @@ namespace Game
         private readonly ButtonWidget m_backgroundButton;
         private readonly Action m_cancelAction;
         private readonly Action m_backgroundAction;
-        private readonly TransferProgress m_progress;
+        private readonly CommunityTransferProgress m_progress;
         private bool m_closable;
 
-        public CommunityDownloadDialog(string title, Action cancelAction = null, Action backgroundAction = null, TransferProgress progress = null)
+        public CommunityDownloadDialog(string title, Action cancelAction = null, Action backgroundAction = null, CommunityTransferProgress progress = null)
         {
             XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusDownloadDialog");
             LoadContents(this, node);
@@ -34,7 +34,7 @@ namespace Game
             SetActiveButtonsVisible(true);
         }
 
-        public void SetProgress(TransferProgress progress)
+        public void SetProgress(CommunityTransferProgress progress)
         {
             // 进入可关闭状态（完成/失败/停止）后忽略迟到的进度事件。
             if (progress == null || m_closable)

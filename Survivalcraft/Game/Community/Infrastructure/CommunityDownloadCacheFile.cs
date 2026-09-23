@@ -4,7 +4,7 @@ using Engine;
 
 namespace Game
 {
-    internal static class DownloadCacheFile
+    internal static class CommunityDownloadCacheFile
     {
         internal sealed class Metadata
         {

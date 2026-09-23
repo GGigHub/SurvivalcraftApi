@@ -17,12 +17,12 @@ namespace Game
     /// 客户端池用 HttpClientProvider.Upload（无超时+取消令牌兜底，见其注释）；凭证/登记
     /// 小请求的 30s 有限超时由工作流侧 CancelAfter 提供。
     /// </summary>
-    internal sealed class UploadClient
+    internal sealed class CommunityUploadClient
     {
         private const string UpyunFileDomain = "https://file.suancaixianyu.cn";
         private readonly HttpClient m_httpClient;
 
-        public UploadClient(HttpClient httpClient)
+        public CommunityUploadClient(HttpClient httpClient)
         {
             m_httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
@@ -156,9 +156,9 @@ namespace Game
         // 带 Bearer 的请求收到 401/403 说明 token 已失效：广播给订阅方统一登出+提示。
         private static void NotifyIfUnauthorized(HttpStatusCode statusCode, string token)
         {
-            if (!string.IsNullOrWhiteSpace(token) && UnauthorizedNotifier.IsUnauthorized(statusCode))
+            if (!string.IsNullOrWhiteSpace(token) && CommunityUnauthorizedNotifier.IsUnauthorized(statusCode))
             {
-                UnauthorizedNotifier.Notify(token);
+                CommunityUnauthorizedNotifier.Notify(token);
             }
         }
 

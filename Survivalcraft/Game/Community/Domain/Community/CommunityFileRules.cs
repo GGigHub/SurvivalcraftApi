@@ -15,13 +15,13 @@ namespace Game
             {
                 // 服务端 filename 可能由上传 saveKey（转义路径）反推，含 %5B %20 等转义：
                 // 落盘前先解码再净化；非法转义序列（如字面 "%"）按原值保留（与匹配侧归一同策略）。
-                return UploadFileNaming.SanitizeFileName(UnescapeFileName(file.Filename));
+                return CommunityUploadFileNaming.SanitizeFileName(UnescapeFileName(file.Filename));
             }
             try
             {
                 if (Uri.TryCreate(file.Url, UriKind.Absolute, out Uri uri))
                 {
-                    return UploadFileNaming.SanitizeFileName(
+                    return CommunityUploadFileNaming.SanitizeFileName(
                         Uri.UnescapeDataString(Storage.GetFileName(uri.LocalPath)));
                 }
             }

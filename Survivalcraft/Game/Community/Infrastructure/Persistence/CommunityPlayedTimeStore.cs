@@ -6,7 +6,7 @@ using Engine;
 
 namespace Game
 {
-    internal sealed class PlayedTimeStore
+    internal sealed class CommunityPlayedTimeStore
     {
         private const int CurrentVersion = 1;
         private static readonly JsonSerializerOptions s_jsonOptions = new()
@@ -18,7 +18,7 @@ namespace Game
         public int Version { get; set; } = CurrentVersion;
         public Dictionary<string, ModPlayedTimeData> Mods { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
-        public static PlayedTimeStore Load(string path = null)
+        public static CommunityPlayedTimeStore Load(string path = null)
         {
             path ??= CommunityStoragePaths.PlayedTimeFile;
             if (!Storage.FileExists(path))
@@ -26,7 +26,7 @@ namespace Game
                 return CreateEmpty();
             }
 
-            PlayedTimeStore store = JsonFileStore.Read<PlayedTimeStore>(path, s_jsonOptions);
+            CommunityPlayedTimeStore store = JsonFileStore.Read<CommunityPlayedTimeStore>(path, s_jsonOptions);
             store ??= CreateEmpty();
             store.Mods ??= new Dictionary<string, ModPlayedTimeData>(StringComparer.OrdinalIgnoreCase);
             return store;
@@ -40,9 +40,9 @@ namespace Game
             JsonFileStore.Write(path, this, s_jsonOptions);
         }
 
-        public static PlayedTimeStore CreateEmpty()
+        public static CommunityPlayedTimeStore CreateEmpty()
         {
-            return new PlayedTimeStore();
+            return new CommunityPlayedTimeStore();
         }
     }
 

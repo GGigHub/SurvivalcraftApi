@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace Game
 {
-    internal sealed class ModCatalogClient
+    internal sealed class CommunityModCatalogClient
     {
         private readonly CommunityApiClient m_apiClient;
 
-        public ModCatalogClient(CommunityApiClient apiClient)
+        public CommunityModCatalogClient(CommunityApiClient apiClient)
         {
             m_apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         }

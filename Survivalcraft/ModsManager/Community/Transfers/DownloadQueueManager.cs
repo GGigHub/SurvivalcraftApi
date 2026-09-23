@@ -9,28 +9,28 @@ namespace Game
 {
     internal sealed class DownloadQueueManager
     {
-        private readonly DownloadQueuePersistence m_persistence;
-        private readonly List<DownloadQueueItem> m_items = [];
+        private readonly CommunityDownloadQueuePersistence m_persistence;
+        private readonly List<CommunityDownloadQueueItem> m_items = [];
         // 集合级互斥：导入完成回调会在工作流后台线程调 Save()（即时落盘「已导入」标记），
         // 与主线程的 Enqueue/RemoveAll/Load 并发。写文件本身经 JsonFileStore 原子替换，
         // 此锁只保护 m_items 集合的遍历/变更互斥。
         private readonly Lock m_gate = new();
         private int m_nextId;
 
-        public DownloadQueueManager(DownloadQueuePersistence persistence)
+        public DownloadQueueManager(CommunityDownloadQueuePersistence persistence)
         {
             m_persistence = persistence ?? throw new ArgumentNullException(nameof(persistence));
         }
 
-        public List<DownloadQueueItem> Items => m_items;
+        public List<CommunityDownloadQueueItem> Items => m_items;
         public int NextId
         {
             get => m_nextId;
             set => m_nextId = Math.Max(0, value);
         }
-        public DownloadQueueItem Current { get; private set; }
+        public CommunityDownloadQueueItem Current { get; private set; }
 
-        public void SetCurrent(DownloadQueueItem item)
+        public void SetCurrent(CommunityDownloadQueueItem item)
         {
             Current = item;
         }
@@ -40,14 +40,14 @@ namespace Game
             Current = null;
         }
 
-        public DownloadQueueItem Enqueue(
+        public CommunityDownloadQueueItem Enqueue(
             string url,
             string originalUrl,
             string fileName,
             ExternalContentType type,
             bool requiresRestart,
-            DownloadSourceOption source,
-            DownloadFeedbackInfo feedbackInfo,
+            CommunityDownloadSourceOption source,
+            CommunityDownloadFeedbackInfo feedbackInfo,
             bool replaceExistingScbbsPlusMod,
             string replaceExistingModPackageName,
             string replaceExistingModPath,
@@ -58,9 +58,9 @@ namespace Game
                 // 去重：同一 URL+文件名的未完成项（含在途/等待覆盖确认）已在队列时拒绝重复入队，
                 // 双击或快速重试不再产生重复下载与二次覆盖确认。
                 bool duplicate = m_items.Any(existing =>
-                    existing.State is not (DownloadQueueItemState.Completed
-                        or DownloadQueueItemState.Canceled
-                        or DownloadQueueItemState.Failed)
+                    existing.State is not (CommunityDownloadQueueItemState.Completed
+                        or CommunityDownloadQueueItemState.Canceled
+                        or CommunityDownloadQueueItemState.Failed)
                     && string.Equals(existing.Url, url, StringComparison.Ordinal)
                     && string.Equals(existing.FileName, fileName, StringComparison.Ordinal));
                 if (duplicate)
@@ -69,7 +69,7 @@ namespace Game
                 }
 
                 int itemId = ++m_nextId;
-                DownloadQueueItem item = new()
+                CommunityDownloadQueueItem item = new()
                 {
                     Id = itemId,
                     Url = url,
@@ -82,10 +82,10 @@ namespace Game
                     ReplaceExistingModPackageName = replaceExistingModPackageName,
                     ReplaceExistingModPath = replaceExistingModPath,
                     OverwriteExistingFilePath = overwriteExistingFilePath,
-                    Progress = new TransferProgress(),
-                    State = DownloadQueueItemState.Pending,
+                    Progress = new CommunityTransferProgress(),
+                    State = CommunityDownloadQueueItemState.Pending,
                     Source = source,
-                    TempFilePath = DownloadQueuePersistence.CreateTempFilePath(itemId, fileName),
+                    TempFilePath = CommunityDownloadQueuePersistence.CreateTempFilePath(itemId, fileName),
                     CreatedTime = DateTime.Now
                 };
                 m_items.Add(item);
@@ -97,30 +97,30 @@ namespace Game
         // 依赖约定「m_items 的变更全部发生在主线程、后台线程只经持锁 Save() 只读序列化」，
         // 主线程读不会与自身变更并发、后台 Save 不改集合，无锁读取因此安全；
         // 若未来允许后台线程变更集合，这些读方法必须改为持锁。
-        public DownloadQueueItem Find(
+        public CommunityDownloadQueueItem Find(
             int? itemId,
-            Func<DownloadQueueItem, bool> predicate,
+            Func<CommunityDownloadQueueItem, bool> predicate,
             bool preferLast = false)
         {
-            IEnumerable<DownloadQueueItem> items = itemId.HasValue
+            IEnumerable<CommunityDownloadQueueItem> items = itemId.HasValue
                 ? m_items.Where(item => item.Id == itemId.Value)
                 : m_items;
             return preferLast ? items.LastOrDefault(predicate) : items.FirstOrDefault(predicate);
         }
 
-        public DownloadQueueItem FindNextPending()
+        public CommunityDownloadQueueItem FindNextPending()
         {
-            return m_items.FirstOrDefault(item => item.State == DownloadQueueItemState.Pending);
+            return m_items.FirstOrDefault(item => item.State == CommunityDownloadQueueItemState.Pending);
         }
 
-        public CancellationToken Begin(DownloadQueueItem item, DateTime startedTime)
+        public CancellationToken Begin(CommunityDownloadQueueItem item, DateTime startedTime)
         {
-            if (item?.State != DownloadQueueItemState.Pending)
+            if (item?.State != CommunityDownloadQueueItemState.Pending)
             {
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyPendingDownloadsCanBeStarted"));
             }
 
-            item.State = DownloadQueueStateMachine.Transition(item.State, DownloadQueueCommand.Start);
+            item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Start);
             item.StartedTime = startedTime;
             item.PauseRequested = false;
             item.CancelSource?.Dispose();
@@ -129,98 +129,98 @@ namespace Game
             return item.CancelSource.Token;
         }
 
-        public DownloadQueueItem FindCancelable(int? itemId)
+        public CommunityDownloadQueueItem FindCancelable(int? itemId)
         {
-            return Find(itemId, item => item.State is DownloadQueueItemState.Pending
-                or DownloadQueueItemState.AwaitingOverwriteConfirmation
-                or DownloadQueueItemState.Paused);
+            return Find(itemId, item => item.State is CommunityDownloadQueueItemState.Pending
+                or CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation
+                or CommunityDownloadQueueItemState.Paused);
         }
 
-        public DownloadQueueItem FindResumable(int? itemId)
+        public CommunityDownloadQueueItem FindResumable(int? itemId)
         {
-            return Find(itemId, item => item.State == DownloadQueueItemState.Paused, preferLast: true);
+            return Find(itemId, item => item.State == CommunityDownloadQueueItemState.Paused, preferLast: true);
         }
 
-        public DownloadQueueItem FindRetryable(int? itemId)
+        public CommunityDownloadQueueItem FindRetryable(int? itemId)
         {
-            return Find(itemId, item => item.State is DownloadQueueItemState.Failed
-                or DownloadQueueItemState.Canceled
-                or DownloadQueueItemState.Paused, preferLast: true);
+            return Find(itemId, item => item.State is CommunityDownloadQueueItemState.Failed
+                or CommunityDownloadQueueItemState.Canceled
+                or CommunityDownloadQueueItemState.Paused, preferLast: true);
         }
 
-        public void CancelQueued(DownloadQueueItem item, DateTime completedTime)
+        public void CancelQueued(CommunityDownloadQueueItem item, DateTime completedTime)
         {
             if (item == null)
             {
                 throw new ArgumentNullException(nameof(item));
             }
-            item.State = DownloadQueueStateMachine.Transition(item.State, DownloadQueueCommand.Cancel);
+            item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Cancel);
             item.CompletedTime = completedTime;
         }
 
-        public void RequestOverwriteConfirmation(DownloadQueueItem item)
+        public void RequestOverwriteConfirmation(CommunityDownloadQueueItem item)
         {
-            if (item == null || item.State is not (DownloadQueueItemState.Pending or DownloadQueueItemState.Running))
+            if (item == null || item.State is not (CommunityDownloadQueueItemState.Pending or CommunityDownloadQueueItemState.Running))
             {
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyPendingOrRunningCanRequestOverwrite"));
             }
 
-            item.State = DownloadQueueStateMachine.Transition(
+            item.State = CommunityDownloadQueueStateMachine.Transition(
                 item.State,
-                DownloadQueueCommand.RequestOverwriteConfirmation);
+                CommunityDownloadQueueCommand.RequestOverwriteConfirmation);
         }
 
-        public void ConfirmOverwrite(DownloadQueueItem item, string existingFilePath)
+        public void ConfirmOverwrite(CommunityDownloadQueueItem item, string existingFilePath)
         {
-            if (item?.State != DownloadQueueItemState.AwaitingOverwriteConfirmation)
+            if (item?.State != CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation)
             {
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyAwaitingOverwriteCanBeConfirmed"));
             }
 
             item.OverwriteExistingFilePath = existingFilePath;
-            item.State = DownloadQueueStateMachine.Transition(item.State, DownloadQueueCommand.ConfirmOverwrite);
+            item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.ConfirmOverwrite);
         }
 
-        public void CancelOverwrite(DownloadQueueItem item, DateTime completedTime)
+        public void CancelOverwrite(CommunityDownloadQueueItem item, DateTime completedTime)
         {
-            if (item?.State != DownloadQueueItemState.AwaitingOverwriteConfirmation)
+            if (item?.State != CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation)
             {
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyAwaitingOverwriteCanBeCanceled"));
             }
 
-            item.State = DownloadQueueStateMachine.Transition(item.State, DownloadQueueCommand.Cancel);
+            item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Cancel);
             item.CompletedTime = completedTime;
         }
 
-        public void PrepareResume(DownloadQueueItem item)
+        public void PrepareResume(CommunityDownloadQueueItem item)
         {
-            if (item?.State != DownloadQueueItemState.Paused)
+            if (item?.State != CommunityDownloadQueueItemState.Paused)
             {
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyPausedDownloadsCanBeResumed"));
             }
-            item.State = DownloadQueueStateMachine.Transition(item.State, DownloadQueueCommand.Resume);
+            item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Resume);
             ResetForQueue(item, resetStartedTime: false);
         }
 
-        public void PrepareRetry(DownloadQueueItem item)
+        public void PrepareRetry(CommunityDownloadQueueItem item)
         {
-            if (item == null || item.State is not (DownloadQueueItemState.Failed
-                or DownloadQueueItemState.Canceled
-                or DownloadQueueItemState.Paused))
+            if (item == null || item.State is not (CommunityDownloadQueueItemState.Failed
+                or CommunityDownloadQueueItemState.Canceled
+                or CommunityDownloadQueueItemState.Paused))
             {
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyFinishedOrPausedCanBeRetried"));
             }
-            item.State = DownloadQueueStateMachine.Transition(item.State, DownloadQueueCommand.Retry);
+            item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Retry);
             ResetForQueue(item, resetStartedTime: true);
-            item.Progress = new TransferProgress();
+            item.Progress = new CommunityTransferProgress();
         }
 
         public bool HasAwaitingOverwriteConfirmation()
         {
-            return m_items.Any(item => item.State == DownloadQueueItemState.AwaitingOverwriteConfirmation);
+            return m_items.Any(item => item.State == CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation);
         }
 
-        public bool Load(Action<DownloadQueueItem> restoredItemAction = null)
+        public bool Load(Action<CommunityDownloadQueueItem> restoredItemAction = null)
         {
             DownloadQueuePersistedState store;
             try
@@ -250,7 +250,7 @@ namespace Game
 
         internal bool Restore(
             DownloadQueuePersistedState store,
-            Action<DownloadQueueItem> restoredItemAction = null)
+            Action<CommunityDownloadQueueItem> restoredItemAction = null)
         {
             if (store == null)
             {
@@ -265,7 +265,7 @@ namespace Game
                 {
                     try
                     {
-                        DownloadQueueItem item = m_persistence.Restore(stored);
+                        CommunityDownloadQueueItem item = m_persistence.Restore(stored);
                         if (item == null)
                         {
                             continue;
@@ -292,7 +292,7 @@ namespace Game
             }
         }
 
-        public int RemoveFinished(Func<DownloadQueueItem, bool> isFinished)
+        public int RemoveFinished(Func<CommunityDownloadQueueItem, bool> isFinished)
         {
             lock (m_gate)
             {
@@ -301,7 +301,7 @@ namespace Game
         }
 
         /// <summary>移除单个项；找到并移除返回 true。主线程路径必须经此（而非 Items 活引用）变更集合，与后台落盘的 Save 互斥。</summary>
-        public bool Remove(DownloadQueueItem item)
+        public bool Remove(CommunityDownloadQueueItem item)
         {
             lock (m_gate)
             {
@@ -309,7 +309,7 @@ namespace Game
             }
         }
 
-        private static void ResetForQueue(DownloadQueueItem item, bool resetStartedTime)
+        private static void ResetForQueue(CommunityDownloadQueueItem item, bool resetStartedTime)
         {
             item.Result = null;
             item.Error = null;

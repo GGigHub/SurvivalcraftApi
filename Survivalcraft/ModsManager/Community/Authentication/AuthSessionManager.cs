@@ -20,7 +20,7 @@ namespace Game
 
         static AuthSessionManager()
         {
-            UnauthorizedNotifier.UnauthorizedResponse += HandleUnauthorizedResponse;
+            CommunityUnauthorizedNotifier.UnauthorizedResponse += HandleUnauthorizedResponse;
         }
 
         public enum AuthChangeKind
@@ -33,7 +33,7 @@ namespace Game
 
         // 认证客户端与会话存储本控制器独占（登录/登出/凭据持久化），不再经共享组合根转发。
         // static readonly：控制器是进程单例，存储须同样进程级，不随实例重建。
-        private static readonly AuthClient s_authClient = new(HttpClientProvider.Community);
+        private static readonly CommunityAuthClient s_authClient = new(HttpClientProvider.Community);
         private static readonly AuthenticationSessionStore s_authenticationSessionStore = new();
         private Task<LoginResponse> m_loginTask;
         private CancellationTokenSource m_loginCancellation;

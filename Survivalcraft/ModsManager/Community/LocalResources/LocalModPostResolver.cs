@@ -16,11 +16,11 @@ namespace Game
             new(CommunityManager.ApiClient, CommunityManager.ModCatalog);
 
         private readonly CommunityApiClient m_apiClient;
-        private readonly ModCatalogClient m_catalogClient;
+        private readonly CommunityModCatalogClient m_catalogClient;
 
         public LocalModPostResolver(
             CommunityApiClient apiClient,
-            ModCatalogClient catalogClient)
+            CommunityModCatalogClient catalogClient)
         {
             m_apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
             m_catalogClient = catalogClient ?? throw new ArgumentNullException(nameof(catalogClient));

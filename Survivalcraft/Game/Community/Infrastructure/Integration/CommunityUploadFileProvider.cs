@@ -6,10 +6,10 @@ using Engine;
 
 namespace Game
 {
-    internal sealed class CommunityUploadFileProvider : IUploadFileProvider
+    internal sealed class CommunityUploadFileProvider : ICommunityUploadFileProvider
     {
 
-        public PreparedUploadFile PrepareWorld(string directoryName, string worldName)
+        public CommunityPreparedUploadFile PrepareWorld(string directoryName, string worldName)
         {
             string tempPath = Storage.CombinePaths(ModsManager.DocPath, $"ScbbsPlusWorldUpload-{Guid.NewGuid():N}.tmp");
             try
@@ -18,10 +18,10 @@ namespace Game
                 {
                     WorldsManager.ExportWorld(directoryName, targetStream);
                 }
-                return new PreparedUploadFile
+                return new CommunityPreparedUploadFile
                 {
                     FilePath = tempPath,
-                    FileName = UploadFileNaming.MakeWorldFileName(worldName),
+                    FileName = CommunityUploadFileNaming.MakeWorldFileName(worldName),
                     FileSize = Storage.GetFileSize(tempPath),
                     FileType = CommunityFileType.World,
                     IsTemporary = true
@@ -35,7 +35,7 @@ namespace Game
             }
         }
 
-        public PreparedUploadFile PrepareLocalResource(LocalResourceItem resourceItem)
+        public CommunityPreparedUploadFile PrepareLocalResource(LocalResourceItem resourceItem)
         {
             if (resourceItem == null)
             {
@@ -54,10 +54,10 @@ namespace Game
                         {
                             FurniturePacksManager.ExportFurniturePack(resourceItem.Name, targetStream);
                         }
-                        return new PreparedUploadFile
+                        return new CommunityPreparedUploadFile
                         {
                             FilePath = tempPath,
-                            FileName = UploadFileNaming.MakeSafeFileName(resourceItem.DisplayName ?? resourceItem.Name, ".scfpack"),
+                            FileName = CommunityUploadFileNaming.MakeSafeFileName(resourceItem.DisplayName ?? resourceItem.Name, ".scfpack"),
                             FileSize = Storage.GetFileSize(tempPath),
                             FileType = fileType,
                             IsTemporary = true
@@ -96,7 +96,7 @@ namespace Game
             return Storage.OpenFile(filePath, OpenFileMode.Read);
         }
 
-        public void DeleteTemporaryFile(PreparedUploadFile uploadFile)
+        public void DeleteTemporaryFile(CommunityPreparedUploadFile uploadFile)
         {
             if (uploadFile?.IsTemporary == true && Storage.FileExists(uploadFile.FilePath))
             {
@@ -160,7 +160,7 @@ namespace Game
             return GetUploadFileName(resourceItem, filePath, GetFallbackUploadExtension(GetUploadFileType(resourceItem)));
         }
 
-        private PreparedUploadFile CreateExistingFileUpload(
+        private CommunityPreparedUploadFile CreateExistingFileUpload(
             LocalResourceItem resourceItem,
             string filePath,
             CommunityFileType fileType,
@@ -175,7 +175,7 @@ namespace Game
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "WorldUpload", "LocalFileDoesNotExistFormat"), filePath));
             }
 
-            return new PreparedUploadFile
+            return new CommunityPreparedUploadFile
             {
                 FilePath = filePath,
                 FileName = GetUploadFileName(resourceItem, filePath, fallbackExtension),
@@ -189,7 +189,7 @@ namespace Game
             string fileName = Storage.GetFileName(filePath);
             if (string.IsNullOrWhiteSpace(fileName))
             {
-                return UploadFileNaming.MakeSafeFileName(
+                return CommunityUploadFileNaming.MakeSafeFileName(
                     resourceItem?.DisplayName ?? resourceItem?.Name ?? "resource",
                     fallbackExtension);
             }
@@ -198,7 +198,7 @@ namespace Game
             {
                 fileName += fallbackExtension;
             }
-            return UploadFileNaming.SanitizeFileName(fileName);
+            return CommunityUploadFileNaming.SanitizeFileName(fileName);
         }
 
         private static string GetFallbackUploadExtension(CommunityFileType fileType)

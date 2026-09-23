@@ -5541,12 +5541,12 @@
         "Trending": "最近热门",
         "NewActivity": "最新动态"
       },
-      "DownloadSourceSelectionMode": {
+      "CommunityDownloadSourceSelectionMode": {
         "Default": "默认（自动选择）",
         "ManualSelect": "每次手动选择",
         "CustomDefault": "使用下方默认下载源"
       },
-      "DownloadSourceOption": {
+      "CommunityDownloadSourceOption": {
         "DefaultCn": "默认线路（中国大陆）",
         "Source1Global": "备用线路 1（全球）",
         "Source2Cn": "备用线路 2（中国大陆）",
@@ -5725,12 +5725,12 @@
       "SelectDownloadSource": "选择下载源"
     }
   },
-  "DownloadSourceSelectionMode": {
+  "CommunityDownloadSourceSelectionMode": {
     "Default": "默认（自动选择）",
     "ManualSelect": "每次手动选择",
     "CustomDefault": "使用下方默认下载源"
   },
-  "DownloadSourceOption": {
+  "CommunityDownloadSourceOption": {
     "DefaultCn": "默认线路（中国大陆）",
     "Source1Global": "备用线路 1（全球）",
     "Source2Cn": "备用线路 2（中国大陆）",

@@ -18,9 +18,9 @@ namespace Game
     /// catch (OCE) when (外部CT未取消→不命中) / 兜底 OCE 映射（stall→网络错误、用户取消→取消）
     /// 的分类结构全部不变，同时可用本类型与用户取消精确区分，避免日志/重构把 stall 误判为取消。
     /// </summary>
-    internal sealed class ReadIdleTimeoutException : OperationCanceledException
+    internal sealed class CommunityReadIdleTimeoutException : OperationCanceledException
     {
-        public ReadIdleTimeoutException(Exception innerException)
+        public CommunityReadIdleTimeoutException(Exception innerException)
             : base("The download stalled: no data was received within the read idle timeout.", innerException)
         {
         }
@@ -29,7 +29,7 @@ namespace Game
     /// <summary>
     /// 负责 HTTP 下载、断点续传和临时文件读取，不包含 UI 文案或导入逻辑。
     /// </summary>
-    internal sealed class HttpDownloader
+    internal sealed class CommunityHttpDownloader
     {
         // 体读取空闲超时：连续两块数据之间的最大间隔，超过视为服务器 stall。
         // internal 非 readonly：测试注入短超时验证挂起读被终止，测试后恢复原值。
@@ -37,7 +37,7 @@ namespace Game
 
         private readonly HttpClient m_httpClient;
 
-        public HttpDownloader(HttpClient httpClient)
+        public CommunityHttpDownloader(HttpClient httpClient)
         {
             m_httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
@@ -100,7 +100,7 @@ namespace Game
             ReportServerFileName(response, serverFileName);
 
             long? totalLength = response.Content.Headers.ContentLength;
-            DownloadGuard.EnsurePayloadWithinLimit(totalLength);
+            CommunityDownloadGuard.EnsurePayloadWithinLimit(totalLength);
             progress?.Report(new DownloadProgress(0, totalLength));
             MemoryStream memory = totalLength is > 0 and <= int.MaxValue
                 ? new MemoryStream((int)totalLength.Value)
@@ -119,7 +119,7 @@ namespace Game
                 {
                     readTimeoutCts.CancelAfter(ReadIdleTimeout);
                     downloaded += read;
-                    DownloadGuard.EnsurePayloadWithinLimit(downloaded);
+                    CommunityDownloadGuard.EnsurePayloadWithinLimit(downloaded);
                     await memory.WriteAsync(buffer, 0, read, cancellationToken);
                     progress?.Report(new DownloadProgress(downloaded, totalLength));
                 }
@@ -143,9 +143,9 @@ namespace Game
                 Storage.CreateDirectory(directory);
             }
             long existingLength = GetFileLength(resumeFilePath);
-            DownloadCacheFile.Metadata existingMetadata = null;
+            CommunityDownloadCacheFile.Metadata existingMetadata = null;
             if (existingLength > 0
-                && (!DownloadCacheFile.TryReadMetadata(resumeFilePath, out existingMetadata)
+                && (!CommunityDownloadCacheFile.TryReadMetadata(resumeFilePath, out existingMetadata)
                     || !UrlsMatch(existingMetadata.RequestUrl, url)
                     || !HasEntityValidator(existingMetadata)))
             {
@@ -226,12 +226,12 @@ namespace Game
             long? responseLength = response.Content.Headers.ContentLength;
             long? totalLength = response.Content.Headers.ContentRange?.Length
                 ?? (responseLength.HasValue ? existingLength + responseLength.Value : null);
-            DownloadGuard.EnsurePayloadWithinLimit(totalLength);
+            CommunityDownloadGuard.EnsurePayloadWithinLimit(totalLength);
             OpenFileMode mode = isPartial && existingLength > 0
                 ? OpenFileMode.CreateOrOpen
                 : OpenFileMode.Create;
             long downloaded = existingLength;
-            DownloadCacheFile.WriteMetadata(
+            CommunityDownloadCacheFile.WriteMetadata(
                 resumeFilePath,
                 CreateMetadata(url, response, totalLength));
             byte[] buffer = new byte[81920];
@@ -252,7 +252,7 @@ namespace Game
                 {
                     readTimeoutCts.CancelAfter(ReadIdleTimeout);
                     downloaded += read;
-                    DownloadGuard.EnsurePayloadWithinLimit(downloaded);
+                    CommunityDownloadGuard.EnsurePayloadWithinLimit(downloaded);
                     await file.WriteAsync(buffer, 0, read, cancellationToken);
                     progress?.Report(new DownloadProgress(downloaded, totalLength));
                 }
@@ -298,7 +298,7 @@ namespace Game
         }
 
         // 读一块响应体。linked CTS 触发取消而外部 CT 未请求取消 = 读空闲超时（服务器 stall），
-        // 转抛 ReadIdleTimeoutException（is-a OCE）与用户取消区分；外部 CT 已取消时
+        // 转抛 CommunityReadIdleTimeoutException（is-a OCE）与用户取消区分；外部 CT 已取消时
         // 原始 OCE 原样传播，用户取消路径行为不变。internal 供 ModpackSourceResolver（后续批次移植）
         // 的对称读空闲超时机制复用。
         internal static async Task<int> ReadWithIdleTimeoutAsync(
@@ -313,7 +313,7 @@ namespace Game
             }
             catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
             {
-                throw new ReadIdleTimeoutException(ex);
+                throw new CommunityReadIdleTimeoutException(ex);
             }
         }
 
@@ -342,7 +342,7 @@ namespace Game
             {
                 Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusHttpDownloader", "ReadCacheFileSizeFailed"), path, ex.Message));
             }
-            DownloadGuard.EnsurePayloadWithinLimit(fileSize);
+            CommunityDownloadGuard.EnsurePayloadWithinLimit(fileSize);
 
             using Stream source = Storage.OpenFile(path, OpenFileMode.Read);
             MemoryStream data = new();
@@ -364,12 +364,12 @@ namespace Game
             }
         }
 
-        private static DownloadCacheFile.Metadata CreateMetadata(
+        private static CommunityDownloadCacheFile.Metadata CreateMetadata(
             string requestUrl,
             HttpResponseMessage response,
             long? totalLength)
         {
-            return new DownloadCacheFile.Metadata
+            return new CommunityDownloadCacheFile.Metadata
             {
                 RequestUrl = requestUrl,
                 ResponseUrl = response.RequestMessage?.RequestUri?.AbsoluteUri ?? requestUrl,
@@ -380,7 +380,7 @@ namespace Game
         }
 
         private static bool ResponseMatchesCache(
-            DownloadCacheFile.Metadata metadata,
+            CommunityDownloadCacheFile.Metadata metadata,
             HttpResponseMessage response,
             bool relaxMissingValidators)
         {
@@ -426,7 +426,7 @@ namespace Game
                 || (relaxMissingValidators && metadata.TotalLength.HasValue && responseLength.HasValue);
         }
 
-        private static bool HasEntityValidator(DownloadCacheFile.Metadata metadata)
+        private static bool HasEntityValidator(CommunityDownloadCacheFile.Metadata metadata)
         {
             return metadata != null
                 && (!string.IsNullOrWhiteSpace(metadata.ETag) || metadata.LastModified.HasValue);
@@ -464,7 +464,7 @@ namespace Game
 
         private static void DeleteDownloadCache(string path)
         {
-            if (!DownloadCacheFile.TryDelete(path, out string error))
+            if (!CommunityDownloadCacheFile.TryDelete(path, out string error))
             {
                 throw new IOException($"Failed to delete download cache: {error}");
             }

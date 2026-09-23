@@ -301,9 +301,9 @@ namespace Game {
 
         public static CommunityContentMode OriginalCommunityContentMode { get; set; }
 
-        public static DownloadSourceSelectionMode CommunityDownloadSourceSelectionMode { get; set; } = DownloadSourceSelectionMode.Default;
+        public static CommunityDownloadSourceSelectionMode CommunityDownloadSourceSelectionMode { get; set; } = CommunityDownloadSourceSelectionMode.Default;
 
-        public static DownloadSourceOption CommunityDefaultDownloadSource { get; set; } = DownloadSourceOption.DefaultCn;
+        public static CommunityDownloadSourceOption CommunityDefaultDownloadSource { get; set; } = CommunityDownloadSourceOption.DefaultCn;
 
         public static bool CommunityApplyDownloadSourceToUpdates { get; set; }
 
@@ -617,8 +617,8 @@ namespace Game {
                 LastLaunchedVersion = string.Empty;
                 CommunityContentMode = CommunityContentMode.Normal;
                 OriginalCommunityContentMode = CommunityContentMode.Normal;
-                CommunityDownloadSourceSelectionMode = DownloadSourceSelectionMode.Default;
-                CommunityDefaultDownloadSource = DownloadSourceOption.DefaultCn;
+                CommunityDownloadSourceSelectionMode = CommunityDownloadSourceSelectionMode.Default;
+                CommunityDefaultDownloadSource = CommunityDownloadSourceOption.DefaultCn;
                 CommunityApplyDownloadSourceToUpdates = false;
                 CommunityPlayedTimeReportingEnabled = true;
                 RestartReturnScreen = string.Empty;

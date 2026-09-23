@@ -18,14 +18,14 @@ namespace Game
         public string FileName { get; set; }
         public ExternalContentType Type { get; set; }
         public bool RequiresRestart { get; set; }
-        public DownloadFeedbackInfo FeedbackInfo { get; set; }
+        public CommunityDownloadFeedbackInfo FeedbackInfo { get; set; }
         public bool ReplaceExistingScbbsPlusMod { get; set; }
         public string ReplaceExistingModPackageName { get; set; }
         public string ReplaceExistingModPath { get; set; }
         public string OverwriteExistingFilePath { get; set; }
         public string TempFilePath { get; set; }
-        public DownloadSourceOption Source { get; set; }
-        public DownloadQueueItemState State { get; set; }
+        public CommunityDownloadSourceOption Source { get; set; }
+        public CommunityDownloadQueueItemState State { get; set; }
         public DateTime CreatedTime { get; set; }
         public DateTime? StartedTime { get; set; }
         public DateTime? CompletedTime { get; set; }

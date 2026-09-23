@@ -6,16 +6,16 @@ using Engine;
 
 namespace Game
 {
-    internal sealed class DownloadQueuePersistence
+    internal sealed class CommunityDownloadQueuePersistence
     {
         public DownloadQueuePersistedState Load()
         {
-            return DownloadQueueStore.Load();
+            return CommunityDownloadQueueStore.Load();
         }
 
-        public void Save(IEnumerable<DownloadQueueItem> items, int nextId)
+        public void Save(IEnumerable<CommunityDownloadQueueItem> items, int nextId)
         {
-            DownloadQueueStore.Save(new DownloadQueuePersistedState
+            CommunityDownloadQueueStore.Save(new DownloadQueuePersistedState
             {
                 Version = 1,
                 NextId = nextId,
@@ -23,7 +23,7 @@ namespace Game
             });
         }
 
-        public DownloadQueueItem Restore(DownloadQueueStoredItem stored)
+        public CommunityDownloadQueueItem Restore(DownloadQueueStoredItem stored)
         {
             if (stored == null || string.IsNullOrWhiteSpace(stored.Url) || string.IsNullOrWhiteSpace(stored.FileName))
             {
@@ -31,7 +31,7 @@ namespace Game
             }
 
             int id = Math.Max(1, stored.Id);
-            DownloadQueueItem item = new()
+            CommunityDownloadQueueItem item = new()
             {
                 Id = id,
                 Url = stored.Url,
@@ -48,19 +48,19 @@ namespace Game
                     ? stored.TempFilePath
                     : CreateTempFilePath(id, stored.FileName),
                 Source = stored.Source,
-                State = DownloadQueueStateMachine.NormalizeLoaded(stored.State),
+                State = CommunityDownloadQueueStateMachine.NormalizeLoaded(stored.State),
                 CreatedTime = stored.CreatedTime == default ? DateTime.Now : stored.CreatedTime,
                 StartedTime = stored.StartedTime,
                 CompletedTime = stored.CompletedTime,
                 Error = stored.Error,
                 Imported = stored.Imported,
-                Progress = new TransferProgress()
+                Progress = new CommunityTransferProgress()
             };
             if (item.Imported)
             {
                 // 导入成功后、收尾落盘前进程死亡：磁盘 State 停在 Running（上方归一为 Paused），
                 // 但导入实际已完成。改判 Completed 终态，恢复流程不得再触发导入。
-                item.State = DownloadQueueItemState.Completed;
+                item.State = CommunityDownloadQueueItemState.Completed;
                 // 该态永不再续传/导入，.part 缓存不会再被成功路径清理，顺手删除。
                 try
                 {
@@ -86,11 +86,11 @@ namespace Game
             {
                 safeFileName = $"download_{id}";
             }
-            safeFileName = UploadFileNaming.SanitizeFileName(safeFileName);
+            safeFileName = CommunityUploadFileNaming.SanitizeFileName(safeFileName);
             return Storage.CombinePaths(CommunityStoragePaths.DownloadCacheDirectory, $"{id}_{safeFileName}.part");
         }
 
-        private static DownloadFeedbackInfo StripToken(DownloadFeedbackInfo info)
+        private static CommunityDownloadFeedbackInfo StripToken(CommunityDownloadFeedbackInfo info)
         {
             if (info == null)
             {
@@ -99,7 +99,7 @@ namespace Game
             // 队列文件不走认证存储的加密通道，明文 Token 不得落盘：
             // 登出只清认证文件，云同步会带走整个游戏目录。克隆剥离，运行时对象不动
             // （同会话上报仍用快照）；恢复项由反馈客户端按当前登录态补取。
-            return new DownloadFeedbackInfo
+            return new CommunityDownloadFeedbackInfo
             {
                 ApiBaseUrl = info.ApiBaseUrl,
                 Token = null,
@@ -110,7 +110,7 @@ namespace Game
             };
         }
 
-        private static DownloadQueueStoredItem ToStored(DownloadQueueItem item)
+        private static DownloadQueueStoredItem ToStored(CommunityDownloadQueueItem item)
         {
             if (item == null)
             {
@@ -132,7 +132,7 @@ namespace Game
                 OverwriteExistingFilePath = item.OverwriteExistingFilePath,
                 TempFilePath = item.TempFilePath,
                 Source = item.Source,
-                State = DownloadQueueStateMachine.NormalizeStored(item.State),
+                State = CommunityDownloadQueueStateMachine.NormalizeStored(item.State),
                 CreatedTime = item.CreatedTime,
                 StartedTime = item.StartedTime,
                 CompletedTime = item.CompletedTime,

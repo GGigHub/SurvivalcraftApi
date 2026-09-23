@@ -4,7 +4,7 @@ using Engine;
 
 namespace Game
 {
-    internal static class UploadFileNaming
+    internal static class CommunityUploadFileNaming
     {
         public static string MakeWorldFileName(string worldName)
         {

@@ -51,7 +51,7 @@ namespace Game
             RemoteImportRequest request,
             MemoryStream stream)
         {
-            // 精确容量 MemoryStream（HttpDownloader 按 Content-Length 预分配、调用方按包数组
+            // 精确容量 MemoryStream（CommunityHttpDownloader 按 Content-Length 预分配、调用方按包数组
             // 构造）TryGetBuffer 零拷贝接管底层缓冲；缓冲超配或短读时回退 ToArray 拷贝。
             byte[] fileData = stream.TryGetBuffer(out ArraySegment<byte> buffer)
                 && buffer.Offset == 0

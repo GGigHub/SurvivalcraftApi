@@ -128,7 +128,7 @@ namespace Game
             CancellationToken cancellationToken = default)
         {
             // 默认 GetAsync 先缓冲整个响应体，叠加 30s 客户端超时，慢网下载较大整合包子项会触发
-            // TaskCanceledException。照 HttpDownloader 改 ResponseHeadersRead：先拿响应头、
+            // TaskCanceledException。照 CommunityHttpDownloader 改 ResponseHeadersRead：先拿响应头、
             // 再按块读体，超时只作用于头部阶段，体读取不再受 30s 总超时约束。
             // URL 来自第三方整合包清单：响应体大小上限（防内存耗尽）。
             using HttpRequestMessage request = new(HttpMethod.Get, url);
@@ -137,25 +137,25 @@ namespace Game
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
             response.EnsureSuccessStatusCode();
-            DownloadGuard.EnsurePayloadWithinLimit(response.Content.Headers.ContentLength);
+            CommunityDownloadGuard.EnsurePayloadWithinLimit(response.Content.Headers.ContentLength);
             using Stream responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
             await using MemoryStream memory = new();
             byte[] buffer = new byte[81920];
             long downloaded = 0;
-            // 体读取空闲超时（与 HttpDownloader 一致）：HttpClient.Timeout 对
+            // 体读取空闲超时（与 CommunityHttpDownloader 一致）：HttpClient.Timeout 对
             // ResponseHeadersRead 只覆盖到响应头，而队列路径传入的 token 可能是 None，
             // 服务器 stall（连接保持但不再发数据）会让 ReadAsync 永久挂起，导入任务卡死
             // 且 IsBusy 永真。每块数据到达重置空闲计时。
             using CancellationTokenSource readTimeoutCts =
                 CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            readTimeoutCts.CancelAfter(HttpDownloader.ReadIdleTimeout);
+            readTimeoutCts.CancelAfter(CommunityHttpDownloader.ReadIdleTimeout);
             int read;
-            while ((read = await HttpDownloader.ReadWithIdleTimeoutAsync(
+            while ((read = await CommunityHttpDownloader.ReadWithIdleTimeoutAsync(
                 responseStream, buffer, readTimeoutCts, cancellationToken)) > 0)
             {
-                readTimeoutCts.CancelAfter(HttpDownloader.ReadIdleTimeout);
+                readTimeoutCts.CancelAfter(CommunityHttpDownloader.ReadIdleTimeout);
                 downloaded += read;
-                DownloadGuard.EnsurePayloadWithinLimit(downloaded);
+                CommunityDownloadGuard.EnsurePayloadWithinLimit(downloaded);
                 memory.Write(buffer, 0, read);
             }
             byte[] data = memory.ToArray();

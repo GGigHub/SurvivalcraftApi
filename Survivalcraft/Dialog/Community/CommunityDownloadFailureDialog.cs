@@ -8,14 +8,14 @@ namespace Game
     {
         private readonly ButtonWidget[] m_sourceButtons;
         private readonly ButtonWidget m_copyLinkButton;
-        private readonly Action<DownloadSourceOption> m_useSource;
+        private readonly Action<CommunityDownloadSourceOption> m_useSource;
         private readonly string m_downloadUrl;
 
         public CommunityDownloadFailureDialog(
             string fileName,
             string downloadUrl,
             string error,
-            Action<DownloadSourceOption> useSource)
+            Action<CommunityDownloadSourceOption> useSource)
         {
             m_useSource = useSource;
             m_downloadUrl = downloadUrl ?? string.Empty;
@@ -39,7 +39,7 @@ namespace Game
                 FontScale = 0.78f,
                 WordWrap = true
             });
-            DownloadSourceOption[] sourceOptions = Enum.GetValues<DownloadSourceOption>();
+            CommunityDownloadSourceOption[] sourceOptions = Enum.GetValues<CommunityDownloadSourceOption>();
             m_sourceButtons = new ButtonWidget[sourceOptions.Length];
             for (int i = 0; i < sourceOptions.Length; i++)
             {
@@ -68,7 +68,7 @@ namespace Game
                 if (m_sourceButtons[i].IsClicked)
                 {
                     DialogsManager.HideDialog(this);
-                    m_useSource((DownloadSourceOption)i);
+                    m_useSource((CommunityDownloadSourceOption)i);
                     break;
                 }
             }

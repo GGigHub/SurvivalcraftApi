@@ -9,13 +9,13 @@ using Engine;
 
 namespace Game
 {
-    internal sealed class DownloadFeedbackClient : IDownloadFeedbackReporter
+    internal sealed class CommunityDownloadFeedbackClient : IDownloadFeedbackReporter
     {
         private readonly HttpClient m_httpClient;
         private readonly Func<string> m_fallbackTokenProvider;
         private readonly Func<string> m_fallbackApiBaseUrlProvider;
 
-        public DownloadFeedbackClient(
+        public CommunityDownloadFeedbackClient(
             HttpClient httpClient,
             Func<string> fallbackTokenProvider = null,
             Func<string> fallbackApiBaseUrlProvider = null)
@@ -27,7 +27,7 @@ namespace Game
             m_fallbackApiBaseUrlProvider = fallbackApiBaseUrlProvider;
         }
 
-        public async Task ReportAsync(DownloadFeedbackInfo feedbackInfo, CancellationToken cancellationToken = default)
+        public async Task ReportAsync(CommunityDownloadFeedbackInfo feedbackInfo, CancellationToken cancellationToken = default)
         {
             if (feedbackInfo == null)
             {
@@ -53,10 +53,10 @@ namespace Game
                 using HttpResponseMessage response = await m_httpClient.SendAsync(request, cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
-                    if (UnauthorizedNotifier.IsUnauthorized(response.StatusCode)
+                    if (CommunityUnauthorizedNotifier.IsUnauthorized(response.StatusCode)
                         && !string.IsNullOrWhiteSpace(token))
                     {
-                        UnauthorizedNotifier.Notify(token);
+                        CommunityUnauthorizedNotifier.Notify(token);
                     }
                     string body = await response.Content.ReadAsStringAsync(cancellationToken);
                     Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFeedbackClient", "RecordDownloadFeedbackFailed"), response.StatusCode, body));
@@ -77,7 +77,7 @@ namespace Game
         }
 
         internal static string ResolveReportToken(
-            DownloadFeedbackInfo feedbackInfo,
+            CommunityDownloadFeedbackInfo feedbackInfo,
             Func<string> fallbackTokenProvider,
             Func<string> fallbackApiBaseUrlProvider)
         {
@@ -114,7 +114,7 @@ namespace Game
             }
         }
 
-        internal static string BuildRequestUrl(DownloadFeedbackInfo feedbackInfo)
+        internal static string BuildRequestUrl(CommunityDownloadFeedbackInfo feedbackInfo)
         {
             List<string> queryParts =
             [

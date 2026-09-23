@@ -1,6 +1,6 @@
 namespace Game
 {
-    public sealed class DownloadFeedbackInfo
+    public sealed class CommunityDownloadFeedbackInfo
     {
         public string ApiBaseUrl { get; set; }
         public string Token { get; set; }

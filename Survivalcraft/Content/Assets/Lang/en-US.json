@@ -5531,12 +5531,12 @@
         "Trending": "Trending",
         "NewActivity": "New Activity"
       },
-      "DownloadSourceSelectionMode": {
+      "CommunityDownloadSourceSelectionMode": {
         "Default": "Default (Auto)",
         "ManualSelect": "Choose Manually Each Time",
         "CustomDefault": "Use the Default Download Source Below"
       },
-      "DownloadSourceOption": {
+      "CommunityDownloadSourceOption": {
         "DefaultCn": "Default Line (Mainland China)",
         "Source1Global": "Backup Line 1 (Global)",
         "Source2Cn": "Backup Line 2 (Mainland China)",
@@ -5715,12 +5715,12 @@
       "SelectDownloadSource": "Select Download Source"
     }
   },
-  "DownloadSourceSelectionMode": {
+  "CommunityDownloadSourceSelectionMode": {
     "Default": "Default (Auto)",
     "ManualSelect": "Choose Manually Each Time",
     "CustomDefault": "Use the Default Download Source Below"
   },
-  "DownloadSourceOption": {
+  "CommunityDownloadSourceOption": {
     "DefaultCn": "Default Line (Mainland China)",
     "Source1Global": "Backup Line 1 (Global)",
     "Source2Cn": "Backup Line 2 (Mainland China)",

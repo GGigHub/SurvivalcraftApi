@@ -25,14 +25,14 @@ namespace Game
     /// 威胁模型：非 Windows 路径的密钥派生口令为 MachineName（非秘密），仅隔离不知机器名的访问者，
     /// 不抵抗知道机器名的离线攻击；Windows 路径走 DPAPI，安全性由操作系统保障。
     /// </summary>
-    internal static class CredentialStore
+    internal static class CommunityCredentialStore
     {
         private static readonly byte[] s_fileMagic = Encoding.ASCII.GetBytes("SCBPAUTH4");
-        private static readonly byte[] s_dpapiEntropy = Encoding.UTF8.GetBytes("ScbbsPlus.CredentialStore.v4");
+        private static readonly byte[] s_dpapiEntropy = Encoding.UTF8.GetBytes("ScbbsPlus.CommunityCredentialStore.v4");
         // legacy 单文件（auth.bin）：v3 及更早格式，仅供 LoadLegacy 一次性迁移读取。
         private static readonly byte[] s_legacyFileMagic = Encoding.ASCII.GetBytes("SCBPAUTH3");
         private static readonly byte[] s_legacyDpapiMagic = Encoding.ASCII.GetBytes("SCBPAUTH2");
-        private static readonly byte[] s_legacyDpapiEntropy = Encoding.UTF8.GetBytes("ScbbsPlus.CredentialStore.v3");
+        private static readonly byte[] s_legacyDpapiEntropy = Encoding.UTF8.GetBytes("ScbbsPlus.CommunityCredentialStore.v3");
 
         private const int s_pbkdf2Iterations = 600_000;
         private const int s_saltSize = 16;

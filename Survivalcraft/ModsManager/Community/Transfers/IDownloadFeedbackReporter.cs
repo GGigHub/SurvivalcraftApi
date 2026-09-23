@@ -5,6 +5,6 @@ namespace Game
 {
     internal interface IDownloadFeedbackReporter
     {
-        Task ReportAsync(DownloadFeedbackInfo feedbackInfo, CancellationToken cancellationToken = default);
+        Task ReportAsync(CommunityDownloadFeedbackInfo feedbackInfo, CancellationToken cancellationToken = default);
     }
 }

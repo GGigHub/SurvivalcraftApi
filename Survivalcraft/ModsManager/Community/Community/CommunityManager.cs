@@ -13,6 +13,6 @@ namespace Game
         internal static readonly CommunityApiClient ApiClient = new(HttpClientProvider.Community);
 
         /// <summary>版本目录查询客户端，依赖 <see cref="ApiClient"/>，声明顺序勿反转。</summary>
-        internal static readonly ModCatalogClient ModCatalog = new(ApiClient);
+        internal static readonly CommunityModCatalogClient ModCatalog = new(ApiClient);
     }
 }

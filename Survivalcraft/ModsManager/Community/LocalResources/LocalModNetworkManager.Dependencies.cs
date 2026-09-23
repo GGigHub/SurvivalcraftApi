@@ -11,7 +11,7 @@ namespace Game
     {
         /// <summary>并发查询各依赖包名：命中文件回填类型/包名缺省后收集，查询失败或无文件按缺失处理。</summary>
         internal static async Task<ModDependencyLookupData> LookupModDependenciesAsync(
-            ModCatalogClient catalogClient,
+            CommunityModCatalogClient catalogClient,
             string apiBaseUrl,
             string token,
             IReadOnlyList<ModDependencyInfo> dependencies,

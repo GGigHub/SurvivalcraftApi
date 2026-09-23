@@ -4,7 +4,7 @@ using Engine;
 
 namespace Game
 {
-    internal static class DownloadQueueStore
+    internal static class CommunityDownloadQueueStore
     {
         // 枚举以字符串序列化（文件可读、未来新增枚举值不破坏旧文件读取）；
         // 允许整数值兼容旧版数字格式文件。

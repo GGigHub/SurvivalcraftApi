@@ -25,7 +25,7 @@ namespace Game
         // 每层列表缩进宽度（标签"li 深度 × 缩进"对应视觉上一档层级）。
         private const float ListIndentPerDepth = 22f;
 
-        private static readonly HttpDownloader s_imageDownloader =
+        private static readonly CommunityHttpDownloader s_imageDownloader =
             new(HttpClientProvider.Community);
 
         private readonly StackPanelWidget m_contentPanel;

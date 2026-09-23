@@ -12,7 +12,7 @@ namespace Game
         {
             try
             {
-                CredentialStore.Save(apiBaseUrl, token, user);
+                CommunityCredentialStore.Save(apiBaseUrl, token, user);
                 return null;
             }
             catch (Exception ex)
@@ -23,14 +23,14 @@ namespace Game
 
         public LoginData Load(string apiBaseUrl)
         {
-            return CredentialStore.Load(apiBaseUrl);
+            return CommunityCredentialStore.Load(apiBaseUrl);
         }
 
         public Exception TryDelete(string apiBaseUrl)
         {
             try
             {
-                CredentialStore.Delete(apiBaseUrl);
+                CommunityCredentialStore.Delete(apiBaseUrl);
                 return null;
             }
             catch (Exception ex)

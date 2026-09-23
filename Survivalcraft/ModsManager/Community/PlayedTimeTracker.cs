@@ -25,10 +25,10 @@ namespace Game
 
         private static readonly Lock s_lock = new();
         // 上报客户端仅本类使用，自持单例（不再经组合根转发）。
-        private static readonly PlayedTimeClient s_playedTimeClient = new(HttpClientProvider.Community);
+        private static readonly CommunityPlayedTimeClient s_playedTimeClient = new(HttpClientProvider.Community);
         private static int? s_reportUserId;
         private static string s_reportToken;
-        private static PlayedTimeStore s_store;
+        private static CommunityPlayedTimeStore s_store;
         private static bool s_loaded;
         // 读取失败置位：后续保存全部跳过，防止用空台账覆盖磁盘上的完好历史。
         private static bool s_loadFailed;
@@ -284,12 +284,12 @@ namespace Game
             s_loaded = true;
             try
             {
-                s_store = PlayedTimeStore.Load();
+                s_store = CommunityPlayedTimeStore.Load();
             }
             catch (Exception ex)
             {
                 Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "ReadModPlayedTimeFailed"), ex.Message));
-                s_store = PlayedTimeStore.CreateEmpty();
+                s_store = CommunityPlayedTimeStore.CreateEmpty();
                 s_loadFailed = true;
             }
         }

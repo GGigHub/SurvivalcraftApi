@@ -9,7 +9,7 @@ namespace Game {
     /// 中文社区上传目标提供者：接新社区认证栈（AuthSessionManager，per-URL 会话 + 加密凭据文件），
     /// 取代已死的 SchubExternalContentProvider（旧 /com/files/* 云盘 + /com/api/login 登录族）。
     /// 登录/登出走 OpenAuthEntry 的交互式对话框；列举跳转专用屏（CommunityMyPublishedScreen，
-    /// 帖子/分页形状无文件夹语义）；上传走又拍云直传+登记链（UploadClient）；
+    /// 帖子/分页形状无文件夹语义）；上传走又拍云直传+登记链（CommunityUploadClient）；
     /// List/Download/Link 新接口无 provider 侧对应面，保留未实现。
     /// </summary>
     public class ChineseCommunityExternalContentProvider : IExternalContentProvider {
@@ -85,10 +85,10 @@ namespace Game {
         public void Link(string path, CancellableProgress progress, Action<string> success, Action<Exception> failure)
             => throw new NotImplementedException();
 
-        // 新接口发布链（同模组 UploadClient 工作流）：取又拍云直传凭证 → 直传文件服务 → POST /upload 登记。
+        // 新接口发布链（同模组 CommunityUploadClient 工作流）：取又拍云直传凭证 → 直传文件服务 → POST /upload 登记。
         // path 仅用作文件名（ShowUploadUi 传裸文件名），类型按扩展名归一；用户取消以异常对象回调
         // （ShowUploadUi 的 failure 直接解引用 error.Message，不得传 null）。
-        private static readonly UploadClient s_uploadClient = new(HttpClientProvider.Upload);
+        private static readonly CommunityUploadClient s_uploadClient = new(HttpClientProvider.Upload);
 
         public void Upload(string path, Stream stream, CancellableProgress progress, Action<string> success, Action<Exception> failure) {
             _ = UploadAsync(path, stream, progress, success, failure);
@@ -103,7 +103,7 @@ namespace Game {
                 CommunityFileType fileType = MapUploadFileType(ExternalContentManager.ExtensionToType(Storage.GetExtension(fileName).ToLower()));
                 string token = AuthSessionManager.Instance.CurrentToken;
                 string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
-                string saveKey = UploadFileNaming.MakeSaveKey(fileName, DateTime.UtcNow);
+                string saveKey = CommunityUploadFileNaming.MakeSaveKey(fileName, DateTime.UtcNow);
                 // 凭证/登记是小请求：30s 有限超时防 API 静默挂起；上传本体由无限超时的
                 // Upload 客户端池承载（HttpClientProvider.Upload 注释），取消统一走令牌。
                 using CancellationTokenSource credentialsCts = CancellationTokenSource.CreateLinkedTokenSource(progress.CancellationToken);

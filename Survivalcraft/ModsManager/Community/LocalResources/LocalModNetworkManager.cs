@@ -29,8 +29,8 @@ namespace Game
         public string FileName { get; init; }
         public ExternalContentType ContentType { get; init; }
         public bool IsRepositoryReleaseAsset { get; init; }
-        public DownloadSourceOption Source { get; init; }
-        public DownloadFeedbackInfo Feedback { get; init; }
+        public CommunityDownloadSourceOption Source { get; init; }
+        public CommunityDownloadFeedbackInfo Feedback { get; init; }
         public string ReplaceExistingModPackageName { get; init; }
         public string ReplaceExistingModPath { get; init; }
         public PostVersionItem VersionItem { get; init; }
@@ -642,7 +642,7 @@ namespace Game
 
         public LocalModDownloadCommand BuildDependencyDownloadCommand(
             PostFileItem file,
-            DownloadSourceOption source,
+            CommunityDownloadSourceOption source,
             string apiBaseUrl,
             string token,
             string platform,
@@ -689,8 +689,8 @@ namespace Game
                 FileName = CommunityFileRules.GetDownloadFileName(file),
                 ContentType = CommunityFileRules.MapFileTypeToExternalContentType(contentType),
                 IsRepositoryReleaseAsset = file.IsRepositoryReleaseAsset,
-                Source = DownloadSourceOption.DefaultCn,
-                Feedback = new DownloadFeedbackInfo
+                Source = CommunityDownloadSourceOption.DefaultCn,
+                Feedback = new CommunityDownloadFeedbackInfo
                 {
                     ApiBaseUrl = apiBaseUrl,
                     Token = token,

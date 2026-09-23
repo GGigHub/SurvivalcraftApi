@@ -12,9 +12,9 @@ namespace Game
     /// 社区 /translate 接口封装。服务端最终由 AI 大模型承接，约定直接投递原文
     /// （整篇帖子 HTML 或标题等纯文本），由服务端保结构翻译并缓存相同内容的结果。
     /// </summary>
-    internal sealed class TranslateClient
+    internal sealed class CommunityTranslateClient
     {
-        public static readonly TranslateClient Shared = new(CreateHttpClient());
+        public static readonly CommunityTranslateClient Shared = new(CreateHttpClient());
 
         // 服务端响应键大小写未见书面约定（历史实现按 PascalCase 绑定），大小写不敏感兜住两种风格。
         private static readonly JsonSerializerOptions s_responseOptions = new()
@@ -24,7 +24,7 @@ namespace Game
 
         private readonly HttpClient m_httpClient;
 
-        public TranslateClient(HttpClient httpClient)
+        public CommunityTranslateClient(HttpClient httpClient)
         {
             m_httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             // 追加共享 UA（含程序集版本），不覆盖客户端既有 UA。

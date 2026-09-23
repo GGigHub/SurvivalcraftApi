@@ -10,11 +10,11 @@ using Engine;
 
 namespace Game
 {
-    internal sealed class AuthClient
+    internal sealed class CommunityAuthClient
     {
         private readonly HttpClient m_httpClient;
 
-        public AuthClient(HttpClient httpClient)
+        public CommunityAuthClient(HttpClient httpClient)
         {
             m_httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
@@ -81,10 +81,10 @@ namespace Game
                 using HttpResponseMessage response = await m_httpClient.SendAsync(request, cancellationToken);
                 if (!response.IsSuccessStatusCode
                     && !string.IsNullOrWhiteSpace(token)
-                    && UnauthorizedNotifier.IsUnauthorized(response.StatusCode))
+                    && CommunityUnauthorizedNotifier.IsUnauthorized(response.StatusCode))
                 {
                     // 登出时 token 可能已失效：广播无害（订阅方只处理 LoggedIn 状态），保持一致性。
-                    UnauthorizedNotifier.Notify(token);
+                    CommunityUnauthorizedNotifier.Notify(token);
                 }
                 Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LogoutRequestCompleted"), response.StatusCode));
                 return response.IsSuccessStatusCode;
