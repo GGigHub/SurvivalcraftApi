@@ -40,6 +40,9 @@ namespace Game {
             m_listPanel.ClearItems();
             m_listPanel.AddItems(CommunityServerManager.GetAllInfos());
             m_listPanel.ScrollPosition = 0f;
+            // 编辑对话框原地改 URL 不换 Info 引用（ChangeChineseInfo 的引用比较拦不住）：
+            // 列表落定后按当前 ApiBaseUrl 重校一次会话激活，同值内部 no-op。
+            AuthSessionManager.Instance.OnServerSwitched();
         }
 
         public void AddServer(CommunityServerManager.Info info) {
@@ -64,7 +67,7 @@ namespace Game {
                     break;
                 case CommunityServerManager.Type.Chinese:
                     CommunityServerManager.ChangeChineseInfo(info);
-                    ScreensManager.SwitchScreen("CommunityContent", info.ApiUrl);
+                    ScreensManager.SwitchScreen("CommunityContent");
                     break;
             }
         }

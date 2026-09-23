@@ -31,7 +31,7 @@ namespace Game
                 queryParts.Add($"versionRange={Uri.EscapeDataString(versionRange)}");
             }
 
-            string baseUrl = ApiUrls.NormalizeBaseUrl(apiBaseUrl);
+            string baseUrl = CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl);
             return m_apiClient.GetJsonAsync<UploadModsResponse>(
                 $"{baseUrl}/upload/mods?{string.Join("&", queryParts)}",
                 token,

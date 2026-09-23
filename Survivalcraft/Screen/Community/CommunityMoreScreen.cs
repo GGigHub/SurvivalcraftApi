@@ -166,11 +166,11 @@ namespace Game
         /// 无匹配（如手改设置指向未知地址）显示归一化地址本身。</summary>
         private static string GetCurrentServerDisplayText()
         {
-            string normalized = ApiUrls.NormalizeBaseUrl(SettingsManager.CommunityApiBaseUrl);
+            string normalized = CommunityServerManager.CurrentApiBaseUrl;
             foreach (CommunityServerManager.Info info in CommunityServerManager.GetAllInfos())
             {
                 if (info.Type == CommunityServerManager.Type.Chinese
-                    && string.Equals(ApiUrls.NormalizeBaseUrl(info.ApiUrl), normalized, StringComparison.OrdinalIgnoreCase))
+                    && string.Equals(CommunityServerManager.NormalizeApiBaseUrl(info.ApiUrl), normalized, StringComparison.OrdinalIgnoreCase))
                 {
                     return CommunityServerManager.GetDisplayName(info);
                 }

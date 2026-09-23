@@ -135,17 +135,8 @@ namespace Game
 
         public override void Enter(object[] parameters)
         {
-            if (parameters != null
-                && parameters.Length > 0
-                && parameters[0] is string apiUrl
-                && !string.IsNullOrWhiteSpace(apiUrl))
-            {
-                // 内容屏服务器选择器带入的 API 地址即本次要用的服务器：总是切换。
-                // per-URL 会话下切服无损，原"设置优先"守卫（防切服登出）已无存在理由；
-                // 经包装属性赋值（setter 归一化+别名升级并触发事件 → OnServerSwitched
-                // 激活目标服会话，同值 no-op）。
-                CommunitySettingsManager.ApiBaseUrl = apiUrl;
-            }
+            // 服务器切换已由 SelectCommunityServerDialog.ChangeChineseInfo 直接完成
+            //（ApiBaseUrl 派生自 CurrentChineseInfo，认证会话同步激活），进屏不再带址绕行。
             AcquireRemoteImportHost();
             InstallDownloadFlowCallbacks(
                 CommunityMoreScreen.SetSharedStatus,

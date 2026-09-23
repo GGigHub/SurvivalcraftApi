@@ -76,7 +76,7 @@ namespace Game
 
         private static string GetCredentialPath(string apiBaseUrl)
         {
-            string normalized = ApiUrls.NormalizeBaseUrl(apiBaseUrl);
+            string normalized = CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl);
             byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
             var hex = new System.Text.StringBuilder(hash.Length * 2);
             foreach (byte b in hash)
@@ -96,7 +96,7 @@ namespace Game
             }
             string json = JsonSerializer.Serialize(new StoredCredential
             {
-                ApiBaseUrl = ApiUrls.NormalizeBaseUrl(apiBaseUrl),
+                ApiBaseUrl = CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl),
                 Login = new LoginData { Token = token, User = user }
             });
             byte[] encrypted = EncryptString(json);
@@ -154,10 +154,10 @@ namespace Game
             {
                 return null;
             }
-            if (!string.Equals(stored.ApiBaseUrl, ApiUrls.NormalizeBaseUrl(apiBaseUrl), StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(stored.ApiBaseUrl, CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl), StringComparison.OrdinalIgnoreCase))
             {
                 // 文件名与 payload 归属不一致（正常不可能，防哈希碰撞/手拷文件）：按未找到处理。
-                Log.Warning($"[ScbbsPlus] Credential file server mismatch: {stored.ApiBaseUrl} != {ApiUrls.NormalizeBaseUrl(apiBaseUrl)}.");
+                Log.Warning($"[ScbbsPlus] Credential file server mismatch: {stored.ApiBaseUrl} != {CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl)}.");
                 return null;
             }
             return stored.Login;

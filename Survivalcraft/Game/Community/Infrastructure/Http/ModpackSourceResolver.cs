@@ -87,7 +87,7 @@ namespace Game
                 return null;
             }
 
-            string url = $"{ApiUrls.NormalizeBaseUrl(apiBaseUrl)}/upload/info?id={Uri.EscapeDataString(fileId.Trim())}";
+            string url = $"{CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl)}/upload/info?id={Uri.EscapeDataString(fileId.Trim())}";
             CommunityApiResponse<FileInfoResponse> apiResult =
                 await m_communityApiClient.GetJsonResultAsync<FileInfoResponse>(url, token, cancellationToken);
             if (!apiResult.IsSuccessStatusCode)

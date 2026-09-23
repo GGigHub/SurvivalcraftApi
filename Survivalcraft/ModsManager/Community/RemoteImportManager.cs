@@ -719,7 +719,7 @@ namespace Game
             string apiBaseUrl = null;
             Dispatcher.Dispatch(() =>
             {
-                apiBaseUrl = ApiUrls.NormalizeBaseUrl(CommunitySettingsManager.ApiBaseUrl);
+                apiBaseUrl = CommunityServerManager.CurrentApiBaseUrl;
             }, waitUntilCompleted: true);
             return apiBaseUrl;
         }

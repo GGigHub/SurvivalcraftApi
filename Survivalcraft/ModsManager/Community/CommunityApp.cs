@@ -81,15 +81,14 @@ namespace Game
         }
 
         /// <summary>
-        /// 设置副作用接线：组合根订阅包装属性事件驱动切服。per-URL 会话下切服
-        /// 不再登出——只更新会话指针并激活目标服会话；同值赋值由 OnServerSwitched
-        /// 内部比较 no-op。订阅后回读一次现值完成初始同步（置指针；实际读盘在
-        /// CommunityFramePump 首帧 EnsureStoredAuthLoaded 的 legacy 迁移之后）。
+        /// 组合根初始同步：按当前服务器激活会话（ApiBaseUrl 派生自
+        /// CommunityServerManager.CurrentChineseInfo；后续切服由 ChangeChineseInfo
+        /// 直接通知，同地址重复通知为 no-op。实际读盘在 CommunityFramePump
+        /// 首帧 EnsureStoredAuthLoaded 的 legacy 迁移之后）。
         /// </summary>
         private static void WireSettingsSideEffects()
         {
-            CommunitySettingsManager.ApiBaseUrlChanged += apiBaseUrl => AuthSessionManager.Instance.OnServerSwitched(apiBaseUrl);
-            AuthSessionManager.Instance.OnServerSwitched(CommunitySettingsManager.ApiBaseUrl);
+            AuthSessionManager.Instance.OnServerSwitched();
         }
     }
 }

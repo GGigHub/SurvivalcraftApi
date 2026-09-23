@@ -135,7 +135,7 @@ namespace Game
                 queryParts.Add($"fileId={feedbackInfo.FileId}");
             }
 
-            return $"{ApiUrls.NormalizeBaseUrl(feedbackInfo.ApiBaseUrl)}/download/record?{string.Join("&", queryParts)}";
+            return $"{CommunityServerManager.NormalizeApiBaseUrl(feedbackInfo.ApiBaseUrl)}/download/record?{string.Join("&", queryParts)}";
         }
     }
 }

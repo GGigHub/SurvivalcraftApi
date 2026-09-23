@@ -54,6 +54,49 @@
         public static Info CurrentOriginalInfo = DefaultOriginalInfo;
         public static Info CurrentChineseInfo = DefaultChineseInfo;
 
+        // 历史默认值（归一化形式）：m.schub.top 为最老默认，m.suancaixianyu.cn 根域为过渡默认。
+        // 只收历史默认值；模组时代的无斜杠 /api 常量归一化后即当前默认，无须入表。
+        private static readonly string[] s_legacyApiBaseUrls =
+        {
+            "https://m.schub.top",
+            "https://m.suancaixianyu.cn"
+        };
+
+        /// <summary>默认社区 API 基址（fallback 常量）：归一化的 DefaultChineseInfo.ApiUrl。</summary>
+        public static string DefaultApiBaseUrl => NormalizeApiBaseUrl(DefaultChineseInfo.ApiUrl);
+
+        /// <summary>
+        /// 当前社区 API 基址：全游戏唯一读取口（新栈 HTTP 客户端与旧内容栈共用）。
+        /// 归一化保证结果要么是原绝对 URL，要么回退默认服务器——绝不产出相对 URL
+        /// （HttpClient 收到相对 URL 会直接抛 InvalidRequestUri）。
+        /// </summary>
+        public static string CurrentApiBaseUrl => NormalizeApiBaseUrl(CurrentChineseInfo.ApiUrl);
+
+        /// <summary>归一化：去尾斜杠；空值与历史旧默认值升级为当前默认。</summary>
+        public static string NormalizeApiBaseUrl(string value)
+        {
+            string normalized = (value ?? string.Empty).Trim();
+            while (normalized.EndsWith("/", StringComparison.Ordinal))
+            {
+                normalized = normalized[..^1];
+            }
+
+            if (normalized.Length == 0)
+            {
+                return DefaultApiBaseUrl;
+            }
+
+            foreach (string legacyDefault in s_legacyApiBaseUrls)
+            {
+                if (string.Equals(normalized, legacyDefault, StringComparison.OrdinalIgnoreCase))
+                {
+                    return DefaultApiBaseUrl;
+                }
+            }
+
+            return normalized;
+        }
+
         /// <summary>服务器条目显示名：内置条目用本地化名，自建条目用用户命名。</summary>
         public static string GetDisplayName(Info info) {
             if (info == null) {
@@ -98,8 +141,11 @@
             if (CurrentChineseInfo != info && info.Type == Type.Chinese) {
                 CommunityContentManager.m_feedbackCache.Clear();
                 CommunityContentManager.m_idToAddressMap.Clear();
-                // 切服不登出：认证改由 AuthSessionManager per-URL 会话承载（OnServerSwitched 各服独立保存恢复）。
+                // 切服不登出：认证由 AuthSessionManager per-URL 会话承载（OnServerSwitched
+                // 激活目标服会话，各服独立保存恢复）；ApiBaseUrl 派生自 CurrentChineseInfo，
+                // 此处是唯一写点，无需经设置层事件绕行。
                 CurrentChineseInfo = info;
+                AuthSessionManager.Instance.OnServerSwitched();
             }
         }
     }

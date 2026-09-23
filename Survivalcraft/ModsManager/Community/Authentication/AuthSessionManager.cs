@@ -75,22 +75,23 @@ namespace Game
 
         public bool IsBusy => m_loginTask != null || m_logoutTask != null;
 
-        /// <summary>当前社区服务器地址（归一化）。唯一写入口是 OnServerSwitched；
-        /// 读出内联归一化，兼容手改 Settings.xml 的未归一存储值。</summary>
-        public string ApiBaseUrl => ApiUrls.NormalizeBaseUrl(string.IsNullOrWhiteSpace(m_apiBaseUrl) ? ApiUrls.DefaultBaseUrl : m_apiBaseUrl);
+        /// <summary>当前社区服务器地址（归一化）：直接派生自 CommunityServerManager.CurrentChineseInfo，
+        /// 本类不自持地址存储；服务器切换由 CommunityServerManager.ChangeChineseInfo 驱动。</summary>
+        public string ApiBaseUrl => CommunityServerManager.CurrentApiBaseUrl;
 
-        private string m_apiBaseUrl = ApiUrls.DefaultBaseUrl;
+        // 会话激活去重指针：记录最近一次加载过会话的地址，同地址重复通知为 no-op。
+        private string m_loadedSessionUrl;
 
-        /// <summary>切换当前服务器：置指针并激活目标服会话。per-URL 会话下切服不登出——
-        /// 各服登录态独立保存、独立恢复；同值赋值（如进屏带入同地址）为 no-op。</summary>
-        public void OnServerSwitched(string apiBaseUrl)
+        /// <summary>服务器切换通知：激活目标服会话。per-URL 会话下切服不登出——
+        /// 各服登录态独立保存、独立恢复；同地址重复通知为 no-op。</summary>
+        public void OnServerSwitched()
         {
-            string normalized = ApiUrls.NormalizeBaseUrl(apiBaseUrl);
-            if (string.Equals(m_apiBaseUrl, normalized, StringComparison.OrdinalIgnoreCase))
+            string current = ApiBaseUrl;
+            if (string.Equals(m_loadedSessionUrl, current, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
-            m_apiBaseUrl = normalized;
+            m_loadedSessionUrl = current;
             EnsureCurrentSessionLoaded();
             m_loginStateChanged.Raise(IsLoggedIn ? AuthChangeKind.LoggedIn : AuthChangeKind.LoggedOut);
         }
@@ -365,7 +366,7 @@ namespace Game
 
         private bool SaveStoredAuth(string apiBaseUrl)
         {
-            LoginData session = m_sessions.TryGetValue(ApiUrls.NormalizeBaseUrl(apiBaseUrl), out LoginData value) ? value : null;
+            LoginData session = m_sessions.TryGetValue(CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl), out LoginData value) ? value : null;
             if (session == null)
             {
                 return false;

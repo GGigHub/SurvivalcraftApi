@@ -93,7 +93,7 @@ namespace Game
         internal static string BuildRequestUrl(string apiBaseUrl)
         {
             // 缺省/空白基址回退默认服务器（NormalizeBaseUrl 保证），绝不拼出相对 URL。
-            return $"{ApiUrls.NormalizeBaseUrl(apiBaseUrl)}/mod-play/record";
+            return $"{CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl)}/mod-play/record";
         }
     }
 }
