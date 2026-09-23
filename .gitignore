@@ -354,3 +354,86 @@ docs/superpowers/
 
 # macOS
 .DS_Store
+dist/Survivalcraft-Windows/0Harmony.dll
+dist/Survivalcraft-Windows/Acornima.dll
+dist/Survivalcraft-Windows/Content.zip
+dist/Survivalcraft-Windows/Engine.dll
+dist/Survivalcraft-Windows/Engine.xml
+dist/Survivalcraft-Windows/EntitySystem.dll
+dist/Survivalcraft-Windows/EntitySystem.xml
+dist/Survivalcraft-Windows/ExtendedNumerics.BigDecimal.dll
+dist/Survivalcraft-Windows/glfw3.dll
+dist/Survivalcraft-Windows/ImeSharp.dll
+dist/Survivalcraft-Windows/init.js
+dist/Survivalcraft-Windows/Jint.dll
+dist/Survivalcraft-Windows/Launch Game 启动游戏.bat
+dist/Survivalcraft-Windows/libEGL.dll
+dist/Survivalcraft-Windows/libGLESv2.dll
+dist/Survivalcraft-Windows/Microsoft.DotNet.PlatformAbstractions.dll
+dist/Survivalcraft-Windows/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+dist/Survivalcraft-Windows/Microsoft.Extensions.DependencyModel.dll
+dist/Survivalcraft-Windows/Microsoft.Extensions.Logging.Abstractions.dll
+dist/Survivalcraft-Windows/Mono.Cecil.dll
+dist/Survivalcraft-Windows/Mono.Cecil.Mdb.dll
+dist/Survivalcraft-Windows/Mono.Cecil.Pdb.dll
+dist/Survivalcraft-Windows/Mono.Cecil.Rocks.dll
+dist/Survivalcraft-Windows/MonoMod.Backports.dll
+dist/Survivalcraft-Windows/MonoMod.Core.dll
+dist/Survivalcraft-Windows/MonoMod.Iced.dll
+dist/Survivalcraft-Windows/MonoMod.ILHelpers.dll
+dist/Survivalcraft-Windows/MonoMod.RuntimeDetour.dll
+dist/Survivalcraft-Windows/MonoMod.Utils.dll
+dist/Survivalcraft-Windows/NativeFileDialogCore.dll
+dist/Survivalcraft-Windows/NAudio.Core.dll
+dist/Survivalcraft-Windows/NAudio.Flac.dll
+dist/Survivalcraft-Windows/NCalc.Core.dll
+dist/Survivalcraft-Windows/NCalc.Domain.dll
+dist/Survivalcraft-Windows/NCalc.Parser.dll
+dist/Survivalcraft-Windows/NCalc.Sync.dll
+dist/Survivalcraft-Windows/nfd64.dll
+dist/Survivalcraft-Windows/NLayer.dll
+dist/Survivalcraft-Windows/NLayer.NAudioSupport.dll
+dist/Survivalcraft-Windows/NuGet.Versioning.dll
+dist/Survivalcraft-Windows/NVorbis.dll
+dist/Survivalcraft-Windows/openal32.dll
+dist/Survivalcraft-Windows/openxr_loader.dll
+dist/Survivalcraft-Windows/Parlot.dll
+dist/Survivalcraft-Windows/Readme 请读我.md
+dist/Survivalcraft-Windows/SharpGLTF.Core.dll
+dist/Survivalcraft-Windows/SharpGLTF.Runtime.dll
+dist/Survivalcraft-Windows/SharpGLTF.Toolkit.dll
+dist/Survivalcraft-Windows/Silk.NET.Core.dll
+dist/Survivalcraft-Windows/Silk.NET.GLFW.dll
+dist/Survivalcraft-Windows/Silk.NET.Input.Common.dll
+dist/Survivalcraft-Windows/Silk.NET.Input.Glfw.dll
+dist/Survivalcraft-Windows/Silk.NET.Maths.dll
+dist/Survivalcraft-Windows/Silk.NET.OpenAL.dll
+dist/Survivalcraft-Windows/Silk.NET.OpenGLES.dll
+dist/Survivalcraft-Windows/Silk.NET.OpenXR.dll
+dist/Survivalcraft-Windows/Silk.NET.OpenXR.Extensions.KHR.dll
+dist/Survivalcraft-Windows/Silk.NET.Windowing.Common.dll
+dist/Survivalcraft-Windows/Silk.NET.Windowing.Glfw.dll
+dist/Survivalcraft-Windows/SixLabors.ImageSharp.dll
+dist/Survivalcraft-Windows/Survivalcraft.deps.json
+dist/Survivalcraft-Windows/Survivalcraft.dll
+dist/Survivalcraft-Windows/Survivalcraft.exe
+dist/Survivalcraft-Windows/Survivalcraft.runtimeconfig.json
+dist/Survivalcraft-Windows/Survivalcraft.xml
+dist/Survivalcraft-Windows/TextCopy.dll
+dist/Survivalcraft-Windows/wrap_oal.dll
+dist/Survivalcraft-Windows/Mods/Tetris3D.scmod
+dist/Survivalcraft-Windows/Tetris3D/save.json
+dist/Survivalcraft-Windows/doc/CommunityContentCache.xml
+dist/Survivalcraft-Windows/doc/Configs.xml
+dist/Survivalcraft-Windows/doc/ModSettings.xml
+dist/Survivalcraft-Windows/doc/OriginalCommunityContentCache.xml
+dist/Survivalcraft-Windows/doc/Settings.xml
+dist/Survivalcraft-Windows/doc/UserId.dat
+dist/Survivalcraft-Windows/doc/Worlds/World/Project.bak
+dist/Survivalcraft-Windows/doc/Worlds/World/Project.xml
+dist/Survivalcraft-Windows/doc/Worlds/World/Regions/Region -1,1.dat
+dist/Survivalcraft-Windows/doc/Worlds/World/Regions/Region -1,2.dat
+
+# Godot
+godot/.godot/
+godot/*.csproj.old
