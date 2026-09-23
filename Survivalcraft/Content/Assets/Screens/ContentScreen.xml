@@ -62,6 +62,14 @@
         <BevelledButtonWidget Name="ManageMod" Text="[ContentScreen:13]" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" />
       </StackPanelWidget>
 
+      <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Size="350, 90">
+          <LabelWidget Text="[ContentScreen:16]" FontScale="0.7" Color="128, 128, 128" WordWrap="true" HorizontalAlignment="Far" VerticalAlignment="Center" TextAnchor="VerticalCenter, HorizontalCenter" />
+        </CanvasWidget>
+        <CanvasWidget Size="20, 0" />
+        <BevelledButtonWidget Name="ManageModpack" Text="[ContentScreen:17]" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" />
+      </StackPanelWidget>
+
       <CanvasWidget Size="0, 25"/>
 
     </StackPanelWidget>

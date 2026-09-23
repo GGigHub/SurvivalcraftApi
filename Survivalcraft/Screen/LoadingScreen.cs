@@ -591,6 +591,7 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
             AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });
             AddLoadAction(delegate { AddScreen("ModsManageContent", new ModsManageContentScreen()); });
+            AddLoadAction(delegate { AddScreen("ModpacksManageContent", new ModpacksManageContentScreen()); });
             AddLoadAction(delegate { AddScreen("Releases", new ReleasesScreen()); });
             /*AddLoadAction(delegate
             {

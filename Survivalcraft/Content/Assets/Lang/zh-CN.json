@@ -81,6 +81,13 @@
       "ChineseCommunity": "中文社区"
     }
   },
+  "ModpacksManageContentScreen": {
+    "1": "整合包管理",
+    "2": "启动",
+    "3": "下载缺失",
+    "4": "详情",
+    "5": "关闭"
+  },
   "ModsManageContentScreen": {
     "1": "管理模组内容",
     "2": "目录",
@@ -707,6 +714,12 @@
     "104": "切换全屏",
     "105": "最高模组影响等级",
     "106": "VR 控制"
+  },
+  "ModpackDetailsDialog": {
+    "1": "名称: ",
+    "2": "大小: ",
+    "3": "版本: ",
+    "4": "包名: "
   },
   "ModDetailsDialog": {
     "CheckUpdate": "检查更新",
@@ -3284,7 +3297,9 @@
       "12": "管理现有模组内容",
       "13": "模组管理",
       "14": "通过系统文件选择器获取内容",
-      "15": "设备"
+      "15": "设备",
+      "16": "管理现有整合包内容",
+      "17": "整合包"
     },
     "ExternalContentScreen": {
       "1": "",
@@ -5235,7 +5250,8 @@
           "UnavailableResourcesIgnorePrompt": "有 {0} 个资源既无法从 ZIP 整合包中获取，也无法通过网络下载。是否忽略这些资源并继续启动整合包？",
           "ModinfoMissingSkipped": "{0}：模组文件缺少 modinfo.json，无法校验。",
           "PackageNameMismatchSkipped": "{0}：模组包名不匹配（期望 {1}，实际 {2}），已跳过。",
-          "VersionMismatchSkipped": "{0}：模组版本不匹配（期望 {1}，实际 {2}），已跳过。"
+          "VersionMismatchSkipped": "{0}：模组版本不匹配（期望 {1}，实际 {2}），已跳过。",
+          "InfoLine": "整合包 | 已下载 {0}/{1} | 版本: {2} | {3}"
         },
         "Manifest": {
           "LocalResourcesDisplayingFormat": "本地{0} · 正在显示...",
@@ -5488,6 +5504,24 @@
   "ScbbsPlusModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "已有整合包文件冲突等待用户处理。",
     "IdenticalFileChooseAction": "本地已存在一模一样的文件名：{0}\n请选择如何处理。"
+  },
+  "ScbbsPlusModpacks": {
+    "ReadModpackEnabledStateFailed": "[ScbbsPlus] 读取整合包启用状态失败: {0}",
+    "LoadModpackFileInfoFailed": "[ScbbsPlus] 加载整合包文件信息失败: {0}",
+    "GetModpackFileInfoFailed": "[ScbbsPlus] 获取整合包文件信息失败 fileId={0}: {1}",
+    "UserIgnoredUnavailableModpackResources": "[ScbbsPlus] 用户忽略最终无法获取的整合包资源并继续启动 failed={0}",
+    "SaveModpackEnabledStateFailed": "[ScbbsPlus] 保存整合包启用状态失败: {0}",
+    "ClearModpackEnabledStateFailed": "[ScbbsPlus] 清除整合包启用状态失败: {0}"
+  },
+  "ScbbsPlusModpackDataFiles": {
+    "DeleteModpackBackupFailed": "[ScbbsPlus] 恢复成功后删除整合包备份失败（保留待下次清理）: {0}: {1}",
+    "CleanModpackCustomTempFileFailed": "[ScbbsPlus] 清理整合包自定义文件临时文件失败 temp={0} error={1}",
+    "SaveModpackCustomConfigFailed": "[ScbbsPlus] 保存整合包自定义配置失败 target={0} persisted={1} error={2}",
+    "RestoreModpackCustomFileFailed": "[ScbbsPlus] 恢复整合包自定义文件失败 target={0} backup={1} error={2}"
+  },
+  "ScbbsPlusModpackManifestLoadManager": {
+    "ReadModpackListFailed": "[ScbbsPlus] 读取整合包列表失败: {0}",
+    "StaleModpackListTaskFailed": "[ScbbsPlus] 已失效的整合包列表读取任务失败: {0}"
   },
   "ScbbsPlusTransactionalFileReplacement": {
     "ScanResidualBackupsFailed": "[ScbbsPlus] 扫描更新残留备份失败 root={0} error={1}",

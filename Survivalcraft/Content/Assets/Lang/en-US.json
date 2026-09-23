@@ -81,6 +81,13 @@
       "ChineseCommunity": "Chinese Community"
     }
   },
+  "ModpacksManageContentScreen": {
+    "1": "Manage Modpacks",
+    "2": "Launch",
+    "3": "Download Missing",
+    "4": "Details",
+    "5": "Close"
+  },
   "ModsManageContentScreen": {
     "1": "Manage mod content",
     "2": "Directory",
@@ -707,6 +714,12 @@
     "104": "Toggle Fullscreen",
     "105": "Highest Mod Impact Level",
     "106": "VR Controls"
+  },
+  "ModpackDetailsDialog": {
+    "1": "Name: ",
+    "2": "Size: ",
+    "3": "Version: ",
+    "4": "Package name: "
   },
   "ModDetailsDialog": {
     "CheckUpdate": "Check Updates",
@@ -3274,7 +3287,9 @@
       "12": "Manage downloaded mod",
       "13": "Manage Mod",
       "14": "Import content from the file picker of your system",
-      "15": "Device"
+      "15": "Device",
+      "16": "Manage existing modpack content",
+      "17": "Modpacks"
     },
     "ExternalContentScreen": {
       "1": "",
@@ -5225,7 +5240,8 @@
           "UnavailableResourcesIgnorePrompt": "{0} resources are unavailable from both the ZIP modpack and the network. Ignore them and launch the modpack anyway?",
           "ModinfoMissingSkipped": "{0}: Mod file missing modinfo.json, unable to verify.",
           "PackageNameMismatchSkipped": "{0}: Mod package name mismatch (expected {1}, actual {2}), skipped.",
-          "VersionMismatchSkipped": "{0}: Mod version mismatch (expected {1}, actual {2}), skipped."
+          "VersionMismatchSkipped": "{0}: Mod version mismatch (expected {1}, actual {2}), skipped.",
+          "InfoLine": "Modpack | Downloaded {0}/{1} | Version: {2} | {3}"
         },
         "Manifest": {
           "LocalResourcesDisplayingFormat": "Local {0}s · Displaying...",
@@ -5478,6 +5494,24 @@
   "ScbbsPlusModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "A modpack file conflict is already waiting for user action.",
     "IdenticalFileChooseAction": "A file with the exact same name already exists locally: {0}\nChoose how to handle it."
+  },
+  "ScbbsPlusModpacks": {
+    "ReadModpackEnabledStateFailed": "[ScbbsPlus] Failed to read the modpack enabled state: {0}",
+    "LoadModpackFileInfoFailed": "[ScbbsPlus] Failed to load modpack file info: {0}",
+    "GetModpackFileInfoFailed": "[ScbbsPlus] Failed to get modpack file info fileId={0}: {1}",
+    "UserIgnoredUnavailableModpackResources": "[ScbbsPlus] User ignored modpack resources that could not be fetched and continued startup failed={0}",
+    "SaveModpackEnabledStateFailed": "[ScbbsPlus] Failed to save the modpack enabled state: {0}",
+    "ClearModpackEnabledStateFailed": "[ScbbsPlus] Failed to clear the modpack enabled state: {0}"
+  },
+  "ScbbsPlusModpackDataFiles": {
+    "DeleteModpackBackupFailed": "[ScbbsPlus] Failed to delete modpack backup after successful restore (kept for next cleanup): {0}: {1}",
+    "CleanModpackCustomTempFileFailed": "[ScbbsPlus] Failed to clean up the modpack custom file temporary file temp={0} error={1}",
+    "SaveModpackCustomConfigFailed": "[ScbbsPlus] Failed to save the modpack custom configuration target={0} persisted={1} error={2}",
+    "RestoreModpackCustomFileFailed": "[ScbbsPlus] Failed to restore the modpack custom file target={0} backup={1} error={2}"
+  },
+  "ScbbsPlusModpackManifestLoadManager": {
+    "ReadModpackListFailed": "[ScbbsPlus] Failed to read modpack list: {0}",
+    "StaleModpackListTaskFailed": "[ScbbsPlus] Stale modpack list reading task failed: {0}"
   },
   "ScbbsPlusTransactionalFileReplacement": {
     "ScanResidualBackupsFailed": "[ScbbsPlus] Failed to scan residual update backups root={0} error={1}",

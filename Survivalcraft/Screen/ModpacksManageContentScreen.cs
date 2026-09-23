@@ -71,6 +71,8 @@ namespace Game
             // 屏实例全局复用：订阅放 Enter 与 Leave 成对，保证每次进入期间都能响应外部整合包变化。
             DownloadFlowManager.Instance.PackDownloadCompleted += OnPackDownloadCompleted;
             ModpackRegistry.Shared.Changed += OnRegistryChanged;
+            // 作废清单缓存：离屏期间的帖子下载/链接导入不经过屏内订阅，进屏必须强制重读（spec §4.1 外部导入自动刷新）。
+            m_manifestLoadManager.Invalidate();
             LoadModpackList();
         }
 

@@ -16,6 +16,7 @@ namespace Game {
         public ButtonWidget m_linkButton;
         public ButtonWidget m_manageButton;
         public ButtonWidget m_manageModButton;
+        public ButtonWidget m_manageModpackButton;
 
         public bool m_isAdmin;
 
@@ -28,6 +29,7 @@ namespace Game {
             m_linkButton = Children.Find<ButtonWidget>("Link");
             m_manageButton = Children.Find<BevelledButtonWidget>("Manage");
             m_manageModButton = Children.Find<BevelledButtonWidget>("ManageMod");
+            m_manageModpackButton = Children.Find<BevelledButtonWidget>("ManageModpack");
         }
 
         public override void Enter(object[] parameters) {
@@ -186,6 +188,9 @@ namespace Game {
             }
             if (m_manageModButton.IsClicked) {
                 ScreensManager.SwitchScreen("ModsManageContent");
+            }
+            if (m_manageModpackButton.IsClicked) {
+                ScreensManager.SwitchScreen("ModpacksManageContent");
             }
             if (Input.Back
                 || Input.Cancel
