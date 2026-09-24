@@ -12,7 +12,7 @@
 | `scripts/Items/` | 物品、配方、背包、熔炉、箱子、发射器、衣物数据 |
 | `scripts/Player/` | 玩家移动、生存属性、输入消费 |
 | `scripts/Mods/` | 模组扫描、数据合并、回调分发 |
-| `scripts/Vr/` | OpenXR 与手柄映射 |
+| `scripts/Vr/` | 不再使用。不做 VR |
 | `scenes/ui/` | 只放 Control 场景 |
 | `scenes/creatures/` | 只放骨骼、网格和动画，不放 AI |
 | `scenes/vr/` | 只放 XR 原点与控制器节点 |

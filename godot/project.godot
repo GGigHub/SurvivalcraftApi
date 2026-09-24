@@ -11,10 +11,14 @@ config_version=5
 [application]
 
 config/name="Survivalcraft"
-config/description="Survivalcraft Godot rewrite. Skeleton only."
-run/main_scene="res://scenes/boot/Boot.tscn"
+config/description="Survivalcraft Godot rewrite."
+run/main_scene="res://scenes/ui/MainMenu.tscn"
 config/features=PackedStringArray("4.7", "C#", "Mobile")
 config/icon="res://icon.svg"
+
+[autoload]
+
+MCPRuntime="*uid://le1316qti3gf"
 
 [display]
 
@@ -25,8 +29,11 @@ window/size/viewport_height=720
 
 project/assembly_name="SurvivalcraftGodot"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="mobile"
 textures/vram_compression/import_etc2_astc=true

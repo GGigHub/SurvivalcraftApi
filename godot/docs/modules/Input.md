@@ -1,6 +1,6 @@
 # 输入动作
 
-代码目录：不单独建系统。动作名写在 `project.godot` 的 `[input]`，消费代码在 `scripts/Player/`。
+代码目录：动作由 `scripts/Player/InputSetup.cs` 注册进 InputMap，消费代码在 `scripts/Player/`。不要在 `project.godot` 里再复制一套同名动作。
 
 原项目用自研输入，并能把四套键盘、四只鼠标拆开。本模块只锁定动作名字。设备限制见 [Multiplayer.md](Multiplayer.md)。
 
@@ -8,7 +8,7 @@
 
 动作名只用下面这些，全小写加下划线：
 
-`move_forward`、`move_back`、`move_left`、`move_right`、`jump`、`sneak`、`attack`、`use`、`drop_item`、`open_inventory`、`pause`
+`move_forward`、`move_back`、`move_left`、`move_right`、`jump`、`sneak`、`attack`、`use`、`drop_item`、`open_inventory`、`pause`、`hotbar_1`、`hotbar_2`、`hotbar_3`、`hotbar_4`、`hotbar_5`、`hotbar_6`、`hotbar_7`、`hotbar_8`、`hotbar_9`、`hotbar_0`
 
 默认键位可以后补。玩法代码只通过 `Input.IsActionPressed` 读这些名字。
 
