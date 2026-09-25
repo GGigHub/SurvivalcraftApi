@@ -25,7 +25,9 @@ namespace Game {
         public float m_outOfMountTime;
 
         public float DetectSurroundingMountRange = 2.5f;
-        public ComponentCreature ComponentCreature { get; set; }
+        public ComponentCreature ComponentCreature {
+            get; set;
+        }
 
         public ComponentMount Mount {
             get {
@@ -45,10 +47,10 @@ namespace Game {
             float num = 0f;
             ComponentMount result = null;
             foreach (ComponentMount item in from b in m_componentBodies
-                select b.Entity.FindComponent<ComponentMount>()
+                                            select b.Entity.FindComponent<ComponentMount>()
                 into m
-                where m != null && m.Entity != Entity
-                select m) {
+                                            where m != null && m.Entity != Entity
+                                            select m) {
                 float allowToStartRange = item.MountAllowToStartRange;
                 float num2 = ScoreMount(item, allowToStartRange);
                 if (num2 > num) {
@@ -60,6 +62,15 @@ namespace Game {
         }
 
         public virtual void StartMounting(ComponentMount componentMount) {
+            bool skipVanilla = false;
+            ModsManager.HookAction("OnStartMounting",
+                loader => {
+                    loader.OnStartMounting(this, componentMount, ref skipVanilla);
+                    return false;
+                }
+            );
+            if (skipVanilla)
+                return;
             if (!m_isAnimating
                 && Mount == null) {
                 m_isAnimating = true;
@@ -79,6 +90,15 @@ namespace Game {
         }
 
         public virtual void StartDismounting() {
+            bool skipVanilla = false;
+            ModsManager.HookAction("OnStartDismounting",
+                loader => {
+                    loader.OnStartDismounting(this, Mount, ref skipVanilla);
+                    return false;
+                }
+            );
+            if (skipVanilla)
+                return;
             if (!m_isAnimating
                 && Mount != null) {
                 float x = 0f;
