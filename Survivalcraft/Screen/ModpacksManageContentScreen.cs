@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Engine;
@@ -9,7 +10,7 @@ namespace Game
 {
     /// <summary>
     /// 整合包管理屏（自模组 ScbbsPlusLocalScreen.Modpacks.Page.cs 提取为独立屏）：
-    /// 列表展示 ModPacks 目录下的整合包记录，底部三钮承担 启动/关闭、补装下载、详情。
+    /// 列表展示 ModPacks 目录下的整合包记录，底部三钮承担 启用/禁用、补装下载、详情。
     /// 启停激活链与详情对话框分别在 Actions 链与 ModpackDetailsDialog 中实现。
     /// </summary>
     internal sealed class ModpacksManageContentScreen : CommunityScreenBase
@@ -263,19 +264,40 @@ namespace Game
                 TitleColor = isActive ? new Color(120, 220, 140) : Color.White
             };
             (int downloadedCount, int totalCount) = ModpackPresenceRules.GetDownloadCounts(record, EnsurePresenceSnapshot());
+            ModpackManifest manifest = record.Manifest;
             widget.Information = string.Format(
                 CultureInfo.InvariantCulture,
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "InfoLine"),
+                LanguageControl.Get(fName, "6"),
                 downloadedCount,
                 totalCount,
                 string.IsNullOrEmpty(record.Version) ? LanguageControl.None : record.Version,
-                resourceItem.CreationTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture));
-            if (isActive)
-            {
-                widget.Information += " | " + LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "Active");
-            }
+                string.IsNullOrEmpty(manifest?.ApiVersion) ? LanguageControl.None : manifest.ApiVersion,
+                string.IsNullOrEmpty(manifest?.Author) ? LanguageControl.None : manifest.Author,
+                TryGetFileSizeText(resourceItem.LocalFilePath));
+            widget.Description = string.IsNullOrEmpty(manifest?.Description) ? null : manifest.Description;
             m_iconManager.StartIconRequests(resourceItem, record, widget.Children.Find<RectangleWidget>("ModsManageContentItem.Icon"));
             return widget;
+        }
+
+        /// <summary>
+        /// 包体文件大小直读（列表里的文件必存在，取不到属异常，记警告后显示“-”降级）。
+        /// </summary>
+        internal static string TryGetFileSizeText(string filePath)
+        {
+            try
+            {
+                using Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read);
+                return DataSizeFormatter.Format(stream.Length);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Modpack file size unavailable: {0} ({1})",
+                    filePath,
+                    ex.Message));
+                return "-";
+            }
         }
 
         private void OnModpackItemClicked(object item)

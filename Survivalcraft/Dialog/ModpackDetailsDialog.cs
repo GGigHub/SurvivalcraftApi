@@ -45,44 +45,39 @@ namespace Game
             m_uploadButton = Children.Find<BevelledButtonWidget>("ModpackDetailsDialog.Upload");
             m_closeButton = Children.Find<BevelledButtonWidget>("ModpackDetailsDialog.Close");
 
-            m_titleLabel.Text = string.Format(
-                CultureInfo.InvariantCulture,
-                LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Info"),
-                LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Modpack"));
+            m_titleLabel.Text = m_item?.DisplayName ?? m_item?.Name ?? "-";
 
             // fileId 补全先行应用缓存，再对缺名条目复用宿主屏的补全任务槽。
             m_screen.ApplyCachedFileInfo(m_record);
 
             Vector2 margin = new Vector2(0f, 4f);
-            string displayName = m_item?.DisplayName ?? m_item?.Name ?? "-";
-            contentPanel.Children.Add(new LabelWidget
-            {
-                Text = $"{LanguageControl.Get(fName, "1")}{displayName}",
-                Margin = margin
-            });
-            contentPanel.Children.Add(new LabelWidget
-            {
-                Text = $"{LanguageControl.Get(fName, "2")}{TryGetFileSizeText(m_item?.LocalFilePath)}",
-                Margin = margin
-            });
-            string manifestFileName = Storage.GetFileName(m_item?.LocalFilePath ?? string.Empty);
-            contentPanel.Children.Add(new LabelWidget
-            {
-                Text = $"{LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ManifestFile")}{(string.IsNullOrWhiteSpace(manifestFileName) ? "-" : manifestFileName)}",
-                WordWrap = true,
-                Margin = margin
-            });
-            contentPanel.Children.Add(new LabelWidget
-            {
-                Text = $"{LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "Description")}{(string.IsNullOrWhiteSpace(m_record?.Description) ? LanguageControl.None : m_record.Description)}",
-                WordWrap = true,
-                Margin = margin
-            });
-            if (string.IsNullOrWhiteSpace(m_record?.SourceUrl))
+            ModpackManifest manifest = m_record?.Manifest;
+            void AddField(string key, string value, bool wordWrap = false)
             {
                 contentPanel.Children.Add(new LabelWidget
                 {
-                    Text = $"{LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "SourceURL")}{LanguageControl.None}",
+                    Text = $"{LanguageControl.Get(fName, key)}{(string.IsNullOrWhiteSpace(value) ? LanguageControl.None : value)}",
+                    WordWrap = wordWrap,
+                    Margin = margin
+                });
+            }
+
+            AddField("1", m_record?.Version);
+            AddField("2", manifest?.ApiVersion);
+            AddField("3", manifest?.Author);
+            contentPanel.Children.Add(new LabelWidget
+            {
+                Text = $"{LanguageControl.Get(fName, "4")}{ModpacksManageContentScreen.TryGetFileSizeText(m_item?.LocalFilePath)}",
+                Margin = margin
+            });
+            AddField("5", manifest?.Description ?? m_record?.Description, wordWrap: true);
+
+            string homepage = !string.IsNullOrWhiteSpace(manifest?.Homepage) ? manifest.Homepage : m_record?.SourceUrl;
+            if (string.IsNullOrWhiteSpace(homepage))
+            {
+                contentPanel.Children.Add(new LabelWidget
+                {
+                    Text = $"{LanguageControl.Get(fName, "6")}{LanguageControl.None}",
                     Margin = margin
                 });
             }
@@ -93,41 +88,28 @@ namespace Game
                     Direction = LayoutDirection.Horizontal,
                     Children =
                     {
-                        new LabelWidget { Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "SourceURL") },
-                        new LinkWidget { Text = m_record.SourceUrl, Url = m_record.SourceUrl, Color = new Color(64, 192, 64) }
+                        new LabelWidget { Text = LanguageControl.Get(fName, "6") },
+                        new LinkWidget { Text = homepage, Url = homepage, Color = new Color(64, 192, 64) }
                     },
                     Margin = margin
                 });
             }
+
+            AddField("7", Storage.GetFileName(m_item?.LocalFilePath ?? string.Empty));
+            AddField("8", m_record?.PackageName);
+
             (int downloadedCount, int totalCount) = ModpackPresenceRules.GetDownloadCounts(m_record, m_screen.EnsurePresenceSnapshot());
-            contentPanel.Children.Add(new LabelWidget
-            {
-                Text = $"{LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "Items")}{totalCount.ToString(CultureInfo.InvariantCulture)}",
-                Margin = margin
-            });
             m_downloadStatusLabel = new LabelWidget
             {
-                Text = $"{LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DownloadStatus")}",
+                Text = string.Format(
+                    CultureInfo.InvariantCulture,
+                    LanguageControl.Get(fName, "9"),
+                    downloadedCount,
+                    totalCount),
                 Margin = margin
             };
             contentPanel.Children.Add(m_downloadStatusLabel);
-            if (!string.IsNullOrWhiteSpace(m_record?.Version))
-            {
-                contentPanel.Children.Add(new LabelWidget
-                {
-                    Text = $"{LanguageControl.Get(fName, "3")}{m_record.Version}",
-                    Margin = margin
-                });
-            }
-            if (!string.IsNullOrWhiteSpace(m_record?.PackageName))
-            {
-                contentPanel.Children.Add(new LabelWidget
-                {
-                    Text = $"{LanguageControl.Get(fName, "4")}{m_record.PackageName}",
-                    WordWrap = true,
-                    Margin = margin
-                });
-            }
+
             contentPanel.Children.Add(new LabelWidget
             {
                 Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ItemsList"),
@@ -153,7 +135,6 @@ namespace Game
                 RefreshDownloadStatusRow();
                 RefreshActionState();
             }
-
             if (m_toggleEnabledButton.IsClicked)
             {
                 m_screen.ToggleSelectedModpackEnabled();
@@ -186,16 +167,14 @@ namespace Game
             }
         }
 
-        /// <summary>动作按钮启用态与进行中文案（与模组本地详情面板同规则）。</summary>
+        /// <summary>动作按钮启用态与进行中文案（启用/禁用取语言静态词，与模组管理屏一致）。</summary>
         private void RefreshActionState()
         {
             bool busy = DownloadFlowManager.Instance.ModpackDownloadBusy;
             bool loading = m_screen.IsModpackFileInfoLoading(m_item);
             bool active = m_screen.IsModpackActive(m_item);
             m_toggleEnabledButton.IsEnabled = !busy;
-            m_toggleEnabledButton.Text = active
-                ? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Close")
-                : LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "Launch");
+            m_toggleEnabledButton.Text = active ? LanguageControl.Disable : LanguageControl.Enable;
             m_downloadMissingButton.IsEnabled = m_screen.GetMissingDownloadItemCount(m_record) > 0 && !busy && !loading;
             m_downloadMissingButton.Text = loading
                 ? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LoadingFileInfo")
@@ -204,26 +183,27 @@ namespace Game
                     : LanguageControl.Get("ScbbsPlusCommon", "Text", "Download");
         }
 
-        /// <summary>下载状态行：已下载 x/y，颜色按齐全度分级，激活中追加激活标记。</summary>
+        /// <summary>子项持有状态行：x/x 随 fileId 补全刷新，颜色按齐全度分级，激活中追加激活标记。</summary>
         private void RefreshDownloadStatusRow()
         {
             (int downloadedCount, int totalCount) = ModpackPresenceRules.GetDownloadCounts(m_record, m_screen.EnsurePresenceSnapshot());
             bool isActive = m_screen.IsModpackActive(m_item);
             string statusText = string.Format(
                 CultureInfo.InvariantCulture,
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "Downloaded"),
+                LanguageControl.Get(fName, "9"),
                 downloadedCount,
                 totalCount);
             if (isActive)
             {
                 statusText += " | " + LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "Active");
             }
-            m_downloadStatusLabel.Text = $"{LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DownloadStatus")}{statusText}";
+            m_downloadStatusLabel.Text = statusText;
             m_downloadStatusLabel.Color = isActive || (downloadedCount >= totalCount && totalCount > 0)
                 ? new Color(120, 220, 140)
                 : downloadedCount > 0 ? new Color(245, 200, 120) : Color.White;
         }
 
+        /// <summary>逐子项清单：`- [已存在/内置/需下载][类型] 文件名`（压缩包引用缺失归入需下载）。</summary>
         private string BuildItemsListText()
         {
             if (m_record?.Manifest?.Items == null || m_record.Manifest.Items.Length == 0)
@@ -233,7 +213,6 @@ namespace Game
 
             ModpackPresenceSnapshot snapshot = m_screen.EnsurePresenceSnapshot();
             List<string> lines = [];
-            int index = 0;
             foreach (ModpackItem item in m_record.Manifest.Items)
             {
                 if (item == null || !item.IsEnabled)
@@ -241,69 +220,25 @@ namespace Game
                     continue;
                 }
 
-                bool isMissingFromArchive = ModpackPresenceRules.IsEmbeddedItemMissing(m_record, item);
-                bool isDownloaded = !isMissingFromArchive && ModpackPresenceRules.IsItemDownloaded(item, snapshot, m_record);
-                string status = isMissingFromArchive
-                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "NotFoundInArchive")
-                    : isDownloaded
-                        ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DownloadedLabel")
-                        : LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "Missing");
-                lines.Add(string.Format(
-                    CultureInfo.InvariantCulture,
-                    "{0}. [{1}] {2} - {3}",
-                    index + 1,
-                    GetModpackItemCategoryName(item),
-                    GetResolvedItemDisplayName(item, snapshot, isDownloaded),
-                    status));
-                index++;
+                bool bundled = ModpackPresenceRules.IsEmbeddedItem(m_record, item);
+                bool installed = !bundled && ModpackPresenceRules.IsItemDownloaded(item, snapshot, m_record);
+                string state = bundled
+                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateBundled")
+                    : installed
+                        ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateExists")
+                        : LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateNeedDownload");
+                lines.Add($"- [{state}][{GetModpackItemCategoryName(item)}] {ModpacksManageContentScreen.GetModpackItemDisplayName(item)}");
             }
 
             return lines.Count == 0 ? LanguageControl.None : string.Join("\n", lines);
         }
 
-        private string GetResolvedItemDisplayName(ModpackItem item, ModpackPresenceSnapshot snapshot, bool isDownloaded)
-        {
-            if (isDownloaded && ModpackPresenceRules.TryGetDownloadedFileName(item, snapshot, out string localFileName))
-            {
-                return localFileName;
-            }
-
-            return ModpacksManageContentScreen.GetModpackItemDisplayName(item);
-        }
-
         private static string GetModpackItemCategoryName(ModpackItem item)
         {
             ExternalContentType type = ModpackRules.ResolveContentType(item);
-            return type switch
-            {
-                ExternalContentType.World => EnumDisplayName.GetEnumDisplayName(ExternalContentType.World),
-                ExternalContentType.FurniturePack => EnumDisplayName.GetEnumDisplayName(ExternalContentType.FurniturePack),
-                ExternalContentType.BlocksTexture => EnumDisplayName.GetEnumDisplayName(ExternalContentType.BlocksTexture),
-                ExternalContentType.CharacterSkin => EnumDisplayName.GetEnumDisplayName(ExternalContentType.CharacterSkin),
-                ExternalContentType.Mod => EnumDisplayName.GetEnumDisplayName(ExternalContentType.Mod),
-                _ => LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "OtherFiles")
-            };
-        }
-
-        /// <summary>
-        /// 包体文件大小直读（列表里的文件必存在，取不到属异常，记警告后显示“-”降级）。
-        /// </summary>
-        private static string TryGetFileSizeText(string filePath)
-        {
-            try
-            {
-                using Stream stream = Storage.OpenFile(filePath, OpenFileMode.Read);
-                return DataSizeFormatter.Format(stream.Length);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Modpack file size unavailable: {0} ({1})",
-                    filePath,
-                    ex.Message));
-                return "-";
-            }
+            return EnumDisplayName.GetEnumDisplayName(
+                CommunityFileRules.MapExternalContentTypeToFileType(type),
+                item?.Category);
         }
     }
 }

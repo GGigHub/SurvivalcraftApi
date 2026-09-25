@@ -8,6 +8,10 @@ namespace Game
         [JsonPropertyName("name")] public string Name { get; set; }
         [JsonPropertyName("packageName")] public string PackageName { get; set; }
         [JsonPropertyName("version")] public string Version { get; set; }
+        // 展示性可选字段：旧清单无值显示「无」；服务端生成 packinfo.json 时写入。
+        [JsonPropertyName("author")] public string Author { get; set; }
+        [JsonPropertyName("homepage")] public string Homepage { get; set; }
+        [JsonPropertyName("apiVersion")] public string ApiVersion { get; set; }
         [JsonPropertyName("description")] public string Description { get; set; }
         [JsonPropertyName("icon")] public string Icon { get; set; }
         [JsonPropertyName("items")] public ModpackItem[] Items { get; set; }

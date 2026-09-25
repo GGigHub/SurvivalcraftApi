@@ -71,18 +71,16 @@ namespace Game
             ModpackManifest manifest = result.Manifest;
             if (manifest == null) return;
 
-            int totalCount = manifest.Items.Length;
+            ModpackPresenceSnapshot snapshot = new ModpackPresenceManager().Capture(null);
+            string body = BuildModpackConfirmBody(manifest, result.EmbeddedFiles, snapshot, out int needDownloadCount);
             string title = !string.IsNullOrWhiteSpace(manifest.Name) ? manifest.Name : result.FileName;
-            string body = string.IsNullOrWhiteSpace(manifest.Description)
-                ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "TotalItemsDownloadAll"), totalCount)
-                : manifest.Description + "\n\n" + string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "TotalItemsDownloadAll"), totalCount);
 
             DialogsManager.ShowDialog(null,
                 new MessageDialog(
                     title,
                     body,
-                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "StartDownload"),
-                    LanguageControl.Cancel,
+                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "Yes"),
+                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "No"),
                     button =>
                     {
                         if (button == MessageDialogButton.Button1)
@@ -95,7 +93,7 @@ namespace Game
                                 ShowToast(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackBusyWait"));
                                 return;
                             }
-                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UserConfirmedModpackDownload"), totalCount));
+                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UserConfirmedModpackDownload"), manifest.Items.Length));
                             int requestId = ++m_modpackDownloadRequestId;
                             m_modpackDownloadCompletedAction = null;
                             m_modpackItemDownloadTask = Task.Run(() => ProcessModpackItemsAsync(
@@ -124,6 +122,60 @@ namespace Game
                             }
                         }
                     }));
+        }
+
+        /// <summary>
+        /// 确认框正文：分叉问句（需下载为零则不提下载）+ 逐子项三态清单
+        /// （已存在=本机已有同内容；内置=随包 zip 落盘；需下载=需网络获取）。
+        /// </summary>
+        private static string BuildModpackConfirmBody(
+            ModpackManifest manifest,
+            IReadOnlyDictionary<string, byte[]> embeddedFiles,
+            ModpackPresenceSnapshot snapshot,
+            out int needDownloadCount)
+        {
+            needDownloadCount = 0;
+            List<string> lines = [];
+            foreach (ModpackItem item in manifest.Items ?? [])
+            {
+                if (item == null || !item.IsEnabled)
+                {
+                    continue;
+                }
+
+                bool bundled = IsBundledItem(item, embeddedFiles);
+                bool installed = !bundled && ModpackPresenceRules.IsItemInstalled(item, snapshot);
+                string state = bundled
+                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateBundled")
+                    : installed
+                        ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateExists")
+                        : LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateNeedDownload");
+                if (!bundled && !installed)
+                {
+                    needDownloadCount++;
+                }
+
+                ExternalContentType contentType = ModpackRules.ResolveContentType(item);
+                string typeName = EnumDisplayName.GetEnumDisplayName(
+                    CommunityFileRules.MapExternalContentTypeToFileType(contentType),
+                    item?.Category);
+                lines.Add($"- [{state}][{typeName}] {ModpacksManageContentScreen.GetModpackItemDisplayName(item)}");
+            }
+
+            lines.Insert(0, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "SubItemsHeader"));
+            lines.Insert(0, string.Format(
+                CultureInfo.InvariantCulture,
+                LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", needDownloadCount > 0 ? "ConfirmDownloadAndEnable" : "ConfirmEnableAllReady"),
+                needDownloadCount));
+            return string.Join("\n", lines);
+        }
+
+        private static bool IsBundledItem(ModpackItem item, IReadOnlyDictionary<string, byte[]> embeddedFiles)
+        {
+            string url = item?.Url?.Trim();
+            return !string.IsNullOrWhiteSpace(url)
+                && !ModpackRules.IsHttpUrl(url)
+                && ModpackRules.TryGetEmbeddedFile(embeddedFiles, url, out _);
         }
 
         /// <summary>
