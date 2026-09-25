@@ -120,6 +120,13 @@ public sealed class WonderfulEraSyncTest : IClassFixture<WonderfulEraGameFixture
         VehicleState clientFinal = await GetVehicleStateAsync(client, vehicleId);
         output.WriteLine($"[记录] 驾驶结束 服务端: {serverFinal}");
         output.WriteLine($"[记录] 驾驶结束 客户端: {clientFinal}");
+
+        MechanicsSyncTools.MountState dismount = await MechanicsSyncTools.StartDismountingAsync(client, playerIndex);
+        Assert.True(dismount.Exists, $"客户端下车请求失败: {dismount.Raw}");
+        output.WriteLine($"[记录] 客户端下车请求: {dismount.Raw}");
+        await MechanicsSyncTools.WaitForMountStateAsync(server, playerIndex, 0);
+        await MechanicsSyncTools.WaitForMountStateAsync(client, playerIndex, 0);
+        output.WriteLine("[记录] WonderfulEra 下车请求与服务端确认已同步。");
         output.WriteLine("[记录] 车辆 run/energy/fuel 为服务端本地数据（无专门同步包），仅记录不强制断言");
     }
 
@@ -159,12 +166,43 @@ public sealed class WonderfulEraSyncTest : IClassFixture<WonderfulEraGameFixture
         Assert.Equal(serverState.Slot0Contents, clientState.Slot0Contents);
         Assert.Equal(serverState.Slot0Count, clientState.Slot0Count);
 
-        if (serverState.PowerOn == clientState.PowerOn) {
-            output.WriteLine("[记录] PowerOn 两端一致（意外同步，需人工复核）。");
+        Assert.Equal(serverState.PowerOn, clientState.PowerOn);
+        Assert.Equal(serverState.MPowerOn, clientState.MPowerOn);
+        output.WriteLine("[记录] PowerOn/m_powerOn 已通过 WonderfulEra 标量快照同步。");
+    }
+
+    [Fact, TestOrder(Priority = 5)]
+    public async Task PlayerThirstySynchronizesThroughCompatNetSnapshot() {
+        await EnsureWorldAndClientAsync();
+        int playerIndex = await PlayerSyncTools.WaitForClientPlayerIndexAsync(client);
+        await PlayerSyncTools.WaitForPlayerEntityAsync(server, playerIndex);
+
+        string result = (string?)await server.PushCommandAsync(
+            "FUNC " + GameTools.ReadScript("WonderfulEra/SetPlayerThirstyCode.cs")
+                .Replace("__PLAYER_INDEX__", playerIndex.ToString(CultureInfo.InvariantCulture))
+                .Replace("__THIRSTY__", "0.17f")) ?? "missing";
+        Assert.NotEqual("missing", result);
+        Assert.NotEqual("field-missing", result);
+        output.WriteLine($"[记录] 服务端将 WonderfulEra Thirsty 设为 {result}");
+
+        DietState serverState = default;
+        DietState clientState = default;
+        DateTime deadline = DateTime.UtcNow.AddSeconds(12);
+        while (DateTime.UtcNow < deadline) {
+            serverState = await GetPlayerDietStateAsync(server, playerIndex);
+            clientState = await GetPlayerDietStateAsync(client, playerIndex);
+            if (serverState.Exists
+                && clientState.Exists
+                && Math.Abs(serverState.Thirsty - clientState.Thirsty) <= VitalStatsSyncEpsilon) {
+                output.WriteLine($"[记录] Thirsty 已收敛，服务端={serverState.Thirsty:R},客户端={clientState.Thirsty:R}");
+                return;
+            }
+
+            await Task.Delay(100);
         }
-        else {
-            output.WriteLine("[记录] PowerOn 未同步：该字段只存在于服务端本地，客户端保持不变。");
-        }
+
+        throw new TimeoutException(
+            $"WonderfulEra Thirsty 未在限定时间内同步。服务端={serverState},客户端={clientState}");
     }
 
     [Fact, TestOrder(Priority = 5)]
@@ -217,8 +255,15 @@ public sealed class WonderfulEraSyncTest : IClassFixture<WonderfulEraGameFixture
             Math.Abs(dietServerAfter.Food - dietClientAfter.Food) <= VitalStatsSyncEpsilon,
             $"Food 未同步。服务端={dietServerAfter.Food:R},客户端={dietClientAfter.Food:R}");
         output.WriteLine($"[记录] Food 同步差异={Math.Abs(dietServerAfter.Food - dietClientAfter.Food):R}（VitalStatSyncPacket 同步）");
-        output.WriteLine($"[记录] Thirsty 服务端={dietServerAfter.Thirsty:R},客户端={dietClientAfter.Thirsty:R}（不在 VitalStatSyncPacket 内）");
-        output.WriteLine($"[记录] Sickness 服务端={dietServerAfter.Sick}({dietServerAfter.SicknessDuration:R}s),客户端={dietClientAfter.Sick}({dietClientAfter.SicknessDuration:R}s)（不在 VitalStatSyncPacket 内）");
+        Assert.True(
+            Math.Abs(dietServerAfter.Thirsty - dietClientAfter.Thirsty) <= VitalStatsSyncEpsilon,
+            $"WonderfulEra Thirsty 未同步。服务端={dietServerAfter.Thirsty:R},客户端={dietClientAfter.Thirsty:R}");
+        Assert.Equal(dietServerAfter.Sick, dietClientAfter.Sick);
+        Assert.True(
+            Math.Abs(dietServerAfter.SicknessDuration - dietClientAfter.SicknessDuration) <= 2f,
+            $"SicknessDuration 未同步。服务端={dietServerAfter.SicknessDuration:R},客户端={dietClientAfter.SicknessDuration:R}");
+        output.WriteLine($"[记录] Thirsty 同步差异={Math.Abs(dietServerAfter.Thirsty - dietClientAfter.Thirsty):R}（WonderfulEra 标量快照）");
+        output.WriteLine($"[记录] Sickness 服务端={dietServerAfter.Sick}({dietServerAfter.SicknessDuration:R}s),客户端={dietClientAfter.Sick}({dietClientAfter.SicknessDuration:R}s)（ComponentSicknessPacket）");
     }
 
     public void Dispose() {

@@ -1,0 +1,11 @@
+{
+  "Name": "Survivalcraft.Compat23",
+  "Version": "1.0.0",
+  "ApiVersion": "1.9",
+  "ScVersion": "2.4.0.0",
+  "Description": "Applies verified file-level repairs to selected Survivalcraft 2.3 mods.",
+  "Author": "_Tk34",
+  "PackageName": "compat23",
+  "Preload": true,
+  "LoadOrder": 1
+}

@@ -43,6 +43,12 @@ public static class WonderfulEraCompatNetPatcher {
                 processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Brfalse, originalStart));
                 processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ret));
             });
+        patched |= ReplaceProjectileCalls(module, ResolveBridge(
+            module,
+            nameof(WonderfulEraCompatNetRuntime.FireProjectileBridge)));
+        patched |= ReplaceGenericProjectileCalls(module, ResolveBridge(
+            module,
+            nameof(WonderfulEraCompatNetRuntime.FireProjectileGenericBridge)));
         patched |= PatchMethod(
             module,
             "WonderfulEra.ComponentRiderN",
@@ -57,6 +63,22 @@ public static class WonderfulEraCompatNetPatcher {
                 Instruction originalStart = method.Body.Instructions[0];
                 processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_0));
                 processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_1));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Call, bridge));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Brfalse, originalStart));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ret));
+            });
+        patched |= PatchMethod(
+            module,
+            "WonderfulEra.ComponentRiderN",
+            "StartDismounting",
+            nameof(WonderfulEraCompatNetRuntime.TrySyncRiderDismounting),
+            candidate => !candidate.IsStatic
+                && candidate.ReturnType.FullName == "System.Void"
+                && candidate.HasBody
+                && candidate.Parameters.Count == 0,
+            (method, processor, bridge) => {
+                Instruction originalStart = method.Body.Instructions[0];
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_0));
                 processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Call, bridge));
                 processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Brfalse, originalStart));
                 processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ret));
@@ -92,6 +114,44 @@ public static class WonderfulEraCompatNetPatcher {
         return true;
     }
 
+    public static bool PatchRiderDismounting(ModAssemblyImage image) {
+        if (image?.Bytes == null || image.Bytes.Length == 0) {
+            return false;
+        }
+
+        using MemoryStream input = new(image.Bytes, writable: false);
+        using AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(
+            input,
+            new ReaderParameters { InMemory = true, ReadSymbols = false });
+        MethodReference bridge = ResolveBridge(
+            assembly.MainModule,
+            nameof(WonderfulEraCompatNetRuntime.TrySyncRiderDismounting));
+        bool patched = PatchMethod(
+            assembly.MainModule,
+            "Game.ComponentNewRider",
+            "StartDismounting",
+            nameof(WonderfulEraCompatNetRuntime.TrySyncRiderDismounting),
+            candidate => !candidate.IsStatic
+                && candidate.ReturnType.FullName == "System.Void"
+                && candidate.HasBody
+                && candidate.Parameters.Count == 0,
+            (method, processor, methodBridge) => {
+                Instruction originalStart = method.Body.Instructions[0];
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_0));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Call, methodBridge));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Brfalse, originalStart));
+                processor.InsertBefore(originalStart, Instruction.Create(OpCodes.Ret));
+            });
+        if (!patched || bridge == null) {
+            return false;
+        }
+
+        using MemoryStream output = new();
+        assembly.Write(output, new WriterParameters { WriteSymbols = false });
+        image.Bytes = output.ToArray();
+        return true;
+    }
+
     private static MethodReference ResolveBridge(
         ModuleDefinition module,
         string methodName) {
@@ -99,6 +159,70 @@ public static class WonderfulEraCompatNetPatcher {
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .FirstOrDefault(candidate => candidate.Name == methodName);
         return method == null ? null : module.ImportReference(method);
+    }
+
+    private static bool ReplaceProjectileCalls(
+        ModuleDefinition module,
+        MethodReference bridge) {
+        if (bridge == null) {
+            return false;
+        }
+
+        bool changed = false;
+        foreach (TypeDefinition type in module.Types.SelectMany(FlattenTypes)) {
+            foreach (MethodDefinition method in type.Methods) {
+                if (!method.HasBody) {
+                    continue;
+                }
+                foreach (Instruction instruction in method.Body.Instructions) {
+                    if (instruction.Operand is not MethodReference reference
+                        || reference.Name != "FireProjectile"
+                        || reference.DeclaringType.FullName != "Game.SubsystemProjectiles"
+                        || reference.Parameters.Count != 5
+                        || reference.GenericParameters.Count != 0) {
+                        continue;
+                    }
+                    instruction.OpCode = OpCodes.Call;
+                    instruction.Operand = bridge;
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
+    private static bool ReplaceGenericProjectileCalls(
+        ModuleDefinition module,
+        MethodReference bridge) {
+        if (bridge == null) {
+            return false;
+        }
+
+        bool changed = false;
+        foreach (TypeDefinition type in module.Types.SelectMany(FlattenTypes)) {
+            foreach (MethodDefinition method in type.Methods) {
+                if (!method.HasBody) {
+                    continue;
+                }
+                foreach (Instruction instruction in method.Body.Instructions) {
+                    if (instruction.Operand is not GenericInstanceMethod reference
+                        || reference.Name != "FireProjectile"
+                        || reference.DeclaringType.FullName != "Game.SubsystemProjectiles"
+                        || reference.Parameters.Count != 5
+                        || reference.GenericArguments.Count != 1) {
+                        continue;
+                    }
+
+                    GenericInstanceMethod replacement = new(bridge);
+                    replacement.GenericArguments.Add(
+                        module.ImportReference(reference.GenericArguments[0]));
+                    instruction.OpCode = OpCodes.Call;
+                    instruction.Operand = replacement;
+                    changed = true;
+                }
+            }
+        }
+        return changed;
     }
 
     private static bool ContainsBridgeCall(

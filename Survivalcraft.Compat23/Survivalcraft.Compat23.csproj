@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\build\Windows.props" />
+  <PropertyGroup>
+    <AssemblyName>Survivalcraft.Compat23</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mono.Cecil" Version="0.11.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Survivalcraft.Windows\Survivalcraft.Windows.csproj">
+      <Private>false</Private>
+      <AdditionalProperties>SkipNetworkModPackage=true;SkipCompatibilityModPackage=true;SkipCompatibilityMods=true;SkipContentZip=true</AdditionalProperties>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Target Name="PackageMod" AfterTargets="Build">
+    <PropertyGroup>
+      <ModTempDir>$(IntermediateOutputPath)ModTemp\</ModTempDir>
+      <ModOutputPath Condition="'$(ModOutputPath)' == ''">..\Survivalcraft.Test\bin\$(Configuration)\net10.0-windows\$(WindowsRuntimeIdentifier)\Mods\</ModOutputPath>
+    </PropertyGroup>
+    <RemoveDir Directories="$(ModTempDir)" />
+    <MakeDir Directories="$(ModTempDir)" />
+    <MakeDir Directories="$(ModOutputPath)" />
+    <ItemGroup>
+      <Compat23PatchFiles Include="PatchData\**\*" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compat23DependencyFiles Include="$(TargetDir)Mono.Cecil.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="$(TargetPath);@(Compat23DependencyFiles)" DestinationFolder="$(ModTempDir)" />
+    <Copy SourceFiles="modinfo.json" DestinationFolder="$(ModTempDir)" />
+    <Copy SourceFiles="@(Compat23PatchFiles)" DestinationFiles="@(Compat23PatchFiles->'$(ModTempDir)%(Identity)')" />
+    <ZipDirectory SourceDirectory="$(ModTempDir)" DestinationFile="$(ModOutputPath)Survivalcraft.Compat23.scmod" Overwrite="true" />
+  </Target>
+</Project>

@@ -70,6 +70,7 @@ public sealed class CompatNetStateValue {
 
 public sealed class CompatNetStateRecord {
     public int EntityId;
+    public bool IsSubsystem;
     public string ComponentTypeName = string.Empty;
     public bool HasEntityPosition;
     public Vector3 EntityPosition;
@@ -81,6 +82,7 @@ public sealed class CompatNetStateRecord {
 
     public void Serialize(PacketSerializer archive) {
         archive.Value(ref EntityId);
+        archive.Value(ref IsSubsystem);
         archive.Value(ref ComponentTypeName);
         archive.Value(ref HasEntityPosition);
         if (HasEntityPosition) {

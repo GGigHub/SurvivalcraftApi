@@ -4,7 +4,8 @@ using Game.Network;
 namespace Game;
 
 public enum IndustrialEra2CompatNetOperation : ushort {
-    TankStateSnapshot = 1
+    TankStateSnapshot = 1,
+    VoltStateSnapshot = 2
 }
 
 public sealed class IndustrialEra2TankSlotState {

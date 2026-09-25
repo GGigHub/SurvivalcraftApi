@@ -17,17 +17,21 @@ public static class SubnauticaCompatNetRuntime {
     private const double PublishInterval = 0.5;
     private const double FullRefreshInterval = 5.0;
     private const float InteractionDistanceSquared = 36f;
+    private const float KillRelayDistanceSquared = 4096f;
     private const string MermaidAffectionTypeName = "Subnautica.ComponentMermaidAffection";
     private const string MermaidQuestTypeName = "Subnautica.ComponentMermaidQuest";
+    private const string AchievementManagerTypeName = "Subnautica.AchievementManager";
     private const BindingFlags InstanceFlags =
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
     private const BindingFlags StaticFlags =
         BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
     private static bool s_forceFullRefresh;
+    private static readonly HashSet<int> s_serverHandledCreatureKills = [];
 
     public static void Reset() {
         s_forceFullRefresh = false;
+        s_serverHandledCreatureKills.Clear();
     }
 
     /// <summary>
@@ -64,6 +68,36 @@ public static class SubnauticaCompatNetRuntime {
             SubnauticaCompatNetPayloads.WriteFeedRequest(new SubnauticaMermaidFeedRequest {
                 MermaidEntityId = mermaid.Entity.Id,
                 Kind = kind
+            }));
+    }
+
+    public static bool TryQueueMermaidGift(Component affection, int giftType) {
+        if (!NetworkManager.IsClientRunning
+            || NetworkManager.IsServerRunning
+            || !IsType(affection, MermaidAffectionTypeName)
+            || giftType < 0
+            || giftType > 3) {
+            return false;
+        }
+
+        ComponentPlayer player = GetPropertyValue(
+                FindProperty(affection.GetType(), "TargetPlayer"),
+                affection) is Entity target
+            ? target.FindComponent<ComponentPlayer>()
+            : null;
+        player ??= FindMainPlayer();
+        if (player?.PlayerData?.IsMainPlayer != true
+            || !CanInteract(player, affection.Entity)) {
+            return false;
+        }
+
+        return CompatNetCore.QueueRequest(
+            player,
+            ScopedUpdateGuardCompatNetAdapter.SubnauticaAdapterId,
+            (ushort)SubnauticaCompatNetOperation.MermaidGiftRequest,
+            SubnauticaCompatNetPayloads.WriteGiftRequest(new SubnauticaMermaidGiftRequest {
+                MermaidEntityId = affection.Entity.Id,
+                GiftType = giftType
             }));
     }
 
@@ -132,6 +166,16 @@ public static class SubnauticaCompatNetRuntime {
                 case SubnauticaCompatNetOperation.MermaidQuestDeliverRequest:
                     HandleQuestDelivery(
                         SubnauticaCompatNetPayloads.ReadQuestDeliverRequest(packet.Payload),
+                        player);
+                    break;
+                case SubnauticaCompatNetOperation.MermaidGiftRequest:
+                    HandleGift(
+                        SubnauticaCompatNetPayloads.ReadGiftRequest(packet.Payload),
+                        player);
+                    break;
+                case SubnauticaCompatNetOperation.CreatureKillRequest:
+                    HandleCreatureKill(
+                        SubnauticaCompatNetPayloads.ReadCreatureKillRequest(packet.Payload),
                         player);
                     break;
             }
@@ -228,6 +272,181 @@ public static class SubnauticaCompatNetRuntime {
         }
     }
 
+    public static void PublishKraken(
+        ref double nextPublishTime,
+        ref double nextFullRefreshTime,
+        ref int sequence,
+        ref byte[] lastPayload) {
+        if (!NetworkManager.IsServerRunning) {
+            return;
+        }
+
+        double now = Time.RealTime;
+        if (now < nextPublishTime) {
+            return;
+        }
+        nextPublishTime = now + PublishInterval;
+        bool fullRefresh = s_forceFullRefresh || now >= nextFullRefreshTime;
+        if (fullRefresh) {
+            nextFullRefreshTime = now + FullRefreshInterval;
+        }
+
+        if (!TryCaptureKrakenState(out SubnauticaKrakenState state)) {
+            return;
+        }
+
+        byte[] statePayload = SubnauticaCompatNetPayloads.WriteKrakenState(
+            new SubnauticaKrakenStateBatch {
+                Sequence = 0,
+                FullRefresh = false,
+                Records = [state]
+            });
+        if (!fullRefresh
+            && lastPayload != null
+            && lastPayload.AsSpan().SequenceEqual(statePayload)) {
+            return;
+        }
+
+        lastPayload = statePayload;
+        sequence = NextSequence(sequence);
+        CompatNetCore.QueueBroadcast(
+            ScopedUpdateGuardCompatNetAdapter.SubnauticaAdapterId,
+            (ushort)SubnauticaCompatNetOperation.KrakenStateSnapshot,
+            SubnauticaCompatNetPayloads.WriteKrakenState(
+                new SubnauticaKrakenStateBatch {
+                    Sequence = sequence,
+                    FullRefresh = fullRefresh,
+                    Records = [state]
+                }));
+    }
+
+    public static void ApplyKraken(byte[] payload, ref int lastAppliedSequence) {
+        SubnauticaKrakenStateBatch batch;
+        try {
+            batch = SubnauticaCompatNetPayloads.ReadKrakenState(payload);
+        }
+        catch {
+            return;
+        }
+
+        if (batch.Sequence <= 0
+            || (lastAppliedSequence != 0
+                && !IsSequenceAtLeast(batch.Sequence, lastAppliedSequence))) {
+            return;
+        }
+        if (IsSequenceNewer(batch.Sequence, lastAppliedSequence)) {
+            lastAppliedSequence = batch.Sequence;
+        }
+
+        foreach (SubnauticaKrakenState state in batch.Records) {
+            if (state != null) {
+                ApplyKrakenState(state);
+            }
+        }
+    }
+
+    private static bool TryCaptureKrakenState(out SubnauticaKrakenState state) {
+        state = new SubnauticaKrakenState();
+        object manager = GetKrakenManager();
+        if (manager == null) {
+            return false;
+        }
+
+        if (GetFieldValue(manager, "m_triggeredEncounterIds") is IEnumerable triggered) {
+            foreach (object value in triggered) {
+                if (value is string id
+                    && !string.IsNullOrWhiteSpace(id)
+                    && id.Length <= SubnauticaCompatNetPayloads.MaximumKrakenEncounterIdLength) {
+                    state.TriggeredEncounterIds.Add(id);
+                    if (state.TriggeredEncounterIds.Count >= SubnauticaCompatNetPayloads.MaximumKrakenTriggeredIds) {
+                        break;
+                    }
+                }
+            }
+            state.TriggeredEncounterIds.Sort(StringComparer.OrdinalIgnoreCase);
+        }
+
+        object active = GetFieldValue(manager, "m_activeEncounter");
+        if (active == null) {
+            return true;
+        }
+
+        state.HasActiveEncounter = true;
+        state.EncounterId = GetStringField(active, "EncounterId");
+        state.TriggerPosition = GetFieldValue(active, "TriggerPosition") is Point3 triggerPosition
+            ? triggerPosition
+            : default;
+        state.CenterPosition = GetFieldValue(active, "CenterPosition") is Vector3 center
+            ? center
+            : Vector3.Zero;
+        state.SurfacePosition = GetFieldValue(active, "SurfacePosition") is Vector3 surface
+            ? surface
+            : Vector3.Zero;
+        state.RiseStartPosition = GetFieldValue(active, "RiseStartPosition") is Vector3 riseStart
+            ? riseStart
+            : Vector3.Zero;
+        state.RiseEndPosition = GetFieldValue(active, "RiseEndPosition") is Vector3 riseEnd
+            ? riseEnd
+            : Vector3.Zero;
+        state.TriggerPlayerEntityId = GetIntFieldValue(active, "TriggerPlayerEntityId");
+        state.KrakenEntityId = GetIntFieldValue(active, "KrakenEntityId");
+        state.Phase = GetIntFieldValue(active, "Phase");
+        state.PhaseTimeRemaining = GetFloatFieldValue(active, "PhaseTimeRemaining");
+        return true;
+    }
+
+    private static void ApplyKrakenState(SubnauticaKrakenState state) {
+        object manager = GetKrakenManager();
+        if (manager == null) {
+            return;
+        }
+
+        object triggered = GetFieldValue(manager, "m_triggeredEncounterIds");
+        if (triggered is ICollection<string> triggeredIds) {
+            triggeredIds.Clear();
+            foreach (string id in state.TriggeredEncounterIds) {
+                if (!string.IsNullOrWhiteSpace(id)) {
+                    triggeredIds.Add(id);
+                }
+            }
+        }
+
+        FieldInfo activeField = FindField(manager.GetType(), "m_activeEncounter");
+        if (activeField == null) {
+            return;
+        }
+        if (!state.HasActiveEncounter) {
+            SetFieldValue(activeField, manager, null);
+            return;
+        }
+
+        object active = GetFieldValue(manager, "m_activeEncounter");
+        if (active == null) {
+            try {
+                active = Activator.CreateInstance(activeField.FieldType, nonPublic: true);
+            }
+            catch {
+                return;
+            }
+            if (active == null) {
+                return;
+            }
+            SetFieldValue(activeField, manager, active);
+        }
+
+        SetField(active, "EncounterId", state.EncounterId);
+        SetField(active, "TriggerPosition", state.TriggerPosition);
+        SetField(active, "CenterPosition", state.CenterPosition);
+        SetField(active, "SurfacePosition", state.SurfacePosition);
+        SetField(active, "RiseStartPosition", state.RiseStartPosition);
+        SetField(active, "RiseEndPosition", state.RiseEndPosition);
+        SetField(active, "TriggerPlayerEntityId", state.TriggerPlayerEntityId);
+        SetField(active, "KrakenEntityId", state.KrakenEntityId);
+        SetEnumField(active, "Phase", state.Phase);
+        SetField(active, "PhaseTimeRemaining", state.PhaseTimeRemaining);
+        SetField(active, "KrakenEntity", FindEntity(state.KrakenEntityId));
+    }
+
     private static void HandleFeed(
         SubnauticaMermaidFeedRequest request,
         ComponentPlayer player) {
@@ -303,6 +522,393 @@ public static class SubnauticaCompatNetRuntime {
             && delivered > 0) {
             InventoryPacketHelpers.MarkInventoryDirty(player.ComponentMiner?.Inventory);
             s_forceFullRefresh = true;
+        }
+    }
+
+    public static void PublishAchievements(
+        ref double nextPublishTime,
+        ref double nextFullRefreshTime,
+        ref int sequence,
+        Dictionary<int, byte[]> lastPayloads) {
+        if (!NetworkManager.IsServerRunning) {
+            return;
+        }
+
+        double now = Time.RealTime;
+        if (now < nextPublishTime) {
+            return;
+        }
+        nextPublishTime = now + PublishInterval;
+        bool fullRefresh = now >= nextFullRefreshTime;
+        if (fullRefresh) {
+            nextFullRefreshTime = now + FullRefreshInterval;
+        }
+
+        if (!TryCaptureAchievements(out List<SubnauticaAchievementState> states)) {
+            return;
+        }
+
+        List<SubnauticaAchievementState> changed = [];
+        foreach (SubnauticaAchievementState state in states) {
+            byte[] statePayload = SubnauticaCompatNetPayloads.WriteAchievementState(
+                new SubnauticaAchievementStateBatch {
+                    Sequence = 0,
+                    FullRefresh = false,
+                    Records = [state]
+                });
+            if (fullRefresh
+                || !lastPayloads.TryGetValue(state.PlayerEntityId, out byte[] previous)
+                || !previous.AsSpan().SequenceEqual(statePayload)) {
+                lastPayloads[state.PlayerEntityId] = statePayload;
+                changed.Add(state);
+                if (changed.Count >= SubnauticaCompatNetPayloads.MaximumAchievementRecordsPerBatch) {
+                    break;
+                }
+            }
+        }
+
+        if (changed.Count == 0) {
+            return;
+        }
+
+        sequence = NextSequence(sequence);
+        QueueAchievementBatches(changed, sequence, fullRefresh);
+    }
+
+    public static void ApplyAchievements(byte[] payload, ref int lastAppliedSequence) {
+        SubnauticaAchievementStateBatch batch;
+        try {
+            batch = SubnauticaCompatNetPayloads.ReadAchievementState(payload);
+        }
+        catch {
+            return;
+        }
+
+        if (batch.Sequence <= 0
+            || (lastAppliedSequence != 0
+                && !IsSequenceAtLeast(batch.Sequence, lastAppliedSequence))) {
+            return;
+        }
+        if (IsSequenceNewer(batch.Sequence, lastAppliedSequence)) {
+            lastAppliedSequence = batch.Sequence;
+        }
+
+        object manager = GetAchievementManager();
+        IDictionary progressByPlayer = GetAchievementProgressDictionary(manager);
+        if (progressByPlayer == null) {
+            return;
+        }
+
+        if (batch.FullRefresh) {
+            try {
+                progressByPlayer.Clear();
+            }
+            catch {
+                return;
+            }
+        }
+
+        Type mapType = progressByPlayer.GetType();
+        Type progressMapType = mapType.IsGenericType
+            ? mapType.GetGenericArguments().Skip(1).FirstOrDefault()
+            : null;
+        Type progressType = progressMapType?.IsGenericType == true
+            ? progressMapType.GetGenericArguments().Skip(1).FirstOrDefault()
+            : null;
+        if (progressMapType == null || progressType == null) {
+            return;
+        }
+
+        foreach (SubnauticaAchievementState state in batch.Records) {
+            if (state == null || state.PlayerEntityId <= 0) {
+                continue;
+            }
+
+            if (!progressByPlayer.Contains(state.PlayerEntityId)) {
+                try {
+                    progressByPlayer[state.PlayerEntityId] = Activator.CreateInstance(progressMapType);
+                }
+                catch {
+                    continue;
+                }
+            }
+
+            if (progressByPlayer[state.PlayerEntityId] is not IDictionary progress) {
+                continue;
+            }
+
+            foreach (SubnauticaAchievementProgress value in state.Progress) {
+                if (value == null || string.IsNullOrWhiteSpace(value.AchievementId)) {
+                    continue;
+                }
+                object targetProgress;
+                try {
+                    targetProgress = Activator.CreateInstance(progressType);
+                }
+                catch {
+                    continue;
+                }
+                SetProperty(targetProgress, "AchievementId", value.AchievementId);
+                SetProperty(targetProgress, "CurrentValue", value.CurrentValue);
+                SetProperty(targetProgress, "Unlocked", value.Unlocked);
+                SetProperty(targetProgress, "UnlockedGameTime", value.UnlockedGameTime);
+                SetProperty(targetProgress, "RewardGranted", value.RewardGranted);
+                try {
+                    progress[value.AchievementId] = targetProgress;
+                }
+                catch {
+                }
+            }
+        }
+    }
+
+    private static bool TryCaptureAchievements(
+        out List<SubnauticaAchievementState> states) {
+        states = [];
+        object manager = GetAchievementManager();
+        IDictionary progressByPlayer = GetAchievementProgressDictionary(manager);
+        if (progressByPlayer == null) {
+            return false;
+        }
+
+        foreach (DictionaryEntry playerEntry in progressByPlayer) {
+            int playerId;
+            try {
+                playerId = Convert.ToInt32(playerEntry.Key);
+            }
+            catch {
+                continue;
+            }
+            if (playerId <= 0 || playerEntry.Value is not IDictionary progressMap) {
+                continue;
+            }
+
+            SubnauticaAchievementState state = new() { PlayerEntityId = playerId };
+            foreach (DictionaryEntry progressEntry in progressMap) {
+                object progress = progressEntry.Value;
+                string id = GetPropertyValue(
+                        FindProperty(progress?.GetType(), "AchievementId"),
+                        progress) as string
+                    ?? progressEntry.Key as string;
+                if (string.IsNullOrWhiteSpace(id)
+                    || id.Length > SubnauticaCompatNetPayloads.MaximumAchievementIdLength) {
+                    continue;
+                }
+
+                state.Progress.Add(new SubnauticaAchievementProgress {
+                    AchievementId = id,
+                    CurrentValue = GetIntProperty(progress, "CurrentValue"),
+                    Unlocked = GetBoolProperty(progress, "Unlocked"),
+                    UnlockedGameTime = GetDoubleProperty(progress, "UnlockedGameTime"),
+                    RewardGranted = GetBoolProperty(progress, "RewardGranted")
+                });
+                if (state.Progress.Count >= SubnauticaCompatNetPayloads.MaximumAchievementsPerPlayer) {
+                    break;
+                }
+            }
+            states.Add(state);
+        }
+        return states.Count > 0;
+    }
+
+    private static void QueueAchievementBatches(
+        List<SubnauticaAchievementState> records,
+        int sequence,
+        bool fullRefresh) {
+        List<SubnauticaAchievementState> current = [];
+        foreach (SubnauticaAchievementState record in records) {
+            current.Add(record);
+            byte[] payload = SubnauticaCompatNetPayloads.WriteAchievementState(
+                new SubnauticaAchievementStateBatch {
+                    Sequence = sequence,
+                    FullRefresh = fullRefresh,
+                    Records = current
+                });
+            if (payload.Length <= CompatNetPacket.MaximumPayloadBytes) {
+                continue;
+            }
+
+            current.RemoveAt(current.Count - 1);
+            if (current.Count > 0) {
+                QueueAchievementBatch(current, sequence, fullRefresh);
+            }
+            current = [record];
+        }
+        if (current.Count > 0) {
+            QueueAchievementBatch(current, sequence, fullRefresh);
+        }
+    }
+
+    private static void QueueAchievementBatch(
+        List<SubnauticaAchievementState> records,
+        int sequence,
+        bool fullRefresh) {
+        byte[] payload = SubnauticaCompatNetPayloads.WriteAchievementState(
+            new SubnauticaAchievementStateBatch {
+                Sequence = sequence,
+                FullRefresh = fullRefresh,
+                Records = records
+            });
+        if (payload.Length <= CompatNetPacket.MaximumPayloadBytes) {
+            CompatNetCore.QueueBroadcast(
+                ScopedUpdateGuardCompatNetAdapter.SubnauticaAdapterId,
+                (ushort)SubnauticaCompatNetOperation.AchievementStateSnapshot,
+                payload);
+        }
+    }
+
+    private static void HandleGift(
+        SubnauticaMermaidGiftRequest request,
+        ComponentPlayer player) {
+        Entity mermaid = FindEntity(request.MermaidEntityId);
+        Component affection = FindComponent(mermaid, MermaidAffectionTypeName);
+        if (!CanInteract(player, mermaid) || affection == null) {
+            return;
+        }
+
+        SetTargetPlayer(affection, player.Entity);
+        MethodInfo method = FindMethod(affection.GetType(), "TryGift", 1);
+        ParameterInfo parameter = method?.GetParameters().FirstOrDefault();
+        if (method == null || parameter?.ParameterType.IsEnum != true) {
+            return;
+        }
+
+        try {
+            object enumValue = Enum.ToObject(parameter.ParameterType, request.GiftType);
+            if (method.Invoke(affection, [enumValue]) is bool success && success) {
+                s_forceFullRefresh = true;
+            }
+        }
+        catch {
+        }
+    }
+
+    /// <summary>
+    /// The optional loader reports creature deaths from a client-side damage
+    /// prediction as well as from the authoritative server. A pure client
+    /// queues the attribution and suppresses its local report; the server
+    /// validates the victim and owns the actual quest/achievement mutation.
+    /// On a server-originated death the ID is remembered so a late client
+    /// relay cannot increment progress a second time.
+    /// </summary>
+    public static bool TryRelayCreatureDying(
+        ComponentHealth componentHealth,
+        Injury injury) {
+        Entity victim = componentHealth?.Entity;
+        if (victim == null) {
+            return false;
+        }
+
+        if (NetworkManager.IsServerRunning) {
+            if (s_serverHandledCreatureKills.Contains(victim.Id)) {
+                return true;
+            }
+            s_serverHandledCreatureKills.Add(victim.Id);
+            return false;
+        }
+
+        if (!NetworkManager.IsClientRunning
+            || injury?.Attacker?.Entity == null) {
+            return false;
+        }
+
+        ComponentPlayer attacker = injury.Attacker.Entity.FindComponent<ComponentPlayer>();
+        ComponentPlayer mainPlayer = FindMainPlayer();
+        if (attacker == null || attacker != mainPlayer) {
+            return false;
+        }
+
+        string creatureName = victim.ValuesDictionary?.DatabaseObject?.Name;
+        if (string.IsNullOrWhiteSpace(creatureName)) {
+            return false;
+        }
+
+        bool queued = CompatNetCore.QueueRequest(
+            mainPlayer,
+            ScopedUpdateGuardCompatNetAdapter.SubnauticaAdapterId,
+            (ushort)SubnauticaCompatNetOperation.CreatureKillRequest,
+            SubnauticaCompatNetPayloads.WriteCreatureKillRequest(
+                new SubnauticaCreatureKillRequest {
+                    VictimEntityId = victim.Id,
+                    CreatureName = creatureName
+                }));
+        return queued;
+    }
+
+    private static void HandleCreatureKill(
+        SubnauticaCreatureKillRequest request,
+        ComponentPlayer player) {
+        Entity victim = FindEntity(request.VictimEntityId);
+        ComponentHealth health = victim?.FindComponent<ComponentHealth>();
+        ComponentBody playerBody = player?.Entity?.FindComponent<ComponentCreature>()?.ComponentBody;
+        ComponentBody victimBody = victim?.FindComponent<ComponentCreature>()?.ComponentBody;
+        if (victim == null
+            || health == null
+            || victim.FindComponent<ComponentPlayer>() != null
+            || !string.Equals(
+                victim.ValuesDictionary?.DatabaseObject?.Name,
+                request.CreatureName,
+                StringComparison.Ordinal)
+            || playerBody is not ComponentFrame playerFrame
+            || victimBody is not ComponentFrame victimFrame
+            || Vector3.DistanceSquared(playerFrame.Position, victimFrame.Position)
+                > KillRelayDistanceSquared) {
+            return;
+        }
+
+        if (!s_serverHandledCreatureKills.Add(victim.Id)) {
+            return;
+        }
+
+        string creatureName = request.CreatureName;
+        IEnumerable<Entity> projectEntities = GameManager.Project == null
+            ? Array.Empty<Entity>()
+            : GameManager.Project.Entities;
+        foreach (Entity entity in projectEntities) {
+            Component quest = FindComponent(entity, MermaidQuestTypeName);
+            ComponentBody mermaidBody = entity.FindComponent<ComponentCreature>()?.ComponentBody;
+            if (quest == null
+                || mermaidBody is not ComponentFrame mermaidFrame
+                || Vector3.DistanceSquared(mermaidFrame.Position, victimFrame.Position) > 1024f) {
+                continue;
+            }
+            TryInvokeBool(
+                FindMethod(quest.GetType(), "ReportKill", 1),
+                quest,
+                [creatureName]);
+        }
+
+        ReportAchievementKill(player.Entity.Id, creatureName);
+        s_forceFullRefresh = true;
+    }
+
+    private static void ReportAchievementKill(int playerEntityId, string creatureName) {
+        Type managerType = FindLoadedType(AchievementManagerTypeName);
+        object manager = GetPropertyValue(
+            managerType?.GetProperty("Current", StaticFlags),
+            null);
+        if (manager == null) {
+            return;
+        }
+
+        Type eventType = FindLoadedType("Subnautica.AchievementEvent");
+        Type eventKind = FindLoadedType("Subnautica.AchievementEventType");
+        ConstructorInfo constructor = eventType?.GetConstructor([
+            eventKind,
+            typeof(int),
+            typeof(string),
+            typeof(int)]);
+        MethodInfo report = FindMethod(manager.GetType(), "Report", 1);
+        if (constructor == null || report == null || eventKind == null || !eventKind.IsEnum) {
+            return;
+        }
+
+        try {
+            object killKind = Enum.Parse(eventKind, "KillCreature");
+            object evt = constructor.Invoke([killKind, playerEntityId, creatureName, 1]);
+            report.Invoke(manager, [evt]);
+        }
+        catch {
         }
     }
 
@@ -580,6 +1186,22 @@ public static class SubnauticaCompatNetRuntime {
             : 0;
     }
 
+    private static bool GetBoolProperty(object instance, string name) {
+        return GetPropertyValue(FindProperty(instance?.GetType(), name), instance) is bool value
+            && value;
+    }
+
+    private static double GetDoubleProperty(object instance, string name) {
+        object value = GetPropertyValue(FindProperty(instance?.GetType(), name), instance);
+        try {
+            double result = Convert.ToDouble(value);
+            return double.IsFinite(result) ? result : 0d;
+        }
+        catch {
+            return 0d;
+        }
+    }
+
     private static string GetStringProperty(object instance, string name) {
         return GetPropertyValue(FindProperty(instance?.GetType(), name), instance) as string
             ?? string.Empty;
@@ -628,6 +1250,82 @@ public static class SubnauticaCompatNetRuntime {
         }
     }
 
+    private static object GetKrakenManager() {
+        object loader = ModsManager.ModLoaders?.FirstOrDefault(candidate =>
+            candidate != null
+            && string.Equals(
+                candidate.GetType().FullName,
+                "Subnautica.SubnauticaLoader",
+                StringComparison.Ordinal));
+        return GetFieldValue(loader, "m_krakenEncounterManager");
+    }
+
+    private static object GetFieldValue(object instance, string name) {
+        FieldInfo field = FindField(instance?.GetType(), name);
+        try {
+            return field?.GetValue(instance);
+        }
+        catch {
+            return null;
+        }
+    }
+
+    private static FieldInfo FindField(Type type, string name) {
+        for (Type current = type; current != null && current != typeof(object); current = current.BaseType) {
+            FieldInfo field = current.GetField(name, InstanceFlags | BindingFlags.DeclaredOnly);
+            if (field != null) {
+                return field;
+            }
+        }
+        return null;
+    }
+
+    private static void SetFieldValue(FieldInfo field, object instance, object value) {
+        if (field == null || field.IsInitOnly || field.IsStatic) {
+            return;
+        }
+        try {
+            field.SetValue(instance, value);
+        }
+        catch {
+        }
+    }
+
+    private static void SetEnumField(object instance, string name, int value) {
+        FieldInfo field = FindField(instance?.GetType(), name);
+        if (field?.FieldType.IsEnum != true) {
+            return;
+        }
+        try {
+            field.SetValue(instance, Enum.ToObject(field.FieldType, value));
+        }
+        catch {
+        }
+    }
+
+    private static string GetStringField(object instance, string name) {
+        return GetFieldValue(instance, name) as string ?? string.Empty;
+    }
+
+    private static int GetIntFieldValue(object instance, string name) {
+        try {
+            return Convert.ToInt32(GetFieldValue(instance, name));
+        }
+        catch {
+            return 0;
+        }
+    }
+
+    private static float GetFloatFieldValue(object instance, string name) {
+        try {
+            float value = Convert.ToSingle(GetFieldValue(instance, name));
+            return float.IsFinite(value) && value >= 0f ? value : 0f;
+        }
+        catch {
+            return 0f;
+        }
+    }
+
     private static void SetField(object instance, string name, object value) {
         for (Type type = instance?.GetType(); type != null && type != typeof(object); type = type.BaseType) {
             FieldInfo field = type.GetField(name, InstanceFlags | BindingFlags.DeclaredOnly);
@@ -643,6 +1341,46 @@ public static class SubnauticaCompatNetRuntime {
             }
             return;
         }
+    }
+
+    private static object GetAchievementManager() {
+        Type managerType = FindLoadedType(AchievementManagerTypeName);
+        return GetPropertyValue(managerType?.GetProperty("Current", StaticFlags), null);
+    }
+
+    private static IDictionary GetAchievementProgressDictionary(object manager) {
+        for (Type type = manager?.GetType(); type != null && type != typeof(object); type = type.BaseType) {
+            FieldInfo field = type.GetField(
+                "m_progressByPlayer",
+                InstanceFlags | BindingFlags.DeclaredOnly);
+            if (field == null) {
+                continue;
+            }
+            try {
+                return field.GetValue(manager) as IDictionary;
+            }
+            catch {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private static Type FindLoadedType(string fullName) {
+        if (string.IsNullOrWhiteSpace(fullName)) {
+            return null;
+        }
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+            try {
+                Type type = assembly.GetType(fullName, throwOnError: false);
+                if (type != null) {
+                    return type;
+                }
+            }
+            catch {
+            }
+        }
+        return null;
     }
 
     private static object FindQuest(Type questType, string questId) {

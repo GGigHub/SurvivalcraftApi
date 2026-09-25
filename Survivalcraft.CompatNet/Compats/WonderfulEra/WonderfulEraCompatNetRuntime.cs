@@ -43,8 +43,9 @@ public static class WonderfulEraCompatNetRuntime {
     /// OnNetworkRiderMounting relay, so a pure client mounts its own player
     /// without ever notifying the server. When invoked on a pure client, this
     /// bridge forwards the mount as a MountRequest via the vanilla hook and
-    /// suppresses the local-only mount; the server then mounts and broadcasts
-    /// the Mount packet back.
+    /// suppresses the target override's duplicate local mount. The request
+    /// remains server-authoritative; the vanilla hook creates the local
+    /// optimistic mount and the authoritative mount packet confirms it.
     /// </summary>
     public static bool TrySyncRiderMounting(ComponentRider rider, ComponentMount mount) {
         if (rider == null
@@ -60,6 +61,33 @@ public static class WonderfulEraCompatNetRuntime {
             "OnNetworkRiderMounting",
             loader => loader.OnNetworkRiderMounting(rider, mount, true));
         return true;
+    }
+
+    /// <summary>
+    /// Called from WonderfulEra's ComponentRiderN.StartDismounting() override.
+    /// The override performs the local animation but skips the vanilla
+    /// OnNetworkRiderDismounting request hook. Queue the request and let the
+    /// target override continue so the local animation remains responsive;
+    /// the server validates the current mount and broadcasts the final state.
+    /// </summary>
+    public static bool TrySyncRiderDismounting(ComponentRider rider) {
+        if (rider == null
+            || rider.m_isAnimating
+            || rider.Mount == null
+            || !NetworkManager.IsClientRunning
+            || NetworkManager.IsServerRunning) {
+            return false;
+        }
+
+        ComponentPlayer player = rider.Entity?.FindComponent<ComponentPlayer>();
+        if (player?.PlayerData?.IsMainPlayer == true) {
+            CompatNetCore.QueueRequest(
+                player,
+                ScopedUpdateGuardCompatNetAdapter.WonderfulEraAdapterId,
+                (ushort)WonderfulEraCompatNetOperation.RiderDismountRequest,
+                []);
+        }
+        return false;
     }
 
     /// <summary>
@@ -131,7 +159,165 @@ public static class WonderfulEraCompatNetRuntime {
         }
 
         skipVanilla = true;
-        return true;
+        return false;
+    }
+
+    public static Projectile FireProjectileBridge(
+        SubsystemProjectiles subsystemProjectiles,
+        int value,
+        Vector3 position,
+        Vector3 velocity,
+        Vector3 angularVelocity,
+        ComponentCreature owner) {
+        if (!NetworkManager.IsClientRunning || NetworkManager.IsServerRunning) {
+            return subsystemProjectiles?.FireProjectile(
+                value,
+                position,
+                velocity,
+                angularVelocity,
+                owner);
+        }
+
+        ComponentPlayer player = owner?.Entity?.FindComponent<ComponentPlayer>();
+        if (player?.PlayerData?.IsMainPlayer != true) {
+            return null;
+        }
+
+        WonderfulEraProjectileRequest request = new() {
+            Value = value,
+            ProjectileTypeName = typeof(Projectile).FullName ?? string.Empty,
+            Position = position,
+            Velocity = velocity,
+            AngularVelocity = angularVelocity
+        };
+        CompatNetCore.QueueRequest(
+            player,
+            ScopedUpdateGuardCompatNetAdapter.WonderfulEraAdapterId,
+            (ushort)WonderfulEraCompatNetOperation.ProjectileRequest,
+            WonderfulEraCompatNetPayloads.WriteProjectileRequest(request));
+        return null;
+    }
+
+    public static T FireProjectileGenericBridge<T>(
+        SubsystemProjectiles subsystemProjectiles,
+        int value,
+        Vector3 position,
+        Vector3 velocity,
+        Vector3 angularVelocity,
+        ComponentCreature owner)
+        where T : Projectile, new() {
+        if (!NetworkManager.IsClientRunning || NetworkManager.IsServerRunning) {
+            return subsystemProjectiles?.FireProjectile<T>(
+                value,
+                position,
+                velocity,
+                angularVelocity,
+                owner);
+        }
+
+        ComponentPlayer player = owner?.Entity?.FindComponent<ComponentPlayer>();
+        if (player?.PlayerData?.IsMainPlayer != true) {
+            return null;
+        }
+
+        WonderfulEraProjectileRequest request = new() {
+            Value = value,
+            ProjectileTypeName = typeof(T).FullName ?? string.Empty,
+            Position = position,
+            Velocity = velocity,
+            AngularVelocity = angularVelocity
+        };
+        CompatNetCore.QueueRequest(
+            player,
+            ScopedUpdateGuardCompatNetAdapter.WonderfulEraAdapterId,
+            (ushort)WonderfulEraCompatNetOperation.ProjectileRequest,
+            WonderfulEraCompatNetPayloads.WriteProjectileRequest(request));
+        return null;
+    }
+
+    public static void HandleProjectileRequest(
+        WonderfulEraProjectileRequest request,
+        PlayerData playerData) {
+        if (!NetworkManager.IsServerRunning
+            || request == null
+            || playerData?.ComponentPlayer == null) {
+            return;
+        }
+
+        ComponentPlayer player = playerData.ComponentPlayer;
+        ComponentBody body = player.ComponentBody;
+        if (body == null || !float.IsFinite(request.Position.X)
+            || !float.IsFinite(request.Position.Y)
+            || !float.IsFinite(request.Position.Z)
+            || Vector3.DistanceSquared(((ComponentFrame)body).Position, request.Position) > 4096f) {
+            return;
+        }
+
+        SubsystemProjectiles projectiles = GameManager.Project?.FindSubsystem<SubsystemProjectiles>();
+        if (projectiles == null) {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ProjectileTypeName)
+            || string.Equals(
+                request.ProjectileTypeName,
+                typeof(Projectile).FullName,
+                StringComparison.Ordinal)) {
+            projectiles.FireProjectile(
+                request.Value,
+                request.Position,
+                request.Velocity,
+                request.AngularVelocity,
+                player);
+            return;
+        }
+
+        Type projectileType = AppDomain.CurrentDomain.GetAssemblies()
+            .Select(assembly => assembly.GetType(request.ProjectileTypeName, false, false))
+            .FirstOrDefault(type => type != null
+                && typeof(Projectile).IsAssignableFrom(type)
+                && IsTargetAssembly(type.Assembly));
+        MethodInfo genericMethod = typeof(SubsystemProjectiles).GetMethods(InstanceFlags)
+            .FirstOrDefault(method => method.Name == "FireProjectile"
+                && method.IsGenericMethodDefinition
+                && method.GetGenericArguments().Length == 1
+                && method.GetParameters().Length == 5);
+        if (projectileType == null || genericMethod == null) {
+            return;
+        }
+
+        try {
+            genericMethod.MakeGenericMethod(projectileType).Invoke(
+                projectiles,
+                [
+                    request.Value,
+                    request.Position,
+                    request.Velocity,
+                    request.AngularVelocity,
+                    player
+                ]);
+        }
+        catch {
+            // A version-skewed projectile type must not break the network loop.
+        }
+    }
+
+    public static void HandleRiderDismountRequest(
+        CompatNetPacket packet,
+        PlayerData playerData) {
+        if (!NetworkManager.IsServerRunning
+            || packet?.Payload == null
+            || playerData?.ComponentPlayer == null) {
+            return;
+        }
+
+        ComponentRider rider = playerData.ComponentPlayer.ComponentRider;
+        if (rider?.Mount == null) {
+            return;
+        }
+
+        rider.StartDismounting(true);
+        NetworkManager.Queue(new ComponentMountPacket(rider));
     }
 
     public static void HandleRequest(CompatNetPacket packet, PlayerData playerData) {

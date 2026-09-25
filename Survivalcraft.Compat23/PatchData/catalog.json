@@ -1,0 +1,229 @@
+{
+  "FormatVersion": 1,
+  "TargetScVersion": "2.4.0.0",
+  "Rules": [
+    {
+      "RuleId": "01-gun-mod-2.8",
+      "PackageName": "gunsmod.ysf.scmod",
+      "ModVersion": "2.8",
+      "Files": [
+        {
+          "Path": "#Guns.dll",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/gun-mod-2.8/#Guns.dll.scdelta",
+          "SourceSize": 855040,
+          "SourceSha256": "fcd878f569ac4c825402c15d0ffc0af2a5df6e12ec7809b01969b360aa013559",
+          "PatchSize": 299402,
+          "PatchSha256": "9185a77a18e172efd60ffa5bfe2d867ec45576028753c7d0260fa90d38c337f8",
+          "TargetSize": 864768,
+          "TargetSha256": "c3d1bdfcfcb832d5a69f4559940d12a623acb1a2cabbce55da9694f7bf691549",
+          "Optional": false
+        },
+        {
+          "Path": "Guns.csv",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/gun-mod-2.8/Guns.csv.scdelta",
+          "SourceSize": 19556,
+          "SourceSha256": "f68cf3624604bba017072b183941d906c485f699289f0535f8859c9aae0f3fa3",
+          "PatchSize": 76,
+          "PatchSha256": "3ee6c29f93e9d1b3a73617653fec57a05b866766831e380866eb652d2f783d2b",
+          "TargetSize": 19526,
+          "TargetSha256": "1ab457fd458fd4e81a519a3fe83145c02d9d237b3a07ed8ddf4f42cdad92c91a",
+          "Optional": false
+        }
+      ]
+    },
+    {
+      "RuleId": "siyah-akrep-2.8",
+      "PackageName": "siyahakrep.ysf.scmod",
+      "ModVersion": "2.8",
+      "Files": [
+        {
+          "Path": "SAItems.csv",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/02-siyah-akrep-2.8/SAItems.csv.scdelta",
+          "SourceSize": 36090,
+          "SourceSha256": "1a5215714e90ff969dcdaed6a87c8777317e5fce4a1fdc7b6979f0ae4dc350ef",
+          "PatchSize": 948,
+          "PatchSha256": "d09df1b4209bc5dffcc3abf89a5702fa74576893160f5ad9d358278cdf712aa5",
+          "TargetSize": 36453,
+          "TargetSha256": "bd25f53736f8d519572c70fb5659ddbbd8ff2ed03b478f4df1375a93bcbc2fe9",
+          "Optional": false
+        }
+      ]
+    },
+    {
+      "RuleId": "mmap-1.0",
+      "PackageName": "mmap.ysf.scmod",
+      "ModVersion": "1.0",
+      "Files": [
+        {
+          "Path": "#mmap.dll",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/03-mmap-1.0/#mmap.dll.scdelta",
+          "SourceSize": 29696,
+          "SourceSha256": "2531221d8c09d61074d78ca1fe0f360131ae6525467bab5b210a5a449c4c9800",
+          "PatchSize": 10711,
+          "PatchSha256": "5604ee0c966b881a4df87c417106be8b03094af5fe7fea98755a5ea82b71a2bd",
+          "TargetSize": 28672,
+          "TargetSha256": "7a77f9a424b03983bff14e31deb7f84e0bcaad4d31127e61963941389fb3e13a",
+          "Optional": false
+        },
+        {
+          "Path": "MMap.csv",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/03-mmap-1.0/MMap.csv.scdelta",
+          "SourceSize": 2303,
+          "SourceSha256": "06e82a39bc47180fcb1a65359709a5fbd43ee70afaa1123661ea80e2aa303f14",
+          "PatchSize": 145,
+          "PatchSha256": "b436d13aa52b4b9e54b8bb50244abf15f9b2c847729a430eb9fa1a1e04f510d5",
+          "TargetSize": 2343,
+          "TargetSha256": "c512a244cc2efd82c0e6879e87ea2b80d1524f8cf6b77f3907d804e605a34736",
+          "Optional": false
+        }
+      ]
+    },
+    {
+      "RuleId": "dayz-2.2.4",
+      "PackageName": "DayZ",
+      "ModVersion": "2.2.4.0 （前瞻）",
+      "Files": [
+        {
+          "Path": "Assets/BlocksData.txt",
+          "Kind": "Delete",
+          "SourceSize": 82102,
+          "SourceSha256": "b799e61b13e0a808c2f25741b68347fb9baae7f82c8d47c34fa987de2fa86c93",
+          "PatchSize": 0,
+          "PatchSha256": "",
+          "TargetSize": 0,
+          "TargetSha256": "",
+          "Optional": false
+        },
+        {
+          "Path": "Assets/Database.xml",
+          "Kind": "Delete",
+          "SourceSize": 485329,
+          "SourceSha256": "4ac6d36aacfa50e18628c1287a786156b1adeeb4c09697c277871f2f6c01ca7d",
+          "PatchSize": 0,
+          "PatchSha256": "",
+          "TargetSize": 0,
+          "TargetSha256": "",
+          "Optional": false
+        },
+        {
+          "Path": "Assets/Fonts/Pericles.lst",
+          "Kind": "Delete",
+          "SourceSize": 223753,
+          "SourceSha256": "2e0ec592ef7a66335298bbdb0d2eda18af93bf37b8ad526d6c589b680598a680",
+          "PatchSize": 0,
+          "PatchSha256": "",
+          "TargetSize": 0,
+          "TargetSha256": "",
+          "Optional": false
+        },
+        {
+          "Path": "Assets/Fonts/Pericles.png",
+          "Kind": "Delete",
+          "SourceSize": 3864854,
+          "SourceSha256": "03959b1f180ed163398039a4d2a0abb130a96d5720d2cf809c317bb382a022b5",
+          "PatchSize": 0,
+          "PatchSha256": "",
+          "TargetSize": 0,
+          "TargetSha256": "",
+          "Optional": false
+        },
+        {
+          "Path": "DayZ work.dll",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/06-dayz-2.2.4/DayZ work.dll.scdelta",
+          "SourceSize": 1367040,
+          "SourceSha256": "93cac87e9f73340446a6386172dfadc91ac3e9f38bb4e3548cb899dc6b8398c0",
+          "PatchSize": 301485,
+          "PatchSha256": "f2e80338f9051bbeaf2cf4f8304deab5f23cd2026dfb6895c523d6d30935ed84",
+          "TargetSize": 1267200,
+          "TargetSha256": "ddcc8a01b6864dfd36bf1668d5d6db5c74083d671ff9af5a18f2146283bbdc5c",
+          "Optional": false
+        },
+        {
+          "Path": "DayZ.csv",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/06-dayz-2.2.4/DayZ.csv.scdelta",
+          "SourceSize": 54143,
+          "SourceSha256": "3116a4868a5922f9fa6667fb75555e4d1e29d389ab9dcbeafe78fb237036c46d",
+          "PatchSize": 1526,
+          "PatchSha256": "89236bdae3294504626e3af5da60a4a0fc55521b45169837ccad37300066036a",
+          "TargetSize": 54425,
+          "TargetSha256": "a470ba4d35f1a9806bb89d5752fa864d9368d6fe9030e0e5262117d9e060be9a",
+          "Optional": false
+        },
+        {
+          "Path": "DayZ.xdb",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/06-dayz-2.2.4/DayZ.xdb.scdelta",
+          "SourceSize": 73167,
+          "SourceSha256": "aeed99436c070f08bee6e1d63d12f54c1b8dd528178a7b2b7c54dbbbf30646f5",
+          "PatchSize": 454,
+          "PatchSha256": "1ab4504b63456577661f3776c783fe374c42f6dc0c707ee25b8809ac48fbf4b9",
+          "TargetSize": 73954,
+          "TargetSha256": "30559a762e90897ee4bcd0a436f10d6cef9493254a8ea8f000c1c49abb348687",
+          "Optional": false
+        },
+        {
+          "Path": "Assets/Screens/MainMenuScreen.xml",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/06-dayz-2.2.4/Assets/Screens/MainMenuScreen.xml.scdelta",
+          "SourceSize": 6292,
+          "SourceSha256": "4834be7666bcc32f0b82a9c2a5552b255e6ff1d55681baf98854374075463b23",
+          "PatchSize": 83,
+          "PatchSha256": "de431d3c9cb5be48fc31d1c1ad8db2923bb52567f8f331a6a5e504b85a4e4808",
+          "TargetSize": 6468,
+          "TargetSha256": "d322060fe5a587dc1accfe97878afdf9973c03300e0e3b48c6fd576fbd4e0a30",
+          "Optional": false
+        },
+        {
+          "Path": "Assets/Widgets/GameWidget.xml",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/06-dayz-2.2.4/Assets/Widgets/GameWidget.xml.scdelta",
+          "SourceSize": 29083,
+          "SourceSha256": "49cb6723f667e20c778c458ba24d50f8442d1d07da91a23d966265ccddef9b45",
+          "PatchSize": 128,
+          "PatchSha256": "cff111c2ba64a42cc2813719e51f54719fe19904f45ec3979cc76c04a2407e37",
+          "TargetSize": 29509,
+          "TargetSha256": "f54f7d127245478de86b7963fe35c0a20c199ff7987ea545b2c43fe1ac318a93",
+          "Optional": false
+        }
+      ]
+    },
+    {
+      "RuleId": "scplus-6.0.3",
+      "PackageName": "SCPlus",
+      "ModVersion": "6.0.3",
+      "Files": [
+        {
+          "Path": "SCPlus.dll",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/07-scplus-6.0.3/SCPlus.dll.scdelta",
+          "SourceSize": 1208320,
+          "SourceSha256": "b63654c23924a392981ea6f049c9cee201a254250577b53285a75fdbfaac4826",
+          "PatchSize": 182090,
+          "PatchSha256": "cb0b8c2d75ccb3a547727d3b0799caacdb6d1683ed2c1a535bbc62742e8ff33f",
+          "TargetSize": 1205760,
+          "TargetSha256": "c2418472cc4d54b34ae6f1e8c23b3b12501026d51f31cd8eaa44940c58a44114",
+          "Optional": false
+        },
+        {
+          "Path": "SCPlus.pdb",
+          "Kind": "BinaryDelta",
+          "PatchFile": "PatchData/patches/07-scplus-6.0.3/SCPlus.pdb.scdelta",
+          "SourceSize": 224920,
+          "SourceSha256": "c7b0040863f369d002ba922452908028890e91a023147a73c43cd58231e9e250",
+          "PatchSize": 94962,
+          "PatchSha256": "105a943a4a30c3f9ee6eb1d09a3a17daf843d90c99db4ef0f51c922d62f8fc4d",
+          "TargetSize": 208552,
+          "TargetSha256": "f8839ba0b67f5a5a77fe0764601d081288cc6be06a04c0c4850c1dcc4301981f",
+          "Optional": true
+        }
+      ]
+    }
+  ]
+}

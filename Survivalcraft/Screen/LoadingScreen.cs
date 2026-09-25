@@ -342,6 +342,20 @@ namespace Game {
                 if (isLoadSucceed) {
                     try {
                         ModsManager.InvokePreloadStart();
+                        List<string> patchedAssetPaths = ModsManager.ModList
+                            .SelectMany(modEntity => modEntity.GetOverriddenAssetPaths())
+                            .Distinct(StringComparer.Ordinal)
+                            .ToList();
+                        if (patchedAssetPaths.Count > 0) {
+                            // Rebuild in load order to apply replacements and remove deleted resources.
+                            ContentManager.Resources.Clear();
+                            foreach (ModEntity modEntity in ModsManager.ModList) {
+                                modEntity.CombineContent();
+                            }
+                            foreach (string assetPath in patchedAssetPaths) {
+                                ContentManager.InvalidateResourceCache(assetPath);
+                            }
+                        }
                     }
                     catch (Exception e) {
                         FailAssembly(e, preloadMods.FirstOrDefault(), null, null);

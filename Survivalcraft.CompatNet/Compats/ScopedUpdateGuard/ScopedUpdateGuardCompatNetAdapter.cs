@@ -8,7 +8,9 @@ namespace Game;
 public enum ScopedUpdateGuardScope {
     RemotePlayerOnly,
     RemoteEntityBody,
-    AllNonPlayerEntities
+    AllNonPlayerEntities,
+    AllEntitiesExceptLocalPlayer,
+    AllEntities
 }
 
 /// <summary>
@@ -27,6 +29,13 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
     public const ushort SubnauticaAdapterId = 9;
     public const ushort WonderfulEraAdapterId = 10;
     public const ushort IndustrialEra2AdapterId = 11;
+    public const ushort NeorxnaAdapterId = 13;
+    public const ushort PerfectWorldAdapterId = 14;
+    public const ushort ZombieSiegeAdapterId = 15;
+    public const ushort MMapAdapterId = 17;
+    public const ushort DayZAdapterId = 18;
+    public const ushort SCPlusAdapterId = 19;
+    public const ushort RecipaediaExAdapterId = 20;
 
     private volatile bool m_targetPackageLoaded;
     private double m_nextStatePublishTime;
@@ -40,13 +49,38 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
     private double m_nextIndustrialTankFullRefreshTime;
     private int m_industrialTankSequence;
     private int m_lastAppliedIndustrialTankSequence;
+    private double m_nextIndustrialVoltPublishTime;
+    private double m_nextIndustrialVoltFullRefreshTime;
+    private int m_industrialVoltSequence;
+    private int m_lastAppliedIndustrialVoltSequence;
     private double m_nextSubnauticaPublishTime;
     private double m_nextSubnauticaFullRefreshTime;
     private int m_subnauticaSequence;
     private int m_lastAppliedSubnauticaSequence;
+    private double m_nextSubnauticaAchievementPublishTime;
+    private double m_nextSubnauticaAchievementFullRefreshTime;
+    private int m_subnauticaAchievementSequence;
+    private int m_lastAppliedSubnauticaAchievementSequence;
+    private double m_nextSubnauticaKrakenPublishTime;
+    private double m_nextSubnauticaKrakenFullRefreshTime;
+    private int m_subnauticaKrakenSequence;
+    private int m_lastAppliedSubnauticaKrakenSequence;
+    private byte[] m_lastSubnauticaKrakenPayload;
+    private double m_nextNeorxnaPublishTime;
+    private double m_nextNeorxnaFullRefreshTime;
+    private int m_neorxnaSequence;
+    private int m_lastAppliedNeorxnaSequence;
+    private double m_nextInventoryPublishTime;
+    private double m_nextInventoryFullRefreshTime;
+    private int m_inventorySequence;
+    private int m_lastAppliedInventorySequence;
     private readonly Dictionary<int, byte[]> m_lastSushiInventoryPayloads = [];
     private readonly Dictionary<string, byte[]> m_lastIndustrialTankPayloads = [];
+    private readonly Dictionary<string, byte[]> m_lastIndustrialVoltPayloads = [];
     private readonly Dictionary<int, byte[]> m_lastSubnauticaPayloads = [];
+    private readonly Dictionary<int, byte[]> m_lastSubnauticaAchievementPayloads = [];
+    private readonly Dictionary<string, byte[]> m_lastNeorxnaPayloads = [];
+    private readonly Dictionary<string, byte[]> m_lastInventoryPayloads = [];
     private readonly Dictionary<string, byte[]> m_lastStatePayloads = [];
 
     public ScopedUpdateGuardCompatNetAdapter(
@@ -112,8 +146,15 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
         new(MchszrAdapterId, "MCHszr", "MCHszr.dll"),
         new(SushiToolAdapterId, "SushiTool", "SushiTool.dll", ScopedUpdateGuardScope.AllNonPlayerEntities),
         new(SubnauticaAdapterId, "Tp.Subnautica", "sc-subnautica-mod.dll", ScopedUpdateGuardScope.RemoteEntityBody),
-        new(WonderfulEraAdapterId, "Tp.WonderfulEra", "WonderfulEra.dll", ScopedUpdateGuardScope.RemoteEntityBody),
-        new(IndustrialEra2AdapterId, "com.IndustrialEra2", "SCIENEW.dll", ScopedUpdateGuardScope.AllNonPlayerEntities)
+        new(WonderfulEraAdapterId, "Tp.WonderfulEra", "WonderfulEra.dll", ScopedUpdateGuardScope.AllEntities),
+        new(IndustrialEra2AdapterId, "com.IndustrialEra2", "SCIENEW.dll", ScopedUpdateGuardScope.AllNonPlayerEntities),
+        new(NeorxnaAdapterId, "ysf.neorxna", "neorxna.dll", ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer),
+        new(PerfectWorldAdapterId, "PerfectWorld", "修仙.dll", ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer),
+        new(ZombieSiegeAdapterId, "vcgcgcggc", "自然生成突破限制.dll", ScopedUpdateGuardScope.AllNonPlayerEntities),
+        new(MMapAdapterId, "mmap.ysf.scmod", "#mmap.dll", ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer),
+        new(DayZAdapterId, "DayZ", "DayZ work.dll", ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer),
+        new(SCPlusAdapterId, "SCPlus", "SCPlus.dll", ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer),
+        new(RecipaediaExAdapterId, "com.recipaediaex", "RecipaediaEX.dll", ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer)
     ];
 
     /// <summary>
@@ -143,17 +184,62 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
         m_nextIndustrialTankFullRefreshTime = 0;
         m_industrialTankSequence = 0;
         m_lastAppliedIndustrialTankSequence = 0;
+        m_nextIndustrialVoltPublishTime = 0;
+        m_nextIndustrialVoltFullRefreshTime = 0;
+        m_industrialVoltSequence = 0;
+        m_lastAppliedIndustrialVoltSequence = 0;
         m_nextSubnauticaPublishTime = 0;
         m_nextSubnauticaFullRefreshTime = 0;
         m_subnauticaSequence = 0;
         m_lastAppliedSubnauticaSequence = 0;
+        m_nextSubnauticaAchievementPublishTime = 0;
+        m_nextSubnauticaAchievementFullRefreshTime = 0;
+        m_subnauticaAchievementSequence = 0;
+        m_lastAppliedSubnauticaAchievementSequence = 0;
+        m_nextSubnauticaKrakenPublishTime = 0;
+        m_nextSubnauticaKrakenFullRefreshTime = 0;
+        m_subnauticaKrakenSequence = 0;
+        m_lastAppliedSubnauticaKrakenSequence = 0;
+        m_lastSubnauticaKrakenPayload = null;
+        m_nextNeorxnaPublishTime = 0;
+        m_nextNeorxnaFullRefreshTime = 0;
+        m_neorxnaSequence = 0;
+        m_lastAppliedNeorxnaSequence = 0;
+        m_nextInventoryPublishTime = 0;
+        m_nextInventoryFullRefreshTime = 0;
+        m_inventorySequence = 0;
+        m_lastAppliedInventorySequence = 0;
         m_lastSushiInventoryPayloads.Clear();
         m_lastIndustrialTankPayloads.Clear();
+        m_lastIndustrialVoltPayloads.Clear();
         m_lastSubnauticaPayloads.Clear();
+        m_lastSubnauticaAchievementPayloads.Clear();
+        m_lastNeorxnaPayloads.Clear();
+        m_lastInventoryPayloads.Clear();
         m_lastStatePayloads.Clear();
         SushiToolCompatNetRuntime.Reset();
         SubnauticaCompatNetRuntime.Reset();
         WonderfulEraCompatNetRuntime.Reset();
+        if (AdapterId == NeorxnaAdapterId) {
+            foreach (ModAssemblyImage image in assemblies ?? Array.Empty<ModAssemblyImage>()) {
+                if (image?.Owner?.modInfo != null
+                    && string.Equals(
+                        image.Owner.modInfo.PackageName,
+                        PackageName,
+                        StringComparison.OrdinalIgnoreCase)) {
+                    try {
+                        if (NeorxnaCompatNetPatcher.Patch(image)) {
+                            Log.Information(
+                                $"[Survivalcraft.CompatNet] Patched {image.FileName} in memory.");
+                        }
+                    }
+                    catch (Exception e) {
+                        Log.Error(
+                            $"[Survivalcraft.CompatNet] Failed to patch {image.FileName}: {e}");
+                    }
+                }
+            }
+        }
 
         foreach (ModAssemblyImage image in assemblies ?? Array.Empty<ModAssemblyImage>()) {
             if (image?.Owner?.modInfo != null
@@ -200,6 +286,30 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
                 }
             }
         }
+
+        if (AdapterId == WonderfulEraAdapterId && m_targetPackageLoaded) {
+            foreach (ModAssemblyImage image in assemblies ?? Array.Empty<ModAssemblyImage>()) {
+                if (image?.Owner?.modInfo == null
+                    || !string.Equals(
+                        image.Owner.modInfo.PackageName,
+                        "gunsmod.ysf.scmod",
+                        StringComparison.OrdinalIgnoreCase)
+                    || !string.Equals(image.FileName, "#Guns.dll", StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+
+                try {
+                    if (WonderfulEraCompatNetPatcher.PatchRiderDismounting(image)) {
+                        Log.Information(
+                            $"[Survivalcraft.CompatNet] Patched {image.FileName} rider dismount hook for WonderfulEra in memory.");
+                    }
+                }
+                catch (Exception e) {
+                    Log.Error(
+                        $"[Survivalcraft.CompatNet] Failed to patch {image.FileName} rider dismount hook: {e}");
+                }
+            }
+        }
     }
 
     public bool ShouldSkipClientUpdate(IUpdateable updateable) {
@@ -228,6 +338,15 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
                        StringComparison.Ordinal);
         }
 
+        // These mods expose authoritative world or player components through
+        // the same update hook. Their pure clients must not advance a second
+        // copy of that state while the server publishes the snapshot.
+        if ((Scope == ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer
+                || Scope == ScopedUpdateGuardScope.AllEntities)
+            && updateable is Subsystem) {
+            return true;
+        }
+
         if (AdapterId == SushiToolAdapterId
             && SushiToolCompatNetRuntime.IsLocallyRiddenTrain(updateable)) {
             return false;
@@ -239,6 +358,10 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
 
         ComponentPlayer player = component.Entity.FindComponent<ComponentPlayer>();
         if (player?.PlayerData != null) {
+            if (Scope == ScopedUpdateGuardScope.AllEntities) {
+                return true;
+            }
+
             return !player.PlayerData.IsMainPlayer;
         }
 
@@ -246,6 +369,8 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
             ScopedUpdateGuardScope.RemoteEntityBody =>
                 component.Entity.FindComponent<ComponentBody>() != null,
             ScopedUpdateGuardScope.AllNonPlayerEntities => true,
+            ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer => true,
+            ScopedUpdateGuardScope.AllEntities => true,
             _ => false
         };
     }
@@ -272,13 +397,33 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
             && m_targetPackageLoaded
             && (packet?.Operation == (ushort)SubnauticaCompatNetOperation.MermaidFeedRequest
                 || packet?.Operation == (ushort)SubnauticaCompatNetOperation.MermaidQuestAcceptRequest
-                || packet?.Operation == (ushort)SubnauticaCompatNetOperation.MermaidQuestDeliverRequest)) {
+                || packet?.Operation == (ushort)SubnauticaCompatNetOperation.MermaidQuestDeliverRequest
+                || packet?.Operation == (ushort)SubnauticaCompatNetOperation.MermaidGiftRequest
+                || packet?.Operation == (ushort)SubnauticaCompatNetOperation.CreatureKillRequest)) {
             SubnauticaCompatNetRuntime.HandleRequest(packet, playerData);
         }
         else if (AdapterId == WonderfulEraAdapterId
             && m_targetPackageLoaded
-            && packet?.Operation == (ushort)WonderfulEraCompatNetOperation.VehicleControlRequest) {
-            WonderfulEraCompatNetRuntime.HandleRequest(packet, playerData);
+            && (packet?.Operation == (ushort)WonderfulEraCompatNetOperation.VehicleControlRequest
+                || packet?.Operation == (ushort)WonderfulEraCompatNetOperation.ProjectileRequest
+                || packet?.Operation == (ushort)WonderfulEraCompatNetOperation.RiderDismountRequest)) {
+            if (packet.Operation == (ushort)WonderfulEraCompatNetOperation.ProjectileRequest) {
+                WonderfulEraProjectileRequest request = WonderfulEraCompatNetPayloads.ReadProjectileRequest(packet.Payload);
+                WonderfulEraCompatNetRuntime.HandleProjectileRequest(request, playerData);
+            }
+            else if (packet.Operation == (ushort)WonderfulEraCompatNetOperation.RiderDismountRequest) {
+                WonderfulEraCompatNetRuntime.HandleRiderDismountRequest(packet, playerData);
+            }
+            else {
+                WonderfulEraCompatNetRuntime.HandleRequest(packet, playerData);
+            }
+        }
+        else if (AdapterId == NeorxnaAdapterId
+            && m_targetPackageLoaded
+            && (packet?.Operation == (ushort)NeorxnaCompatNetOperation.SetHomeRequest
+                || packet?.Operation == (ushort)NeorxnaCompatNetOperation.DeleteHomeRequest
+                || packet?.Operation == (ushort)NeorxnaCompatNetOperation.SetBackPositionRequest)) {
+            NeorxnaCompatNetRuntime.HandleRequest(packet, playerData);
         }
     }
 
@@ -321,6 +466,15 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
                 packet.Payload,
                 ref m_lastAppliedIndustrialTankSequence);
         }
+        else if (AdapterId == IndustrialEra2AdapterId
+            && packet?.Operation == (ushort)IndustrialEra2CompatNetOperation.VoltStateSnapshot
+            && m_targetPackageLoaded
+            && NetworkManager.IsClientRunning
+            && !NetworkManager.IsServerRunning) {
+            IndustrialEra2CompatNetRuntime.ApplyVolt(
+                packet.Payload,
+                ref m_lastAppliedIndustrialVoltSequence);
+        }
         else if (AdapterId == SubnauticaAdapterId
             && packet?.Operation == (ushort)SubnauticaCompatNetOperation.MermaidStateSnapshot
             && m_targetPackageLoaded
@@ -329,6 +483,42 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
             SubnauticaCompatNetRuntime.Apply(
                 packet.Payload,
                 ref m_lastAppliedSubnauticaSequence);
+        }
+        else if (AdapterId == SubnauticaAdapterId
+            && packet?.Operation == (ushort)SubnauticaCompatNetOperation.AchievementStateSnapshot
+            && m_targetPackageLoaded
+            && NetworkManager.IsClientRunning
+            && !NetworkManager.IsServerRunning) {
+            SubnauticaCompatNetRuntime.ApplyAchievements(
+                packet.Payload,
+                ref m_lastAppliedSubnauticaAchievementSequence);
+        }
+        else if (AdapterId == SubnauticaAdapterId
+            && packet?.Operation == (ushort)SubnauticaCompatNetOperation.KrakenStateSnapshot
+            && m_targetPackageLoaded
+            && NetworkManager.IsClientRunning
+            && !NetworkManager.IsServerRunning) {
+            SubnauticaCompatNetRuntime.ApplyKraken(
+                packet.Payload,
+                ref m_lastAppliedSubnauticaKrakenSequence);
+        }
+        else if (AdapterId == NeorxnaAdapterId
+            && packet?.Operation == (ushort)NeorxnaCompatNetOperation.HomeStateSnapshot
+            && m_targetPackageLoaded
+            && NetworkManager.IsClientRunning
+            && !NetworkManager.IsServerRunning) {
+            NeorxnaCompatNetRuntime.Apply(
+                packet.Payload,
+                ref m_lastAppliedNeorxnaSequence);
+        }
+        else if (packet?.Operation == (ushort)CompatNetInventoryOperation.StateSnapshot
+            && m_targetPackageLoaded
+            && NetworkManager.IsClientRunning
+            && !NetworkManager.IsServerRunning) {
+            CompatNetInventoryRuntime.Apply(
+                packet.Payload,
+                AssemblyName,
+                ref m_lastAppliedInventorySequence);
         }
     }
 
@@ -356,6 +546,11 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
                 ref m_nextIndustrialTankFullRefreshTime,
                 ref m_industrialTankSequence,
                 m_lastIndustrialTankPayloads);
+            IndustrialEra2CompatNetRuntime.PublishVolt(
+                ref m_nextIndustrialVoltPublishTime,
+                ref m_nextIndustrialVoltFullRefreshTime,
+                ref m_industrialVoltSequence,
+                m_lastIndustrialVoltPayloads);
         }
 
         if (AdapterId == SubnauticaAdapterId && m_targetPackageLoaded) {
@@ -364,7 +559,34 @@ public sealed class ScopedUpdateGuardCompatNetAdapter : ICompatNetAdapter {
                 ref m_nextSubnauticaFullRefreshTime,
                 ref m_subnauticaSequence,
                 m_lastSubnauticaPayloads);
+            SubnauticaCompatNetRuntime.PublishAchievements(
+                ref m_nextSubnauticaAchievementPublishTime,
+                ref m_nextSubnauticaAchievementFullRefreshTime,
+                ref m_subnauticaAchievementSequence,
+                m_lastSubnauticaAchievementPayloads);
+            SubnauticaCompatNetRuntime.PublishKraken(
+                ref m_nextSubnauticaKrakenPublishTime,
+                ref m_nextSubnauticaKrakenFullRefreshTime,
+                ref m_subnauticaKrakenSequence,
+                ref m_lastSubnauticaKrakenPayload);
         }
+
+        if (AdapterId == NeorxnaAdapterId && m_targetPackageLoaded) {
+            NeorxnaCompatNetRuntime.Publish(
+                ref m_nextNeorxnaPublishTime,
+                ref m_nextNeorxnaFullRefreshTime,
+                ref m_neorxnaSequence,
+                m_lastNeorxnaPayloads);
+        }
+
+        CompatNetInventoryRuntime.Publish(
+            AdapterId,
+            AssemblyName,
+            m_targetPackageLoaded,
+            ref m_nextInventoryPublishTime,
+            ref m_nextInventoryFullRefreshTime,
+            ref m_inventorySequence,
+            m_lastInventoryPayloads);
     }
 
     private bool IsTargetAssembly(Assembly assembly) {

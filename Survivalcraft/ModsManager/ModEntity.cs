@@ -36,6 +36,9 @@ namespace Game {
 
         private ModAssemblyImage[] assemblyImages;
 
+        private readonly Dictionary<string, byte[]> m_modFileOverrides = new(StringComparer.Ordinal);
+        private readonly HashSet<string> m_removedModFiles = new(StringComparer.Ordinal);
+
         public string ResourcesMd5 = string.Empty;
 
         /// <summary>
@@ -82,7 +85,7 @@ namespace Game {
             foreach ((string filename, ZipArchiveEntry zipArchiveEntry) in ModFiles) {
                 if (Storage.GetExtension(filename) == extension) {
                     MemoryStream stream = new();
-                    ModArchive.ExtractFile(zipArchiveEntry, stream);
+                    ExtractModFile(zipArchiveEntry, stream);
                     stream.Position = 0L;
                     try {
                         action.Invoke(zipArchiveEntry.FilenameInZip, stream);
@@ -123,7 +126,7 @@ namespace Game {
             }
             if (ModFiles.TryGetValue(filename, out ZipArchiveEntry entry)) {
                 using MemoryStream ms = new();
-                ModArchive.ExtractFile(entry, ms);
+                ExtractModFile(entry, ms);
                 ms.Position = 0L;
                 try {
                     action?.Invoke(ms);
@@ -137,6 +140,94 @@ namespace Game {
         }
 
         public virtual bool GetAssetsFile(string filename, Action<Stream> action) => GetFile($"Assets/{filename}", action);
+
+        /// <summary>
+        ///     读取模组归档内当前可见的文件字节，优先返回已安装的内存覆盖。
+        /// </summary>
+        public bool TryGetModFileBytes(string filename, out byte[] bytes) {
+            string normalizedFilename = NormalizeModFilePath(filename);
+            if (m_modFileOverrides.TryGetValue(normalizedFilename, out byte[] replacement)) {
+                bytes = replacement.ToArray();
+                return true;
+            }
+            return TryGetOriginalModFileBytes(normalizedFilename, out bytes);
+        }
+
+        internal bool TryGetOriginalModFileBytes(string filename, out byte[] bytes) {
+            string normalizedFilename = NormalizeModFilePath(filename);
+            if (ModArchive == null || !ModFiles.TryGetValue(normalizedFilename, out ZipArchiveEntry entry)) {
+                bytes = null;
+                return false;
+            }
+            using MemoryStream stream = new();
+            ModArchive.ExtractFile(entry, stream);
+            bytes = stream.ToArray();
+            return true;
+        }
+
+        /// <summary>
+        ///     原子安装模组文件的内存覆盖，不会改写原始 .scmod 文件。
+        /// </summary>
+        public void SetModFileOverrides(IReadOnlyDictionary<string, byte[]> replacements) {
+            ApplyModFileChanges(replacements, Array.Empty<string>());
+        }
+
+        /// <summary>
+        ///     原子安装模组文件覆盖并移除指定资源，不会改写原始 .scmod 文件。
+        /// </summary>
+        public void ApplyModFileChanges(
+            IReadOnlyDictionary<string, byte[]> replacements,
+            IReadOnlyCollection<string> deletions) {
+            ArgumentNullException.ThrowIfNull(replacements);
+            ArgumentNullException.ThrowIfNull(deletions);
+            Dictionary<string, byte[]> staged = new(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, byte[]> replacement in replacements) {
+                string normalizedFilename = NormalizeModFilePath(replacement.Key);
+                if (replacement.Value == null || !ModFiles.ContainsKey(normalizedFilename)) {
+                    throw new InvalidDataException($"Invalid mod file override [{replacement.Key}].");
+                }
+                staged.Add(normalizedFilename, replacement.Value.ToArray());
+            }
+            HashSet<string> stagedDeletions = new(StringComparer.Ordinal);
+            foreach (string deletion in deletions) {
+                string normalizedFilename = NormalizeModFilePath(deletion);
+                if (string.IsNullOrWhiteSpace(normalizedFilename)
+                    || !ModFiles.ContainsKey(normalizedFilename)
+                    || staged.ContainsKey(normalizedFilename)) {
+                    throw new InvalidDataException($"Invalid mod file deletion [{deletion}].");
+                }
+                stagedDeletions.Add(normalizedFilename);
+            }
+
+            foreach (KeyValuePair<string, byte[]> replacement in staged) {
+                m_modFileOverrides[replacement.Key] = replacement.Value;
+            }
+            foreach (string deletion in stagedDeletions) {
+                m_modFileOverrides.Remove(deletion);
+                m_removedModFiles.Add(deletion);
+                ModFiles.Remove(deletion);
+            }
+        }
+
+        /// <summary>
+        ///     获取已覆盖或移除的 Assets 路径，用于重建内容资源表并刷新缓存。
+        /// </summary>
+        public IReadOnlyList<string> GetOverriddenAssetPaths() => m_modFileOverrides.Keys
+            .Concat(m_removedModFiles)
+            .Where(filename => filename.StartsWith("Assets/", StringComparison.Ordinal))
+            .Select(filename => filename.Substring("Assets/".Length))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        private static string NormalizeModFilePath(string filename) => filename?.Replace((char)92, '/');
+
+        private void ExtractModFile(ZipArchiveEntry entry, Stream destination) {
+            if (m_modFileOverrides.TryGetValue(entry.FilenameInZip, out byte[] replacement)) {
+                destination.Write(replacement, 0, replacement.Length);
+                return;
+            }
+            ModArchive.ExtractFile(entry, destination);
+        }
 
         /// <summary>
         ///     初始化语言包
@@ -265,7 +356,7 @@ namespace Game {
                 if (filename.StartsWith("Assets/")) {
                     MemoryStream memoryStream = new();
                     ContentInfo contentInfo = new(filename.Substring(7));
-                    ModArchive.ExtractFile(zipArchiveEntry, memoryStream);
+                    ExtractModFile(zipArchiveEntry, memoryStream);
                     contentInfo.SetContentStream(memoryStream);
                     ContentManager.Add(contentInfo);
                 }
@@ -373,7 +464,11 @@ namespace Game {
                     if (!filename.StartsWith("Assets/")) {
                         string fileNameWithoutDirectory = Storage.GetFileName(filename);
                         if (!InvalidDllNames.Contains(fileNameWithoutDirectory)) {
-                            assemblies.Add(new ModAssemblyImage(this, filename, ModsManager.StreamToBytes(stream)));
+                            byte[] assemblyBytes = ModsManager.StreamToBytes(stream);
+                            byte[] originalBytes = TryGetOriginalModFileBytes(filename, out byte[] archiveBytes)
+                                ? archiveBytes
+                                : assemblyBytes;
+                            assemblies.Add(new ModAssemblyImage(this, filename, originalBytes, assemblyBytes));
                         }
                     }
                 }

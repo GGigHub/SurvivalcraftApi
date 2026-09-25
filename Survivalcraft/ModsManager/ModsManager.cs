@@ -1,4 +1,4 @@
-﻿// Game.ModsManager
+// Game.ModsManager
 
 using System.Collections.Frozen;
 using System.IO.Compression;
@@ -17,9 +17,9 @@ using XmlUtilities;
 using ZipArchive = Game.ZipArchive;
 public static class ModsManager {
     public static string ModSuffix = ".scmod";
-    public static string APIVersionString = "1.9.3.1";
+    public static string APIVersionString = "1.9.3.2";
     public static string ShortAPIVersionString = "1.9";
-    public static NuGetVersion APINuGetVersion = new(1, 9, 3, 1);
+    public static NuGetVersion APINuGetVersion = new(1, 9, 3, 2);
     public static string GameVersion = "2.4.0.0";
     public static string ShortGameVersion = "2.4";
     public static string ReportLink = "https://gitee.com/SC-SPM/SurvivalcraftApi/issues";

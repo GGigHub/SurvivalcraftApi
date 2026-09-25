@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Globalization;
 using System.Reflection;
 using Engine;
 using Game.Network;
@@ -13,11 +15,117 @@ namespace Game;
 public static class IndustrialEra2CompatNetRuntime {
     public const string TargetAssemblyName = "SCIENEW.dll";
 
+    private const string VoltSubsystemTypeName = "SCIENEW.VoltNet.SubsystemVoltNet";
     private const double PublishInterval = 0.25;
     private const double FullRefreshInterval = 5.0;
     private const string TankInterfaceName = "SCIENEW.ITank";
     private const BindingFlags InstanceFlags =
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+    public static void PublishVolt(
+        ref double nextPublishTime,
+        ref double nextFullRefreshTime,
+        ref int sequence,
+        Dictionary<string, byte[]> lastPayloads) {
+        if (!NetworkManager.IsServerRunning || GameManager.Project == null) {
+            return;
+        }
+
+        double now = Time.RealTime;
+        if (now < nextPublishTime) {
+            return;
+        }
+        nextPublishTime = now + PublishInterval;
+        bool fullRefresh = now >= nextFullRefreshTime;
+        if (fullRefresh) {
+            nextFullRefreshTime = now + FullRefreshInterval;
+        }
+
+        IDictionary elements = GetVoltElements();
+        if (elements == null) {
+            return;
+        }
+
+        List<IndustrialEra2VoltElementState> changed = [];
+        foreach (DictionaryEntry entry in elements) {
+            if (entry.Key is not Point3 position
+                || !TryCaptureVoltElement(position, entry.Value, out IndustrialEra2VoltElementState state)) {
+                continue;
+            }
+
+            byte[] statePayload = IndustrialEra2VoltPayloads.Write(
+                new IndustrialEra2VoltStateBatch {
+                    Sequence = 0,
+                    FullRefresh = false,
+                    Records = [state]
+                });
+            string key = $"{position.X}:{position.Y}:{position.Z}";
+            if (fullRefresh
+                || !lastPayloads.TryGetValue(key, out byte[] previous)
+                || !previous.AsSpan().SequenceEqual(statePayload)) {
+                lastPayloads[key] = statePayload;
+                changed.Add(state);
+                if (changed.Count >= IndustrialEra2VoltPayloads.MaximumRecordsPerBatch) {
+                    break;
+                }
+            }
+        }
+
+        if (changed.Count == 0) {
+            return;
+        }
+
+        sequence = NextSequence(sequence);
+        QueueVoltBatches(changed, sequence, fullRefresh);
+    }
+
+    public static void ApplyVolt(byte[] payload, ref int lastAppliedSequence) {
+        IndustrialEra2VoltStateBatch batch;
+        try {
+            batch = IndustrialEra2VoltPayloads.Read(payload);
+        }
+        catch {
+            return;
+        }
+
+        if (batch.Sequence <= 0
+            || (lastAppliedSequence != 0
+                && !IsSequenceAtLeast(batch.Sequence, lastAppliedSequence))
+            || batch.Records.Count > IndustrialEra2VoltPayloads.MaximumRecordsPerBatch) {
+            return;
+        }
+
+        if (IsSequenceNewer(batch.Sequence, lastAppliedSequence)) {
+            lastAppliedSequence = batch.Sequence;
+        }
+
+        IDictionary elements = GetVoltElements();
+        if (elements == null) {
+            return;
+        }
+
+        foreach (IndustrialEra2VoltElementState state in batch.Records) {
+            if (state == null
+                || string.IsNullOrWhiteSpace(state.ElementTypeName)
+                || state.ElementTypeName.Length > IndustrialEra2VoltPayloads.MaximumElementTypeNameLength
+                || !elements.Contains(state.Position)) {
+                continue;
+            }
+
+            object element = elements[state.Position];
+            if (element == null
+                || !string.Equals(
+                    element.GetType().FullName,
+                    state.ElementTypeName,
+                    StringComparison.Ordinal)) {
+                continue;
+            }
+
+            foreach (CompatNetStateValue value in state.Values) {
+                ApplyVoltValue(element, value);
+            }
+        }
+    }
 
     public static void Publish(
         ref double nextPublishTime,
@@ -123,6 +231,311 @@ public static class IndustrialEra2CompatNetRuntime {
             if (component != null) {
                 ApplyState(component, state);
             }
+        }
+    }
+
+    private static IDictionary GetVoltElements() {
+        object subsystem = GameManager.Project?.Subsystems?.FirstOrDefault(candidate =>
+            candidate != null
+            && string.Equals(
+                candidate.GetType().FullName,
+                VoltSubsystemTypeName,
+                StringComparison.Ordinal));
+        return GetMemberValue(subsystem, "m_elements") as IDictionary;
+    }
+
+    private static bool TryCaptureVoltElement(
+        Point3 position,
+        object element,
+        out IndustrialEra2VoltElementState state) {
+        state = new IndustrialEra2VoltElementState {
+            Position = position,
+            ElementTypeName = element?.GetType().FullName ?? string.Empty
+        };
+        if (element == null
+            || state.ElementTypeName.Length == 0
+            || state.ElementTypeName.Length > IndustrialEra2VoltPayloads.MaximumElementTypeNameLength) {
+            return false;
+        }
+
+        HashSet<string> capturedNames = [];
+        for (Type current = element.GetType();
+             current != null && current != typeof(object);
+             current = current.BaseType) {
+            foreach (FieldInfo field in current.GetFields(
+                         BindingFlags.Instance
+                         | BindingFlags.Public
+                         | BindingFlags.NonPublic
+                         | BindingFlags.DeclaredOnly)) {
+                if (state.Values.Count >= IndustrialEra2VoltPayloads.MaximumValuesPerElement
+                    || capturedNames.Contains(field.Name)
+                    || !IsTargetAssembly(field.DeclaringType?.Assembly)
+                    || !IsVoltStateMemberName(field.Name)
+                    || field.IsStatic
+                    || field.FieldType.IsPointer
+                    || field.FieldType.IsByRef
+                    || !TryReadVoltField(field, element, out CompatNetStateValue value)) {
+                    continue;
+                }
+
+                state.Values.Add(value);
+                capturedNames.Add(value.Name);
+            }
+
+            foreach (PropertyInfo property in current.GetProperties(
+                         BindingFlags.Instance
+                         | BindingFlags.Public
+                         | BindingFlags.NonPublic
+                         | BindingFlags.DeclaredOnly)) {
+                if (state.Values.Count >= IndustrialEra2VoltPayloads.MaximumValuesPerElement
+                    || capturedNames.Contains(property.Name)
+                    || property.GetIndexParameters().Length != 0
+                    || !IsTargetAssembly(property.DeclaringType?.Assembly)
+                    || !IsVoltStateMemberName(property.Name)
+                    || property.GetMethod == null
+                    || !TryReadVoltProperty(property, element, out CompatNetStateValue value)) {
+                    continue;
+                }
+
+                state.Values.Add(value);
+                capturedNames.Add(value.Name);
+            }
+        }
+
+        return state.Values.Count > 0;
+    }
+
+    private static bool IsVoltStateMemberName(string name) {
+        if (string.IsNullOrWhiteSpace(name)
+            || name.Contains("BackingField", StringComparison.Ordinal)
+            || string.Equals(name, "Position", StringComparison.Ordinal)
+            || string.Equals(name, "BlockValue", StringComparison.Ordinal)
+            || string.Equals(name, "SubsystemVoltNet", StringComparison.Ordinal)
+            || string.Equals(name, "SubsystemTerrain", StringComparison.Ordinal)
+            || string.Equals(name, "m_standardVoltage", StringComparison.Ordinal)
+            || string.Equals(name, "m_standardPower", StringComparison.Ordinal)
+            || string.Equals(name, "m_belongingConnections", StringComparison.Ordinal)) {
+            return false;
+        }
+        return true;
+    }
+
+    private static bool TryReadVoltValue(
+        string name,
+        object raw,
+        out CompatNetStateValue value) {
+        value = new CompatNetStateValue { Name = name };
+        switch (raw) {
+            case bool boolean:
+                value.Kind = CompatNetStateValueKind.Boolean;
+                value.BooleanValue = boolean;
+                return true;
+            case byte @byte:
+                value.Kind = CompatNetStateValueKind.Byte;
+                value.ByteValue = @byte;
+                return true;
+            case sbyte or short or ushort or uint or int:
+                try {
+                    value.Kind = CompatNetStateValueKind.Integer;
+                    value.IntegerValue = Convert.ToInt32(raw, CultureInfo.InvariantCulture);
+                    return true;
+                }
+                catch {
+                    return false;
+                }
+            case Enum enumValue:
+                try {
+                    value.Kind = CompatNetStateValueKind.Integer;
+                    value.IntegerValue = Convert.ToInt32(enumValue, CultureInfo.InvariantCulture);
+                    return true;
+                }
+                catch {
+                    return false;
+                }
+            case float single when float.IsFinite(single):
+                value.Kind = CompatNetStateValueKind.Single;
+                value.SingleValue = single;
+                return true;
+            case double @double when double.IsFinite(@double):
+                value.Kind = CompatNetStateValueKind.Double;
+                value.DoubleValue = @double;
+                return true;
+            case Point3 point:
+                value.Kind = CompatNetStateValueKind.Point3;
+                value.Point3Value = point;
+                return true;
+            case Vector3 vector:
+                value.Kind = CompatNetStateValueKind.Vector3;
+                value.Vector3Value = vector;
+                return true;
+            case Quaternion quaternion:
+                value.Kind = CompatNetStateValueKind.Quaternion;
+                value.QuaternionValue = quaternion;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool TryReadVoltField(
+        FieldInfo field,
+        object instance,
+        out CompatNetStateValue value) {
+        try {
+            return TryReadVoltValue(field.Name, field.GetValue(instance), out value);
+        }
+        catch {
+            value = null;
+            return false;
+        }
+    }
+
+    private static bool TryReadVoltProperty(
+        PropertyInfo property,
+        object instance,
+        out CompatNetStateValue value) {
+        try {
+            return TryReadVoltValue(property.Name, property.GetValue(instance), out value);
+        }
+        catch {
+            value = null;
+            return false;
+        }
+    }
+
+    private static void ApplyVoltValue(object element, CompatNetStateValue value) {
+        if (element == null
+            || value == null
+            || string.IsNullOrWhiteSpace(value.Name)
+            || value.Name.Length > IndustrialEra2VoltPayloads.MaximumValueNameLength) {
+            return;
+        }
+
+        Type type = element.GetType();
+        FieldInfo field = FindField(type, value.Name);
+        if (field != null
+            && !field.IsStatic
+            && !field.IsInitOnly
+            && TryConvertVoltValue(value, field.FieldType, out object fieldValue)) {
+            try {
+                field.SetValue(element, fieldValue);
+            }
+            catch {
+            }
+            return;
+        }
+
+        PropertyInfo property = FindProperty(type, value.Name);
+        if (property?.CanWrite != true
+            || !TryConvertVoltValue(value, property.PropertyType, out object propertyValue)) {
+            return;
+        }
+
+        try {
+            property.SetValue(element, propertyValue);
+        }
+        catch {
+        }
+    }
+
+    private static bool TryConvertVoltValue(
+        CompatNetStateValue value,
+        Type targetType,
+        out object converted) {
+        converted = null;
+        try {
+            if (value.Kind == CompatNetStateValueKind.Boolean && targetType == typeof(bool)) {
+                converted = value.BooleanValue;
+                return true;
+            }
+            if (value.Kind == CompatNetStateValueKind.Byte && targetType == typeof(byte)) {
+                converted = value.ByteValue;
+                return true;
+            }
+            if (value.Kind == CompatNetStateValueKind.Integer) {
+                if (targetType.IsEnum) {
+                    converted = Enum.ToObject(targetType, value.IntegerValue);
+                    return true;
+                }
+                if (targetType == typeof(sbyte)
+                    || targetType == typeof(short)
+                    || targetType == typeof(ushort)
+                    || targetType == typeof(int)
+                    || targetType == typeof(uint)) {
+                    converted = Convert.ChangeType(value.IntegerValue, targetType, CultureInfo.InvariantCulture);
+                    return true;
+                }
+            }
+            if (value.Kind == CompatNetStateValueKind.Single && targetType == typeof(float)) {
+                converted = value.SingleValue;
+                return true;
+            }
+            if (value.Kind == CompatNetStateValueKind.Double && targetType == typeof(double)) {
+                converted = value.DoubleValue;
+                return true;
+            }
+            if (value.Kind == CompatNetStateValueKind.Point3 && targetType == typeof(Point3)) {
+                converted = value.Point3Value;
+                return true;
+            }
+            if (value.Kind == CompatNetStateValueKind.Vector3 && targetType == typeof(Vector3)) {
+                converted = value.Vector3Value;
+                return true;
+            }
+            if (value.Kind == CompatNetStateValueKind.Quaternion && targetType == typeof(Quaternion)) {
+                converted = value.QuaternionValue;
+                return true;
+            }
+        }
+        catch {
+        }
+        return false;
+    }
+
+    private static void QueueVoltBatches(
+        List<IndustrialEra2VoltElementState> records,
+        int sequence,
+        bool fullRefresh) {
+        List<IndustrialEra2VoltElementState> current = [];
+        foreach (IndustrialEra2VoltElementState record in records) {
+            current.Add(record);
+            byte[] payload = IndustrialEra2VoltPayloads.Write(
+                new IndustrialEra2VoltStateBatch {
+                    Sequence = sequence,
+                    FullRefresh = fullRefresh,
+                    Records = current
+                });
+            if (payload.Length <= CompatNetPacket.MaximumPayloadBytes) {
+                continue;
+            }
+
+            current.RemoveAt(current.Count - 1);
+            if (current.Count > 0) {
+                QueueVoltBatch(current, sequence, fullRefresh);
+            }
+            current = [record];
+        }
+
+        if (current.Count > 0) {
+            QueueVoltBatch(current, sequence, fullRefresh);
+        }
+    }
+
+    private static void QueueVoltBatch(
+        List<IndustrialEra2VoltElementState> records,
+        int sequence,
+        bool fullRefresh) {
+        byte[] payload = IndustrialEra2VoltPayloads.Write(
+            new IndustrialEra2VoltStateBatch {
+                Sequence = sequence,
+                FullRefresh = fullRefresh,
+                Records = records
+            });
+        if (payload.Length <= CompatNetPacket.MaximumPayloadBytes) {
+            CompatNetCore.QueueBroadcast(
+                ScopedUpdateGuardCompatNetAdapter.IndustrialEra2AdapterId,
+                (ushort)IndustrialEra2CompatNetOperation.VoltStateSnapshot,
+                payload);
         }
     }
 
@@ -349,6 +762,33 @@ public static class IndustrialEra2CompatNetRuntime {
             }
             return;
         }
+    }
+
+    private static object GetMemberValue(object instance, string name) {
+        if (instance == null) {
+            return null;
+        }
+
+        FieldInfo field = FindField(instance.GetType(), name);
+        try {
+            if (field != null) {
+                return field.GetValue(instance);
+            }
+            return FindProperty(instance.GetType(), name)?.GetValue(instance);
+        }
+        catch {
+            return null;
+        }
+    }
+
+    private static FieldInfo FindField(Type type, string name) {
+        for (Type current = type; current != null && current != typeof(object); current = current.BaseType) {
+            FieldInfo field = current.GetField(name, InstanceFlags | BindingFlags.DeclaredOnly);
+            if (field != null) {
+                return field;
+            }
+        }
+        return null;
     }
 
     private static PropertyInfo FindProperty(Type type, string name) {

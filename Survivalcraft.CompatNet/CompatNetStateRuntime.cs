@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using Engine;
 using GameEntitySystem;
@@ -17,12 +18,12 @@ public static class CompatNetStateRuntime {
     private const double FullRefreshInterval = 5.0;
 
     private static readonly string[] s_allowedTokens = [
-        "active", "affection", "air", "amount", "broken", "channel", "count",
-        "cooldown", "current", "damage", "direction", "drilling", "duration",
-        "energy", "enabled", "fuel", "health", "index", "level", "loaded",
-        "mode", "oxygen", "power", "preparing", "pressure", "process",
-        "progress", "quest", "rotation", "speed", "start", "stamina", "state", "target",
-        "tank", "temperature", "timer", "turn", "velocity", "voltage", "work"
+        "active", "achievement", "affection", "air", "amount", "ammo", "broken", "channel", "charge", "count",
+        "cooldown", "completed", "current", "damage", "direction", "drilling", "duration",
+        "energy", "enabled", "experience", "fire", "fuel", "health", "hunger", "index", "infection", "level", "loaded",
+        "mode", "mount", "oxygen", "poison", "power", "preparing", "pressure", "process",
+        "progress", "quest", "reload", "remaining", "rotation", "running", "smelt", "souls", "speed", "stamina", "state", "target",
+        "tank", "temperature", "thirst", "timer", "turn", "vehicle", "velocity", "voltage", "water", "work"
     ];
 
     private static readonly string[] s_blockedTokens = [
@@ -93,6 +94,32 @@ public static class CompatNetStateRuntime {
             }
         }
 
+        if ((scope == ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer
+                || scope == ScopedUpdateGuardScope.AllEntities)
+            && changed.Count < MaximumRecordsPerPublish) {
+            foreach (Subsystem subsystem in GameManager.Project.Subsystems) {
+                if (!IsTargetSubsystem(subsystem, assemblyName)
+                    || !TryCaptureSubsystem(subsystem, assemblyName, out CompatNetStateRecord record)) {
+                    continue;
+                }
+
+                byte[] recordPayload = CompatNetStatePayloads.Write(new CompatNetStateBatch {
+                    Sequence = 0,
+                    Records = [record]
+                });
+                string key = $"subsystem:{record.ComponentTypeName}";
+                if (fullRefresh
+                    || !lastPayloads.TryGetValue(key, out byte[] previous)
+                    || !previous.AsSpan().SequenceEqual(recordPayload)) {
+                    lastPayloads[key] = recordPayload;
+                    changed.Add(record);
+                    if (changed.Count >= MaximumRecordsPerPublish) {
+                        break;
+                    }
+                }
+            }
+        }
+
         if (changed.Count == 0) {
             return;
         }
@@ -118,6 +145,30 @@ public static class CompatNetStateRuntime {
         }
 
         foreach (CompatNetStateRecord record in batch.Records) {
+            if (record.IsSubsystem) {
+                if (scope != ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer
+                    && scope != ScopedUpdateGuardScope.AllEntities
+                    || string.IsNullOrWhiteSpace(record.ComponentTypeName)) {
+                    continue;
+                }
+
+                Subsystem subsystem = GameManager.Project?.Subsystems?.FirstOrDefault(candidate =>
+                    candidate != null
+                    && IsTargetSubsystem(candidate, assemblyName)
+                    && string.Equals(
+                        candidate.GetType().FullName,
+                        record.ComponentTypeName,
+                        StringComparison.Ordinal));
+                if (subsystem == null) {
+                    continue;
+                }
+
+                foreach (CompatNetStateValue value in record.Values) {
+                    ApplyValue(subsystem, assemblyName, value);
+                }
+                continue;
+            }
+
             if (record.EntityId <= 0
                 || string.IsNullOrWhiteSpace(record.ComponentTypeName)) {
                 continue;
@@ -215,6 +266,7 @@ public static class CompatNetStateRuntime {
             record.EntityPosition = frame.Position;
         }
 
+        HashSet<string> capturedNames = [];
         for (Type current = component.GetType();
              current != null && current != typeof(object);
              current = current.BaseType) {
@@ -231,6 +283,24 @@ public static class CompatNetStateRuntime {
                 }
 
                 record.Values.Add(value);
+                capturedNames.Add(value.Name);
+            }
+
+            foreach (PropertyInfo property in current.GetProperties(
+                         BindingFlags.Instance
+                         | BindingFlags.Public
+                         | BindingFlags.NonPublic
+                         | BindingFlags.DeclaredOnly)) {
+                if (record.Values.Count >= MaximumFieldsPerComponent
+                    || capturedNames.Contains(property.Name)
+                    || !IsAssemblyMatch(property.DeclaringType?.Assembly, assemblyName)
+                    || !IsAllowedProperty(property)
+                    || !TryReadValue(property, component, out CompatNetStateValue value)) {
+                    continue;
+                }
+
+                record.Values.Add(value);
+                capturedNames.Add(value.Name);
             }
         }
 
@@ -323,7 +393,79 @@ public static class CompatNetStateRuntime {
             && !name.Contains("Overlay", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static bool IsTargetSubsystem(Subsystem subsystem, string assemblyName) {
+        if (subsystem == null || !IsAssemblyMatch(subsystem.GetType().Assembly, assemblyName)) {
+            return false;
+        }
+
+        string name = subsystem.GetType().Name;
+        return !name.Contains("Gui", StringComparison.OrdinalIgnoreCase)
+            && !name.Contains("Model", StringComparison.OrdinalIgnoreCase)
+            && !name.Contains("Overlay", StringComparison.OrdinalIgnoreCase)
+            && !name.Contains("Renderer", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryCaptureSubsystem(
+        Subsystem subsystem,
+        string assemblyName,
+        out CompatNetStateRecord record) {
+        record = new CompatNetStateRecord {
+            EntityId = 0,
+            IsSubsystem = true,
+            ComponentTypeName = subsystem?.GetType().FullName ?? string.Empty
+        };
+        if (!IsTargetSubsystem(subsystem, assemblyName)) {
+            return false;
+        }
+
+        HashSet<string> capturedNames = [];
+        for (Type current = subsystem.GetType();
+             current != null && current != typeof(object);
+             current = current.BaseType) {
+            foreach (FieldInfo field in current.GetFields(
+                         BindingFlags.Instance
+                         | BindingFlags.Public
+                         | BindingFlags.NonPublic
+                         | BindingFlags.DeclaredOnly)) {
+                if (record.Values.Count >= MaximumFieldsPerComponent
+                    || capturedNames.Contains(field.Name)
+                    || !IsAssemblyMatch(field.DeclaringType?.Assembly, assemblyName)
+                    || !IsAllowedField(field)
+                    || !TryReadValue(field, subsystem, out CompatNetStateValue value)) {
+                    continue;
+                }
+
+                record.Values.Add(value);
+                capturedNames.Add(value.Name);
+            }
+
+            foreach (PropertyInfo property in current.GetProperties(
+                         BindingFlags.Instance
+                         | BindingFlags.Public
+                         | BindingFlags.NonPublic
+                         | BindingFlags.DeclaredOnly)) {
+                if (record.Values.Count >= MaximumFieldsPerComponent
+                    || capturedNames.Contains(property.Name)
+                    || !IsAssemblyMatch(property.DeclaringType?.Assembly, assemblyName)
+                    || !IsAllowedProperty(property)
+                    || !TryReadValue(property, subsystem, out CompatNetStateValue value)) {
+                    continue;
+                }
+
+                record.Values.Add(value);
+                capturedNames.Add(value.Name);
+            }
+        }
+
+        return !string.IsNullOrEmpty(record.ComponentTypeName)
+            && record.Values.Count > 0;
+    }
+
     private static bool MatchesScope(Entity entity, ScopedUpdateGuardScope scope, bool isClient) {
+        if (entity == null) {
+            return false;
+        }
+
         ComponentPlayer player = entity.FindComponent<ComponentPlayer>();
         return scope switch {
             ScopedUpdateGuardScope.RemotePlayerOnly =>
@@ -332,6 +474,9 @@ public static class CompatNetStateRuntime {
                 entity.FindComponent<ComponentBody>() != null
                 && (!isClient || player?.PlayerData?.IsMainPlayer != true),
             ScopedUpdateGuardScope.AllNonPlayerEntities => player == null,
+            ScopedUpdateGuardScope.AllEntitiesExceptLocalPlayer =>
+                player?.PlayerData?.IsMainPlayer != true,
+            ScopedUpdateGuardScope.AllEntities => true,
             _ => false
         };
     }
@@ -376,11 +521,7 @@ public static class CompatNetStateRuntime {
             return false;
         }
 
-        string name = field.Name.ToLowerInvariant();
-        if (s_blockedTokens.Any(name.Contains)) {
-            return false;
-        }
-        return s_allowedTokens.Any(name.Contains);
+        return IsAllowedName(field.Name);
     }
 
     private static bool TryReadValue(
@@ -390,50 +531,93 @@ public static class CompatNetStateRuntime {
         value = new CompatNetStateValue { Name = field.Name };
         try {
             object raw = field.GetValue(instance);
-            switch (raw) {
-                case bool boolean:
-                    value.Kind = CompatNetStateValueKind.Boolean;
-                    value.BooleanValue = boolean;
-                    return true;
-                case byte @byte:
-                    value.Kind = CompatNetStateValueKind.Byte;
-                    value.ByteValue = @byte;
-                    return true;
-                case int integer:
-                    value.Kind = CompatNetStateValueKind.Integer;
-                    value.IntegerValue = integer;
-                    return true;
-                case float single when float.IsFinite(single):
-                    value.Kind = CompatNetStateValueKind.Single;
-                    value.SingleValue = single;
-                    return true;
-                case double @double when double.IsFinite(@double):
-                    value.Kind = CompatNetStateValueKind.Double;
-                    value.DoubleValue = @double;
-                    return true;
-                case Point3 point:
-                    value.Kind = CompatNetStateValueKind.Point3;
-                    value.Point3Value = point;
-                    return true;
-                case Vector3 vector:
-                    value.Kind = CompatNetStateValueKind.Vector3;
-                    value.Vector3Value = vector;
-                    return true;
-                case Quaternion quaternion:
-                    value.Kind = CompatNetStateValueKind.Quaternion;
-                    value.QuaternionValue = quaternion;
-                    return true;
-                default:
-                    return false;
-            }
+            return TryCreateValue(value.Name, raw, ref value);
         }
         catch {
             return false;
         }
     }
 
+    private static bool TryReadValue(
+        PropertyInfo property,
+        object instance,
+        out CompatNetStateValue value) {
+        value = new CompatNetStateValue { Name = property.Name };
+        try {
+            object raw = property.GetValue(instance);
+            return TryCreateValue(value.Name, raw, ref value);
+        }
+        catch {
+            return false;
+        }
+    }
+
+    private static bool TryCreateValue(
+        string name,
+        object raw,
+        ref CompatNetStateValue value) {
+        switch (raw) {
+            case bool boolean:
+                value.Kind = CompatNetStateValueKind.Boolean;
+                value.BooleanValue = boolean;
+                return true;
+            case byte @byte:
+                value.Kind = CompatNetStateValueKind.Byte;
+                value.ByteValue = @byte;
+                return true;
+            case sbyte or short or ushort or int or uint or long or ulong:
+                try {
+                    long integer = Convert.ToInt64(raw, CultureInfo.InvariantCulture);
+                    if (integer < int.MinValue || integer > int.MaxValue) {
+                        return false;
+                    }
+                    value.Kind = CompatNetStateValueKind.Integer;
+                    value.IntegerValue = (int)integer;
+                    return true;
+                }
+                catch {
+                    return false;
+                }
+            case Enum enumValue:
+                try {
+                    long integer = Convert.ToInt64(enumValue, CultureInfo.InvariantCulture);
+                    if (integer < int.MinValue || integer > int.MaxValue) {
+                        return false;
+                    }
+                    value.Kind = CompatNetStateValueKind.Integer;
+                    value.IntegerValue = (int)integer;
+                    return true;
+                }
+                catch {
+                    return false;
+                }
+            case float single when float.IsFinite(single):
+                value.Kind = CompatNetStateValueKind.Single;
+                value.SingleValue = single;
+                return true;
+            case double @double when double.IsFinite(@double):
+                value.Kind = CompatNetStateValueKind.Double;
+                value.DoubleValue = @double;
+                return true;
+            case Point3 point:
+                value.Kind = CompatNetStateValueKind.Point3;
+                value.Point3Value = point;
+                return true;
+            case Vector3 vector:
+                value.Kind = CompatNetStateValueKind.Vector3;
+                value.Vector3Value = vector;
+                return true;
+            case Quaternion quaternion:
+                value.Kind = CompatNetStateValueKind.Quaternion;
+                value.QuaternionValue = quaternion;
+                return true;
+            default:
+                return false;
+        }
+    }
+
     private static void ApplyValue(
-        Component component,
+        object instance,
         string assemblyName,
         CompatNetStateValue value) {
         if (value == null || !IsSafeValueName(value.Name)) {
@@ -441,7 +625,8 @@ public static class CompatNetStateRuntime {
         }
 
         FieldInfo field = null;
-        for (Type current = component.GetType();
+        PropertyInfo property = null;
+        for (Type current = instance?.GetType();
              current != null
              && current != typeof(object)
              && IsAssemblyMatch(current.Assembly, assemblyName);
@@ -452,11 +637,20 @@ public static class CompatNetStateRuntime {
             if (field != null) {
                 break;
             }
+
+            property = current.GetProperty(
+                value.Name,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            if (property != null) {
+                break;
+            }
         }
 
-        if (field == null
-            || !IsAssemblyMatch(field.DeclaringType?.Assembly, assemblyName)
-            || !IsAllowedField(field)) {
+        if ((field == null && property == null)
+            || !IsAssemblyMatch(
+                field?.DeclaringType?.Assembly ?? property?.DeclaringType?.Assembly,
+                assemblyName)
+            || (field != null ? !IsAllowedField(field) : !IsAllowedProperty(property))) {
             return;
         }
 
@@ -472,8 +666,14 @@ public static class CompatNetStateRuntime {
                 CompatNetStateValueKind.Quaternion => value.QuaternionValue,
                 _ => null
             };
-            if (raw != null && field.FieldType == raw.GetType()) {
-                field.SetValue(component, raw);
+            Type targetType = field?.FieldType ?? property?.PropertyType;
+            if (raw != null && TryConvertValue(raw, targetType, out object converted)) {
+                if (field != null) {
+                    field.SetValue(instance, converted);
+                }
+                else if (property?.SetMethod != null) {
+                    property.SetValue(instance, converted);
+                }
             }
         }
         catch {
@@ -486,6 +686,63 @@ public static class CompatNetStateRuntime {
         if (string.IsNullOrEmpty(name)) {
             return false;
         }
+        string lowered = name.ToLowerInvariant();
+        return !s_blockedTokens.Any(lowered.Contains) && s_allowedTokens.Any(lowered.Contains);
+    }
+
+    private static bool TryConvertValue(
+        object raw,
+        Type targetType,
+        out object converted) {
+        converted = null;
+        if (raw == null || targetType == null) {
+            return false;
+        }
+
+        if (targetType == raw.GetType()) {
+            converted = raw;
+            return true;
+        }
+
+        try {
+            if (targetType.IsEnum && raw is int integer) {
+                converted = Enum.ToObject(targetType, integer);
+                return true;
+            }
+
+            Type nullableType = Nullable.GetUnderlyingType(targetType);
+            if (nullableType != null) {
+                targetType = nullableType;
+            }
+
+            if (raw is int or byte or float or double
+                && (targetType.IsPrimitive || targetType == typeof(decimal))) {
+                converted = Convert.ChangeType(raw, targetType, CultureInfo.InvariantCulture);
+                return true;
+            }
+        }
+        catch {
+            // Ignore values that are outside the target type's range.
+        }
+        return false;
+    }
+
+    private static bool IsAllowedProperty(PropertyInfo property) {
+        MethodInfo getter = property?.GetMethod;
+        MethodInfo setter = property?.SetMethod;
+        return getter != null
+            && setter != null
+            && !getter.IsStatic
+            && !setter.IsStatic
+            && property.GetIndexParameters().Length == 0
+            && IsAllowedName(property.Name);
+    }
+
+    private static bool IsAllowedName(string name) {
+        if (string.IsNullOrEmpty(name)) {
+            return false;
+        }
+
         string lowered = name.ToLowerInvariant();
         return !s_blockedTokens.Any(lowered.Contains) && s_allowedTokens.Any(lowered.Contains);
     }

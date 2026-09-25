@@ -31,6 +31,12 @@ public static class SubnauticaCompatNetPatcher {
         MethodReference deliveryBridge = ResolveBridge(
             module,
             nameof(SubnauticaCompatNetRuntime.QueueQuestDelivery));
+        MethodReference giftBridge = ResolveBridge(
+            module,
+            nameof(SubnauticaCompatNetRuntime.TryQueueMermaidGift));
+        MethodReference killBridge = ResolveBridge(
+            module,
+            nameof(SubnauticaCompatNetRuntime.TryRelayCreatureDying));
         bool changed = false;
 
         changed |= InjectMermaidFeedHook(
@@ -48,6 +54,16 @@ public static class SubnauticaCompatNetPatcher {
             "TryDeliverItems",
             deliveryBridge,
             [typeof(ComponentPlayer).FullName]);
+        changed |= InjectBooleanReturnGate(
+            FindType(assembly, "Subnautica.ComponentMermaidAffection"),
+            "TryGift",
+            giftBridge,
+            ["Subnautica.GiftType"]);
+        changed |= InjectVoidBooleanGate(
+            FindType(assembly, "Subnautica.SubnauticaLoader"),
+            "OnCreatureDying",
+            killBridge,
+            [typeof(ComponentHealth).FullName, typeof(Injury).FullName]);
 
         if (!changed) {
             return false;
@@ -119,6 +135,81 @@ public static class SubnauticaCompatNetPatcher {
             il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg, parameter));
         }
         il.InsertBefore(originalStart, Instruction.Create(OpCodes.Call, bridge));
+        return true;
+    }
+
+    private static bool InjectBooleanReturnGate(
+        TypeDefinition type,
+        string methodName,
+        MethodReference bridge,
+        IReadOnlyList<string> parameterTypeNames) {
+        if (type == null || bridge == null) {
+            return false;
+        }
+
+        MethodDefinition method = type.Methods.FirstOrDefault(item =>
+            !item.IsStatic
+            && item.Name == methodName
+            && item.ReturnType.FullName == "System.Boolean"
+            && item.HasBody
+            && item.Parameters.Count == parameterTypeNames.Count
+            && item.Parameters
+                .Select(parameter => parameter.ParameterType.FullName)
+                .SequenceEqual(parameterTypeNames));
+        if (method == null || ContainsBridgeCall(method, bridge)) {
+            return false;
+        }
+
+        ILProcessor il = method.Body.GetILProcessor();
+        Instruction originalStart = method.Body.Instructions[0];
+        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_0));
+        foreach (ParameterDefinition parameter in method.Parameters) {
+            il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg, parameter));
+            if (parameter.ParameterType.IsValueType
+                && parameter.ParameterType.FullName != "System.Boolean"
+                && parameter.ParameterType.FullName != "System.Int32") {
+                il.InsertBefore(originalStart, Instruction.Create(OpCodes.Conv_I4));
+            }
+        }
+        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Call, bridge));
+        Instruction continueInstruction = Instruction.Create(OpCodes.Brfalse, originalStart);
+        il.InsertBefore(originalStart, continueInstruction);
+        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldc_I4_1));
+        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ret));
+        return true;
+    }
+
+    private static bool InjectVoidBooleanGate(
+        TypeDefinition type,
+        string methodName,
+        MethodReference bridge,
+        IReadOnlyList<string> parameterTypeNames) {
+        if (type == null || bridge == null) {
+            return false;
+        }
+
+        MethodDefinition method = type.Methods.FirstOrDefault(item =>
+            !item.IsStatic
+            && item.Name == methodName
+            && item.ReturnType.FullName == "System.Void"
+            && item.HasBody
+            && item.Parameters.Count == parameterTypeNames.Count
+            && item.Parameters
+                .Select(parameter => parameter.ParameterType.FullName)
+                .SequenceEqual(parameterTypeNames));
+        if (method == null || ContainsBridgeCall(method, bridge)) {
+            return false;
+        }
+
+        ILProcessor il = method.Body.GetILProcessor();
+        Instruction originalStart = method.Body.Instructions[0];
+        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg_0));
+        foreach (ParameterDefinition parameter in method.Parameters) {
+            il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ldarg, parameter));
+        }
+        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Call, bridge));
+        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Brfalse, originalStart));
+        il.InsertBefore(originalStart, Instruction.Create(OpCodes.Ret));
         return true;
     }
 

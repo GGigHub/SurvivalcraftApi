@@ -58,8 +58,15 @@
     <CompatibilityModPackagePath Condition="'$(CompatibilityModPackagePath)' == ''">$(CompatibilityModPackageDirectory)$(CompatibilityModPackageName)</CompatibilityModPackagePath>
     <CompatibilityModDestinationDirectory Condition="'$(CompatibilityModDestinationDirectory)' == '' and '$(OutputPath)' != ''">$(OutputPath)InternalMods\</CompatibilityModDestinationDirectory>
     <CompatibilityModDestinationFile Condition="'$(CompatibilityModDestinationFile)' == '' and '$(CompatibilityModDestinationDirectory)' != ''">$(CompatibilityModDestinationDirectory)$(CompatibilityModPackageName)</CompatibilityModDestinationFile>
+
+    <Compatibility23ModProject Condition="'$(Compatibility23ModProject)' == ''">$(MSBuildProjectDirectory)\..\Survivalcraft.Compat23\Survivalcraft.Compat23.csproj</Compatibility23ModProject>
+    <Compatibility23ModPackageDirectory Condition="'$(Compatibility23ModPackageDirectory)' == ''">$(MSBuildProjectDirectory)\..\Survivalcraft.Compat23\bin\$(Configuration)\net10.0-windows\$(WindowsRuntimeIdentifier)\scmod\</Compatibility23ModPackageDirectory>
+    <Compatibility23ModPackageName Condition="'$(Compatibility23ModPackageName)' == ''">Survivalcraft.Compat23.scmod</Compatibility23ModPackageName>
+    <Compatibility23ModPackagePath Condition="'$(Compatibility23ModPackagePath)' == ''">$(Compatibility23ModPackageDirectory)$(Compatibility23ModPackageName)</Compatibility23ModPackagePath>
+    <Compatibility23ModDestinationDirectory Condition="'$(Compatibility23ModDestinationDirectory)' == '' and '$(OutputPath)' != ''">$(OutputPath)InternalMods\</Compatibility23ModDestinationDirectory>
+    <Compatibility23ModDestinationFile Condition="'$(Compatibility23ModDestinationFile)' == '' and '$(Compatibility23ModDestinationDirectory)' != ''">$(Compatibility23ModDestinationDirectory)$(Compatibility23ModPackageName)</Compatibility23ModDestinationFile>
   </PropertyGroup>
-  <Target Name="PackageAndCopyCompatibilityMod" AfterTargets="PackageAndCopyNetworkMod" Condition="'$(SkipNetworkModPackage)' != 'true' and '$(SkipCompatibilityModPackage)' != 'true'">
+  <Target Name="PackageAndCopyCompatibilityMod" AfterTargets="PackageAndCopyNetworkMod" Condition="'$(SkipNetworkModPackage)' != 'true' and '$(SkipCompatibilityModPackage)' != 'true' and '$(SkipCompatibilityMods)' != 'true'">
     <PropertyGroup>
       <CompatibilityModDestinationDirectory Condition="'$(CompatibilityModDestinationDirectory)' == ''">$(TargetDir)InternalMods\</CompatibilityModDestinationDirectory>
       <CompatibilityModDestinationFile Condition="'$(CompatibilityModDestinationFile)' == ''">$(CompatibilityModDestinationDirectory)$(CompatibilityModPackageName)</CompatibilityModDestinationFile>
@@ -68,5 +75,16 @@
     <MakeDir Directories="$(CompatibilityModDestinationDirectory)" />
     <Copy SourceFiles="$(CompatibilityModPackagePath)" DestinationFiles="$(CompatibilityModDestinationFile)" SkipUnchangedFiles="true" />
     <Message Importance="high" Text="Copied compatibility mod to $(CompatibilityModDestinationFile)" />
+  </Target>
+
+  <Target Name="PackageAndCopyCompatibility23Mod" AfterTargets="PackageAndCopyCompatibilityMod" Condition="'$(SkipNetworkModPackage)' != 'true' and '$(SkipCompatibilityModPackage)' != 'true' and '$(SkipCompatibilityMods)' != 'true'">
+    <PropertyGroup>
+      <Compatibility23ModDestinationDirectory Condition="'$(Compatibility23ModDestinationDirectory)' == ''">$(TargetDir)InternalMods\</Compatibility23ModDestinationDirectory>
+      <Compatibility23ModDestinationFile Condition="'$(Compatibility23ModDestinationFile)' == ''">$(Compatibility23ModDestinationDirectory)$(Compatibility23ModPackageName)</Compatibility23ModDestinationFile>
+    </PropertyGroup>
+    <MSBuild Projects="$(Compatibility23ModProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);GenerateModPackage=true;TargetFramework=net10.0-windows;RuntimeIdentifier=$(WindowsRuntimeIdentifier);ModOutputPath=$(Compatibility23ModPackageDirectory)" BuildInParallel="false" />
+    <MakeDir Directories="$(Compatibility23ModDestinationDirectory)" />
+    <Copy SourceFiles="$(Compatibility23ModPackagePath)" DestinationFiles="$(Compatibility23ModDestinationFile)" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Copied compatibility mod to $(Compatibility23ModDestinationFile)" />
   </Target>
 </Project>

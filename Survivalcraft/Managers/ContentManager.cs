@@ -135,6 +135,38 @@ namespace Game {
         }
 
         /// <summary>
+        ///     使指定资源路径及其后缀对应的已解码缓存失效。
+        /// </summary>
+        public static void InvalidateResourceCache(string assetPath) {
+            if (string.IsNullOrWhiteSpace(assetPath)) {
+                return;
+            }
+            string normalizedPath = assetPath.Replace((char)92, '/');
+            string pathWithoutExtension = normalizedPath;
+            int extensionIndex = normalizedPath.LastIndexOf('.');
+            int separatorIndex = normalizedPath.LastIndexOf('/');
+            if (extensionIndex > separatorIndex) {
+                pathWithoutExtension = normalizedPath.Substring(0, extensionIndex);
+            }
+            lock (syncObj) {
+                HashSet<object> disposedValues = new(ReferenceEqualityComparer.Instance);
+                foreach (KeyValuePair<string, List<object>> cache in Caches.ToArray()) {
+                    if (!string.Equals(cache.Key, normalizedPath, StringComparison.Ordinal)
+                        && !string.Equals(cache.Key, pathWithoutExtension, StringComparison.Ordinal)
+                        && !cache.Key.StartsWith(pathWithoutExtension + ".", StringComparison.Ordinal)) {
+                        continue;
+                    }
+                    foreach (object value in cache.Value) {
+                        if (value is IDisposable disposable && disposedValues.Add(value)) {
+                            disposable.Dispose();
+                        }
+                    }
+                    Caches.TryRemove(cache.Key, out _);
+                }
+            }
+        }
+
+        /// <summary>
         ///     可能需要带上文件后缀，即获取名字+获取的后缀
         /// </summary>
         /// <param name="name"></param>
