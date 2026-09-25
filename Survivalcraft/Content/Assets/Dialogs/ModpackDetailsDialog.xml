@@ -10,9 +10,9 @@
         <FlexPanelWidget Name="ModpackDetailsDialog.ActionsPanel" Direction="Horizontal" Wrap="Wrap" JustifyContent="Center" Gap="10, 8" HorizontalAlignment="Stretch" VerticalAlignment="Far">
           <BevelledButtonWidget Name="ModpackDetailsDialog.ToggleEnabled" Style="{Styles/ButtonStyle_160x60}"/>
           <BevelledButtonWidget Name="ModpackDetailsDialog.DownloadMissing" Style="{Styles/ButtonStyle_160x60}"/>
-          <BevelledButtonWidget Name="ModpackDetailsDialog.Delete" Style="{Styles/ButtonStyle_160x60}"/>
-          <BevelledButtonWidget Name="ModpackDetailsDialog.Upload" Style="{Styles/ButtonStyle_160x60}"/>
-          <BevelledButtonWidget Name="ModpackDetailsDialog.Close" Style="{Styles/ButtonStyle_160x60}"/>
+          <BevelledButtonWidget Name="ModpackDetailsDialog.Delete" Style="{Styles/ButtonStyle_160x60}" Text="[ScbbsPlusCommunityScreen:Delete]"/>
+          <BevelledButtonWidget Name="ModpackDetailsDialog.Upload" Style="{Styles/ButtonStyle_160x60}" Text="[ScbbsPlusCommunityScreen:Upload]"/>
+          <BevelledButtonWidget Name="ModpackDetailsDialog.Close" Style="{Styles/ButtonStyle_160x60}" Text="[ViewGameLogDialog:2]"/>
         </FlexPanelWidget>
       </StackPanelWidget>
     </ScrollPanelWidget>
