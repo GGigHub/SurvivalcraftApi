@@ -207,6 +207,12 @@ namespace Game
             m_iconManager.Clear();
             s_iconLoader.DisposeRetired();
             m_placeholderLabel.IsVisible = m_modpacksList.Items.Count == 0;
+            if (m_modpacksList.Items.Count == 0)
+            {
+                // 空态：加载已完成，占位文案从「正在读取」换成无内容
+                // （模组原版 LocalResourcesEmptyLabel 同键，经 ContentWidgets 子树解析）。
+                m_placeholderLabel.Text = LanguageControl.GetContentWidgets("ScbbsPlusCommunityScreen", "NoContent");
+            }
             RestoreSelection();
         }
 
