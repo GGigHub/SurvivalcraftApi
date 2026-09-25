@@ -5690,6 +5690,7 @@
       "DownloadPackFailure": "整合包下载失败：成功 {0} 项，失败 {1} 项。",
       "DownloadCanceled": "已取消下载：{0}",
       "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
+      "ModpackManifestSaveFailed": "整合包清单保存失败：{0}",
       "DownloadPaused": "已暂停下载：{0}",
       "DownloadFailed": "下载失败：{0}",
       "ImportFailed": "导入失败：{0}",

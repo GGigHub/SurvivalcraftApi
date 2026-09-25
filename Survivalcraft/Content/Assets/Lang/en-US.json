@@ -5680,6 +5680,7 @@
       "DownloadPackFailure": "Modpack download failed: {0} succeeded, {1} failed.",
       "DownloadCanceled": "Download canceled: {0}",
       "ModpackBusyWait": "Another modpack is being processed. Please wait.",
+      "ModpackManifestSaveFailed": "Failed to save the modpack manifest: {0}",
       "DownloadPaused": "Download paused: {0}",
       "DownloadFailed": "Download failed: {0}",
       "ImportFailed": "Import failed: {0}",

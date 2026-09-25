@@ -108,6 +108,21 @@ namespace Game
                                 saveManifestRecord: true,
                                 sourceData: result.OriginalData));
                         }
+                        else
+                        {
+                            // 用户取消/关闭确认框：包体与清单已在本进程，丢弃等于白费这次下载流量。
+                            // 只落清单记录（子项一个未下），管理屏出现该包后可从那里补装或删除。
+                            // （本体设计偏离模组原版：模组取消即整体丢弃。用户裁定 2026-09-24 选留。）
+                            try
+                            {
+                                ModpackRegistry.Shared.SaveManifest(manifest, result.SourceUrl, result.FileName, result.OriginalData);
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Warning(string.Format(CultureInfo.InvariantCulture,
+                                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackManifestSaveFailed"), ex.Message));
+                            }
+                        }
                     }));
         }
 
