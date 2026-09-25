@@ -1309,7 +1309,7 @@
   "PlayScreen": {
     "1": "模组不兼容警告！",
     "2": "继续",
-    "3": "缺少以下模组： ",
+    "3": "缺失以下模组： ",
     "4": "模组名称：{0}，版本：{1}",
     "5": "以下模组版本不兼容：",
     "6": "模组名称：{0}，所需版本：{1}，当前版本：{2}",
@@ -1432,7 +1432,7 @@
     "Unknown": "未知",
     "Manually": "玩家手动禁用",
     "NoModInfo": "模组缺少modinfo.json文件，或者该文件损坏",
-    "DependencyError": "缺少依赖模组",
+    "DependencyError": "缺失依赖模组",
     "Duplicated": "存在重复的模组",
     "InvalidPackageName": "模组的包名包含英文分号\";\""
   },
@@ -5009,8 +5009,8 @@
         "UsedByWorlds": "{0} 个世界使用中",
         "Designs": "{0} 个设计",
         "ReadFailed": "读取失败: {0}",
-        "MissingDependency": "缺少依赖{0}",
-        "MissingMods": "缺少{0}模组",
+        "MissingDependency": "缺失依赖 {0}",
+        "MissingMods": "缺失 {0} 模组",
         "Buttons": {
           "Searching": "搜索中...",
           "Checking": "检查中...",
@@ -5189,7 +5189,7 @@
           "ItemsList": "资源列表：",
           "Downloaded": "已下载 {0} / {1}",
           "ThisModpackHasNoManagedModResources": "当前整合包没有可管理的模组资源。",
-          "MissingResources": "缺少资源",
+          "MissingResources": "缺失资源",
           "DownloadAndLaunch": "下载并启动",
           "DownloadingMissingModpackResources": "正在下载整合包缺失资源...",
           "MissingModpackResourcesDownloaded": "整合包缺失资源下载完成。",
