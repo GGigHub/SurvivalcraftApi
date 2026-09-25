@@ -158,7 +158,10 @@ namespace TemplatesDatabase {
                         type = value.GetType();
                     }
                     else {
-                        type = TypeCache.FindType(typeName, false, true);
+                        type = TypeCache.FindType(typeName, false, false);
+                        if (type == null) {
+                            continue;
+                        }
                     }
                     object valueObj = XmlUtils.GetAttributeValue(item, "Value", type);
                     SetValue(key, valueObj);
