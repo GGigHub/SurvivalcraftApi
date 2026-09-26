@@ -4969,6 +4969,9 @@
     "NoModVersionForCurrentGame": "帖子中没有适配当前版本的模组版本。",
     "VersionListIsEmpty": "版本列表为空。",
     "CannotFindPublishedPostByFileName": "无法通过文件名找到已发布帖子：{0}"
+,
+    "NoScmodFileInLatestVersion": "最新版本没有可下载的 .scmod 文件。",
+    "PostDetailsIsEmpty": "帖子详情为空。"
 
   },
   "ScbbsPlusLocalModPostResolver": {
@@ -5120,49 +5123,7 @@
       "ModpackDownloadFinishedSummary": "整合包下载完成：成功 {0} 项，失败 {1} 项。"
     },
     "Upload": {
-      "Update": {
-        "UnknownAccount": "未知账号",
-        "ChooseDownloadSourceMode": "选择下载源设置",
-        "ManualSelect": "手动选择",
-        "DownloadsWillUseTheDefaultSource": "下载时将使用默认下载源。",
-        "CheckingLatestRelease": "正在检查最新发布版...",
-        "CurrentVersionUnknown": "无法获取当前版本，请稍后再试。",
-        "CheckFailed": "检查失败：{0}",
-        "AlreadyUpToDate": "已是最新版本（当前版本 {0}，最新版本 {1}）",
-        "CurrentVersionNewerFormat": "当前版本 {0} 高于最新版本 {1}，可能是开发版本。",
-        "VersionCompareFailedFormat": "无法比较版本（当前版本 {0}，最新版本 {1}）。",
-        "FoundVersionButNoScmodFileWasFound": "发现新版本 {0}，但没有找到 .scmod 文件。",
-        "FoundNewVersion": "发现新版本：{0}",
-        "BackgroundDownloading": "正在后台下载：{0}",
-        "UpdatePackageDataIsEmpty": "更新包数据为空。",
-        "CustomDefaultSource": "指定默认下载源",
-        "DefaultDownloadSourceSetTo": "默认下载源已设置为：{0}",
-        "NoUsableModVersionInPost": "帖子中没有可用的模组版本。",
-        "PostDetailsIsEmpty": "帖子详情为空。",
-        "NoScmodFileInLatestVersion": "最新版本没有可下载的 .scmod 文件。",
-        "ScbbsPlusResourceLookupByPackageFailed": "按包名查找 ScbbsPlus 社区资源失败。",
-        "ResolveCommunityPostFailed": "解析社区帖子失败: {0}",
-        "NoPublishedCommunityPost": "未找到已发布的 ScbbsPlus 社区帖子。",
-        "UpdatePackageIsNotScbbsPlusMod": "下载的更新包不是 ScbbsPlus 模组。",
-        "CannotConfirmCurrentPackageName": "无法确认当前模组包名，已取消更新。",
-        "UpdatePackageInvalidOrCorrupted": "下载的更新包无效或已损坏，已取消更新。",
-        "UpdatePackagePackageNameMismatch": "下载的更新包不是当前模组：{0}。",
-        "UpdatePackageDataUnreadable": "更新包数据不可读取。",
-        "EntryNameMustBeInArchiveRoot": "条目名称必须位于归档根目录。",
-        "NoLatestRelease": "{0} 没有可用的最新 release。",
-        "FetchReleaseFailed": "获取 {0} release 失败：{1}",
-        "ReleaseDataIsEmpty": "release 数据为空。",
-        "CommunityUpdateServiceNotInjected": "社区更新服务未注入。",
-        "ToolDescription": "说明：由sc中文社区制作的适配工具，用于浏览、下载、上传和管理本地资源。",
-        "SupportedImportExtensions": "支持 scworld / scfpack / png / scbtex / scskin / scmod / zip / json 直链导入。",
-        "ImportOrDownloadBusy": "当前已有导入或下载任务，请等待完成后再检查更新。",
-        "ManualDownloadSourceHint": "下载时将手动选择下载源。",
-        "AutoCheckOnHint": "进入页面自动检查更新已开启。",
-        "AutoCheckOffHint": "进入页面自动检查更新已关闭。",
-        "DownloadedArchiveCorrupt": "下载到的 .scmod 不是有效压缩包，可能是下载源返回了错误内容或资源文件本身已损坏。",
-        "FileNotScmodArchive": "下载的文件不是有效的 scmod 压缩包。",
-        "ModinfoMissingInPackage": "更新包缺少 modinfo.json。"
-      },
+
       "WorldUpload": {
         "Uploading": "正在上传...",
         "UploadResource": "上传资源",
@@ -5635,7 +5596,23 @@
       "SubItemsHeader": "子项："
     },
     "UnfinishedDownloadsBadge": "当前有{0}个下载未完成，点击查看"
+,
+    "BackgroundDownloading": "正在后台下载：{0}"
 
+  },
+  "ScbbsPlusModUpdateImporter": {
+    "CannotConfirmCurrentPackageName": "无法确认当前模组包名，已取消更新。",
+    "UpdatePackageInvalidOrCorrupted": "下载的更新包无效或已损坏，已取消更新。",
+    "UpdatePackageIsNotScbbsPlusMod": "下载的更新包不是 ScbbsPlus 模组。",
+    "UpdatePackagePackageNameMismatch": "下载的更新包不是当前模组：{0}。"
+  },
+  "ScbbsPlusScmodArchiveReader": {
+    "DownloadedArchiveCorrupt": "下载到的 .scmod 不是有效压缩包，可能是下载源返回了错误内容或资源文件本身已损坏。",
+    "EntryNameMustBeInArchiveRoot": "条目名称必须位于归档根目录。",
+    "FileNotScmodArchive": "下载的文件不是有效的 scmod 压缩包。",
+    "ModinfoMissingInPackage": "更新包缺少 modinfo.json。",
+    "UpdatePackageDataIsEmpty": "更新包数据为空。",
+    "UpdatePackageDataUnreadable": "更新包数据不可读取。"
   },
   "ScbbsPlusFiltersDialog": {
     "SelectFileType": "选择文件类型",
@@ -5697,7 +5674,9 @@
       "CheckUpdate": "检查更新",
       "Apply": "应用",
       "SelectDownloadSource": "选择下载源"
-    }
+    },
+    "UnknownAccount": "未知账号"
+
   },
   "CommunityDownloadSourceSelectionMode": {
     "Default": "默认（自动选择）",

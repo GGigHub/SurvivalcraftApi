@@ -186,7 +186,7 @@ namespace Game
                 return LanguageControl.Get("ScbbsPlusCommunityScreen", "Main", "NotLoggedIn");
             }
             string account = string.IsNullOrWhiteSpace(auth.CurrentUser.Account)
-                ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UnknownAccount")
+                ? LanguageControl.Get("ScbbsPlusMoreScreen", "UnknownAccount")
                 : auth.CurrentUser.Account.Trim();
             string nickname = string.IsNullOrWhiteSpace(auth.CurrentUser.Nickname) ? account : auth.CurrentUser.Nickname.Trim();
             string userName = string.Equals(nickname, account, StringComparison.Ordinal) ? account : $"{nickname}（{account}）";

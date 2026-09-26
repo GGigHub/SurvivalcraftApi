@@ -43,7 +43,7 @@ namespace Game
                     cancellationToken);
                 if (postResponse?.Code != 200 || postResponse.Data == null)
                 {
-                    return CreateVersionsErrorResult(request, postResponse?.Msg ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "PostDetailsIsEmpty"));
+                    return CreateVersionsErrorResult(request, postResponse?.Msg ?? LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "PostDetailsIsEmpty"));
                 }
 
                 VersionListResponse versionListResponse = await postResolver.LoadVersionCatalogAsync(

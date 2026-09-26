@@ -4959,6 +4959,9 @@
     "NoModVersionForCurrentGame": "The post has no mod version compatible with the current game.",
     "VersionListIsEmpty": "Version list is empty.",
     "CannotFindPublishedPostByFileName": "Unable to find a published post by file name: {0}"
+,
+    "NoScmodFileInLatestVersion": "The latest version has no downloadable .scmod file.",
+    "PostDetailsIsEmpty": "Post details are empty."
 
   },
   "ScbbsPlusLocalModPostResolver": {
@@ -5110,49 +5113,7 @@
       "ModpackDownloadFinishedSummary": "Modpack download complete: {0} succeeded, {1} failed."
     },
     "Upload": {
-      "Update": {
-        "UnknownAccount": "Unknown Account",
-        "ChooseDownloadSourceMode": "Choose Download Source Mode",
-        "ManualSelect": "Manual Select",
-        "DownloadsWillUseTheDefaultSource": "Downloads will use the default source.",
-        "CheckingLatestRelease": "Checking latest release...",
-        "CurrentVersionUnknown": "Unable to determine the current version. Please try again later.",
-        "CheckFailed": "Check failed: {0}",
-        "AlreadyUpToDate": "Already up to date (current version {0}, latest version {1}).",
-        "CurrentVersionNewerFormat": "Current version {0} is newer than the latest version {1}; this may be a development build.",
-        "VersionCompareFailedFormat": "Unable to compare versions (current version {0}, latest version {1}).",
-        "FoundVersionButNoScmodFileWasFound": "Found version {0}, but no .scmod file was found.",
-        "FoundNewVersion": "Found new version: {0}",
-        "BackgroundDownloading": "Background downloading: {0}",
-        "UpdatePackageDataIsEmpty": "Update package data is empty.",
-        "CustomDefaultSource": "Custom Default Source",
-        "DefaultDownloadSourceSetTo": "Default download source set to: {0}",
-        "NoUsableModVersionInPost": "The post has no usable mod version.",
-        "PostDetailsIsEmpty": "Post details are empty.",
-        "NoScmodFileInLatestVersion": "The latest version has no downloadable .scmod file.",
-        "ScbbsPlusResourceLookupByPackageFailed": "Failed to find the ScbbsPlus community resource by package name.",
-        "ResolveCommunityPostFailed": "Failed to resolve community post: {0}",
-        "NoPublishedCommunityPost": "No published ScbbsPlus community post found.",
-        "UpdatePackageIsNotScbbsPlusMod": "The downloaded update package is not the ScbbsPlus mod.",
-        "CannotConfirmCurrentPackageName": "Unable to confirm the current mod package name; update canceled.",
-        "UpdatePackageInvalidOrCorrupted": "The downloaded update package is invalid or corrupted; update canceled.",
-        "UpdatePackagePackageNameMismatch": "The downloaded update package is not the current mod: {0}.",
-        "UpdatePackageDataUnreadable": "Update package data is unreadable.",
-        "EntryNameMustBeInArchiveRoot": "Entry names must be at the archive root.",
-        "NoLatestRelease": "{0} has no available latest release.",
-        "FetchReleaseFailed": "Failed to fetch {0} release: {1}",
-        "ReleaseDataIsEmpty": "Release data is empty.",
-        "CommunityUpdateServiceNotInjected": "Community update service is not injected.",
-        "ToolDescription": "Description: Compatibility tools by SC Chinese Community for browsing, downloading, uploading, and managing local resources.",
-        "SupportedImportExtensions": "Supports direct scworld / scfpack / png / scbtex / scskin / scmod / zip / json link imports.",
-        "ImportOrDownloadBusy": "An import or download is already running. Please wait before checking updates.",
-        "ManualDownloadSourceHint": "You will choose a download source before each download.",
-        "AutoCheckOnHint": "Automatic update checks on page entry are enabled.",
-        "AutoCheckOffHint": "Automatic update checks on page entry are disabled.",
-        "DownloadedArchiveCorrupt": "The downloaded .scmod is not a valid archive. The source may have returned invalid content, or the resource file itself may be corrupted.",
-        "FileNotScmodArchive": "The downloaded file is not a valid scmod archive.",
-        "ModinfoMissingInPackage": "The update package is missing modinfo.json."
-      },
+
       "WorldUpload": {
         "Uploading": "Uploading...",
         "UploadResource": "Upload Resource",
@@ -5626,7 +5587,23 @@
       "SubItemsHeader": "Sub-items:"
     },
     "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view."
+,
+    "BackgroundDownloading": "Background downloading: {0}"
 
+  },
+  "ScbbsPlusModUpdateImporter": {
+    "CannotConfirmCurrentPackageName": "Unable to confirm the current mod package name; update canceled.",
+    "UpdatePackageInvalidOrCorrupted": "The downloaded update package is invalid or corrupted; update canceled.",
+    "UpdatePackageIsNotScbbsPlusMod": "The downloaded update package is not the ScbbsPlus mod.",
+    "UpdatePackagePackageNameMismatch": "The downloaded update package is not the current mod: {0}."
+  },
+  "ScbbsPlusScmodArchiveReader": {
+    "DownloadedArchiveCorrupt": "The downloaded .scmod is not a valid archive. The source may have returned invalid content, or the resource file itself may be corrupted.",
+    "EntryNameMustBeInArchiveRoot": "Entry names must be at the archive root.",
+    "FileNotScmodArchive": "The downloaded file is not a valid scmod archive.",
+    "ModinfoMissingInPackage": "The update package is missing modinfo.json.",
+    "UpdatePackageDataIsEmpty": "Update package data is empty.",
+    "UpdatePackageDataUnreadable": "Update package data is unreadable."
   },
   "ScbbsPlusFiltersDialog": {
     "SelectFileType": "Select File Type",
@@ -5688,7 +5665,9 @@
       "CheckUpdate": "Check Update",
       "Apply": "Apply",
       "SelectDownloadSource": "Select Download Source"
-    }
+    },
+    "UnknownAccount": "Unknown Account"
+
   },
   "CommunityDownloadSourceSelectionMode": {
     "Default": "Default (Auto)",

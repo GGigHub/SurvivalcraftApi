@@ -18,7 +18,7 @@ namespace Game
             ModInfo updateInfo = ScmodArchiveReader.ReadModInfo(stream);
             if (updateInfo == null || !string.Equals(updateInfo.PackageName, packageName, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackageIsNotScbbsPlusMod"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModUpdateImporter", "UpdatePackageIsNotScbbsPlusMod"));
             }
 
             string targetPath = Storage.CombinePaths(ModsManager.ModsPath, GetSafeFileName(fileName, "ScbbsPlus.scmod"));
@@ -33,17 +33,17 @@ namespace Game
         {
             if (string.IsNullOrWhiteSpace(expectedPackageName))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "CannotConfirmCurrentPackageName"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModUpdateImporter", "CannotConfirmCurrentPackageName"));
             }
 
             if (!TryReadModInfo(stream, out ModInfo updateInfo) || updateInfo == null)
             {
                 // 与 ImportSelfUpdate 的强校验一致：损坏包直接拒绝，避免用坏包静默替换用户原 mod。
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackageInvalidOrCorrupted"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModUpdateImporter", "UpdatePackageInvalidOrCorrupted"));
             }
             if (!string.Equals(updateInfo.PackageName, expectedPackageName, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackagePackageNameMismatch"), expectedPackageName));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModUpdateImporter", "UpdatePackagePackageNameMismatch"), expectedPackageName));
             }
 
             string targetPath = Storage.CombinePaths(

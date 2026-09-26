@@ -42,7 +42,7 @@ namespace Game
                 cancellationToken);
             if (response?.Code != 200 || response.Data == null)
             {
-                result.Error = response?.Msg ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "PostDetailsIsEmpty");
+                result.Error = response?.Msg ?? LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "PostDetailsIsEmpty");
                 return result;
             }
 
@@ -84,7 +84,7 @@ namespace Game
                 request.FileName);
             if (file == null || string.IsNullOrWhiteSpace(file.Url))
             {
-                result.Error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "NoScmodFileInLatestVersion");
+                result.Error = LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "NoScmodFileInLatestVersion");
                 return result;
             }
 

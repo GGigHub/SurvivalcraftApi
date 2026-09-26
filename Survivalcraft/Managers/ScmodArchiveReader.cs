@@ -30,8 +30,8 @@ namespace Game
         private static string BuildMessage(ScmodArchiveFailureKind kind)
         {
             return kind == ScmodArchiveFailureKind.MissingModInfo
-                ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "ModinfoMissingInPackage")
-                : LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "FileNotScmodArchive");
+                ? LanguageControl.Get("ScbbsPlusScmodArchiveReader", "ModinfoMissingInPackage")
+                : LanguageControl.Get("ScbbsPlusScmodArchiveReader", "FileNotScmodArchive");
         }
     }
 
@@ -45,7 +45,7 @@ namespace Game
     internal static class ScmodArchiveReader
     {
         /// <summary>归档结构无效时的统一展示文案（原 GetFriendlyScmodArchiveError 的归一目标）。</summary>
-        public static string InvalidArchiveFriendlyMessage => LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "DownloadedArchiveCorrupt");
+        public static string InvalidArchiveFriendlyMessage => LanguageControl.Get("ScbbsPlusScmodArchiveReader", "DownloadedArchiveCorrupt");
 
         /// <summary>
         /// 打开 scmod 数据的归档视图：缓冲整个流，识别并去除游戏内置弱加密前缀
@@ -59,7 +59,7 @@ namespace Game
             byte[] data = ReadStreamData(stream);
             if (data.Length == 0)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackageDataIsEmpty"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusScmodArchiveReader", "UpdatePackageDataIsEmpty"));
             }
             if (data.Length >= MinEncryptedHeaderLength)
             {
@@ -102,7 +102,7 @@ namespace Game
                 || entryName.IndexOf('/') >= 0
                 || entryName.IndexOf('\\') >= 0)
             {
-                throw new ArgumentException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "EntryNameMustBeInArchiveRoot"), nameof(entryName));
+                throw new ArgumentException(LanguageControl.Get("ScbbsPlusScmodArchiveReader", "EntryNameMustBeInArchiveRoot"), nameof(entryName));
             }
 
             System.IO.Compression.ZipArchiveEntry entry = archive.Entries.FirstOrDefault(candidate =>
@@ -217,7 +217,7 @@ namespace Game
         {
             if (!stream.CanSeek)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "UpdatePackageDataUnreadable"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusScmodArchiveReader", "UpdatePackageDataUnreadable"));
             }
 
             long originalPosition = stream.Position;

@@ -806,7 +806,7 @@ namespace Game
         {
             if (m_currentDownloadItem != null)
             {
-                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "Update", "BackgroundDownloading"), m_currentDownloadItem.FileName));
+                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "BackgroundDownloading"), m_currentDownloadItem.FileName));
             }
 
             if (m_fileDownloadDialog == null)
