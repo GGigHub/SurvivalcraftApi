@@ -146,10 +146,10 @@ namespace Game
                 bool bundled = IsBundledItem(item, embeddedFiles);
                 bool installed = !bundled && ModpackPresenceRules.IsItemInstalled(item, snapshot);
                 string state = bundled
-                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateBundled")
+                    ? LanguageControl.Get("ModpackDetailsDialog", "StateBundled")
                     : installed
-                        ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateExists")
-                        : LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateNeedDownload");
+                        ? LanguageControl.Get("ModpackDetailsDialog", "StateExists")
+                        : LanguageControl.Get("ModpackDetailsDialog", "StateNeedDownload");
                 if (!bundled && !installed)
                 {
                     needDownloadCount++;

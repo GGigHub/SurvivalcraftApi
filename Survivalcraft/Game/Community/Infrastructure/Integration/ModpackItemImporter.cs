@@ -68,13 +68,13 @@ namespace Game
             if (!ScmodArchiveReader.TryReadModInfo(new MemoryStream(scmodData, writable: false), out ModInfo modInfo)
                 || modInfo == null)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ModinfoMissingSkipped"), item.Filename));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackItemImporter", "ModinfoMissingSkipped"), item.Filename));
             }
 
             if (!string.IsNullOrWhiteSpace(item.PackageName)
                 && !string.Equals(modInfo.PackageName, item.PackageName, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "PackageNameMismatchSkipped"),
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackItemImporter", "PackageNameMismatchSkipped"),
                     item.Filename,
                     item.PackageName,
                     modInfo.PackageName ?? LanguageControl.None));
@@ -82,7 +82,7 @@ namespace Game
             if (!string.IsNullOrWhiteSpace(item.Version)
                 && !string.Equals(modInfo.Version, item.Version, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "VersionMismatchSkipped"),
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackItemImporter", "VersionMismatchSkipped"),
                     item.Filename,
                     item.Version,
                     modInfo.Version ?? LanguageControl.None));

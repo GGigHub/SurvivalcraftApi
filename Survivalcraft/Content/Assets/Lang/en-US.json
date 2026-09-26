@@ -87,7 +87,37 @@
     "3": "Download Missing",
     "4": "Details",
     "5": "Disable",
-    "6": "Owned: {0}/{1}  Modpack version: {2}  API version: {3}  Author: {4}  Size: {5}"
+    "6": "Owned: {0}/{1}  Modpack version: {2}  API version: {3}  Author: {4}  Size: {5}",
+    "AllResourcesReady": "All modpack resources have been downloaded.",
+    "AndMore": " and {0} more",
+    "AnotherModpackActive": "Another modpack is already active. Please close it first.",
+    "CannotDelete": "Cannot Delete",
+    "CloseModpack": "Disable modpack",
+    "CurrentlyActive": "{0} (currently active)",
+    "DisableBeforeDelete": "Please close the active modpack before deleting this modpack record.",
+    "DisabledRestartPrompt": "The modpack has been disabled. A restart is required to restore the previous mod states. Restart now?",
+    "DownloadAndLaunch": "Download and enable",
+    "DownloadingMissingModpackResources": "Downloading missing modpack resources...",
+    "EnabledRestartPrompt": "The modpack has been enabled. A restart is required to load its mod resources. Restart now?",
+    "ExtractFailedNotStarted": "Failed to extract modpack resources; it was not enabled.",
+    "ExtractingResourcesFromTheModpack": "Extracting resources from the modpack...",
+    "FailedToDownloadModpackResources": "Failed to Download Modpack Resources",
+    "IgnoreAndLaunch": "Ignore and enable",
+    "LaunchModpack": "Enable modpack",
+    "MissingInArchiveList": "The following resources were not found inside the archive: {0}. Complete the modpack before enabling.",
+    "MissingModpackFiles": "Missing Modpack Files",
+    "MissingModpackResourcesDownloaded": "Missing modpack resources downloaded.",
+    "MissingResources": "Missing Resources",
+    "MissingResourcesDownloadPrompt": "Modpack \"{0}\" has {1} undownloaded resources. Download them before enabling?",
+    "StartBlockedMissingResources": "The modpack still has undownloaded resources; it was not enabled.",
+    "ThisModpackHasNoManagedModResources": "This modpack has no managed mod resources.",
+    "ThisModpackIsNotCurrentlyActive": "This modpack is not currently active.",
+    "UnavailableResourcesIgnorePrompt": "{0} resources can be fetched neither from the ZIP modpack nor over the network. Ignore them and enable the modpack anyway?",
+    "FailedToSaveSettings": "Failed to Save Settings",
+    "SaveConfigFailed": "Unable to save settings changed while using the modpack: {0}",
+    "FailedToRestoreFiles": "Failed to Restore Files",
+    "RestoreFilesFailed": "Unable to restore files from before the modpack was enabled: {0}"
+
   },
   "ModsManageContentScreen": {
     "1": "Manage mod content",
@@ -725,7 +755,13 @@
     "6": "Homepage: ",
     "7": "File name: ",
     "8": "Package name: ",
-    "9": "Sub-items owned: {0}/{1}"
+    "9": "Sub-items owned: {0}/{1}",
+    "Active": "Active",
+    "ItemsList": "Sub-items:",
+    "StateBundled": "Bundled",
+    "StateExists": "Owned",
+    "StateNeedDownload": "Need download"
+
   },
   "ModDetailsDialog": {
     "CheckUpdate": "Check Updates",
@@ -5176,72 +5212,6 @@
         }
       },
       "Modpacks": {
-        "Page": {
-          "Active": "Active",
-          "ItemsList": "Sub-items:",
-          "ThisModpackHasNoManagedModResources": "This modpack has no managed mod resources.",
-          "MissingResources": "Missing Resources",
-          "DownloadAndLaunch": "Download and enable",
-          "DownloadingMissingModpackResources": "Downloading missing modpack resources...",
-          "MissingModpackResourcesDownloaded": "Missing modpack resources downloaded.",
-          "LaunchModpack": "Enable modpack",
-          "ThisModpackIsNotCurrentlyActive": "This modpack is not currently active.",
-          "CloseModpack": "Disable modpack",
-          "CannotDelete": "Cannot Delete",
-          "DataFileHasNoTargetPathSpecified": "{0}: Data file has no target path specified.",
-          "UnsafeCustomFileTargetPathRejected": "Unsafe custom file target path rejected: {0}.",
-          "AndMore": " and {0} more",
-          "CurrentlyActive": "{0} (currently active)",
-          "FailedToSaveSettings": "Failed to Save Settings",
-          "IgnoreAndLaunch": "Ignore and enable",
-          "FailedToRestoreFiles": "Failed to Restore Files",
-          "MissingModpackFiles": "Missing Modpack Files",
-          "FailedToDownloadModpackResources": "Failed to Download Modpack Resources",
-          "ExtractingResourcesFromTheModpack": "Extracting resources from the modpack...",
-          "ZipEntryExceedsSizeLimit": "ZIP entry exceeds size limit: {0}",
-          "GetFileInfoByFileIdFailed": "Failed to get file info by file ID: {0}: {1}",
-          "GetFileInfoByFileIdMalformed": "Malformed file info response by file ID: {0}",
-          "FileIdReturnedNoDownloadLink": "File ID {0} returned no valid download link.",
-          "BackupFileDoesNotExist": "Backup file does not exist: {0}",
-          "DataFileHasNoTargetPathSpecifiedPlain": "Data file has no target path specified.",
-          "CustomFileUrlHasNoFileName": "The custom file url contains no valid file name.",
-          "PackOnlySupportsZipOrJson": "Modpacks only support .zip and .json files.",
-          "PackinfoJsonNotFoundInZipRoot": "packinfo.json not found in ZIP root.",
-          "ZipReadFailed": "ZIP read failed: {0}",
-          "ManifestJsonParseFailed": "Manifest JSON parse failed: {0}",
-          "ManifestMissingFieldName": "Modpack manifest is missing required field: name.",
-          "ManifestMissingFieldPackageName": "Modpack manifest is missing required field: packageName.",
-          "ManifestMissingFieldVersion": "Modpack manifest is missing required field: version.",
-          "ManifestMissingFieldDescription": "Modpack manifest is missing required field: description.",
-          "ManifestHasNoValidItems": "Modpack manifest has no valid items.",
-          "IconOnlySupportsPngOrWebp": "Modpack icon only supports png or webp.",
-          "JsonPackIconMustBeUrl": "The icon of a json modpack must be a web link.",
-          "PackItemIsEmpty": "Modpack item is empty.",
-          "PackItemMissingTargetDirectory": "{0}: targetDirectory not specified.",
-          "PackItemUrlAndFileIdBothEmpty": "{0}: url and fileId cannot both be empty.",
-          "JsonPackNoLocalRelativePath": "{0}: json modpacks do not support local relative paths.",
-          "PackItemFileNotFoundInArchive": "{0}: file {1} not found in the archive.",
-          "PackItemDefaultName": "Modpack item",
-          "DownloadedZipPackIsEmpty": "The downloaded ZIP modpack is empty.",
-          "AnotherModpackActive": "Another modpack is already active. Please close it first.",
-          "MissingResourcesDownloadPrompt": "Modpack \"{0}\" has {1} undownloaded resources. Download them before enabling?",
-          "StartBlockedMissingResources": "The modpack still has undownloaded resources; it was not enabled.",
-          "AllResourcesReady": "All modpack resources have been downloaded.",
-          "EnabledRestartPrompt": "The modpack has been enabled. A restart is required to load its mod resources. Restart now?",
-          "DisabledRestartPrompt": "The modpack has been disabled. A restart is required to restore the previous mod states. Restart now?",
-          "DisableBeforeDelete": "Please close the active modpack before deleting this modpack record.",
-          "MissingInArchiveList": "The following resources were not found inside the archive: {0}. Complete the modpack before enabling.",
-          "ExtractFailedNotStarted": "Failed to extract modpack resources; it was not enabled.",
-          "SaveConfigFailed": "Unable to save settings changed while using the modpack: {0}",
-          "RestoreFilesFailed": "Unable to restore files from before the modpack was enabled: {0}",
-          "UnavailableResourcesIgnorePrompt": "{0} resources can be fetched neither from the ZIP modpack nor over the network. Ignore them and enable the modpack anyway?",
-          "ModinfoMissingSkipped": "{0}: Mod file missing modinfo.json, unable to verify.",
-          "PackageNameMismatchSkipped": "{0}: Mod package name mismatch (expected {1}, actual {2}), skipped.",
-          "VersionMismatchSkipped": "{0}: Mod version mismatch (expected {1}, actual {2}), skipped.",
-          "StateExists": "Owned",
-          "StateBundled": "Bundled",
-          "StateNeedDownload": "Need download"
-        },
         "Manifest": {
           "LocalResourcesDisplayingFormat": "Local {0}s · Displaying...",
           "LocalResourcesDisplayingProgressFormat": "Local {0}s · Displaying {1}/{2}..."
@@ -5476,11 +5446,28 @@
     "ModpackItemUsesNetworkUrl": "[ScbbsPlus] Modpack item uses the network url={0}",
     "ModpackItemUrlDownloadFailedFallingBackToFileId": "[ScbbsPlus] Modpack item url download failed; falling back to fileId={0}: {1}",
     "ModpackItemUsesZipEntry": "[ScbbsPlus] Modpack item uses a file inside the ZIP path={0}",
-    "ModpackItemUrlMissingResolvingByFileId": "[ScbbsPlus] No url obtained for the modpack item url={0}; resolving the download link via fileId={1}"
+    "ModpackItemUrlMissingResolvingByFileId": "[ScbbsPlus] No url obtained for the modpack item url={0}; resolving the download link via fileId={1}",
+    "FileIdReturnedNoDownloadLink": "File ID {0} returned no valid download link.",
+    "GetFileInfoByFileIdFailed": "Failed to get file info by file ID: {0}: {1}",
+    "GetFileInfoByFileIdMalformed": "Malformed file info response by file ID: {0}"
+
   },
   "ScbbsPlusModpackManifestParser": {
     "Text": {
-      "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid."
+      "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
+      "PackOnlySupportsZipOrJson": "Modpacks only support .zip and .json files.",
+      "PackinfoJsonNotFoundInZipRoot": "packinfo.json not found in ZIP root.",
+      "ZipEntryExceedsSizeLimit": "ZIP entry exceeds size limit: {0}",
+      "ZipReadFailed": "ZIP read failed: {0}",
+      "ManifestJsonParseFailed": "Manifest JSON parse failed: {0}",
+      "ManifestMissingFieldName": "Modpack manifest is missing required field: name.",
+      "ManifestMissingFieldVersion": "Modpack manifest is missing required field: version.",
+      "ManifestMissingFieldDescription": "Modpack manifest is missing required field: description.",
+      "ManifestMissingFieldPackageName": "Modpack manifest is missing required field: packageName.",
+      "IconOnlySupportsPngOrWebp": "Modpack icon only supports png or webp.",
+      "JsonPackIconMustBeUrl": "The icon of a json modpack must be a web link.",
+      "ManifestHasNoValidItems": "Modpack manifest has no valid items."
+
     }
   },
   "ScbbsPlusModpackRegistry": {
@@ -5488,7 +5475,9 @@
     "ReadModpackRecordFailed": "[ScbbsPlus] Failed to read the modpack record path={0} error={1}",
     "CompareModpackSourceFailed": "[ScbbsPlus] Failed to compare the modpack source: path={0}, error={1}",
     "ReadModpackRecordMetadataFailed": "[ScbbsPlus] Failed to read the modpack record metadata: path={0}, error={1}",
-    "NoValidItemsRead": "no valid items were read."
+    "NoValidItemsRead": "no valid items were read.",
+    "DownloadedZipPackIsEmpty": "The downloaded ZIP modpack is empty."
+
   },
   "ScbbsPlusModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "A modpack file conflict is already waiting for user action.",
@@ -5502,11 +5491,30 @@
     "SaveModpackEnabledStateFailed": "[ScbbsPlus] Failed to save the modpack enabled state: {0}",
     "ClearModpackEnabledStateFailed": "[ScbbsPlus] Failed to clear the modpack enabled state: {0}"
   },
+  "ScbbsPlusModpackRules": {
+    "PackItemIsEmpty": "Modpack item is empty.",
+    "PackItemMissingTargetDirectory": "{0}: targetDirectory not specified.",
+    "PackItemUrlAndFileIdBothEmpty": "{0}: url and fileId cannot both be empty.",
+    "PackItemFileNotFoundInArchive": "{0}: file {1} not found in the archive.",
+    "JsonPackNoLocalRelativePath": "{0}: json modpacks do not support local relative paths.",
+    "PackItemDefaultName": "Modpack item"
+  },
+  "ScbbsPlusModpackItemImporter": {
+    "ModinfoMissingSkipped": "{0}: Mod file missing modinfo.json, unable to verify.",
+    "PackageNameMismatchSkipped": "{0}: Mod package name mismatch (expected {1}, actual {2}), skipped.",
+    "VersionMismatchSkipped": "{0}: Mod version mismatch (expected {1}, actual {2}), skipped."
+  },
   "ScbbsPlusModpackDataFiles": {
     "DeleteModpackBackupFailed": "[ScbbsPlus] Failed to delete modpack backup after successful restore (kept for next cleanup): {0}: {1}",
     "CleanModpackCustomTempFileFailed": "[ScbbsPlus] Failed to clean up the modpack custom file temporary file temp={0} error={1}",
     "SaveModpackCustomConfigFailed": "[ScbbsPlus] Failed to save the modpack custom configuration target={0} persisted={1} error={2}",
-    "RestoreModpackCustomFileFailed": "[ScbbsPlus] Failed to restore the modpack custom file target={0} backup={1} error={2}"
+    "RestoreModpackCustomFileFailed": "[ScbbsPlus] Failed to restore the modpack custom file target={0} backup={1} error={2}",
+    "DataFileHasNoTargetPathSpecified": "{0}: Data file has no target path specified.",
+    "DataFileHasNoTargetPathSpecifiedPlain": "Data file has no target path specified.",
+    "CustomFileUrlHasNoFileName": "The custom file url contains no valid file name.",
+    "UnsafeCustomFileTargetPathRejected": "Unsafe custom file target path rejected: {0}.",
+    "BackupFileDoesNotExist": "Backup file does not exist: {0}"
+
   },
   "ScbbsPlusModpackManifestLoadManager": {
     "ReadModpackListFailed": "[ScbbsPlus] Failed to read modpack list: {0}",

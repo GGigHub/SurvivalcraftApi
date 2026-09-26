@@ -31,7 +31,7 @@ namespace Game
         {
             if (item == null || (string.IsNullOrWhiteSpace(item.TargetPath) && string.IsNullOrWhiteSpace(item.TargetDirectory)))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DataFileHasNoTargetPathSpecified"), item?.Filename));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "DataFileHasNoTargetPathSpecified"), item?.Filename));
             }
 
             string targetPath = ResolveTargetPath(item);
@@ -165,7 +165,7 @@ namespace Game
             {
                 if (entry.ExistedBefore && (string.IsNullOrWhiteSpace(entry.BackupPath) || !Storage.FileExists(entry.BackupPath)))
                 {
-                    error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "BackupFileDoesNotExist"), entry.BackupPath);
+                    error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "BackupFileDoesNotExist"), entry.BackupPath);
                     return false;
                 }
             }
@@ -221,7 +221,7 @@ namespace Game
             string targetDirectory = item?.TargetDirectory?.Trim();
             if (string.IsNullOrWhiteSpace(targetDirectory))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DataFileHasNoTargetPathSpecifiedPlain"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModpackDataFiles", "DataFileHasNoTargetPathSpecifiedPlain"));
             }
 
             bool isDirectoryTarget = targetDirectory.EndsWith("/", StringComparison.Ordinal)
@@ -236,7 +236,7 @@ namespace Game
                 : ModpackRules.TryGetPathTailName(item.Url);
             if (string.IsNullOrWhiteSpace(sourceFileName))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "CustomFileUrlHasNoFileName"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModpackDataFiles", "CustomFileUrlHasNoFileName"));
             }
             return ResolveTargetPath($"{targetDirectory}{sourceFileName}");
         }
@@ -246,7 +246,7 @@ namespace Game
             string safeRelativePath = SanitizeRelativePath(targetPath);
             if (string.IsNullOrWhiteSpace(safeRelativePath))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DataFileHasNoTargetPathSpecifiedPlain"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModpackDataFiles", "DataFileHasNoTargetPathSpecifiedPlain"));
             }
 
             string result = GetBasePath();
@@ -294,7 +294,7 @@ namespace Game
 
             if (s_protectedRootNames.Contains(safeSegments[0]))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "UnsafeCustomFileTargetPathRejected"),
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "UnsafeCustomFileTargetPathRejected"),
                     targetPath));
             }
 

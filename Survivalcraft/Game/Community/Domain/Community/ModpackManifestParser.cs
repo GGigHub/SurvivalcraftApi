@@ -62,7 +62,7 @@ namespace Game
             bool isZipSource = string.Equals(sourceExtension, ".zip", StringComparison.OrdinalIgnoreCase);
             if (!isJsonSource && !isZipSource)
             {
-                return Error(requestId, data, sourceUrl, sourceFileName, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "PackOnlySupportsZipOrJson"));
+                return Error(requestId, data, sourceUrl, sourceFileName, LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "PackOnlySupportsZipOrJson"));
             }
 
             string manifestError = null;
@@ -94,12 +94,12 @@ namespace Game
                     string.Equals(entry.FullName?.Trim().Replace('\\', '/'), "packinfo.json", StringComparison.OrdinalIgnoreCase));
                 if (manifestEntry == null)
                 {
-                    return Error(requestId, data, sourceUrl, sourceFileName, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "PackinfoJsonNotFoundInZipRoot"));
+                    return Error(requestId, data, sourceUrl, sourceFileName, LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "PackinfoJsonNotFoundInZipRoot"));
                 }
 
                 if (manifestEntry.Length > MaxEmbeddedEntryBytes)
                 {
-                    return Error(requestId, data, sourceUrl, sourceFileName, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ZipEntryExceedsSizeLimit"), "packinfo.json"));
+                    return Error(requestId, data, sourceUrl, sourceFileName, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ZipEntryExceedsSizeLimit"), "packinfo.json"));
                 }
 
                 using Stream entryStream = manifestEntry.Open();
@@ -109,7 +109,7 @@ namespace Game
                 {
                     // 中央目录 entry.Length 可伪造，此处解压后按实际大小复核。嵌入文件循环
                     // 无此复核，由 .NET 读取路径（CrcValidatingReadStream）的 CRC 校验兜底。
-                    return Error(requestId, data, sourceUrl, sourceFileName, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ZipEntryExceedsSizeLimit"), "packinfo.json"));
+                    return Error(requestId, data, sourceUrl, sourceFileName, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ZipEntryExceedsSizeLimit"), "packinfo.json"));
                 }
                 string zipManifestError = null;
                 if (!TryReadJson(manifestMemory.ToArray(), out ModpackManifest zipManifest, out string zipJsonError)
@@ -137,7 +137,7 @@ namespace Game
 
                     if (entry.Length > MaxEmbeddedEntryBytes)
                     {
-                        return Error(requestId, data, sourceUrl, sourceFileName, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ZipEntryExceedsSizeLimit"), entryPath));
+                        return Error(requestId, data, sourceUrl, sourceFileName, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ZipEntryExceedsSizeLimit"), entryPath));
                     }
 
                     using Stream fileStream = entry.Open();
@@ -146,7 +146,7 @@ namespace Game
                     totalEmbeddedBytes += fileMemory.Length;
                     if (totalEmbeddedBytes > MaxTotalEmbeddedBytes)
                     {
-                        return Error(requestId, data, sourceUrl, sourceFileName, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ZipEntryExceedsSizeLimit"), entryPath));
+                        return Error(requestId, data, sourceUrl, sourceFileName, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ZipEntryExceedsSizeLimit"), entryPath));
                     }
                     embeddedFiles[entryPath] = fileMemory.ToArray();
                 }
@@ -166,7 +166,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                return Error(requestId, data, sourceUrl, sourceFileName, manifestError ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ZipReadFailed"), ex.Message));
+                return Error(requestId, data, sourceUrl, sourceFileName, manifestError ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ZipReadFailed"), ex.Message));
             }
         }
 
@@ -182,7 +182,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ManifestJsonParseFailed"), ex.Message);
+                error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ManifestJsonParseFailed"), ex.Message);
                 return false;
             }
         }
@@ -197,32 +197,32 @@ namespace Game
             }
             if (string.IsNullOrWhiteSpace(manifest.Name))
             {
-                error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ManifestMissingFieldName");
+                error = LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ManifestMissingFieldName");
                 return false;
             }
             if (string.IsNullOrWhiteSpace(manifest.PackageName))
             {
-                error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ManifestMissingFieldPackageName");
+                error = LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ManifestMissingFieldPackageName");
                 return false;
             }
             if (string.IsNullOrWhiteSpace(manifest.Version))
             {
-                error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ManifestMissingFieldVersion");
+                error = LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ManifestMissingFieldVersion");
                 return false;
             }
             if (string.IsNullOrWhiteSpace(manifest.Description))
             {
-                error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ManifestMissingFieldDescription");
+                error = LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ManifestMissingFieldDescription");
                 return false;
             }
             if (manifest.Items == null || manifest.Items.Length == 0)
             {
-                error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ManifestHasNoValidItems");
+                error = LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ManifestHasNoValidItems");
                 return false;
             }
             if (!IsSupportedIconPath(manifest.Icon))
             {
-                error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "IconOnlySupportsPngOrWebp");
+                error = LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "IconOnlySupportsPngOrWebp");
                 return false;
             }
             return true;
@@ -239,7 +239,7 @@ namespace Game
                 && !string.IsNullOrWhiteSpace(manifest?.Icon)
                 && !ModpackRules.IsHttpUrl(manifest.Icon))
             {
-                error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "JsonPackIconMustBeUrl");
+                error = LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "JsonPackIconMustBeUrl");
                 return false;
             }
 

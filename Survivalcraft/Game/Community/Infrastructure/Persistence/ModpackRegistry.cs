@@ -77,7 +77,7 @@ namespace Game
         {
             if (sourceData == null || sourceData.Length == 0)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DownloadedZipPackIsEmpty"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModpackRegistry", "DownloadedZipPackIsEmpty"));
             }
 
             lock (m_writeSync)
@@ -202,7 +202,7 @@ namespace Game
                 ModpackManifestLoadResult parsed = m_parser.Parse(0, ReadBytes(manifestPath), null, Storage.GetFileName(manifestPath));
                 if (parsed?.Manifest?.Items == null || parsed.Manifest.Items.Length == 0)
                 {
-                    error = parsed?.Error ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ManifestHasNoValidItems");
+                    error = parsed?.Error ?? LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ManifestHasNoValidItems");
                     Cache(cacheKey, manifestPath, manifestTime, manifestSize, metadataTime, null, error);
                     return null;
                 }

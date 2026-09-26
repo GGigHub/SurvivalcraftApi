@@ -145,13 +145,13 @@ namespace Game
             error = null;
             if (item == null)
             {
-                error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "PackItemIsEmpty");
+                error = LanguageControl.Get("ScbbsPlusModpackRules", "PackItemIsEmpty");
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(item.TargetDirectory))
             {
-                error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "PackItemMissingTargetDirectory"), GetDisplayName(item));
+                error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackRules", "PackItemMissingTargetDirectory"), GetDisplayName(item));
                 return false;
             }
 
@@ -159,7 +159,7 @@ namespace Game
             string fileId = item.FileId?.Trim();
             if (string.IsNullOrWhiteSpace(url) && string.IsNullOrWhiteSpace(fileId))
             {
-                error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "PackItemUrlAndFileIdBothEmpty"), GetDisplayName(item));
+                error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackRules", "PackItemUrlAndFileIdBothEmpty"), GetDisplayName(item));
                 return false;
             }
 
@@ -171,7 +171,7 @@ namespace Game
                     {
                         return true;
                     }
-                    error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "JsonPackNoLocalRelativePath"), GetDisplayName(item));
+                    error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackRules", "JsonPackNoLocalRelativePath"), GetDisplayName(item));
                     return false;
                 }
 
@@ -181,7 +181,7 @@ namespace Game
                     {
                         return true;
                     }
-                    error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "PackItemFileNotFoundInArchive"), GetDisplayName(item), url);
+                    error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackRules", "PackItemFileNotFoundInArchive"), GetDisplayName(item), url);
                     return false;
                 }
             }
@@ -269,8 +269,8 @@ namespace Game
         private static string GetDisplayName(ModpackItem item)
         {
             return item == null
-                ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "PackItemDefaultName")
-                : item.Filename ?? item.FileId ?? item.Url ?? item.Category ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "PackItemDefaultName");
+                ? LanguageControl.Get("ScbbsPlusModpackRules", "PackItemDefaultName")
+                : item.Filename ?? item.FileId ?? item.Url ?? item.Category ?? LanguageControl.Get("ScbbsPlusModpackRules", "PackItemDefaultName");
         }
 
         private static ExternalContentType ResolveCategory(string category)

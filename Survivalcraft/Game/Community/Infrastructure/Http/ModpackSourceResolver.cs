@@ -92,7 +92,7 @@ namespace Game
                 await m_communityApiClient.GetJsonResultAsync<FileInfoResponse>(url, token, cancellationToken);
             if (!apiResult.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "GetFileInfoByFileIdFailed"), apiResult.StatusCode, apiResult.Body));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "GetFileInfoByFileIdFailed"), apiResult.StatusCode, apiResult.Body));
             }
 
             string body = apiResult.Body;
@@ -113,11 +113,11 @@ namespace Game
             }
             if (wrapped != null && wrapped.Code != 0 && wrapped.Code != 200)
             {
-                throw new InvalidOperationException(wrapped.Msg ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "GetFileInfoByFileIdMalformed"), body));
+                throw new InvalidOperationException(wrapped.Msg ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "GetFileInfoByFileIdMalformed"), body));
             }
             if (directFile == null || string.IsNullOrWhiteSpace(directFile.Url))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "FileIdReturnedNoDownloadLink"), fileId));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "FileIdReturnedNoDownloadLink"), fileId));
             }
 
             return directFile;

@@ -258,7 +258,7 @@ namespace Game
                 Title = isActive
                     ? string.Format(
                         CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "CurrentlyActive"),
+                        LanguageControl.Get(fName, "CurrentlyActive"),
                         displayName)
                     : displayName,
                 TitleColor = isActive ? new Color(120, 220, 140) : Color.White
@@ -367,7 +367,7 @@ namespace Game
             if (gateDecision.Kind == ModpackDecisionKind.OtherModpackActive)
             {
                 CommunityToastManager.Show(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "AnotherModpackActive"),
+                    LanguageControl.Get(fName, "AnotherModpackActive"),
                     autoHideSeconds: 3.0);
                 return;
             }
@@ -389,7 +389,7 @@ namespace Game
             if (decision.Kind == ModpackDecisionKind.NoManagedMods)
             {
                 CommunityToastManager.Show(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ThisModpackHasNoManagedModResources"),
+                    LanguageControl.Get(fName, "ThisModpackHasNoManagedModResources"),
                     autoHideSeconds: 3.0);
                 return;
             }
@@ -418,16 +418,16 @@ namespace Game
                 {
                     missingNames += string.Format(
                         CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "AndMore"),
+                        LanguageControl.Get(fName, "AndMore"),
                         missingEmbeddedItems.Count);
                 }
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingModpackFiles"),
+                        LanguageControl.Get(fName, "MissingModpackFiles"),
                         string.Format(
                             CultureInfo.InvariantCulture,
-                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingInArchiveList"),
+                            LanguageControl.Get(fName, "MissingInArchiveList"),
                             missingNames),
                         LanguageControl.Ok,
                         null,
@@ -441,13 +441,13 @@ namespace Game
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingResources"),
+                        LanguageControl.Get(fName, "MissingResources"),
                         string.Format(
                             CultureInfo.InvariantCulture,
-                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingResourcesDownloadPrompt"),
+                            LanguageControl.Get(fName, "MissingResourcesDownloadPrompt"),
                             displayName,
                             missingItems.Count),
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DownloadAndLaunch"),
+                        LanguageControl.Get(fName, "DownloadAndLaunch"),
                         LanguageControl.Cancel,
                         button =>
                         {
@@ -492,7 +492,7 @@ namespace Game
             if (missingItems.Count == 0)
             {
                 CommunityToastManager.Show(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "AllResourcesReady"),
+                    LanguageControl.Get(fName, "AllResourcesReady"),
                     autoHideSeconds: 2.5);
                 RefreshActionButtons();
                 return;
@@ -539,7 +539,7 @@ namespace Game
                             RefreshActionButtons();
                         }
                         CommunityToastManager.Show(
-                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "MissingModpackResourcesDownloaded"),
+                            LanguageControl.Get(fName, "MissingModpackResourcesDownloaded"),
                             autoHideSeconds: 3.0);
                         return;
                     }
@@ -558,12 +558,12 @@ namespace Game
                             DialogsManager.ShowDialog(
                                 null,
                                 new MessageDialog(
-                                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "FailedToDownloadModpackResources"),
+                                    LanguageControl.Get(fName, "FailedToDownloadModpackResources"),
                                     string.Format(
                                         CultureInfo.InvariantCulture,
-                                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "UnavailableResourcesIgnorePrompt"),
+                                        LanguageControl.Get(fName, "UnavailableResourcesIgnorePrompt"),
                                         progress.FailedCount),
-                                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "IgnoreAndLaunch"),
+                                    LanguageControl.Get(fName, "IgnoreAndLaunch"),
                                     LanguageControl.Cancel,
                                     button =>
                                     {
@@ -580,7 +580,7 @@ namespace Game
                         }
 
                         CommunityToastManager.Show(
-                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StartBlockedMissingResources"),
+                            LanguageControl.Get(fName, "StartBlockedMissingResources"),
                             autoHideSeconds: 3.0);
                         return;
                     }
@@ -591,7 +591,7 @@ namespace Game
             if (downloadStarted)
             {
                 CommunityToastManager.Show(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DownloadingMissingModpackResources"),
+                    LanguageControl.Get(fName, "DownloadingMissingModpackResources"),
                     autoHideSeconds: 2.5);
             }
             RefreshActionButtons();
@@ -626,7 +626,7 @@ namespace Game
                     {
                         ModpackDataFiles.TryRestoreBackups(progress?.CustomFileBackups, out _);
                         CommunityToastManager.Show(
-                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ExtractFailedNotStarted"),
+                            LanguageControl.Get(fName, "ExtractFailedNotStarted"),
                             autoHideSeconds: 3.0);
                         return;
                     }
@@ -641,7 +641,7 @@ namespace Game
             if (downloadStarted)
             {
                 CommunityToastManager.Show(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ExtractingResourcesFromTheModpack"),
+                    LanguageControl.Get(fName, "ExtractingResourcesFromTheModpack"),
                     autoHideSeconds: 2.5);
             }
             RefreshActionButtons();
@@ -681,8 +681,8 @@ namespace Game
             }
             RefreshModpackList();
             PromptRestartForModpackChange(
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "LaunchModpack"),
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "EnabledRestartPrompt"));
+                LanguageControl.Get(fName, "LaunchModpack"),
+                LanguageControl.Get(fName, "EnabledRestartPrompt"));
         }
 
         private void DisableSelectedModpack(LocalResourceItem resourceItem)
@@ -690,7 +690,7 @@ namespace Game
             if (!IsModpackActive(resourceItem) || m_activeModpackState == null)
             {
                 CommunityToastManager.Show(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ThisModpackIsNotCurrentlyActive"),
+                    LanguageControl.Get(fName, "ThisModpackIsNotCurrentlyActive"),
                     autoHideSeconds: 2.5);
                 return;
             }
@@ -729,8 +729,8 @@ namespace Game
             m_activeModpackState = null;
             RefreshModpackList();
             PromptRestartForModpackChange(
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "CloseModpack"),
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DisabledRestartPrompt"));
+                LanguageControl.Get(fName, "CloseModpack"),
+                LanguageControl.Get(fName, "DisabledRestartPrompt"));
         }
 
         private void ShowModpackFileOperationError(string titleKey, string messageKey, string error)
@@ -738,10 +738,10 @@ namespace Game
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", titleKey),
+                    LanguageControl.Get(fName, titleKey),
                     string.Format(
                         CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", messageKey),
+                        LanguageControl.Get(fName, messageKey),
                         error),
                     LanguageControl.Ok,
                     null,
@@ -781,8 +781,8 @@ namespace Game
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "CannotDelete"),
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "DisableBeforeDelete"),
+                        LanguageControl.Get(fName, "CannotDelete"),
+                        LanguageControl.Get(fName, "DisableBeforeDelete"),
                         LanguageControl.Ok,
                         null,
                         null));

@@ -115,7 +115,7 @@ namespace Game
 
             contentPanel.Children.Add(new LabelWidget
             {
-                Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "ItemsList"),
+                Text = LanguageControl.Get(fName, "ItemsList"),
                 Margin = margin
             });
             m_itemsListValueLabel = new LabelWidget { WordWrap = true };
@@ -213,7 +213,7 @@ namespace Game
                 totalCount);
             if (isActive)
             {
-                statusText += " | " + LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "Active");
+                statusText += " | " + LanguageControl.Get(fName, "Active");
             }
             m_downloadStatusLabel.Text = statusText;
             m_downloadStatusLabel.Color = isActive || (downloadedCount >= totalCount && totalCount > 0)
@@ -241,10 +241,10 @@ namespace Game
                 bool bundled = ModpackPresenceRules.IsEmbeddedItem(m_record, item);
                 bool installed = !bundled && ModpackPresenceRules.IsItemDownloaded(item, snapshot, m_record);
                 string state = bundled
-                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateBundled")
+                    ? LanguageControl.Get(fName, "StateBundled")
                     : installed
-                        ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateExists")
-                        : LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "Modpacks", "Page", "StateNeedDownload");
+                        ? LanguageControl.Get(fName, "StateExists")
+                        : LanguageControl.Get(fName, "StateNeedDownload");
                 lines.Add($"- [{state}][{GetModpackItemCategoryName(item)}] {ModpacksManageContentScreen.GetModpackItemDisplayName(item)}");
             }
 
