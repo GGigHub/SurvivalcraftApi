@@ -112,8 +112,8 @@ namespace Game
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Auth", "Auth", "LogOut"),
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Auth", "Auth", "LogOutOfTheCurrentCommunityAccount"),
+                        LanguageControl.Get("ScbbsPlusAuthSessionManager", "LogOut"),
+                        LanguageControl.Get("ScbbsPlusAuthSessionManager", "LogOutOfTheCurrentCommunityAccount"),
                         LanguageControl.Yes,
                         LanguageControl.No,
                         button =>
@@ -151,7 +151,7 @@ namespace Game
             account = account?.Trim();
             if (string.IsNullOrEmpty(account) || string.IsNullOrEmpty(password))
             {
-                m_loginDialog?.SetError(LanguageControl.Get("ScbbsPlusCommunityScreen", "Auth", "Auth", "PleaseEnterAccountAndPassword"));
+                m_loginDialog?.SetError(LanguageControl.Get("ScbbsPlusAuthSessionManager", "PleaseEnterAccountAndPassword"));
                 return;
             }
 
@@ -351,7 +351,7 @@ namespace Game
                     {
                         // 服务端登出失败：本地凭据已保留（可重试登录/登出），Toast 说明。
                         CommunityToastManager.Show(
-                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Auth", "Auth", "LogoutFailedToast"),
+                            LanguageControl.Get("ScbbsPlusAuthSessionManager", "LogoutFailedToast"),
                             autoHideSeconds: 4.0);
                     }
                 }

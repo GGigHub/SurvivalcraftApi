@@ -402,7 +402,7 @@ namespace Game
 
             m_shouldShowRestoredDownloadPromptOnEnter = false;
             CommunityToastManager.Show(
-                string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Auth", "SelfReview", "UnfinishedDownloadsBadge"), m_restoredUnfinishedDownloadCount),
+                string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UnfinishedDownloadsBadge"), m_restoredUnfinishedDownloadCount),
                 confirmAction: ShowQueueDialog,
                 dismissAction: () => m_restoredUnfinishedDownloadCount = 0);
         }

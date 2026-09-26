@@ -5200,17 +5200,7 @@
         "UploadTypeNotSupported": "暂不支持上传该资源类型。"
       }
     },
-    "Auth": {
-      "SelfReview": {
-        "UnfinishedDownloadsBadge": "当前有{0}个下载未完成，点击查看"
-      },
-      "Auth": {
-        "LogOut": "确认登出",
-        "LogOutOfTheCurrentCommunityAccount": "确定要退出当前社区账号吗？",
-        "PleaseEnterAccountAndPassword": "请输入账号和密码",
-        "LogoutFailedToast": "登出请求未完成，服务端登录状态可能仍然有效"
-      }
-    },
+
     "DefaultFiltersSaved": "[ScbbsPlus] 已保存默认筛选: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] 加载推荐资源失败: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] 加载社区帖子失败: {0}",
@@ -5497,7 +5487,12 @@
     "SaveCredentialsFailed": "[ScbbsPlus] 保存凭据失败: {0}",
     "LocalCredentialFileDeleted": "[ScbbsPlus] 已删除本地凭据文件",
     "DeleteCredentialFileFailed": "[ScbbsPlus] 删除凭据文件失败: {0}",
-    "TokenInvalidatedClearingLocalState": "[ScbbsPlus] 检测到 token 失效（401/403），清除本地登录态"
+    "TokenInvalidatedClearingLocalState": "[ScbbsPlus] 检测到 token 失效（401/403），清除本地登录态",
+    "LogOut": "确认登出",
+    "LogOutOfTheCurrentCommunityAccount": "确定要退出当前社区账号吗？",
+    "PleaseEnterAccountAndPassword": "请输入账号和密码",
+    "LogoutFailedToast": "登出请求未完成，服务端登录状态可能仍然有效"
+
   },
   "ScbbsPlusCommon": {
     "Text": {
@@ -5638,7 +5633,9 @@
       "ConfirmDownloadAndEnable": "有 {0} 个子项，是否立即下载并启用？",
       "ConfirmEnableAllReady": "所有子项已就绪，是否立即启用？",
       "SubItemsHeader": "子项："
-    }
+    },
+    "UnfinishedDownloadsBadge": "当前有{0}个下载未完成，点击查看"
+
   },
   "ScbbsPlusFiltersDialog": {
     "SelectFileType": "选择文件类型",

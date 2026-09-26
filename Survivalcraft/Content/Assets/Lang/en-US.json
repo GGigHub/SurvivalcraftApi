@@ -5190,17 +5190,7 @@
         "UploadTypeNotSupported": "Uploading this resource type is not supported yet."
       }
     },
-    "Auth": {
-      "SelfReview": {
-        "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view."
-      },
-      "Auth": {
-        "LogOut": "Log Out",
-        "LogOutOfTheCurrentCommunityAccount": "Log out of the current community account?",
-        "PleaseEnterAccountAndPassword": "Please enter account and password",
-        "LogoutFailedToast": "The logout request did not complete; the server session may still be active"
-      }
-    },
+
     "DefaultFiltersSaved": "[ScbbsPlus] Default filters saved: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] Failed to load featured resources: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] Failed to load community posts: {0}",
@@ -5488,7 +5478,12 @@
     "SaveCredentialsFailed": "[ScbbsPlus] Failed to save credentials: {0}",
     "LocalCredentialFileDeleted": "[ScbbsPlus] Deleted the local credential file",
     "DeleteCredentialFileFailed": "[ScbbsPlus] Failed to delete the credential file: {0}",
-    "TokenInvalidatedClearingLocalState": "[ScbbsPlus] Token invalidation detected (401/403); clearing the local login state"
+    "TokenInvalidatedClearingLocalState": "[ScbbsPlus] Token invalidation detected (401/403); clearing the local login state",
+    "LogOut": "Log Out",
+    "LogOutOfTheCurrentCommunityAccount": "Log out of the current community account?",
+    "PleaseEnterAccountAndPassword": "Please enter account and password",
+    "LogoutFailedToast": "The logout request did not complete; the server session may still be active"
+
   },
   "ScbbsPlusCommon": {
     "Text": {
@@ -5629,7 +5624,9 @@
       "ConfirmDownloadAndEnable": "There are {0} sub-items. Download and enable now?",
       "ConfirmEnableAllReady": "All sub-items are ready. Enable now?",
       "SubItemsHeader": "Sub-items:"
-    }
+    },
+    "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view."
+
   },
   "ScbbsPlusFiltersDialog": {
     "SelectFileType": "Select File Type",
