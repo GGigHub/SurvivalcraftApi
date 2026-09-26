@@ -984,7 +984,7 @@ namespace Game {
                 "ChangeSkyColor",
                 loader => {
                     color = loader.ChangeSkyColor(color, direction, timeOfDay, temperature);
-                    return true;
+                    return false;
                 }
             );
             return color;
