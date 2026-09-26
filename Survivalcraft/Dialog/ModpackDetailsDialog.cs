@@ -25,6 +25,9 @@ namespace Game
         private readonly LabelWidget m_itemsListValueLabel;
         private readonly BevelledButtonWidget m_toggleEnabledButton;
         private readonly BevelledButtonWidget m_downloadMissingButton;
+        // 上一帧的下载忙/文件信息加载态：失败等路径不产生任何回调，按钮文本靠边沿轮询恢复。
+        private bool m_lastBusy;
+        private bool m_lastLoading;
         private readonly BevelledButtonWidget m_deleteButton;
         private readonly BevelledButtonWidget m_uploadButton;
         private readonly BevelledButtonWidget m_closeButton;
@@ -122,6 +125,8 @@ namespace Game
             m_itemsListValueLabel.Text = BuildItemsListText();
 
             RefreshActionState();
+            m_lastBusy = DownloadFlowManager.Instance.ModpackDownloadBusy;
+            m_lastLoading = m_screen.IsModpackFileInfoLoading(m_item);
             m_screen.StartModpackFileInfoLoad(m_item, m_record);
         }
 
@@ -133,6 +138,19 @@ namespace Game
             {
                 m_itemsListValueLabel.Text = BuildItemsListText();
                 RefreshDownloadStatusRow();
+                RefreshActionState();
+            }
+
+            // 下载任务成败均无回调直达对话框（宿主屏靠 PackDownloadCompleted 事件，但 busy
+            // 还含清单拉取任务），边沿轮询 busy/loading 变化恢复按钮文本并同步持有状态行。
+            bool busy = DownloadFlowManager.Instance.ModpackDownloadBusy;
+            bool loading = m_screen.IsModpackFileInfoLoading(m_item);
+            if (busy != m_lastBusy || loading != m_lastLoading)
+            {
+                m_lastBusy = busy;
+                m_lastLoading = loading;
+                RefreshDownloadStatusRow();
+                m_itemsListValueLabel.Text = BuildItemsListText();
                 RefreshActionState();
             }
             if (m_toggleEnabledButton.IsClicked)
