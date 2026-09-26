@@ -205,7 +205,9 @@
     "FileDeletedTag": "File Deleted",
       "Community": {
         "BusyMessage": {
-          "LoadingPreviousVersionList": "Loading the previous version list."
+          "LoadingPreviousVersionList": "Loading the previous version list.",
+        "CheckingPreviousModUpdate": "Checking the previous mod update.",
+        "SearchingPreviousDependency": "Searching the previous dependency."
         },
         "FailedToLoadVersionList": "Failed to load version list: {0}",
       "AlreadyUpToDateFormat": "Already up to date.\n{0}: {1}\n{2}: {3}",

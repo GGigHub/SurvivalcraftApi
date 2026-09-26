@@ -205,7 +205,9 @@
     "FileDeletedTag": "文件已删除",
     "Community": {
       "BusyMessage": {
-        "LoadingPreviousVersionList": "正在加载上一项版本列表。"
+        "LoadingPreviousVersionList": "正在加载上一项版本列表。",
+        "CheckingPreviousModUpdate": "正在检查上一项模组更新。",
+        "SearchingPreviousDependency": "正在搜索上一项依赖。"
       },
       "FailedToLoadVersionList": "获取版本列表失败：{0}",
       "AlreadyUpToDateFormat": "当前已是最新版本。\n{0}：{1}\n{2}：{3}",
