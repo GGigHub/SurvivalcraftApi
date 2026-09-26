@@ -57,12 +57,12 @@ namespace Game
             }
             if (m_slot.IsRunning)
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Text", "PleaseWait"), LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "SubmittingPreviousReview"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Text", "PleaseWait"), LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Text", "SubmittingPreviousReview"), LanguageControl.Ok, null, null));
                 return false;
             }
             if (!IsLoggedInProvider() || string.IsNullOrEmpty(TokenProvider()))
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "PleaseLogInBeforeReviewing"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Text", "PleaseLogInBeforeReviewing"), LanguageControl.Ok, null, null));
                 return false;
             }
 
@@ -87,7 +87,7 @@ namespace Game
                 }));
             if (request.ShowSubmittingDialog)
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "Submitting"), LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "SubmittingReviewToTheCommunity"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Text", "Submitting"), LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Text", "SubmittingReviewToTheCommunity"), LanguageControl.Ok, null, null));
             }
             return true;
         }
@@ -114,7 +114,7 @@ namespace Game
             }
             if (!string.IsNullOrEmpty(result.Error))
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "ReviewSubmissionFailed"), result.Error), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Text", "ReviewSubmissionFailed"), result.Error), LanguageControl.Ok, null, null));
                 return true;
             }
 
@@ -125,7 +125,7 @@ namespace Game
             }
             else
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "ReviewSubmitted"), LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "ReviewSubmittedToast"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Text", "ReviewSubmitted"), LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Text", "ReviewSubmittedToast"), LanguageControl.Ok, null, null));
             }
             return true;
         }
@@ -179,7 +179,7 @@ namespace Game
                     return new LocalResourceScoreResult
                     {
                         ResourceKey = request.ResourceKey,
-                        Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "CannotFindPublishedPostByFileName"), request.FileName)
+                        Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "CannotFindPublishedPostByFileName"), request.FileName)
                     };
                 }
 

@@ -202,7 +202,27 @@
     "80": "Details",
     "81": "*Requires Restart",
     "PendingRestartTag": "Pending Restart",
-    "FileDeletedTag": "File Deleted"
+    "FileDeletedTag": "File Deleted",
+      "Community": {
+        "BusyMessage": {
+          "LoadingPreviousVersionList": "Loading the previous version list."
+        },
+        "FailedToLoadVersionList": "Failed to load version list: {0}",
+      "AlreadyUpToDateFormat": "Already up to date.\n{0}: {1}\n{2}: {3}",
+      "DependencySearchFailed": "Dependency search failed: {0}",
+      "ModsCanBeUpdatedTapToView": "{0} mod(s) can be updated",
+      "NoDownloadableDependenciesWereFound": "No downloadable dependencies were found.",
+      "NoUpdateReasonFormat": "{0}\n{1}: {2}\n{3}: {4}",
+      "SearchDependencies": "Search Dependencies",
+      "UpdateCheckFailed": "Update check failed: {0}"
+
+      },
+      "Review": {
+        "MissingFileNameOrPackageName": "Missing file name or package name",
+        "Buttons": {
+          "NoPost": "No Post"
+        }
+      }
   },
   "ManageContentScreen": {
     "1": "Blocks Texture | {0}x{1}",
@@ -4934,7 +4954,15 @@
     }
   },
   "ScbbsPlusLocalModNetworkManager": {
-    "AutoUpdateCheckFailed": "[ScbbsPlus] Automatic update check failed for local mod: {0}, error={1}"
+    "AutoUpdateCheckFailed": "[ScbbsPlus] Automatic update check failed for local mod: {0}, error={1}",
+    "NoModVersionForCurrentGame": "The post has no mod version compatible with the current game.",
+    "VersionListIsEmpty": "Version list is empty.",
+    "CannotFindPublishedPostByFileName": "Unable to find a published post by file name: {0}"
+
+  },
+  "ScbbsPlusLocalModPostResolver": {
+    "FindPostByFileNameFailed": "Failed to find post by file name: {0}: {1}",
+    "FindPostByFileNameMalformed": "Malformed find-post-by-file-name response: {0}"
   },
   "ScbbsPlusCommunityScreen": {
     "Community": {
@@ -5161,103 +5189,6 @@
         "UploadTypeNotSupported": "Uploading this resource type is not supported yet."
       }
     },
-    "Local": {
-      "LocalMods": {
-        "Pending": {
-          "Marked": "Marked {0}: {1}",
-          "CanceledPendingAction": "Canceled pending action: {0}",
-          "MissingModPackageNameOrVersion": "Mod package name or version is missing; cannot update the disabled state."
-        },
-        "Network": {
-          "LoadingPreviousVersionList": "Loading the previous version list.",
-          "FailedToLoadVersionList": "Failed to load version list: {0}",
-          "CheckingPreviousModUpdate": "Checking the previous mod update.",
-          "SearchingPreviousDependency": "Searching the previous dependency.",
-          "NoDownloadableDependenciesWereFound": "No downloadable dependencies were found.",
-          "ModsCanBeUpdatedTapToView": "{0} mod(s) can be updated",
-          "UpdateCheckFailed": "Update check failed: {0}",
-          "DependencySearchFailed": "Dependency search failed: {0}",
-          "ModsFound": "Mods Found",
-          "GetMods": "Get Mods",
-          "SearchDependencies": "Search Dependencies",
-          "ModLookupFailed": "Get mods failed: {0}",
-          "AlreadyUpToDateFormat": "Already up to date.\n{0}: {1}\n{2}: {3}",
-          "NoUpdateReasonFormat": "{0}\n{1}: {2}\n{3}: {4}",
-          "FindPostByFileNameFailed": "Failed to find post by file name: {0}: {1}",
-          "FindPostByFileNameMalformed": "Malformed find-post-by-file-name response: {0}",
-          "NoModVersionForCurrentGame": "The post has no mod version compatible with the current game.",
-          "NoScmodFileInLatestReleaseOfSource": "{0} latest release has no downloadable .scmod file.",
-          "LatestReleaseMissingDownloadLink": "{0} latest release is missing a download link.",
-          "CommunityPostNotFoundAndRepoUpdateFailed": "Community post not found, and repository fallback update failed: {0}",
-          "CannotFindPublishedPostByFileName": "Unable to find a published post by file name: {0}",
-          "VersionListIsEmpty": "Version list is empty."
-        },
-        "Review": {
-          "SubmittingPreviousReview": "Submitting the previous review.",
-          "PleaseLogInBeforeReviewing": "Please log in before reviewing.",
-          "Submitting": "Submitting",
-          "SubmittingReviewToTheCommunity": "Submitting review to the community.",
-          "ReviewSubmitted": "Review Submitted",
-          "ReviewSubmissionFailed": "Review submission failed: {0}",
-          "Buttons": {
-            "NoPost": "No Post",
-            "Review": "Review",
-            "Check": "Check",
-            "Failed": "Failed"
-          },
-          "ScoreApiReturnedEmpty": "Score API returned an empty response",
-          "ScoreApiReturnedMalformed": "Score API returned a malformed response",
-          "MissingFileNameOrPackageName": "Missing file name or package name",
-          "ReviewSubmittedToast": "Local resource review submitted to the community."
-        }
-      },
-      "Modpacks": {
-        "Manifest": {
-          "LocalResourcesDisplayingFormat": "Local {0}s · Displaying...",
-          "LocalResourcesDisplayingProgressFormat": "Local {0}s · Displaying {1}/{2}..."
-        }
-      },
-      "LocalResources": {
-        "Details": {
-          "FileName": "File Name:",
-          "Created": "Created:",
-          "Homepage": "Homepage:",
-          "LocalName": "Local Name:",
-          "PlayedTime": "Play Time:",
-          "Latest": "Latest {0}",
-          "SeedCopiedToClipboard": "Seed copied to clipboard.",
-          "CannotOpen": "Cannot Open",
-          "NoLinkIsAvailable": "No link is available.",
-          "Saved": "Saved",
-          "WorldInfoSaved": "World info saved.",
-          "BuiltInResourceCannotBeUploaded": "Built-in resource cannot be uploaded",
-          "ReadyToUpload": "Ready to upload",
-          "UsedMods": "Used Mods:",
-          "WorldInfo": "World Info",
-          "WorldName": "World Name:",
-          "WorldSize": "World Size:",
-          "WorldSeed": "World Seed:",
-          "EasiestMode": "Easiest Mode:",
-          "Players": "Players:",
-          "Days": "Days:",
-          "Deaths": "Deaths:",
-          "CurrentStatus": "Current Status:",
-          "Author": "Author:",
-          "ResourceType": "Resource Type:",
-          "Format": "Format:",
-          "CompatibleAPI": "Compatible API:",
-          "Dependencies": "Dependencies:",
-          "Status": "Status:",
-          "CopySeed": "Copy Seed",
-          "CurrentGameMode": "Current Game Mode",
-          "SaveFailed": "Save failed: {0}",
-          "CurrentMode": "Current Mode:",
-          "Buttons": {
-            "Mode": "Mode"
-          }
-        }
-      }
-    },
     "Auth": {
       "SelfReview": {
         "ReviewThisMod": "Review This Mod",
@@ -5314,7 +5245,10 @@
     "Unspecified": "Background"
   },
   "ScbbsPlusCommunityManager": {
-    "HighlightDataLoadFailed": "[ScbbsPlus] Failed to load highlight data: {0}"
+    "HighlightDataLoadFailed": "[ScbbsPlus] Failed to load highlight data: {0}",
+    "ScoreApiReturnedEmpty": "Score API returned an empty response",
+    "ScoreApiReturnedMalformed": "Score API returned a malformed response"
+
   },
   "ScbbsPlusVersionCatalogCache": {
     "NoApiVersionSkippingPluginMatch": "[ScbbsPlus] No API version provided; skipping plugin version matching. game={0}",
@@ -5335,7 +5269,9 @@
     "ProcessedPendingModAction": "[ScbbsPlus] Processed pending mod action: reason={0}, action={1}, path={2}",
     "ProcessPendingModActionFailed": "[ScbbsPlus] Failed to process the pending mod action: reason={0}, action={1}, path={2}, error={3}",
     "ReadPendingModManifestFailed": "[ScbbsPlus] Failed to read the pending mod manifest: {0}",
-    "SavePendingModManifestFailed": "[ScbbsPlus] Failed to save the pending mod manifest: {0}"
+    "SavePendingModManifestFailed": "[ScbbsPlus] Failed to save the pending mod manifest: {0}",
+    "MissingModPackageNameOrVersion": "Mod package name or version is missing; cannot update the disabled state."
+
   },
   "ScbbsPlusPendingLocalModMetadataReader": {
     "ReadPendingModMetadataFailed": "[ScbbsPlus] Failed to read pending mod metadata: {0}, error={1}"
@@ -5834,7 +5770,15 @@
   "ScbbsPlusReviewSubmissionHandler": {
     "ScoreSubmissionTaskFaulted": "[ScbbsPlus] Score submission task faulted: {0}",
     "Text": {
-      "PleaseWait": "Please Wait"
+      "PleaseWait": "Please Wait",
+      "PleaseLogInBeforeReviewing": "Please log in before reviewing.",
+      "ReviewSubmissionFailed": "Review submission failed: {0}",
+      "ReviewSubmitted": "Review Submitted",
+      "ReviewSubmittedToast": "Local resource review submitted to the community.",
+      "Submitting": "Submitting",
+      "SubmittingPreviousReview": "Submitting the previous review.",
+      "SubmittingReviewToTheCommunity": "Submitting review to the community."
+
     }
   },
   "ScbbsPlusTreeViewWidget": {

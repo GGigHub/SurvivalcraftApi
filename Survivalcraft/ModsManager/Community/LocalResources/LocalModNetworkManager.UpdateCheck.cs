@@ -65,7 +65,7 @@ namespace Game
                 result.PostId = postId;
                 result.PostTitle = response.Data.Title;
                 result.LatestVersion = ExternalVersionParser.Normalize(latestAnyVersion?.Version);
-                result.NoUpdateReason = LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "NoModVersionForCurrentGame");
+                result.NoUpdateReason = LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "NoModVersionForCurrentGame");
                 return result;
             }
 

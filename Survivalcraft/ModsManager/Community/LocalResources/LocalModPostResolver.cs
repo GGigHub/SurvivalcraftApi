@@ -140,13 +140,13 @@ namespace Game
                 await m_apiClient.GetJsonResultAsync<FilePublishedResponse>(url, token, cancellationToken);
             if (!apiResult.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "FindPostByFileNameFailed"), apiResult.StatusCode, apiResult.Body));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModPostResolver", "FindPostByFileNameFailed"), apiResult.StatusCode, apiResult.Body));
             }
 
             FilePublishedResponse publishedResponse = apiResult.Value;
             if (publishedResponse?.Code != 200)
             {
-                throw new InvalidOperationException(publishedResponse?.Msg ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "FindPostByFileNameMalformed"), apiResult.Body));
+                throw new InvalidOperationException(publishedResponse?.Msg ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModPostResolver", "FindPostByFileNameMalformed"), apiResult.Body));
             }
             if (publishedResponse.Data?.Published != true || publishedResponse.Data.Posts == null || publishedResponse.Data.Posts.Length == 0)
             {

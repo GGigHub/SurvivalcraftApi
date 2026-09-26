@@ -181,7 +181,7 @@ namespace Game
 
             if (request.RequirePublishedPost && string.IsNullOrWhiteSpace(communityResult.Error))
             {
-                communityResult.Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "CannotFindPublishedPostByFileName"), request.FileName);
+                communityResult.Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "CannotFindPublishedPostByFileName"), request.FileName);
             }
             return communityResult;
         }

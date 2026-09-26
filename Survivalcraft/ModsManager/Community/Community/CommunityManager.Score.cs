@@ -34,11 +34,11 @@ namespace Game
             if (response == null)
             {
                 // 空响应不再被当提交成功，评分丢失必须让调用方感知。
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "ScoreApiReturnedEmpty"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityManager", "ScoreApiReturnedEmpty"));
             }
             if (response.Code != 0 && response.Code != 200)
             {
-                throw new InvalidOperationException(response.Msg ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "ScoreApiReturnedMalformed"));
+                throw new InvalidOperationException(response.Msg ?? LanguageControl.Get("ScbbsPlusCommunityManager", "ScoreApiReturnedMalformed"));
             }
         }
     }

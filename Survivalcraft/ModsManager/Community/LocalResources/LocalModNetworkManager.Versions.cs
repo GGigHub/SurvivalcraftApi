@@ -33,7 +33,7 @@ namespace Game
                         cancellationToken);
                 if (postId <= 0)
                 {
-                    return CreateVersionsErrorResult(request, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "CannotFindPublishedPostByFileName"), request.FileName));
+                    return CreateVersionsErrorResult(request, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "CannotFindPublishedPostByFileName"), request.FileName));
                 }
 
                 PostDetailResponse postResponse = await postResolver.LoadPostDetailAsync(
@@ -52,7 +52,7 @@ namespace Game
                     cancellationToken);
                 if (versionListResponse?.Code != 200 || versionListResponse.Data == null)
                 {
-                    return CreateVersionsErrorResult(request, versionListResponse?.Msg ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "VersionListIsEmpty"));
+                    return CreateVersionsErrorResult(request, versionListResponse?.Msg ?? LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "VersionListIsEmpty"));
                 }
 
                 List<PostVersionItem> versions = PrepareVersionsForDisplay(postResponse.Data);

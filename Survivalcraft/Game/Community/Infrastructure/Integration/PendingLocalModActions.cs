@@ -184,7 +184,7 @@ namespace Game
             string version = entry?.Version?.Trim();
             if (string.IsNullOrWhiteSpace(packageName) || string.IsNullOrWhiteSpace(version))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Pending", "MissingModPackageNameOrVersion"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusPendingLocalModActions", "MissingModPackageNameOrVersion"));
             }
 
             bool changed = enable

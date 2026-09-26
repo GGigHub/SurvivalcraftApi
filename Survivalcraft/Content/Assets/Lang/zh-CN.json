@@ -202,7 +202,27 @@
     "80": "详情",
     "81": "*需重启",
     "PendingRestartTag": "待重启",
-    "FileDeletedTag": "文件已删除"
+    "FileDeletedTag": "文件已删除",
+    "Community": {
+      "BusyMessage": {
+        "LoadingPreviousVersionList": "正在加载上一项版本列表。"
+      },
+      "FailedToLoadVersionList": "获取版本列表失败：{0}",
+      "AlreadyUpToDateFormat": "当前已是最新版本。\n{0}：{1}\n{2}：{3}",
+      "DependencySearchFailed": "搜索依赖失败：{0}",
+      "ModsCanBeUpdatedTapToView": "检测到 {0} 个模组可更新",
+      "NoDownloadableDependenciesWereFound": "没有找到可下载的依赖。",
+      "NoUpdateReasonFormat": "{0}\n{1}：{2}\n{3}：{4}",
+      "SearchDependencies": "搜索依赖",
+      "UpdateCheckFailed": "检查更新失败：{0}"
+
+    },
+      "Review": {
+        "MissingFileNameOrPackageName": "缺少文件名或包名",
+        "Buttons": {
+          "NoPost": "未发布"
+        }
+      }
   },
   "ManageContentScreen": {
     "1": "方块材质 | {0}x{1}",
@@ -4944,7 +4964,15 @@
     }
   },
   "ScbbsPlusLocalModNetworkManager": {
-    "AutoUpdateCheckFailed": "[ScbbsPlus] 本地模组自动检查更新失败: {0}, error={1}"
+    "AutoUpdateCheckFailed": "[ScbbsPlus] 本地模组自动检查更新失败: {0}, error={1}",
+    "NoModVersionForCurrentGame": "帖子中没有适配当前版本的模组版本。",
+    "VersionListIsEmpty": "版本列表为空。",
+    "CannotFindPublishedPostByFileName": "无法通过文件名找到已发布帖子：{0}"
+
+  },
+  "ScbbsPlusLocalModPostResolver": {
+    "FindPostByFileNameFailed": "按文件名查找帖子失败: {0}: {1}",
+    "FindPostByFileNameMalformed": "按文件名查找帖子返回异常: {0}"
   },
   "ScbbsPlusCommunityScreen": {
     "Community": {
@@ -5171,103 +5199,6 @@
         "UploadTypeNotSupported": "暂不支持上传该资源类型。"
       }
     },
-    "Local": {
-      "LocalMods": {
-        "Pending": {
-          "Marked": "已标记{0}：{1}",
-          "CanceledPendingAction": "已取消待处理：{0}",
-          "MissingModPackageNameOrVersion": "缺少模组包名或版本，无法更新禁用状态。"
-        },
-        "Network": {
-          "LoadingPreviousVersionList": "正在加载上一项版本列表。",
-          "FailedToLoadVersionList": "获取版本列表失败：{0}",
-          "CheckingPreviousModUpdate": "正在检查上一项模组更新。",
-          "SearchingPreviousDependency": "正在搜索上一项依赖。",
-          "NoDownloadableDependenciesWereFound": "没有找到可下载的依赖。",
-          "ModsCanBeUpdatedTapToView": "检测到 {0} 个模组可更新",
-          "UpdateCheckFailed": "检查更新失败：{0}",
-          "DependencySearchFailed": "搜索依赖失败：{0}",
-          "ModsFound": "找到模组",
-          "GetMods": "获取模组",
-          "SearchDependencies": "搜索依赖",
-          "ModLookupFailed": "获取模组失败：{0}",
-          "AlreadyUpToDateFormat": "当前已是最新版本。\n{0}：{1}\n{2}：{3}",
-          "NoUpdateReasonFormat": "{0}\n{1}：{2}\n{3}：{4}",
-          "FindPostByFileNameFailed": "按文件名查找帖子失败: {0}: {1}",
-          "FindPostByFileNameMalformed": "按文件名查找帖子返回异常: {0}",
-          "NoModVersionForCurrentGame": "帖子中没有适配当前版本的模组版本。",
-          "NoScmodFileInLatestReleaseOfSource": "{0} 最新 release 中没有可下载的 .scmod 文件。",
-          "LatestReleaseMissingDownloadLink": "{0} 最新 release 缺少下载链接。",
-          "CommunityPostNotFoundAndRepoUpdateFailed": "未找到社区帖子，且仓库备选更新失败：{0}",
-          "CannotFindPublishedPostByFileName": "无法通过文件名找到已发布帖子：{0}",
-          "VersionListIsEmpty": "版本列表为空。"
-        },
-        "Review": {
-          "SubmittingPreviousReview": "正在提交上一条评价。",
-          "PleaseLogInBeforeReviewing": "请先登录后再评价。",
-          "Submitting": "正在提交",
-          "SubmittingReviewToTheCommunity": "评价正在提交到社区。",
-          "ReviewSubmitted": "评价已提交",
-          "ReviewSubmissionFailed": "评价提交失败：{0}",
-          "Buttons": {
-            "NoPost": "未发布",
-            "Review": "评价",
-            "Check": "检查中",
-            "Failed": "检查失败"
-          },
-          "ScoreApiReturnedEmpty": "评分接口返回为空",
-          "ScoreApiReturnedMalformed": "评分接口返回异常",
-          "MissingFileNameOrPackageName": "缺少文件名或包名",
-          "ReviewSubmittedToast": "本地资源评价已提交到社区。"
-        }
-      },
-      "Modpacks": {
-        "Manifest": {
-          "LocalResourcesDisplayingFormat": "本地{0} · 正在显示...",
-          "LocalResourcesDisplayingProgressFormat": "本地{0} · 正在显示 {1}/{2}..."
-        }
-      },
-      "LocalResources": {
-        "Details": {
-          "FileName": "文件名称：",
-          "Created": "创建时间：",
-          "Homepage": "主页：",
-          "LocalName": "本地名称：",
-          "PlayedTime": "游玩时间：",
-          "Latest": "最新版 {0}",
-          "SeedCopiedToClipboard": "种子已复制到剪贴板。",
-          "CannotOpen": "无法打开",
-          "NoLinkIsAvailable": "没有可用的链接。",
-          "Saved": "保存完成",
-          "WorldInfoSaved": "存档信息已保存。",
-          "BuiltInResourceCannotBeUploaded": "内置资源不可上传",
-          "ReadyToUpload": "可上传",
-          "UsedMods": "使用模组：",
-          "WorldInfo": "存档信息",
-          "WorldName": "存档名称：",
-          "WorldSize": "存档大小：",
-          "WorldSeed": "存档种子：",
-          "EasiestMode": "最简单游戏模式：",
-          "Players": "玩家数量：",
-          "Days": "游戏天数：",
-          "Deaths": "死亡次数：",
-          "CurrentStatus": "当前状态：",
-          "Author": "作者：",
-          "ResourceType": "资源类型：",
-          "Format": "格式：",
-          "CompatibleAPI": "适配API：",
-          "Dependencies": "引用依赖包：",
-          "Status": "状态：",
-          "CopySeed": "复制种子",
-          "CurrentGameMode": "当前游戏模式",
-          "SaveFailed": "保存失败：{0}",
-          "CurrentMode": "当前游戏模式：",
-          "Buttons": {
-            "Mode": "修改模式"
-          }
-        }
-      }
-    },
     "Auth": {
       "SelfReview": {
         "ReviewThisMod": "评价本模组",
@@ -5324,7 +5255,10 @@
     "Unspecified": "后台"
   },
   "ScbbsPlusCommunityManager": {
-    "HighlightDataLoadFailed": "[ScbbsPlus] 高亮数据加载失败: {0}"
+    "HighlightDataLoadFailed": "[ScbbsPlus] 高亮数据加载失败: {0}",
+    "ScoreApiReturnedEmpty": "评分接口返回为空",
+    "ScoreApiReturnedMalformed": "评分接口返回异常"
+
   },
   "ScbbsPlusVersionCatalogCache": {
     "NoApiVersionSkippingPluginMatch": "[ScbbsPlus] 当前未提供 API 版本，跳过 plugin 版本匹配。game={0}",
@@ -5345,7 +5279,8 @@
     "ProcessedPendingModAction": "[ScbbsPlus] 已处理待关闭模组操作: reason={0}, action={1}, path={2}",
     "ProcessPendingModActionFailed": "[ScbbsPlus] 处理待关闭模组操作失败: reason={0}, action={1}, path={2}, error={3}",
     "ReadPendingModManifestFailed": "[ScbbsPlus] 读取待关闭模组清单失败: {0}",
-    "SavePendingModManifestFailed": "[ScbbsPlus] 保存待关闭模组清单失败: {0}"
+    "SavePendingModManifestFailed": "[ScbbsPlus] 保存待关闭模组清单失败: {0}",
+    "MissingModPackageNameOrVersion": "缺少模组包名或版本，无法更新禁用状态。"
   },
   "ScbbsPlusPendingLocalModMetadataReader": {
     "ReadPendingModMetadataFailed": "[ScbbsPlus] 读取未加载模组信息失败: {0}, error={1}"
@@ -5844,7 +5779,15 @@
   "ScbbsPlusReviewSubmissionHandler": {
     "ScoreSubmissionTaskFaulted": "[ScbbsPlus] 评分提交任务异常: {0}",
     "Text": {
-      "PleaseWait": "请稍候"
+      "PleaseWait": "请稍候",
+      "PleaseLogInBeforeReviewing": "请先登录后再评价。",
+      "ReviewSubmissionFailed": "评价提交失败：{0}",
+      "ReviewSubmitted": "评价已提交",
+      "ReviewSubmittedToast": "本地资源评价已提交到社区。",
+      "Submitting": "正在提交",
+      "SubmittingPreviousReview": "正在提交上一条评价。",
+      "SubmittingReviewToTheCommunity": "评价正在提交到社区。"
+
     }
   },
   "ScbbsPlusTreeViewWidget": {

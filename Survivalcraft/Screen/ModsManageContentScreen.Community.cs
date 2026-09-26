@@ -154,7 +154,7 @@ public partial class ModsManageContentScreen
         {
             CommunityToastManager.Show(
                 string.Format(CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "ModsCanBeUpdatedTapToView"), count),
+                    LanguageControl.Get(fName, "Community", "ModsCanBeUpdatedTapToView"), count),
                 autoHideSeconds: 3.0);
         }
     }
@@ -271,7 +271,7 @@ public partial class ModsManageContentScreen
     {
         if (isRunning)
         {
-            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "PleaseWait"), LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", busyMessageKey), LanguageControl.Ok, null, null));
+            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "PleaseWait"), LanguageControl.Get(fName, "Community", "BusyMessage", busyMessageKey), LanguageControl.Ok, null, null));
             return false;
         }
         return validateResource();
@@ -296,7 +296,7 @@ public partial class ModsManageContentScreen
         }
         if (!string.IsNullOrEmpty(result.Error))
         {
-            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "UpdateCheckFailed"), result.Error), LanguageControl.Ok, null, null));
+            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get(fName, "Community", "UpdateCheckFailed"), result.Error), LanguageControl.Ok, null, null));
             return;
         }
 
@@ -307,7 +307,7 @@ public partial class ModsManageContentScreen
         {
             string message = string.Format(
                 CultureInfo.InvariantCulture,
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "AlreadyUpToDateFormat"),
+                LanguageControl.Get(fName, "Community", "AlreadyUpToDateFormat"),
                 LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "CurrentVersion"),
                 currentVersion,
                 LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LatestVersion"),
@@ -320,7 +320,7 @@ public partial class ModsManageContentScreen
                         ? message
                         : string.Format(
                             CultureInfo.InvariantCulture,
-                            LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "NoUpdateReasonFormat"),
+                            LanguageControl.Get(fName, "Community", "NoUpdateReasonFormat"),
                             result.NoUpdateReason,
                             LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "CurrentVersion"),
                             currentVersion,
@@ -437,7 +437,7 @@ public partial class ModsManageContentScreen
         }
         if (!string.IsNullOrEmpty(result.Error))
         {
-            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "FailedToLoadVersionList"), result.Error), LanguageControl.Ok, null, null));
+            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get(fName, "Community", "FailedToLoadVersionList"), result.Error), LanguageControl.Ok, null, null));
             return;
         }
 
@@ -508,7 +508,7 @@ public partial class ModsManageContentScreen
                     LanguageControl.Error,
                     string.Format(
                         CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "DependencySearchFailed"),
+                        LanguageControl.Get(fName, "Community", "DependencySearchFailed"),
                         result.Error),
                     LanguageControl.Ok,
                     null,
@@ -521,8 +521,8 @@ public partial class ModsManageContentScreen
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "SearchDependencies"),
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Network", "NoDownloadableDependenciesWereFound"),
+                    LanguageControl.Get(fName, "Community", "SearchDependencies"),
+                    LanguageControl.Get(fName, "Community", "NoDownloadableDependenciesWereFound"),
                     LanguageControl.Ok,
                     null,
                     null));
@@ -624,7 +624,7 @@ public partial class ModsManageContentScreen
             m_publishedCheckCompleted = true;
             m_publishedCheckCallback = null;
             CommunityToastManager.Show(
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "MissingFileNameOrPackageName"),
+                LanguageControl.Get(fName, "Review", "MissingFileNameOrPackageName"),
                 autoHideSeconds: 3.0);
             return;
         }
@@ -724,7 +724,7 @@ public partial class ModsManageContentScreen
             // spec §6：未发布/失败均 Toast（模组侧落按钮禁用态，本屏无该状态）。
             CommunityToastManager.Show(
                 string.IsNullOrEmpty(result.Error)
-                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Local", "LocalMods", "Review", "Buttons", "NoPost")
+                    ? LanguageControl.Get(fName, "Review", "Buttons", "NoPost")
                     : result.Error,
                 autoHideSeconds: 3.0);
         }
