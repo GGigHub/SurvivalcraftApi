@@ -56,8 +56,6 @@ namespace Game
         private readonly TaskSlot<PostDetailsDialogLoadResult> m_postDialogSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "CommunityPostDetailsDialog"));
         private readonly TaskSlot<FeaturedLoadResult> m_featuredSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "Featured"));
         private FeaturedLoadResult m_featuredResult;
-        private bool m_firstDownloadSelfReviewPromptShown;
-        private bool m_selfReviewPromptActive;
         private bool m_hasDeferredInitialPanelRefresh;
         private int m_deferredInitialPanelRefreshFrames;
         private bool m_hasDeferredEnterSideWork;
@@ -90,7 +88,6 @@ namespace Game
             // 下载/整合包管线见 DownloadFlowManager（Presentation/Controllers），
             // 屏幕只订阅完成事件刷新本地列表。界面回调（状态提示/下载源/重启返回）是共享单例上的
             // 单槽委托，不能在 ctor 赋值——三屏 ctor 都赋会被后注册者覆盖；统一放 Enter/Leave 配对。
-            m_selfScoreHandler = new((message, autoHideSeconds) => ShowToastPrompt(message, autoHideSeconds: autoHideSeconds));
             DownloadFlowManager downloadManager = DownloadFlowManager.Instance;
             XElement node = ContentManager.Get<XElement>("Screens/ScbbsPlusCommunityScreen");
             LoadContents(this, node);
@@ -269,7 +266,6 @@ namespace Game
             }
 
             HandleMoreButtonClicks();
-            TryShowSelfReviewPromptAfterEnoughUse();
 
             // Tab 按钮切换
             HandleFilterClicks();
@@ -301,9 +297,6 @@ namespace Game
             {
                 ApplyFeaturedResult(loadResult);
             }
-
-            // 轮询帖子请求
-            UpdateSelfScoreTask();
         }
 
         public override void Dispose()

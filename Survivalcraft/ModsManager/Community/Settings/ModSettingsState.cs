@@ -14,18 +14,12 @@ namespace Game
     internal static class ModSettingsState
     {
         private static bool s_loaded;
-        private static bool s_firstDownloadSelfReviewPromptShown;
         private static CommunityFileType s_localFileType = CommunityFileType.Mod;
         private static CommunityFileType s_communityFileType = CommunityFileType.Mod;
         private static CommunityOrderType s_communityOrderType = CommunityOrderType.Hot;
         private static bool s_communityOnlyCurrentVersion = true;
         private static int s_communitySection = 1;
         private static CommunityFileType s_myPublishedFileType = CommunityFileType.Mod;
-
-        public static bool FirstDownloadSelfReviewPromptShown
-        {
-            get { EnsureLoaded(); return s_firstDownloadSelfReviewPromptShown; }
-        }
 
         public static CommunityFileType LocalFileType
         {
@@ -65,13 +59,6 @@ namespace Game
             Persist();
         }
 
-        public static void SetFirstDownloadSelfReviewPromptShown()
-        {
-            EnsureLoaded();
-            s_firstDownloadSelfReviewPromptShown = true;
-            Persist();
-        }
-
         public static void SetCommunityDefaults(
             CommunityFileType fileType,
             CommunityOrderType orderType,
@@ -102,7 +89,6 @@ namespace Game
                 return;
             }
 
-            s_firstDownloadSelfReviewPromptShown = state.FirstDownloadSelfReviewPromptShown;
             s_localFileType = CommunityFileTypes.FromSettingValue(state.LocalFileType);
             s_communityFileType = CommunityFileTypes.FromSettingValue(state.CommunityFileType);
             s_communityOrderType = CommunityFileTypes.OrderFromSettingValue(state.CommunityOrderType);
@@ -117,8 +103,7 @@ namespace Game
             {
                 JsonFileStore.Write(CommunityStoragePaths.StateFile, new StateData
                 {
-                FirstDownloadSelfReviewPromptShown = s_firstDownloadSelfReviewPromptShown,
-                LocalFileType = (int)s_localFileType,
+                    LocalFileType = (int)s_localFileType,
                     CommunityFileType = (int)s_communityFileType,
                     CommunityOrderType = (int)s_communityOrderType,
                     CommunityOnlyCurrentVersion = s_communityOnlyCurrentVersion,
@@ -136,7 +121,6 @@ namespace Game
         // JSON 缺属性时退化语义与旧 XML 缺属性一致。
         private sealed class StateData
         {
-            public bool FirstDownloadSelfReviewPromptShown { get; set; }
             public int LocalFileType { get; set; } = 5;
             public int CommunityFileType { get; set; } = 5;
             public int CommunityOrderType { get; set; } = 4;

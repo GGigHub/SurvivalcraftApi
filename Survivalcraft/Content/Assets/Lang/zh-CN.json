@@ -4203,7 +4203,6 @@
       "ShareLink": "分享链接",
       "Details": "查看详情",
       "More": "...",
-      "LikeTheCommunityExpansionMod": "喜欢社区扩展模组吗?",
       "Disable": "禁用",
       "PendingRestartResources": "有0个资源需要重启加载"
     },
@@ -5203,10 +5202,6 @@
     },
     "Auth": {
       "SelfReview": {
-        "ReviewThisMod": "评价本模组",
-        "Useful": "好用",
-        "ThanksForYourSupport": "感谢你的支持",
-        "LikeTheCommunityExpansionMod": "喜欢社区扩展模组吗?",
         "UnfinishedDownloadsBadge": "当前有{0}个下载未完成，点击查看"
       },
       "Auth": {

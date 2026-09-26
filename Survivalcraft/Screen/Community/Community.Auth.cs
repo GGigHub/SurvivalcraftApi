@@ -7,13 +7,7 @@ namespace Game
     {
         private void LoadSettings()
         {
-            m_firstDownloadSelfReviewPromptShown = ModSettingsState.FirstDownloadSelfReviewPromptShown;
             ApplyLoadedDefaultFilters();
-        }
-
-        private void SaveSettings()
-        {
-            ModSettingsState.SetFirstDownloadSelfReviewPromptShown();
         }
 
         private void SaveDefaultFilters(CommunityFiltersDialog.State state)
