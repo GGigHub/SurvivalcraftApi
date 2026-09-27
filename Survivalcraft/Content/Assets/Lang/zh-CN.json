@@ -20,7 +20,6 @@
     "LoggedIn": "已登录",
     "NotLoggedIn": "未登录",
     "CannotFindLocalFile": "无法找到本地文件。"
-
   },
   "FurnitureBlock": [
     "将家具组合成交互式家具设计",
@@ -119,7 +118,6 @@
     "SaveConfigFailed": "无法保存整合包使用期间修改的配置：{0}",
     "FailedToRestoreFiles": "恢复文件失败",
     "RestoreFilesFailed": "无法恢复整合包启用前的文件：{0}"
-
   },
   "ModsManageContentScreen": {
     "1": "管理模组内容",
@@ -219,7 +217,6 @@
       "NoUpdateReasonFormat": "{0}\n{1}：{2}\n{3}：{4}",
       "SearchDependencies": "搜索依赖",
       "UpdateCheckFailed": "检查更新失败：{0}"
-
     },
       "Review": {
         "MissingFileNameOrPackageName": "缺少文件名或包名",
@@ -785,7 +782,6 @@
     "StateBundled": "内置",
     "StateExists": "已存在",
     "StateNeedDownload": "需下载"
-
   },
   "ModDetailsDialog": {
     "CheckUpdate": "检查更新",
@@ -793,6 +789,9 @@
     "Dependencies": "缺失依赖",
     "Review": "评分",
     "Upload": "上传",
+    "RestartRequired": "{0}（需要重启加载）",
+    "IncompatibleWithCurrentGame": "{0}（不适配当前游戏）",
+    "MissingDependency": "缺失依赖 {0}",
     "1": "禁用原因：",
     "2": "模组版本：",
     "3": "API 版本：",
@@ -4974,7 +4973,6 @@
 ,
     "NoScmodFileInLatestVersion": "最新版本没有可下载的 .scmod 文件。",
     "PostDetailsIsEmpty": "帖子详情为空。"
-
   },
   "ScbbsPlusLocalModPostResolver": {
     "FindPostByFileNameFailed": "按文件名查找帖子失败: {0}: {1}",
@@ -5060,54 +5058,6 @@
         "AllVersions": "全部版本",
         "TokenExpiredTitle": "登录已过期",
         "TokenExpired": "登录状态已失效，请重新登录。"
-      },
-      "LocalResources": {
-        "DuplicatePackageNameNotLoaded": "包名重复，未加载",
-        "ManuallyDisabledNotLoaded": "手动禁用，未加载",
-        "DependencyErrorNotLoaded": "依赖错误，未加载",
-        "InvalidModInformationNotLoaded": "模组信息无效，未加载",
-        "InvalidPackageNameNotLoaded": "包名无效，未加载",
-        "PendingEnable": "待启用",
-        "PendingDisable": "待禁用",
-        "PendingDelete": "待删除",
-        "DeleteResource": "删除资源",
-        "DeleteWorld": "删除存档",
-        "CancelEnable": "取消启用",
-        "CancelDisable": "取消禁用",
-        "CancelDelete": "取消删除",
-        "ModsPendingClose": "有{0}个模组待关闭处理",
-        "RestartRequired": "{0}（需要重启加载）",
-        "IncompatibleWithCurrentGame": "{0}（不适配当前游戏）",
-        "TypeYesToDeleteWorld": "输入 yes 以删除存档：{0}",
-        "AreYouSureYouWantToDeleteWorld": "确定要删除存档“{0}”吗？",
-        "AreYouSureYouWantToDelete": "确定要删除{0}“{1}”吗？",
-        "Played": "游玩 {0}",
-        "UsedByWorlds": "{0} 个世界使用中",
-        "Designs": "{0} 个设计",
-        "ReadFailed": "读取失败: {0}",
-        "MissingDependency": "缺失依赖 {0}",
-        "MissingMods": "缺失 {0} 模组",
-        "Buttons": {
-          "Searching": "搜索中...",
-          "Checking": "检查中...",
-          "GetMods": "获取模组",
-          "SearchDependencies": "搜索依赖"
-        },
-        "ResourcesNeedRestart": "有{0}个资源需要重启加载",
-        "Launch": "启动",
-        "Loaded": "已加载",
-        "SecondsFormat": "{0}秒",
-        "MinutesFormat": "{0}分钟",
-        "HoursMinutesFormat": "{0}小时{1}分钟",
-        "HoursFormat": "{0}小时",
-        "LessThanOneMinute": "<1分钟",
-        "Android": "安卓",
-        "DuplicatePackageName": "包名重复，请删除其中一个模组",
-        "RestartPromptPendingLoad": "当前有{0}个资源需要重启加载。是否立即重启？",
-        "DisablePendingRestartPrompt": "当前有{0}个模组待关闭处理。是否立即重启？",
-        "RestartAndDisablePrompt": "当前有{0}个资源需要重启加载，另有{1}个模组待关闭处理。是否立即重启？",
-        "PendingLoadSummary": "有{0}个资源需要重启加载，{1}个模组待关闭处理",
-        "DeleteUsedByWorldsConfirm": "确定要删除{0}“{1}”吗？它当前被{2}个存档使用。"
       }
     },
     "Main": {
@@ -5124,8 +5074,6 @@
       "OtherLoadsFailedSeeLog": "另有 {0} 项失败，请查看日志。",
       "ModpackDownloadFinishedSummary": "整合包下载完成：成功 {0} 项，失败 {1} 项。"
     },
-
-
     "DefaultFiltersSaved": "[ScbbsPlus] 已保存默认筛选: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] 加载推荐资源失败: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] 加载社区帖子失败: {0}",
@@ -5170,7 +5118,6 @@
     "HighlightDataLoadFailed": "[ScbbsPlus] 高亮数据加载失败: {0}",
     "ScoreApiReturnedEmpty": "评分接口返回为空",
     "ScoreApiReturnedMalformed": "评分接口返回异常"
-
   },
   "ScbbsPlusVersionCatalogCache": {
     "NoApiVersionSkippingPluginMatch": "[ScbbsPlus] 当前未提供 API 版本，跳过 plugin 版本匹配。game={0}",
@@ -5307,7 +5254,6 @@
     "FileIdReturnedNoDownloadLink": "文件ID {0} 未返回有效下载链接。",
     "GetFileInfoByFileIdFailed": "通过文件ID获取文件信息失败: {0}: {1}",
     "GetFileInfoByFileIdMalformed": "通过文件ID获取文件信息返回异常: {0}"
-
   },
   "ScbbsPlusModpackManifestParser": {
     "Text": {
@@ -5324,7 +5270,6 @@
       "IconOnlySupportsPngOrWebp": "整合包图标仅支持 png 或 webp。",
       "JsonPackIconMustBeUrl": "json 整合包的 icon 必须是网络链接。",
       "ManifestHasNoValidItems": "整合包清单未读取到有效 items。"
-
     }
   },
   "ScbbsPlusModpackRegistry": {
@@ -5334,7 +5279,6 @@
     "ReadModpackRecordMetadataFailed": "[ScbbsPlus] 读取整合包记录元数据失败: path={0}, error={1}",
     "NoValidItemsRead": "未读取到有效 items。",
     "DownloadedZipPackIsEmpty": "下载到的 ZIP 整合包为空。"
-
   },
   "ScbbsPlusModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "已有整合包文件冲突等待用户处理。",
@@ -5371,7 +5315,6 @@
     "CustomFileUrlHasNoFileName": "自定义文件的 url 中未包含有效文件名。",
     "UnsafeCustomFileTargetPathRejected": "自定义文件目标路径不安全，已拒绝写入：{0}。",
     "BackupFileDoesNotExist": "备份文件不存在：{0}"
-
   },
   "ScbbsPlusModpackManifestLoadManager": {
     "ReadModpackListFailed": "[ScbbsPlus] 读取整合包列表失败: {0}",
@@ -5396,7 +5339,12 @@
     "ReadModPlayedTimeFailed": "[ScbbsPlus] 读取模组游玩时间失败: {0}",
     "SaveModPlayedTimeFailed": "[ScbbsPlus] 保存模组游玩时间失败: {0}",
     "PlayedTimeReportingDisabledSkipping": "[ScbbsPlus] 游玩时间上报已关闭，跳过本次上报",
-    "PlayedTimeReportingDisabledCancelingPending": "[ScbbsPlus] 游玩时间上报已关闭，取消待发送请求"
+    "PlayedTimeReportingDisabledCancelingPending": "[ScbbsPlus] 游玩时间上报已关闭，取消待发送请求",
+    "SecondsFormat": "{0}秒",
+    "MinutesFormat": "{0}分钟",
+    "HoursMinutesFormat": "{0}小时{1}分钟",
+    "HoursFormat": "{0}小时",
+    "LessThanOneMinute": "<1分钟"
   },
   "ScbbsPlusAuthSessionManager": {
     "CreateLoginRequestFailed": "[ScbbsPlus] 创建登录请求失败: {0}",
@@ -5417,7 +5365,6 @@
     "LogOutOfTheCurrentCommunityAccount": "确定要退出当前社区账号吗？",
     "PleaseEnterAccountAndPassword": "请输入账号和密码",
     "LogoutFailedToast": "登出请求未完成，服务端登录状态可能仍然有效"
-
   },
   "ScbbsPlusCommon": {
     "Text": {
@@ -5563,7 +5510,6 @@
     "UnfinishedDownloadsBadge": "当前有{0}个下载未完成，点击查看"
 ,
     "BackgroundDownloading": "正在后台下载：{0}"
-
   },
   "ScbbsPlusModUpdateImporter": {
     "CannotConfirmCurrentPackageName": "无法确认当前模组包名，已取消更新。",
@@ -5602,7 +5548,6 @@
     "LocalFileDoesNotExistFormat": "本地文件不存在：{0}",
     "NoLocalResourceSelected": "未选择本地资源。",
     "UnsupportedUploadResourceTypeFormat": "暂不支持上传该资源类型：{0}"
-
   },
   "ScbbsPlusGlobalFramePump": {
     "FramePumpPollFaulted": "[ScbbsPlus] 全局帧泵轮询异常: {0}"
@@ -5655,7 +5600,6 @@
       "SelectDownloadSource": "选择下载源"
     },
     "UnknownAccount": "未知账号"
-
   },
   "CommunityDownloadSourceSelectionMode": {
     "Default": "默认（自动选择）",
@@ -5739,7 +5683,6 @@
       "Submitting": "正在提交",
       "SubmittingPreviousReview": "正在提交上一条评价。",
       "SubmittingReviewToTheCommunity": "评价正在提交到社区。"
-
     }
   },
   "ScbbsPlusTreeViewWidget": {

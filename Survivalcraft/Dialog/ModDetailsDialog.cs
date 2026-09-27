@@ -139,9 +139,9 @@ namespace Game {
                         ModDependencyAvailability availability = dependencySnapshot.Evaluate(dependency);
                         string text = availability switch {
                             ModDependencyAvailability.Loaded => displayName,
-                            ModDependencyAvailability.PendingRestart => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "RestartRequired"), displayName),
-                            ModDependencyAvailability.Incompatible => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "IncompatibleWithCurrentGame"), displayName),
-                            _ => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "MissingDependency"), displayName)
+                            ModDependencyAvailability.PendingRestart => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get(fName, "RestartRequired"), displayName),
+                            ModDependencyAvailability.Incompatible => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get(fName, "IncompatibleWithCurrentGame"), displayName),
+                            _ => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get(fName, "MissingDependency"), displayName)
                         };
                         bool available = availability is ModDependencyAvailability.Loaded or ModDependencyAvailability.PendingRestart;
                         m_contentPanel.Children.Add(

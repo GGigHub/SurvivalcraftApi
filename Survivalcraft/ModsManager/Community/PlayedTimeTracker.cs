@@ -197,25 +197,25 @@ namespace Game
             if (seconds < 60.0)
             {
                 int value = Math.Max(0, (int)Math.Round(seconds));
-                return string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "SecondsFormat"), value);
+                return string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "SecondsFormat"), value);
             }
             if (seconds < 3600.0)
             {
                 int value = (int)(seconds / 60.0);
-                return string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "MinutesFormat"), value);
+                return string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "MinutesFormat"), value);
             }
 
             int hours = (int)(seconds / 3600.0);
             int minutes = (int)((seconds % 3600.0) / 60.0);
             return minutes > 0
-                ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "HoursMinutesFormat"), hours, minutes)
-                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "HoursFormat"), hours);
+                ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "HoursMinutesFormat"), hours, minutes)
+                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "HoursFormat"), hours);
         }
 
         public static string FormatDurationCompact(double seconds)
         {
             return seconds < 60.0
-                ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "LocalResources", "LessThanOneMinute")
+                ? LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "LessThanOneMinute")
                 : FormatDuration(seconds);
         }
 

@@ -20,7 +20,6 @@
     "LoggedIn": "Logged in",
     "NotLoggedIn": "Not logged in",
     "CannotFindLocalFile": "Unable to find the local file."
-
   },
   "FurnitureBlock": [
     "Combine furniture into interactive design",
@@ -119,7 +118,6 @@
     "SaveConfigFailed": "Unable to save settings changed while using the modpack: {0}",
     "FailedToRestoreFiles": "Failed to Restore Files",
     "RestoreFilesFailed": "Unable to restore files from before the modpack was enabled: {0}"
-
   },
   "ModsManageContentScreen": {
     "1": "Manage mod content",
@@ -219,7 +217,6 @@
       "NoUpdateReasonFormat": "{0}\n{1}: {2}\n{3}: {4}",
       "SearchDependencies": "Search Dependencies",
       "UpdateCheckFailed": "Update check failed: {0}"
-
       },
       "Review": {
         "MissingFileNameOrPackageName": "Missing file name or package name",
@@ -785,7 +782,6 @@
     "StateBundled": "Bundled",
     "StateExists": "Owned",
     "StateNeedDownload": "Need download"
-
   },
   "ModDetailsDialog": {
     "CheckUpdate": "Check Updates",
@@ -793,6 +789,9 @@
     "Dependencies": "Missing Dependencies",
     "Review": "Review",
     "Upload": "Upload",
+    "RestartRequired": "{0} (restart required)",
+    "IncompatibleWithCurrentGame": "{0} (incompatible with current game)",
+    "MissingDependency": "Missing dependency {0}",
     "1": "Disable Reason: ",
     "2": "Mod Ver:",
     "3": "API Ver: ",
@@ -4964,7 +4963,6 @@
 ,
     "NoScmodFileInLatestVersion": "The latest version has no downloadable .scmod file.",
     "PostDetailsIsEmpty": "Post details are empty."
-
   },
   "ScbbsPlusLocalModPostResolver": {
     "FindPostByFileNameFailed": "Failed to find post by file name: {0}: {1}",
@@ -5050,54 +5048,6 @@
         "AllVersions": "All Versions",
         "TokenExpiredTitle": "Session Expired",
         "TokenExpired": "Your login session has expired. Please log in again."
-      },
-      "LocalResources": {
-        "DuplicatePackageNameNotLoaded": "Duplicate package name; not loaded",
-        "ManuallyDisabledNotLoaded": "Manually disabled; not loaded",
-        "DependencyErrorNotLoaded": "Dependency error; not loaded",
-        "InvalidModInformationNotLoaded": "Invalid mod information; not loaded",
-        "InvalidPackageNameNotLoaded": "Invalid package name; not loaded",
-        "PendingEnable": "Pending Enable",
-        "PendingDisable": "Pending Disable",
-        "PendingDelete": "Pending Delete",
-        "DeleteResource": "Delete Resource",
-        "DeleteWorld": "Delete World",
-        "CancelEnable": "Cancel Enable",
-        "CancelDisable": "Cancel Disable",
-        "CancelDelete": "Cancel Delete",
-        "ModsPendingClose": "{0} mods pending close",
-        "RestartRequired": "{0} (restart required)",
-        "IncompatibleWithCurrentGame": "{0} (incompatible with current game)",
-        "TypeYesToDeleteWorld": "Type yes to delete world: {0}",
-        "AreYouSureYouWantToDeleteWorld": "Are you sure you want to delete world \"{0}\"?",
-        "AreYouSureYouWantToDelete": "Are you sure you want to delete {0} \"{1}\"?",
-        "Played": "Played {0}",
-        "UsedByWorlds": "Used by {0} worlds",
-        "Designs": "{0} designs",
-        "ReadFailed": "Read failed: {0}",
-        "MissingDependency": "Missing dependency {0}",
-        "MissingMods": "Missing {0} Mods",
-        "Buttons": {
-          "Searching": "Searching",
-          "Checking": "Checking",
-          "GetMods": "Get Mods",
-          "SearchDependencies": "Deps"
-        },
-        "ResourcesNeedRestart": "{0} resources need to restart to load",
-        "Launch": "Launch",
-        "Loaded": "Loaded",
-        "SecondsFormat": "{0}s",
-        "MinutesFormat": "{0}m",
-        "HoursMinutesFormat": "{0}h {1}m",
-        "HoursFormat": "{0}h",
-        "LessThanOneMinute": "<1m",
-        "Android": "Android",
-        "DuplicatePackageName": "Duplicate package name; delete one of these mods",
-        "RestartPromptPendingLoad": "There are {0} resources waiting for restart to load. Restart now?",
-        "DisablePendingRestartPrompt": "There are {0} mods waiting to be handled on close. Restart now?",
-        "RestartAndDisablePrompt": "There are {0} resources waiting for restart, plus {1} mods waiting to be handled on close. Restart now?",
-        "PendingLoadSummary": "{0} resources need restart, {1} mods pending close",
-        "DeleteUsedByWorldsConfirm": "Are you sure you want to delete {0} \"{1}\"? It is currently used by {2} worlds."
       }
     },
     "Main": {
@@ -5114,8 +5064,6 @@
       "OtherLoadsFailedSeeLog": "Another {0} items failed. Check the log for details.",
       "ModpackDownloadFinishedSummary": "Modpack download complete: {0} succeeded, {1} failed."
     },
-
-
     "DefaultFiltersSaved": "[ScbbsPlus] Default filters saved: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] Failed to load featured resources: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] Failed to load community posts: {0}",
@@ -5160,7 +5108,6 @@
     "HighlightDataLoadFailed": "[ScbbsPlus] Failed to load highlight data: {0}",
     "ScoreApiReturnedEmpty": "Score API returned an empty response",
     "ScoreApiReturnedMalformed": "Score API returned a malformed response"
-
   },
   "ScbbsPlusVersionCatalogCache": {
     "NoApiVersionSkippingPluginMatch": "[ScbbsPlus] No API version provided; skipping plugin version matching. game={0}",
@@ -5183,7 +5130,6 @@
     "ReadPendingModManifestFailed": "[ScbbsPlus] Failed to read the pending mod manifest: {0}",
     "SavePendingModManifestFailed": "[ScbbsPlus] Failed to save the pending mod manifest: {0}",
     "MissingModPackageNameOrVersion": "Mod package name or version is missing; cannot update the disabled state."
-
   },
   "ScbbsPlusPendingLocalModMetadataReader": {
     "ReadPendingModMetadataFailed": "[ScbbsPlus] Failed to read pending mod metadata: {0}, error={1}"
@@ -5298,7 +5244,6 @@
     "FileIdReturnedNoDownloadLink": "File ID {0} returned no valid download link.",
     "GetFileInfoByFileIdFailed": "Failed to get file info by file ID: {0}: {1}",
     "GetFileInfoByFileIdMalformed": "Malformed file info response by file ID: {0}"
-
   },
   "ScbbsPlusModpackManifestParser": {
     "Text": {
@@ -5315,7 +5260,6 @@
       "IconOnlySupportsPngOrWebp": "Modpack icon only supports png or webp.",
       "JsonPackIconMustBeUrl": "The icon of a json modpack must be a web link.",
       "ManifestHasNoValidItems": "Modpack manifest has no valid items."
-
     }
   },
   "ScbbsPlusModpackRegistry": {
@@ -5325,7 +5269,6 @@
     "ReadModpackRecordMetadataFailed": "[ScbbsPlus] Failed to read the modpack record metadata: path={0}, error={1}",
     "NoValidItemsRead": "no valid items were read.",
     "DownloadedZipPackIsEmpty": "The downloaded ZIP modpack is empty."
-
   },
   "ScbbsPlusModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "A modpack file conflict is already waiting for user action.",
@@ -5362,7 +5305,6 @@
     "CustomFileUrlHasNoFileName": "The custom file url contains no valid file name.",
     "UnsafeCustomFileTargetPathRejected": "Unsafe custom file target path rejected: {0}.",
     "BackupFileDoesNotExist": "Backup file does not exist: {0}"
-
   },
   "ScbbsPlusModpackManifestLoadManager": {
     "ReadModpackListFailed": "[ScbbsPlus] Failed to read modpack list: {0}",
@@ -5387,7 +5329,12 @@
     "ReadModPlayedTimeFailed": "[ScbbsPlus] Failed to read mod played time: {0}",
     "SaveModPlayedTimeFailed": "[ScbbsPlus] Failed to save mod played time: {0}",
     "PlayedTimeReportingDisabledSkipping": "[ScbbsPlus] Played time reporting is disabled; skipping this report",
-    "PlayedTimeReportingDisabledCancelingPending": "[ScbbsPlus] Played time reporting is disabled; canceling pending requests"
+    "PlayedTimeReportingDisabledCancelingPending": "[ScbbsPlus] Played time reporting is disabled; canceling pending requests",
+    "SecondsFormat": "{0}s",
+    "MinutesFormat": "{0}m",
+    "HoursMinutesFormat": "{0}h {1}m",
+    "HoursFormat": "{0}h",
+    "LessThanOneMinute": "<1m"
   },
   "ScbbsPlusAuthSessionManager": {
     "CreateLoginRequestFailed": "[ScbbsPlus] Failed to create the login request: {0}",
@@ -5408,7 +5355,6 @@
     "LogOutOfTheCurrentCommunityAccount": "Log out of the current community account?",
     "PleaseEnterAccountAndPassword": "Please enter account and password",
     "LogoutFailedToast": "The logout request did not complete; the server session may still be active"
-
   },
   "ScbbsPlusCommon": {
     "Text": {
@@ -5554,7 +5500,6 @@
     "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view."
 ,
     "BackgroundDownloading": "Background downloading: {0}"
-
   },
   "ScbbsPlusModUpdateImporter": {
     "CannotConfirmCurrentPackageName": "Unable to confirm the current mod package name; update canceled.",
@@ -5593,7 +5538,6 @@
     "LocalFileDoesNotExistFormat": "Local file does not exist: {0}",
     "NoLocalResourceSelected": "No local resource selected.",
     "UnsupportedUploadResourceTypeFormat": "Uploading this resource type is not supported: {0}"
-
   },
   "ScbbsPlusGlobalFramePump": {
     "FramePumpPollFaulted": "[ScbbsPlus] Global frame pump polling faulted: {0}"
@@ -5646,7 +5590,6 @@
       "SelectDownloadSource": "Select Download Source"
     },
     "UnknownAccount": "Unknown Account"
-
   },
   "CommunityDownloadSourceSelectionMode": {
     "Default": "Default (Auto)",
@@ -5730,7 +5673,6 @@
       "Submitting": "Submitting",
       "SubmittingPreviousReview": "Submitting the previous review.",
       "SubmittingReviewToTheCommunity": "Submitting review to the community."
-
     }
   },
   "ScbbsPlusTreeViewWidget": {
