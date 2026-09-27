@@ -183,7 +183,7 @@ namespace Game
             AuthSessionManager auth = AuthSessionManager.Instance;
             if (!auth.IsLoggedIn || auth.CurrentUser == null)
             {
-                return LanguageControl.Get("ScbbsPlusCommunityScreen", "Main", "NotLoggedIn");
+                return LanguageControl.Get("ScbbsPlusMoreScreen", "Text", "NotLoggedIn");
             }
             string account = string.IsNullOrWhiteSpace(auth.CurrentUser.Account)
                 ? LanguageControl.Get("ScbbsPlusMoreScreen", "UnknownAccount")

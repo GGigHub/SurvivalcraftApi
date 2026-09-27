@@ -186,10 +186,10 @@ namespace Game
             {
                 case CommunitySection.Trending:
                 case CommunitySection.NewActivity:
-                    m_postsPresenter.StatusLabel.Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "Main", "FeaturedContentLoading");
+                    m_postsPresenter.StatusLabel.Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "FeaturedContentLoading");
                     break;
                 default:
-                    m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Main", "CommunityLoadingFormat"), EnumDisplayName.GetEnumDisplayName(m_selectedFileType));
+                    m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "CommunityLoadingFormat"), EnumDisplayName.GetEnumDisplayName(m_selectedFileType));
                     break;
             }
 

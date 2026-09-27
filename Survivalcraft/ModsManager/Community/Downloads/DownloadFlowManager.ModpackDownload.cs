@@ -285,7 +285,7 @@ namespace Game
                 string itemName = result.Item?.Filename
                     ?? result.Item?.FileId
                     ?? result.Item?.Url
-                    ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Main", "UnknownResource");
+                    ?? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "UnknownResource");
                 builder.Append("\n\n").Append(itemName);
                 if (!string.IsNullOrEmpty(result.Error))
                 {

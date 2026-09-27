@@ -195,7 +195,7 @@ namespace Game
 
         internal static string GetVersionFilterName(bool onlyCurrentVersion)
         {
-            return onlyCurrentVersion ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "CurrentVersion") : LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "Ui", "AllVersions");
+            return onlyCurrentVersion ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "CurrentVersion") : LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "AllVersions");
         }
 
         // 认证会话状态变化的界面副作用；会话本体由 AuthSessionManager 管理。

@@ -311,7 +311,7 @@ namespace Game
                 }
                 else
                 {
-                    string errorMessage = result?.Msg ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Main", "LoginFailed");
+                    string errorMessage = result?.Msg ?? LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginFailedDefaultMessage");
                     Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginFailed"), errorMessage));
                     CommunityLoginDialog loginDialog = m_loginDialog;
                     if (loginDialog == null)
@@ -481,8 +481,8 @@ namespace Game
                     Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "TokenInvalidatedClearingLocalState"));
                     m_loginStateChanged.Raise(AuthChangeKind.SessionExpired);
                     DialogsManager.ShowDialog(null, new MessageDialog(
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "Ui", "TokenExpiredTitle"),
-                        LanguageControl.Get("ScbbsPlusCommunityScreen", "Core", "Ui", "TokenExpired"),
+                        LanguageControl.Get("ScbbsPlusAuthSessionManager", "TokenExpiredTitle"),
+                        LanguageControl.Get("ScbbsPlusAuthSessionManager", "TokenExpired"),
                         LanguageControl.Ok,
                         null,
                         null));

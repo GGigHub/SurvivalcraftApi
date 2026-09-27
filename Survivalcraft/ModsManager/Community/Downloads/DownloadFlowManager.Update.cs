@@ -84,7 +84,7 @@ namespace Game
                     ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "Imported"), result.FileName));
                     m_fileDownloadDialog?.SetCompleted(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "Imported"), result.FileName));
                     ShowToast(
-                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Main", "DownloadComplete"), result.FileName),
+                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadComplete"), result.FileName),
                         autoHideSeconds: 2.4);
                     if (result.RequiresRestart)
                     {
@@ -136,7 +136,7 @@ namespace Game
             {
                 if (!string.IsNullOrWhiteSpace(manifestResult.Error))
                 {
-                    ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Main", "FailedToLoadModpackManifest"), manifestResult.Error));
+                    ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "FailedToLoadModpackManifest"), manifestResult.Error));
                 }
                 else
                 {
@@ -175,7 +175,7 @@ namespace Game
                         : LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadPackFailure"),
                     progress.SuccessCount,
                     progress.FailedCount)
-                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Main", "ModpackDownloadFinishedSummary"),
+                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackDownloadFinishedSummary"),
                     progress.SuccessCount,
                     progress.FailedCount);
             if (!string.IsNullOrEmpty(progress.Error))

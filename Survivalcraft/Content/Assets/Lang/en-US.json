@@ -4959,8 +4959,7 @@
     "AutoUpdateCheckFailed": "[ScbbsPlus] Automatic update check failed for local mod: {0}, error={1}",
     "NoModVersionForCurrentGame": "The post has no mod version compatible with the current game.",
     "VersionListIsEmpty": "Version list is empty.",
-    "CannotFindPublishedPostByFileName": "Unable to find a published post by file name: {0}"
-,
+    "CannotFindPublishedPostByFileName": "Unable to find a published post by file name: {0}",
     "NoScmodFileInLatestVersion": "The latest version has no downloadable .scmod file.",
     "PostDetailsIsEmpty": "Post details are empty."
   },
@@ -5043,27 +5042,6 @@
         "Loading": "{0} · Loading..."
       }
     },
-    "Core": {
-      "Ui": {
-        "AllVersions": "All Versions",
-        "TokenExpiredTitle": "Session Expired",
-        "TokenExpired": "Your login session has expired. Please log in again."
-      }
-    },
-    "Main": {
-      "DownloadComplete": "{0} download complete",
-      "NotLoggedIn": "Not Logged In",
-      "LoginFailed": "Login failed",
-      "FailedToLoadModpackManifest": "Failed to load modpack manifest: {0}",
-      "UnknownResource": "Unknown Resource",
-      "LocalResourcesLoadingFormat": "Local {0}s · Loading...",
-      "ReadingLocalResources": "Reading local resources...",
-      "CommunityLoadingFormat": "Community {0}s · Loading...",
-      "FeaturedContentLoading": "Featured Content · Loading...",
-      "SelectLeftToShowDetails": "Select content on the left to view details here",
-      "OtherLoadsFailedSeeLog": "Another {0} items failed. Check the log for details.",
-      "ModpackDownloadFinishedSummary": "Modpack download complete: {0} succeeded, {1} failed."
-    },
     "DefaultFiltersSaved": "[ScbbsPlus] Default filters saved: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] Failed to load featured resources: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] Failed to load community posts: {0}",
@@ -5075,7 +5053,10 @@
       "Downloading": "Downloading...",
       "LoadingProgress": "Loading...",
       "VersionDetails": "Version Details",
-      "MyPublishedFormat": "My {0}s"
+      "MyPublishedFormat": "My {0}s",
+      "AllVersions": "All Versions",
+      "CommunityLoadingFormat": "Community {0}s · Loading...",
+      "FeaturedContentLoading": "Featured Content · Loading..."
     }
   },
   "ScbbsPlusHttpDownloader": {
@@ -5354,7 +5335,10 @@
     "LogOut": "Log Out",
     "LogOutOfTheCurrentCommunityAccount": "Log out of the current community account?",
     "PleaseEnterAccountAndPassword": "Please enter account and password",
-    "LogoutFailedToast": "The logout request did not complete; the server session may still be active"
+    "LogoutFailedToast": "The logout request did not complete; the server session may still be active",
+    "TokenExpiredTitle": "Session Expired",
+    "TokenExpired": "Your login session has expired. Please log in again.",
+    "LoginFailedDefaultMessage": "Login failed"
   },
   "ScbbsPlusCommon": {
     "Text": {
@@ -5495,10 +5479,13 @@
       "No": "No",
       "ConfirmDownloadAndEnable": "There are {0} sub-items. Download and enable now?",
       "ConfirmEnableAllReady": "All sub-items are ready. Enable now?",
-      "SubItemsHeader": "Sub-items:"
+      "SubItemsHeader": "Sub-items:",
+      "DownloadComplete": "{0} download complete",
+      "FailedToLoadModpackManifest": "Failed to load modpack manifest: {0}",
+      "UnknownResource": "Unknown Resource",
+      "ModpackDownloadFinishedSummary": "Modpack download complete: {0} succeeded, {1} failed."
     },
-    "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view."
-,
+    "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view.",
     "BackgroundDownloading": "Background downloading: {0}"
   },
   "ScbbsPlusModUpdateImporter": {
@@ -5587,7 +5574,8 @@
       "LogIn": "Log In",
       "CheckUpdate": "Check Update",
       "Apply": "Apply",
-      "SelectDownloadSource": "Select Download Source"
+      "SelectDownloadSource": "Select Download Source",
+      "NotLoggedIn": "Not Logged In"
     },
     "UnknownAccount": "Unknown Account"
   },
