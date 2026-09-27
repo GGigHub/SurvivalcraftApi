@@ -4146,7 +4146,7 @@
     },
     "ScbbsPlusCommunityScreen": {
       "UnpublishedOnly": "Unpublished Only",
-      "SCChineseCommunity": "SC Chinese Community",
+      "SCChineseCommunity": "Chinese Community",
       "Community": "Community",
       "Type": "Type",
       "Filter": "Filter",
@@ -4968,7 +4968,6 @@
     "DefaultFiltersSaved": "[ScbbsPlus] Default filters saved: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] Failed to load featured resources: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] Failed to load community posts: {0}",
-    "SCChineseCommunity": "SC Chinese Community",
     "CurrentVersion": "Current Version",
     "LoadingFormat": "{0} · Loading...",
     "CommunityFormat": "Community {0}",
@@ -5335,11 +5334,6 @@
         "CharacterSkin": "Skin",
         "Mod": "Mod"
       }
-    }
-  },
-  "ScbbsPlusApp": {
-    "Text": {
-      "SCChineseCommunity": "SC Chinese Community"
     }
   },
   "ScbbsPlusDownloadDialog": {

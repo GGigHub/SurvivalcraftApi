@@ -140,7 +140,6 @@ namespace Game
                 () => SettingsManager.CommunityDownloadSourceSelectionMode,
                 ResolveEffectiveDownloadSource);
             PlayedTimeTracker.StartSelfPage();
-            UpdateTopBarTitle();
             // 首进先只搭骨架并让出 2 帧给首屏绘制，避免解密凭据/拉列表/读本地资源堵在同一帧造成黑屏。
             PreparePanelForDeferredInitialRefresh();
             m_hasDeferredInitialPanelRefresh = true;
@@ -225,14 +224,6 @@ namespace Game
                 LoadFeatured();
                 DownloadFlowManager.Instance.TryShowRestoredDownloadPromptOnEnter();
             }
-        }
-
-        private void UpdateTopBarTitle()
-        {
-            LabelWidget topBarLabel = Children.Find<LabelWidget>("TopBar.Label");
-            // 原生内置后无本插件 ModEntity，ScbbsPlusVersionProvider.GetCurrentVersion() 恒为
-            // null（VersionProvider 随自更新链不移植）：标题恒取无版本形态，版本行收尾批再定。
-            topBarLabel.Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "SCChineseCommunity");
         }
 
         public override void Leave()
