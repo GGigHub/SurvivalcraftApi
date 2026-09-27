@@ -60,7 +60,8 @@
       "MyPublishedFormat": "Published {0}s",
       "PageUploads": "{0}, {3} Files",
       "NoUploads": "{0} · No Files",
-      "MyUnpublishedFormat": "Unpublished {0}s"
+      "MyUnpublishedFormat": "Unpublished {0}s",
+      "ShareLinkCopiedToClipboard": "Share link copied to clipboard."
     }
   },
   "ContentScreen": {
@@ -4970,71 +4971,7 @@
   "ScbbsPlusCommunityScreen": {
     "Community": {
       "Posts": {
-        "DownloadExceedsSizeLimit": "Download content exceeds the size limit ({0} bytes).",
-        "StartDownloading": "Start downloading {0}",
-        "AlreadyExistsReplace": "{0} already exists, replace?",
-        "DownloadPausedDownloaded": "Download paused: {0} ({1} downloaded)",
-        "AddedToDownloadQueue": "Added to download queue: {0}",
-        "DuplicateDownloadQueued": "Skipped duplicate download (same file already in queue): {0}",
-        "Queued": "Queued",
-        "WaitingForOverwriteConfirmation": "Waiting for overwrite confirmation",
-        "Completed": "Completed",
-        "Pausing": "Pausing",
-        "Canceling": "Canceling",
-        "PausingDownload": "Pausing download: {0}",
-        "ResumingDownload": "Resuming download: {0}",
-        "NoDownloadTaskCanBePausedOrResumed": "No download task can be paused or resumed.",
-        "CancelingDownload": "Canceling download: {0}",
-        "NoCancelableDownloadTasks": "No cancelable download tasks.",
-        "NoRetryableDownloadTasks": "No retryable download tasks.",
-        "TaskCannotBeCanceled": "Task {0} cannot be canceled.",
-        "TaskCannotBePausedOrResumed": "Task {0} cannot be paused or resumed.",
-        "TaskCannotBeRetried": "Task {0} cannot be retried.",
-        "TaskCannotBeCleared": "Task {0} cannot be cleared.",
-        "RequeuedDownload": "Requeued download: {0}",
-        "ClearedDownloadTask": "Cleared download task: {0}",
-        "ClearedDownloadTasks": "Cleared {0} download tasks.",
-        "NoFiles": "No Files",
-        "File": "[File] {0}",
-        "SwitchedDownloadSource": "Switched download source: {0}",
-        "ShareLinkCopiedToClipboard": "Share link copied to clipboard.",
-        "Connecting": "Connecting: {0}",
-        "Downloading": "Downloading: {0} ({1})",
-        "PublishStats": "Publish Stats",
-        "FailedToLoadStats": "Failed to load stats: {0}",
-        "NoStats": "No stats.",
-        "Last30DaysTotalVersionsFiles": "Last 30 days {0}, total {1}, versions {2}, files {3}",
-        "NoDownloadsInTheLast30Days": "No downloads in the last 30 days.",
-        "RecentDownloads": "Recent Downloads",
-        "DailyDownloadsFormat": "{0}: {1}",
-        "VersionDownloads": "Version Downloads",
-        "VersionLast30DaysTotalFiles": "Version {0}: last 30 days {1}, total {2}, files {3}",
-        "LoadedResourcesFormat": "Loaded {0}s ({1})",
-        "PagePosts": "{0}, {3} Posts",
-        "NoPosts": "{0} · No Posts",
-        "LoadFailed": "{0} · Load Failed",
-        "UnknownUser": "Unknown User",
-        "PostSummaryFormat": "{0}  by {1} on {2}  downloads {3}  {4} versions",
-        "ExpandToLoadFiles": "Expand to load files",
-        "NoResources": "No Resources",
-        "FailedToLoadPostDetails": "Failed to load post details: {0}",
-        "ModpackFileHasNoDownloadLink": "Modpack file {0} has no download link.",
-        "Installed": "Installed",
-        "CurrentlyInstalled": "Currently Installed",
-        "LocalResourcesReadingPendingModsFormat": "Local {0}s ({1}) · Reading pending mods...",
-        "NoData": "No Data",
-        "Downloads": "Downloads {0}",
-        "Details": "Details",
-        "ChooseDownloadSource": "Choose Download Source",
-        "LocalAlreadyExistsChooseAction": "Local file \"{0}\" already exists. Choose an action:",
-        "DownloadingLabel": "Downloading",
-        "Paused": "Paused",
-        "VersionFormat": "Version {0}",
-        "GetVersionListFailed": "Failed to get version list: {0}: {1}",
-        "VersionListResponseMalformed": "Malformed version list response: {0}",
-        "DownloadTrendsResponseMalformed": "Malformed download trends response: {0}",
-        "ResumeUnsupportedRedownload": "Server does not support resume; restarting download: {0}",
-        "DownloadSourceSwitchUnavailable": "The current link cannot switch download source."
+        "LoadFailed": "{0} · Load Failed"
       },
       "Featured": {
         "NoData": "No Data",
@@ -5056,7 +4993,9 @@
       "MyPublishedFormat": "My {0}s",
       "AllVersions": "All Versions",
       "CommunityLoadingFormat": "Community {0}s · Loading...",
-      "FeaturedContentLoading": "Featured Content · Loading..."
+      "FeaturedContentLoading": "Featured Content · Loading...",
+      "Details": "Details",
+      "FailedToLoadPostDetails": "Failed to load post details: {0}"
     }
   },
   "ScbbsPlusHttpDownloader": {
@@ -5085,10 +5024,17 @@
     "PostDetailsDialog": "Post details dialog",
     "Unspecified": "Background"
   },
+  "ScbbsPlusCommunityDownloadGuard": {
+    "DownloadExceedsSizeLimit": "Download content exceeds the size limit ({0} bytes)."
+  },
   "ScbbsPlusCommunityManager": {
     "HighlightDataLoadFailed": "[ScbbsPlus] Failed to load highlight data: {0}",
     "ScoreApiReturnedEmpty": "Score API returned an empty response",
-    "ScoreApiReturnedMalformed": "Score API returned a malformed response"
+    "ScoreApiReturnedMalformed": "Score API returned a malformed response",
+    "NoStats": "No stats.",
+    "GetVersionListFailed": "Failed to get version list: {0}: {1}",
+    "VersionListResponseMalformed": "Malformed version list response: {0}",
+    "DownloadTrendsResponseMalformed": "Malformed download trends response: {0}"
   },
   "ScbbsPlusVersionCatalogCache": {
     "NoApiVersionSkippingPluginMatch": "[ScbbsPlus] No API version provided; skipping plugin version matching. game={0}",
@@ -5483,7 +5429,39 @@
       "DownloadComplete": "{0} download complete",
       "FailedToLoadModpackManifest": "Failed to load modpack manifest: {0}",
       "UnknownResource": "Unknown Resource",
-      "ModpackDownloadFinishedSummary": "Modpack download complete: {0} succeeded, {1} failed."
+      "ModpackDownloadFinishedSummary": "Modpack download complete: {0} succeeded, {1} failed.",
+      "StartDownloading": "Start downloading {0}",
+      "DownloadPausedDownloaded": "Download paused: {0} ({1} downloaded)",
+      "AddedToDownloadQueue": "Added to download queue: {0}",
+      "DuplicateDownloadQueued": "Skipped duplicate download (same file already in queue): {0}",
+      "WaitingForOverwriteConfirmation": "Waiting for overwrite confirmation",
+      "Completed": "Completed",
+      "Pausing": "Pausing",
+      "Canceling": "Canceling",
+      "NoDownloadTaskCanBePausedOrResumed": "No download task can be paused or resumed.",
+      "NoCancelableDownloadTasks": "No cancelable download tasks.",
+      "NoRetryableDownloadTasks": "No retryable download tasks.",
+      "TaskCannotBeCanceled": "Task {0} cannot be canceled.",
+      "TaskCannotBePausedOrResumed": "Task {0} cannot be paused or resumed.",
+      "TaskCannotBeRetried": "Task {0} cannot be retried.",
+      "TaskCannotBeCleared": "Task {0} cannot be cleared.",
+      "RequeuedDownload": "Requeued download: {0}",
+      "ClearedDownloadTask": "Cleared download task: {0}",
+      "ClearedDownloadTasks": "Cleared {0} download tasks.",
+      "SwitchedDownloadSource": "Switched download source: {0}",
+      "Connecting": "Connecting: {0}",
+      "ChooseDownloadSource": "Choose Download Source",
+      "LocalAlreadyExistsChooseAction": "Local file \"{0}\" already exists. Choose an action:",
+      "ModpackFileHasNoDownloadLink": "Modpack file {0} has no download link.",
+      "Downloading": "Downloading: {0} ({1})",
+      "DownloadingLabel": "Downloading",
+      "Paused": "Paused",
+      "AlreadyExistsReplace": "{0} already exists, replace?",
+      "CancelingDownload": "Canceling download: {0}",
+      "PausingDownload": "Pausing download: {0}",
+      "Queued": "Queued",
+      "ResumingDownload": "Resuming download: {0}",
+      "DownloadSourceSwitchUnavailable": "The current link cannot switch download source."
     },
     "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view.",
     "BackgroundDownloading": "Background downloading: {0}"
@@ -5624,7 +5602,15 @@
       "UnknownError": "Unknown error",
       "CurrentVersion": "Current Version",
       "LatestVersion": "Latest Version",
-      "UnnamedVersion": "Unnamed Version"
+      "UnnamedVersion": "Unnamed Version",
+      "PublishStats": "Publish Stats",
+      "FailedToLoadStats": "Failed to load stats: {0}",
+      "Last30DaysTotalVersionsFiles": "Last 30 days {0}, total {1}, versions {2}, files {3}",
+      "NoDownloadsInTheLast30Days": "No downloads in the last 30 days.",
+      "RecentDownloads": "Recent Downloads",
+      "DailyDownloadsFormat": "{0}: {1}",
+      "VersionDownloads": "Version Downloads",
+      "VersionLast30DaysTotalFiles": "Version {0}: last 30 days {1}, total {2}, files {3}"
     }
   },
   "ScbbsPlusPostIconLoader": {
@@ -5638,7 +5624,20 @@
     "LoadPostFailed": "[ScbbsPlus] Failed to load the post: {0}",
     "Text": {
       "Files": "Files {0}",
-      "UpdateAvailable": "Update available"
+      "UpdateAvailable": "Update available",
+      "NoFiles": "No Files",
+      "PagePosts": "{0}, {3} Posts",
+      "NoPosts": "{0} · No Posts",
+      "UnknownUser": "Unknown User",
+      "PostSummaryFormat": "{0}  by {1} on {2}  downloads {3}  {4} versions",
+      "Installed": "Installed",
+      "CurrentlyInstalled": "Currently Installed",
+      "Downloads": "Downloads {0}",
+      "VersionFormat": "Version {0}",
+      "ExpandToLoadFiles": "Expand to load files",
+      "File": "[File] {0}",
+      "NoData": "No Data",
+      "NoResources": "No Resources"
     }
   },
   "ScbbsPlusRestartConfirmDialog": {

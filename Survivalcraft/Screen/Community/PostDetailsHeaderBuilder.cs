@@ -35,19 +35,19 @@ namespace Game
         // 「我发布的」帖子详情：下载统计摘要 + 最近下载趋势 + 版本下载量。
         public static void AppendPublishStats(StackPanelWidget panel, PostDownloadTrendResponse stats, string statsError)
         {
-            AppendHeading(panel, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "PublishStats"));
+            AppendHeading(panel, LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "PublishStats"));
             if (stats == null)
             {
                 AppendParagraph(panel, string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "FailedToLoadStats"),
+                    LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "FailedToLoadStats"),
                     string.IsNullOrWhiteSpace(statsError) ? LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "UnknownError") : statsError));
                 return;
             }
 
             AppendParagraph(panel, string.Format(
                 CultureInfo.InvariantCulture,
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "Last30DaysTotalVersionsFiles"),
+                LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "Last30DaysTotalVersionsFiles"),
                 stats.TotalDownloadCount,
                 stats.Post?.TotalDownloadCount ?? 0,
                 stats.Post?.VersionCount ?? stats.Versions?.Length ?? 0,
@@ -64,16 +64,16 @@ namespace Game
                 .ToArray();
             if (visibleSeries == null || visibleSeries.Count == 0)
             {
-                AppendParagraph(panel, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "NoDownloadsInTheLast30Days"));
+                AppendParagraph(panel, LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "NoDownloadsInTheLast30Days"));
                 return;
             }
 
-            AppendHeading(panel, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "RecentDownloads"));
+            AppendHeading(panel, LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "RecentDownloads"));
             foreach (PostDownloadTrendSeriesItem item in visibleSeries)
             {
                 AppendListItem(panel, string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "DailyDownloadsFormat"),
+                    LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "DailyDownloadsFormat"),
                     CommunityTimeFormatter.FormatDate(item.BucketStart),
                     item.DownloadCount));
             }
@@ -86,7 +86,7 @@ namespace Game
                 return;
             }
 
-            AppendHeading(panel, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "VersionDownloads"));
+            AppendHeading(panel, LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "VersionDownloads"));
             foreach (PostDownloadTrendVersion version in versions.Where(version => version != null).OrderByDescending(version => version.RangeDownloadCount).ThenByDescending(version => version.TotalDownloadCount).Take(6))
             {
                 string name = !string.IsNullOrWhiteSpace(version.Version)
@@ -94,7 +94,7 @@ namespace Game
                     : (!string.IsNullOrWhiteSpace(version.Title) ? version.Title.Trim() : LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "UnnamedVersion"));
                 AppendListItem(panel, string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "VersionLast30DaysTotalFiles"),
+                    LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Text", "VersionLast30DaysTotalFiles"),
                     name,
                     version.RangeDownloadCount,
                     version.TotalDownloadCount,

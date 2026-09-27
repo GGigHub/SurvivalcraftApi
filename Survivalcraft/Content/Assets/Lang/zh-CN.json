@@ -60,7 +60,8 @@
       "MyPublishedFormat": "已发布的{0}",
       "PageUploads": "{0}，共 {3} 个文件",
       "NoUploads": "{0} · 暂无文件",
-      "MyUnpublishedFormat": "未发布的{0}"
+      "MyUnpublishedFormat": "未发布的{0}",
+      "ShareLinkCopiedToClipboard": "分享链接已复制到剪贴板。"
     }
   },
   "ContentScreen": {
@@ -4980,71 +4981,7 @@
   "ScbbsPlusCommunityScreen": {
     "Community": {
       "Posts": {
-        "DownloadExceedsSizeLimit": "下载内容超过大小上限（{0} 字节）。",
-        "StartDownloading": "开始下载{0}",
-        "AlreadyExistsReplace": "{0}重名,是否替换?",
-        "DownloadPausedDownloaded": "已暂停下载：{0}（已下载 {1}）",
-        "AddedToDownloadQueue": "已加入下载队列：{0}",
-        "DuplicateDownloadQueued": "已跳过重复下载（队列中已有相同文件）：{0}",
-        "Queued": "等待中",
-        "WaitingForOverwriteConfirmation": "等待替换确认",
-        "Completed": "已完成",
-        "Pausing": "暂停中",
-        "Canceling": "取消中",
-        "PausingDownload": "正在暂停下载：{0}",
-        "ResumingDownload": "继续下载：{0}",
-        "NoDownloadTaskCanBePausedOrResumed": "没有可暂停或继续的下载任务。",
-        "CancelingDownload": "正在取消下载：{0}",
-        "NoCancelableDownloadTasks": "没有可取消的下载任务。",
-        "NoRetryableDownloadTasks": "没有可重试的下载任务。",
-        "TaskCannotBeCanceled": "任务 {0} 不能取消。",
-        "TaskCannotBePausedOrResumed": "任务 {0} 不能暂停或继续。",
-        "TaskCannotBeRetried": "任务 {0} 不能重试。",
-        "TaskCannotBeCleared": "任务 {0} 不能清理。",
-        "RequeuedDownload": "已重新加入下载队列：{0}",
-        "ClearedDownloadTask": "已清理下载任务：{0}",
-        "ClearedDownloadTasks": "已清理 {0} 个下载任务。",
-        "NoFiles": "无文件",
-        "File": "[文件] {0}",
-        "SwitchedDownloadSource": "已切换下载源：{0}",
-        "ShareLinkCopiedToClipboard": "分享链接已复制到剪贴板。",
-        "Connecting": "正在连接：{0}",
-        "Downloading": "正在下载：{0} ({1})",
-        "PublishStats": "发布统计",
-        "FailedToLoadStats": "统计加载失败：{0}",
-        "NoStats": "暂无统计数据。",
-        "Last30DaysTotalVersionsFiles": "近30天下载 {0}，累计下载 {1}，版本 {2}，文件 {3}",
-        "NoDownloadsInTheLast30Days": "近30天暂无下载记录。",
-        "RecentDownloads": "最近下载",
-        "DailyDownloadsFormat": "{0}：{1} 次",
-        "VersionDownloads": "版本下载",
-        "VersionLast30DaysTotalFiles": "版本 {0}：近30天 {1}，累计 {2}，文件 {3}",
-        "LoadedResourcesFormat": "已加载的{0} ({1})",
-        "PagePosts": "{0}，共 {3} 个帖子",
-        "NoPosts": "{0} · 暂无帖子",
-        "LoadFailed": "{0} · 加载失败",
-        "UnknownUser": "未知用户",
-        "PostSummaryFormat": "{0}  由{1}发布于{2}  总下载 {3}  共{4}个版本",
-        "ExpandToLoadFiles": "展开加载文件",
-        "NoResources": "无资源",
-        "FailedToLoadPostDetails": "获取帖子详情失败：{0}",
-        "ModpackFileHasNoDownloadLink": "整合包文件 {0} 没有下载链接。",
-        "Installed": "已安装",
-        "CurrentlyInstalled": "当前安装",
-        "LocalResourcesReadingPendingModsFormat": "本地{0} ({1}) · 正在读取待加载模组...",
-        "NoData": "无数据",
-        "Downloads": "文件下载 {0}",
-        "Details": "查看详情",
-        "ChooseDownloadSource": "选择下载源",
-        "LocalAlreadyExistsChooseAction": "本地已存在\"{0}\"，请选择操作：",
-        "DownloadingLabel": "下载中",
-        "Paused": "已暂停",
-        "VersionFormat": "版本 {0}",
-        "GetVersionListFailed": "获取版本列表失败: {0}: {1}",
-        "VersionListResponseMalformed": "版本列表返回异常: {0}",
-        "DownloadTrendsResponseMalformed": "下载趋势接口返回异常: {0}",
-        "ResumeUnsupportedRedownload": "服务器不支持断点续传，重新下载：{0}",
-        "DownloadSourceSwitchUnavailable": "当前链接无法切换下载源。"
+        "LoadFailed": "{0} · 加载失败"
       },
       "Featured": {
         "NoData": "暂无数据",
@@ -5066,7 +5003,9 @@
       "MyPublishedFormat": "我发布的{0}",
       "AllVersions": "全部版本",
       "CommunityLoadingFormat": "社区{0} · 正在加载...",
-      "FeaturedContentLoading": "精选内容 · 正在加载..."
+      "FeaturedContentLoading": "精选内容 · 正在加载...",
+      "Details": "查看详情",
+      "FailedToLoadPostDetails": "获取帖子详情失败：{0}"
     }
   },
   "ScbbsPlusHttpDownloader": {
@@ -5095,10 +5034,17 @@
     "PostDetailsDialog": "帖子详情对话框",
     "Unspecified": "后台"
   },
+  "ScbbsPlusCommunityDownloadGuard": {
+    "DownloadExceedsSizeLimit": "下载内容超过大小上限（{0} 字节）。"
+  },
   "ScbbsPlusCommunityManager": {
     "HighlightDataLoadFailed": "[ScbbsPlus] 高亮数据加载失败: {0}",
     "ScoreApiReturnedEmpty": "评分接口返回为空",
-    "ScoreApiReturnedMalformed": "评分接口返回异常"
+    "ScoreApiReturnedMalformed": "评分接口返回异常",
+    "NoStats": "暂无统计数据。",
+    "GetVersionListFailed": "获取版本列表失败: {0}: {1}",
+    "VersionListResponseMalformed": "版本列表返回异常: {0}",
+    "DownloadTrendsResponseMalformed": "下载趋势接口返回异常: {0}"
   },
   "ScbbsPlusVersionCatalogCache": {
     "NoApiVersionSkippingPluginMatch": "[ScbbsPlus] 当前未提供 API 版本，跳过 plugin 版本匹配。game={0}",
@@ -5493,7 +5439,39 @@
       "DownloadComplete": "{0}下载完成",
       "FailedToLoadModpackManifest": "整合包清单加载失败：{0}",
       "UnknownResource": "未知资源",
-      "ModpackDownloadFinishedSummary": "整合包下载完成：成功 {0} 项，失败 {1} 项。"
+      "ModpackDownloadFinishedSummary": "整合包下载完成：成功 {0} 项，失败 {1} 项。",
+      "StartDownloading": "开始下载{0}",
+      "DownloadPausedDownloaded": "已暂停下载：{0}（已下载 {1}）",
+      "AddedToDownloadQueue": "已加入下载队列：{0}",
+      "DuplicateDownloadQueued": "已跳过重复下载（队列中已有相同文件）：{0}",
+      "WaitingForOverwriteConfirmation": "等待替换确认",
+      "Completed": "已完成",
+      "Pausing": "暂停中",
+      "Canceling": "取消中",
+      "NoDownloadTaskCanBePausedOrResumed": "没有可暂停或继续的下载任务。",
+      "NoCancelableDownloadTasks": "没有可取消的下载任务。",
+      "NoRetryableDownloadTasks": "没有可重试的下载任务。",
+      "TaskCannotBeCanceled": "任务 {0} 不能取消。",
+      "TaskCannotBePausedOrResumed": "任务 {0} 不能暂停或继续。",
+      "TaskCannotBeRetried": "任务 {0} 不能重试。",
+      "TaskCannotBeCleared": "任务 {0} 不能清理。",
+      "RequeuedDownload": "已重新加入下载队列：{0}",
+      "ClearedDownloadTask": "已清理下载任务：{0}",
+      "ClearedDownloadTasks": "已清理 {0} 个下载任务。",
+      "SwitchedDownloadSource": "已切换下载源：{0}",
+      "Connecting": "正在连接：{0}",
+      "ChooseDownloadSource": "选择下载源",
+      "LocalAlreadyExistsChooseAction": "本地已存在\"{0}\"，请选择操作：",
+      "ModpackFileHasNoDownloadLink": "整合包文件 {0} 没有下载链接。",
+      "Downloading": "正在下载：{0} ({1})",
+      "DownloadingLabel": "下载中",
+      "Paused": "已暂停",
+      "AlreadyExistsReplace": "{0}重名,是否替换?",
+      "CancelingDownload": "正在取消下载：{0}",
+      "PausingDownload": "正在暂停下载：{0}",
+      "Queued": "等待中",
+      "ResumingDownload": "继续下载：{0}",
+      "DownloadSourceSwitchUnavailable": "当前链接无法切换下载源。"
     },
     "UnfinishedDownloadsBadge": "当前有{0}个下载未完成，点击查看",
     "BackgroundDownloading": "正在后台下载：{0}"
@@ -5634,7 +5612,15 @@
       "UnknownError": "未知错误",
       "CurrentVersion": "当前版本",
       "LatestVersion": "最新版本",
-      "UnnamedVersion": "未命名版本"
+      "UnnamedVersion": "未命名版本",
+      "PublishStats": "发布统计",
+      "FailedToLoadStats": "统计加载失败：{0}",
+      "Last30DaysTotalVersionsFiles": "近30天下载 {0}，累计下载 {1}，版本 {2}，文件 {3}",
+      "NoDownloadsInTheLast30Days": "近30天暂无下载记录。",
+      "RecentDownloads": "最近下载",
+      "DailyDownloadsFormat": "{0}：{1} 次",
+      "VersionDownloads": "版本下载",
+      "VersionLast30DaysTotalFiles": "版本 {0}：近30天 {1}，累计 {2}，文件 {3}"
     }
   },
   "ScbbsPlusPostIconLoader": {
@@ -5648,7 +5634,20 @@
     "LoadPostFailed": "[ScbbsPlus] 加载帖子失败: {0}",
     "Text": {
       "Files": "文件 {0}",
-      "UpdateAvailable": "有更新"
+      "UpdateAvailable": "有更新",
+      "NoFiles": "无文件",
+      "PagePosts": "{0}，共 {3} 个帖子",
+      "NoPosts": "{0} · 暂无帖子",
+      "UnknownUser": "未知用户",
+      "PostSummaryFormat": "{0}  由{1}发布于{2}  总下载 {3}  共{4}个版本",
+      "Installed": "已安装",
+      "CurrentlyInstalled": "当前安装",
+      "Downloads": "文件下载 {0}",
+      "VersionFormat": "版本 {0}",
+      "ExpandToLoadFiles": "展开加载文件",
+      "File": "[文件] {0}",
+      "NoData": "无数据",
+      "NoResources": "无资源"
     }
   },
   "ScbbsPlusRestartConfirmDialog": {

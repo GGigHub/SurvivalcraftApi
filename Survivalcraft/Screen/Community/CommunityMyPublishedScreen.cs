@@ -372,7 +372,7 @@ namespace Game
             }
 
             ClipboardManager.ClipboardString = url;
-            CommunityToastManager.Show(LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "ShareLinkCopiedToClipboard"), autoHideSeconds: 2.0);
+            CommunityToastManager.Show(LanguageControl.Get("CommunityMyPublishedScreen", "Text", "ShareLinkCopiedToClipboard"), autoHideSeconds: 2.0);
         }
 
         public override void Dispose()

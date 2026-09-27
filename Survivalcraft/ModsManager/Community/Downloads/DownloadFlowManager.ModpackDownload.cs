@@ -25,7 +25,7 @@ namespace Game
             Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "StartModpackDownload"), url, fileName));
             if (string.IsNullOrWhiteSpace(url))
             {
-                ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "ModpackFileHasNoDownloadLink"), fileName));
+                ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackFileHasNoDownloadLink"), fileName));
                 return;
             }
 

@@ -15,7 +15,7 @@ namespace Game
         {
             if (contentLength.HasValue && contentLength.Value > MaxPayloadBytes)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "DownloadExceedsSizeLimit"), MaxPayloadBytes));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityDownloadGuard", "DownloadExceedsSizeLimit"), MaxPayloadBytes));
             }
         }
     }

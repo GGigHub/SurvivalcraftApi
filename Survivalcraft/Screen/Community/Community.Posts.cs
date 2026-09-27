@@ -104,7 +104,7 @@ namespace Game
                     ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "Downloading")
                     : LanguageControl.Get("ScbbsPlusCommon", "Text", "Download");
                 m_detailsButton.IsEnabled = hasDetailsTarget && !dialogLoadRunning;
-                m_detailsButton.Text = dialogLoadRunning ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "LoadingProgress") : LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "Details");
+                m_detailsButton.Text = dialogLoadRunning ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "LoadingProgress") : LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "Details");
             }
 
             if (m_downloadButton.IsClicked && downloadTarget != null)
@@ -209,7 +209,7 @@ namespace Game
             {
                 if (!string.IsNullOrEmpty(result.Error))
                 {
-                    DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "FailedToLoadPostDetails"), result.Error), LanguageControl.Ok, null, null));
+                    DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "FailedToLoadPostDetails"), result.Error), LanguageControl.Ok, null, null));
                     return;
                 }
 
@@ -219,7 +219,7 @@ namespace Game
 
             if (!string.IsNullOrEmpty(result.Error))
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "FailedToLoadPostDetails"), result.Error), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "FailedToLoadPostDetails"), result.Error), LanguageControl.Ok, null, null));
                 return;
             }
 

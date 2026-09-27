@@ -36,11 +36,11 @@ namespace Game
                 await LoadVersionCatalogResultAsync(apiClient, apiBaseUrl, token, cancellationToken);
             if (!apiResult.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "GetVersionListFailed"), apiResult.StatusCode, apiResult.Body));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityManager", "GetVersionListFailed"), apiResult.StatusCode, apiResult.Body));
             }
             if (apiResult.Value?.Code != 200 || apiResult.Value.Data == null)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "VersionListResponseMalformed"), apiResult.Body));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityManager", "VersionListResponseMalformed"), apiResult.Body));
             }
 
             return CommunityModVersionSelector.FindBestMatch(apiResult.Value.Data, apiVersion);

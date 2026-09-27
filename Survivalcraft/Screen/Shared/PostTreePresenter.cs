@@ -214,7 +214,7 @@ namespace Game
                 // 与下方加载失败路径区分——失败是瞬时的，重挂可重试的懒加载占位。
                 if (targetNode.Nodes.Count == 0)
                 {
-                    targetNode.AddChild(new TreeViewNode(LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "NoResources"), "") { Selectable = false });
+                    targetNode.AddChild(new TreeViewNode(LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoResources"), "") { Selectable = false });
                 }
                 targetTree.InvalidateRows();
                 MarkDirty();
@@ -224,7 +224,7 @@ namespace Game
             // 失败可能是瞬时网络错误：重新挂懒加载占位保持可重试（点击帖子节点再次拉取），
             // 错误信息写进占位行副文本展示，不钉死成"无资源"。
             TreeViewNode failed = new TreeViewNode(
-                LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "ExpandToLoadFiles"),
+                LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "ExpandToLoadFiles"),
                 string.IsNullOrWhiteSpace(result.Error) ? result.Response?.Msg ?? string.Empty : result.Error)
             {
                 Tag = LazyTag,
@@ -276,14 +276,14 @@ namespace Game
                 TotalPages = totalPages;
                 SetPageJumpBoxText();
                 m_statusLabel.Text = result.Data.List.Length > 0
-                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "PagePosts"), statusPrefix, Page, TotalPages, total)
-                    : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "NoPosts"), statusPrefix);
+                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "PagePosts"), statusPrefix, Page, TotalPages, total)
+                    : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoPosts"), statusPrefix);
             }
             else
             {
                 TotalPages = MathUtils.Max(Page, 1);
                 SetPageJumpBoxText();
-                string error = loadResult.Error ?? result?.Msg ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "NoData");
+                string error = loadResult.Error ?? result?.Msg ?? LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoData");
                 m_statusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "LoadFailed"), statusPrefix);
                 Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "LoadPostFailed"), error));
             }
@@ -320,7 +320,7 @@ namespace Game
             {
                 TotalPages = MathUtils.Max(Page, 1);
                 SetPageJumpBoxText();
-                string error = loadResult.Error ?? result?.Msg ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "NoData");
+                string error = loadResult.Error ?? result?.Msg ?? LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoData");
                 m_statusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "LoadFailed"), statusPrefix);
                 Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "LoadPostFailed"), error));
             }
@@ -406,8 +406,8 @@ namespace Game
         public TreeViewNode CreatePostNode(PostItem post, ref List<LocalResourceItem> snapshot)
         {
             string timeText = CommunityTimeFormatter.FormatDate(post.CreatedAt);
-            string authorText = string.IsNullOrWhiteSpace(post.Creator?.Nickname) ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "UnknownUser") : post.Creator.Nickname.Trim();
-            string subText = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "PostSummaryFormat"),
+            string authorText = string.IsNullOrWhiteSpace(post.Creator?.Nickname) ? LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "UnknownUser") : post.Creator.Nickname.Trim();
+            string subText = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "PostSummaryFormat"),
                 m_fileTypeNameProvider(post.FileType),
                 authorText,
                 timeText,
@@ -440,12 +440,12 @@ namespace Game
                 // 与空数组一样落占位，避免帖子节点展开为空白（缺陷 5 补审 F2）。
                 if (node.Nodes.Count == 0)
                 {
-                    node.AddChild(new TreeViewNode(LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "NoResources"), "") { Selectable = false });
+                    node.AddChild(new TreeViewNode(LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoResources"), "") { Selectable = false });
                 }
             }
             else if (ShouldCreateLazyPlaceholder(post))
             {
-                TreeViewNode lazyNode = new TreeViewNode(LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "ExpandToLoadFiles"), "")
+                TreeViewNode lazyNode = new TreeViewNode(LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "ExpandToLoadFiles"), "")
                 {
                     Tag = LazyTag,
                     Selectable = false
@@ -454,7 +454,7 @@ namespace Game
             }
             else
             {
-                node.AddChild(new TreeViewNode(LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "NoResources"), "") { Selectable = false });
+                node.AddChild(new TreeViewNode(LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoResources"), "") { Selectable = false });
             }
             return node;
         }
@@ -534,7 +534,7 @@ namespace Game
             }
             if (node.Nodes.Count == 0 && singleFile == null)
             {
-                node.AddChild(new TreeViewNode(LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "NoFiles"), "") { Selectable = false });
+                node.AddChild(new TreeViewNode(LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoFiles"), "") { Selectable = false });
             }
             return node;
         }
@@ -547,8 +547,8 @@ namespace Game
             }
             string sizeText = TryGetSizeText(file.Size);
             string timeText = CommunityTimeFormatter.FormatDate(file.CreatedAt);
-            string title = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "File"), file.Filename ?? string.Empty);
-            TreeViewNode node = new TreeViewNode(title, new Color(180, 255, 180), $"{sizeText}  {string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "Downloads"), file.DownloadCount)}  {timeText}", new Color(140, 140, 140))
+            string title = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "File"), file.Filename ?? string.Empty);
+            TreeViewNode node = new TreeViewNode(title, new Color(180, 255, 180), $"{sizeText}  {string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "Downloads"), file.DownloadCount)}  {timeText}", new Color(140, 140, 140))
             {
                 Tag = file
             };
@@ -568,7 +568,7 @@ namespace Game
             }
             string sizeText = TryGetSizeText(file.Size);
             string timeText = CommunityTimeFormatter.FormatDate(file.CreatedAt);
-            string title = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "File"), file.Filename ?? string.Empty);
+            string title = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "File"), file.Filename ?? string.Empty);
             TreeViewNode node = new TreeViewNode(title, new Color(180, 255, 180), $"{sizeText}  {timeText}", new Color(140, 140, 140))
             {
                 Tag = file
@@ -724,7 +724,7 @@ namespace Game
             return state switch
             {
                 LocalModInstallState.UpdateAvailable => LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "UpdateAvailable"),
-                LocalModInstallState.Installed => LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "Installed"),
+                LocalModInstallState.Installed => LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "Installed"),
                 _ => null
             };
         }
@@ -732,8 +732,8 @@ namespace Game
         private static string GetCommunityVersionDisplayTitle(PostVersionItem version, bool isInstalledVersion)
         {
             string titleValue = string.IsNullOrEmpty(version?.Version) ? version?.Title : version.Version;
-            string title = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "VersionFormat"), titleValue);
-            return isInstalledVersion ? $"{title}  [{LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "CurrentlyInstalled")}]" : title;
+            string title = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "VersionFormat"), titleValue);
+            return isInstalledVersion ? $"{title}  [{LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "CurrentlyInstalled")}]" : title;
         }
 
         internal static bool TryGetPostScore(PostItem post, out double score)

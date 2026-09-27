@@ -248,7 +248,7 @@ namespace Game
             string downloadUrl = CommunityDownloadSourceResolver.ResolveUrl(url, source);
             if (string.IsNullOrWhiteSpace(downloadUrl))
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "DownloadSourceSwitchUnavailable"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadSourceSwitchUnavailable"), LanguageControl.Ok, null, null));
                 return;
             }
 
@@ -266,12 +266,12 @@ namespace Game
                 overwriteExistingFilePath);
             if (item == null)
             {
-                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "DuplicateDownloadQueued"), fileName));
+                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DuplicateDownloadQueued"), fileName));
                 return;
             }
             SaveQueue();
-            ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "StartDownloading"), fileName), autoHideSeconds: 2.0);
-            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "AddedToDownloadQueue"), fileName));
+            ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "StartDownloading"), fileName), autoHideSeconds: 2.0);
+            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "AddedToDownloadQueue"), fileName));
             StartNextQueuedDownload();
         }
 
@@ -281,7 +281,7 @@ namespace Game
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
-                    LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "ChooseDownloadSource"),
+                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ChooseDownloadSource"),
                     sourceOptions,
                     60f,
                     item => GetDownloadSourceText((CommunityDownloadSourceOption)item),
