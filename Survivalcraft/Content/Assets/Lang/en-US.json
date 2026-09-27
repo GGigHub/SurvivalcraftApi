@@ -5083,9 +5083,7 @@
     "LoginResponseFormatError": "Malformed login response: {0}",
     "CredentialFileFormatInvalid": "Credential file format is invalid.",
     "OldCredentialFileFormatInvalid": "Old credential file format is invalid.",
-    "Text": {
-      "LogIn": "Log In"
-    }
+    "LogIn": "Log In"
   },
   "ScbbsPlusRemoteImportManager": {
     "ZIPModpackHasBeenSavedLocally": "ZIP modpack {0} has been saved locally.",
@@ -5128,24 +5126,22 @@
     "DownloadInterruptedManifestKept": "Resource downloading was stopped; only the JSON modpack manifest was kept.",
     "ImportOrDownloadBusy": "An import or download is already running. Please wait.",
     "Manifest": " manifest",
-    "Text": {
-      "DownloadComplete": "Download Complete",
-      "ImportComplete": "Import Complete",
-      "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
-      "HasNoDownloadLinkSkipped": "{0} has no download link, skipped.",
-      "UnknownItemCategory": "Unknown item category: {0}",
-      "DataFileHostUnavailable": "{0} cannot be imported: this page cannot handle modpack data files. Use the modpack download in Local Resources instead.",
-      "Modpack": "Modpack",
-      "Imported": "{0} imported.",
-      "ImportResource": "Import Resource",
-      "Importing": "Importing...",
-      "DownloadingFormat": "Downloading: {0}",
-      "DownloadingProgress": "Downloading...",
-      "TotalItemsDownloadAll": "Total {0} items. Download all?",
-      "StartDownload": "Start Download",
-      "DownloadPackPartialFailure": "Modpack download partially failed: {0} succeeded, {1} failed.",
-      "DownloadPackFailure": "Modpack download failed: {0} succeeded, {1} failed."
-    }
+    "DownloadComplete": "Download Complete",
+    "ImportComplete": "Import Complete",
+    "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
+    "HasNoDownloadLinkSkipped": "{0} has no download link, skipped.",
+    "UnknownItemCategory": "Unknown item category: {0}",
+    "DataFileHostUnavailable": "{0} cannot be imported: this page cannot handle modpack data files. Use the modpack download in Local Resources instead.",
+    "Modpack": "Modpack",
+    "Imported": "{0} imported.",
+    "ImportResource": "Import Resource",
+    "Importing": "Importing...",
+    "DownloadingFormat": "Downloading: {0}",
+    "DownloadingProgress": "Downloading...",
+    "TotalItemsDownloadAll": "Total {0} items. Download all?",
+    "StartDownload": "Start Download",
+    "DownloadPackPartialFailure": "Modpack download partially failed: {0} succeeded, {1} failed.",
+    "DownloadPackFailure": "Modpack download failed: {0} succeeded, {1} failed."
   },
   "ScbbsPlusModpackSourceResolver": {
     "ModpackItemUsesNetworkUrl": "[ScbbsPlus] Modpack item uses the network url={0}",
@@ -5157,21 +5153,19 @@
     "GetFileInfoByFileIdMalformed": "Malformed file info response by file ID: {0}"
   },
   "ScbbsPlusModpackManifestParser": {
-    "Text": {
-      "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
-      "PackOnlySupportsZipOrJson": "Modpacks only support .zip and .json files.",
-      "PackinfoJsonNotFoundInZipRoot": "packinfo.json not found in ZIP root.",
-      "ZipEntryExceedsSizeLimit": "ZIP entry exceeds size limit: {0}",
-      "ZipReadFailed": "ZIP read failed: {0}",
-      "ManifestJsonParseFailed": "Manifest JSON parse failed: {0}",
-      "ManifestMissingFieldName": "Modpack manifest is missing required field: name.",
-      "ManifestMissingFieldVersion": "Modpack manifest is missing required field: version.",
-      "ManifestMissingFieldDescription": "Modpack manifest is missing required field: description.",
-      "ManifestMissingFieldPackageName": "Modpack manifest is missing required field: packageName.",
-      "IconOnlySupportsPngOrWebp": "Modpack icon only supports png or webp.",
-      "JsonPackIconMustBeUrl": "The icon of a json modpack must be a web link.",
-      "ManifestHasNoValidItems": "Modpack manifest has no valid items."
-    }
+    "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
+    "PackOnlySupportsZipOrJson": "Modpacks only support .zip and .json files.",
+    "PackinfoJsonNotFoundInZipRoot": "packinfo.json not found in ZIP root.",
+    "ZipEntryExceedsSizeLimit": "ZIP entry exceeds size limit: {0}",
+    "ZipReadFailed": "ZIP read failed: {0}",
+    "ManifestJsonParseFailed": "Manifest JSON parse failed: {0}",
+    "ManifestMissingFieldName": "Modpack manifest is missing required field: name.",
+    "ManifestMissingFieldVersion": "Modpack manifest is missing required field: version.",
+    "ManifestMissingFieldDescription": "Modpack manifest is missing required field: description.",
+    "ManifestMissingFieldPackageName": "Modpack manifest is missing required field: packageName.",
+    "IconOnlySupportsPngOrWebp": "Modpack icon only supports png or webp.",
+    "JsonPackIconMustBeUrl": "The icon of a json modpack must be a web link.",
+    "ManifestHasNoValidItems": "Modpack manifest has no valid items."
   },
   "ScbbsPlusModpackRegistry": {
     "ModpackRecordCorrupted": "[ScbbsPlus] Modpack record is corrupted: {0}, {1}",
@@ -5351,17 +5345,13 @@
   "ScbbsPlusDownloadDialog": {
     "DownloadingLabel": "Downloading",
     "DownloadComplete": "Download complete.",
-    "Text": {
-      "DownloadingProgress": "Downloading...",
-      "DownloadFailed": "Download failed: {0}",
-      "Canceled": "Canceled"
-    }
+    "DownloadingProgress": "Downloading...",
+    "DownloadFailed": "Download failed: {0}",
+    "Canceled": "Canceled"
   },
   "ScbbsPlusDownloadFailureDialog": {
     "DownloadError": "Download Error",
-    "Text": {
-      "UnknownError": "Unknown error"
-    }
+    "UnknownError": "Unknown error"
   },
   "ScbbsPlusDownloadFlowManager": {
     "StartModpackDownload": "[ScbbsPlus] Starting modpack download url={0} file={1}",

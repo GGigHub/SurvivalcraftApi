@@ -33,7 +33,7 @@ namespace Game
             StackPanelWidget errorContent = Children.Find<StackPanelWidget>("ScbbsPlusDownloadFailureDialog.ErrorContent");
             errorContent.Children.Add(new LabelWidget
             {
-                Text = error ?? LanguageControl.Get("ScbbsPlusDownloadFailureDialog", "Text", "UnknownError"),
+                Text = error ?? LanguageControl.Get("ScbbsPlusDownloadFailureDialog", "UnknownError"),
                 Margin = new Vector2(4f, 2f),
                 Color = new Color(235, 235, 235),
                 FontScale = 0.78f,

@@ -43,7 +43,7 @@ namespace Game
             }
 
             (string message, float fraction, bool hasPercent) = progress.Snapshot();
-            m_statusLabel.Text = message ?? LanguageControl.Get("ScbbsPlusDownloadDialog", "Text", "DownloadingProgress");
+            m_statusLabel.Text = message ?? LanguageControl.Get("ScbbsPlusDownloadDialog", "DownloadingProgress");
             m_progressBar.Value = MathUtils.Saturate(fraction);
             m_percentLabel.Text = hasPercent ? $"{fraction * 100f:0}%" : "--%";
         }
@@ -58,13 +58,13 @@ namespace Game
 
         public void SetFailed(string error)
         {
-            m_statusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadDialog", "Text", "DownloadFailed"), error);
+            m_statusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadDialog", "DownloadFailed"), error);
             ShowClosableState();
         }
 
         public void SetStopped(string message)
         {
-            m_statusLabel.Text = message ?? LanguageControl.Get("ScbbsPlusDownloadDialog", "Text", "Canceled");
+            m_statusLabel.Text = message ?? LanguageControl.Get("ScbbsPlusDownloadDialog", "Canceled");
             ShowClosableState();
         }
 

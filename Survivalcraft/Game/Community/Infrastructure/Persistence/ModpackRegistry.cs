@@ -202,7 +202,7 @@ namespace Game
                 ModpackManifestLoadResult parsed = m_parser.Parse(0, ReadBytes(manifestPath), null, Storage.GetFileName(manifestPath));
                 if (parsed?.Manifest?.Items == null || parsed.Manifest.Items.Length == 0)
                 {
-                    error = parsed?.Error ?? LanguageControl.Get("ScbbsPlusModpackManifestParser", "Text", "ManifestHasNoValidItems");
+                    error = parsed?.Error ?? LanguageControl.Get("ScbbsPlusModpackManifestParser", "ManifestHasNoValidItems");
                     Cache(cacheKey, manifestPath, manifestTime, manifestSize, metadataTime, null, error);
                     return null;
                 }

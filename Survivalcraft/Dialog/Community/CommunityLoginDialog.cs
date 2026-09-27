@@ -37,7 +37,7 @@ namespace Game
             m_isBusy = isBusy;
             m_loginButton.IsEnabled = !isBusy;
             m_cancelButton.IsEnabled = !isBusy;
-            m_loginButton.Text = isBusy ? LanguageControl.Get("ScbbsPlusLoginDialog", "LoggingIn") : LanguageControl.Get("ScbbsPlusLoginDialog", "Text", "LogIn");
+            m_loginButton.Text = isBusy ? LanguageControl.Get("ScbbsPlusLoginDialog", "LoggingIn") : LanguageControl.Get("ScbbsPlusLoginDialog", "LogIn");
         }
 
         public void SetError(string message)

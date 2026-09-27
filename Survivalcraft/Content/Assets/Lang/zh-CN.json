@@ -5093,9 +5093,7 @@
     "LoginResponseFormatError": "登录响应格式异常: {0}",
     "CredentialFileFormatInvalid": "凭据文件格式无效。",
     "OldCredentialFileFormatInvalid": "旧凭据文件格式无效。",
-    "Text": {
-      "LogIn": "登录"
-    }
+    "LogIn": "登录"
   },
   "ScbbsPlusRemoteImportManager": {
     "ZIPModpackHasBeenSavedLocally": "ZIP 整合包 {0} 已保存到本地。",
@@ -5138,24 +5136,22 @@
     "DownloadInterruptedManifestKept": "已中断资源下载，仅保留 JSON 整合包清单。",
     "ImportOrDownloadBusy": "当前已有导入或下载任务，请等待完成。",
     "Manifest": "清单",
-    "Text": {
-      "DownloadComplete": "下载完成",
-      "ImportComplete": "导入完成",
-      "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
-      "HasNoDownloadLinkSkipped": "{0} 没有下载链接，已跳过。",
-      "UnknownItemCategory": "未知的子项类别：{0}",
-      "DataFileHostUnavailable": "{0} 无法导入：当前页面无法处理整合包数据文件，请在本地资源管理屏使用整合包下载。",
-      "Modpack": "整合包",
-      "Imported": "{0} 已导入。",
-      "ImportResource": "导入资源",
-      "Importing": "正在导入...",
-      "DownloadingFormat": "正在下载：{0}",
-      "DownloadingProgress": "正在下载...",
-      "TotalItemsDownloadAll": "共 {0} 个子项，是否全部下载？",
-      "StartDownload": "开始下载",
-      "DownloadPackPartialFailure": "整合包下载部分失败：成功 {0} 项，失败 {1} 项。",
-      "DownloadPackFailure": "整合包下载失败：成功 {0} 项，失败 {1} 项。"
-    }
+    "DownloadComplete": "下载完成",
+    "ImportComplete": "导入完成",
+    "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
+    "HasNoDownloadLinkSkipped": "{0} 没有下载链接，已跳过。",
+    "UnknownItemCategory": "未知的子项类别：{0}",
+    "DataFileHostUnavailable": "{0} 无法导入：当前页面无法处理整合包数据文件，请在本地资源管理屏使用整合包下载。",
+    "Modpack": "整合包",
+    "Imported": "{0} 已导入。",
+    "ImportResource": "导入资源",
+    "Importing": "正在导入...",
+    "DownloadingFormat": "正在下载：{0}",
+    "DownloadingProgress": "正在下载...",
+    "TotalItemsDownloadAll": "共 {0} 个子项，是否全部下载？",
+    "StartDownload": "开始下载",
+    "DownloadPackPartialFailure": "整合包下载部分失败：成功 {0} 项，失败 {1} 项。",
+    "DownloadPackFailure": "整合包下载失败：成功 {0} 项，失败 {1} 项。"
   },
   "ScbbsPlusModpackSourceResolver": {
     "ModpackItemUsesNetworkUrl": "[ScbbsPlus] 整合包子项使用网络 url={0}",
@@ -5167,21 +5163,19 @@
     "GetFileInfoByFileIdMalformed": "通过文件ID获取文件信息返回异常: {0}"
   },
   "ScbbsPlusModpackManifestParser": {
-    "Text": {
-      "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
-      "PackOnlySupportsZipOrJson": "整合包仅支持 .zip 和 .json 文件。",
-      "PackinfoJsonNotFoundInZipRoot": "ZIP 根目录未找到 packinfo.json。",
-      "ZipEntryExceedsSizeLimit": "ZIP 内嵌文件超过大小上限：{0}",
-      "ZipReadFailed": "ZIP 读取失败：{0}",
-      "ManifestJsonParseFailed": "清单 JSON 解析失败：{0}",
-      "ManifestMissingFieldName": "整合包清单缺少必填字段 name。",
-      "ManifestMissingFieldVersion": "整合包清单缺少必填字段 version。",
-      "ManifestMissingFieldDescription": "整合包清单缺少必填字段 description。",
-      "ManifestMissingFieldPackageName": "整合包清单缺少必填字段 packageName。",
-      "IconOnlySupportsPngOrWebp": "整合包图标仅支持 png 或 webp。",
-      "JsonPackIconMustBeUrl": "json 整合包的 icon 必须是网络链接。",
-      "ManifestHasNoValidItems": "整合包清单未读取到有效 items。"
-    }
+    "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
+    "PackOnlySupportsZipOrJson": "整合包仅支持 .zip 和 .json 文件。",
+    "PackinfoJsonNotFoundInZipRoot": "ZIP 根目录未找到 packinfo.json。",
+    "ZipEntryExceedsSizeLimit": "ZIP 内嵌文件超过大小上限：{0}",
+    "ZipReadFailed": "ZIP 读取失败：{0}",
+    "ManifestJsonParseFailed": "清单 JSON 解析失败：{0}",
+    "ManifestMissingFieldName": "整合包清单缺少必填字段 name。",
+    "ManifestMissingFieldVersion": "整合包清单缺少必填字段 version。",
+    "ManifestMissingFieldDescription": "整合包清单缺少必填字段 description。",
+    "ManifestMissingFieldPackageName": "整合包清单缺少必填字段 packageName。",
+    "IconOnlySupportsPngOrWebp": "整合包图标仅支持 png 或 webp。",
+    "JsonPackIconMustBeUrl": "json 整合包的 icon 必须是网络链接。",
+    "ManifestHasNoValidItems": "整合包清单未读取到有效 items。"
   },
   "ScbbsPlusModpackRegistry": {
     "ModpackRecordCorrupted": "[ScbbsPlus] 整合包记录已损坏: {0}，{1}",
@@ -5361,17 +5355,13 @@
   "ScbbsPlusDownloadDialog": {
     "DownloadingLabel": "正在下载",
     "DownloadComplete": "下载完成。",
-    "Text": {
-      "DownloadingProgress": "正在下载...",
-      "DownloadFailed": "下载失败：{0}",
-      "Canceled": "已取消"
-    }
+    "DownloadingProgress": "正在下载...",
+    "DownloadFailed": "下载失败：{0}",
+    "Canceled": "已取消"
   },
   "ScbbsPlusDownloadFailureDialog": {
     "DownloadError": "下载出错",
-    "Text": {
-      "UnknownError": "未知错误"
-    }
+    "UnknownError": "未知错误"
   },
   "ScbbsPlusDownloadFlowManager": {
     "StartModpackDownload": "[ScbbsPlus] 开始下载整合包 url={0} file={1}",
