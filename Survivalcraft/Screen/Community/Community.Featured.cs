@@ -71,7 +71,7 @@ namespace Game
 
             if (!string.IsNullOrEmpty(m_featuredResult.Error))
             {
-                m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "LoadFailed"), sectionName);
+                m_postsPresenter.ShowLoadFailed(sectionName);
                 m_postsPresenter.AddRoot(new TreeViewNode(LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Featured", "FailedToLoadFeaturedResources"), "") { Selectable = false });
                 UpdatePaginationButtons();
                 return;

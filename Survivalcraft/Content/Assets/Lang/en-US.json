@@ -4969,16 +4969,6 @@
     "FindPostByFileNameMalformed": "Malformed find-post-by-file-name response: {0}"
   },
   "ScbbsPlusCommunityScreen": {
-    "Community": {
-      "Posts": {
-        "LoadFailed": "{0} · Load Failed"
-      },
-      "Featured": {
-        "NoData": "No Data",
-        "FailedToLoadFeaturedResources": "Failed to load featured resources",
-        "Loading": "{0} · Loading..."
-      }
-    },
     "DefaultFiltersSaved": "[ScbbsPlus] Default filters saved: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] Failed to load featured resources: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] Failed to load community posts: {0}",
@@ -5637,7 +5627,8 @@
       "ExpandToLoadFiles": "Expand to load files",
       "File": "[File] {0}",
       "NoData": "No Data",
-      "NoResources": "No Resources"
+      "NoResources": "No Resources",
+      "LoadFailed": "{0} · Load Failed"
     }
   },
   "ScbbsPlusRestartConfirmDialog": {

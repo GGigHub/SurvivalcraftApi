@@ -284,7 +284,7 @@ namespace Game
                 TotalPages = MathUtils.Max(Page, 1);
                 SetPageJumpBoxText();
                 string error = loadResult.Error ?? result?.Msg ?? LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoData");
-                m_statusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "LoadFailed"), statusPrefix);
+                ShowLoadFailed(statusPrefix);
                 Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "LoadPostFailed"), error));
             }
             MarkDirty();
@@ -321,10 +321,17 @@ namespace Game
                 TotalPages = MathUtils.Max(Page, 1);
                 SetPageJumpBoxText();
                 string error = loadResult.Error ?? result?.Msg ?? LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoData");
-                m_statusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Posts", "LoadFailed"), statusPrefix);
+                ShowLoadFailed(statusPrefix);
                 Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "LoadPostFailed"), error));
             }
             MarkDirty();
+        }
+
+        /// <summary>列表加载失败状态行（三处同构收敛：帖子/上传/精选共用同一文案）。</summary>
+        public void ShowLoadFailed(string statusPrefix)
+        {
+            StatusLabel.Text = string.Format(CultureInfo.InvariantCulture,
+                LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "LoadFailed"), statusPrefix);
         }
 
         public void SetPageJumpBoxText()
