@@ -313,8 +313,8 @@ namespace Game
                 TotalPages = totalPages;
                 SetPageJumpBoxText();
                 m_statusLabel.Text = result.Data.List.Length > 0
-                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "PageUploads"), statusPrefix, Page, TotalPages, total)
-                    : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "NoUploads"), statusPrefix);
+                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "PageUploads"), statusPrefix, Page, TotalPages, total)
+                    : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "Text", "NoUploads"), statusPrefix);
             }
             else
             {

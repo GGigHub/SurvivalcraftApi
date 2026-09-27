@@ -165,7 +165,7 @@ namespace Game
             {
                 m_postsPresenter.ApplyPostsResult(
                     loadResult,
-                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(loadResult.FileType)));
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(loadResult.FileType)));
             }
 
             if (m_uploadsLoadSlot.TryTake(
@@ -178,7 +178,7 @@ namespace Game
             {
                 m_postsPresenter.ApplyUploadFilesResult(
                     uploadsResult,
-                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyUnpublishedFormat"), EnumDisplayName.GetEnumDisplayName(uploadsResult.FileType)));
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyUnpublishedFormat"), EnumDisplayName.GetEnumDisplayName(uploadsResult.FileType)));
             }
         }
 
@@ -201,7 +201,7 @@ namespace Game
             int userId = AuthSessionManager.Instance.CurrentUser?.Id ?? 0;
             string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
             m_postsPresenter.TotalPages = MathUtils.Max(m_postsPresenter.Page, 1);
-            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(fileType)));
+            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(fileType)));
             VersionCatalogCache.TryGetCachedVersionCatalog(apiBaseUrl, out VersionListItem[] cachedCatalog, out Dictionary<int, string> cachedVersionMap, out _);
             bool needVersionCatalog = VersionCatalogCache.ShouldLoadVersionCatalogForFileType(fileType);
 
@@ -243,7 +243,7 @@ namespace Game
             string token = AuthSessionManager.Instance.CurrentToken;
             string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
             m_postsPresenter.TotalPages = MathUtils.Max(m_postsPresenter.Page, 1);
-            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "Text", "MyUnpublishedFormat"), EnumDisplayName.GetEnumDisplayName(fileType)));
+            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyUnpublishedFormat"), EnumDisplayName.GetEnumDisplayName(fileType)));
             m_uploadsLoadSlot.Start(async (requestId, _) =>
             {
                 CommunityUploadFilesLoad load = await CommunityManager.LoadMyUploadsAsync(
@@ -349,7 +349,7 @@ namespace Game
                 m_downloadButtonsState = state;
                 m_downloadButton.IsEnabled = hasDownloadTarget && !downloadBusy;
                 m_downloadButton.Text = downloadBusy
-                    ? LanguageControl.Get("CommunityMyPublishedScreen", "Text", "Downloading")
+                    ? LanguageControl.Get("CommunityMyPublishedScreen", "Downloading")
                     : LanguageControl.Get("ScbbsPlusCommon", "Text", "Download");
             }
 
@@ -372,7 +372,7 @@ namespace Game
             }
 
             ClipboardManager.ClipboardString = url;
-            CommunityToastManager.Show(LanguageControl.Get("CommunityMyPublishedScreen", "Text", "ShareLinkCopiedToClipboard"), autoHideSeconds: 2.0);
+            CommunityToastManager.Show(LanguageControl.Get("CommunityMyPublishedScreen", "ShareLinkCopiedToClipboard"), autoHideSeconds: 2.0);
         }
 
         public override void Dispose()

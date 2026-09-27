@@ -54,15 +54,11 @@
   },
   "CommunityMyPublishedScreen": {
     "LoadMyPublishedFailed": "[ScbbsPlus] Failed to load my published posts: {0}",
-    "Text": {
-      "LoadingFormat": "{0} · Loading...",
-      "Downloading": "Downloading...",
-      "MyPublishedFormat": "Published {0}s",
-      "PageUploads": "{0}, {3} Files",
-      "NoUploads": "{0} · No Files",
-      "MyUnpublishedFormat": "Unpublished {0}s",
-      "ShareLinkCopiedToClipboard": "Share link copied to clipboard."
-    }
+    "LoadingFormat": "{0} · Loading...",
+    "Downloading": "Downloading...",
+    "MyPublishedFormat": "Published {0}s",
+    "MyUnpublishedFormat": "Unpublished {0}s",
+    "ShareLinkCopiedToClipboard": "Share link copied to clipboard."
   },
   "ContentScreen": {
     "1": "Mod Management",
@@ -5628,7 +5624,9 @@
       "File": "[File] {0}",
       "NoData": "No Data",
       "NoResources": "No Resources",
-      "LoadFailed": "{0} · Load Failed"
+      "LoadFailed": "{0} · Load Failed",
+      "PageUploads": "{0}, {3} Files",
+      "NoUploads": "{0} · No Files"
     }
   },
   "ScbbsPlusRestartConfirmDialog": {
