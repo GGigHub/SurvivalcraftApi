@@ -31,7 +31,7 @@ namespace Game
             m_downloadButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionWidget.DownloadButton");
             m_filesButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionWidget.FilesButton");
             m_filesPanel = Children.Find<StackPanelWidget>("ScbbsPlusModVersionWidget.FilesPanel");
-            m_detailsButton.Text = LanguageControl.Get("ScbbsPlusModVersionWidget", "Text", "Details");
+            m_detailsButton.Text = LanguageControl.Get("ScbbsPlusModVersionWidget", "Details");
             m_downloadButton.Text = LanguageControl.Get("ScbbsPlusCommon", "Text", "Download");
         }
 
@@ -56,10 +56,10 @@ namespace Game
             m_downloadButton.IsVisible = data.HasSingleFile;
             m_filesButton.IsVisible = data.HasExpandableFiles;
             m_filesButton.Text = isExpanded
-                ? LanguageControl.Get("ScbbsPlusModVersionWidget", "Text", "Collapse")
+                ? LanguageControl.Get("ScbbsPlusModVersionWidget", "Collapse")
                 : string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusModVersionWidget", "Text", "Files"),
+                    LanguageControl.Get("ScbbsPlusModVersionWidget", "Files"),
                     data.Files.Count);
             SetExpanded(isExpanded);
         }

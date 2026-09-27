@@ -26,7 +26,7 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusRestartConfirmDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusRestartConfirmDialog.Title").Text =
-                string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "Text", "RestartRequired") : title;
+                string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "RestartRequired") : title;
             Children.Find<LabelWidget>("ScbbsPlusRestartConfirmDialog.Message").Text = message ?? string.Empty;
             m_restartButton = Children.Find<BevelledButtonWidget>("ScbbsPlusRestartConfirmDialog.RestartButton");
             m_restartToCurrentScreen = Children.Find<BevelledButtonWidget>("ScbbsPlusRestartConfirmDialog.RestartToCurrentScreen");
@@ -45,8 +45,8 @@ namespace Game
             DialogsManager.ShowDialog(
                 null,
                 new RestartConfirmDialog(
-                    LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "Text", "UpdateComplete"),
-                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "Text", "ImportedRestartPrompt"), fileName),
+                    LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "UpdateComplete"),
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "ImportedRestartPrompt"), fileName),
                     restartAction: () =>
                     {
                         Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "UserChoseNormalRestart"), fileName));

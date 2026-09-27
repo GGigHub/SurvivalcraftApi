@@ -30,7 +30,7 @@ namespace Game
             Children.Find<LabelWidget>("ScbbsPlusModReviewDialog.Title").Text =
                 string.IsNullOrWhiteSpace(dialogTitle) ? LanguageControl.Get("ScbbsPlusModReviewDialog", "ReviewLocalResource") : dialogTitle;
             Children.Find<LabelWidget>("ScbbsPlusModReviewDialog.ModNameLabel").Text =
-                string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("ScbbsPlusModReviewDialog", "Text", "LocalResource") : modName;
+                string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("ScbbsPlusModReviewDialog", "LocalResource") : modName;
             m_starRating = Children.Find<StarRatingWidget>("ScbbsPlusModReviewDialog.StarRating");
             m_restoreLink = Children.Find<LinkWidget>("ScbbsPlusModReviewDialog.RestoreLink");
             m_textBox = Children.Find<TextBoxWidget>("ScbbsPlusModReviewDialog.TextBox");

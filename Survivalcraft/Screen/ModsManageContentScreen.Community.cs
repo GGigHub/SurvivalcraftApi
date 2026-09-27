@@ -109,7 +109,7 @@ public partial class ModsManageContentScreen
     }
 
     private static string GetLocalModDisplayName(LocalResourceItem resourceItem)
-        => resourceItem?.DisplayName ?? resourceItem?.Name ?? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LocalMod");
+        => resourceItem?.DisplayName ?? resourceItem?.Name ?? LanguageControl.Get("ModsManageContentScreen", "LocalMod");
 
     private void UpdateAutoUpdateScanTask()
     {
@@ -271,7 +271,7 @@ public partial class ModsManageContentScreen
     {
         if (isRunning)
         {
-            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "PleaseWait"), LanguageControl.Get(fName, "Community", "BusyMessage", busyMessageKey), LanguageControl.Ok, null, null));
+            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ModsManageContentScreen", "PleaseWait"), LanguageControl.Get(fName, "Community", "BusyMessage", busyMessageKey), LanguageControl.Ok, null, null));
             return false;
         }
         return validateResource();
@@ -308,23 +308,23 @@ public partial class ModsManageContentScreen
             string message = string.Format(
                 CultureInfo.InvariantCulture,
                 LanguageControl.Get(fName, "Community", "AlreadyUpToDateFormat"),
-                LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "CurrentVersion"),
+                LanguageControl.Get("ModsManageContentScreen", "CurrentVersion"),
                 currentVersion,
-                LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LatestVersion"),
+                LanguageControl.Get("ModsManageContentScreen", "LatestVersion"),
                 latestVersion);
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "CheckUpdate"),
+                    LanguageControl.Get("ModsManageContentScreen", "CheckUpdate"),
                     string.IsNullOrWhiteSpace(result.NoUpdateReason)
                         ? message
                         : string.Format(
                             CultureInfo.InvariantCulture,
                             LanguageControl.Get(fName, "Community", "NoUpdateReasonFormat"),
                             result.NoUpdateReason,
-                            LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "CurrentVersion"),
+                            LanguageControl.Get("ModsManageContentScreen", "CurrentVersion"),
                             currentVersion,
-                            LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LatestVersion"),
+                            LanguageControl.Get("ModsManageContentScreen", "LatestVersion"),
                             latestVersion),
                     LanguageControl.Ok,
                     null,
@@ -346,7 +346,7 @@ public partial class ModsManageContentScreen
         DialogsManager.ShowDialog(
             null,
             new CommunityPostDetailsDialog(
-                LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "UpdateFound"),
+                LanguageControl.Get("ModsManageContentScreen", "UpdateFound"),
                 contentHtml,
                 AuthSessionManager.Instance.ApiBaseUrl,
                 LanguageControl.Get("ScbbsPlusCommon", "Text", "Download"),
@@ -355,7 +355,7 @@ public partial class ModsManageContentScreen
                 contentPlainText: releaseNotes,
                 buildHeader: panel => PostDetailsHeaderBuilder.AppendUpdateInfo(
                     panel,
-                    result?.PostTitle ?? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "CommunityPost"),
+                    result?.PostTitle ?? LanguageControl.Get("ModsManageContentScreen", "CommunityPost"),
                     result?.CurrentVersion,
                     result?.LatestVersion,
                     CommunityFileRules.GetDownloadFileName(result?.File))));
@@ -460,7 +460,7 @@ public partial class ModsManageContentScreen
     {
         LocalResourceItem resourceItem = m_selectedEntity != null ? GetLocalModItem(m_selectedEntity) : null;
         string title = string.IsNullOrWhiteSpace(version?.Title)
-            ? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "VersionDetails")
+            ? LanguageControl.Get("ModsManageContentScreen", "VersionDetails")
             : version.Title;
         string packageName = resourceItem?.PackageName ?? resourceItem?.ModEntity?.modInfo?.PackageName;
         string fileName = CommunityUploadFileProvider.GetUploadFileName(resourceItem, resourceItem?.LocalFilePath);
@@ -770,7 +770,7 @@ public partial class ModsManageContentScreen
 
         string key = LocalResourceIdentity.MakeModReviewKey(resourceItem);
         LocalModStateStore.LocalModReviews.TryGetValue(key, out LocalModReviewEntry entry);
-        string title = resourceItem.DisplayName ?? resourceItem.Name ?? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LocalResource");
+        string title = resourceItem.DisplayName ?? resourceItem.Name ?? LanguageControl.Get("ModsManageContentScreen", "LocalResource");
         DialogsManager.ShowDialog(
             null,
             new CommunityModReviewDialog(

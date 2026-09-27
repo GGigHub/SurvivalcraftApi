@@ -357,7 +357,7 @@ namespace Game
         private void AddImageBlock(string url, string alt)
         {
             url = ResolveUrl(url);
-            alt = string.IsNullOrWhiteSpace(alt) ? LanguageControl.Get("ScbbsPlusPostDetailsContentBuilder", "Text", "Image") : alt.Trim();
+            alt = string.IsNullOrWhiteSpace(alt) ? LanguageControl.Get("ScbbsPlusPostDetailsContentBuilder", "Image") : alt.Trim();
 
             AddSpacer(m_contentPanel, 10f);
             CanvasWidget frame = new()

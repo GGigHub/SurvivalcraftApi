@@ -55,7 +55,7 @@ namespace Game
             {
                 return title;
             }
-            return versionText != "-" && !IsIntegerText(versionText) ? versionText : LanguageControl.Get("ScbbsPlusVersionDetailFormatter", "Text", "UnnamedVersion");
+            return versionText != "-" && !IsIntegerText(versionText) ? versionText : LanguageControl.Get("ScbbsPlusVersionDetailFormatter", "UnnamedVersion");
         }
 
         internal static bool IsIntegerText(string value)

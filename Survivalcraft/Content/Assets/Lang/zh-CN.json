@@ -114,7 +114,11 @@
     "FailedToSaveSettings": "保存配置失败",
     "SaveConfigFailed": "无法保存整合包使用期间修改的配置：{0}",
     "FailedToRestoreFiles": "恢复文件失败",
-    "RestoreFilesFailed": "无法恢复整合包启用前的文件：{0}"
+    "RestoreFilesFailed": "无法恢复整合包启用前的文件：{0}",
+    "Modpack": "整合包",
+    "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
+    "LocalResourcesReadingModpacksFormat": "本地{0} · 正在读取整合包...",
+    "DeleteFailed": "删除失败：{0}"
   },
   "ModsManageContentScreen": {
     "1": "管理模组内容",
@@ -200,6 +204,16 @@
     "81": "*需重启",
     "PendingRestartTag": "待重启",
     "FileDeletedTag": "文件已删除",
+    "LatestVersion": "最新版本",
+    "CurrentVersion": "当前版本",
+    "VersionDetails": "版本详情",
+    "UpdateFound": "发现更新",
+    "LocalResource": "本地资源",
+    "LocalMod": "本地模组",
+    "CommunityPost": "社区帖子",
+    "CheckUpdate": "检查更新",
+    "HasUpdate": "有更新",
+    "PleaseWait": "请稍候",
     "Community": {
       "BusyMessage": {
         "LoadingPreviousVersionList": "正在加载上一项版本列表。",
@@ -4896,40 +4910,8 @@
       "Update": "检查更新"
     },
     "Text": {
-      "Close": "关闭",
-      "FurniturePack": "家具包",
-      "Skin": "皮肤",
-      "Texture": "材质",
-      "Versions": "版本列表",
-      "LocalResourcesReadingModpacksFormat": "本地{0} · 正在读取整合包...",
-      "OtherFiles": "其他文件",
-      "Modpack": "整合包",
-      "UpdateFound": "发现更新",
-      "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
-      "Canceled": "已取消",
-      "PleaseWait": "请稍候",
-      "LocalMod": "本地模组",
-      "NoLoadedAssemblyReadable": "当前模组还没有可读取的已加载程序集。",
-      "LocalResource": "本地资源",
-      "CommunityPost": "社区帖子",
-      "RestartRequired": "重启加载",
-      "CurrentVersion": "当前版本",
-      "LatestVersion": "最新版本",
-      "PreparingUpload": "准备上传...",
       "Downloading": "下载中...",
-      "LoadingProgress": "加载中...",
-      "VersionDetails": "版本详情",
-      "CheckUpdate": "检查更新",
-      "LocalWorld": "本地存档",
-      "LoadingFileInfo": "获取文件信息...",
-      "DeleteFailed": "删除失败：{0}",
-      "Disabled": "已禁用",
-      "IncompatibleWithCurrentGame": "不适配当前游戏",
-      "RestartRequiredLabel": "需要重启加载",
-      "NotLoaded": "未加载",
-      "Info": "{0}信息",
-      "LocalResourcesFormat": "本地{0} ({1})",
-      "HasUpdate": "有更新"
+      "LoadingFileInfo": "获取文件信息..."
     }
   },
   "ScbbsPlusLocalMods": {
@@ -4941,9 +4923,7 @@
     "ThereIsNoPreviousContentToRestore": "没有可还原的内容。",
     "PreviousContentRestored": "已还原上次内容。",
     "PleaseSelectARating": "请选择评分。",
-    "Text": {
-      "LocalResource": "本地资源"
-    }
+    "LocalResource": "本地资源"
   },
   "ScbbsPlusMissingDependenciesDialog": {
     "DependenciesFound": "找到依赖",
@@ -4957,10 +4937,8 @@
     "CollapsedPackageGroupLatestOnly": "已隐藏 {0} 个同包名模组，仅显示最新一个",
     "CollapsedFileGroupLatestOnly": "已隐藏 {0} 个相同文件，仅显示最新一个",
     "NoDownloadableFile": "社区资源中未找到可下载文件。",
-    "Text": {
-      "LocalMod": "本地模组",
-      "UnnamedFile": "未命名文件"
-    }
+    "LocalMod": "本地模组",
+    "UnnamedFile": "未命名文件"
   },
   "ScbbsPlusLocalModNetworkManager": {
     "AutoUpdateCheckFailed": "[ScbbsPlus] 本地模组自动检查更新失败: {0}, error={1}",
@@ -5373,74 +5351,72 @@
     "BackgroundManifestLoadTaskFaulted": "[ScbbsPlus] 后台加载整合包清单任务异常: {0}",
     "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] 后台整合包子项下载任务异常: {0}",
     "ImportCompletedCallbackFaulted": "[ScbbsPlus] 导入完成回调异常（导入本身已成功）: {0}",
-    "Text": {
-      "Failed": "失败",
-      "DefaultMainlandChina": "默认/中国大陆",
-      "Source1Global": "下载源1/全球",
-      "Source2MainlandChina": "下载源2/中国大陆",
-      "Source3Global": "下载源3/全球",
-      "Source4Global": "下载源4/全球",
-      "SkippedLocalDuplicates": "，另有 {0} 项因本地已有同名内容而跳过。",
-      "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
-      "HasNoDownloadLinkSkipped": "{0} 没有下载链接，已跳过。",
-      "UnknownItemCategory": "未知的子项类别：{0}",
-      "DataFileHostUnavailable": "{0} 无法导入：当前页面无法处理整合包数据文件，请在本地资源管理屏使用整合包下载。",
-      "Imported": "{0} 已导入。",
-      "ImportResource": "导入资源",
-      "Importing": "正在导入...",
-      "DownloadingFormat": "正在下载：{0}",
-      "DownloadPackPartialFailure": "整合包下载部分失败：成功 {0} 项，失败 {1} 项。",
-      "DownloadPackFailure": "整合包下载失败：成功 {0} 项，失败 {1} 项。",
-      "DownloadCanceled": "已取消下载：{0}",
-      "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
-      "ModpackManifestSaveFailed": "整合包清单保存失败：{0}",
-      "DownloadPaused": "已暂停下载：{0}",
-      "DownloadFailed": "下载失败：{0}",
-      "ImportFailed": "导入失败：{0}",
-      "UnknownError": "未知错误",
-      "Canceled": "已取消",
-      "Yes": "是",
-      "No": "否",
-      "ConfirmDownloadAndEnable": "有 {0} 个子项，是否立即下载并启用？",
-      "ConfirmEnableAllReady": "所有子项已就绪，是否立即启用？",
-      "SubItemsHeader": "子项：",
-      "DownloadComplete": "{0}下载完成",
-      "FailedToLoadModpackManifest": "整合包清单加载失败：{0}",
-      "UnknownResource": "未知资源",
-      "ModpackDownloadFinishedSummary": "整合包下载完成：成功 {0} 项，失败 {1} 项。",
-      "StartDownloading": "开始下载{0}",
-      "DownloadPausedDownloaded": "已暂停下载：{0}（已下载 {1}）",
-      "AddedToDownloadQueue": "已加入下载队列：{0}",
-      "DuplicateDownloadQueued": "已跳过重复下载（队列中已有相同文件）：{0}",
-      "WaitingForOverwriteConfirmation": "等待替换确认",
-      "Completed": "已完成",
-      "Pausing": "暂停中",
-      "Canceling": "取消中",
-      "NoDownloadTaskCanBePausedOrResumed": "没有可暂停或继续的下载任务。",
-      "NoCancelableDownloadTasks": "没有可取消的下载任务。",
-      "NoRetryableDownloadTasks": "没有可重试的下载任务。",
-      "TaskCannotBeCanceled": "任务 {0} 不能取消。",
-      "TaskCannotBePausedOrResumed": "任务 {0} 不能暂停或继续。",
-      "TaskCannotBeRetried": "任务 {0} 不能重试。",
-      "TaskCannotBeCleared": "任务 {0} 不能清理。",
-      "RequeuedDownload": "已重新加入下载队列：{0}",
-      "ClearedDownloadTask": "已清理下载任务：{0}",
-      "ClearedDownloadTasks": "已清理 {0} 个下载任务。",
-      "SwitchedDownloadSource": "已切换下载源：{0}",
-      "Connecting": "正在连接：{0}",
-      "ChooseDownloadSource": "选择下载源",
-      "LocalAlreadyExistsChooseAction": "本地已存在\"{0}\"，请选择操作：",
-      "ModpackFileHasNoDownloadLink": "整合包文件 {0} 没有下载链接。",
-      "Downloading": "正在下载：{0} ({1})",
-      "DownloadingLabel": "下载中",
-      "Paused": "已暂停",
-      "AlreadyExistsReplace": "{0}重名,是否替换?",
-      "CancelingDownload": "正在取消下载：{0}",
-      "PausingDownload": "正在暂停下载：{0}",
-      "Queued": "等待中",
-      "ResumingDownload": "继续下载：{0}",
-      "DownloadSourceSwitchUnavailable": "当前链接无法切换下载源。"
-    },
+    "Failed": "失败",
+    "DefaultMainlandChina": "默认/中国大陆",
+    "Source1Global": "下载源1/全球",
+    "Source2MainlandChina": "下载源2/中国大陆",
+    "Source3Global": "下载源3/全球",
+    "Source4Global": "下载源4/全球",
+    "SkippedLocalDuplicates": "，另有 {0} 项因本地已有同名内容而跳过。",
+    "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
+    "HasNoDownloadLinkSkipped": "{0} 没有下载链接，已跳过。",
+    "UnknownItemCategory": "未知的子项类别：{0}",
+    "DataFileHostUnavailable": "{0} 无法导入：当前页面无法处理整合包数据文件，请在本地资源管理屏使用整合包下载。",
+    "Imported": "{0} 已导入。",
+    "ImportResource": "导入资源",
+    "Importing": "正在导入...",
+    "DownloadingFormat": "正在下载：{0}",
+    "DownloadPackPartialFailure": "整合包下载部分失败：成功 {0} 项，失败 {1} 项。",
+    "DownloadPackFailure": "整合包下载失败：成功 {0} 项，失败 {1} 项。",
+    "DownloadCanceled": "已取消下载：{0}",
+    "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
+    "ModpackManifestSaveFailed": "整合包清单保存失败：{0}",
+    "DownloadPaused": "已暂停下载：{0}",
+    "DownloadFailed": "下载失败：{0}",
+    "ImportFailed": "导入失败：{0}",
+    "UnknownError": "未知错误",
+    "Canceled": "已取消",
+    "Yes": "是",
+    "No": "否",
+    "ConfirmDownloadAndEnable": "有 {0} 个子项，是否立即下载并启用？",
+    "ConfirmEnableAllReady": "所有子项已就绪，是否立即启用？",
+    "SubItemsHeader": "子项：",
+    "DownloadComplete": "{0}下载完成",
+    "FailedToLoadModpackManifest": "整合包清单加载失败：{0}",
+    "UnknownResource": "未知资源",
+    "ModpackDownloadFinishedSummary": "整合包下载完成：成功 {0} 项，失败 {1} 项。",
+    "StartDownloading": "开始下载{0}",
+    "DownloadPausedDownloaded": "已暂停下载：{0}（已下载 {1}）",
+    "AddedToDownloadQueue": "已加入下载队列：{0}",
+    "DuplicateDownloadQueued": "已跳过重复下载（队列中已有相同文件）：{0}",
+    "WaitingForOverwriteConfirmation": "等待替换确认",
+    "Completed": "已完成",
+    "Pausing": "暂停中",
+    "Canceling": "取消中",
+    "NoDownloadTaskCanBePausedOrResumed": "没有可暂停或继续的下载任务。",
+    "NoCancelableDownloadTasks": "没有可取消的下载任务。",
+    "NoRetryableDownloadTasks": "没有可重试的下载任务。",
+    "TaskCannotBeCanceled": "任务 {0} 不能取消。",
+    "TaskCannotBePausedOrResumed": "任务 {0} 不能暂停或继续。",
+    "TaskCannotBeRetried": "任务 {0} 不能重试。",
+    "TaskCannotBeCleared": "任务 {0} 不能清理。",
+    "RequeuedDownload": "已重新加入下载队列：{0}",
+    "ClearedDownloadTask": "已清理下载任务：{0}",
+    "ClearedDownloadTasks": "已清理 {0} 个下载任务。",
+    "SwitchedDownloadSource": "已切换下载源：{0}",
+    "Connecting": "正在连接：{0}",
+    "ChooseDownloadSource": "选择下载源",
+    "LocalAlreadyExistsChooseAction": "本地已存在\"{0}\"，请选择操作：",
+    "ModpackFileHasNoDownloadLink": "整合包文件 {0} 没有下载链接。",
+    "Downloading": "正在下载：{0} ({1})",
+    "DownloadingLabel": "下载中",
+    "Paused": "已暂停",
+    "AlreadyExistsReplace": "{0}重名,是否替换?",
+    "CancelingDownload": "正在取消下载：{0}",
+    "PausingDownload": "正在暂停下载：{0}",
+    "Queued": "等待中",
+    "ResumingDownload": "继续下载：{0}",
+    "DownloadSourceSwitchUnavailable": "当前链接无法切换下载源。",
     "UnfinishedDownloadsBadge": "当前有{0}个下载未完成，点击查看",
     "BackgroundDownloading": "正在后台下载：{0}"
   },
@@ -5498,11 +5474,9 @@
     "GameLoaded": "[ScbbsPlus] 游戏已加载。"
   },
   "ScbbsPlusModVersionWidget": {
-    "Text": {
-      "Files": "文件 {0}",
-      "Details": "详情",
-      "Collapse": "收起"
-    }
+    "Files": "文件 {0}",
+    "Details": "详情",
+    "Collapse": "收起"
   },
   "ScbbsPlusModVersionsDialog": {
     "Current": "当前使用",
@@ -5516,23 +5490,15 @@
     "GameVersionsPublished": "{0}适配游戏版本：{1}   发布时间：{2}",
     "Version": "版本",
     "Published": "发布时间",
-    "Text": {
-      "UnnamedFile": "未命名文件",
-      "CommunityPost": "社区帖子"
-    }
+    "UnnamedFile": "未命名文件",
+    "CommunityPost": "社区帖子"
   },
   "ScbbsPlusMoreScreen": {
     "StatusReady": "设置已就绪。",
     "SettingsApplied": "设置已应用。",
-    "Text": {
-      "LogOut": "登出",
-      "UpdateFound": "发现更新",
-      "LogIn": "登录",
-      "CheckUpdate": "检查更新",
-      "Apply": "应用",
-      "SelectDownloadSource": "选择下载源",
-      "NotLoggedIn": "未登录"
-    },
+    "LogOut": "登出",
+    "LogIn": "登录",
+    "NotLoggedIn": "未登录",
     "UnknownAccount": "未知账号"
   },
   "CommunityDownloadSourceSelectionMode": {
@@ -5558,9 +5524,7 @@
     "DisposeDuplicatePostDetailsTextureFailed": "[ScbbsPlus] 释放重复帖子详情纹理失败: {0}",
     "DecodePostDetailsImageFailed": "[ScbbsPlus] 解析帖子详情图片失败: {0}, error={1}",
     "RequestPostDetailsImageFailed": "[ScbbsPlus] 请求帖子详情图片失败: {0}, error={1}",
-    "Text": {
-      "Image": "图片"
-    }
+    "Image": "图片"
   },
   "ScbbsPlusPostDetailsDialog": {
     "TranslatingTo": "正在翻译为 {0}...",
@@ -5569,27 +5533,23 @@
     "FailedToLoad": "{0}加载失败",
     "Loading": "{0}加载中...",
     "AutoTranslateFailed": "[ScbbsPlus] 自动翻译失败: {0}",
-    "Text": {
-      "NoDetails": "暂无详情内容。",
-      "PostDetails": "帖子详情"
-    }
+    "NoDetails": "暂无详情内容。",
+    "PostDetails": "帖子详情"
   },
   "ScbbsPlusPostDetailsHeaderBuilder": {
-    "Text": {
-      "DownloadFile": "下载文件",
-      "UnknownError": "未知错误",
-      "CurrentVersion": "当前版本",
-      "LatestVersion": "最新版本",
-      "UnnamedVersion": "未命名版本",
-      "PublishStats": "发布统计",
-      "FailedToLoadStats": "统计加载失败：{0}",
-      "Last30DaysTotalVersionsFiles": "近30天下载 {0}，累计下载 {1}，版本 {2}，文件 {3}",
-      "NoDownloadsInTheLast30Days": "近30天暂无下载记录。",
-      "RecentDownloads": "最近下载",
-      "DailyDownloadsFormat": "{0}：{1} 次",
-      "VersionDownloads": "版本下载",
-      "VersionLast30DaysTotalFiles": "版本 {0}：近30天 {1}，累计 {2}，文件 {3}"
-    }
+    "DownloadFile": "下载文件",
+    "UnknownError": "未知错误",
+    "CurrentVersion": "当前版本",
+    "LatestVersion": "最新版本",
+    "UnnamedVersion": "未命名版本",
+    "PublishStats": "发布统计",
+    "FailedToLoadStats": "统计加载失败：{0}",
+    "Last30DaysTotalVersionsFiles": "近30天下载 {0}，累计下载 {1}，版本 {2}，文件 {3}",
+    "NoDownloadsInTheLast30Days": "近30天暂无下载记录。",
+    "RecentDownloads": "最近下载",
+    "DailyDownloadsFormat": "{0}：{1} 次",
+    "VersionDownloads": "版本下载",
+    "VersionLast30DaysTotalFiles": "版本 {0}：近30天 {1}，累计 {2}，文件 {3}"
   },
   "ScbbsPlusPostIconLoader": {
     "SkipOversizedPostIcon": "[ScbbsPlus] 跳过过大的帖子图标: {0}, size={1}",
@@ -5600,55 +5560,47 @@
   "ScbbsPlusPostTreePresenter": {
     "GetPostDetailsFailed": "[ScbbsPlus] 获取帖子详情失败: {0}",
     "LoadPostFailed": "[ScbbsPlus] 加载帖子失败: {0}",
-    "Text": {
-      "Files": "文件 {0}",
-      "UpdateAvailable": "有更新",
-      "NoFiles": "无文件",
-      "PagePosts": "{0}，共 {3} 个帖子",
-      "NoPosts": "{0} · 暂无帖子",
-      "UnknownUser": "未知用户",
-      "PostSummaryFormat": "{0}  由{1}发布于{2}  总下载 {3}  共{4}个版本",
-      "Installed": "已安装",
-      "CurrentlyInstalled": "当前安装",
-      "Downloads": "文件下载 {0}",
-      "VersionFormat": "版本 {0}",
-      "ExpandToLoadFiles": "展开加载文件",
-      "File": "[文件] {0}",
-      "NoData": "无数据",
-      "NoResources": "无资源",
-      "LoadFailed": "{0} · 加载失败",
-      "PageUploads": "{0}，共 {3} 个文件",
-      "NoUploads": "{0} · 暂无文件"
-    }
+    "Files": "文件 {0}",
+    "UpdateAvailable": "有更新",
+    "NoFiles": "无文件",
+    "PagePosts": "{0}，共 {3} 个帖子",
+    "NoPosts": "{0} · 暂无帖子",
+    "UnknownUser": "未知用户",
+    "PostSummaryFormat": "{0}  由{1}发布于{2}  总下载 {3}  共{4}个版本",
+    "Installed": "已安装",
+    "CurrentlyInstalled": "当前安装",
+    "Downloads": "文件下载 {0}",
+    "VersionFormat": "版本 {0}",
+    "ExpandToLoadFiles": "展开加载文件",
+    "File": "[文件] {0}",
+    "NoData": "无数据",
+    "NoResources": "无资源",
+    "LoadFailed": "{0} · 加载失败",
+    "PageUploads": "{0}，共 {3} 个文件",
+    "NoUploads": "{0} · 暂无文件"
   },
   "ScbbsPlusRestartConfirmDialog": {
     "UserChoseNormalRestart": "[ScbbsPlus] 用户在导入完成提示中选择普通重启。file={0}",
     "UserChoseRestartIntoIt": "[ScbbsPlus] 用户在导入完成提示中选择重启到此。file={0}",
-    "Text": {
-      "RestartRequired": "重启加载",
-      "UpdateComplete": "更新完成",
-      "ImportedRestartPrompt": "{0} 已导入，已标记为待重启加载，重启游戏后生效。是否立即重启？"
-    }
+    "RestartRequired": "重启加载",
+    "UpdateComplete": "更新完成",
+    "ImportedRestartPrompt": "{0} 已导入，已标记为待重启加载，重启游戏后生效。是否立即重启？"
   },
   "ScbbsPlusReviewSubmissionHandler": {
     "ScoreSubmissionTaskFaulted": "[ScbbsPlus] 评分提交任务异常: {0}",
-    "Text": {
-      "PleaseWait": "请稍候",
-      "PleaseLogInBeforeReviewing": "请先登录后再评价。",
-      "ReviewSubmissionFailed": "评价提交失败：{0}",
-      "ReviewSubmitted": "评价已提交",
-      "ReviewSubmittedToast": "本地资源评价已提交到社区。",
-      "Submitting": "正在提交",
-      "SubmittingPreviousReview": "正在提交上一条评价。",
-      "SubmittingReviewToTheCommunity": "评价正在提交到社区。"
-    }
+    "PleaseWait": "请稍候",
+    "PleaseLogInBeforeReviewing": "请先登录后再评价。",
+    "ReviewSubmissionFailed": "评价提交失败：{0}",
+    "ReviewSubmitted": "评价已提交",
+    "ReviewSubmittedToast": "本地资源评价已提交到社区。",
+    "Submitting": "正在提交",
+    "SubmittingPreviousReview": "正在提交上一条评价。",
+    "SubmittingReviewToTheCommunity": "评价正在提交到社区。"
   },
   "ScbbsPlusTreeViewWidget": {
     "RowWidgetsRebuiltCallbackFaulted": "[ScbbsPlus] 行组件重建回调异常: {0}"
   },
   "ScbbsPlusVersionDetailFormatter": {
-    "Text": {
-      "UnnamedVersion": "未命名版本"
-    }
+    "UnnamedVersion": "未命名版本"
   }
 }

@@ -187,8 +187,8 @@ namespace Game
             m_placeholderLabel.IsVisible = true;
             m_placeholderLabel.Text = string.Format(
                 CultureInfo.InvariantCulture,
-                LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LocalResourcesReadingModpacksFormat"),
-                LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Modpack"));
+                LanguageControl.Get("ModpacksManageContentScreen", "LocalResourcesReadingModpacksFormat"),
+                LanguageControl.Get("ModpacksManageContentScreen", "Modpack"));
             m_manifestLoadManager.StartDeferredLoad();
         }
 
@@ -251,7 +251,7 @@ namespace Game
             }
 
             bool isActive = IsModpackActive(resourceItem);
-            string displayName = resourceItem.DisplayName ?? resourceItem.Name ?? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Modpack");
+            string displayName = resourceItem.DisplayName ?? resourceItem.Name ?? LanguageControl.Get("ModpacksManageContentScreen", "Modpack");
             ModsManageContentItemWidget widget = new()
             {
                 // 行 XML 自带 DefaultModIcon 占位，Icon 不在此设置，由图标管理器异步补图。
@@ -361,7 +361,7 @@ namespace Game
             });
             if (gateDecision.Kind == ModpackDecisionKind.Busy)
             {
-                CommunityToastManager.Show(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "ModpackBusyWait"), autoHideSeconds: 2.5);
+                CommunityToastManager.Show(LanguageControl.Get("ModpacksManageContentScreen", "ModpackBusyWait"), autoHideSeconds: 2.5);
                 return;
             }
             if (gateDecision.Kind == ModpackDecisionKind.OtherModpackActive)
@@ -437,7 +437,7 @@ namespace Game
 
             if (decision.Kind == ModpackDecisionKind.MissingDownloadItems)
             {
-                string displayName = resourceItem.DisplayName ?? resourceItem.Name ?? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Modpack");
+                string displayName = resourceItem.DisplayName ?? resourceItem.Name ?? LanguageControl.Get("ModpacksManageContentScreen", "Modpack");
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
@@ -470,7 +470,7 @@ namespace Game
         {
             if (DownloadFlowManager.Instance.ModpackDownloadBusy)
             {
-                CommunityToastManager.Show(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "ModpackBusyWait"), autoHideSeconds: 2.5);
+                CommunityToastManager.Show(LanguageControl.Get("ModpacksManageContentScreen", "ModpackBusyWait"), autoHideSeconds: 2.5);
                 return;
             }
 
@@ -803,7 +803,7 @@ namespace Game
                         LanguageControl.Error,
                         string.Format(
                             CultureInfo.InvariantCulture,
-                            LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "DeleteFailed"),
+                            LanguageControl.Get("ModpacksManageContentScreen", "DeleteFailed"),
                             ex.Message),
                         LanguageControl.Ok,
                         null,

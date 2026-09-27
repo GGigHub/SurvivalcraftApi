@@ -313,7 +313,7 @@ public partial class ModsManageContentScreen : Screen {
         if (string.IsNullOrWhiteSpace(key)) return false;
         if (LocalModStateStore.LocalModUpdateDetailsCache.TryGetValue(key, out LocalModUpdateCheckResult info)
             && info?.HasUpdate == true && info.File != null) {
-            tag = LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "HasUpdate");
+            tag = LanguageControl.Get("ModsManageContentScreen", "HasUpdate");
             return true;
         }
         return false;

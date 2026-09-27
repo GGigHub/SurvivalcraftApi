@@ -46,7 +46,7 @@ namespace Game
             LoadContents(this, node);
 
             m_titleLabel = Children.Find<LabelWidget>("ScbbsPlusPostDetailsDialog.Title");
-            m_titleLabel.Text = string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusPostDetailsDialog", "Text", "PostDetails") : title;
+            m_titleLabel.Text = string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusPostDetailsDialog", "PostDetails") : title;
             m_contentPanel = Children.Find<StackPanelWidget>("ScbbsPlusPostDetailsDialog.ContentPanel");
             m_headerPanel = Children.Find<StackPanelWidget>("ScbbsPlusPostDetailsDialog.HeaderPanel");
             m_actionsRow = Children.Find<Widget>("ScbbsPlusPostDetailsDialog.ActionsRow");
@@ -120,7 +120,7 @@ namespace Game
             }
             if (!appended)
             {
-                m_contentBuilder.AppendParagraph(LanguageControl.Get("ScbbsPlusPostDetailsDialog", "Text", "NoDetails"));
+                m_contentBuilder.AppendParagraph(LanguageControl.Get("ScbbsPlusPostDetailsDialog", "NoDetails"));
             }
         }
 

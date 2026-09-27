@@ -45,7 +45,7 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusModVersionsDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusModVersionsDialog.PostTitleLabel").Text =
-                string.IsNullOrWhiteSpace(postTitle) ? LanguageControl.Get("ScbbsPlusModVersionsDialog", "Text", "CommunityPost") : postTitle;
+                string.IsNullOrWhiteSpace(postTitle) ? LanguageControl.Get("ScbbsPlusModVersionsDialog", "CommunityPost") : postTitle;
             m_listPanel = Children.Find<StackPanelWidget>("ScbbsPlusModVersionsDialog.ListPanel");
             BuildVersionList();
         }
@@ -190,7 +190,7 @@ namespace Game
 
         private static string FormatFileTitle(PostFileItem file)
         {
-            return string.IsNullOrWhiteSpace(file?.Filename) ? LanguageControl.Get("ScbbsPlusModVersionsDialog", "Text", "UnnamedFile") : file.Filename.Trim();
+            return string.IsNullOrWhiteSpace(file?.Filename) ? LanguageControl.Get("ScbbsPlusModVersionsDialog", "UnnamedFile") : file.Filename.Trim();
         }
 
         private static string FormatFileSize(string value)

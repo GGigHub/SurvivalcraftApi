@@ -42,7 +42,7 @@ namespace Game
             Children.Find<LabelWidget>("ScbbsPlusMissingDependenciesDialog.TitleLabel").Text =
                 string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "DependenciesFound") : title;
             Children.Find<LabelWidget>("ScbbsPlusMissingDependenciesDialog.ModNameLabel").Text =
-                string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "Text", "LocalMod") : modName;
+                string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "LocalMod") : modName;
             m_listPanel = Children.Find<StackPanelWidget>("ScbbsPlusMissingDependenciesDialog.ListPanel");
 
             m_fileGroups = BuildFileGroups(files, groupFilesByPackageName, m_preferredVersionsByPackage);
@@ -147,7 +147,7 @@ namespace Game
             {
                 File = file,
                 FileTitle = string.IsNullOrWhiteSpace(file?.Filename)
-                    ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "Text", "UnnamedFile")
+                    ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "UnnamedFile")
                     : file.Filename,
                 MetadataText = string.Format(
                     CultureInfo.InvariantCulture,

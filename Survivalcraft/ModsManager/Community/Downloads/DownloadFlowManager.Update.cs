@@ -60,7 +60,7 @@ namespace Game
             }
                 if (result?.Paused == true)
                 {
-                    string message = result.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadPaused"), result.FileName);
+                    string message = result.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadPaused"), result.FileName);
                     ReportStatus(message);
                     m_fileDownloadDialog?.SetStopped(message);
                     StartNextQueuedDownload();
@@ -68,7 +68,7 @@ namespace Game
                 }
                 if (result?.Canceled == true)
                 {
-                    string message = result.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadCanceled"), result.FileName);
+                    string message = result.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadCanceled"), result.FileName);
                     ReportStatus(message);
                     m_fileDownloadDialog?.SetStopped(message);
                     StartNextQueuedDownload();
@@ -81,10 +81,10 @@ namespace Game
                         LocalModStateStore.RememberLocalModPostId(result.ImportedName, result.FileName, result.PostId);
                     }
                     DownloadCompleted?.Invoke(result);
-                    ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "Imported"), result.FileName));
-                    m_fileDownloadDialog?.SetCompleted(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "Imported"), result.FileName));
+                    ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Imported"), result.FileName));
+                    m_fileDownloadDialog?.SetCompleted(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Imported"), result.FileName));
                     ShowToast(
-                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadComplete"), result.FileName),
+                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadComplete"), result.FileName),
                         autoHideSeconds: 2.4);
                     if (result.RequiresRestart)
                     {
@@ -97,8 +97,8 @@ namespace Game
                     string failureMessage = string.Format(
                         CultureInfo.InvariantCulture,
                         useDownloadFailureText
-                            ? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadFailed")
-                            : LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ImportFailed"),
+                            ? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadFailed")
+                            : LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ImportFailed"),
                         result.Error);
                     ReportStatus(failureMessage);
                     m_fileDownloadDialog?.SetFailed(result.Error);
@@ -136,7 +136,7 @@ namespace Game
             {
                 if (!string.IsNullOrWhiteSpace(manifestResult.Error))
                 {
-                    ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "FailedToLoadModpackManifest"), manifestResult.Error));
+                    ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "FailedToLoadModpackManifest"), manifestResult.Error));
                 }
                 else
                 {
@@ -171,11 +171,11 @@ namespace Game
                 ? string.Format(
                     CultureInfo.InvariantCulture,
                     progress.SuccessCount > 0
-                        ? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadPackPartialFailure")
-                        : LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DownloadPackFailure"),
+                        ? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadPackPartialFailure")
+                        : LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadPackFailure"),
                     progress.SuccessCount,
                     progress.FailedCount)
-                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackDownloadFinishedSummary"),
+                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ModpackDownloadFinishedSummary"),
                     progress.SuccessCount,
                     progress.FailedCount);
             if (!string.IsNullOrEmpty(progress.Error))
@@ -187,7 +187,7 @@ namespace Game
                 // 缺陷 1 汇总：撞本地同名的跳过项单独提示（不计成功/失败）。
                 summary += string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "SkippedLocalDuplicates"),
+                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "SkippedLocalDuplicates"),
                     progress.SkippedCount);
             }
             ReportStatus(summary);

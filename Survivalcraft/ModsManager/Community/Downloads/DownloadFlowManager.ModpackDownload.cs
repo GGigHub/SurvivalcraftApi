@@ -16,7 +16,7 @@ namespace Game
         {
             if (ModpackDownloadBusy)
             {
-                ShowToast(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackBusyWait"));
+                ShowToast(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ModpackBusyWait"));
                 return;
             }
 
@@ -25,7 +25,7 @@ namespace Game
             Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "StartModpackDownload"), url, fileName));
             if (string.IsNullOrWhiteSpace(url))
             {
-                ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackFileHasNoDownloadLink"), fileName));
+                ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ModpackFileHasNoDownloadLink"), fileName));
                 return;
             }
 
@@ -47,7 +47,7 @@ namespace Game
                 {
                     Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackManifestEmptyOrInvalid"), url));
                     return string.IsNullOrWhiteSpace(result.Error)
-                        ? new ModpackManifestLoadResult { RequestId = requestId, Error = LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "TheModpackManifestIsEmptyOrInvalid") }
+                        ? new ModpackManifestLoadResult { RequestId = requestId, Error = LanguageControl.Get("ScbbsPlusDownloadFlowManager", "TheModpackManifestIsEmptyOrInvalid") }
                         : result;
                 }
 
@@ -79,8 +79,8 @@ namespace Game
                 new MessageDialog(
                     title,
                     body,
-                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "Yes"),
-                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "No"),
+                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Yes"),
+                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "No"),
                     button =>
                     {
                         if (button == MessageDialogButton.Button1)
@@ -90,7 +90,7 @@ namespace Game
                             //（G3：与 RemoteImportManager 确认路径的同款复检对称）。
                             if (m_modpackItemDownloadTask != null)
                             {
-                                ShowToast(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackBusyWait"));
+                                ShowToast(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ModpackBusyWait"));
                                 return;
                             }
                             Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UserConfirmedModpackDownload"), manifest.Items.Length));
@@ -118,7 +118,7 @@ namespace Game
                             catch (Exception ex)
                             {
                                 Log.Warning(string.Format(CultureInfo.InvariantCulture,
-                                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackManifestSaveFailed"), ex.Message));
+                                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ModpackManifestSaveFailed"), ex.Message));
                             }
                         }
                     }));
@@ -162,10 +162,10 @@ namespace Game
                 lines.Add($"- [{state}][{typeName}] {ModpacksManageContentScreen.GetModpackItemDisplayName(item)}");
             }
 
-            lines.Insert(0, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "SubItemsHeader"));
+            lines.Insert(0, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "SubItemsHeader"));
             lines.Insert(0, string.Format(
                 CultureInfo.InvariantCulture,
-                LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", needDownloadCount > 0 ? "ConfirmDownloadAndEnable" : "ConfirmEnableAllReady"),
+                LanguageControl.Get("ScbbsPlusDownloadFlowManager", needDownloadCount > 0 ? "ConfirmDownloadAndEnable" : "ConfirmEnableAllReady"),
                 needDownloadCount));
             return string.Join("\n", lines);
         }
@@ -199,7 +199,7 @@ namespace Game
             // m_modpackDownloadCompletedAction，旧调用方的收尾回调（列表刷新/备份还原）被静默丢弃。
             if (ModpackDownloadBusy)
             {
-                ShowToast(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "ModpackBusyWait"));
+                ShowToast(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ModpackBusyWait"));
                 return false;
             }
             m_modpackDownloadCompletedAction = completedAction;
@@ -239,9 +239,9 @@ namespace Game
                     AuthSessionManager.Instance.ApiBaseUrl,
                     AuthSessionManager.Instance.CurrentToken,
                     customFileBackupPreparer,
-                    item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "HasNoDownloadLinkSkipped"), item.Filename),
-                    item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "UnknownItemCategory"), item.Category),
-                    hostUnavailableError: item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "DataFileHostUnavailable"), item.Filename),
+                    item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "HasNoDownloadLinkSkipped"), item.Filename),
+                    item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UnknownItemCategory"), item.Category),
+                    hostUnavailableError: item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DataFileHostUnavailable"), item.Filename),
                     hasExactLocalContent: (type, fileName) =>
                         // 与导入覆盖判定同口径（缺陷 1 补审 F1）：家具/材质/皮肤走
                         // FindExistingExternalContentName 的归一匹配，Mod 补 ModsPath 文件名直查。
@@ -285,7 +285,7 @@ namespace Game
                 string itemName = result.Item?.Filename
                     ?? result.Item?.FileId
                     ?? result.Item?.Url
-                    ?? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Text", "UnknownResource");
+                    ?? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UnknownResource");
                 builder.Append("\n\n").Append(itemName);
                 if (!string.IsNullOrEmpty(result.Error))
                 {

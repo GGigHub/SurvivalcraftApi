@@ -114,7 +114,11 @@
     "FailedToSaveSettings": "Failed to Save Settings",
     "SaveConfigFailed": "Unable to save settings changed while using the modpack: {0}",
     "FailedToRestoreFiles": "Failed to Restore Files",
-    "RestoreFilesFailed": "Unable to restore files from before the modpack was enabled: {0}"
+    "RestoreFilesFailed": "Unable to restore files from before the modpack was enabled: {0}",
+    "Modpack": "Modpack",
+    "ModpackBusyWait": "Another modpack is being processed. Please wait.",
+    "LocalResourcesReadingModpacksFormat": "Local {0}s · Reading modpacks...",
+    "DeleteFailed": "Delete failed: {0}"
   },
   "ModsManageContentScreen": {
     "1": "Manage mod content",
@@ -200,6 +204,16 @@
     "81": "*Requires Restart",
     "PendingRestartTag": "Pending Restart",
     "FileDeletedTag": "File Deleted",
+    "LatestVersion": "Latest Version",
+    "CurrentVersion": "Current Version",
+    "VersionDetails": "Version Details",
+    "UpdateFound": "Update Found",
+    "LocalResource": "Local Resource",
+    "LocalMod": "Local Mod",
+    "CommunityPost": "Community Post",
+    "CheckUpdate": "Check Update",
+    "HasUpdate": "Update",
+    "PleaseWait": "Please Wait",
       "Community": {
         "BusyMessage": {
           "LoadingPreviousVersionList": "Loading the previous version list.",
@@ -4886,40 +4900,8 @@
       "Update": "Update"
     },
     "Text": {
-      "Close": "Close",
-      "FurniturePack": "Furniture Pack",
-      "Skin": "Skin",
-      "Texture": "Texture",
-      "Versions": "Versions",
-      "LocalResourcesReadingModpacksFormat": "Local {0}s · Reading modpacks...",
-      "OtherFiles": "Other Files",
-      "Modpack": "Modpack",
-      "UpdateFound": "Update Found",
-      "ModpackBusyWait": "Another modpack is being processed. Please wait.",
-      "Canceled": "Canceled",
-      "PleaseWait": "Please Wait",
-      "LocalMod": "Local Mod",
-      "NoLoadedAssemblyReadable": "The current mod has no readable loaded assemblies.",
-      "LocalResource": "Local Resource",
-      "CommunityPost": "Community Post",
-      "RestartRequired": "Restart Required",
-      "CurrentVersion": "Current Version",
-      "LatestVersion": "Latest Version",
-      "PreparingUpload": "Preparing upload...",
       "Downloading": "Downloading...",
-      "LoadingProgress": "Loading...",
-      "VersionDetails": "Version Details",
-      "CheckUpdate": "Check Update",
-      "LocalWorld": "Local World",
-      "LoadingFileInfo": "Loading File Info...",
-      "DeleteFailed": "Delete failed: {0}",
-      "Disabled": "Disabled",
-      "IncompatibleWithCurrentGame": "Incompatible with current game",
-      "RestartRequiredLabel": "Restart Required",
-      "NotLoaded": "Not loaded",
-      "Info": "{0} Info",
-      "LocalResourcesFormat": "Local {0}s ({1})",
-      "HasUpdate": "Update"
+      "LoadingFileInfo": "Loading File Info..."
     }
   },
   "ScbbsPlusLocalMods": {
@@ -4931,9 +4913,7 @@
     "ThereIsNoPreviousContentToRestore": "There is no previous content to restore.",
     "PreviousContentRestored": "Previous content restored.",
     "PleaseSelectARating": "Please select a rating.",
-    "Text": {
-      "LocalResource": "Local Resource"
-    }
+    "LocalResource": "Local Resource"
   },
   "ScbbsPlusMissingDependenciesDialog": {
     "DependenciesFound": "Dependencies Found",
@@ -4947,10 +4927,8 @@
     "CollapsedPackageGroupLatestOnly": "Hidden {0} mods with the same package name; only the latest is shown",
     "CollapsedFileGroupLatestOnly": "Hidden {0} duplicate files; only the latest is shown",
     "NoDownloadableFile": "No downloadable files were found in community resources.",
-    "Text": {
-      "LocalMod": "Local Mod",
-      "UnnamedFile": "Unnamed File"
-    }
+    "LocalMod": "Local Mod",
+    "UnnamedFile": "Unnamed File"
   },
   "ScbbsPlusLocalModNetworkManager": {
     "AutoUpdateCheckFailed": "[ScbbsPlus] Automatic update check failed for local mod: {0}, error={1}",
@@ -5363,74 +5341,72 @@
     "BackgroundManifestLoadTaskFaulted": "[ScbbsPlus] Background modpack manifest loading task faulted: {0}",
     "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] Background modpack item download task faulted: {0}",
     "ImportCompletedCallbackFaulted": "[ScbbsPlus] Import completion callback faulted (the import itself succeeded): {0}",
-    "Text": {
-      "Failed": "Failed",
-      "DefaultMainlandChina": "Default / Mainland China",
-      "Source1Global": "Source 1 / Global",
-      "Source2MainlandChina": "Source 2 / Mainland China",
-      "Source3Global": "Source 3 / Global",
-      "Source4Global": "Source 4 / Global",
-      "SkippedLocalDuplicates": ", {0} item(s) skipped because identical local content already exists.",
-      "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
-      "HasNoDownloadLinkSkipped": "{0} has no download link, skipped.",
-      "UnknownItemCategory": "Unknown item category: {0}",
-      "DataFileHostUnavailable": "{0} cannot be imported: this page cannot handle modpack data files. Use the modpack download in Local Resources instead.",
-      "Imported": "{0} imported.",
-      "ImportResource": "Import Resource",
-      "Importing": "Importing...",
-      "DownloadingFormat": "Downloading: {0}",
-      "DownloadPackPartialFailure": "Modpack download partially failed: {0} succeeded, {1} failed.",
-      "DownloadPackFailure": "Modpack download failed: {0} succeeded, {1} failed.",
-      "DownloadCanceled": "Download canceled: {0}",
-      "ModpackBusyWait": "Another modpack is being processed. Please wait.",
-      "ModpackManifestSaveFailed": "Failed to save the modpack manifest: {0}",
-      "DownloadPaused": "Download paused: {0}",
-      "DownloadFailed": "Download failed: {0}",
-      "ImportFailed": "Import failed: {0}",
-      "UnknownError": "Unknown error",
-      "Canceled": "Canceled",
-      "Yes": "Yes",
-      "No": "No",
-      "ConfirmDownloadAndEnable": "There are {0} sub-items. Download and enable now?",
-      "ConfirmEnableAllReady": "All sub-items are ready. Enable now?",
-      "SubItemsHeader": "Sub-items:",
-      "DownloadComplete": "{0} download complete",
-      "FailedToLoadModpackManifest": "Failed to load modpack manifest: {0}",
-      "UnknownResource": "Unknown Resource",
-      "ModpackDownloadFinishedSummary": "Modpack download complete: {0} succeeded, {1} failed.",
-      "StartDownloading": "Start downloading {0}",
-      "DownloadPausedDownloaded": "Download paused: {0} ({1} downloaded)",
-      "AddedToDownloadQueue": "Added to download queue: {0}",
-      "DuplicateDownloadQueued": "Skipped duplicate download (same file already in queue): {0}",
-      "WaitingForOverwriteConfirmation": "Waiting for overwrite confirmation",
-      "Completed": "Completed",
-      "Pausing": "Pausing",
-      "Canceling": "Canceling",
-      "NoDownloadTaskCanBePausedOrResumed": "No download task can be paused or resumed.",
-      "NoCancelableDownloadTasks": "No cancelable download tasks.",
-      "NoRetryableDownloadTasks": "No retryable download tasks.",
-      "TaskCannotBeCanceled": "Task {0} cannot be canceled.",
-      "TaskCannotBePausedOrResumed": "Task {0} cannot be paused or resumed.",
-      "TaskCannotBeRetried": "Task {0} cannot be retried.",
-      "TaskCannotBeCleared": "Task {0} cannot be cleared.",
-      "RequeuedDownload": "Requeued download: {0}",
-      "ClearedDownloadTask": "Cleared download task: {0}",
-      "ClearedDownloadTasks": "Cleared {0} download tasks.",
-      "SwitchedDownloadSource": "Switched download source: {0}",
-      "Connecting": "Connecting: {0}",
-      "ChooseDownloadSource": "Choose Download Source",
-      "LocalAlreadyExistsChooseAction": "Local file \"{0}\" already exists. Choose an action:",
-      "ModpackFileHasNoDownloadLink": "Modpack file {0} has no download link.",
-      "Downloading": "Downloading: {0} ({1})",
-      "DownloadingLabel": "Downloading",
-      "Paused": "Paused",
-      "AlreadyExistsReplace": "{0} already exists, replace?",
-      "CancelingDownload": "Canceling download: {0}",
-      "PausingDownload": "Pausing download: {0}",
-      "Queued": "Queued",
-      "ResumingDownload": "Resuming download: {0}",
-      "DownloadSourceSwitchUnavailable": "The current link cannot switch download source."
-    },
+    "Failed": "Failed",
+    "DefaultMainlandChina": "Default / Mainland China",
+    "Source1Global": "Source 1 / Global",
+    "Source2MainlandChina": "Source 2 / Mainland China",
+    "Source3Global": "Source 3 / Global",
+    "Source4Global": "Source 4 / Global",
+    "SkippedLocalDuplicates": ", {0} item(s) skipped because identical local content already exists.",
+    "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
+    "HasNoDownloadLinkSkipped": "{0} has no download link, skipped.",
+    "UnknownItemCategory": "Unknown item category: {0}",
+    "DataFileHostUnavailable": "{0} cannot be imported: this page cannot handle modpack data files. Use the modpack download in Local Resources instead.",
+    "Imported": "{0} imported.",
+    "ImportResource": "Import Resource",
+    "Importing": "Importing...",
+    "DownloadingFormat": "Downloading: {0}",
+    "DownloadPackPartialFailure": "Modpack download partially failed: {0} succeeded, {1} failed.",
+    "DownloadPackFailure": "Modpack download failed: {0} succeeded, {1} failed.",
+    "DownloadCanceled": "Download canceled: {0}",
+    "ModpackBusyWait": "Another modpack is being processed. Please wait.",
+    "ModpackManifestSaveFailed": "Failed to save the modpack manifest: {0}",
+    "DownloadPaused": "Download paused: {0}",
+    "DownloadFailed": "Download failed: {0}",
+    "ImportFailed": "Import failed: {0}",
+    "UnknownError": "Unknown error",
+    "Canceled": "Canceled",
+    "Yes": "Yes",
+    "No": "No",
+    "ConfirmDownloadAndEnable": "There are {0} sub-items. Download and enable now?",
+    "ConfirmEnableAllReady": "All sub-items are ready. Enable now?",
+    "SubItemsHeader": "Sub-items:",
+    "DownloadComplete": "{0} download complete",
+    "FailedToLoadModpackManifest": "Failed to load modpack manifest: {0}",
+    "UnknownResource": "Unknown Resource",
+    "ModpackDownloadFinishedSummary": "Modpack download complete: {0} succeeded, {1} failed.",
+    "StartDownloading": "Start downloading {0}",
+    "DownloadPausedDownloaded": "Download paused: {0} ({1} downloaded)",
+    "AddedToDownloadQueue": "Added to download queue: {0}",
+    "DuplicateDownloadQueued": "Skipped duplicate download (same file already in queue): {0}",
+    "WaitingForOverwriteConfirmation": "Waiting for overwrite confirmation",
+    "Completed": "Completed",
+    "Pausing": "Pausing",
+    "Canceling": "Canceling",
+    "NoDownloadTaskCanBePausedOrResumed": "No download task can be paused or resumed.",
+    "NoCancelableDownloadTasks": "No cancelable download tasks.",
+    "NoRetryableDownloadTasks": "No retryable download tasks.",
+    "TaskCannotBeCanceled": "Task {0} cannot be canceled.",
+    "TaskCannotBePausedOrResumed": "Task {0} cannot be paused or resumed.",
+    "TaskCannotBeRetried": "Task {0} cannot be retried.",
+    "TaskCannotBeCleared": "Task {0} cannot be cleared.",
+    "RequeuedDownload": "Requeued download: {0}",
+    "ClearedDownloadTask": "Cleared download task: {0}",
+    "ClearedDownloadTasks": "Cleared {0} download tasks.",
+    "SwitchedDownloadSource": "Switched download source: {0}",
+    "Connecting": "Connecting: {0}",
+    "ChooseDownloadSource": "Choose Download Source",
+    "LocalAlreadyExistsChooseAction": "Local file \"{0}\" already exists. Choose an action:",
+    "ModpackFileHasNoDownloadLink": "Modpack file {0} has no download link.",
+    "Downloading": "Downloading: {0} ({1})",
+    "DownloadingLabel": "Downloading",
+    "Paused": "Paused",
+    "AlreadyExistsReplace": "{0} already exists, replace?",
+    "CancelingDownload": "Canceling download: {0}",
+    "PausingDownload": "Pausing download: {0}",
+    "Queued": "Queued",
+    "ResumingDownload": "Resuming download: {0}",
+    "DownloadSourceSwitchUnavailable": "The current link cannot switch download source.",
     "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view.",
     "BackgroundDownloading": "Background downloading: {0}"
   },
@@ -5488,11 +5464,9 @@
     "GameLoaded": "[ScbbsPlus] Game Loaded."
   },
   "ScbbsPlusModVersionWidget": {
-    "Text": {
-      "Files": "Files {0}",
-      "Details": "Details",
-      "Collapse": "Collapse"
-    }
+    "Files": "Files {0}",
+    "Details": "Details",
+    "Collapse": "Collapse"
   },
   "ScbbsPlusModVersionsDialog": {
     "Current": "Current",
@@ -5506,23 +5480,15 @@
     "GameVersionsPublished": "{0}Game versions: {1}   Published: {2}",
     "Version": "Version",
     "Published": "Published",
-    "Text": {
-      "UnnamedFile": "Unnamed File",
-      "CommunityPost": "Community Post"
-    }
+    "UnnamedFile": "Unnamed File",
+    "CommunityPost": "Community Post"
   },
   "ScbbsPlusMoreScreen": {
     "StatusReady": "Settings are ready.",
     "SettingsApplied": "Settings applied.",
-    "Text": {
-      "LogOut": "Log Out",
-      "UpdateFound": "Update Found",
-      "LogIn": "Log In",
-      "CheckUpdate": "Check Update",
-      "Apply": "Apply",
-      "SelectDownloadSource": "Select Download Source",
-      "NotLoggedIn": "Not Logged In"
-    },
+    "LogOut": "Log Out",
+    "LogIn": "Log In",
+    "NotLoggedIn": "Not Logged In",
     "UnknownAccount": "Unknown Account"
   },
   "CommunityDownloadSourceSelectionMode": {
@@ -5548,9 +5514,7 @@
     "DisposeDuplicatePostDetailsTextureFailed": "[ScbbsPlus] Failed to dispose a duplicate post details texture: {0}",
     "DecodePostDetailsImageFailed": "[ScbbsPlus] Failed to decode a post details image: {0}, error={1}",
     "RequestPostDetailsImageFailed": "[ScbbsPlus] Failed to request a post details image: {0}, error={1}",
-    "Text": {
-      "Image": "Image"
-    }
+    "Image": "Image"
   },
   "ScbbsPlusPostDetailsDialog": {
     "TranslatingTo": "Translating to {0}...",
@@ -5559,27 +5523,23 @@
     "FailedToLoad": "{0} failed to load",
     "Loading": "{0} loading...",
     "AutoTranslateFailed": "[ScbbsPlus] Automatic translation failed: {0}",
-    "Text": {
-      "NoDetails": "No details.",
-      "PostDetails": "Post Details"
-    }
+    "NoDetails": "No details.",
+    "PostDetails": "Post Details"
   },
   "ScbbsPlusPostDetailsHeaderBuilder": {
-    "Text": {
-      "DownloadFile": "Download File",
-      "UnknownError": "Unknown error",
-      "CurrentVersion": "Current Version",
-      "LatestVersion": "Latest Version",
-      "UnnamedVersion": "Unnamed Version",
-      "PublishStats": "Publish Stats",
-      "FailedToLoadStats": "Failed to load stats: {0}",
-      "Last30DaysTotalVersionsFiles": "Last 30 days {0}, total {1}, versions {2}, files {3}",
-      "NoDownloadsInTheLast30Days": "No downloads in the last 30 days.",
-      "RecentDownloads": "Recent Downloads",
-      "DailyDownloadsFormat": "{0}: {1}",
-      "VersionDownloads": "Version Downloads",
-      "VersionLast30DaysTotalFiles": "Version {0}: last 30 days {1}, total {2}, files {3}"
-    }
+    "DownloadFile": "Download File",
+    "UnknownError": "Unknown error",
+    "CurrentVersion": "Current Version",
+    "LatestVersion": "Latest Version",
+    "UnnamedVersion": "Unnamed Version",
+    "PublishStats": "Publish Stats",
+    "FailedToLoadStats": "Failed to load stats: {0}",
+    "Last30DaysTotalVersionsFiles": "Last 30 days {0}, total {1}, versions {2}, files {3}",
+    "NoDownloadsInTheLast30Days": "No downloads in the last 30 days.",
+    "RecentDownloads": "Recent Downloads",
+    "DailyDownloadsFormat": "{0}: {1}",
+    "VersionDownloads": "Version Downloads",
+    "VersionLast30DaysTotalFiles": "Version {0}: last 30 days {1}, total {2}, files {3}"
   },
   "ScbbsPlusPostIconLoader": {
     "SkipOversizedPostIcon": "[ScbbsPlus] Skipping an oversized post icon: {0}, size={1}",
@@ -5590,55 +5550,47 @@
   "ScbbsPlusPostTreePresenter": {
     "GetPostDetailsFailed": "[ScbbsPlus] Failed to get post details: {0}",
     "LoadPostFailed": "[ScbbsPlus] Failed to load the post: {0}",
-    "Text": {
-      "Files": "Files {0}",
-      "UpdateAvailable": "Update available",
-      "NoFiles": "No Files",
-      "PagePosts": "{0}, {3} Posts",
-      "NoPosts": "{0} · No Posts",
-      "UnknownUser": "Unknown User",
-      "PostSummaryFormat": "{0}  by {1} on {2}  downloads {3}  {4} versions",
-      "Installed": "Installed",
-      "CurrentlyInstalled": "Currently Installed",
-      "Downloads": "Downloads {0}",
-      "VersionFormat": "Version {0}",
-      "ExpandToLoadFiles": "Expand to load files",
-      "File": "[File] {0}",
-      "NoData": "No Data",
-      "NoResources": "No Resources",
-      "LoadFailed": "{0} · Load Failed",
-      "PageUploads": "{0}, {3} Files",
-      "NoUploads": "{0} · No Files"
-    }
+    "Files": "Files {0}",
+    "UpdateAvailable": "Update available",
+    "NoFiles": "No Files",
+    "PagePosts": "{0}, {3} Posts",
+    "NoPosts": "{0} · No Posts",
+    "UnknownUser": "Unknown User",
+    "PostSummaryFormat": "{0}  by {1} on {2}  downloads {3}  {4} versions",
+    "Installed": "Installed",
+    "CurrentlyInstalled": "Currently Installed",
+    "Downloads": "Downloads {0}",
+    "VersionFormat": "Version {0}",
+    "ExpandToLoadFiles": "Expand to load files",
+    "File": "[File] {0}",
+    "NoData": "No Data",
+    "NoResources": "No Resources",
+    "LoadFailed": "{0} · Load Failed",
+    "PageUploads": "{0}, {3} Files",
+    "NoUploads": "{0} · No Files"
   },
   "ScbbsPlusRestartConfirmDialog": {
     "UserChoseNormalRestart": "[ScbbsPlus] User chose a normal restart in the import completion prompt. file={0}",
     "UserChoseRestartIntoIt": "[ScbbsPlus] User chose restart-into-it in the import completion prompt. file={0}",
-    "Text": {
-      "RestartRequired": "Restart Required",
-      "UpdateComplete": "Update Complete",
-      "ImportedRestartPrompt": "{0} has been imported and marked as pending restart. Restart the game now to apply it?"
-    }
+    "RestartRequired": "Restart Required",
+    "UpdateComplete": "Update Complete",
+    "ImportedRestartPrompt": "{0} has been imported and marked as pending restart. Restart the game now to apply it?"
   },
   "ScbbsPlusReviewSubmissionHandler": {
     "ScoreSubmissionTaskFaulted": "[ScbbsPlus] Score submission task faulted: {0}",
-    "Text": {
-      "PleaseWait": "Please Wait",
-      "PleaseLogInBeforeReviewing": "Please log in before reviewing.",
-      "ReviewSubmissionFailed": "Review submission failed: {0}",
-      "ReviewSubmitted": "Review Submitted",
-      "ReviewSubmittedToast": "Local resource review submitted to the community.",
-      "Submitting": "Submitting",
-      "SubmittingPreviousReview": "Submitting the previous review.",
-      "SubmittingReviewToTheCommunity": "Submitting review to the community."
-    }
+    "PleaseWait": "Please Wait",
+    "PleaseLogInBeforeReviewing": "Please log in before reviewing.",
+    "ReviewSubmissionFailed": "Review submission failed: {0}",
+    "ReviewSubmitted": "Review Submitted",
+    "ReviewSubmittedToast": "Local resource review submitted to the community.",
+    "Submitting": "Submitting",
+    "SubmittingPreviousReview": "Submitting the previous review.",
+    "SubmittingReviewToTheCommunity": "Submitting review to the community."
   },
   "ScbbsPlusTreeViewWidget": {
     "RowWidgetsRebuiltCallbackFaulted": "[ScbbsPlus] Row widget rebuild callback faulted: {0}"
   },
   "ScbbsPlusVersionDetailFormatter": {
-    "Text": {
-      "UnnamedVersion": "Unnamed Version"
-    }
+    "UnnamedVersion": "Unnamed Version"
   }
 }

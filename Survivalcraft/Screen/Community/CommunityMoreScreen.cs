@@ -140,8 +140,8 @@ namespace Game
         {
             m_accountInfo.Text = GetAccountInfoText();
             m_authButton.Text = AuthSessionManager.Instance.IsLoggedIn
-                ? LanguageControl.Get("ScbbsPlusMoreScreen", "Text", "LogOut")
-                : LanguageControl.Get("ScbbsPlusMoreScreen", "Text", "LogIn");
+                ? LanguageControl.Get("ScbbsPlusMoreScreen", "LogOut")
+                : LanguageControl.Get("ScbbsPlusMoreScreen", "LogIn");
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace Game
             AuthSessionManager auth = AuthSessionManager.Instance;
             if (!auth.IsLoggedIn || auth.CurrentUser == null)
             {
-                return LanguageControl.Get("ScbbsPlusMoreScreen", "Text", "NotLoggedIn");
+                return LanguageControl.Get("ScbbsPlusMoreScreen", "NotLoggedIn");
             }
             string account = string.IsNullOrWhiteSpace(auth.CurrentUser.Account)
                 ? LanguageControl.Get("ScbbsPlusMoreScreen", "UnknownAccount")
