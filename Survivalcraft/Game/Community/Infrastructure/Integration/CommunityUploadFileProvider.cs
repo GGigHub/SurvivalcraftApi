@@ -39,7 +39,7 @@ namespace Game
         {
             if (resourceItem == null)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "WorldUpload", "NoLocalResourceSelected"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusGameUploadFileProvider", "NoLocalResourceSelected"));
             }
 
             CommunityFileType fileType = GetUploadFileType(resourceItem);
@@ -86,7 +86,7 @@ namespace Game
                         ".scmod");
 
                 default:
-                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "WorldUpload", "UnsupportedUploadResourceTypeFormat"), resourceItem.Type));
+                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusGameUploadFileProvider", "UnsupportedUploadResourceTypeFormat"), resourceItem.Type));
             }
         }
 
@@ -168,11 +168,11 @@ namespace Game
         {
             if (string.IsNullOrWhiteSpace(filePath))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "WorldUpload", "CannotFindLocalResourcePath"));
+                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusGameUploadFileProvider", "CannotFindLocalResourcePath"));
             }
             if (!Storage.FileExists(filePath))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "WorldUpload", "LocalFileDoesNotExistFormat"), filePath));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusGameUploadFileProvider", "LocalFileDoesNotExistFormat"), filePath));
             }
 
             return new CommunityPreparedUploadFile

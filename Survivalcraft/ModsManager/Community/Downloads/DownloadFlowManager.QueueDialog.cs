@@ -865,7 +865,7 @@ namespace Game
                 {
                     FileName = item.FileName,
                     DownloadFailed = true,
-                    Error = LanguageControl.Get("ScbbsPlusCommunityScreen", "Upload", "WorldUpload", "NetworkError")
+                    Error = LanguageControl.Get("ScbbsPlusCommon", "Text", "NetworkError")
                 };
             }
             catch (Exception ex)
