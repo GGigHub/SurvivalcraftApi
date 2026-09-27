@@ -186,10 +186,10 @@ namespace Game
             {
                 case CommunitySection.Trending:
                 case CommunitySection.NewActivity:
-                    m_postsPresenter.StatusLabel.Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "FeaturedContentLoading");
+                    m_postsPresenter.StatusLabel.Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "FeaturedContentLoading");
                     break;
                 default:
-                    m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "CommunityLoadingFormat"), EnumDisplayName.GetEnumDisplayName(m_selectedFileType));
+                    m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "CommunityLoadingFormat"), EnumDisplayName.GetEnumDisplayName(m_selectedFileType));
                     break;
             }
 
@@ -232,7 +232,7 @@ namespace Game
             LabelWidget topBarLabel = Children.Find<LabelWidget>("TopBar.Label");
             // 原生内置后无本插件 ModEntity，ScbbsPlusVersionProvider.GetCurrentVersion() 恒为
             // null（VersionProvider 随自更新链不移植）：标题恒取无版本形态，版本行收尾批再定。
-            topBarLabel.Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "SCChineseCommunity");
+            topBarLabel.Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "SCChineseCommunity");
         }
 
         public override void Leave()
@@ -288,8 +288,8 @@ namespace Game
                 m_postsPresenter.ApplyPostsResult(
                     postsLoadResult,
                     postsLoadResult.Source == ResourceSource.MyPublished
-                        ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(postsLoadResult.FileType))
-                        : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Text", "CommunityFormat"), EnumDisplayName.GetEnumDisplayName(postsLoadResult.FileType)));
+                        ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(postsLoadResult.FileType))
+                        : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "CommunityFormat"), EnumDisplayName.GetEnumDisplayName(postsLoadResult.FileType)));
             }
 
             if (m_featuredSlot.TryTake(out FeaturedLoadResult loadResult)
