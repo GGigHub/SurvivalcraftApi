@@ -349,7 +349,7 @@ public partial class ModsManageContentScreen
                 LanguageControl.Get("ModsManageContentScreen", "UpdateFound"),
                 contentHtml,
                 AuthSessionManager.Instance.ApiBaseUrl,
-                LanguageControl.Get("ScbbsPlusCommon", "Text", "Download"),
+                LanguageControl.Get("ExternalContentScreen", "2"),
                 () => StartLocalModUpdateDownload(downloadItem, result.File, result.LatestVersionItem),
                 enableAutoTranslate: true,
                 contentPlainText: releaseNotes,
@@ -471,7 +471,7 @@ public partial class ModsManageContentScreen
                 title,
                 CommunityVersionDetailFormatter.GetVersionDetailHtml(version),
                 AuthSessionManager.Instance.ApiBaseUrl,
-                file != null ? LanguageControl.Get("ScbbsPlusCommon", "Text", "Download") : null,
+                file != null ? LanguageControl.Get("ExternalContentScreen", "2") : null,
                 file != null ? () => StartLocalModUpdateDownload(resourceItem, file, version) : null,
                 enableAutoTranslate: true));
     }

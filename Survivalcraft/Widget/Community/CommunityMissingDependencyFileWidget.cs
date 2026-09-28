@@ -15,7 +15,7 @@ namespace Game
             m_fileTitleWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyFileWidget.FileTitle");
             m_metadataWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyFileWidget.Metadata");
             m_downloadButton = Children.Find<ButtonWidget>("ScbbsPlusMissingDependencyFileWidget.DownloadButton");
-            m_downloadButton.Text = LanguageControl.Get("ScbbsPlusCommon", "Text", "Download");
+            m_downloadButton.Text = LanguageControl.Get("ExternalContentScreen", "2");
         }
 
         public PostFileItem File { get; private set; }

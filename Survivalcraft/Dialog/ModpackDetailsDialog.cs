@@ -195,10 +195,10 @@ namespace Game
             m_toggleEnabledButton.Text = active ? LanguageControl.Disable : LanguageControl.Enable;
             m_downloadMissingButton.IsEnabled = m_screen.GetMissingDownloadItemCount(m_record) > 0 && !busy && !loading;
             m_downloadMissingButton.Text = loading
-                ? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LoadingFileInfo")
+                ? LanguageControl.Get("ModpacksManageContentScreen", "LoadingFileInfo")
                 : busy
-                    ? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Downloading")
-                    : LanguageControl.Get("ScbbsPlusCommon", "Text", "Download");
+                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Downloading")
+                    : LanguageControl.Get("ExternalContentScreen", "2");
         }
 
         /// <summary>子项持有状态行：x/x 随 fileId 补全刷新，颜色按齐全度分级，激活中追加激活标记。</summary>

@@ -55,7 +55,6 @@
   "CommunityMyPublishedScreen": {
     "LoadMyPublishedFailed": "[ScbbsPlus] Failed to load my published posts: {0}",
     "LoadingFormat": "{0} · Loading...",
-    "Downloading": "Downloading...",
     "MyPublishedFormat": "Published {0}s",
     "MyUnpublishedFormat": "Unpublished {0}s",
     "ShareLinkCopiedToClipboard": "Share link copied to clipboard."
@@ -4895,15 +4894,6 @@
     "RestoredJsonTempFile": "[ScbbsPlus] Recovered from a residual JSON temporary file: {0} → {1}",
     "RestoreJsonTempFileFailed": "[ScbbsPlus] Failed to recover from a residual JSON temporary file: {0}, {1}"
   },
-  "ScbbsPlusLocalScreen": {
-    "Buttons": {
-      "Update": "Update"
-    },
-    "Text": {
-      "Downloading": "Downloading...",
-      "LoadingFileInfo": "Loading File Info..."
-    }
-  },
   "ScbbsPlusLocalMods": {
     "AutoUpdateScanFailed": "[ScbbsPlus] Automatic update scan of local mods failed: {0}",
     "PublishedCheckTaskFaulted": "[ScbbsPlus] Published check task faulted: {0}"
@@ -5242,10 +5232,6 @@
     "LoginFailedDefaultMessage": "Login failed"
   },
   "ScbbsPlusCommon": {
-    "Text": {
-      "Download": "Download",
-    "NetworkError": "Network connection failed. Please check your network and try again."
-    },
     "Enums": {
       "ScbbsPlusCommunitySection": {
         "All": "All",
@@ -5408,7 +5394,8 @@
     "ResumingDownload": "Resuming download: {0}",
     "DownloadSourceSwitchUnavailable": "The current link cannot switch download source.",
     "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view.",
-    "BackgroundDownloading": "Background downloading: {0}"
+    "BackgroundDownloading": "Background downloading: {0}",
+    "NetworkError": "Network connection failed. Please check your network and try again."
   },
   "ScbbsPlusModUpdateImporter": {
     "CannotConfirmCurrentPackageName": "Unable to confirm the current mod package name; update canceled.",
@@ -5452,16 +5439,7 @@
     "FramePumpPollFaulted": "[ScbbsPlus] Global frame pump polling faulted: {0}"
   },
   "ScbbsPlusModLoader": {
-    "ScbbsPlusDescription": "A better UI for browsing the Chinese community",
-    "LocalResources": "Local Resources",
-    "LocalResourcesDescription": "A better manager for mods, textures, skins and other resources",
-    "MyPublished": "My Published",
-    "MyPublishedDescription": "Browse resources you have published to the Chinese community",
-    "ImportFromWebLink": "Import from Web Link",
-    "ImportFromWebLinkDescription": "A better tool for importing resources from web links",
-    "Link": "Link",
-    "StartupRollbackResidualBackupFailed": "[ScbbsPlus] Failed to roll back residual update backups at startup: {0}",
-    "GameLoaded": "[ScbbsPlus] Game Loaded."
+    "StartupRollbackResidualBackupFailed": "[ScbbsPlus] Failed to roll back residual update backups at startup: {0}"
   },
   "ScbbsPlusModVersionWidget": {
     "Files": "Files {0}",

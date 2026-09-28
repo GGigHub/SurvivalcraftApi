@@ -32,7 +32,7 @@ namespace Game
             m_filesButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionWidget.FilesButton");
             m_filesPanel = Children.Find<StackPanelWidget>("ScbbsPlusModVersionWidget.FilesPanel");
             m_detailsButton.Text = LanguageControl.Get("ScbbsPlusModVersionWidget", "Details");
-            m_downloadButton.Text = LanguageControl.Get("ScbbsPlusCommon", "Text", "Download");
+            m_downloadButton.Text = LanguageControl.Get("ExternalContentScreen", "2");
         }
 
         public string VersionKey => m_displayData?.VersionKey;

@@ -383,7 +383,7 @@ namespace Game
             });
             if (decision.Kind == ModpackDecisionKind.FileInfoLoading)
             {
-                CommunityToastManager.Show(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LoadingFileInfo"), autoHideSeconds: 2.5);
+                CommunityToastManager.Show(LanguageControl.Get("ModpacksManageContentScreen", "LoadingFileInfo"), autoHideSeconds: 2.5);
                 return;
             }
             if (decision.Kind == ModpackDecisionKind.NoManagedMods)
@@ -480,7 +480,7 @@ namespace Game
             StartModpackFileInfoLoad(resourceItem, record);
             if (IsModpackFileInfoLoading(resourceItem))
             {
-                CommunityToastManager.Show(LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LoadingFileInfo"), autoHideSeconds: 2.5);
+                CommunityToastManager.Show(LanguageControl.Get("ModpacksManageContentScreen", "LoadingFileInfo"), autoHideSeconds: 2.5);
                 return;
             }
 
@@ -924,9 +924,9 @@ namespace Game
             m_toggleEnabledButton.Text = LanguageControl.Get(fName, IsModpackActive(resourceItem) ? "5" : "2");
             m_downloadMissingButton.IsEnabled = GetMissingDownloadItemCount(record) > 0 && !busy && !fileInfoLoading;
             m_downloadMissingButton.Text = fileInfoLoading
-                ? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "LoadingFileInfo")
+                ? LanguageControl.Get("ModpacksManageContentScreen", "LoadingFileInfo")
                 : busy
-                    ? LanguageControl.Get("ScbbsPlusLocalScreen", "Text", "Downloading")
+                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Downloading")
                     : LanguageControl.Get(fName, "3");
         }
 

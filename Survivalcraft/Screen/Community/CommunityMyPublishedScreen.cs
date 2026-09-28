@@ -349,8 +349,8 @@ namespace Game
                 m_downloadButtonsState = state;
                 m_downloadButton.IsEnabled = hasDownloadTarget && !downloadBusy;
                 m_downloadButton.Text = downloadBusy
-                    ? LanguageControl.Get("CommunityMyPublishedScreen", "Downloading")
-                    : LanguageControl.Get("ScbbsPlusCommon", "Text", "Download");
+                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Downloading")
+                    : LanguageControl.Get("ExternalContentScreen", "2");
             }
 
             if (m_downloadButton.IsClicked && downloadTarget != null)

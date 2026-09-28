@@ -102,7 +102,7 @@ namespace Game
                 m_downloadButton.IsEnabled = hasDownloadTarget && !downloadBusy;
                 m_downloadButton.Text = downloadBusy
                     ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Downloading")
-                    : LanguageControl.Get("ScbbsPlusCommon", "Text", "Download");
+                    : LanguageControl.Get("ExternalContentScreen", "2");
                 m_detailsButton.IsEnabled = hasDetailsTarget && !dialogLoadRunning;
                 m_detailsButton.Text = dialogLoadRunning ? LanguageControl.Get("ScbbsPlusCommunityScreen", "LoadingProgress") : LanguageControl.Get("ScbbsPlusCommunityScreen", "Details");
             }

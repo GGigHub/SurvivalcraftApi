@@ -43,7 +43,6 @@ namespace Game
             PendingLocalModActions.Process("startup");
             // 全局帧泵：下载收尾/自动更新/认证轮询改由引擎 Window.Frame 驱动，不再依赖 mod 屏 Update。
             CommunityFramePump.Initialize();
-            Log.Information(LanguageControl.Get("ScbbsPlusModLoader", "GameLoaded"));
         }
 
         public static void OnScreenLeaved(Screen screen)
