@@ -1,4 +1,4 @@
-﻿{
+{
   "Language": {
     "Name": "English"
   },
@@ -117,7 +117,9 @@
     "Modpack": "Modpack",
     "ModpackBusyWait": "Another modpack is being processed. Please wait.",
     "LocalResourcesReadingModpacksFormat": "Local {0}s · Reading modpacks...",
-    "DeleteFailed": "Delete failed: {0}"
+    "DeleteFailed": "Delete failed: {0}",
+    "DeleteConfirmTitle": "Delete Modpack?",
+    "DeleteConfirmMessage": "Are you sure you want to delete modpack \"{0}\"?\nThis action cannot be undone."
   },
   "ModsManageContentScreen": {
     "1": "Manage mod content",
@@ -213,13 +215,13 @@
     "CheckUpdate": "Check Update",
     "HasUpdate": "Update",
     "PleaseWait": "Please Wait",
-      "Community": {
-        "BusyMessage": {
-          "LoadingPreviousVersionList": "Loading the previous version list.",
+    "Community": {
+      "BusyMessage": {
+        "LoadingPreviousVersionList": "Loading the previous version list.",
         "CheckingPreviousModUpdate": "Checking the previous mod update.",
         "SearchingPreviousDependency": "Searching the previous dependency."
-        },
-        "FailedToLoadVersionList": "Failed to load version list: {0}",
+      },
+      "FailedToLoadVersionList": "Failed to load version list: {0}",
       "AlreadyUpToDateFormat": "Already up to date.\n{0}: {1}\n{2}: {3}",
       "DependencySearchFailed": "Dependency search failed: {0}",
       "ModsCanBeUpdatedTapToView": "{0} mod(s) can be updated",
@@ -227,13 +229,13 @@
       "NoUpdateReasonFormat": "{0}\n{1}: {2}\n{3}: {4}",
       "SearchDependencies": "Search Dependencies",
       "UpdateCheckFailed": "Update check failed: {0}"
-      },
-      "Review": {
-        "MissingFileNameOrPackageName": "Missing file name or package name",
-        "Buttons": {
-          "NoPost": "No Post"
-        }
+    },
+    "Review": {
+      "MissingFileNameOrPackageName": "Missing file name or package name",
+      "Buttons": {
+        "NoPost": "No Post"
       }
+    }
   },
   "ManageContentScreen": {
     "1": "Blocks Texture | {0}x{1}",
@@ -813,7 +815,7 @@
     "9": "Package Name: ",
     "10": "Dependencies: ",
     "11": "Are you sure to delete?",
-    "12": "\"{0}\" will be deleted.",
+    "12": "\"{0}\" will be deleted.\nThis action cannot be undone.",
     "13": "Failed to delete \"{0}\". Reason: {1}",
     "14": "Delete \"{0}\" Successfully.",
     "15": "Not Found / Not Enabled",
@@ -4292,7 +4294,9 @@
       "PlayedTimeReportingDescription": "Report playtime to the community for statistics",
       "CurrentServer": "Current Server",
       "MyPublished": "My Published",
-      "MyPublishedDescription": "Browse resources you have published to the Chinese community"
+      "MyPublishedDescription": "Browse resources you have published to the Chinese community",
+      "PostDetailsAutoTranslate": "Post Details Auto-Translate",
+      "PostDetailsAutoTranslateDescription": "Automatically translate post or version details into the current system language"
     },
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "Post Details",
@@ -5247,17 +5251,11 @@
       "Source3Global": "Backup Line 3 (Global)",
       "Source4Global": "Backup Line 4 (Global)"
     },
-    "ScbbsPlusCommunityOrderType": {
-      "Latest": "Latest",
-      "Oldest": "Oldest",
-      "Updated": "Updated",
-      "Hot": "Hot"
-    },
     "CommunityOrderType": {
-      "Latest": "Latest",
+      "Latest": "Latest Releases",
       "Oldest": "Oldest",
       "Updated": "Updated",
-      "Hot": "Hot"
+      "Hot": "Trending Now"
     },
     "ExternalContentType": {
       "Unknown": "Resource",
@@ -5395,7 +5393,7 @@
   },
   "ScbbsPlusFiltersDialog": {
     "SelectFileType": "Select File Type",
-    "SelectSortOrder": "Select Sort Order",
+    "SelectSortOrder": "Sort Options & Rankings",
     "SelectVersionRange": "Select Version Range",
     "SelectSection": "Select Section",
     "SaveDefault": "Save Default",

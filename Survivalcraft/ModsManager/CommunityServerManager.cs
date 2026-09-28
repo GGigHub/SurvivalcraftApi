@@ -44,10 +44,10 @@
         }
 #if BROWSER
         public static Info DefaultOriginalInfo = new(Type.Original, string.Empty, "https://cloudflare-cors-anywhere.weathered-shadow-6c41.workers.dev/?https://scresdir.appspot.com/resource");
-        public static Info DefaultChineseInfo = new(Type.Chinese, string.Empty, "https://m.suancaixianyu.cn/api", "https://test.suancaixianyu.cn/#/modList/0");
+        public static Info DefaultChineseInfo = new(Type.Chinese, string.Empty, "https://api.survivalcraft.cn/api", "https://test.suancaixianyu.cn/#/modList/0");
 #else
         public static Info DefaultOriginalInfo = new(Type.Original, string.Empty, "https://scresdir.appspot.com/resource");
-        public static Info DefaultChineseInfo = new(Type.Chinese, string.Empty, "https://m.suancaixianyu.cn/api", "https://test.suancaixianyu.cn/#/modList/0");
+        public static Info DefaultChineseInfo = new(Type.Chinese, string.Empty, "https://api.survivalcraft.cn/api", "https://test.suancaixianyu.cn/#/modList/0");
 #endif
 
         public static List<Info> UserInfos = [];

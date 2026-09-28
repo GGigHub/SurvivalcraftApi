@@ -351,7 +351,7 @@ public partial class ModsManageContentScreen
                 AuthSessionManager.Instance.ApiBaseUrl,
                 LanguageControl.Get("ExternalContentScreen", "2"),
                 () => StartLocalModUpdateDownload(downloadItem, result.File, result.LatestVersionItem),
-                enableAutoTranslate: true,
+                enableAutoTranslate: SettingsManager.CommunityPostDetailsAutoTranslateEnabled,
                 contentPlainText: releaseNotes,
                 buildHeader: panel => PostDetailsHeaderBuilder.AppendUpdateInfo(
                     panel,
@@ -473,7 +473,7 @@ public partial class ModsManageContentScreen
                 AuthSessionManager.Instance.ApiBaseUrl,
                 file != null ? LanguageControl.Get("ExternalContentScreen", "2") : null,
                 file != null ? () => StartLocalModUpdateDownload(resourceItem, file, version) : null,
-                enableAutoTranslate: true));
+                enableAutoTranslate: SettingsManager.CommunityPostDetailsAutoTranslateEnabled));
     }
 
     private void StartLocalModVersionDownload(PostVersionItem version, PostFileItem file)

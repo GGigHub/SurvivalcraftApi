@@ -789,27 +789,46 @@ namespace Game
                 return true;
             }
 
-            try
-            {
-                ModpackRegistry.Shared.DeleteFileSet(resourceItem.LocalFilePath);
-                // DeleteFileSet 内部触发 Changed → 作废清单缓存并延迟重读（Update 轮询后上屏）。
-                return true;
-            }
-            catch (Exception ex)
-            {
-                DialogsManager.ShowDialog(
-                    null,
-                    new MessageDialog(
-                        LanguageControl.Error,
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            LanguageControl.Get("ModpacksManageContentScreen", "DeleteFailed"),
-                            ex.Message),
-                        LanguageControl.Ok,
-                        null,
-                        null));
-                return true;
-            }
+            // 删除不可恢复且连带文件集，先弹确认（对齐模组删除的「无法恢复」提示）。
+            string displayName = resourceItem.DisplayName ?? resourceItem.Name
+                ?? LanguageControl.Get("ModpacksManageContentScreen", "Modpack");
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageControl.Get(fName, "DeleteConfirmTitle"),
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        LanguageControl.Get(fName, "DeleteConfirmMessage"),
+                        displayName),
+                    LanguageControl.Yes,
+                    LanguageControl.No,
+                    button =>
+                    {
+                        if (button != MessageDialogButton.Button1)
+                        {
+                            return;
+                        }
+                        try
+                        {
+                            ModpackRegistry.Shared.DeleteFileSet(resourceItem.LocalFilePath);
+                            // DeleteFileSet 内部触发 Changed → 作废清单缓存并延迟重读（Update 轮询后上屏）。
+                        }
+                        catch (Exception ex)
+                        {
+                            DialogsManager.ShowDialog(
+                                null,
+                                new MessageDialog(
+                                    LanguageControl.Error,
+                                    string.Format(
+                                        CultureInfo.InvariantCulture,
+                                        LanguageControl.Get("ModpacksManageContentScreen", "DeleteFailed"),
+                                        ex.Message),
+                                    LanguageControl.Ok,
+                                    null,
+                                    null));
+                        }
+                    }));
+            return true;
         }
 
         /// <summary>清单条目的展示名（缺失对话框逐项列举/详情清单行共用）：文件名 → fileId → 目标路径 → 包名。</summary>

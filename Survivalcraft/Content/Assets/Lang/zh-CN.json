@@ -1,4 +1,4 @@
-﻿{
+{
   "Language": {
     "Name": "简体中文"
   },
@@ -117,7 +117,9 @@
     "Modpack": "整合包",
     "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
     "LocalResourcesReadingModpacksFormat": "本地{0} · 正在读取整合包...",
-    "DeleteFailed": "删除失败：{0}"
+    "DeleteFailed": "删除失败：{0}",
+    "DeleteConfirmTitle": "确认删除整合包？",
+    "DeleteConfirmMessage": "确定要删除整合包“{0}”吗？\n此操作无法恢复"
   },
   "ModsManageContentScreen": {
     "1": "管理模组内容",
@@ -228,12 +230,12 @@
       "SearchDependencies": "搜索依赖",
       "UpdateCheckFailed": "检查更新失败：{0}"
     },
-      "Review": {
-        "MissingFileNameOrPackageName": "缺少文件名或包名",
-        "Buttons": {
-          "NoPost": "未发布"
-        }
+    "Review": {
+      "MissingFileNameOrPackageName": "缺少文件名或包名",
+      "Buttons": {
+        "NoPost": "未发布"
       }
+    }
   },
   "ManageContentScreen": {
     "1": "方块材质 | {0}x{1}",
@@ -813,7 +815,7 @@
     "9": "包名：",
     "10": "依赖模组：",
     "11": "确认删除？",
-    "12": "这将删除 \"{0}\" 。",
+    "12": "这将删除 \"{0}\" 。\n此操作无法恢复",
     "13": "删除 \"{0}\" 失败，原因：{1}",
     "14": "删除 \"{0}\" 成功。",
     "15": "未找到/未启用",
@@ -4302,7 +4304,9 @@
       "PlayedTimeReportingDescription": "向社区上报游玩时长，用于社区数据统计",
       "CurrentServer": "当前服务器",
       "MyPublished": "我发布的",
-      "MyPublishedDescription": "查看已发布到中文社区的资源"
+      "MyPublishedDescription": "查看已发布到中文社区的资源",
+      "PostDetailsAutoTranslate": "帖子详情自动翻译",
+      "PostDetailsAutoTranslateDescription": "进入帖子或版本详情时，自动翻译为当前系统语言"
     },
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "帖子详情",
@@ -5257,17 +5261,11 @@
       "Source3Global": "备用线路 3（全球）",
       "Source4Global": "备用线路 4（全球）"
     },
-    "ScbbsPlusCommunityOrderType": {
-      "Latest": "最新",
-      "Oldest": "最早",
-      "Updated": "最近更新",
-      "Hot": "热度"
-    },
     "CommunityOrderType": {
-      "Latest": "最新",
+      "Latest": "最新发布",
       "Oldest": "最早",
       "Updated": "最近更新",
-      "Hot": "热度"
+      "Hot": "最近火爆"
     },
     "ExternalContentType": {
       "Unknown": "资源",
@@ -5405,7 +5403,7 @@
   },
   "ScbbsPlusFiltersDialog": {
     "SelectFileType": "选择文件类型",
-    "SelectSortOrder": "选择排序方式",
+    "SelectSortOrder": "排序方式和榜单",
     "SelectVersionRange": "选择版本范围",
     "SelectSection": "选择板块",
     "SaveDefault": "保存为默认值",

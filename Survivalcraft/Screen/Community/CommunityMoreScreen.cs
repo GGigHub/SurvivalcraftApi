@@ -20,6 +20,7 @@ namespace Game
         private ButtonWidget m_defaultDownloadSourceButton;
         private ButtonWidget m_applyDownloadSourceToUpdatesButton;
         private ButtonWidget m_playedTimeReportingButton;
+        private ButtonWidget m_postDetailsAutoTranslateButton;
         private ButtonWidget m_topBarBackButton;
         private LabelWidget m_statusLabel;
 
@@ -37,6 +38,7 @@ namespace Game
             m_defaultDownloadSourceButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DefaultDownloadSourceButton");
             m_applyDownloadSourceToUpdatesButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ApplyDownloadSourceToUpdatesButton");
             m_playedTimeReportingButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.PlayedTimeReportingButton");
+            m_postDetailsAutoTranslateButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.PostDetailsAutoTranslateButton");
             m_topBarBackButton = Children.Find<ButtonWidget>("TopBar.Back");
             m_statusLabel = Children.Find<LabelWidget>("ScbbsPlusMoreScreen.Status");
         }
@@ -122,6 +124,11 @@ namespace Game
                 SettingsManager.CommunityPlayedTimeReportingEnabled = !SettingsManager.CommunityPlayedTimeReportingEnabled;
                 RefreshSettingsUi();
             }
+            if (m_postDetailsAutoTranslateButton.IsClicked)
+            {
+                SettingsManager.CommunityPostDetailsAutoTranslateEnabled = !SettingsManager.CommunityPostDetailsAutoTranslateEnabled;
+                RefreshSettingsUi();
+            }
         }
 
         internal static void SetSharedStatus(string status)
@@ -160,6 +167,7 @@ namespace Game
                 (Enum.IsDefined(downloadSource) ? downloadSource : CommunityDownloadSourceOption.DefaultCn).ToString());
             m_applyDownloadSourceToUpdatesButton.Text = SettingsManager.CommunityApplyDownloadSourceToUpdates ? LanguageControl.Yes : LanguageControl.No;
             m_playedTimeReportingButton.Text = SettingsManager.CommunityPlayedTimeReportingEnabled ? LanguageControl.Yes : LanguageControl.No;
+            m_postDetailsAutoTranslateButton.Text = SettingsManager.CommunityPostDetailsAutoTranslateEnabled ? LanguageControl.Yes : LanguageControl.No;
         }
 
         /// <summary>当前服务器显示名：优先匹配服务器列表中的中文社区条目（含内置与自建），
