@@ -33,7 +33,7 @@ namespace Game
         public ButtonWidget m_topBarBackButton;
         // 社区筛选状态
         private CommunitySection m_section = CommunitySection.All;
-        private CommunityFileType m_selectedFileType = CommunityFileType.Mod;
+        private ExternalContentType m_selectedFileType = ExternalContentType.Mod;
         private CommunityOrderType m_orderType = CommunityOrderType.Hot;
         private bool m_onlyCurrentVersion = true;
         private bool m_ignoreFileTypeFilter;
@@ -41,7 +41,7 @@ namespace Game
         private bool m_ignoreVersionFilter;
         private bool m_ignoreSectionFilter;
         private CommunitySection m_defaultSection = CommunitySection.All;
-        private CommunityFileType m_defaultSelectedFileType = CommunityFileType.Mod;
+        private ExternalContentType m_defaultSelectedFileType = ExternalContentType.Mod;
         private CommunityOrderType m_defaultOrderType = CommunityOrderType.Hot;
         private bool m_defaultOnlyCurrentVersion = true;
         private bool m_defaultIgnoreFileTypeFilter;
@@ -107,7 +107,7 @@ namespace Game
                 m_nextPageButton,
                 m_pageJumpBox,
                 m_pageJumpButton,
-                item => LanguageControl.GetEnumDisplayName((CommunityFileType)item),
+                item => LanguageControl.GetEnumDisplayName((ExternalContentType)item),
                 PostTreePresenter.GetSingleVersionFile,
                 PostTreePresenter.ShouldShowCompatibilityForVersion,
                 m_postDetailSlot);

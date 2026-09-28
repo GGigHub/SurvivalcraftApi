@@ -28,7 +28,7 @@ namespace Game
             byte[] data,
             ModpackItem item)
         {
-            if (type == ExternalContentType.Mod
+            if (CommunityFileTypes.IsModLike(type)
                 && (!string.IsNullOrWhiteSpace(item?.PackageName) || !string.IsNullOrWhiteSpace(item?.Version)))
             {
                 ValidateModItem(data, item);

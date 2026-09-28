@@ -86,7 +86,7 @@ namespace Game
                         ModpackRules.ApplyItemFileInfo(item, communityFile);
                         if (contentType == ExternalContentType.Unknown && communityFile != null)
                         {
-                            contentType = CommunityFileRules.MapFileTypeToExternalContentType(communityFile.Type);
+                            contentType = CommunityFileTypes.ToExternal(communityFile.Type);
                         }
                         // 预检已取得下载链接：填充 Url，导入阶段 ResolveAsync 直接走下载分支，
                         // 不再重复请求 fileId 元数据（原每次导入都二次 /upload/info）。
@@ -185,7 +185,7 @@ namespace Game
                     ExternalContentType contentType = ModpackRules.ResolveContentType(item);
                     if (contentType == ExternalContentType.Unknown && communityFile != null)
                     {
-                        contentType = CommunityFileRules.MapFileTypeToExternalContentType(communityFile.Type);
+                        contentType = CommunityFileTypes.ToExternal(communityFile.Type);
                     }
                     ModpackRules.ApplyItemFileInfo(item, communityFile);
                     item.Filename = ModpackRules.EnsureItemFileName(item, contentType, communityFile, downloadedFileName);

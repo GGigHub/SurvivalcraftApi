@@ -69,7 +69,7 @@ namespace Game
             };
 
             using MemoryStream analysisStream = new(fileData, writable: false);
-            if (request.Type == ExternalContentType.Mod)
+            if (CommunityFileTypes.IsModLike(request.Type))
             {
                 ModInfo modInfo = ScmodArchiveReader.ReadModInfo(analysisStream);
                 result.DisplayName = string.IsNullOrWhiteSpace(modInfo?.Name)
@@ -102,7 +102,7 @@ namespace Game
 
         public static string GetContentTypeDisplayName(ExternalContentType type)
         {
-            return LanguageControl.GetEnumDisplayName(type, LanguageControl.GetEnumDisplayName(CommunityFileType.Unknown));
+            return LanguageControl.GetEnumDisplayName(type, LanguageControl.GetEnumDisplayName(ExternalContentType.Unknown));
         }
 
         /// <summary>

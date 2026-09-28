@@ -42,7 +42,7 @@ namespace Game
 
             return type switch
             {
-                ExternalContentType.Mod => FindFileRecursive(ModsManager.ModsPath, fileName),
+                ExternalContentType.Mod or ExternalContentType.NetMod => FindFileRecursive(ModsManager.ModsPath, fileName),
                 ExternalContentType.FurniturePack =>
                     FindInDirectory(FurniturePacksManager.FurniturePacksDirectoryName, fileName),
                 ExternalContentType.BlocksTexture =>

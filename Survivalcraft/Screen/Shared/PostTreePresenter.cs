@@ -21,7 +21,7 @@ namespace Game
         private readonly BevelledButtonWidget m_nextPageButton;
         private readonly TextBoxWidget m_pageJumpBox;
         private readonly BevelledButtonWidget m_pageJumpButton;
-        private readonly Func<CommunityFileType, string> m_fileTypeNameProvider;
+        private readonly Func<ExternalContentType, string> m_fileTypeNameProvider;
         private readonly Func<PostVersionItem, PostFileItem> m_singleVersionFileProvider;
         private readonly Func<PostVersionItem, bool> m_showCompatibilityProvider;
         private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot;
@@ -40,7 +40,7 @@ namespace Game
             BevelledButtonWidget nextPageButton,
             TextBoxWidget pageJumpBox,
             BevelledButtonWidget pageJumpButton,
-            Func<CommunityFileType, string> fileTypeNameProvider,
+            Func<ExternalContentType, string> fileTypeNameProvider,
             Func<PostVersionItem, PostFileItem> singleVersionFileProvider,
             Func<PostVersionItem, bool> showCompatibilityProvider,
             TaskSlot<PostDetailLoadResult> postDetailSlot)
@@ -264,7 +264,7 @@ namespace Game
                         continue;
                     }
                     post.ShowLocalModInstallStatus = loadResult.Source == ResourceSource.Community
-                        && (loadResult.FileType == CommunityFileType.Mod || (loadResult.FileType == CommunityFileType.Unknown && post.FileType == CommunityFileType.Mod));
+                        && (loadResult.FileType == ExternalContentType.Mod || (loadResult.FileType == ExternalContentType.Unknown && CommunityFileTypes.ToExternal(post.FileType) == ExternalContentType.Mod));
                     m_tree.AddRoot(CreatePostNode(post, ref snapshot));
                 }
                 // 服务端分页语义按端点漂移：/user/posts 的 total=页数、count=条数；
@@ -415,7 +415,7 @@ namespace Game
             string timeText = CommunityTimeFormatter.FormatDate(post.CreatedAt);
             string authorText = string.IsNullOrWhiteSpace(post.Creator?.Nickname) ? LanguageControl.Get("ScbbsPlusPostTreePresenter", "UnknownUser") : post.Creator.Nickname.Trim();
             string subText = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostTreePresenter", "PostSummaryFormat"),
-                m_fileTypeNameProvider(post.FileType),
+                m_fileTypeNameProvider(CommunityFileTypes.ToExternal(post.FileType)),
                 authorText,
                 timeText,
                 post.DownloadCount,

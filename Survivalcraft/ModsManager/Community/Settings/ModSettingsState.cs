@@ -14,19 +14,19 @@ namespace Game
     internal static class ModSettingsState
     {
         private static bool s_loaded;
-        private static CommunityFileType s_localFileType = CommunityFileType.Mod;
-        private static CommunityFileType s_communityFileType = CommunityFileType.Mod;
+        private static ExternalContentType s_localFileType = ExternalContentType.Mod;
+        private static ExternalContentType s_communityFileType = ExternalContentType.Mod;
         private static CommunityOrderType s_communityOrderType = CommunityOrderType.Hot;
         private static bool s_communityOnlyCurrentVersion = true;
         private static int s_communitySection = 1;
-        private static CommunityFileType s_myPublishedFileType = CommunityFileType.Mod;
+        private static ExternalContentType s_myPublishedFileType = ExternalContentType.Mod;
 
-        public static CommunityFileType LocalFileType
+        public static ExternalContentType LocalFileType
         {
             get { EnsureLoaded(); return s_localFileType; }
         }
 
-        public static CommunityFileType CommunityFileType
+        public static ExternalContentType CommunityFileType
         {
             get { EnsureLoaded(); return s_communityFileType; }
         }
@@ -46,13 +46,13 @@ namespace Game
             get { EnsureLoaded(); return s_communitySection; }
         }
 
-        public static CommunityFileType MyPublishedFileType
+        public static ExternalContentType MyPublishedFileType
         {
             get { EnsureLoaded(); return s_myPublishedFileType; }
         }
 
         // 我的发布屏文件类型写入端（模组 SetScreenFileType 按屏名版式在游戏内收敛为本屏单方法）。
-        public static void SetMyPublishedFileType(CommunityFileType fileType)
+        public static void SetMyPublishedFileType(ExternalContentType fileType)
         {
             EnsureLoaded();
             s_myPublishedFileType = fileType;
@@ -60,7 +60,7 @@ namespace Game
         }
 
         public static void SetCommunityDefaults(
-            CommunityFileType fileType,
+            ExternalContentType fileType,
             CommunityOrderType orderType,
             bool onlyCurrentVersion,
             int section)
@@ -117,16 +117,17 @@ namespace Game
             }
         }
 
-        // 数值初值对应旧 XElement.ReadInt 的回退值（文件类型 5、排序 4、节 1）：
+        // 数值初值对应旧 XElement.ReadInt 的回退值（文件类型 Mod、排序 4、节 1）：
         // JSON 缺属性时退化语义与旧 XML 缺属性一致。
+        // 文件类型已改存 ExternalContentType 原生值（分支未发布，旧协议值不作迁移，非法值由 FromSettingValue 归 Mod）。
         private sealed class StateData
         {
-            public int LocalFileType { get; set; } = 5;
-            public int CommunityFileType { get; set; } = 5;
+            public int LocalFileType { get; set; } = (int)ExternalContentType.Mod;
+            public int CommunityFileType { get; set; } = (int)ExternalContentType.Mod;
             public int CommunityOrderType { get; set; } = 4;
             public bool CommunityOnlyCurrentVersion { get; set; } = true;
             public int CommunitySection { get; set; } = 1;
-            public int MyPublishedFileType { get; set; } = 5;
+            public int MyPublishedFileType { get; set; } = (int)ExternalContentType.Mod;
         }
 
         private static int NormalizeSection(int section) => section switch

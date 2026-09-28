@@ -43,31 +43,5 @@ namespace Game
                 return value;
             }
         }
-
-        public static ExternalContentType MapFileTypeToExternalContentType(CommunityFileType fileType)
-        {
-            return fileType switch
-            {
-                CommunityFileType.World => ExternalContentType.World,
-                CommunityFileType.Furniture => ExternalContentType.FurniturePack,
-                CommunityFileType.Texture => ExternalContentType.BlocksTexture,
-                CommunityFileType.Skin => ExternalContentType.CharacterSkin,
-                CommunityFileType.Mod or CommunityFileType.NetMod => ExternalContentType.Mod,
-                _ => ExternalContentType.Unknown
-            };
-        }
-
-        public static CommunityFileType MapExternalContentTypeToFileType(ExternalContentType type)
-        {
-            return type switch
-            {
-                ExternalContentType.World => CommunityFileType.World,
-                ExternalContentType.FurniturePack => CommunityFileType.Furniture,
-                ExternalContentType.BlocksTexture => CommunityFileType.Texture,
-                ExternalContentType.CharacterSkin => CommunityFileType.Skin,
-                ExternalContentType.Mod => CommunityFileType.Mod,
-                _ => CommunityFileType.Unknown
-            };
-        }
     }
 }

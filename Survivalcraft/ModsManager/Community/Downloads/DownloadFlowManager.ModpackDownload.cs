@@ -157,7 +157,7 @@ namespace Game
 
                 ExternalContentType contentType = ModpackRules.ResolveContentType(item);
                 string typeName = LanguageControl.GetEnumDisplayName(
-                    CommunityFileRules.MapExternalContentTypeToFileType(contentType),
+                    contentType,
                     item?.Category);
                 lines.Add($"- [{state}][{typeName}] {ModpacksManageContentScreen.GetModpackItemDisplayName(item)}");
             }

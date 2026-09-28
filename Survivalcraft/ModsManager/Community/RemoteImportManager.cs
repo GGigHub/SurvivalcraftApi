@@ -428,7 +428,7 @@ namespace Game
                     return new CommunityFileDownloadResult
                     {
                         FileName = result.FileName,
-                        DownloadFailed = result.Type == ExternalContentType.Mod,
+                        DownloadFailed = CommunityFileTypes.IsModLike(result.Type),
                         Error = ScmodArchiveReader.InvalidArchiveFriendlyMessage
                     };
                 }

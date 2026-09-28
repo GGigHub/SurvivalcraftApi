@@ -216,7 +216,7 @@ namespace Game
             ExternalContentType contentType = ModpackRules.ResolveContentType(item);
             if (contentType == ExternalContentType.Unknown && fetched.CommunityFile != null)
             {
-                contentType = CommunityFileRules.MapFileTypeToExternalContentType(fetched.CommunityFile.Type);
+                contentType = CommunityFileTypes.ToExternal(fetched.CommunityFile.Type);
             }
             ModpackRules.ApplyItemFileInfo(item, fetched.CommunityFile);
             item.Filename = ModpackRules.EnsureItemFileName(item, contentType, fetched.CommunityFile, fetched.DownloadedFileName);

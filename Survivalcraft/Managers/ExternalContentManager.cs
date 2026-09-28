@@ -49,6 +49,8 @@ namespace Game {
                 case ExternalContentType.CharacterSkin: yield return ".scskin"; break;
                 case ExternalContentType.FurniturePack: yield return ".scfpack"; break;
                 case ExternalContentType.Mod: yield return ".scmod"; break;
+                // 社区联机模组与 Mod 同为 scmod 包；声明序 Mod 在前，ExtensionToType 对 .scmod 仍归 Mod。
+                case ExternalContentType.NetMod: yield return ".scmod"; break;
                 //case ExternalContentType.ModList: yield return ".scmodList"; break;
             }
         }
@@ -144,7 +146,8 @@ namespace Game {
                 case ExternalContentType.BlocksTexture: return BlocksTexturesManager.ImportBlocksTexture(name, stream);
                 case ExternalContentType.CharacterSkin: return CharacterSkinsManager.ImportCharacterSkin(name, stream);
                 case ExternalContentType.FurniturePack: return FurniturePacksManager.ImportFurniturePack(name, stream);
-                case ExternalContentType.Mod: return ModsManager.ImportMod(name, stream);
+                // NetMod（社区联机模组）同为 scmod 包，导入链与 Mod 一致。
+                case ExternalContentType.Mod or ExternalContentType.NetMod: return ModsManager.ImportMod(name, stream);
                 default: throw new InvalidOperationException(LanguageControl.Get(fName, 4));
             }
         }

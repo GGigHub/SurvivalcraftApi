@@ -127,37 +127,21 @@ namespace Game
             };
         }
 
-        public static string GetUploadExtensionText(string filePath, CommunityFileType fileType)
-        {
-            string extension = Storage.GetExtensionBCL(filePath);
-            if (!string.IsNullOrWhiteSpace(extension))
-            {
-                return extension.TrimStart('.').ToLowerInvariant();
-            }
-
-            return fileType switch
-            {
-                CommunityFileType.World => "scworld",
-                CommunityFileType.Furniture => "scfpack",
-                CommunityFileType.Texture => "png/scbtex",
-                CommunityFileType.Skin => "scskin",
-                CommunityFileType.Mod => "scmod",
-                CommunityFileType.Modpack => "zip/json",
-                _ => "-"
-            };
-        }
-
         public static CommunityFileType GetUploadFileType(LocalResourceItem resourceItem)
+            => CommunityFileTypes.FromExternal(GetUploadExternalType(resourceItem));
+
+        /// <summary>域内上传类型：本地资源类型，未分类时按整合包标记（Tag）判 Modpack。</summary>
+        public static ExternalContentType GetUploadExternalType(LocalResourceItem resourceItem)
         {
-            CommunityFileType fileType = CommunityFileRules.MapExternalContentTypeToFileType(resourceItem?.Type ?? ExternalContentType.Unknown);
-            return fileType != CommunityFileType.Unknown
-                ? fileType
-                : IsModpack(resourceItem) ? CommunityFileTypes.ModpackFileType : CommunityFileType.Unknown;
+            ExternalContentType type = resourceItem?.Type ?? ExternalContentType.Unknown;
+            return type != ExternalContentType.Unknown
+                ? type
+                : IsModpack(resourceItem) ? ExternalContentType.Modpack : ExternalContentType.Unknown;
         }
 
         public static string GetUploadFileName(LocalResourceItem resourceItem, string filePath)
         {
-            return GetUploadFileName(resourceItem, filePath, GetFallbackUploadExtension(GetUploadFileType(resourceItem)));
+            return GetUploadFileName(resourceItem, filePath, GetFallbackUploadExtension(GetUploadExternalType(resourceItem)));
         }
 
         private CommunityPreparedUploadFile CreateExistingFileUpload(
@@ -201,19 +185,16 @@ namespace Game
             return CommunityUploadFileNaming.SanitizeFileName(fileName);
         }
 
-        private static string GetFallbackUploadExtension(CommunityFileType fileType)
+        private static string GetFallbackUploadExtension(ExternalContentType type)
         {
-            ExternalContentType type = CommunityFileRules.MapFileTypeToExternalContentType(fileType);
-            if (type != ExternalContentType.Unknown)
+            if (type == ExternalContentType.Modpack)
             {
-                return ExternalContentManager.GetEntryTypeExtensions(type).FirstOrDefault() ?? ".dat";
+                return ".json";
             }
 
-            return fileType switch
-            {
-                CommunityFileType.Modpack => ".json",
-                _ => ".dat"
-            };
+            return type != ExternalContentType.Unknown
+                ? ExternalContentManager.GetEntryTypeExtensions(type).FirstOrDefault() ?? ".dat"
+                : ".dat";
         }
 
         private static void TryDeleteTempFile(string path)

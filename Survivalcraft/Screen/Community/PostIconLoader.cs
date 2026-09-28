@@ -33,7 +33,7 @@ namespace Game
 
         public static void ApplyPostNodeIcon(TreeViewNode node, PostItem post)
         {
-            ApplyNodeFileTypeIcon(node, post.FileType);
+            ApplyNodeFileTypeIcon(node, CommunityFileTypes.ToExternal(post.FileType));
             string iconUrl = GetNodeIconUrl(post);
             if (string.IsNullOrEmpty(iconUrl))
             {
@@ -281,7 +281,7 @@ namespace Game
             }
         }
 
-        private static void ApplyNodeFileTypeIcon(TreeViewNode node, CommunityFileType fileType)
+        private static void ApplyNodeFileTypeIcon(TreeViewNode node, ExternalContentType fileType)
         {
             if (node == null)
             {
@@ -297,14 +297,15 @@ namespace Game
             SetNodeIcon(node, iconSubtexture);
         }
 
-        public static Subtexture GetFileTypeIconSubtexture(CommunityFileType fileType)
+        public static Subtexture GetFileTypeIconSubtexture(ExternalContentType fileType)
         {
             return fileType switch
             {
-                CommunityFileType.Image => ContentManager.Get<Subtexture>("Textures/Atlas/PhotoButton"),
-                CommunityFileType.Other => ContentManager.Get<Subtexture>("Textures/Atlas/QuestionMarkIcon"),
-                CommunityFileType.Modpack => ContentManager.Get<Subtexture>("Textures/Atlas/QuestionMarkIcon"),
-                _ => ExternalContentManager.GetEntryTypeIcon(CommunityFileRules.MapFileTypeToExternalContentType(fileType))
+                ExternalContentType.Image => ContentManager.Get<Subtexture>("Textures/Atlas/PhotoButton"),
+                ExternalContentType.Other => ContentManager.Get<Subtexture>("Textures/Atlas/QuestionMarkIcon"),
+                ExternalContentType.Modpack => ContentManager.Get<Subtexture>("Textures/Atlas/QuestionMarkIcon"),
+                ExternalContentType.NetMod => ContentManager.Get<Subtexture>("Textures/Gui/DefaultModIcon"),
+                _ => ExternalContentManager.GetEntryTypeIcon(fileType)
             };
         }
 

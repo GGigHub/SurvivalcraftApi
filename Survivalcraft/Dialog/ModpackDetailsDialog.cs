@@ -255,7 +255,7 @@ namespace Game
         {
             ExternalContentType type = ModpackRules.ResolveContentType(item);
             return LanguageControl.GetEnumDisplayName(
-                CommunityFileRules.MapExternalContentTypeToFileType(type),
+                type,
                 item?.Category);
         }
     }

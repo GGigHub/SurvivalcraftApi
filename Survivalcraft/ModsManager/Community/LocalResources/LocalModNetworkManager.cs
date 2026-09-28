@@ -687,7 +687,7 @@ namespace Game
             {
                 Url = file.Url,
                 FileName = CommunityFileRules.GetDownloadFileName(file),
-                ContentType = CommunityFileRules.MapFileTypeToExternalContentType(contentType),
+                ContentType = CommunityFileTypes.ToExternal(contentType),
                 IsRepositoryReleaseAsset = file.IsRepositoryReleaseAsset,
                 Source = CommunityDownloadSourceOption.DefaultCn,
                 Feedback = new CommunityDownloadFeedbackInfo

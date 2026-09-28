@@ -23,7 +23,7 @@ namespace Game
                 throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportDataIsEmpty"));
             }
 
-            if (result.Type == ExternalContentType.Mod)
+            if (CommunityFileTypes.IsModLike(result.Type))
             {
                 if (string.Equals(result.ExistingModPackageName, selfPackageName, StringComparison.OrdinalIgnoreCase))
                 {

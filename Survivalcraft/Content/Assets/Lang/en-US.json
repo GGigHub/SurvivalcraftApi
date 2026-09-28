@@ -5246,30 +5246,6 @@
       "Source3Global": "Backup Line 3 (Global)",
       "Source4Global": "Backup Line 4 (Global)"
     },
-    "ScbbsPlusCommunityFileType": {
-      "Unknown": "Resource",
-      "World": "World",
-      "Furniture": "Furniture",
-      "Texture": "Texture",
-      "Skin": "Skin",
-      "Mod": "Mod",
-      "Image": "Image",
-      "Other": "Other Files",
-      "NetMod": "Net Mod",
-      "Modpack": "Modpack"
-    },
-    "CommunityFileType": {
-      "Unknown": "Resource",
-      "World": "World",
-      "Furniture": "Furniture",
-      "Texture": "Texture",
-      "Skin": "Skin",
-      "Mod": "Mod",
-      "Image": "Image",
-      "Other": "Other Files",
-      "NetMod": "Net Mod",
-      "Modpack": "Modpack"
-    },
     "ScbbsPlusCommunityOrderType": {
       "Latest": "Latest",
       "Oldest": "Oldest",
@@ -5283,11 +5259,16 @@
       "Hot": "Hot"
     },
     "ExternalContentType": {
+      "Unknown": "Resource",
       "World": "World",
       "FurniturePack": "Furniture Pack",
       "BlocksTexture": "Texture",
       "CharacterSkin": "Skin",
-      "Mod": "Mod"
+      "Mod": "Mod",
+      "Modpack": "Modpack",
+      "NetMod": "Net Mod",
+      "Image": "Image",
+      "Other": "Other Files"
     }
   },
   "ScbbsPlusDownloadDialog": {

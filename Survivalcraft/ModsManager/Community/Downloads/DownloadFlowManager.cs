@@ -135,9 +135,9 @@ namespace Game
                 StartModpackDownload(file);
                 return;
             }
-            ExternalContentType type = CommunityFileRules.MapFileTypeToExternalContentType(file.Type);
+            ExternalContentType type = CommunityFileTypes.ToExternal(file.Type);
             string fileName = CommunityFileRules.GetDownloadFileName(file);
-            if (type == ExternalContentType.Mod && version != null)
+            if (CommunityFileTypes.IsModLike(type) && version != null)
             {
                 LocalModStateStore.RememberPendingLocalModCompatibilityOverride(file.PackageName, fileName, version);
             }
@@ -167,7 +167,7 @@ namespace Game
             // 恰有一个同包名模组时自动禁用旧版（持久化到 DisabledMods：重启后旧版失效、新版生效，
             // 本进程旧版仍在运行不受影响，管理屏立即显示黄字"已禁用"）；已有多个副本时直接下载，
             // 由用户自行管理启用。不走"替换并删除旧文件"的更新链——链接导入链保留该语义。
-            if (type == ExternalContentType.Mod
+            if (CommunityFileTypes.IsModLike(type)
                 && !string.IsNullOrWhiteSpace(file.PackageName)
                 // 包名来自社区数据，挡掉内置模组名，防止服务端恶意/损坏数据禁用核心模组
                 && file.PackageName is not ("survivalcraft" or "fastdebug"))

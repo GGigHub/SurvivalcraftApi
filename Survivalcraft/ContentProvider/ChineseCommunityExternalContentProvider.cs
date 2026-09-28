@@ -100,7 +100,7 @@ namespace Game {
                 if (string.IsNullOrWhiteSpace(fileName)) {
                     throw new InvalidOperationException(LanguageControl.Get("ChineseCommunityExternalContentProvider", "CannotFindLocalFile"));
                 }
-                CommunityFileType fileType = MapUploadFileType(ExternalContentManager.ExtensionToType(Storage.GetExtension(fileName).ToLower()));
+                CommunityFileType fileType = CommunityFileTypes.FromUploadableExternal(ExternalContentManager.ExtensionToType(Storage.GetExtension(fileName).ToLower()));
                 string token = AuthSessionManager.Instance.CurrentToken;
                 string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
                 string saveKey = CommunityUploadFileNaming.MakeSaveKey(fileName, DateTime.UtcNow);
@@ -134,15 +134,6 @@ namespace Game {
                 failure?.Invoke(ex);
             }
         }
-
-        private static CommunityFileType MapUploadFileType(ExternalContentType type) => type switch {
-            ExternalContentType.World => CommunityFileType.World,
-            ExternalContentType.FurniturePack => CommunityFileType.Furniture,
-            ExternalContentType.BlocksTexture => CommunityFileType.Texture,
-            ExternalContentType.CharacterSkin => CommunityFileType.Skin,
-            ExternalContentType.Mod => CommunityFileType.Mod,
-            _ => throw new InvalidOperationException($"Unsupported upload type: {type}")
-        };
 
         public void Dispose() {
             if (m_waitingLoginState) {

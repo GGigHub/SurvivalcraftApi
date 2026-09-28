@@ -26,7 +26,7 @@ namespace Game
         public BevelledButtonWidget m_unpublishedButton;
 
         private readonly PostTreePresenter m_postsPresenter;
-        private CommunityFileType m_selectedFileType = CommunityFileType.Mod;
+        private ExternalContentType m_selectedFileType = ExternalContentType.Mod;
         private readonly TaskSlot<PostsLoadResult> m_postsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostsList"));
         private readonly TaskSlot<UploadFilesLoadResult> m_uploadsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostsList"));
         private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostNodeDetails"));
@@ -64,7 +64,7 @@ namespace Game
                 m_nextPageButton,
                 m_pageJumpBox,
                 m_pageJumpButton,
-                item => LanguageControl.GetEnumDisplayName((CommunityFileType)item),
+                item => LanguageControl.GetEnumDisplayName((ExternalContentType)item),
                 PostTreePresenter.GetSingleVersionFile,
                 PostTreePresenter.ShouldShowCompatibilityForVersion,
                 m_postDetailSlot);
@@ -188,7 +188,7 @@ namespace Game
             m_postsLoadSlot.Invalidate();
             m_uploadsLoadSlot.Invalidate();
             m_postsPresenter.InvalidatePostDetailLoad();
-            CommunityFileType fileType = m_selectedFileType;
+            ExternalContentType fileType = m_selectedFileType;
             // 开关开：/upload/list 未发布平铺；关：帖子树（全部类别）。
             if (m_showUnpublished)
             {
@@ -214,7 +214,7 @@ namespace Game
                     userId,
                     m_postsPresenter.Page,
                     10,
-                    fileType,
+                    CommunityFileTypes.FromExternal(fileType),
                     needVersionCatalog,
                     cachedCatalog,
                     cachedVersionMap);
@@ -238,7 +238,7 @@ namespace Game
 
         // 开关开：/upload/list 未发布平铺文件列表（publishState=2，token 归属"我的上传"），
         // 全类别可用；平铺行无版本/兼容性展示，不加载版本目录。
-        private void LoadMyUploads(CommunityFileType fileType)
+        private void LoadMyUploads(ExternalContentType fileType)
         {
             string token = AuthSessionManager.Instance.CurrentToken;
             string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
@@ -252,7 +252,7 @@ namespace Game
                     token,
                     m_postsPresenter.Page,
                     10,
-                    fileType);
+                    CommunityFileTypes.FromExternal(fileType));
                 if (!string.IsNullOrEmpty(load.Error))
                 {
                     Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "LoadMyPublishedFailed"), load.Error));
@@ -275,15 +275,15 @@ namespace Game
                 return;
             }
 
-            CommunityFileType[] fileTypeValues = CommunityFileTypes.FilterableValues();
+            ExternalContentType[] fileTypeValues = CommunityFileTypes.FilterableValues();
             DialogsManager.ShowDialog(null, new ListSelectionDialog(
                 LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectFileType"),
                 fileTypeValues,
                 60f,
-                item => LanguageControl.GetEnumDisplayName((CommunityFileType)item),
+                item => LanguageControl.GetEnumDisplayName((ExternalContentType)item),
                 delegate (object result)
                 {
-                    CommunityFileType newFileType = (CommunityFileType)result;
+                    ExternalContentType newFileType = (ExternalContentType)result;
                     if (newFileType == m_selectedFileType)
                     {
                         return;
@@ -307,7 +307,7 @@ namespace Game
             LoadMyPublishedPosts();
         }
 
-        private void SetCurrentMyPublishedFileType(CommunityFileType fileType)
+        private void SetCurrentMyPublishedFileType(ExternalContentType fileType)
         {
             m_selectedFileType = fileType;
             ModSettingsState.SetMyPublishedFileType(fileType);

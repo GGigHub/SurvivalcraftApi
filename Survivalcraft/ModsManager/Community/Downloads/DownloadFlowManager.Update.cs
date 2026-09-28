@@ -76,7 +76,7 @@ namespace Game
                 }
                 if (string.IsNullOrEmpty(result.Error))
                 {
-                    if (result.Type == ExternalContentType.Mod && result.PostId > 0)
+                    if (CommunityFileTypes.IsModLike(result.Type) && result.PostId > 0)
                     {
                         LocalModStateStore.RememberLocalModPostId(result.ImportedName, result.FileName, result.PostId);
                     }
