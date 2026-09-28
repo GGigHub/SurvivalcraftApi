@@ -15,16 +15,24 @@ namespace Game
         /// <summary>每帧轮询：进度对话框、下载队列推进、三个后台任务的完成收尾。由全局帧泵（CommunityFramePump）驱动，离屏也持续收尾。</summary>
         public void Update()
         {
-            UpdateFileDownloadDialog();
-            ReshowLostQueuedOverwriteDialog();
-            StartNextQueuedDownload();
-
-            if (CompleteFileDownloadIfFinished())
+            // 异常兜底内置（全局帧泵调用）：引擎 Frame?.Invoke() 无 try/catch，冒泡即杀进程。
+            try
             {
-                return;
+                UpdateFileDownloadDialog();
+                ReshowLostQueuedOverwriteDialog();
+                StartNextQueuedDownload();
+
+                if (CompleteFileDownloadIfFinished())
+                {
+                    return;
+                }
+                CompleteModpackManifestLoadIfFinished();
+                CompleteModpackItemsDownloadIfFinished();
             }
-            CompleteModpackManifestLoadIfFinished();
-            CompleteModpackItemsDownloadIfFinished();
+            catch (Exception ex)
+            {
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadFlowPollFaulted"), ex));
+            }
         }
 
         /// <summary>文件下载任务收尾。返回 true 表示本轮终止（重排队确认/暂停/取消分支不继续后续段）。</summary>

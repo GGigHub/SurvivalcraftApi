@@ -255,112 +255,120 @@ namespace Game
 
         public void Update()
         {
-            EnsureStoredAuthLoaded();
-
-            // 轮询登录结果
-            if (m_loginTask != null && m_loginTask.IsCompleted)
+            // 异常兜底内置（全局帧泵调用）：引擎 Frame?.Invoke() 无 try/catch，冒泡即杀进程。
+            try
             {
-                LoginResponse result;
-                try
+                EnsureStoredAuthLoaded();
+
+                // 轮询登录结果
+                if (m_loginTask != null && m_loginTask.IsCompleted)
                 {
-                    result = m_loginTask.Result;
-                }
-                catch (Exception ex)
-                {
-                    // 用户取消登录等异常不冒泡到游戏帧循环，按失败路径展示。
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginRequestFaulted"), ex.Message));
-                    result = null;
-                }
-                m_loginTask = null;
-                bool loginAbandoned = m_loginCancellation != null && m_loginCancellation.IsCancellationRequested;
-                m_loginCancellation?.Dispose();
-                m_loginCancellation = null;
-                if (loginAbandoned)
-                {
+                    LoginResponse result;
+                    try
+                    {
+                        result = m_loginTask.Result;
+                    }
+                    catch (Exception ex)
+                    {
+                        // 用户取消登录等异常不冒泡到游戏帧循环，按失败路径展示。
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginRequestFaulted"), ex.Message));
+                        result = null;
+                    }
+                    m_loginTask = null;
+                    bool loginAbandoned = m_loginCancellation != null && m_loginCancellation.IsCancellationRequested;
+                    m_loginCancellation?.Dispose();
+                    m_loginCancellation = null;
+                    if (loginAbandoned)
+                    {
+                        m_loginApiBaseUrl = null;
+                        // 登录对话框已关闭：迟到结果不写入登录态，也不弹错误窗。
+                        return;
+                    }
+
+                    if (result != null && result.Code == 200 && result.Data?.User != null)
+                    {
+                        // 登录成功：按发起时快照写入目标服（在途期间可能已切服）。
+                        string loginApiBaseUrl = m_loginApiBaseUrl ?? ApiBaseUrl;
+                        m_sessions[loginApiBaseUrl] = new LoginData
+                        {
+                            Token = result.Data.Token,
+                            User = result.Data.User
+                        };
+                        if (m_loginDialog != null)
+                        {
+                            DialogsManager.HideDialog(m_loginDialog);
+                            m_loginDialog = null;
+                        }
+
+                        // 日志与事件用本次登录结果本体：写入目标是快照服，与当前服可能不同
+                        //（在途期间切服且取消回调未触发的边缘路径），当前服视图可能为空或他人。
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginSucceeded"), result.Data.User.Nickname, result.Data.User.Level));
+
+                        // 持久化登录数据
+                        SaveStoredAuth(loginApiBaseUrl);
+
+                        if (string.Equals(loginApiBaseUrl, ApiBaseUrl, StringComparison.OrdinalIgnoreCase))
+                        {
+                            m_loginStateChanged.Raise(AuthChangeKind.LoggedIn);
+                        }
+                    }
+                    else
+                    {
+                        string errorMessage = result?.Msg ?? LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginFailedDefaultMessage");
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginFailed"), errorMessage));
+                        CommunityLoginDialog loginDialog = m_loginDialog;
+                        if (loginDialog == null)
+                        {
+                            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, errorMessage, LanguageControl.Ok, null, null));
+                        }
+                        else if (IsDialogAttachedToRoot(loginDialog))
+                        {
+                            loginDialog.SetBusy(false);
+                            loginDialog.SetError(errorMessage);
+                        }
+                        else
+                        {
+                            // 引擎切屏只把旧屏从 RootWidget 摘除，对话框仍留在 Dialogs（挂在死屏上），
+                            // 错误写上去用户看不见：改走 MessageDialog 兜底。HideDialog 同步把死框移出
+                            // Dialogs，关闭动画再把死框连同旧 CoverWidget 从死屏摘除。
+                            // 兜底 MessageDialog 是另一实例，不同字典键，无同帧 Hide+Show 覆盖 AnimationData 之虞。
+                            m_loginDialog = null;
+                            DialogsManager.HideDialog(loginDialog);
+                            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, errorMessage, LanguageControl.Ok, null, null));
+                        }
+                    }
+                    // 登录结果处理完毕（成功/失败均至此）：清除目标服快照。
                     m_loginApiBaseUrl = null;
-                    // 登录对话框已关闭：迟到结果不写入登录态，也不弹错误窗。
-                    return;
                 }
 
-                if (result != null && result.Code == 200 && result.Data?.User != null)
+                if (m_logoutTask != null && m_logoutTask.IsCompleted)
                 {
-                    // 登录成功：按发起时快照写入目标服（在途期间可能已切服）。
-                    string loginApiBaseUrl = m_loginApiBaseUrl ?? ApiBaseUrl;
-                    m_sessions[loginApiBaseUrl] = new LoginData
+                    try
                     {
-                        Token = result.Data.Token,
-                        User = result.Data.User
-                    };
-                    if (m_loginDialog != null)
-                    {
-                        DialogsManager.HideDialog(m_loginDialog);
-                        m_loginDialog = null;
+                        if (m_logoutTask.Result)
+                        {
+                            // 服务端登出成功：删除该服本地凭据（BeginLogout 阶段仅清了内存态）。
+                            DeleteStoredAuth(m_logoutApiBaseUrl ?? ApiBaseUrl);
+                        }
+                        else
+                        {
+                            // 服务端登出失败：本地凭据已保留（可重试登录/登出），Toast 说明。
+                            CommunityToastManager.Show(
+                                LanguageControl.Get("ScbbsPlusAuthSessionManager", "LogoutFailedToast"),
+                                autoHideSeconds: 4.0);
+                        }
                     }
-
-                    // 日志与事件用本次登录结果本体：写入目标是快照服，与当前服可能不同
-                    //（在途期间切服且取消回调未触发的边缘路径），当前服视图可能为空或他人。
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginSucceeded"), result.Data.User.Nickname, result.Data.User.Level));
-
-                    // 持久化登录数据
-                    SaveStoredAuth(loginApiBaseUrl);
-
-                    if (string.Equals(loginApiBaseUrl, ApiBaseUrl, StringComparison.OrdinalIgnoreCase))
+                    catch (Exception ex)
                     {
-                        m_loginStateChanged.Raise(AuthChangeKind.LoggedIn);
+                        Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LogoutRequestFailed"), ex.Message));
                     }
+                    m_logoutTask = null;
+                    m_logoutApiBaseUrl = null;
                 }
-                else
-                {
-                    string errorMessage = result?.Msg ?? LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginFailedDefaultMessage");
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginFailed"), errorMessage));
-                    CommunityLoginDialog loginDialog = m_loginDialog;
-                    if (loginDialog == null)
-                    {
-                        DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, errorMessage, LanguageControl.Ok, null, null));
-                    }
-                    else if (IsDialogAttachedToRoot(loginDialog))
-                    {
-                        loginDialog.SetBusy(false);
-                        loginDialog.SetError(errorMessage);
-                    }
-                    else
-                    {
-                        // 引擎切屏只把旧屏从 RootWidget 摘除，对话框仍留在 Dialogs（挂在死屏上），
-                        // 错误写上去用户看不见：改走 MessageDialog 兜底。HideDialog 同步把死框移出
-                        // Dialogs，关闭动画再把死框连同旧 CoverWidget 从死屏摘除。
-                        // 兜底 MessageDialog 是另一实例，不同字典键，无同帧 Hide+Show 覆盖 AnimationData 之虞。
-                        m_loginDialog = null;
-                        DialogsManager.HideDialog(loginDialog);
-                        DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, errorMessage, LanguageControl.Ok, null, null));
-                    }
-                }
-                // 登录结果处理完毕（成功/失败均至此）：清除目标服快照。
-                m_loginApiBaseUrl = null;
             }
-
-            if (m_logoutTask != null && m_logoutTask.IsCompleted)
+            catch (Exception ex)
             {
-                try
-                {
-                    if (m_logoutTask.Result)
-                    {
-                        // 服务端登出成功：删除该服本地凭据（BeginLogout 阶段仅清了内存态）。
-                        DeleteStoredAuth(m_logoutApiBaseUrl ?? ApiBaseUrl);
-                    }
-                    else
-                    {
-                        // 服务端登出失败：本地凭据已保留（可重试登录/登出），Toast 说明。
-                        CommunityToastManager.Show(
-                            LanguageControl.Get("ScbbsPlusAuthSessionManager", "LogoutFailedToast"),
-                            autoHideSeconds: 4.0);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LogoutRequestFailed"), ex.Message));
-                }
-                m_logoutTask = null;
-                m_logoutApiBaseUrl = null;
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "AuthSessionPollFaulted"), ex));
             }
         }
 

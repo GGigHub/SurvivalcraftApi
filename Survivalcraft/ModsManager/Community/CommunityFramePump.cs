@@ -1,6 +1,4 @@
-using System;
 using Engine;
-using System.Globalization;
 
 namespace Game
 {
@@ -30,17 +28,10 @@ namespace Game
                 return;
             }
 
-            // 引擎 Frame?.Invoke() 无异常兜底：屏幕 Update 原本被 Program.Run 的 try/catch
-            // 兜住（记日志+切回主菜单），这里异常会直接杀死进程。保持「记日志继续跑」契约。
-            try
-            {
-                AuthSessionManager.Instance.Update();
-                DownloadFlowManager.Instance.Update();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusGlobalFramePump", "FramePumpPollFaulted"), ex));
-            }
+            // 轮询异常由各 Update 内部兜底：引擎 Frame?.Invoke() 无 try/catch，
+            // 冒泡即杀进程；各自兜底使一个轮询故障不拖累同帧其他轮询。
+            AuthSessionManager.Instance.Update();
+            DownloadFlowManager.Instance.Update();
         }
     }
 }

@@ -5213,6 +5213,7 @@
   "ScbbsPlusAuthSessionManager": {
     "CreateLoginRequestFailed": "[ScbbsPlus] 创建登录请求失败: {0}",
     "LoginRequestFaulted": "[ScbbsPlus] 登录请求异常: {0}",
+    "AuthSessionPollFaulted": "[ScbbsPlus] 认证会话轮询异常: {0}",
     "LoginSucceeded": "[ScbbsPlus] 登录成功 - 用户: {0} (Lv.{1})",
     "LoginFailed": "[ScbbsPlus] 登录失败: {0}",
     "LoginStateRestoredFromLocal": "[ScbbsPlus] 从本地恢复登录状态 - 用户: {0}",
@@ -5305,6 +5306,7 @@
     "SaveDownloadQueueFailed": "[ScbbsPlus] 保存下载队列失败: {0}",
     "CleanDownloadTempFileFailed": "[ScbbsPlus] 清理下载临时文件失败: {0}",
     "DownloadTaskFaulted": "[ScbbsPlus] 下载任务异常: {0}",
+    "DownloadFlowPollFaulted": "[ScbbsPlus] 下载收尾轮询异常: {0}",
     "BackgroundManifestLoadTaskFaulted": "[ScbbsPlus] 后台加载整合包清单任务异常: {0}",
     "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] 后台整合包子项下载任务异常: {0}",
     "ImportCompletedCallbackFaulted": "[ScbbsPlus] 导入完成回调异常（导入本身已成功）: {0}",
@@ -5415,9 +5417,6 @@
     "LocalFileDoesNotExistFormat": "本地文件不存在：{0}",
     "NoLocalResourceSelected": "未选择本地资源。",
     "UnsupportedUploadResourceTypeFormat": "暂不支持上传该资源类型：{0}"
-  },
-  "ScbbsPlusGlobalFramePump": {
-    "FramePumpPollFaulted": "[ScbbsPlus] 全局帧泵轮询异常: {0}"
   },
   "ScbbsPlusModVersionWidget": {
     "Files": "文件 {0}",

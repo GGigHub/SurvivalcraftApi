@@ -5203,6 +5203,7 @@
   "ScbbsPlusAuthSessionManager": {
     "CreateLoginRequestFailed": "[ScbbsPlus] Failed to create the login request: {0}",
     "LoginRequestFaulted": "[ScbbsPlus] Login request faulted: {0}",
+    "AuthSessionPollFaulted": "[ScbbsPlus] Auth session poll faulted: {0}",
     "LoginSucceeded": "[ScbbsPlus] Login succeeded - user: {0} (Lv.{1})",
     "LoginFailed": "[ScbbsPlus] Login failed: {0}",
     "LoginStateRestoredFromLocal": "[ScbbsPlus] Login state restored from local storage - user: {0}",
@@ -5295,6 +5296,7 @@
     "SaveDownloadQueueFailed": "[ScbbsPlus] Failed to save the download queue: {0}",
     "CleanDownloadTempFileFailed": "[ScbbsPlus] Failed to clean up a download temporary file: {0}",
     "DownloadTaskFaulted": "[ScbbsPlus] Download task faulted: {0}",
+    "DownloadFlowPollFaulted": "[ScbbsPlus] Download flow poll faulted: {0}",
     "BackgroundManifestLoadTaskFaulted": "[ScbbsPlus] Background modpack manifest loading task faulted: {0}",
     "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] Background modpack item download task faulted: {0}",
     "ImportCompletedCallbackFaulted": "[ScbbsPlus] Import completion callback faulted (the import itself succeeded): {0}",
@@ -5405,9 +5407,6 @@
     "LocalFileDoesNotExistFormat": "Local file does not exist: {0}",
     "NoLocalResourceSelected": "No local resource selected.",
     "UnsupportedUploadResourceTypeFormat": "Uploading this resource type is not supported: {0}"
-  },
-  "ScbbsPlusGlobalFramePump": {
-    "FramePumpPollFaulted": "[ScbbsPlus] Global frame pump polling faulted: {0}"
   },
   "ScbbsPlusModVersionWidget": {
     "Files": "Files {0}",
