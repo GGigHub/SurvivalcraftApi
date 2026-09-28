@@ -4992,15 +4992,9 @@
     "NoMatchingPluginVersion": "[ScbbsPlus] No matching plugin version found: game={0}, api={1}",
     "VersionMatchSucceeded": "[ScbbsPlus] Version matching succeeded: game={0}, api={1}, matchedId={2}, matchedVersion={3}, matchedName={4}"
   },
-  "ScbbsPlusSettingsManager": {
-    "LoadNativeModSettingsFailed": "[ScbbsPlus] Failed to load native mod settings: {0}"
-  },
   "ScbbsPlusLocalModReviewState": {
     "ReadReviewsFailed": "[ScbbsPlus] Failed to read local resource reviews: {0}",
     "SaveReviewsFailed": "[ScbbsPlus] Failed to save local resource reviews: {0}"
-  },
-  "ScbbsPlusPendingLocalModScanState": {
-    "BackgroundScanFailed": "[ScbbsPlus] Background scan of pending mods failed: {0}"
   },
   "ScbbsPlusPendingLocalModActions": {
     "ProcessedPendingModAction": "[ScbbsPlus] Processed pending mod action: reason={0}, action={1}, path={2}",
@@ -5008,9 +5002,6 @@
     "ReadPendingModManifestFailed": "[ScbbsPlus] Failed to read the pending mod manifest: {0}",
     "SavePendingModManifestFailed": "[ScbbsPlus] Failed to save the pending mod manifest: {0}",
     "MissingModPackageNameOrVersion": "Mod package name or version is missing; cannot update the disabled state."
-  },
-  "ScbbsPlusPendingLocalModMetadataReader": {
-    "ReadPendingModMetadataFailed": "[ScbbsPlus] Failed to read pending mod metadata: {0}, error={1}"
   },
   "ScbbsPlusDownloadQueueManager": {
     "LoadDownloadQueueFailed": "[ScbbsPlus] Failed to load download queue: {0}",

@@ -5002,15 +5002,9 @@
     "NoMatchingPluginVersion": "[ScbbsPlus] 未找到匹配的 plugin 版本: game={0}, api={1}",
     "VersionMatchSucceeded": "[ScbbsPlus] 版本匹配成功: game={0}, api={1}, matchedId={2}, matchedVersion={3}, matchedName={4}"
   },
-  "ScbbsPlusSettingsManager": {
-    "LoadNativeModSettingsFailed": "[ScbbsPlus] 加载原生模组设置失败: {0}"
-  },
   "ScbbsPlusLocalModReviewState": {
     "ReadReviewsFailed": "[ScbbsPlus] 读取本地资源评价失败: {0}",
     "SaveReviewsFailed": "[ScbbsPlus] 保存本地资源评价失败: {0}"
-  },
-  "ScbbsPlusPendingLocalModScanState": {
-    "BackgroundScanFailed": "[ScbbsPlus] 后台读取待加载模组失败: {0}"
   },
   "ScbbsPlusPendingLocalModActions": {
     "ProcessedPendingModAction": "[ScbbsPlus] 已处理待关闭模组操作: reason={0}, action={1}, path={2}",
@@ -5018,9 +5012,6 @@
     "ReadPendingModManifestFailed": "[ScbbsPlus] 读取待关闭模组清单失败: {0}",
     "SavePendingModManifestFailed": "[ScbbsPlus] 保存待关闭模组清单失败: {0}",
     "MissingModPackageNameOrVersion": "缺少模组包名或版本，无法更新禁用状态。"
-  },
-  "ScbbsPlusPendingLocalModMetadataReader": {
-    "ReadPendingModMetadataFailed": "[ScbbsPlus] 读取未加载模组信息失败: {0}, error={1}"
   },
   "ScbbsPlusDownloadQueueManager": {
     "LoadDownloadQueueFailed": "[ScbbsPlus] 加载下载队列失败: {0}",
