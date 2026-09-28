@@ -5193,7 +5193,8 @@
     "CleanIncompleteModUpdateFileFailed": "[ScbbsPlus] 清理未完成的模组更新文件失败: {0}",
     "RestoreModUpdateBackupFailed": "[ScbbsPlus] 还原模组更新备份失败: {0}",
     "CleanOverwriteBackupFailed": "[ScbbsPlus] 清理覆盖前备份失败: {0}",
-    "RestoreOverwriteBackupFailed": "[ScbbsPlus] 还原覆盖前备份失败: {0}"
+    "RestoreOverwriteBackupFailed": "[ScbbsPlus] 还原覆盖前备份失败: {0}",
+    "StartupRollbackResidualBackupFailed": "[ScbbsPlus] 启动回滚更新残留备份失败: {0}"
   },
   "ScbbsPlusPlayedTimeTracker": {
     "StartedTrackingModPlayedTime": "[ScbbsPlus] 已开始记录模组游玩时间: {0} 个模组",
@@ -5438,9 +5439,6 @@
   },
   "ScbbsPlusGlobalFramePump": {
     "FramePumpPollFaulted": "[ScbbsPlus] 全局帧泵轮询异常: {0}"
-  },
-  "ScbbsPlusModLoader": {
-    "StartupRollbackResidualBackupFailed": "[ScbbsPlus] 启动回滚更新残留备份失败: {0}"
   },
   "ScbbsPlusModVersionWidget": {
     "Files": "文件 {0}",

@@ -161,7 +161,21 @@ namespace Game {
                     ModsManager.Initialize();
                 }
             );
-            AddLoadAction(delegate { CommunityApp.Initialize(); });
+            AddLoadAction(delegate {
+                // ScbbsPlus 组合根接线：传输反馈的登录态回退延迟求值（仅真正上报时解析），接线前匿名上报。
+                TransferManager.ConfigureFeedbackProviders(
+                    () => AuthSessionManager.Instance.CurrentToken,
+                    () => AuthSessionManager.Instance.ApiBaseUrl);
+                // 按当前服务器激活会话（先于任何设置写入）：ApiBaseUrl 派生自
+                // CommunityServerManager.CurrentChineseInfo，后续切服由 ChangeChineseInfo 直接通知。
+                AuthSessionManager.Instance.OnServerSwitched();
+                TransactionalFileReplacement.RecoverLeftoverBackups(ModsManager.ModsPath, ModsManager.DocPath);
+                // 先于一切业务读取：修复上次进程死于 MoveFile 两步之间时 data:ScbbsPlus 下的状态丢失。
+                JsonFileStore.RecoverLeftoverTempFiles(CommunityStoragePaths.RootDirectory);
+                // ModPacks 主文件/meta 与 JsonFileStore 同款 .tmp 命名，同因写入：Move 阶段死亡时包文件唯一副本成孤儿 .tmp。
+                JsonFileStore.RecoverLeftoverTempFiles(ModpackRegistry.Shared.DirectoryPath);
+                PendingLocalModActions.Process("startup-early", includeSettingActions: false);
+            });
             AddLoadAction(
                 delegate {
 #if ANDROID
@@ -544,7 +558,11 @@ namespace Game {
                 }
             );
             AddLoadAction(KeyCompatibleGroupsManager.Initialize); //初始化按键兼容组
-            AddLoadAction(delegate { CommunityApp.OnLoadingFinished(); });
+            AddLoadAction(delegate {
+                PendingLocalModActions.Process("startup");
+                // 全局帧泵：下载收尾/自动更新/认证轮询改由引擎 Window.Frame 驱动，不再依赖 mod 屏 Update。
+                CommunityFramePump.Initialize();
+            });
             AddLoadAction(
                 delegate {
                     string restartReturnScreen = ScreensManager.ConsumeRestartReturnScreen();

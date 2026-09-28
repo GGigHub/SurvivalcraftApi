@@ -5183,7 +5183,8 @@
     "CleanIncompleteModUpdateFileFailed": "[ScbbsPlus] Failed to clean up an incomplete mod update file: {0}",
     "RestoreModUpdateBackupFailed": "[ScbbsPlus] Failed to restore a mod update backup: {0}",
     "CleanOverwriteBackupFailed": "[ScbbsPlus] Failed to clean up the pre-overwrite backup: {0}",
-    "RestoreOverwriteBackupFailed": "[ScbbsPlus] Failed to restore the pre-overwrite backup: {0}"
+    "RestoreOverwriteBackupFailed": "[ScbbsPlus] Failed to restore the pre-overwrite backup: {0}",
+    "StartupRollbackResidualBackupFailed": "[ScbbsPlus] Failed to roll back residual update backups at startup: {0}"
   },
   "ScbbsPlusPlayedTimeTracker": {
     "StartedTrackingModPlayedTime": "[ScbbsPlus] Started tracking mod played time: {0} mods",
@@ -5428,9 +5429,6 @@
   },
   "ScbbsPlusGlobalFramePump": {
     "FramePumpPollFaulted": "[ScbbsPlus] Global frame pump polling faulted: {0}"
-  },
-  "ScbbsPlusModLoader": {
-    "StartupRollbackResidualBackupFailed": "[ScbbsPlus] Failed to roll back residual update backups at startup: {0}"
   },
   "ScbbsPlusModVersionWidget": {
     "Files": "Files {0}",

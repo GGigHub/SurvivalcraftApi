@@ -1,4 +1,4 @@
-using Engine;
+﻿using Engine;
 using Engine.Graphics;
 
 namespace Game {
@@ -230,7 +230,7 @@ namespace Game {
                             return false;
                         }
                     );
-                    CommunityApp.OnScreenLeaved(m_animationData.OldScreen);
+                    CommunityToastManager.DetachFromScreen(m_animationData.OldScreen);
                     RootWidget.Children.Remove(m_animationData.OldScreen);
                 }
                 if (m_animationData.NewScreen != null) {

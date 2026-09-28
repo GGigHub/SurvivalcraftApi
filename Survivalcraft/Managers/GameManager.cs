@@ -1,4 +1,4 @@
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -54,7 +54,7 @@ namespace Game {
                     }
                 );
                 Project.OnProjectLoad += delegate(Project project) {
-                    CommunityApp.OnProjectLoaded(project);
+                    PlayedTimeTracker.StartProject(project);
                     ModsManager.HookAction(
                         "OnProjectLoaded",
                         loader => {
@@ -146,7 +146,7 @@ namespace Game {
                 XmlUtils.SetAttributeValue(xElement, "Version", VersionsManager.SerializationVersion);
                 XmlUtils.SetAttributeValue(xElement, "APIVersion", ModsManager.APIVersionString);
                 Storage.CreateDirectory(directoryName);
-                CommunityApp.OnProjectXmlSaved(xElement);
+                PlayedTimeTracker.OnProjectXmlSaved();
                 ModsManager.HookAction(
                     "OnProjectXmlSaved",
                     loader => {
@@ -199,7 +199,7 @@ namespace Game {
                 m_project = null;
                 m_subsystemUpdate = null;
                 m_worldInfo = null;
-                CommunityApp.OnProjectDisposed();
+                PlayedTimeTracker.StopProject();
                 ModsManager.HookAction(
                     "OnProjectDisposed",
                     loader => {

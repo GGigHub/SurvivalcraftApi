@@ -16,30 +16,37 @@ namespace Game
         // 原文件仍在说明该文件未被移走或新文件已就位，直接清理备份。
         public static void RecoverLeftoverBackups(params string[] rootPaths)
         {
-            if (rootPaths == null || rootPaths.Length == 0)
+            try
             {
-                return;
-            }
-
-            HashSet<string> visitedDirectories = new(StringComparer.OrdinalIgnoreCase);
-            foreach (string rootPath in rootPaths)
-            {
-                if (string.IsNullOrWhiteSpace(rootPath))
+                if (rootPaths == null || rootPaths.Length == 0)
                 {
-                    continue;
+                    return;
                 }
 
-                try
+                HashSet<string> visitedDirectories = new(StringComparer.OrdinalIgnoreCase);
+                foreach (string rootPath in rootPaths)
                 {
-                    if (Storage.DirectoryExists(rootPath))
+                    if (string.IsNullOrWhiteSpace(rootPath))
                     {
-                        RecoverInDirectory(rootPath, visitedDirectories, isRoot: true);
+                        continue;
+                    }
+
+                    try
+                    {
+                        if (Storage.DirectoryExists(rootPath))
+                        {
+                            RecoverInDirectory(rootPath, visitedDirectories, isRoot: true);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "ScanResidualBackupsFailed"), rootPath, ex.Message));
                     }
                 }
-                catch (Exception ex)
-                {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "ScanResidualBackupsFailed"), rootPath, ex.Message));
-                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "StartupRollbackResidualBackupFailed"), ex.Message));
             }
         }
 
