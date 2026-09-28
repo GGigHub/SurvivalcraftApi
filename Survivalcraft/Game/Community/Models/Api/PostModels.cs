@@ -129,7 +129,10 @@ namespace Game
     public class UploadModsData
     {
         [JsonPropertyName("list")] public PostFileItem[] List { get; set; }
-        [JsonPropertyName("total")] public int Total { get; set; }
+        // total 与 page/limit 同族：服务端计数字段类型不稳定，统一 FlexibleInt 归一化。
+        [JsonPropertyName("total")]
+        [JsonConverter(typeof(FlexibleIntJsonConverter))]
+        public int Total { get; set; }
         // /upload/list 的 page/limit 返回字符串（"1"/"10"），/upload/mods 返回数字：
         // 服务端同族接口类型不稳定，同 PostItem 计数字段走 FlexibleInt 归一化。
         [JsonPropertyName("page")]
