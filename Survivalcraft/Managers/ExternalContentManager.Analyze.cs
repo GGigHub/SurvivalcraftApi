@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -102,7 +102,7 @@ namespace Game
 
         public static string GetContentTypeDisplayName(ExternalContentType type)
         {
-            return EnumDisplayName.GetEnumDisplayName(type, EnumDisplayName.GetEnumDisplayName(CommunityFileType.Unknown));
+            return LanguageControl.GetEnumDisplayName(type, LanguageControl.GetEnumDisplayName(CommunityFileType.Unknown));
         }
 
         /// <summary>

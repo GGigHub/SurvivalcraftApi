@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -254,7 +254,7 @@ namespace Game
         private static string GetModpackItemCategoryName(ModpackItem item)
         {
             ExternalContentType type = ModpackRules.ResolveContentType(item);
-            return EnumDisplayName.GetEnumDisplayName(
+            return LanguageControl.GetEnumDisplayName(
                 CommunityFileRules.MapExternalContentTypeToFileType(type),
                 item?.Category);
         }

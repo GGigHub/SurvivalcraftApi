@@ -1,4 +1,4 @@
-{
+﻿{
   "Language": {
     "Name": "English"
   },
@@ -5223,73 +5223,71 @@
     "TokenExpired": "Your login session has expired. Please log in again.",
     "LoginFailedDefaultMessage": "Login failed"
   },
-  "ScbbsPlusCommon": {
-    "Enums": {
-      "ScbbsPlusCommunitySection": {
-        "All": "All",
-        "Trending": "Trending",
-        "NewActivity": "New Activity"
-      },
-      "CommunitySection": {
-        "All": "All",
-        "Trending": "Trending",
-        "NewActivity": "New Activity"
-      },
-      "CommunityDownloadSourceSelectionMode": {
-        "Default": "Default (Auto)",
-        "ManualSelect": "Choose Manually Each Time",
-        "CustomDefault": "Use the Default Download Source Below"
-      },
-      "CommunityDownloadSourceOption": {
-        "DefaultCn": "Default Line (Mainland China)",
-        "Source1Global": "Backup Line 1 (Global)",
-        "Source2Cn": "Backup Line 2 (Mainland China)",
-        "Source3Global": "Backup Line 3 (Global)",
-        "Source4Global": "Backup Line 4 (Global)"
-      },
-      "ScbbsPlusCommunityFileType": {
-        "Unknown": "Resource",
-        "World": "World",
-        "Furniture": "Furniture",
-        "Texture": "Texture",
-        "Skin": "Skin",
-        "Mod": "Mod",
-        "Image": "Image",
-        "Other": "Other Files",
-        "NetMod": "Net Mod",
-        "Modpack": "Modpack"
-      },
-      "CommunityFileType": {
-        "Unknown": "Resource",
-        "World": "World",
-        "Furniture": "Furniture",
-        "Texture": "Texture",
-        "Skin": "Skin",
-        "Mod": "Mod",
-        "Image": "Image",
-        "Other": "Other Files",
-        "NetMod": "Net Mod",
-        "Modpack": "Modpack"
-      },
-      "ScbbsPlusCommunityOrderType": {
-        "Latest": "Latest",
-        "Oldest": "Oldest",
-        "Updated": "Updated",
-        "Hot": "Hot"
-      },
-      "CommunityOrderType": {
-        "Latest": "Latest",
-        "Oldest": "Oldest",
-        "Updated": "Updated",
-        "Hot": "Hot"
-      },
-      "ExternalContentType": {
-        "World": "World",
-        "FurniturePack": "Furniture Pack",
-        "BlocksTexture": "Texture",
-        "CharacterSkin": "Skin",
-        "Mod": "Mod"
-      }
+  "Enums": {
+    "ScbbsPlusCommunitySection": {
+      "All": "All",
+      "Trending": "Trending",
+      "NewActivity": "New Activity"
+    },
+    "CommunitySection": {
+      "All": "All",
+      "Trending": "Trending",
+      "NewActivity": "New Activity"
+    },
+    "CommunityDownloadSourceSelectionMode": {
+      "Default": "Default (Auto)",
+      "ManualSelect": "Choose Manually Each Time",
+      "CustomDefault": "Use the Default Download Source Below"
+    },
+    "CommunityDownloadSourceOption": {
+      "DefaultCn": "Default Line (Mainland China)",
+      "Source1Global": "Backup Line 1 (Global)",
+      "Source2Cn": "Backup Line 2 (Mainland China)",
+      "Source3Global": "Backup Line 3 (Global)",
+      "Source4Global": "Backup Line 4 (Global)"
+    },
+    "ScbbsPlusCommunityFileType": {
+      "Unknown": "Resource",
+      "World": "World",
+      "Furniture": "Furniture",
+      "Texture": "Texture",
+      "Skin": "Skin",
+      "Mod": "Mod",
+      "Image": "Image",
+      "Other": "Other Files",
+      "NetMod": "Net Mod",
+      "Modpack": "Modpack"
+    },
+    "CommunityFileType": {
+      "Unknown": "Resource",
+      "World": "World",
+      "Furniture": "Furniture",
+      "Texture": "Texture",
+      "Skin": "Skin",
+      "Mod": "Mod",
+      "Image": "Image",
+      "Other": "Other Files",
+      "NetMod": "Net Mod",
+      "Modpack": "Modpack"
+    },
+    "ScbbsPlusCommunityOrderType": {
+      "Latest": "Latest",
+      "Oldest": "Oldest",
+      "Updated": "Updated",
+      "Hot": "Hot"
+    },
+    "CommunityOrderType": {
+      "Latest": "Latest",
+      "Oldest": "Oldest",
+      "Updated": "Updated",
+      "Hot": "Hot"
+    },
+    "ExternalContentType": {
+      "World": "World",
+      "FurniturePack": "Furniture Pack",
+      "BlocksTexture": "Texture",
+      "CharacterSkin": "Skin",
+      "Mod": "Mod"
     }
   },
   "ScbbsPlusDownloadDialog": {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Engine;
@@ -61,7 +61,7 @@ namespace Game
             m_postsPresenter.InvalidatePostDetailLoad();
             m_postsPresenter.TotalPages = 1;
 
-            string sectionName = EnumDisplayName.GetEnumDisplayName(effectiveSection);
+            string sectionName = LanguageControl.GetEnumDisplayName(effectiveSection);
             if (m_featuredResult == null)
             {
                 m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Featured", "Loading"), sectionName);

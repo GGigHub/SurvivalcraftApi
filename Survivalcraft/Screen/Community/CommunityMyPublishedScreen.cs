@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Xml.Linq;
@@ -64,7 +64,7 @@ namespace Game
                 m_nextPageButton,
                 m_pageJumpBox,
                 m_pageJumpButton,
-                item => EnumDisplayName.GetEnumDisplayName((CommunityFileType)item),
+                item => LanguageControl.GetEnumDisplayName((CommunityFileType)item),
                 PostTreePresenter.GetSingleVersionFile,
                 PostTreePresenter.ShouldShowCompatibilityForVersion,
                 m_postDetailSlot);
@@ -165,7 +165,7 @@ namespace Game
             {
                 m_postsPresenter.ApplyPostsResult(
                     loadResult,
-                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(loadResult.FileType)));
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyPublishedFormat"), LanguageControl.GetEnumDisplayName(loadResult.FileType)));
             }
 
             if (m_uploadsLoadSlot.TryTake(
@@ -178,7 +178,7 @@ namespace Game
             {
                 m_postsPresenter.ApplyUploadFilesResult(
                     uploadsResult,
-                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyUnpublishedFormat"), EnumDisplayName.GetEnumDisplayName(uploadsResult.FileType)));
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyUnpublishedFormat"), LanguageControl.GetEnumDisplayName(uploadsResult.FileType)));
             }
         }
 
@@ -201,7 +201,7 @@ namespace Game
             int userId = AuthSessionManager.Instance.CurrentUser?.Id ?? 0;
             string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
             m_postsPresenter.TotalPages = MathUtils.Max(m_postsPresenter.Page, 1);
-            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyPublishedFormat"), EnumDisplayName.GetEnumDisplayName(fileType)));
+            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyPublishedFormat"), LanguageControl.GetEnumDisplayName(fileType)));
             VersionCatalogCache.TryGetCachedVersionCatalog(apiBaseUrl, out VersionListItem[] cachedCatalog, out Dictionary<int, string> cachedVersionMap, out _);
             bool needVersionCatalog = VersionCatalogCache.ShouldLoadVersionCatalogForFileType(fileType);
 
@@ -243,7 +243,7 @@ namespace Game
             string token = AuthSessionManager.Instance.CurrentToken;
             string apiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl;
             m_postsPresenter.TotalPages = MathUtils.Max(m_postsPresenter.Page, 1);
-            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyUnpublishedFormat"), EnumDisplayName.GetEnumDisplayName(fileType)));
+            m_postsStatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityMyPublishedScreen", "MyUnpublishedFormat"), LanguageControl.GetEnumDisplayName(fileType)));
             m_uploadsLoadSlot.Start(async (requestId, _) =>
             {
                 CommunityUploadFilesLoad load = await CommunityManager.LoadMyUploadsAsync(
@@ -280,7 +280,7 @@ namespace Game
                 LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectFileType"),
                 fileTypeValues,
                 60f,
-                item => EnumDisplayName.GetEnumDisplayName((CommunityFileType)item),
+                item => LanguageControl.GetEnumDisplayName((CommunityFileType)item),
                 delegate (object result)
                 {
                     CommunityFileType newFileType = (CommunityFileType)result;

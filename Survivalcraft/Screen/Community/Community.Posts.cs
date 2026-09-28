@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text.Json;
@@ -19,7 +19,7 @@ namespace Game
             CommunityFileType resultFileType = useSearchIgnore && m_ignoreFileTypeFilter ? CommunityFileType.Unknown : fileType;
             string apiBaseUrl = CurrentApiBaseUrl;
             m_postsPresenter.TotalPages = MathUtils.Max(m_postsPresenter.Page, 1);
-            m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "CommunityFormat"), EnumDisplayName.GetEnumDisplayName(resultFileType)));
+            m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "CommunityFormat"), LanguageControl.GetEnumDisplayName(resultFileType)));
             bool needVersionFilter = (!useSearchIgnore || !m_ignoreVersionFilter) && m_onlyCurrentVersion;
             bool needVersionCatalog = VersionCatalogCache.ShouldLoadVersionCatalogForFileType(resultFileType);
             VersionCatalogCache.TryGetCachedVersionCatalog(apiBaseUrl, out VersionListItem[] cachedCatalog, out Dictionary<int, string> cachedVersionMap, out int? cachedPluginVersionId);

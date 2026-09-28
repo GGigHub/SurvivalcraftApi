@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Xml.Linq;
 using Engine;
@@ -92,7 +92,7 @@ namespace Game
                     LanguageControl.GetContentWidgets("ScbbsPlusMoreScreen", "CommunityDownloadSourceSelectionMode"),
                     EnumUtils.GetEnumValues<CommunityDownloadSourceSelectionMode>(),
                     60f,
-                    item => EnumDisplayName.GetEnumDisplayName((CommunityDownloadSourceSelectionMode)item),
+                    item => LanguageControl.GetEnumDisplayName((CommunityDownloadSourceSelectionMode)item),
                     item =>
                     {
                         SettingsManager.CommunityDownloadSourceSelectionMode = (CommunityDownloadSourceSelectionMode)item;
@@ -105,7 +105,7 @@ namespace Game
                     LanguageControl.GetContentWidgets("ScbbsPlusMoreScreen", "DefaultDownloadSource"),
                     EnumUtils.GetEnumValues<CommunityDownloadSourceOption>(),
                     60f,
-                    item => EnumDisplayName.GetEnumDisplayName((CommunityDownloadSourceOption)item),
+                    item => LanguageControl.GetEnumDisplayName((CommunityDownloadSourceOption)item),
                     item =>
                     {
                         SettingsManager.CommunityDefaultDownloadSource = (CommunityDownloadSourceOption)item;

@@ -325,6 +325,10 @@ namespace Game {
             return r;
         }
 
+        /// <summary>枚举显示名统一语言键：Enums.{枚举名}.{成员名}。</summary>
+        public static string GetEnumDisplayName<T>(T enumValue, string fallback = null) where T : Enum =>
+            TryGet(out string result, "Enums", typeof(T).Name, enumValue.ToString()) ? result : fallback ?? enumValue.ToString();
+
         public static string GetWithoutFallback(out bool r, params string[] keys) => Get(out r, jsonNode, keys);
 
         public static string GetBlock(string blockName, string prop) {

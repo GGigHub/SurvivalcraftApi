@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Xml.Linq;
 
 namespace Game
@@ -87,7 +87,7 @@ namespace Game
 
             if (m_fileTypeButton.IsClicked)
             {
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectFileType"), CommunityFileTypes.FilterableValues(), 60f, item => EnumDisplayName.GetEnumDisplayName((CommunityFileType)item), item =>
+                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectFileType"), CommunityFileTypes.FilterableValues(), 60f, item => LanguageControl.GetEnumDisplayName((CommunityFileType)item), item =>
                 {
                     m_fileType = (CommunityFileType)item;
                     MarkDefaultsChanged();
@@ -98,7 +98,7 @@ namespace Game
             if (m_orderButton.IsClicked)
             {
                 CommunityOrderType[] values = [CommunityOrderType.Latest, CommunityOrderType.Oldest, CommunityOrderType.Updated, CommunityOrderType.Hot];
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectSortOrder"), values, 60f, item => EnumDisplayName.GetEnumDisplayName((CommunityOrderType)item), item =>
+                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectSortOrder"), values, 60f, item => LanguageControl.GetEnumDisplayName((CommunityOrderType)item), item =>
                 {
                     m_orderType = (CommunityOrderType)item;
                     MarkDefaultsChanged();
@@ -120,7 +120,7 @@ namespace Game
             if (m_sectionButton.IsClicked)
             {
                 CommunitySection[] values = [CommunitySection.All, CommunitySection.Trending, CommunitySection.NewActivity];
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectSection"), values, 60f, item => EnumDisplayName.GetEnumDisplayName((CommunitySection)item), item =>
+                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectSection"), values, 60f, item => LanguageControl.GetEnumDisplayName((CommunitySection)item), item =>
                 {
                     m_section = (CommunitySection)item;
                     MarkDefaultsChanged();
@@ -189,10 +189,10 @@ namespace Game
 
         private void UpdateOptionButtons()
         {
-            m_fileTypeButton.Text = EnumDisplayName.GetEnumDisplayName(m_fileType);
-            m_orderButton.Text = EnumDisplayName.GetEnumDisplayName(m_orderType);
+            m_fileTypeButton.Text = LanguageControl.GetEnumDisplayName(m_fileType);
+            m_orderButton.Text = LanguageControl.GetEnumDisplayName(m_orderType);
             m_versionButton.Text = CommunityScreen.GetVersionFilterName(m_onlyCurrentVersion);
-            m_sectionButton.Text = EnumDisplayName.GetEnumDisplayName(m_section);
+            m_sectionButton.Text = LanguageControl.GetEnumDisplayName(m_section);
             m_saveDefaultButton.Text = m_defaultsSaved
                 ? LanguageControl.Get("ScbbsPlusFiltersDialog", "Saved")
                 : LanguageControl.Get("ScbbsPlusFiltersDialog", "SaveDefault");

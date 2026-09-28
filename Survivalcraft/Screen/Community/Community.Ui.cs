@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Engine;
 
 namespace Game
@@ -119,7 +119,7 @@ namespace Game
                     LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectSortOrder"),
                     new CommunityOrderType[] { CommunityOrderType.Latest, CommunityOrderType.Oldest, CommunityOrderType.Updated, CommunityOrderType.Hot },
                     60f,
-                    item => EnumDisplayName.GetEnumDisplayName((CommunityOrderType)item),
+                    item => LanguageControl.GetEnumDisplayName((CommunityOrderType)item),
                     delegate(object item)
                     {
                         CommunityOrderType newOrderType = (CommunityOrderType)item;
@@ -182,7 +182,7 @@ namespace Game
             bool orderEffective = GetEffectiveSection() == CommunitySection.All;
             m_orderButton.IsEnabled = orderEffective;
             m_orderButton.Text = orderEffective
-                ? EnumDisplayName.GetEnumDisplayName(m_orderType)
+                ? LanguageControl.GetEnumDisplayName(m_orderType)
                 : LanguageControl.Unavailable;
         }
 

@@ -1,4 +1,4 @@
-{
+﻿{
   "Language": {
     "Name": "简体中文"
   },
@@ -5233,73 +5233,71 @@
     "TokenExpired": "登录状态已失效，请重新登录。",
     "LoginFailedDefaultMessage": "登录失败"
   },
-  "ScbbsPlusCommon": {
-    "Enums": {
-      "ScbbsPlusCommunitySection": {
-        "All": "全部",
-        "Trending": "最近热门",
-        "NewActivity": "最新动态"
-      },
-      "CommunitySection": {
-        "All": "全部",
-        "Trending": "最近热门",
-        "NewActivity": "最新动态"
-      },
-      "CommunityDownloadSourceSelectionMode": {
-        "Default": "默认（自动选择）",
-        "ManualSelect": "每次手动选择",
-        "CustomDefault": "使用下方默认下载源"
-      },
-      "CommunityDownloadSourceOption": {
-        "DefaultCn": "默认线路（中国大陆）",
-        "Source1Global": "备用线路 1（全球）",
-        "Source2Cn": "备用线路 2（中国大陆）",
-        "Source3Global": "备用线路 3（全球）",
-        "Source4Global": "备用线路 4（全球）"
-      },
-      "ScbbsPlusCommunityFileType": {
-        "Unknown": "资源",
-        "World": "存档",
-        "Furniture": "家具",
-        "Texture": "材质",
-        "Skin": "皮肤",
-        "Mod": "模组",
-        "Image": "图片",
-        "Other": "其他文件",
-        "NetMod": "联机模组",
-        "Modpack": "整合包"
-      },
-      "CommunityFileType": {
-        "Unknown": "资源",
-        "World": "存档",
-        "Furniture": "家具",
-        "Texture": "材质",
-        "Skin": "皮肤",
-        "Mod": "模组",
-        "Image": "图片",
-        "Other": "其他文件",
-        "NetMod": "联机模组",
-        "Modpack": "整合包"
-      },
-      "ScbbsPlusCommunityOrderType": {
-        "Latest": "最新",
-        "Oldest": "最早",
-        "Updated": "最近更新",
-        "Hot": "热度"
-      },
-      "CommunityOrderType": {
-        "Latest": "最新",
-        "Oldest": "最早",
-        "Updated": "最近更新",
-        "Hot": "热度"
-      },
-      "ExternalContentType": {
-        "World": "存档",
-        "FurniturePack": "家具包",
-        "BlocksTexture": "材质",
-        "CharacterSkin": "皮肤",
-        "Mod": "模组"
-      }
+  "Enums": {
+    "ScbbsPlusCommunitySection": {
+      "All": "全部",
+      "Trending": "最近热门",
+      "NewActivity": "最新动态"
+    },
+    "CommunitySection": {
+      "All": "全部",
+      "Trending": "最近热门",
+      "NewActivity": "最新动态"
+    },
+    "CommunityDownloadSourceSelectionMode": {
+      "Default": "默认（自动选择）",
+      "ManualSelect": "每次手动选择",
+      "CustomDefault": "使用下方默认下载源"
+    },
+    "CommunityDownloadSourceOption": {
+      "DefaultCn": "默认线路（中国大陆）",
+      "Source1Global": "备用线路 1（全球）",
+      "Source2Cn": "备用线路 2（中国大陆）",
+      "Source3Global": "备用线路 3（全球）",
+      "Source4Global": "备用线路 4（全球）"
+    },
+    "ScbbsPlusCommunityFileType": {
+      "Unknown": "资源",
+      "World": "存档",
+      "Furniture": "家具",
+      "Texture": "材质",
+      "Skin": "皮肤",
+      "Mod": "模组",
+      "Image": "图片",
+      "Other": "其他文件",
+      "NetMod": "联机模组",
+      "Modpack": "整合包"
+    },
+    "CommunityFileType": {
+      "Unknown": "资源",
+      "World": "存档",
+      "Furniture": "家具",
+      "Texture": "材质",
+      "Skin": "皮肤",
+      "Mod": "模组",
+      "Image": "图片",
+      "Other": "其他文件",
+      "NetMod": "联机模组",
+      "Modpack": "整合包"
+    },
+    "ScbbsPlusCommunityOrderType": {
+      "Latest": "最新",
+      "Oldest": "最早",
+      "Updated": "最近更新",
+      "Hot": "热度"
+    },
+    "CommunityOrderType": {
+      "Latest": "最新",
+      "Oldest": "最早",
+      "Updated": "最近更新",
+      "Hot": "热度"
+    },
+    "ExternalContentType": {
+      "World": "存档",
+      "FurniturePack": "家具包",
+      "BlocksTexture": "材质",
+      "CharacterSkin": "皮肤",
+      "Mod": "模组"
     }
   },
   "ScbbsPlusDownloadDialog": {
