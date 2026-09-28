@@ -34,7 +34,12 @@ namespace Game
             m_httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
 
-        public async Task ReportAsync(
+        /// <summary>
+        /// 上报一批游玩时长记录。返回 true 表示服务端完整接收本批（HTTP 成功且 recorded 数与
+        /// 条数一致且无被拒条目）；false 表示任何失败（网络/服务端拒绝/部分被拒），调用方据此决定
+        /// 是否保留重试队列。业务失败不抛出，只记日志。
+        /// </summary>
+        public async Task<bool> ReportAsync(
             string apiBaseUrl,
             string token,
             IReadOnlyList<ModPlayRecordItem> items,
@@ -42,7 +47,7 @@ namespace Game
         {
             if (items == null || items.Count == 0)
             {
-                return;
+                return true;
             }
 
             string url = BuildRequestUrl(apiBaseUrl);
@@ -79,6 +84,8 @@ namespace Game
                         .Select(item => item.Reason));
                     Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeClient", "PlayedTimeReportRejectedEntries"), failureSummary));
                 }
+
+                return (result.Data?.Recorded ?? 0) == items.Count && failed == 0;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -87,6 +94,7 @@ namespace Game
             catch (Exception ex)
             {
                 Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeClient", "PlayedTimeReportFailed"), ex.Message));
+                return false;
             }
         }
 

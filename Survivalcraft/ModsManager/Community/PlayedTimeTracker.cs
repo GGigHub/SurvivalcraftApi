@@ -23,6 +23,10 @@ namespace Game
         // 全额计入会大量虚增游玩时长——按 2×自动保存周期封顶，超出部分视为不可玩时间丢弃。
         internal static readonly double MaxSettlementIntervalSeconds = 2.0 * 300.0;
 
+        // 待上报队列的硬上限：防 token 长期失效/服务端持续不可达时无限堆积。
+        // 正常每自动保存周期至多每模组 1 条，2000 条已是数周不间断游玩的量级；超限丢最旧。
+        internal const int MaxPendingReports = 2000;
+
         private static readonly Lock s_lock = new();
         // 上报客户端仅本类使用，自持单例（不再经组合根转发）。
         private static readonly CommunityPlayedTimeClient s_playedTimeClient = new(HttpClientProvider.Community);
@@ -36,6 +40,12 @@ namespace Game
         private static double s_lastProjectSettlementRealTime;
         private static readonly Dictionary<string, ActivePlaySession> s_projectSessions = new(StringComparer.OrdinalIgnoreCase);
         private static ActivePlaySession s_selfPageSession;
+        // 待上报队列（复用 s_lock）：上报前先落盘，发送成功整批出队；开机补报、新记录入队时触发。
+        // 上报循环单飞：一次只有一个 ReportPendingAsync 在跑，失败不自动循环重试，
+        // 由下次启动或新记录入队再触发——与上游模组 e56f312/374182e 的队列语义一致。
+        private static List<ModPlayRecordItem> s_pendingReports;
+        private static bool s_pendingReportsLoaded;
+        private static bool s_reportLoopRunning;
 
         /// <summary>
         /// 项目销毁（退出世界）时结算剩余时长并上报，随后清空会话与结算基准。
@@ -384,8 +394,8 @@ namespace Game
 
         /// <summary>
         /// 生成会话的上报记录，取走累计中的整数秒（尾数留在会话里随后续增量上报）。
-        /// 不足 1 秒的会话整段跳过；上报本身非事务，失败不重试（与本地时长台账可能
-        /// 出现单个自动保存周期的服务端缺口，属接受的权衡）。internal 供测试注入台账与身份。
+        /// 不足 1 秒的会话整段跳过；记录生成后先进待上报队列落盘，发送失败保留重试
+        /// （开机补报/新记录入队触发）。internal 供测试注入台账与身份。
         /// </summary>
         internal static List<ModPlayRecordItem> CreateReports(
             IDictionary<string, ModPlayedTimeData> mods,
@@ -443,20 +453,152 @@ namespace Game
                 return;
             }
 
-            string token = s_reportToken;
-            _ = ReportAsync(reports, token);
+            lock (s_lock)
+            {
+                EnsurePendingReportsLoadedLocked();
+                s_pendingReports.AddRange(reports);
+                if (s_pendingReports.Count > MaxPendingReports)
+                {
+                    int excess = s_pendingReports.Count - MaxPendingReports;
+                    s_pendingReports.RemoveRange(0, excess);
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsTrimmed"), excess));
+                }
+                SavePendingReportsLocked();
+            }
+
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsEnqueued"), reports.Count));
+            StartReportLoop();
         }
 
-        private static async Task ReportAsync(List<ModPlayRecordItem> reports, string token)
+        /// <summary>开机补报：装载完成时调用，把上次会话遗留的待上报记录重试发送。</summary>
+        public static void RetryPendingReports()
         {
-            // 发送前再查一次开关：排队与真正发送之间用户可能刚把它关掉。
+            // 开机时身份快照尚未建立（s_reportToken 为 null），先幂等恢复本地凭据并拍照，
+            // 否则补报恒以匿名发送、对已登录用户形同虚设。与 StartProject 同款两行。
+            AuthSessionManager.Instance.EnsureStoredAuthLoaded();
+            RefreshReportIdentitySnapshot();
             if (!SettingsManager.CommunityPlayedTimeReportingEnabled)
             {
-                Log.Information(LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PlayedTimeReportingDisabledCancelingPending"));
                 return;
             }
 
-            await s_playedTimeClient.ReportAsync(AuthSessionManager.Instance.ApiBaseUrl, token, reports);
+            int pendingCount;
+            lock (s_lock)
+            {
+                EnsurePendingReportsLoadedLocked();
+                pendingCount = s_pendingReports.Count;
+            }
+
+            if (pendingCount <= 0)
+            {
+                return;
+            }
+
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsRetryStart"), pendingCount));
+            StartReportLoop();
+        }
+
+        private static void StartReportLoop()
+        {
+            lock (s_lock)
+            {
+                if (s_reportLoopRunning)
+                {
+                    return;
+                }
+
+                s_reportLoopRunning = true;
+            }
+
+            _ = ReportPendingAsync();
+        }
+
+        private static async Task ReportPendingAsync()
+        {
+            List<ModPlayRecordItem> reports;
+            try
+            {
+                lock (s_lock)
+                {
+                    EnsurePendingReportsLoadedLocked();
+                    reports = [.. s_pendingReports];
+                }
+
+                // 发送前再查开关与网络：排队与真正发送之间用户可能刚关掉开关，或本就无网络。
+                if (reports.Count == 0 || !SettingsManager.CommunityPlayedTimeReportingEnabled)
+                {
+                    return;
+                }
+
+                if (!WebManager.IsInternetConnectionAvailable())
+                {
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsOffline"), reports.Count));
+                    return;
+                }
+
+                bool fullyAccepted = await s_playedTimeClient.ReportAsync(AuthSessionManager.Instance.ApiBaseUrl, s_reportToken, reports);
+                if (!fullyAccepted)
+                {
+                    // 整批成功才出队：部分被拒/服务端异常时全批保留，等下次触发重发。
+                    Log.Information(LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsKept"));
+                    return;
+                }
+
+                lock (s_lock)
+                {
+                    EnsurePendingReportsLoadedLocked();
+                    int removeCount = Math.Min(reports.Count, s_pendingReports.Count);
+                    s_pendingReports.RemoveRange(0, removeCount);
+                    SavePendingReportsLocked();
+                }
+
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsDequeued"), reports.Count));
+            }
+            catch (Exception ex)
+            {
+                // 防御兜底：上报链各层已各自兜异常，这里是最后一道，避免 unobserved task exception 静默。
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsLoopFaulted"), ex));
+            }
+            finally
+            {
+                int remaining;
+                lock (s_lock)
+                {
+                    s_reportLoopRunning = false;
+                    EnsurePendingReportsLoadedLocked();
+                    remaining = s_pendingReports.Count;
+                }
+
+                // 失败/离线不自动循环重试：留给下次启动补报或新记录入队时触发。
+                if (remaining > 0 && SettingsManager.CommunityPlayedTimeReportingEnabled)
+                {
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsRemaining"), remaining));
+                }
+            }
+        }
+
+        private static void EnsurePendingReportsLoadedLocked()
+        {
+            if (s_pendingReportsLoaded)
+            {
+                return;
+            }
+
+            s_pendingReportsLoaded = true;
+            // JsonFileStore 读失败自带日志并回退 null（空队列），不吞数据之外的风险。
+            s_pendingReports = JsonFileStore.Read<List<ModPlayRecordItem>>(CommunityStoragePaths.PlayedTimePendingReportsFile, CommunityPlayedTimeClient.SerializationOptions) ?? [];
+        }
+
+        private static void SavePendingReportsLocked()
+        {
+            try
+            {
+                JsonFileStore.Write(CommunityStoragePaths.PlayedTimePendingReportsFile, s_pendingReports, CommunityPlayedTimeClient.SerializationOptions);
+            }
+            catch (Exception ex)
+            {
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsSaveFailed"), ex.Message));
+            }
         }
 
         /// <summary>主线程入口调用：把当前登录态拍成上报身份快照，供任意结算线程消费。</summary>

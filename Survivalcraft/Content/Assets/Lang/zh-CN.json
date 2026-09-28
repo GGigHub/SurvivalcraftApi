@@ -5207,12 +5207,20 @@
     "ReadModPlayedTimeFailed": "[ScbbsPlus] 读取模组游玩时间失败: {0}",
     "SaveModPlayedTimeFailed": "[ScbbsPlus] 保存模组游玩时间失败: {0}",
     "PlayedTimeReportingDisabledSkipping": "[ScbbsPlus] 游玩时间上报已关闭，跳过本次上报",
-    "PlayedTimeReportingDisabledCancelingPending": "[ScbbsPlus] 游玩时间上报已关闭，取消待发送请求",
     "SecondsFormat": "{0}秒",
     "MinutesFormat": "{0}分钟",
     "HoursMinutesFormat": "{0}小时{1}分钟",
     "HoursFormat": "{0}小时",
-    "LessThanOneMinute": "<1分钟"
+    "LessThanOneMinute": "<1分钟",
+    "PendingReportsEnqueued": "已将 {0} 条游玩时长写入待上报队列",
+    "PendingReportsTrimmed": "待上报队列超限，已丢弃最旧的 {0} 条",
+    "PendingReportsRetryStart": "检测到 {0} 条待补报的游玩时长，开始重试",
+    "PendingReportsOffline": "当前无网络连接，{0} 条游玩时长保留在待上报队列",
+    "PendingReportsKept": "服务端未完整接收本批游玩时长，保留队列等待下次重试",
+    "PendingReportsDequeued": "已从待上报队列移除 {0} 条成功记录",
+    "PendingReportsRemaining": "仍有 {0} 条待上报记录，将在下次启动或产生新记录时重试",
+    "PendingReportsSaveFailed": "保存待上报游玩时长失败: {0}",
+    "PendingReportsLoopFaulted": "游玩时长待上报循环异常: {0}"
   },
   "ScbbsPlusAuthSessionManager": {
     "CreateLoginRequestFailed": "[ScbbsPlus] 创建登录请求失败: {0}",

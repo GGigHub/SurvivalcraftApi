@@ -14,6 +14,7 @@ namespace Game
         public static readonly string LocalModPendingActionsFile = Storage.CombinePaths(RootDirectory, "local-mod-pending-actions.json");
         public static readonly string LocalModpackStateFile = Storage.CombinePaths(RootDirectory, "local-integration-pack-state.json");
         public static readonly string PlayedTimeFile = Storage.CombinePaths(RootDirectory, "playedtime.json");
+        public static readonly string PlayedTimePendingReportsFile = Storage.CombinePaths(RootDirectory, "pending-play-reports.json");
         public static readonly string DownloadQueueFile = Storage.CombinePaths(RootDirectory, "download-queue.json");
         public static readonly string AuthDirectory = Storage.CombinePaths(RootDirectory, "auth");
         public static readonly string DownloadCacheDirectory = Storage.CombinePaths(RootDirectory, "download-cache");

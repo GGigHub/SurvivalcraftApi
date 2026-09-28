@@ -560,6 +560,8 @@ namespace Game {
             AddLoadAction(KeyCompatibleGroupsManager.Initialize); //初始化按键兼容组
             AddLoadAction(delegate {
                 PendingLocalModActions.Process("startup");
+                // 开机补报：重试上次会话遗留的待上报游玩时长（队列见 PlayedTimeTracker）。
+                PlayedTimeTracker.RetryPendingReports();
                 // 全局帧泵：下载收尾/自动更新/认证轮询改由引擎 Window.Frame 驱动，不再依赖 mod 屏 Update。
                 CommunityFramePump.Initialize();
             });

@@ -5197,12 +5197,20 @@
     "ReadModPlayedTimeFailed": "[ScbbsPlus] Failed to read mod played time: {0}",
     "SaveModPlayedTimeFailed": "[ScbbsPlus] Failed to save mod played time: {0}",
     "PlayedTimeReportingDisabledSkipping": "[ScbbsPlus] Played time reporting is disabled; skipping this report",
-    "PlayedTimeReportingDisabledCancelingPending": "[ScbbsPlus] Played time reporting is disabled; canceling pending requests",
     "SecondsFormat": "{0}s",
     "MinutesFormat": "{0}m",
     "HoursMinutesFormat": "{0}h {1}m",
     "HoursFormat": "{0}h",
-    "LessThanOneMinute": "<1m"
+    "LessThanOneMinute": "<1m",
+    "PendingReportsEnqueued": "Queued {0} playtime records for reporting",
+    "PendingReportsTrimmed": "Pending report queue over limit: dropped {0} oldest records",
+    "PendingReportsRetryStart": "Found {0} pending playtime records, retrying",
+    "PendingReportsOffline": "No internet connection: {0} playtime records kept in the pending queue",
+    "PendingReportsKept": "Server did not fully accept this batch; keeping the pending queue for the next retry",
+    "PendingReportsDequeued": "Removed {0} accepted records from the pending queue",
+    "PendingReportsRemaining": "{0} records remain pending; they will retry at next startup or when new records appear",
+    "PendingReportsSaveFailed": "Failed to save pending playtime records: {0}",
+    "PendingReportsLoopFaulted": "Playtime pending-report loop faulted: {0}"
   },
   "ScbbsPlusAuthSessionManager": {
     "CreateLoginRequestFailed": "[ScbbsPlus] Failed to create the login request: {0}",
