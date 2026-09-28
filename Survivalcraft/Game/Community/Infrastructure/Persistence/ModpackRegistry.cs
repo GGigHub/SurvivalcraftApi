@@ -35,7 +35,7 @@ namespace Game
 
         public string DirectoryPath => m_directory;
 
-        public void SaveManifest(ModpackManifest manifest, string sourceUrl, string sourceFileName, byte[] sourceData = null)
+        public void SaveManifest(ModpackManifest manifest, string sourceUrl, string sourceFileName, byte[] sourceData = null, bool overwriteConflicting = false)
         {
             if (manifest == null || manifest.Items == null || manifest.Items.Length == 0)
             {
@@ -57,7 +57,12 @@ namespace Game
                     Manifest = manifest
                 };
                 string manifestPath = BuildManifestPath(record);
-                manifestPath = ResolveNonConflictingTargetPath(manifestPath, sourceUrl);
+                // overwriteConflicting：调用方已弹覆盖确认，跳过异源改名直接顶替同名；
+                // 未确认时维持原语义（同名顶替/异源改名 "pack (2)"）。
+                if (!overwriteConflicting)
+                {
+                    manifestPath = ResolveNonConflictingTargetPath(manifestPath, sourceUrl);
+                }
                 if (sourceData != null && sourceData.Length > 0)
                 {
                     WriteBytes(manifestPath, sourceData);
@@ -73,7 +78,7 @@ namespace Game
             }
         }
 
-        public void SaveArchive(byte[] sourceData, string sourceUrl, string sourceFileName)
+        public void SaveArchive(byte[] sourceData, string sourceUrl, string sourceFileName, bool overwriteConflicting = false)
         {
             if (sourceData == null || sourceData.Length == 0)
             {
@@ -88,8 +93,15 @@ namespace Game
                 {
                     fileName = "pack.zip";
                 }
-                string archivePath = Storage.CombinePaths(m_directory, fileName);
-                archivePath = ResolveNonConflictingTargetPath(archivePath, sourceUrl);
+                // 与 FindConflictingPackPath/BuildManifestPath 同用 BuildTargetPath：
+                // 覆盖确认检查的命中路径必须与实际落盘路径一致，否则「确认覆盖却另写新名」。
+                // 入口已按 .zip/.json 分叉，归一化只影响大小写与极端文件名清洗。
+                string archivePath = BuildTargetPath(fileName);
+                // overwriteConflicting：调用方已弹覆盖确认，跳过异源改名直接顶替同名（与 SaveManifest 同口径）。
+                if (!overwriteConflicting)
+                {
+                    archivePath = ResolveNonConflictingTargetPath(archivePath, sourceUrl);
+                }
                 WriteBytes(archivePath, sourceData);
                 WriteMetadata(archivePath, new LocalModpackRecord
                 {
@@ -585,13 +597,44 @@ namespace Game
             public string ImportedAt { get; set; }
         }
 
+        /// <summary>
+        /// 判定本次导入是否与既有整合包同名（同基名的 .zip/.json 任一已存在）。
+        /// 返回命中的既有文件路径（供覆盖确认框展示），无同名返回 null。
+        /// 口径与 ResolveNonConflictingTargetPath 的"原始目标基名即重新导入"一致，
+        /// 不含历史导入改名分配出的 "pack (2)" 这类非原始基名。
+        /// </summary>
+        public string FindConflictingPackPath(string sourceFileName)
+        {
+            string targetPath = BuildTargetPath(sourceFileName);
+            string directory = Storage.GetDirectoryName(targetPath);
+            string baseName = Storage.GetFileNameWithoutExtensionBCL(targetPath);
+            if (string.IsNullOrWhiteSpace(directory) || string.IsNullOrWhiteSpace(baseName))
+            {
+                return null;
+            }
+            foreach (string candidateExtension in ConflictingExtensions)
+            {
+                string candidatePath = Storage.CombinePaths(directory, baseName + candidateExtension);
+                if (Storage.FileExists(candidatePath))
+                {
+                    return candidatePath;
+                }
+            }
+            return null;
+        }
+
         private string BuildManifestPath(LocalModpackRecord record)
         {
-            string sourceFileName = Storage.GetFileName(record?.SourceFileName ?? string.Empty);
-            if (!string.IsNullOrWhiteSpace(sourceFileName))
+            return BuildTargetPath(record?.SourceFileName);
+        }
+
+        private string BuildTargetPath(string sourceFileName)
+        {
+            string fileName = Storage.GetFileName(sourceFileName ?? string.Empty);
+            if (!string.IsNullOrWhiteSpace(fileName))
             {
-                string baseName = Storage.SanitizeFileNameSegment(Storage.GetFileNameWithoutExtensionBCL(sourceFileName), "pack");
-                string extension = Storage.GetExtensionBCL(sourceFileName);
+                string baseName = Storage.SanitizeFileNameSegment(Storage.GetFileNameWithoutExtensionBCL(fileName), "pack");
+                string extension = Storage.GetExtensionBCL(fileName);
                 if (!string.Equals(extension, ".json", StringComparison.OrdinalIgnoreCase)
                     && !string.Equals(extension, ".zip", StringComparison.OrdinalIgnoreCase))
                 {

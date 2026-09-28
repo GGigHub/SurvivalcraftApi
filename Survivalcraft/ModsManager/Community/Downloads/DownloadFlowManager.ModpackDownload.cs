@@ -127,8 +127,9 @@ namespace Game
         /// <summary>
         /// 确认框正文：分叉问句（需下载为零则不提下载）+ 逐子项三态清单
         /// （已存在=本机已有同内容；内置=随包 zip 落盘；需下载=需网络获取）。
+        /// RemoteImportManager 清单链确认框共用（同款是/否问句）。
         /// </summary>
-        private static string BuildModpackConfirmBody(
+        internal static string BuildModpackConfirmBody(
             ModpackManifest manifest,
             IReadOnlyDictionary<string, byte[]> embeddedFiles,
             ModpackPresenceSnapshot snapshot,
@@ -170,7 +171,7 @@ namespace Game
             return string.Join("\n", lines);
         }
 
-        private static bool IsBundledItem(ModpackItem item, IReadOnlyDictionary<string, byte[]> embeddedFiles)
+        internal static bool IsBundledItem(ModpackItem item, IReadOnlyDictionary<string, byte[]> embeddedFiles)
         {
             string url = item?.Url?.Trim();
             return !string.IsNullOrWhiteSpace(url)

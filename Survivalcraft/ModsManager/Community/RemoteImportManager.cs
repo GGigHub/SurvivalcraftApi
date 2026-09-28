@@ -183,14 +183,7 @@ namespace Game
                     DialogsManager.HideDialog(s_downloadDialog);
                     s_downloadDialog = null;
                 }
-                DialogsManager.ShowDialog(
-                    null,
-                    new MessageDialog(
-                        LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportComplete"),
-                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ZIPModpackHasBeenSavedLocally"), result.FileName),
-                        LanguageControl.Ok,
-                        null,
-                        null));
+                ConfirmArchiveOverwriteAndSave(requestId, result.Url, result.FileName, result.ArchiveData);
                 return;
             }
 
@@ -201,7 +194,7 @@ namespace Game
                     DialogsManager.HideDialog(s_downloadDialog);
                     s_downloadDialog = null;
                 }
-                ConfirmAndStartRemoteModpackDownload(requestId, result.Manifest, result.Url, result.FileName, result.EmbeddedFiles, result.OriginalData);
+                ConfirmRemoteModpackOverwrite(requestId, result.Manifest, result.Url, result.FileName, result.EmbeddedFiles, result.OriginalData);
                 return;
             }
 
@@ -336,6 +329,10 @@ namespace Game
                 return;
             }
 
+            // 整合包分支同样消费此旗标（同名覆盖确认），必须在分叉前赋值，
+            // 否则读到上一次资源导入的残留值。
+            s_showDuplicatePrompt = showDuplicatePrompt;
+
             try
             {
                 string candidateFileName = ModpackRules.TryGetPathTailName(fileName ?? rawUrl);
@@ -348,7 +345,6 @@ namespace Game
 
                 RemoteImportRequest request = CreateRequest(rawUrl, fileName);
                 int requestId = ++s_prepareRequestId;
-                s_showDuplicatePrompt = showDuplicatePrompt;
                 s_progress = new CommunityTransferProgress();
                 s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportResource"), progress: s_progress);
                 s_downloadDialog.SetProgress(s_progress);
@@ -544,8 +540,9 @@ namespace Game
                     Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackPackageDownloadCompleted"), kindWord, data.Length));
                     if (downloadArchiveOnly)
                     {
-                        ModpackRegistry.Shared.SaveArchive(data, url, fileName);
-                        return new ExternalContentPreparation { RequestId = requestId, FileName = fileName, ArchiveSaved = true };
+                        // 落盘改在主线程覆盖确认后执行（SaveRemoteArchive），准备任务只携带字节。
+                        // Url 必须随行：SaveArchive 写溯源 meta，缺失会永久丢失同源判定证据。
+                        return new ExternalContentPreparation { RequestId = requestId, Url = url, FileName = fileName, ArchiveSaved = true, ArchiveData = data };
                     }
 
                     ModpackManifestLoadResult manifestResult = s_manifestParser.Parse(requestId, data, url, fileName);
@@ -588,43 +585,126 @@ namespace Game
             AttachPrepareCompletion(s_prepareTask, requestId);
         }
 
-        private static void ConfirmAndStartRemoteModpackDownload(int requestId, ModpackManifest manifest, string url, string fileName, IReadOnlyDictionary<string, byte[]> embeddedFiles, byte[] sourceData)
+        // 直链 zip 整合包：与清单链同款覆盖确认（同名检查 → CommunityImportOverwriteDialog），
+        // 确认后主线程 SaveArchive 落盘并沿用「已保存到本地」完成弹窗。
+        private static void ConfirmArchiveOverwriteAndSave(int requestId, string url, string fileName, byte[] archiveData)
         {
-            int totalCount = manifest.Items.Length;
-            string title = !string.IsNullOrWhiteSpace(manifest.Name) ? manifest.Name : fileName;
-            bool canImportManifestOnly = string.Equals(Storage.GetExtensionBCL(fileName), ".json", StringComparison.OrdinalIgnoreCase);
-            string actionPrompt = canImportManifestOnly
-                ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "SubitemsCountPrompt"), totalCount)
-                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "TotalItemsDownloadAll"), totalCount);
-            string body = string.IsNullOrWhiteSpace(manifest.Description)
-                ? actionPrompt
-                : manifest.Description + "\n\n" + actionPrompt;
+            string conflictingPath = ModpackRegistry.Shared.FindConflictingPackPath(fileName);
+            if (conflictingPath != null && s_showDuplicatePrompt)
+            {
+                string message = string.Format(
+                    CultureInfo.InvariantCulture,
+                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "LocalAlreadyExistsOverwriteIt"),
+                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "Modpack"),
+                    Storage.GetFileName(conflictingPath));
+                DialogsManager.ShowDialog(
+                    null,
+                    new CommunityImportOverwriteDialog(message, canRename: false, action =>
+                    {
+                        if (action == ImportOverwriteAction.Overwrite)
+                        {
+                            SaveRemoteArchive(requestId, url, fileName, archiveData, overwriteConflicting: true);
+                        }
+                        // 取消：一个字节未落盘，零残留。
+                    }));
+                return;
+            }
 
-            DialogsManager.ShowDialog(null,
+            SaveRemoteArchive(requestId, url, fileName, archiveData, overwriteConflicting: false);
+        }
+
+        private static void SaveRemoteArchive(int requestId, string url, string fileName, byte[] archiveData, bool overwriteConflicting)
+        {
+            // 确认框可能悬置到下一次导入之后才被点击：过期 requestId 或已有导入在跑时丢弃本次落盘。
+            if (requestId != s_prepareRequestId || s_importTask != null)
+            {
+                return;
+            }
+            try
+            {
+                ModpackRegistry.Shared.SaveArchive(archiveData, url, fileName, overwriteConflicting);
+            }
+            catch (Exception ex)
+            {
+                // 原实现此写入在准备任务内、异常走统一错误弹窗；搬进按钮回调后自兜同款，
+                // 不允许磁盘满等异常从对话框按钮处理器逃逸。
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "SaveArchiveFailed"), ex.Message));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, ex.Message, LanguageControl.Ok, null, null));
+                return;
+            }
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportComplete"),
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ZIPModpackHasBeenSavedLocally"), fileName),
+                    LanguageControl.Ok,
+                    null,
+                    null));
+        }
+
+        // 清单链导入流程（2026-09-29 用户裁定重排）：内存下完 → 同名整合包覆盖确认
+        // → 清单直接落盘 → ConfirmDownloadAndEnable 是/否问句（DFM 同款三态子项清单）。
+        // 旧「开始下载/仅导入清单」三钮框删除：清单在提问前已落盘，答"否"即旧
+        // 「仅导入清单」语义（管理屏可补装或删除），与 DFM 取消路径行为对齐。
+        private static void ConfirmRemoteModpackOverwrite(int requestId, ModpackManifest manifest, string url, string fileName, IReadOnlyDictionary<string, byte[]> embeddedFiles, byte[] sourceData)
+        {
+            string conflictingPath = ModpackRegistry.Shared.FindConflictingPackPath(fileName);
+            if (conflictingPath != null && s_showDuplicatePrompt)
+            {
+                string message = string.Format(
+                    CultureInfo.InvariantCulture,
+                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "LocalAlreadyExistsOverwriteIt"),
+                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "Modpack"),
+                    Storage.GetFileName(conflictingPath));
+                DialogsManager.ShowDialog(
+                    null,
+                    new CommunityImportOverwriteDialog(message, canRename: false, action =>
+                    {
+                        if (action == ImportOverwriteAction.Overwrite)
+                        {
+                            SaveRemoteModpackAndAskEnable(requestId, manifest, url, fileName, embeddedFiles, sourceData, overwriteConflicting: true);
+                        }
+                        // 取消：一个字节未落盘，零残留。
+                    }));
+                return;
+            }
+
+            SaveRemoteModpackAndAskEnable(requestId, manifest, url, fileName, embeddedFiles, sourceData, overwriteConflicting: false);
+        }
+
+        private static void SaveRemoteModpackAndAskEnable(int requestId, ModpackManifest manifest, string url, string fileName, IReadOnlyDictionary<string, byte[]> embeddedFiles, byte[] sourceData, bool overwriteConflicting)
+        {
+            // 覆盖确认框可能悬置到下一次导入之后才被点击（帧首投递显示、同帧任务即释放，
+            // 下一帧起 IsBusy 已 false）。过期 requestId 或已有导入在跑时不再落盘/提问。
+            if (requestId != s_prepareRequestId || s_importTask != null)
+            {
+                return;
+            }
+            if (!TrySaveManifest(manifest, url, fileName, sourceData, overwriteConflicting))
+            {
+                return;
+            }
+
+            ModpackPresenceSnapshot snapshot = new ModpackPresenceManager().Capture(null);
+            string body = DownloadFlowManager.BuildModpackConfirmBody(manifest, embeddedFiles, snapshot, out _);
+            string title = !string.IsNullOrWhiteSpace(manifest.Name) ? manifest.Name : fileName;
+            DialogsManager.ShowDialog(
+                null,
                 new MessageDialog(
                     title,
                     body,
-                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "StartDownload"),
-                    canImportManifestOnly
-                        ? LanguageControl.Get("ScbbsPlusRemoteImportManager", "OnlyImportManifest")
-                        : LanguageControl.Cancel,
+                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Yes"),
+                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "No"),
                     button =>
                     {
                         if (button == MessageDialogButton.Button1)
                         {
-                            // 复检：确认对话框可能悬置到下一次导入之后才被点击（帧首投递显示、
-                            // 同帧任务即释放，下一帧起 IsBusy 已 false）。过期 requestId 或已有
-                            // 导入在跑时忽略本次确认，防旧包以过期 requestId 启动产生
-                            // 「0 项完成」误导弹窗与无谓 SaveManifest。
+                            // 同款复检：防旧包以过期 requestId 启动产生「0 项完成」误导弹窗。
                             if (requestId != s_prepareRequestId || s_importTask != null)
                             {
                                 return;
                             }
-                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "UserConfirmedModpackImport"), totalCount));
-                            if (!TrySaveManifest(manifest, url, fileName, sourceData))
-                            {
-                                return;
-                            }
+                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "UserConfirmedModpackImport"), manifest.Items.Length));
                             s_progress = new CommunityTransferProgress();
                             s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Modpack"), progress: s_progress);
                             s_downloadDialog.SetProgress(s_progress);
@@ -632,22 +712,7 @@ namespace Game
                             s_importTask = Task.Run(() => ProcessRemoteModpackItemsAsync(requestId, manifest, url, fileName, embeddedFiles, sourceData));
                             AttachImportCompletion(s_importTask, requestId);
                         }
-                        else if (button == MessageDialogButton.Button2 && canImportManifestOnly)
-                        {
-                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportModpackManifestOnly"), fileName, totalCount));
-                            if (!TrySaveManifest(manifest, url, fileName, sourceData))
-                            {
-                                return;
-                            }
-                            DialogsManager.ShowDialog(
-                                null,
-                                new MessageDialog(
-                                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportComplete"),
-                                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "ManifestSavedContentPending"),
-                                    LanguageControl.Ok,
-                                    null,
-                                    null));
-                        }
+                        // "否"：清单已落盘（等于旧"仅导入清单"），静默关闭。
                     }));
         }
 
@@ -726,11 +791,11 @@ namespace Game
 
         // 保存清单（确认按钮回调与导入任务内均有磁盘 I/O）：失败时弹错误框并返回 false，
         // 调用方中止后续流程——磁盘满等异常不允许从对话框按钮处理器逃逸。
-        private static bool TrySaveManifest(ModpackManifest manifest, string url, string fileName, byte[] sourceData)
+        private static bool TrySaveManifest(ModpackManifest manifest, string url, string fileName, byte[] sourceData, bool overwriteConflicting)
         {
             try
             {
-                ModpackRegistry.Shared.SaveManifest(manifest, url, fileName, sourceData);
+                ModpackRegistry.Shared.SaveManifest(manifest, url, fileName, sourceData, overwriteConflicting);
                 return true;
             }
             catch (Exception ex)

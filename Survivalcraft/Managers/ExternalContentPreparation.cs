@@ -22,7 +22,10 @@ namespace Game
         public string ExistingModPath { get; set; }
         public bool RequiresRestart { get; set; }
         public string Error { get; set; }
+        /// <summary>直链 zip 包链路旗标：包体已下载到内存（ArchiveData），落盘由主线程覆盖确认后执行，此字段不再表示「已落盘」。</summary>
         public bool ArchiveSaved { get; set; }
+        /// <summary>直链 zip 整合包的包体字节：准备任务只下到内存，落盘改由主线程在覆盖确认后执行（SaveArchive）。</summary>
+        public byte[] ArchiveData { get; set; }
         public ModpackManifest Manifest { get; set; }
         public IReadOnlyDictionary<string, byte[]> EmbeddedFiles { get; set; }
         public byte[] OriginalData { get; set; }
