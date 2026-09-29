@@ -127,7 +127,7 @@ namespace Game
         private void StartAutoTranslate()
         {
             string translateUrl = GetTranslateUrl();
-            string targetLanguage = GetSystemTargetLanguage();
+            string targetLanguage = LanguageControl.CurrentLanguageSimpleEnglishName;
             bool hasText = PostDetailsContentBuilder.HasVisibleText(m_contentHtml);
             bool hasTitle = !string.IsNullOrWhiteSpace(m_titleLabel?.Text);
             if (string.IsNullOrWhiteSpace(translateUrl)
@@ -248,31 +248,6 @@ namespace Game
                     TargetLanguage = targetLanguage
                 };
             }
-        }
-
-        private static string GetSystemTargetLanguage()
-        {
-            CultureInfo culture = CultureInfo.CurrentUICulture == CultureInfo.InvariantCulture
-                ? (CultureInfo.CurrentCulture == CultureInfo.InvariantCulture
-                    ? CultureInfo.InstalledUICulture
-                    : CultureInfo.CurrentCulture)
-                : CultureInfo.CurrentUICulture;
-
-            if (culture == CultureInfo.InvariantCulture)
-            {
-                return null;
-            }
-            CultureInfo languageCulture = culture.Parent != CultureInfo.InvariantCulture
-                ? culture.Parent
-                : culture;
-            string englishName = languageCulture?.EnglishName;
-            if (string.IsNullOrWhiteSpace(englishName))
-            {
-                return null;
-            }
-
-            int parenthesisIndex = englishName.IndexOf(" (", StringComparison.Ordinal);
-            return parenthesisIndex > 0 ? englishName[..parenthesisIndex].Trim() : englishName.Trim();
         }
 
         private sealed class AutoTranslateResult

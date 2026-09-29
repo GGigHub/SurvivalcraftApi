@@ -312,7 +312,7 @@ namespace Game {
 #if BROWSER
                             LanguageControl.LanguageTypes.Add(fileName);
 #else
-                            CultureInfo cultureInfo = new(fileName.EndsWith("-old") ? fileName.Substring(0, fileName.Length - 4) : fileName, false);
+                            CultureInfo cultureInfo = new(fileName, false);
                             LanguageControl.LanguageTypes.TryAdd(fileName, cultureInfo); //第二个参数应为CultureInfo
 #endif
                         }

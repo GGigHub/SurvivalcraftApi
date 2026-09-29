@@ -41,6 +41,16 @@ namespace Game {
 
         public static string CurrentLanguageName { get; set; } = "en-US";
 
+        public static string CurrentLanguageSimpleEnglishName => CurrentLanguageName switch {
+            "zh-CN" => "Chinese",
+            "ro-RO" => "Romanian",
+            "ru-RU" => "Russian",
+            "es-419" => "Spanish",
+            "vi-VN" => "Vietnamese",
+            "pt-BR" => "Portuguese",
+            _ => "English"
+        };
+
         public static void Initialize(string languageType) {
 #if BROWSER
             if (!LanguageTypes.Contains(languageType)) {
@@ -426,7 +436,6 @@ namespace Game {
                             "es-419" => "español (Latinoamérica)",
                             "vi-VN" => "Tiếng Việt (Việt Nam)",
                             "pt-BR" => "Português (Brasil)",
-                            "zh-CN-old" => "[旧] 中文 (中国）",
                             _ => $"{name}"
                         }
                     );
@@ -438,12 +447,7 @@ namespace Game {
                     foreach ((string name, CultureInfo cultureInfo) in LanguageTypes) {
                         string nativeName = cultureInfo.NativeName;
                         string displayName = cultureInfo.DisplayName;
-                        if (name == "zh-CN-old") {
-                            CachedLanguageFullNames.Add(name, $"[旧] {nativeName} - {displayName}");
-                        }
-                        else {
-                            CachedLanguageFullNames.Add(name, nativeName == displayName ? nativeName : $"{nativeName} - {displayName}");
-                        }
+                        CachedLanguageFullNames.Add(name, nativeName == displayName ? nativeName : $"{nativeName} - {displayName}");
                     }
                 }
                 finally {
@@ -454,7 +458,6 @@ namespace Game {
             IOrderedEnumerable<KeyValuePair<string, string>> sorted = CachedLanguageFullNames.OrderBy(item => item.Key switch {
                     "en-US" => 0,
                     "zh-CN" => 1,
-                    "zh-CN-old" => 1000,
                     _ => 2
                 }
             );
