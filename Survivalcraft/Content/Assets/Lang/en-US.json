@@ -4305,6 +4305,20 @@
     "ScbbsPlusRestartConfirmDialog": {
       "Restart": "Restart",
       "RestartToCurrentScreen": "Reboot here"
+    },
+    "SelectDownloadSourceDialog": {
+      "1": "Select Download Source",
+      "2": "Set as Default",
+      "3": "Add",
+      "4": "Edit"
+    },
+    "EditDownloadSourceInfoDialog": {
+      "1": "Edit Download Source",
+      "2": "Name*: ",
+      "3": "Mirror Host: ",
+      "4": "OK",
+      "5": "Remove",
+      "6": "Cancel"
     }
   },
   "FireworksBlock": {
@@ -5246,13 +5260,6 @@
       "ManualSelect": "Choose Manually Each Time",
       "CustomDefault": "Use the Default Download Source Below"
     },
-    "CommunityDownloadSourceOption": {
-      "DefaultCn": "Default Line (Mainland China)",
-      "Source1Global": "Backup Line 1 (Global)",
-      "Source2Cn": "Backup Line 2 (Mainland China)",
-      "Source3Global": "Backup Line 3 (Global)",
-      "Source4Global": "Backup Line 4 (Global)"
-    },
     "CommunityOrderType": {
       "Latest": "Latest Releases",
       "Oldest": "Oldest",
@@ -5301,11 +5308,6 @@
     "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] Background modpack item download task faulted: {0}",
     "ImportCompletedCallbackFaulted": "[ScbbsPlus] Import completion callback faulted (the import itself succeeded): {0}",
     "Failed": "Failed",
-    "DefaultMainlandChina": "Default / Mainland China",
-    "Source1Global": "Source 1 / Global",
-    "Source2MainlandChina": "Source 2 / Mainland China",
-    "Source3Global": "Source 3 / Global",
-    "Source4Global": "Source 4 / Global",
     "SkippedLocalDuplicates": ", {0} item(s) skipped because identical local content already exists.",
     "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
     "HasNoDownloadLinkSkipped": "{0} has no download link, skipped.",
@@ -5436,17 +5438,17 @@
     "NotLoggedIn": "Not Logged In",
     "UnknownAccount": "Unknown Account"
   },
-  "CommunityDownloadSourceSelectionMode": {
-    "Default": "Default (Auto)",
-    "ManualSelect": "Choose Manually Each Time",
-    "CustomDefault": "Use the Default Download Source Below"
-  },
-  "CommunityDownloadSourceOption": {
+  "CommunityDownloadSource": {
     "DefaultCn": "Default Line (Mainland China)",
     "Source1Global": "Backup Line 1 (Global)",
     "Source2Cn": "Backup Line 2 (Mainland China)",
     "Source3Global": "Backup Line 3 (Global)",
     "Source4Global": "Backup Line 4 (Global)"
+  },
+  "CommunityDownloadSourceSelectionMode": {
+    "Default": "Default (Auto)",
+    "ManualSelect": "Choose Manually Each Time",
+    "CustomDefault": "Use the Default Download Source Below"
   },
   "ScbbsPlusPlayedTimeClient": {
     "PlayedTimeReportCompleted": "[ScbbsPlus] Mod played time report completed: {0} succeeded, {1} failed",
@@ -5537,5 +5539,9 @@
   },
   "ScbbsPlusVersionDetailFormatter": {
     "UnnamedVersion": "Unnamed Version"
+  },
+  "EditDownloadSourceInfoDialog": {
+    "NewDownloadSource": "New Download Source",
+    "DuplicateName": "The name is empty or already in use."
   }
 }

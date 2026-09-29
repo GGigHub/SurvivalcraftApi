@@ -24,7 +24,8 @@ namespace Game
         public string ReplaceExistingModPath { get; set; }
         public string OverwriteExistingFilePath { get; set; }
         public string TempFilePath { get; set; }
-        public CommunityDownloadSourceOption Source { get; set; }
+        /// <summary>下载源名称（CommunityDownloadSourceManager 身份）；恢复时按名解析，未命中回退默认线路。</summary>
+        public string Source { get; set; }
         public CommunityDownloadQueueItemState State { get; set; }
         public DateTime CreatedTime { get; set; }
         public DateTime? StartedTime { get; set; }

@@ -546,7 +546,7 @@ public partial class ModsManageContentScreen
         {
             return;
         }
-        EnqueueMissingDependencyDownload(file, CommunityDownloadSourceOption.DefaultCn);
+        EnqueueMissingDependencyDownload(file, CommunityDownloadSourceManager.DefaultCnInfo);
     }
 
     private void StartMissingDependencyDownloads(IReadOnlyList<PostFileItem> files)
@@ -558,11 +558,11 @@ public partial class ModsManageContentScreen
         }
         foreach (PostFileItem file in validFiles)
         {
-            EnqueueMissingDependencyDownload(file, CommunityDownloadSourceOption.DefaultCn);
+            EnqueueMissingDependencyDownload(file, CommunityDownloadSourceManager.DefaultCnInfo);
         }
     }
 
-    private void EnqueueMissingDependencyDownload(PostFileItem file, CommunityDownloadSourceOption source)
+    private void EnqueueMissingDependencyDownload(PostFileItem file, CommunityDownloadSourceManager.Info source)
     {
         if (file == null || string.IsNullOrWhiteSpace(file.Url))
         {

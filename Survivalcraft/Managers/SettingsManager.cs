@@ -303,7 +303,39 @@ namespace Game {
 
         public static CommunityDownloadSourceSelectionMode CommunityDownloadSourceSelectionMode { get; set; } = CommunityDownloadSourceSelectionMode.Default;
 
-        public static CommunityDownloadSourceOption CommunityDefaultDownloadSource { get; set; } = CommunityDownloadSourceOption.DefaultCn;
+        // 用户自建下载源列表；须先于 CommunityDefaultDownloadSourceName 反序列化（默认源可能指向自建条目）
+        public static string CommunityDownloadSourceUserInfos {
+            get {
+                if (CommunityDownloadSourceManager.UserInfos.Count == 0) {
+                    return string.Empty;
+                }
+                List<string> results = [];
+                foreach (CommunityDownloadSourceManager.Info info in CommunityDownloadSourceManager.UserInfos) {
+                    results.Add(info.ToString());
+                }
+                return string.Join("||", results);
+            }
+            set {
+                if (string.IsNullOrEmpty(value)) {
+                    return;
+                }
+                string[] array1 = value.Split("||", StringSplitOptions.RemoveEmptyEntries);
+                foreach (string str in array1) {
+                    CommunityDownloadSourceManager.Info info = CommunityDownloadSourceManager.Info.FromString(str);
+                    if (info != null) {
+                        CommunityDownloadSourceManager.UserInfos.Add(info);
+                    }
+                }
+                // 默认源名可能先于本列表到达（Settings.xml 键序不保证），到齐后重放解析
+                CommunityDownloadSourceManager.ApplyPendingDefaultName();
+            }
+        }
+
+        // 默认下载源按名称存取（身份即名称）；指向尚未载入/已删除条目时由管理器 pending 机制兜底
+        public static string CommunityDefaultDownloadSourceName {
+            get => CommunityDownloadSourceManager.CurrentDefaultInfo.Name;
+            set => CommunityDownloadSourceManager.SetPendingDefaultName(value);
+        }
 
         public static bool CommunityApplyDownloadSourceToUpdates { get; set; }
 
@@ -620,7 +652,7 @@ namespace Game {
                 CommunityContentMode = CommunityContentMode.Normal;
                 OriginalCommunityContentMode = CommunityContentMode.Normal;
                 CommunityDownloadSourceSelectionMode = CommunityDownloadSourceSelectionMode.Default;
-                CommunityDefaultDownloadSource = CommunityDownloadSourceOption.DefaultCn;
+                CommunityDefaultDownloadSourceName = CommunityDownloadSourceManager.DefaultCnInfo.Name;
                 CommunityApplyDownloadSourceToUpdates = false;
                 CommunityPlayedTimeReportingEnabled = true;
                 CommunityPostDetailsAutoTranslateEnabled = false;

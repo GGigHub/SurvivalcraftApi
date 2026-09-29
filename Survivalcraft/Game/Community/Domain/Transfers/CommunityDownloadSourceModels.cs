@@ -7,14 +7,8 @@ namespace Game
         CustomDefault = 3
     }
 
-    public enum CommunityDownloadSourceOption
-    {
-        DefaultCn = 0,
-        Source1Global = 1,
-        Source2Cn = 2,
-        Source3Global = 3,
-        Source4Global = 4
-    }
+    // 下载源已由硬编码枚举改为可配置列表（CommunityDownloadSourceManager.Info，身份即名称）；
+    // 原枚举成员名成为内置线路的保留内部名，旧队列/设置文件按名直查无需迁移。
 
     public class CommunityFileDownloadResult
     {

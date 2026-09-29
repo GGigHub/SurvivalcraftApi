@@ -450,10 +450,10 @@ namespace Game
                     item.FileName,
                     item.Url,
                     error,
-                    option => SwitchDownloadSourceAndRetry(item, option)));
+                    source => SwitchDownloadSourceAndRetry(item, source)));
         }
 
-        private void SwitchDownloadSourceAndRetry(CommunityDownloadQueueItem item, CommunityDownloadSourceOption source)
+        private void SwitchDownloadSourceAndRetry(CommunityDownloadQueueItem item, CommunityDownloadSourceManager.Info source)
         {
             if (item == null)
             {
@@ -472,20 +472,8 @@ namespace Game
             item.Url = switchedUrl;
             item.Source = source;
             SaveQueue();
-            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "SwitchedDownloadSource"), GetDownloadSourceText(source)));
+            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "SwitchedDownloadSource"), CommunityDownloadSourceManager.GetDisplayName(source)));
             RetryDownloadQueueItem(item.Id);
-        }
-
-        internal static string GetDownloadSourceText(CommunityDownloadSourceOption source)
-        {
-            return source switch
-            {
-                CommunityDownloadSourceOption.Source1Global => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Source1Global"),
-                CommunityDownloadSourceOption.Source2Cn => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Source2MainlandChina"),
-                CommunityDownloadSourceOption.Source3Global => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Source3Global"),
-                CommunityDownloadSourceOption.Source4Global => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Source4Global"),
-                _ => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DefaultMainlandChina")
-            };
         }
 
         private static void SetRestoredDownloadQueueProgress(CommunityDownloadQueueItem item)

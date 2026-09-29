@@ -18,7 +18,7 @@ namespace Game
         public string OverwriteExistingFilePath { get; set; }
         public string TempFilePath { get; set; }
         public CommunityTransferProgress Progress { get; set; }
-        public CommunityDownloadSourceOption Source { get; set; }
+        public CommunityDownloadSourceManager.Info Source { get; set; }
         public CommunityDownloadQueueItemState State { get; set; }
         public DateTime CreatedTime { get; set; }
         public DateTime? StartedTime { get; set; }

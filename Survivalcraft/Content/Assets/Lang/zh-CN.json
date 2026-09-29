@@ -4315,6 +4315,20 @@
     "ScbbsPlusRestartConfirmDialog": {
       "Restart": "重启",
       "RestartToCurrentScreen": "重启到此"
+    },
+    "SelectDownloadSourceDialog": {
+      "1": "选择下载源",
+      "2": "设为默认",
+      "3": "添加",
+      "4": "编辑"
+    },
+    "EditDownloadSourceInfoDialog": {
+      "1": "编辑下载源",
+      "2": "名称*: ",
+      "3": "镜像主机: ",
+      "4": "确定",
+      "5": "删除",
+      "6": "取消"
     }
   },
   "FireworksBlock": {
@@ -5256,13 +5270,6 @@
       "ManualSelect": "每次手动选择",
       "CustomDefault": "使用下方默认下载源"
     },
-    "CommunityDownloadSourceOption": {
-      "DefaultCn": "默认线路（中国大陆）",
-      "Source1Global": "备用线路 1（全球）",
-      "Source2Cn": "备用线路 2（中国大陆）",
-      "Source3Global": "备用线路 3（全球）",
-      "Source4Global": "备用线路 4（全球）"
-    },
     "CommunityOrderType": {
       "Latest": "最新发布",
       "Oldest": "最早",
@@ -5311,11 +5318,6 @@
     "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] 后台整合包子项下载任务异常: {0}",
     "ImportCompletedCallbackFaulted": "[ScbbsPlus] 导入完成回调异常（导入本身已成功）: {0}",
     "Failed": "失败",
-    "DefaultMainlandChina": "默认/中国大陆",
-    "Source1Global": "下载源1/全球",
-    "Source2MainlandChina": "下载源2/中国大陆",
-    "Source3Global": "下载源3/全球",
-    "Source4Global": "下载源4/全球",
     "SkippedLocalDuplicates": "，另有 {0} 项因本地已有同名内容而跳过。",
     "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
     "HasNoDownloadLinkSkipped": "{0} 没有下载链接，已跳过。",
@@ -5446,17 +5448,17 @@
     "NotLoggedIn": "未登录",
     "UnknownAccount": "未知账号"
   },
-  "CommunityDownloadSourceSelectionMode": {
-    "Default": "默认（自动选择）",
-    "ManualSelect": "每次手动选择",
-    "CustomDefault": "使用下方默认下载源"
-  },
-  "CommunityDownloadSourceOption": {
+  "CommunityDownloadSource": {
     "DefaultCn": "默认线路（中国大陆）",
     "Source1Global": "备用线路 1（全球）",
     "Source2Cn": "备用线路 2（中国大陆）",
     "Source3Global": "备用线路 3（全球）",
     "Source4Global": "备用线路 4（全球）"
+  },
+  "CommunityDownloadSourceSelectionMode": {
+    "Default": "默认（自动选择）",
+    "ManualSelect": "每次手动选择",
+    "CustomDefault": "使用下方默认下载源"
   },
   "ScbbsPlusPlayedTimeClient": {
     "PlayedTimeReportCompleted": "[ScbbsPlus] 模组游玩时间上报完成: 成功 {0} 条，失败 {1} 条",
@@ -5547,5 +5549,9 @@
   },
   "ScbbsPlusVersionDetailFormatter": {
     "UnnamedVersion": "未命名版本"
+  },
+  "EditDownloadSourceInfoDialog": {
+    "NewDownloadSource": "新下载源",
+    "DuplicateName": "名称不能为空或与现有下载源重名。"
   }
 }

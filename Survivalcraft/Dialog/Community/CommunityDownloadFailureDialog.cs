@@ -9,14 +9,14 @@ namespace Game
         private readonly ButtonWidget m_switchSourceButton;
         private readonly ButtonWidget m_copyLinkButton;
         private readonly ButtonWidget m_closeButton;
-        private readonly Action<CommunityDownloadSourceOption> m_useSource;
+        private readonly Action<CommunityDownloadSourceManager.Info> m_useSource;
         private readonly string m_downloadUrl;
 
         public CommunityDownloadFailureDialog(
             string fileName,
             string downloadUrl,
             string error,
-            Action<CommunityDownloadSourceOption> useSource)
+            Action<CommunityDownloadSourceManager.Info> useSource)
         {
             m_useSource = useSource;
             m_downloadUrl = downloadUrl ?? string.Empty;

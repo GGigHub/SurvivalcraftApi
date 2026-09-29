@@ -88,7 +88,7 @@ namespace Game
         public Func<CommunityDownloadSourceSelectionMode> SourceModeResolver { get; set; }
 
         /// <summary>有效下载源解析；屏幕按设置提供。</summary>
-        public Func<CommunityDownloadSourceOption> EffectiveSourceResolver { get; set; }
+        public Func<CommunityDownloadSourceManager.Info> EffectiveSourceResolver { get; set; }
 
         /// <summary>整合包清单/子项任务进行中。</summary>
         public bool ModpackDownloadBusy => m_modpackManifestLoadTask != null || m_modpackItemDownloadTask != null;
@@ -126,7 +126,7 @@ namespace Game
 
         private CommunityDownloadSourceSelectionMode SourceMode => SourceModeResolver?.Invoke() ?? CommunityDownloadSourceSelectionMode.Default;
 
-        private CommunityDownloadSourceOption EffectiveSource => EffectiveSourceResolver?.Invoke() ?? CommunityDownloadSourceOption.DefaultCn;
+        private CommunityDownloadSourceManager.Info EffectiveSource => EffectiveSourceResolver?.Invoke() ?? CommunityDownloadSourceManager.DefaultCnInfo;
 
         public void StartDownload(PostFileItem file, PostVersionItem version = null)
         {
@@ -238,7 +238,7 @@ namespace Game
             string fileName,
             ExternalContentType type,
             bool requiresRestart,
-            CommunityDownloadSourceOption source,
+            CommunityDownloadSourceManager.Info source,
             CommunityDownloadFeedbackInfo feedbackInfo = null,
             bool replaceExistingScbbsPlusMod = false,
             string replaceExistingModPackageName = null,
@@ -275,17 +275,16 @@ namespace Game
             StartNextQueuedDownload();
         }
 
-        public void ShowDownloadSourceSelectionDialog(Action<CommunityDownloadSourceOption> selectSourceAction)
+        public void ShowDownloadSourceSelectionDialog(Action<CommunityDownloadSourceManager.Info> selectSourceAction)
         {
-            CommunityDownloadSourceOption[] sourceOptions = Enum.GetValues<CommunityDownloadSourceOption>();
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
                     LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ChooseDownloadSource"),
-                    sourceOptions,
+                    CommunityDownloadSourceManager.GetAllInfos(),
                     60f,
-                    item => GetDownloadSourceText((CommunityDownloadSourceOption)item),
-                    item => selectSourceAction?.Invoke((CommunityDownloadSourceOption)item)));
+                    item => CommunityDownloadSourceManager.GetDisplayName((CommunityDownloadSourceManager.Info)item),
+                    item => selectSourceAction?.Invoke((CommunityDownloadSourceManager.Info)item)));
         }
 
     }

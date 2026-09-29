@@ -1,0 +1,36 @@
+<CanvasWidget xmlns="runtime-namespace:Game">
+  <CanvasWidget Size="600, 330" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+    <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
+      <LabelWidget Text="[EditDownloadSourceInfoDialog:1]" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5"/>
+      <StackPanelWidget Direction="Horizontal" Margin="10, 10">
+        <CanvasWidget Size="160, 50">
+          <LabelWidget Text="[EditDownloadSourceInfoDialog:2]" VerticalAlignment="Center" HorizontalAlignment="Far" />
+        </CanvasWidget>
+        <CanvasWidget Size="10, 0" />
+        <CanvasWidget>
+          <BevelledRectangleWidget Size="Infinity, 50" Style="{Styles/TextBoxArea}" />
+          <TextBoxWidget Name="EditDownloadSourceInfoDialog.Name" Color="255, 255, 255" Margin="6, 0" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+        </CanvasWidget>
+      </StackPanelWidget>
+      <StackPanelWidget Direction="Horizontal" Margin="10, 10">
+        <CanvasWidget Size="160, 50">
+          <LabelWidget Text="[EditDownloadSourceInfoDialog:3]" VerticalAlignment="Center" HorizontalAlignment="Far" />
+        </CanvasWidget>
+        <CanvasWidget Size="10, 0" />
+        <CanvasWidget>
+          <BevelledRectangleWidget Size="Infinity, 50" Style="{Styles/TextBoxArea}" />
+          <TextBoxWidget Name="EditDownloadSourceInfoDialog.Host" Color="255, 255, 255" Margin="6, 0" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+        </CanvasWidget>
+      </StackPanelWidget>
+      <CanvasWidget Size="0, Infinity" />
+      <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+        <BevelledButtonWidget Name="EditDownloadSourceInfoDialog.Ok" Text="[EditDownloadSourceInfoDialog:4]" Style="{Styles/ButtonStyle_160x60}" />
+        <CanvasWidget Size="40, 0" />
+        <BevelledButtonWidget Name="EditDownloadSourceInfoDialog.Remove" Text="[EditDownloadSourceInfoDialog:5]" Style="{Styles/ButtonStyle_160x60}" />
+        <CanvasWidget Size="40, 0" />
+        <BevelledButtonWidget Name="EditDownloadSourceInfoDialog.Cancel" Text="[EditDownloadSourceInfoDialog:6]" Style="{Styles/ButtonStyle_160x60}" />
+      </StackPanelWidget>
+    </StackPanelWidget>
+  </CanvasWidget>
+</CanvasWidget>

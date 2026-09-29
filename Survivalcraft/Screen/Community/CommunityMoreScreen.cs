@@ -91,7 +91,7 @@ namespace Game
                 // 弹出选单（与模组一致；勿用 IndexOf+1 取模循环——本枚举成员 1 起始，
                 // 索引空间取模回投枚举会原地打转）。标题复用行标签键。
                 DialogsManager.ShowDialog(null, new ListSelectionDialog(
-                    LanguageControl.GetContentWidgets("ScbbsPlusMoreScreen", "CommunityDownloadSourceSelectionMode"),
+                    LanguageControl.GetContentWidgets("ScbbsPlusMoreScreen", "DownloadSourceSelectionMode"),
                     EnumUtils.GetEnumValues<CommunityDownloadSourceSelectionMode>(),
                     60f,
                     item => LanguageControl.GetEnumDisplayName((CommunityDownloadSourceSelectionMode)item),
@@ -103,16 +103,8 @@ namespace Game
             }
             if (m_defaultDownloadSourceButton.IsClicked)
             {
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(
-                    LanguageControl.GetContentWidgets("ScbbsPlusMoreScreen", "DefaultDownloadSource"),
-                    EnumUtils.GetEnumValues<CommunityDownloadSourceOption>(),
-                    60f,
-                    item => LanguageControl.GetEnumDisplayName((CommunityDownloadSourceOption)item),
-                    item =>
-                    {
-                        SettingsManager.CommunityDefaultDownloadSource = (CommunityDownloadSourceOption)item;
-                        RefreshSettingsUi();
-                    }));
+                // 打开下载源管理框：列表选默认、添加/编辑自建线路（选择模式行仍走枚举选单）
+                DialogsManager.ShowDialog(null, new SelectDownloadSourceDialog());
             }
             if (m_applyDownloadSourceToUpdatesButton.IsClicked)
             {
@@ -161,10 +153,7 @@ namespace Game
             m_downloadSourceSelectionModeButton.Text = LanguageControl.Get(
                 "CommunityDownloadSourceSelectionMode",
                 (Enum.IsDefined(sourceMode) ? sourceMode : CommunityDownloadSourceSelectionMode.Default).ToString());
-            CommunityDownloadSourceOption downloadSource = SettingsManager.CommunityDefaultDownloadSource;
-            m_defaultDownloadSourceButton.Text = LanguageControl.Get(
-                "CommunityDownloadSourceOption",
-                (Enum.IsDefined(downloadSource) ? downloadSource : CommunityDownloadSourceOption.DefaultCn).ToString());
+            m_defaultDownloadSourceButton.Text = CommunityDownloadSourceManager.GetDisplayName(CommunityDownloadSourceManager.CurrentDefaultInfo);
             m_applyDownloadSourceToUpdatesButton.Text = SettingsManager.CommunityApplyDownloadSourceToUpdates ? LanguageControl.Yes : LanguageControl.No;
             m_playedTimeReportingButton.Text = SettingsManager.CommunityPlayedTimeReportingEnabled ? LanguageControl.Yes : LanguageControl.No;
             m_postDetailsAutoTranslateButton.Text = SettingsManager.CommunityPostDetailsAutoTranslateEnabled ? LanguageControl.Yes : LanguageControl.No;
@@ -206,18 +195,12 @@ namespace Game
             RefreshControls();
         }
 
-        private static CommunityDownloadSourceOption ResolveEffectiveDownloadSource()
+        private static CommunityDownloadSourceManager.Info ResolveEffectiveDownloadSource()
         {
-            // 枚举成员可非连续，未定义值不会等于任何具名成员，模式无须兜底；
-            // 源读取兜底防手改 Settings.xml。
+            // 自定义默认模式取管理器当前默认线路，其余模式原站直连
             return SettingsManager.CommunityDownloadSourceSelectionMode == CommunityDownloadSourceSelectionMode.CustomDefault
-                ? NormalizeSource(SettingsManager.CommunityDefaultDownloadSource)
-                : CommunityDownloadSourceOption.DefaultCn;
-        }
-
-        private static CommunityDownloadSourceOption NormalizeSource(CommunityDownloadSourceOption value)
-        {
-            return Enum.IsDefined(value) ? value : CommunityDownloadSourceOption.DefaultCn;
+                ? CommunityDownloadSourceManager.CurrentDefaultInfo
+                : CommunityDownloadSourceManager.DefaultCnInfo;
         }
 
         private void SetBusy(bool busy)

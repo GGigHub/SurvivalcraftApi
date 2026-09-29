@@ -47,7 +47,8 @@ namespace Game
                 TempFilePath = IsTrustedTempFilePath(id, stored.TempFilePath)
                     ? stored.TempFilePath
                     : CreateTempFilePath(id, stored.FileName),
-                Source = stored.Source,
+                // 按名恢复下载源；内置内部名沿用旧枚举名，旧队列文件字符串值直查命中，未命中回退默认线路
+                Source = CommunityDownloadSourceManager.FindByName(stored.Source) ?? CommunityDownloadSourceManager.DefaultCnInfo,
                 State = CommunityDownloadQueueStateMachine.NormalizeLoaded(stored.State),
                 CreatedTime = stored.CreatedTime == default ? DateTime.Now : stored.CreatedTime,
                 StartedTime = stored.StartedTime,
@@ -131,7 +132,7 @@ namespace Game
                 ReplaceExistingModPath = item.ReplaceExistingModPath,
                 OverwriteExistingFilePath = item.OverwriteExistingFilePath,
                 TempFilePath = item.TempFilePath,
-                Source = item.Source,
+                Source = item.Source?.Name,
                 State = CommunityDownloadQueueStateMachine.NormalizeStored(item.State),
                 CreatedTime = item.CreatedTime,
                 StartedTime = item.StartedTime,

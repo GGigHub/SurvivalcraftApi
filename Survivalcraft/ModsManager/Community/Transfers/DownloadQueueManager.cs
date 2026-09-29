@@ -46,7 +46,7 @@ namespace Game
             string fileName,
             ExternalContentType type,
             bool requiresRestart,
-            CommunityDownloadSourceOption source,
+            CommunityDownloadSourceManager.Info source,
             CommunityDownloadFeedbackInfo feedbackInfo,
             bool replaceExistingScbbsPlusMod,
             string replaceExistingModPackageName,
