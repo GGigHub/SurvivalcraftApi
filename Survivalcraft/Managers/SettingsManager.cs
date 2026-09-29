@@ -331,6 +331,8 @@ namespace Game {
                 }
                 // 默认源名可能先于本列表到达（Settings.xml 键序不保证），到齐后重放解析
                 CommunityDownloadSourceManager.ApplyPendingDefaultName();
+                // 同序依赖：LastSelected* 服务器恢复可能先于此列表，到齐后重放
+                CommunityServerManager.ApplyPendingRestoredInfos();
             }
         }
 
@@ -507,12 +509,13 @@ namespace Game {
 
         public static string LastSelectedOriginalCommunityInfo {
             get => CommunityServerManager.CurrentOriginalInfo.ToString();
-            set => CommunityServerManager.Info.FromString(value);
+            // 按值匹配解析回列表内引用身份；指向已删除条目时维持默认（pending 机制见管理器）
+            set => CommunityServerManager.RestoreOriginalInfo(CommunityServerManager.Info.FromString(value));
         }
 
         public static string LastSelectedChineseCommunityInfo {
             get => CommunityServerManager.CurrentChineseInfo.ToString();
-            set => CommunityServerManager.Info.FromString(value);
+            set => CommunityServerManager.RestoreChineseInfo(CommunityServerManager.Info.FromString(value));
         }
 
         /// <summary>

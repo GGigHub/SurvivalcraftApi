@@ -45,7 +45,7 @@
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <LabelWidget Text="[ScbbsPlusMoreScreen:CurrentServer]" HorizontalAlignment="Far" Margin="20, 0" VerticalAlignment="Center" FontScale="0.95" Color="255, 255, 255" />
-              <LabelWidget Name="ScbbsPlusMoreScreen.CurrentServerValue" VerticalAlignment="Center" Margin="20, 0" FontScale="0.8" Color="255, 255, 255" MaxLines="1" Ellipsis="true" />
+              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.CurrentServerButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">

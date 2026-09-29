@@ -15,7 +15,7 @@ namespace Game
         private ButtonWidget m_myPublishedButton;
         private ButtonWidget m_importButton;
         private ButtonWidget m_downloadQueueButton;
-        private LabelWidget m_currentServerValue;
+        private ButtonWidget m_currentServerButton;
         private ButtonWidget m_downloadSourceSelectionModeButton;
         private ButtonWidget m_defaultDownloadSourceButton;
         private ButtonWidget m_applyDownloadSourceToUpdatesButton;
@@ -33,7 +33,7 @@ namespace Game
             m_myPublishedButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.MyPublishedButton");
             m_importButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ImportButton");
             m_downloadQueueButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadQueueButton");
-            m_currentServerValue = Children.Find<LabelWidget>("ScbbsPlusMoreScreen.CurrentServerValue");
+            m_currentServerButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.CurrentServerButton");
             m_downloadSourceSelectionModeButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadSourceSelectionModeButton");
             m_defaultDownloadSourceButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DefaultDownloadSourceButton");
             m_applyDownloadSourceToUpdatesButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ApplyDownloadSourceToUpdatesButton");
@@ -79,12 +79,19 @@ namespace Game
                 ScreensManager.GoBack();
                 return;
             }
+            RefreshDynamicButtonTexts();
 
             if (m_authButton.IsClicked) AuthSessionManager.Instance.OpenAuthEntry();
             // 我的发布屏入口（模组原挂在原生 ContentScreen 入口行，游戏内收口到 More 屏）。
             if (m_myPublishedButton.IsClicked) ScreensManager.SwitchScreen("CommunityMyPublished");
             if (m_importButton.IsClicked) RemoteImportManager.OpenImportLinkDialog();
             if (m_downloadQueueButton.IsClicked) DownloadFlowManager.Instance.ShowQueueDialog();
+            if (m_currentServerButton.IsClicked)
+            {
+                // 仅选择不导航模式：选择只改当前服务器并关框，留在本屏（导航语义会弄坏返回栈，
+                // 见 SelectCommunityServerDialog.m_selectOnly 注释）
+                DialogsManager.ShowDialog(null, new SelectCommunityServerDialog(selectOnly: true));
+            }
 
             if (m_downloadSourceSelectionModeButton.IsClicked)
             {
@@ -134,10 +141,31 @@ namespace Game
                 : LanguageControl.Get("ScbbsPlusMoreScreen", "LogIn");
         }
 
-        /// <summary>设置区控件即时刷新，直读 SettingsManager.Community* 与下载源管理器当前状态。</summary>
+        /// <summary>
+        /// 对话框里改完设置回本屏无回调可挂（对话框关闭不通知宿主），两枚动态文案钮逐帧
+        /// 守卫刷新：当前服务器（选择框/编辑框原地改）与默认下载源（下载源管理框可改）。
+        /// 值未变零写入。
+        /// </summary>
+        private void RefreshDynamicButtonTexts()
+        {
+            string serverText = GetCurrentServerDisplayText();
+            if (m_currentServerButton.Text != serverText)
+            {
+                m_currentServerButton.Text = serverText;
+            }
+            string defaultSourceText = CommunityDownloadSourceManager.GetDisplayName(CommunityDownloadSourceManager.CurrentDefaultInfo);
+            if (m_defaultDownloadSourceButton.Text != defaultSourceText)
+            {
+                m_defaultDownloadSourceButton.Text = defaultSourceText;
+            }
+        }
+
+        /// <summary>
+        /// 设置区控件即时刷新，直读 SettingsManager.Community* 与下载源管理器当前状态。
+        /// </summary>
         private void RefreshSettingsUi()
         {
-            m_currentServerValue.Text = GetCurrentServerDisplayText();
+            m_currentServerButton.Text = GetCurrentServerDisplayText();
             m_downloadSourceSelectionModeButton.Text = SettingsManager.CommunityDownloadSourceManualSelectEnabled ? LanguageControl.Yes : LanguageControl.No;
             m_defaultDownloadSourceButton.Text = CommunityDownloadSourceManager.GetDisplayName(CommunityDownloadSourceManager.CurrentDefaultInfo);
             m_applyDownloadSourceToUpdatesButton.Text = SettingsManager.CommunityApplyDownloadSourceToUpdates ? LanguageControl.Yes : LanguageControl.No;

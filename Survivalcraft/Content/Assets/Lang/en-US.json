@@ -4143,7 +4143,8 @@
       "1": "Select Community Server",
       "2": "Open",
       "3": "Add",
-      "4": "Edit"
+      "4": "Edit",
+      "5": "Set as Current"
     },
     "EditCommunityServerInfoDialog": {
       "1": "Edit Server",
