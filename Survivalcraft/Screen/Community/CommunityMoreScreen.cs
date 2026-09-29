@@ -54,7 +54,7 @@ namespace Game
             AcquireRemoteImportHost();
             InstallDownloadFlowCallbacks(
                 SetSharedStatus,
-                () => SettingsManager.CommunityDownloadSourceSelectionMode,
+                () => SettingsManager.CommunityDownloadSourceManualSelectEnabled,
                 ResolveEffectiveDownloadSource);
         }
 
@@ -88,18 +88,9 @@ namespace Game
 
             if (m_downloadSourceSelectionModeButton.IsClicked)
             {
-                // 弹出选单（与模组一致；勿用 IndexOf+1 取模循环——本枚举成员 1 起始，
-                // 索引空间取模回投枚举会原地打转）。标题复用行标签键。
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(
-                    LanguageControl.GetContentWidgets("ScbbsPlusMoreScreen", "DownloadSourceSelectionMode"),
-                    EnumUtils.GetEnumValues<CommunityDownloadSourceSelectionMode>(),
-                    60f,
-                    item => LanguageControl.GetEnumDisplayName((CommunityDownloadSourceSelectionMode)item),
-                    item =>
-                    {
-                        SettingsManager.CommunityDownloadSourceSelectionMode = (CommunityDownloadSourceSelectionMode)item;
-                        RefreshSettingsUi();
-                    }));
+                // 是/否切换：开 = 每次下载弹框选源，关 = 直接用默认下载源
+                SettingsManager.CommunityDownloadSourceManualSelectEnabled = !SettingsManager.CommunityDownloadSourceManualSelectEnabled;
+                RefreshSettingsUi();
             }
             if (m_defaultDownloadSourceButton.IsClicked)
             {
@@ -143,16 +134,11 @@ namespace Game
                 : LanguageControl.Get("ScbbsPlusMoreScreen", "LogIn");
         }
 
-        /// <summary>
-        /// 设置区控件即时刷新，直读 SettingsManager.Community*，内联枚举兜底防手改 XML。
-        /// </summary>
+        /// <summary>设置区控件即时刷新，直读 SettingsManager.Community* 与下载源管理器当前状态。</summary>
         private void RefreshSettingsUi()
         {
             m_currentServerValue.Text = GetCurrentServerDisplayText();
-            CommunityDownloadSourceSelectionMode sourceMode = SettingsManager.CommunityDownloadSourceSelectionMode;
-            m_downloadSourceSelectionModeButton.Text = LanguageControl.Get(
-                "CommunityDownloadSourceSelectionMode",
-                (Enum.IsDefined(sourceMode) ? sourceMode : CommunityDownloadSourceSelectionMode.CustomDefault).ToString());
+            m_downloadSourceSelectionModeButton.Text = SettingsManager.CommunityDownloadSourceManualSelectEnabled ? LanguageControl.Yes : LanguageControl.No;
             m_defaultDownloadSourceButton.Text = CommunityDownloadSourceManager.GetDisplayName(CommunityDownloadSourceManager.CurrentDefaultInfo);
             m_applyDownloadSourceToUpdatesButton.Text = SettingsManager.CommunityApplyDownloadSourceToUpdates ? LanguageControl.Yes : LanguageControl.No;
             m_playedTimeReportingButton.Text = SettingsManager.CommunityPlayedTimeReportingEnabled ? LanguageControl.Yes : LanguageControl.No;

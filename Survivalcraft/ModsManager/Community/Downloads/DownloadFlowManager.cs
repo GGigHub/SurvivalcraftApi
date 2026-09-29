@@ -15,7 +15,7 @@ namespace Game
     /// 三屏共用；界面副作用通过事件与注入回调输出：
     /// - DownloadCompleted / PackDownloadCompleted → 订阅方刷新本地列表
     /// - StatusReporter → 订阅方写状态栏（关于对话框）
-    /// - SourceModeResolver / EffectiveSourceResolver → 下载源设置由屏幕侧提供
+    /// - ManualSelectResolver / EffectiveSourceResolver → 下载源设置由屏幕侧提供
     /// 控制器自持下载进度对话框与队列对话框（DialogsManager 全局），Toast 走全局 Toast 管理器。
     /// </summary>
     internal sealed partial class DownloadFlowManager : IDownloadQueueDialogHost
@@ -84,8 +84,8 @@ namespace Game
         /// <summary>状态栏输出口（About Screen 持久状态标签）；屏幕注入。</summary>
         public Action<string> StatusReporter { get; set; }
 
-        /// <summary>下载源选择模式；屏幕按设置提供。</summary>
-        public Func<CommunityDownloadSourceSelectionMode> SourceModeResolver { get; set; }
+        /// <summary>每次手动选择下载源（true = 下载时弹框选源）；屏幕按设置提供。</summary>
+        public Func<bool> ManualSelectResolver { get; set; }
 
         /// <summary>有效下载源解析；屏幕按设置提供。</summary>
         public Func<CommunityDownloadSourceManager.Info> EffectiveSourceResolver { get; set; }
@@ -124,7 +124,7 @@ namespace Game
             CommunityToastManager.Show(message, autoHideSeconds: autoHideSeconds);
         }
 
-        private CommunityDownloadSourceSelectionMode SourceMode => SourceModeResolver?.Invoke() ?? CommunityDownloadSourceSelectionMode.CustomDefault;
+        private bool ManualSelect => ManualSelectResolver?.Invoke() ?? false;
 
         private CommunityDownloadSourceManager.Info EffectiveSource => EffectiveSourceResolver?.Invoke() ?? CommunityDownloadSourceManager.DefaultCnInfo;
 
@@ -203,7 +203,7 @@ namespace Game
             string replaceExistingModPath = null,
             string overwriteExistingFilePath = null)
         {
-            if (SourceMode == CommunityDownloadSourceSelectionMode.ManualSelect)
+            if (ManualSelect)
             {
                 ShowDownloadSourceSelectionDialog(
                     source => EnqueueFileDownload(

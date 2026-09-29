@@ -4283,8 +4283,8 @@
       "ModSettings": "Mod Settings",
       "ModSettingsDescription": "Open the game's native mod settings",
       "Open": "Open",
-      "DownloadSourceSelectionMode": "Download Source Selection",
-      "DownloadSourceSelectionModeDescription": "How a download source is chosen when downloading resources",
+      "DownloadSourceSelectionMode": "Choose Download Source Manually",
+      "DownloadSourceSelectionModeDescription": "When enabled, a dialog asks for the download source on every download",
       "DefaultDownloadSource": "Default Download Source",
       "DefaultDownloadSourceDescription": "The download source used when \"Use the default download source below\" is selected",
       "ApplyDownloadSourceToUpdates": "Apply to Resource Updates",
@@ -5255,10 +5255,6 @@
       "Trending": "Trending",
       "NewActivity": "New Activity"
     },
-    "CommunityDownloadSourceSelectionMode": {
-      "ManualSelect": "Choose Manually Each Time",
-      "CustomDefault": "Use the Default Download Source Below"
-    },
     "CommunityOrderType": {
       "Latest": "Latest Releases",
       "Oldest": "Oldest",
@@ -5443,10 +5439,6 @@
     "Source2Cn": "Backup Line 2 (Mainland China)",
     "Source3Global": "Backup Line 3 (Global)",
     "Source4Global": "Backup Line 4 (Global)"
-  },
-  "CommunityDownloadSourceSelectionMode": {
-    "ManualSelect": "Choose Manually Each Time",
-    "CustomDefault": "Use the Default Download Source Below"
   },
   "ScbbsPlusPlayedTimeClient": {
     "PlayedTimeReportCompleted": "[ScbbsPlus] Mod played time report completed: {0} succeeded, {1} failed",

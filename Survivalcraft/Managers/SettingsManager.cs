@@ -301,7 +301,10 @@ namespace Game {
 
         public static CommunityContentMode OriginalCommunityContentMode { get; set; }
 
-        public static CommunityDownloadSourceSelectionMode CommunityDownloadSourceSelectionMode { get; set; } = CommunityDownloadSourceSelectionMode.CustomDefault;
+        // 每次手动选择下载源；false = 直接使用 CommunityDownloadSourceManager.CurrentDefaultInfo。
+        // 旧 SelectionMode 枚举（Default/ManualSelect/CustomDefault）已删：Default 与 CustomDefault
+        // + 默认线路语义重复，ManualSelect 收编为本布尔；已存枚举整数值载入时类型不符按默认处理
+        public static bool CommunityDownloadSourceManualSelectEnabled { get; set; }
 
         // 用户自建下载源列表；须先于 CommunityDefaultDownloadSourceName 反序列化（默认源可能指向自建条目）
         public static string CommunityDownloadSourceUserInfos {
@@ -651,7 +654,7 @@ namespace Game {
                 LastLaunchedVersion = string.Empty;
                 CommunityContentMode = CommunityContentMode.Normal;
                 OriginalCommunityContentMode = CommunityContentMode.Normal;
-                CommunityDownloadSourceSelectionMode = CommunityDownloadSourceSelectionMode.CustomDefault;
+                CommunityDownloadSourceManualSelectEnabled = false;
                 CommunityDefaultDownloadSourceName = CommunityDownloadSourceManager.DefaultCnInfo.Name;
                 CommunityApplyDownloadSourceToUpdates = false;
                 CommunityPlayedTimeReportingEnabled = true;

@@ -1,15 +1,8 @@
 namespace Game
 {
-    public enum CommunityDownloadSourceSelectionMode
-    {
-        // 原 Default 成员已删：其语义（恒用原站直连）与 CustomDefault + 默认线路完全重复；
-        // 保留 ManualSelect=2/CustomDefault=3 原值，旧 Settings.xml 已存数值不换义
-        ManualSelect = 2,
-        CustomDefault = 3
-    }
-
-    // 下载源已由硬编码枚举改为可配置列表（CommunityDownloadSourceManager.Info，身份即名称）；
-    // 原枚举成员名成为内置线路的保留内部名，旧队列/设置文件按名直查无需迁移。
+    // 下载源选择模式曾是三值枚举（Default/ManualSelect/CustomDefault），Default 删除后仅剩
+    // 手动选择与否的二元选择，收编为 SettingsManager 布尔属性
+    // CommunityDownloadSourceManualSelectEnabled；下载源本体见 CommunityDownloadSourceManager。
 
     public class CommunityFileDownloadResult
     {

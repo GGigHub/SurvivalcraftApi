@@ -129,7 +129,7 @@ namespace Game
             AcquireRemoteImportHost();
             InstallDownloadFlowCallbacks(
                 CommunityMoreScreen.SetSharedStatus,
-                () => SettingsManager.CommunityDownloadSourceSelectionMode,
+                () => SettingsManager.CommunityDownloadSourceManualSelectEnabled,
                 ResolveEffectiveDownloadSource);
             PlayedTimeTracker.StartSelfPage();
             // 首进先只搭骨架并让出 2 帧给首屏绘制，避免解密凭据/拉列表/读本地资源堵在同一帧造成黑屏。

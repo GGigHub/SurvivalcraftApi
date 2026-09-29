@@ -71,12 +71,12 @@ namespace Game
         /// </summary>
         protected void InstallDownloadFlowCallbacks(
             Action<string> statusReporter,
-            Func<CommunityDownloadSourceSelectionMode> sourceModeResolver,
+            Func<bool> manualSelectResolver,
             Func<CommunityDownloadSourceManager.Info> effectiveSourceResolver)
         {
             DownloadFlowManager downloadManager = DownloadFlowManager.Instance;
             downloadManager.StatusReporter = statusReporter;
-            downloadManager.SourceModeResolver = sourceModeResolver;
+            downloadManager.ManualSelectResolver = manualSelectResolver;
             downloadManager.EffectiveSourceResolver = effectiveSourceResolver;
         }
 

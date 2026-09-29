@@ -4293,8 +4293,8 @@
       "ModSettings": "模组设置",
       "ModSettingsDescription": "打开游戏原生模组设置",
       "Open": "打开",
-      "DownloadSourceSelectionMode": "下载源选择",
-      "DownloadSourceSelectionModeDescription": "下载资源时如何选择下载源",
+      "DownloadSourceSelectionMode": "每次手动选择下载源",
+      "DownloadSourceSelectionModeDescription": "开启后，每次下载都会弹窗选择下载源",
       "DefaultDownloadSource": "默认下载源",
       "DefaultDownloadSourceDescription": "「使用下方默认下载源」模式下统一使用的下载源",
       "ApplyDownloadSourceToUpdates": "应用到资源更新",
@@ -5265,10 +5265,6 @@
       "Trending": "最近热门",
       "NewActivity": "最新动态"
     },
-    "CommunityDownloadSourceSelectionMode": {
-      "ManualSelect": "每次手动选择",
-      "CustomDefault": "使用下方默认下载源"
-    },
     "CommunityOrderType": {
       "Latest": "最新发布",
       "Oldest": "最早",
@@ -5453,10 +5449,6 @@
     "Source2Cn": "备用线路 2（中国大陆）",
     "Source3Global": "备用线路 3（全球）",
     "Source4Global": "备用线路 4（全球）"
-  },
-  "CommunityDownloadSourceSelectionMode": {
-    "ManualSelect": "每次手动选择",
-    "CustomDefault": "使用下方默认下载源"
   },
   "ScbbsPlusPlayedTimeClient": {
     "PlayedTimeReportCompleted": "[ScbbsPlus] 模组游玩时间上报完成: 成功 {0} 条，失败 {1} 条",
