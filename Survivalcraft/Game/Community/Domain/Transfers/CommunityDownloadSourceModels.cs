@@ -2,7 +2,8 @@ namespace Game
 {
     public enum CommunityDownloadSourceSelectionMode
     {
-        Default = 1,
+        // 原 Default 成员已删：其语义（恒用原站直连）与 CustomDefault + 默认线路完全重复；
+        // 保留 ManualSelect=2/CustomDefault=3 原值，旧 Settings.xml 已存数值不换义
         ManualSelect = 2,
         CustomDefault = 3
     }

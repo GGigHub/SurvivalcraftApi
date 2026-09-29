@@ -124,7 +124,7 @@ namespace Game
             CommunityToastManager.Show(message, autoHideSeconds: autoHideSeconds);
         }
 
-        private CommunityDownloadSourceSelectionMode SourceMode => SourceModeResolver?.Invoke() ?? CommunityDownloadSourceSelectionMode.Default;
+        private CommunityDownloadSourceSelectionMode SourceMode => SourceModeResolver?.Invoke() ?? CommunityDownloadSourceSelectionMode.CustomDefault;
 
         private CommunityDownloadSourceManager.Info EffectiveSource => EffectiveSourceResolver?.Invoke() ?? CommunityDownloadSourceManager.DefaultCnInfo;
 

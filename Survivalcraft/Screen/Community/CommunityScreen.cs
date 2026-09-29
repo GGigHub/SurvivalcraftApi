@@ -71,11 +71,8 @@ namespace Game
 
         private CommunityDownloadSourceManager.Info ResolveEffectiveDownloadSource()
         {
-            // 自定义默认模式取管理器当前默认线路（可能指向已删除条目时管理器已回退内置默认线），
-            // 其余模式原站直连
-            return SettingsManager.CommunityDownloadSourceSelectionMode == CommunityDownloadSourceSelectionMode.CustomDefault
-                ? CommunityDownloadSourceManager.CurrentDefaultInfo
-                : CommunityDownloadSourceManager.DefaultCnInfo;
+            // 仅剩 CustomDefault 一种自动模式（ManualSelect 走逐次弹框，不经此）：恒取管理器当前默认线路
+            return CommunityDownloadSourceManager.CurrentDefaultInfo;
         }
 
         public CommunityScreen()

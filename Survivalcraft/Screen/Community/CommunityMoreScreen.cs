@@ -152,7 +152,7 @@ namespace Game
             CommunityDownloadSourceSelectionMode sourceMode = SettingsManager.CommunityDownloadSourceSelectionMode;
             m_downloadSourceSelectionModeButton.Text = LanguageControl.Get(
                 "CommunityDownloadSourceSelectionMode",
-                (Enum.IsDefined(sourceMode) ? sourceMode : CommunityDownloadSourceSelectionMode.Default).ToString());
+                (Enum.IsDefined(sourceMode) ? sourceMode : CommunityDownloadSourceSelectionMode.CustomDefault).ToString());
             m_defaultDownloadSourceButton.Text = CommunityDownloadSourceManager.GetDisplayName(CommunityDownloadSourceManager.CurrentDefaultInfo);
             m_applyDownloadSourceToUpdatesButton.Text = SettingsManager.CommunityApplyDownloadSourceToUpdates ? LanguageControl.Yes : LanguageControl.No;
             m_playedTimeReportingButton.Text = SettingsManager.CommunityPlayedTimeReportingEnabled ? LanguageControl.Yes : LanguageControl.No;
@@ -197,10 +197,8 @@ namespace Game
 
         private static CommunityDownloadSourceManager.Info ResolveEffectiveDownloadSource()
         {
-            // 自定义默认模式取管理器当前默认线路，其余模式原站直连
-            return SettingsManager.CommunityDownloadSourceSelectionMode == CommunityDownloadSourceSelectionMode.CustomDefault
-                ? CommunityDownloadSourceManager.CurrentDefaultInfo
-                : CommunityDownloadSourceManager.DefaultCnInfo;
+            // 仅剩 CustomDefault 一种自动模式（ManualSelect 走逐次弹框，不经此）：恒取管理器当前默认线路
+            return CommunityDownloadSourceManager.CurrentDefaultInfo;
         }
 
         private void SetBusy(bool busy)

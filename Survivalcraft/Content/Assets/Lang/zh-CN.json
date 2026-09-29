@@ -5266,7 +5266,6 @@
       "NewActivity": "最新动态"
     },
     "CommunityDownloadSourceSelectionMode": {
-      "Default": "默认（自动选择）",
       "ManualSelect": "每次手动选择",
       "CustomDefault": "使用下方默认下载源"
     },
@@ -5456,7 +5455,6 @@
     "Source4Global": "备用线路 4（全球）"
   },
   "CommunityDownloadSourceSelectionMode": {
-    "Default": "默认（自动选择）",
     "ManualSelect": "每次手动选择",
     "CustomDefault": "使用下方默认下载源"
   },

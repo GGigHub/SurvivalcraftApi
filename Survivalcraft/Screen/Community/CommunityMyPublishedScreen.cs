@@ -82,7 +82,7 @@ namespace Game
             SetCurrentMyPublishedFileType(ModSettingsState.MyPublishedFileType);
             InstallDownloadFlowCallbacks(
                 status => { },
-                () => CommunityDownloadSourceSelectionMode.Default,
+                () => CommunityDownloadSourceSelectionMode.CustomDefault,
                 () => CommunityDownloadSourceManager.DefaultCnInfo);
             DownloadFlowManager.Instance.LoadQueue();
             m_pendingLoginOnEnter = false;
