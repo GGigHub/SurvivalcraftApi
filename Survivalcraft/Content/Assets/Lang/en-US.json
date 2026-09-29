@@ -3303,7 +3303,8 @@
   },
   "ContentWidgets": {
     "ScbbsPlusModVersionsDialog": {
-      "AllVersions": "All Versions"
+      "AllVersions": "All Versions",
+      "Close": "Close"
     },
     "ScbbsPlusModReviewDialog": {
       "Rating": "Rating:",
@@ -3313,7 +3314,8 @@
       "EnterReviewContent": "Enter review content"
     },
     "ScbbsPlusMissingDependenciesDialog": {
-      "DownloadAllDeps": "Download All Deps"
+      "DownloadAllDeps": "Download All Deps",
+      "Close": "Close"
     },
     "BestiaryDescriptionScreen": {
       "1": "Creature Description",
@@ -4221,11 +4223,7 @@
       "CurrentDownloadLink": "Current Download Link",
       "ErrorReason": "Error Reason",
       "CopyLink": "Copy Link",
-      "DefaultMainlandChina": "Default / Mainland China",
-      "Source1Global": "Source 1 / Global",
-      "Source2MainlandChina": "Source 2 / Mainland China",
-      "Source3Global": "Source 3 / Global",
-      "Source4Global": "Source 4 / Global"
+      "Close": "Close"
     },
     "ScbbsPlusDownloadQueueDialog": {
       "DownloadQueue": "Download Queue",
@@ -4262,7 +4260,8 @@
       "Overwrite": "Overwrite",
       "Skip": "Skip",
       "SkipAll": "Skip All",
-      "OverwriteAll": "Overwrite All"
+      "OverwriteAll": "Overwrite All",
+      "Close": "Close"
     },
     "ScbbsPlusMoreScreen": {
       "MoreScbbsPlus": "More ScbbsPlus",

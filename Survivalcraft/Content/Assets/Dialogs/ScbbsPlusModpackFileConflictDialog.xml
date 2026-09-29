@@ -13,6 +13,8 @@
       <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.SkipAllButton" Text="[ScbbsPlusModpackFileConflictDialog:SkipAll]" Style="{Styles/ButtonStyle_115x60}" />
       <CanvasWidget Size="10, 0" />
       <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.OverwriteAllButton" Text="[ScbbsPlusModpackFileConflictDialog:OverwriteAll]" Style="{Styles/ButtonStyle_115x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.CloseButton" Text="[ScbbsPlusModpackFileConflictDialog:Close]" Style="{Styles/ButtonStyle_115x60}" />
     </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

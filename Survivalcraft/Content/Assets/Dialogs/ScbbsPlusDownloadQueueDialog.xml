@@ -15,6 +15,8 @@
       <BevelledButtonWidget Name="ScbbsPlusDownloadQueueDialog.RetryButton" Text="[ScbbsPlusDownloadQueueDialog:Retry]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
       <BevelledButtonWidget Name="ScbbsPlusDownloadQueueDialog.ClearButton" Text="[ScbbsPlusDownloadQueueDialog:ClearDone]" Style="{Styles/ButtonStyle_160x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="ScbbsPlusDownloadQueueDialog.CloseButton" Text="[ScbbsPlusDownloadQueueDialog:Close]" Style="{Styles/ButtonStyle_160x60}" />
     </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

@@ -22,18 +22,10 @@
       </CanvasWidget>
     </CanvasWidget>
     <CanvasWidget Size="0, Infinity" />
-    <LabelWidget Name="ScbbsPlusDownloadFailureDialog.SourceLabel" Text="[ScbbsPlusDownloadFailureDialog:UseAnotherSource]" Color="128, 128, 128" HorizontalAlignment="Near" Margin="10, 2" />
-    <CanvasWidget Size="0, 6" />
     <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.Source0Button" Text="[ScbbsPlusDownloadFailureDialog:DefaultMainlandChina]" Style="{Styles/ButtonStyle_205x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.SwitchSourceButton" Text="[ScbbsPlusDownloadFailureDialog:UseAnotherSource]" Style="{Styles/ButtonStyle_205x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.Source1Button" Text="[ScbbsPlusDownloadFailureDialog:Source1Global]" Style="{Styles/ButtonStyle_205x60}" />
-      <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.Source2Button" Text="[ScbbsPlusDownloadFailureDialog:Source2MainlandChina]" Style="{Styles/ButtonStyle_205x60}" />
-      <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.Source3Button" Text="[ScbbsPlusDownloadFailureDialog:Source3Global]" Style="{Styles/ButtonStyle_205x60}" />
-      <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.Source4Button" Text="[ScbbsPlusDownloadFailureDialog:Source4Global]" Style="{Styles/ButtonStyle_205x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.CloseButton" Text="[ScbbsPlusDownloadFailureDialog:Close]" Style="{Styles/ButtonStyle_160x60}" />
     </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

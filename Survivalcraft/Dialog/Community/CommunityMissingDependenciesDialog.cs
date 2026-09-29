@@ -10,6 +10,7 @@ namespace Game
     public sealed class CommunityMissingDependenciesDialog : Dialog
     {
         private readonly ButtonWidget m_downloadAllButton;
+        private readonly ButtonWidget m_closeButton;
         private readonly StackPanelWidget m_listPanel;
         private readonly List<FileGroup> m_fileGroups;
         private readonly List<string> m_missingDependencyLabels;
@@ -51,11 +52,13 @@ namespace Game
 
             m_downloadAllButton = Children.Find<ButtonWidget>("ScbbsPlusMissingDependenciesDialog.DownloadAllButton");
             m_downloadAllButton.IsEnabled = m_primaryDownloadFiles.Count > 0 && m_downloadAll != null;
+            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusMissingDependenciesDialog.CloseButton");
         }
 
         public override void Update()
         {
-            if (Input.Back
+            if (m_closeButton.IsClicked
+                || Input.Back
                 || Input.Cancel
                 || (Input.Tap.HasValue && !HitTest(Input.Tap.Value)))
             {

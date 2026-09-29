@@ -19,6 +19,7 @@ namespace Game
         private readonly string m_currentGameVersion;
         private readonly IReadOnlyList<VersionListItem> m_versionCatalog;
         private readonly StackPanelWidget m_listPanel;
+        private readonly ButtonWidget m_closeButton;
         private readonly Action<PostVersionItem> m_showDetails;
         private readonly Action<PostVersionItem, PostFileItem> m_download;
 
@@ -47,6 +48,7 @@ namespace Game
             Children.Find<LabelWidget>("ScbbsPlusModVersionsDialog.PostTitleLabel").Text =
                 string.IsNullOrWhiteSpace(postTitle) ? LanguageControl.Get("ScbbsPlusModVersionsDialog", "CommunityPost") : postTitle;
             m_listPanel = Children.Find<StackPanelWidget>("ScbbsPlusModVersionsDialog.ListPanel");
+            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionsDialog.CloseButton");
             BuildVersionList();
         }
 
@@ -79,7 +81,8 @@ namespace Game
 
         public override void Update()
         {
-            if (Input.Back
+            if (m_closeButton.IsClicked
+                || Input.Back
                 || Input.Cancel
                 || (Input.Tap.HasValue && !HitTest(Input.Tap.Value)))
             {

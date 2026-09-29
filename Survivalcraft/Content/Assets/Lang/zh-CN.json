@@ -3313,7 +3313,8 @@
   },
   "ContentWidgets": {
     "ScbbsPlusModVersionsDialog": {
-      "AllVersions": "查看所有版本"
+      "AllVersions": "查看所有版本",
+      "Close": "关闭"
     },
     "ScbbsPlusModReviewDialog": {
       "Rating": "评分：",
@@ -3323,7 +3324,8 @@
       "EnterReviewContent": "输入评价内容"
     },
     "ScbbsPlusMissingDependenciesDialog": {
-      "DownloadAllDeps": "一键下载所需依赖"
+      "DownloadAllDeps": "一键下载所需依赖",
+      "Close": "关闭"
     },
     "BestiaryDescriptionScreen": {
       "1": "生物信息",
@@ -4231,11 +4233,7 @@
       "CurrentDownloadLink": "当前下载链接",
       "ErrorReason": "错误原因",
       "CopyLink": "复制链接",
-      "DefaultMainlandChina": "默认/中国大陆",
-      "Source1Global": "下载源1/全球",
-      "Source2MainlandChina": "下载源2/中国大陆",
-      "Source3Global": "下载源3/全球",
-      "Source4Global": "下载源4/全球"
+      "Close": "关闭"
     },
     "ScbbsPlusDownloadQueueDialog": {
       "DownloadQueue": "下载队列",
@@ -4272,7 +4270,8 @@
       "Overwrite": "覆盖",
       "Skip": "跳过",
       "SkipAll": "全部跳过",
-      "OverwriteAll": "全部覆盖"
+      "OverwriteAll": "全部覆盖",
+      "Close": "关闭"
     },
     "ScbbsPlusMoreScreen": {
       "MoreScbbsPlus": "更多 ScbbsPlus",

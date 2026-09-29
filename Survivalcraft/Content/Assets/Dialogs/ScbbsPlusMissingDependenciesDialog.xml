@@ -6,6 +6,10 @@
     <ScrollPanelWidget Direction="Vertical" Margin="5, 10">
       <StackPanelWidget Name="ScbbsPlusMissingDependenciesDialog.ListPanel" Direction="Vertical" Margin="5, 0" HorizontalAlignment="Stretch" />
     </ScrollPanelWidget>
-    <BevelledButtonWidget Name="ScbbsPlusMissingDependenciesDialog.DownloadAllButton" Text="[ScbbsPlusMissingDependenciesDialog:DownloadAllDeps]" Style="{Styles/ButtonStyle_310x60}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8, 0, 10">
+      <BevelledButtonWidget Name="ScbbsPlusMissingDependenciesDialog.DownloadAllButton" Text="[ScbbsPlusMissingDependenciesDialog:DownloadAllDeps]" Style="{Styles/ButtonStyle_310x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="ScbbsPlusMissingDependenciesDialog.CloseButton" Text="[ScbbsPlusMissingDependenciesDialog:Close]" Style="{Styles/ButtonStyle_160x60}" />
+    </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

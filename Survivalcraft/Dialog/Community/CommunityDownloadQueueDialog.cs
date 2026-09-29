@@ -33,6 +33,7 @@ namespace Game
         private readonly ButtonWidget m_cancelButton;
         private readonly ButtonWidget m_retryButton;
         private readonly ButtonWidget m_clearButton;
+        private readonly ButtonWidget m_closeButton;
         private readonly List<DownloadQueueDialogItem> m_rows = [];
         private int? m_selectedTaskId;
 
@@ -70,6 +71,7 @@ namespace Game
             m_cancelButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadQueueDialog.CancelButton");
             m_retryButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadQueueDialog.RetryButton");
             m_clearButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadQueueDialog.ClearButton");
+            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadQueueDialog.CloseButton");
             Refresh();
         }
 
@@ -146,7 +148,8 @@ namespace Game
             {
                 m_host.ClearFinishedDownloadQueueItems(m_selectedTaskId);
             }
-            if (Input.Back
+            if (m_closeButton.IsClicked
+                || Input.Back
                 || Input.Cancel
                 || (Input.Tap.HasValue && !HitTest(Input.Tap.Value)))
             {

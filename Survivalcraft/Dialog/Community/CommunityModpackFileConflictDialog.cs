@@ -19,6 +19,7 @@ namespace Game
         private readonly ButtonWidget m_skipButton;
         private readonly ButtonWidget m_skipAllButton;
         private readonly ButtonWidget m_overwriteAllButton;
+        private readonly ButtonWidget m_closeButton;
         private readonly Action<ModpackFileConflictAction> m_handler;
 
         public CommunityModpackFileConflictDialog(string fileName, Action<ModpackFileConflictAction> handler)
@@ -33,11 +34,13 @@ namespace Game
             m_skipButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.SkipButton");
             m_skipAllButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.SkipAllButton");
             m_overwriteAllButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.OverwriteAllButton");
+            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.CloseButton");
         }
 
         public override void Update()
         {
-            if (Input.Back
+            if (m_closeButton.IsClicked
+                || Input.Back
                 || Input.Cancel
                 || (Input.Tap.HasValue && !HitTest(Input.Tap.Value)))
             {

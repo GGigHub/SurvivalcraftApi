@@ -6,8 +6,9 @@ namespace Game
 {
     public sealed class CommunityDownloadFailureDialog : Dialog
     {
-        private readonly ButtonWidget[] m_sourceButtons;
+        private readonly ButtonWidget m_switchSourceButton;
         private readonly ButtonWidget m_copyLinkButton;
+        private readonly ButtonWidget m_closeButton;
         private readonly Action<CommunityDownloadSourceOption> m_useSource;
         private readonly string m_downloadUrl;
 
@@ -39,17 +40,14 @@ namespace Game
                 FontScale = 0.78f,
                 WordWrap = true
             });
-            CommunityDownloadSourceOption[] sourceOptions = Enum.GetValues<CommunityDownloadSourceOption>();
-            m_sourceButtons = new ButtonWidget[sourceOptions.Length];
-            for (int i = 0; i < sourceOptions.Length; i++)
-            {
-                m_sourceButtons[i] = Children.Find<ButtonWidget>($"ScbbsPlusDownloadFailureDialog.Source{i}Button");
-            }
+            m_switchSourceButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadFailureDialog.SwitchSourceButton");
+            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadFailureDialog.CloseButton");
         }
 
         public override void Update()
         {
-            if (Input.Back
+            if (m_closeButton.IsClicked
+                || Input.Back
                 || Input.Cancel
                 || (Input.Tap.HasValue && !HitTest(Input.Tap.Value)))
             {
@@ -63,14 +61,15 @@ namespace Game
                 return;
             }
 
-            for (int i = 0; i < m_sourceButtons.Length; i++)
+            if (m_switchSourceButton.IsClicked)
             {
-                if (m_sourceButtons[i].IsClicked)
+                // 换源选择复用 DFM 的 ListSelectionDialog（标题/条目文案同款）；
+                // 本框保持打开，用户取消选择仍可回到失败详情。
+                DownloadFlowManager.Instance.ShowDownloadSourceSelectionDialog(option =>
                 {
                     DialogsManager.HideDialog(this);
-                    m_useSource((CommunityDownloadSourceOption)i);
-                    break;
-                }
+                    m_useSource(option);
+                });
             }
         }
     }
