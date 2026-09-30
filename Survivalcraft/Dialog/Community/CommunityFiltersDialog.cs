@@ -50,7 +50,7 @@ namespace Game
             m_saveDefault = saveDefault;
             m_submit = submit;
 
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusFiltersDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityFiltersDialog");
             LoadContents(this, node);
             m_fileTypeButton = Children.Find<BevelledButtonWidget>("ScbbsPlusFiltersDialog.FileTypeButton");
             m_orderButton = Children.Find<BevelledButtonWidget>("ScbbsPlusFiltersDialog.OrderButton");

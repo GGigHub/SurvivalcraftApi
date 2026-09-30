@@ -10,7 +10,7 @@ namespace Game
 
         public CommunityMissingDependencyFileWidget()
         {
-            XElement node = ContentManager.Get<XElement>("Widgets/ScbbsPlusMissingDependencyFileWidget");
+            XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyFileWidget");
             LoadContents(this, node);
             m_fileTitleWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyFileWidget.FileTitle");
             m_metadataWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyFileWidget.Metadata");

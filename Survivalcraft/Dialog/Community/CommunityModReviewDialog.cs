@@ -25,7 +25,7 @@ namespace Game
             m_submit = submit;
             m_lastText = lastText ?? string.Empty;
 
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusModReviewDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModReviewDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusModReviewDialog.Title").Text =
                 string.IsNullOrWhiteSpace(dialogTitle) ? LanguageControl.Get("ScbbsPlusModReviewDialog", "ReviewLocalResource") : dialogTitle;

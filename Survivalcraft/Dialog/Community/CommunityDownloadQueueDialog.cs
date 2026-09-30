@@ -61,7 +61,7 @@ namespace Game
             ArgumentNullException.ThrowIfNull(host);
             m_host = host;
             m_closedCallback = closedCallback;
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusDownloadQueueDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityDownloadQueueDialog");
             LoadContents(this, node);
             m_taskList = Children.Find<ListPanelWidget>("ScbbsPlusDownloadQueueDialog.TaskList");
             m_taskList.ItemWidgetFactory = MakeTaskItem;

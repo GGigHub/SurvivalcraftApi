@@ -20,7 +20,7 @@ namespace Game
             m_submit = submit;
             m_closed = closed;
 
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusLoginDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityLoginDialog");
             LoadContents(this, node);
             m_accountBox = Children.Find<TextBoxWidget>("ScbbsPlusLoginDialog.AccountBox");
             m_passwordBox = Children.Find<TextBoxWidget>("ScbbsPlusLoginDialog.PasswordBox");

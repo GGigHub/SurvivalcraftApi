@@ -38,7 +38,7 @@ namespace Game
             m_missingDependencyLabels = BuildMissingDependencyLabels(missingDependencyLabels);
             m_preferredVersionsByPackage = BuildPreferredVersionsByPackage(preferredVersionsByPackage);
 
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusMissingDependenciesDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityMissingDependenciesDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusMissingDependenciesDialog.TitleLabel").Text =
                 string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "DependenciesFound") : title;

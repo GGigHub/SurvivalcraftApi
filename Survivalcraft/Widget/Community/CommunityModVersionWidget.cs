@@ -21,7 +21,7 @@ namespace Game
 
         public CommunityModVersionWidget()
         {
-            XElement node = ContentManager.Get<XElement>("Widgets/ScbbsPlusModVersionWidget");
+            XElement node = ContentManager.Get<XElement>("Widgets/CommunityModVersionWidget");
             LoadContents(this, node);
             m_backgroundWidget = Children.Find<RectangleWidget>("ScbbsPlusModVersionWidget.Background");
             m_versionTitleWidget = Children.Find<LabelWidget>("ScbbsPlusModVersionWidget.VersionTitle");

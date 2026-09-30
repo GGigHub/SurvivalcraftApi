@@ -26,7 +26,7 @@ namespace Game {
         }
 
         public CommunityDownloadQueueItemWidget() {
-            XElement node = ContentManager.Get<XElement>("Widgets/ScbbsPlusDownloadQueueItemWidget");
+            XElement node = ContentManager.Get<XElement>("Widgets/CommunityDownloadQueueItemWidget");
             LoadContents(this, node);
             m_backgroundWidget = Children.Find<RectangleWidget>("ScbbsPlusDownloadQueueItemWidget.Background");
             m_titleWidget = Children.Find<LabelWidget>("ScbbsPlusDownloadQueueItemWidget.Title");

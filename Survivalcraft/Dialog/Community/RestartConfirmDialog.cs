@@ -23,7 +23,7 @@ namespace Game
             m_restartAction = restartAction;
             m_restartToCurrentScreenAction = restartToCurrentScreenAction;
 
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusRestartConfirmDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/RestartConfirmDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusRestartConfirmDialog.Title").Text =
                 string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "RestartRequired") : title;

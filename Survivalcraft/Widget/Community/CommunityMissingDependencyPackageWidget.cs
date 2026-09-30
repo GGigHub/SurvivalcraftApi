@@ -10,7 +10,7 @@ namespace Game
 
         public CommunityMissingDependencyPackageWidget()
         {
-            XElement node = ContentManager.Get<XElement>("Widgets/ScbbsPlusMissingDependencyPackageWidget");
+            XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyPackageWidget");
             LoadContents(this, node);
             m_messagePanel = Children.Find<FixedSizePanelWidget>("ScbbsPlusMissingDependencyPackageWidget.MessagePanel");
             m_messageTextWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyPackageWidget.MessageText");

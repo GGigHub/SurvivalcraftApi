@@ -47,7 +47,7 @@ namespace Game
             m_postUrl = BuildPostWebUrl(CommunityServerManager.CurrentChineseInfo.WebsiteUrl, postId);
             m_contentHtml = html ?? string.Empty;
             m_contentPlainText = contentPlainText;
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusPostDetailsDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityPostDetailsDialog");
             LoadContents(this, node);
 
             m_titleLabel = Children.Find<LabelWidget>("ScbbsPlusPostDetailsDialog.Title");

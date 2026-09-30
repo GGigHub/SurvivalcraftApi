@@ -81,7 +81,7 @@ namespace Game
             // 屏幕只订阅完成事件刷新本地列表。界面回调（状态提示/下载源/重启返回）是共享单例上的
             // 单槽委托，不能在 ctor 赋值——三屏 ctor 都赋会被后注册者覆盖；统一放 Enter/Leave 配对。
             DownloadFlowManager downloadManager = DownloadFlowManager.Instance;
-            XElement node = ContentManager.Get<XElement>("Screens/ScbbsPlusCommunityScreen");
+            XElement node = ContentManager.Get<XElement>("Screens/CommunityScreen");
             LoadContents(this, node);
 
             m_topBarBackButton = Children.Find<ButtonWidget>("TopBar.Back");

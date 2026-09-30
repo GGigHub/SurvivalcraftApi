@@ -21,7 +21,7 @@ namespace Game
             m_useSource = useSource;
             m_downloadUrl = downloadUrl ?? string.Empty;
 
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusDownloadFailureDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityDownloadFailureDialog");
             LoadContents(this, node);
             string title = string.IsNullOrWhiteSpace(fileName)
                 ? LanguageControl.Get("ScbbsPlusDownloadFailureDialog", "DownloadError")

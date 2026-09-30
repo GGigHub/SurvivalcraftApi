@@ -19,7 +19,7 @@ namespace Game
 
         public CommunityDownloadDialog(string title, Action cancelAction = null, Action backgroundAction = null, CommunityTransferProgress progress = null)
         {
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusDownloadDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityDownloadDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusDownloadDialog.Title").Text =
                 string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusDownloadDialog", "DownloadingLabel") : title;

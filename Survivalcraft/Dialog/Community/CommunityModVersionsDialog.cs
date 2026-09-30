@@ -43,7 +43,7 @@ namespace Game
             m_showDetails = showDetails;
             m_download = download;
 
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusModVersionsDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModVersionsDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusModVersionsDialog.PostTitleLabel").Text =
                 string.IsNullOrWhiteSpace(postTitle) ? LanguageControl.Get("ScbbsPlusModVersionsDialog", "CommunityPost") : postTitle;

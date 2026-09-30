@@ -24,7 +24,7 @@ namespace Game
         {
             m_handler = handler;
 
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusImportOverwriteDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityImportOverwriteDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusImportOverwriteDialog.Message").Text = message ?? string.Empty;
             m_overwriteButton = Children.Find<ButtonWidget>("ScbbsPlusImportOverwriteDialog.OverwriteButton");

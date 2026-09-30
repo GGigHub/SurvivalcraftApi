@@ -16,7 +16,7 @@ namespace Game
 
         public CommunityMissingDependencyGroupWidget()
         {
-            XElement node = ContentManager.Get<XElement>("Widgets/ScbbsPlusMissingDependencyGroupWidget");
+            XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyGroupWidget");
             LoadContents(this, node);
             m_groupTextWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyGroupWidget.GroupText");
             m_toggleButton = Children.Find<ButtonWidget>("ScbbsPlusMissingDependencyGroupWidget.ToggleButton");

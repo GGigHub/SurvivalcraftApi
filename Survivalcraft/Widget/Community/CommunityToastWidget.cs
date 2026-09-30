@@ -24,7 +24,7 @@ namespace Game
 
         public CommunityToastWidget()
         {
-            XElement node = ContentManager.Get<XElement>("Widgets/ScbbsPlusToastWidget");
+            XElement node = ContentManager.Get<XElement>("Widgets/CommunityToastWidget");
             LoadContents(this, node);
             m_text = Children.Find<LabelWidget>("ScbbsPlusToastWidget.Text");
             m_confirm = Children.Find<LinkWidget>("ScbbsPlusToastWidget.Confirm");

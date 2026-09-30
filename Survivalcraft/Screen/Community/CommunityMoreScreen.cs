@@ -26,7 +26,7 @@ namespace Game
 
         public CommunityMoreScreen()
         {
-            XElement node = ContentManager.Get<XElement>("Screens/ScbbsPlusMoreScreen");
+            XElement node = ContentManager.Get<XElement>("Screens/CommunityMoreScreen");
             LoadContents(this, node);
             m_accountInfo = Children.Find<LabelWidget>("ScbbsPlusMoreScreen.AccountInfo");
             m_authButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.AuthButton");

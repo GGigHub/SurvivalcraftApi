@@ -26,7 +26,7 @@ namespace Game
         {
             m_handler = handler;
 
-            XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusModpackFileConflictDialog");
+            XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModpackFileConflictDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusModpackFileConflictDialog.Message").Text =
                 string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackFileConflictDialog", "IdenticalFileChooseAction"), fileName);

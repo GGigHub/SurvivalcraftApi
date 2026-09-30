@@ -11,7 +11,7 @@ namespace Game
 
         public CommunityModVersionFileWidget()
         {
-            XElement node = ContentManager.Get<XElement>("Widgets/ScbbsPlusModVersionFileWidget");
+            XElement node = ContentManager.Get<XElement>("Widgets/CommunityModVersionFileWidget");
             LoadContents(this, node);
             m_fileTitleWidget = Children.Find<LabelWidget>("ScbbsPlusModVersionFileWidget.FileTitle");
             m_downloadsSizeWidget = Children.Find<LabelWidget>("ScbbsPlusModVersionFileWidget.DownloadsSize");
