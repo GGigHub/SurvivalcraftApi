@@ -20,7 +20,6 @@ namespace Game
         private static Task<ExternalContentPreparation> s_prepareTask;
         private static Task<CommunityFileDownloadResult> s_importTask;
         private static int s_prepareRequestId;
-        private static bool s_showDuplicatePrompt = true;
         private static readonly ModpackConflictManager s_modpackConflictManager = new();
         private static IRemoteImportHost s_host;
         private static readonly ModpackManifestParser s_manifestParser = new();
@@ -72,10 +71,6 @@ namespace Game
                     StartExternalContentPreparation));
         }
 
-        public static void StartExternalContentPreparation(string rawUrl, string fileName)
-        {
-            StartExternalContentPreparation(rawUrl, fileName, showDuplicatePrompt: true);
-        }
 
         public static bool IsBusy()
         {
@@ -201,7 +196,7 @@ namespace Game
                 return;
             }
 
-            if (s_showDuplicatePrompt && result.RequiresOverwriteConfirmation)
+            if (result.RequiresOverwriteConfirmation)
             {
                 if (s_downloadDialog != null)
                 {
@@ -314,20 +309,16 @@ namespace Game
 
         private static void StartExternalContentPreparation(string rawUrl)
         {
-            StartExternalContentPreparation(rawUrl, null, showDuplicatePrompt: true);
+            StartExternalContentPreparation(rawUrl, null);
         }
 
-        private static void StartExternalContentPreparation(string rawUrl, string fileName, bool showDuplicatePrompt)
+        private static void StartExternalContentPreparation(string rawUrl, string fileName)
         {
             if (s_prepareTask != null || s_importTask != null)
             {
                 DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("RemoteImportManager", "ImportOrDownloadBusy"), LanguageControl.Ok, null, null));
                 return;
             }
-
-            // 整合包分支同样消费此旗标（同名覆盖确认），必须在分叉前赋值，
-            // 否则读到上一次资源导入的残留值。
-            s_showDuplicatePrompt = showDuplicatePrompt;
 
             try
             {
@@ -577,7 +568,7 @@ namespace Game
         private static void ConfirmArchiveOverwriteAndSave(int requestId, string url, string fileName, byte[] archiveData)
         {
             string conflictingPath = ModpackRegistry.Shared.FindConflictingPackPath(fileName);
-            if (conflictingPath != null && s_showDuplicatePrompt)
+            if (conflictingPath != null)
             {
                 string message = string.Format(
                     CultureInfo.InvariantCulture,
@@ -636,7 +627,7 @@ namespace Game
         private static void ConfirmRemoteModpackOverwrite(int requestId, ModpackManifest manifest, string url, string fileName, IReadOnlyDictionary<string, byte[]> embeddedFiles, byte[] sourceData)
         {
             string conflictingPath = ModpackRegistry.Shared.FindConflictingPackPath(fileName);
-            if (conflictingPath != null && s_showDuplicatePrompt)
+            if (conflictingPath != null)
             {
                 string message = string.Format(
                     CultureInfo.InvariantCulture,

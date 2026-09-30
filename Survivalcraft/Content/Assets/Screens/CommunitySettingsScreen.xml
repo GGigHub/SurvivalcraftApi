@@ -3,7 +3,7 @@
   <PanoramaWidget />
   <StackPanelWidget Direction="Horizontal">
     <CanvasWidget Style="{Widgets/TopBarContents}">
-      <LabelWidget Name="TopBar.Label" Text="[CommunitySettingsScreen:More]" />
+      <LabelWidget Name="TopBar.Label" Text="[CommunitySettingsScreen:Title]" />
     </CanvasWidget>
     <StackPanelWidget Direction="Vertical" Margin="10, 0">
       <CanvasWidget Size="0, 20" />

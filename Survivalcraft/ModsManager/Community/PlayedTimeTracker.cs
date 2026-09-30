@@ -12,7 +12,7 @@ namespace Game
     internal static class PlayedTimeTracker
     {
         // 项目模组时间按自动保存回调结算，而不是每帧累计；因此精度约为项目自动保存周期。
-        // 线程模型：StartProject/StopSelfPage/StopProject 由引擎在主线程调用，入口先 EnsureStoredAuthLoaded
+        // 线程模型：StartProject/StopProject 由引擎在主线程调用，入口先 EnsureStoredAuthLoaded
         // （恢复登录可能触发 LoginStateChanged/UI 刷新），再拍下上报身份快照；OnProjectXmlSaved 由
         // GameManager.SaveProject 的 Task.Run 在线程池触发——这正是 s_lock 存在的原因。
         // 保存回调线程只消费主线程拍下的快照做结算与上报排队，绝不实时读认证状态；
@@ -181,12 +181,6 @@ namespace Game
             return ModsManager.ModList
                 .Where(entity => entity != null && entity.modInfo != null)
                 .Where(entity => entity is not SurvivalCraftModEntity && entity is not FastDebugModEntity);
-        }
-
-        private static ModEntity FindSelfMod()
-        {
-            return ModsManager.ModList.FirstOrDefault(entity =>
-                entity?.modInfo != null);
         }
 
         private static ModPlayedTimeData GetOrCreateModDataLocked(ModEntity entity)

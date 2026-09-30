@@ -5415,14 +5415,6 @@
     "UnnamedFile": "未命名文件",
     "CommunityPost": "社区帖子"
   },
-  "MoreScreen": {
-    "StatusReady": "设置已就绪。",
-    "SettingsApplied": "设置已应用。",
-    "LogOut": "登出",
-    "LogIn": "登录",
-    "NotLoggedIn": "未登录",
-    "UnknownAccount": "未知账号"
-  },
   "PlayedTimeClient": {
     "PlayedTimeReportRejectedEntries": "模组游玩时间上报被服务端拒绝的条目: {0}",
     "PlayedTimeReportFailed": "模组游玩时间上报失败: {0}"
@@ -5509,5 +5501,13 @@
   },
   "VersionDetailFormatter": {
     "UnnamedVersion": "未命名版本"
+  },
+  "CommunitySettingsScreen": {
+    "StatusReady": "设置已就绪。",
+    "SettingsApplied": "设置已应用。",
+    "LogOut": "登出",
+    "LogIn": "登录",
+    "NotLoggedIn": "未登录",
+    "UnknownAccount": "未知账号"
   }
 }

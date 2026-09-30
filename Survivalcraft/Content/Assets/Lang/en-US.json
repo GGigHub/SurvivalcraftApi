@@ -5405,14 +5405,6 @@
     "UnnamedFile": "Unnamed File",
     "CommunityPost": "Community Post"
   },
-  "MoreScreen": {
-    "StatusReady": "Settings are ready.",
-    "SettingsApplied": "Settings applied.",
-    "LogOut": "Log Out",
-    "LogIn": "Log In",
-    "NotLoggedIn": "Not Logged In",
-    "UnknownAccount": "Unknown Account"
-  },
   "PlayedTimeClient": {
     "PlayedTimeReportRejectedEntries": "Entries rejected by the server during the mod played time report: {0}",
     "PlayedTimeReportFailed": "Mod played time report failed: {0}"
@@ -5499,5 +5491,13 @@
   },
   "VersionDetailFormatter": {
     "UnnamedVersion": "Unnamed Version"
+  },
+  "CommunitySettingsScreen": {
+    "StatusReady": "Settings are ready.",
+    "SettingsApplied": "Settings applied.",
+    "LogOut": "Log Out",
+    "LogIn": "Log In",
+    "NotLoggedIn": "Not Logged In",
+    "UnknownAccount": "Unknown Account"
   }
 }
