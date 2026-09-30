@@ -176,9 +176,12 @@ namespace Game {
         }
 
         public override void Draw(DrawContext dc) {
-            Color centerColor = CenterColor * new Vector4(0.6f, 0.6f, 0.6f, 1f);
-            Color bevelColor = BevelColor;
-            Color shadowColor = ShadowColor;
+            // 引擎 2D flat 管线按预乘 alpha 混合（BlendState.AlphaBlend = One/InvSrcAlpha），
+            // 而 Unlit.psh 输出的顶点色是直色：低透明度颜色会以全亮度参混、近似实心。
+            // 此处统一预乘，让调用方按自然直色写值；不透明色与纯黑（阴影）数值不变，既有用法零影响。
+            Color centerColor = PremultiplyAlpha(CenterColor * new Vector4(0.6f, 0.6f, 0.6f, 1f));
+            Color bevelColor = PremultiplyAlpha(BevelColor);
+            Color shadowColor = PremultiplyAlpha(ShadowColor);
             bool flag = shadowColor != Color.Transparent && BevelSize > 0f;
             float globalScale = GlobalScale;
             if (globalScale != m_cachedPixelsPerUnit) {
@@ -277,6 +280,11 @@ namespace Game {
         public override void MeasureOverride(Vector2 parentAvailableSize) {
             IsDrawRequired = BevelColor.A != 0 || CenterColor.A != 0;
             DesiredSize = Size;
+        }
+
+        private static Color PremultiplyAlpha(Color color)
+        {
+            return new Color(color.R * color.A / 255, color.G * color.A / 255, color.B * color.A / 255, color.A);
         }
 
         public override void ArrangeOverride() {
