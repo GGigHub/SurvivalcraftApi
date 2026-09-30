@@ -35,9 +35,8 @@ namespace Game
             errorContent.Children.Add(new LabelWidget
             {
                 Text = error ?? LanguageControl.Get("ScbbsPlusDownloadFailureDialog", "UnknownError"),
-                Margin = new Vector2(4f, 2f),
-                Color = new Color(235, 235, 235),
-                FontScale = 0.78f,
+                Color = new Color(255, 255, 255),
+                FontScale = 0.8f,
                 WordWrap = true
             });
             m_switchSourceButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadFailureDialog.SwitchSourceButton");

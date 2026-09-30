@@ -1,31 +1,29 @@
-<CanvasWidget xmlns="runtime-namespace:Game" Size="1240, 560" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+<CanvasWidget xmlns="runtime-namespace:Game" Size="680, 420" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
   <BevelledRectangleWidget Style="{Styles/DialogArea}" />
-  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="0, 10">
-    <LabelWidget Name="ScbbsPlusDownloadFailureDialog.Title" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5" />
-    <CanvasWidget Size="0, 8" />
-    <LabelWidget Text="[ScbbsPlusDownloadFailureDialog:CurrentDownloadLink]" Color="128, 128, 128" HorizontalAlignment="Near" Margin="10, 2" />
-    <CanvasWidget Size="0, 8" />
-    <CanvasWidget Name="ScbbsPlusDownloadFailureDialog.LinkBox" Size="1220, 76">
-      <RectangleWidget FillColor="18, 18, 18, 255" OutlineColor="120, 120, 120, 220" Size="1220, 76" />
-      <LabelWidget Name="ScbbsPlusDownloadFailureDialog.LinkLabel" Margin="12, 10" Size="1056, 56" HorizontalAlignment="Near" VerticalAlignment="Near" Color="235, 235, 235" WordWrap="true" />
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.CopyLinkButton" Text="[ScbbsPlusDownloadFailureDialog:CopyLink]" Style="{Styles/ButtonStyle_115x60}" HorizontalAlignment="Far" VerticalAlignment="Center" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
+    <LabelWidget Name="ScbbsPlusDownloadFailureDialog.Title" Color="255, 255, 255" HorizontalAlignment="Center" />
+    <CanvasWidget HorizontalAlignment="Stretch">
+      <LabelWidget Text="[ScbbsPlusDownloadFailureDialog:CurrentDownloadLink]" Color="255, 255, 255" VerticalAlignment="Center" />
+      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.CopyLinkButton" Text="[ScbbsPlusDownloadFailureDialog:CopyLink]" Style="{Styles/ButtonStyle_115x60}" HorizontalAlignment="Far" />
     </CanvasWidget>
-    <CanvasWidget Size="0, 8" />
-    <LabelWidget Text="[ScbbsPlusDownloadFailureDialog:ErrorReason]" Color="128, 128, 128" HorizontalAlignment="Near" Margin="10, 2" />
-    <CanvasWidget Size="0, 8" />
-    <CanvasWidget Name="ScbbsPlusDownloadFailureDialog.ErrorBox" Size="1220, 160">
-      <RectangleWidget FillColor="18, 18, 18, 255" OutlineColor="120, 120, 120, 220" Size="1220, 160" />
-      <CanvasWidget Margin="8, 8" Size="1204, 144">
-        <ScrollPanelWidget Direction="Vertical">
-          <StackPanelWidget Name="ScbbsPlusDownloadFailureDialog.ErrorContent" Direction="Vertical" HorizontalAlignment="Stretch" />
-        </ScrollPanelWidget>
-      </CanvasWidget>
+    <CanvasWidget Name="ScbbsPlusDownloadFailureDialog.LinkBox" Size="Infinity, 48">
+      <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
+      <LabelWidget Name="ScbbsPlusDownloadFailureDialog.LinkLabel" Margin="8, 0" VerticalAlignment="Center" Color="255, 255, 255" Ellipsis="true" />
     </CanvasWidget>
-    <CanvasWidget Size="0, Infinity" />
-    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
+    <CanvasWidget Size="0, 16" />
+    <LabelWidget Text="[ScbbsPlusDownloadFailureDialog:ErrorReason]" Color="255, 255, 255" />
+    <CanvasWidget Size="0, 8" />
+    <CanvasWidget Name="ScbbsPlusDownloadFailureDialog.ErrorBox">
+      <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
+      <ScrollPanelWidget Direction="Vertical">
+        <StackPanelWidget Name="ScbbsPlusDownloadFailureDialog.ErrorContent" Direction="Vertical" HorizontalAlignment="Stretch" Margin="5, 5" />
+      </ScrollPanelWidget>
+    </CanvasWidget>
+    <CanvasWidget Size="0, 16" />
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
       <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.SwitchSourceButton" Text="[ScbbsPlusDownloadFailureDialog:UseAnotherSource]" Style="{Styles/ButtonStyle_205x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.CloseButton" Text="[ScbbsPlusDownloadFailureDialog:Close]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.CloseButton" Text="[ScbbsPlusDownloadFailureDialog:Close]" Style="{Styles/ButtonStyle_205x60}" />
     </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>
