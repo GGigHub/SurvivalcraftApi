@@ -4278,7 +4278,18 @@
       "OverwriteAll": "Overwrite All",
       "Close": "Close"
     },
-    "MoreScreen": {
+    "PostDetailsDialog": {
+      "PostDetails": "Post Details",
+      "Close": "Close",
+      "Download": "Download",
+      "ViewInBrowser": "View In Browser"
+    },
+    "RestartConfirmDialog": {
+      "Restart": "Restart",
+      "RestartToCurrentScreen": "Reboot here"
+    },
+    "CommunitySettingsScreen": {
+      "Title": "Chinese Community Settings",
       "Close": "Close",
       "LoggedAccount": "Current Account",
       "NotLoggedIn": "Not Logged In",
@@ -4308,16 +4319,6 @@
       "MyPublishedDescription": "Browse resources you have published to the Chinese community",
       "PostDetailsAutoTranslate": "Post Details Auto-Translate",
       "PostDetailsAutoTranslateDescription": "Automatically translate post or version details into the current system language"
-    },
-    "PostDetailsDialog": {
-      "PostDetails": "Post Details",
-      "Close": "Close",
-      "Download": "Download",
-      "ViewInBrowser": "View In Browser"
-    },
-    "RestartConfirmDialog": {
-      "Restart": "Restart",
-      "RestartToCurrentScreen": "Reboot here"
     }
   },
   "FireworksBlock": {

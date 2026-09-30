@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Xml.Linq;
@@ -128,7 +128,7 @@ namespace Game
             //（ApiBaseUrl 派生自 CurrentChineseInfo，认证会话同步激活），进屏不再带址绕行。
             AcquireRemoteImportHost();
             InstallDownloadFlowCallbacks(
-                CommunityMoreScreen.SetSharedStatus,
+                CommunitySettingsScreen.SetSharedStatus,
                 () => SettingsManager.CommunityDownloadSourceManualSelectEnabled,
                 ResolveEffectiveDownloadSource);
             // 首进先只搭骨架并让出 2 帧给首屏绘制，避免解密凭据/拉列表/读本地资源堵在同一帧造成黑屏。

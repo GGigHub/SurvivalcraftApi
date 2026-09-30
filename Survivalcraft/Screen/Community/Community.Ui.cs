@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Engine;
 
 namespace Game
@@ -10,7 +10,7 @@ namespace Game
         {
             if (m_moreButton.IsClicked)
             {
-                ScreensManager.SwitchScreen("CommunityMore");
+                ScreensManager.SwitchScreen("CommunitySettings");
             }
         }
 

@@ -606,7 +606,7 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("ExternalContent", new ExternalContentScreen()); });
             AddLoadAction(delegate { AddScreen("OriginalCommunityContent", new OriginalCommunityContentScreen()); });
             AddLoadAction(delegate { AddScreen("CommunityContent", new CommunityScreen()); });
-            AddLoadAction(delegate { AddScreen("CommunityMore", new CommunityMoreScreen()); });
+            AddLoadAction(delegate { AddScreen("CommunitySettings", new CommunitySettingsScreen()); });
             AddLoadAction(delegate { AddScreen("CommunityMyPublished", new CommunityMyPublishedScreen()); });
             AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
             AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });

@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Xml.Linq;
 using Engine;
 
 namespace Game
 {
-    internal sealed class CommunityMoreScreen : CommunityScreenBase
+    internal sealed class CommunitySettingsScreen : CommunityScreenBase
     {
-        private static CommunityMoreScreen s_current;
+        private static CommunitySettingsScreen s_current;
         private static string s_sharedStatus = string.Empty;
 
         private LabelWidget m_accountInfo;
@@ -24,23 +24,23 @@ namespace Game
         private ButtonWidget m_topBarBackButton;
         private LabelWidget m_statusLabel;
 
-        public CommunityMoreScreen()
+        public CommunitySettingsScreen()
         {
-            XElement node = ContentManager.Get<XElement>("Screens/CommunityMoreScreen");
+            XElement node = ContentManager.Get<XElement>("Screens/CommunitySettingsScreen");
             LoadContents(this, node);
-            m_accountInfo = Children.Find<LabelWidget>("ScbbsPlusMoreScreen.AccountInfo");
-            m_authButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.AuthButton");
-            m_myPublishedButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.MyPublishedButton");
-            m_importButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ImportButton");
-            m_downloadQueueButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadQueueButton");
-            m_currentServerButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.CurrentServerButton");
-            m_downloadSourceSelectionModeButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DownloadSourceSelectionModeButton");
-            m_defaultDownloadSourceButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.DefaultDownloadSourceButton");
-            m_applyDownloadSourceToUpdatesButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.ApplyDownloadSourceToUpdatesButton");
-            m_playedTimeReportingButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.PlayedTimeReportingButton");
-            m_postDetailsAutoTranslateButton = Children.Find<ButtonWidget>("ScbbsPlusMoreScreen.PostDetailsAutoTranslateButton");
+            m_accountInfo = Children.Find<LabelWidget>("CommunitySettingsScreen.AccountInfo");
+            m_authButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.AuthButton");
+            m_myPublishedButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.MyPublishedButton");
+            m_importButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.ImportButton");
+            m_downloadQueueButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.DownloadQueueButton");
+            m_currentServerButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.CurrentServerButton");
+            m_downloadSourceSelectionModeButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.DownloadSourceSelectionModeButton");
+            m_defaultDownloadSourceButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.DefaultDownloadSourceButton");
+            m_applyDownloadSourceToUpdatesButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.ApplyDownloadSourceToUpdatesButton");
+            m_playedTimeReportingButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.PlayedTimeReportingButton");
+            m_postDetailsAutoTranslateButton = Children.Find<ButtonWidget>("CommunitySettingsScreen.PostDetailsAutoTranslateButton");
             m_topBarBackButton = Children.Find<ButtonWidget>("TopBar.Back");
-            m_statusLabel = Children.Find<LabelWidget>("ScbbsPlusMoreScreen.Status");
+            m_statusLabel = Children.Find<LabelWidget>("CommunitySettingsScreen.Status");
         }
 
         public override void Enter(object[] parameters)
@@ -49,7 +49,7 @@ namespace Game
             RefreshControls();
             RefreshSettingsUi();
             SetStatus(string.IsNullOrWhiteSpace(s_sharedStatus)
-                ? LanguageControl.Get("MoreScreen", "StatusReady")
+                ? LanguageControl.Get("CommunitySettingsScreen", "StatusReady")
                 : s_sharedStatus);
             AcquireRemoteImportHost();
             InstallDownloadFlowCallbacks(
@@ -137,8 +137,8 @@ namespace Game
         {
             m_accountInfo.Text = GetAccountInfoText();
             m_authButton.Text = AuthSessionManager.Instance.IsLoggedIn
-                ? LanguageControl.Get("MoreScreen", "LogOut")
-                : LanguageControl.Get("MoreScreen", "LogIn");
+                ? LanguageControl.Get("CommunitySettingsScreen", "LogOut")
+                : LanguageControl.Get("CommunitySettingsScreen", "LogIn");
         }
 
         /// <summary>
@@ -194,10 +194,10 @@ namespace Game
             AuthSessionManager auth = AuthSessionManager.Instance;
             if (!auth.IsLoggedIn || auth.CurrentUser == null)
             {
-                return LanguageControl.Get("MoreScreen", "NotLoggedIn");
+                return LanguageControl.Get("CommunitySettingsScreen", "NotLoggedIn");
             }
             string account = string.IsNullOrWhiteSpace(auth.CurrentUser.Account)
-                ? LanguageControl.Get("MoreScreen", "UnknownAccount")
+                ? LanguageControl.Get("CommunitySettingsScreen", "UnknownAccount")
                 : auth.CurrentUser.Account.Trim();
             string nickname = string.IsNullOrWhiteSpace(auth.CurrentUser.Nickname) ? account : auth.CurrentUser.Nickname.Trim();
             string userName = string.Equals(nickname, account, StringComparison.Ordinal) ? account : $"{nickname}（{account}）";

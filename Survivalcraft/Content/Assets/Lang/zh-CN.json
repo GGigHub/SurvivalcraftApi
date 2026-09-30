@@ -4288,7 +4288,18 @@
       "OverwriteAll": "全部覆盖",
       "Close": "关闭"
     },
-    "MoreScreen": {
+    "PostDetailsDialog": {
+      "PostDetails": "帖子详情",
+      "Close": "关闭",
+      "Download": "下载",
+      "ViewInBrowser": "浏览器中查看"
+    },
+    "RestartConfirmDialog": {
+      "Restart": "重启",
+      "RestartToCurrentScreen": "重启到此"
+    },
+    "CommunitySettingsScreen": {
+      "Title": "中文社区设置",
       "Close": "关闭",
       "LoggedAccount": "当前登录账号",
       "NotLoggedIn": "未登录",
@@ -4318,16 +4329,6 @@
       "MyPublishedDescription": "查看已发布到中文社区的资源",
       "PostDetailsAutoTranslate": "帖子详情自动翻译",
       "PostDetailsAutoTranslateDescription": "进入帖子或版本详情时，自动翻译为当前系统语言"
-    },
-    "PostDetailsDialog": {
-      "PostDetails": "帖子详情",
-      "Close": "关闭",
-      "Download": "下载",
-      "ViewInBrowser": "浏览器中查看"
-    },
-    "RestartConfirmDialog": {
-      "Restart": "重启",
-      "RestartToCurrentScreen": "重启到此"
     }
   },
   "FireworksBlock": {
