@@ -22,7 +22,6 @@ namespace Game
 
             string fileName = CommunityFileRules.GetDownloadFileName(file);
             string url = file.Url;
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "StartModpackDownload"), url, fileName));
             if (string.IsNullOrWhiteSpace(url))
             {
                 ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "ModpackFileHasNoDownloadLink"), fileName));
@@ -38,9 +37,7 @@ namespace Game
         {
             try
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadModpackManifest"), url));
                 (byte[] data, _) = await TransferManager.ModpackSourceResolver.DownloadBytesAsync(url);
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "ModpackManifestDownloadCompleted"), data.Length));
                 ModpackManifestLoadResult result = new ModpackManifestParser().Parse(requestId, data, url, fileName);
                 ModpackManifest manifest = result.Manifest;
                 if (manifest == null || manifest.Items == null || manifest.Items.Length == 0)
@@ -51,11 +48,9 @@ namespace Game
                         : result;
                 }
 
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackSummary"), manifest.Name, manifest.PackageName, manifest.Version, manifest.Items.Length));
                 for (int i = 0; i < manifest.Items.Length; i++)
                 {
                     ModpackItem item = manifest.Items[i];
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackItemDetails"), i, item.TargetDirectory, item.Filename, item.Url, item.FileId, item.Category, item.TargetPath));
                 }
                 return result;
             }
@@ -93,7 +88,6 @@ namespace Game
                                 ShowToast(LanguageControl.Get("DownloadFlowManager", "ModpackBusyWait"));
                                 return;
                             }
-                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "UserConfirmedModpackDownload"), manifest.Items.Length));
                             int requestId = ++m_modpackDownloadRequestId;
                             m_modpackDownloadCompletedAction = null;
                             m_modpackItemDownloadTask = Task.Run(() => ProcessModpackItemsAsync(
@@ -230,7 +224,6 @@ namespace Game
             byte[] sourceData = null,
             Func<ModpackItem, byte[], ModpackDownloadProgress, byte[]> customFileBackupPreparer = null)
         {
-            Log.Information(LanguageControl.Get("DownloadFlowManager", "StartProcessingModpackItems"));
             try
             {
                 ModpackDownloadProgress progress = await m_modpackDownloader.ExecuteAsync(
@@ -255,7 +248,6 @@ namespace Game
                 {
                     ModpackRegistry.Shared.SaveManifest(manifest, sourceUrl, sourceFileName, sourceData);
                 }
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackProcessingCompleted"), progress.SuccessCount, progress.FailedCount));
                 return progress;
             }
             catch (Exception ex)

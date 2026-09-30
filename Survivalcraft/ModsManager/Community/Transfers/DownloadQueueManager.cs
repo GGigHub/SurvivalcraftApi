@@ -48,7 +48,6 @@ namespace Game
             bool requiresRestart,
             CommunityDownloadSourceManager.Info source,
             CommunityDownloadFeedbackInfo feedbackInfo,
-            bool replaceExistingScbbsPlusMod,
             string replaceExistingModPackageName,
             string replaceExistingModPath,
             string overwriteExistingFilePath)
@@ -78,7 +77,6 @@ namespace Game
                     Type = type,
                     RequiresRestart = requiresRestart,
                     FeedbackInfo = feedbackInfo,
-                    ReplaceExistingScbbsPlusMod = replaceExistingScbbsPlusMod,
                     ReplaceExistingModPackageName = replaceExistingModPackageName,
                     ReplaceExistingModPath = replaceExistingModPath,
                     OverwriteExistingFilePath = overwriteExistingFilePath,

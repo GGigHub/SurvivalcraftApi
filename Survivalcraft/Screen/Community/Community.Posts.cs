@@ -22,7 +22,7 @@ namespace Game
             m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "CommunityFormat"), LanguageControl.GetEnumDisplayName(resultFileType)));
             bool needVersionFilter = (!useSearchIgnore || !m_ignoreVersionFilter) && m_onlyCurrentVersion;
             bool needVersionCatalog = VersionCatalogCache.ShouldLoadVersionCatalogForFileType(resultFileType);
-            VersionCatalogCache.TryGetCachedVersionCatalog(apiBaseUrl, out VersionListItem[] cachedCatalog, out Dictionary<int, string> cachedVersionMap, out int? cachedPluginVersionId);
+            VersionCatalogCache.TryGetCachedVersionCatalog(apiBaseUrl, out VersionListItem[] cachedCatalog, out Dictionary<int, string> cachedVersionMap, out int? cachedApiVersionId);
             string currentApiVersion = VersionCatalogCache.CurrentApiVersion;
 
             m_postsLoadSlot.Start(async (requestId, _) =>
@@ -44,8 +44,8 @@ namespace Game
                         CurrentApiVersion = currentApiVersion,
                         CachedCatalog = cachedCatalog,
                         CachedVersionMap = cachedVersionMap,
-                        CachedPluginVersionId = cachedPluginVersionId,
-                        ResolvePluginVersionIdAsync = () => VersionCatalogCache.ResolvePluginVersionIdAsync(apiBaseUrl, token)
+                        CachedApiVersionId = cachedApiVersionId,
+                        ResolveApiVersionIdAsync = () => VersionCatalogCache.ResolveApiVersionIdAsync(apiBaseUrl, token)
                     });
                 if (!string.IsNullOrEmpty(load.Error))
                 {

@@ -7,7 +7,7 @@ namespace Game
 {
     /// <summary>
     /// 平台 API 401/403 响应广播。token 失效后任一带 Bearer 的请求失败都会通知，
-    /// 由 ScbbsPlusCommunityScreen 统一清除本地登录态并提示重新登录，各调用点无需逐个处理。
+    /// 由 CommunityScreen 统一清除本地登录态并提示重新登录，各调用点无需逐个处理。
     /// 通知携带触发请求的 token：订阅方比对当前凭据，旧 token 的在途请求不会误杀新会话。
     /// </summary>
     internal static class CommunityUnauthorizedNotifier
@@ -31,7 +31,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, "[ScbbsPlus] Unauthorized notifier subscriber failed: {0}", ex.Message));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, "Unauthorized notifier subscriber failed: {0}", ex.Message));
                 }
             }
         }

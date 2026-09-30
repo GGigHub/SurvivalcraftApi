@@ -11,7 +11,7 @@ namespace Game
 
         public CommunityPreparedUploadFile PrepareWorld(string directoryName, string worldName)
         {
-            string tempPath = Storage.CombinePaths(ModsManager.DocPath, $"ScbbsPlusWorldUpload-{Guid.NewGuid():N}.tmp");
+            string tempPath = Storage.CombinePaths(ModsManager.DocPath, $"WorldUpload-{Guid.NewGuid():N}.tmp");
             try
             {
                 using (Stream targetStream = Storage.OpenFile(tempPath, OpenFileMode.Create))
@@ -47,7 +47,7 @@ namespace Game
             {
                 case ExternalContentType.FurniturePack:
                 {
-                    string tempPath = Storage.CombinePaths(ModsManager.DocPath, $"ScbbsPlusFurnitureUpload-{Guid.NewGuid():N}.scfpack");
+                    string tempPath = Storage.CombinePaths(ModsManager.DocPath, $"FurnitureUpload-{Guid.NewGuid():N}.scfpack");
                     try
                     {
                         using (Stream targetStream = Storage.OpenFile(tempPath, OpenFileMode.Create))

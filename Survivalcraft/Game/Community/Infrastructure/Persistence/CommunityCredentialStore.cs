@@ -11,16 +11,11 @@ namespace Game
     /// <summary>
     /// 负责凭据文件的加密、解密和旧格式迁移。
     ///
-    /// 当前格式（v4）：每服一文件 data:ScbbsPlus/auth/&lt;sha256(归一化地址)&gt;.bin，魔数 SCBPAUTH4，
+    /// 当前格式（v4）：每服一文件 CommunityStoragePaths.AuthDirectory/auth/&lt;sha256(归一化地址)&gt;.bin，魔数 SCBPAUTH4，
     /// payload 为 JSON {apiBaseUrl, login}（自描述）；加密方式同 v3：
     /// - Windows：魔数 + DPAPI（CurrentUser 作用域，带应用专属 entropy）密文。
     /// - 其他平台：魔数 + salt(16) + nonce(12) + AES-GCM 密文 + tag(16)，
     ///   密钥由 PBKDF2-SHA256(600k) 派生。
-    ///
-    /// 仍可读取的旧格式（仅 legacy auth.bin 迁移路径）：SCBPAUTH3/SCBPAUTH2/无魔数 AES-CBC：
-    /// - 魔数 SCBPAUTH3：v3 单文件（Windows DPAPI / 非 Windows AES-GCM）。
-    /// - 魔数 SCBPAUTH2：旧版 Windows DPAPI（无 entropy）。
-    /// - 无魔数：旧版非 Windows AES-CBC（MachineName + 固定 salt + 1 万次 PBKDF2）。
     ///
     /// 威胁模型：非 Windows 路径的密钥派生口令为 MachineName（非秘密），仅隔离不知机器名的访问者，
     /// 不抵抗知道机器名的离线攻击；Windows 路径走 DPAPI，安全性由操作系统保障。
@@ -28,11 +23,7 @@ namespace Game
     internal static class CommunityCredentialStore
     {
         private static readonly byte[] s_fileMagic = Encoding.ASCII.GetBytes("SCBPAUTH4");
-        private static readonly byte[] s_dpapiEntropy = Encoding.UTF8.GetBytes("ScbbsPlus.CommunityCredentialStore.v4");
-        // legacy 单文件（auth.bin）：v3 及更早格式，仅供 LoadLegacy 一次性迁移读取。
-        private static readonly byte[] s_legacyFileMagic = Encoding.ASCII.GetBytes("SCBPAUTH3");
-        private static readonly byte[] s_legacyDpapiMagic = Encoding.ASCII.GetBytes("SCBPAUTH2");
-        private static readonly byte[] s_legacyDpapiEntropy = Encoding.UTF8.GetBytes("ScbbsPlus.CommunityCredentialStore.v3");
+        private static readonly byte[] s_dpapiEntropy = Encoding.UTF8.GetBytes("CommunityCredentialStore.v4");
 
         private const int s_pbkdf2Iterations = 600_000;
         private const int s_saltSize = 16;
@@ -157,7 +148,7 @@ namespace Game
             if (!string.Equals(stored.ApiBaseUrl, CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl), StringComparison.OrdinalIgnoreCase))
             {
                 // 文件名与 payload 归属不一致（正常不可能，防哈希碰撞/手拷文件）：按未找到处理。
-                Log.Warning($"[ScbbsPlus] Credential file server mismatch: {stored.ApiBaseUrl} != {CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl)}.");
+                Log.Warning($"Credential file server mismatch: {stored.ApiBaseUrl} != {CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl)}.");
                 return null;
             }
             return stored.Login;
@@ -277,7 +268,6 @@ namespace Game
         {
             if (!StartsWithMagic(data, s_fileMagic))
             {
-                // 每服文件只认 v4；v3 内容只可能出现在 legacy auth.bin（LoadLegacy 路径）。
                 throw new CryptographicException(LanguageControl.Get("LoginDialog", "CredentialFileFormatInvalid"));
             }
             byte[] body = new byte[data.Length - s_fileMagic.Length];
@@ -327,55 +317,6 @@ namespace Game
             }
         }
 
-        private static string DecryptBytes(byte[] data, out bool legacyFormat)
-        {
-            if (StartsWithMagic(data, s_legacyFileMagic))
-            {
-                legacyFormat = false;
-                byte[] body = new byte[data.Length - s_legacyFileMagic.Length];
-                Buffer.BlockCopy(data, s_legacyFileMagic.Length, body, 0, body.Length);
-                byte[] plainBytes = OperatingSystem.IsWindows()
-                    ? UnprotectWithDpapi(body, s_legacyDpapiEntropy)
-                    : DecryptWithAesGcm(body);
-                try
-                {
-                    return Encoding.UTF8.GetString(plainBytes);
-                }
-                finally
-                {
-                    CryptographicOperations.ZeroMemory(plainBytes);
-                }
-            }
-
-            // 旧版 Windows DPAPI（无 entropy）：迁移读取。
-            if (StartsWithMagic(data, s_legacyDpapiMagic))
-            {
-                if (VersionsManager.CurrentPlatform != VersionsManager.Platform.Windows)
-                {
-                    // 跨平台迁移：DPAPI 凭据无法在本平台解开，返回 null 由 Load 作废文件。
-                    legacyFormat = true;
-                    return null;
-                }
-
-                legacyFormat = true;
-                byte[] body = new byte[data.Length - s_legacyDpapiMagic.Length];
-                Buffer.BlockCopy(data, s_legacyDpapiMagic.Length, body, 0, body.Length);
-                byte[] plainBytes = UnprotectWithDpapi(body, null);
-                try
-                {
-                    return Encoding.UTF8.GetString(plainBytes);
-                }
-                finally
-                {
-                    CryptographicOperations.ZeroMemory(plainBytes);
-                }
-            }
-
-            // 旧版非 Windows AES-CBC：迁移读取。
-            legacyFormat = true;
-            return DecryptLegacyBytes(data);
-        }
-
         internal static byte[] DecryptWithAesGcm(byte[] data)
         {
             int headerSize = s_saltSize + s_nonceSize;
@@ -421,7 +362,7 @@ namespace Game
             IntPtr entropyBlobPtr = AllocEntropyBlob(entropy, out entropyBlob);
             try
             {
-                if (!CryptProtectData(ref input, "ScbbsPlus 登录凭据", entropyBlobPtr, IntPtr.Zero, IntPtr.Zero, 1, out output))
+                if (!CryptProtectData(ref input, "Survivalcraft API Chinese Community Login Token", entropyBlobPtr, IntPtr.Zero, IntPtr.Zero, 1, out output))
                 {
                     throw new CryptographicException(Marshal.GetLastWin32Error());
                 }
@@ -554,52 +495,6 @@ namespace Game
                 }
             }
             return true;
-        }
-
-        // ===== 旧格式迁移读取（只读，不再用于写入）=====
-
-        private static byte[] DeriveLegacyEncryptionKey()
-        {
-            byte[] salt = Encoding.UTF8.GetBytes("ScbbsPlus.Salt@2026!v1");
-            return Rfc2898DeriveBytes.Pbkdf2(
-                Environment.MachineName, salt, 10_000, HashAlgorithmName.SHA256, 32);
-        }
-
-        private static string DecryptLegacyBytes(byte[] data)
-        {
-            const int ivLength = 16;
-            if (data == null || data.Length <= ivLength || (data.Length - ivLength) % ivLength != 0)
-            {
-                throw new CryptographicException(LanguageControl.Get("LoginDialog", "OldCredentialFileFormatInvalid"));
-            }
-
-            byte[] key = DeriveLegacyEncryptionKey();
-            try
-            {
-                using var aes = Aes.Create();
-                aes.Key = key;
-
-                byte[] iv = new byte[ivLength];
-                byte[] cipherBytes = new byte[data.Length - ivLength];
-                Buffer.BlockCopy(data, 0, iv, 0, ivLength);
-                Buffer.BlockCopy(data, ivLength, cipherBytes, 0, cipherBytes.Length);
-
-                aes.IV = iv;
-                using var decryptor = aes.CreateDecryptor();
-                byte[] plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
-                try
-                {
-                    return Encoding.UTF8.GetString(plainBytes);
-                }
-                finally
-                {
-                    CryptographicOperations.ZeroMemory(plainBytes);
-                }
-            }
-            finally
-            {
-                CryptographicOperations.ZeroMemory(key);
-            }
         }
     }
 }

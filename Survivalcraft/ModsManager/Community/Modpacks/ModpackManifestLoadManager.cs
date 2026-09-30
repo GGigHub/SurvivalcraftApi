@@ -7,9 +7,6 @@ using Engine;
 
 namespace Game
 {
-    // 模组 ScbbsPlusModpackManifestLoadResult → ManifestItemsLoadResult：
-    // 本体已有解析结果类 ModpackManifestLoadResult（Game/Community/Models/Persistence/ModpackModels.cs），
-    // 为免同名冲突按 brief 定名 ManifestItemsLoadResult。
     internal sealed class ManifestItemsLoadResult
     {
         public int RequestId { get; init; }

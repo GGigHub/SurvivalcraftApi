@@ -162,7 +162,7 @@ namespace Game {
                 }
             );
             AddLoadAction(delegate {
-                // ScbbsPlus 组合根接线：传输反馈的登录态回退延迟求值（仅真正上报时解析），接线前匿名上报。
+                // 中文社区组合根接线：传输反馈的登录态回退延迟求值（仅真正上报时解析），接线前匿名上报。
                 TransferManager.ConfigureFeedbackProviders(
                     () => AuthSessionManager.Instance.CurrentToken,
                     () => AuthSessionManager.Instance.ApiBaseUrl);
@@ -170,7 +170,7 @@ namespace Game {
                 // CommunityServerManager.CurrentChineseInfo，后续切服由 ChangeChineseInfo 直接通知。
                 AuthSessionManager.Instance.OnServerSwitched();
                 TransactionalFileReplacement.RecoverLeftoverBackups(ModsManager.ModsPath, ModsManager.DocPath);
-                // 先于一切业务读取：修复上次进程死于 MoveFile 两步之间时 data:ScbbsPlus 下的状态丢失。
+                // 先于一切业务读取：修复上次进程死于 MoveFile 两步之间时 CommunityStoragePaths.RootDirectory 下的状态丢失。
                 JsonFileStore.RecoverLeftoverTempFiles(CommunityStoragePaths.RootDirectory);
                 // ModPacks 主文件/meta 与 JsonFileStore 同款 .tmp 命名，同因写入：Move 阶段死亡时包文件唯一副本成孤儿 .tmp。
                 JsonFileStore.RecoverLeftoverTempFiles(ModpackRegistry.Shared.DirectoryPath);
@@ -606,7 +606,7 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("ExternalContent", new ExternalContentScreen()); });
             AddLoadAction(delegate { AddScreen("OriginalCommunityContent", new OriginalCommunityContentScreen()); });
             AddLoadAction(delegate { AddScreen("CommunityContent", new CommunityScreen()); });
-            AddLoadAction(delegate { AddScreen("ScbbsPlusMore", new CommunityMoreScreen()); });
+            AddLoadAction(delegate { AddScreen("CommunityMore", new CommunityMoreScreen()); });
             AddLoadAction(delegate { AddScreen("CommunityMyPublished", new CommunityMyPublishedScreen()); });
             AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
             AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });

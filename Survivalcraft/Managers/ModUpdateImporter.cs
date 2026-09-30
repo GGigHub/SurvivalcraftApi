@@ -10,21 +10,6 @@ namespace Game
     /// </summary>
     internal static class ModUpdateImporter
     {
-        // 旧安装文件路径由调用方在分析/确认阶段查得（封送主线程的权威口径，见
-        // ExternalContentManager.FindInstalledMod），导入线程不再重扫 ModListAll：
-        // 后台裸枚举与主线程列表重建并发，靠吞异常降级会漏删旧文件。
-        public static string ImportSelfUpdate(Stream stream, string fileName, string packageName, string existingModFilePath = null)
-        {
-            ModInfo updateInfo = ScmodArchiveReader.ReadModInfo(stream);
-            if (updateInfo == null || !string.Equals(updateInfo.PackageName, packageName, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException(LanguageControl.Get("ModUpdateImporter", "UpdatePackageIsNotCommunityMod"));
-            }
-
-            string targetPath = Storage.CombinePaths(ModsManager.ModsPath, GetSafeFileName(fileName, "ScbbsPlus.scmod"));
-            return ReplaceModFile(stream, targetPath, existingModFilePath, "ScbbsPlus-update");
-        }
-
         public static string ImportModUpdate(
             Stream stream,
             string fileName,
@@ -38,7 +23,7 @@ namespace Game
 
             if (!TryReadModInfo(stream, out ModInfo updateInfo) || updateInfo == null)
             {
-                // 与 ImportSelfUpdate 的强校验一致：损坏包直接拒绝，避免用坏包静默替换用户原 mod。
+                // 损坏包直接拒绝，避免用坏包静默替换用户原 mod。
                 throw new InvalidOperationException(LanguageControl.Get("ModUpdateImporter", "UpdatePackageInvalidOrCorrupted"));
             }
             if (!string.Equals(updateInfo.PackageName, expectedPackageName, StringComparison.OrdinalIgnoreCase))
@@ -49,7 +34,7 @@ namespace Game
             string targetPath = Storage.CombinePaths(
                 ModsManager.ModsPath,
                 GetSafeFileName(fileName, $"{expectedPackageName}.scmod"));
-            return ReplaceModFile(stream, targetPath, oldModFilePath, "ScbbsPlus-mod-update");
+            return ReplaceModFile(stream, targetPath, oldModFilePath, "mod-update");
         }
 
         // 原始字节直通：探测走读器（内存解密、复位流位置），落盘 CopyTo 流式写，

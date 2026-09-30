@@ -77,9 +77,9 @@ namespace Game
             m_postsPresenter.Page = 1;
             // 屏实例全局复用：防上次会话开关残留，同 Page 重置语义。
             m_showUnpublished = false;
-            // 游戏内 ModSettingsState 以 MyPublishedFileType 单属性承载本屏类型（无按屏名
+            // 游戏内 CommunityModSettingsState 以 MyPublishedFileType 单属性承载本屏类型（无按屏名
             // TryGet 版式），恒有值，直接恢复即可。
-            SetCurrentMyPublishedFileType(ModSettingsState.MyPublishedFileType);
+            SetCurrentMyPublishedFileType(CommunityModSettingsState.MyPublishedFileType);
             InstallDownloadFlowCallbacks(
                 status => { },
                 () => false,
@@ -310,7 +310,7 @@ namespace Game
         private void SetCurrentMyPublishedFileType(ExternalContentType fileType)
         {
             m_selectedFileType = fileType;
-            ModSettingsState.SetMyPublishedFileType(fileType);
+            CommunityModSettingsState.SetMyPublishedFileType(fileType);
             // 类型决定页数上限：切换（含 Enter 恢复上次类型）必须回第一页，否则新类型页数
             // 少于旧类型时仍按旧页码请求，返回空列表显示"没有数据"。屏实例全局复用，
             // Page 跨 Enter 存活，与社区屏筛选/搜索重置 Page 同理。

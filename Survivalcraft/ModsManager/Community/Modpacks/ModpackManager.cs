@@ -198,8 +198,7 @@ namespace Game
                 string version = (item.Version ?? item.ModEntity?.modInfo?.Version)?.Trim();
                 if (string.IsNullOrWhiteSpace(filePath)
                     || string.IsNullOrWhiteSpace(packageName)
-                    || string.IsNullOrWhiteSpace(version)
-                    || ModpackModMatcher.IsSelfPackage(packageName))
+                    || string.IsNullOrWhiteSpace(version))
                 {
                     continue;
                 }

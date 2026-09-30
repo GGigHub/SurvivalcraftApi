@@ -47,7 +47,7 @@ namespace Game
             TryDeleteFile(temporaryPath);
         }
 
-        // 启动清扫 data:ScbbsPlus 下写入中断残留的 *.tmp（MoveFile 为 Delete+Move 两步，非原子）：
+        // 启动清扫CommunityStoragePaths.RootDirectory下写入中断残留的 *.tmp（MoveFile 为 Delete+Move 两步，非原子）：
         // 正式文件仍在 → .tmp 是替换流程残留，正式文件已是新内容，直接删；
         // 正式文件缺失 → Delete 已执行而 Move 未完成，.tmp 是新数据唯一副本，移回原名。
         // 时间戳在 data: 虚拟存储下不可靠，以正式文件是否存在为唯一分支依据。
@@ -119,7 +119,7 @@ namespace Game
         }
 
         // 临时名格式 <原文件名>.<32位hex>.tmp，与 Write 的命名对齐；校验 hex 段，
-        // 避免误伤 auth.bin.tmp（CommunityCredentialStore 自带恢复）等非本类命名的临时文件。
+        // 避免误伤其他组件自管的非本类命名临时文件。
         private static bool TryParseTempFileName(string fileName, out string originalFileName)
         {
             originalFileName = null;

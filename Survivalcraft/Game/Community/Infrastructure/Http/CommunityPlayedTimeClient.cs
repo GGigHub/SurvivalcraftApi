@@ -76,7 +76,6 @@ namespace Game
                 }
 
                 int failed = result.Data?.Failed?.Count ?? 0;
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeClient", "PlayedTimeReportCompleted"), result.Data?.Recorded ?? 0, failed));
                 if (failed > 0)
                 {
                     string failureSummary = string.Join("; ", result.Data!.Failed!

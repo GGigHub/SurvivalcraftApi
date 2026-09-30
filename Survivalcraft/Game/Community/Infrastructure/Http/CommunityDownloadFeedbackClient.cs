@@ -62,8 +62,6 @@ namespace Game
                     Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFeedbackClient", "RecordDownloadFeedbackFailed"), response.StatusCode, body));
                     return;
                 }
-
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFeedbackClient", "DownloadFeedbackRecorded"), feedbackInfo.PostId, feedbackInfo.FileId));
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

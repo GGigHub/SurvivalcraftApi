@@ -12,7 +12,7 @@ namespace Game
     /// 意图落盘为 JSON 清单（local-mod-pending-actions.json），在模组加载器启动或
     /// 导入流程的重启边界由 <see cref="Process"/> 逐条兑现——删除动作删 .scmod
     /// 文件，启用/禁用写引擎 ModsManager.DisabledMods；失败条目保留在清单里，
-    /// 下次启动自动重试。清单的 UI 侧内存视图由 ScbbsPlusLocalModPendingActionStore 维护。
+    /// 下次启动自动重试。清单的 UI 侧内存视图由 LocalModPendingActionStore 维护。
     /// </summary>
     internal static class PendingLocalModActions
     {

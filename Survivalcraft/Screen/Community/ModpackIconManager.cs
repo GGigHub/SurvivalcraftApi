@@ -6,7 +6,7 @@ using Engine.Graphics;
 namespace Game
 {
     /// <summary>
-    /// 整合包图标加载协调器（自模组 ScbbsPlusLocalScreen.Modpacks.Page.cs 提取）：
+    /// 整合包图标加载协调器：
     /// 持有"等待加载完成"的图标 widget 名册与已装/缺失判定，屏侧只转发。
     /// loader 由屏注入（静态共享缓存语义保持不变）。
     /// </summary>
@@ -205,8 +205,6 @@ namespace Game
                 return icon;
             }
 
-            // ScbbsPlusFileNameRules.GetExtension → Storage.GetExtensionBCL（Engine/Storage.cs，
-            // 点文件语义，先例映射 GetFileNameWithoutExtensionBCL）。
             if (string.Equals(Storage.GetExtensionBCL(item?.LocalFilePath ?? string.Empty), ".zip", StringComparison.OrdinalIgnoreCase)
                 || !Uri.TryCreate(record?.SourceUrl, UriKind.Absolute, out Uri sourceUri)
                 || (sourceUri.Scheme != Uri.UriSchemeHttp && sourceUri.Scheme != Uri.UriSchemeHttps))
@@ -221,8 +219,6 @@ namespace Game
 
         private static string MakeCacheKey(string packPath, string iconPath)
         {
-            // 本体无 PendingLocalModMetadataReader；ModsManager.NormalizeStoragePath（ModsManager.cs）
-            // 与模组 ScbbsPlusPendingLocalModMetadataReader.NormalizeStoragePath 实现逐字一致（'\\'→'/' 后 Trim）。
             string normalizedPath = ModsManager.NormalizeStoragePath(packPath);
             if (string.IsNullOrWhiteSpace(normalizedPath) || string.IsNullOrWhiteSpace(iconPath))
             {

@@ -37,7 +37,6 @@ namespace Game
 
             if (ModpackRules.IsHttpUrl(resolvedUrl))
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "ModpackItemUsesNetworkUrl"), resolvedUrl));
                 try
                 {
                     (data, downloadedFileName) = await DownloadBytesAsync(resolvedUrl, cancellationToken);
@@ -56,7 +55,6 @@ namespace Game
                 && ModpackRules.TryGetEmbeddedFile(embeddedFiles, resolvedUrl, out byte[] embeddedData))
             {
                 data = embeddedData;
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "ModpackItemUsesZipEntry"), resolvedUrl));
             }
 
             if (data != null || string.IsNullOrWhiteSpace(item?.FileId))
@@ -64,7 +62,6 @@ namespace Game
                 return (data, downloadedFileName, resolvedUrl, communityFile);
             }
 
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "ModpackItemUrlMissingResolvingByFileId"), resolvedUrl, item.FileId));
             communityFile = await FetchFileInfoByIdAsync(apiBaseUrl, token, item.FileId, cancellationToken);
             ModpackRules.ApplyItemFileInfo(item, communityFile);
             resolvedUrl = communityFile?.Url;

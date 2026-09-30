@@ -4,14 +4,13 @@ using Engine;
 namespace Game
 {
     /// <summary>
-    /// 不应暴露在原生设置页面中的模组流程状态，随 data:ScbbsPlus/state.json 以 JSON 持久化
+    /// 不应暴露在原生设置页面中的模组流程状态，随 CommunityStoragePaths.RootDirectory/state.json 以 JSON 持久化
     /// （JsonFileStore 临时文件原子替换写）。读取走 EnsureLoaded 惰性门闩（首次访问任意
     /// 公开成员时读入）；写方法改完内存后同步落盘（Persist）——变更低频（用户改筛选），
-    /// 同步写盘可接受。旧 ModSettings.xml 内的 ScbbsPlusState 元素不再迁移，
-    /// 升级后首次运行为全默认。重启直达目标已改由 ScreensManager.RestartGameToScreen
+    /// 同步写盘可接受。重启直达目标已改由 ScreensManager.RestartGameToScreen
     /// 经 Settings.xml 承载，不再入 state.json。
     /// </summary>
-    internal static class ModSettingsState
+    internal static class CommunityModSettingsState
     {
         private static bool s_loaded;
         private static ExternalContentType s_localFileType = ExternalContentType.Mod;
@@ -113,7 +112,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning($"[ScbbsPlus] {ex.Message}");
+                Log.Warning($"Failed to write community mod settings state: {ex.Message}");
             }
         }
 

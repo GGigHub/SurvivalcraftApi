@@ -12,7 +12,6 @@ namespace Game
         public ExternalContentType Type { get; set; }
         public bool RequiresRestart { get; set; }
         public CommunityDownloadFeedbackInfo FeedbackInfo { get; set; }
-        public bool ReplaceExistingScbbsPlusMod { get; set; }
         public string ReplaceExistingModPackageName { get; set; }
         public string ReplaceExistingModPath { get; set; }
         public string OverwriteExistingFilePath { get; set; }

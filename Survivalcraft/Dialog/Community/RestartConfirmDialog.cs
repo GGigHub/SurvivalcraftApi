@@ -49,13 +49,11 @@ namespace Game
                     string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RestartConfirmDialog", "ImportedRestartPrompt"), fileName),
                     restartAction: () =>
                     {
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RestartConfirmDialog", "UserChoseNormalRestart"), fileName));
                         PendingLocalModActions.Process(reasonTag + "-restart");
                         return true;
                     },
                     restartToCurrentScreenAction: () =>
                     {
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RestartConfirmDialog", "UserChoseRestartIntoIt"), fileName));
                         PendingLocalModActions.Process(reasonTag + "-restart-continue");
                         return true;
                     }));

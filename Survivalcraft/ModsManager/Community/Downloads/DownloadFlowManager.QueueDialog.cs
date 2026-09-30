@@ -53,20 +53,16 @@ namespace Game
                     {
                         item.Progress.Set(LanguageControl.Get("DownloadFlowManager", "Importing"), 1f, true);
                         // 队列项字段拼装准备结果后统一走 ExternalContentManager.ImportPreparedExternalContent
-                        // 决策树（自更新/覆盖更新/覆盖回滚/普通导入），与链接导入共用一套分支口径。
+                        // 决策树（覆盖更新/覆盖回滚/普通导入），与链接导入共用一套分支口径。
                         ExternalContentPreparation preparation = new()
                         {
                             Type = item.Type,
                             FileName = item.FileName,
-                            ExistingModPackageName = item.ReplaceExistingScbbsPlusMod
-                                ? ModIdentity.PackageName
-                                : item.ReplaceExistingModPackageName,
-                            ExistingModPath = item.ReplaceExistingScbbsPlusMod
-                                ? item.OverwriteExistingFilePath
-                                : item.ReplaceExistingModPath,
+                            ExistingModPackageName = item.ReplaceExistingModPackageName,
+                            ExistingModPath = item.ReplaceExistingModPath,
                             ExistingEntryFilePath = item.OverwriteExistingFilePath
                         };
-                        return ExternalContentManager.ImportPreparedExternalContent(ModIdentity.PackageName, stream, preparation, overwriteExisting: true);
+                        return ExternalContentManager.ImportPreparedExternalContent(stream, preparation, overwriteExisting: true);
                     },
                     onImportCompleted: () =>
                     {
@@ -82,7 +78,6 @@ namespace Game
         private bool TryRequestQueuedDownloadOverwrite(CommunityDownloadQueueItem item)
         {
             if (item == null
-                || item.ReplaceExistingScbbsPlusMod
                 || !string.IsNullOrWhiteSpace(item.ReplaceExistingModPackageName)
                 || !string.IsNullOrWhiteSpace(item.OverwriteExistingFilePath))
             {
@@ -311,7 +306,6 @@ namespace Game
             if (item == null
                 || result == null
                 || string.IsNullOrWhiteSpace(result.ExistingFilePath)
-                || item.ReplaceExistingScbbsPlusMod
                 || !string.IsNullOrWhiteSpace(item.ReplaceExistingModPackageName)
                 || !string.IsNullOrWhiteSpace(item.OverwriteExistingFilePath))
             {

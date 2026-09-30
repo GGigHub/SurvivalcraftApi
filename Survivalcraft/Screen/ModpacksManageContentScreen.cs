@@ -9,7 +9,7 @@ using Engine;
 namespace Game
 {
     /// <summary>
-    /// 整合包管理屏（自模组 ScbbsPlusLocalScreen.Modpacks.Page.cs 提取为独立屏）：
+    /// 整合包管理屏：
     /// 列表展示 ModPacks 目录下的整合包记录，底部三钮承担 启用/禁用、补装下载、详情。
     /// 启停激活链与详情对话框分别在 Actions 链与 ModpackDetailsDialog 中实现。
     /// </summary>
@@ -29,7 +29,6 @@ namespace Game
         private readonly ModpackManifestLoadManager m_manifestLoadManager =
             new(() => ModpackRegistry.Shared.ReadResources().ToList());
         // fileId 缓存跨屏实例共享：屏随换语言重建，重建瞬间不应丢失已补全的社区文件信息
-        //（与模组 ScbbsPlusModpackFileInfoManager 的 static readonly 单例语义一致）。
         private static readonly ModpackFileInfoManager s_fileInfoManager = new(TransferManager.ModpackSourceResolver);
         private readonly ModpackManager m_modpackManager = new();
         private readonly ModpackPresenceManager m_presenceManager = new();
@@ -894,7 +893,7 @@ namespace Game
 
         private static bool SetModDisabledState(string packageName, string version, bool isDisabled)
         {
-            if (string.IsNullOrWhiteSpace(packageName) || string.IsNullOrWhiteSpace(version) || ModpackModMatcher.IsSelfPackage(packageName))
+            if (string.IsNullOrWhiteSpace(packageName) || string.IsNullOrWhiteSpace(version))
             {
                 return false;
             }

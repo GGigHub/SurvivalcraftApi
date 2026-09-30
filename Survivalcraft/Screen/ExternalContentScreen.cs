@@ -269,7 +269,6 @@ namespace Game {
                         // 统一走 PrepareExternalContent 冲突检测（Mod 按包名、家具/材质/皮肤按归一名），
                         // 命中时弹与链接导入一致的覆盖确认框。
                         ExternalContentPreparation preparation = ExternalContentManager.PrepareExternalContent(
-                            ModIdentity.PackageName,
                             0,
                             Storage.GetFileName(entry.Path),
                             entry.Type,
@@ -313,7 +312,6 @@ namespace Game {
             CancellableBusyDialog busyDialog = new(LanguageControl.Get(fName, 12), false);
             DialogsManager.ShowDialog(null, busyDialog);
             ExternalContentManager.ImportPreparedExternalContentAsync(
-                ModIdentity.PackageName,
                 preparation,
                 overwriteExisting,
                 delegate {

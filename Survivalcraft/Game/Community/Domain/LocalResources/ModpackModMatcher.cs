@@ -59,7 +59,7 @@ namespace Game
                 }
 
                 string packageName = item.PackageName?.Trim();
-                if (string.IsNullOrWhiteSpace(packageName) || IsSelfPackage(packageName))
+                if (string.IsNullOrWhiteSpace(packageName))
                 {
                     continue;
                 }
@@ -89,7 +89,7 @@ namespace Game
 
             packageName = packageName?.Trim();
             version = version?.Trim();
-            if (!string.IsNullOrWhiteSpace(packageName) && !IsSelfPackage(packageName)
+            if (!string.IsNullOrWhiteSpace(packageName)
                 && ((!string.IsNullOrWhiteSpace(version) && managedMods.PackageVersionKeys.Contains(MakePackageVersionKey(packageName, version)))
                     || managedMods.PackageNames.Contains(packageName)))
             {
@@ -98,12 +98,6 @@ namespace Game
 
             string fileKey = NormalizeMatchKey(filePath);
             return !string.IsNullOrWhiteSpace(fileKey) && managedMods.FileKeys.Contains(fileKey);
-        }
-
-        public static bool IsSelfPackage(string packageName)
-        {
-            // 已核实 ModIdentity.PackageName 值为 "scbbsplus"，与模组 ScbbsPlusModIdentity 同值。
-            return string.Equals(packageName?.Trim(), ModIdentity.PackageName, StringComparison.OrdinalIgnoreCase);
         }
 
         public static string NormalizeMatchKey(string text)
@@ -116,7 +110,7 @@ namespace Game
             string candidate = text.Trim().Replace('\\', '/');
             try
             {
-                // 模组 ScbbsPlusFileNameRules.GetFileNameWithoutExtension → 本体 Storage.GetFileNameWithoutExtensionBCL（BCL 语义，点文件保留全名）。
+                // 模组 FileNameRules.GetFileNameWithoutExtension → 本体 Storage.GetFileNameWithoutExtensionBCL（BCL 语义，点文件保留全名）。
                 candidate = Storage.GetFileNameWithoutExtensionBCL(candidate);
             }
             catch

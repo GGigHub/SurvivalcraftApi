@@ -20,20 +20,19 @@ namespace Game
             m_defaultIgnoreOrderFilter = state.IgnoreOrder;
             m_defaultIgnoreVersionFilter = state.IgnoreVersion;
             m_defaultIgnoreSectionFilter = state.IgnoreSection;
-            ModSettingsState.SetCommunityDefaults(
+            CommunityModSettingsState.SetCommunityDefaults(
                 m_defaultSelectedFileType,
                 m_defaultOrderType,
                 m_defaultOnlyCurrentVersion,
                 (int)m_defaultSection);
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "DefaultFiltersSaved"), m_defaultSelectedFileType, m_defaultOrderType, m_defaultOnlyCurrentVersion, m_defaultSection, m_defaultIgnoreFileTypeFilter, m_defaultIgnoreOrderFilter, m_defaultIgnoreVersionFilter, m_defaultIgnoreSectionFilter));
         }
 
         private void ApplyLoadedDefaultFilters()
         {
-            m_defaultSelectedFileType = ModSettingsState.CommunityFileType;
-            m_defaultOrderType = ModSettingsState.CommunityOrderType;
-            m_defaultOnlyCurrentVersion = ModSettingsState.CommunityOnlyCurrentVersion;
-            m_defaultSection = NormalizeSection(ModSettingsState.CommunitySection);
+            m_defaultSelectedFileType = CommunityModSettingsState.CommunityFileType;
+            m_defaultOrderType = CommunityModSettingsState.CommunityOrderType;
+            m_defaultOnlyCurrentVersion = CommunityModSettingsState.CommunityOnlyCurrentVersion;
+            m_defaultSection = NormalizeSection(CommunityModSettingsState.CommunitySection);
             m_defaultIgnoreFileTypeFilter = false;
             m_defaultIgnoreOrderFilter = false;
             m_defaultIgnoreVersionFilter = false;

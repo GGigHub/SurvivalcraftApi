@@ -11,7 +11,7 @@ namespace Game
             List<ModpackModStateChange> changes = [];
             foreach (LocalModpackModStateEntry state in currentStates ?? [])
             {
-                if (state == null || ModpackModMatcher.IsSelfPackage(state.PackageName))
+                if (state == null)
                 {
                     continue;
                 }
@@ -48,7 +48,7 @@ namespace Game
             }
             foreach (LocalModpackModStateEntry state in backupStates ?? [])
             {
-                if (state != null && !ModpackModMatcher.IsSelfPackage(state.PackageName))
+                if (state != null)
                 {
                     changes.Add(new ModpackModStateChange
                     {

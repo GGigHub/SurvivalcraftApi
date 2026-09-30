@@ -67,7 +67,6 @@ namespace Game
         private DownloadFlowManager()
         {
             m_modpackItemImporter = new ModpackItemImporter(
-                ModIdentity.PackageName,
                 () => m_remoteImportHost);
             m_modpackDownloader = new ModpackDownloader(
                 TransferManager.ModpackSourceResolver,
@@ -198,7 +197,6 @@ namespace Game
             ExternalContentType type,
             bool requiresRestart,
             CommunityDownloadFeedbackInfo feedbackInfo = null,
-            bool replaceExistingScbbsPlusMod = false,
             string replaceExistingModPackageName = null,
             string replaceExistingModPath = null,
             string overwriteExistingFilePath = null)
@@ -213,7 +211,6 @@ namespace Game
                         requiresRestart,
                         source,
                         feedbackInfo,
-                        replaceExistingScbbsPlusMod,
                         replaceExistingModPackageName,
                         replaceExistingModPath,
                         overwriteExistingFilePath));
@@ -227,7 +224,6 @@ namespace Game
                 requiresRestart,
                 EffectiveSource,
                 feedbackInfo,
-                replaceExistingScbbsPlusMod,
                 replaceExistingModPackageName,
                 replaceExistingModPath,
                 overwriteExistingFilePath);
@@ -240,7 +236,6 @@ namespace Game
             bool requiresRestart,
             CommunityDownloadSourceManager.Info source,
             CommunityDownloadFeedbackInfo feedbackInfo = null,
-            bool replaceExistingScbbsPlusMod = false,
             string replaceExistingModPackageName = null,
             string replaceExistingModPath = null,
             string overwriteExistingFilePath = null)
@@ -260,7 +255,6 @@ namespace Game
                 requiresRestart,
                 source,
                 feedbackInfo,
-                replaceExistingScbbsPlusMod,
                 replaceExistingModPackageName,
                 replaceExistingModPath,
                 overwriteExistingFilePath);

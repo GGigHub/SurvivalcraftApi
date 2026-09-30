@@ -260,8 +260,8 @@ namespace Game
             }
             // 边界匹配：别名前不得紧邻数字/点（排除 1.2.1 命中 2.1 这类版本号嵌套），
             // 别名以数字结尾时其后亦不得紧邻数字（排除 2.10 命中 2.1）。
-            // 名字形态别名（字母结尾）后边界不设限：「ScbbsPlus 2.1」归一化后是
-            // scbbsplus2.1，若后边界排除数字则名字+版本连写会全部漏判。
+            // 名字形态别名（字母结尾）后边界不设限：「name 2.1」归一化后是
+            // name2.1，若后边界排除数字则名字+版本连写会全部漏判。
             string pattern = char.IsDigit(alias[^1])
                 ? $"(?<![0-9.]){Regex.Escape(alias)}(?![0-9])"
                 : $"(?<![0-9.]){Regex.Escape(alias)}";
@@ -338,7 +338,7 @@ namespace Game
         // 但实现有意同源、都偏向 Name：
         // - 目录行可能只有 Name 带版本（如 "API 1.9" 而 Version 为空）——此时靠
         //   AddTarget 的 TryParse(compareText) 从 Name 兜底抠出版本号；
-        // - 反向形态（Name 无数字、Version 是纯版本，如 "ScbbsPlus"/"2.1"）由
+        // - 反向形态（Name 无数字、Version 是纯版本，如 "Name"/"2.1"）由
         //   VersionListItem.NuGetVersion（模型层从 Version 解析）覆盖，不依赖 CompareText；
         // - ContainsApiText(CompareText) 依赖 Name 形态（"API 1.9"）为漏标 Type 的行选 API 基线。
         // 拆成不同来源（如 CompareText 偏向 Version）会同时打破上述两条兜底，勿改。

@@ -3,8 +3,7 @@ using System;
 namespace Game
 {
     /// <summary>
-    /// 按归一化服务器地址读写各服凭据文件（data:ScbbsPlus/auth/&lt;sha256&gt;.bin，v4）；
-    /// legacy auth.bin 仅供一次性迁移。
+    /// 按归一化服务器地址读写各服凭据文件（CommunityStoragePaths.AuthDirectory/&lt;sha256&gt;.bin，v4）。
     /// </summary>
     internal sealed class AuthenticationSessionStore
     {

@@ -127,7 +127,6 @@ public static class OriginalCommunityContentManager {
                 ExternalContentPreparation preparation;
                 try {
                     preparation = ExternalContentManager.PrepareExternalContent(
-                        ModIdentity.PackageName,
                         0,
                         name,
                         type,
@@ -188,7 +187,6 @@ public static class OriginalCommunityContentManager {
         Action success,
         Action<Exception> failure) {
         ExternalContentManager.ImportPreparedExternalContentAsync(
-            ModIdentity.PackageName,
             preparation,
             overwriteExisting,
             delegate(string downloadedName) {

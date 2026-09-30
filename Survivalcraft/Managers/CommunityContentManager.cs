@@ -138,7 +138,6 @@ namespace Game {
                     ExternalContentPreparation preparation;
                     try {
                         preparation = ExternalContentManager.PrepareExternalContent(
-                            ModIdentity.PackageName,
                             0,
                             name,
                             type,
@@ -199,7 +198,6 @@ namespace Game {
             Action success,
             Action<Exception> failure) {
             ExternalContentManager.ImportPreparedExternalContentAsync(
-                ModIdentity.PackageName,
                 preparation,
                 overwriteExisting,
                 delegate(string downloadedName) {

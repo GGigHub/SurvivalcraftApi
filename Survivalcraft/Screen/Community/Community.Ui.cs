@@ -5,12 +5,12 @@ namespace Game
 {
     internal partial class CommunityScreen
     {
-        // 关于页同时承担“自更新入口、下载队列入口、远程导入入口、账号入口”的聚合职责。
+        // 社区设置页同时承担“下载队列入口、远程导入入口、账号入口”的聚合职责。
         private void HandleMoreButtonClicks()
         {
             if (m_moreButton.IsClicked)
             {
-                ScreensManager.SwitchScreen("ScbbsPlusMore");
+                ScreensManager.SwitchScreen("CommunityMore");
             }
         }
 

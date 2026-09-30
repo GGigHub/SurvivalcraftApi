@@ -8,8 +8,8 @@ namespace Game
 {
     internal static class TransactionalFileReplacement
     {
-        // 备份文件名格式：<原文件名>.scbbsplus-backup-<32位hex>，游戏不会误加载，且可在启动时按此格式识别并回滚。
-        internal const string BackupMarker = ".scbbsplus-backup-";
+        // 备份文件名格式：<原文件名>.-backup-<32位hex>，游戏不会误加载，且可在启动时按此格式识别并回滚。
+        internal const string BackupMarker = ".-backup-";
         private const int BackupGuidLength = 32;
 
         // 启动时回滚上次更新中断留下的残留备份：原文件缺失说明旧文件只被移到了备份路径，移回原路径；
@@ -107,7 +107,7 @@ namespace Game
             }
         }
 
-        // 与 ScbbsPlusModpackDataFiles.s_protectedRootNames 对齐：
+        // 与 ModpackDataFiles.s_protectedRootNames 对齐：
         // 这些根目录不可能出现本模组备份（数据文件被拒写，模组更新由 ModsPath 根扫描覆盖）。
         private static bool IsSkippedRootDirectory(string directoryName)
         {

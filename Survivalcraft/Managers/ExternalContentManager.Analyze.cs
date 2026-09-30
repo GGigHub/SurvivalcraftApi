@@ -15,7 +15,6 @@ namespace Game
         /// 缓冲后立即释放原流。导入阶段只消费 preparation.FileData。
         /// </summary>
         public static ExternalContentPreparation PrepareExternalContent(
-            string selfPackageName,
             int requestId,
             string fileName,
             ExternalContentType type,
@@ -38,7 +37,7 @@ namespace Game
                     stream.Dispose();
                 }
             }
-            return PrepareExternalContent(selfPackageName, requestId, new RemoteImportRequest
+            return PrepareExternalContent(requestId, new RemoteImportRequest
             {
                 FileName = fileName,
                 Type = type
@@ -46,7 +45,6 @@ namespace Game
         }
 
         public static ExternalContentPreparation PrepareExternalContent(
-            string selfPackageName,
             int requestId,
             RemoteImportRequest request,
             MemoryStream stream)
@@ -84,7 +82,7 @@ namespace Game
                     result.ExistingModPackageName = existingMod.modInfo.PackageName;
                     result.ExistingModPath = existingMod.ModFilePath;
                 }
-                // 模组一律重启后才加载（引擎启动期扫描 Mods 目录）：新装/覆盖/自更新都提示重启。
+                // 模组一律重启后才加载（引擎启动期扫描 Mods 目录）：新装/覆盖都提示重启。
                 result.RequiresRestart = true;
                 return result;
             }
@@ -201,7 +199,7 @@ namespace Game
 
         /// <summary>
         /// 按包名（其次磁盘文件名）在已加载模组中定位实体。枚举 ModListAll 封送主线程；
-        /// 主线程调用时 Dispatch 内联执行，无额外开销（CommunityMoreScreen 自更新入队即此用法）。
+        /// 主线程调用时 Dispatch 内联执行，无额外开销（ExternalContentScreen 导入入队即此用法）。
         /// </summary>
         internal static ModEntity FindInstalledMod(string packageName, string fileName)
         {

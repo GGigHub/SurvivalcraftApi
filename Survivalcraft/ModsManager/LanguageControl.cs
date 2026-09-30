@@ -415,7 +415,7 @@ namespace Game {
                     c.Value.Dispose();
                 }
                 catch (Exception ex) {
-                    Log.Warning($"[ScbbsPlus] Disposing replaced screen \"{c.Key}\" failed: {ex.Message}");
+                    Log.Warning($"Disposing replaced screen \"{c.Key}\" failed: {ex.Message}");
                 }
             }
         }

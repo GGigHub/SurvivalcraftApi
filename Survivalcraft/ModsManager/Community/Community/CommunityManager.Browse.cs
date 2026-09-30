@@ -166,11 +166,11 @@ namespace Game
                         bool hasFreshCatalog = versionCatalog != null && versionCatalog.Length > 0;
                         if (!hasFreshCatalog)
                         {
-                            matchedVersionId = request.CachedPluginVersionId;
+                            matchedVersionId = request.CachedApiVersionId;
                         }
-                        if (!matchedVersionId.HasValue && request.ResolvePluginVersionIdAsync != null)
+                        if (!matchedVersionId.HasValue && request.ResolveApiVersionIdAsync != null)
                         {
-                            matchedVersionId = await request.ResolvePluginVersionIdAsync();
+                            matchedVersionId = await request.ResolveApiVersionIdAsync();
                         }
                     }
                 }
@@ -263,8 +263,8 @@ namespace Game
         public string CurrentApiVersion { get; set; }
         public VersionListItem[] CachedCatalog { get; set; }
         public Dictionary<int, string> CachedVersionMap { get; set; }
-        public int? CachedPluginVersionId { get; set; }
-        public Func<Task<int?>> ResolvePluginVersionIdAsync { get; set; }
+        public int? CachedApiVersionId { get; set; }
+        public Func<Task<int?>> ResolveApiVersionIdAsync { get; set; }
     }
 
     internal sealed class CommunityPostsLoad

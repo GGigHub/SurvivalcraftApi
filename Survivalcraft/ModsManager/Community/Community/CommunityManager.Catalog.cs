@@ -20,7 +20,7 @@ namespace Game
                 cancellationToken);
         }
 
-        public static async Task<VersionListItem> ResolvePluginVersionAsync(
+        public static async Task<VersionListItem> ResolveApiVersionAsync(
             CommunityApiClient apiClient,
             string apiBaseUrl,
             string token,

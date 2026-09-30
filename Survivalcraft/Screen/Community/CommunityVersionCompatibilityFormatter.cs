@@ -4,10 +4,6 @@ using NuGet.Versioning;
 
 namespace Game
 {
-    // 自模组 Presentation/Dialogs/ScbbsPlusModVersionsDialog.cs 原样抽出（成员零改动，
-    // 嵌套 CompatibilityDisplayInfo（现 VersionCompatibilityInfo）提为命名空间级）：帖子树渲染
-    // 需要静态兼容性显示方法，而 ModVersionsDialog 对话框本体留待 Local 轮移植，故拆出本独立类型。
-
     /// <summary>
     /// 版本兼容性显示信息（原 ModVersionsDialog 嵌套类型，提为命名空间级）。
     /// </summary>

@@ -39,7 +39,6 @@ namespace Game
         private static string s_worldKey;
         private static double s_lastProjectSettlementRealTime;
         private static readonly Dictionary<string, ActivePlaySession> s_projectSessions = new(StringComparer.OrdinalIgnoreCase);
-        private static ActivePlaySession s_selfPageSession;
         // 待上报队列（复用 s_lock）：上报前先落盘，发送成功整批出队；开机补报、新记录入队时触发。
         // 上报循环单飞：一次只有一个 ReportPendingAsync 在跑，失败不自动循环重试，
         // 由下次启动或新记录入队再触发——与上游模组 e56f312/374182e 的队列语义一致。
@@ -108,42 +107,9 @@ namespace Game
                         Key = key
                     };
                 }
-
-                if (s_projectSessions.Count > 0)
-                {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "StartedTrackingModPlayedTime"), s_projectSessions.Count));
-                }
             }
 
             QueueReports(carryOverReports);
-        }
-
-        public static void StartSelfPage()
-        {
-            lock (s_lock)
-            {
-                EnsureLoadedLocked();
-                ModEntity entity = FindSelfMod();
-                if (entity?.modInfo == null)
-                {
-                    Log.Information(LanguageControl.Get("PlayedTimeTracker", "ModEntityNotFound"));
-                    return;
-                }
-
-                string key = MakeModKey(entity);
-                ModPlayedTimeData data = GetOrCreateModDataLocked(entity);
-                if (s_selfPageSession == null)
-                {
-                    DateTime now = DateTime.UtcNow;
-                    data.LastStartedAtUtc = now;
-                    s_selfPageSession = new ActivePlaySession
-                    {
-                        Key = key,
-                        LastSettlementRealTime = Time.RealTime
-                    };
-                    Log.Information(LanguageControl.Get("PlayedTimeTracker", "StartedTrackingScreenPlayedTime"));
-                }
-            }
         }
 
         /// <summary>项目 XML 保存完成时结算项目内模组时间，落盘并把自上次上报以来的增量排队上报。</summary>
@@ -160,25 +126,6 @@ namespace Game
                 SettleProjectLocked(Time.RealTime);
                 reports = CreateReportsLocked(s_projectSessions.Values);
                 SaveLocked();
-            }
-
-            QueueReports(reports);
-        }
-
-        public static void StopSelfPage()
-        {
-            AuthSessionManager.Instance.EnsureStoredAuthLoaded();
-            RefreshReportIdentitySnapshot();
-            List<ModPlayRecordItem> reports = null;
-            lock (s_lock)
-            {
-                if (s_selfPageSession != null)
-                {
-                    SettleSelfPageLocked(Time.RealTime);
-                    reports = CreateReportsLocked([s_selfPageSession]);
-                    s_selfPageSession = null;
-                    SaveLocked();
-                }
             }
 
             QueueReports(reports);
@@ -233,15 +180,13 @@ namespace Game
         {
             return ModsManager.ModList
                 .Where(entity => entity != null && entity.modInfo != null)
-                .Where(entity => entity is not SurvivalCraftModEntity && entity is not FastDebugModEntity)
-                .Where(entity => !string.Equals(entity.modInfo.PackageName, ModIdentity.PackageName, StringComparison.OrdinalIgnoreCase));
+                .Where(entity => entity is not SurvivalCraftModEntity && entity is not FastDebugModEntity);
         }
 
         private static ModEntity FindSelfMod()
         {
             return ModsManager.ModList.FirstOrDefault(entity =>
-                entity?.modInfo != null
-                && string.Equals(entity.modInfo.PackageName, ModIdentity.PackageName, StringComparison.OrdinalIgnoreCase));
+                entity?.modInfo != null);
         }
 
         private static ModPlayedTimeData GetOrCreateModDataLocked(ModEntity entity)
@@ -325,24 +270,6 @@ namespace Game
         internal static double ClampSettlementElapsed(double rawElapsed)
         {
             return Math.Min(MaxSettlementIntervalSeconds, Math.Max(0.0, rawElapsed));
-        }
-
-        private static void SettleSelfPageLocked(double realTime)
-        {
-            if (s_selfPageSession == null)
-            {
-                return;
-            }
-
-            double elapsed = ClampSettlementElapsed(realTime - s_selfPageSession.LastSettlementRealTime);
-            if (elapsed <= 0.0)
-            {
-                return;
-            }
-
-            EnsureLoadedLocked();
-            AddElapsed(s_store.Mods, s_selfPageSession, elapsed, DateTime.UtcNow, null);
-            s_selfPageSession.LastSettlementRealTime = realTime;
         }
 
         /// <summary>把一段时长计入台账与会话；internal 供测试直接驱动结算核心。</summary>

@@ -44,9 +44,6 @@ namespace Game
         private Task<bool> m_logoutTask;
         private CommunityLoginDialog m_loginDialog;
         private bool m_storedAuthLoaded;
-        // legacy auth.bin 一次性迁移闩：完成前 EnsureCurrentSessionLoaded 不读盘
-        // （旧凭据尚未归因，当前服会查空）。
-        private bool m_legacyCredentialChecked;
         // 内存会话表：归一化地址 → 该服登录数据。任意时刻只有当前地址是活跃上下文。
         private readonly Dictionary<string, LoginData> m_sessions = new(StringComparer.OrdinalIgnoreCase);
         // 每 URL 每进程只读一次盘（含查空结果）。
@@ -92,16 +89,7 @@ namespace Game
                 return;
             }
             m_loadedSessionUrl = current;
-            EnsureCurrentSessionLoaded();
             m_loginStateChanged.Raise(IsLoggedIn ? AuthChangeKind.LoggedIn : AuthChangeKind.LoggedOut);
-        }
-
-        private void EnsureCurrentSessionLoaded()
-        {
-            if (m_legacyCredentialChecked)
-            {
-                LoadSessionFromDisk(ApiBaseUrl);
-            }
         }
 
         /// <summary>认证入口：已登录弹登出确认，否则弹登录对话框。</summary>
@@ -230,7 +218,6 @@ namespace Game
                 if (data != null && !string.IsNullOrEmpty(data.Token) && data.User != null)
                 {
                     m_sessions[apiBaseUrl] = data;
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "LoginStateRestoredFromLocal"), data.User.Nickname));
                     if (string.Equals(apiBaseUrl, ApiBaseUrl, StringComparison.OrdinalIgnoreCase))
                     {
                         m_loginStateChanged.Raise(AuthChangeKind.LoggedIn);
@@ -299,10 +286,6 @@ namespace Game
                             DialogsManager.HideDialog(m_loginDialog);
                             m_loginDialog = null;
                         }
-
-                        // 日志与事件用本次登录结果本体：写入目标是快照服，与当前服可能不同
-                        //（在途期间切服且取消回调未触发的边缘路径），当前服视图可能为空或他人。
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "LoginSucceeded"), result.Data.User.Nickname, result.Data.User.Level));
 
                         // 持久化登录数据
                         SaveStoredAuth(loginApiBaseUrl);
@@ -386,7 +369,6 @@ namespace Game
                 {
                     throw error;
                 }
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "LoginCredentialsSavedEncrypted"), CommunityStoragePaths.AuthDirectory));
                 return true;
             }
             catch (PlatformNotSupportedException ex)
@@ -395,10 +377,10 @@ namespace Game
                 {
                     s_authenticationSessionStore.TryDelete(apiBaseUrl);
                 }
-                catch
-                {
+                catch {
+                    // ignored
                 }
-                Log.Warning($"[ScbbsPlus] {ex.Message}");
+                Log.Warning($"Saving community login credentials is not supported on this platform: {ex.Message}");
                 return false;
             }
             catch (Exception ex)
@@ -417,7 +399,6 @@ namespace Game
                 {
                     throw error;
                 }
-                Log.Information(LanguageControl.Get("AuthSessionManager", "LocalCredentialFileDeleted"));
             }
             catch (Exception ex)
             {

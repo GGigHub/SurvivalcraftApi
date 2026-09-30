@@ -9,14 +9,11 @@ namespace Game
     /// </summary>
     internal sealed class ModpackItemImporter : IModpackItemImporter
     {
-        private readonly string m_selfPackageName;
         private readonly Func<IRemoteImportHost> m_hostProvider;
 
         public ModpackItemImporter(
-            string selfPackageName,
             Func<IRemoteImportHost> hostProvider)
         {
-            m_selfPackageName = selfPackageName ?? throw new ArgumentNullException(nameof(selfPackageName));
             m_hostProvider = hostProvider ?? throw new ArgumentNullException(nameof(hostProvider));
         }
 
@@ -41,9 +38,9 @@ namespace Game
                 Type = type
             };
             using MemoryStream analysisStream = new(data, writable: false);
-            ExternalContentPreparation preparation = ExternalContentManager.PrepareExternalContent(m_selfPackageName, requestId, request, analysisStream);
+            ExternalContentPreparation preparation = ExternalContentManager.PrepareExternalContent(requestId, request, analysisStream);
             using MemoryStream importStream = new(data, writable: false);
-            ExternalContentManager.ImportPreparedExternalContent(m_selfPackageName, importStream, preparation, overwriteExisting: true);
+            ExternalContentManager.ImportPreparedExternalContent(importStream, preparation, overwriteExisting: true);
         }
 
         public bool ImportDataFile(byte[] data, ModpackItem item)

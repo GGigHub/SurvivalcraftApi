@@ -157,8 +157,7 @@ namespace Game
         /// 更新检查编排：社区命中即返回；RequirePublishedPost
         /// 时把"找不到帖子"落为 Error。依赖经参数穿线（组合根静态字段在运行路径注入，
         /// 测试传 HTTP 桩），保持可注入性。
-        /// （游戏侧裁定：仓库 release 回退链随自更新删除令移除，仅保留社区帖源——
-        /// 与 4126a14e「删除 ScbbsPlus 自更新链」对 RepositoryRelease* 的处置一致。）
+        /// （游戏侧裁定：仓库 release 回退链随自更新删除令移除，仅保留社区帖源。）
         /// </summary>
         internal static async Task<LocalModUpdateCheckResult> CheckUpdateAsync(
             LocalModUpdateCheckRequest request,

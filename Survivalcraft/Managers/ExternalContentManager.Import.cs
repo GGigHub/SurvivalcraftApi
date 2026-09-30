@@ -10,10 +10,9 @@ namespace Game
     {
         /// <summary>
         /// 按 PrepareExternalContent 产出的准备结果导入：
-        /// 自家模组自更新 → 覆盖更新模组 → 覆盖文件型内容（备份回滚）→ 普通导入。
+        /// 覆盖更新模组 → 覆盖文件型内容（备份回滚）→ 普通导入。
         /// </summary>
         public static string ImportPreparedExternalContent(
-            string selfPackageName,
             Stream stream,
             ExternalContentPreparation result,
             bool overwriteExisting)
@@ -25,11 +24,6 @@ namespace Game
 
             if (CommunityFileTypes.IsModLike(result.Type))
             {
-                if (string.Equals(result.ExistingModPackageName, selfPackageName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return ModUpdateImporter.ImportSelfUpdate(stream, result.FileName, selfPackageName, result.ExistingModPath);
-                }
-
                 if (overwriteExisting && !string.IsNullOrWhiteSpace(result.ExistingModPackageName))
                 {
                     return ModUpdateImporter.ImportModUpdate(
@@ -65,7 +59,6 @@ namespace Game
         ///（镜像 ImportExternalContent 的异步模式）。导入只消费 preparation.FileData。
         /// </summary>
         public static void ImportPreparedExternalContentAsync(
-            string selfPackageName,
             ExternalContentPreparation preparation,
             bool overwriteExisting,
             Action<string> success,
@@ -78,7 +71,7 @@ namespace Game
                             throw new InvalidOperationException(LanguageControl.Get("RemoteImportManager", "ImportDataIsEmpty"));
                         }
                         using MemoryStream stream = new(preparation.FileData, writable: false);
-                        success?.Invoke(ImportPreparedExternalContent(selfPackageName, stream, preparation, overwriteExisting));
+                        success?.Invoke(ImportPreparedExternalContent(stream, preparation, overwriteExisting));
                     }
                     catch (Exception obj) {
                         failure?.Invoke(obj);

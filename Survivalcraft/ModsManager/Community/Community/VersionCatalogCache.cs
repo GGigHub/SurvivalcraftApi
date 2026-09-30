@@ -7,8 +7,8 @@ using Engine;
 namespace Game
 {
     /// <summary>
-    /// 版本目录与 plugin 版本匹配的进程级缓存：三屏（本地/社区/我的发布）共用一份目录、
-    /// 游戏版本映射与 plugin 版本匹配结果。缓存对象不可变快照替换，后台任务整引用读取。
+    /// 版本目录与 api 版本匹配的进程级缓存：三屏（本地/社区/我的发布）共用一份目录、
+    /// 游戏版本映射与 api 版本匹配结果。缓存对象不可变快照替换，后台任务整引用读取。
     /// </summary>
     internal static class VersionCatalogCache
     {
@@ -31,13 +31,13 @@ namespace Game
         }
 
         private static CatalogSnapshot s_catalog;
-        private static PluginVersionCache s_pluginVersion;
+        private static ApiVersionCache s_apiVersion;
 
         /// <summary>
-        /// plugin 版本匹配缓存的不可变快照：后台任务整对象替换，UI 线程整引用读取，杜绝字段组合撕裂。
+        /// api 版本匹配缓存的不可变快照：后台任务整对象替换，UI 线程整引用读取，杜绝字段组合撕裂。
         /// Resolved 区分"已判定且无匹配"（负缓存）与"尚未判定"，负缓存命中时直接短路 HTTP 往返。
         /// </summary>
-        internal sealed class PluginVersionCache
+        internal sealed class ApiVersionCache
         {
             public bool Resolved;
             public int? Id;
@@ -72,18 +72,18 @@ namespace Game
 
         public static string CurrentApiVersion => ModsManager.APIVersionString;
 
-        public static async Task<int?> ResolvePluginVersionIdAsync(string apiBaseUrl, string token)
+        public static async Task<int?> ResolveApiVersionIdAsync(string apiBaseUrl, string token)
         {
             string gameVersion = CurrentGameVersion;
             string apiVersion = CurrentApiVersion;
             if (string.IsNullOrWhiteSpace(apiVersion))
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("VersionCatalogCache", "NoApiVersionSkippingPluginMatch"), gameVersion ?? "null"));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("VersionCatalogCache", "NoApiVersionSkippingApiMatch"), gameVersion ?? "null"));
                 return null;
             }
 
             // 缓存合为单不可变对象：后台任务与 UI 线程并发读写时引用赋值原子，不会读到撕裂的字段组合。
-            PluginVersionCache cache = s_pluginVersion;
+            ApiVersionCache cache = s_apiVersion;
             if (cache?.Resolved == true
                 && string.Equals(cache.ApiVersion, apiVersion, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(cache.GameVersion, gameVersion, StringComparison.OrdinalIgnoreCase)
@@ -92,15 +92,15 @@ namespace Game
                 return cache.Id;
             }
 
-            VersionListItem matchedVersion = await CommunityManager.ResolvePluginVersionAsync(
+            VersionListItem matchedVersion = await CommunityManager.ResolveApiVersionAsync(
                 CommunityManager.ApiClient,
                 apiBaseUrl,
                 token,
                 apiVersion);
             if (matchedVersion == null)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("VersionCatalogCache", "NoMatchingPluginVersion"), gameVersion ?? "null", apiVersion));
-                s_pluginVersion = new PluginVersionCache
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("VersionCatalogCache", "NoMatchingApiVersion"), gameVersion ?? "null", apiVersion));
+                s_apiVersion = new ApiVersionCache
                 {
                     Resolved = true,
                     Id = null,
@@ -111,7 +111,7 @@ namespace Game
                 return null;
             }
 
-            s_pluginVersion = new PluginVersionCache
+            s_apiVersion = new ApiVersionCache
             {
                 Resolved = true,
                 Id = matchedVersion.Id,
@@ -137,37 +137,37 @@ namespace Game
             string apiBaseUrl,
             out VersionListItem[] versionCatalog,
             out Dictionary<int, string> gameVersionsById,
-            out int? pluginVersionId)
+            out int? apiVersionId)
         {
             versionCatalog = null;
             gameVersionsById = null;
-            pluginVersionId = null;
+            apiVersionId = null;
 
             string apiVersion = CurrentApiVersion;
             string gameVersion = CurrentGameVersion;
-            PluginVersionCache cache = s_pluginVersion;
-            bool pluginCacheValid = cache?.Resolved == true
+            ApiVersionCache cache = s_apiVersion;
+            bool apiCacheValid = cache?.Resolved == true
                 && string.Equals(cache.ApiVersion, apiVersion, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(cache.GameVersion, gameVersion, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(cache.BaseUrl, apiBaseUrl, StringComparison.OrdinalIgnoreCase);
-            if (pluginCacheValid)
+            if (apiCacheValid)
             {
-                pluginVersionId = cache.Id;
+                apiVersionId = cache.Id;
             }
 
             CatalogSnapshot snapshot = s_catalog;
             if (snapshot?.Catalog == null || snapshot.Catalog.Length == 0)
             {
-                return pluginCacheValid;
+                return apiCacheValid;
             }
 
             // 缺陷 6：目录与写入时的服务器绑定——切服务器后旧目录不得复用
             //（否则拿 A 的版本 id 向 B 发 gameVersionIds，列表空/结果错）。
-            // 不匹配时目录部分视为未命中（plugin 缓存自身已带 BaseUrl 校验）。
+            // 不匹配时目录部分视为未命中（api 缓存自身已带 BaseUrl 校验）。
             bool catalogValid = string.Equals(snapshot.BaseUrl, (apiBaseUrl ?? string.Empty).TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
             if (!catalogValid)
             {
-                return pluginCacheValid;
+                return apiCacheValid;
             }
 
             versionCatalog = snapshot.Catalog;

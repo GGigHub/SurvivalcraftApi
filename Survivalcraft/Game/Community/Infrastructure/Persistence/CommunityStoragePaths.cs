@@ -3,7 +3,7 @@ using Engine;
 namespace Game
 {
     /// <summary>
-    /// 集中维护 ScbbsPlus 的本地存储路径，避免业务代码重复拼接用户目录。
+    /// 集中维护中文社区的本地存储路径，避免业务代码重复拼接用户目录。
     /// </summary>
     internal static class CommunityStoragePaths
     {

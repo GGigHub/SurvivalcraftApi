@@ -25,7 +25,7 @@ namespace Game
         private static IRemoteImportHost s_host;
         private static readonly ModpackManifestParser s_manifestParser = new();
         private static readonly ModpackItemImporter s_modpackItemImporter =
-            new(ModIdentity.PackageName, () => s_host);
+            new(() => s_host);
         private static readonly RemoteModpackInstaller s_modpackInstaller =
             new(
                 s_modpackSourceResolver,
@@ -77,10 +77,6 @@ namespace Game
             StartExternalContentPreparation(rawUrl, fileName, showDuplicatePrompt: true);
         }
 
-        public static void StartScbbsPlusUpdateDownload(string rawUrl, string fileName)
-        {
-            StartExternalContentPreparation(rawUrl, fileName, showDuplicatePrompt: false);
-        }
         public static bool IsBusy()
         {
             return s_prepareTask != null || s_importTask != null;
@@ -367,7 +363,7 @@ namespace Game
                                 Error = LanguageControl.Get("RemoteImportManager", "UnsupportedFileExtension")
                             };
                         }
-                        return ExternalContentManager.PrepareExternalContent(ModIdentity.PackageName, requestId, request, stream);
+                        return ExternalContentManager.PrepareExternalContent(requestId, request, stream);
                     }
                     catch (Exception ex)
                     {
@@ -409,7 +405,7 @@ namespace Game
                 try
                 {
                     using MemoryStream stream = new(result.FileData, writable: false);
-                    string importedName = ExternalContentManager.ImportPreparedExternalContent(ModIdentity.PackageName, stream, result, overwriteExisting);
+                    string importedName = ExternalContentManager.ImportPreparedExternalContent(stream, result, overwriteExisting);
                     return new CommunityFileDownloadResult
                     {
                         FileName = result.FileName,
@@ -520,7 +516,6 @@ namespace Game
                             fileName),
                         0f,
                         true);
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "DownloadModpackPackage"), kindWord, url));
                     Progress<DownloadProgress> byteProgress = new(info =>
                     {
                         if (info.TotalBytes is > 0)
@@ -537,7 +532,6 @@ namespace Game
                     });
                     using MemoryStream dataStream = await s_httpDownloader.DownloadToMemoryAsync(url, null, CancellationToken.None, byteProgress);
                     byte[] data = dataStream.ToArray();
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackPackageDownloadCompleted"), kindWord, data.Length));
                     if (downloadArchiveOnly)
                     {
                         // 落盘改在主线程覆盖确认后执行（SaveRemoteArchive），准备任务只携带字节。
@@ -557,13 +551,6 @@ namespace Game
                             FileName = fileName,
                             Error = manifestResult.Error ?? LanguageControl.Get("RemoteImportManager", "TheModpackManifestIsEmptyOrInvalid")
                         };
-                    }
-
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackSummary"), manifest.Name, manifest.PackageName, manifest.Version, manifest.Items.Length));
-                    for (int i = 0; i < manifest.Items.Length; i++)
-                    {
-                        ModpackItem item = manifest.Items[i];
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackItemDetails"), i, item.TargetDirectory, item.Filename, item.Url, item.FileId, item.Category, item.TargetPath));
                     }
 
                     return new ExternalContentPreparation
@@ -704,7 +691,6 @@ namespace Game
                             {
                                 return;
                             }
-                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "UserConfirmedModpackImport"), manifest.Items.Length));
                             s_progress = new CommunityTransferProgress();
                             s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("RemoteImportManager", "Modpack"), progress: s_progress);
                             s_downloadDialog.SetProgress(s_progress);
@@ -720,7 +706,6 @@ namespace Game
         {
             try
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "StartProcessingModpackItemsWithTotal"), manifest.Items.Length));
                 RemoteModpackResult workflowResult = await s_modpackInstaller.ExecuteAsync(
                     requestId,
                     manifest,
@@ -735,7 +720,6 @@ namespace Game
                 {
                     return FinishInterruptedRemoteModpackDownload(manifest);
                 }
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackProcessingCompleted"), successCount, failedCount));
                 ModpackRegistry.Shared.SaveManifest(manifest, sourceUrl, sourceFileName, sourceData);
 
                 string resultMessage = failedCount > 0
