@@ -40,13 +40,13 @@ namespace Game
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "ScanResidualBackupsFailed"), rootPath, ex.Message));
+                        Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "ScanResidualBackupsFailed"), rootPath, ex.Message));
                     }
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "StartupRollbackResidualBackupFailed"), ex.Message));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "StartupRollbackResidualBackupFailed"), ex.Message));
             }
         }
 
@@ -71,17 +71,17 @@ namespace Game
                     if (Storage.FileExists(originalPath))
                     {
                         Storage.DeleteFile(backupPath);
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "CleanResidualBackup"), backupPath));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "CleanResidualBackup"), backupPath));
                     }
                     else
                     {
                         Storage.MoveFile(backupPath, originalPath);
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "RollbackResidualBackup"), backupPath, originalPath));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "RollbackResidualBackup"), backupPath, originalPath));
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "ProcessResidualBackupFailed"), backupPath, ex.Message));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "ProcessResidualBackupFailed"), backupPath, ex.Message));
                 }
             }
 
@@ -102,7 +102,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "ScanResidualBackupSubdirectoryFailed"), directoryName, ex.Message));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "ScanResidualBackupSubdirectoryFailed"), directoryName, ex.Message));
                 }
             }
         }
@@ -221,7 +221,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "CleanModUpdateBackupFailed"), ex.Message));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "CleanModUpdateBackupFailed"), ex.Message));
                 }
             }
         }
@@ -261,7 +261,7 @@ namespace Game
                 }
                 catch (Exception restoreEx)
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "RestoreOverwriteBackupFailed"), restoreEx.Message));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "RestoreOverwriteBackupFailed"), restoreEx.Message));
                 }
                 throw;
             }
@@ -278,7 +278,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "CleanOverwriteBackupFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "CleanOverwriteBackupFailed"), ex.Message));
             }
         }
 
@@ -295,7 +295,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "CleanIncompleteModUpdateFileFailed"), ex.Message));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "CleanIncompleteModUpdateFileFailed"), ex.Message));
                 }
             }
 
@@ -311,7 +311,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTransactionalFileReplacement", "RestoreModUpdateBackupFailed"), ex.Message));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TransactionalFileReplacement", "RestoreModUpdateBackupFailed"), ex.Message));
                 }
             }
         }

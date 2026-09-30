@@ -46,7 +46,7 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModVersionsDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusModVersionsDialog.PostTitleLabel").Text =
-                string.IsNullOrWhiteSpace(postTitle) ? LanguageControl.Get("ScbbsPlusModVersionsDialog", "CommunityPost") : postTitle;
+                string.IsNullOrWhiteSpace(postTitle) ? LanguageControl.Get("ModVersionsDialog", "CommunityPost") : postTitle;
             m_listPanel = Children.Find<StackPanelWidget>("ScbbsPlusModVersionsDialog.ListPanel");
             m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionsDialog.CloseButton");
             BuildVersionList();
@@ -61,7 +61,7 @@ namespace Game
             {
                 m_listPanel.Children.Add(new LabelWidget
                 {
-                    Text = LanguageControl.Get("ScbbsPlusModVersionsDialog", "NoVersions"),
+                    Text = LanguageControl.Get("ModVersionsDialog", "NoVersions"),
                     Color = new Color(200, 200, 200),
                     FontScale = 0.9f,
                     HorizontalAlignment = WidgetAlignment.Center
@@ -149,7 +149,7 @@ namespace Game
                     FileTitle = FormatFileTitle(file),
                     DownloadsSizeText = string.Format(
                         CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ScbbsPlusModVersionsDialog", "DownloadsSize"),
+                        LanguageControl.Get("ModVersionsDialog", "DownloadsSize"),
                         file?.DownloadCount ?? 0,
                         FormatFileSize(file?.Size))
                 });
@@ -160,12 +160,12 @@ namespace Game
                 Version = version,
                 VersionKey = GetVersionKey(version),
                 VersionTitle = isCurrent
-                    ? $"{CommunityVersionDetailFormatter.FormatVersionTitle(version)}  {LanguageControl.Get("ScbbsPlusModVersionsDialog", "Current")}"
+                    ? $"{CommunityVersionDetailFormatter.FormatVersionTitle(version)}  {LanguageControl.Get("ModVersionsDialog", "Current")}"
                     : CommunityVersionDetailFormatter.FormatVersionTitle(version),
                 FileTitle = hasSingleFile ? FormatFileTitle(version.Files[0]) : string.Empty,
                 CompatibilityText = string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusModVersionsDialog", "GameVersionsPublished"),
+                    LanguageControl.Get("ModVersionsDialog", "GameVersionsPublished"),
                     $"{compatibility.StatusText}  ",
                     compatibility.VersionNamesText,
                     CommunityTimeFormatter.FormatTime(version?.CreatedAt)),
@@ -193,7 +193,7 @@ namespace Game
 
         private static string FormatFileTitle(PostFileItem file)
         {
-            return string.IsNullOrWhiteSpace(file?.Filename) ? LanguageControl.Get("ScbbsPlusModVersionsDialog", "UnnamedFile") : file.Filename.Trim();
+            return string.IsNullOrWhiteSpace(file?.Filename) ? LanguageControl.Get("ModVersionsDialog", "UnnamedFile") : file.Filename.Trim();
         }
 
         private static string FormatFileSize(string value)

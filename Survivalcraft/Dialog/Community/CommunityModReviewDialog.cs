@@ -28,9 +28,9 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModReviewDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusModReviewDialog.Title").Text =
-                string.IsNullOrWhiteSpace(dialogTitle) ? LanguageControl.Get("ScbbsPlusModReviewDialog", "ReviewLocalResource") : dialogTitle;
+                string.IsNullOrWhiteSpace(dialogTitle) ? LanguageControl.Get("ModReviewDialog", "ReviewLocalResource") : dialogTitle;
             Children.Find<LabelWidget>("ScbbsPlusModReviewDialog.ModNameLabel").Text =
-                string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("ScbbsPlusModReviewDialog", "LocalResource") : modName;
+                string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("ModReviewDialog", "LocalResource") : modName;
             m_starRating = Children.Find<StarRatingWidget>("ScbbsPlusModReviewDialog.StarRating");
             m_restoreLink = Children.Find<LinkWidget>("ScbbsPlusModReviewDialog.RestoreLink");
             m_textBox = Children.Find<TextBoxWidget>("ScbbsPlusModReviewDialog.TextBox");
@@ -54,12 +54,12 @@ namespace Game
                 // 无历史内容时不动当前草稿，只提示。
                 if (string.IsNullOrEmpty(m_lastText))
                 {
-                    m_statusLabel.Text = LanguageControl.Get("ScbbsPlusModReviewDialog", "ThereIsNoPreviousContentToRestore");
+                    m_statusLabel.Text = LanguageControl.Get("ModReviewDialog", "ThereIsNoPreviousContentToRestore");
                 }
                 else
                 {
                     m_textBox.Text = m_lastText;
-                    m_statusLabel.Text = LanguageControl.Get("ScbbsPlusModReviewDialog", "PreviousContentRestored");
+                    m_statusLabel.Text = LanguageControl.Get("ModReviewDialog", "PreviousContentRestored");
                 }
                 m_textBox.HasFocus = true;
             }
@@ -86,9 +86,9 @@ namespace Game
             m_submitButton.IsEnabled = m_starRating.Rating > 0f;
             if (m_starRating.Rating <= 0f)
             {
-                m_statusLabel.Text = LanguageControl.Get("ScbbsPlusModReviewDialog", "PleaseSelectARating");
+                m_statusLabel.Text = LanguageControl.Get("ModReviewDialog", "PleaseSelectARating");
             }
-            else if (m_statusLabel.Text == LanguageControl.Get("ScbbsPlusModReviewDialog", "PleaseSelectARating"))
+            else if (m_statusLabel.Text == LanguageControl.Get("ModReviewDialog", "PleaseSelectARating"))
             {
                 m_statusLabel.Text = string.Empty;
             }

@@ -3,7 +3,7 @@
   <PanoramaWidget />
   <StackPanelWidget Direction="Horizontal">
     <CanvasWidget Style="{Widgets/TopBarContents}">
-      <LabelWidget Name="TopBar.Label" Text="[ScbbsPlusMoreScreen:MoreScbbsPlus]" />
+      <LabelWidget Name="TopBar.Label" Text="[MoreScreen:More]" />
     </CanvasWidget>
     <StackPanelWidget Direction="Vertical" Margin="10, 0">
       <CanvasWidget Size="0, 20" />
@@ -12,73 +12,73 @@
         <ScrollPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3, 3">
           <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-              <LabelWidget Text="[ScbbsPlusMoreScreen:LoggedAccount]" HorizontalAlignment="Far" Margin="20, 0" VerticalAlignment="Center" Color="255, 255, 255" />
-              <LabelWidget Name="ScbbsPlusMoreScreen.AccountInfo" VerticalAlignment="Center" Margin="20, 0" Text="[ScbbsPlusMoreScreen:NotLoggedIn]" FontScale="0.8" Color="255, 255, 255" MaxLines="1" Ellipsis="true" />
+              <LabelWidget Text="[MoreScreen:LoggedAccount]" HorizontalAlignment="Far" Margin="20, 0" VerticalAlignment="Center" Color="255, 255, 255" />
+              <LabelWidget Name="ScbbsPlusMoreScreen.AccountInfo" VerticalAlignment="Center" Margin="20, 0" Text="[MoreScreen:NotLoggedIn]" FontScale="0.8" Color="255, 255, 255" MaxLines="1" Ellipsis="true" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:CommunityAccount]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:CommunityAccountDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+                <LabelWidget Text="[MoreScreen:CommunityAccount]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[MoreScreen:CommunityAccountDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
               </StackPanelWidget>
-              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.AuthButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[ScbbsPlusMoreScreen:LogIn]" />
+              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.AuthButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[MoreScreen:LogIn]" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:MyPublished]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:MyPublishedDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+                <LabelWidget Text="[MoreScreen:MyPublished]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[MoreScreen:MyPublishedDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
               </StackPanelWidget>
-              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.MyPublishedButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[ScbbsPlusMoreScreen:Open]" />
+              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.MyPublishedButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[MoreScreen:Open]" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:LinkImport]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:LinkImportDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+                <LabelWidget Text="[MoreScreen:LinkImport]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[MoreScreen:LinkImportDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
               </StackPanelWidget>
-              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.ImportButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[ScbbsPlusMoreScreen:Import]" />
+              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.ImportButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[MoreScreen:Import]" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:DownloadQueue]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:DownloadQueueDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+                <LabelWidget Text="[MoreScreen:DownloadQueue]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[MoreScreen:DownloadQueueDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
               </StackPanelWidget>
-              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.DownloadQueueButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[ScbbsPlusMoreScreen:View]" />
+              <BevelledButtonWidget Name="ScbbsPlusMoreScreen.DownloadQueueButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[MoreScreen:View]" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-              <LabelWidget Text="[ScbbsPlusMoreScreen:CurrentServer]" HorizontalAlignment="Far" Margin="20, 0" VerticalAlignment="Center" FontScale="0.95" Color="255, 255, 255" />
+              <LabelWidget Text="[MoreScreen:CurrentServer]" HorizontalAlignment="Far" Margin="20, 0" VerticalAlignment="Center" FontScale="0.95" Color="255, 255, 255" />
               <BevelledButtonWidget Name="ScbbsPlusMoreScreen.CurrentServerButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:DownloadSourceSelectionMode]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:DownloadSourceSelectionModeDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+                <LabelWidget Text="[MoreScreen:DownloadSourceSelectionMode]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[MoreScreen:DownloadSourceSelectionModeDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
               </StackPanelWidget>
               <BevelledButtonWidget Name="ScbbsPlusMoreScreen.DownloadSourceSelectionModeButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:DefaultDownloadSource]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:DefaultDownloadSourceDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+                <LabelWidget Text="[MoreScreen:DefaultDownloadSource]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[MoreScreen:DefaultDownloadSourceDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
               </StackPanelWidget>
               <BevelledButtonWidget Name="ScbbsPlusMoreScreen.DefaultDownloadSourceButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:ApplyDownloadSourceToUpdates]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:ApplyDownloadSourceToUpdatesDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+                <LabelWidget Text="[MoreScreen:ApplyDownloadSourceToUpdates]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[MoreScreen:ApplyDownloadSourceToUpdatesDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
               </StackPanelWidget>
               <BevelledButtonWidget Name="ScbbsPlusMoreScreen.ApplyDownloadSourceToUpdatesButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:PlayedTimeReporting]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:PlayedTimeReportingDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+                <LabelWidget Text="[MoreScreen:PlayedTimeReporting]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[MoreScreen:PlayedTimeReportingDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
               </StackPanelWidget>
               <BevelledButtonWidget Name="ScbbsPlusMoreScreen.PlayedTimeReportingButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
             </UniformSpacingPanelWidget>
             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
               <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
-                <LabelWidget Text="[ScbbsPlusMoreScreen:PostDetailsAutoTranslate]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
-                <LabelWidget Text="[ScbbsPlusMoreScreen:PostDetailsAutoTranslateDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+                <LabelWidget Text="[MoreScreen:PostDetailsAutoTranslate]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[MoreScreen:PostDetailsAutoTranslateDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
               </StackPanelWidget>
               <BevelledButtonWidget Name="ScbbsPlusMoreScreen.PostDetailsAutoTranslateButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
             </UniformSpacingPanelWidget>

@@ -47,10 +47,10 @@ namespace Game
 
     internal sealed partial class LocalModNetworkManager
     {
-        private readonly TaskSlot<LocalModUpdateCheckResult> m_updateCheckSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "UpdateCheck"));
-        private readonly TaskSlot<LocalModAutoUpdateScanResult> m_autoUpdateScanSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "AutoUpdateScan"));
-        private readonly TaskSlot<LocalModVersionsLoadResult> m_versionsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "VersionList"));
-        private readonly TaskSlot<MissingModDependenciesLookupResult> m_dependencyLookupSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "DependencyLookup"));
+        private readonly TaskSlot<LocalModUpdateCheckResult> m_updateCheckSlot = new(LanguageControl.Get("TaskSlot", "UpdateCheck"));
+        private readonly TaskSlot<LocalModAutoUpdateScanResult> m_autoUpdateScanSlot = new(LanguageControl.Get("TaskSlot", "AutoUpdateScan"));
+        private readonly TaskSlot<LocalModVersionsLoadResult> m_versionsLoadSlot = new(LanguageControl.Get("TaskSlot", "VersionList"));
+        private readonly TaskSlot<MissingModDependenciesLookupResult> m_dependencyLookupSlot = new(LanguageControl.Get("TaskSlot", "DependencyLookup"));
         private CancellationTokenSource m_cancellation;
 
         public bool IsUpdateCheckRunning => m_updateCheckSlot.IsRunning;
@@ -181,7 +181,7 @@ namespace Game
 
             if (request.RequirePublishedPost && string.IsNullOrWhiteSpace(communityResult.Error))
             {
-                communityResult.Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "CannotFindPublishedPostByFileName"), request.FileName);
+                communityResult.Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LocalModNetworkManager", "CannotFindPublishedPostByFileName"), request.FileName);
             }
             return communityResult;
         }
@@ -284,7 +284,7 @@ namespace Game
                 }
                 else if (!string.IsNullOrWhiteSpace(result?.Error))
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "AutoUpdateCheckFailed"), target.DisplayName, result.Error));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LocalModNetworkManager", "AutoUpdateCheckFailed"), target.DisplayName, result.Error));
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -293,7 +293,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "AutoUpdateCheckFailed"), target.DisplayName, ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LocalModNetworkManager", "AutoUpdateCheckFailed"), target.DisplayName, ex.Message));
             }
 
             return new LocalModAutoUpdateScanEntry

@@ -13,12 +13,12 @@ namespace Game
             string url = (rawUrl ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(url))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "EnterResourceLink"));
+                throw new InvalidOperationException(LanguageControl.Get("RemoteImportManager", "EnterResourceLink"));
             }
             if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri)
                 || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "InvalidUrl"));
+                throw new InvalidOperationException(LanguageControl.Get("RemoteImportManager", "InvalidUrl"));
             }
 
             // 先解码再取文件名：%2F%2E%2E 等转义必须先展开，否则 ".." 段会随文件名
@@ -32,7 +32,7 @@ namespace Game
                 || fileName == "."
                 || fileName == "..")
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "CannotRecognizeFileName"));
+                throw new InvalidOperationException(LanguageControl.Get("RemoteImportManager", "CannotRecognizeFileName"));
             }
 
             return new RemoteImportRequest

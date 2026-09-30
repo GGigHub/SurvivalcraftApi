@@ -126,7 +126,7 @@ namespace Game
             catch (CryptographicException ex)
             {
                 // 本平台损坏（截断/坏 GCM tag/坏 DPAPI blob）：作废文件，用户干净重登后由 Save 重建。
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCredentialStore", "DecryptCredentialFileFailed"), ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CredentialStore", "DecryptCredentialFileFailed"), ex.Message));
                 TryDeleteFile(path);
                 TryDeleteFile(path + ".bak");
                 return null;
@@ -145,7 +145,7 @@ namespace Game
             catch (JsonException ex)
             {
                 // 可解密但 payload 非法（截断/手改）：与损坏文件同待，作废后由 Save 重建。
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCredentialStore", "DecryptCredentialFileFailed"), ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CredentialStore", "DecryptCredentialFileFailed"), ex.Message));
                 TryDeleteFile(path);
                 TryDeleteFile(path + ".bak");
                 return null;
@@ -183,7 +183,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCredentialStore", "DeleteCredentialFileFailed"), path, ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CredentialStore", "DeleteCredentialFileFailed"), path, ex.Message));
             }
         }
 
@@ -278,7 +278,7 @@ namespace Game
             if (!StartsWithMagic(data, s_fileMagic))
             {
                 // 每服文件只认 v4；v3 内容只可能出现在 legacy auth.bin（LoadLegacy 路径）。
-                throw new CryptographicException(LanguageControl.Get("ScbbsPlusLoginDialog", "CredentialFileFormatInvalid"));
+                throw new CryptographicException(LanguageControl.Get("LoginDialog", "CredentialFileFormatInvalid"));
             }
             byte[] body = new byte[data.Length - s_fileMagic.Length];
             Buffer.BlockCopy(data, s_fileMagic.Length, body, 0, body.Length);
@@ -381,7 +381,7 @@ namespace Game
             int headerSize = s_saltSize + s_nonceSize;
             if (data == null || data.Length < headerSize + s_tagSize)
             {
-                throw new CryptographicException(LanguageControl.Get("ScbbsPlusLoginDialog", "CredentialFileFormatInvalid"));
+                throw new CryptographicException(LanguageControl.Get("LoginDialog", "CredentialFileFormatInvalid"));
             }
 
             byte[] salt = new byte[s_saltSize];
@@ -391,7 +391,7 @@ namespace Game
             int ciphertextLength = data.Length - headerSize - s_tagSize;
             if (ciphertextLength < 0)
             {
-                throw new CryptographicException(LanguageControl.Get("ScbbsPlusLoginDialog", "CredentialFileFormatInvalid"));
+                throw new CryptographicException(LanguageControl.Get("LoginDialog", "CredentialFileFormatInvalid"));
             }
 
             byte[] ciphertext = new byte[ciphertextLength];
@@ -570,7 +570,7 @@ namespace Game
             const int ivLength = 16;
             if (data == null || data.Length <= ivLength || (data.Length - ivLength) % ivLength != 0)
             {
-                throw new CryptographicException(LanguageControl.Get("ScbbsPlusLoginDialog", "OldCredentialFileFormatInvalid"));
+                throw new CryptographicException(LanguageControl.Get("LoginDialog", "OldCredentialFileFormatInvalid"));
             }
 
             byte[] key = DeriveLegacyEncryptionKey();

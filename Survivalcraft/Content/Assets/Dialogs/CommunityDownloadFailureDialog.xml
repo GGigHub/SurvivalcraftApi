@@ -3,15 +3,15 @@
   <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
     <LabelWidget Name="ScbbsPlusDownloadFailureDialog.Title" Color="255, 255, 255" HorizontalAlignment="Center" />
     <CanvasWidget HorizontalAlignment="Stretch">
-      <LabelWidget Text="[ScbbsPlusDownloadFailureDialog:CurrentDownloadLink]" Color="255, 255, 255" VerticalAlignment="Center" />
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.CopyLinkButton" Text="[ScbbsPlusDownloadFailureDialog:CopyLink]" Style="{Styles/ButtonStyle_115x60}" HorizontalAlignment="Far" />
+      <LabelWidget Text="[DownloadFailureDialog:CurrentDownloadLink]" Color="255, 255, 255" VerticalAlignment="Center" />
+      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.CopyLinkButton" Text="[DownloadFailureDialog:CopyLink]" Style="{Styles/ButtonStyle_115x60}" HorizontalAlignment="Far" />
     </CanvasWidget>
     <CanvasWidget Name="ScbbsPlusDownloadFailureDialog.LinkBox" Size="Infinity, 48">
       <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
       <LabelWidget Name="ScbbsPlusDownloadFailureDialog.LinkLabel" Margin="8, 0" VerticalAlignment="Center" Color="255, 255, 255" Ellipsis="true" />
     </CanvasWidget>
     <CanvasWidget Size="0, 16" />
-    <LabelWidget Text="[ScbbsPlusDownloadFailureDialog:ErrorReason]" Color="255, 255, 255" />
+    <LabelWidget Text="[DownloadFailureDialog:ErrorReason]" Color="255, 255, 255" />
     <CanvasWidget Size="0, 8" />
     <CanvasWidget Name="ScbbsPlusDownloadFailureDialog.ErrorBox">
       <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
@@ -21,9 +21,9 @@
     </CanvasWidget>
     <CanvasWidget Size="0, 16" />
     <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.SwitchSourceButton" Text="[ScbbsPlusDownloadFailureDialog:UseAnotherSource]" Style="{Styles/ButtonStyle_205x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.SwitchSourceButton" Text="[DownloadFailureDialog:UseAnotherSource]" Style="{Styles/ButtonStyle_205x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.CloseButton" Text="[ScbbsPlusDownloadFailureDialog:Close]" Style="{Styles/ButtonStyle_205x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusDownloadFailureDialog.CloseButton" Text="[DownloadFailureDialog:Close]" Style="{Styles/ButtonStyle_205x60}" />
     </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

@@ -13,7 +13,7 @@ public partial class ModsManageContentScreen
     private readonly LocalModNetworkManager m_localModNetworkManager = new();
     private readonly ReviewSubmissionHandler m_reviewHandler =
         new((message, autoHideSeconds) => CommunityToastManager.Show(message, autoHideSeconds: autoHideSeconds));
-    private readonly TaskSlot<LocalPublishedCheckResult> m_publishedCheckSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PublishedCheck"));
+    private readonly TaskSlot<LocalPublishedCheckResult> m_publishedCheckSlot = new(LanguageControl.Get("TaskSlot", "PublishedCheck"));
 
     // 当前选中实体（对话框动作入口显式传参，不依赖选中态；此字段供结果落地的 reviewKey 比对）
     private ModEntity m_selectedEntity;
@@ -117,7 +117,7 @@ public partial class ModsManageContentScreen
         if (result == null || result.RequestId != m_localModNetworkManager.CurrentAutoUpdateScanRequestId) return;
         if (!string.IsNullOrEmpty(result.Error))
         {
-            Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalMods", "AutoUpdateScanFailed"), result.Error));
+            Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LocalMods", "AutoUpdateScanFailed"), result.Error));
             return;
         }
         HashSet<string> activeKeys = new(StringComparer.OrdinalIgnoreCase);
@@ -699,7 +699,7 @@ public partial class ModsManageContentScreen
         if (!m_publishedCheckSlot.TryTake(out LocalPublishedCheckResult result, ex =>
             {
                 // 任务 Faulted 不冒泡出 Update()，按无结果丢弃。
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalMods", "PublishedCheckTaskFaulted"), ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LocalMods", "PublishedCheckTaskFaulted"), ex.Message));
                 return null;
             }))
         {

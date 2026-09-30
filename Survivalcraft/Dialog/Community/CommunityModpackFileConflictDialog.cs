@@ -29,7 +29,7 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModpackFileConflictDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusModpackFileConflictDialog.Message").Text =
-                string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackFileConflictDialog", "IdenticalFileChooseAction"), fileName);
+                string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackFileConflictDialog", "IdenticalFileChooseAction"), fileName);
             m_overwriteButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.OverwriteButton");
             m_skipButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.SkipButton");
             m_skipAllButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.SkipAllButton");

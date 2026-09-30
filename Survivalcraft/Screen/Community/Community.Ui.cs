@@ -116,7 +116,7 @@ namespace Game
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
-                    LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectSortOrder"),
+                    LanguageControl.Get("FiltersDialog", "SelectSortOrder"),
                     new CommunityOrderType[] { CommunityOrderType.Latest, CommunityOrderType.Oldest, CommunityOrderType.Updated, CommunityOrderType.Hot },
                     60f,
                     item => LanguageControl.GetEnumDisplayName((CommunityOrderType)item),
@@ -195,7 +195,7 @@ namespace Game
 
         internal static string GetVersionFilterName(bool onlyCurrentVersion)
         {
-            return onlyCurrentVersion ? LanguageControl.Get("ScbbsPlusCommunityScreen", "CurrentVersion") : LanguageControl.Get("ScbbsPlusCommunityScreen", "AllVersions");
+            return onlyCurrentVersion ? LanguageControl.Get("CommunityScreen", "CurrentVersion") : LanguageControl.Get("CommunityScreen", "AllVersions");
         }
 
         // 认证会话状态变化的界面副作用；会话本体由 AuthSessionManager 管理。

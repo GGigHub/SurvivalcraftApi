@@ -18,7 +18,7 @@ namespace Game
             {
                 if (m_pendingRequest != null)
                 {
-                    throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModpackFileConflictDialog", "ConflictAlreadyWaitingForUser"));
+                    throw new InvalidOperationException(LanguageControl.Get("ModpackFileConflictDialog", "ConflictAlreadyWaitingForUser"));
                 }
                 m_pendingRequest = request;
             }

@@ -215,7 +215,7 @@ namespace Game
                 // 远程图标一律是图片：加缩略图后仍限制体积，超大即弃用占位。
                 if (data.Length > 512 * 1024)
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostIconLoader", "SkipOversizedPostIcon"), iconUrl, data.Length));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostIconLoader", "SkipOversizedPostIcon"), iconUrl, data.Length));
                     Dispatcher.Dispatch(() => s_iconRequests.Remove(iconUrl));
                     return;
                 }
@@ -260,12 +260,12 @@ namespace Game
                         }
                         else
                         {
-                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostIconLoader", "DecodeRemoteIconFailed"), iconUrl, result?.Error));
+                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostIconLoader", "DecodeRemoteIconFailed"), iconUrl, result?.Error));
                         }
                     }
                     catch (Exception ex)
                     {
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostIconLoader", "CreatePostIconTextureFailed"), iconUrl, ex.Message));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostIconLoader", "CreatePostIconTextureFailed"), iconUrl, ex.Message));
                     }
                     finally
                     {
@@ -277,7 +277,7 @@ namespace Game
             catch (Exception ex)
             {
                 Dispatcher.Dispatch(() => s_iconRequests.Remove(iconUrl));
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostIconLoader", "RequestPostIconFailed"), iconUrl, ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostIconLoader", "RequestPostIconFailed"), iconUrl, ex.Message));
             }
         }
 

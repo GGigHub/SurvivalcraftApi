@@ -79,12 +79,12 @@ namespace Game
                 {
                     // 锁外执行文件 IO 与 SaveSettings：锁只保护清单读写。
                     ProcessEntry(entry);
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPendingLocalModActions", "ProcessedPendingModAction"), reason, entry.ActionType, entry.FilePath));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PendingLocalModActions", "ProcessedPendingModAction"), reason, entry.ActionType, entry.FilePath));
                 }
                 catch (Exception ex)
                 {
                     remaining[key] = entry;
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPendingLocalModActions", "ProcessPendingModActionFailed"), reason, entry.ActionType, entry.FilePath, ex.Message));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PendingLocalModActions", "ProcessPendingModActionFailed"), reason, entry.ActionType, entry.FilePath, ex.Message));
                 }
             }
 
@@ -117,7 +117,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPendingLocalModActions", "ReadPendingModManifestFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PendingLocalModActions", "ReadPendingModManifestFailed"), ex.Message));
                 return new LocalModPendingActionsData();
             }
         }
@@ -139,7 +139,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPendingLocalModActions", "SavePendingModManifestFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PendingLocalModActions", "SavePendingModManifestFailed"), ex.Message));
             }
         }
 
@@ -184,7 +184,7 @@ namespace Game
             string version = entry?.Version?.Trim();
             if (string.IsNullOrWhiteSpace(packageName) || string.IsNullOrWhiteSpace(version))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusPendingLocalModActions", "MissingModPackageNameOrVersion"));
+                throw new InvalidOperationException(LanguageControl.Get("PendingLocalModActions", "MissingModPackageNameOrVersion"));
             }
 
             bool changed = enable

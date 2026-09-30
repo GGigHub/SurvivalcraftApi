@@ -2,25 +2,25 @@
   <PanoramaWidget />
   <StackPanelWidget Direction="Horizontal">
     <CanvasWidget Style="{Widgets/TopBarContents}">
-      <LabelWidget Name="TopBar.Label" Text="[ScbbsPlusCommunityScreen:SCChineseCommunity]" />
+      <LabelWidget Name="TopBar.Label" Text="[CommunityScreen:SCChineseCommunity]" />
     </CanvasWidget>
     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0, 5">
       <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <BevelledButtonWidget Name="CommunityOrderButton" Text="[ScbbsPlusCommunityScreen:RecentlyUpdated]" Style="{Styles/ButtonStyle_160x60}" Margin="5, 0" FontScale="1" />
-        <BevelledButtonWidget Name="CommunityFilterButton" Text="[ScbbsPlusCommunityScreen:Filter]" Style="{Styles/ButtonStyle_160x60}" Margin="5, 0" FontScale="1" />
+        <BevelledButtonWidget Name="CommunityOrderButton" Text="[CommunityScreen:RecentlyUpdated]" Style="{Styles/ButtonStyle_160x60}" Margin="5, 0" FontScale="1" />
+        <BevelledButtonWidget Name="CommunityFilterButton" Text="[CommunityScreen:Filter]" Style="{Styles/ButtonStyle_160x60}" Margin="5, 0" FontScale="1" />
         <CanvasWidget Size="Infinity, 50" Margin="10, 0" HorizontalAlignment="Stretch" VerticalAlignment="Center">
           <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
-          <TextBoxWidget Name="CommunitySearchBox" Title="[ScbbsPlusCommunityScreen:Search]" Description="[ScbbsPlusCommunityScreen:Search]" Size="Infinity, 50" HorizontalAlignment="Stretch" VerticalAlignment="Center" MaximumLength="40" Margin="10, 0" />
-          <LabelWidget Name="CommunitySearchHintLabel" Text="[ScbbsPlusCommunityScreen:Search]" HorizontalAlignment="Center" VerticalAlignment="Center" Color="128, 128, 128" />
+          <TextBoxWidget Name="CommunitySearchBox" Title="[CommunityScreen:Search]" Description="[CommunityScreen:Search]" Size="Infinity, 50" HorizontalAlignment="Stretch" VerticalAlignment="Center" MaximumLength="40" Margin="10, 0" />
+          <LabelWidget Name="CommunitySearchHintLabel" Text="[CommunityScreen:Search]" HorizontalAlignment="Center" VerticalAlignment="Center" Color="128, 128, 128" />
         </CanvasWidget>
       </StackPanelWidget>
       <CanvasWidget Size="Infinity, Infinity" Margin="10, 8">
         <BevelledRectangleWidget Style="{Styles/Area}" />
         <StackPanelWidget Direction="Vertical">
-          <LabelWidget Name="CommunityPostsTitle" Text="[ScbbsPlusCommunityScreen:CommunityMods]" FontScale="0.9" Color="255, 255, 255" Margin="10, 4" HorizontalAlignment="Stretch" />
+          <LabelWidget Name="CommunityPostsTitle" Text="[CommunityScreen:CommunityMods]" FontScale="0.9" Color="255, 255, 255" Margin="10, 4" HorizontalAlignment="Stretch" />
           <CanvasWidget Size="Infinity, Infinity">
             <CommunityTreeViewWidget Name="CommunityPostsTree" Direction="Vertical" ItemSize="58" Margin="3, 3" />
-            <LabelWidget Name="CommunityPostsEmptyLabel" Text="[ScbbsPlusCommunityScreen:SelectLeftToShowDetails]" HorizontalAlignment="Center" VerticalAlignment="Center" Color="160, 160, 160" IsVisible="false" />
+            <LabelWidget Name="CommunityPostsEmptyLabel" Text="[CommunityScreen:SelectLeftToShowDetails]" HorizontalAlignment="Center" VerticalAlignment="Center" Color="160, 160, 160" IsVisible="false" />
           </CanvasWidget>
         </StackPanelWidget>
       </CanvasWidget>
@@ -29,17 +29,17 @@
             <BevelledButtonWidget Name="CommunityPrevPageButton" Style="{Styles/ButtonStyle_ArrowLeft}" />
             <CanvasWidget Size="60, 46" VerticalAlignment="Center" MarginLeft="6">
               <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
-              <TextBoxWidget Name="CommunityPageJumpBox" Title="[ScbbsPlusCommunityScreen:Page]" Description="[ScbbsPlusCommunityScreen:Page]" Size="60, 46" MaximumLength="4" Margin="8, 0" />
+              <TextBoxWidget Name="CommunityPageJumpBox" Title="[CommunityScreen:Page]" Description="[CommunityScreen:Page]" Size="60, 46" MaximumLength="4" Margin="8, 0" />
             </CanvasWidget>
-            <BevelledButtonWidget Name="CommunityPageJumpButton" Style="{Styles/ButtonStyle_70x60}" Text="[ScbbsPlusCommunityScreen:Go]" FontScale="0.9" />
+            <BevelledButtonWidget Name="CommunityPageJumpButton" Style="{Styles/ButtonStyle_70x60}" Text="[CommunityScreen:Go]" FontScale="0.9" />
             <BevelledButtonWidget Name="CommunityNextPageButton" Style="{Styles/ButtonStyle_ArrowRight}" />
           </StackPanelWidget>
         <CanvasWidget Size="Infinity, 0" />
-        <BevelledButtonWidget Name="CommunityDownloadButton" Text="[ScbbsPlusCommunityScreen:Download]" Style="{Styles/ButtonStyle_205x60}" VerticalAlignment="Center" />
+        <BevelledButtonWidget Name="CommunityDownloadButton" Text="[CommunityScreen:Download]" Style="{Styles/ButtonStyle_205x60}" VerticalAlignment="Center" />
         <CanvasWidget Size="10, 0" />
-        <BevelledButtonWidget Name="CommunityDetailsButton" Text="[ScbbsPlusCommunityScreen:Details]" Style="{Styles/ButtonStyle_205x60}" VerticalAlignment="Center" />
+        <BevelledButtonWidget Name="CommunityDetailsButton" Text="[CommunityScreen:Details]" Style="{Styles/ButtonStyle_205x60}" VerticalAlignment="Center" />
         <CanvasWidget Size="10, 0" />
-        <BevelledButtonWidget Name="CommunityMoreButton" Text="[ScbbsPlusCommunityScreen:More]" Style="{Styles/ButtonStyle_70x60}" VerticalAlignment="Center" />
+        <BevelledButtonWidget Name="CommunityMoreButton" Text="[CommunityScreen:More]" Style="{Styles/ButtonStyle_70x60}" VerticalAlignment="Center" />
       </StackPanelWidget>
     </StackPanelWidget>
   </StackPanelWidget>

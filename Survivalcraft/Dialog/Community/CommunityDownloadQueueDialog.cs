@@ -290,20 +290,20 @@ namespace Game
         {
             if (m_rows.Count == 0)
             {
-                m_selectionLabel.Text = LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "NoDownloadTasks");
+                m_selectionLabel.Text = LanguageControl.Get("DownloadQueueDialog", "NoDownloadTasks");
                 return;
             }
 
             if (!m_selectedTaskId.HasValue)
             {
-                m_selectionLabel.Text = LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "SelectionHint");
+                m_selectionLabel.Text = LanguageControl.Get("DownloadQueueDialog", "SelectionHint");
                 return;
             }
 
             DownloadQueueDialogItem row = FindRowById(m_selectedTaskId);
             m_selectionLabel.Text = row == null
-                ? LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "SelectionHint")
-                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "SelectedTask"), row.Id, ExtractDisplayName(row.Title));
+                ? LanguageControl.Get("DownloadQueueDialog", "SelectionHint")
+                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadQueueDialog", "SelectedTask"), row.Id, ExtractDisplayName(row.Title));
         }
 
         private static string ExtractDisplayName(string title)

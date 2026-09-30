@@ -87,14 +87,14 @@ namespace Game
                     if (wrapped != null && wrapped.Code != 200)
                     {
                         return (null, string.IsNullOrWhiteSpace(wrapped.Msg)
-                            ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityManager", "DownloadTrendsResponseMalformed"), wrapped.Code)
+                            ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityManager", "DownloadTrendsResponseMalformed"), wrapped.Code)
                             : wrapped.Msg);
                     }
 
                     stats = wrapped?.Data;
                 }
                 return stats?.Post == null
-                    ? (null, LanguageControl.Get("ScbbsPlusCommunityManager", "NoStats"))
+                    ? (null, LanguageControl.Get("CommunityManager", "NoStats"))
                     : (stats, null);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

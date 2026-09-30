@@ -36,13 +36,13 @@ namespace Game
                 string body = await response.Content.ReadAsStringAsync(cancellationToken);
                 if (string.IsNullOrWhiteSpace(body))
                 {
-                    return new LoginResponse { Code = -1, Msg = LanguageControl.Get("ScbbsPlusLoginDialog", "LoginResponseIsEmpty") };
+                    return new LoginResponse { Code = -1, Msg = LanguageControl.Get("LoginDialog", "LoginResponseIsEmpty") };
                 }
 
                 LoginResponse result = JsonSerializer.Deserialize<LoginResponse>(body);
                 // 账号/密码错误由服务端响应码承载（如 Code=401），此处区分网络故障与响应异常，
                 // 避免把非 JSON 错误页当成网络错误误导用户。
-                return result ?? new LoginResponse { Code = -1, Msg = LanguageControl.Get("ScbbsPlusLoginDialog", "LoginResponseIsEmpty") };
+                return result ?? new LoginResponse { Code = -1, Msg = LanguageControl.Get("LoginDialog", "LoginResponseIsEmpty") };
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -52,18 +52,18 @@ namespace Game
             }
             catch (HttpRequestException ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LoginRequestFailed"), ex.Message));
-                return new LoginResponse { Code = -1, Msg = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLoginDialog", "LoginNetworkError"), ex.Message) };
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthClient", "LoginRequestFailed"), ex.Message));
+                return new LoginResponse { Code = -1, Msg = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LoginDialog", "LoginNetworkError"), ex.Message) };
             }
             catch (JsonException ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LoginResponseMalformed"), ex.Message));
-                return new LoginResponse { Code = -1, Msg = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLoginDialog", "LoginResponseFormatError"), ex.Message) };
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthClient", "LoginResponseMalformed"), ex.Message));
+                return new LoginResponse { Code = -1, Msg = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LoginDialog", "LoginResponseFormatError"), ex.Message) };
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LoginRequestFailed"), ex.Message));
-                return new LoginResponse { Code = -1, Msg = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLoginDialog", "LoginNetworkError"), ex.Message) };
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthClient", "LoginRequestFailed"), ex.Message));
+                return new LoginResponse { Code = -1, Msg = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LoginDialog", "LoginNetworkError"), ex.Message) };
             }
         }
 
@@ -86,7 +86,7 @@ namespace Game
                     // 登出时 token 可能已失效：广播无害（订阅方只处理 LoggedIn 状态），保持一致性。
                     CommunityUnauthorizedNotifier.Notify(token);
                 }
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LogoutRequestCompleted"), response.StatusCode));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthClient", "LogoutRequestCompleted"), response.StatusCode));
                 return response.IsSuccessStatusCode;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -96,7 +96,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LogoutRequestFailed"), ex.Message));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthClient", "LogoutRequestFailed"), ex.Message));
                 return false;
             }
         }

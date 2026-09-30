@@ -1,7 +1,7 @@
 <CanvasWidget xmlns="runtime-namespace:Game" Size="920, 520" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
   <BevelledRectangleWidget Style="{Styles/DialogArea}" />
   <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="0, 10">
-    <LabelWidget Name="ScbbsPlusPostDetailsDialog.Title" Text="[ScbbsPlusPostDetailsDialog:PostDetails]" Color="255, 255, 255" HorizontalAlignment="Center" />
+    <LabelWidget Name="ScbbsPlusPostDetailsDialog.Title" Text="[PostDetailsDialog:PostDetails]" Color="255, 255, 255" HorizontalAlignment="Center" />
     <ScrollPanelWidget Name="ScbbsPlusPostDetailsDialog.ScrollPanel" Direction="Vertical" Margin="5, 12">
       <StackPanelWidget Direction="Vertical" Margin="5, 0" HorizontalAlignment="Stretch">
         <LabelWidget Name="ScbbsPlusPostDetailsDialog.TranslateStatus" MarginBottom="8" Color="160, 210, 255" FontScale="0.7" WordWrap="true" IsVisible="false" />
@@ -10,11 +10,11 @@
       </StackPanelWidget>
     </ScrollPanelWidget>
     <StackPanelWidget Name="ScbbsPlusPostDetailsDialog.ActionsRow" HorizontalAlignment="Center">
-      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.ViewInBrowserButton" Text="[ScbbsPlusPostDetailsDialog:ViewInBrowser]" Style="{Styles/ButtonStyle_205x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.ViewInBrowserButton" Text="[PostDetailsDialog:ViewInBrowser]" Style="{Styles/ButtonStyle_205x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.PrimaryButton" Text="[ScbbsPlusPostDetailsDialog:Download]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.PrimaryButton" Text="[PostDetailsDialog:Download]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.CloseButton" Text="[ScbbsPlusPostDetailsDialog:Close]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.CloseButton" Text="[PostDetailsDialog:Close]" Style="{Styles/ButtonStyle_160x60}" />
     </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

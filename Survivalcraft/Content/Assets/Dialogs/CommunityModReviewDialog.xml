@@ -5,21 +5,21 @@
     <LabelWidget Name="ScbbsPlusModReviewDialog.ModNameLabel" Color="255, 230, 140" Size="600, 36" HorizontalAlignment="Center" WordWrap="true" Margin="0, 6" />
     <CanvasWidget Size="0, Infinity" />
     <StackPanelWidget Name="ScbbsPlusModReviewDialog.RatingRow" Direction="Horizontal" HorizontalAlignment="Center">
-      <LabelWidget Text="[ScbbsPlusModReviewDialog:Rating]" Color="128, 128, 128" VerticalAlignment="Center" Size="74, 0" />
+      <LabelWidget Text="[ModReviewDialog:Rating]" Color="128, 128, 128" VerticalAlignment="Center" Size="74, 0" />
       <StarRatingWidget Name="ScbbsPlusModReviewDialog.StarRating" StarSize="50" VerticalAlignment="Center" />
     </StackPanelWidget>
     <CanvasWidget Size="0, 8" />
-    <LinkWidget Name="ScbbsPlusModReviewDialog.RestoreLink" Text="[ScbbsPlusModReviewDialog:RestorePrevious]" Color="64, 192, 64" DropShadow="true" HorizontalAlignment="Near" Size="160, 32" />
+    <LinkWidget Name="ScbbsPlusModReviewDialog.RestoreLink" Text="[ModReviewDialog:RestorePrevious]" Color="64, 192, 64" DropShadow="true" HorizontalAlignment="Near" Size="160, 32" />
     <CanvasWidget Size="0, 6" />
     <CanvasWidget Name="ScbbsPlusModReviewDialog.TextInputPanel" Size="600, 150">
       <BevelledRectangleWidget Style="{Styles/TextBoxArea}" Size="600, 150" />
-      <TextBoxWidget Name="ScbbsPlusModReviewDialog.TextBox" Title="[ScbbsPlusModReviewDialog:ReviewContent]" Description="[ScbbsPlusModReviewDialog:EnterReviewContent]" MaximumLength="1000" MaximumLinesCount="1000" EnterAsNewLine="true" VerticalPadding="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10, 8" Size="580, 134" />
+      <TextBoxWidget Name="ScbbsPlusModReviewDialog.TextBox" Title="[ModReviewDialog:ReviewContent]" Description="[ModReviewDialog:EnterReviewContent]" MaximumLength="1000" MaximumLinesCount="1000" EnterAsNewLine="true" VerticalPadding="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10, 8" Size="580, 134" />
     </CanvasWidget>
     <CanvasWidget Size="0, 8" />
     <LabelWidget Name="ScbbsPlusModReviewDialog.StatusLabel" Color="220, 180, 120" HorizontalAlignment="Center" WordWrap="true" Size="600, 28" />
     <CanvasWidget Size="0, Infinity" />
     <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
-      <BevelledButtonWidget Name="ScbbsPlusModReviewDialog.SubmitButton" Text="[ScbbsPlusModReviewDialog:Submit]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusModReviewDialog.SubmitButton" Text="[ModReviewDialog:Submit]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
       <BevelledButtonWidget Name="ScbbsPlusModReviewDialog.CancelButton" Style="{Styles/ButtonStyle_160x60}" />
     </StackPanelWidget>

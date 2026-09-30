@@ -38,7 +38,7 @@ namespace Game
             {
                 StatusText = compatibility.HasCompatibilityTargets
                     ? GetCompatibilityStatusText(compatibility.Level)
-                    : LanguageControl.Get("ScbbsPlusModVersionsDialog", "NoCompatibilityVersionSpecified"),
+                    : LanguageControl.Get("ModVersionsDialog", "NoCompatibilityVersionSpecified"),
                 VersionNamesText = compatibility.HasCompatibilityTargets
                     ? string.Join("、", compatibility.VersionNames)
                     : "-",
@@ -50,10 +50,10 @@ namespace Game
         {
             return level switch
             {
-                ModCompatibilityLevel.Exact => LanguageControl.Get("ScbbsPlusModVersionsDialog", "FullyCompatible"),
-                ModCompatibilityLevel.Risky => LanguageControl.Get("ScbbsPlusModVersionsDialog", "PotentialCompatibilityIssues"),
-                ModCompatibilityLevel.Incompatible => LanguageControl.Get("ScbbsPlusModVersionsDialog", "Incompatible"),
-                _ => LanguageControl.Get("ScbbsPlusModVersionsDialog", "NoCompatibilityVersionSpecified")
+                ModCompatibilityLevel.Exact => LanguageControl.Get("ModVersionsDialog", "FullyCompatible"),
+                ModCompatibilityLevel.Risky => LanguageControl.Get("ModVersionsDialog", "PotentialCompatibilityIssues"),
+                ModCompatibilityLevel.Incompatible => LanguageControl.Get("ModVersionsDialog", "Incompatible"),
+                _ => LanguageControl.Get("ModVersionsDialog", "NoCompatibilityVersionSpecified")
             };
         }
 

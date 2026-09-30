@@ -37,7 +37,7 @@ namespace Game
 
             if (ModpackRules.IsHttpUrl(resolvedUrl))
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "ModpackItemUsesNetworkUrl"), resolvedUrl));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "ModpackItemUsesNetworkUrl"), resolvedUrl));
                 try
                 {
                     (data, downloadedFileName) = await DownloadBytesAsync(resolvedUrl, cancellationToken);
@@ -49,14 +49,14 @@ namespace Game
                 }
                 catch (Exception ex) when (!string.IsNullOrWhiteSpace(item?.FileId))
                 {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "ModpackItemUrlDownloadFailedFallingBackToFileId"), item.FileId, ex.Message));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "ModpackItemUrlDownloadFailedFallingBackToFileId"), item.FileId, ex.Message));
                 }
             }
             else if (!string.IsNullOrWhiteSpace(resolvedUrl)
                 && ModpackRules.TryGetEmbeddedFile(embeddedFiles, resolvedUrl, out byte[] embeddedData))
             {
                 data = embeddedData;
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "ModpackItemUsesZipEntry"), resolvedUrl));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "ModpackItemUsesZipEntry"), resolvedUrl));
             }
 
             if (data != null || string.IsNullOrWhiteSpace(item?.FileId))
@@ -64,7 +64,7 @@ namespace Game
                 return (data, downloadedFileName, resolvedUrl, communityFile);
             }
 
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "ModpackItemUrlMissingResolvingByFileId"), resolvedUrl, item.FileId));
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "ModpackItemUrlMissingResolvingByFileId"), resolvedUrl, item.FileId));
             communityFile = await FetchFileInfoByIdAsync(apiBaseUrl, token, item.FileId, cancellationToken);
             ModpackRules.ApplyItemFileInfo(item, communityFile);
             resolvedUrl = communityFile?.Url;
@@ -92,7 +92,7 @@ namespace Game
                 await m_communityApiClient.GetJsonResultAsync<FileInfoResponse>(url, token, cancellationToken);
             if (!apiResult.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "GetFileInfoByFileIdFailed"), apiResult.StatusCode, apiResult.Body));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "GetFileInfoByFileIdFailed"), apiResult.StatusCode, apiResult.Body));
             }
 
             string body = apiResult.Body;
@@ -113,11 +113,11 @@ namespace Game
             }
             if (wrapped != null && wrapped.Code != 0 && wrapped.Code != 200)
             {
-                throw new InvalidOperationException(wrapped.Msg ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "GetFileInfoByFileIdMalformed"), body));
+                throw new InvalidOperationException(wrapped.Msg ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "GetFileInfoByFileIdMalformed"), body));
             }
             if (directFile == null || string.IsNullOrWhiteSpace(directFile.Url))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackSourceResolver", "FileIdReturnedNoDownloadLink"), fileId));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackSourceResolver", "FileIdReturnedNoDownloadLink"), fileId));
             }
 
             return directFile;

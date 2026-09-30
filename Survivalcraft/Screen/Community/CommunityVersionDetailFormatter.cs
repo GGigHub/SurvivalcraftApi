@@ -36,14 +36,14 @@ namespace Game
 
             string versionText = FormatEmpty(version?.Version);
             string versionLine = versionText != "-" && !IsIntegerText(versionText)
-                ? string.Format(CultureInfo.CurrentCulture, "<p>{0}：{1}</p>", LanguageControl.Get("ScbbsPlusModVersionsDialog", "Version"), WebUtility.HtmlEncode(versionText))
+                ? string.Format(CultureInfo.CurrentCulture, "<p>{0}：{1}</p>", LanguageControl.Get("ModVersionsDialog", "Version"), WebUtility.HtmlEncode(versionText))
                 : string.Empty;
             return string.Format(
                 CultureInfo.CurrentCulture,
                 "<p>{0}</p>{1}<p>{2}：{3}</p>",
                 WebUtility.HtmlEncode(FormatVersionTitle(version)),
                 versionLine,
-                LanguageControl.Get("ScbbsPlusModVersionsDialog", "Published"),
+                LanguageControl.Get("ModVersionsDialog", "Published"),
                 WebUtility.HtmlEncode(CommunityTimeFormatter.FormatTime(version?.CreatedAt)));
         }
 
@@ -55,7 +55,7 @@ namespace Game
             {
                 return title;
             }
-            return versionText != "-" && !IsIntegerText(versionText) ? versionText : LanguageControl.Get("ScbbsPlusVersionDetailFormatter", "UnnamedVersion");
+            return versionText != "-" && !IsIntegerText(versionText) ? versionText : LanguageControl.Get("VersionDetailFormatter", "UnnamedVersion");
         }
 
         internal static bool IsIntegerText(string value)

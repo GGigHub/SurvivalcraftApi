@@ -2,13 +2,13 @@
   <BevelledRectangleWidget Style="{Styles/DialogArea}" />
   <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="0, 10">
     <StackPanelWidget HorizontalAlignment="Center">
-      <LabelWidget Text="[ScbbsPlusModVersionsDialog:AllVersions]" Color="255, 255, 255" HorizontalAlignment="Center" />
+      <LabelWidget Text="[ModVersionsDialog:AllVersions]" Color="255, 255, 255" HorizontalAlignment="Center" />
       <CanvasWidget Size="0, 10" />
       <LabelWidget Name="ScbbsPlusModVersionsDialog.PostTitleLabel" Color="255, 230, 140" HorizontalAlignment="Center" WordWrap="true" />
     </StackPanelWidget>
     <ScrollPanelWidget Direction="Vertical" Margin="5, 12">
       <StackPanelWidget Name="ScbbsPlusModVersionsDialog.ListPanel" Direction="Vertical" Margin="5, 0" HorizontalAlignment="Stretch" />
     </ScrollPanelWidget>
-    <BevelledButtonWidget Name="ScbbsPlusModVersionsDialog.CloseButton" Text="[ScbbsPlusModVersionsDialog:Close]" Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Center" />
+    <BevelledButtonWidget Name="ScbbsPlusModVersionsDialog.CloseButton" Text="[ModVersionsDialog:Close]" Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Center" />
   </StackPanelWidget>
 </CanvasWidget>

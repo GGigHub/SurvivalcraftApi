@@ -27,7 +27,7 @@ namespace Game
     /// </summary>
     internal sealed class ReviewSubmissionHandler
     {
-        private readonly TaskSlot<LocalResourceScoreResult> m_slot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "ScoreSubmission"));
+        private readonly TaskSlot<LocalResourceScoreResult> m_slot = new(LanguageControl.Get("TaskSlot", "ScoreSubmission"));
         private readonly Action<string, double> m_showToast;
 
         /// <summary>会话守卫口：组合根默认读 AuthSessionController；测试注入替身。</summary>
@@ -57,12 +57,12 @@ namespace Game
             }
             if (m_slot.IsRunning)
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "PleaseWait"), LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "SubmittingPreviousReview"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ReviewSubmissionHandler", "PleaseWait"), LanguageControl.Get("ReviewSubmissionHandler", "SubmittingPreviousReview"), LanguageControl.Ok, null, null));
                 return false;
             }
             if (!IsLoggedInProvider() || string.IsNullOrEmpty(TokenProvider()))
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "PleaseLogInBeforeReviewing"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ReviewSubmissionHandler", "PleaseLogInBeforeReviewing"), LanguageControl.Ok, null, null));
                 return false;
             }
 
@@ -87,7 +87,7 @@ namespace Game
                 }));
             if (request.ShowSubmittingDialog)
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "Submitting"), LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "SubmittingReviewToTheCommunity"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ReviewSubmissionHandler", "Submitting"), LanguageControl.Get("ReviewSubmissionHandler", "SubmittingReviewToTheCommunity"), LanguageControl.Ok, null, null));
             }
             return true;
         }
@@ -102,7 +102,7 @@ namespace Game
                 {
                     // 任务 Faulted 不冒泡出 Update()，带 Error 的 fallback 走既有失败对话框，
                     // 让用户知道提交失败可重试，而不是无声丢弃。
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "ScoreSubmissionTaskFaulted"), ex.Message));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ReviewSubmissionHandler", "ScoreSubmissionTaskFaulted"), ex.Message));
                     return new LocalResourceScoreResult { Error = ex.Message };
                 }))
             {
@@ -114,7 +114,7 @@ namespace Game
             }
             if (!string.IsNullOrEmpty(result.Error))
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "ReviewSubmissionFailed"), result.Error), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ReviewSubmissionHandler", "ReviewSubmissionFailed"), result.Error), LanguageControl.Ok, null, null));
                 return true;
             }
 
@@ -125,7 +125,7 @@ namespace Game
             }
             else
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "ReviewSubmitted"), LanguageControl.Get("ScbbsPlusReviewSubmissionHandler", "ReviewSubmittedToast"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ReviewSubmissionHandler", "ReviewSubmitted"), LanguageControl.Get("ReviewSubmissionHandler", "ReviewSubmittedToast"), LanguageControl.Ok, null, null));
             }
             return true;
         }
@@ -179,7 +179,7 @@ namespace Game
                     return new LocalResourceScoreResult
                     {
                         ResourceKey = request.ResourceKey,
-                        Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "CannotFindPublishedPostByFileName"), request.FileName)
+                        Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LocalModNetworkManager", "CannotFindPublishedPostByFileName"), request.FileName)
                     };
                 }
 

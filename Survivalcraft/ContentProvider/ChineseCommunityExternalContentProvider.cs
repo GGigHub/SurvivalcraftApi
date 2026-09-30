@@ -128,7 +128,7 @@ namespace Game {
             }
             catch (OperationCanceledException) {
                 // 凭证/登记 30s 超时（"A task was canceled." 对用户无意义），映射网络错误文案。
-                failure?.Invoke(new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "NetworkError")));
+                failure?.Invoke(new InvalidOperationException(LanguageControl.Get("DownloadFlowManager", "NetworkError")));
             }
             catch (Exception ex) {
                 failure?.Invoke(ex);

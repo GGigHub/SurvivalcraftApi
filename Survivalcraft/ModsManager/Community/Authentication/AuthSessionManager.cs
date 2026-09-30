@@ -112,8 +112,8 @@ namespace Game
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Get("ScbbsPlusAuthSessionManager", "LogOut"),
-                        LanguageControl.Get("ScbbsPlusAuthSessionManager", "LogOutOfTheCurrentCommunityAccount"),
+                        LanguageControl.Get("AuthSessionManager", "LogOut"),
+                        LanguageControl.Get("AuthSessionManager", "LogOutOfTheCurrentCommunityAccount"),
                         LanguageControl.Yes,
                         LanguageControl.No,
                         button =>
@@ -151,7 +151,7 @@ namespace Game
             account = account?.Trim();
             if (string.IsNullOrEmpty(account) || string.IsNullOrEmpty(password))
             {
-                m_loginDialog?.SetError(LanguageControl.Get("ScbbsPlusAuthSessionManager", "PleaseEnterAccountAndPassword"));
+                m_loginDialog?.SetError(LanguageControl.Get("AuthSessionManager", "PleaseEnterAccountAndPassword"));
                 return;
             }
 
@@ -172,7 +172,7 @@ namespace Game
                 // 服务创建任务时若同步失败，也要释放 CTS 并恢复登录对话框。
                 m_loginCancellation.Dispose();
                 m_loginCancellation = null;
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "CreateLoginRequestFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "CreateLoginRequestFailed"), ex.Message));
                 m_loginDialog?.SetBusy(false);
                 m_loginDialog?.SetError(ex.Message);
                 return;
@@ -230,7 +230,7 @@ namespace Game
                 if (data != null && !string.IsNullOrEmpty(data.Token) && data.User != null)
                 {
                     m_sessions[apiBaseUrl] = data;
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginStateRestoredFromLocal"), data.User.Nickname));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "LoginStateRestoredFromLocal"), data.User.Nickname));
                     if (string.Equals(apiBaseUrl, ApiBaseUrl, StringComparison.OrdinalIgnoreCase))
                     {
                         m_loginStateChanged.Raise(AuthChangeKind.LoggedIn);
@@ -239,17 +239,17 @@ namespace Game
             }
             catch (PlatformNotSupportedException ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "ClearedUnreadableCredentials"), ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "ClearedUnreadableCredentials"), ex.Message));
                 s_authenticationSessionStore.TryDelete(apiBaseUrl);
             }
             catch (CryptographicException)
             {
-                Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "CredentialDecryptionFailedClearedOld"));
+                Log.Information(LanguageControl.Get("AuthSessionManager", "CredentialDecryptionFailedClearedOld"));
                 s_authenticationSessionStore.TryDelete(apiBaseUrl);
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoadCredentialsFailed"), ex.Message));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "LoadCredentialsFailed"), ex.Message));
             }
         }
 
@@ -271,7 +271,7 @@ namespace Game
                     catch (Exception ex)
                     {
                         // 用户取消登录等异常不冒泡到游戏帧循环，按失败路径展示。
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginRequestFaulted"), ex.Message));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "LoginRequestFaulted"), ex.Message));
                         result = null;
                     }
                     m_loginTask = null;
@@ -302,7 +302,7 @@ namespace Game
 
                         // 日志与事件用本次登录结果本体：写入目标是快照服，与当前服可能不同
                         //（在途期间切服且取消回调未触发的边缘路径），当前服视图可能为空或他人。
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginSucceeded"), result.Data.User.Nickname, result.Data.User.Level));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "LoginSucceeded"), result.Data.User.Nickname, result.Data.User.Level));
 
                         // 持久化登录数据
                         SaveStoredAuth(loginApiBaseUrl);
@@ -314,8 +314,8 @@ namespace Game
                     }
                     else
                     {
-                        string errorMessage = result?.Msg ?? LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginFailedDefaultMessage");
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginFailed"), errorMessage));
+                        string errorMessage = result?.Msg ?? LanguageControl.Get("AuthSessionManager", "LoginFailedDefaultMessage");
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "LoginFailed"), errorMessage));
                         CommunityLoginDialog loginDialog = m_loginDialog;
                         if (loginDialog == null)
                         {
@@ -354,13 +354,13 @@ namespace Game
                         {
                             // 服务端登出失败：本地凭据已保留（可重试登录/登出），Toast 说明。
                             CommunityToastManager.Show(
-                                LanguageControl.Get("ScbbsPlusAuthSessionManager", "LogoutFailedToast"),
+                                LanguageControl.Get("AuthSessionManager", "LogoutFailedToast"),
                                 autoHideSeconds: 4.0);
                         }
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthClient", "LogoutRequestFailed"), ex.Message));
+                        Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthClient", "LogoutRequestFailed"), ex.Message));
                     }
                     m_logoutTask = null;
                     m_logoutApiBaseUrl = null;
@@ -368,7 +368,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "AuthSessionPollFaulted"), ex));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "AuthSessionPollFaulted"), ex));
             }
         }
 
@@ -386,7 +386,7 @@ namespace Game
                 {
                     throw error;
                 }
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "LoginCredentialsSavedEncrypted"), CommunityStoragePaths.AuthDirectory));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "LoginCredentialsSavedEncrypted"), CommunityStoragePaths.AuthDirectory));
                 return true;
             }
             catch (PlatformNotSupportedException ex)
@@ -403,7 +403,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "SaveCredentialsFailed"), ex.Message));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "SaveCredentialsFailed"), ex.Message));
                 return false;
             }
         }
@@ -417,11 +417,11 @@ namespace Game
                 {
                     throw error;
                 }
-                Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "LocalCredentialFileDeleted"));
+                Log.Information(LanguageControl.Get("AuthSessionManager", "LocalCredentialFileDeleted"));
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusAuthSessionManager", "DeleteCredentialFileFailed"), ex.Message));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "DeleteCredentialFileFailed"), ex.Message));
             }
         }
 
@@ -486,11 +486,11 @@ namespace Game
                 DeleteStoredAuth(ownerUrl);
                 if (string.Equals(ownerUrl, ApiBaseUrl, StringComparison.OrdinalIgnoreCase))
                 {
-                    Log.Information(LanguageControl.Get("ScbbsPlusAuthSessionManager", "TokenInvalidatedClearingLocalState"));
+                    Log.Information(LanguageControl.Get("AuthSessionManager", "TokenInvalidatedClearingLocalState"));
                     m_loginStateChanged.Raise(AuthChangeKind.SessionExpired);
                     DialogsManager.ShowDialog(null, new MessageDialog(
-                        LanguageControl.Get("ScbbsPlusAuthSessionManager", "TokenExpiredTitle"),
-                        LanguageControl.Get("ScbbsPlusAuthSessionManager", "TokenExpired"),
+                        LanguageControl.Get("AuthSessionManager", "TokenExpiredTitle"),
+                        LanguageControl.Get("AuthSessionManager", "TokenExpired"),
                         LanguageControl.Ok,
                         null,
                         null));

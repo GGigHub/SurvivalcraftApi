@@ -35,15 +35,15 @@ namespace Game
                 fileName => s_modpackConflictManager.RequestAsync(fileName),
                 requestId => requestId == s_prepareRequestId,
                 (item, itemIndex, totalCount) => s_progress.Set(
-                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "Downloading"),
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "Downloading"),
                         item.Filename ?? item.FileId ?? item.Url,
                         itemIndex,
                         totalCount),
                     (float)(itemIndex - 1) / totalCount,
                     true),
-                item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "HasNoDownloadLinkSkipped"), item.Filename),
-                item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "UnknownItemCategory"), item.Category),
-                item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "DataFileHostUnavailable"), item.Filename));
+                item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "HasNoDownloadLinkSkipped"), item.Filename),
+                item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "UnknownItemCategory"), item.Category),
+                item => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "DataFileHostUnavailable"), item.Filename));
 
         static RemoteImportManager()
         {
@@ -108,7 +108,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ShowConflictDialogFailed"), ex));
+                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ShowConflictDialogFailed"), ex));
                     s_modpackConflictManager.Complete(request, ModpackFileConflictAction.Skip);
                     DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, ex.Message, LanguageControl.Ok, null, null));
                 }
@@ -167,7 +167,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "RemoteImportPrepareTaskFaulted"), ex));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "RemoteImportPrepareTaskFaulted"), ex));
                 result = new ExternalContentPreparation { RequestId = requestId, Error = ex.GetBaseException().Message };
             }
             s_prepareTask = null;
@@ -215,7 +215,7 @@ namespace Game
 
                 string resourceTypeName = ExternalContentManager.GetContentTypeDisplayName(result.Type);
                 string existingName = result.ExistingDisplayName ?? result.ExistingEntryName ?? result.FileName;
-                string overwriteMessage = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "LocalAlreadyExistsOverwriteIt"), resourceTypeName, existingName);
+                string overwriteMessage = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "LocalAlreadyExistsOverwriteIt"), resourceTypeName, existingName);
                 // 仅家具包提供"导入为副本"：引擎重名时自动另起新名保留旧包；
                 // 材质/皮肤是原地覆盖、Mod 抛同名异常，均无安全的副本语义。
                 bool canRename = result.Type == ExternalContentType.FurniturePack;
@@ -257,7 +257,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "RemoteImportTaskFaulted"), ex));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "RemoteImportTaskFaulted"), ex));
                 result = new CommunityFileDownloadResult { Error = ex.GetBaseException().Message };
             }
             s_importTask = null;
@@ -271,18 +271,18 @@ namespace Game
                 if (result.Canceled)
                 {
                     HideRemoteImportDialog();
-                    DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Modpack"), result.ImportedName ?? LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadInterruptedManifestKept"), LanguageControl.Ok, null, null));
+                    DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("RemoteImportManager", "Modpack"), result.ImportedName ?? LanguageControl.Get("RemoteImportManager", "DownloadInterruptedManifestKept"), LanguageControl.Ok, null, null));
                     return;
                 }
 
-                s_progress?.Set(result.ImportedName ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "Imported"), result.FileName), 1f, false);
+                s_progress?.Set(result.ImportedName ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "Imported"), result.FileName), 1f, false);
                 if (result.HideProgressDialog)
                 {
                     HideRemoteImportDialog();
                 }
                 else
                 {
-                    s_downloadDialog?.SetCompleted(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "Imported"), result.FileName));
+                    s_downloadDialog?.SetCompleted(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "Imported"), result.FileName));
                 }
                 if (result.RequiresRestart)
                 {
@@ -290,7 +290,7 @@ namespace Game
                 }
                 else
                 {
-                    DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadComplete"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "Imported"), result.FileName), LanguageControl.Ok, null, null));
+                    DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get("RemoteImportManager", "DownloadComplete"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "Imported"), result.FileName), LanguageControl.Ok, null, null));
                 }
             }
             else
@@ -311,7 +311,7 @@ namespace Game
 
         private static void HandleUiCompletionFailure(Exception exception)
         {
-            Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "RemoteImportCompletionFaulted"), exception));
+            Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "RemoteImportCompletionFaulted"), exception));
             HideRemoteImportDialog();
             DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, exception.GetBaseException().Message, LanguageControl.Ok, null, null));
         }
@@ -325,7 +325,7 @@ namespace Game
         {
             if (s_prepareTask != null || s_importTask != null)
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportOrDownloadBusy"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("RemoteImportManager", "ImportOrDownloadBusy"), LanguageControl.Ok, null, null));
                 return;
             }
 
@@ -346,7 +346,7 @@ namespace Game
                 RemoteImportRequest request = CreateRequest(rawUrl, fileName);
                 int requestId = ++s_prepareRequestId;
                 s_progress = new CommunityTransferProgress();
-                s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportResource"), progress: s_progress);
+                s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("RemoteImportManager", "ImportResource"), progress: s_progress);
                 s_downloadDialog.SetProgress(s_progress);
                 DialogsManager.ShowDialog(null, s_downloadDialog);
                 s_prepareTask = Task.Run(async () =>
@@ -355,7 +355,7 @@ namespace Game
                     {
                         string serverFileName = null;
                         using MemoryStream stream = await DownloadToMemoryAsync(request.Url, request.FileName, s_progress, name => serverFileName = name);
-                        s_progress.Set(LanguageControl.Get("ScbbsPlusRemoteImportManager", "CheckingLocalResources"), 1f, false);
+                        s_progress.Set(LanguageControl.Get("RemoteImportManager", "CheckingLocalResources"), 1f, false);
                         ApplyServerFileName(request, serverFileName);
                         if (request.Type == ExternalContentType.Unknown)
                         {
@@ -364,7 +364,7 @@ namespace Game
                                 RequestId = requestId,
                                 FileName = request.FileName,
                                 Type = request.Type,
-                                Error = LanguageControl.Get("ScbbsPlusRemoteImportManager", "UnsupportedFileExtension")
+                                Error = LanguageControl.Get("RemoteImportManager", "UnsupportedFileExtension")
                             };
                         }
                         return ExternalContentManager.PrepareExternalContent(ModIdentity.PackageName, requestId, request, stream);
@@ -398,12 +398,12 @@ namespace Game
             if (s_downloadDialog == null)
             {
                 s_progress = new CommunityTransferProgress();
-                s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportResource"), progress: s_progress);
+                s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("RemoteImportManager", "ImportResource"), progress: s_progress);
                 s_downloadDialog.SetProgress(s_progress);
                 DialogsManager.ShowDialog(null, s_downloadDialog);
             }
 
-            s_progress?.Set(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Importing"), 1f, false);
+            s_progress?.Set(LanguageControl.Get("RemoteImportManager", "Importing"), 1f, false);
             s_importTask = Task.Run(() =>
             {
                 try
@@ -470,19 +470,19 @@ namespace Game
 
         private static async Task<MemoryStream> DownloadToMemoryAsync(string url, string fileName, CommunityTransferProgress progress, Action<string> serverFileName = null)
         {
-            progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadingFormat"), fileName), 0f, true);
+            progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "DownloadingFormat"), fileName), 0f, true);
             Progress<DownloadProgress> byteProgress = new(info =>
             {
                 if (info.TotalBytes is > 0)
                 {
                     progress?.Set(
-                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadingFormat"), fileName),
+                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "DownloadingFormat"), fileName),
                         info.BytesDownloaded / (float)info.TotalBytes.Value,
                         true);
                 }
                 else
                 {
-                    progress?.Set(LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadingProgress"), 0f, false);
+                    progress?.Set(LanguageControl.Get("RemoteImportManager", "DownloadingProgress"), 0f, false);
                 }
             });
             try
@@ -491,36 +491,36 @@ namespace Game
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadFailedFormat"), ex.Message), ex);
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "DownloadFailedFormat"), ex.Message), ex);
             }
         }
 
         private static void StartRemoteModpackImport(string url, string fileName)
         {
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "StartModpackImport"), url, fileName));
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "StartModpackImport"), url, fileName));
             bool downloadArchiveOnly = string.Equals(Storage.GetExtensionBCL(fileName), ".zip", StringComparison.OrdinalIgnoreCase);
 
             s_progress = new CommunityTransferProgress();
-            s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportModpack"), progress: s_progress);
+            s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("RemoteImportManager", "ImportModpack"), progress: s_progress);
             s_downloadDialog.SetProgress(s_progress);
             DialogsManager.ShowDialog(null, s_downloadDialog);
 
             int requestId = ++s_prepareRequestId;
             s_prepareTask = Task.Run(async () =>
             {
-                string kindWord = downloadArchiveOnly ? string.Empty : LanguageControl.Get("ScbbsPlusRemoteImportManager", "Manifest");
+                string kindWord = downloadArchiveOnly ? string.Empty : LanguageControl.Get("RemoteImportManager", "Manifest");
                 try
                 {
                     s_progress.Set(
                         string.Format(
                             CultureInfo.InvariantCulture,
                             downloadArchiveOnly
-                                ? LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadArchiveFormat")
-                                : LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadManifestFormat"),
+                                ? LanguageControl.Get("RemoteImportManager", "DownloadArchiveFormat")
+                                : LanguageControl.Get("RemoteImportManager", "DownloadManifestFormat"),
                             fileName),
                         0f,
                         true);
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadModpackPackage"), kindWord, url));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "DownloadModpackPackage"), kindWord, url));
                     Progress<DownloadProgress> byteProgress = new(info =>
                     {
                         if (info.TotalBytes is > 0)
@@ -528,8 +528,8 @@ namespace Game
                             s_progress.Set(
                                 string.Format(CultureInfo.InvariantCulture,
                                     downloadArchiveOnly
-                                        ? LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadArchiveFormat")
-                                        : LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadManifestFormat"),
+                                        ? LanguageControl.Get("RemoteImportManager", "DownloadArchiveFormat")
+                                        : LanguageControl.Get("RemoteImportManager", "DownloadManifestFormat"),
                                     fileName),
                                 info.BytesDownloaded / (float)info.TotalBytes.Value,
                                 true);
@@ -537,7 +537,7 @@ namespace Game
                     });
                     using MemoryStream dataStream = await s_httpDownloader.DownloadToMemoryAsync(url, null, CancellationToken.None, byteProgress);
                     byte[] data = dataStream.ToArray();
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackPackageDownloadCompleted"), kindWord, data.Length));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackPackageDownloadCompleted"), kindWord, data.Length));
                     if (downloadArchiveOnly)
                     {
                         // 落盘改在主线程覆盖确认后执行（SaveRemoteArchive），准备任务只携带字节。
@@ -550,20 +550,20 @@ namespace Game
 
                     if (manifest == null || manifest.Items == null || manifest.Items.Length == 0)
                     {
-                        Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackManifestEmptyOrInvalid"), url));
+                        Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackManifestEmptyOrInvalid"), url));
                         return new ExternalContentPreparation
                         {
                             RequestId = requestId,
                             FileName = fileName,
-                            Error = manifestResult.Error ?? LanguageControl.Get("ScbbsPlusRemoteImportManager", "TheModpackManifestIsEmptyOrInvalid")
+                            Error = manifestResult.Error ?? LanguageControl.Get("RemoteImportManager", "TheModpackManifestIsEmptyOrInvalid")
                         };
                     }
 
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackSummary"), manifest.Name, manifest.PackageName, manifest.Version, manifest.Items.Length));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackSummary"), manifest.Name, manifest.PackageName, manifest.Version, manifest.Items.Length));
                     for (int i = 0; i < manifest.Items.Length; i++)
                     {
                         ModpackItem item = manifest.Items[i];
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackItemDetails"), i, item.TargetDirectory, item.Filename, item.Url, item.FileId, item.Category, item.TargetPath));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackItemDetails"), i, item.TargetDirectory, item.Filename, item.Url, item.FileId, item.Category, item.TargetPath));
                     }
 
                     return new ExternalContentPreparation
@@ -578,7 +578,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackManifestDownloadFailed"), url, ex));
+                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackManifestDownloadFailed"), url, ex));
                     return new ExternalContentPreparation { RequestId = requestId, FileName = fileName, Error = ex.Message };
                 }
             });
@@ -594,8 +594,8 @@ namespace Game
             {
                 string message = string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "LocalAlreadyExistsOverwriteIt"),
-                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "Modpack"),
+                    LanguageControl.Get("RemoteImportManager", "LocalAlreadyExistsOverwriteIt"),
+                    LanguageControl.Get("RemoteImportManager", "Modpack"),
                     Storage.GetFileName(conflictingPath));
                 DialogsManager.ShowDialog(
                     null,
@@ -628,15 +628,15 @@ namespace Game
             {
                 // 原实现此写入在准备任务内、异常走统一错误弹窗；搬进按钮回调后自兜同款，
                 // 不允许磁盘满等异常从对话框按钮处理器逃逸。
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "SaveArchiveFailed"), ex.Message));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "SaveArchiveFailed"), ex.Message));
                 DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, ex.Message, LanguageControl.Ok, null, null));
                 return;
             }
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportComplete"),
-                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ZIPModpackHasBeenSavedLocally"), fileName),
+                    LanguageControl.Get("RemoteImportManager", "ImportComplete"),
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ZIPModpackHasBeenSavedLocally"), fileName),
                     LanguageControl.Ok,
                     null,
                     null));
@@ -653,8 +653,8 @@ namespace Game
             {
                 string message = string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "LocalAlreadyExistsOverwriteIt"),
-                    LanguageControl.Get("ScbbsPlusRemoteImportManager", "Modpack"),
+                    LanguageControl.Get("RemoteImportManager", "LocalAlreadyExistsOverwriteIt"),
+                    LanguageControl.Get("RemoteImportManager", "Modpack"),
                     Storage.GetFileName(conflictingPath));
                 DialogsManager.ShowDialog(
                     null,
@@ -693,8 +693,8 @@ namespace Game
                 new MessageDialog(
                     title,
                     body,
-                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Yes"),
-                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "No"),
+                    LanguageControl.Get("DownloadFlowManager", "Yes"),
+                    LanguageControl.Get("DownloadFlowManager", "No"),
                     button =>
                     {
                         if (button == MessageDialogButton.Button1)
@@ -704,9 +704,9 @@ namespace Game
                             {
                                 return;
                             }
-                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "UserConfirmedModpackImport"), manifest.Items.Length));
+                            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "UserConfirmedModpackImport"), manifest.Items.Length));
                             s_progress = new CommunityTransferProgress();
-                            s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("ScbbsPlusRemoteImportManager", "Modpack"), progress: s_progress);
+                            s_downloadDialog = new CommunityDownloadDialog(LanguageControl.Get("RemoteImportManager", "Modpack"), progress: s_progress);
                             s_downloadDialog.SetProgress(s_progress);
                             DialogsManager.ShowDialog(null, s_downloadDialog);
                             s_importTask = Task.Run(() => ProcessRemoteModpackItemsAsync(requestId, manifest, url, fileName, embeddedFiles, sourceData));
@@ -720,7 +720,7 @@ namespace Game
         {
             try
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "StartProcessingModpackItemsWithTotal"), manifest.Items.Length));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "StartProcessingModpackItemsWithTotal"), manifest.Items.Length));
                 RemoteModpackResult workflowResult = await s_modpackInstaller.ExecuteAsync(
                     requestId,
                     manifest,
@@ -735,22 +735,22 @@ namespace Game
                 {
                     return FinishInterruptedRemoteModpackDownload(manifest);
                 }
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackProcessingCompleted"), successCount, failedCount));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackProcessingCompleted"), successCount, failedCount));
                 ModpackRegistry.Shared.SaveManifest(manifest, sourceUrl, sourceFileName, sourceData);
 
                 string resultMessage = failedCount > 0
                     ? string.Format(
                         CultureInfo.InvariantCulture,
                         successCount > 0
-                            ? LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadPackPartialFailure")
-                            : LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadPackFailure"),
+                            ? LanguageControl.Get("RemoteImportManager", "DownloadPackPartialFailure")
+                            : LanguageControl.Get("RemoteImportManager", "DownloadPackFailure"),
                         successCount,
                         failedCount)
                     : string.Format(
                         CultureInfo.InvariantCulture,
                         skippedCount > 0
-                            ? LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadPackCompleteWithSkipped")
-                            : LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadPackComplete"),
+                            ? LanguageControl.Get("RemoteImportManager", "DownloadPackCompleteWithSkipped")
+                            : LanguageControl.Get("RemoteImportManager", "DownloadPackComplete"),
                         successCount,
                         failedCount,
                         skippedCount);
@@ -771,7 +771,7 @@ namespace Game
             {
                 // 顶层兜底：任何未预期异常（磁盘满写清单、工作流内部故障等）转失败结果，
                 // 任务不再 Fault，完成回调可以统一展示失败。
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "ModpackImportFailed"), ex));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackImportFailed"), ex));
                 return new CommunityFileDownloadResult { FileName = manifest?.Name ?? manifest?.PackageName, Error = ex.Message };
             }
         }
@@ -800,7 +800,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "SaveModpackManifestFailed"), ex.Message));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "SaveModpackManifestFailed"), ex.Message));
                 DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, ex.Message, LanguageControl.Ok, null, null));
                 return false;
             }
@@ -808,7 +808,7 @@ namespace Game
 
         private static CommunityFileDownloadResult FinishInterruptedRemoteModpackDownload(ModpackManifest manifest)
         {
-            string message = LanguageControl.Get("ScbbsPlusRemoteImportManager", "DownloadInterruptedManifestKept");
+            string message = LanguageControl.Get("RemoteImportManager", "DownloadInterruptedManifestKept");
             s_progress.Set(message, 1f, false);
             return new CommunityFileDownloadResult
             {

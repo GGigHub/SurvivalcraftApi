@@ -22,7 +22,7 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityDownloadDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusDownloadDialog.Title").Text =
-                string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusDownloadDialog", "DownloadingLabel") : title;
+                string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("DownloadDialog", "DownloadingLabel") : title;
             m_statusLabel = Children.Find<LabelWidget>("ScbbsPlusDownloadDialog.Status");
             m_percentLabel = Children.Find<LabelWidget>("ScbbsPlusDownloadDialog.Percent");
             m_progressBar = Children.Find<ValueBarWidget>("ScbbsPlusDownloadDialog.Progress");
@@ -43,14 +43,14 @@ namespace Game
             }
 
             (string message, float fraction, bool hasPercent) = progress.Snapshot();
-            m_statusLabel.Text = message ?? LanguageControl.Get("ScbbsPlusDownloadDialog", "DownloadingProgress");
+            m_statusLabel.Text = message ?? LanguageControl.Get("DownloadDialog", "DownloadingProgress");
             m_progressBar.Value = MathUtils.Saturate(fraction);
             m_percentLabel.Text = hasPercent ? $"{fraction * 100f:0}%" : "--%";
         }
 
         public void SetCompleted(string message)
         {
-            m_statusLabel.Text = message ?? LanguageControl.Get("ScbbsPlusDownloadDialog", "DownloadComplete");
+            m_statusLabel.Text = message ?? LanguageControl.Get("DownloadDialog", "DownloadComplete");
             m_progressBar.Value = 1f;
             m_percentLabel.Text = "100%";
             ShowClosableState();
@@ -58,13 +58,13 @@ namespace Game
 
         public void SetFailed(string error)
         {
-            m_statusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadDialog", "DownloadFailed"), error);
+            m_statusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadDialog", "DownloadFailed"), error);
             ShowClosableState();
         }
 
         public void SetStopped(string message)
         {
-            m_statusLabel.Text = message ?? LanguageControl.Get("ScbbsPlusDownloadDialog", "Canceled");
+            m_statusLabel.Text = message ?? LanguageControl.Get("DownloadDialog", "Canceled");
             ShowClosableState();
         }
 

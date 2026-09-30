@@ -191,11 +191,11 @@ namespace Game
         {
             if (type == ExternalContentType.BlocksTexture && BlocksTexturesManager.IsBuiltIn(existingName))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "CannotOverwriteBuiltInTexture"), existingName));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "CannotOverwriteBuiltInTexture"), existingName));
             }
             if (type == ExternalContentType.CharacterSkin && CharacterSkinsManager.IsBuiltIn(existingName))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRemoteImportManager", "CannotOverwriteBuiltInSkin"), existingName));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "CannotOverwriteBuiltInSkin"), existingName));
             }
         }
 

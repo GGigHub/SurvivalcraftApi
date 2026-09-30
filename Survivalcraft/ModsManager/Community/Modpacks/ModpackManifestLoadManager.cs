@@ -153,7 +153,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackManifestLoadManager", "ReadModpackListFailed"), ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackManifestLoadManager", "ReadModpackListFailed"), ex.Message));
                 return new ManifestItemsLoadResult
                 {
                     RequestId = requestId,
@@ -182,7 +182,7 @@ namespace Game
                 Exception error = completed.Exception;
                 if (error != null)
                 {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackManifestLoadManager", "StaleModpackListTaskFailed"), error.GetBaseException().Message));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackManifestLoadManager", "StaleModpackListTaskFailed"), error.GetBaseException().Message));
                 }
             }, TaskContinuationOptions.OnlyOnFaulted);
         }

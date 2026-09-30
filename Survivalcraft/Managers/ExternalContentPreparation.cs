@@ -47,7 +47,7 @@ namespace Game
             string existingName = ExistingDisplayName ?? ExistingEntryName ?? FileName;
             return string.Format(
                 CultureInfo.InvariantCulture,
-                LanguageControl.Get("ScbbsPlusRemoteImportManager", "LocalAlreadyExistsOverwriteIt"),
+                LanguageControl.Get("RemoteImportManager", "LocalAlreadyExistsOverwriteIt"),
                 resourceTypeName,
                 existingName);
         }

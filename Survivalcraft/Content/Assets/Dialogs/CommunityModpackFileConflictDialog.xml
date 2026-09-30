@@ -1,20 +1,20 @@
 <CanvasWidget xmlns="runtime-namespace:Game" Size="700, 280" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
   <BevelledRectangleWidget Style="{Styles/DialogArea}" />
   <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
-    <LabelWidget Text="[ScbbsPlusModpackFileConflictDialog:DuplicateFileFound]" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5" />
+    <LabelWidget Text="[ModpackFileConflictDialog:DuplicateFileFound]" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5" />
     <CanvasWidget Size="0, Infinity" />
     <LabelWidget Name="ScbbsPlusModpackFileConflictDialog.Message" Color="128, 128, 128" HorizontalAlignment="Center" WordWrap="true" Margin="10, 10" />
     <CanvasWidget Size="0, Infinity" />
     <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
-      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.OverwriteButton" Text="[ScbbsPlusModpackFileConflictDialog:Overwrite]" Style="{Styles/ButtonStyle_115x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.OverwriteButton" Text="[ModpackFileConflictDialog:Overwrite]" Style="{Styles/ButtonStyle_115x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.SkipButton" Text="[ScbbsPlusModpackFileConflictDialog:Skip]" Style="{Styles/ButtonStyle_115x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.SkipButton" Text="[ModpackFileConflictDialog:Skip]" Style="{Styles/ButtonStyle_115x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.SkipAllButton" Text="[ScbbsPlusModpackFileConflictDialog:SkipAll]" Style="{Styles/ButtonStyle_115x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.SkipAllButton" Text="[ModpackFileConflictDialog:SkipAll]" Style="{Styles/ButtonStyle_115x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.OverwriteAllButton" Text="[ScbbsPlusModpackFileConflictDialog:OverwriteAll]" Style="{Styles/ButtonStyle_115x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.OverwriteAllButton" Text="[ModpackFileConflictDialog:OverwriteAll]" Style="{Styles/ButtonStyle_115x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.CloseButton" Text="[ScbbsPlusModpackFileConflictDialog:Close]" Style="{Styles/ButtonStyle_115x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusModpackFileConflictDialog.CloseButton" Text="[ModpackFileConflictDialog:Close]" Style="{Styles/ButtonStyle_115x60}" />
     </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

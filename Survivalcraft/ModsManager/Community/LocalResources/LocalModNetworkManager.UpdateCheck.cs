@@ -42,7 +42,7 @@ namespace Game
                 cancellationToken);
             if (response?.Code != 200 || response.Data == null)
             {
-                result.Error = response?.Msg ?? LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "PostDetailsIsEmpty");
+                result.Error = response?.Msg ?? LanguageControl.Get("LocalModNetworkManager", "PostDetailsIsEmpty");
                 return result;
             }
 
@@ -65,7 +65,7 @@ namespace Game
                 result.PostId = postId;
                 result.PostTitle = response.Data.Title;
                 result.LatestVersion = ExternalVersionParser.Normalize(latestAnyVersion?.Version);
-                result.NoUpdateReason = LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "NoModVersionForCurrentGame");
+                result.NoUpdateReason = LanguageControl.Get("LocalModNetworkManager", "NoModVersionForCurrentGame");
                 return result;
             }
 
@@ -84,7 +84,7 @@ namespace Game
                 request.FileName);
             if (file == null || string.IsNullOrWhiteSpace(file.Url))
             {
-                result.Error = LanguageControl.Get("ScbbsPlusLocalModNetworkManager", "NoScmodFileInLatestVersion");
+                result.Error = LanguageControl.Get("LocalModNetworkManager", "NoScmodFileInLatestVersion");
                 return result;
             }
 

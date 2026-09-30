@@ -49,7 +49,7 @@ namespace Game
             RefreshControls();
             RefreshSettingsUi();
             SetStatus(string.IsNullOrWhiteSpace(s_sharedStatus)
-                ? LanguageControl.Get("ScbbsPlusMoreScreen", "StatusReady")
+                ? LanguageControl.Get("MoreScreen", "StatusReady")
                 : s_sharedStatus);
             AcquireRemoteImportHost();
             InstallDownloadFlowCallbacks(
@@ -137,8 +137,8 @@ namespace Game
         {
             m_accountInfo.Text = GetAccountInfoText();
             m_authButton.Text = AuthSessionManager.Instance.IsLoggedIn
-                ? LanguageControl.Get("ScbbsPlusMoreScreen", "LogOut")
-                : LanguageControl.Get("ScbbsPlusMoreScreen", "LogIn");
+                ? LanguageControl.Get("MoreScreen", "LogOut")
+                : LanguageControl.Get("MoreScreen", "LogIn");
         }
 
         /// <summary>
@@ -194,10 +194,10 @@ namespace Game
             AuthSessionManager auth = AuthSessionManager.Instance;
             if (!auth.IsLoggedIn || auth.CurrentUser == null)
             {
-                return LanguageControl.Get("ScbbsPlusMoreScreen", "NotLoggedIn");
+                return LanguageControl.Get("MoreScreen", "NotLoggedIn");
             }
             string account = string.IsNullOrWhiteSpace(auth.CurrentUser.Account)
-                ? LanguageControl.Get("ScbbsPlusMoreScreen", "UnknownAccount")
+                ? LanguageControl.Get("MoreScreen", "UnknownAccount")
                 : auth.CurrentUser.Account.Trim();
             string nickname = string.IsNullOrWhiteSpace(auth.CurrentUser.Nickname) ? account : auth.CurrentUser.Nickname.Trim();
             string userName = string.Equals(nickname, account, StringComparison.Ordinal) ? account : $"{nickname}（{account}）";

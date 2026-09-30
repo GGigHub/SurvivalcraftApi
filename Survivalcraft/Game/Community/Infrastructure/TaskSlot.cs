@@ -22,7 +22,7 @@ namespace Game
 
         public TaskSlot(string operation)
         {
-            m_operation = operation ?? LanguageControl.Get("ScbbsPlusTaskSlot", "Unspecified");
+            m_operation = operation ?? LanguageControl.Get("TaskSlot", "Unspecified");
         }
 
         /// <summary>任务在途或结果未被 TryTake 取走均为 true；TryStart 据此忙拒绝。</summary>
@@ -89,7 +89,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTaskSlot", "TaskFaultConsumedAsNoResult"), m_operation, ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TaskSlot", "TaskFaultConsumedAsNoResult"), m_operation, ex.Message));
             }
             return true;
         }
@@ -124,7 +124,7 @@ namespace Game
                 Exception error = completed.Exception;
                 if (error != null)
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTaskSlot", "StaleTaskFault"), m_operation, error.GetBaseException().Message));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TaskSlot", "StaleTaskFault"), m_operation, error.GetBaseException().Message));
                 }
             }, TaskContinuationOptions.OnlyOnFaulted);
         }

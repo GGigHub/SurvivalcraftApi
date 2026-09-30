@@ -20,7 +20,7 @@ namespace Game
         {
             if (result == null)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportDataIsEmpty"));
+                throw new InvalidOperationException(LanguageControl.Get("RemoteImportManager", "ImportDataIsEmpty"));
             }
 
             if (CommunityFileTypes.IsModLike(result.Type))
@@ -75,7 +75,7 @@ namespace Game
                 delegate {
                     try {
                         if (preparation?.FileData == null) {
-                            throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusRemoteImportManager", "ImportDataIsEmpty"));
+                            throw new InvalidOperationException(LanguageControl.Get("RemoteImportManager", "ImportDataIsEmpty"));
                         }
                         using MemoryStream stream = new(preparation.FileData, writable: false);
                         success?.Invoke(ImportPreparedExternalContent(selfPackageName, stream, preparation, overwriteExisting));

@@ -36,7 +36,7 @@ namespace Game
 
             if (feedbackInfo.FileId <= 0 && feedbackInfo.PostId <= 0)
             {
-                Log.Information(LanguageControl.Get("ScbbsPlusDownloadFeedbackClient", "MissingFeedbackIdsSkipped"));
+                Log.Information(LanguageControl.Get("DownloadFeedbackClient", "MissingFeedbackIdsSkipped"));
                 return;
             }
 
@@ -59,11 +59,11 @@ namespace Game
                         CommunityUnauthorizedNotifier.Notify(token);
                     }
                     string body = await response.Content.ReadAsStringAsync(cancellationToken);
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFeedbackClient", "RecordDownloadFeedbackFailed"), response.StatusCode, body));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFeedbackClient", "RecordDownloadFeedbackFailed"), response.StatusCode, body));
                     return;
                 }
 
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFeedbackClient", "DownloadFeedbackRecorded"), feedbackInfo.PostId, feedbackInfo.FileId));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFeedbackClient", "DownloadFeedbackRecorded"), feedbackInfo.PostId, feedbackInfo.FileId));
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -72,7 +72,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFeedbackClient", "RecordDownloadFeedbackFaulted"), ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFeedbackClient", "RecordDownloadFeedbackFaulted"), ex.Message));
             }
         }
 
@@ -109,7 +109,7 @@ namespace Game
             {
                 // fallback 是外部扩展点：provider 异常按"无凭据"处理（匿名上报），
                 // 不得把已成功导入的反馈上报炸成下载失败（复审 F2）。
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFeedbackClient", "FeedbackAuthRefreshFailedReportingAnonymously"), ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFeedbackClient", "FeedbackAuthRefreshFailedReportingAnonymously"), ex.Message));
                 return null;
             }
         }

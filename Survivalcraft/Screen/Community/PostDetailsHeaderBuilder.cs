@@ -18,36 +18,36 @@ namespace Game
             AppendParagraph(panel, string.Format(
                 CultureInfo.InvariantCulture,
                 "{0}：{1}",
-                LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "CurrentVersion"),
+                LanguageControl.Get("PostDetailsHeaderBuilder", "CurrentVersion"),
                 string.IsNullOrWhiteSpace(currentVersion) ? "-" : currentVersion));
             AppendParagraph(panel, string.Format(
                 CultureInfo.InvariantCulture,
                 "{0}：{1}",
-                LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "LatestVersion"),
+                LanguageControl.Get("PostDetailsHeaderBuilder", "LatestVersion"),
                 string.IsNullOrWhiteSpace(latestVersion) ? "-" : latestVersion));
             AppendParagraph(panel, string.Format(
                 CultureInfo.InvariantCulture,
                 "{0}：{1}",
-                LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "DownloadFile"),
+                LanguageControl.Get("PostDetailsHeaderBuilder", "DownloadFile"),
                 string.IsNullOrWhiteSpace(downloadFileName) ? "-" : downloadFileName));
         }
 
         // 「我发布的」帖子详情：下载统计摘要 + 最近下载趋势 + 版本下载量。
         public static void AppendPublishStats(StackPanelWidget panel, PostDownloadTrendResponse stats, string statsError)
         {
-            AppendHeading(panel, LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "PublishStats"));
+            AppendHeading(panel, LanguageControl.Get("PostDetailsHeaderBuilder", "PublishStats"));
             if (stats == null)
             {
                 AppendParagraph(panel, string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "FailedToLoadStats"),
-                    string.IsNullOrWhiteSpace(statsError) ? LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "UnknownError") : statsError));
+                    LanguageControl.Get("PostDetailsHeaderBuilder", "FailedToLoadStats"),
+                    string.IsNullOrWhiteSpace(statsError) ? LanguageControl.Get("PostDetailsHeaderBuilder", "UnknownError") : statsError));
                 return;
             }
 
             AppendParagraph(panel, string.Format(
                 CultureInfo.InvariantCulture,
-                LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "Last30DaysTotalVersionsFiles"),
+                LanguageControl.Get("PostDetailsHeaderBuilder", "Last30DaysTotalVersionsFiles"),
                 stats.TotalDownloadCount,
                 stats.Post?.TotalDownloadCount ?? 0,
                 stats.Post?.VersionCount ?? stats.Versions?.Length ?? 0,
@@ -64,16 +64,16 @@ namespace Game
                 .ToArray();
             if (visibleSeries == null || visibleSeries.Count == 0)
             {
-                AppendParagraph(panel, LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "NoDownloadsInTheLast30Days"));
+                AppendParagraph(panel, LanguageControl.Get("PostDetailsHeaderBuilder", "NoDownloadsInTheLast30Days"));
                 return;
             }
 
-            AppendHeading(panel, LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "RecentDownloads"));
+            AppendHeading(panel, LanguageControl.Get("PostDetailsHeaderBuilder", "RecentDownloads"));
             foreach (PostDownloadTrendSeriesItem item in visibleSeries)
             {
                 AppendListItem(panel, string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "DailyDownloadsFormat"),
+                    LanguageControl.Get("PostDetailsHeaderBuilder", "DailyDownloadsFormat"),
                     CommunityTimeFormatter.FormatDate(item.BucketStart),
                     item.DownloadCount));
             }
@@ -86,15 +86,15 @@ namespace Game
                 return;
             }
 
-            AppendHeading(panel, LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "VersionDownloads"));
+            AppendHeading(panel, LanguageControl.Get("PostDetailsHeaderBuilder", "VersionDownloads"));
             foreach (PostDownloadTrendVersion version in versions.Where(version => version != null).OrderByDescending(version => version.RangeDownloadCount).ThenByDescending(version => version.TotalDownloadCount).Take(6))
             {
                 string name = !string.IsNullOrWhiteSpace(version.Version)
                     ? version.Version.Trim()
-                    : (!string.IsNullOrWhiteSpace(version.Title) ? version.Title.Trim() : LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "UnnamedVersion"));
+                    : (!string.IsNullOrWhiteSpace(version.Title) ? version.Title.Trim() : LanguageControl.Get("PostDetailsHeaderBuilder", "UnnamedVersion"));
                 AppendListItem(panel, string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusPostDetailsHeaderBuilder", "VersionLast30DaysTotalFiles"),
+                    LanguageControl.Get("PostDetailsHeaderBuilder", "VersionLast30DaysTotalFiles"),
                     name,
                     version.RangeDownloadCount,
                     version.TotalDownloadCount,

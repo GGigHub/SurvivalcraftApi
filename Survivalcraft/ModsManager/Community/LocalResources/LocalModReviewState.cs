@@ -40,7 +40,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModReviewState", "ReadReviewsFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LocalModReviewState", "ReadReviewsFailed"), ex.Message));
             }
         }
 
@@ -56,7 +56,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusLocalModReviewState", "SaveReviewsFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("LocalModReviewState", "SaveReviewsFailed"), ex.Message));
             }
         }
 

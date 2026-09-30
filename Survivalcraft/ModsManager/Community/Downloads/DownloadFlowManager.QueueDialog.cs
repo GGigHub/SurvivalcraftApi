@@ -37,9 +37,9 @@ namespace Game
 
             CancellationToken cancellationToken = m_downloadQueue.Begin(item, DateTime.Now);
             m_fileDownloadProgress = item.Progress;
-            item.Progress.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadingFormat"), item.FileName), 0f, true);
+            item.Progress.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadingFormat"), item.FileName), 0f, true);
             SaveQueue();
-            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadingFormat"), item.FileName));
+            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadingFormat"), item.FileName));
             ShowQueuedDownloadProgressDialog(item);
             m_fileDownloadTask = Task.Run(async () =>
             {
@@ -51,7 +51,7 @@ namespace Game
                     CreateDownloadProgressReporter(item),
                     stream =>
                     {
-                        item.Progress.Set(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Importing"), 1f, true);
+                        item.Progress.Set(LanguageControl.Get("DownloadFlowManager", "Importing"), 1f, true);
                         // 队列项字段拼装准备结果后统一走 ExternalContentManager.ImportPreparedExternalContent
                         // 决策树（自更新/覆盖更新/覆盖回滚/普通导入），与链接导入共用一套分支口径。
                         ExternalContentPreparation preparation = new()
@@ -106,7 +106,7 @@ namespace Game
             }
 
             m_downloadQueue.ConfirmOverwrite(item, existingPath);
-            item.Progress?.Set(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Queued"), 0f, false);
+            item.Progress?.Set(LanguageControl.Get("DownloadFlowManager", "Queued"), 0f, false);
             SaveQueue();
             StartNextQueuedDownload();
         }
@@ -119,7 +119,7 @@ namespace Game
             }
 
             m_downloadQueue.CancelOverwrite(item, DateTime.Now);
-            item.Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadCanceled"), item.FileName);
+            item.Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadCanceled"), item.FileName);
             item.Progress?.Set(item.Error, 0f, false);
             SaveQueue();
             ReportStatus(item.Error);
@@ -135,7 +135,7 @@ namespace Game
 
             // 不设覆盖路径 → 按游戏原生导入（World 另建目录、FurniturePack 去重），保留旧项。
             m_downloadQueue.ConfirmOverwrite(item, null);
-            item.Progress?.Set(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Queued"), 0f, false);
+            item.Progress?.Set(LanguageControl.Get("DownloadFlowManager", "Queued"), 0f, false);
             SaveQueue();
             StartNextQueuedDownload();
         }
@@ -163,20 +163,20 @@ namespace Game
                 item.Error = null;
                 item.CompletedTime = null;
                 item.Progress.Set(
-                    result.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadPaused"), item.FileName),
+                    result.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadPaused"), item.FileName),
                     GetResumeProgressValue(item.TempFilePath),
                     false);
             }
             else if (result?.Canceled == true)
             {
                 item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Cancel);
-                item.Error = result.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadCanceled"), item.FileName);
+                item.Error = result.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadCanceled"), item.FileName);
                 item.Progress.Set(item.Error, 0f, false);
             }
             else if (string.IsNullOrEmpty(result?.Error))
             {
                 item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Complete);
-                item.Progress.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Imported"), item.FileName), 1f, true);
+                item.Progress.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "Imported"), item.FileName), 1f, true);
                 DeleteDownloadTempFile(item);
             }
             else
@@ -192,12 +192,12 @@ namespace Game
                     string.Format(
                         CultureInfo.InvariantCulture,
                         result.DownloadFailed
-                            ? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadFailed")
-                            : LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ImportFailed"),
+                            ? LanguageControl.Get("DownloadFlowManager", "DownloadFailed")
+                            : LanguageControl.Get("DownloadFlowManager", "ImportFailed"),
                         result.Error),
                     0f,
                     false);
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "BackgroundTaskFailed"), item.FileName, result.DownloadFailed, result.Error));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "BackgroundTaskFailed"), item.FileName, result.DownloadFailed, result.Error));
             }
             m_currentDownloadItem = null;
             SaveQueue();
@@ -219,10 +219,10 @@ namespace Game
 
             m_downloadQueue.RequestOverwriteConfirmation(item);
             preConfirm?.Invoke();
-            item.Progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "AlreadyExistsReplace"), item.FileName), 0f, false);
+            item.Progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "AlreadyExistsReplace"), item.FileName), 0f, false);
             m_currentDownloadItem = null;
             SaveQueue();
-            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "AlreadyExistsReplace"), item.FileName));
+            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "AlreadyExistsReplace"), item.FileName));
             m_queuedOverwriteDialogItem = item;
             // 换绑新框时清掉旧框的 Hide 待重挂标志：否则同帧内"取消旧框→立即开始下一项→
             // 新框又失联"时，残留的 true 会压制对旧实例的 HideDialog，重挂等不到旧框出册。
@@ -344,7 +344,7 @@ namespace Game
 
         private static CommunityImportOverwriteDialog ShowDownloadOverwriteDialog(string fileName, Action confirmAction, Action renameAction, Action cancelAction, bool canRename)
         {
-            string message = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "LocalAlreadyExistsChooseAction"), fileName);
+            string message = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "LocalAlreadyExistsChooseAction"), fileName);
             CommunityImportOverwriteDialog dialog = new(
                 message,
                 canRename,
@@ -378,7 +378,7 @@ namespace Game
 
             m_restoredUnfinishedDownloadCount = m_downloadQueueItems.Count(item => !IsFinishedDownloadQueueItem(item));
             m_shouldShowRestoredDownloadPromptOnEnter = m_restoredUnfinishedDownloadCount > 0;
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadQueueRestored"), m_downloadQueueItems.Count));
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadQueueRestored"), m_downloadQueueItems.Count));
         }
 
         public void SaveQueue()
@@ -389,7 +389,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "SaveDownloadQueueFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "SaveDownloadQueueFailed"), ex.Message));
             }
         }
 
@@ -402,7 +402,7 @@ namespace Game
 
             m_shouldShowRestoredDownloadPromptOnEnter = false;
             CommunityToastManager.Show(
-                string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UnfinishedDownloadsBadge"), m_restoredUnfinishedDownloadCount),
+                string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "UnfinishedDownloadsBadge"), m_restoredUnfinishedDownloadCount),
                 confirmAction: ShowQueueDialog,
                 dismissAction: () => m_restoredUnfinishedDownloadCount = 0);
         }
@@ -443,7 +443,7 @@ namespace Game
                 return;
             }
 
-            string error = item.Result?.Error ?? item.Error ?? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "UnknownError");
+            string error = item.Result?.Error ?? item.Error ?? LanguageControl.Get("DownloadFlowManager", "UnknownError");
             DialogsManager.ShowDialog(
                 null,
                 new CommunityDownloadFailureDialog(
@@ -464,7 +464,7 @@ namespace Game
             string switchedUrl = CommunityDownloadSourceResolver.ResolveUrl(baseUrl, source);
             if (string.IsNullOrWhiteSpace(switchedUrl))
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadSourceSwitchUnavailable"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("DownloadFlowManager", "DownloadSourceSwitchUnavailable"), LanguageControl.Ok, null, null));
                 return;
             }
 
@@ -472,7 +472,7 @@ namespace Game
             item.Url = switchedUrl;
             item.Source = source;
             SaveQueue();
-            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "SwitchedDownloadSource"), CommunityDownloadSourceManager.GetDisplayName(source)));
+            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "SwitchedDownloadSource"), CommunityDownloadSourceManager.GetDisplayName(source)));
             RetryDownloadQueueItem(item.Id);
         }
 
@@ -480,11 +480,11 @@ namespace Game
         {
             string message = item.State switch
             {
-                CommunityDownloadQueueItemState.Pending => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Queued"),
+                CommunityDownloadQueueItemState.Pending => LanguageControl.Get("DownloadFlowManager", "Queued"),
                 CommunityDownloadQueueItemState.Paused => FormatPausedDownloadMessage(item),
-                CommunityDownloadQueueItemState.Canceled => item.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadCanceled"), item.FileName),
-                CommunityDownloadQueueItemState.Failed => item.Error ?? LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Failed"),
-                CommunityDownloadQueueItemState.Completed => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Imported"), item.FileName),
+                CommunityDownloadQueueItemState.Canceled => item.Error ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadCanceled"), item.FileName),
+                CommunityDownloadQueueItemState.Failed => item.Error ?? LanguageControl.Get("DownloadFlowManager", "Failed"),
+                CommunityDownloadQueueItemState.Completed => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "Imported"), item.FileName),
                 _ => GetDownloadQueueItemStateText(item.State)
             };
             item.Progress?.Set(message, GetResumeProgressValue(item.TempFilePath), false);
@@ -494,8 +494,8 @@ namespace Game
         {
             bool hasDownloaded = Storage.TryGetFileSize(item?.TempFilePath, out long length) && length > 0;
             return hasDownloaded
-                ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadPausedDownloaded"), item.FileName, DataSizeFormatter.Format(length))
-                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadPaused"), item?.FileName);
+                ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadPausedDownloaded"), item.FileName, DataSizeFormatter.Format(length))
+                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadPaused"), item?.FileName);
         }
 
         private IReadOnlyList<CommunityDownloadQueueDialog.DownloadQueueDialogItem> BuildDownloadQueueDialogItems()
@@ -578,10 +578,10 @@ namespace Game
                     m_currentDownloadItem.State,
                     CommunityDownloadQueueCommand.Cancel);
                 m_currentDownloadItem.PauseRequested = false;
-                m_currentDownloadItem.Progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "CancelingDownload"), m_currentDownloadItem.FileName), 0f, false);
+                m_currentDownloadItem.Progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "CancelingDownload"), m_currentDownloadItem.FileName), 0f, false);
                 m_currentDownloadItem.CancelSource?.Cancel();
                 SaveQueue();
-                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "CancelingDownload"), m_currentDownloadItem.FileName));
+                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "CancelingDownload"), m_currentDownloadItem.FileName));
                 return;
             }
 
@@ -589,8 +589,8 @@ namespace Game
             if (item == null)
             {
                 ReportStatus(itemId.HasValue
-                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "TaskCannotBeCanceled"), itemId.Value)
-                    : LanguageControl.Get("ScbbsPlusDownloadFlowManager", "NoCancelableDownloadTasks"));
+                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "TaskCannotBeCanceled"), itemId.Value)
+                    : LanguageControl.Get("DownloadFlowManager", "NoCancelableDownloadTasks"));
                 return;
             }
 
@@ -600,7 +600,7 @@ namespace Game
             {
                 DialogsManager.HideDialog(m_queuedOverwriteDialog);
             }
-            item.Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadCanceled"), item.FileName);
+            item.Error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadCanceled"), item.FileName);
             item.Progress?.Set(item.Error, 0f, false);
             SaveQueue();
             ReportStatus(item.Error);
@@ -616,10 +616,10 @@ namespace Game
                     m_currentDownloadItem.State,
                     CommunityDownloadQueueCommand.RequestPause);
                 m_currentDownloadItem.PauseRequested = true;
-                m_currentDownloadItem.Progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "PausingDownload"), m_currentDownloadItem.FileName), 0f, false);
+                m_currentDownloadItem.Progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "PausingDownload"), m_currentDownloadItem.FileName), 0f, false);
                 m_currentDownloadItem.CancelSource?.Cancel();
                 SaveQueue();
-                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "PausingDownload"), m_currentDownloadItem.FileName));
+                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "PausingDownload"), m_currentDownloadItem.FileName));
                 return;
             }
 
@@ -627,15 +627,15 @@ namespace Game
             if (item == null)
             {
                 ReportStatus(itemId.HasValue
-                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "TaskCannotBePausedOrResumed"), itemId.Value)
-                    : LanguageControl.Get("ScbbsPlusDownloadFlowManager", "NoDownloadTaskCanBePausedOrResumed"));
+                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "TaskCannotBePausedOrResumed"), itemId.Value)
+                    : LanguageControl.Get("DownloadFlowManager", "NoDownloadTaskCanBePausedOrResumed"));
                 return;
             }
 
             m_downloadQueue.PrepareResume(item);
-            item.Progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ResumingDownload"), item.FileName), GetResumeProgressValue(item.TempFilePath), false);
+            item.Progress?.Set(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "ResumingDownload"), item.FileName), GetResumeProgressValue(item.TempFilePath), false);
             SaveQueue();
-            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ResumingDownload"), item.FileName));
+            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "ResumingDownload"), item.FileName));
             StartNextQueuedDownload();
         }
 
@@ -645,15 +645,15 @@ namespace Game
             if (item == null)
             {
                 ReportStatus(itemId.HasValue
-                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "TaskCannotBeRetried"), itemId.Value)
-                    : LanguageControl.Get("ScbbsPlusDownloadFlowManager", "NoRetryableDownloadTasks"));
+                    ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "TaskCannotBeRetried"), itemId.Value)
+                    : LanguageControl.Get("DownloadFlowManager", "NoRetryableDownloadTasks"));
                 return;
             }
 
             m_downloadQueue.PrepareRetry(item);
-            item.Progress.Set(LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Queued"), 0f, false);
+            item.Progress.Set(LanguageControl.Get("DownloadFlowManager", "Queued"), 0f, false);
             SaveQueue();
-            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "RequeuedDownload"), item.FileName));
+            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "RequeuedDownload"), item.FileName));
             StartNextQueuedDownload();
         }
 
@@ -664,7 +664,7 @@ namespace Game
                 CommunityDownloadQueueItem item = m_downloadQueueItems.FirstOrDefault(queueItem => queueItem.Id == itemId.Value);
                 if (item == null || !IsFinishedDownloadQueueItem(item))
                 {
-                    ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "TaskCannotBeCleared"), itemId.Value));
+                    ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "TaskCannotBeCleared"), itemId.Value));
                     return;
                 }
 
@@ -674,7 +674,7 @@ namespace Game
                 // 经 coordinator 加锁移除：Items 活引用直改会与后台落盘 Save 的锁内枚举竞态。
                 m_downloadQueue.Remove(item);
                 SaveQueue();
-                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ClearedDownloadTask"), item.FileName));
+                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "ClearedDownloadTask"), item.FileName));
                 return;
             }
 
@@ -689,7 +689,7 @@ namespace Game
             }
             int removed = m_downloadQueue.RemoveFinished(IsFinishedDownloadQueueItem);
             SaveQueue();
-            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ClearedDownloadTasks"), removed));
+            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "ClearedDownloadTasks"), removed));
         }
 
         private static bool IsFinishedDownloadQueueItem(CommunityDownloadQueueItem item)
@@ -701,15 +701,15 @@ namespace Game
         {
             return state switch
             {
-                CommunityDownloadQueueItemState.Pending => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Queued"),
-                CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "WaitingForOverwriteConfirmation"),
-                CommunityDownloadQueueItemState.Running => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadingLabel"),
-                CommunityDownloadQueueItemState.Pausing => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Pausing"),
-                CommunityDownloadQueueItemState.Paused => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Paused"),
-                CommunityDownloadQueueItemState.Canceling => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Canceling"),
-                CommunityDownloadQueueItemState.Completed => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Completed"),
-                CommunityDownloadQueueItemState.Canceled => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Canceled"),
-                CommunityDownloadQueueItemState.Failed => LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Failed"),
+                CommunityDownloadQueueItemState.Pending => LanguageControl.Get("DownloadFlowManager", "Queued"),
+                CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation => LanguageControl.Get("DownloadFlowManager", "WaitingForOverwriteConfirmation"),
+                CommunityDownloadQueueItemState.Running => LanguageControl.Get("DownloadFlowManager", "DownloadingLabel"),
+                CommunityDownloadQueueItemState.Pausing => LanguageControl.Get("DownloadFlowManager", "Pausing"),
+                CommunityDownloadQueueItemState.Paused => LanguageControl.Get("DownloadFlowManager", "Paused"),
+                CommunityDownloadQueueItemState.Canceling => LanguageControl.Get("DownloadFlowManager", "Canceling"),
+                CommunityDownloadQueueItemState.Completed => LanguageControl.Get("DownloadFlowManager", "Completed"),
+                CommunityDownloadQueueItemState.Canceled => LanguageControl.Get("DownloadFlowManager", "Canceled"),
+                CommunityDownloadQueueItemState.Failed => LanguageControl.Get("DownloadFlowManager", "Failed"),
                 _ => string.Empty
             };
         }
@@ -725,8 +725,8 @@ namespace Game
                 {
                     progress?.Set(
                         isResuming
-                            ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ResumingDownload"), fileName)
-                            : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Connecting"), fileName),
+                            ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "ResumingDownload"), fileName)
+                            : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "Connecting"), fileName),
                         isResuming ? 0.35f : 0f,
                         !isResuming);
                     return;
@@ -735,14 +735,14 @@ namespace Game
                 if (info.TotalBytes is > 0)
                 {
                     progress?.Set(
-                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadingFormat"), fileName),
+                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadingFormat"), fileName),
                         info.BytesDownloaded / (float)info.TotalBytes.Value,
                         true);
                 }
                 else
                 {
                     progress?.Set(
-                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "Downloading"),
+                        string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "Downloading"),
                             fileName,
                             DataSizeFormatter.Format(info.BytesDownloaded)),
                         0.35f,
@@ -761,7 +761,7 @@ namespace Game
         {
             if (!CommunityDownloadCacheFile.TryDelete(item?.TempFilePath, out string error))
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "CleanDownloadTempFileFailed"), error));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "CleanDownloadTempFileFailed"), error));
             }
         }
 
@@ -783,7 +783,7 @@ namespace Game
             }
 
             m_fileDownloadDialog = new CommunityDownloadDialog(
-                LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ImportResource"),
+                LanguageControl.Get("DownloadFlowManager", "ImportResource"),
                 () => CancelDownloadQueueItem(item.Id),
                 HideQueuedDownloadProgressDialogToBackground);
             m_fileDownloadDialog.SetProgress(item.Progress);
@@ -794,7 +794,7 @@ namespace Game
         {
             if (m_currentDownloadItem != null)
             {
-                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "BackgroundDownloading"), m_currentDownloadItem.FileName));
+                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "BackgroundDownloading"), m_currentDownloadItem.FileName));
             }
 
             if (m_fileDownloadDialog == null)
@@ -853,7 +853,7 @@ namespace Game
                 {
                     FileName = item.FileName,
                     DownloadFailed = true,
-                    Error = LanguageControl.Get("ScbbsPlusDownloadFlowManager", "NetworkError")
+                    Error = LanguageControl.Get("DownloadFlowManager", "NetworkError")
                 };
             }
             catch (Exception ex)
@@ -881,7 +881,7 @@ namespace Game
                     }
                     catch (Exception ex)
                     {
-                        Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ImportCompletedCallbackFaulted"), ex.Message));
+                        Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "ImportCompletedCallbackFaulted"), ex.Message));
                     }
                     // 反馈是导入成功后的上报：若在此传队列 CT，用户在反馈请求在途时暂停/取消
                     // 会把已成功导入的项误标 Paused/Canceled。反馈不受队列取消影响。

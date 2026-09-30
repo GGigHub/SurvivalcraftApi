@@ -53,8 +53,8 @@ namespace Game
                 ? m_displayData.ExpandedGroupText ?? string.Empty
                 : m_displayData.GroupText ?? string.Empty;
             m_toggleButton.Text = isExpanded
-                ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "Collapse")
-                : LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "Expand");
+                ? LanguageControl.Get("MissingDependenciesDialog", "Collapse")
+                : LanguageControl.Get("MissingDependenciesDialog", "Expand");
             m_filesPanel.IsVisible = isExpanded;
             m_filesPanel.Children.Clear();
             m_fileWidgets.Clear();

@@ -25,7 +25,7 @@ namespace Game
                 m_defaultOrderType,
                 m_defaultOnlyCurrentVersion,
                 (int)m_defaultSection);
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "DefaultFiltersSaved"), m_defaultSelectedFileType, m_defaultOrderType, m_defaultOnlyCurrentVersion, m_defaultSection, m_defaultIgnoreFileTypeFilter, m_defaultIgnoreOrderFilter, m_defaultIgnoreVersionFilter, m_defaultIgnoreSectionFilter));
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "DefaultFiltersSaved"), m_defaultSelectedFileType, m_defaultOrderType, m_defaultOnlyCurrentVersion, m_defaultSection, m_defaultIgnoreFileTypeFilter, m_defaultIgnoreOrderFilter, m_defaultIgnoreVersionFilter, m_defaultIgnoreSectionFilter));
         }
 
         private void ApplyLoadedDefaultFilters()

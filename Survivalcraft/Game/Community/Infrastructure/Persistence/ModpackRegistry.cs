@@ -82,7 +82,7 @@ namespace Game
         {
             if (sourceData == null || sourceData.Length == 0)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModpackRegistry", "DownloadedZipPackIsEmpty"));
+                throw new InvalidOperationException(LanguageControl.Get("ModpackRegistry", "DownloadedZipPackIsEmpty"));
             }
 
             lock (m_writeSync)
@@ -126,7 +126,7 @@ namespace Game
                     LocalModpackRecord record = ReadRecord(manifestPath, out string parseError);
                     if (record?.Manifest?.Items == null || record.Manifest.Items.Length == 0)
                     {
-                        Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackRegistry", "ModpackRecordCorrupted"), manifestPath, parseError ?? LanguageControl.Get("ScbbsPlusModpackRegistry", "NoValidItemsRead")));
+                        Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackRegistry", "ModpackRecordCorrupted"), manifestPath, parseError ?? LanguageControl.Get("ModpackRegistry", "NoValidItemsRead")));
                         continue;
                     }
 
@@ -156,7 +156,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackRegistry", "ReadModpackRecordFailed"), manifestPath, ex.Message));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackRegistry", "ReadModpackRecordFailed"), manifestPath, ex.Message));
                 }
             }
 
@@ -214,7 +214,7 @@ namespace Game
                 ModpackManifestLoadResult parsed = m_parser.Parse(0, ReadBytes(manifestPath), null, Storage.GetFileName(manifestPath));
                 if (parsed?.Manifest?.Items == null || parsed.Manifest.Items.Length == 0)
                 {
-                    error = parsed?.Error ?? LanguageControl.Get("ScbbsPlusModpackManifestParser", "ManifestHasNoValidItems");
+                    error = parsed?.Error ?? LanguageControl.Get("ModpackManifestParser", "ManifestHasNoValidItems");
                     Cache(cacheKey, manifestPath, manifestTime, manifestSize, metadataTime, null, error);
                     return null;
                 }
@@ -420,7 +420,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackRegistry", "CompareModpackSourceFailed"), existingPath, ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackRegistry", "CompareModpackSourceFailed"), existingPath, ex.Message));
                 return false;
             }
         }
@@ -471,7 +471,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackRegistry", "ReadModpackRecordMetadataFailed"), manifestPath, ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackRegistry", "ReadModpackRecordMetadataFailed"), manifestPath, ex.Message));
                 return null;
             }
         }

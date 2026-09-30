@@ -197,7 +197,7 @@ namespace Game
             m_downloadMissingButton.Text = loading
                 ? LanguageControl.Get("ModpacksManageContentScreen", "LoadingFileInfo")
                 : busy
-                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Downloading")
+                    ? LanguageControl.Get("CommunityScreen", "Downloading")
                     : LanguageControl.Get("ExternalContentScreen", "2");
         }
 

@@ -340,7 +340,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusHttpDownloader", "ReadCacheFileSizeFailed"), path, ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("HttpDownloader", "ReadCacheFileSizeFailed"), path, ex.Message));
             }
             CommunityDownloadGuard.EnsurePayloadWithinLimit(fileSize);
 
@@ -359,7 +359,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusHttpDownloader", "GetCacheFileSizeFailed"), path, ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("HttpDownloader", "GetCacheFileSizeFailed"), path, ex.Message));
                 return 0;
             }
         }

@@ -41,9 +41,9 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityMissingDependenciesDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusMissingDependenciesDialog.TitleLabel").Text =
-                string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "DependenciesFound") : title;
+                string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("MissingDependenciesDialog", "DependenciesFound") : title;
             Children.Find<LabelWidget>("ScbbsPlusMissingDependenciesDialog.ModNameLabel").Text =
-                string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "LocalMod") : modName;
+                string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("MissingDependenciesDialog", "LocalMod") : modName;
             m_listPanel = Children.Find<StackPanelWidget>("ScbbsPlusMissingDependenciesDialog.ListPanel");
 
             m_fileGroups = BuildFileGroups(files, groupFilesByPackageName, m_preferredVersionsByPackage);
@@ -132,7 +132,7 @@ namespace Game
             // The section header belongs to the list, not to any individual compact row.
             CommunityMissingDependencyPackageHeaderWidget headerWidget = new();
             headerWidget.Bind(
-                LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "ResourcePackageNameNotFound"),
+                LanguageControl.Get("MissingDependenciesDialog", "ResourcePackageNameNotFound"),
                 hasFileGroupSpacer: m_fileGroups.Count > 0);
             m_listPanel.Children.Add(headerWidget);
 
@@ -150,11 +150,11 @@ namespace Game
             {
                 File = file,
                 FileTitle = string.IsNullOrWhiteSpace(file?.Filename)
-                    ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "UnnamedFile")
+                    ? LanguageControl.Get("MissingDependenciesDialog", "UnnamedFile")
                     : file.Filename,
                 MetadataText = string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "PublishTimePackageVersionFormat"),
+                    LanguageControl.Get("MissingDependenciesDialog", "PublishTimePackageVersionFormat"),
                     CommunityTimeFormatter.FormatTime(!string.IsNullOrWhiteSpace(file?.CreatedAt) ? file.CreatedAt : file?.UpdatedAt),
                     CommunityVersionDetailFormatter.FormatEmpty(file?.PackageName),
                     CommunityVersionDetailFormatter.FormatEmpty(file?.PackageVersion))
@@ -181,13 +181,13 @@ namespace Game
                 GroupKey = group.Key,
                 GroupText = string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", collapsedToken),
+                    LanguageControl.Get("MissingDependenciesDialog", collapsedToken),
                     hiddenCount),
                 ExpandedGroupText = string.Format(
                     CultureInfo.InvariantCulture,
                     m_groupFilesByPackageName
-                        ? LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "MoreModsWithTheSamePackageName")
-                        : LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "MoreDuplicateFiles"),
+                        ? LanguageControl.Get("MissingDependenciesDialog", "MoreModsWithTheSamePackageName")
+                        : LanguageControl.Get("MissingDependenciesDialog", "MoreDuplicateFiles"),
                     hiddenCount),
                 Files = group.Files
                     .Skip(1)
@@ -201,7 +201,7 @@ namespace Game
             return new CommunityMissingDependencyPackageDisplayData
             {
                 Text = CommunityVersionDetailFormatter.FormatEmpty(label),
-                DetailText = LanguageControl.Get("ScbbsPlusMissingDependenciesDialog", "NoDownloadableFile")
+                DetailText = LanguageControl.Get("MissingDependenciesDialog", "NoDownloadableFile")
             };
         }
 

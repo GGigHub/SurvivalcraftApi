@@ -31,7 +31,7 @@ namespace Game
         {
             if (item == null || (string.IsNullOrWhiteSpace(item.TargetPath) && string.IsNullOrWhiteSpace(item.TargetDirectory)))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "DataFileHasNoTargetPathSpecified"), item?.Filename));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackDataFiles", "DataFileHasNoTargetPathSpecified"), item?.Filename));
             }
 
             string targetPath = ResolveTargetPath(item);
@@ -64,7 +64,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "CleanModpackCustomTempFileFailed"), temporaryPath, ex.Message));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackDataFiles", "CleanModpackCustomTempFileFailed"), temporaryPath, ex.Message));
                 }
             }
         }
@@ -147,7 +147,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "SaveModpackCustomConfigFailed"), entry.TargetPath, entry.PersistedPath, ex));
+                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackDataFiles", "SaveModpackCustomConfigFailed"), entry.TargetPath, entry.PersistedPath, ex));
                     error = $"{entry.TargetPath}：{ex.Message}";
                     return false;
                 }
@@ -165,7 +165,7 @@ namespace Game
             {
                 if (entry.ExistedBefore && (string.IsNullOrWhiteSpace(entry.BackupPath) || !Storage.FileExists(entry.BackupPath)))
                 {
-                    error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "BackupFileDoesNotExist"), entry.BackupPath);
+                    error = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackDataFiles", "BackupFileDoesNotExist"), entry.BackupPath);
                     return false;
                 }
             }
@@ -187,7 +187,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "RestoreModpackCustomFileFailed"), entry.TargetPath, entry.BackupPath, ex));
+                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackDataFiles", "RestoreModpackCustomFileFailed"), entry.TargetPath, entry.BackupPath, ex));
                     error = $"{entry.TargetPath}：{ex.Message}";
                     return false;
                 }
@@ -204,7 +204,7 @@ namespace Game
                     }
                     catch (Exception ex)
                     {
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "DeleteModpackBackupFailed"), entry.BackupPath, ex.Message));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackDataFiles", "DeleteModpackBackupFailed"), entry.BackupPath, ex.Message));
                     }
                 }
             }
@@ -221,7 +221,7 @@ namespace Game
             string targetDirectory = item?.TargetDirectory?.Trim();
             if (string.IsNullOrWhiteSpace(targetDirectory))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModpackDataFiles", "DataFileHasNoTargetPathSpecifiedPlain"));
+                throw new InvalidOperationException(LanguageControl.Get("ModpackDataFiles", "DataFileHasNoTargetPathSpecifiedPlain"));
             }
 
             bool isDirectoryTarget = targetDirectory.EndsWith("/", StringComparison.Ordinal)
@@ -236,7 +236,7 @@ namespace Game
                 : ModpackRules.TryGetPathTailName(item.Url);
             if (string.IsNullOrWhiteSpace(sourceFileName))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModpackDataFiles", "CustomFileUrlHasNoFileName"));
+                throw new InvalidOperationException(LanguageControl.Get("ModpackDataFiles", "CustomFileUrlHasNoFileName"));
             }
             return ResolveTargetPath($"{targetDirectory}{sourceFileName}");
         }
@@ -246,7 +246,7 @@ namespace Game
             string safeRelativePath = SanitizeRelativePath(targetPath);
             if (string.IsNullOrWhiteSpace(safeRelativePath))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusModpackDataFiles", "DataFileHasNoTargetPathSpecifiedPlain"));
+                throw new InvalidOperationException(LanguageControl.Get("ModpackDataFiles", "DataFileHasNoTargetPathSpecifiedPlain"));
             }
 
             string result = GetBasePath();
@@ -294,7 +294,7 @@ namespace Game
 
             if (s_protectedRootNames.Contains(safeSegments[0]))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusModpackDataFiles", "UnsafeCustomFileTargetPathRejected"),
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackDataFiles", "UnsafeCustomFileTargetPathRejected"),
                     targetPath));
             }
 

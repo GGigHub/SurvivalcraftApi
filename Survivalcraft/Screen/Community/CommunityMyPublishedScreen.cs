@@ -27,9 +27,9 @@ namespace Game
 
         private readonly PostTreePresenter m_postsPresenter;
         private ExternalContentType m_selectedFileType = ExternalContentType.Mod;
-        private readonly TaskSlot<PostsLoadResult> m_postsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostsList"));
-        private readonly TaskSlot<UploadFilesLoadResult> m_uploadsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostsList"));
-        private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostNodeDetails"));
+        private readonly TaskSlot<PostsLoadResult> m_postsLoadSlot = new(LanguageControl.Get("TaskSlot", "PostsList"));
+        private readonly TaskSlot<UploadFilesLoadResult> m_uploadsLoadSlot = new(LanguageControl.Get("TaskSlot", "PostsList"));
+        private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot = new(LanguageControl.Get("TaskSlot", "PostNodeDetails"));
         private bool m_pendingLoginOnEnter;
         // 只看未发布开关：开=upload/list 平铺未发布文件；关=帖子树（全部类别）。
         private bool m_showUnpublished;
@@ -277,7 +277,7 @@ namespace Game
 
             ExternalContentType[] fileTypeValues = CommunityFileTypes.FilterableValues();
             DialogsManager.ShowDialog(null, new ListSelectionDialog(
-                LanguageControl.Get("ScbbsPlusFiltersDialog", "SelectFileType"),
+                LanguageControl.Get("FiltersDialog", "SelectFileType"),
                 fileTypeValues,
                 60f,
                 item => LanguageControl.GetEnumDisplayName((ExternalContentType)item),
@@ -349,7 +349,7 @@ namespace Game
                 m_downloadButtonsState = state;
                 m_downloadButton.IsEnabled = hasDownloadTarget && !downloadBusy;
                 m_downloadButton.Text = downloadBusy
-                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Downloading")
+                    ? LanguageControl.Get("CommunityScreen", "Downloading")
                     : LanguageControl.Get("ExternalContentScreen", "2");
             }
 

@@ -113,7 +113,7 @@ namespace Game
                 {
                     Log.Warning(string.Format(
                         CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ScbbsPlusModpackManifestLoadManager", "ReadModpackListFailed"),
+                        LanguageControl.Get("ModpackManifestLoadManager", "ReadModpackListFailed"),
                         manifestResult.Error));
                 }
                 RefreshModpackList();
@@ -212,7 +212,7 @@ namespace Game
             {
                 // 空态：加载已完成，占位文案从「正在读取」换成无内容
                 // （模组原版 LocalResourcesEmptyLabel 同键，经 ContentWidgets 子树解析）。
-                m_placeholderLabel.Text = LanguageControl.GetContentWidgets("ScbbsPlusCommunityScreen", "NoContent");
+                m_placeholderLabel.Text = LanguageControl.GetContentWidgets("CommunityScreen", "NoContent");
             }
             RestoreSelection();
         }
@@ -571,7 +571,7 @@ namespace Game
                                         {
                                             Log.Warning(string.Format(
                                                 CultureInfo.InvariantCulture,
-                                                LanguageControl.Get("ScbbsPlusModpacks", "UserIgnoredUnavailableModpackResources"),
+                                                LanguageControl.Get("Modpacks", "UserIgnoredUnavailableModpackResources"),
                                                 progress.FailedCount));
                                             ImportEmbeddedItemsAndEnable(latestResourceItem, latestRecord);
                                         }
@@ -674,7 +674,7 @@ namespace Game
             {
                 Log.Warning(string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusModpacks", "SaveModpackEnabledStateFailed"),
+                    LanguageControl.Get("Modpacks", "SaveModpackEnabledStateFailed"),
                     result.Error));
                 ShowModpackFileOperationError("FailedToSaveSettings", "SaveConfigFailed", result.Error);
                 return;
@@ -720,7 +720,7 @@ namespace Game
             {
                 Log.Warning(string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusModpacks", "ClearModpackEnabledStateFailed"),
+                    LanguageControl.Get("Modpacks", "ClearModpackEnabledStateFailed"),
                     result.Error));
                 ShowModpackFileOperationError("FailedToSaveSettings", "SaveConfigFailed", result.Error);
                 return;
@@ -945,7 +945,7 @@ namespace Game
             m_downloadMissingButton.Text = fileInfoLoading
                 ? LanguageControl.Get("ModpacksManageContentScreen", "LoadingFileInfo")
                 : busy
-                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Downloading")
+                    ? LanguageControl.Get("CommunityScreen", "Downloading")
                     : LanguageControl.Get(fName, "3");
         }
 
@@ -956,7 +956,7 @@ namespace Game
             {
                 Log.Warning(string.Format(
                     CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ScbbsPlusModpacks", "ReadModpackEnabledStateFailed"),
+                    LanguageControl.Get("Modpacks", "ReadModpackEnabledStateFailed"),
                     load.Error.Message));
             }
             m_activeModpackState = load.State;
@@ -1017,7 +1017,7 @@ namespace Game
                 {
                     Log.Warning(string.Format(
                         CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ScbbsPlusModpacks", "LoadModpackFileInfoFailed"),
+                        LanguageControl.Get("Modpacks", "LoadModpackFileInfoFailed"),
                         ex.Message));
                     return null;
                 }))
@@ -1042,7 +1042,7 @@ namespace Game
                 {
                     Log.Warning(string.Format(
                         CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ScbbsPlusModpacks", "GetModpackFileInfoFailed"),
+                        LanguageControl.Get("Modpacks", "GetModpackFileInfoFailed"),
                         entry.FileId,
                         entry.Error));
                 }

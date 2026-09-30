@@ -29,7 +29,7 @@ namespace Game
                 // 两侧都失败：抛首个错误，维持上层「整体失败带 Error」的既有行为。
                 throw new InvalidOperationException(topTask.Exception?.GetBaseException().Message
                     ?? recentTask.Exception?.GetBaseException().Message
-                    ?? LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Featured", "FailedToLoadFeaturedResources"));
+                    ?? LanguageControl.Get("CommunityScreen", "Community", "Featured", "FailedToLoadFeaturedResources"));
             }
             return new CommunityFeaturedData
             {
@@ -55,7 +55,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityManager", "HighlightDataLoadFailed"), ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityManager", "HighlightDataLoadFailed"), ex.Message));
                 return null;
             }
         }

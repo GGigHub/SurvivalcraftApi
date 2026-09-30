@@ -6,9 +6,9 @@
     <LabelWidget Name="ScbbsPlusRestartConfirmDialog.Message" Color="128, 128, 128" HorizontalAlignment="Center" WordWrap="true" Margin="10, 10" />
     <CanvasWidget Size="0, Infinity" />
     <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
-      <BevelledButtonWidget Name="ScbbsPlusRestartConfirmDialog.RestartButton" Text="[ScbbsPlusRestartConfirmDialog:Restart]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusRestartConfirmDialog.RestartButton" Text="[RestartConfirmDialog:Restart]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusRestartConfirmDialog.RestartToCurrentScreen" Text="[ScbbsPlusRestartConfirmDialog:RestartToCurrentScreen]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusRestartConfirmDialog.RestartToCurrentScreen" Text="[RestartConfirmDialog:RestartToCurrentScreen]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
       <BevelledButtonWidget Name="ScbbsPlusRestartConfirmDialog.CancelButton" Style="{Styles/ButtonStyle_160x60}" />
     </StackPanelWidget>

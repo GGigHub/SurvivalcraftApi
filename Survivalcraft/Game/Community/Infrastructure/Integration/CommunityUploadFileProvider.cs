@@ -39,7 +39,7 @@ namespace Game
         {
             if (resourceItem == null)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusGameUploadFileProvider", "NoLocalResourceSelected"));
+                throw new InvalidOperationException(LanguageControl.Get("GameUploadFileProvider", "NoLocalResourceSelected"));
             }
 
             CommunityFileType fileType = GetUploadFileType(resourceItem);
@@ -86,7 +86,7 @@ namespace Game
                         ".scmod");
 
                 default:
-                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusGameUploadFileProvider", "UnsupportedUploadResourceTypeFormat"), resourceItem.Type));
+                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("GameUploadFileProvider", "UnsupportedUploadResourceTypeFormat"), resourceItem.Type));
             }
         }
 
@@ -152,11 +152,11 @@ namespace Game
         {
             if (string.IsNullOrWhiteSpace(filePath))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusGameUploadFileProvider", "CannotFindLocalResourcePath"));
+                throw new InvalidOperationException(LanguageControl.Get("GameUploadFileProvider", "CannotFindLocalResourcePath"));
             }
             if (!Storage.FileExists(filePath))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusGameUploadFileProvider", "LocalFileDoesNotExistFormat"), filePath));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("GameUploadFileProvider", "LocalFileDoesNotExistFormat"), filePath));
             }
 
             return new CommunityPreparedUploadFile
@@ -205,7 +205,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusGameUploadFileProvider", "CleanUploadTempFileFailed"), path, ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("GameUploadFileProvider", "CleanUploadTempFileFailed"), path, ex.Message));
             }
         }
 

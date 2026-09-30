@@ -111,7 +111,7 @@ namespace Game
 
                 if (s_projectSessions.Count > 0)
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "StartedTrackingModPlayedTime"), s_projectSessions.Count));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "StartedTrackingModPlayedTime"), s_projectSessions.Count));
                 }
             }
 
@@ -126,7 +126,7 @@ namespace Game
                 ModEntity entity = FindSelfMod();
                 if (entity?.modInfo == null)
                 {
-                    Log.Information(LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "ScbbsPlusModEntityNotFound"));
+                    Log.Information(LanguageControl.Get("PlayedTimeTracker", "ModEntityNotFound"));
                     return;
                 }
 
@@ -141,7 +141,7 @@ namespace Game
                         Key = key,
                         LastSettlementRealTime = Time.RealTime
                     };
-                    Log.Information(LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "StartedTrackingScreenPlayedTime"));
+                    Log.Information(LanguageControl.Get("PlayedTimeTracker", "StartedTrackingScreenPlayedTime"));
                 }
             }
         }
@@ -207,25 +207,25 @@ namespace Game
             if (seconds < 60.0)
             {
                 int value = Math.Max(0, (int)Math.Round(seconds));
-                return string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "SecondsFormat"), value);
+                return string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "SecondsFormat"), value);
             }
             if (seconds < 3600.0)
             {
                 int value = (int)(seconds / 60.0);
-                return string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "MinutesFormat"), value);
+                return string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "MinutesFormat"), value);
             }
 
             int hours = (int)(seconds / 3600.0);
             int minutes = (int)((seconds % 3600.0) / 60.0);
             return minutes > 0
-                ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "HoursMinutesFormat"), hours, minutes)
-                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "HoursFormat"), hours);
+                ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "HoursMinutesFormat"), hours, minutes)
+                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "HoursFormat"), hours);
         }
 
         public static string FormatDurationCompact(double seconds)
         {
             return seconds < 60.0
-                ? LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "LessThanOneMinute")
+                ? LanguageControl.Get("PlayedTimeTracker", "LessThanOneMinute")
                 : FormatDuration(seconds);
         }
 
@@ -298,7 +298,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "ReadModPlayedTimeFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "ReadModPlayedTimeFailed"), ex.Message));
                 s_store = CommunityPlayedTimeStore.CreateEmpty();
                 s_loadFailed = true;
             }
@@ -382,7 +382,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "SaveModPlayedTimeFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "SaveModPlayedTimeFailed"), ex.Message));
             }
         }
 
@@ -449,7 +449,7 @@ namespace Game
         {
             if (!SettingsManager.CommunityPlayedTimeReportingEnabled)
             {
-                Log.Information(LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PlayedTimeReportingDisabledSkipping"));
+                Log.Information(LanguageControl.Get("PlayedTimeTracker", "PlayedTimeReportingDisabledSkipping"));
                 return;
             }
 
@@ -461,12 +461,12 @@ namespace Game
                 {
                     int excess = s_pendingReports.Count - MaxPendingReports;
                     s_pendingReports.RemoveRange(0, excess);
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsTrimmed"), excess));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "PendingReportsTrimmed"), excess));
                 }
                 SavePendingReportsLocked();
             }
 
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsEnqueued"), reports.Count));
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "PendingReportsEnqueued"), reports.Count));
             StartReportLoop();
         }
 
@@ -494,7 +494,7 @@ namespace Game
                 return;
             }
 
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsRetryStart"), pendingCount));
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "PendingReportsRetryStart"), pendingCount));
             StartReportLoop();
         }
 
@@ -532,7 +532,7 @@ namespace Game
 
                 if (!WebManager.IsInternetConnectionAvailable())
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsOffline"), reports.Count));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "PendingReportsOffline"), reports.Count));
                     return;
                 }
 
@@ -540,7 +540,7 @@ namespace Game
                 if (!fullyAccepted)
                 {
                     // 整批成功才出队：部分被拒/服务端异常时全批保留，等下次触发重发。
-                    Log.Information(LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsKept"));
+                    Log.Information(LanguageControl.Get("PlayedTimeTracker", "PendingReportsKept"));
                     return;
                 }
 
@@ -552,12 +552,12 @@ namespace Game
                     SavePendingReportsLocked();
                 }
 
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsDequeued"), reports.Count));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "PendingReportsDequeued"), reports.Count));
             }
             catch (Exception ex)
             {
                 // 防御兜底：上报链各层已各自兜异常，这里是最后一道，避免 unobserved task exception 静默。
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsLoopFaulted"), ex));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "PendingReportsLoopFaulted"), ex));
             }
             finally
             {
@@ -572,7 +572,7 @@ namespace Game
                 // 失败/离线不自动循环重试：留给下次启动补报或新记录入队时触发。
                 if (remaining > 0 && SettingsManager.CommunityPlayedTimeReportingEnabled)
                 {
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsRemaining"), remaining));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "PendingReportsRemaining"), remaining));
                 }
             }
         }
@@ -597,7 +597,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeTracker", "PendingReportsSaveFailed"), ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeTracker", "PendingReportsSaveFailed"), ex.Message));
             }
         }
 

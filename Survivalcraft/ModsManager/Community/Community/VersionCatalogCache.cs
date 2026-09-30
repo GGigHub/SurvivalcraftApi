@@ -78,7 +78,7 @@ namespace Game
             string apiVersion = CurrentApiVersion;
             if (string.IsNullOrWhiteSpace(apiVersion))
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusVersionCatalogCache", "NoApiVersionSkippingPluginMatch"), gameVersion ?? "null"));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("VersionCatalogCache", "NoApiVersionSkippingPluginMatch"), gameVersion ?? "null"));
                 return null;
             }
 
@@ -99,7 +99,7 @@ namespace Game
                 apiVersion);
             if (matchedVersion == null)
             {
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusVersionCatalogCache", "NoMatchingPluginVersion"), gameVersion ?? "null", apiVersion));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("VersionCatalogCache", "NoMatchingPluginVersion"), gameVersion ?? "null", apiVersion));
                 s_pluginVersion = new PluginVersionCache
                 {
                     Resolved = true,
@@ -119,7 +119,7 @@ namespace Game
                 GameVersion = gameVersion,
                 BaseUrl = apiBaseUrl
             };
-            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusVersionCatalogCache", "VersionMatchSucceeded"), gameVersion ?? "null", apiVersion, matchedVersion.Id, matchedVersion.Version, matchedVersion.Name));
+            Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("VersionCatalogCache", "VersionMatchSucceeded"), gameVersion ?? "null", apiVersion, matchedVersion.Id, matchedVersion.Version, matchedVersion.Name));
             return matchedVersion.Id;
         }
 

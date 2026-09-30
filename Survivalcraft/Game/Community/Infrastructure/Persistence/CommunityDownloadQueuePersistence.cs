@@ -72,7 +72,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadQueuePersistence", "CleanImportedItemCacheFailed"), item.TempFilePath, ex.Message));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadQueuePersistence", "CleanImportedItemCacheFailed"), item.TempFilePath, ex.Message));
                 }
             }
             return item;

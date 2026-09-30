@@ -51,10 +51,10 @@ namespace Game
         private string m_searchTitle = string.Empty;
         // 搜索防抖：输入停止 SearchDebounceSeconds 后才重建左面板并发请求（0 表示无待触发）。
         private double m_searchDebounceUntil;
-        private readonly TaskSlot<PostsLoadResult> m_postsLoadSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostsList"));
-        private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "PostNodeDetails"));
-        private readonly TaskSlot<PostDetailsDialogLoadResult> m_postDialogSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "CommunityPostDetailsDialog"));
-        private readonly TaskSlot<FeaturedLoadResult> m_featuredSlot = new(LanguageControl.Get("ScbbsPlusTaskSlot", "Featured"));
+        private readonly TaskSlot<PostsLoadResult> m_postsLoadSlot = new(LanguageControl.Get("TaskSlot", "PostsList"));
+        private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot = new(LanguageControl.Get("TaskSlot", "PostNodeDetails"));
+        private readonly TaskSlot<PostDetailsDialogLoadResult> m_postDialogSlot = new(LanguageControl.Get("TaskSlot", "CommunityPostDetailsDialog"));
+        private readonly TaskSlot<FeaturedLoadResult> m_featuredSlot = new(LanguageControl.Get("TaskSlot", "Featured"));
         private FeaturedLoadResult m_featuredResult;
         private bool m_hasDeferredInitialPanelRefresh;
         private int m_deferredInitialPanelRefreshFrames;
@@ -177,10 +177,10 @@ namespace Game
             {
                 case CommunitySection.Trending:
                 case CommunitySection.NewActivity:
-                    m_postsPresenter.StatusLabel.Text = LanguageControl.Get("ScbbsPlusCommunityScreen", "FeaturedContentLoading");
+                    m_postsPresenter.StatusLabel.Text = LanguageControl.Get("CommunityScreen", "FeaturedContentLoading");
                     break;
                 default:
-                    m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "CommunityLoadingFormat"), LanguageControl.GetEnumDisplayName(m_selectedFileType));
+                    m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "CommunityLoadingFormat"), LanguageControl.GetEnumDisplayName(m_selectedFileType));
                     break;
             }
 
@@ -271,8 +271,8 @@ namespace Game
                 m_postsPresenter.ApplyPostsResult(
                     postsLoadResult,
                     postsLoadResult.Source == ResourceSource.MyPublished
-                        ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "MyPublishedFormat"), LanguageControl.GetEnumDisplayName(postsLoadResult.FileType))
-                        : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "CommunityFormat"), LanguageControl.GetEnumDisplayName(postsLoadResult.FileType)));
+                        ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "MyPublishedFormat"), LanguageControl.GetEnumDisplayName(postsLoadResult.FileType))
+                        : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "CommunityFormat"), LanguageControl.GetEnumDisplayName(postsLoadResult.FileType)));
             }
 
             if (m_featuredSlot.TryTake(out FeaturedLoadResult loadResult)

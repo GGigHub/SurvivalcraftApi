@@ -31,7 +31,7 @@ namespace Game
                 catch (Exception ex)
                 {
                     // 整体失败降级为空列表 + Error；单侧失败已由 ContentService 降级为部分内容。
-                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "LoadFeaturedFailed"), ex.Message));
+                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "LoadFeaturedFailed"), ex.Message));
                     return new FeaturedLoadResult
                     {
                         RequestId = requestId,
@@ -64,7 +64,7 @@ namespace Game
             string sectionName = LanguageControl.GetEnumDisplayName(effectiveSection);
             if (m_featuredResult == null)
             {
-                m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Featured", "Loading"), sectionName);
+                m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "Community", "Featured", "Loading"), sectionName);
                 UpdatePaginationButtons();
                 return;
             }
@@ -72,7 +72,7 @@ namespace Game
             if (!string.IsNullOrEmpty(m_featuredResult.Error))
             {
                 m_postsPresenter.ShowLoadFailed(sectionName);
-                m_postsPresenter.AddRoot(new TreeViewNode(LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Featured", "FailedToLoadFeaturedResources"), "") { Selectable = false });
+                m_postsPresenter.AddRoot(new TreeViewNode(LanguageControl.Get("CommunityScreen", "Community", "Featured", "FailedToLoadFeaturedResources"), "") { Selectable = false });
                 UpdatePaginationButtons();
                 return;
             }
@@ -82,7 +82,7 @@ namespace Game
                 : m_featuredResult.RecentUpdates;
             if (items == null || items.Count == 0)
             {
-                m_postsPresenter.AddRoot(new TreeViewNode(LanguageControl.Get("ScbbsPlusCommunityScreen", "Community", "Featured", "NoData"), "") { Selectable = false });
+                m_postsPresenter.AddRoot(new TreeViewNode(LanguageControl.Get("CommunityScreen", "Community", "Featured", "NoData"), "") { Selectable = false });
             }
             else
             {

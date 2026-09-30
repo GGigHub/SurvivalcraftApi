@@ -51,7 +51,7 @@ namespace Game
             LoadContents(this, node);
 
             m_titleLabel = Children.Find<LabelWidget>("ScbbsPlusPostDetailsDialog.Title");
-            m_titleLabel.Text = string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusPostDetailsDialog", "PostDetails") : title;
+            m_titleLabel.Text = string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("PostDetailsDialog", "PostDetails") : title;
             m_contentPanel = Children.Find<StackPanelWidget>("ScbbsPlusPostDetailsDialog.ContentPanel");
             m_headerPanel = Children.Find<StackPanelWidget>("ScbbsPlusPostDetailsDialog.HeaderPanel");
             m_actionsRow = Children.Find<Widget>("ScbbsPlusPostDetailsDialog.ActionsRow");
@@ -135,7 +135,7 @@ namespace Game
             }
             if (!appended)
             {
-                m_contentBuilder.AppendParagraph(LanguageControl.Get("ScbbsPlusPostDetailsDialog", "NoDetails"));
+                m_contentBuilder.AppendParagraph(LanguageControl.Get("PostDetailsDialog", "NoDetails"));
             }
         }
 
@@ -153,7 +153,7 @@ namespace Game
                 return;
             }
 
-            SetTranslateStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "TranslatingTo"), targetLanguage), new Color(160, 210, 255));
+            SetTranslateStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "TranslatingTo"), targetLanguage), new Color(160, 210, 255));
             // 服务端对相同内容有翻译缓存：先请求、返回后一次性建 Widget，不先建原文再重建。
             m_contentPanel.Children.Clear();
             int requestId = ++m_autoTranslateRequestId;
@@ -199,8 +199,8 @@ namespace Game
             {
                 if (!string.IsNullOrWhiteSpace(result.Error))
                 {
-                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "AutoTranslateFailed"), result.Error));
-                    SetTranslateStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "AutomaticTranslationFailed"), result.Error), new Color(255, 170, 170));
+                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "AutoTranslateFailed"), result.Error));
+                    SetTranslateStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "AutomaticTranslationFailed"), result.Error), new Color(255, 170, 170));
                     BuildContent();
                 }
                 return;
@@ -211,7 +211,7 @@ namespace Game
                 m_titleLabel.Text = result.TranslatedTitle;
             }
 
-            SetTranslateStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "AutomaticallyTranslatedTo"), result.TargetLanguage), new Color(170, 230, 170));
+            SetTranslateStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "AutomaticallyTranslatedTo"), result.TargetLanguage), new Color(170, 230, 170));
             BuildContent(result.TranslatedHtml);
         }
 

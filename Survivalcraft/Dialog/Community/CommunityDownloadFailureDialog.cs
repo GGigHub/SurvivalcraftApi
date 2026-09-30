@@ -24,8 +24,8 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityDownloadFailureDialog");
             LoadContents(this, node);
             string title = string.IsNullOrWhiteSpace(fileName)
-                ? LanguageControl.Get("ScbbsPlusDownloadFailureDialog", "DownloadError")
-                : $"{LanguageControl.Get("ScbbsPlusDownloadFailureDialog", "DownloadError")} - {fileName}";
+                ? LanguageControl.Get("DownloadFailureDialog", "DownloadError")
+                : $"{LanguageControl.Get("DownloadFailureDialog", "DownloadError")} - {fileName}";
             Children.Find<LabelWidget>("ScbbsPlusDownloadFailureDialog.Title").Text = title;
             Children.Find<LabelWidget>("ScbbsPlusDownloadFailureDialog.LinkLabel").Text =
                 string.IsNullOrWhiteSpace(m_downloadUrl) ? "-" : m_downloadUrl;
@@ -34,7 +34,7 @@ namespace Game
             StackPanelWidget errorContent = Children.Find<StackPanelWidget>("ScbbsPlusDownloadFailureDialog.ErrorContent");
             errorContent.Children.Add(new LabelWidget
             {
-                Text = error ?? LanguageControl.Get("ScbbsPlusDownloadFailureDialog", "UnknownError"),
+                Text = error ?? LanguageControl.Get("DownloadFailureDialog", "UnknownError"),
                 Color = new Color(255, 255, 255),
                 FontScale = 0.8f,
                 WordWrap = true

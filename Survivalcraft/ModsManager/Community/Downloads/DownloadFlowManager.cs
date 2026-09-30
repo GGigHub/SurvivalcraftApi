@@ -158,7 +158,7 @@ namespace Game
                     () => StartFileDownload(file.Url, fileName, type, requiresRestart: false, feedbackInfo, overwriteExistingFilePath: existingPath),
                     () => StartFileDownload(file.Url, fileName, type, requiresRestart: false, feedbackInfo),
                 // 仅家具包提供"导入为副本"（引擎重名自动另起新名保留旧包），见覆盖确认调用处。
-                () => ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadCanceled"), fileName)),
+                () => ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadCanceled"), fileName)),
                 type == ExternalContentType.FurniturePack);
                 return;
             }
@@ -184,7 +184,7 @@ namespace Game
                     // 本地 modinfo 大小写不一致时禁用会静默失效
                     PendingLocalModActions.SetManualDisabledState(oldVersion.modInfo.PackageName, oldVersion.modInfo.Version, isDisabled: true);
                     ShowToast(string.Format(CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ScbbsPlusDownloadFlowManager", "OldVersionDisabledPendingRestart"),
+                        LanguageControl.Get("DownloadFlowManager", "OldVersionDisabledPendingRestart"),
                         Storage.GetFileName(oldVersion.ModFilePath)), autoHideSeconds: 3.0);
                 }
             }
@@ -248,7 +248,7 @@ namespace Game
             string downloadUrl = CommunityDownloadSourceResolver.ResolveUrl(url, source);
             if (string.IsNullOrWhiteSpace(downloadUrl))
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DownloadSourceSwitchUnavailable"), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, LanguageControl.Get("DownloadFlowManager", "DownloadSourceSwitchUnavailable"), LanguageControl.Ok, null, null));
                 return;
             }
 
@@ -266,12 +266,12 @@ namespace Game
                 overwriteExistingFilePath);
             if (item == null)
             {
-                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "DuplicateDownloadQueued"), fileName));
+                ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DuplicateDownloadQueued"), fileName));
                 return;
             }
             SaveQueue();
-            ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "StartDownloading"), fileName), autoHideSeconds: 2.0);
-            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadFlowManager", "AddedToDownloadQueue"), fileName));
+            ShowToast(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "StartDownloading"), fileName), autoHideSeconds: 2.0);
+            ReportStatus(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "AddedToDownloadQueue"), fileName));
             StartNextQueuedDownload();
         }
 
@@ -280,7 +280,7 @@ namespace Game
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
-                    LanguageControl.Get("ScbbsPlusDownloadFlowManager", "ChooseDownloadSource"),
+                    LanguageControl.Get("DownloadFlowManager", "ChooseDownloadSource"),
                     CommunityDownloadSourceManager.GetAllInfos(),
                     60f,
                     item => CommunityDownloadSourceManager.GetDisplayName((CommunityDownloadSourceManager.Info)item),

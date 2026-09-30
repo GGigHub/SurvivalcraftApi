@@ -47,7 +47,7 @@ namespace Game
             if (!response.IsSuccessStatusCode)
             {
                 NotifyIfUnauthorized(response.StatusCode, token);
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityUploadClient", "GetUploadCredentialsFailed"), response.StatusCode, responseBody));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityUploadClient", "GetUploadCredentialsFailed"), response.StatusCode, responseBody));
             }
 
             // 空/非 JSON body（网关 200 空响应、HTML 错误页）归一化为 InvalidOperationException，
@@ -73,7 +73,7 @@ namespace Game
                 || string.IsNullOrWhiteSpace(credentials.Authorization)
                 || string.IsNullOrWhiteSpace(credentials.UploadUrl))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityUploadClient", "UploadCredentialsResponseMalformed"), responseBody));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityUploadClient", "UploadCredentialsResponseMalformed"), responseBody));
             }
             return credentials;
         }
@@ -99,13 +99,13 @@ namespace Game
             string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityUploadClient", "FileServerUploadFailed"), response.StatusCode, responseBody));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityUploadClient", "FileServerUploadFailed"), response.StatusCode, responseBody));
             }
 
             string uploadedUrl = ParseUpyunUploadedUrl(responseBody);
             if (string.IsNullOrWhiteSpace(uploadedUrl))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityUploadClient", "FileServerReturnedNoLink"), responseBody));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityUploadClient", "FileServerReturnedNoLink"), responseBody));
             }
             return NormalizeUpyunUrl(uploadedUrl);
         }
@@ -130,7 +130,7 @@ namespace Game
             if (!response.IsSuccessStatusCode)
             {
                 NotifyIfUnauthorized(response.StatusCode, token);
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityUploadClient", "RegisterUploadFileFailed"), response.StatusCode, responseBody));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityUploadClient", "RegisterUploadFileFailed"), response.StatusCode, responseBody));
             }
 
             if (string.IsNullOrWhiteSpace(responseBody))
@@ -148,7 +148,7 @@ namespace Game
             }
             if (registerResponse?.Code != 200 || registerResponse.Data == null)
             {
-                throw new InvalidOperationException(registerResponse?.Msg ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityUploadClient", "RegisterUploadFileResponseMalformed"), responseBody));
+                throw new InvalidOperationException(registerResponse?.Msg ?? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityUploadClient", "RegisterUploadFileResponseMalformed"), responseBody));
             }
             return registerResponse.Data;
         }
@@ -180,7 +180,7 @@ namespace Game
                 || (!string.Equals(uri.Host, "upyun.com", StringComparison.OrdinalIgnoreCase)
                     && !uri.Host.EndsWith(".upyun.com", StringComparison.OrdinalIgnoreCase)))
             {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityUploadClient", "InvalidUploadUrl"), uploadUrl));
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityUploadClient", "InvalidUploadUrl"), uploadUrl));
             }
         }
 

@@ -3302,21 +3302,6 @@
     "ScreenLayout.QuadrupleOpposite.Description": "Opposite, for sharing touch devices"
   },
   "ContentWidgets": {
-    "ScbbsPlusModVersionsDialog": {
-      "AllVersions": "All Versions",
-      "Close": "Close"
-    },
-    "ScbbsPlusModReviewDialog": {
-      "Rating": "Rating:",
-      "RestorePrevious": "Restore Previous",
-      "Submit": "Submit",
-      "ReviewContent": "Review Content",
-      "EnterReviewContent": "Enter review content"
-    },
-    "ScbbsPlusMissingDependenciesDialog": {
-      "DownloadAllDeps": "Download All Deps",
-      "Close": "Close"
-    },
     "BestiaryDescriptionScreen": {
       "1": "Creature Description",
       "2": "Drops:"
@@ -4162,7 +4147,36 @@
       "1": "Select Which Class to use",
       "2": "Note: Either option may cause the game to malfunction."
     },
-    "ScbbsPlusCommunityScreen": {
+    "SelectDownloadSourceDialog": {
+      "1": "Select Download Source",
+      "2": "Set as Default",
+      "3": "Add",
+      "4": "Edit"
+    },
+    "EditDownloadSourceInfoDialog": {
+      "1": "Edit Download Source",
+      "2": "Name*: ",
+      "3": "Mirror Host: ",
+      "4": "OK",
+      "5": "Remove",
+      "6": "Cancel"
+    },
+    "ModVersionsDialog": {
+      "AllVersions": "All Versions",
+      "Close": "Close"
+    },
+    "ModReviewDialog": {
+      "Rating": "Rating:",
+      "RestorePrevious": "Restore Previous",
+      "Submit": "Submit",
+      "ReviewContent": "Review Content",
+      "EnterReviewContent": "Enter review content"
+    },
+    "MissingDependenciesDialog": {
+      "DownloadAllDeps": "Download All Deps",
+      "Close": "Close"
+    },
+    "CommunityScreen": {
       "UnpublishedOnly": "Unpublished Only",
       "SCChineseCommunity": "Chinese Community",
       "Community": "Community",
@@ -4212,21 +4226,21 @@
       "Disable": "Disable",
       "PendingRestartResources": "0 resources need to restart to load"
     },
-    "ScbbsPlusDownloadDialog": {
+    "DownloadDialog": {
       "DownloadingLabel": "Downloading",
       "Close": "Close",
       "PreparingDownload": "Preparing download...",
       "CancelDownload": "Cancel Download",
       "Background": "Background"
     },
-    "ScbbsPlusDownloadFailureDialog": {
+    "DownloadFailureDialog": {
       "UseAnotherSource": "Use Another Source",
       "CurrentDownloadLink": "Current Download Link",
       "ErrorReason": "Error Reason",
       "CopyLink": "Copy",
       "Close": "Close"
     },
-    "ScbbsPlusDownloadQueueDialog": {
+    "DownloadQueueDialog": {
       "DownloadQueue": "Download Queue",
       "SelectionHint": "Click a task to select it. Without a selection, buttons auto-match a task.",
       "PauseResume": "Pause/Resume",
@@ -4235,7 +4249,7 @@
       "ClearDone": "Clear Done",
       "Close": "Close"
     },
-    "ScbbsPlusFiltersDialog": {
+    "FiltersDialog": {
       "Title": "Filter",
       "Filter": "Filter",
       "IgnoreSearch": "Ignore",
@@ -4244,19 +4258,19 @@
       "VersionRange": "Version Range",
       "Section": "Section"
     },
-    "ScbbsPlusImportOverwriteDialog": {
+    "ImportOverwriteDialog": {
       "DuplicateResource": "Duplicate Resource",
       "Overwrite": "Overwrite",
       "Rename": "Rename"
     },
-    "ScbbsPlusLoginDialog": {
+    "LoginDialog": {
       "LogInToCommunity": "Log In to Community",
       "AccountLabel": "Email/User:",
       "PasswordLabel": "Password:",
       "LogIn": "Log In",
       "Register": "Register"
     },
-    "ScbbsPlusModpackFileConflictDialog": {
+    "ModpackFileConflictDialog": {
       "DuplicateFileFound": "Duplicate File Found",
       "Overwrite": "Overwrite",
       "Skip": "Skip",
@@ -4264,8 +4278,7 @@
       "OverwriteAll": "Overwrite All",
       "Close": "Close"
     },
-    "ScbbsPlusMoreScreen": {
-      "MoreScbbsPlus": "More ScbbsPlus",
+    "MoreScreen": {
       "Close": "Close",
       "LoggedAccount": "Current Account",
       "NotLoggedIn": "Not Logged In",
@@ -4296,31 +4309,18 @@
       "MyPublished": "My Published",
       "MyPublishedDescription": "Browse resources you have published to the Chinese community",
       "PostDetailsAutoTranslate": "Post Details Auto-Translate",
-      "PostDetailsAutoTranslateDescription": "Automatically translate post or version details into the current system language"
+      "PostDetailsAutoTranslateDescription": "Automatically translate post or version details into the current system language",
+      "More": "More ScbbsPlus"
     },
-    "ScbbsPlusPostDetailsDialog": {
+    "PostDetailsDialog": {
       "PostDetails": "Post Details",
       "Close": "Close",
       "Download": "Download",
       "ViewInBrowser": "View In Browser"
     },
-    "ScbbsPlusRestartConfirmDialog": {
+    "RestartConfirmDialog": {
       "Restart": "Restart",
       "RestartToCurrentScreen": "Reboot here"
-    },
-    "SelectDownloadSourceDialog": {
-      "1": "Select Download Source",
-      "2": "Set as Default",
-      "3": "Add",
-      "4": "Edit"
-    },
-    "EditDownloadSourceInfoDialog": {
-      "1": "Edit Download Source",
-      "2": "Name*: ",
-      "3": "Mirror Host: ",
-      "4": "OK",
-      "5": "Remove",
-      "6": "Cancel"
     }
   },
   "FireworksBlock": {
@@ -4906,25 +4906,61 @@
       "373": "No effect. Only for replacing a component to this."
     }
   },
-  "ScbbsPlusJsonFileStore": {
+  "Enums": {
+    "CommunitySection": {
+      "All": "All",
+      "Trending": "Trending",
+      "NewActivity": "New Activity"
+    },
+    "CommunityOrderType": {
+      "Latest": "Latest Releases",
+      "Oldest": "Oldest",
+      "Updated": "Updated",
+      "Hot": "Trending Now"
+    },
+    "ExternalContentType": {
+      "Unknown": "Resource",
+      "World": "World",
+      "FurniturePack": "Furniture Pack",
+      "BlocksTexture": "Texture",
+      "CharacterSkin": "Skin",
+      "Mod": "Mod",
+      "Modpack": "Modpack",
+      "NetMod": "Net Mod",
+      "Image": "Image",
+      "Other": "Other Files"
+    }
+  },
+  "CommunityDownloadSource": {
+    "DefaultCn": "Default Line (Mainland China)",
+    "Source1Global": "Backup Line 1 (Global)",
+    "Source2Cn": "Backup Line 2 (Mainland China)",
+    "Source3Global": "Backup Line 3 (Global)",
+    "Source4Global": "Backup Line 4 (Global)"
+  },
+  "EditDownloadSourceInfoDialog": {
+    "NewDownloadSource": "New Download Source",
+    "DuplicateName": "The name is empty or already in use."
+  },
+  "JsonFileStore": {
     "ReadJsonFileFailedUsingDefault": "[ScbbsPlus] Failed to read the JSON file; falling back to the default: {0}, error={1}",
     "CleanJsonTempFileFailed": "[ScbbsPlus] Failed to clean up the JSON temporary file: {0}, {1}",
     "ScanJsonTempFilesFailed": "[ScbbsPlus] Failed to scan residual JSON temporary files root={0} error={1}",
     "RestoredJsonTempFile": "[ScbbsPlus] Recovered from a residual JSON temporary file: {0} → {1}",
     "RestoreJsonTempFileFailed": "[ScbbsPlus] Failed to recover from a residual JSON temporary file: {0}, {1}"
   },
-  "ScbbsPlusLocalMods": {
+  "LocalMods": {
     "AutoUpdateScanFailed": "[ScbbsPlus] Automatic update scan of local mods failed: {0}",
     "PublishedCheckTaskFaulted": "[ScbbsPlus] Published check task faulted: {0}"
   },
-  "ScbbsPlusModReviewDialog": {
+  "ModReviewDialog": {
     "ReviewLocalResource": "Review Local Resource",
     "ThereIsNoPreviousContentToRestore": "There is no previous content to restore.",
     "PreviousContentRestored": "Previous content restored.",
     "PleaseSelectARating": "Please select a rating.",
     "LocalResource": "Local Resource"
   },
-  "ScbbsPlusMissingDependenciesDialog": {
+  "MissingDependenciesDialog": {
     "DependenciesFound": "Dependencies Found",
     "PublishTimePackageVersionFormat": "Published: {0}   Package: {1}   Package Version: {2}",
     "Collapse": "Collapse",
@@ -4939,7 +4975,7 @@
     "LocalMod": "Local Mod",
     "UnnamedFile": "Unnamed File"
   },
-  "ScbbsPlusLocalModNetworkManager": {
+  "LocalModNetworkManager": {
     "AutoUpdateCheckFailed": "[ScbbsPlus] Automatic update check failed for local mod: {0}, error={1}",
     "NoModVersionForCurrentGame": "The post has no mod version compatible with the current game.",
     "VersionListIsEmpty": "Version list is empty.",
@@ -4947,11 +4983,11 @@
     "NoScmodFileInLatestVersion": "The latest version has no downloadable .scmod file.",
     "PostDetailsIsEmpty": "Post details are empty."
   },
-  "ScbbsPlusLocalModPostResolver": {
+  "LocalModPostResolver": {
     "FindPostByFileNameFailed": "Failed to find post by file name: {0}: {1}",
     "FindPostByFileNameMalformed": "Malformed find-post-by-file-name response: {0}"
   },
-  "ScbbsPlusCommunityScreen": {
+  "CommunityScreen": {
     "DefaultFiltersSaved": "[ScbbsPlus] Default filters saved: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
     "LoadFeaturedFailed": "[ScbbsPlus] Failed to load featured resources: {0}",
     "LoadCommunityPostsFailed": "[ScbbsPlus] Failed to load community posts: {0}",
@@ -4968,15 +5004,15 @@
     "Details": "Details",
     "FailedToLoadPostDetails": "Failed to load post details: {0}"
   },
-  "ScbbsPlusHttpDownloader": {
+  "HttpDownloader": {
     "ReadCacheFileSizeFailed": "[ScbbsPlus] Failed to read the cached file size: {0}, {1}",
     "GetCacheFileSizeFailed": "[ScbbsPlus] Failed to get the cached file size: {0}, {1}"
   },
-  "ScbbsPlusCredentialStore": {
+  "CredentialStore": {
     "DecryptCredentialFileFailed": "[ScbbsPlus] Failed to decrypt the credential file, invalidating it: {0}",
     "DeleteCredentialFileFailed": "[ScbbsPlus] Failed to delete the credential file: {0}, {1}"
   },
-  "ScbbsPlusTaskSlot": {
+  "TaskSlot": {
     "TaskFaultConsumedAsNoResult": "[ScbbsPlus] Exception of the {0} task consumed as no result: {1}",
     "StaleTaskFault": "[ScbbsPlus] Exception of a stale {0} task: {1}",
     "PostsList": "Posts list",
@@ -4994,10 +5030,10 @@
     "PostDetailsDialog": "Post details dialog",
     "Unspecified": "Background"
   },
-  "ScbbsPlusCommunityDownloadGuard": {
+  "CommunityDownloadGuard": {
     "DownloadExceedsSizeLimit": "Download content exceeds the size limit ({0} bytes)."
   },
-  "ScbbsPlusCommunityManager": {
+  "CommunityManager": {
     "HighlightDataLoadFailed": "[ScbbsPlus] Failed to load highlight data: {0}",
     "ScoreApiReturnedEmpty": "Score API returned an empty response",
     "ScoreApiReturnedMalformed": "Score API returned a malformed response",
@@ -5006,27 +5042,27 @@
     "VersionListResponseMalformed": "Malformed version list response: {0}",
     "DownloadTrendsResponseMalformed": "Malformed download trends response: {0}"
   },
-  "ScbbsPlusVersionCatalogCache": {
+  "VersionCatalogCache": {
     "NoApiVersionSkippingPluginMatch": "[ScbbsPlus] No API version provided; skipping plugin version matching. game={0}",
     "NoMatchingPluginVersion": "[ScbbsPlus] No matching plugin version found: game={0}, api={1}",
     "VersionMatchSucceeded": "[ScbbsPlus] Version matching succeeded: game={0}, api={1}, matchedId={2}, matchedVersion={3}, matchedName={4}"
   },
-  "ScbbsPlusLocalModReviewState": {
+  "LocalModReviewState": {
     "ReadReviewsFailed": "[ScbbsPlus] Failed to read local resource reviews: {0}",
     "SaveReviewsFailed": "[ScbbsPlus] Failed to save local resource reviews: {0}"
   },
-  "ScbbsPlusPendingLocalModActions": {
+  "PendingLocalModActions": {
     "ProcessedPendingModAction": "[ScbbsPlus] Processed pending mod action: reason={0}, action={1}, path={2}",
     "ProcessPendingModActionFailed": "[ScbbsPlus] Failed to process the pending mod action: reason={0}, action={1}, path={2}, error={3}",
     "ReadPendingModManifestFailed": "[ScbbsPlus] Failed to read the pending mod manifest: {0}",
     "SavePendingModManifestFailed": "[ScbbsPlus] Failed to save the pending mod manifest: {0}",
     "MissingModPackageNameOrVersion": "Mod package name or version is missing; cannot update the disabled state."
   },
-  "ScbbsPlusDownloadQueueManager": {
+  "DownloadQueueManager": {
     "LoadDownloadQueueFailed": "[ScbbsPlus] Failed to load download queue: {0}",
     "RestoreQueueItemFailed": "[ScbbsPlus] Failed to restore a download queue item: {0}"
   },
-  "ScbbsPlusDownloadQueueDialog": {
+  "DownloadQueueDialog": {
     "SelectedTask": "Selected: task {0} - {1}",
     "NoDownloadTasks": "No download tasks.",
     "OnlyPendingDownloadsCanBeStarted": "Only pending downloads can be started.",
@@ -5037,23 +5073,23 @@
     "OnlyFinishedOrPausedCanBeRetried": "Only finished or paused downloads can be retried.",
     "SelectionHint": "Click a task to select it. Without a selection, buttons auto-match a task."
   },
-  "ScbbsPlusDownloadQueuePersistence": {
+  "DownloadQueuePersistence": {
     "CleanImportedItemCacheFailed": "[ScbbsPlus] Failed to clean the download cache of an imported item: {0}, {1}"
   },
-  "ScbbsPlusDownloadFeedbackClient": {
+  "DownloadFeedbackClient": {
     "MissingFeedbackIdsSkipped": "[ScbbsPlus] Download feedback is missing fileId/postId; skipping recording.",
     "RecordDownloadFeedbackFailed": "[ScbbsPlus] Failed to record download feedback: {0}: {1}",
     "DownloadFeedbackRecorded": "[ScbbsPlus] Download feedback recorded, postId={0}, fileId={1}",
     "RecordDownloadFeedbackFaulted": "[ScbbsPlus] Download feedback recording faulted: {0}",
     "FeedbackAuthRefreshFailedReportingAnonymously": "[ScbbsPlus] Failed to refresh the login state for the feedback report; reporting anonymously: {0}"
   },
-  "ScbbsPlusAuthClient": {
+  "AuthClient": {
     "LoginRequestFailed": "[ScbbsPlus] Login request failed: {0}",
     "LoginResponseMalformed": "[ScbbsPlus] Login response is malformed: {0}",
     "LogoutRequestCompleted": "[ScbbsPlus] Logout request completed ({0})",
     "LogoutRequestFailed": "[ScbbsPlus] Logout request failed: {0}"
   },
-  "ScbbsPlusLoginDialog": {
+  "LoginDialog": {
     "LoggingIn": "Logging In...",
     "LoginResponseIsEmpty": "Login response is empty",
     "LoginNetworkError": "Network error: {0}",
@@ -5062,7 +5098,7 @@
     "OldCredentialFileFormatInvalid": "Old credential file format is invalid.",
     "LogIn": "Log In"
   },
-  "ScbbsPlusRemoteImportManager": {
+  "RemoteImportManager": {
     "ZIPModpackHasBeenSavedLocally": "ZIP modpack {0} has been saved locally.",
     "ImportModpack": "Import Modpack",
     "Downloading": "Downloading: {0} ({1}/{2})",
@@ -5115,7 +5151,7 @@
     "DownloadPackPartialFailure": "Modpack download partially failed: {0} succeeded, {1} failed.",
     "DownloadPackFailure": "Modpack download failed: {0} succeeded, {1} failed."
   },
-  "ScbbsPlusModpackSourceResolver": {
+  "ModpackSourceResolver": {
     "ModpackItemUsesNetworkUrl": "[ScbbsPlus] Modpack item uses the network url={0}",
     "ModpackItemUrlDownloadFailedFallingBackToFileId": "[ScbbsPlus] Modpack item url download failed; falling back to fileId={0}: {1}",
     "ModpackItemUsesZipEntry": "[ScbbsPlus] Modpack item uses a file inside the ZIP path={0}",
@@ -5124,7 +5160,7 @@
     "GetFileInfoByFileIdFailed": "Failed to get file info by file ID: {0}: {1}",
     "GetFileInfoByFileIdMalformed": "Malformed file info response by file ID: {0}"
   },
-  "ScbbsPlusModpackManifestParser": {
+  "ModpackManifestParser": {
     "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
     "PackOnlySupportsZipOrJson": "Modpacks only support .zip and .json files.",
     "PackinfoJsonNotFoundInZipRoot": "packinfo.json not found in ZIP root.",
@@ -5139,7 +5175,7 @@
     "JsonPackIconMustBeUrl": "The icon of a json modpack must be a web link.",
     "ManifestHasNoValidItems": "Modpack manifest has no valid items."
   },
-  "ScbbsPlusModpackRegistry": {
+  "ModpackRegistry": {
     "ModpackRecordCorrupted": "[ScbbsPlus] Modpack record is corrupted: {0}, {1}",
     "ReadModpackRecordFailed": "[ScbbsPlus] Failed to read the modpack record path={0} error={1}",
     "CompareModpackSourceFailed": "[ScbbsPlus] Failed to compare the modpack source: path={0}, error={1}",
@@ -5147,11 +5183,11 @@
     "NoValidItemsRead": "no valid items were read.",
     "DownloadedZipPackIsEmpty": "The downloaded ZIP modpack is empty."
   },
-  "ScbbsPlusModpackFileConflictDialog": {
+  "ModpackFileConflictDialog": {
     "ConflictAlreadyWaitingForUser": "A modpack file conflict is already waiting for user action.",
     "IdenticalFileChooseAction": "A file with the exact same name already exists locally: {0}\nChoose how to handle it."
   },
-  "ScbbsPlusModpacks": {
+  "Modpacks": {
     "ReadModpackEnabledStateFailed": "[ScbbsPlus] Failed to read the modpack enabled state: {0}",
     "LoadModpackFileInfoFailed": "[ScbbsPlus] Failed to load modpack file info: {0}",
     "GetModpackFileInfoFailed": "[ScbbsPlus] Failed to get modpack file info fileId={0}: {1}",
@@ -5159,7 +5195,7 @@
     "SaveModpackEnabledStateFailed": "[ScbbsPlus] Failed to save the modpack enabled state: {0}",
     "ClearModpackEnabledStateFailed": "[ScbbsPlus] Failed to clear the modpack enabled state: {0}"
   },
-  "ScbbsPlusModpackRules": {
+  "ModpackRules": {
     "PackItemIsEmpty": "Modpack item is empty.",
     "PackItemMissingTargetDirectory": "{0}: targetDirectory not specified.",
     "PackItemUrlAndFileIdBothEmpty": "{0}: url and fileId cannot both be empty.",
@@ -5167,12 +5203,12 @@
     "JsonPackNoLocalRelativePath": "{0}: json modpacks do not support local relative paths.",
     "PackItemDefaultName": "Modpack item"
   },
-  "ScbbsPlusModpackItemImporter": {
+  "ModpackItemImporter": {
     "ModinfoMissingSkipped": "{0}: Mod file missing modinfo.json, unable to verify.",
     "PackageNameMismatchSkipped": "{0}: Mod package name mismatch (expected {1}, actual {2}), skipped.",
     "VersionMismatchSkipped": "{0}: Mod version mismatch (expected {1}, actual {2}), skipped."
   },
-  "ScbbsPlusModpackDataFiles": {
+  "ModpackDataFiles": {
     "DeleteModpackBackupFailed": "[ScbbsPlus] Failed to delete modpack backup after successful restore (kept for next cleanup): {0}: {1}",
     "CleanModpackCustomTempFileFailed": "[ScbbsPlus] Failed to clean up the modpack custom file temporary file temp={0} error={1}",
     "SaveModpackCustomConfigFailed": "[ScbbsPlus] Failed to save the modpack custom configuration target={0} persisted={1} error={2}",
@@ -5183,11 +5219,11 @@
     "UnsafeCustomFileTargetPathRejected": "Unsafe custom file target path rejected: {0}.",
     "BackupFileDoesNotExist": "Backup file does not exist: {0}"
   },
-  "ScbbsPlusModpackManifestLoadManager": {
+  "ModpackManifestLoadManager": {
     "ReadModpackListFailed": "[ScbbsPlus] Failed to read modpack list: {0}",
     "StaleModpackListTaskFailed": "[ScbbsPlus] Stale modpack list reading task failed: {0}"
   },
-  "ScbbsPlusTransactionalFileReplacement": {
+  "TransactionalFileReplacement": {
     "ScanResidualBackupsFailed": "[ScbbsPlus] Failed to scan residual update backups root={0} error={1}",
     "CleanResidualBackup": "[ScbbsPlus] Cleaning up a residual update backup backup={0}",
     "RollbackResidualBackup": "[ScbbsPlus] Rolling back a residual update backup backup={0} original={1}",
@@ -5200,9 +5236,8 @@
     "RestoreOverwriteBackupFailed": "[ScbbsPlus] Failed to restore the pre-overwrite backup: {0}",
     "StartupRollbackResidualBackupFailed": "[ScbbsPlus] Failed to roll back residual update backups at startup: {0}"
   },
-  "ScbbsPlusPlayedTimeTracker": {
+  "PlayedTimeTracker": {
     "StartedTrackingModPlayedTime": "[ScbbsPlus] Started tracking mod played time: {0} mods",
-    "ScbbsPlusModEntityNotFound": "[ScbbsPlus] ScbbsPlus mod entity not found; cannot track its own played time.",
     "StartedTrackingScreenPlayedTime": "[ScbbsPlus] Started tracking ScbbsPlus screen played time.",
     "ReadModPlayedTimeFailed": "[ScbbsPlus] Failed to read mod played time: {0}",
     "SaveModPlayedTimeFailed": "[ScbbsPlus] Failed to save mod played time: {0}",
@@ -5220,9 +5255,10 @@
     "PendingReportsDequeued": "Removed {0} accepted records from the pending queue",
     "PendingReportsRemaining": "{0} records remain pending; they will retry at next startup or when new records appear",
     "PendingReportsSaveFailed": "Failed to save pending playtime records: {0}",
-    "PendingReportsLoopFaulted": "Playtime pending-report loop faulted: {0}"
+    "PendingReportsLoopFaulted": "Playtime pending-report loop faulted: {0}",
+    "ModEntityNotFound": "[ScbbsPlus] ScbbsPlus mod entity not found; cannot track its own played time."
   },
-  "ScbbsPlusAuthSessionManager": {
+  "AuthSessionManager": {
     "CreateLoginRequestFailed": "[ScbbsPlus] Failed to create the login request: {0}",
     "LoginRequestFaulted": "[ScbbsPlus] Login request faulted: {0}",
     "AuthSessionPollFaulted": "[ScbbsPlus] Auth session poll faulted: {0}",
@@ -5246,48 +5282,18 @@
     "TokenExpired": "Your login session has expired. Please log in again.",
     "LoginFailedDefaultMessage": "Login failed"
   },
-  "Enums": {
-    "ScbbsPlusCommunitySection": {
-      "All": "All",
-      "Trending": "Trending",
-      "NewActivity": "New Activity"
-    },
-    "CommunitySection": {
-      "All": "All",
-      "Trending": "Trending",
-      "NewActivity": "New Activity"
-    },
-    "CommunityOrderType": {
-      "Latest": "Latest Releases",
-      "Oldest": "Oldest",
-      "Updated": "Updated",
-      "Hot": "Trending Now"
-    },
-    "ExternalContentType": {
-      "Unknown": "Resource",
-      "World": "World",
-      "FurniturePack": "Furniture Pack",
-      "BlocksTexture": "Texture",
-      "CharacterSkin": "Skin",
-      "Mod": "Mod",
-      "Modpack": "Modpack",
-      "NetMod": "Net Mod",
-      "Image": "Image",
-      "Other": "Other Files"
-    }
-  },
-  "ScbbsPlusDownloadDialog": {
+  "DownloadDialog": {
     "DownloadingLabel": "Downloading",
     "DownloadComplete": "Download complete.",
     "DownloadingProgress": "Downloading...",
     "DownloadFailed": "Download failed: {0}",
     "Canceled": "Canceled"
   },
-  "ScbbsPlusDownloadFailureDialog": {
+  "DownloadFailureDialog": {
     "DownloadError": "Download Error",
     "UnknownError": "Unknown error"
   },
-  "ScbbsPlusDownloadFlowManager": {
+  "DownloadFlowManager": {
     "StartModpackDownload": "[ScbbsPlus] Starting modpack download url={0} file={1}",
     "DownloadModpackManifest": "[ScbbsPlus] Downloading the modpack manifest url={0}",
     "ModpackManifestDownloadCompleted": "[ScbbsPlus] Modpack manifest download completed length={0}",
@@ -5369,13 +5375,13 @@
     "BackgroundDownloading": "Background downloading: {0}",
     "NetworkError": "Network connection failed. Please check your network and try again."
   },
-  "ScbbsPlusModUpdateImporter": {
+  "ModUpdateImporter": {
     "CannotConfirmCurrentPackageName": "Unable to confirm the current mod package name; update canceled.",
     "UpdatePackageInvalidOrCorrupted": "The downloaded update package is invalid or corrupted; update canceled.",
-    "UpdatePackageIsNotScbbsPlusMod": "The downloaded update package is not the ScbbsPlus mod.",
-    "UpdatePackagePackageNameMismatch": "The downloaded update package is not the current mod: {0}."
+    "UpdatePackagePackageNameMismatch": "The downloaded update package is not the current mod: {0}.",
+    "UpdatePackageIsNotCommunityMod": "The downloaded update package is not the ScbbsPlus mod."
   },
-  "ScbbsPlusCommunityUploadClient": {
+  "CommunityUploadClient": {
     "FileServerReturnedNoLink": "File server returned no link: {0}",
     "FileServerUploadFailed": "File server upload failed: {0}: {1}",
     "GetUploadCredentialsFailed": "Failed to get upload credentials: {0}: {1}",
@@ -5384,7 +5390,7 @@
     "RegisterUploadFileResponseMalformed": "Malformed register upload file response: {0}",
     "UploadCredentialsResponseMalformed": "Malformed upload credentials response: {0}"
   },
-  "ScbbsPlusScmodArchiveReader": {
+  "ScmodArchiveReader": {
     "DownloadedArchiveCorrupt": "The downloaded .scmod is not a valid archive. The source may have returned invalid content, or the resource file itself may be corrupted.",
     "EntryNameMustBeInArchiveRoot": "Entry names must be at the archive root.",
     "FileNotScmodArchive": "The downloaded file is not a valid scmod archive.",
@@ -5392,7 +5398,7 @@
     "UpdatePackageDataIsEmpty": "Update package data is empty.",
     "UpdatePackageDataUnreadable": "Update package data is unreadable."
   },
-  "ScbbsPlusFiltersDialog": {
+  "FiltersDialog": {
     "SelectFileType": "Select File Type",
     "SelectSortOrder": "Sort Options & Rankings",
     "SelectVersionRange": "Select Version Range",
@@ -5400,19 +5406,19 @@
     "SaveDefault": "Save Default",
     "Saved": "Saved"
   },
-  "ScbbsPlusGameUploadFileProvider": {
+  "GameUploadFileProvider": {
     "CleanUploadTempFileFailed": "[ScbbsPlus] Failed to clean up the upload temporary file: {0}, {1}",
     "CannotFindLocalResourcePath": "Unable to find the local resource file path.",
     "LocalFileDoesNotExistFormat": "Local file does not exist: {0}",
     "NoLocalResourceSelected": "No local resource selected.",
     "UnsupportedUploadResourceTypeFormat": "Uploading this resource type is not supported: {0}"
   },
-  "ScbbsPlusModVersionWidget": {
+  "ModVersionWidget": {
     "Files": "Files {0}",
     "Details": "Details",
     "Collapse": "Collapse"
   },
-  "ScbbsPlusModVersionsDialog": {
+  "ModVersionsDialog": {
     "Current": "Current",
     "NoVersions": "No versions.",
     "NoDownloadableFiles": "No downloadable files.",
@@ -5427,7 +5433,7 @@
     "UnnamedFile": "Unnamed File",
     "CommunityPost": "Community Post"
   },
-  "ScbbsPlusMoreScreen": {
+  "MoreScreen": {
     "StatusReady": "Settings are ready.",
     "SettingsApplied": "Settings applied.",
     "LogOut": "Log Out",
@@ -5435,19 +5441,12 @@
     "NotLoggedIn": "Not Logged In",
     "UnknownAccount": "Unknown Account"
   },
-  "CommunityDownloadSource": {
-    "DefaultCn": "Default Line (Mainland China)",
-    "Source1Global": "Backup Line 1 (Global)",
-    "Source2Cn": "Backup Line 2 (Mainland China)",
-    "Source3Global": "Backup Line 3 (Global)",
-    "Source4Global": "Backup Line 4 (Global)"
-  },
-  "ScbbsPlusPlayedTimeClient": {
+  "PlayedTimeClient": {
     "PlayedTimeReportCompleted": "[ScbbsPlus] Mod played time report completed: {0} succeeded, {1} failed",
     "PlayedTimeReportRejectedEntries": "[ScbbsPlus] Entries rejected by the server during the mod played time report: {0}",
     "PlayedTimeReportFailed": "[ScbbsPlus] Mod played time report failed: {0}"
   },
-  "ScbbsPlusPostDetailsContentBuilder": {
+  "PostDetailsContentBuilder": {
     "DisposePostDetailsTextureFailed": "[ScbbsPlus] Failed to dispose a post details texture: {0}",
     "DisposeLatePostDetailsTextureFailed": "[ScbbsPlus] Failed to dispose a late post details texture: {0}",
     "DisposeDuplicatePostDetailsTextureFailed": "[ScbbsPlus] Failed to dispose a duplicate post details texture: {0}",
@@ -5455,7 +5454,7 @@
     "RequestPostDetailsImageFailed": "[ScbbsPlus] Failed to request a post details image: {0}, error={1}",
     "Image": "Image"
   },
-  "ScbbsPlusPostDetailsDialog": {
+  "PostDetailsDialog": {
     "TranslatingTo": "Translating to {0}...",
     "AutomaticallyTranslatedTo": "Automatically translated to {0}.",
     "AutomaticTranslationFailed": "Automatic translation failed: {0}",
@@ -5465,7 +5464,7 @@
     "NoDetails": "No details.",
     "PostDetails": "Post Details"
   },
-  "ScbbsPlusPostDetailsHeaderBuilder": {
+  "PostDetailsHeaderBuilder": {
     "DownloadFile": "Download File",
     "UnknownError": "Unknown error",
     "CurrentVersion": "Current Version",
@@ -5480,13 +5479,13 @@
     "VersionDownloads": "Version Downloads",
     "VersionLast30DaysTotalFiles": "Version {0}: last 30 days {1}, total {2}, files {3}"
   },
-  "ScbbsPlusPostIconLoader": {
+  "PostIconLoader": {
     "SkipOversizedPostIcon": "[ScbbsPlus] Skipping an oversized post icon: {0}, size={1}",
     "DecodeRemoteIconFailed": "[ScbbsPlus] Failed to decode a remote icon: {0}, error={1}",
     "CreatePostIconTextureFailed": "[ScbbsPlus] Failed to create the post icon texture: {0}, error={1}",
     "RequestPostIconFailed": "[ScbbsPlus] Failed to request a post icon: {0}, error={1}"
   },
-  "ScbbsPlusPostTreePresenter": {
+  "PostTreePresenter": {
     "GetPostDetailsFailed": "[ScbbsPlus] Failed to get post details: {0}",
     "LoadPostFailed": "[ScbbsPlus] Failed to load the post: {0}",
     "Files": "Files {0}",
@@ -5508,14 +5507,14 @@
     "PageUploads": "{0}, {3} Files",
     "NoUploads": "{0} · No Files"
   },
-  "ScbbsPlusRestartConfirmDialog": {
+  "RestartConfirmDialog": {
     "UserChoseNormalRestart": "[ScbbsPlus] User chose a normal restart in the import completion prompt. file={0}",
     "UserChoseRestartIntoIt": "[ScbbsPlus] User chose restart-into-it in the import completion prompt. file={0}",
     "RestartRequired": "Restart Required",
     "UpdateComplete": "Update Complete",
     "ImportedRestartPrompt": "{0} has been imported and marked as pending restart. Restart the game now to apply it?"
   },
-  "ScbbsPlusReviewSubmissionHandler": {
+  "ReviewSubmissionHandler": {
     "ScoreSubmissionTaskFaulted": "[ScbbsPlus] Score submission task faulted: {0}",
     "PleaseWait": "Please Wait",
     "PleaseLogInBeforeReviewing": "Please log in before reviewing.",
@@ -5526,14 +5525,10 @@
     "SubmittingPreviousReview": "Submitting the previous review.",
     "SubmittingReviewToTheCommunity": "Submitting review to the community."
   },
-  "ScbbsPlusTreeViewWidget": {
+  "TreeViewWidget": {
     "RowWidgetsRebuiltCallbackFaulted": "[ScbbsPlus] Row widget rebuild callback faulted: {0}"
   },
-  "ScbbsPlusVersionDetailFormatter": {
+  "VersionDetailFormatter": {
     "UnnamedVersion": "Unnamed Version"
-  },
-  "EditDownloadSourceInfoDialog": {
-    "NewDownloadSource": "New Download Source",
-    "DuplicateName": "The name is empty or already in use."
   }
 }

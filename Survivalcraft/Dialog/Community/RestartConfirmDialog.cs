@@ -26,7 +26,7 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/RestartConfirmDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("ScbbsPlusRestartConfirmDialog.Title").Text =
-                string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "RestartRequired") : title;
+                string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("RestartConfirmDialog", "RestartRequired") : title;
             Children.Find<LabelWidget>("ScbbsPlusRestartConfirmDialog.Message").Text = message ?? string.Empty;
             m_restartButton = Children.Find<BevelledButtonWidget>("ScbbsPlusRestartConfirmDialog.RestartButton");
             m_restartToCurrentScreen = Children.Find<BevelledButtonWidget>("ScbbsPlusRestartConfirmDialog.RestartToCurrentScreen");
@@ -45,17 +45,17 @@ namespace Game
             DialogsManager.ShowDialog(
                 null,
                 new RestartConfirmDialog(
-                    LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "UpdateComplete"),
-                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "ImportedRestartPrompt"), fileName),
+                    LanguageControl.Get("RestartConfirmDialog", "UpdateComplete"),
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RestartConfirmDialog", "ImportedRestartPrompt"), fileName),
                     restartAction: () =>
                     {
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "UserChoseNormalRestart"), fileName));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RestartConfirmDialog", "UserChoseNormalRestart"), fileName));
                         PendingLocalModActions.Process(reasonTag + "-restart");
                         return true;
                     },
                     restartToCurrentScreenAction: () =>
                     {
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusRestartConfirmDialog", "UserChoseRestartIntoIt"), fileName));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RestartConfirmDialog", "UserChoseRestartIntoIt"), fileName));
                         PendingLocalModActions.Process(reasonTag + "-restart-continue");
                         return true;
                     }));

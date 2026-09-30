@@ -19,7 +19,7 @@ namespace Game
             ExternalContentType resultFileType = useSearchIgnore && m_ignoreFileTypeFilter ? ExternalContentType.Unknown : fileType;
             string apiBaseUrl = CurrentApiBaseUrl;
             m_postsPresenter.TotalPages = MathUtils.Max(m_postsPresenter.Page, 1);
-            m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "CommunityFormat"), LanguageControl.GetEnumDisplayName(resultFileType)));
+            m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "LoadingFormat"), string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "CommunityFormat"), LanguageControl.GetEnumDisplayName(resultFileType)));
             bool needVersionFilter = (!useSearchIgnore || !m_ignoreVersionFilter) && m_onlyCurrentVersion;
             bool needVersionCatalog = VersionCatalogCache.ShouldLoadVersionCatalogForFileType(resultFileType);
             VersionCatalogCache.TryGetCachedVersionCatalog(apiBaseUrl, out VersionListItem[] cachedCatalog, out Dictionary<int, string> cachedVersionMap, out int? cachedPluginVersionId);
@@ -49,7 +49,7 @@ namespace Game
                     });
                 if (!string.IsNullOrEmpty(load.Error))
                 {
-                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "LoadCommunityPostsFailed"), load.Error));
+                    Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "LoadCommunityPostsFailed"), load.Error));
                 }
                 return new PostsLoadResult
                 {
@@ -101,10 +101,10 @@ namespace Game
                 m_downloadButtonsState = state;
                 m_downloadButton.IsEnabled = hasDownloadTarget && !downloadBusy;
                 m_downloadButton.Text = downloadBusy
-                    ? LanguageControl.Get("ScbbsPlusCommunityScreen", "Downloading")
+                    ? LanguageControl.Get("CommunityScreen", "Downloading")
                     : LanguageControl.Get("ExternalContentScreen", "2");
                 m_detailsButton.IsEnabled = hasDetailsTarget && !dialogLoadRunning;
-                m_detailsButton.Text = dialogLoadRunning ? LanguageControl.Get("ScbbsPlusCommunityScreen", "LoadingProgress") : LanguageControl.Get("ScbbsPlusCommunityScreen", "Details");
+                m_detailsButton.Text = dialogLoadRunning ? LanguageControl.Get("CommunityScreen", "LoadingProgress") : LanguageControl.Get("CommunityScreen", "Details");
             }
 
             if (m_downloadButton.IsClicked && downloadTarget != null)
@@ -131,7 +131,7 @@ namespace Game
         private void ShowPostVersionDetailsDialog(PostVersionItem version)
         {
             string title = string.IsNullOrWhiteSpace(version?.Title)
-                ? LanguageControl.Get("ScbbsPlusCommunityScreen", "VersionDetails")
+                ? LanguageControl.Get("CommunityScreen", "VersionDetails")
                 : version.Title;
             DialogsManager.ShowDialog(null, new CommunityPostDetailsDialog(title, CommunityVersionDetailFormatter.GetVersionDetailHtml(version), CurrentApiBaseUrl, enableAutoTranslate: SettingsManager.CommunityPostDetailsAutoTranslateEnabled, postId: version?.PostId ?? 0));
         }
@@ -209,7 +209,7 @@ namespace Game
             {
                 if (!string.IsNullOrEmpty(result.Error))
                 {
-                    DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "FailedToLoadPostDetails"), result.Error), LanguageControl.Ok, null, null));
+                    DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "FailedToLoadPostDetails"), result.Error), LanguageControl.Ok, null, null));
                     return;
                 }
 
@@ -219,7 +219,7 @@ namespace Game
 
             if (!string.IsNullOrEmpty(result.Error))
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusCommunityScreen", "FailedToLoadPostDetails"), result.Error), LanguageControl.Ok, null, null));
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "FailedToLoadPostDetails"), result.Error), LanguageControl.Ok, null, null));
                 return;
             }
 

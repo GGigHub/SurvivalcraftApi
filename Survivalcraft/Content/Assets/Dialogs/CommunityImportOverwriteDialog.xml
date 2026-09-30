@@ -1,14 +1,14 @@
 <CanvasWidget xmlns="runtime-namespace:Game" Size="600, 280" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
   <BevelledRectangleWidget Style="{Styles/DialogArea}" />
   <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
-    <LabelWidget Text="[ScbbsPlusImportOverwriteDialog:DuplicateResource]" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5" />
+    <LabelWidget Text="[ImportOverwriteDialog:DuplicateResource]" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5" />
     <CanvasWidget Size="0, Infinity" />
     <LabelWidget Name="ScbbsPlusImportOverwriteDialog.Message" Color="128, 128, 128" HorizontalAlignment="Center" WordWrap="true" Margin="10, 10" />
     <CanvasWidget Size="0, Infinity" />
     <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
-      <BevelledButtonWidget Name="ScbbsPlusImportOverwriteDialog.OverwriteButton" Text="[ScbbsPlusImportOverwriteDialog:Overwrite]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusImportOverwriteDialog.OverwriteButton" Text="[ImportOverwriteDialog:Overwrite]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusImportOverwriteDialog.RenameButton" Text="[ScbbsPlusImportOverwriteDialog:Rename]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="ScbbsPlusImportOverwriteDialog.RenameButton" Text="[ImportOverwriteDialog:Rename]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
       <BevelledButtonWidget Name="ScbbsPlusImportOverwriteDialog.CancelButton" Style="{Styles/ButtonStyle_160x60}" />
     </StackPanelWidget>

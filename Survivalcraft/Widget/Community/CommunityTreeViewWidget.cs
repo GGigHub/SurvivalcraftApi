@@ -71,7 +71,7 @@ namespace Game
             catch (Exception e)
             {
                 // 事件在引擎 Draw 主循环内同步触发，异常会打断整帧绘制；记录并放弃本帧重刷。
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusTreeViewWidget", "RowWidgetsRebuiltCallbackFaulted"), e.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("TreeViewWidget", "RowWidgetsRebuiltCallbackFaulted"), e.Message));
             }
         }
 

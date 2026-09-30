@@ -25,7 +25,7 @@ namespace Game
             catch (Exception ex)
             {
                 // 损坏/截断/权限异常统一回退默认值，调用方均按 null/空集合兜底，避免启动链路崩溃。
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusJsonFileStore", "ReadJsonFileFailedUsingDefault"), path, ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("JsonFileStore", "ReadJsonFileFailedUsingDefault"), path, ex.Message));
                 return default;
             }
         }
@@ -67,7 +67,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusJsonFileStore", "ScanJsonTempFilesFailed"), rootPath, ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("JsonFileStore", "ScanJsonTempFilesFailed"), rootPath, ex.Message));
             }
         }
 
@@ -96,12 +96,12 @@ namespace Game
                     else
                     {
                         Storage.MoveFile(temporaryPath, originalPath);
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusJsonFileStore", "RestoredJsonTempFile"), temporaryPath, originalPath));
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("JsonFileStore", "RestoredJsonTempFile"), temporaryPath, originalPath));
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusJsonFileStore", "RestoreJsonTempFileFailed"), temporaryPath, ex.Message));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("JsonFileStore", "RestoreJsonTempFileFailed"), temporaryPath, ex.Message));
                 }
             }
 
@@ -113,7 +113,7 @@ namespace Game
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusJsonFileStore", "ScanJsonTempFilesFailed"), directoryName, ex.Message));
+                    Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("JsonFileStore", "ScanJsonTempFilesFailed"), directoryName, ex.Message));
                 }
             }
         }
@@ -167,7 +167,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusJsonFileStore", "CleanJsonTempFileFailed"), path, ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("JsonFileStore", "CleanJsonTempFileFailed"), path, ex.Message));
             }
         }
     }

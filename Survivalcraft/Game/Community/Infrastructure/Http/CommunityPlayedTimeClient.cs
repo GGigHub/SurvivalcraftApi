@@ -76,13 +76,13 @@ namespace Game
                 }
 
                 int failed = result.Data?.Failed?.Count ?? 0;
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeClient", "PlayedTimeReportCompleted"), result.Data?.Recorded ?? 0, failed));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeClient", "PlayedTimeReportCompleted"), result.Data?.Recorded ?? 0, failed));
                 if (failed > 0)
                 {
                     string failureSummary = string.Join("; ", result.Data!.Failed!
                         .Where(item => item != null && !string.IsNullOrWhiteSpace(item.Reason))
                         .Select(item => item.Reason));
-                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeClient", "PlayedTimeReportRejectedEntries"), failureSummary));
+                    Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeClient", "PlayedTimeReportRejectedEntries"), failureSummary));
                 }
 
                 return (result.Data?.Recorded ?? 0) == items.Count && failed == 0;
@@ -93,7 +93,7 @@ namespace Game
             }
             catch (Exception ex)
             {
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPlayedTimeClient", "PlayedTimeReportFailed"), ex.Message));
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PlayedTimeClient", "PlayedTimeReportFailed"), ex.Message));
                 return false;
             }
         }

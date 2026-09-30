@@ -117,7 +117,7 @@ namespace Game
         {
             if (item?.State != CommunityDownloadQueueItemState.Pending)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyPendingDownloadsCanBeStarted"));
+                throw new InvalidOperationException(LanguageControl.Get("DownloadQueueDialog", "OnlyPendingDownloadsCanBeStarted"));
             }
 
             item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Start);
@@ -162,7 +162,7 @@ namespace Game
         {
             if (item == null || item.State is not (CommunityDownloadQueueItemState.Pending or CommunityDownloadQueueItemState.Running))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyPendingOrRunningCanRequestOverwrite"));
+                throw new InvalidOperationException(LanguageControl.Get("DownloadQueueDialog", "OnlyPendingOrRunningCanRequestOverwrite"));
             }
 
             item.State = CommunityDownloadQueueStateMachine.Transition(
@@ -174,7 +174,7 @@ namespace Game
         {
             if (item?.State != CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyAwaitingOverwriteCanBeConfirmed"));
+                throw new InvalidOperationException(LanguageControl.Get("DownloadQueueDialog", "OnlyAwaitingOverwriteCanBeConfirmed"));
             }
 
             item.OverwriteExistingFilePath = existingFilePath;
@@ -185,7 +185,7 @@ namespace Game
         {
             if (item?.State != CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyAwaitingOverwriteCanBeCanceled"));
+                throw new InvalidOperationException(LanguageControl.Get("DownloadQueueDialog", "OnlyAwaitingOverwriteCanBeCanceled"));
             }
 
             item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Cancel);
@@ -196,7 +196,7 @@ namespace Game
         {
             if (item?.State != CommunityDownloadQueueItemState.Paused)
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyPausedDownloadsCanBeResumed"));
+                throw new InvalidOperationException(LanguageControl.Get("DownloadQueueDialog", "OnlyPausedDownloadsCanBeResumed"));
             }
             item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Resume);
             ResetForQueue(item, resetStartedTime: false);
@@ -208,7 +208,7 @@ namespace Game
                 or CommunityDownloadQueueItemState.Canceled
                 or CommunityDownloadQueueItemState.Paused))
             {
-                throw new InvalidOperationException(LanguageControl.Get("ScbbsPlusDownloadQueueDialog", "OnlyFinishedOrPausedCanBeRetried"));
+                throw new InvalidOperationException(LanguageControl.Get("DownloadQueueDialog", "OnlyFinishedOrPausedCanBeRetried"));
             }
             item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Retry);
             ResetForQueue(item, resetStartedTime: true);
@@ -230,7 +230,7 @@ namespace Game
             catch (Exception ex)
             {
                 // 队列文件整体损坏或不可读：回退为空队列，避免启动失败。
-                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadQueueManager", "LoadDownloadQueueFailed"), ex.Message));
+                Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadQueueManager", "LoadDownloadQueueFailed"), ex.Message));
                 m_items.Clear();
                 m_nextId = 0;
                 return false;
@@ -277,7 +277,7 @@ namespace Game
                     catch (Exception ex)
                     {
                         // 单个坏项（反序列化或回调失败）不拖垮整条队列：跳过继续恢复其余项。
-                        Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusDownloadQueueManager", "RestoreQueueItemFailed"), ex.Message));
+                        Log.Error(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadQueueManager", "RestoreQueueItemFailed"), ex.Message));
                     }
                 }
             }

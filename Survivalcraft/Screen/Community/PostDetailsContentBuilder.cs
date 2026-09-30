@@ -166,7 +166,7 @@ namespace Game
             foreach (Texture2D texture in m_loadedTextures)
             {
                 try { texture?.Dispose(); }
-                catch (Exception ex) { Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsContentBuilder", "DisposePostDetailsTextureFailed"), ex.Message)); }
+                catch (Exception ex) { Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsContentBuilder", "DisposePostDetailsTextureFailed"), ex.Message)); }
             }
             m_loadedTextures.Clear();
             m_imageTextureCache.Clear();
@@ -357,7 +357,7 @@ namespace Game
         private void AddImageBlock(string url, string alt)
         {
             url = ResolveUrl(url);
-            alt = string.IsNullOrWhiteSpace(alt) ? LanguageControl.Get("ScbbsPlusPostDetailsContentBuilder", "Image") : alt.Trim();
+            alt = string.IsNullOrWhiteSpace(alt) ? LanguageControl.Get("PostDetailsContentBuilder", "Image") : alt.Trim();
 
             AddSpacer(m_contentPanel, 10f);
             CanvasWidget frame = new()
@@ -388,7 +388,7 @@ namespace Game
 
             LabelWidget status = new()
             {
-                Text = string.IsNullOrWhiteSpace(url) ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "FailedToLoad"), alt) : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "Loading"), alt),
+                Text = string.IsNullOrWhiteSpace(url) ? string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "FailedToLoad"), alt) : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "Loading"), alt),
                 HorizontalAlignment = WidgetAlignment.Center,
                 VerticalAlignment = WidgetAlignment.Center,
                 Color = new Color(170, 170, 170),
@@ -433,7 +433,7 @@ namespace Game
                     {
                         if (data.Length == 0)
                         {
-                            status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "FailedToLoad"), alt);
+                            status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "FailedToLoad"), alt);
                             return;
                         }
 
@@ -442,13 +442,13 @@ namespace Game
                         if (m_texturesReleased)
                         {
                             // 对话框已关闭：纹理不会被任何 UpdateCeases 释放，就地回收。
-                            try { texture.Dispose(); } catch (Exception disposeEx) { Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsContentBuilder", "DisposeLatePostDetailsTextureFailed"), disposeEx.Message)); }
+                            try { texture.Dispose(); } catch (Exception disposeEx) { Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsContentBuilder", "DisposeLatePostDetailsTextureFailed"), disposeEx.Message)); }
                             return;
                         }
                         if (m_imageTextureCache.TryGetValue(url, out Texture2D existingTexture))
                         {
                             // 重建期间并发下载了同一 URL：后到者就地释放，复用先到者。
-                            try { texture.Dispose(); } catch (Exception disposeEx) { Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsContentBuilder", "DisposeDuplicatePostDetailsTextureFailed"), disposeEx.Message)); }
+                            try { texture.Dispose(); } catch (Exception disposeEx) { Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsContentBuilder", "DisposeDuplicatePostDetailsTextureFailed"), disposeEx.Message)); }
                             texture = existingTexture;
                         }
                         else
@@ -460,8 +460,8 @@ namespace Game
                     }
                     catch (Exception ex)
                     {
-                        status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "FailedToLoad"), alt);
-                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsContentBuilder", "DecodePostDetailsImageFailed"), url, ex.Message));
+                        status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "FailedToLoad"), alt);
+                        Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsContentBuilder", "DecodePostDetailsImageFailed"), url, ex.Message));
                     }
                 });
             }
@@ -469,9 +469,9 @@ namespace Game
             {
                 Dispatcher.Dispatch(delegate
                 {
-                    status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "FailedToLoad"), alt);
+                    status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "FailedToLoad"), alt);
                 });
-                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsContentBuilder", "RequestPostDetailsImageFailed"), url, ex.Message));
+                Log.Information(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsContentBuilder", "RequestPostDetailsImageFailed"), url, ex.Message));
             }
         }
 
@@ -488,7 +488,7 @@ namespace Game
             {
                 if (texture == null || texture.Width <= 0 || texture.Height <= 0)
                 {
-                    status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "FailedToLoad"), alt);
+                    status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "FailedToLoad"), alt);
                     return;
                 }
                 Vector2 size = GetImageDisplaySize(texture);
@@ -501,8 +501,8 @@ namespace Game
             }
             catch (Exception ex)
             {
-                status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsDialog", "FailedToLoad"), alt);
-                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ScbbsPlusPostDetailsContentBuilder", "DecodePostDetailsImageFailed"), url, ex.Message));
+                status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "FailedToLoad"), alt);
+                Log.Warning(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsContentBuilder", "DecodePostDetailsImageFailed"), url, ex.Message));
             }
         }
 
