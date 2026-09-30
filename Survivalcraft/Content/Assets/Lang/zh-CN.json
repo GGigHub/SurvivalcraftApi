@@ -4311,7 +4311,8 @@
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "帖子详情",
       "Close": "关闭",
-      "Download": "下载"
+      "Download": "下载",
+      "ViewInBrowser": "浏览器中查看"
     },
     "ScbbsPlusRestartConfirmDialog": {
       "Restart": "重启",

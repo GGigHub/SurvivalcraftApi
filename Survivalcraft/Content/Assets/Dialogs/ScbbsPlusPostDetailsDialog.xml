@@ -9,8 +9,12 @@
         <StackPanelWidget Name="ScbbsPlusPostDetailsDialog.ContentPanel" Direction="Vertical" HorizontalAlignment="Stretch" />
       </StackPanelWidget>
     </ScrollPanelWidget>
-    <CanvasWidget Name="ScbbsPlusPostDetailsDialog.ActionsRow" Size="Infinity, 60" Margin="10, 0">
-      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.PrimaryButton" Text="[ScbbsPlusPostDetailsDialog:Download]" Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Far" VerticalAlignment="Center" />
-    </CanvasWidget>
+    <StackPanelWidget Name="ScbbsPlusPostDetailsDialog.ActionsRow" HorizontalAlignment="Center">
+      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.ViewInBrowserButton" Text="[ScbbsPlusPostDetailsDialog:ViewInBrowser]" Style="{Styles/ButtonStyle_205x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.PrimaryButton" Text="[ScbbsPlusPostDetailsDialog:Download]" Style="{Styles/ButtonStyle_160x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="ScbbsPlusPostDetailsDialog.CloseButton" Text="[ScbbsPlusPostDetailsDialog:Close]" Style="{Styles/ButtonStyle_160x60}" />
+    </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

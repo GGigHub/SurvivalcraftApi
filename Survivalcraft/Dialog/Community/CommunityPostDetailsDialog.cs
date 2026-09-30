@@ -13,11 +13,14 @@ namespace Game
         private readonly Widget m_actionsRow;
         private readonly StackPanelWidget m_contentPanel;
         private readonly StackPanelWidget m_headerPanel;
+        private readonly ButtonWidget m_viewInBrowserButton;
         private readonly ButtonWidget m_primaryButton;
+        private readonly ButtonWidget m_closeButton;
         private readonly LabelWidget m_titleLabel;
         private readonly LabelWidget m_translateStatusLabel;
         private readonly Action m_primaryAction;
         private readonly string m_baseUrl;
+        private readonly string m_postUrl;
         // content 区只放服务端来源内容（HTML 或纯文本二选一）；header 区放本地结构化数据，
         // 不参与自动翻译——翻译只发送 m_contentHtml，重建时 header 原地不动。
         private readonly string m_contentHtml;
@@ -36,10 +39,12 @@ namespace Game
             Action primaryAction = null,
             bool enableAutoTranslate = false,
             Action<StackPanelWidget> buildHeader = null,
-            string contentPlainText = null)
+            string contentPlainText = null,
+            int postId = 0)
         {
             m_baseUrl = baseUrl;
             m_primaryAction = primaryAction;
+            m_postUrl = BuildPostWebUrl(CommunityServerManager.CurrentChineseInfo.WebsiteUrl, postId);
             m_contentHtml = html ?? string.Empty;
             m_contentPlainText = contentPlainText;
             XElement node = ContentManager.Get<XElement>("Dialogs/ScbbsPlusPostDetailsDialog");
@@ -50,13 +55,17 @@ namespace Game
             m_contentPanel = Children.Find<StackPanelWidget>("ScbbsPlusPostDetailsDialog.ContentPanel");
             m_headerPanel = Children.Find<StackPanelWidget>("ScbbsPlusPostDetailsDialog.HeaderPanel");
             m_actionsRow = Children.Find<Widget>("ScbbsPlusPostDetailsDialog.ActionsRow");
+            m_viewInBrowserButton = Children.Find<ButtonWidget>("ScbbsPlusPostDetailsDialog.ViewInBrowserButton");
             m_primaryButton = Children.Find<ButtonWidget>("ScbbsPlusPostDetailsDialog.PrimaryButton");
+            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusPostDetailsDialog.CloseButton");
             m_translateStatusLabel = Children.Find<LabelWidget>("ScbbsPlusPostDetailsDialog.TranslateStatus");
             m_contentBuilder = new PostDetailsContentBuilder(m_contentPanel, m_baseUrl);
 
             bool hasPrimaryAction = !string.IsNullOrWhiteSpace(primaryButtonText) && primaryAction != null;
-            m_actionsRow.IsVisible = hasPrimaryAction;
+            // 行内含关闭按钮，恒可见；主按钮/浏览器按钮按有无动作与链接各自显隐。
+            m_actionsRow.IsVisible = true;
             m_primaryButton.IsVisible = hasPrimaryAction;
+            m_viewInBrowserButton.IsVisible = !string.IsNullOrWhiteSpace(m_postUrl);
             if (hasPrimaryAction)
             {
                 m_primaryButton.Text = primaryButtonText;
@@ -79,10 +88,16 @@ namespace Game
         {
             if (Input.Back
                 || Input.Cancel
+                || m_closeButton.IsClicked
                 || (Input.Tap.HasValue && !HitTest(Input.Tap.Value)))
             {
                 DialogsManager.HideDialog(this);
                 return;
+            }
+
+            if (m_viewInBrowserButton.IsClicked)
+            {
+                WebBrowserManager.LaunchBrowser(m_postUrl);
             }
 
             if (m_primaryButton.IsClicked)
@@ -210,6 +225,21 @@ namespace Game
         private string GetTranslateUrl()
         {
             return Uri.TryCreate(m_baseUrl, UriKind.Absolute, out Uri baseUri) ? $"{baseUri.AbsoluteUri.TrimEnd('/')}/translate" : null;
+        }
+
+        /// <summary>
+        /// 帖子网页链接：服务器网站根 + /#/postDetails/{postId}（形如 https://test.suancaixianyu.cn/#/postDetails/1059）。
+        /// postId 无效或 WebsiteUrl 缺失/非 HTTP(S) 时返回 null，调用方隐藏"浏览器中查看"按钮。
+        /// </summary>
+        public static string BuildPostWebUrl(string websiteUrl, int postId)
+        {
+            if (postId <= 0
+                || !Uri.TryCreate(websiteUrl, UriKind.Absolute, out Uri uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                return null;
+            }
+            return $"{uri.Scheme}://{uri.Authority}/#/postDetails/{postId}";
         }
 
         private static async Task<AutoTranslateResult> TranslateDialogAsync(

@@ -4301,7 +4301,8 @@
     "ScbbsPlusPostDetailsDialog": {
       "PostDetails": "Post Details",
       "Close": "Close",
-      "Download": "Download"
+      "Download": "Download",
+      "ViewInBrowser": "View In Browser"
     },
     "ScbbsPlusRestartConfirmDialog": {
       "Restart": "Restart",
