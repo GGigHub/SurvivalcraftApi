@@ -53,7 +53,7 @@
     "1": "内部存储"
   },
   "CommunityMyPublishedScreen": {
-    "LoadMyPublishedFailed": "[ScbbsPlus] 加载我发布的帖子失败: {0}",
+    "LoadMyPublishedFailed": "加载我发布的帖子失败: {0}",
     "LoadingFormat": "{0} · 正在加载...",
     "MyPublishedFormat": "已发布的{0}",
     "MyUnpublishedFormat": "未发布的{0}",
@@ -4301,8 +4301,6 @@
       "DownloadQueue": "下载队列",
       "DownloadQueueDescription": "查看正在等待、暂停或失败的下载任务",
       "View": "查看",
-      "ModUpdate": "ScbbsPlus 更新",
-      "ModUpdateDescription": "检查 ScbbsPlus 在代码仓库中的可用更新",
       "CheckUpdate": "检查更新",
       "ModSettings": "模组设置",
       "ModSettingsDescription": "打开游戏原生模组设置",
@@ -4319,8 +4317,7 @@
       "MyPublished": "我发布的",
       "MyPublishedDescription": "查看已发布到中文社区的资源",
       "PostDetailsAutoTranslate": "帖子详情自动翻译",
-      "PostDetailsAutoTranslateDescription": "进入帖子或版本详情时，自动翻译为当前系统语言",
-      "More": "更多 ScbbsPlus"
+      "PostDetailsAutoTranslateDescription": "进入帖子或版本详情时，自动翻译为当前系统语言"
     },
     "PostDetailsDialog": {
       "PostDetails": "帖子详情",
@@ -4953,15 +4950,15 @@
     "DuplicateName": "名称不能为空或与现有下载源重名。"
   },
   "JsonFileStore": {
-    "ReadJsonFileFailedUsingDefault": "[ScbbsPlus] 读取 JSON 文件失败，回退默认值: {0}, error={1}",
-    "CleanJsonTempFileFailed": "[ScbbsPlus] 清理 JSON 临时文件失败: {0}, {1}",
-    "ScanJsonTempFilesFailed": "[ScbbsPlus] 扫描 JSON 残留临时文件失败 root={0} error={1}",
-    "RestoredJsonTempFile": "[ScbbsPlus] 已从残留 JSON 临时文件恢复: {0} → {1}",
-    "RestoreJsonTempFileFailed": "[ScbbsPlus] 从残留 JSON 临时文件恢复失败: {0}, {1}"
+    "ReadJsonFileFailedUsingDefault": "读取 JSON 文件失败，回退默认值: {0}, error={1}",
+    "CleanJsonTempFileFailed": "清理 JSON 临时文件失败: {0}, {1}",
+    "ScanJsonTempFilesFailed": "扫描 JSON 残留临时文件失败 root={0} error={1}",
+    "RestoredJsonTempFile": "已从残留 JSON 临时文件恢复: {0} → {1}",
+    "RestoreJsonTempFileFailed": "从残留 JSON 临时文件恢复失败: {0}, {1}"
   },
   "LocalMods": {
-    "AutoUpdateScanFailed": "[ScbbsPlus] 本地模组自动更新扫描失败: {0}",
-    "PublishedCheckTaskFaulted": "[ScbbsPlus] 已发布检查任务异常: {0}"
+    "AutoUpdateScanFailed": "本地模组自动更新扫描失败: {0}",
+    "PublishedCheckTaskFaulted": "已发布检查任务异常: {0}"
   },
   "ModReviewDialog": {
     "ReviewLocalResource": "评价本地资源",
@@ -4986,7 +4983,7 @@
     "UnnamedFile": "未命名文件"
   },
   "LocalModNetworkManager": {
-    "AutoUpdateCheckFailed": "[ScbbsPlus] 本地模组自动检查更新失败: {0}, error={1}",
+    "AutoUpdateCheckFailed": "本地模组自动检查更新失败: {0}, error={1}",
     "NoModVersionForCurrentGame": "帖子中没有适配当前版本的模组版本。",
     "VersionListIsEmpty": "版本列表为空。",
     "CannotFindPublishedPostByFileName": "无法通过文件名找到已发布帖子：{0}",
@@ -4998,9 +4995,8 @@
     "FindPostByFileNameMalformed": "按文件名查找帖子返回异常: {0}"
   },
   "CommunityScreen": {
-    "DefaultFiltersSaved": "[ScbbsPlus] 已保存默认筛选: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
-    "LoadFeaturedFailed": "[ScbbsPlus] 加载推荐资源失败: {0}",
-    "LoadCommunityPostsFailed": "[ScbbsPlus] 加载社区帖子失败: {0}",
+    "LoadFeaturedFailed": "加载推荐资源失败: {0}",
+    "LoadCommunityPostsFailed": "加载社区帖子失败: {0}",
     "CurrentVersion": "当前版本",
     "LoadingFormat": "{0} · 正在加载...",
     "CommunityFormat": "社区{0}",
@@ -5015,16 +5011,16 @@
     "FailedToLoadPostDetails": "获取帖子详情失败：{0}"
   },
   "HttpDownloader": {
-    "ReadCacheFileSizeFailed": "[ScbbsPlus] 读取缓存文件大小失败: {0}, {1}",
-    "GetCacheFileSizeFailed": "[ScbbsPlus] 获取缓存文件大小失败: {0}, {1}"
+    "ReadCacheFileSizeFailed": "读取缓存文件大小失败: {0}, {1}",
+    "GetCacheFileSizeFailed": "获取缓存文件大小失败: {0}, {1}"
   },
   "CredentialStore": {
-    "DecryptCredentialFileFailed": "[ScbbsPlus] 解密凭据文件失败，作废该文件: {0}",
-    "DeleteCredentialFileFailed": "[ScbbsPlus] 删除凭据文件失败: {0}, {1}"
+    "DecryptCredentialFileFailed": "解密凭据文件失败，作废该文件: {0}",
+    "DeleteCredentialFileFailed": "删除凭据文件失败: {0}, {1}"
   },
   "TaskSlot": {
-    "TaskFaultConsumedAsNoResult": "[ScbbsPlus] {0}任务异常已按无结果消费: {1}",
-    "StaleTaskFault": "[ScbbsPlus] 已失效的{0}任务异常: {1}",
+    "TaskFaultConsumedAsNoResult": "[{0}]任务异常已按无结果消费: {1}",
+    "StaleTaskFault": "已失效的[{0}]任务异常: {1}",
     "PostsList": "帖子列表",
     "PostNodeDetails": "帖子节点详情",
     "UpdateCheck": "更新检查",
@@ -5044,7 +5040,7 @@
     "DownloadExceedsSizeLimit": "下载内容超过大小上限（{0} 字节）。"
   },
   "CommunityManager": {
-    "HighlightDataLoadFailed": "[ScbbsPlus] 高亮数据加载失败: {0}",
+    "HighlightDataLoadFailed": "高亮数据加载失败: {0}",
     "ScoreApiReturnedEmpty": "评分接口返回为空",
     "ScoreApiReturnedMalformed": "评分接口返回异常",
     "NoStats": "暂无统计数据。",
@@ -5053,24 +5049,24 @@
     "DownloadTrendsResponseMalformed": "下载趋势接口返回异常: {0}"
   },
   "VersionCatalogCache": {
-    "NoApiVersionSkippingPluginMatch": "[ScbbsPlus] 当前未提供 API 版本，跳过 plugin 版本匹配。game={0}",
-    "NoMatchingPluginVersion": "[ScbbsPlus] 未找到匹配的 plugin 版本: game={0}, api={1}",
-    "VersionMatchSucceeded": "[ScbbsPlus] 版本匹配成功: game={0}, api={1}, matchedId={2}, matchedVersion={3}, matchedName={4}"
+    "NoApiVersionSkippingApiMatch": "当前未提供 API 版本，跳过 API 版本匹配。game={0}",
+    "NoMatchingApiVersion": "未找到匹配的 API 版本: game={0}, api={1}",
+    "VersionMatchSucceeded": "版本匹配成功: game={0}, api={1}, matchedId={2}, matchedVersion={3}, matchedName={4}"
   },
   "LocalModReviewState": {
-    "ReadReviewsFailed": "[ScbbsPlus] 读取本地资源评价失败: {0}",
-    "SaveReviewsFailed": "[ScbbsPlus] 保存本地资源评价失败: {0}"
+    "ReadReviewsFailed": "读取本地资源评价失败: {0}",
+    "SaveReviewsFailed": "保存本地资源评价失败: {0}"
   },
   "PendingLocalModActions": {
-    "ProcessedPendingModAction": "[ScbbsPlus] 已处理待关闭模组操作: reason={0}, action={1}, path={2}",
-    "ProcessPendingModActionFailed": "[ScbbsPlus] 处理待关闭模组操作失败: reason={0}, action={1}, path={2}, error={3}",
-    "ReadPendingModManifestFailed": "[ScbbsPlus] 读取待关闭模组清单失败: {0}",
-    "SavePendingModManifestFailed": "[ScbbsPlus] 保存待关闭模组清单失败: {0}",
+    "ProcessedPendingModAction": "已处理待关闭模组操作: reason={0}, action={1}, path={2}",
+    "ProcessPendingModActionFailed": "处理待关闭模组操作失败: reason={0}, action={1}, path={2}, error={3}",
+    "ReadPendingModManifestFailed": "读取待关闭模组清单失败: {0}",
+    "SavePendingModManifestFailed": "保存待关闭模组清单失败: {0}",
     "MissingModPackageNameOrVersion": "缺少模组包名或版本，无法更新禁用状态。"
   },
   "DownloadQueueManager": {
-    "LoadDownloadQueueFailed": "[ScbbsPlus] 加载下载队列失败: {0}",
-    "RestoreQueueItemFailed": "[ScbbsPlus] 恢复下载队列单项失败: {0}"
+    "LoadDownloadQueueFailed": "加载下载队列失败: {0}",
+    "RestoreQueueItemFailed": "恢复下载队列单项失败: {0}"
   },
   "DownloadQueueDialog": {
     "SelectedTask": "当前选择：任务 {0} - {1}",
@@ -5084,20 +5080,19 @@
     "SelectionHint": "点击任务即可选择，未选择时按钮会自动匹配任务。"
   },
   "DownloadQueuePersistence": {
-    "CleanImportedItemCacheFailed": "[ScbbsPlus] 清理已导入项的下载缓存失败: {0}, {1}"
+    "CleanImportedItemCacheFailed": "清理已导入项的下载缓存失败: {0}, {1}"
   },
   "DownloadFeedbackClient": {
-    "MissingFeedbackIdsSkipped": "[ScbbsPlus] 下载反馈缺少 fileId/postId，已跳过记录。",
-    "RecordDownloadFeedbackFailed": "[ScbbsPlus] 下载反馈记录失败: {0}: {1}",
-    "DownloadFeedbackRecorded": "[ScbbsPlus] 下载反馈已记录, postId={0}, fileId={1}",
-    "RecordDownloadFeedbackFaulted": "[ScbbsPlus] 下载反馈记录异常: {0}",
-    "FeedbackAuthRefreshFailedReportingAnonymously": "[ScbbsPlus] 反馈上报补取登录态失败，按匿名上报: {0}"
+    "MissingFeedbackIdsSkipped": "下载反馈缺少 fileId/postId，已跳过记录。",
+    "RecordDownloadFeedbackFailed": "下载反馈记录失败: {0}: {1}",
+    "RecordDownloadFeedbackFaulted": "下载反馈记录异常: {0}",
+    "FeedbackAuthRefreshFailedReportingAnonymously": "反馈上报补取登录态失败，按匿名上报: {0}"
   },
   "AuthClient": {
-    "LoginRequestFailed": "[ScbbsPlus] 登录请求失败: {0}",
-    "LoginResponseMalformed": "[ScbbsPlus] 登录响应格式异常: {0}",
-    "LogoutRequestCompleted": "[ScbbsPlus] 登出请求完成 ({0})",
-    "LogoutRequestFailed": "[ScbbsPlus] 登出请求失败: {0}"
+    "LoginRequestFailed": "登录请求失败: {0}",
+    "LoginResponseMalformed": "登录响应格式异常: {0}",
+    "LogoutRequestCompleted": "登出请求完成 ({0})",
+    "LogoutRequestFailed": "登出请求失败: {0}"
   },
   "LoginDialog": {
     "LoggingIn": "登录中...",
@@ -5126,22 +5121,15 @@
     "ImportDataIsEmpty": "导入数据为空。",
     "CannotOverwriteBuiltInTexture": "不能覆盖内置材质：{0}",
     "CannotOverwriteBuiltInSkin": "不能覆盖内置皮肤：{0}",
-    "ShowConflictDialogFailed": "[ScbbsPlus] 显示冲突对话框失败: {0}",
-    "RemoteImportPrepareTaskFaulted": "[ScbbsPlus] 远程导入准备任务异常: {0}",
-    "RemoteImportTaskFaulted": "[ScbbsPlus] 远程导入任务异常: {0}",
-    "RemoteImportCompletionFaulted": "[ScbbsPlus] 远程导入完成处理异常: {0}",
-    "StartModpackImport": "[ScbbsPlus] 开始导入整合包 url={0} fileName={1}",
-    "DownloadModpackPackage": "[ScbbsPlus] 下载整合包{0} url={1}",
-    "ModpackPackageDownloadCompleted": "[ScbbsPlus] 整合包{0}下载完成 长度={1}",
-    "ModpackManifestEmptyOrInvalid": "[ScbbsPlus] 整合包清单为空或格式无效 url={0}",
-    "ModpackSummary": "[ScbbsPlus] 整合包 name={0} pkg={1} ver={2} items={3}",
-    "ModpackItemDetails": "[ScbbsPlus]   #{0} targetDirectory={1} file={2} url={3} fileId={4} legacyCategory={5} legacyTarget={6}",
-    "ModpackManifestDownloadFailed": "[ScbbsPlus] 整合包清单下载失败 url={0} error={1}",
-    "UserConfirmedModpackImport": "[ScbbsPlus] 用户确认开始导入整合包 total={0}",
-    "StartProcessingModpackItemsWithTotal": "[ScbbsPlus] 开始处理整合包子项 total={0}",
-    "ModpackProcessingCompleted": "[ScbbsPlus] 整合包处理完成 success={0} failed={1}",
-    "ModpackImportFailed": "[ScbbsPlus] 整合包导入失败 error={0}",
-    "SaveModpackManifestFailed": "[ScbbsPlus] 保存整合包清单失败: {0}",
+    "ShowConflictDialogFailed": "显示冲突对话框失败: {0}",
+    "RemoteImportPrepareTaskFaulted": "远程导入准备任务异常: {0}",
+    "RemoteImportTaskFaulted": "远程导入任务异常: {0}",
+    "RemoteImportCompletionFaulted": "远程导入完成处理异常: {0}",
+    "StartModpackImport": "开始导入整合包 url={0} fileName={1}",
+    "ModpackManifestEmptyOrInvalid": "整合包清单为空或格式无效 url={0}",
+    "ModpackManifestDownloadFailed": "整合包清单下载失败 url={0} error={1}",
+    "ModpackImportFailed": "整合包导入失败 error={0}",
+    "SaveModpackManifestFailed": "保存整合包清单失败: {0}",
     "SaveArchiveFailed": "保存整合包归档失败: {0}",
     "DownloadInterruptedManifestKept": "已中断资源下载，仅保留 JSON 整合包清单。",
     "ImportOrDownloadBusy": "当前已有导入或下载任务，请等待完成。",
@@ -5162,10 +5150,7 @@
     "DownloadPackFailure": "整合包下载失败：成功 {0} 项，失败 {1} 项。"
   },
   "ModpackSourceResolver": {
-    "ModpackItemUsesNetworkUrl": "[ScbbsPlus] 整合包子项使用网络 url={0}",
-    "ModpackItemUrlDownloadFailedFallingBackToFileId": "[ScbbsPlus] 整合包子项 url 下载失败，切换 fileId={0}: {1}",
-    "ModpackItemUsesZipEntry": "[ScbbsPlus] 整合包子项使用 ZIP 内文件 path={0}",
-    "ModpackItemUrlMissingResolvingByFileId": "[ScbbsPlus] 整合包中未取得子项 url={0}，通过 fileId={1} 获取下载链接",
+    "ModpackItemUrlDownloadFailedFallingBackToFileId": "整合包子项 url 下载失败，切换 fileId={0}: {1}",
     "FileIdReturnedNoDownloadLink": "文件ID {0} 未返回有效下载链接。",
     "GetFileInfoByFileIdFailed": "通过文件ID获取文件信息失败: {0}: {1}",
     "GetFileInfoByFileIdMalformed": "通过文件ID获取文件信息返回异常: {0}"
@@ -5186,10 +5171,10 @@
     "ManifestHasNoValidItems": "整合包清单未读取到有效 items。"
   },
   "ModpackRegistry": {
-    "ModpackRecordCorrupted": "[ScbbsPlus] 整合包记录已损坏: {0}，{1}",
-    "ReadModpackRecordFailed": "[ScbbsPlus] 读取整合包记录失败 path={0} error={1}",
-    "CompareModpackSourceFailed": "[ScbbsPlus] 比对整合包来源失败: path={0}, error={1}",
-    "ReadModpackRecordMetadataFailed": "[ScbbsPlus] 读取整合包记录元数据失败: path={0}, error={1}",
+    "ModpackRecordCorrupted": "整合包记录已损坏: {0}，{1}",
+    "ReadModpackRecordFailed": "读取整合包记录失败 path={0} error={1}",
+    "CompareModpackSourceFailed": "比对整合包来源失败: path={0}, error={1}",
+    "ReadModpackRecordMetadataFailed": "读取整合包记录元数据失败: path={0}, error={1}",
     "NoValidItemsRead": "未读取到有效 items。",
     "DownloadedZipPackIsEmpty": "下载到的 ZIP 整合包为空。"
   },
@@ -5198,12 +5183,12 @@
     "IdenticalFileChooseAction": "本地已存在一模一样的文件名：{0}\n请选择如何处理。"
   },
   "Modpacks": {
-    "ReadModpackEnabledStateFailed": "[ScbbsPlus] 读取整合包启用状态失败: {0}",
-    "LoadModpackFileInfoFailed": "[ScbbsPlus] 加载整合包文件信息失败: {0}",
-    "GetModpackFileInfoFailed": "[ScbbsPlus] 获取整合包文件信息失败 fileId={0}: {1}",
-    "UserIgnoredUnavailableModpackResources": "[ScbbsPlus] 用户忽略最终无法获取的整合包资源并继续启动 failed={0}",
-    "SaveModpackEnabledStateFailed": "[ScbbsPlus] 保存整合包启用状态失败: {0}",
-    "ClearModpackEnabledStateFailed": "[ScbbsPlus] 清除整合包启用状态失败: {0}"
+    "ReadModpackEnabledStateFailed": "读取整合包启用状态失败: {0}",
+    "LoadModpackFileInfoFailed": "加载整合包文件信息失败: {0}",
+    "GetModpackFileInfoFailed": "获取整合包文件信息失败 fileId={0}: {1}",
+    "UserIgnoredUnavailableModpackResources": "忽略最终无法获取的整合包资源并继续启动 failed={0}",
+    "SaveModpackEnabledStateFailed": "保存整合包启用状态失败: {0}",
+    "ClearModpackEnabledStateFailed": "清除整合包启用状态失败: {0}"
   },
   "ModpackRules": {
     "PackItemIsEmpty": "整合包项目为空。",
@@ -5219,10 +5204,10 @@
     "VersionMismatchSkipped": "{0}：模组版本不匹配（期望 {1}，实际 {2}），已跳过。"
   },
   "ModpackDataFiles": {
-    "DeleteModpackBackupFailed": "[ScbbsPlus] 恢复成功后删除整合包备份失败（保留待下次清理）: {0}: {1}",
-    "CleanModpackCustomTempFileFailed": "[ScbbsPlus] 清理整合包自定义文件临时文件失败 temp={0} error={1}",
-    "SaveModpackCustomConfigFailed": "[ScbbsPlus] 保存整合包自定义配置失败 target={0} persisted={1} error={2}",
-    "RestoreModpackCustomFileFailed": "[ScbbsPlus] 恢复整合包自定义文件失败 target={0} backup={1} error={2}",
+    "DeleteModpackBackupFailed": "恢复成功后删除整合包备份失败（保留待下次清理）: {0}: {1}",
+    "CleanModpackCustomTempFileFailed": "清理整合包自定义文件临时文件失败 temp={0} error={1}",
+    "SaveModpackCustomConfigFailed": "保存整合包自定义配置失败 target={0} persisted={1} error={2}",
+    "RestoreModpackCustomFileFailed": "恢复整合包自定义文件失败 target={0} backup={1} error={2}",
     "DataFileHasNoTargetPathSpecified": "{0}：数据文件未指定目标路径。",
     "DataFileHasNoTargetPathSpecifiedPlain": "数据文件未指定目标路径。",
     "CustomFileUrlHasNoFileName": "自定义文件的 url 中未包含有效文件名。",
@@ -5230,28 +5215,26 @@
     "BackupFileDoesNotExist": "备份文件不存在：{0}"
   },
   "ModpackManifestLoadManager": {
-    "ReadModpackListFailed": "[ScbbsPlus] 读取整合包列表失败: {0}",
-    "StaleModpackListTaskFailed": "[ScbbsPlus] 已失效的整合包列表读取任务失败: {0}"
+    "ReadModpackListFailed": "读取整合包列表失败: {0}",
+    "StaleModpackListTaskFailed": "已失效的整合包列表读取任务失败: {0}"
   },
   "TransactionalFileReplacement": {
-    "ScanResidualBackupsFailed": "[ScbbsPlus] 扫描更新残留备份失败 root={0} error={1}",
-    "CleanResidualBackup": "[ScbbsPlus] 清理更新残留备份 backup={0}",
-    "RollbackResidualBackup": "[ScbbsPlus] 回滚更新残留备份 backup={0} original={1}",
-    "ProcessResidualBackupFailed": "[ScbbsPlus] 处理更新残留备份失败 backup={0} error={1}",
-    "ScanResidualBackupSubdirectoryFailed": "[ScbbsPlus] 扫描更新残留备份子目录失败 dir={0} error={1}",
-    "CleanModUpdateBackupFailed": "[ScbbsPlus] 清理模组更新备份失败: {0}",
-    "CleanIncompleteModUpdateFileFailed": "[ScbbsPlus] 清理未完成的模组更新文件失败: {0}",
-    "RestoreModUpdateBackupFailed": "[ScbbsPlus] 还原模组更新备份失败: {0}",
-    "CleanOverwriteBackupFailed": "[ScbbsPlus] 清理覆盖前备份失败: {0}",
-    "RestoreOverwriteBackupFailed": "[ScbbsPlus] 还原覆盖前备份失败: {0}",
-    "StartupRollbackResidualBackupFailed": "[ScbbsPlus] 启动回滚更新残留备份失败: {0}"
+    "ScanResidualBackupsFailed": "扫描更新残留备份失败 root={0} error={1}",
+    "CleanResidualBackup": "清理更新残留备份 backup={0}",
+    "RollbackResidualBackup": "回滚更新残留备份 backup={0} original={1}",
+    "ProcessResidualBackupFailed": "处理更新残留备份失败 backup={0} error={1}",
+    "ScanResidualBackupSubdirectoryFailed": "扫描更新残留备份子目录失败 dir={0} error={1}",
+    "CleanModUpdateBackupFailed": "清理模组更新备份失败: {0}",
+    "CleanIncompleteModUpdateFileFailed": "清理未完成的模组更新文件失败: {0}",
+    "RestoreModUpdateBackupFailed": "还原模组更新备份失败: {0}",
+    "CleanOverwriteBackupFailed": "清理覆盖前备份失败: {0}",
+    "RestoreOverwriteBackupFailed": "还原覆盖前备份失败: {0}",
+    "StartupRollbackResidualBackupFailed": "启动回滚更新残留备份失败: {0}"
   },
   "PlayedTimeTracker": {
-    "StartedTrackingModPlayedTime": "[ScbbsPlus] 已开始记录模组游玩时间: {0} 个模组",
-    "StartedTrackingScreenPlayedTime": "[ScbbsPlus] 已开始记录 ScbbsPlus 页面游玩时间。",
-    "ReadModPlayedTimeFailed": "[ScbbsPlus] 读取模组游玩时间失败: {0}",
-    "SaveModPlayedTimeFailed": "[ScbbsPlus] 保存模组游玩时间失败: {0}",
-    "PlayedTimeReportingDisabledSkipping": "[ScbbsPlus] 游玩时间上报已关闭，跳过本次上报",
+    "ReadModPlayedTimeFailed": "读取模组游玩时间失败: {0}",
+    "SaveModPlayedTimeFailed": "保存模组游玩时间失败: {0}",
+    "PlayedTimeReportingDisabledSkipping": "游玩时间上报已关闭，跳过本次上报",
     "SecondsFormat": "{0}秒",
     "MinutesFormat": "{0}分钟",
     "HoursMinutesFormat": "{0}小时{1}分钟",
@@ -5265,25 +5248,19 @@
     "PendingReportsDequeued": "已从待上报队列移除 {0} 条成功记录",
     "PendingReportsRemaining": "仍有 {0} 条待上报记录，将在下次启动或产生新记录时重试",
     "PendingReportsSaveFailed": "保存待上报游玩时长失败: {0}",
-    "PendingReportsLoopFaulted": "游玩时长待上报循环异常: {0}",
-    "ModEntityNotFound": "[ScbbsPlus] 未找到 ScbbsPlus 模组实体，无法记录自身游玩时间。"
+    "PendingReportsLoopFaulted": "游玩时长待上报循环异常: {0}"
   },
   "AuthSessionManager": {
-    "CreateLoginRequestFailed": "[ScbbsPlus] 创建登录请求失败: {0}",
-    "LoginRequestFaulted": "[ScbbsPlus] 登录请求异常: {0}",
-    "AuthSessionPollFaulted": "[ScbbsPlus] 认证会话轮询异常: {0}",
-    "LoginSucceeded": "[ScbbsPlus] 登录成功 - 用户: {0} (Lv.{1})",
-    "LoginFailed": "[ScbbsPlus] 登录失败: {0}",
-    "LoginStateRestoredFromLocal": "[ScbbsPlus] 从本地恢复登录状态 - 用户: {0}",
-    "LegacyCredentialsMigratedToDpapi": "[ScbbsPlus] 已将旧凭据迁移为 Windows DPAPI 格式",
-    "ClearedUnreadableCredentials": "[ScbbsPlus] {0} 已清除无法读取的凭据",
-    "CredentialDecryptionFailedClearedOld": "[ScbbsPlus] 凭据解密失败，已清除旧凭据",
-    "LoadCredentialsFailed": "[ScbbsPlus] 加载凭据失败: {0}",
-    "LoginCredentialsSavedEncrypted": "[ScbbsPlus] 登录凭据已加密保存到 {0}",
-    "SaveCredentialsFailed": "[ScbbsPlus] 保存凭据失败: {0}",
-    "LocalCredentialFileDeleted": "[ScbbsPlus] 已删除本地凭据文件",
-    "DeleteCredentialFileFailed": "[ScbbsPlus] 删除凭据文件失败: {0}",
-    "TokenInvalidatedClearingLocalState": "[ScbbsPlus] 检测到 token 失效（401/403），清除本地登录态",
+    "CreateLoginRequestFailed": "创建登录请求失败: {0}",
+    "LoginRequestFaulted": "登录请求异常: {0}",
+    "AuthSessionPollFaulted": "认证会话轮询异常: {0}",
+    "LoginFailed": "登录失败: {0}",
+    "ClearedUnreadableCredentials": "{0} 已清除无法读取的社区登录凭据",
+    "CredentialDecryptionFailedClearedOld": "社区登录凭据解密失败，已清除旧凭据",
+    "LoadCredentialsFailed": "加载社区登录凭据失败: {0}",
+    "SaveCredentialsFailed": "保存社区登录凭据失败: {0}",
+    "DeleteCredentialFileFailed": "删除社区登录凭据文件失败: {0}",
+    "TokenInvalidatedClearingLocalState": "检测到 token 失效（401/403），清除本地登录态",
     "LogOut": "确认登出",
     "LogOutOfTheCurrentCommunityAccount": "确定要退出当前社区账号吗？",
     "PleaseEnterAccountAndPassword": "请输入账号和密码",
@@ -5304,22 +5281,17 @@
     "UnknownError": "未知错误"
   },
   "DownloadFlowManager": {
-    "StartModpackDownload": "[ScbbsPlus] 开始下载整合包 url={0} file={1}",
-    "DownloadModpackManifest": "[ScbbsPlus] 下载整合包清单 url={0}",
-    "ModpackManifestDownloadCompleted": "[ScbbsPlus] 整合包清单下载完成 长度={0}",
-    "UserConfirmedModpackDownload": "[ScbbsPlus] 用户确认开始下载整合包 total={0}",
-    "StartProcessingModpackItems": "[ScbbsPlus] 开始处理整合包子项",
-    "ModpackProcessingFaulted": "[ScbbsPlus] 整合包处理异常: {0}",
-    "BackgroundTaskFailed": "[ScbbsPlus] 后台任务失败: {0}, downloadFailed={1}, error={2}",
-    "DownloadQueueRestored": "[ScbbsPlus] 已恢复下载队列: {0} 项",
+    "ModpackProcessingFaulted": "整合包处理异常: {0}",
+    "BackgroundTaskFailed": "后台任务失败: {0}, downloadFailed={1}, error={2}",
+    "DownloadQueueRestored": "已恢复下载队列: {0} 项",
     "OldVersionDisabledPendingRestart": "已禁用旧版本 {0}，新下载的版本将在重启后生效",
-    "SaveDownloadQueueFailed": "[ScbbsPlus] 保存下载队列失败: {0}",
-    "CleanDownloadTempFileFailed": "[ScbbsPlus] 清理下载临时文件失败: {0}",
-    "DownloadTaskFaulted": "[ScbbsPlus] 下载任务异常: {0}",
-    "DownloadFlowPollFaulted": "[ScbbsPlus] 下载收尾轮询异常: {0}",
-    "BackgroundManifestLoadTaskFaulted": "[ScbbsPlus] 后台加载整合包清单任务异常: {0}",
-    "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] 后台整合包子项下载任务异常: {0}",
-    "ImportCompletedCallbackFaulted": "[ScbbsPlus] 导入完成回调异常（导入本身已成功）: {0}",
+    "SaveDownloadQueueFailed": "保存下载队列失败: {0}",
+    "CleanDownloadTempFileFailed": "清理下载临时文件失败: {0}",
+    "DownloadTaskFaulted": "下载任务异常: {0}",
+    "DownloadFlowPollFaulted": "下载收尾轮询异常: {0}",
+    "BackgroundManifestLoadTaskFaulted": "后台加载整合包清单任务异常: {0}",
+    "BackgroundItemDownloadTaskFaulted": "后台整合包子项下载任务异常: {0}",
+    "ImportCompletedCallbackFaulted": "导入完成回调异常（导入本身已成功）: {0}",
     "Failed": "失败",
     "SkippedLocalDuplicates": "，另有 {0} 项因本地已有同名内容而跳过。",
     "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
@@ -5388,8 +5360,7 @@
   "ModUpdateImporter": {
     "CannotConfirmCurrentPackageName": "无法确认当前模组包名，已取消更新。",
     "UpdatePackageInvalidOrCorrupted": "下载的更新包无效或已损坏，已取消更新。",
-    "UpdatePackagePackageNameMismatch": "下载的更新包不是当前模组：{0}。",
-    "UpdatePackageIsNotCommunityMod": "下载的更新包不是 ScbbsPlus 模组。"
+    "UpdatePackagePackageNameMismatch": "下载的更新包不是当前模组：{0}。"
   },
   "CommunityUploadClient": {
     "FileServerReturnedNoLink": "文件服务器未返回链接: {0}",
@@ -5417,7 +5388,7 @@
     "Saved": "已保存"
   },
   "GameUploadFileProvider": {
-    "CleanUploadTempFileFailed": "[ScbbsPlus] 清理上传临时文件失败: {0}, {1}",
+    "CleanUploadTempFileFailed": "清理上传临时文件失败: {0}, {1}",
     "CannotFindLocalResourcePath": "无法找到本地资源文件路径。",
     "LocalFileDoesNotExistFormat": "本地文件不存在：{0}",
     "NoLocalResourceSelected": "未选择本地资源。",
@@ -5452,16 +5423,15 @@
     "UnknownAccount": "未知账号"
   },
   "PlayedTimeClient": {
-    "PlayedTimeReportCompleted": "[ScbbsPlus] 模组游玩时间上报完成: 成功 {0} 条，失败 {1} 条",
-    "PlayedTimeReportRejectedEntries": "[ScbbsPlus] 模组游玩时间上报被服务端拒绝的条目: {0}",
-    "PlayedTimeReportFailed": "[ScbbsPlus] 模组游玩时间上报失败: {0}"
+    "PlayedTimeReportRejectedEntries": "模组游玩时间上报被服务端拒绝的条目: {0}",
+    "PlayedTimeReportFailed": "模组游玩时间上报失败: {0}"
   },
   "PostDetailsContentBuilder": {
-    "DisposePostDetailsTextureFailed": "[ScbbsPlus] 释放帖子详情纹理失败: {0}",
-    "DisposeLatePostDetailsTextureFailed": "[ScbbsPlus] 释放迟到帖子详情纹理失败: {0}",
-    "DisposeDuplicatePostDetailsTextureFailed": "[ScbbsPlus] 释放重复帖子详情纹理失败: {0}",
-    "DecodePostDetailsImageFailed": "[ScbbsPlus] 解析帖子详情图片失败: {0}, error={1}",
-    "RequestPostDetailsImageFailed": "[ScbbsPlus] 请求帖子详情图片失败: {0}, error={1}",
+    "DisposePostDetailsTextureFailed": "释放帖子详情纹理失败: {0}",
+    "DisposeLatePostDetailsTextureFailed": "释放迟到帖子详情纹理失败: {0}",
+    "DisposeDuplicatePostDetailsTextureFailed": "释放重复帖子详情纹理失败: {0}",
+    "DecodePostDetailsImageFailed": "解析帖子详情图片失败: {0}, error={1}",
+    "RequestPostDetailsImageFailed": "请求帖子详情图片失败: {0}, error={1}",
     "Image": "图片"
   },
   "PostDetailsDialog": {
@@ -5470,7 +5440,7 @@
     "AutomaticTranslationFailed": "自动翻译失败：{0}",
     "FailedToLoad": "{0}加载失败",
     "Loading": "{0}加载中...",
-    "AutoTranslateFailed": "[ScbbsPlus] 自动翻译失败: {0}",
+    "AutoTranslateFailed": "社区帖子自动翻译失败: {0}",
     "NoDetails": "暂无详情内容。",
     "PostDetails": "帖子详情"
   },
@@ -5490,14 +5460,14 @@
     "VersionLast30DaysTotalFiles": "版本 {0}：近30天 {1}，累计 {2}，文件 {3}"
   },
   "PostIconLoader": {
-    "SkipOversizedPostIcon": "[ScbbsPlus] 跳过过大的帖子图标: {0}, size={1}",
-    "DecodeRemoteIconFailed": "[ScbbsPlus] 解析远程图标失败: {0}, error={1}",
-    "CreatePostIconTextureFailed": "[ScbbsPlus] 创建帖子图标纹理失败: {0}, error={1}",
-    "RequestPostIconFailed": "[ScbbsPlus] 请求帖子图标失败: {0}, error={1}"
+    "SkipOversizedPostIcon": "跳过过大的帖子图标: {0}, size={1}",
+    "DecodeRemoteIconFailed": "解析远程图标失败: {0}, error={1}",
+    "CreatePostIconTextureFailed": "创建帖子图标纹理失败: {0}, error={1}",
+    "RequestPostIconFailed": "请求帖子图标失败: {0}, error={1}"
   },
   "PostTreePresenter": {
-    "GetPostDetailsFailed": "[ScbbsPlus] 获取帖子详情失败: {0}",
-    "LoadPostFailed": "[ScbbsPlus] 加载帖子失败: {0}",
+    "GetPostDetailsFailed": "获取帖子详情失败: {0}",
+    "LoadPostFailed": "加载帖子失败: {0}",
     "Files": "文件 {0}",
     "UpdateAvailable": "有更新",
     "NoFiles": "无文件",
@@ -5518,14 +5488,12 @@
     "NoUploads": "{0} · 暂无文件"
   },
   "RestartConfirmDialog": {
-    "UserChoseNormalRestart": "[ScbbsPlus] 用户在导入完成提示中选择普通重启。file={0}",
-    "UserChoseRestartIntoIt": "[ScbbsPlus] 用户在导入完成提示中选择重启到此。file={0}",
     "RestartRequired": "重启加载",
     "UpdateComplete": "更新完成",
     "ImportedRestartPrompt": "{0} 已导入，已标记为待重启加载，重启游戏后生效。是否立即重启？"
   },
   "ReviewSubmissionHandler": {
-    "ScoreSubmissionTaskFaulted": "[ScbbsPlus] 评分提交任务异常: {0}",
+    "ScoreSubmissionTaskFaulted": "评分提交任务异常: {0}",
     "PleaseWait": "请稍候",
     "PleaseLogInBeforeReviewing": "请先登录后再评价。",
     "ReviewSubmissionFailed": "评价提交失败：{0}",
@@ -5536,7 +5504,7 @@
     "SubmittingReviewToTheCommunity": "评价正在提交到社区。"
   },
   "TreeViewWidget": {
-    "RowWidgetsRebuiltCallbackFaulted": "[ScbbsPlus] 行组件重建回调异常: {0}"
+    "RowWidgetsRebuiltCallbackFaulted": "行组件重建回调异常: {0}"
   },
   "VersionDetailFormatter": {
     "UnnamedVersion": "未命名版本"

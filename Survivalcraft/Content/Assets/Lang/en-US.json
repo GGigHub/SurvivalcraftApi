@@ -53,7 +53,7 @@
     "1": "SD Card"
   },
   "CommunityMyPublishedScreen": {
-    "LoadMyPublishedFailed": "[ScbbsPlus] Failed to load my published posts: {0}",
+    "LoadMyPublishedFailed": "Failed to load my published posts: {0}",
     "LoadingFormat": "{0} · Loading...",
     "MyPublishedFormat": "Published {0}s",
     "MyUnpublishedFormat": "Unpublished {0}s",
@@ -189,15 +189,15 @@
     "65": "Mod reinforcement will replace the current mod file. After reinforcement, it is usually irreversible, so please back up your files first.\nIf the original project file is lost after reinforcement, you can contact the Chinese Community admins to recover the reinforcement mod file.\nNon-developers may ignore this note.",
     "66": "This mod file is already protected; no need to protect again",
     "67": "Module protection failed due to an unknown error:",
-    "68": "Old plugin version (API {0}) mods may not work",
-    "69": "This mod is for plugin version 1.3 or older and cannot be used in the current version",
-    "70": "This mod is for an old plugin version and does not work in the current version. Deletion is recommended.",
+    "68": "Old API version ({0}) mods may not work",
+    "69": "This mod is for API version 1.3 or older and cannot be used in the current version",
+    "70": "This mod is for an old API version and does not work in the current version. Deletion is recommended.",
     "71": "Directory Access Failed",
     "72": "Sorry, your device cannot access",
     "73": "Unprotect",
     "74": "Failed to load icon for {0}. Reason: {1}",
     "75": "Failed to load mod info from {0}'s modinfo.json. Reason: {1}",
-    "76": "This mod is for plugin version {0} and may not work in the current plugin version",
+    "76": "This mod is for API version {0} and may not work in the current API version",
     "77": "Open Homepage",
     "78": "This mod has no homepage link set.",
     "79": "Module Version: {0}  API Version: {1}  Author: {2}  Size: {3}",
@@ -4291,8 +4291,6 @@
       "DownloadQueue": "Download Queue",
       "DownloadQueueDescription": "View downloads that are queued, paused, or failed",
       "View": "View",
-      "ModUpdate": "ScbbsPlus Update",
-      "ModUpdateDescription": "Check the code repository for available ScbbsPlus updates",
       "CheckUpdate": "Check Update",
       "ModSettings": "Mod Settings",
       "ModSettingsDescription": "Open the game's native mod settings",
@@ -4309,8 +4307,7 @@
       "MyPublished": "My Published",
       "MyPublishedDescription": "Browse resources you have published to the Chinese community",
       "PostDetailsAutoTranslate": "Post Details Auto-Translate",
-      "PostDetailsAutoTranslateDescription": "Automatically translate post or version details into the current system language",
-      "More": "More ScbbsPlus"
+      "PostDetailsAutoTranslateDescription": "Automatically translate post or version details into the current system language"
     },
     "PostDetailsDialog": {
       "PostDetails": "Post Details",
@@ -4943,15 +4940,15 @@
     "DuplicateName": "The name is empty or already in use."
   },
   "JsonFileStore": {
-    "ReadJsonFileFailedUsingDefault": "[ScbbsPlus] Failed to read the JSON file; falling back to the default: {0}, error={1}",
-    "CleanJsonTempFileFailed": "[ScbbsPlus] Failed to clean up the JSON temporary file: {0}, {1}",
-    "ScanJsonTempFilesFailed": "[ScbbsPlus] Failed to scan residual JSON temporary files root={0} error={1}",
-    "RestoredJsonTempFile": "[ScbbsPlus] Recovered from a residual JSON temporary file: {0} → {1}",
-    "RestoreJsonTempFileFailed": "[ScbbsPlus] Failed to recover from a residual JSON temporary file: {0}, {1}"
+    "ReadJsonFileFailedUsingDefault": "Failed to read the JSON file; falling back to the default: {0}, error={1}",
+    "CleanJsonTempFileFailed": "Failed to clean up the JSON temporary file: {0}, {1}",
+    "ScanJsonTempFilesFailed": "Failed to scan residual JSON temporary files root={0} error={1}",
+    "RestoredJsonTempFile": "Recovered from a residual JSON temporary file: {0} → {1}",
+    "RestoreJsonTempFileFailed": "Failed to recover from a residual JSON temporary file: {0}, {1}"
   },
   "LocalMods": {
-    "AutoUpdateScanFailed": "[ScbbsPlus] Automatic update scan of local mods failed: {0}",
-    "PublishedCheckTaskFaulted": "[ScbbsPlus] Published check task faulted: {0}"
+    "AutoUpdateScanFailed": "Automatic update scan of local mods failed: {0}",
+    "PublishedCheckTaskFaulted": "Published check task faulted: {0}"
   },
   "ModReviewDialog": {
     "ReviewLocalResource": "Review Local Resource",
@@ -4976,7 +4973,7 @@
     "UnnamedFile": "Unnamed File"
   },
   "LocalModNetworkManager": {
-    "AutoUpdateCheckFailed": "[ScbbsPlus] Automatic update check failed for local mod: {0}, error={1}",
+    "AutoUpdateCheckFailed": "Automatic update check failed for local mod: {0}, error={1}",
     "NoModVersionForCurrentGame": "The post has no mod version compatible with the current game.",
     "VersionListIsEmpty": "Version list is empty.",
     "CannotFindPublishedPostByFileName": "Unable to find a published post by file name: {0}",
@@ -4988,9 +4985,8 @@
     "FindPostByFileNameMalformed": "Malformed find-post-by-file-name response: {0}"
   },
   "CommunityScreen": {
-    "DefaultFiltersSaved": "[ScbbsPlus] Default filters saved: fileType={0}, orderType={1}, onlyCurrentVersion={2}, section={3}, ignoreFileType={4}, ignoreOrder={5}, ignoreVersion={6}, ignoreSection={7}",
-    "LoadFeaturedFailed": "[ScbbsPlus] Failed to load featured resources: {0}",
-    "LoadCommunityPostsFailed": "[ScbbsPlus] Failed to load community posts: {0}",
+    "LoadFeaturedFailed": "Failed to load featured resources: {0}",
+    "LoadCommunityPostsFailed": "Failed to load community posts: {0}",
     "CurrentVersion": "Current Version",
     "LoadingFormat": "{0} · Loading...",
     "CommunityFormat": "Community {0}",
@@ -5005,16 +5001,16 @@
     "FailedToLoadPostDetails": "Failed to load post details: {0}"
   },
   "HttpDownloader": {
-    "ReadCacheFileSizeFailed": "[ScbbsPlus] Failed to read the cached file size: {0}, {1}",
-    "GetCacheFileSizeFailed": "[ScbbsPlus] Failed to get the cached file size: {0}, {1}"
+    "ReadCacheFileSizeFailed": "Failed to read the cached file size: {0}, {1}",
+    "GetCacheFileSizeFailed": "Failed to get the cached file size: {0}, {1}"
   },
   "CredentialStore": {
-    "DecryptCredentialFileFailed": "[ScbbsPlus] Failed to decrypt the credential file, invalidating it: {0}",
-    "DeleteCredentialFileFailed": "[ScbbsPlus] Failed to delete the credential file: {0}, {1}"
+    "DecryptCredentialFileFailed": "Failed to decrypt the credential file, invalidating it: {0}",
+    "DeleteCredentialFileFailed": "Failed to delete the credential file: {0}, {1}"
   },
   "TaskSlot": {
-    "TaskFaultConsumedAsNoResult": "[ScbbsPlus] Exception of the {0} task consumed as no result: {1}",
-    "StaleTaskFault": "[ScbbsPlus] Exception of a stale {0} task: {1}",
+    "TaskFaultConsumedAsNoResult": "Exception of the [{0}] task consumed as no result: {1}",
+    "StaleTaskFault": "Exception of a stale [{0}] task: {1}",
     "PostsList": "Posts list",
     "PostNodeDetails": "Post node details",
     "UpdateCheck": "Update check",
@@ -5034,7 +5030,7 @@
     "DownloadExceedsSizeLimit": "Download content exceeds the size limit ({0} bytes)."
   },
   "CommunityManager": {
-    "HighlightDataLoadFailed": "[ScbbsPlus] Failed to load highlight data: {0}",
+    "HighlightDataLoadFailed": "Failed to load highlight data: {0}",
     "ScoreApiReturnedEmpty": "Score API returned an empty response",
     "ScoreApiReturnedMalformed": "Score API returned a malformed response",
     "NoStats": "No stats.",
@@ -5043,24 +5039,24 @@
     "DownloadTrendsResponseMalformed": "Malformed download trends response: {0}"
   },
   "VersionCatalogCache": {
-    "NoApiVersionSkippingPluginMatch": "[ScbbsPlus] No API version provided; skipping plugin version matching. game={0}",
-    "NoMatchingPluginVersion": "[ScbbsPlus] No matching plugin version found: game={0}, api={1}",
-    "VersionMatchSucceeded": "[ScbbsPlus] Version matching succeeded: game={0}, api={1}, matchedId={2}, matchedVersion={3}, matchedName={4}"
+    "NoApiVersionSkippingApiMatch": "No API version provided; skipping API version matching. game={0}",
+    "NoMatchingApiVersion": "No matching API version found: game={0}, api={1}",
+    "VersionMatchSucceeded": "Version matching succeeded: game={0}, api={1}, matchedId={2}, matchedVersion={3}, matchedName={4}"
   },
   "LocalModReviewState": {
-    "ReadReviewsFailed": "[ScbbsPlus] Failed to read local resource reviews: {0}",
-    "SaveReviewsFailed": "[ScbbsPlus] Failed to save local resource reviews: {0}"
+    "ReadReviewsFailed": "Failed to read local resource reviews: {0}",
+    "SaveReviewsFailed": "Failed to save local resource reviews: {0}"
   },
   "PendingLocalModActions": {
-    "ProcessedPendingModAction": "[ScbbsPlus] Processed pending mod action: reason={0}, action={1}, path={2}",
-    "ProcessPendingModActionFailed": "[ScbbsPlus] Failed to process the pending mod action: reason={0}, action={1}, path={2}, error={3}",
-    "ReadPendingModManifestFailed": "[ScbbsPlus] Failed to read the pending mod manifest: {0}",
-    "SavePendingModManifestFailed": "[ScbbsPlus] Failed to save the pending mod manifest: {0}",
+    "ProcessedPendingModAction": "Processed pending mod action: reason={0}, action={1}, path={2}",
+    "ProcessPendingModActionFailed": "Failed to process the pending mod action: reason={0}, action={1}, path={2}, error={3}",
+    "ReadPendingModManifestFailed": "Failed to read the pending mod manifest: {0}",
+    "SavePendingModManifestFailed": "Failed to save the pending mod manifest: {0}",
     "MissingModPackageNameOrVersion": "Mod package name or version is missing; cannot update the disabled state."
   },
   "DownloadQueueManager": {
-    "LoadDownloadQueueFailed": "[ScbbsPlus] Failed to load download queue: {0}",
-    "RestoreQueueItemFailed": "[ScbbsPlus] Failed to restore a download queue item: {0}"
+    "LoadDownloadQueueFailed": "Failed to load download queue: {0}",
+    "RestoreQueueItemFailed": "Failed to restore a download queue item: {0}"
   },
   "DownloadQueueDialog": {
     "SelectedTask": "Selected: task {0} - {1}",
@@ -5074,20 +5070,19 @@
     "SelectionHint": "Click a task to select it. Without a selection, buttons auto-match a task."
   },
   "DownloadQueuePersistence": {
-    "CleanImportedItemCacheFailed": "[ScbbsPlus] Failed to clean the download cache of an imported item: {0}, {1}"
+    "CleanImportedItemCacheFailed": "Failed to clean the download cache of an imported item: {0}, {1}"
   },
   "DownloadFeedbackClient": {
-    "MissingFeedbackIdsSkipped": "[ScbbsPlus] Download feedback is missing fileId/postId; skipping recording.",
-    "RecordDownloadFeedbackFailed": "[ScbbsPlus] Failed to record download feedback: {0}: {1}",
-    "DownloadFeedbackRecorded": "[ScbbsPlus] Download feedback recorded, postId={0}, fileId={1}",
-    "RecordDownloadFeedbackFaulted": "[ScbbsPlus] Download feedback recording faulted: {0}",
-    "FeedbackAuthRefreshFailedReportingAnonymously": "[ScbbsPlus] Failed to refresh the login state for the feedback report; reporting anonymously: {0}"
+    "MissingFeedbackIdsSkipped": "Download feedback is missing fileId/postId; skipping recording.",
+    "RecordDownloadFeedbackFailed": "Failed to record download feedback: {0}: {1}",
+    "RecordDownloadFeedbackFaulted": "Download feedback recording faulted: {0}",
+    "FeedbackAuthRefreshFailedReportingAnonymously": "Failed to refresh the login state for the feedback report; reporting anonymously: {0}"
   },
   "AuthClient": {
-    "LoginRequestFailed": "[ScbbsPlus] Login request failed: {0}",
-    "LoginResponseMalformed": "[ScbbsPlus] Login response is malformed: {0}",
-    "LogoutRequestCompleted": "[ScbbsPlus] Logout request completed ({0})",
-    "LogoutRequestFailed": "[ScbbsPlus] Logout request failed: {0}"
+    "LoginRequestFailed": "Login request failed: {0}",
+    "LoginResponseMalformed": "Login response is malformed: {0}",
+    "LogoutRequestCompleted": "Logout request completed ({0})",
+    "LogoutRequestFailed": "Logout request failed: {0}"
   },
   "LoginDialog": {
     "LoggingIn": "Logging In...",
@@ -5116,22 +5111,15 @@
     "ImportDataIsEmpty": "Import data is empty.",
     "CannotOverwriteBuiltInTexture": "Cannot overwrite built-in texture: {0}",
     "CannotOverwriteBuiltInSkin": "Cannot overwrite built-in skin: {0}",
-    "ShowConflictDialogFailed": "[ScbbsPlus] Failed to show the conflict dialog: {0}",
-    "RemoteImportPrepareTaskFaulted": "[ScbbsPlus] Remote import preparation task faulted: {0}",
-    "RemoteImportTaskFaulted": "[ScbbsPlus] Remote import task faulted: {0}",
-    "RemoteImportCompletionFaulted": "[ScbbsPlus] Remote import completion handling faulted: {0}",
-    "StartModpackImport": "[ScbbsPlus] Starting modpack import url={0} fileName={1}",
-    "DownloadModpackPackage": "[ScbbsPlus] Downloading the modpack{0} url={1}",
-    "ModpackPackageDownloadCompleted": "[ScbbsPlus] Modpack{0} download completed length={1}",
-    "ModpackManifestEmptyOrInvalid": "[ScbbsPlus] Modpack manifest is empty or invalid url={0}",
-    "ModpackSummary": "[ScbbsPlus] Modpack name={0} pkg={1} ver={2} items={3}",
-    "ModpackItemDetails": "[ScbbsPlus]   #{0} targetDirectory={1} file={2} url={3} fileId={4} legacyCategory={5} legacyTarget={6}",
-    "ModpackManifestDownloadFailed": "[ScbbsPlus] Modpack manifest download failed url={0} error={1}",
-    "UserConfirmedModpackImport": "[ScbbsPlus] User confirmed to start the modpack import total={0}",
-    "StartProcessingModpackItemsWithTotal": "[ScbbsPlus] Starting to process modpack items total={0}",
-    "ModpackProcessingCompleted": "[ScbbsPlus] Modpack processing completed success={0} failed={1}",
-    "ModpackImportFailed": "[ScbbsPlus] Modpack import failed error={0}",
-    "SaveModpackManifestFailed": "[ScbbsPlus] Failed to save the modpack manifest: {0}",
+    "ShowConflictDialogFailed": "Failed to show the conflict dialog: {0}",
+    "RemoteImportPrepareTaskFaulted": "Remote import preparation task faulted: {0}",
+    "RemoteImportTaskFaulted": "Remote import task faulted: {0}",
+    "RemoteImportCompletionFaulted": "Remote import completion handling faulted: {0}",
+    "StartModpackImport": "Starting modpack import url={0} fileName={1}",
+    "ModpackManifestEmptyOrInvalid": "Modpack manifest is empty or invalid url={0}",
+    "ModpackManifestDownloadFailed": "Modpack manifest download failed url={0} error={1}",
+    "ModpackImportFailed": "Modpack import failed error={0}",
+    "SaveModpackManifestFailed": "Failed to save the modpack manifest: {0}",
     "SaveArchiveFailed": "Failed to save the modpack archive: {0}",
     "DownloadInterruptedManifestKept": "Resource downloading was stopped; only the JSON modpack manifest was kept.",
     "ImportOrDownloadBusy": "An import or download is already running. Please wait.",
@@ -5152,10 +5140,7 @@
     "DownloadPackFailure": "Modpack download failed: {0} succeeded, {1} failed."
   },
   "ModpackSourceResolver": {
-    "ModpackItemUsesNetworkUrl": "[ScbbsPlus] Modpack item uses the network url={0}",
-    "ModpackItemUrlDownloadFailedFallingBackToFileId": "[ScbbsPlus] Modpack item url download failed; falling back to fileId={0}: {1}",
-    "ModpackItemUsesZipEntry": "[ScbbsPlus] Modpack item uses a file inside the ZIP path={0}",
-    "ModpackItemUrlMissingResolvingByFileId": "[ScbbsPlus] No url obtained for the modpack item url={0}; resolving the download link via fileId={1}",
+    "ModpackItemUrlDownloadFailedFallingBackToFileId": "Modpack item url download failed; falling back to fileId={0}: {1}",
     "FileIdReturnedNoDownloadLink": "File ID {0} returned no valid download link.",
     "GetFileInfoByFileIdFailed": "Failed to get file info by file ID: {0}: {1}",
     "GetFileInfoByFileIdMalformed": "Malformed file info response by file ID: {0}"
@@ -5176,10 +5161,10 @@
     "ManifestHasNoValidItems": "Modpack manifest has no valid items."
   },
   "ModpackRegistry": {
-    "ModpackRecordCorrupted": "[ScbbsPlus] Modpack record is corrupted: {0}, {1}",
-    "ReadModpackRecordFailed": "[ScbbsPlus] Failed to read the modpack record path={0} error={1}",
-    "CompareModpackSourceFailed": "[ScbbsPlus] Failed to compare the modpack source: path={0}, error={1}",
-    "ReadModpackRecordMetadataFailed": "[ScbbsPlus] Failed to read the modpack record metadata: path={0}, error={1}",
+    "ModpackRecordCorrupted": "Modpack record is corrupted: {0}, {1}",
+    "ReadModpackRecordFailed": "Failed to read the modpack record path={0} error={1}",
+    "CompareModpackSourceFailed": "Failed to compare the modpack source: path={0}, error={1}",
+    "ReadModpackRecordMetadataFailed": "Failed to read the modpack record metadata: path={0}, error={1}",
     "NoValidItemsRead": "no valid items were read.",
     "DownloadedZipPackIsEmpty": "The downloaded ZIP modpack is empty."
   },
@@ -5188,12 +5173,12 @@
     "IdenticalFileChooseAction": "A file with the exact same name already exists locally: {0}\nChoose how to handle it."
   },
   "Modpacks": {
-    "ReadModpackEnabledStateFailed": "[ScbbsPlus] Failed to read the modpack enabled state: {0}",
-    "LoadModpackFileInfoFailed": "[ScbbsPlus] Failed to load modpack file info: {0}",
-    "GetModpackFileInfoFailed": "[ScbbsPlus] Failed to get modpack file info fileId={0}: {1}",
-    "UserIgnoredUnavailableModpackResources": "[ScbbsPlus] User ignored modpack resources that could not be fetched and continued startup failed={0}",
-    "SaveModpackEnabledStateFailed": "[ScbbsPlus] Failed to save the modpack enabled state: {0}",
-    "ClearModpackEnabledStateFailed": "[ScbbsPlus] Failed to clear the modpack enabled state: {0}"
+    "ReadModpackEnabledStateFailed": "Failed to read the modpack enabled state: {0}",
+    "LoadModpackFileInfoFailed": "Failed to load modpack file info: {0}",
+    "GetModpackFileInfoFailed": "Failed to get modpack file info fileId={0}: {1}",
+    "UserIgnoredUnavailableModpackResources": "Ignored modpack resources that could not be fetched and continued startup failed={0}",
+    "SaveModpackEnabledStateFailed": "Failed to save the modpack enabled state: {0}",
+    "ClearModpackEnabledStateFailed": "Failed to clear the modpack enabled state: {0}"
   },
   "ModpackRules": {
     "PackItemIsEmpty": "Modpack item is empty.",
@@ -5209,10 +5194,10 @@
     "VersionMismatchSkipped": "{0}: Mod version mismatch (expected {1}, actual {2}), skipped."
   },
   "ModpackDataFiles": {
-    "DeleteModpackBackupFailed": "[ScbbsPlus] Failed to delete modpack backup after successful restore (kept for next cleanup): {0}: {1}",
-    "CleanModpackCustomTempFileFailed": "[ScbbsPlus] Failed to clean up the modpack custom file temporary file temp={0} error={1}",
-    "SaveModpackCustomConfigFailed": "[ScbbsPlus] Failed to save the modpack custom configuration target={0} persisted={1} error={2}",
-    "RestoreModpackCustomFileFailed": "[ScbbsPlus] Failed to restore the modpack custom file target={0} backup={1} error={2}",
+    "DeleteModpackBackupFailed": "Failed to delete modpack backup after successful restore (kept for next cleanup): {0}: {1}",
+    "CleanModpackCustomTempFileFailed": "Failed to clean up the modpack custom file temporary file temp={0} error={1}",
+    "SaveModpackCustomConfigFailed": "Failed to save the modpack custom configuration target={0} persisted={1} error={2}",
+    "RestoreModpackCustomFileFailed": "Failed to restore the modpack custom file target={0} backup={1} error={2}",
     "DataFileHasNoTargetPathSpecified": "{0}: Data file has no target path specified.",
     "DataFileHasNoTargetPathSpecifiedPlain": "Data file has no target path specified.",
     "CustomFileUrlHasNoFileName": "The custom file url contains no valid file name.",
@@ -5220,28 +5205,26 @@
     "BackupFileDoesNotExist": "Backup file does not exist: {0}"
   },
   "ModpackManifestLoadManager": {
-    "ReadModpackListFailed": "[ScbbsPlus] Failed to read modpack list: {0}",
-    "StaleModpackListTaskFailed": "[ScbbsPlus] Stale modpack list reading task failed: {0}"
+    "ReadModpackListFailed": "Failed to read modpack list: {0}",
+    "StaleModpackListTaskFailed": "Stale modpack list reading task failed: {0}"
   },
   "TransactionalFileReplacement": {
-    "ScanResidualBackupsFailed": "[ScbbsPlus] Failed to scan residual update backups root={0} error={1}",
-    "CleanResidualBackup": "[ScbbsPlus] Cleaning up a residual update backup backup={0}",
-    "RollbackResidualBackup": "[ScbbsPlus] Rolling back a residual update backup backup={0} original={1}",
-    "ProcessResidualBackupFailed": "[ScbbsPlus] Failed to process a residual update backup backup={0} error={1}",
-    "ScanResidualBackupSubdirectoryFailed": "[ScbbsPlus] Failed to scan a residual update backup subdirectory dir={0} error={1}",
-    "CleanModUpdateBackupFailed": "[ScbbsPlus] Failed to clean up a mod update backup: {0}",
-    "CleanIncompleteModUpdateFileFailed": "[ScbbsPlus] Failed to clean up an incomplete mod update file: {0}",
-    "RestoreModUpdateBackupFailed": "[ScbbsPlus] Failed to restore a mod update backup: {0}",
-    "CleanOverwriteBackupFailed": "[ScbbsPlus] Failed to clean up the pre-overwrite backup: {0}",
-    "RestoreOverwriteBackupFailed": "[ScbbsPlus] Failed to restore the pre-overwrite backup: {0}",
-    "StartupRollbackResidualBackupFailed": "[ScbbsPlus] Failed to roll back residual update backups at startup: {0}"
+    "ScanResidualBackupsFailed": "Failed to scan residual update backups root={0} error={1}",
+    "CleanResidualBackup": "Cleaning up a residual update backup backup={0}",
+    "RollbackResidualBackup": "Rolling back a residual update backup backup={0} original={1}",
+    "ProcessResidualBackupFailed": "Failed to process a residual update backup backup={0} error={1}",
+    "ScanResidualBackupSubdirectoryFailed": "Failed to scan a residual update backup subdirectory dir={0} error={1}",
+    "CleanModUpdateBackupFailed": "Failed to clean up a mod update backup: {0}",
+    "CleanIncompleteModUpdateFileFailed": "Failed to clean up an incomplete mod update file: {0}",
+    "RestoreModUpdateBackupFailed": "Failed to restore a mod update backup: {0}",
+    "CleanOverwriteBackupFailed": "Failed to clean up the pre-overwrite backup: {0}",
+    "RestoreOverwriteBackupFailed": "Failed to restore the pre-overwrite backup: {0}",
+    "StartupRollbackResidualBackupFailed": "Failed to roll back residual update backups at startup: {0}"
   },
   "PlayedTimeTracker": {
-    "StartedTrackingModPlayedTime": "[ScbbsPlus] Started tracking mod played time: {0} mods",
-    "StartedTrackingScreenPlayedTime": "[ScbbsPlus] Started tracking ScbbsPlus screen played time.",
-    "ReadModPlayedTimeFailed": "[ScbbsPlus] Failed to read mod played time: {0}",
-    "SaveModPlayedTimeFailed": "[ScbbsPlus] Failed to save mod played time: {0}",
-    "PlayedTimeReportingDisabledSkipping": "[ScbbsPlus] Played time reporting is disabled; skipping this report",
+    "ReadModPlayedTimeFailed": "Failed to read mod played time: {0}",
+    "SaveModPlayedTimeFailed": "Failed to save mod played time: {0}",
+    "PlayedTimeReportingDisabledSkipping": "Played time reporting is disabled; skipping this report",
     "SecondsFormat": "{0}s",
     "MinutesFormat": "{0}m",
     "HoursMinutesFormat": "{0}h {1}m",
@@ -5255,25 +5238,19 @@
     "PendingReportsDequeued": "Removed {0} accepted records from the pending queue",
     "PendingReportsRemaining": "{0} records remain pending; they will retry at next startup or when new records appear",
     "PendingReportsSaveFailed": "Failed to save pending playtime records: {0}",
-    "PendingReportsLoopFaulted": "Playtime pending-report loop faulted: {0}",
-    "ModEntityNotFound": "[ScbbsPlus] ScbbsPlus mod entity not found; cannot track its own played time."
+    "PendingReportsLoopFaulted": "Playtime pending-report loop faulted: {0}"
   },
   "AuthSessionManager": {
-    "CreateLoginRequestFailed": "[ScbbsPlus] Failed to create the login request: {0}",
-    "LoginRequestFaulted": "[ScbbsPlus] Login request faulted: {0}",
-    "AuthSessionPollFaulted": "[ScbbsPlus] Auth session poll faulted: {0}",
-    "LoginSucceeded": "[ScbbsPlus] Login succeeded - user: {0} (Lv.{1})",
-    "LoginFailed": "[ScbbsPlus] Login failed: {0}",
-    "LoginStateRestoredFromLocal": "[ScbbsPlus] Login state restored from local storage - user: {0}",
-    "LegacyCredentialsMigratedToDpapi": "[ScbbsPlus] Migrated legacy credentials to the Windows DPAPI format",
-    "ClearedUnreadableCredentials": "[ScbbsPlus] {0} Cleared unreadable credentials",
-    "CredentialDecryptionFailedClearedOld": "[ScbbsPlus] Credential decryption failed; cleared the old credentials",
-    "LoadCredentialsFailed": "[ScbbsPlus] Failed to load credentials: {0}",
-    "LoginCredentialsSavedEncrypted": "[ScbbsPlus] Login credentials saved encrypted to {0}",
-    "SaveCredentialsFailed": "[ScbbsPlus] Failed to save credentials: {0}",
-    "LocalCredentialFileDeleted": "[ScbbsPlus] Deleted the local credential file",
-    "DeleteCredentialFileFailed": "[ScbbsPlus] Failed to delete the credential file: {0}",
-    "TokenInvalidatedClearingLocalState": "[ScbbsPlus] Token invalidation detected (401/403); clearing the local login state",
+    "CreateLoginRequestFailed": "Failed to create the login request: {0}",
+    "LoginRequestFaulted": "Login request faulted: {0}",
+    "AuthSessionPollFaulted": "Auth session poll faulted: {0}",
+    "LoginFailed": "Login failed: {0}",
+    "ClearedUnreadableCredentials": "{0} Cleared unreadable community login credentials",
+    "CredentialDecryptionFailedClearedOld": "Community login credential decryption failed; cleared the old credentials",
+    "LoadCredentialsFailed": "Failed to load community login credentials: {0}",
+    "SaveCredentialsFailed": "Failed to save community login credentials: {0}",
+    "DeleteCredentialFileFailed": "Failed to delete the community login credential file: {0}",
+    "TokenInvalidatedClearingLocalState": "Token invalidation detected (401/403); clearing the local login state",
     "LogOut": "Log Out",
     "LogOutOfTheCurrentCommunityAccount": "Log out of the current community account?",
     "PleaseEnterAccountAndPassword": "Please enter account and password",
@@ -5294,22 +5271,17 @@
     "UnknownError": "Unknown error"
   },
   "DownloadFlowManager": {
-    "StartModpackDownload": "[ScbbsPlus] Starting modpack download url={0} file={1}",
-    "DownloadModpackManifest": "[ScbbsPlus] Downloading the modpack manifest url={0}",
-    "ModpackManifestDownloadCompleted": "[ScbbsPlus] Modpack manifest download completed length={0}",
-    "UserConfirmedModpackDownload": "[ScbbsPlus] User confirmed to start the modpack download total={0}",
-    "StartProcessingModpackItems": "[ScbbsPlus] Starting to process modpack items",
-    "ModpackProcessingFaulted": "[ScbbsPlus] Modpack processing faulted: {0}",
-    "BackgroundTaskFailed": "[ScbbsPlus] Background task failed: {0}, downloadFailed={1}, error={2}",
-    "DownloadQueueRestored": "[ScbbsPlus] Download queue restored: {0} items",
+    "ModpackProcessingFaulted": "Modpack processing faulted: {0}",
+    "BackgroundTaskFailed": "Background task failed: {0}, downloadFailed={1}, error={2}",
+    "DownloadQueueRestored": "Download queue restored: {0} items",
     "OldVersionDisabledPendingRestart": "Disabled old version {0}; the newly downloaded version takes effect after restart",
-    "SaveDownloadQueueFailed": "[ScbbsPlus] Failed to save the download queue: {0}",
-    "CleanDownloadTempFileFailed": "[ScbbsPlus] Failed to clean up a download temporary file: {0}",
-    "DownloadTaskFaulted": "[ScbbsPlus] Download task faulted: {0}",
-    "DownloadFlowPollFaulted": "[ScbbsPlus] Download flow poll faulted: {0}",
-    "BackgroundManifestLoadTaskFaulted": "[ScbbsPlus] Background modpack manifest loading task faulted: {0}",
-    "BackgroundItemDownloadTaskFaulted": "[ScbbsPlus] Background modpack item download task faulted: {0}",
-    "ImportCompletedCallbackFaulted": "[ScbbsPlus] Import completion callback faulted (the import itself succeeded): {0}",
+    "SaveDownloadQueueFailed": "Failed to save the download queue: {0}",
+    "CleanDownloadTempFileFailed": "Failed to clean up a download temporary file: {0}",
+    "DownloadTaskFaulted": "Download task faulted: {0}",
+    "DownloadFlowPollFaulted": "Download flow poll faulted: {0}",
+    "BackgroundManifestLoadTaskFaulted": "Background modpack manifest loading task faulted: {0}",
+    "BackgroundItemDownloadTaskFaulted": "Background modpack item download task faulted: {0}",
+    "ImportCompletedCallbackFaulted": "Import completion callback faulted (the import itself succeeded): {0}",
     "Failed": "Failed",
     "SkippedLocalDuplicates": ", {0} item(s) skipped because identical local content already exists.",
     "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
@@ -5378,8 +5350,7 @@
   "ModUpdateImporter": {
     "CannotConfirmCurrentPackageName": "Unable to confirm the current mod package name; update canceled.",
     "UpdatePackageInvalidOrCorrupted": "The downloaded update package is invalid or corrupted; update canceled.",
-    "UpdatePackagePackageNameMismatch": "The downloaded update package is not the current mod: {0}.",
-    "UpdatePackageIsNotCommunityMod": "The downloaded update package is not the ScbbsPlus mod."
+    "UpdatePackagePackageNameMismatch": "The downloaded update package is not the current mod: {0}."
   },
   "CommunityUploadClient": {
     "FileServerReturnedNoLink": "File server returned no link: {0}",
@@ -5407,7 +5378,7 @@
     "Saved": "Saved"
   },
   "GameUploadFileProvider": {
-    "CleanUploadTempFileFailed": "[ScbbsPlus] Failed to clean up the upload temporary file: {0}, {1}",
+    "CleanUploadTempFileFailed": "Failed to clean up the upload temporary file: {0}, {1}",
     "CannotFindLocalResourcePath": "Unable to find the local resource file path.",
     "LocalFileDoesNotExistFormat": "Local file does not exist: {0}",
     "NoLocalResourceSelected": "No local resource selected.",
@@ -5442,16 +5413,15 @@
     "UnknownAccount": "Unknown Account"
   },
   "PlayedTimeClient": {
-    "PlayedTimeReportCompleted": "[ScbbsPlus] Mod played time report completed: {0} succeeded, {1} failed",
-    "PlayedTimeReportRejectedEntries": "[ScbbsPlus] Entries rejected by the server during the mod played time report: {0}",
-    "PlayedTimeReportFailed": "[ScbbsPlus] Mod played time report failed: {0}"
+    "PlayedTimeReportRejectedEntries": "Entries rejected by the server during the mod played time report: {0}",
+    "PlayedTimeReportFailed": "Mod played time report failed: {0}"
   },
   "PostDetailsContentBuilder": {
-    "DisposePostDetailsTextureFailed": "[ScbbsPlus] Failed to dispose a post details texture: {0}",
-    "DisposeLatePostDetailsTextureFailed": "[ScbbsPlus] Failed to dispose a late post details texture: {0}",
-    "DisposeDuplicatePostDetailsTextureFailed": "[ScbbsPlus] Failed to dispose a duplicate post details texture: {0}",
-    "DecodePostDetailsImageFailed": "[ScbbsPlus] Failed to decode a post details image: {0}, error={1}",
-    "RequestPostDetailsImageFailed": "[ScbbsPlus] Failed to request a post details image: {0}, error={1}",
+    "DisposePostDetailsTextureFailed": "Failed to dispose a post details texture: {0}",
+    "DisposeLatePostDetailsTextureFailed": "Failed to dispose a late post details texture: {0}",
+    "DisposeDuplicatePostDetailsTextureFailed": "Failed to dispose a duplicate post details texture: {0}",
+    "DecodePostDetailsImageFailed": "Failed to decode a post details image: {0}, error={1}",
+    "RequestPostDetailsImageFailed": "Failed to request a post details image: {0}, error={1}",
     "Image": "Image"
   },
   "PostDetailsDialog": {
@@ -5460,7 +5430,7 @@
     "AutomaticTranslationFailed": "Automatic translation failed: {0}",
     "FailedToLoad": "{0} failed to load",
     "Loading": "{0} loading...",
-    "AutoTranslateFailed": "[ScbbsPlus] Automatic translation failed: {0}",
+    "AutoTranslateFailed": "Community post automatic translation failed: {0}",
     "NoDetails": "No details.",
     "PostDetails": "Post Details"
   },
@@ -5480,14 +5450,14 @@
     "VersionLast30DaysTotalFiles": "Version {0}: last 30 days {1}, total {2}, files {3}"
   },
   "PostIconLoader": {
-    "SkipOversizedPostIcon": "[ScbbsPlus] Skipping an oversized post icon: {0}, size={1}",
-    "DecodeRemoteIconFailed": "[ScbbsPlus] Failed to decode a remote icon: {0}, error={1}",
-    "CreatePostIconTextureFailed": "[ScbbsPlus] Failed to create the post icon texture: {0}, error={1}",
-    "RequestPostIconFailed": "[ScbbsPlus] Failed to request a post icon: {0}, error={1}"
+    "SkipOversizedPostIcon": "Skipping an oversized post icon: {0}, size={1}",
+    "DecodeRemoteIconFailed": "Failed to decode a remote icon: {0}, error={1}",
+    "CreatePostIconTextureFailed": "Failed to create the post icon texture: {0}, error={1}",
+    "RequestPostIconFailed": "Failed to request a post icon: {0}, error={1}"
   },
   "PostTreePresenter": {
-    "GetPostDetailsFailed": "[ScbbsPlus] Failed to get post details: {0}",
-    "LoadPostFailed": "[ScbbsPlus] Failed to load the post: {0}",
+    "GetPostDetailsFailed": "Failed to get post details: {0}",
+    "LoadPostFailed": "Failed to load the post: {0}",
     "Files": "Files {0}",
     "UpdateAvailable": "Update available",
     "NoFiles": "No Files",
@@ -5508,14 +5478,12 @@
     "NoUploads": "{0} · No Files"
   },
   "RestartConfirmDialog": {
-    "UserChoseNormalRestart": "[ScbbsPlus] User chose a normal restart in the import completion prompt. file={0}",
-    "UserChoseRestartIntoIt": "[ScbbsPlus] User chose restart-into-it in the import completion prompt. file={0}",
     "RestartRequired": "Restart Required",
     "UpdateComplete": "Update Complete",
     "ImportedRestartPrompt": "{0} has been imported and marked as pending restart. Restart the game now to apply it?"
   },
   "ReviewSubmissionHandler": {
-    "ScoreSubmissionTaskFaulted": "[ScbbsPlus] Score submission task faulted: {0}",
+    "ScoreSubmissionTaskFaulted": "Score submission task faulted: {0}",
     "PleaseWait": "Please Wait",
     "PleaseLogInBeforeReviewing": "Please log in before reviewing.",
     "ReviewSubmissionFailed": "Review submission failed: {0}",
@@ -5526,7 +5494,7 @@
     "SubmittingReviewToTheCommunity": "Submitting review to the community."
   },
   "TreeViewWidget": {
-    "RowWidgetsRebuiltCallbackFaulted": "[ScbbsPlus] Row widget rebuild callback faulted: {0}"
+    "RowWidgetsRebuiltCallbackFaulted": "Row widget rebuild callback faulted: {0}"
   },
   "VersionDetailFormatter": {
     "UnnamedVersion": "Unnamed Version"
