@@ -91,11 +91,11 @@ public static class ModsManager {
     static bool AllowContinue = true;
     public static Dictionary<string, string> Configs = [];
     /// <summary>
-    /// 所有模组，含禁用的
+    /// 所有模组，含禁用、未生效的
     /// </summary>
     public static List<ModEntity> ModListAll = [];
     /// <summary>
-    /// 所有已启用的模组
+    /// 所有已启用且生效的模组
     /// </summary>
     public static List<ModEntity> ModList = [];
     /// <summary>
@@ -435,6 +435,9 @@ public static class ModsManager {
         return realName;
     }
 
+    /// <summary>
+    /// 对所有已生效模组进行操作（名称中的 All 是历史残留）
+    /// </summary>
     public static void ModListAllDo(Action<ModEntity> entity) {
         for (int i = 0; i < ModList.Count; i++) {
             entity?.Invoke(ModList[i]);

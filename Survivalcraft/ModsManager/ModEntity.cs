@@ -497,8 +497,8 @@ namespace Game {
                 else {
                     IsDisabled = true;
                     DisableReason = ModDisableReason.DependencyError;
-                    string versionStr = string.IsNullOrEmpty(range.OriginalString) ? string.Empty : $"Required version: {range}";
-                    Log.Error($"[{modInfo.Name}] Failed to find dependency: Package Name \"{name}\", {versionStr}");
+                    string versionStr = string.IsNullOrEmpty(range.OriginalString) ? string.Empty : $", Required version: {range}";
+                    Log.Error($"[{modInfo.Name}] Failed to find dependency: Package Name \"{name}\"{versionStr}");
                     return;
                 }
             }

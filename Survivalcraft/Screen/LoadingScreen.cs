@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
+using System.Text;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
@@ -213,6 +214,27 @@ namespace Game {
                         }
                         item.CheckDependencies(ModsManager.ModList);
                     }
+                    if (ModsManager.ModListAll.Count <= 2) {
+                        return;
+                    }
+                    StringBuilder sb = new("Mod List:");
+                    foreach (ModEntity entity in ModsManager.ModListAll) {
+                        if (string.IsNullOrEmpty(entity.ModFilePath)) {
+                            continue;
+                        }
+                        sb.AppendLine();
+                        ModInfo info = entity.modInfo;
+                        if (info == null) {
+                            sb.Append($"[Invalid] FileName: {Storage.GetFileName(entity.ModFilePath)}");
+                        }
+                        else {
+                            string status = entity.IsDisabled ? entity.DisableReason.ToString() : "Enabled";
+                            sb.Append(
+                                $"[{status}] Name: {info.Name}  Version: {info.Version}  PackageName: {info.PackageName}  FileName: {Storage.GetFileName(entity.ModFilePath)}"
+                            );
+                        }
+                    }
+                    Log.Information(sb.ToString());
                 }
             );
             AddLoadAction(() => {
