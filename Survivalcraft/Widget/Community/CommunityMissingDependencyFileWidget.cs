@@ -12,9 +12,9 @@ namespace Game
         {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyFileWidget");
             LoadContents(this, node);
-            m_fileTitleWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyFileWidget.FileTitle");
-            m_metadataWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyFileWidget.Metadata");
-            m_downloadButton = Children.Find<ButtonWidget>("ScbbsPlusMissingDependencyFileWidget.DownloadButton");
+            m_fileTitleWidget = Children.Find<LabelWidget>("MissingDependencyFileWidget.FileTitle");
+            m_metadataWidget = Children.Find<LabelWidget>("MissingDependencyFileWidget.Metadata");
+            m_downloadButton = Children.Find<ButtonWidget>("MissingDependencyFileWidget.DownloadButton");
             m_downloadButton.Text = LanguageControl.Get("ExternalContentScreen", "2");
         }
 

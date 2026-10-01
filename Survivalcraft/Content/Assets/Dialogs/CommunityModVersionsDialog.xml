@@ -4,11 +4,11 @@
     <StackPanelWidget HorizontalAlignment="Center">
       <LabelWidget Text="[ModVersionsDialog:AllVersions]" Color="255, 255, 255" HorizontalAlignment="Center" />
       <CanvasWidget Size="0, 10" />
-      <LabelWidget Name="ScbbsPlusModVersionsDialog.PostTitleLabel" Color="255, 230, 140" HorizontalAlignment="Center" WordWrap="true" />
+      <LabelWidget Name="ModVersionsDialog.PostTitleLabel" Color="255, 230, 140" HorizontalAlignment="Center" WordWrap="true" />
     </StackPanelWidget>
     <ScrollPanelWidget Direction="Vertical" Margin="5, 12">
-      <StackPanelWidget Name="ScbbsPlusModVersionsDialog.ListPanel" Direction="Vertical" Margin="5, 0" HorizontalAlignment="Stretch" />
+      <StackPanelWidget Name="ModVersionsDialog.ListPanel" Direction="Vertical" Margin="5, 0" HorizontalAlignment="Stretch" />
     </ScrollPanelWidget>
-    <BevelledButtonWidget Name="ScbbsPlusModVersionsDialog.CloseButton" Text="[ModVersionsDialog:Close]" Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Center" />
+    <BevelledButtonWidget Name="ModVersionsDialog.CloseButton" Text="[ModVersionsDialog:Close]" Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Center" />
   </StackPanelWidget>
 </CanvasWidget>

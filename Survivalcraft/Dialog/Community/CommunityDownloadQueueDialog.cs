@@ -63,15 +63,15 @@ namespace Game
             m_closedCallback = closedCallback;
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityDownloadQueueDialog");
             LoadContents(this, node);
-            m_taskList = Children.Find<ListPanelWidget>("ScbbsPlusDownloadQueueDialog.TaskList");
+            m_taskList = Children.Find<ListPanelWidget>("DownloadQueueDialog.TaskList");
             m_taskList.ItemWidgetFactory = MakeTaskItem;
             m_taskList.ItemClicked += OnTaskItemClicked;
-            m_selectionLabel = Children.Find<LabelWidget>("ScbbsPlusDownloadQueueDialog.Selection");
-            m_pauseResumeButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadQueueDialog.PauseResumeButton");
-            m_cancelButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadQueueDialog.CancelButton");
-            m_retryButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadQueueDialog.RetryButton");
-            m_clearButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadQueueDialog.ClearButton");
-            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadQueueDialog.CloseButton");
+            m_selectionLabel = Children.Find<LabelWidget>("DownloadQueueDialog.Selection");
+            m_pauseResumeButton = Children.Find<ButtonWidget>("DownloadQueueDialog.PauseResumeButton");
+            m_cancelButton = Children.Find<ButtonWidget>("DownloadQueueDialog.CancelButton");
+            m_retryButton = Children.Find<ButtonWidget>("DownloadQueueDialog.RetryButton");
+            m_clearButton = Children.Find<ButtonWidget>("DownloadQueueDialog.ClearButton");
+            m_closeButton = Children.Find<ButtonWidget>("DownloadQueueDialog.CloseButton");
             Refresh();
         }
 

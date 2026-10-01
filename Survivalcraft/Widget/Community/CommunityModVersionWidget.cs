@@ -23,14 +23,14 @@ namespace Game
         {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityModVersionWidget");
             LoadContents(this, node);
-            m_backgroundWidget = Children.Find<RectangleWidget>("ScbbsPlusModVersionWidget.Background");
-            m_versionTitleWidget = Children.Find<LabelWidget>("ScbbsPlusModVersionWidget.VersionTitle");
-            m_fileTitleWidget = Children.Find<LabelWidget>("ScbbsPlusModVersionWidget.FileTitle");
-            m_compatibilityWidget = Children.Find<LabelWidget>("ScbbsPlusModVersionWidget.Compatibility");
-            m_detailsButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionWidget.DetailsButton");
-            m_downloadButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionWidget.DownloadButton");
-            m_filesButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionWidget.FilesButton");
-            m_filesPanel = Children.Find<StackPanelWidget>("ScbbsPlusModVersionWidget.FilesPanel");
+            m_backgroundWidget = Children.Find<RectangleWidget>("ModVersionWidget.Background");
+            m_versionTitleWidget = Children.Find<LabelWidget>("ModVersionWidget.VersionTitle");
+            m_fileTitleWidget = Children.Find<LabelWidget>("ModVersionWidget.FileTitle");
+            m_compatibilityWidget = Children.Find<LabelWidget>("ModVersionWidget.Compatibility");
+            m_detailsButton = Children.Find<ButtonWidget>("ModVersionWidget.DetailsButton");
+            m_downloadButton = Children.Find<ButtonWidget>("ModVersionWidget.DownloadButton");
+            m_filesButton = Children.Find<ButtonWidget>("ModVersionWidget.FilesButton");
+            m_filesPanel = Children.Find<StackPanelWidget>("ModVersionWidget.FilesPanel");
             m_detailsButton.Text = LanguageControl.Get("ModVersionWidget", "Details");
             m_downloadButton.Text = LanguageControl.Get("ExternalContentScreen", "2");
         }

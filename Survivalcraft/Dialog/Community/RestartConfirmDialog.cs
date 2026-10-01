@@ -25,12 +25,12 @@ namespace Game
 
             XElement node = ContentManager.Get<XElement>("Dialogs/RestartConfirmDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("ScbbsPlusRestartConfirmDialog.Title").Text =
+            Children.Find<LabelWidget>("RestartConfirmDialog.Title").Text =
                 string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("RestartConfirmDialog", "RestartRequired") : title;
-            Children.Find<LabelWidget>("ScbbsPlusRestartConfirmDialog.Message").Text = message ?? string.Empty;
-            m_restartButton = Children.Find<BevelledButtonWidget>("ScbbsPlusRestartConfirmDialog.RestartButton");
-            m_restartToCurrentScreen = Children.Find<BevelledButtonWidget>("ScbbsPlusRestartConfirmDialog.RestartToCurrentScreen");
-            m_cancelButton = Children.Find<BevelledButtonWidget>("ScbbsPlusRestartConfirmDialog.CancelButton");
+            Children.Find<LabelWidget>("RestartConfirmDialog.Message").Text = message ?? string.Empty;
+            m_restartButton = Children.Find<BevelledButtonWidget>("RestartConfirmDialog.RestartButton");
+            m_restartToCurrentScreen = Children.Find<BevelledButtonWidget>("RestartConfirmDialog.RestartToCurrentScreen");
+            m_cancelButton = Children.Find<BevelledButtonWidget>("RestartConfirmDialog.CancelButton");
             m_cancelButton.Text = LanguageControl.Cancel;
             m_restartToCurrentScreen.IsVisible = m_restartToCurrentScreenAction != null;
         }

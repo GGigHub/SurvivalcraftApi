@@ -1,8 +1,8 @@
 <FixedSizePanelWidget xmlns="runtime-namespace:Game" HorizontalAlignment="Stretch" Margin="0, 3">
-  <RectangleWidget Name="ScbbsPlusModVersionFileWidget.Background" FillColor="10, 10, 10, 168" OutlineColor="72, 72, 72, 130" OutlineThickness="1" />
+  <RectangleWidget Name="ModVersionFileWidget.Background" FillColor="10, 10, 10, 168" OutlineColor="72, 72, 72, 130" OutlineThickness="1" />
   <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" Margin="10, 5">
-    <LabelWidget Name="ScbbsPlusModVersionFileWidget.FileTitle" Margin4="0, 0, 158, 0" Color="255, 255, 255" FontScale="0.7" WordWrap="true" />
-    <LabelWidget Name="ScbbsPlusModVersionFileWidget.DownloadsSize" Margin4="0, 4, 158, 0" Color="165, 165, 165" FontScale="0.7" WordWrap="true" />
+    <LabelWidget Name="ModVersionFileWidget.FileTitle" Margin4="0, 0, 158, 0" Color="255, 255, 255" FontScale="0.7" WordWrap="true" />
+    <LabelWidget Name="ModVersionFileWidget.DownloadsSize" Margin4="0, 4, 158, 0" Color="165, 165, 165" FontScale="0.7" WordWrap="true" />
   </StackPanelWidget>
-  <BevelledButtonWidget Name="ScbbsPlusModVersionFileWidget.DownloadButton" Size="128, 48" FontScale="0.8" HorizontalAlignment="Far" Margin="10, 5" />
+  <BevelledButtonWidget Name="ModVersionFileWidget.DownloadButton" Size="128, 48" FontScale="0.8" HorizontalAlignment="Far" Margin="10, 5" />
 </FixedSizePanelWidget>

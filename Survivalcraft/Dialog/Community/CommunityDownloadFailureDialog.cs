@@ -26,12 +26,12 @@ namespace Game
             string title = string.IsNullOrWhiteSpace(fileName)
                 ? LanguageControl.Get("DownloadFailureDialog", "DownloadError")
                 : $"{LanguageControl.Get("DownloadFailureDialog", "DownloadError")} - {fileName}";
-            Children.Find<LabelWidget>("ScbbsPlusDownloadFailureDialog.Title").Text = title;
-            Children.Find<LabelWidget>("ScbbsPlusDownloadFailureDialog.LinkLabel").Text =
+            Children.Find<LabelWidget>("DownloadFailureDialog.Title").Text = title;
+            Children.Find<LabelWidget>("DownloadFailureDialog.LinkLabel").Text =
                 string.IsNullOrWhiteSpace(m_downloadUrl) ? "-" : m_downloadUrl;
-            m_copyLinkButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadFailureDialog.CopyLinkButton");
+            m_copyLinkButton = Children.Find<ButtonWidget>("DownloadFailureDialog.CopyLinkButton");
             m_copyLinkButton.IsEnabled = !string.IsNullOrWhiteSpace(m_downloadUrl);
-            StackPanelWidget errorContent = Children.Find<StackPanelWidget>("ScbbsPlusDownloadFailureDialog.ErrorContent");
+            StackPanelWidget errorContent = Children.Find<StackPanelWidget>("DownloadFailureDialog.ErrorContent");
             errorContent.Children.Add(new LabelWidget
             {
                 Text = error ?? LanguageControl.Get("DownloadFailureDialog", "UnknownError"),
@@ -39,8 +39,8 @@ namespace Game
                 FontScale = 0.8f,
                 WordWrap = true
             });
-            m_switchSourceButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadFailureDialog.SwitchSourceButton");
-            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadFailureDialog.CloseButton");
+            m_switchSourceButton = Children.Find<ButtonWidget>("DownloadFailureDialog.SwitchSourceButton");
+            m_closeButton = Children.Find<ButtonWidget>("DownloadFailureDialog.CloseButton");
         }
 
         public override void Update()

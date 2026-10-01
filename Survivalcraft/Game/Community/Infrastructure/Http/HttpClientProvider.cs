@@ -10,7 +10,7 @@ namespace Game
     internal static class HttpClientProvider
     {
         // 声明顺序即静态初始化顺序：Create 引用 UserAgent，必须先于三个客户端声明。
-        internal static string UserAgent { get; } = $"ScbbsPlus/{VersionsManager.Version}";
+        internal static string UserAgent { get; } = $"SurvivalcraftApi/{VersionsManager.Version}";
 
         public static HttpClient Community { get; } = Create(TimeSpan.FromSeconds(30));
 

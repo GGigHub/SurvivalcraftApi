@@ -1,9 +1,9 @@
-<CanvasWidget xmlns="runtime-namespace:Game" Name="ScbbsPlusToastWidget" Size="600, -1" HorizontalAlignment="Center" VerticalAlignment="Far">
-  <BevelledRectangleWidget Name="ScbbsPlusToastWidget.Background" Size="0, 0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" DirectionalLight="0" AmbientLight="1" BevelSize="2" RoundingRadius="10" RoundingCount="4" CenterColor="0, 0, 0, 192" BevelColor="192, 192, 192, 192" />
+<CanvasWidget xmlns="runtime-namespace:Game" Name="ToastWidget" Size="600, -1" HorizontalAlignment="Center" VerticalAlignment="Far">
+  <BevelledRectangleWidget Name="ToastWidget.Background" Size="0, 0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" DirectionalLight="0" AmbientLight="1" BevelSize="2" RoundingRadius="10" RoundingCount="4" CenterColor="0, 0, 0, 192" BevelColor="192, 192, 192, 192" />
   <StackPanelWidget Direction="Horizontal" Margin="16, 12">
-    <LabelWidget Name="ScbbsPlusToastWidget.Text" FontScale="0.86" Color="255, 255, 255" VerticalAlignment="Center" WordWrap="true" MaxLines="6" Ellipsis="true" />
+    <LabelWidget Name="ToastWidget.Text" FontScale="0.86" Color="255, 255, 255" VerticalAlignment="Center" WordWrap="true" MaxLines="6" Ellipsis="true" />
     <CanvasWidget Size="Infinity, 0" />
-    <LinkWidget Name="ScbbsPlusToastWidget.Confirm" Margin="20, 0" FontScale="0.8" Color="120, 235, 120" VerticalAlignment="Center" IsVisible="false" />
-    <LinkWidget Name="ScbbsPlusToastWidget.Close" FontScale="0.8" Color="210, 210, 210" VerticalAlignment="Center" />
+    <LinkWidget Name="ToastWidget.Confirm" Margin="20, 0" FontScale="0.8" Color="120, 235, 120" VerticalAlignment="Center" IsVisible="false" />
+    <LinkWidget Name="ToastWidget.Close" FontScale="0.8" Color="210, 210, 210" VerticalAlignment="Center" />
   </StackPanelWidget>
 </CanvasWidget>

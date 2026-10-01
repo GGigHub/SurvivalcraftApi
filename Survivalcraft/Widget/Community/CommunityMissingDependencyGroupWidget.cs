@@ -18,9 +18,9 @@ namespace Game
         {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyGroupWidget");
             LoadContents(this, node);
-            m_groupTextWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyGroupWidget.GroupText");
-            m_toggleButton = Children.Find<ButtonWidget>("ScbbsPlusMissingDependencyGroupWidget.ToggleButton");
-            m_filesPanel = Children.Find<StackPanelWidget>("ScbbsPlusMissingDependencyGroupWidget.FilesPanel");
+            m_groupTextWidget = Children.Find<LabelWidget>("MissingDependencyGroupWidget.GroupText");
+            m_toggleButton = Children.Find<ButtonWidget>("MissingDependencyGroupWidget.ToggleButton");
+            m_filesPanel = Children.Find<StackPanelWidget>("MissingDependencyGroupWidget.FilesPanel");
         }
 
         public string GroupKey { get; private set; }

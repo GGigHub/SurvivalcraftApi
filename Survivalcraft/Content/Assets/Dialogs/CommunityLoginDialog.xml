@@ -9,7 +9,7 @@
       <CanvasWidget Size="10, 0" />
       <CanvasWidget>
         <BevelledRectangleWidget Size="Infinity, 50" Style="{Styles/TextBoxArea}" />
-        <TextBoxWidget Name="ScbbsPlusLoginDialog.AccountBox" Color="255, 255, 255" Margin="6, 0" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+        <TextBoxWidget Name="LoginDialog.AccountBox" Color="255, 255, 255" Margin="6, 0" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
       </CanvasWidget>
     </StackPanelWidget>
     <StackPanelWidget Direction="Horizontal" Margin="10, 10">
@@ -19,17 +19,17 @@
       <CanvasWidget Size="10, 0" />
       <CanvasWidget>
         <BevelledRectangleWidget Size="Infinity, 50" Style="{Styles/TextBoxArea}" />
-        <TextBoxWidget Name="ScbbsPlusLoginDialog.PasswordBox" PasswordMode="true" Color="255, 255, 255" Margin="6, 0" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+        <TextBoxWidget Name="LoginDialog.PasswordBox" PasswordMode="true" Color="255, 255, 255" Margin="6, 0" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
       </CanvasWidget>
     </StackPanelWidget>
-    <LabelWidget Name="ScbbsPlusLoginDialog.ErrorLabel" Color="255, 80, 80" HorizontalAlignment="Center" WordWrap="true" Margin="10, 10" />
+    <LabelWidget Name="LoginDialog.ErrorLabel" Color="255, 80, 80" HorizontalAlignment="Center" WordWrap="true" Margin="10, 10" />
     <CanvasWidget Size="0, Infinity" />
     <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
-      <BevelledButtonWidget Name="ScbbsPlusLoginDialog.LoginButton" Text="[LoginDialog:LogIn]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="LoginDialog.LoginButton" Text="[LoginDialog:LogIn]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusLoginDialog.RegisterButton" Text="[LoginDialog:Register]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="LoginDialog.RegisterButton" Text="[LoginDialog:Register]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusLoginDialog.CancelButton" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="LoginDialog.CancelButton" Style="{Styles/ButtonStyle_160x60}" />
     </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

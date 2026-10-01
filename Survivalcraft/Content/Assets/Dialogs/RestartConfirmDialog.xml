@@ -1,16 +1,16 @@
 <CanvasWidget xmlns="runtime-namespace:Game" Size="600, 280" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
   <BevelledRectangleWidget Style="{Styles/DialogArea}" />
   <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
-    <LabelWidget Name="ScbbsPlusRestartConfirmDialog.Title" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5" />
+    <LabelWidget Name="RestartConfirmDialog.Title" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5" />
     <CanvasWidget Size="0, Infinity" />
-    <LabelWidget Name="ScbbsPlusRestartConfirmDialog.Message" Color="128, 128, 128" HorizontalAlignment="Center" WordWrap="true" Margin="10, 10" />
+    <LabelWidget Name="RestartConfirmDialog.Message" Color="128, 128, 128" HorizontalAlignment="Center" WordWrap="true" Margin="10, 10" />
     <CanvasWidget Size="0, Infinity" />
     <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
-      <BevelledButtonWidget Name="ScbbsPlusRestartConfirmDialog.RestartButton" Text="[RestartConfirmDialog:Restart]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="RestartConfirmDialog.RestartButton" Text="[RestartConfirmDialog:Restart]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusRestartConfirmDialog.RestartToCurrentScreen" Text="[RestartConfirmDialog:RestartToCurrentScreen]" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="RestartConfirmDialog.RestartToCurrentScreen" Text="[RestartConfirmDialog:RestartToCurrentScreen]" Style="{Styles/ButtonStyle_160x60}" />
       <CanvasWidget Size="10, 0" />
-      <BevelledButtonWidget Name="ScbbsPlusRestartConfirmDialog.CancelButton" Style="{Styles/ButtonStyle_160x60}" />
+      <BevelledButtonWidget Name="RestartConfirmDialog.CancelButton" Style="{Styles/ButtonStyle_160x60}" />
     </StackPanelWidget>
   </StackPanelWidget>
 </CanvasWidget>

@@ -40,19 +40,19 @@ namespace Game
 
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityMissingDependenciesDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("ScbbsPlusMissingDependenciesDialog.TitleLabel").Text =
+            Children.Find<LabelWidget>("MissingDependenciesDialog.TitleLabel").Text =
                 string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("MissingDependenciesDialog", "DependenciesFound") : title;
-            Children.Find<LabelWidget>("ScbbsPlusMissingDependenciesDialog.ModNameLabel").Text =
+            Children.Find<LabelWidget>("MissingDependenciesDialog.ModNameLabel").Text =
                 string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("MissingDependenciesDialog", "LocalMod") : modName;
-            m_listPanel = Children.Find<StackPanelWidget>("ScbbsPlusMissingDependenciesDialog.ListPanel");
+            m_listPanel = Children.Find<StackPanelWidget>("MissingDependenciesDialog.ListPanel");
 
             m_fileGroups = BuildFileGroups(files, groupFilesByPackageName, m_preferredVersionsByPackage);
             m_primaryDownloadFiles = BuildPrimaryDownloadFiles(m_fileGroups);
             BuildFileRows();
 
-            m_downloadAllButton = Children.Find<ButtonWidget>("ScbbsPlusMissingDependenciesDialog.DownloadAllButton");
+            m_downloadAllButton = Children.Find<ButtonWidget>("MissingDependenciesDialog.DownloadAllButton");
             m_downloadAllButton.IsEnabled = m_primaryDownloadFiles.Count > 0 && m_downloadAll != null;
-            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusMissingDependenciesDialog.CloseButton");
+            m_closeButton = Children.Find<ButtonWidget>("MissingDependenciesDialog.CloseButton");
         }
 
         public override void Update()

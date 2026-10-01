@@ -21,13 +21,13 @@ namespace Game
         {
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityDownloadDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("ScbbsPlusDownloadDialog.Title").Text =
+            Children.Find<LabelWidget>("DownloadDialog.Title").Text =
                 string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("DownloadDialog", "DownloadingLabel") : title;
-            m_statusLabel = Children.Find<LabelWidget>("ScbbsPlusDownloadDialog.Status");
-            m_percentLabel = Children.Find<LabelWidget>("ScbbsPlusDownloadDialog.Percent");
-            m_progressBar = Children.Find<ValueBarWidget>("ScbbsPlusDownloadDialog.Progress");
-            m_cancelButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadDialog.CancelButton");
-            m_backgroundButton = Children.Find<ButtonWidget>("ScbbsPlusDownloadDialog.BackgroundButton");
+            m_statusLabel = Children.Find<LabelWidget>("DownloadDialog.Status");
+            m_percentLabel = Children.Find<LabelWidget>("DownloadDialog.Percent");
+            m_progressBar = Children.Find<ValueBarWidget>("DownloadDialog.Progress");
+            m_cancelButton = Children.Find<ButtonWidget>("DownloadDialog.CancelButton");
+            m_backgroundButton = Children.Find<ButtonWidget>("DownloadDialog.BackgroundButton");
             m_cancelAction = cancelAction;
             m_backgroundAction = backgroundAction;
             m_progress = progress;

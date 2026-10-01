@@ -28,13 +28,13 @@ namespace Game
 
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModpackFileConflictDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("ScbbsPlusModpackFileConflictDialog.Message").Text =
+            Children.Find<LabelWidget>("ModpackFileConflictDialog.Message").Text =
                 string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackFileConflictDialog", "IdenticalFileChooseAction"), fileName);
-            m_overwriteButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.OverwriteButton");
-            m_skipButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.SkipButton");
-            m_skipAllButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.SkipAllButton");
-            m_overwriteAllButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.OverwriteAllButton");
-            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusModpackFileConflictDialog.CloseButton");
+            m_overwriteButton = Children.Find<ButtonWidget>("ModpackFileConflictDialog.OverwriteButton");
+            m_skipButton = Children.Find<ButtonWidget>("ModpackFileConflictDialog.SkipButton");
+            m_skipAllButton = Children.Find<ButtonWidget>("ModpackFileConflictDialog.SkipAllButton");
+            m_overwriteAllButton = Children.Find<ButtonWidget>("ModpackFileConflictDialog.OverwriteAllButton");
+            m_closeButton = Children.Find<ButtonWidget>("ModpackFileConflictDialog.CloseButton");
         }
 
         public override void Update()

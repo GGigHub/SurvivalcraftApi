@@ -26,10 +26,10 @@ namespace Game
 
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityImportOverwriteDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("ScbbsPlusImportOverwriteDialog.Message").Text = message ?? string.Empty;
-            m_overwriteButton = Children.Find<ButtonWidget>("ScbbsPlusImportOverwriteDialog.OverwriteButton");
-            m_renameButton = Children.Find<ButtonWidget>("ScbbsPlusImportOverwriteDialog.RenameButton");
-            m_cancelButton = Children.Find<ButtonWidget>("ScbbsPlusImportOverwriteDialog.CancelButton");
+            Children.Find<LabelWidget>("ImportOverwriteDialog.Message").Text = message ?? string.Empty;
+            m_overwriteButton = Children.Find<ButtonWidget>("ImportOverwriteDialog.OverwriteButton");
+            m_renameButton = Children.Find<ButtonWidget>("ImportOverwriteDialog.RenameButton");
+            m_cancelButton = Children.Find<ButtonWidget>("ImportOverwriteDialog.CancelButton");
             m_cancelButton.Text = LanguageControl.Cancel;
             m_renameButton.IsVisible = canRename;
         }

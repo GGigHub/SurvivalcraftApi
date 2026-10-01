@@ -45,10 +45,10 @@ namespace Game
 
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModVersionsDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("ScbbsPlusModVersionsDialog.PostTitleLabel").Text =
+            Children.Find<LabelWidget>("ModVersionsDialog.PostTitleLabel").Text =
                 string.IsNullOrWhiteSpace(postTitle) ? LanguageControl.Get("ModVersionsDialog", "CommunityPost") : postTitle;
-            m_listPanel = Children.Find<StackPanelWidget>("ScbbsPlusModVersionsDialog.ListPanel");
-            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionsDialog.CloseButton");
+            m_listPanel = Children.Find<StackPanelWidget>("ModVersionsDialog.ListPanel");
+            m_closeButton = Children.Find<ButtonWidget>("ModVersionsDialog.CloseButton");
             BuildVersionList();
         }
 

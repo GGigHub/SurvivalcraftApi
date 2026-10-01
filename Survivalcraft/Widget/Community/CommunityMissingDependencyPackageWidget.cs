@@ -12,9 +12,9 @@ namespace Game
         {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyPackageWidget");
             LoadContents(this, node);
-            m_messagePanel = Children.Find<FixedSizePanelWidget>("ScbbsPlusMissingDependencyPackageWidget.MessagePanel");
-            m_messageTextWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyPackageWidget.MessageText");
-            m_detailTextWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyPackageWidget.DetailText");
+            m_messagePanel = Children.Find<FixedSizePanelWidget>("MissingDependencyPackageWidget.MessagePanel");
+            m_messageTextWidget = Children.Find<LabelWidget>("MissingDependencyPackageWidget.MessageText");
+            m_detailTextWidget = Children.Find<LabelWidget>("MissingDependencyPackageWidget.DetailText");
         }
 
         internal void Bind(CommunityMissingDependencyPackageDisplayData data)

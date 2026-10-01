@@ -52,17 +52,17 @@ namespace Game
 
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityFiltersDialog");
             LoadContents(this, node);
-            m_fileTypeButton = Children.Find<BevelledButtonWidget>("ScbbsPlusFiltersDialog.FileTypeButton");
-            m_orderButton = Children.Find<BevelledButtonWidget>("ScbbsPlusFiltersDialog.OrderButton");
-            m_versionButton = Children.Find<BevelledButtonWidget>("ScbbsPlusFiltersDialog.VersionButton");
-            m_sectionButton = Children.Find<BevelledButtonWidget>("ScbbsPlusFiltersDialog.SectionButton");
-            m_ignoreFileTypeCheckbox = Children.Find<CheckboxWidget>("ScbbsPlusFiltersDialog.IgnoreFileType");
-            m_ignoreOrderCheckbox = Children.Find<CheckboxWidget>("ScbbsPlusFiltersDialog.IgnoreOrder");
-            m_ignoreVersionCheckbox = Children.Find<CheckboxWidget>("ScbbsPlusFiltersDialog.IgnoreVersion");
-            m_ignoreSectionCheckbox = Children.Find<CheckboxWidget>("ScbbsPlusFiltersDialog.IgnoreSection");
-            m_saveDefaultButton = Children.Find<BevelledButtonWidget>("ScbbsPlusFiltersDialog.SaveDefaultButton");
-            m_confirmButton = Children.Find<BevelledButtonWidget>("ScbbsPlusFiltersDialog.ConfirmButton");
-            m_cancelButton = Children.Find<BevelledButtonWidget>("ScbbsPlusFiltersDialog.CancelButton");
+            m_fileTypeButton = Children.Find<BevelledButtonWidget>("FiltersDialog.FileTypeButton");
+            m_orderButton = Children.Find<BevelledButtonWidget>("FiltersDialog.OrderButton");
+            m_versionButton = Children.Find<BevelledButtonWidget>("FiltersDialog.VersionButton");
+            m_sectionButton = Children.Find<BevelledButtonWidget>("FiltersDialog.SectionButton");
+            m_ignoreFileTypeCheckbox = Children.Find<CheckboxWidget>("FiltersDialog.IgnoreFileType");
+            m_ignoreOrderCheckbox = Children.Find<CheckboxWidget>("FiltersDialog.IgnoreOrder");
+            m_ignoreVersionCheckbox = Children.Find<CheckboxWidget>("FiltersDialog.IgnoreVersion");
+            m_ignoreSectionCheckbox = Children.Find<CheckboxWidget>("FiltersDialog.IgnoreSection");
+            m_saveDefaultButton = Children.Find<BevelledButtonWidget>("FiltersDialog.SaveDefaultButton");
+            m_confirmButton = Children.Find<BevelledButtonWidget>("FiltersDialog.ConfirmButton");
+            m_cancelButton = Children.Find<BevelledButtonWidget>("FiltersDialog.CancelButton");
 
             m_confirmButton.Text = LanguageControl.Ok;
             m_cancelButton.Text = LanguageControl.Cancel;

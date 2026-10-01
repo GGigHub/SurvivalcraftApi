@@ -13,9 +13,9 @@ namespace Game
         {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityModVersionFileWidget");
             LoadContents(this, node);
-            m_fileTitleWidget = Children.Find<LabelWidget>("ScbbsPlusModVersionFileWidget.FileTitle");
-            m_downloadsSizeWidget = Children.Find<LabelWidget>("ScbbsPlusModVersionFileWidget.DownloadsSize");
-            m_downloadButton = Children.Find<ButtonWidget>("ScbbsPlusModVersionFileWidget.DownloadButton");
+            m_fileTitleWidget = Children.Find<LabelWidget>("ModVersionFileWidget.FileTitle");
+            m_downloadsSizeWidget = Children.Find<LabelWidget>("ModVersionFileWidget.DownloadsSize");
+            m_downloadButton = Children.Find<ButtonWidget>("ModVersionFileWidget.DownloadButton");
             m_downloadButton.Text = LanguageControl.Get("ExternalContentScreen", "2");
         }
 

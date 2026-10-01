@@ -50,15 +50,15 @@ namespace Game
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityPostDetailsDialog");
             LoadContents(this, node);
 
-            m_titleLabel = Children.Find<LabelWidget>("ScbbsPlusPostDetailsDialog.Title");
+            m_titleLabel = Children.Find<LabelWidget>("PostDetailsDialog.Title");
             m_titleLabel.Text = string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("PostDetailsDialog", "PostDetails") : title;
-            m_contentPanel = Children.Find<StackPanelWidget>("ScbbsPlusPostDetailsDialog.ContentPanel");
-            m_headerPanel = Children.Find<StackPanelWidget>("ScbbsPlusPostDetailsDialog.HeaderPanel");
-            m_actionsRow = Children.Find<Widget>("ScbbsPlusPostDetailsDialog.ActionsRow");
-            m_viewInBrowserButton = Children.Find<ButtonWidget>("ScbbsPlusPostDetailsDialog.ViewInBrowserButton");
-            m_primaryButton = Children.Find<ButtonWidget>("ScbbsPlusPostDetailsDialog.PrimaryButton");
-            m_closeButton = Children.Find<ButtonWidget>("ScbbsPlusPostDetailsDialog.CloseButton");
-            m_translateStatusLabel = Children.Find<LabelWidget>("ScbbsPlusPostDetailsDialog.TranslateStatus");
+            m_contentPanel = Children.Find<StackPanelWidget>("PostDetailsDialog.ContentPanel");
+            m_headerPanel = Children.Find<StackPanelWidget>("PostDetailsDialog.HeaderPanel");
+            m_actionsRow = Children.Find<Widget>("PostDetailsDialog.ActionsRow");
+            m_viewInBrowserButton = Children.Find<ButtonWidget>("PostDetailsDialog.ViewInBrowserButton");
+            m_primaryButton = Children.Find<ButtonWidget>("PostDetailsDialog.PrimaryButton");
+            m_closeButton = Children.Find<ButtonWidget>("PostDetailsDialog.CloseButton");
+            m_translateStatusLabel = Children.Find<LabelWidget>("PostDetailsDialog.TranslateStatus");
             m_contentBuilder = new PostDetailsContentBuilder(m_contentPanel, m_baseUrl);
 
             bool hasPrimaryAction = !string.IsNullOrWhiteSpace(primaryButtonText) && primaryAction != null;

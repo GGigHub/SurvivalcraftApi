@@ -26,9 +26,9 @@ namespace Game
         {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityToastWidget");
             LoadContents(this, node);
-            m_text = Children.Find<LabelWidget>("ScbbsPlusToastWidget.Text");
-            m_confirm = Children.Find<LinkWidget>("ScbbsPlusToastWidget.Confirm");
-            m_close = Children.Find<LinkWidget>("ScbbsPlusToastWidget.Close");
+            m_text = Children.Find<LabelWidget>("ToastWidget.Text");
+            m_confirm = Children.Find<LinkWidget>("ToastWidget.Confirm");
+            m_close = Children.Find<LinkWidget>("ToastWidget.Close");
             Margin = new Vector2(0f, HiddenBottomMargin);
             IsVisible = false;
         }

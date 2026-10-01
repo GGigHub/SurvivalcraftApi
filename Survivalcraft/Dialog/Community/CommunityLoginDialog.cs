@@ -22,12 +22,12 @@ namespace Game
 
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityLoginDialog");
             LoadContents(this, node);
-            m_accountBox = Children.Find<TextBoxWidget>("ScbbsPlusLoginDialog.AccountBox");
-            m_passwordBox = Children.Find<TextBoxWidget>("ScbbsPlusLoginDialog.PasswordBox");
-            m_errorLabel = Children.Find<LabelWidget>("ScbbsPlusLoginDialog.ErrorLabel");
-            m_loginButton = Children.Find<BevelledButtonWidget>("ScbbsPlusLoginDialog.LoginButton");
-            m_registerButton = Children.Find<BevelledButtonWidget>("ScbbsPlusLoginDialog.RegisterButton");
-            m_cancelButton = Children.Find<BevelledButtonWidget>("ScbbsPlusLoginDialog.CancelButton");
+            m_accountBox = Children.Find<TextBoxWidget>("LoginDialog.AccountBox");
+            m_passwordBox = Children.Find<TextBoxWidget>("LoginDialog.PasswordBox");
+            m_errorLabel = Children.Find<LabelWidget>("LoginDialog.ErrorLabel");
+            m_loginButton = Children.Find<BevelledButtonWidget>("LoginDialog.LoginButton");
+            m_registerButton = Children.Find<BevelledButtonWidget>("LoginDialog.RegisterButton");
+            m_cancelButton = Children.Find<BevelledButtonWidget>("LoginDialog.CancelButton");
             m_cancelButton.Text = LanguageControl.Cancel;
             m_accountBox.HasFocus = true;
         }

@@ -11,8 +11,8 @@ namespace Game
         {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyPackageHeaderWidget");
             LoadContents(this, node);
-            m_fileGroupSpacer = Children.Find<CanvasWidget>("ScbbsPlusMissingDependencyPackageHeaderWidget.FileGroupSpacer");
-            m_headerTextWidget = Children.Find<LabelWidget>("ScbbsPlusMissingDependencyPackageHeaderWidget.HeaderText");
+            m_fileGroupSpacer = Children.Find<CanvasWidget>("MissingDependencyPackageHeaderWidget.FileGroupSpacer");
+            m_headerTextWidget = Children.Find<LabelWidget>("MissingDependencyPackageHeaderWidget.HeaderText");
         }
 
         internal void Bind(string text, bool hasFileGroupSpacer)

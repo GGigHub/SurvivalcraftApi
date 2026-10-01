@@ -27,16 +27,16 @@ namespace Game
 
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModReviewDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("ScbbsPlusModReviewDialog.Title").Text =
+            Children.Find<LabelWidget>("ModReviewDialog.Title").Text =
                 string.IsNullOrWhiteSpace(dialogTitle) ? LanguageControl.Get("ModReviewDialog", "ReviewLocalResource") : dialogTitle;
-            Children.Find<LabelWidget>("ScbbsPlusModReviewDialog.ModNameLabel").Text =
+            Children.Find<LabelWidget>("ModReviewDialog.ModNameLabel").Text =
                 string.IsNullOrWhiteSpace(modName) ? LanguageControl.Get("ModReviewDialog", "LocalResource") : modName;
-            m_starRating = Children.Find<StarRatingWidget>("ScbbsPlusModReviewDialog.StarRating");
-            m_restoreLink = Children.Find<LinkWidget>("ScbbsPlusModReviewDialog.RestoreLink");
-            m_textBox = Children.Find<TextBoxWidget>("ScbbsPlusModReviewDialog.TextBox");
-            m_statusLabel = Children.Find<LabelWidget>("ScbbsPlusModReviewDialog.StatusLabel");
-            m_submitButton = Children.Find<ButtonWidget>("ScbbsPlusModReviewDialog.SubmitButton");
-            m_cancelButton = Children.Find<ButtonWidget>("ScbbsPlusModReviewDialog.CancelButton");
+            m_starRating = Children.Find<StarRatingWidget>("ModReviewDialog.StarRating");
+            m_restoreLink = Children.Find<LinkWidget>("ModReviewDialog.RestoreLink");
+            m_textBox = Children.Find<TextBoxWidget>("ModReviewDialog.TextBox");
+            m_statusLabel = Children.Find<LabelWidget>("ModReviewDialog.StatusLabel");
+            m_submitButton = Children.Find<ButtonWidget>("ModReviewDialog.SubmitButton");
+            m_cancelButton = Children.Find<ButtonWidget>("ModReviewDialog.CancelButton");
             m_cancelButton.Text = LanguageControl.Cancel;
             m_textBox.Text = text ?? string.Empty;
             m_textBox.TextChanged += _ => UpdateSubmitState();
