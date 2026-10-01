@@ -1059,13 +1059,6 @@ namespace Game {
                 }
             }
 
-            // 文本或光标变化后滚动到光标可见的位置。
-            // 放在 Update 末尾按帧比对而非 setter 中触发：setter 阶段布局尺寸（ActualSize）可能尚未就绪。
-            if (!string.Equals(Text, m_lastText, StringComparison.Ordinal) || Caret != m_lastCaret) {
-                EnsureCaretVisible();
-                m_lastText = Text;
-                m_lastCaret = Caret;
-            }
             return;
 #endif
 
@@ -1097,17 +1090,21 @@ namespace Game {
                 Vector2 widgetActualSize) {
                 float scale = fontScale * font.Scale;
                 Vector2 spacing = fontSpacing + font.Spacing;
+                // 行进量必须与 EndOfLineDrawItem / GetLineHeight 的绘制行进一致
+                // （font.LineHeight 含 Font.Spacing，绘制行进不含），否则多行文本深处
+                // 的点击定位随行数漂移，会落到相邻行。
+                float rowAdvance = font.GlyphHeight * font.Scale * fontScale + fontSpacing.Y;
                 float currentPosition = 0f;
-                float currentHeight = widgetActualSize.Y / 2f - font.LineHeight * scale / 2;
+                float currentHeight = widgetActualSize.Y / 2f - rowAdvance / 2f;
                 int i = 0;
-                while (currentHeight + font.LineHeight * scale + spacing.Y < clickPosition.Y) {
+                while (currentHeight + rowAdvance < clickPosition.Y) {
                     int nextLineStart = text.IndexOf('\n', i);
                     if (nextLineStart == -1) {
                         // 点击位置在所有行之下，光标置于文本末尾。
                         return text.Length;
                     }
                     i = nextLineStart + 1;
-                    currentHeight += font.LineHeight * scale + spacing.Y;
+                    currentHeight += rowAdvance;
                 }
                 for (; i < text.Length; i++) {
                     char letter = text[i];
@@ -2002,6 +1999,22 @@ namespace Game {
             }
             DesiredSize = Font.MeasureText(Text.Length == 0 ? " " : Text, new Vector2(FontScale), FontSpacing);
             base.MeasureOverride(parentAvailableSize);
+        }
+
+        /// <inheritdoc />
+        public override void ArrangeOverride() {
+            base.ArrangeOverride();
+            // 垂直滚动修正必须在 Arrange 后进行：Update 先于 Measure/Arrange 执行，
+            // 首帧 ActualSize 为 0，旧实现据此把 VerticalScroll 钉在错误值
+            // （文字/光标整体上移约一行），且之后没有任何时机再将其钳回。
+            if (!string.Equals(Text, m_lastText, StringComparison.Ordinal) || Caret != m_lastCaret) {
+                EnsureCaretVisible();
+                m_lastText = Text;
+                m_lastCaret = Caret;
+            }
+            else {
+                LimitVerticalScrollValue();
+            }
         }
 
         public abstract class TextDrawItem {
