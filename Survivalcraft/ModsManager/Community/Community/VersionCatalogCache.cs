@@ -158,8 +158,7 @@ namespace Game {
         internal static Dictionary<int, string> BuildGameVersionNameMap(VersionListItem[] versions) {
             Dictionary<int, string> result = new();
             foreach (VersionListItem version in versions ?? []) {
-                if (version == null
-                    || version.Id <= 0
+                if (version is null or { Id: <= 0 }
                     || string.IsNullOrWhiteSpace(version.Name)) {
                     continue;
                 }

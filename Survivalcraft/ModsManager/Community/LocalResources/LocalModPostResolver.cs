@@ -56,6 +56,7 @@ namespace Game {
                     // WhenAll 保持原顺序，取首个解析成功者。
                     using SemaphoreSlim limiter = new(3);
                     int[] postIds = await Task.WhenAll(
+                        // ReSharper disable once AccessToDisposedClosure — limiter 由 using 释放，但下方 WhenAll 先行等待全部查询。
                         matchedFiles.Select(async file => {
                                 if (string.IsNullOrWhiteSpace(file?.Filename)) {
                                     return 0;
@@ -73,6 +74,7 @@ namespace Game {
                                     return 0;
                                 }
                                 finally {
+                                    // ReSharper disable once AccessToDisposedClosure
                                     limiter.Release();
                                 }
                             }

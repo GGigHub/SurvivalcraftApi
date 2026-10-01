@@ -32,10 +32,7 @@ namespace Game {
 
             public static Info FromString(string str) {
                 string[] parts = str.Split("^^");
-                if (parts.Length == 2) {
-                    return new Info(parts[0], parts[1]);
-                }
-                return null;
+                return parts.Length == 2 ? new Info(parts[0], parts[1]) : null;
             }
 
             public Info Clone() => new(Name, Host);
@@ -93,10 +90,7 @@ namespace Game {
             if (info == Source3GlobalInfo) {
                 return LanguageControl.Get("CommunityDownloadSource", "Source3Global");
             }
-            if (info == Source4GlobalInfo) {
-                return LanguageControl.Get("CommunityDownloadSource", "Source4Global");
-            }
-            return info.Name;
+            return info == Source4GlobalInfo ? LanguageControl.Get("CommunityDownloadSource", "Source4Global") : info.Name;
         }
 
         public static bool IsDefaultInfo(Info info) => Array.IndexOf(DefaultInfos, info) >= 0;

@@ -42,7 +42,7 @@ namespace Game {
             if (unknownItemCategoryError == null) {
                 throw new ArgumentNullException(nameof(unknownItemCategoryError));
             }
-            IReadOnlyList<ModpackItem> selectedItems = (items ?? []).Where(item => item != null && item.IsEnabled).ToArray();
+            IReadOnlyList<ModpackItem> selectedItems = [.. (items ?? []).Where(item => item != null && item.IsEnabled)];
             ModpackDownloadProgress progress = new() { TotalCount = selectedItems.Count, Results = [] };
             for (int offset = 0; offset < selectedItems.Count; offset += PrefetchBatchSize) {
                 if (!m_isCurrentRequest(requestId)) {
@@ -52,7 +52,7 @@ namespace Game {
                     break;
                 }
                 int count = Math.Min(PrefetchBatchSize, selectedItems.Count - offset);
-                IReadOnlyList<ModpackItem> batch = selectedItems.Skip(offset).Take(count).ToArray();
+                IReadOnlyList<ModpackItem> batch = [.. selectedItems.Skip(offset).Take(count)];
                 PrefetchedItem[] fetched = await PrefetchBatchAsync(batch, embeddedFiles, apiBaseUrl, token, cancellationToken);
                 for (int i = 0; i < batch.Count; i++) {
                     ModpackItem item = batch[i];
@@ -66,8 +66,6 @@ namespace Game {
                                 progress,
                                 itemResult,
                                 embeddedFiles,
-                                apiBaseUrl,
-                                token,
                                 prepareCustomDataFile,
                                 noDownloadLinkError,
                                 unknownItemCategoryError,
@@ -152,8 +150,6 @@ namespace Game {
             ModpackDownloadProgress progress,
             ModpackItemDownloadResult itemResult,
             IReadOnlyDictionary<string, byte[]> embeddedFiles,
-            string apiBaseUrl,
-            string token,
             Func<ModpackItem, byte[], ModpackDownloadProgress, byte[]> prepareCustomDataFile,
             Func<ModpackItem, string> noDownloadLinkError,
             Func<ModpackItem, string> unknownItemCategoryError,

@@ -67,15 +67,12 @@ namespace Game {
                 return false;
             }
             string existingPath = LocalModStateStore.FindExactLocalDownloadFilePath(item.Type, item.FileName);
-            if (string.IsNullOrWhiteSpace(existingPath)) {
-                return false;
-            }
-            return BeginQueuedDownloadOverwriteConfirmation(item, existingPath, null);
+            return !string.IsNullOrWhiteSpace(existingPath)
+                && BeginQueuedDownloadOverwriteConfirmation(item, existingPath, null);
         }
 
         void ConfirmQueuedDownloadOverwrite(CommunityDownloadQueueItem item, string existingPath) {
-            if (item == null
-                || item.State != CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation) {
+            if (item is null or { State: not CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation }) {
                 return;
             }
             m_downloadQueue.ConfirmOverwrite(item, existingPath);
@@ -85,8 +82,7 @@ namespace Game {
         }
 
         void CancelQueuedDownloadOverwrite(CommunityDownloadQueueItem item) {
-            if (item == null
-                || item.State != CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation) {
+            if (item is null or { State: not CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation }) {
                 return;
             }
             m_downloadQueue.CancelOverwrite(item, DateTime.Now);
@@ -98,8 +94,7 @@ namespace Game {
         }
 
         void RenameQueuedDownloadOverwrite(CommunityDownloadQueueItem item) {
-            if (item == null
-                || item.State != CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation) {
+            if (item is null or { State: not CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation }) {
                 return;
             }
 
@@ -235,8 +230,7 @@ namespace Game {
         /// </summary>
         void ReshowLostQueuedOverwriteDialog() {
             CommunityDownloadQueueItem item = m_queuedOverwriteDialogItem;
-            if (item == null
-                || item.State != CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation) {
+            if (item is null or { State: not CommunityDownloadQueueItemState.AwaitingOverwriteConfirmation }) {
                 m_queuedOverwriteDialog = null;
                 m_queuedOverwriteDialogItem = null;
                 m_queuedOverwriteDialogHidePending = false;
@@ -461,7 +455,9 @@ namespace Game {
         }
 
         static string FormatPausedDownloadMessage(CommunityDownloadQueueItem item) {
-            bool hasDownloaded = Storage.TryGetFileSize(item?.TempFilePath, out long length) && length > 0;
+            // 调用链 Restore 仅对非空项回调（DownloadQueueManager.Restore 有 null 守卫），
+            // 此处不写 ?.：与裸解引用混用会喂给值分析「item 可空」证据，误报 :463 可能 NRE。
+            bool hasDownloaded = Storage.TryGetFileSize(item.TempFilePath, out long length) && length > 0;
             return hasDownloaded
                 ? string.Format(
                     CultureInfo.InvariantCulture,
@@ -469,12 +465,12 @@ namespace Game {
                     item.FileName,
                     DataSizeFormatter.Format(length)
                 )
-                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadPaused"), item?.FileName);
+                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("DownloadFlowManager", "DownloadPaused"), item.FileName);
         }
 
         IReadOnlyList<CommunityDownloadQueueDialog.DownloadQueueDialogItem> BuildDownloadQueueDialogItems() {
             if (m_downloadQueueItems.Count == 0) {
-                return Array.Empty<CommunityDownloadQueueDialog.DownloadQueueDialogItem>();
+                return [];
             }
             List<CommunityDownloadQueueDialog.DownloadQueueDialogItem> items = [];
             for (int i = 0; i < m_downloadQueueItems.Count; i++) {

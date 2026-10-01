@@ -459,7 +459,6 @@ namespace Game {
             DialogsManager.ShowDialog(null, s_downloadDialog);
             int requestId = ++s_prepareRequestId;
             s_prepareTask = Task.Run(async () => {
-                    string kindWord = downloadArchiveOnly ? string.Empty : LanguageControl.Get("RemoteImportManager", "Manifest");
                     try {
                         s_progress.Set(
                             string.Format(
@@ -499,9 +498,7 @@ namespace Game {
                         }
                         ModpackManifestLoadResult manifestResult = s_manifestParser.Parse(requestId, data, url, fileName);
                         ModpackManifest manifest = manifestResult.Manifest;
-                        if (manifest == null
-                            || manifest.Items == null
-                            || manifest.Items.Length == 0) {
+                        if (manifest is not { Items.Length: > 0 }) {
                             Log.Error(
                                 string.Format(
                                     CultureInfo.InvariantCulture,

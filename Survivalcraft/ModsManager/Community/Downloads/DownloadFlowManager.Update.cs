@@ -23,8 +23,7 @@ namespace Game {
 
         /// <summary>文件下载任务收尾。返回 true 表示本轮终止（重排队确认/暂停/取消分支不继续后续段）。</summary>
         bool CompleteFileDownloadIfFinished() {
-            if (m_fileDownloadTask == null
-                || !m_fileDownloadTask.IsCompleted) {
+            if (m_fileDownloadTask is null or { IsCompleted: false }) {
                 return false;
             }
             CommunityFileDownloadResult result;
@@ -102,8 +101,7 @@ namespace Game {
         }
 
         void CompleteModpackManifestLoadIfFinished() {
-            if (m_modpackManifestLoadTask == null
-                || !m_modpackManifestLoadTask.IsCompleted) {
+            if (m_modpackManifestLoadTask is null or { IsCompleted: false }) {
                 return;
             }
             ModpackManifestLoadResult manifestResult;
@@ -139,8 +137,7 @@ namespace Game {
         }
 
         void CompleteModpackItemsDownloadIfFinished() {
-            if (m_modpackItemDownloadTask == null
-                || !m_modpackItemDownloadTask.IsCompleted) {
+            if (m_modpackItemDownloadTask is null or { IsCompleted: false }) {
                 return;
             }
             ModpackDownloadProgress progress;

@@ -27,9 +27,7 @@ namespace Game {
                 (byte[] data, _) = await TransferManager.ModpackSourceResolver.DownloadBytesAsync(url);
                 ModpackManifestLoadResult result = new ModpackManifestParser().Parse(requestId, data, url, fileName);
                 ModpackManifest manifest = result.Manifest;
-                if (manifest == null
-                    || manifest.Items == null
-                    || manifest.Items.Length == 0) {
+                if (manifest is not { Items.Length: > 0 }) {
                     Log.Error(
                         string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RemoteImportManager", "ModpackManifestEmptyOrInvalid"), url)
                     );
@@ -38,9 +36,6 @@ namespace Game {
                             RequestId = requestId, Error = LanguageControl.Get("DownloadFlowManager", "TheModpackManifestIsEmptyOrInvalid")
                         }
                         : result;
-                }
-                for (int i = 0; i < manifest.Items.Length; i++) {
-                    ModpackItem item = manifest.Items[i];
                 }
                 return result;
             }
@@ -58,7 +53,7 @@ namespace Game {
                 return;
             }
             ModpackPresenceSnapshot snapshot = new ModpackPresenceManager().Capture(null);
-            string body = BuildModpackConfirmBody(manifest, result.EmbeddedFiles, snapshot, out int needDownloadCount);
+            string body = BuildModpackConfirmBody(manifest, result.EmbeddedFiles, snapshot, out _);
             string title = !string.IsNullOrWhiteSpace(manifest.Name) ? manifest.Name : result.FileName;
             DialogsManager.ShowDialog(
                 null,
@@ -124,8 +119,7 @@ namespace Game {
             needDownloadCount = 0;
             List<string> lines = [];
             foreach (ModpackItem item in manifest.Items ?? []) {
-                if (item == null
-                    || !item.IsEnabled) {
+                if (item is null or { IsEnabled: false }) {
                     continue;
                 }
                 bool bundled = IsBundledItem(item, embeddedFiles);
@@ -291,10 +285,7 @@ namespace Game {
             if (OperatingSystem.IsMacOS()) {
                 return "macOS";
             }
-            if (OperatingSystem.IsLinux()) {
-                return "Linux";
-            }
-            return string.Empty;
+            return OperatingSystem.IsLinux() ? "Linux" : string.Empty;
         }
     }
 }

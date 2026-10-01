@@ -102,7 +102,7 @@ namespace Game {
             return Start(
                 m_dependencyLookupSlot,
                 request,
-                req => req == null || req.Dependencies == null || req.Dependencies.Count == 0
+                req => req is not { Dependencies.Count: > 0 }
                     ? LocalModNetworkStartKind.NoDependencies
                     : LocalModNetworkStartKind.Started,
                 RunDependencyLookup
@@ -152,7 +152,7 @@ namespace Game {
                 throw new ArgumentNullException(nameof(request));
             }
             LocalModCompatibilityContext compatibilityContext = await LoadCompatibilityContextAsync(request, cancellationToken, postResolver);
-            IReadOnlyList<LocalModUpdateTarget> targets = (request.Targets ?? []).Where(target => target != null).ToArray();
+            IReadOnlyList<LocalModUpdateTarget> targets = [.. (request.Targets ?? []).Where(target => target != null)];
             // 有界并发（原逐项串行 15 模组 6-12s → 2-4s）：结果按 targets 原序落位，
             // 单项失败不中断整批（与串行版逐项 catch 语义一致），用户取消中止整批。
             LocalModAutoUpdateScanEntry[] entries = new LocalModAutoUpdateScanEntry[targets.Count];
@@ -162,12 +162,14 @@ namespace Game {
                 int index = i;
                 LocalModUpdateTarget target = targets[i];
                 workers[i] = Task.Run(
+                    // ReSharper disable once AccessToDisposedClosure — gate 由 using 释放，但下方 WhenAll 先行等待全部 worker。
                     async () => {
                         await gate.WaitAsync(cancellationToken);
                         try {
                             entries[index] = await EvaluateTargetAsync(request, target, compatibilityContext, cancellationToken, postResolver);
                         }
                         finally {
+                            // ReSharper disable once AccessToDisposedClosure
                             gate.Release();
                         }
                     },
@@ -444,7 +446,7 @@ namespace Game {
         }
 
         public IReadOnlyList<PostFileItem> FilterDownloadableFiles(IEnumerable<PostFileItem> files) {
-            return (files ?? []).Where(file => file != null && !string.IsNullOrWhiteSpace(file.Url)).ToArray();
+            return [.. (files ?? []).Where(file => file != null && !string.IsNullOrWhiteSpace(file.Url))];
         }
 
         public IReadOnlyList<LocalModUpdateCandidate> BuildUpdateCandidates(IEnumerable<LocalResourceItem> resources,
@@ -464,9 +466,7 @@ namespace Game {
                 if (string.IsNullOrWhiteSpace(key)
                     || updateDetails == null
                     || !updateDetails.TryGetValue(key, out LocalModUpdateCheckResult updateInfo)
-                    || updateInfo == null
-                    || !updateInfo.HasUpdate
-                    || updateInfo.File == null) {
+                    || updateInfo is not { HasUpdate: true, File: not null }) {
                     continue;
                 }
                 candidates.Add(

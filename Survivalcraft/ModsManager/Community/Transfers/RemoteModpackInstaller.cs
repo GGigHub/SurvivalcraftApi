@@ -48,8 +48,7 @@ namespace Game {
             HashSet<ModpackItem> skippedItems = [];
             HashSet<ModpackItem> overwriteItems = [];
             foreach (ModpackItem item in manifest.Items) {
-                if (item == null
-                    || !item.IsEnabled) {
+                if (item is null or { IsEnabled: false }) {
                     continue;
                 }
                 if (!m_isCurrentRequest(requestId)) {
@@ -113,8 +112,7 @@ namespace Game {
             }
             for (int i = 0; i < manifest.Items.Length; i++) {
                 ModpackItem item = manifest.Items[i];
-                if (item == null
-                    || !item.IsEnabled) {
+                if (item is null or { IsEnabled: false }) {
                     continue;
                 }
                 if (!m_isCurrentRequest(requestId)) {

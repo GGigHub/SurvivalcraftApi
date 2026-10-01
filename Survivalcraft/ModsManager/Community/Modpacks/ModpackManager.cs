@@ -87,7 +87,7 @@ namespace Game {
         public ModpackManager(Func<LocalModpackActivationState, Exception> saveState = null,
             Func<IEnumerable<LocalModpackFileStateEntry>, string, (bool Success, string Error)> persistChanges = null,
             Func<IEnumerable<LocalModpackFileStateEntry>, (bool Success, string Error)> restoreBackups = null) {
-            m_saveState = saveState ?? (state => ModpackActivationState.Save(state));
+            m_saveState = saveState ?? ModpackActivationState.Save;
             m_persistChanges = persistChanges
                 ?? ((backups, key) => {
                     bool success = ModpackDataFiles.TryPersistChanges(backups, key, out string error);
@@ -171,9 +171,8 @@ namespace Game {
                     IsDisabled = getIsDisabled(item)
                 };
             }
-            return result.Values.OrderBy(item => item.DisplayName, StringComparer.InvariantCultureIgnoreCase)
-                .ThenBy(item => item.PackageName, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            return [.. result.Values.OrderBy(item => item.DisplayName, StringComparer.InvariantCultureIgnoreCase)
+                .ThenBy(item => item.PackageName, StringComparer.OrdinalIgnoreCase)];
         }
 
         public ModpackOperationResult Activate(ModpackActivationRequest request,
@@ -186,7 +185,7 @@ namespace Game {
             if (setDisabledState == null) {
                 throw new ArgumentNullException(nameof(setDisabledState));
             }
-            IReadOnlyList<LocalModpackModStateEntry> backupStates = (request.CurrentModStates ?? []).ToArray();
+            IReadOnlyList<LocalModpackModStateEntry> backupStates = [.. request.CurrentModStates ?? []];
             ManagedModSet managedMods = ModpackModMatcher.BuildManagedSet(request.Record);
             clearPendingActions?.Invoke();
             bool changed = false;
@@ -203,7 +202,7 @@ namespace Game {
                 DisplayName = request.DisplayName ?? request.Record.PackageName ?? "Modpack",
                 UpdatedAt = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
                 BackupModStates = backupStates,
-                BackupFiles = (request.BackupFiles ?? []).ToArray()
+                BackupFiles = [.. request.BackupFiles ?? []]
             };
             Exception error = m_saveState(state);
             return new ModpackOperationResult {
@@ -254,13 +253,12 @@ namespace Game {
             Func<LocalResourceItem, string> getFilePath,
             Func<string, string, bool, bool> setDisabledState,
             Action saveSettings) {
-            IReadOnlyList<ModpackItem> downloadedModItems = (progress?.Results ?? [])
+            IReadOnlyList<ModpackItem> downloadedModItems = [.. (progress?.Results ?? [])
                 .Where(result => result?.Success == true
                     && result.Item != null
                     && ModpackRules.ResolveContentType(result.Item) == ExternalContentType.Mod
                 )
-                .Select(result => result.Item)
-                .ToArray();
+                .Select(result => result.Item)];
             if (downloadedModItems.Count == 0) {
                 return false;
             }
@@ -287,7 +285,7 @@ namespace Game {
             if (isEmbeddedMissing == null) {
                 throw new ArgumentNullException(nameof(isEmbeddedMissing));
             }
-            return (record?.Manifest?.Items ?? []).Where(item => item != null && item.IsEnabled && isEmbeddedMissing(item)).ToArray();
+            return [.. (record?.Manifest?.Items ?? []).Where(item => item != null && item.IsEnabled && isEmbeddedMissing(item))];
         }
 
         public IReadOnlyList<ModpackItem> GetMissingDownloadItems(LocalModpackRecord record,
@@ -299,15 +297,14 @@ namespace Game {
             if (isDownloaded == null) {
                 throw new ArgumentNullException(nameof(isDownloaded));
             }
-            return (record?.Manifest?.Items ?? []).Where(item => item != null && item.IsEnabled)
+            return [.. (record?.Manifest?.Items ?? [])
+                .Where(item => item != null && item.IsEnabled)
                 .Where(item => !isEmbeddedMissing(item))
-                .Where(item => !isDownloaded(item))
-                .ToArray();
+                .Where(item => !isDownloaded(item))];
         }
 
         public ModpackDecision EvaluateEnable(ModpackDecisionInput input) {
-            if (input == null
-                || !input.IsModpack) {
+            if (input is null or { IsModpack: false }) {
                 return new ModpackDecision(ModpackDecisionKind.InvalidResource);
             }
             if (input.IsBusy) {
@@ -325,10 +322,9 @@ namespace Game {
             if (input.MissingEmbeddedItems is { Count: > 0 }) {
                 return new ModpackDecision(ModpackDecisionKind.MissingEmbeddedItems, input.MissingEmbeddedItems, input.MissingDownloadItems);
             }
-            if (input.MissingDownloadItems is { Count: > 0 }) {
-                return new ModpackDecision(ModpackDecisionKind.MissingDownloadItems, input.MissingEmbeddedItems, input.MissingDownloadItems);
-            }
-            return new ModpackDecision(ModpackDecisionKind.ReadyToActivate);
+            return input.MissingDownloadItems is { Count: > 0 }
+                ? new ModpackDecision(ModpackDecisionKind.MissingDownloadItems, input.MissingEmbeddedItems, input.MissingDownloadItems)
+                : new ModpackDecision(ModpackDecisionKind.ReadyToActivate);
         }
 
         static string NormalizePath(string path) => path?.Trim().Replace('\\', '/');

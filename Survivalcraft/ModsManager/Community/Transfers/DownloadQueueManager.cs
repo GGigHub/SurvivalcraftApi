@@ -137,8 +137,7 @@ namespace Game {
         }
 
         public void RequestOverwriteConfirmation(CommunityDownloadQueueItem item) {
-            if (item == null
-                || item.State is not (CommunityDownloadQueueItemState.Pending or CommunityDownloadQueueItemState.Running)) {
+            if (item is null or { State: not (CommunityDownloadQueueItemState.Pending or CommunityDownloadQueueItemState.Running) }) {
                 throw new InvalidOperationException(LanguageControl.Get("DownloadQueueDialog", "OnlyPendingOrRunningCanRequestOverwrite"));
             }
             item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.RequestOverwriteConfirmation);
@@ -169,10 +168,9 @@ namespace Game {
         }
 
         public void PrepareRetry(CommunityDownloadQueueItem item) {
-            if (item == null
-                || item.State is not (CommunityDownloadQueueItemState.Failed
-                    or CommunityDownloadQueueItemState.Canceled
-                    or CommunityDownloadQueueItemState.Paused)) {
+            if (item is null or { State: not (CommunityDownloadQueueItemState.Failed
+                or CommunityDownloadQueueItemState.Canceled
+                or CommunityDownloadQueueItemState.Paused) }) {
                 throw new InvalidOperationException(LanguageControl.Get("DownloadQueueDialog", "OnlyFinishedOrPausedCanBeRetried"));
             }
             item.State = CommunityDownloadQueueStateMachine.Transition(item.State, CommunityDownloadQueueCommand.Retry);

@@ -18,17 +18,19 @@ namespace Game {
 
             // 限流并发请求，大整合包瞬时全量 /upload/info 会打爆服务端。
             using SemaphoreSlim limiter = new(6);
-            Task<ModpackFileInfoEntry>[] tasks = (request.FileIds ?? []).Select(async fileId => {
+            Task<ModpackFileInfoEntry>[] tasks = [.. (request.FileIds ?? []).Select(async fileId => {
+                        // ReSharper disable once AccessToDisposedClosure — limiter 由 using 释放，但下方 WhenAll 先行等待全部请求。
                         await limiter.WaitAsync(cancellationToken);
                         try {
                             return await LoadOneAsync(request.ApiBaseUrl, request.Token, fileId, cancellationToken);
                         }
                         finally {
+                            // ReSharper disable once AccessToDisposedClosure
                             limiter.Release();
                         }
                     }
                 )
-                .ToArray();
+                ];
             return new ModpackFileInfoLoadResult {
                 RequestId = request.RequestId,
                 ResourcePath = request.ResourcePath,
@@ -51,11 +53,10 @@ namespace Game {
             string key = MakeCacheKey(apiBaseUrl, fileId);
             lock (m_cacheSync) {
                 // 已存在的键只更新值不入队，避免同键重复入队导致弹出时误删新条目。
-                if (m_cache.ContainsKey(key)) {
+                if (!m_cache.TryAdd(key, file)) {
                     m_cache[key] = file;
                     return;
                 }
-                m_cache[key] = file;
                 m_cacheOrder.Enqueue(key);
                 while (m_cacheOrder.Count > CacheCapacity) {
                     m_cache.Remove(m_cacheOrder.Dequeue());

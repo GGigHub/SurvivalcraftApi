@@ -143,7 +143,7 @@ namespace Game {
             : FormatDuration(seconds);
 
         static IEnumerable<ModEntity> EnumerateTrackableMods() {
-            return ModsManager.ModList.Where(entity => entity != null && entity.modInfo != null)
+            return ModsManager.ModList.Where(entity => entity?.modInfo != null)
                 .Where(entity => entity is not SurvivalCraftModEntity && entity is not FastDebugModEntity);
         }
 

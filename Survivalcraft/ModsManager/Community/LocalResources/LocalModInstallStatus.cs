@@ -121,12 +121,11 @@ namespace Game {
                 string localFileName = Storage.GetFileName(LocalResourceIdentity.GetModStoragePath(localMod) ?? localMod.Name);
                 string resourceKey = LocalResourceIdentity.MakeModReviewKey(localMod);
                 bool matchesPost = LocalModReviewState.GetCachedLocalModPostId(localMod) == version.PostId;
-                if (!string.IsNullOrWhiteSpace(resourceKey)
+                matchesPost = (!string.IsNullOrWhiteSpace(resourceKey)
                     && s_communityStatusCache.TryGetValue(resourceKey, out LocalModCommunityStatusInfo cachedStatus)
                     && cachedStatus?.IsPublished == true
-                    && cachedStatus.PostId == version.PostId) {
-                    matchesPost = true;
-                }
+                    && cachedStatus.PostId == version.PostId)
+                    || matchesPost;
                 PostFileItem[] matchingFiles = CommunityLocalModMatchingRules.GetMatchingFiles(version, packageName, localFileName);
                 bool hasPackageMetadata = version.Files?.Any(file => file != null && !string.IsNullOrWhiteSpace(file.PackageName)) == true;
                 if (matchingFiles.Length == 0

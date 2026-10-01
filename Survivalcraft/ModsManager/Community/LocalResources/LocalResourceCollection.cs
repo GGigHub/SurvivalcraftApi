@@ -10,7 +10,7 @@ namespace Game {
         // 主线程渲染可能并发枚举同一列表，必须主线程同步调用。
         public static List<LocalResourceItem> ScanFurniturePacks() {
             FurniturePacksManager.UpdateFurniturePacksList();
-            return FurniturePacksManager.FurniturePackNames.Select(name => new LocalResourceItem {
+            return [.. FurniturePacksManager.FurniturePackNames.Select(name => new LocalResourceItem {
                         Type = ExternalContentType.FurniturePack,
                         Name = name,
                         DisplayName = FurniturePacksManager.GetDisplayName(name),
@@ -18,14 +18,14 @@ namespace Game {
                     }
                 )
                 .OrderByDescending(item => item.CreationTime)
-                .ToList();
+                ];
         }
 
         public static List<LocalResourceItem> ScanBlocksTextures() {
             BlocksTexturesManager.UpdateBlocksTexturesList();
             // WorldInfos 每次访问可能构造新 ReadOnlyList：循环外取一次快照，避免 O(N×M) 重复构造。
             ReadOnlyList<WorldInfo> worlds = WorldsManager.WorldInfos;
-            return BlocksTexturesManager.BlockTexturesNames.Select(name => new LocalResourceItem {
+            return [.. BlocksTexturesManager.BlockTexturesNames.Select(name => new LocalResourceItem {
                         Type = ExternalContentType.BlocksTexture,
                         Name = name,
                         DisplayName = BlocksTexturesManager.GetDisplayName(name),
@@ -36,14 +36,14 @@ namespace Game {
                 )
                 .OrderBy(item => item.IsBuiltIn ? 0 : 1)
                 .ThenBy(item => item.DisplayName, StringComparer.InvariantCulture)
-                .ToList();
+                ];
         }
 
         public static List<LocalResourceItem> ScanCharacterSkins() {
             CharacterSkinsManager.UpdateCharacterSkinsList();
             // WorldInfos 每次访问可能构造新 ReadOnlyList：循环外取一次快照，避免 O(N×M) 重复构造。
             ReadOnlyList<WorldInfo> worlds = WorldsManager.WorldInfos;
-            return CharacterSkinsManager.CharacterSkinsNames.Select(name => new LocalResourceItem {
+            return [.. CharacterSkinsManager.CharacterSkinsNames.Select(name => new LocalResourceItem {
                         Type = ExternalContentType.CharacterSkin,
                         Name = name,
                         DisplayName = CharacterSkinsManager.GetDisplayName(name),
@@ -54,15 +54,15 @@ namespace Game {
                 )
                 .OrderBy(item => item.IsBuiltIn ? 0 : 1)
                 .ThenBy(item => item.DisplayName, StringComparer.InvariantCulture)
-                .ToList();
+                ];
         }
 
         public static List<LocalResourceItem> ScanLoadedMods() {
-            return ModsManager.ModListAll.Where(entity => entity?.modInfo != null)
+            return [.. ModsManager.ModListAll.Where(entity => entity?.modInfo != null)
                 .Where(entity => entity is not SurvivalCraftModEntity && entity is not FastDebugModEntity)
                 .Select(ToLocalResourceItem)
                 .OrderBy(item => item.DisplayName, StringComparer.InvariantCulture)
-                .ToList();
+                ];
         }
 
         /// <summary>

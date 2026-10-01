@@ -91,9 +91,6 @@ namespace Game {
     }
 
     sealed class LocalModUpdateCheckResult {
-        string m_currentVersion;
-        string m_latestVersion;
-
         public int RequestId { get; set; }
         public string ResourceKey { get; set; }
         public string ResourceDisplayName { get; set; }
@@ -102,9 +99,9 @@ namespace Game {
         public string PostTitle { get; set; }
 
         public string CurrentVersion {
-            get => m_currentVersion;
+            get;
             set {
-                m_currentVersion = value;
+                field = value;
                 CurrentNuGetVersion = ExternalVersionParser.ParseOrNull(value);
             }
         }
@@ -112,9 +109,9 @@ namespace Game {
         public NuGetVersion CurrentNuGetVersion { get; private set; }
 
         public string LatestVersion {
-            get => m_latestVersion;
+            get;
             set {
-                m_latestVersion = value;
+                field = value;
                 LatestNuGetVersion = ExternalVersionParser.ParseOrNull(value);
             }
         }

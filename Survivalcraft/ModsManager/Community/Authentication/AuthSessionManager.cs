@@ -313,17 +313,16 @@ namespace Game {
             }
         }
 
-        bool SaveStoredAuth(string apiBaseUrl) {
+        void SaveStoredAuth(string apiBaseUrl) {
             LoginData session = m_sessions.TryGetValue(CommunityServerManager.NormalizeApiBaseUrl(apiBaseUrl), out LoginData value) ? value : null;
             if (session == null) {
-                return false;
+                return;
             }
             try {
                 Exception error = s_authenticationSessionStore.TrySave(apiBaseUrl, session.Token, session.User);
                 if (error != null) {
                     throw error;
                 }
-                return true;
             }
             catch (PlatformNotSupportedException ex) {
                 try {
@@ -333,17 +332,15 @@ namespace Game {
                     // ignored
                 }
                 Log.Warning($"Saving community login credentials is not supported on this platform: {ex.Message}");
-                return false;
             }
             catch (Exception ex) {
                 Log.Error(
                     string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("AuthSessionManager", "SaveCredentialsFailed"), ex.Message)
                 );
-                return false;
             }
         }
 
-        void DeleteStoredAuth(string apiBaseUrl) {
+        static void DeleteStoredAuth(string apiBaseUrl) {
             try {
                 Exception error = s_authenticationSessionStore.TryDelete(apiBaseUrl);
                 if (error != null) {

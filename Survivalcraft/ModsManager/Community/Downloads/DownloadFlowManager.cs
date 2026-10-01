@@ -16,7 +16,6 @@ namespace Game {
 
         readonly DownloadQueueManager m_downloadQueue = new(TransferManager.CommunityDownloadQueuePersistence);
 
-        readonly ModpackItemImporter m_modpackItemImporter;
         readonly ModpackDownloader m_modpackDownloader;
         IRemoteImportHost m_remoteImportHost;
 
@@ -56,10 +55,10 @@ namespace Game {
         }
 
         DownloadFlowManager() {
-            m_modpackItemImporter = new ModpackItemImporter(() => m_remoteImportHost);
+            ModpackItemImporter modpackItemImporter = new(() => m_remoteImportHost);
             m_modpackDownloader = new ModpackDownloader(
                 TransferManager.ModpackSourceResolver,
-                m_modpackItemImporter,
+                modpackItemImporter,
                 requestId => m_modpackDownloadRequestId == requestId
             );
         }
@@ -104,7 +103,7 @@ namespace Game {
             StatusReporter?.Invoke(message);
         }
 
-        void ShowToast(string message, double autoHideSeconds = 0.0) {
+        static void ShowToast(string message, double autoHideSeconds = 0.0) {
             CommunityToastManager.Show(message, autoHideSeconds: autoHideSeconds);
         }
 
@@ -154,10 +153,8 @@ namespace Game {
                 && !string.IsNullOrWhiteSpace(file.PackageName)
                 // 包名来自社区数据，挡掉内置模组名，防止服务端恶意/损坏数据禁用核心模组
                 && file.PackageName is not ("survivalcraft" or "fastdebug")) {
-                List<ModEntity> samePackage = ModsManager.ModListAll.Where(entity => entity?.modInfo != null
-                        && string.Equals(entity.modInfo.PackageName, file.PackageName, StringComparison.OrdinalIgnoreCase)
-                    )
-                    .ToList();
+                List<ModEntity> samePackage = [.. ModsManager.ModListAll.Where(entity => entity?.modInfo != null
+                    && string.Equals(entity.modInfo.PackageName, file.PackageName, StringComparison.OrdinalIgnoreCase))];
                 if (samePackage.Count == 1
                     && !string.IsNullOrWhiteSpace(samePackage[0].modInfo.Version)) {
                     ModEntity oldVersion = samePackage[0];

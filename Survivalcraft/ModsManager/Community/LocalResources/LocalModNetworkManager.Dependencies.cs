@@ -21,7 +21,8 @@ namespace Game {
             // 并发查询依赖并限流 4，避免 N 依赖 N 次顺序往返；WhenAll 保持原顺序，聚合仍在主线程无需加锁。
             // 单项查询失败只影响该项（按未找到处理），不拖垮其余依赖的结果。
             using SemaphoreSlim limiter = new(4);
-            Task<(ModDependencyInfo Dependency, UploadModsResponse Response, string Error)>[] tasks = validDependencies.Select(async dependency => {
+            Task<(ModDependencyInfo Dependency, UploadModsResponse Response, string Error)>[] tasks = [.. validDependencies.Select(async dependency => {
+                        // ReSharper disable once AccessToDisposedClosure — limiter 由 using 释放，但下方 WhenAll 先行等待全部查询。
                         await limiter.WaitAsync(cancellationToken);
                         try {
                             UploadModsResponse response = await catalogClient.FindByPackageNameAsync(
@@ -41,11 +42,12 @@ namespace Game {
                             return (dependency, null, ex.Message);
                         }
                         finally {
+                            // ReSharper disable once AccessToDisposedClosure
                             limiter.Release();
                         }
                     }
                 )
-                .ToArray();
+                ];
             foreach ((ModDependencyInfo dependency, UploadModsResponse response, string error) in await Task.WhenAll(tasks)) {
                 if (error != null) {
                     // 查询失败按缺失处理：与查无结果同语义（调用方走缺失提示，用户可重试），

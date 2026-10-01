@@ -153,7 +153,7 @@ namespace Game {
 
         // 先把所有旧文件移到非模组扩展名的备份路径，只有新文件就位后才清理备份。
         public static void Replace(string tempPath, string targetPath, params string[] oldPaths) {
-            List<FileBackup> backups = new();
+            List<FileBackup> backups = [];
             HashSet<string> pathsToBackup = new(StringComparer.OrdinalIgnoreCase);
             bool installMoveStarted = false;
             bool installed = false;

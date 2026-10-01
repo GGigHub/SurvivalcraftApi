@@ -117,6 +117,7 @@ namespace Game {
         // JSON 缺属性时退化语义与旧 XML 缺属性一致。
         // 文件类型已改存 ExternalContentType 原生值（分支未发布，旧协议值不作迁移，非法值由 FromSettingValue 归 Mod）。
         sealed class StateData {
+            // 属性名 = Settings 键名，不可改名；与外层同名静态属性是有意遮蔽（序列化 DTO 复用同名语义）。
             public int LocalFileType { get; set; } = (int)ExternalContentType.Mod;
             public int CommunityFileType { get; set; } = (int)ExternalContentType.Mod;
             public int CommunityOrderType { get; set; } = 4;

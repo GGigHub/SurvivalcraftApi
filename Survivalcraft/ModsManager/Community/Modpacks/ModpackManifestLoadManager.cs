@@ -42,7 +42,7 @@ namespace Game {
             int requestId;
             lock (m_sync) {
                 if (m_cachedItems != null) {
-                    return new List<LocalResourceItem>(m_cachedItems);
+                    return [.. m_cachedItems];
                 }
                 discardedTask = m_loadTask;
                 m_loadTask = null;
@@ -55,7 +55,7 @@ namespace Game {
                     && m_cachedItems == null) {
                     m_cachedItems = result.Items ?? [];
                 }
-                return m_cachedItems == null ? [] : new List<LocalResourceItem>(m_cachedItems);
+                return m_cachedItems == null ? [] : [.. m_cachedItems];
             }
         }
 
@@ -75,8 +75,7 @@ namespace Game {
             int requestId;
             lock (m_sync) {
                 result = null;
-                if (m_loadTask == null
-                    || !m_loadTask.IsCompleted) {
+                if (m_loadTask is null or { IsCompleted: false }) {
                     return false;
                 }
                 completedTask = m_loadTask;
@@ -102,7 +101,7 @@ namespace Game {
 
         public bool TryGetCachedItems(out List<LocalResourceItem> items) {
             lock (m_sync) {
-                items = m_cachedItems == null ? null : new List<LocalResourceItem>(m_cachedItems);
+                items = m_cachedItems == null ? null : [.. m_cachedItems];
                 return items != null;
             }
         }
