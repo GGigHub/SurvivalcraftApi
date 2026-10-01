@@ -36,7 +36,7 @@ namespace Game {
             }
             string url = BuildRequestUrl(apiBaseUrl);
             try {
-                string body = JsonSerializer.Serialize(new ModPlayRecordRequest { List = items.ToArray() }, s_jsonOptions);
+                string body = JsonSerializer.Serialize(new ModPlayRecordRequest { List = [.. items] }, s_jsonOptions);
                 using HttpRequestMessage request = new(HttpMethod.Post, url);
                 request.Content = new StringContent(body, Encoding.UTF8, "application/json");
                 if (!string.IsNullOrWhiteSpace(token)) {

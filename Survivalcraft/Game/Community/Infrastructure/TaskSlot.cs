@@ -58,8 +58,7 @@ namespace Game {
         public bool TryTake(out T result, Func<Exception, T> onFaulted = null) {
             result = null;
             Task<T> task = m_task;
-            if (task == null
-                || !task.IsCompleted) {
+            if (task is null or { IsCompleted: false }) {
                 return false;
             }
             m_task = null;

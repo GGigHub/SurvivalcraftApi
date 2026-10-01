@@ -64,17 +64,15 @@ namespace Game {
     }
 
     public class PostVersionItem {
-        string m_version;
-
         [JsonPropertyName("id")] public int Id { get; set; }
         [JsonPropertyName("postId")] public int PostId { get; set; }
         [JsonPropertyName("title")] public string Title { get; set; }
 
         [JsonPropertyName("version")]
         public string Version {
-            get => m_version;
+            get;
             set {
-                m_version = value;
+                field = value;
                 NuGetVersion = ExternalVersionParser.ParseOrNull(value);
             }
         }
@@ -94,8 +92,6 @@ namespace Game {
     }
 
     public class PostFileItem {
-        string m_packageVersion;
-
         [JsonPropertyName("id")] public int Id { get; set; }
         [JsonPropertyName("postId")] public int PostId { get; set; }
         [JsonPropertyName("filename")] public string Filename { get; set; }
@@ -119,9 +115,9 @@ namespace Game {
 
         [JsonPropertyName("packageVersion")]
         public string PackageVersion {
-            get => m_packageVersion;
+            get;
             set {
-                m_packageVersion = value;
+                field = value;
                 NuGetVersion = ExternalVersionParser.ParseOrNull(value);
             }
         }

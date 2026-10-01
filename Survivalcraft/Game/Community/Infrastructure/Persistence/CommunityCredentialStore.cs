@@ -271,7 +271,7 @@ namespace Game {
         }
 
         internal static byte[] DecryptWithAesGcm(byte[] data) {
-            int headerSize = s_saltSize + s_nonceSize;
+            const int headerSize = s_saltSize + s_nonceSize;
             if (data == null
                 || data.Length < headerSize + s_tagSize) {
                 throw new CryptographicException(LanguageControl.Get("LoginDialog", "CredentialFileFormatInvalid"));
@@ -303,8 +303,7 @@ namespace Game {
         static byte[] ProtectWithDpapi(byte[] data, byte[] entropy) {
             DataBlob input = CreateDataBlob(data);
             DataBlob output = default;
-            DataBlob entropyBlob;
-            IntPtr entropyBlobPtr = AllocEntropyBlob(entropy, out entropyBlob);
+            IntPtr entropyBlobPtr = AllocEntropyBlob(entropy, out DataBlob entropyBlob);
             try {
                 if (!CryptProtectData(
                         ref input,
@@ -330,8 +329,7 @@ namespace Game {
         static byte[] UnprotectWithDpapi(byte[] data, byte[] entropy) {
             DataBlob input = CreateDataBlob(data);
             DataBlob output = default;
-            DataBlob entropyBlob;
-            IntPtr entropyBlobPtr = AllocEntropyBlob(entropy, out entropyBlob);
+            IntPtr entropyBlobPtr = AllocEntropyBlob(entropy, out DataBlob entropyBlob);
             try {
                 if (!CryptUnprotectData(
                         ref input,

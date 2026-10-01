@@ -181,7 +181,7 @@ namespace Game {
             }
             long? responseLength = response.Content.Headers.ContentLength;
             long? totalLength = response.Content.Headers.ContentRange?.Length
-                ?? (responseLength.HasValue ? existingLength + responseLength.Value : null);
+                ?? (existingLength + responseLength);
             CommunityDownloadGuard.EnsurePayloadWithinLimit(totalLength);
             OpenFileMode mode = isPartial && existingLength > 0 ? OpenFileMode.CreateOrOpen : OpenFileMode.Create;
             long downloaded = existingLength;
@@ -339,10 +339,7 @@ namespace Game {
             && range.Length.Value > expectedStart
             && range.To.Value < range.Length.Value;
 
-        static bool IsCompletePartialDownload(ContentRangeHeaderValue range, long existingLength, long downloadedLength) => range != null
-            && range.From.HasValue
-            && range.To.HasValue
-            && range.Length.HasValue
+        static bool IsCompletePartialDownload(ContentRangeHeaderValue range, long existingLength, long downloadedLength) => range is { From: not null, To: not null, Length: not null }
             && downloadedLength - existingLength == range.To.Value - range.From.Value + 1
             && downloadedLength == range.Length.Value;
 

@@ -17,8 +17,7 @@ namespace Game {
             int totalCount = 0;
             int downloadedCount = 0;
             foreach (ModpackItem item in record.Manifest.Items) {
-                if (item == null
-                    || !item.IsEnabled) {
+                if (item is not { IsEnabled: true }) {
                     continue;
                 }
                 totalCount++;
@@ -30,10 +29,10 @@ namespace Game {
         }
 
         public static IReadOnlyList<ModpackItem> GetEmbeddedItems(LocalModpackRecord record, ModpackPresenceSnapshot snapshot) {
-            return (record?.Manifest?.Items ?? []).Where(item => item != null && item.IsEnabled && IsEmbeddedItem(record, item))
-                // 自定义文件即使已存在也要重新应用；覆盖前会保存快照，关闭整合包时恢复。
-                .Where(item => ModpackRules.IsCustomDataFile(item) || !IsItemInstalled(item, snapshot))
-                .ToArray();
+            // 自定义文件即使已存在也要重新应用；覆盖前会保存快照，关闭整合包时恢复。
+            return [.. (record?.Manifest?.Items ?? [])
+                .Where(item => item != null && item.IsEnabled && IsEmbeddedItem(record, item))
+                .Where(item => ModpackRules.IsCustomDataFile(item) || !IsItemInstalled(item, snapshot))];
         }
 
         public static bool IsItemDownloaded(ModpackItem item, ModpackPresenceSnapshot snapshot, LocalModpackRecord record = null) {
@@ -43,10 +42,7 @@ namespace Game {
 
             // ZIP 整合包中的相对路径资源已经随整合包落盘，应当显示为已下载；
             // 真正启用时再从压缩包导入目标目录，避免详情页把内嵌文件误判成网络缺失项。
-            if (IsEmbeddedItem(record, item)) {
-                return true;
-            }
-            return IsItemInstalled(item, snapshot);
+            return IsEmbeddedItem(record, item) || IsItemInstalled(item, snapshot);
         }
 
         public static bool IsItemInstalled(ModpackItem item, ModpackPresenceSnapshot snapshot) {

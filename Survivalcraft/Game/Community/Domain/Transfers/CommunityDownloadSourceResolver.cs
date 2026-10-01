@@ -14,8 +14,7 @@ namespace Game {
             // 主机来自用户输入：非法字符/畸形端口会让 UriBuilder.Uri 抛 UriFormatException，
             // 与「无法切换」对话框的空结果契约对齐，按 null 处理而非裸抛
             try {
-                int mirrorPort = -1;
-                UriBuilder builder = new(uri) { Host = NormalizeHost(host, out mirrorPort) };
+                UriBuilder builder = new(uri) { Host = NormalizeHost(host, out int mirrorPort) };
                 if (mirrorPort >= 0) {
                     builder.Port = mirrorPort;
                 }

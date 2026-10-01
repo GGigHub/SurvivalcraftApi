@@ -17,17 +17,15 @@ namespace Game {
     public class VersionListResponse : ApiEnvelope<VersionListItem[]> { }
 
     public class VersionListItem {
-        string m_version;
-
         [JsonPropertyName("id")] public int Id { get; set; }
         [JsonPropertyName("name")] public string Name { get; set; }
         [JsonPropertyName("type")] public string Type { get; set; }
 
         [JsonPropertyName("version")]
         public string Version {
-            get => m_version;
+            get;
             set {
-                m_version = value;
+                field = value;
                 NuGetVersion = ExternalVersionParser.ParseOrNull(value);
                 IsVersionLine = IsTwoComponentRelease(NuGetVersion);
             }

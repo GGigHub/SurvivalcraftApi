@@ -19,9 +19,8 @@ namespace Game {
                 || record.Manifest.Items.Length == 0) {
                 return [];
             }
-            return record.Manifest.Items
-                .Where(item => item != null && item.IsEnabled && ModpackRules.ResolveContentType(item) == ExternalContentType.Mod)
-                .ToArray();
+            return [.. record.Manifest.Items
+                .Where(item => item != null && item.IsEnabled && ModpackRules.ResolveContentType(item) == ExternalContentType.Mod)];
         }
 
         public static ManagedModSet BuildManagedSet(LocalModpackRecord record) => BuildManagedSet(GetManagedModItems(record));
@@ -29,8 +28,7 @@ namespace Game {
         public static ManagedModSet BuildManagedSet(IEnumerable<ModpackItem> items) {
             ManagedModSet result = new();
             foreach (ModpackItem item in items ?? []) {
-                if (item == null
-                    || !item.IsEnabled
+                if (item is not { IsEnabled: true }
                     || ModpackRules.ResolveContentType(item) != ExternalContentType.Mod) {
                     continue;
                 }

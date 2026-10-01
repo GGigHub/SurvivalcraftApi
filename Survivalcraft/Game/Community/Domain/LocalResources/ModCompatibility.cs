@@ -28,7 +28,7 @@ namespace Game {
             List<VersionCompatibilityTarget> targets = ResolveTargets(version, gameVersionsById, versionCatalog);
             return new ModCompatibilityResult {
                 Level = EvaluateBestLevel(targets, currentApiVersion, currentGameVersion),
-                VersionNames = targets.Select(target => target.DisplayName).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
+                VersionNames = [.. targets.Select(target => target.DisplayName).Distinct(StringComparer.OrdinalIgnoreCase)]
             };
         }
 

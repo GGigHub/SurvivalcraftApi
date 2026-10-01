@@ -84,10 +84,9 @@ namespace Game {
                 // 把 B 的有效令牌发往 A = 凭据外泄给另一主机；A 回 401 还会携 B 的令牌
                 // 触发误登出（审查缺陷 3 复审 F1）。服务器不一致（或当前服务器未知）→ 匿名上报。
                 string currentApiBaseUrl = fallbackApiBaseUrlProvider?.Invoke();
-                if (!string.Equals(feedbackInfo?.ApiBaseUrl, currentApiBaseUrl, StringComparison.OrdinalIgnoreCase)) {
-                    return null;
-                }
-                return fallbackToken;
+                return string.Equals(feedbackInfo?.ApiBaseUrl, currentApiBaseUrl, StringComparison.OrdinalIgnoreCase)
+                    ? fallbackToken
+                    : null;
             }
             catch (Exception ex) {
                 // fallback 是外部扩展点：provider 异常按"无凭据"处理（匿名上报），

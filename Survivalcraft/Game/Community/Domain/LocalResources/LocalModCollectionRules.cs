@@ -1,11 +1,11 @@
 namespace Game {
     static class LocalModCollectionRules {
         public static LocalResourceItem[] OrderPendingMods(IEnumerable<LocalResourceItem> pendingMods) {
-            return (pendingMods ?? []).OrderByDescending(item => item?.CreationTime).ToArray();
+            return [.. (pendingMods ?? []).OrderByDescending(item => item?.CreationTime)];
         }
 
         public static void MarkDuplicatePackageNames(IEnumerable<LocalResourceItem> loadedMods, IEnumerable<LocalResourceItem> pendingMods) {
-            LocalResourceItem[] allMods = (loadedMods ?? []).Concat(pendingMods ?? []).Where(item => item != null).ToArray();
+            LocalResourceItem[] allMods = [.. (loadedMods ?? []).Concat(pendingMods ?? []).Where(item => item != null)];
             foreach (LocalResourceItem item in allMods) {
                 item.HasDuplicatePackageName = false;
             }

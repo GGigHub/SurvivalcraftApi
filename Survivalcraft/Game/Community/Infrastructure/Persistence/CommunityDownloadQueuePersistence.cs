@@ -8,7 +8,7 @@ namespace Game {
         public void Save(IEnumerable<CommunityDownloadQueueItem> items, int nextId) {
             CommunityDownloadQueueStore.Save(
                 new DownloadQueuePersistedState {
-                    Version = 1, NextId = nextId, Items = (items ?? []).Select(ToStored).Where(item => item != null).ToArray()
+                    Version = 1, NextId = nextId, Items = [.. (items ?? []).Select(ToStored).Where(item => item != null)]
                 }
             );
         }

@@ -21,10 +21,7 @@ namespace Game {
         public static bool TryParse(string version, out NuGetVersion parsed) {
             parsed = null;
             string text = Normalize(version);
-            if (string.IsNullOrEmpty(text)) {
-                return false;
-            }
-            return NuGetVersion.TryParse(text, out parsed);
+            return !string.IsNullOrEmpty(text) && NuGetVersion.TryParse(text, out parsed);
         }
 
         // 供模型 setter 一行完成"赋值即解析"：解析失败存 null。

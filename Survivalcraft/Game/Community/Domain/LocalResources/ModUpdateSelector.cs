@@ -85,10 +85,7 @@ namespace Game {
 
         public static int CompareVersions(PostVersionItem left, PostVersionItem right) {
             int versionCompare = CompareNuGetVersions(left?.NuGetVersion, right?.NuGetVersion);
-            if (versionCompare != 0) {
-                return versionCompare;
-            }
-            return ParseVersionTime(left).CompareTo(ParseVersionTime(right));
+            return versionCompare != 0 ? versionCompare : ParseVersionTime(left).CompareTo(ParseVersionTime(right));
         }
 
         static int CompareNuGetVersions(NuGetVersion left, NuGetVersion right) {
@@ -117,10 +114,8 @@ namespace Game {
         }
 
         static bool EndsWithScmod(string value) {
-            if (string.IsNullOrWhiteSpace(value)) {
-                return false;
-            }
-            return Uri.UnescapeDataString(value.Trim()).EndsWith(".scmod", StringComparison.OrdinalIgnoreCase);
+            return !string.IsNullOrWhiteSpace(value)
+                && Uri.UnescapeDataString(value.Trim()).EndsWith(".scmod", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

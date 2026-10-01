@@ -28,9 +28,9 @@ namespace Game {
                 return content;
             }
             string requestBody = JsonSerializer.Serialize(new TranslateRequest { Content = content, TargetLanguage = targetLanguage });
-            using HttpRequestMessage request = new(HttpMethod.Post, translateUrl) {
-                Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
-            };
+            using HttpRequestMessage request = new(HttpMethod.Post, translateUrl);
+            // 拆行赋值：using 声明生效后再设 Content，初始化抛异常也能处置 request（同 PlayedTimeClient 先例）。
+            request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
             using HttpResponseMessage response = await m_httpClient.SendAsync(request, cancellationToken);
             string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
             if (!response.IsSuccessStatusCode) {
@@ -46,6 +46,8 @@ namespace Game {
 
         static HttpClient CreateHttpClient() => new();
 
+        // 以下 DTO 仅供 STJ 反射序列化/反序列化：属性读写与实例化均由反射触发，
+        // Rider 的「访问器未使用/类未实例化」警告属反射误报，勿据此删成员（会破坏线协议）。
         sealed class TranslateRequest {
             // 服务端（Nest 风格校验）只认 camelCase 键，多余/错名属性直接 400 拒收。
             [JsonPropertyName("content")] public string Content { get; set; }

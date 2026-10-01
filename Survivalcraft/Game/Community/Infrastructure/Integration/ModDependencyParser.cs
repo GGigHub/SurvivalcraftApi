@@ -5,10 +5,9 @@ namespace Game {
         public static IReadOnlyList<ModDependencyInfo> GetDependencies(ModEntity entity) => GetDependencies(entity?.modInfo);
 
         public static IReadOnlyList<ModDependencyInfo> GetDependencies(ModInfo modInfo) {
-            if (modInfo?.DependencyRanges == null) {
-                return [];
-            }
-            return modInfo.DependencyRanges.Select(dependency => CreateDependencyInfo(dependency.Key, dependency.Value)).ToArray();
+            return modInfo?.DependencyRanges == null
+                ? []
+                : [.. modInfo.DependencyRanges.Select(dependency => CreateDependencyInfo(dependency.Key, dependency.Value))];
         }
 
         // DependencyRanges 的值由引擎解析保证非 null（解析失败不入典），无字符串/空值兜底分支。

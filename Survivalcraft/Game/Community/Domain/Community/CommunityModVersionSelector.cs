@@ -12,8 +12,7 @@ namespace Game {
             VersionListItem bestMatch = null;
             VersionMatchScore bestScore = default;
             foreach (VersionListItem version in versions) {
-                if (version == null
-                    || version.Status != 1
+                if (version is not { Status: 1 }
                     || !string.Equals(version.Type, "plugin", StringComparison.OrdinalIgnoreCase)) {
                     continue;
                 }
@@ -65,10 +64,7 @@ namespace Game {
                     return compare;
                 }
                 compare = SameMajorMinor.CompareTo(other.SameMajorMinor);
-                if (compare != 0) {
-                    return compare;
-                }
-                return other.PatchDistance.CompareTo(PatchDistance);
+                return compare != 0 ? compare : other.PatchDistance.CompareTo(PatchDistance);
             }
         }
     }

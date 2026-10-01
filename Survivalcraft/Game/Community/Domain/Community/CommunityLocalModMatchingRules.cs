@@ -39,7 +39,7 @@ namespace Game {
         }
 
         public static PostFileItem[] GetMatchingFiles(PostVersionItem version, string packageName, string localFileName) {
-            return (version?.Files ?? []).Where(file => MatchesLocalMod(version, file, packageName, localFileName)).ToArray();
+            return [.. (version?.Files ?? []).Where(file => MatchesLocalMod(version, file, packageName, localFileName))];
         }
 
         public static bool PostContainsLocalMod(PostItem post, string packageName, string localFileName) {

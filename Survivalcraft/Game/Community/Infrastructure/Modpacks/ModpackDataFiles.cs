@@ -141,9 +141,8 @@ namespace Game {
 
         public static bool TryRestoreBackups(IEnumerable<LocalModpackFileStateEntry> backups, out string error) {
             error = null;
-            IReadOnlyList<LocalModpackFileStateEntry> entries = (backups ?? [])
-                .Where(entry => entry != null && !string.IsNullOrWhiteSpace(entry.TargetPath))
-                .ToArray();
+            IReadOnlyList<LocalModpackFileStateEntry> entries = [.. (backups ?? [])
+                .Where(entry => entry != null && !string.IsNullOrWhiteSpace(entry.TargetPath))];
             foreach (LocalModpackFileStateEntry entry in entries) {
                 if (entry.ExistedBefore
                     && (string.IsNullOrWhiteSpace(entry.BackupPath) || !Storage.FileExists(entry.BackupPath))) {

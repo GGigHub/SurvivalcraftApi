@@ -13,7 +13,7 @@ namespace Game {
         // 注册表只产生/枚举/解析 .zip/.json（BuildManifestPath/EnumerateManifestFiles 同口径）。
         // .modpack/.scpack 不参与顶替清理：它们不在整合包列表中展示，若纳入会基于同基名
         // 组共享的 meta 被误判同源而删掉（审查缺陷 2 复审 F2）。
-        static readonly string[] ConflictingExtensions = { ".zip", ".json" };
+        static readonly string[] ConflictingExtensions = [".zip", ".json"];
 
         readonly Lock m_cacheSync = new();
 
@@ -36,9 +36,7 @@ namespace Game {
             string sourceFileName,
             byte[] sourceData = null,
             bool overwriteConflicting = false) {
-            if (manifest == null
-                || manifest.Items == null
-                || manifest.Items.Length == 0) {
+            if (manifest is not { Items.Length: > 0 }) {
                 return;
             }
             lock (m_writeSync) {
@@ -155,7 +153,7 @@ namespace Game {
                     );
                 }
             }
-            return items.OrderByDescending(item => item.CreationTime).ThenBy(item => item.DisplayName, StringComparer.InvariantCulture).ToArray();
+            return [.. items.OrderByDescending(item => item.CreationTime).ThenBy(item => item.DisplayName, StringComparer.InvariantCulture)];
         }
 
         public IEnumerable<string> EnumerateManifestFiles() {
@@ -394,7 +392,7 @@ namespace Game {
             }
         }
 
-        void DeleteConflictingFiles(string manifestPath) {
+        static void DeleteConflictingFiles(string manifestPath) {
             string directory = Storage.GetDirectoryName(manifestPath);
             string baseName = Storage.GetFileNameWithoutExtensionBCL(manifestPath);
             if (string.IsNullOrWhiteSpace(directory)
@@ -423,10 +421,9 @@ namespace Game {
         LocalModpackFileMetadata ReadMetadata(string manifestPath) {
             try {
                 string path = GetMetadataPath(manifestPath);
-                if (!Storage.FileExists(path)) {
-                    return null;
-                }
-                return JsonSerializer.Deserialize<LocalModpackFileMetadata>(Storage.ReadAllText(path, Encoding.UTF8), m_jsonOptions);
+                return Storage.FileExists(path)
+                    ? JsonSerializer.Deserialize<LocalModpackFileMetadata>(Storage.ReadAllText(path, Encoding.UTF8), m_jsonOptions)
+                    : null;
             }
             catch (Exception ex) {
                 Log.Warning(

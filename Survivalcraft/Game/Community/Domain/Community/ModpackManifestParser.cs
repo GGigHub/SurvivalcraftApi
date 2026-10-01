@@ -304,8 +304,7 @@ namespace Game {
         // Win 中文工具默认 GBK（位未置），Android/跨平台工具多置 UTF-8。据此选编码，兼容两端。
         // 仅在可回退的流上探测；否则返回 null 回退 GBK。
         static Encoding DetectZipEntryNameEncoding(Stream stream) {
-            if (stream == null
-                || !stream.CanSeek) {
+            if (stream is not { CanSeek: true }) {
                 return null;
             }
             long rewind = stream.Position;

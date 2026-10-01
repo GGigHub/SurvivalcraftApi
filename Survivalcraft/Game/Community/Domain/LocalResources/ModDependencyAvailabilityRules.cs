@@ -19,10 +19,9 @@ namespace Game {
             if (IsInstalledModMatching(dependency, pendingPackages)) {
                 return ModDependencyAvailability.PendingRestart;
             }
-            if (IsInstalledModMatching(dependency, incompatiblePackages)) {
-                return ModDependencyAvailability.Incompatible;
-            }
-            return ModDependencyAvailability.Missing;
+            return IsInstalledModMatching(dependency, incompatiblePackages)
+                ? ModDependencyAvailability.Incompatible
+                : ModDependencyAvailability.Missing;
         }
 
         public static string MakePackageVersionKey(string packageName, string version) => $"{packageName?.Trim()}\n{version?.Trim()}";

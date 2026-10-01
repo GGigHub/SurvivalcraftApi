@@ -9,8 +9,7 @@ namespace Game {
         public const long MaxPayloadBytes = 256L * 1024 * 1024;
 
         public static void EnsurePayloadWithinLimit(long? contentLength) {
-            if (contentLength.HasValue
-                && contentLength.Value > MaxPayloadBytes) {
+            if (contentLength > MaxPayloadBytes) {
                 throw new InvalidOperationException(
                     string.Format(
                         CultureInfo.InvariantCulture,

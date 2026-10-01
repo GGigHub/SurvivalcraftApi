@@ -115,7 +115,7 @@ namespace Game {
             GetFallbackUploadExtension(GetUploadExternalType(resourceItem))
         );
 
-        CommunityPreparedUploadFile CreateExistingFileUpload(LocalResourceItem resourceItem,
+        static CommunityPreparedUploadFile CreateExistingFileUpload(LocalResourceItem resourceItem,
             string filePath,
             CommunityFileType fileType,
             string fallbackExtension) {
