@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
 
 namespace Engine {
@@ -144,25 +145,38 @@ namespace Engine {
             return num > maxLength * maxLength ? v * (maxLength / MathF.Sqrt(num)) : v;
         }
 
-        // x86 SSE：shufps 四次把四列转置成四行；加法顺序与标量版一致，结果逐位相同
+        // 列主序：M11/M12/M13/M14 各落在连续 4 float 的列起点；ARM64 NEON 用 Zip1/Zip2 两级转置
+        // （配对 (c1,c3)/(c2,c4)），x86 SSE 用 shufps 四次；加法顺序与标量版一致，结果逐位相同
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void TransformRows(ref Matrix m, out Vector128<float> row1, out Vector128<float> row2, out Vector128<float> row3, out Vector128<float> row4) {
             Vector128<float> c1 = Vector128.LoadUnsafe(ref m.M11);
             Vector128<float> c2 = Vector128.LoadUnsafe(ref m.M12);
             Vector128<float> c3 = Vector128.LoadUnsafe(ref m.M13);
             Vector128<float> c4 = Vector128.LoadUnsafe(ref m.M14);
-            Vector128<float> t01 = Sse.Shuffle(c1, c2, 0x44);
-            Vector128<float> t23 = Sse.Shuffle(c1, c2, 0xEE);
-            Vector128<float> u01 = Sse.Shuffle(c3, c4, 0x44);
-            Vector128<float> u23 = Sse.Shuffle(c3, c4, 0xEE);
-            row1 = Sse.Shuffle(t01, u01, 0x88);
-            row2 = Sse.Shuffle(t01, u01, 0xDD);
-            row3 = Sse.Shuffle(t23, u23, 0x88);
-            row4 = Sse.Shuffle(t23, u23, 0xDD);
+            if (AdvSimd.IsSupported) {
+                Vector128<float> t1 = AdvSimd.Arm64.ZipLow(c1, c3);
+                Vector128<float> t2 = AdvSimd.Arm64.ZipLow(c2, c4);
+                Vector128<float> t3 = AdvSimd.Arm64.ZipHigh(c1, c3);
+                Vector128<float> t4 = AdvSimd.Arm64.ZipHigh(c2, c4);
+                row1 = AdvSimd.Arm64.ZipLow(t1, t2);
+                row2 = AdvSimd.Arm64.ZipHigh(t1, t2);
+                row3 = AdvSimd.Arm64.ZipLow(t3, t4);
+                row4 = AdvSimd.Arm64.ZipHigh(t3, t4);
+            }
+            else {
+                Vector128<float> t01 = Sse.Shuffle(c1, c2, 0x44);
+                Vector128<float> t23 = Sse.Shuffle(c1, c2, 0xEE);
+                Vector128<float> u01 = Sse.Shuffle(c3, c4, 0x44);
+                Vector128<float> u23 = Sse.Shuffle(c3, c4, 0xEE);
+                row1 = Sse.Shuffle(t01, u01, 0x88);
+                row2 = Sse.Shuffle(t01, u01, 0xDD);
+                row3 = Sse.Shuffle(t23, u23, 0x88);
+                row4 = Sse.Shuffle(t23, u23, 0xDD);
+            }
         }
 
         public static Vector4 Transform(Vector4 v, Matrix m) {
-            if (Sse.IsSupported) {
+            if (Vector128.IsHardwareAccelerated) {
                 TransformRows(ref m, out Vector128<float> row1, out Vector128<float> row2, out Vector128<float> row3, out Vector128<float> row4);
                 Vector128<float> r = row1 * Vector128.Create(v.X) + row2 * Vector128.Create(v.Y) + row3 * Vector128.Create(v.Z) + row4;
                 return new Vector4(r[0], r[1], r[2], r[3]);
@@ -185,7 +199,7 @@ namespace Engine {
             Vector4[] destinationArray,
             int destinationIndex,
             int count) {
-            if (Sse.IsSupported) {
+            if (Vector128.IsHardwareAccelerated) {
                 TransformRows(ref m, out Vector128<float> row1, out Vector128<float> row2, out Vector128<float> row3, out Vector128<float> row4);
                 for (int i = 0; i < count; i++) {
                     Vector4 vector = sourceArray[sourceIndex + i];
