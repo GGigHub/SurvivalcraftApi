@@ -610,8 +610,21 @@ namespace Game {
                     && processedCount != 0) {
                     //TODO:ProcessItem允许突破格子物品上限限制
                     int count = MathUtils.Min(sourceInventory.GetSlotCapacity(sourceSlotIndex, processedValue), processedCount);
-                    sourceInventory.RemoveSlotItems(sourceSlotIndex, count);
-                    sourceInventory.AddSlotItems(sourceSlotIndex, processedValue, count);
+                    // 归还未被消费的处理结果。上方 RemoveSlotItems 已把参与处理的物品移出源格，
+                    // 同值归还只需 AddSlotItems 合并回原格（原版行为）；再先 Remove 一次会把
+                    // 移除量双重扣减（吃饱继续进食时食物凭空消失，caa9ecb8 引入）。
+                    // 仅当源格残留物品与结果不同值、AddSlotItems 无法合并时跳过归还并记录，
+                    // 避免 AddSlotItems 抛 InvalidOperationException。
+                    if (sourceInventory.GetSlotCount(sourceSlotIndex) == 0
+                        || sourceInventory.GetSlotValue(sourceSlotIndex) == processedValue) {
+                        sourceInventory.AddSlotItems(sourceSlotIndex, processedValue, count);
+                    }
+                    else {
+                        Log.Warning(
+                            $"Skip returning processed items: slot {sourceSlotIndex} holds a different value "
+                            + $"({sourceInventory.GetSlotValue(sourceSlotIndex)}) than processed result ({processedValue})."
+                        );
+                    }
                 }
                 flag = true;
             }
