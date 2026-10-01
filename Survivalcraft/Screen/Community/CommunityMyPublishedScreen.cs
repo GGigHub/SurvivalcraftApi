@@ -75,7 +75,7 @@ namespace Game {
             // 游戏内 CommunityModSettingsState 以 MyPublishedFileType 单属性承载本屏类型（无按屏名
             // TryGet 版式），恒有值，直接恢复即可。
             SetCurrentMyPublishedFileType(CommunityModSettingsState.MyPublishedFileType);
-            InstallDownloadFlowCallbacks(status => { }, () => false, () => CommunityDownloadSourceManager.DefaultCnInfo);
+            InstallDownloadFlowCallbacks(_ => { }, () => false, () => CommunityDownloadSourceManager.DefaultCnInfo);
             DownloadFlowManager.Instance.LoadQueue();
             m_pendingLoginOnEnter = false;
             // 本屏 Update 轮询前的会话恢复：直奔本屏（不经过社区/More 屏）时只有这里
@@ -272,8 +272,7 @@ namespace Game {
 
         // 小屏顶栏摆不下 6 个类型按钮：收进 ListSelectionDialog（ManageUserScreen 同款惯式）。
         void HandleTypeButtonClick() {
-            if (m_typeButton == null
-                || !m_typeButton.IsClicked) {
+            if (m_typeButton is null or { IsClicked: false }) {
                 return;
             }
             ExternalContentType[] fileTypeValues = CommunityFileTypes.FilterableValues();
@@ -298,8 +297,7 @@ namespace Game {
 
         // 只看未发布开关：切换即回第一页，语义同 SetCurrentMyPublishedFileType。
         void HandleUnpublishedToggle() {
-            if (m_unpublishedButton == null
-                || !m_unpublishedButton.IsClicked) {
+            if (m_unpublishedButton is null or { IsClicked: false }) {
                 return;
             }
             m_showUnpublished = !m_showUnpublished;
@@ -356,7 +354,7 @@ namespace Game {
             }
         }
 
-        void CopyPublishedFileShareLink(PostFileItem file) {
+        static void CopyPublishedFileShareLink(PostFileItem file) {
             string url = file?.Url?.Trim();
             if (string.IsNullOrWhiteSpace(url)) {
                 return;

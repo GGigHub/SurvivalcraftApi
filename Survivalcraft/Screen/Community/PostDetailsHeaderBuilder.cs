@@ -73,7 +73,7 @@ namespace Game {
         }
 
         static void AppendRecentDownloadSeries(StackPanelWidget panel, PostDownloadTrendSeriesItem[] series) {
-            IReadOnlyList<PostDownloadTrendSeriesItem> visibleSeries = series?.Where(item => item != null && item.DownloadCount > 0)
+            IReadOnlyList<PostDownloadTrendSeriesItem> visibleSeries = series?.Where(item => item is { DownloadCount: > 0 })
                 .TakeLast(7)
                 .ToArray();
             if (visibleSeries == null

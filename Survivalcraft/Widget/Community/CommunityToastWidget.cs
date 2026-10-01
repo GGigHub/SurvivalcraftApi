@@ -94,24 +94,20 @@ namespace Game {
             t = 1f - (1f - t) * (1f - t);
             float hiddenMargin = ComputeHiddenMargin();
             Margin = new Vector2(0f, hiddenMargin + (VisibleBottomMargin - hiddenMargin) * t);
-            if (m_autoHideSeconds > 0.0
-                && elapsed >= m_autoHideSeconds) {
-                Action closeAction = m_closeAction;
-                Hide();
-                closeAction?.Invoke();
-                return;
-            }
-            if (m_close.IsClicked) {
-                Action closeAction = m_closeAction;
-                Hide();
-                closeAction?.Invoke();
+            if ((m_autoHideSeconds > 0.0
+                    && elapsed >= m_autoHideSeconds) || m_close.IsClicked) {
+                DismissAndInvoke(m_closeAction);
                 return;
             }
             if (m_confirm.IsClicked) {
-                Action confirmAction = m_confirmAction;
-                Hide();
-                confirmAction?.Invoke();
+                DismissAndInvoke(m_confirmAction);
             }
+        }
+
+        // 动作实参在 Hide 清场前求值，等价于原先的局部快照
+        void DismissAndInvoke(Action action) {
+            Hide();
+            action?.Invoke();
         }
 
         void ClearState() {

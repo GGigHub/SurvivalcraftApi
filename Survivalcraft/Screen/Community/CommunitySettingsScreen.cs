@@ -5,19 +5,19 @@ namespace Game {
         static CommunitySettingsScreen s_current;
         static string s_sharedStatus = string.Empty;
 
-        LabelWidget m_accountInfo;
-        ButtonWidget m_authButton;
-        ButtonWidget m_myPublishedButton;
-        ButtonWidget m_importButton;
-        ButtonWidget m_downloadQueueButton;
-        ButtonWidget m_currentServerButton;
-        ButtonWidget m_downloadSourceSelectionModeButton;
-        ButtonWidget m_defaultDownloadSourceButton;
-        ButtonWidget m_applyDownloadSourceToUpdatesButton;
-        ButtonWidget m_playedTimeReportingButton;
-        ButtonWidget m_postDetailsAutoTranslateButton;
-        ButtonWidget m_topBarBackButton;
-        LabelWidget m_statusLabel;
+        readonly LabelWidget m_accountInfo;
+        readonly ButtonWidget m_authButton;
+        readonly ButtonWidget m_myPublishedButton;
+        readonly ButtonWidget m_importButton;
+        readonly ButtonWidget m_downloadQueueButton;
+        readonly ButtonWidget m_currentServerButton;
+        readonly ButtonWidget m_downloadSourceSelectionModeButton;
+        readonly ButtonWidget m_defaultDownloadSourceButton;
+        readonly ButtonWidget m_applyDownloadSourceToUpdatesButton;
+        readonly ButtonWidget m_playedTimeReportingButton;
+        readonly ButtonWidget m_postDetailsAutoTranslateButton;
+        readonly ButtonWidget m_topBarBackButton;
+        readonly LabelWidget m_statusLabel;
 
         public CommunitySettingsScreen() {
             XElement node = ContentManager.Get<XElement>("Screens/CommunitySettingsScreen");
@@ -176,7 +176,7 @@ namespace Game {
             return normalized;
         }
 
-        string GetAccountInfoText() {
+        static string GetAccountInfoText() {
             AuthSessionManager auth = AuthSessionManager.Instance;
             if (!auth.IsLoggedIn
                 || auth.CurrentUser == null) {
@@ -197,10 +197,5 @@ namespace Game {
         static CommunityDownloadSourceManager.Info ResolveEffectiveDownloadSource() =>
             // 仅剩 CustomDefault 一种自动模式（ManualSelect 走逐次弹框，不经此）：恒取管理器当前默认线路
             CommunityDownloadSourceManager.CurrentDefaultInfo;
-
-        void SetBusy(bool busy) {
-            m_importButton.IsEnabled = !busy;
-            m_downloadQueueButton.IsEnabled = !busy;
-        }
     }
 }

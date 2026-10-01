@@ -4,9 +4,7 @@ using Engine;
 
 namespace Game {
     public sealed class CommunityPostDetailsDialog : Dialog {
-        readonly Widget m_actionsRow;
         readonly StackPanelWidget m_contentPanel;
-        readonly StackPanelWidget m_headerPanel;
         readonly ButtonWidget m_viewInBrowserButton;
         readonly ButtonWidget m_primaryButton;
         readonly ButtonWidget m_closeButton;
@@ -48,8 +46,8 @@ namespace Game {
             m_titleLabel = Children.Find<LabelWidget>("PostDetailsDialog.Title");
             m_titleLabel.Text = string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("PostDetailsDialog", "PostDetails") : title;
             m_contentPanel = Children.Find<StackPanelWidget>("PostDetailsDialog.ContentPanel");
-            m_headerPanel = Children.Find<StackPanelWidget>("PostDetailsDialog.HeaderPanel");
-            m_actionsRow = Children.Find<Widget>("PostDetailsDialog.ActionsRow");
+            StackPanelWidget headerPanel = Children.Find<StackPanelWidget>("PostDetailsDialog.HeaderPanel");
+            Widget actionsRow = Children.Find<Widget>("PostDetailsDialog.ActionsRow");
             m_viewInBrowserButton = Children.Find<ButtonWidget>("PostDetailsDialog.ViewInBrowserButton");
             m_primaryButton = Children.Find<ButtonWidget>("PostDetailsDialog.PrimaryButton");
             m_closeButton = Children.Find<ButtonWidget>("PostDetailsDialog.CloseButton");
@@ -57,15 +55,15 @@ namespace Game {
             m_contentBuilder = new PostDetailsContentBuilder(m_contentPanel, m_baseUrl);
             bool hasPrimaryAction = !string.IsNullOrWhiteSpace(primaryButtonText) && primaryAction != null;
             // 行内含关闭按钮，恒可见；主按钮/浏览器按钮按有无动作与链接各自显隐。
-            m_actionsRow.IsVisible = true;
+            actionsRow.IsVisible = true;
             m_primaryButton.IsVisible = hasPrimaryAction;
             m_viewInBrowserButton.IsVisible = !string.IsNullOrWhiteSpace(m_postUrl);
             if (hasPrimaryAction) {
                 m_primaryButton.Text = primaryButtonText;
             }
             if (buildHeader != null) {
-                buildHeader(m_headerPanel);
-                m_headerPanel.IsVisible = m_headerPanel.Children.Count > 0;
+                buildHeader(headerPanel);
+                headerPanel.IsVisible = headerPanel.Children.Count > 0;
             }
             BuildContent();
             if (enableAutoTranslate) {
@@ -152,8 +150,7 @@ namespace Game {
         }
 
         void UpdateAutoTranslateTask() {
-            if (m_autoTranslateTask == null
-                || !m_autoTranslateTask.IsCompleted) {
+            if (m_autoTranslateTask is null or { IsCompleted: false }) {
                 return;
             }
             AutoTranslateResult result;

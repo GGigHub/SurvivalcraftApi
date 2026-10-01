@@ -13,8 +13,6 @@ namespace Game {
             public bool IgnoreSection;
         }
 
-        const CommunityOrderType DefaultOrderType = CommunityOrderType.Hot;
-
         readonly Action<State> m_submit;
         readonly Action<State> m_saveDefault;
         readonly BevelledButtonWidget m_fileTypeButton;

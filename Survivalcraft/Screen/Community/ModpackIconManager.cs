@@ -122,7 +122,7 @@ namespace Game {
                 }
                 return;
             }
-            if (ApplyReadyTexture(result.Key, waiters, result.Texture)) {
+            if (ApplyReadyTexture(waiters, result.Texture)) {
                 m_waiters.Remove(result.Key);
             }
         }
@@ -132,12 +132,10 @@ namespace Game {
         /// 分离 widget 不参与绘制，先贴即等价于滚回补应用，结算后 key 即清空、名册不再滞留闲置条目。
         /// 恒返回 true（调用方删 key）。
         /// </summary>
-        bool ApplyReadyTexture(string key, List<RectangleWidget> waiters, Texture2D texture) {
+        static bool ApplyReadyTexture(List<RectangleWidget> waiters, Texture2D texture) {
             for (int i = waiters.Count - 1; i >= 0; i--) {
                 RectangleWidget waiter = waiters[i];
-                if (waiter != null) {
-                    waiter.Subtexture = new Subtexture(texture, Vector2.Zero, Vector2.One);
-                }
+                waiter?.Subtexture = new Subtexture(texture, Vector2.Zero, Vector2.One);
                 waiters.RemoveAt(i);
             }
             return waiters.Count == 0;
@@ -155,7 +153,7 @@ namespace Game {
             List<string> settledKeys = null;
             foreach (KeyValuePair<string, List<RectangleWidget>> pair in m_waiters) {
                 if (m_loader.TryGetCachedTexture(pair.Key, out Texture2D texture)
-                    && ApplyReadyTexture(pair.Key, pair.Value, texture)) {
+                    && ApplyReadyTexture(pair.Value, texture)) {
                     (settledKeys ??= []).Add(pair.Key);
                 }
             }

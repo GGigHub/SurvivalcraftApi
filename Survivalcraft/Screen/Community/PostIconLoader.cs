@@ -189,10 +189,9 @@ namespace Game {
                     .ConfigureAwait(false);
                 Dispatcher.Dispatch(
                     delegate {
-                        Texture2D texture = null;
                         try {
                             if (result?.Image != null) {
-                                texture = Texture2D.Load(result.Image);
+                                Texture2D texture = Texture2D.Load(result.Image);
                                 bool overwriting = s_iconCache.TryGetValue(iconUrl, out _);
                                 List<string> evictedKeys = s_iconCache.Add(iconUrl, texture);
                                 if (overwriting) {

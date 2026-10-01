@@ -15,7 +15,6 @@ namespace Game {
         readonly Action<PostFileItem> m_download;
         readonly Action<IReadOnlyList<PostFileItem>> m_downloadAll;
         readonly bool m_groupFilesByPackageName;
-        readonly Dictionary<string, string> m_preferredVersionsByPackage;
 
         public CommunityMissingDependenciesDialog(string modName,
             IReadOnlyList<PostFileItem> files,
@@ -29,7 +28,7 @@ namespace Game {
             m_downloadAll = downloadAll;
             m_groupFilesByPackageName = groupFilesByPackageName;
             m_missingDependencyLabels = BuildMissingDependencyLabels(missingDependencyLabels);
-            m_preferredVersionsByPackage = BuildPreferredVersionsByPackage(preferredVersionsByPackage);
+            Dictionary<string, string> preferredVersions = BuildPreferredVersionsByPackage(preferredVersionsByPackage);
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityMissingDependenciesDialog");
             LoadContents(this, node);
             Children.Find<LabelWidget>("MissingDependenciesDialog.TitleLabel").Text = string.IsNullOrWhiteSpace(title)
@@ -39,7 +38,7 @@ namespace Game {
                 ? LanguageControl.Get("MissingDependenciesDialog", "LocalMod")
                 : modName;
             m_listPanel = Children.Find<StackPanelWidget>("MissingDependenciesDialog.ListPanel");
-            m_fileGroups = BuildFileGroups(files, groupFilesByPackageName, m_preferredVersionsByPackage);
+            m_fileGroups = BuildFileGroups(files, groupFilesByPackageName, preferredVersions);
             m_primaryDownloadFiles = BuildPrimaryDownloadFiles(m_fileGroups);
             BuildFileRows();
             m_downloadAllButton = Children.Find<ButtonWidget>("MissingDependenciesDialog.DownloadAllButton");
@@ -116,7 +115,7 @@ namespace Game {
             }
         }
 
-        CommunityMissingDependencyFileDisplayData BuildFileDisplayData(PostFileItem file) => new() {
+        static CommunityMissingDependencyFileDisplayData BuildFileDisplayData(PostFileItem file) => new() {
             File = file,
             FileTitle = string.IsNullOrWhiteSpace(file?.Filename) ? LanguageControl.Get("MissingDependenciesDialog", "UnnamedFile") : file.Filename,
             MetadataText = string.Format(
@@ -146,11 +145,11 @@ namespace Game {
                         : LanguageControl.Get("MissingDependenciesDialog", "MoreDuplicateFiles"),
                     hiddenCount
                 ),
-                Files = group.Files.Skip(1).Select(BuildFileDisplayData).ToArray()
+                Files = [.. group.Files.Skip(1).Select(BuildFileDisplayData)]
             };
         }
 
-        CommunityMissingDependencyPackageDisplayData BuildPackageDisplayData(string label) => new() {
+        static CommunityMissingDependencyPackageDisplayData BuildPackageDisplayData(string label) => new() {
             Text = CommunityVersionDetailFormatter.FormatEmpty(label),
             DetailText = LanguageControl.Get("MissingDependenciesDialog", "NoDownloadableFile")
         };
@@ -217,10 +216,9 @@ namespace Game {
 
         static int CompareFilesWithinGroup(PostFileItem left, PostFileItem right, string preferredVersion) {
             int preferredCompare = CompareFilesByPreferredVersion(left, right, preferredVersion);
-            if (preferredCompare != 0) {
-                return preferredCompare;
-            }
-            return CompareFilesByTimeDescending(left, right);
+            return preferredCompare != 0
+                ? preferredCompare
+                : CompareFilesByTimeDescending(left, right);
         }
 
         internal static int CompareFilesByPreferredVersion(PostFileItem left, PostFileItem right, string preferredVersion) {
@@ -232,10 +230,9 @@ namespace Game {
             DependencyVersionMatchScore leftScore = GetDependencyVersionMatchScore(left, preferredRange, preferredNuGetVersion);
             DependencyVersionMatchScore rightScore = GetDependencyVersionMatchScore(right, preferredRange, preferredNuGetVersion);
             int compare = rightScore.CompareTo(leftScore);
-            if (compare != 0) {
-                return compare;
-            }
-            return CompareNuGetVersions(right?.NuGetVersion, left?.NuGetVersion);
+            return compare != 0
+                ? compare
+                : CompareNuGetVersions(right?.NuGetVersion, left?.NuGetVersion);
         }
 
         static int CompareFilesByTimeDescending(PostFileItem left, PostFileItem right) {
@@ -342,15 +339,10 @@ namespace Game {
                 if (compare != 0) {
                     return compare;
                 }
-                compare = IsSatisfied.CompareTo(other.IsSatisfied);
-                if (compare != 0) {
-                    return compare;
-                }
-                compare = IsExactMatch.CompareTo(other.IsExactMatch);
-                if (compare != 0) {
-                    return compare;
-                }
-                return 0;
+                int satisfiedCompare = IsSatisfied.CompareTo(other.IsSatisfied);
+                return satisfiedCompare != 0
+                    ? satisfiedCompare
+                    : IsExactMatch.CompareTo(other.IsExactMatch);
             }
         }
 

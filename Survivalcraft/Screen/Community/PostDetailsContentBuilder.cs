@@ -458,7 +458,7 @@ namespace Game {
             }
         }
 
-        void ApplyImageTexture(Texture2D texture,
+        static void ApplyImageTexture(Texture2D texture,
             CanvasWidget frame,
             RectangleWidget background,
             RectangleWidget image,
@@ -466,9 +466,7 @@ namespace Game {
             string alt,
             string url) {
             try {
-                if (texture == null
-                    || texture.Width <= 0
-                    || texture.Height <= 0) {
+                if (texture is not { Width: > 0, Height: > 0 }) {
                     status.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("PostDetailsDialog", "FailedToLoad"), alt);
                     return;
                 }
@@ -520,16 +518,13 @@ namespace Game {
             if (!Uri.TryCreate(m_baseUrl, UriKind.Absolute, out Uri baseUri)) {
                 return url;
             }
-            if (url.StartsWith("/", StringComparison.Ordinal)) {
-                return new Uri(new Uri(baseUri.GetLeftPart(UriPartial.Authority)), url).ToString();
-            }
-            return new Uri(baseUri, url).ToString();
+            return url.StartsWith("/", StringComparison.Ordinal)
+                ? new Uri(new Uri(baseUri.GetLeftPart(UriPartial.Authority)), url).ToString()
+                : new Uri(baseUri, url).ToString();
         }
 
         static Vector2 GetImageDisplaySize(Texture2D texture) {
-            if (texture == null
-                || texture.Width <= 0
-                || texture.Height <= 0) {
+            if (texture is not { Width: > 0, Height: > 0 }) {
                 return new Vector2(ContentWidth, 220f);
             }
             float width = texture.Width;

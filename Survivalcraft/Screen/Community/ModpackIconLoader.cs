@@ -64,7 +64,7 @@ namespace Game {
                     byte[] bytes = downloaded.ToArray();
                     if (bytes.Length == 0
                         || bytes.Length > 2 * 1024 * 1024) {
-                        return new DecodedIcon { Key = url, Error = "empty or oversized icon" };
+                        return new DecodedIcon { Error = "empty or oversized icon" };
                     }
                     return await Task.Run(() => Decode(bytes)).ConfigureAwait(false);
                 }
@@ -89,7 +89,7 @@ namespace Game {
                 decoded = completed.Value.Result;
             }
             catch (Exception ex) {
-                decoded = new DecodedIcon { Key = completed.Key, Error = ex.Message };
+                decoded = new DecodedIcon { Error = ex.Message };
             }
             try {
                 if (decoded?.Image == null) {
@@ -167,7 +167,6 @@ namespace Game {
         }
 
         sealed class DecodedIcon {
-            public string Key { get; init; }
             public Image<Rgba32> Image { get; init; }
             public string Error { get; init; }
         }

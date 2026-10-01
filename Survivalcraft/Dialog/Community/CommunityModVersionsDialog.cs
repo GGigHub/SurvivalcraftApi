@@ -158,10 +158,9 @@ namespace Game {
             if (version == null) {
                 return "null";
             }
-            if (version.Id > 0) {
-                return $"id:{version.Id}";
-            }
-            return $"text:{version.Title}|{version.Version}|{version.CreatedAt}";
+            return version.Id > 0
+                ? $"id:{version.Id}"
+                : $"text:{version.Title}|{version.Version}|{version.CreatedAt}";
         }
 
         static string FormatFileTitle(PostFileItem file) => string.IsNullOrWhiteSpace(file?.Filename)
