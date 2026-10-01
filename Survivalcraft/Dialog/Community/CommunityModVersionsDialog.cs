@@ -1,30 +1,23 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Xml.Linq;
 using Engine;
-using Engine.Graphics;
-using NuGet.Versioning;
 
-namespace Game
-{
-    public sealed class CommunityModVersionsDialog : Dialog
-    {
-        private readonly List<CommunityModVersionWidget> m_versionWidgets = [];
-        private readonly HashSet<string> m_expandedVersionKeys = [];
-        private readonly IReadOnlyList<PostVersionItem> m_versions;
-        private readonly IReadOnlyDictionary<int, string> m_gameVersionsById;
-        private readonly string m_currentVersion;
-        private readonly string m_currentApiVersion;
-        private readonly string m_currentGameVersion;
-        private readonly IReadOnlyList<VersionListItem> m_versionCatalog;
-        private readonly StackPanelWidget m_listPanel;
-        private readonly ButtonWidget m_closeButton;
-        private readonly Action<PostVersionItem> m_showDetails;
-        private readonly Action<PostVersionItem, PostFileItem> m_download;
+namespace Game {
+    public sealed class CommunityModVersionsDialog : Dialog {
+        readonly List<CommunityModVersionWidget> m_versionWidgets = [];
+        readonly HashSet<string> m_expandedVersionKeys = [];
+        readonly IReadOnlyList<PostVersionItem> m_versions;
+        readonly IReadOnlyDictionary<int, string> m_gameVersionsById;
+        readonly string m_currentVersion;
+        readonly string m_currentApiVersion;
+        readonly string m_currentGameVersion;
+        readonly IReadOnlyList<VersionListItem> m_versionCatalog;
+        readonly StackPanelWidget m_listPanel;
+        readonly ButtonWidget m_closeButton;
+        readonly Action<PostVersionItem> m_showDetails;
+        readonly Action<PostVersionItem, PostFileItem> m_download;
 
-        public CommunityModVersionsDialog(
-            string postTitle,
+        public CommunityModVersionsDialog(string postTitle,
             string currentVersion,
             string currentApiVersion,
             string currentGameVersion,
@@ -32,8 +25,7 @@ namespace Game
             IReadOnlyDictionary<int, string> gameVersionsById,
             IReadOnlyList<VersionListItem> versionCatalog,
             Action<PostVersionItem> showDetails,
-            Action<PostVersionItem, PostFileItem> download)
-        {
+            Action<PostVersionItem, PostFileItem> download) {
             m_versions = versions ?? [];
             m_gameVersionsById = gameVersionsById ?? new Dictionary<int, string>();
             m_currentVersion = ExternalVersionParser.Normalize(currentVersion);
@@ -42,35 +34,32 @@ namespace Game
             m_versionCatalog = versionCatalog ?? [];
             m_showDetails = showDetails;
             m_download = download;
-
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModVersionsDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("ModVersionsDialog.PostTitleLabel").Text =
-                string.IsNullOrWhiteSpace(postTitle) ? LanguageControl.Get("ModVersionsDialog", "CommunityPost") : postTitle;
+            Children.Find<LabelWidget>("ModVersionsDialog.PostTitleLabel").Text = string.IsNullOrWhiteSpace(postTitle)
+                ? LanguageControl.Get("ModVersionsDialog", "CommunityPost")
+                : postTitle;
             m_listPanel = Children.Find<StackPanelWidget>("ModVersionsDialog.ListPanel");
             m_closeButton = Children.Find<ButtonWidget>("ModVersionsDialog.CloseButton");
             BuildVersionList();
         }
 
-        private void BuildVersionList()
-        {
+        void BuildVersionList() {
             m_listPanel.Children.Clear();
             m_versionWidgets.Clear();
-
-            if (m_versions == null || m_versions.Count == 0)
-            {
-                m_listPanel.Children.Add(new LabelWidget
-                {
-                    Text = LanguageControl.Get("ModVersionsDialog", "NoVersions"),
-                    Color = new Color(200, 200, 200),
-                    FontScale = 0.9f,
-                    HorizontalAlignment = WidgetAlignment.Center
-                });
+            if (m_versions == null
+                || m_versions.Count == 0) {
+                m_listPanel.Children.Add(
+                    new LabelWidget {
+                        Text = LanguageControl.Get("ModVersionsDialog", "NoVersions"),
+                        Color = new Color(200, 200, 200),
+                        FontScale = 0.9f,
+                        HorizontalAlignment = WidgetAlignment.Center
+                    }
+                );
                 return;
             }
-
-            foreach (PostVersionItem version in m_versions)
-            {
+            foreach (PostVersionItem version in m_versions) {
                 CommunityModVersionDisplayData data = BuildVersionDisplayData(version);
                 CommunityModVersionWidget widget = new();
                 widget.Bind(data, m_expandedVersionKeys.Contains(data.VersionKey));
@@ -79,57 +68,42 @@ namespace Game
             }
         }
 
-        public override void Update()
-        {
+        public override void Update() {
             if (m_closeButton.IsClicked
                 || Input.Back
                 || Input.Cancel
-                || (Input.Tap.HasValue && !HitTest(Input.Tap.Value)))
-            {
+                || (Input.Tap.HasValue && !HitTest(Input.Tap.Value))) {
                 DialogsManager.HideDialog(this);
                 return;
             }
-
-            foreach (CommunityModVersionWidget widget in m_versionWidgets)
-            {
-                if (widget.IsDetailsClicked)
-                {
+            foreach (CommunityModVersionWidget widget in m_versionWidgets) {
+                if (widget.IsDetailsClicked) {
                     DialogsManager.HideDialog(this);
                     m_showDetails?.Invoke(widget.Version);
                     return;
                 }
             }
-
-            foreach (CommunityModVersionWidget widget in m_versionWidgets)
-            {
-                if (!widget.IsFilesToggleClicked)
-                {
+            foreach (CommunityModVersionWidget widget in m_versionWidgets) {
+                if (!widget.IsFilesToggleClicked) {
                     continue;
                 }
-
-                if (!m_expandedVersionKeys.Remove(widget.VersionKey))
-                {
+                if (!m_expandedVersionKeys.Remove(widget.VersionKey)) {
                     m_expandedVersionKeys.Add(widget.VersionKey);
                 }
                 BuildVersionList();
                 return;
             }
-
-            foreach (CommunityModVersionWidget widget in m_versionWidgets)
-            {
-                if (!widget.TryGetClickedFile(out PostFileItem file))
-                {
+            foreach (CommunityModVersionWidget widget in m_versionWidgets) {
+                if (!widget.TryGetClickedFile(out PostFileItem file)) {
                     continue;
                 }
-
                 DialogsManager.HideDialog(this);
                 m_download?.Invoke(widget.Version, file);
                 return;
             }
         }
 
-        private CommunityModVersionDisplayData BuildVersionDisplayData(PostVersionItem version)
-        {
+        CommunityModVersionDisplayData BuildVersionDisplayData(PostVersionItem version) {
             int fileCount = version?.Files?.Length ?? 0;
             bool hasExpandableFiles = fileCount > 1;
             bool hasSingleFile = fileCount == 1;
@@ -139,36 +113,38 @@ namespace Game
                 m_currentApiVersion,
                 m_currentGameVersion,
                 m_gameVersionsById,
-                m_versionCatalog);
+                m_versionCatalog
+            );
             List<CommunityModFileDisplayData> files = [];
-            foreach (PostFileItem file in version?.Files ?? [])
-            {
-                files.Add(new CommunityModFileDisplayData
-                {
-                    File = file,
-                    FileTitle = FormatFileTitle(file),
-                    DownloadsSizeText = string.Format(
-                        CultureInfo.InvariantCulture,
-                        LanguageControl.Get("ModVersionsDialog", "DownloadsSize"),
-                        file?.DownloadCount ?? 0,
-                        FormatFileSize(file?.Size))
-                });
+            foreach (PostFileItem file in version?.Files ?? []) {
+                files.Add(
+                    new CommunityModFileDisplayData {
+                        File = file,
+                        FileTitle = FormatFileTitle(file),
+                        DownloadsSizeText = string.Format(
+                            CultureInfo.InvariantCulture,
+                            LanguageControl.Get("ModVersionsDialog", "DownloadsSize"),
+                            file?.DownloadCount ?? 0,
+                            FormatFileSize(file?.Size)
+                        )
+                    }
+                );
             }
-
-            return new CommunityModVersionDisplayData
-            {
+            return new CommunityModVersionDisplayData {
                 Version = version,
                 VersionKey = GetVersionKey(version),
-                VersionTitle = isCurrent
-                    ? $"{CommunityVersionDetailFormatter.FormatVersionTitle(version)}  {LanguageControl.Get("ModVersionsDialog", "Current")}"
-                    : CommunityVersionDetailFormatter.FormatVersionTitle(version),
+                VersionTitle =
+                    isCurrent
+                        ? $"{CommunityVersionDetailFormatter.FormatVersionTitle(version)}  {LanguageControl.Get("ModVersionsDialog", "Current")}"
+                        : CommunityVersionDetailFormatter.FormatVersionTitle(version),
                 FileTitle = hasSingleFile ? FormatFileTitle(version.Files[0]) : string.Empty,
                 CompatibilityText = string.Format(
                     CultureInfo.InvariantCulture,
                     LanguageControl.Get("ModVersionsDialog", "GameVersionsPublished"),
                     $"{compatibility.StatusText}  ",
                     compatibility.VersionNamesText,
-                    CommunityTimeFormatter.FormatTime(version?.CreatedAt)),
+                    CommunityTimeFormatter.FormatTime(version?.CreatedAt)
+                ),
                 TitleColor = isCurrent ? new Color(255, 230, 140) : Color.White,
                 CompatibilityColor = isCurrent ? new Color(255, 230, 140) : compatibility.Color,
                 IsCurrent = isCurrent,
@@ -178,34 +154,26 @@ namespace Game
             };
         }
 
-        private static string GetVersionKey(PostVersionItem version)
-        {
-            if (version == null)
-            {
+        static string GetVersionKey(PostVersionItem version) {
+            if (version == null) {
                 return "null";
             }
-            if (version.Id > 0)
-            {
+            if (version.Id > 0) {
                 return $"id:{version.Id}";
             }
             return $"text:{version.Title}|{version.Version}|{version.CreatedAt}";
         }
 
-        private static string FormatFileTitle(PostFileItem file)
-        {
-            return string.IsNullOrWhiteSpace(file?.Filename) ? LanguageControl.Get("ModVersionsDialog", "UnnamedFile") : file.Filename.Trim();
-        }
+        static string FormatFileTitle(PostFileItem file) => string.IsNullOrWhiteSpace(file?.Filename)
+            ? LanguageControl.Get("ModVersionsDialog", "UnnamedFile")
+            : file.Filename.Trim();
 
-        private static string FormatFileSize(string value)
-        {
+        static string FormatFileSize(string value) {
             string text = CommunityVersionDetailFormatter.FormatEmpty(value);
-            if (text == "-")
-            {
+            if (text == "-") {
                 return text;
             }
-            return long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out long size)
-                ? DataSizeFormatter.Format(size)
-                : text;
+            return long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out long size) ? DataSizeFormatter.Format(size) : text;
         }
     }
 }

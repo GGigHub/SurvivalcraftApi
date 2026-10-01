@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
-
-namespace Game
-{
+namespace Game {
     /// <summary>
     /// 整合包在场判定用的本机资源快照（纯数据，自 PresenceManager 拆分独立文件）。
     /// 捕获与失效由 ModpackPresenceManager 负责。
     /// </summary>
-    internal sealed class ModpackPresenceSnapshot
-    {
+    sealed class ModpackPresenceSnapshot {
         public HashSet<string> WorldKeys { get; } = new(StringComparer.OrdinalIgnoreCase);
         public HashSet<string> FurnitureKeys { get; } = new(StringComparer.OrdinalIgnoreCase);
         public HashSet<string> TextureKeys { get; } = new(StringComparer.OrdinalIgnoreCase);

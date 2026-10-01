@@ -1,14 +1,10 @@
-using System;
 using System.Net.Http;
-using System.Threading;
 
-namespace Game
-{
+namespace Game {
     /// <summary>
     /// 集中创建共享 HTTP 客户端，同时保留社区请求与远程导入的超时策略差异。
     /// </summary>
-    internal static class HttpClientProvider
-    {
+    static class HttpClientProvider {
         // 声明顺序即静态初始化顺序：Create 引用 UserAgent，必须先于三个客户端声明。
         internal static string UserAgent { get; } = $"SurvivalcraftApi/{VersionsManager.Version}";
 
@@ -22,12 +18,8 @@ namespace Game
         // 超时、交由取消令牌兜底；凭证与登记小请求在工作流内另挂 30s CancelAfter。
         public static HttpClient Upload { get; } = Create(Timeout.InfiniteTimeSpan);
 
-        private static HttpClient Create(TimeSpan timeout)
-        {
-            HttpClient client = new()
-            {
-                Timeout = timeout
-            };
+        static HttpClient Create(TimeSpan timeout) {
+            HttpClient client = new() { Timeout = timeout };
             // 版本取游戏程序集版本（VersionsManager.Version；mod 原取自身 AssemblyInfo，游戏本体无 modinfo 版本——批准的最小适配点）：
             // 硬编码会随版本演进漂移（曾钉死 1.0 而实际已 2.0，主报告 #9）。
             client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", UserAgent);

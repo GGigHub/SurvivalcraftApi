@@ -1,11 +1,8 @@
-using System;
 using System.Globalization;
 using System.Xml.Linq;
 
-namespace Game
-{
-    public enum ModpackFileConflictAction
-    {
+namespace Game {
+    public enum ModpackFileConflictAction {
         Overwrite,
         Skip,
         SkipAll,
@@ -13,23 +10,23 @@ namespace Game
         Close
     }
 
-    public sealed class CommunityModpackFileConflictDialog : Dialog
-    {
-        private readonly ButtonWidget m_overwriteButton;
-        private readonly ButtonWidget m_skipButton;
-        private readonly ButtonWidget m_skipAllButton;
-        private readonly ButtonWidget m_overwriteAllButton;
-        private readonly ButtonWidget m_closeButton;
-        private readonly Action<ModpackFileConflictAction> m_handler;
+    public sealed class CommunityModpackFileConflictDialog : Dialog {
+        readonly ButtonWidget m_overwriteButton;
+        readonly ButtonWidget m_skipButton;
+        readonly ButtonWidget m_skipAllButton;
+        readonly ButtonWidget m_overwriteAllButton;
+        readonly ButtonWidget m_closeButton;
+        readonly Action<ModpackFileConflictAction> m_handler;
 
-        public CommunityModpackFileConflictDialog(string fileName, Action<ModpackFileConflictAction> handler)
-        {
+        public CommunityModpackFileConflictDialog(string fileName, Action<ModpackFileConflictAction> handler) {
             m_handler = handler;
-
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityModpackFileConflictDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("ModpackFileConflictDialog.Message").Text =
-                string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackFileConflictDialog", "IdenticalFileChooseAction"), fileName);
+            Children.Find<LabelWidget>("ModpackFileConflictDialog.Message").Text = string.Format(
+                CultureInfo.InvariantCulture,
+                LanguageControl.Get("ModpackFileConflictDialog", "IdenticalFileChooseAction"),
+                fileName
+            );
             m_overwriteButton = Children.Find<ButtonWidget>("ModpackFileConflictDialog.OverwriteButton");
             m_skipButton = Children.Find<ButtonWidget>("ModpackFileConflictDialog.SkipButton");
             m_skipAllButton = Children.Find<ButtonWidget>("ModpackFileConflictDialog.SkipAllButton");
@@ -37,35 +34,28 @@ namespace Game
             m_closeButton = Children.Find<ButtonWidget>("ModpackFileConflictDialog.CloseButton");
         }
 
-        public override void Update()
-        {
+        public override void Update() {
             if (m_closeButton.IsClicked
                 || Input.Back
                 || Input.Cancel
-                || (Input.Tap.HasValue && !HitTest(Input.Tap.Value)))
-            {
+                || (Input.Tap.HasValue && !HitTest(Input.Tap.Value))) {
                 Complete(ModpackFileConflictAction.Close);
             }
-            else if (m_overwriteButton.IsClicked)
-            {
+            else if (m_overwriteButton.IsClicked) {
                 Complete(ModpackFileConflictAction.Overwrite);
             }
-            else if (m_skipButton.IsClicked)
-            {
+            else if (m_skipButton.IsClicked) {
                 Complete(ModpackFileConflictAction.Skip);
             }
-            else if (m_skipAllButton.IsClicked)
-            {
+            else if (m_skipAllButton.IsClicked) {
                 Complete(ModpackFileConflictAction.SkipAll);
             }
-            else if (m_overwriteAllButton.IsClicked)
-            {
+            else if (m_overwriteAllButton.IsClicked) {
                 Complete(ModpackFileConflictAction.OverwriteAll);
             }
         }
 
-        private void Complete(ModpackFileConflictAction action)
-        {
+        void Complete(ModpackFileConflictAction action) {
             DialogsManager.HideDialog(this);
             m_handler?.Invoke(action);
         }

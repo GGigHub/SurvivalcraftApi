@@ -1,21 +1,16 @@
-using System;
-using System.Collections.Generic;
 using System.Xml.Linq;
 
-namespace Game
-{
-    public sealed class CommunityMissingDependencyGroupWidget : FixedSizePanelWidget
-    {
-        private readonly LabelWidget m_groupTextWidget;
-        private readonly ButtonWidget m_toggleButton;
-        private readonly StackPanelWidget m_filesPanel;
-        private readonly List<CommunityMissingDependencyFileWidget> m_fileWidgets = [];
-        private CommunityMissingDependencyGroupDisplayData m_displayData;
-        private bool m_isExpanded;
-        private bool m_canDownload = true;
+namespace Game {
+    public sealed class CommunityMissingDependencyGroupWidget : FixedSizePanelWidget {
+        readonly LabelWidget m_groupTextWidget;
+        readonly ButtonWidget m_toggleButton;
+        readonly StackPanelWidget m_filesPanel;
+        readonly List<CommunityMissingDependencyFileWidget> m_fileWidgets = [];
+        CommunityMissingDependencyGroupDisplayData m_displayData;
+        bool m_isExpanded;
+        bool m_canDownload = true;
 
-        public CommunityMissingDependencyGroupWidget()
-        {
+        public CommunityMissingDependencyGroupWidget() {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyGroupWidget");
             LoadContents(this, node);
             m_groupTextWidget = Children.Find<LabelWidget>("MissingDependencyGroupWidget.GroupText");
@@ -25,43 +20,33 @@ namespace Game
 
         public string GroupKey { get; private set; }
 
-        internal void Bind(CommunityMissingDependencyGroupDisplayData data, bool isExpanded, bool canDownload = true)
-        {
+        internal void Bind(CommunityMissingDependencyGroupDisplayData data, bool isExpanded, bool canDownload = true) {
             m_displayData = data ?? throw new ArgumentNullException(nameof(data));
             GroupKey = data.GroupKey;
             m_canDownload = canDownload;
             SetExpanded(isExpanded);
         }
 
-        public override void Update()
-        {
-            if (m_toggleButton.IsClicked)
-            {
+        public override void Update() {
+            if (m_toggleButton.IsClicked) {
                 SetExpanded(!m_isExpanded);
             }
         }
 
-        internal void SetExpanded(bool isExpanded)
-        {
-            if (m_displayData == null)
-            {
+        internal void SetExpanded(bool isExpanded) {
+            if (m_displayData == null) {
                 return;
             }
-
             m_isExpanded = isExpanded;
-            m_groupTextWidget.Text = isExpanded
-                ? m_displayData.ExpandedGroupText ?? string.Empty
-                : m_displayData.GroupText ?? string.Empty;
+            m_groupTextWidget.Text = isExpanded ? m_displayData.ExpandedGroupText ?? string.Empty : m_displayData.GroupText ?? string.Empty;
             m_toggleButton.Text = isExpanded
                 ? LanguageControl.Get("MissingDependenciesDialog", "Collapse")
                 : LanguageControl.Get("MissingDependenciesDialog", "Expand");
             m_filesPanel.IsVisible = isExpanded;
             m_filesPanel.Children.Clear();
             m_fileWidgets.Clear();
-            if (isExpanded)
-            {
-                foreach (CommunityMissingDependencyFileDisplayData file in m_displayData.Files)
-                {
+            if (isExpanded) {
+                foreach (CommunityMissingDependencyFileDisplayData file in m_displayData.Files) {
                     CommunityMissingDependencyFileWidget widget = new();
                     widget.Bind(file, m_canDownload);
                     m_fileWidgets.Add(widget);
@@ -70,17 +55,14 @@ namespace Game
             }
         }
 
-        internal bool TryGetClickedFile(out PostFileItem file)
-        {
-            foreach (CommunityMissingDependencyFileWidget fileWidget in m_fileWidgets)
-            {
-                if (fileWidget.IsDownloadClicked && fileWidget.File != null)
-                {
+        internal bool TryGetClickedFile(out PostFileItem file) {
+            foreach (CommunityMissingDependencyFileWidget fileWidget in m_fileWidgets) {
+                if (fileWidget.IsDownloadClicked
+                    && fileWidget.File != null) {
                     file = fileWidget.File;
                     return true;
                 }
             }
-
             file = null;
             return false;
         }

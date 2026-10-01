@@ -1,7 +1,5 @@
-namespace Game
-{
-    public sealed class CommunityDownloadFeedbackInfo
-    {
+namespace Game {
+    public sealed class CommunityDownloadFeedbackInfo {
         public string ApiBaseUrl { get; set; }
         public string Token { get; set; }
         public int PostId { get; set; }

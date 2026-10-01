@@ -1,23 +1,17 @@
-using System;
 using Engine;
 
-namespace Game
-{
+namespace Game {
     // 远程导入请求构造：URL 校验、文件名安全提取与类型识别。
-    public static partial class RemoteImportManager
-    {
+    public static partial class RemoteImportManager {
         // 类型按扩展名就地识别；识别不出（动态下载端点的 URL 常不带扩展名）不拒绝，
         // 置 Unknown 留待下载完成后按响应头文件名（Content-Disposition）二次定型。
-        public static RemoteImportRequest CreateRequest(string rawUrl, string preferredFileName = null)
-        {
+        public static RemoteImportRequest CreateRequest(string rawUrl, string preferredFileName = null) {
             string url = (rawUrl ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(url))
-            {
+            if (string.IsNullOrWhiteSpace(url)) {
                 throw new InvalidOperationException(LanguageControl.Get("RemoteImportManager", "EnterResourceLink"));
             }
             if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri)
-                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-            {
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)) {
                 throw new InvalidOperationException(LanguageControl.Get("RemoteImportManager", "InvalidUrl"));
             }
 
@@ -30,31 +24,19 @@ namespace Game
                 || fileName.IndexOf('/') >= 0
                 || fileName.IndexOf('\\') >= 0
                 || fileName == "."
-                || fileName == "..")
-            {
+                || fileName == "..") {
                 throw new InvalidOperationException(LanguageControl.Get("RemoteImportManager", "CannotRecognizeFileName"));
             }
-
-            return new RemoteImportRequest
-            {
-                Url = uri.ToString(),
-                FileName = fileName,
-                Type = ResolveType(fileName)
-            };
+            return new RemoteImportRequest { Url = uri.ToString(), FileName = fileName, Type = ResolveType(fileName) };
         }
 
-        internal static ExternalContentType ResolveType(string fileName)
-        {
-            ExternalContentType type = ExternalContentManager.ExtensionToType(
-                Storage.GetExtensionBCL(fileName ?? string.Empty));
-            return ExternalContentManager.IsEntryTypeDownloadSupported(type)
-                ? type
-                : ExternalContentType.Unknown;
+        internal static ExternalContentType ResolveType(string fileName) {
+            ExternalContentType type = ExternalContentManager.ExtensionToType(Storage.GetExtensionBCL(fileName ?? string.Empty));
+            return ExternalContentManager.IsEntryTypeDownloadSupported(type) ? type : ExternalContentType.Unknown;
         }
     }
 
-    public sealed class RemoteImportRequest
-    {
+    public sealed class RemoteImportRequest {
         public string Url { get; set; }
         public string FileName { get; set; }
         public ExternalContentType Type { get; set; }

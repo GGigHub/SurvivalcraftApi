@@ -1,14 +1,11 @@
-using System;
 using Engine.Graphics;
 
-namespace Game
-{
+namespace Game {
     /// <summary>
     /// 本地资源子系统的核心数据模型（主报告 #1 归位：原住 Presentation/Models，
     /// 而 Domain/Infrastructure 才是它的主要消费方，反向依赖）。
     /// </summary>
-    public class LocalResourceItem
-    {
+    public class LocalResourceItem {
         public ExternalContentType Type { get; set; }
         public string Name { get; set; }
         public string DisplayName { get; set; }
@@ -30,8 +27,7 @@ namespace Game
         public object Tag { get; set; }
     }
 
-    public class LocalModCommunityStatusInfo
-    {
+    public class LocalModCommunityStatusInfo {
         public bool CheckCompleted { get; set; }
         public bool IsPublished { get; set; }
         public int PostId { get; set; }

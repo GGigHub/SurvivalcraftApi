@@ -1,39 +1,26 @@
-using System;
-
-namespace Game
-{
+namespace Game {
     /// <summary>
     /// 按归一化服务器地址读写各服凭据文件（CommunityStoragePaths.AuthDirectory/&lt;sha256&gt;.bin，v4）。
     /// </summary>
-    internal sealed class AuthenticationSessionStore
-    {
-        public Exception TrySave(string apiBaseUrl, string token, UserData user)
-        {
-            try
-            {
+    sealed class AuthenticationSessionStore {
+        public Exception TrySave(string apiBaseUrl, string token, UserData user) {
+            try {
                 CommunityCredentialStore.Save(apiBaseUrl, token, user);
                 return null;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 return ex;
             }
         }
 
-        public LoginData Load(string apiBaseUrl)
-        {
-            return CommunityCredentialStore.Load(apiBaseUrl);
-        }
+        public LoginData Load(string apiBaseUrl) => CommunityCredentialStore.Load(apiBaseUrl);
 
-        public Exception TryDelete(string apiBaseUrl)
-        {
-            try
-            {
+        public Exception TryDelete(string apiBaseUrl) {
+            try {
                 CommunityCredentialStore.Delete(apiBaseUrl);
                 return null;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 return ex;
             }
         }

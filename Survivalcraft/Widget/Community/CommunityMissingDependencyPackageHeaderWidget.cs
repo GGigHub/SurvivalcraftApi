@@ -1,22 +1,18 @@
 using System.Xml.Linq;
 
-namespace Game
-{
-    public sealed class CommunityMissingDependencyPackageHeaderWidget : StackPanelWidget
-    {
-        private readonly CanvasWidget m_fileGroupSpacer;
-        private readonly LabelWidget m_headerTextWidget;
+namespace Game {
+    public sealed class CommunityMissingDependencyPackageHeaderWidget : StackPanelWidget {
+        readonly CanvasWidget m_fileGroupSpacer;
+        readonly LabelWidget m_headerTextWidget;
 
-        public CommunityMissingDependencyPackageHeaderWidget()
-        {
+        public CommunityMissingDependencyPackageHeaderWidget() {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyPackageHeaderWidget");
             LoadContents(this, node);
             m_fileGroupSpacer = Children.Find<CanvasWidget>("MissingDependencyPackageHeaderWidget.FileGroupSpacer");
             m_headerTextWidget = Children.Find<LabelWidget>("MissingDependencyPackageHeaderWidget.HeaderText");
         }
 
-        internal void Bind(string text, bool hasFileGroupSpacer)
-        {
+        internal void Bind(string text, bool hasFileGroupSpacer) {
             m_fileGroupSpacer.IsVisible = hasFileGroupSpacer;
             m_headerTextWidget.Text = text ?? string.Empty;
         }

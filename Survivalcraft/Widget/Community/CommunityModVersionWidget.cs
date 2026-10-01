@@ -1,26 +1,21 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Xml.Linq;
 using Engine;
 
-namespace Game
-{
-    public sealed class CommunityModVersionWidget : FixedSizePanelWidget
-    {
-        private readonly RectangleWidget m_backgroundWidget;
-        private readonly LabelWidget m_versionTitleWidget;
-        private readonly LabelWidget m_fileTitleWidget;
-        private readonly LabelWidget m_compatibilityWidget;
-        private readonly ButtonWidget m_detailsButton;
-        private readonly ButtonWidget m_downloadButton;
-        private readonly ButtonWidget m_filesButton;
-        private readonly StackPanelWidget m_filesPanel;
-        private readonly List<CommunityModVersionFileWidget> m_fileWidgets = [];
-        private CommunityModVersionDisplayData m_displayData;
+namespace Game {
+    public sealed class CommunityModVersionWidget : FixedSizePanelWidget {
+        readonly RectangleWidget m_backgroundWidget;
+        readonly LabelWidget m_versionTitleWidget;
+        readonly LabelWidget m_fileTitleWidget;
+        readonly LabelWidget m_compatibilityWidget;
+        readonly ButtonWidget m_detailsButton;
+        readonly ButtonWidget m_downloadButton;
+        readonly ButtonWidget m_filesButton;
+        readonly StackPanelWidget m_filesPanel;
+        readonly List<CommunityModVersionFileWidget> m_fileWidgets = [];
+        CommunityModVersionDisplayData m_displayData;
 
-        public CommunityModVersionWidget()
-        {
+        public CommunityModVersionWidget() {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityModVersionWidget");
             LoadContents(this, node);
             m_backgroundWidget = Children.Find<RectangleWidget>("ModVersionWidget.Background");
@@ -43,8 +38,7 @@ namespace Game
 
         public bool IsFilesToggleClicked => m_filesButton.IsClicked;
 
-        internal void Bind(CommunityModVersionDisplayData data, bool isExpanded)
-        {
+        internal void Bind(CommunityModVersionDisplayData data, bool isExpanded) {
             m_displayData = data ?? throw new ArgumentNullException(nameof(data));
             m_versionTitleWidget.Text = data.VersionTitle ?? string.Empty;
             m_versionTitleWidget.Color = data.TitleColor;
@@ -52,58 +46,43 @@ namespace Game
             m_fileTitleWidget.IsVisible = data.HasSingleFile;
             m_compatibilityWidget.Text = data.CompatibilityText ?? string.Empty;
             m_compatibilityWidget.Color = data.CompatibilityColor;
-
             m_downloadButton.IsVisible = data.HasSingleFile;
             m_filesButton.IsVisible = data.HasExpandableFiles;
             m_filesButton.Text = isExpanded
                 ? LanguageControl.Get("ModVersionWidget", "Collapse")
-                : string.Format(
-                    CultureInfo.InvariantCulture,
-                    LanguageControl.Get("ModVersionWidget", "Files"),
-                    data.Files.Count);
+                : string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModVersionWidget", "Files"), data.Files.Count);
             SetExpanded(isExpanded);
         }
 
-        public void SetExpanded(bool isExpanded)
-        {
+        public void SetExpanded(bool isExpanded) {
             bool shouldShowFiles = m_displayData?.HasExpandableFiles == true && isExpanded;
             m_filesPanel.IsVisible = shouldShowFiles;
             m_filesPanel.Children.Clear();
             m_fileWidgets.Clear();
-
-            if (shouldShowFiles)
-            {
-                foreach (CommunityModFileDisplayData fileData in m_displayData.Files)
-                {
+            if (shouldShowFiles) {
+                foreach (CommunityModFileDisplayData fileData in m_displayData.Files) {
                     CommunityModVersionFileWidget fileWidget = new();
                     fileWidget.Bind(fileData);
                     m_fileWidgets.Add(fileWidget);
                     m_filesPanel.Children.Add(fileWidget);
                 }
             }
-
-            m_backgroundWidget.OutlineColor = m_displayData?.IsCurrent == true
-                ? new Color(255, 230, 140, 230)
-                : new Color(90, 90, 90, 190);
+            m_backgroundWidget.OutlineColor = m_displayData?.IsCurrent == true ? new Color(255, 230, 140, 230) : new Color(90, 90, 90, 190);
         }
 
-        internal bool TryGetClickedFile(out PostFileItem file)
-        {
-            if (m_downloadButton.IsClicked && m_displayData?.HasSingleFile == true && m_displayData.Files.Count > 0)
-            {
+        internal bool TryGetClickedFile(out PostFileItem file) {
+            if (m_downloadButton.IsClicked
+                && m_displayData?.HasSingleFile == true
+                && m_displayData.Files.Count > 0) {
                 file = m_displayData.Files[0].File;
                 return file != null;
             }
-
-            foreach (CommunityModVersionFileWidget fileWidget in m_fileWidgets)
-            {
-                if (fileWidget.IsDownloadClicked)
-                {
+            foreach (CommunityModVersionFileWidget fileWidget in m_fileWidgets) {
+                if (fileWidget.IsDownloadClicked) {
                     file = fileWidget.File;
                     return file != null;
                 }
             }
-
             file = null;
             return false;
         }

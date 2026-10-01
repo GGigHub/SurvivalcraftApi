@@ -1,16 +1,13 @@
 using System.Xml.Linq;
 
-namespace Game
-{
-    public sealed class CommunityModVersionFileWidget : FixedSizePanelWidget
-    {
-        private readonly LabelWidget m_fileTitleWidget;
-        private readonly LabelWidget m_downloadsSizeWidget;
-        private readonly ButtonWidget m_downloadButton;
-        private PostFileItem m_file;
+namespace Game {
+    public sealed class CommunityModVersionFileWidget : FixedSizePanelWidget {
+        readonly LabelWidget m_fileTitleWidget;
+        readonly LabelWidget m_downloadsSizeWidget;
+        readonly ButtonWidget m_downloadButton;
+        PostFileItem m_file;
 
-        public CommunityModVersionFileWidget()
-        {
+        public CommunityModVersionFileWidget() {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityModVersionFileWidget");
             LoadContents(this, node);
             m_fileTitleWidget = Children.Find<LabelWidget>("ModVersionFileWidget.FileTitle");
@@ -23,8 +20,7 @@ namespace Game
 
         public bool IsDownloadClicked => m_downloadButton.IsClicked;
 
-        internal void Bind(CommunityModFileDisplayData data)
-        {
+        internal void Bind(CommunityModFileDisplayData data) {
             m_file = data?.File;
             m_fileTitleWidget.Text = data?.FileTitle ?? string.Empty;
             m_downloadsSizeWidget.Text = data?.DownloadsSizeText ?? string.Empty;

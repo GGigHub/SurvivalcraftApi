@@ -1,10 +1,5 @@
-using System;
-using System.Threading;
-
-namespace Game
-{
-    internal sealed class CommunityDownloadQueueItem
-    {
+namespace Game {
+    sealed class CommunityDownloadQueueItem {
         public int Id { get; set; }
         public string Url { get; set; }
         public string OriginalUrl { get; set; }
@@ -28,8 +23,8 @@ namespace Game
         public bool PauseRequested { get; set; }
 
         /// <summary>
-        ///     导入已成功（由工作流导入回调在后台线程当场置位并落盘）。进程在收尾前死亡时，
-        ///     恢复流程据此把该项改判 Completed 终态，避免把已导入项当 Paused 再次导入。
+        /// 导入已成功（由工作流导入回调在后台线程当场置位并落盘）。进程在收尾前死亡时，
+        /// 恢复流程据此把该项改判 Completed 终态，避免把已导入项当 Paused 再次导入。
         /// </summary>
         public bool Imported { get; set; }
     }

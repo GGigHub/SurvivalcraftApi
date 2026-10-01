@@ -1,32 +1,24 @@
-using System;
 using System.Globalization;
 using System.Xml.Linq;
 using Engine;
 
-namespace Game
-{
+namespace Game {
     // 重启确认对话框：按钮回调返回 true 时由对话框执行对应重启，返回 false 仅关闭窗口。
-    public sealed class RestartConfirmDialog : Dialog
-    {
-        private readonly Func<bool> m_restartAction;
-        private readonly Func<bool> m_restartToCurrentScreenAction;
-        private readonly BevelledButtonWidget m_restartButton;
-        private readonly BevelledButtonWidget m_restartToCurrentScreen;
-        private readonly BevelledButtonWidget m_cancelButton;
+    public sealed class RestartConfirmDialog : Dialog {
+        readonly Func<bool> m_restartAction;
+        readonly Func<bool> m_restartToCurrentScreenAction;
+        readonly BevelledButtonWidget m_restartButton;
+        readonly BevelledButtonWidget m_restartToCurrentScreen;
+        readonly BevelledButtonWidget m_cancelButton;
 
-        public RestartConfirmDialog(
-            string title,
-            string message,
-            Func<bool> restartAction,
-            Func<bool> restartToCurrentScreenAction)
-        {
+        public RestartConfirmDialog(string title, string message, Func<bool> restartAction, Func<bool> restartToCurrentScreenAction) {
             m_restartAction = restartAction;
             m_restartToCurrentScreenAction = restartToCurrentScreenAction;
-
             XElement node = ContentManager.Get<XElement>("Dialogs/RestartConfirmDialog");
             LoadContents(this, node);
-            Children.Find<LabelWidget>("RestartConfirmDialog.Title").Text =
-                string.IsNullOrWhiteSpace(title) ? LanguageControl.Get("RestartConfirmDialog", "RestartRequired") : title;
+            Children.Find<LabelWidget>("RestartConfirmDialog.Title").Text = string.IsNullOrWhiteSpace(title)
+                ? LanguageControl.Get("RestartConfirmDialog", "RestartRequired")
+                : title;
             Children.Find<LabelWidget>("RestartConfirmDialog.Message").Text = message ?? string.Empty;
             m_restartButton = Children.Find<BevelledButtonWidget>("RestartConfirmDialog.RestartButton");
             m_restartToCurrentScreen = Children.Find<BevelledButtonWidget>("RestartConfirmDialog.RestartToCurrentScreen");
@@ -40,51 +32,43 @@ namespace Game
         /// （PendingLocalModActions）并返回 true，重启本身由对话框执行。
         /// reasonTag 仅用于日志区分调用链路（如 "remote-import"、"import"）。
         /// </summary>
-        public static void ShowModImportRestartConfirm(string fileName, string reasonTag)
-        {
+        public static void ShowModImportRestartConfirm(string fileName, string reasonTag) {
             DialogsManager.ShowDialog(
                 null,
                 new RestartConfirmDialog(
                     LanguageControl.Get("RestartConfirmDialog", "UpdateComplete"),
                     string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("RestartConfirmDialog", "ImportedRestartPrompt"), fileName),
-                    restartAction: () =>
-                    {
+                    () => {
                         PendingLocalModActions.Process(reasonTag + "-restart");
                         return true;
                     },
-                    restartToCurrentScreenAction: () =>
-                    {
+                    () => {
                         PendingLocalModActions.Process(reasonTag + "-restart-continue");
                         return true;
-                    }));
+                    }
+                )
+            );
         }
 
-        public override void Update()
-        {
+        public override void Update() {
             if (Input.Back
                 || Input.Cancel
                 || (Input.Tap.HasValue && !HitTest(Input.Tap.Value))
-                || m_cancelButton.IsClicked)
-            {
+                || m_cancelButton.IsClicked) {
                 DialogsManager.HideDialog(this);
                 return;
             }
-
-            if (Input.Ok || m_restartButton.IsClicked)
-            {
+            if (Input.Ok
+                || m_restartButton.IsClicked) {
                 DialogsManager.HideDialog(this);
-                if (m_restartAction?.Invoke() == true)
-                {
+                if (m_restartAction?.Invoke() == true) {
                     Window.Restart();
                 }
                 return;
             }
-
-            if (m_restartToCurrentScreen.IsClicked)
-            {
+            if (m_restartToCurrentScreen.IsClicked) {
                 DialogsManager.HideDialog(this);
-                if (m_restartToCurrentScreenAction?.Invoke() == true)
-                {
+                if (m_restartToCurrentScreenAction?.Invoke() == true) {
                     ScreensManager.RestartGameToCurrentScreen();
                 }
             }

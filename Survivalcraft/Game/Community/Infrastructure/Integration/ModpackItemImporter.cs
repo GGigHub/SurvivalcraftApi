@@ -1,56 +1,33 @@
-using System;
 using System.Globalization;
-using System.IO;
 
-namespace Game
-{
+namespace Game {
     /// <summary>
     /// 导入单个整合包项目，集中保留模组元数据校验和游戏内容写入。
     /// </summary>
-    internal sealed class ModpackItemImporter : IModpackItemImporter
-    {
-        private readonly Func<IRemoteImportHost> m_hostProvider;
+    sealed class ModpackItemImporter : IModpackItemImporter {
+        readonly Func<IRemoteImportHost> m_hostProvider;
 
-        public ModpackItemImporter(
-            Func<IRemoteImportHost> hostProvider)
-        {
+        public ModpackItemImporter(Func<IRemoteImportHost> hostProvider) =>
             m_hostProvider = hostProvider ?? throw new ArgumentNullException(nameof(hostProvider));
-        }
 
-        public void ImportExternalContent(
-            int requestId,
-            string itemUrl,
-            string fileName,
-            ExternalContentType type,
-            byte[] data,
-            ModpackItem item)
-        {
+        public void ImportExternalContent(int requestId, string itemUrl, string fileName, ExternalContentType type, byte[] data, ModpackItem item) {
             if (CommunityFileTypes.IsModLike(type)
-                && (!string.IsNullOrWhiteSpace(item?.PackageName) || !string.IsNullOrWhiteSpace(item?.Version)))
-            {
+                && (!string.IsNullOrWhiteSpace(item?.PackageName) || !string.IsNullOrWhiteSpace(item?.Version))) {
                 ValidateModItem(data, item);
             }
-
-            RemoteImportRequest request = new()
-            {
-                Url = itemUrl,
-                FileName = fileName,
-                Type = type
-            };
-            using MemoryStream analysisStream = new(data, writable: false);
+            RemoteImportRequest request = new() { Url = itemUrl, FileName = fileName, Type = type };
+            using MemoryStream analysisStream = new(data, false);
             ExternalContentPreparation preparation = ExternalContentManager.PrepareExternalContent(requestId, request, analysisStream);
-            using MemoryStream importStream = new(data, writable: false);
-            ExternalContentManager.ImportPreparedExternalContent(importStream, preparation, overwriteExisting: true);
+            using MemoryStream importStream = new(data, false);
+            ExternalContentManager.ImportPreparedExternalContent(importStream, preparation, true);
         }
 
-        public bool ImportDataFile(byte[] data, ModpackItem item)
-        {
+        public bool ImportDataFile(byte[] data, ModpackItem item) {
             // host 缺失（离屏被释放/单槽被清）时数据无处导入：返回 false 让管线
             // 按失败计数。原先静默 no-op 后管线照常计成功、清单照常保存，
             // 整合包实际缺文件而 toast 报成功。
             IRemoteImportHost host = m_hostProvider();
-            if (host == null)
-            {
+            if (host == null) {
                 return false;
             }
             host.ImportModpackDataFileSafe(data, item);
@@ -59,30 +36,37 @@ namespace Game
             return host.IsModpackDataFilePresent(item);
         }
 
-        internal static void ValidateModItem(byte[] scmodData, ModpackItem item)
-        {
+        internal static void ValidateModItem(byte[] scmodData, ModpackItem item) {
             // JSON 损坏时 TryReadModInfo 返回 true 但 modInfo 为 null：与条目缺失同按无效包跳过。
-            if (!ScmodArchiveReader.TryReadModInfo(new MemoryStream(scmodData, writable: false), out ModInfo modInfo)
-                || modInfo == null)
-            {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackItemImporter", "ModinfoMissingSkipped"), item.Filename));
+            if (!ScmodArchiveReader.TryReadModInfo(new MemoryStream(scmodData, false), out ModInfo modInfo)
+                || modInfo == null) {
+                throw new InvalidOperationException(
+                    string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackItemImporter", "ModinfoMissingSkipped"), item.Filename)
+                );
             }
-
             if (!string.IsNullOrWhiteSpace(item.PackageName)
-                && !string.Equals(modInfo.PackageName, item.PackageName, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackItemImporter", "PackageNameMismatchSkipped"),
-                    item.Filename,
-                    item.PackageName,
-                    modInfo.PackageName ?? LanguageControl.None));
+                && !string.Equals(modInfo.PackageName, item.PackageName, StringComparison.OrdinalIgnoreCase)) {
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        LanguageControl.Get("ModpackItemImporter", "PackageNameMismatchSkipped"),
+                        item.Filename,
+                        item.PackageName,
+                        modInfo.PackageName ?? LanguageControl.None
+                    )
+                );
             }
             if (!string.IsNullOrWhiteSpace(item.Version)
-                && !string.Equals(modInfo.Version, item.Version, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModpackItemImporter", "VersionMismatchSkipped"),
-                    item.Filename,
-                    item.Version,
-                    modInfo.Version ?? LanguageControl.None));
+                && !string.Equals(modInfo.Version, item.Version, StringComparison.OrdinalIgnoreCase)) {
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        LanguageControl.Get("ModpackItemImporter", "VersionMismatchSkipped"),
+                        item.Filename,
+                        item.Version,
+                        modInfo.Version ?? LanguageControl.None
+                    )
+                );
             }
         }
     }

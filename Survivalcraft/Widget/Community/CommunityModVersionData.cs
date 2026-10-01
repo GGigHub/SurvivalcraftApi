@@ -1,10 +1,7 @@
-using System.Collections.Generic;
 using Engine;
 
-namespace Game
-{
-    internal sealed class CommunityModVersionDisplayData
-    {
+namespace Game {
+    sealed class CommunityModVersionDisplayData {
         public PostVersionItem Version { get; init; }
 
         public string VersionKey { get; init; }
@@ -28,8 +25,7 @@ namespace Game
         public IReadOnlyList<CommunityModFileDisplayData> Files { get; init; } = [];
     }
 
-    internal sealed class CommunityModFileDisplayData
-    {
+    sealed class CommunityModFileDisplayData {
         public PostFileItem File { get; init; }
 
         public string FileTitle { get; init; }

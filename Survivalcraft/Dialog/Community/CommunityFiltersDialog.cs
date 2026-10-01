@@ -1,12 +1,8 @@
-﻿using System;
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 
-namespace Game
-{
-    internal sealed class CommunityFiltersDialog : Dialog
-    {
-        internal struct State
-        {
+namespace Game {
+    sealed class CommunityFiltersDialog : Dialog {
+        internal struct State {
             public ExternalContentType FileType;
             public CommunityOrderType OrderType;
             public bool OnlyCurrentVersion;
@@ -17,39 +13,34 @@ namespace Game
             public bool IgnoreSection;
         }
 
-        private const CommunityOrderType DefaultOrderType = CommunityOrderType.Hot;
+        const CommunityOrderType DefaultOrderType = CommunityOrderType.Hot;
 
-        private readonly Action<State> m_submit;
-        private readonly Action<State> m_saveDefault;
-        private readonly BevelledButtonWidget m_fileTypeButton;
-        private readonly BevelledButtonWidget m_orderButton;
-        private readonly BevelledButtonWidget m_versionButton;
-        private readonly BevelledButtonWidget m_sectionButton;
-        private readonly CheckboxWidget m_ignoreFileTypeCheckbox;
-        private readonly CheckboxWidget m_ignoreOrderCheckbox;
-        private readonly CheckboxWidget m_ignoreVersionCheckbox;
-        private readonly CheckboxWidget m_ignoreSectionCheckbox;
-        private readonly BevelledButtonWidget m_saveDefaultButton;
-        private readonly BevelledButtonWidget m_confirmButton;
-        private readonly BevelledButtonWidget m_cancelButton;
-        private ExternalContentType m_fileType;
-        private CommunityOrderType m_orderType;
-        private bool m_onlyCurrentVersion;
-        private CommunitySection m_section;
-        private bool m_defaultsSaved;
+        readonly Action<State> m_submit;
+        readonly Action<State> m_saveDefault;
+        readonly BevelledButtonWidget m_fileTypeButton;
+        readonly BevelledButtonWidget m_orderButton;
+        readonly BevelledButtonWidget m_versionButton;
+        readonly BevelledButtonWidget m_sectionButton;
+        readonly CheckboxWidget m_ignoreFileTypeCheckbox;
+        readonly CheckboxWidget m_ignoreOrderCheckbox;
+        readonly CheckboxWidget m_ignoreVersionCheckbox;
+        readonly CheckboxWidget m_ignoreSectionCheckbox;
+        readonly BevelledButtonWidget m_saveDefaultButton;
+        readonly BevelledButtonWidget m_confirmButton;
+        readonly BevelledButtonWidget m_cancelButton;
+        ExternalContentType m_fileType;
+        CommunityOrderType m_orderType;
+        bool m_onlyCurrentVersion;
+        CommunitySection m_section;
+        bool m_defaultsSaved;
 
-        public CommunityFiltersDialog(
-            State state,
-            Action<State> saveDefault,
-            Action<State> submit)
-        {
+        public CommunityFiltersDialog(State state, Action<State> saveDefault, Action<State> submit) {
             m_fileType = state.FileType;
             m_orderType = state.OrderType;
             m_onlyCurrentVersion = state.OnlyCurrentVersion;
             m_section = state.Section;
             m_saveDefault = saveDefault;
             m_submit = submit;
-
             XElement node = ContentManager.Get<XElement>("Dialogs/CommunityFiltersDialog");
             LoadContents(this, node);
             m_fileTypeButton = Children.Find<BevelledButtonWidget>("FiltersDialog.FileTypeButton");
@@ -63,7 +54,6 @@ namespace Game
             m_saveDefaultButton = Children.Find<BevelledButtonWidget>("FiltersDialog.SaveDefaultButton");
             m_confirmButton = Children.Find<BevelledButtonWidget>("FiltersDialog.ConfirmButton");
             m_cancelButton = Children.Find<BevelledButtonWidget>("FiltersDialog.CancelButton");
-
             m_confirmButton.Text = LanguageControl.Ok;
             m_cancelButton.Text = LanguageControl.Cancel;
             m_ignoreFileTypeCheckbox.IsChecked = state.IgnoreFileType;
@@ -73,72 +63,92 @@ namespace Game
             UpdateOptionButtons();
         }
 
-        public override void Update()
-        {
+        public override void Update() {
             // Back/Cancel 与下方 Ok 同理：子级 ListSelectionDialog 存活期间全局输入先被列表消费，
             // 本对话框同帧读到会一次按键连关两层（未提交的筛选修改丢失）。
-            if ((Input.Back || Input.Cancel) && !HasLiveListSelectionDialog()
+            if (((Input.Back || Input.Cancel) && !HasLiveListSelectionDialog())
                 || (Input.Tap.HasValue && !HitTest(Input.Tap.Value))
-                || m_cancelButton.IsClicked)
-            {
+                || m_cancelButton.IsClicked) {
                 DialogsManager.HideDialog(this);
                 return;
             }
-
-            if (m_fileTypeButton.IsClicked)
-            {
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("FiltersDialog", "SelectFileType"), CommunityFileTypes.FilterableValues(), 60f, item => LanguageControl.GetEnumDisplayName((ExternalContentType)item), item =>
-                {
-                    m_fileType = (ExternalContentType)item;
-                    MarkDefaultsChanged();
-                }));
+            if (m_fileTypeButton.IsClicked) {
+                DialogsManager.ShowDialog(
+                    null,
+                    new ListSelectionDialog(
+                        LanguageControl.Get("FiltersDialog", "SelectFileType"),
+                        CommunityFileTypes.FilterableValues(),
+                        60f,
+                        item => LanguageControl.GetEnumDisplayName((ExternalContentType)item),
+                        item => {
+                            m_fileType = (ExternalContentType)item;
+                            MarkDefaultsChanged();
+                        }
+                    )
+                );
                 return;
             }
-
-            if (m_orderButton.IsClicked)
-            {
-                CommunityOrderType[] values = [CommunityOrderType.Latest, CommunityOrderType.Oldest, CommunityOrderType.Updated, CommunityOrderType.Hot];
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("FiltersDialog", "SelectSortOrder"), values, 60f, item => LanguageControl.GetEnumDisplayName((CommunityOrderType)item), item =>
-                {
-                    m_orderType = (CommunityOrderType)item;
-                    MarkDefaultsChanged();
-                }));
+            if (m_orderButton.IsClicked) {
+                CommunityOrderType[] values = [
+                    CommunityOrderType.Latest, CommunityOrderType.Oldest, CommunityOrderType.Updated, CommunityOrderType.Hot
+                ];
+                DialogsManager.ShowDialog(
+                    null,
+                    new ListSelectionDialog(
+                        LanguageControl.Get("FiltersDialog", "SelectSortOrder"),
+                        values,
+                        60f,
+                        item => LanguageControl.GetEnumDisplayName((CommunityOrderType)item),
+                        item => {
+                            m_orderType = (CommunityOrderType)item;
+                            MarkDefaultsChanged();
+                        }
+                    )
+                );
                 return;
             }
-
-            if (m_versionButton.IsClicked)
-            {
+            if (m_versionButton.IsClicked) {
                 bool[] values = [true, false];
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("FiltersDialog", "SelectVersionRange"), values, 60f, item => CommunityScreen.GetVersionFilterName((bool)item), item =>
-                {
-                    m_onlyCurrentVersion = (bool)item;
-                    MarkDefaultsChanged();
-                }));
+                DialogsManager.ShowDialog(
+                    null,
+                    new ListSelectionDialog(
+                        LanguageControl.Get("FiltersDialog", "SelectVersionRange"),
+                        values,
+                        60f,
+                        item => CommunityScreen.GetVersionFilterName((bool)item),
+                        item => {
+                            m_onlyCurrentVersion = (bool)item;
+                            MarkDefaultsChanged();
+                        }
+                    )
+                );
                 return;
             }
-
-            if (m_sectionButton.IsClicked)
-            {
+            if (m_sectionButton.IsClicked) {
                 CommunitySection[] values = [CommunitySection.All, CommunitySection.Trending, CommunitySection.NewActivity];
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get("FiltersDialog", "SelectSection"), values, 60f, item => LanguageControl.GetEnumDisplayName((CommunitySection)item), item =>
-                {
-                    m_section = (CommunitySection)item;
-                    MarkDefaultsChanged();
-                }));
+                DialogsManager.ShowDialog(
+                    null,
+                    new ListSelectionDialog(
+                        LanguageControl.Get("FiltersDialog", "SelectSection"),
+                        values,
+                        60f,
+                        item => LanguageControl.GetEnumDisplayName((CommunitySection)item),
+                        item => {
+                            m_section = (CommunitySection)item;
+                            MarkDefaultsChanged();
+                        }
+                    )
+                );
                 return;
             }
-
             if (m_ignoreFileTypeCheckbox.IsClicked
                 || m_ignoreOrderCheckbox.IsClicked
                 || m_ignoreVersionCheckbox.IsClicked
-                || m_ignoreSectionCheckbox.IsClicked)
-            {
+                || m_ignoreSectionCheckbox.IsClicked) {
                 MarkDefaultsChanged();
                 return;
             }
-
-            if (m_saveDefaultButton.IsClicked)
-            {
+            if (m_saveDefaultButton.IsClicked) {
                 m_saveDefault?.Invoke(GetState());
                 m_defaultsSaved = true;
                 UpdateOptionButtons();
@@ -147,8 +157,8 @@ namespace Game
 
             // Input.Ok 为边缘触发但全层级共享（引擎无模态输入隔离）：子级 ListSelectionDialog 存活期间，
             // 同一 A 键按下帧会被本对话框读到并误提交旧筛选值，故存活期间跳过该分支。
-            if ((Input.Ok && !HasLiveListSelectionDialog()) || m_confirmButton.IsClicked)
-            {
+            if ((Input.Ok && !HasLiveListSelectionDialog())
+                || m_confirmButton.IsClicked) {
                 DialogsManager.HideDialog(this);
                 m_submit?.Invoke(GetState());
             }
@@ -156,24 +166,19 @@ namespace Game
 
         // 存活判据不能只查 Dialogs：切屏后 ListSelectionDialog 实例仍留在 Dialogs（挂在死屏上），
         // 会让新屏上的 Ok/Back 被永久抑制，须「在 Dialogs 中且父链可达 RootWidget」。
-        private static bool HasLiveListSelectionDialog()
-        {
-            foreach (Dialog dialog in DialogsManager.Dialogs)
-            {
-                if (dialog is ListSelectionDialog && IsWidgetInRootHierarchy(dialog))
-                {
+        static bool HasLiveListSelectionDialog() {
+            foreach (Dialog dialog in DialogsManager.Dialogs) {
+                if (dialog is ListSelectionDialog
+                    && IsWidgetInRootHierarchy(dialog)) {
                     return true;
                 }
             }
             return false;
         }
 
-        private static bool IsWidgetInRootHierarchy(Widget widget)
-        {
-            while (widget != null)
-            {
-                if (widget == ScreensManager.RootWidget)
-                {
+        static bool IsWidgetInRootHierarchy(Widget widget) {
+            while (widget != null) {
+                if (widget == ScreensManager.RootWidget) {
                     return true;
                 }
                 widget = widget.ParentWidget;
@@ -181,14 +186,12 @@ namespace Game
             return false;
         }
 
-        private void MarkDefaultsChanged()
-        {
+        void MarkDefaultsChanged() {
             m_defaultsSaved = false;
             UpdateOptionButtons();
         }
 
-        private void UpdateOptionButtons()
-        {
+        void UpdateOptionButtons() {
             m_fileTypeButton.Text = LanguageControl.GetEnumDisplayName(m_fileType);
             m_orderButton.Text = LanguageControl.GetEnumDisplayName(m_orderType);
             m_versionButton.Text = CommunityScreen.GetVersionFilterName(m_onlyCurrentVersion);
@@ -198,19 +201,15 @@ namespace Game
                 : LanguageControl.Get("FiltersDialog", "SaveDefault");
         }
 
-        private State GetState()
-        {
-            return new State
-            {
-                FileType = m_fileType,
-                OrderType = m_orderType,
-                OnlyCurrentVersion = m_onlyCurrentVersion,
-                Section = m_section,
-                IgnoreFileType = m_ignoreFileTypeCheckbox.IsChecked,
-                IgnoreOrder = m_ignoreOrderCheckbox.IsChecked,
-                IgnoreVersion = m_ignoreVersionCheckbox.IsChecked,
-                IgnoreSection = m_ignoreSectionCheckbox.IsChecked
-            };
-        }
+        State GetState() => new() {
+            FileType = m_fileType,
+            OrderType = m_orderType,
+            OnlyCurrentVersion = m_onlyCurrentVersion,
+            Section = m_section,
+            IgnoreFileType = m_ignoreFileTypeCheckbox.IsChecked,
+            IgnoreOrder = m_ignoreOrderCheckbox.IsChecked,
+            IgnoreVersion = m_ignoreVersionCheckbox.IsChecked,
+            IgnoreSection = m_ignoreSectionCheckbox.IsChecked
+        };
     }
 }

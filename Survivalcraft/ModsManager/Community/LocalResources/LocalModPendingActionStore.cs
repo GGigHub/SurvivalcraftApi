@@ -1,56 +1,42 @@
-using System;
-using System.Collections.Generic;
-
-namespace Game
-{
+namespace Game {
     /// <summary>
     /// “重启后再执行”的本地模组待处理动作存储：单独落盘，避免页面实例销毁后丢失动作。
     /// 仅在 UI 线程访问，无需锁。
     /// </summary>
-    internal static class LocalModPendingActionStore
-    {
-        private static readonly Dictionary<string, LocalModPendingActionEntry> s_pendingActions = new(StringComparer.OrdinalIgnoreCase);
-        private static bool s_pendingActionsLoaded;
+    static class LocalModPendingActionStore {
+        static readonly Dictionary<string, LocalModPendingActionEntry> s_pendingActions = new(StringComparer.OrdinalIgnoreCase);
+        static bool s_pendingActionsLoaded;
 
-        public static Dictionary<string, LocalModPendingActionEntry> LocalModPendingActions
-        {
-            get
-            {
+        public static Dictionary<string, LocalModPendingActionEntry> LocalModPendingActions {
+            get {
                 EnsurePendingActionsLoaded();
                 return s_pendingActions;
             }
         }
 
-        public static void EnsurePendingActionsLoaded()
-        {
-            if (s_pendingActionsLoaded)
-            {
+        public static void EnsurePendingActionsLoaded() {
+            if (s_pendingActionsLoaded) {
                 return;
             }
             s_pendingActionsLoaded = true;
             LoadLocalModPendingActions();
         }
 
-        public static void LoadLocalModPendingActions()
-        {
+        public static void LoadLocalModPendingActions() {
             s_pendingActions.Clear();
             LocalModPendingActionsData data = PendingLocalModActions.Load();
-            if (data?.Actions == null)
-            {
+            if (data?.Actions == null) {
                 return;
             }
-
-            foreach (KeyValuePair<string, LocalModPendingActionEntry> pair in data.Actions)
-            {
-                if (!string.IsNullOrWhiteSpace(pair.Key) && pair.Value != null)
-                {
+            foreach (KeyValuePair<string, LocalModPendingActionEntry> pair in data.Actions) {
+                if (!string.IsNullOrWhiteSpace(pair.Key)
+                    && pair.Value != null) {
                     s_pendingActions[pair.Key] = pair.Value;
                 }
             }
         }
 
-        public static void SaveLocalModPendingActions()
-        {
+        public static void SaveLocalModPendingActions() {
             PendingLocalModActions.Save(LocalModPendingActions);
         }
 
@@ -60,24 +46,18 @@ namespace Game
         /// 先确保延迟加载（否则进程内首调会在 Clear 后经属性 getter 把盘上数据重载回来）。
         /// 无可清条目时不覆写；空表覆写时 PendingLocalModActions.Save 内部会删除清单文件。
         /// </summary>
-        public static void ClearPendingActions()
-        {
+        public static void ClearPendingActions() {
             EnsurePendingActionsLoaded();
             List<string> keysToRemove = null;
-            foreach (KeyValuePair<string, LocalModPendingActionEntry> pair in s_pendingActions)
-            {
-                if (pair.Value?.ActionType is LocalModPendingActionType.Enable or LocalModPendingActionType.Disable)
-                {
+            foreach (KeyValuePair<string, LocalModPendingActionEntry> pair in s_pendingActions) {
+                if (pair.Value?.ActionType is LocalModPendingActionType.Enable or LocalModPendingActionType.Disable) {
                     (keysToRemove ??= []).Add(pair.Key);
                 }
             }
-            if (keysToRemove == null)
-            {
+            if (keysToRemove == null) {
                 return;
             }
-
-            foreach (string key in keysToRemove)
-            {
+            foreach (string key in keysToRemove) {
                 s_pendingActions.Remove(key);
             }
             SaveLocalModPendingActions();

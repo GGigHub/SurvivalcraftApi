@@ -613,10 +613,6 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("ModsManageContent", new ModsManageContentScreen()); });
             AddLoadAction(delegate { AddScreen("ModpacksManageContent", new ModpacksManageContentScreen()); });
             AddLoadAction(delegate { AddScreen("Releases", new ReleasesScreen()); });
-            /*AddLoadAction(delegate
-            {
-                AddScreen("ManageUser", new ManageUserScreen());
-            });*/
             AddLoadAction(delegate { AddScreen("Players", new PlayersScreen()); });
             AddLoadAction(delegate { AddScreen("Player", new PlayerScreen()); });
             AddLoadAction(delegate { AddScreen("KeyboardMapping", new KeyboardMappingScreen()); });

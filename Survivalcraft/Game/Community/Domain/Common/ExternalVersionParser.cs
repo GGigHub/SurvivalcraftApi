@@ -1,43 +1,33 @@
 using NuGet.Versioning;
 
-namespace Game
-{
+namespace Game {
     /// <summary>
     /// 将外部版本文本规范化并解析为 NuGetVersion。
     /// </summary>
-    internal static class ExternalVersionParser
-    {
-        public static string Normalize(string version)
-        {
+    static class ExternalVersionParser {
+        public static string Normalize(string version) {
             version = version?.Trim();
-            if (string.IsNullOrEmpty(version))
+            if (string.IsNullOrEmpty(version)) {
                 return version;
-
-            for (int i = 0; i < version.Length; i++)
-            {
-                if (char.IsDigit(version[i]))
-                {
+            }
+            for (int i = 0; i < version.Length; i++) {
+                if (char.IsDigit(version[i])) {
                     return version.Substring(i);
                 }
             }
             return version;
         }
 
-        public static bool TryParse(string version, out NuGetVersion parsed)
-        {
+        public static bool TryParse(string version, out NuGetVersion parsed) {
             parsed = null;
             string text = Normalize(version);
-            if (string.IsNullOrEmpty(text))
-            {
+            if (string.IsNullOrEmpty(text)) {
                 return false;
             }
             return NuGetVersion.TryParse(text, out parsed);
         }
 
         // 供模型 setter 一行完成"赋值即解析"：解析失败存 null。
-        public static NuGetVersion ParseOrNull(string version)
-        {
-            return TryParse(version, out NuGetVersion parsed) ? parsed : null;
-        }
+        public static NuGetVersion ParseOrNull(string version) => TryParse(version, out NuGetVersion parsed) ? parsed : null;
     }
 }

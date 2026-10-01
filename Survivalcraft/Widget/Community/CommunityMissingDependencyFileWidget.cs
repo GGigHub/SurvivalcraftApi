@@ -1,15 +1,12 @@
 using System.Xml.Linq;
 
-namespace Game
-{
-    public sealed class CommunityMissingDependencyFileWidget : FixedSizePanelWidget
-    {
-        private readonly LabelWidget m_fileTitleWidget;
-        private readonly LabelWidget m_metadataWidget;
-        private readonly ButtonWidget m_downloadButton;
+namespace Game {
+    public sealed class CommunityMissingDependencyFileWidget : FixedSizePanelWidget {
+        readonly LabelWidget m_fileTitleWidget;
+        readonly LabelWidget m_metadataWidget;
+        readonly ButtonWidget m_downloadButton;
 
-        public CommunityMissingDependencyFileWidget()
-        {
+        public CommunityMissingDependencyFileWidget() {
             XElement node = ContentManager.Get<XElement>("Widgets/CommunityMissingDependencyFileWidget");
             LoadContents(this, node);
             m_fileTitleWidget = Children.Find<LabelWidget>("MissingDependencyFileWidget.FileTitle");
@@ -22,8 +19,7 @@ namespace Game
 
         public bool IsDownloadClicked => m_downloadButton.IsClicked;
 
-        internal void Bind(CommunityMissingDependencyFileDisplayData data, bool canDownload = true)
-        {
+        internal void Bind(CommunityMissingDependencyFileDisplayData data, bool canDownload = true) {
             File = data?.File;
             m_fileTitleWidget.Text = data?.FileTitle ?? string.Empty;
             m_metadataWidget.Text = data?.MetadataText ?? string.Empty;

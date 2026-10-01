@@ -1,9 +1,5 @@
-using System.Collections.Generic;
-
-namespace Game
-{
-    internal sealed class CommunityMissingDependencyFileDisplayData
-    {
+namespace Game {
+    sealed class CommunityMissingDependencyFileDisplayData {
         public PostFileItem File { get; init; }
 
         public string FileTitle { get; init; }
@@ -11,8 +7,7 @@ namespace Game
         public string MetadataText { get; init; }
     }
 
-    internal sealed class CommunityMissingDependencyGroupDisplayData
-    {
+    sealed class CommunityMissingDependencyGroupDisplayData {
         public string GroupKey { get; init; }
 
         public string GroupText { get; init; }
@@ -22,8 +17,7 @@ namespace Game
         public IReadOnlyList<CommunityMissingDependencyFileDisplayData> Files { get; init; } = [];
     }
 
-    internal sealed class CommunityMissingDependencyPackageDisplayData
-    {
+    sealed class CommunityMissingDependencyPackageDisplayData {
         public string Text { get; init; }
 
         public string DetailText { get; init; }

@@ -3,7 +3,6 @@ using Engine;
 
 namespace Game {
     public class CommunityDownloadQueueItemWidget : CanvasWidget {
-
         public readonly RectangleWidget m_backgroundWidget;
         public readonly LabelWidget m_titleWidget;
         public readonly LabelWidget m_detailWidget;

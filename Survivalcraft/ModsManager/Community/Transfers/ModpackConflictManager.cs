@@ -1,23 +1,14 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Game
-{
-    internal sealed class ModpackConflictManager
-    {
-        private readonly Lock m_sync = new();
-        private ModpackConflictRequest m_pendingRequest;
+namespace Game {
+    sealed class ModpackConflictManager {
+        readonly Lock m_sync = new();
+        ModpackConflictRequest m_pendingRequest;
 
         public event Action<ModpackConflictRequest> RequestCreated;
 
-        public Task<ModpackFileConflictAction> RequestAsync(string fileName)
-        {
+        public Task<ModpackFileConflictAction> RequestAsync(string fileName) {
             ModpackConflictRequest request = new(fileName);
-            lock (m_sync)
-            {
-                if (m_pendingRequest != null)
-                {
+            lock (m_sync) {
+                if (m_pendingRequest != null) {
                     throw new InvalidOperationException(LanguageControl.Get("ModpackFileConflictDialog", "ConflictAlreadyWaitingForUser"));
                 }
                 m_pendingRequest = request;
@@ -26,12 +17,11 @@ namespace Game
             return request.Completion.Task;
         }
 
-        public bool TryMarkRequestDisplayed(ModpackConflictRequest request)
-        {
-            lock (m_sync)
-            {
-                if (!ReferenceEquals(m_pendingRequest, request) || request == null || request.IsDialogShown)
-                {
+        public bool TryMarkRequestDisplayed(ModpackConflictRequest request) {
+            lock (m_sync) {
+                if (!ReferenceEquals(m_pendingRequest, request)
+                    || request == null
+                    || request.IsDialogShown) {
                     return false;
                 }
                 request.IsDialogShown = true;
@@ -39,12 +29,9 @@ namespace Game
             }
         }
 
-        public void Complete(ModpackConflictRequest request, ModpackFileConflictAction action)
-        {
-            lock (m_sync)
-            {
-                if (ReferenceEquals(m_pendingRequest, request))
-                {
+        public void Complete(ModpackConflictRequest request, ModpackFileConflictAction action) {
+            lock (m_sync) {
+                if (ReferenceEquals(m_pendingRequest, request)) {
                     m_pendingRequest = null;
                 }
             }
@@ -52,10 +39,8 @@ namespace Game
         }
     }
 
-    internal sealed class ModpackConflictRequest
-    {
-        public ModpackConflictRequest(string fileName)
-        {
+    sealed class ModpackConflictRequest {
+        public ModpackConflictRequest(string fileName) {
             FileName = fileName;
             Completion = new TaskCompletionSource<ModpackFileConflictAction>(TaskCreationOptions.RunContinuationsAsynchronously);
         }

@@ -1,40 +1,31 @@
-using System;
-using System.Collections.Generic;
 using System.Text.Json;
 using Engine;
 
-namespace Game
-{
-    internal static class LocalModReviewStore
-    {
-        private static readonly JsonSerializerOptions s_options = new() { WriteIndented = true };
+namespace Game {
+    static class LocalModReviewStore {
+        static readonly JsonSerializerOptions s_options = new() { WriteIndented = true };
 
-        public static Dictionary<string, LocalModReviewEntry> Load()
-        {
-            if (!Storage.FileExists(CommunityStoragePaths.LocalModReviewsFile))
-            {
+        public static Dictionary<string, LocalModReviewEntry> Load() {
+            if (!Storage.FileExists(CommunityStoragePaths.LocalModReviewsFile)) {
                 return new Dictionary<string, LocalModReviewEntry>(StringComparer.OrdinalIgnoreCase);
             }
-
-            LocalModReviewsData data = JsonFileStore.Read<LocalModReviewsData>(
-                CommunityStoragePaths.LocalModReviewsFile,
-                s_options);
+            LocalModReviewsData data = JsonFileStore.Read<LocalModReviewsData>(CommunityStoragePaths.LocalModReviewsFile, s_options);
             return data?.Reviews == null
                 ? new Dictionary<string, LocalModReviewEntry>(StringComparer.OrdinalIgnoreCase)
                 : new Dictionary<string, LocalModReviewEntry>(data.Reviews, StringComparer.OrdinalIgnoreCase);
         }
 
-        public static void Save(IReadOnlyDictionary<string, LocalModReviewEntry> reviews)
-        {
+        public static void Save(IReadOnlyDictionary<string, LocalModReviewEntry> reviews) {
             JsonFileStore.Write(
                 CommunityStoragePaths.LocalModReviewsFile,
-                new LocalModReviewsData
-                {
+                new LocalModReviewsData {
                     Reviews = new Dictionary<string, LocalModReviewEntry>(
                         reviews ?? new Dictionary<string, LocalModReviewEntry>(),
-                        StringComparer.OrdinalIgnoreCase)
+                        StringComparer.OrdinalIgnoreCase
+                    )
                 },
-                s_options);
+                s_options
+            );
         }
     }
 }

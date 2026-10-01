@@ -1,15 +1,8 @@
 using NuGet.Versioning;
 
-namespace Game
-{
-    internal sealed class ModDependencyInfo
-    {
-        public ModDependencyInfo(
-            string packageName,
-            string version,
-            string displayName = null,
-            VersionRange versionRange = null)
-        {
+namespace Game {
+    sealed class ModDependencyInfo {
+        public ModDependencyInfo(string packageName, string version, string displayName = null, VersionRange versionRange = null) {
             PackageName = packageName?.Trim();
             VersionRangeString = version?.Trim();
             DisplayName = displayName?.Trim();

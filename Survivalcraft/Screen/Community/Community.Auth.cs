@@ -1,17 +1,10 @@
-using Engine;
-using System.Globalization;
-
-namespace Game
-{
-    internal partial class CommunityScreen
-    {
-        private void LoadSettings()
-        {
+namespace Game {
+    partial class CommunityScreen {
+        void LoadSettings() {
             ApplyLoadedDefaultFilters();
         }
 
-        private void SaveDefaultFilters(CommunityFiltersDialog.State state)
-        {
+        void SaveDefaultFilters(CommunityFiltersDialog.State state) {
             m_defaultSelectedFileType = state.FileType;
             m_defaultOrderType = state.OrderType;
             m_defaultOnlyCurrentVersion = state.OnlyCurrentVersion;
@@ -24,11 +17,11 @@ namespace Game
                 m_defaultSelectedFileType,
                 m_defaultOrderType,
                 m_defaultOnlyCurrentVersion,
-                (int)m_defaultSection);
+                (int)m_defaultSection
+            );
         }
 
-        private void ApplyLoadedDefaultFilters()
-        {
+        void ApplyLoadedDefaultFilters() {
             m_defaultSelectedFileType = CommunityModSettingsState.CommunityFileType;
             m_defaultOrderType = CommunityModSettingsState.CommunityOrderType;
             m_defaultOnlyCurrentVersion = CommunityModSettingsState.CommunityOnlyCurrentVersion;
@@ -37,7 +30,6 @@ namespace Game
             m_defaultIgnoreOrderFilter = false;
             m_defaultIgnoreVersionFilter = false;
             m_defaultIgnoreSectionFilter = false;
-
             m_selectedFileType = m_defaultSelectedFileType;
             m_orderType = m_defaultOrderType;
             m_onlyCurrentVersion = m_defaultOnlyCurrentVersion;
@@ -49,10 +41,8 @@ namespace Game
             m_postsPresenter.Page = 1;
         }
 
-        private static CommunitySection NormalizeSection(int section)
-        {
-            return section switch
-            {
+        static CommunitySection NormalizeSection(int section) {
+            return section switch {
                 2 => CommunitySection.Trending,
                 3 => CommunitySection.NewActivity,
                 _ => CommunitySection.All

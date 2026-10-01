@@ -58,10 +58,7 @@ namespace Game {
                 LanguageControl.GetContentWidgets(fName, 3),
                 string.Format(LanguageControl.GetContentWidgets(fName, 2), m_releasesName)
             );
-            Children.Find<LabelWidget>("TopBar.Label").Text = string.Format(
-                LanguageControl.GetContentWidgets(fName, 1),
-                m_releasesName
-            );
+            Children.Find<LabelWidget>("TopBar.Label").Text = string.Format(LanguageControl.GetContentWidgets(fName, 1), m_releasesName);
             if (Releases.Count == 0
                 || m_releasesName != previousName) {
                 Task.Run(() => Task.FromResult(GetReleasesAsync()));
@@ -134,7 +131,8 @@ namespace Game {
                     '9'
                 ]
             );
-            if (firstNumberIndex >= 0 && currentVersion.Substring(firstNumberIndex) == targetVersion) {
+            if (firstNumberIndex >= 0
+                && currentVersion.Substring(firstNumberIndex) == targetVersion) {
                 return LanguageControl.GetContentWidgets(fName, "5");
             }
             return string.Empty;
@@ -156,11 +154,7 @@ namespace Game {
         {
             ReleaseInfo releaseInfo = (ReleaseInfo)item;
             m_titleLabel.Text = releaseInfo.name;
-            m_infoLabel.Text = string.Format(
-                LanguageControl.GetContentWidgets(fName, 4),
-                releaseInfo.author.name,
-                releaseInfo.created_at
-            );
+            m_infoLabel.Text = string.Format(LanguageControl.GetContentWidgets(fName, 4), releaseInfo.author.name, releaseInfo.created_at);
             m_textLabel.Text = releaseInfo.body;
             PopulateAssetsList(releaseInfo);
         }
