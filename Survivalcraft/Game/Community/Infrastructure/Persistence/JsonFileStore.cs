@@ -12,6 +12,11 @@ namespace Game {
 
         public static T Read<T>(string path, JsonSerializerOptions options = null) {
             try {
+                // 文件不存在（首次启动/尚未写入过）是正常状态，
+                // 直接走默认值，避免每次启动抛 FileNotFoundException 刷日志。
+                if (!Storage.FileExists(path)) {
+                    return default;
+                }
                 string json = Storage.ReadAllText(path, Encoding.UTF8);
                 return JsonSerializer.Deserialize<T>(json, options);
             }
