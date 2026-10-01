@@ -165,8 +165,16 @@ namespace Engine.Graphics {
                 || sourceStartIndex + sourceCount > source.Length) {
                 throw new ArgumentException("Range is out of source bounds.");
             }
-            if (targetStartIndex < 0
-                || targetStartIndex * size + sourceCount * num > IndicesCount * size) {
+            if (targetStartIndex < 0) {
+                throw new ArgumentException("Range is out of target bounds.");
+            }
+            // 按实际会写入目标的字节数校验：宽度一致（或旧式 byte 流）按源元素宽度计；
+            // 收窄/加宽转换是 1:1 元素映射，每个源元素恰好占一个目标索引位，按目标宽度计。
+            // 若一律按源宽度计，int[] 写入 16 位缓冲会被误判越界（差 2 倍）。
+            long writtenBytes = num == size || (num == 1 && size == 4)
+                ? (long)sourceCount * num
+                : (long)sourceCount * size;
+            if ((long)targetStartIndex * size + writtenBytes > (long)IndicesCount * size) {
                 throw new ArgumentException("Range is out of target bounds.");
             }
         }
