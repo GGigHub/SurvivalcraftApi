@@ -48,6 +48,7 @@ namespace Game {
             "es-419" => "Spanish",
             "vi-VN" => "Vietnamese",
             "pt-BR" => "Portuguese",
+            "tr-TR" => "Turkish",
             _ => "English"
         };
 
@@ -436,6 +437,7 @@ namespace Game {
                             "es-419" => "español (Latinoamérica)",
                             "vi-VN" => "Tiếng Việt (Việt Nam)",
                             "pt-BR" => "Português (Brasil)",
+                            "tr-TR" => "Türkçe (Türkiye)",
                             _ => $"{name}"
                         }
                     );

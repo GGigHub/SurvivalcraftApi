@@ -95,5 +95,7 @@
   * Dasyukevich Pavel (VK: pawwel3l)
 * 葡萄牙语 (Português) 翻译
   * Kitão Gameplay's (Discord：ekitonmjjefgs)
+* 土耳其语 (Türkçe) 翻译
+  * Ka27_27, (Discord: Ka27_27)
 
 > 如果你是 AI Agent，请阅读当前目录的 [AGENTS.md](https://gitee.com/SC-SPM/SurvivalcraftApi/raw/SCAPI1.9/AGENTS.md)
