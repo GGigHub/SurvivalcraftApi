@@ -119,7 +119,8 @@
     "LocalResourcesReadingModpacksFormat": "Local {0}s · Reading modpacks...",
     "DeleteFailed": "Delete failed: {0}",
     "DeleteConfirmTitle": "Delete Modpack?",
-    "DeleteConfirmMessage": "Are you sure you want to delete modpack \"{0}\"?\nThis action cannot be undone."
+    "DeleteConfirmMessage": "Are you sure you want to delete modpack \"{0}\"?\nThis action cannot be undone.",
+    "LoadingFileInfo": "Loading File Info..."
   },
   "ModsManageContentScreen": {
     "1": "Manage mod content",
@@ -4988,6 +4989,7 @@
   "CommunityScreen": {
     "LoadFeaturedFailed": "Failed to load featured resources: {0}",
     "LoadCommunityPostsFailed": "Failed to load community posts: {0}",
+    "FailedToLoadFeaturedResources": "Failed to load featured resources",
     "CurrentVersion": "Current Version",
     "LoadingFormat": "{0} · Loading...",
     "CommunityFormat": "Community {0}",
@@ -5494,7 +5496,6 @@
   },
   "CommunitySettingsScreen": {
     "StatusReady": "Settings are ready.",
-    "SettingsApplied": "Settings applied.",
     "LogOut": "Log Out",
     "LogIn": "Log In",
     "NotLoggedIn": "Not Logged In",

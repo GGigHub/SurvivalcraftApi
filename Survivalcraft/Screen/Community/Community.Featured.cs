@@ -64,7 +64,7 @@ namespace Game
             string sectionName = LanguageControl.GetEnumDisplayName(effectiveSection);
             if (m_featuredResult == null)
             {
-                m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "Community", "Featured", "Loading"), sectionName);
+                m_postsPresenter.StatusLabel.Text = string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("CommunityScreen", "LoadingFormat"), sectionName);
                 UpdatePaginationButtons();
                 return;
             }
@@ -72,7 +72,7 @@ namespace Game
             if (!string.IsNullOrEmpty(m_featuredResult.Error))
             {
                 m_postsPresenter.ShowLoadFailed(sectionName);
-                m_postsPresenter.AddRoot(new TreeViewNode(LanguageControl.Get("CommunityScreen", "Community", "Featured", "FailedToLoadFeaturedResources"), "") { Selectable = false });
+                m_postsPresenter.AddRoot(new TreeViewNode(LanguageControl.Get("CommunityScreen", "FailedToLoadFeaturedResources"), "") { Selectable = false });
                 UpdatePaginationButtons();
                 return;
             }
@@ -82,7 +82,7 @@ namespace Game
                 : m_featuredResult.RecentUpdates;
             if (items == null || items.Count == 0)
             {
-                m_postsPresenter.AddRoot(new TreeViewNode(LanguageControl.Get("CommunityScreen", "Community", "Featured", "NoData"), "") { Selectable = false });
+                m_postsPresenter.AddRoot(new TreeViewNode(LanguageControl.Get("PostTreePresenter", "NoData"), "") { Selectable = false });
             }
             else
             {

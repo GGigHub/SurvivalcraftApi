@@ -29,7 +29,7 @@ namespace Game
                 // 两侧都失败：抛首个错误，维持上层「整体失败带 Error」的既有行为。
                 throw new InvalidOperationException(topTask.Exception?.GetBaseException().Message
                     ?? recentTask.Exception?.GetBaseException().Message
-                    ?? LanguageControl.Get("CommunityScreen", "Community", "Featured", "FailedToLoadFeaturedResources"));
+                    ?? LanguageControl.Get("CommunityScreen", "FailedToLoadFeaturedResources"));
             }
             return new CommunityFeaturedData
             {

@@ -53,7 +53,7 @@ namespace Game
         private double m_searchDebounceUntil;
         private readonly TaskSlot<PostsLoadResult> m_postsLoadSlot = new(LanguageControl.Get("TaskSlot", "PostsList"));
         private readonly TaskSlot<PostDetailLoadResult> m_postDetailSlot = new(LanguageControl.Get("TaskSlot", "PostNodeDetails"));
-        private readonly TaskSlot<PostDetailsDialogLoadResult> m_postDialogSlot = new(LanguageControl.Get("TaskSlot", "CommunityPostDetailsDialog"));
+        private readonly TaskSlot<PostDetailsDialogLoadResult> m_postDialogSlot = new(LanguageControl.Get("TaskSlot", "PostDetailsDialog"));
         private readonly TaskSlot<FeaturedLoadResult> m_featuredSlot = new(LanguageControl.Get("TaskSlot", "Featured"));
         private FeaturedLoadResult m_featuredResult;
         private bool m_hasDeferredInitialPanelRefresh;

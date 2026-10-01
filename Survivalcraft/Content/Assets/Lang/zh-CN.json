@@ -119,7 +119,8 @@
     "LocalResourcesReadingModpacksFormat": "本地{0} · 正在读取整合包...",
     "DeleteFailed": "删除失败：{0}",
     "DeleteConfirmTitle": "确认删除整合包？",
-    "DeleteConfirmMessage": "确定要删除整合包“{0}”吗？\n此操作无法恢复"
+    "DeleteConfirmMessage": "确定要删除整合包“{0}”吗？\n此操作无法恢复",
+    "LoadingFileInfo": "获取文件信息..."
   },
   "ModsManageContentScreen": {
     "1": "管理模组内容",
@@ -4998,6 +4999,7 @@
   "CommunityScreen": {
     "LoadFeaturedFailed": "加载推荐资源失败: {0}",
     "LoadCommunityPostsFailed": "加载社区帖子失败: {0}",
+    "FailedToLoadFeaturedResources": "加载精选资源失败",
     "CurrentVersion": "当前版本",
     "LoadingFormat": "{0} · 正在加载...",
     "CommunityFormat": "社区{0}",
@@ -5504,7 +5506,6 @@
   },
   "CommunitySettingsScreen": {
     "StatusReady": "设置已就绪。",
-    "SettingsApplied": "设置已应用。",
     "LogOut": "登出",
     "LogIn": "登录",
     "NotLoggedIn": "未登录",
