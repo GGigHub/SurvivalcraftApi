@@ -206,9 +206,13 @@ namespace Engine.Input {
         internal static void HandleMotionEvent(MotionEvent e) {
             switch (e.Action) {
                 case MotionEventActions.Move: {
+                    // 事件样本 = 历史批次 + 当前样本，两者都要累加；
+                    // 漏加 GetX() 时低报点率设备（蓝牙鼠标）每帧丢掉大半样本，
+                    // 视角几乎不转，高报点率 USB 鼠标因损失占比小而难以察觉。
                     for (int num = e.HistorySize - 1; num >= 0; num--) {
                         m_queuedMouseMovement += new Vector2(e.GetHistoricalX(num), e.GetHistoricalY(num));
                     }
+                    m_queuedMouseMovement += new Vector2(e.GetX(), e.GetY());
                     MousePosition = Point2.Round(e.GetX(), e.GetY());
                     break;
                 }
