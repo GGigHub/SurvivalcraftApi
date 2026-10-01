@@ -43,6 +43,7 @@
         <None Update="Launch Game 启动游戏.bat">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Remove="Content.zip" />
         <!-- 来自 https://github.com/mmozeiko/build-angle/releases/tag/2026-01-04 -->
     </ItemGroup>
     <Target Name="PreBuild" BeforeTargets="PreBuildEvent">

@@ -16,6 +16,11 @@
     "7": "尚未在此应用中登录 Dropbox。",
     "8": "未找到共享信息。"
   },
+  "ChineseCommunityExternalContentProvider": {
+    "LoggedIn": "已登录",
+    "NotLoggedIn": "未登录",
+    "CannotFindLocalFile": "无法找到本地文件。"
+  },
   "FurnitureBlock": [
     "将家具组合成交互式家具设计",
     "家具设计种类过多"
@@ -47,6 +52,13 @@
   "AndroidSdCardExternalContentProvider": {
     "1": "内部存储"
   },
+  "CommunityMyPublishedScreen": {
+    "LoadMyPublishedFailed": "加载我发布的帖子失败: {0}",
+    "LoadingFormat": "{0} · 正在加载...",
+    "MyPublishedFormat": "已发布的{0}",
+    "MyUnpublishedFormat": "未发布的{0}",
+    "ShareLinkCopiedToClipboard": "分享链接已复制到剪贴板。"
+  },
   "ContentScreen": {
     "1": "模组管理",
     "2": "资源管理",
@@ -65,6 +77,50 @@
       "OriginalCommunity": "原版社区",
       "ChineseCommunity": "中文社区"
     }
+  },
+  "ModpacksManageContentScreen": {
+    "1": "整合包管理",
+    "2": "启用",
+    "3": "下载缺失",
+    "4": "详情",
+    "5": "禁用",
+    "6": "已持有：{0}/{1}  整合包版本：{2}  API 版本：{3}  作者：{4}  大小：{5}",
+    "AllResourcesReady": "整合包资源已全部下载。",
+    "AndMore": " 等 {0} 项",
+    "AnotherModpackActive": "已有其他整合包处于启用状态，请先关闭当前整合包。",
+    "CannotDelete": "无法删除",
+    "CloseModpack": "禁用整合包",
+    "CurrentlyActive": "{0}（当前启用）",
+    "DisableBeforeDelete": "请先关闭当前启用的整合包，再删除该整合包记录。",
+    "DisabledRestartPrompt": "已禁用当前整合包。需要重启以恢复之前的模组状态，是否立即重启？",
+    "DownloadAndLaunch": "下载并启用",
+    "DownloadingMissingModpackResources": "正在下载整合包缺失资源...",
+    "EnabledRestartPrompt": "已启用当前整合包。需要重启以加载整合包模组资源，是否立即重启？",
+    "ExtractFailedNotStarted": "整合包内资源解压失败，暂未启用。",
+    "ExtractingResourcesFromTheModpack": "正在从整合包解压资源...",
+    "FailedToDownloadModpackResources": "整合包资源下载失败",
+    "IgnoreAndLaunch": "忽略并继续启用",
+    "LaunchModpack": "启用整合包",
+    "MissingInArchiveList": "压缩包内未找到以下资源：{0}。请补全整合包后再启用。",
+    "MissingModpackFiles": "整合包文件缺失",
+    "MissingModpackResourcesDownloaded": "整合包缺失资源下载完成。",
+    "MissingResources": "缺失资源",
+    "MissingResourcesDownloadPrompt": "整合包“{0}”还有 {1} 个资源未下载，是否先下载后再启用？",
+    "StartBlockedMissingResources": "整合包仍有未下载的资源，暂未启用。",
+    "ThisModpackHasNoManagedModResources": "当前整合包没有可管理的模组资源。",
+    "ThisModpackIsNotCurrentlyActive": "当前没有启用该整合包。",
+    "UnavailableResourcesIgnorePrompt": "有 {0} 个资源既无法从 ZIP 整合包中获取，也无法通过网络下载。是否忽略这些资源并继续启用整合包？",
+    "FailedToSaveSettings": "保存配置失败",
+    "SaveConfigFailed": "无法保存整合包使用期间修改的配置：{0}",
+    "FailedToRestoreFiles": "恢复文件失败",
+    "RestoreFilesFailed": "无法恢复整合包启用前的文件：{0}",
+    "Modpack": "整合包",
+    "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
+    "LocalResourcesReadingModpacksFormat": "本地{0} · 正在读取整合包...",
+    "DeleteFailed": "删除失败：{0}",
+    "DeleteConfirmTitle": "确认删除整合包？",
+    "DeleteConfirmMessage": "确定要删除整合包“{0}”吗？\n此操作无法恢复",
+    "LoadingFileInfo": "获取文件信息..."
   },
   "ModsManageContentScreen": {
     "1": "管理模组内容",
@@ -147,7 +203,40 @@
     "78": "该模组未设置主页链接。",
     "79": "模组版本: {0}  API 版本: {1}  作者: {2}  大小: {3}",
     "80": "详情",
-    "81": "*需重启"
+    "81": "*需重启",
+    "PendingRestartTag": "待重启",
+    "FileDeletedTag": "文件已删除",
+    "LatestVersion": "最新版本",
+    "CurrentVersion": "当前版本",
+    "VersionDetails": "版本详情",
+    "UpdateFound": "发现更新",
+    "LocalResource": "本地资源",
+    "LocalMod": "本地模组",
+    "CommunityPost": "社区帖子",
+    "CheckUpdate": "检查更新",
+    "HasUpdate": "有更新",
+    "PleaseWait": "请稍候",
+    "Community": {
+      "BusyMessage": {
+        "LoadingPreviousVersionList": "正在加载上一项版本列表。",
+        "CheckingPreviousModUpdate": "正在检查上一项模组更新。",
+        "SearchingPreviousDependency": "正在搜索上一项依赖。"
+      },
+      "FailedToLoadVersionList": "获取版本列表失败：{0}",
+      "AlreadyUpToDateFormat": "当前已是最新版本。\n{0}：{1}\n{2}：{3}",
+      "DependencySearchFailed": "搜索依赖失败：{0}",
+      "ModsCanBeUpdatedTapToView": "检测到 {0} 个模组可更新",
+      "NoDownloadableDependenciesWereFound": "没有找到可下载的依赖。",
+      "NoUpdateReasonFormat": "{0}\n{1}：{2}\n{3}：{4}",
+      "SearchDependencies": "搜索依赖",
+      "UpdateCheckFailed": "检查更新失败：{0}"
+    },
+    "Review": {
+      "MissingFileNameOrPackageName": "缺少文件名或包名",
+      "Buttons": {
+        "NoPost": "未发布"
+      }
+    }
   },
   "ManageContentScreen": {
     "1": "方块材质 | {0}x{1}",
@@ -691,7 +780,31 @@
     "105": "最高模组影响等级",
     "106": "VR 控制"
   },
+  "ModpackDetailsDialog": {
+    "1": "整合包版本：",
+    "2": "API 版本：",
+    "3": "作者：",
+    "4": "大小：",
+    "5": "描述：",
+    "6": "主页：",
+    "7": "文件名：",
+    "8": "包名：",
+    "9": "子项持有状态：{0}/{1}",
+    "Active": "当前启用",
+    "ItemsList": "子项：",
+    "StateBundled": "内置",
+    "StateExists": "已存在",
+    "StateNeedDownload": "需下载"
+  },
   "ModDetailsDialog": {
+    "CheckUpdate": "检查更新",
+    "Versions": "版本列表",
+    "Dependencies": "缺失依赖",
+    "Review": "评分",
+    "Upload": "上传",
+    "RestartRequired": "{0}（需要重启加载）",
+    "IncompatibleWithCurrentGame": "{0}（不适配当前游戏）",
+    "MissingDependency": "缺失依赖 {0}",
     "1": "禁用原因：",
     "2": "模组版本：",
     "3": "API 版本：",
@@ -703,11 +816,13 @@
     "9": "包名：",
     "10": "依赖模组：",
     "11": "确认删除？",
-    "12": "这将删除 \"{0}\" 。",
+    "12": "这将删除 \"{0}\" 。\n此操作无法恢复",
     "13": "删除 \"{0}\" 失败，原因：{1}",
     "14": "删除 \"{0}\" 成功。",
     "15": "未找到/未启用",
-    "16": "已找到的版本："
+    "16": "已找到的版本：",
+    "17": "（最新: {0}）",
+    "18": "游玩时长："
   },
   "BlocksManager": {
     "1": "未能从已加载的 dll 程序集中找到方块类 [{0}]。",
@@ -1272,7 +1387,7 @@
   "PlayScreen": {
     "1": "模组不兼容警告！",
     "2": "继续",
-    "3": "缺少以下模组： ",
+    "3": "缺失以下模组： ",
     "4": "模组名称：{0}，版本：{1}",
     "5": "以下模组版本不兼容：",
     "6": "模组名称：{0}，所需版本：{1}，当前版本：{2}",
@@ -1395,7 +1510,7 @@
     "Unknown": "未知",
     "Manually": "玩家手动禁用",
     "NoModInfo": "模组缺少modinfo.json文件，或者该文件损坏",
-    "DependencyError": "缺少依赖模组",
+    "DependencyError": "缺失依赖模组",
     "Duplicated": "存在重复的模组",
     "InvalidPackageName": "模组的包名包含英文分号\";\""
   },
@@ -2911,7 +3026,7 @@
   },
   "Help": {
     "1": {
-      "value": "\\nAPI版本发布的模组格式为scmod，只有在主页-内容-模组管理器中有显示的模组才是有效的。\\n在Android系统和Windows系统，你能在打开格式为scmod的文件时选择插件版，即可完成模组的安装。\\n手动安装路径：\\n安卓：\/storage\/emulated\/0\/Survivalcraft2.4_API1.9\/Mods\\n其他系统：(解压到的目录)/Mods \\n\\n手动安装模组具体操作：\\n用系统自带的文件管理器或任何你喜欢的文件管理器，找到你下载的格式为scmod的模组文件，复制粘贴到前述手动安装路径，最后重启游戏即可。\\n删除模组同样需要重启游戏才生效。",
+      "value": "\\nAPI版本发布的模组格式为scmod，只有在主页-内容-模组管理器中有显示的模组才是有效的。\\n在Android系统和Windows系统，你能在打开格式为scmod的文件时选择插件版，即可完成模组的安装。\\n手动安装路径：\\n安卓：/storage/emulated/0/Survivalcraft2.4_API1.9/Mods\\n其他系统：(解压到的目录)/Mods \\n\\n手动安装模组具体操作：\\n用系统自带的文件管理器或任何你喜欢的文件管理器，找到你下载的格式为scmod的模组文件，复制粘贴到前述手动安装路径，最后重启游戏即可。\\n删除模组同样需要重启游戏才生效。",
       "Name": "TutorialOfInstallingMods",
       "Title": "安装模组教程"
     },
@@ -3229,6 +3344,9 @@
       "6": "搜索",
       "7": "x"
     },
+    "CommunityMyPublished": {
+      "Title": "我发布的"
+    },
     "ContentScreen": {
       "1": "选择获取方式",
       "2": "获取已经放置在本地存储的内容",
@@ -3244,7 +3362,9 @@
       "12": "管理现有模组内容",
       "13": "模组管理",
       "14": "通过系统文件选择器获取内容",
-      "15": "设备"
+      "15": "设备",
+      "16": "管理现有整合包内容",
+      "17": "整合包"
     },
     "ExternalContentScreen": {
       "1": "",
@@ -3520,8 +3640,8 @@
       "1": "更改世界选项",
       "2": "地形类型：",
       "3": "",
-      "4": "岛屿大小 东\/西：",
-      "5": "岛屿大小 南\/北：",
+      "4": "岛屿大小 东/西：",
+      "5": "岛屿大小 南/北：",
       "6": "平坦地面高度：",
       "7": "平坦海岸粗糙度：",
       "8": "平坦地面方块：",
@@ -3579,7 +3699,7 @@
       "2": "背包"
     },
     "ClothingWidget": {
-      "1": "身体\/吃食物",
+      "1": "身体/吃食物",
       "2": "背包",
       "3": "",
       "4": ""
@@ -3733,13 +3853,9 @@
     },
     "DownloadContentFromLinkDialog": {
       "1": "输入文件链接",
-      "2": "一般名称和类型会从链接自动获取，如果不能请手动输入。",
-      "3": "链接：",
-      "4": "名称：",
-      "5": "内容类型：",
-      "6": "...",
       "7": "下载",
-      "8": "取消"
+      "8": "取消",
+      "9": "支持 scworld / scfpack / png / scbtex / scskin / scmod / zip / json 直链"
     },
     "EditAdjustableDelayGateDialog": {
       "1": "调整延迟",
@@ -4023,7 +4139,8 @@
       "1": "选择社区服务器",
       "2": "打开",
       "3": "添加",
-      "4": "编辑"
+      "4": "编辑",
+      "5": "设为当前"
     },
     "EditCommunityServerInfoDialog": {
       "1": "编辑服务器",
@@ -4040,6 +4157,179 @@
     "SelectClassSubstituteDialog": {
       "1": "选择要使用的类",
       "2": "说明：所有选项都有可能导致整个游戏无法正常运行"
+    },
+    "SelectDownloadSourceDialog": {
+      "1": "选择下载源",
+      "2": "设为默认",
+      "3": "添加",
+      "4": "编辑"
+    },
+    "EditDownloadSourceInfoDialog": {
+      "1": "编辑下载源",
+      "2": "名称*: ",
+      "3": "镜像主机: ",
+      "4": "确定",
+      "5": "删除",
+      "6": "取消"
+    },
+    "ModVersionsDialog": {
+      "AllVersions": "查看所有版本",
+      "Close": "关闭"
+    },
+    "ModReviewDialog": {
+      "Rating": "评分：",
+      "RestorePrevious": "还原上次内容",
+      "Submit": "提交",
+      "ReviewContent": "评价内容",
+      "EnterReviewContent": "输入评价内容"
+    },
+    "MissingDependenciesDialog": {
+      "DownloadAllDeps": "一键下载所需依赖",
+      "Close": "关闭"
+    },
+    "CommunityScreen": {
+      "UnpublishedOnly": "只看未发布",
+      "SCChineseCommunity": "中文社区",
+      "Community": "社区",
+      "Filter": "筛选",
+      "Type": "类型",
+      "Mod": "模组",
+      "Sort": "排序",
+      "RecentlyUpdated": "最近更新",
+      "CurrentVersion": "当前版本",
+      "All": "全部",
+      "Search": "搜索",
+      "World": "存档",
+      "Furniture": "家具",
+      "Texture": "材质",
+      "Skin": "皮肤",
+      "Modpack": "整合包",
+      "NoContent": "无内容",
+      "CommunityMods": "社区模组",
+      "SelectLeftToShowDetails": "选中左侧内容, 在此展示详情",
+      "WorldName": "存档名称：",
+      "WorldSize": "存档大小：",
+      "WorldSeed": "存档种子：",
+      "CopySeed": "复制种子",
+      "CurrentStatus": "当前状态：",
+      "EasiestMode": "最简单游戏模式：",
+      "CurrentMode": "当前游戏模式：",
+      "ChangeMode": "修改模式",
+      "Players": "玩家数量：",
+      "Days": "游戏天数：",
+      "CompatibleAPI": "适配API：",
+      "PackageName": "包名：",
+      "Dependencies": "引用依赖包：",
+      "Deaths": "死亡次数：",
+      "Review": "评价",
+      "Versions": "版本列表",
+      "CheckUpdate": "检查更新",
+      "Functions": "查看函数集",
+      "Download": "下载",
+      "Delete": "删除",
+      "Upload": "上传",
+      "Save": "保存",
+      "Page": "页码",
+      "Go": "跳转",
+      "ShareLink": "分享链接",
+      "Details": "查看详情",
+      "More": "...",
+      "Disable": "禁用",
+      "PendingRestartResources": "有0个资源需要重启加载"
+    },
+    "DownloadDialog": {
+      "DownloadingLabel": "正在下载",
+      "Close": "关闭",
+      "PreparingDownload": "准备下载...",
+      "CancelDownload": "取消下载",
+      "Background": "后台下载"
+    },
+    "DownloadFailureDialog": {
+      "UseAnotherSource": "使用其他源",
+      "CurrentDownloadLink": "当前下载链接",
+      "ErrorReason": "错误原因",
+      "CopyLink": "复制",
+      "Close": "关闭"
+    },
+    "DownloadQueueDialog": {
+      "DownloadQueue": "下载队列",
+      "SelectionHint": "点击任务即可选择，未选择时按钮会自动匹配任务。",
+      "PauseResume": "暂停/继续",
+      "CancelTask": "取消任务",
+      "Retry": "重试失败",
+      "ClearDone": "清理完成",
+      "Close": "关闭"
+    },
+    "FiltersDialog": {
+      "Title": "筛选",
+      "Filter": "筛选项",
+      "IgnoreSearch": "忽略",
+      "FileType": "文件类型",
+      "SortOrder": "排序方式",
+      "VersionRange": "版本范围",
+      "Section": "板块"
+    },
+    "ImportOverwriteDialog": {
+      "DuplicateResource": "发现同名资源",
+      "Overwrite": "覆盖",
+      "Rename": "重命名"
+    },
+    "LoginDialog": {
+      "LogInToCommunity": "登录社区",
+      "AccountLabel": "邮箱/用户名:",
+      "PasswordLabel": "密码:",
+      "LogIn": "登录",
+      "Register": "注册"
+    },
+    "ModpackFileConflictDialog": {
+      "DuplicateFileFound": "发现同名文件",
+      "Overwrite": "覆盖",
+      "Skip": "跳过",
+      "SkipAll": "全部跳过",
+      "OverwriteAll": "全部覆盖",
+      "Close": "关闭"
+    },
+    "PostDetailsDialog": {
+      "PostDetails": "帖子详情",
+      "Close": "关闭",
+      "Download": "下载",
+      "ViewInBrowser": "浏览器中查看"
+    },
+    "RestartConfirmDialog": {
+      "Restart": "重启",
+      "RestartToCurrentScreen": "重启到此"
+    },
+    "CommunitySettingsScreen": {
+      "Title": "中文社区设置",
+      "Close": "关闭",
+      "LoggedAccount": "当前登录账号",
+      "NotLoggedIn": "未登录",
+      "CommunityAccount": "社区账号",
+      "CommunityAccountDescription": "登录后可上传资源并管理已发布内容",
+      "LogIn": "登录",
+      "LinkImport": "链接导入",
+      "LinkImportDescription": "通过网络链接导入资源或整合包",
+      "Import": "导入",
+      "DownloadQueue": "下载队列",
+      "DownloadQueueDescription": "查看正在等待、暂停或失败的下载任务",
+      "View": "查看",
+      "CheckUpdate": "检查更新",
+      "ModSettings": "模组设置",
+      "ModSettingsDescription": "打开游戏原生模组设置",
+      "Open": "打开",
+      "DownloadSourceSelectionMode": "每次手动选择下载源",
+      "DownloadSourceSelectionModeDescription": "开启后，每次下载都会弹窗选择下载源",
+      "DefaultDownloadSource": "默认下载源",
+      "DefaultDownloadSourceDescription": "「使用下方默认下载源」模式下统一使用的下载源",
+      "ApplyDownloadSourceToUpdates": "应用到资源更新",
+      "ApplyDownloadSourceToUpdatesDescription": "下载已发布资源的更新时使用所选下载源",
+      "PlayedTimeReporting": "游玩时长统计",
+      "PlayedTimeReportingDescription": "向社区上报游玩时长，用于社区数据统计",
+      "CurrentServer": "当前服务器",
+      "MyPublished": "我发布的",
+      "MyPublishedDescription": "查看已发布到中文社区的资源",
+      "PostDetailsAutoTranslate": "帖子详情自动翻译",
+      "PostDetailsAutoTranslateDescription": "进入帖子或版本详情时，自动翻译为当前系统语言"
     }
   },
   "FireworksBlock": {
@@ -4624,5 +4914,601 @@
       "372": "用于创建组件的 .NET 类的名称",
       "373": "无作用，仅用于替换一个组件为空组件"
     }
+  },
+  "Enums": {
+    "CommunitySection": {
+      "All": "全部",
+      "Trending": "最近热门",
+      "NewActivity": "最新动态"
+    },
+    "CommunityOrderType": {
+      "Latest": "最新发布",
+      "Oldest": "最早",
+      "Updated": "最近更新",
+      "Hot": "最近火爆"
+    },
+    "ExternalContentType": {
+      "Unknown": "资源",
+      "World": "存档",
+      "FurniturePack": "家具包",
+      "BlocksTexture": "材质",
+      "CharacterSkin": "皮肤",
+      "Mod": "模组",
+      "Modpack": "整合包",
+      "NetMod": "联机模组",
+      "Image": "图片",
+      "Other": "其他文件"
+    }
+  },
+  "CommunityDownloadSource": {
+    "DefaultCn": "默认线路（中国大陆）",
+    "Source1Global": "备用线路 1（全球）",
+    "Source2Cn": "备用线路 2（中国大陆）",
+    "Source3Global": "备用线路 3（全球）",
+    "Source4Global": "备用线路 4（全球）"
+  },
+  "EditDownloadSourceInfoDialog": {
+    "NewDownloadSource": "新下载源",
+    "DuplicateName": "名称不能为空或与现有下载源重名。"
+  },
+  "JsonFileStore": {
+    "ReadJsonFileFailedUsingDefault": "读取 JSON 文件失败，回退默认值: {0}, error={1}",
+    "CleanJsonTempFileFailed": "清理 JSON 临时文件失败: {0}, {1}",
+    "ScanJsonTempFilesFailed": "扫描 JSON 残留临时文件失败 root={0} error={1}",
+    "RestoredJsonTempFile": "已从残留 JSON 临时文件恢复: {0} → {1}",
+    "RestoreJsonTempFileFailed": "从残留 JSON 临时文件恢复失败: {0}, {1}"
+  },
+  "LocalMods": {
+    "AutoUpdateScanFailed": "本地模组自动更新扫描失败: {0}",
+    "PublishedCheckTaskFaulted": "已发布检查任务异常: {0}"
+  },
+  "ModReviewDialog": {
+    "ReviewLocalResource": "评价本地资源",
+    "ThereIsNoPreviousContentToRestore": "没有可还原的内容。",
+    "PreviousContentRestored": "已还原上次内容。",
+    "PleaseSelectARating": "请选择评分。",
+    "LocalResource": "本地资源"
+  },
+  "MissingDependenciesDialog": {
+    "DependenciesFound": "找到依赖",
+    "PublishTimePackageVersionFormat": "发布时间：{0}   包名：{1}   包版本：{2}",
+    "Collapse": "折叠",
+    "ResourcePackageNameNotFound": "未找到资源的包名",
+    "MoreModsWithTheSamePackageName": "还有 {0} 个同包名模组",
+    "MoreDuplicateFiles": "还有 {0} 个相同文件",
+    "Expand": "展开",
+    "CollapsedPackageGroupLatestInRange": "已隐藏 {0} 个同包名模组，优先显示范围内最新一个",
+    "CollapsedPackageGroupLatestOnly": "已隐藏 {0} 个同包名模组，仅显示最新一个",
+    "CollapsedFileGroupLatestOnly": "已隐藏 {0} 个相同文件，仅显示最新一个",
+    "NoDownloadableFile": "社区资源中未找到可下载文件。",
+    "LocalMod": "本地模组",
+    "UnnamedFile": "未命名文件"
+  },
+  "LocalModNetworkManager": {
+    "AutoUpdateCheckFailed": "本地模组自动检查更新失败: {0}, error={1}",
+    "NoModVersionForCurrentGame": "帖子中没有适配当前版本的模组版本。",
+    "VersionListIsEmpty": "版本列表为空。",
+    "CannotFindPublishedPostByFileName": "无法通过文件名找到已发布帖子：{0}",
+    "NoScmodFileInLatestVersion": "最新版本没有可下载的 .scmod 文件。",
+    "PostDetailsIsEmpty": "帖子详情为空。"
+  },
+  "LocalModPostResolver": {
+    "FindPostByFileNameFailed": "按文件名查找帖子失败: {0}: {1}",
+    "FindPostByFileNameMalformed": "按文件名查找帖子返回异常: {0}"
+  },
+  "CommunityScreen": {
+    "LoadFeaturedFailed": "加载推荐资源失败: {0}",
+    "LoadCommunityPostsFailed": "加载社区帖子失败: {0}",
+    "FailedToLoadFeaturedResources": "加载精选资源失败",
+    "CurrentVersion": "当前版本",
+    "LoadingFormat": "{0} · 正在加载...",
+    "CommunityFormat": "社区{0}",
+    "Downloading": "下载中...",
+    "LoadingProgress": "加载中...",
+    "VersionDetails": "版本详情",
+    "MyPublishedFormat": "我发布的{0}",
+    "AllVersions": "全部版本",
+    "CommunityLoadingFormat": "社区{0} · 正在加载...",
+    "FeaturedContentLoading": "精选内容 · 正在加载...",
+    "Details": "查看详情",
+    "FailedToLoadPostDetails": "获取帖子详情失败：{0}"
+  },
+  "HttpDownloader": {
+    "ReadCacheFileSizeFailed": "读取缓存文件大小失败: {0}, {1}",
+    "GetCacheFileSizeFailed": "获取缓存文件大小失败: {0}, {1}"
+  },
+  "CredentialStore": {
+    "DecryptCredentialFileFailed": "解密凭据文件失败，作废该文件: {0}",
+    "DeleteCredentialFileFailed": "删除凭据文件失败: {0}, {1}"
+  },
+  "TaskSlot": {
+    "TaskFaultConsumedAsNoResult": "[{0}]任务异常已按无结果消费: {1}",
+    "StaleTaskFault": "已失效的[{0}]任务异常: {1}",
+    "PostsList": "帖子列表",
+    "PostNodeDetails": "帖子节点详情",
+    "UpdateCheck": "更新检查",
+    "AutoUpdateScan": "自动更新扫描",
+    "VersionList": "版本列表",
+    "DependencyLookup": "依赖查询",
+    "ManualUpdateCheck": "手动更新检查",
+    "ScoreSubmission": "评分提交",
+    "Featured": "热门资源",
+    "WorldUpload": "世界上传",
+    "PublishedCheck": "已发布检查",
+    "ModpackFileInfo": "整合包文件信息",
+    "PostDetailsDialog": "帖子详情对话框",
+    "Unspecified": "后台"
+  },
+  "CommunityDownloadGuard": {
+    "DownloadExceedsSizeLimit": "下载内容超过大小上限（{0} 字节）。"
+  },
+  "CommunityManager": {
+    "HighlightDataLoadFailed": "高亮数据加载失败: {0}",
+    "ScoreApiReturnedEmpty": "评分接口返回为空",
+    "ScoreApiReturnedMalformed": "评分接口返回异常",
+    "NoStats": "暂无统计数据。",
+    "GetVersionListFailed": "获取版本列表失败: {0}: {1}",
+    "VersionListResponseMalformed": "版本列表返回异常: {0}",
+    "DownloadTrendsResponseMalformed": "下载趋势接口返回异常: {0}"
+  },
+  "VersionCatalogCache": {
+    "NoApiVersionSkippingApiMatch": "当前未提供 API 版本，跳过 API 版本匹配。game={0}",
+    "NoMatchingApiVersion": "未找到匹配的 API 版本: game={0}, api={1}",
+    "VersionMatchSucceeded": "版本匹配成功: game={0}, api={1}, matchedId={2}, matchedVersion={3}, matchedName={4}"
+  },
+  "LocalModReviewState": {
+    "ReadReviewsFailed": "读取本地资源评价失败: {0}",
+    "SaveReviewsFailed": "保存本地资源评价失败: {0}"
+  },
+  "PendingLocalModActions": {
+    "ProcessedPendingModAction": "已处理待关闭模组操作: reason={0}, action={1}, path={2}",
+    "ProcessPendingModActionFailed": "处理待关闭模组操作失败: reason={0}, action={1}, path={2}, error={3}",
+    "ReadPendingModManifestFailed": "读取待关闭模组清单失败: {0}",
+    "SavePendingModManifestFailed": "保存待关闭模组清单失败: {0}",
+    "MissingModPackageNameOrVersion": "缺少模组包名或版本，无法更新禁用状态。"
+  },
+  "DownloadQueueManager": {
+    "LoadDownloadQueueFailed": "加载下载队列失败: {0}",
+    "RestoreQueueItemFailed": "恢复下载队列单项失败: {0}"
+  },
+  "DownloadQueueDialog": {
+    "SelectedTask": "当前选择：任务 {0} - {1}",
+    "NoDownloadTasks": "暂无下载任务。",
+    "OnlyPendingDownloadsCanBeStarted": "只有待处理的下载才能启动。",
+    "OnlyPendingOrRunningCanRequestOverwrite": "只有待处理或进行中的下载才能请求覆盖确认。",
+    "OnlyAwaitingOverwriteCanBeConfirmed": "只有等待覆盖确认的下载才能确认。",
+    "OnlyAwaitingOverwriteCanBeCanceled": "只有等待覆盖确认的下载才能取消。",
+    "OnlyPausedDownloadsCanBeResumed": "只有已暂停的下载才能继续。",
+    "OnlyFinishedOrPausedCanBeRetried": "只有已完成或已暂停的下载才能重试。",
+    "SelectionHint": "点击任务即可选择，未选择时按钮会自动匹配任务。"
+  },
+  "DownloadQueuePersistence": {
+    "CleanImportedItemCacheFailed": "清理已导入项的下载缓存失败: {0}, {1}"
+  },
+  "DownloadFeedbackClient": {
+    "MissingFeedbackIdsSkipped": "下载反馈缺少 fileId/postId，已跳过记录。",
+    "RecordDownloadFeedbackFailed": "下载反馈记录失败: {0}: {1}",
+    "RecordDownloadFeedbackFaulted": "下载反馈记录异常: {0}",
+    "FeedbackAuthRefreshFailedReportingAnonymously": "反馈上报补取登录态失败，按匿名上报: {0}"
+  },
+  "AuthClient": {
+    "LoginRequestFailed": "登录请求失败: {0}",
+    "LoginResponseMalformed": "登录响应格式异常: {0}",
+    "LogoutRequestCompleted": "登出请求完成 ({0})",
+    "LogoutRequestFailed": "登出请求失败: {0}"
+  },
+  "LoginDialog": {
+    "LoggingIn": "登录中...",
+    "LoginResponseIsEmpty": "登录响应为空",
+    "LoginNetworkError": "网络错误: {0}",
+    "LoginResponseFormatError": "登录响应格式异常: {0}",
+    "CredentialFileFormatInvalid": "凭据文件格式无效。",
+    "OldCredentialFileFormatInvalid": "旧凭据文件格式无效。",
+    "LogIn": "登录"
+  },
+  "RemoteImportManager": {
+    "ZIPModpackHasBeenSavedLocally": "ZIP 整合包 {0} 已保存到本地。",
+    "ImportModpack": "导入整合包",
+    "Downloading": "正在下载：{0} ({1}/{2})",
+    "CheckingLocalResources": "正在检查本地资源...",
+    "LocalAlreadyExistsOverwriteIt": "本地已存在{0}\"{1}\"，是否覆盖更新？",
+    "DownloadArchiveFormat": "正在下载整合包：{0}",
+    "DownloadManifestFormat": "正在下载整合包清单：{0}",
+    "DownloadPackCompleteWithSkipped": "整合包下载完成：成功 {0} 项，失败 {1} 项，跳过 {2} 项。",
+    "DownloadPackComplete": "整合包下载完成：成功 {0} 项，失败 {1} 项。",
+    "DownloadFailedFormat": "下载失败：{0}",
+    "EnterResourceLink": "请输入资源链接。",
+    "InvalidUrl": "请输入有效的 http 或 https 链接。",
+    "CannotRecognizeFileName": "无法从链接中识别文件名。",
+    "UnsupportedFileExtension": "无法识别资源类型。",
+    "ImportDataIsEmpty": "导入数据为空。",
+    "CannotOverwriteBuiltInTexture": "不能覆盖内置材质：{0}",
+    "CannotOverwriteBuiltInSkin": "不能覆盖内置皮肤：{0}",
+    "ShowConflictDialogFailed": "显示冲突对话框失败: {0}",
+    "RemoteImportPrepareTaskFaulted": "远程导入准备任务异常: {0}",
+    "RemoteImportTaskFaulted": "远程导入任务异常: {0}",
+    "RemoteImportCompletionFaulted": "远程导入完成处理异常: {0}",
+    "StartModpackImport": "开始导入整合包 url={0} fileName={1}",
+    "ModpackManifestEmptyOrInvalid": "整合包清单为空或格式无效 url={0}",
+    "ModpackManifestDownloadFailed": "整合包清单下载失败 url={0} error={1}",
+    "ModpackImportFailed": "整合包导入失败 error={0}",
+    "SaveModpackManifestFailed": "保存整合包清单失败: {0}",
+    "SaveArchiveFailed": "保存整合包归档失败: {0}",
+    "DownloadInterruptedManifestKept": "已中断资源下载，仅保留 JSON 整合包清单。",
+    "ImportOrDownloadBusy": "当前已有导入或下载任务，请等待完成。",
+    "Manifest": "清单",
+    "DownloadComplete": "下载完成",
+    "ImportComplete": "导入完成",
+    "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
+    "HasNoDownloadLinkSkipped": "{0} 没有下载链接，已跳过。",
+    "UnknownItemCategory": "未知的子项类别：{0}",
+    "DataFileHostUnavailable": "{0} 无法导入：当前页面无法处理整合包数据文件，请在本地资源管理屏使用整合包下载。",
+    "Modpack": "整合包",
+    "Imported": "{0} 已导入。",
+    "ImportResource": "导入资源",
+    "Importing": "正在导入...",
+    "DownloadingFormat": "正在下载：{0}",
+    "DownloadingProgress": "正在下载...",
+    "DownloadPackPartialFailure": "整合包下载部分失败：成功 {0} 项，失败 {1} 项。",
+    "DownloadPackFailure": "整合包下载失败：成功 {0} 项，失败 {1} 项。"
+  },
+  "ModpackSourceResolver": {
+    "ModpackItemUrlDownloadFailedFallingBackToFileId": "整合包子项 url 下载失败，切换 fileId={0}: {1}",
+    "FileIdReturnedNoDownloadLink": "文件ID {0} 未返回有效下载链接。",
+    "GetFileInfoByFileIdFailed": "通过文件ID获取文件信息失败: {0}: {1}",
+    "GetFileInfoByFileIdMalformed": "通过文件ID获取文件信息返回异常: {0}"
+  },
+  "ModpackManifestParser": {
+    "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
+    "PackOnlySupportsZipOrJson": "整合包仅支持 .zip 和 .json 文件。",
+    "PackinfoJsonNotFoundInZipRoot": "ZIP 根目录未找到 packinfo.json。",
+    "ZipEntryExceedsSizeLimit": "ZIP 内嵌文件超过大小上限：{0}",
+    "ZipReadFailed": "ZIP 读取失败：{0}",
+    "ManifestJsonParseFailed": "清单 JSON 解析失败：{0}",
+    "ManifestMissingFieldName": "整合包清单缺少必填字段 name。",
+    "ManifestMissingFieldVersion": "整合包清单缺少必填字段 version。",
+    "ManifestMissingFieldDescription": "整合包清单缺少必填字段 description。",
+    "ManifestMissingFieldPackageName": "整合包清单缺少必填字段 packageName。",
+    "IconOnlySupportsPngOrWebp": "整合包图标仅支持 png 或 webp。",
+    "JsonPackIconMustBeUrl": "json 整合包的 icon 必须是网络链接。",
+    "ManifestHasNoValidItems": "整合包清单未读取到有效 items。"
+  },
+  "ModpackRegistry": {
+    "ModpackRecordCorrupted": "整合包记录已损坏: {0}，{1}",
+    "ReadModpackRecordFailed": "读取整合包记录失败 path={0} error={1}",
+    "CompareModpackSourceFailed": "比对整合包来源失败: path={0}, error={1}",
+    "ReadModpackRecordMetadataFailed": "读取整合包记录元数据失败: path={0}, error={1}",
+    "NoValidItemsRead": "未读取到有效 items。",
+    "DownloadedZipPackIsEmpty": "下载到的 ZIP 整合包为空。"
+  },
+  "ModpackFileConflictDialog": {
+    "ConflictAlreadyWaitingForUser": "已有整合包文件冲突等待用户处理。",
+    "IdenticalFileChooseAction": "本地已存在一模一样的文件名：{0}\n请选择如何处理。"
+  },
+  "Modpacks": {
+    "ReadModpackEnabledStateFailed": "读取整合包启用状态失败: {0}",
+    "LoadModpackFileInfoFailed": "加载整合包文件信息失败: {0}",
+    "GetModpackFileInfoFailed": "获取整合包文件信息失败 fileId={0}: {1}",
+    "UserIgnoredUnavailableModpackResources": "忽略最终无法获取的整合包资源并继续启动 failed={0}",
+    "SaveModpackEnabledStateFailed": "保存整合包启用状态失败: {0}",
+    "ClearModpackEnabledStateFailed": "清除整合包启用状态失败: {0}"
+  },
+  "ModpackRules": {
+    "PackItemIsEmpty": "整合包项目为空。",
+    "PackItemMissingTargetDirectory": "{0}：未指定 targetDirectory。",
+    "PackItemUrlAndFileIdBothEmpty": "{0}：url 和 fileId 不能同时为空。",
+    "PackItemFileNotFoundInArchive": "{0}：压缩包内未找到文件 {1}。",
+    "JsonPackNoLocalRelativePath": "{0}：json 整合包不支持本地相对路径。",
+    "PackItemDefaultName": "整合包项目"
+  },
+  "ModpackItemImporter": {
+    "ModinfoMissingSkipped": "{0}：模组文件缺少 modinfo.json，无法校验。",
+    "PackageNameMismatchSkipped": "{0}：模组包名不匹配（期望 {1}，实际 {2}），已跳过。",
+    "VersionMismatchSkipped": "{0}：模组版本不匹配（期望 {1}，实际 {2}），已跳过。"
+  },
+  "ModpackDataFiles": {
+    "DeleteModpackBackupFailed": "恢复成功后删除整合包备份失败（保留待下次清理）: {0}: {1}",
+    "CleanModpackCustomTempFileFailed": "清理整合包自定义文件临时文件失败 temp={0} error={1}",
+    "SaveModpackCustomConfigFailed": "保存整合包自定义配置失败 target={0} persisted={1} error={2}",
+    "RestoreModpackCustomFileFailed": "恢复整合包自定义文件失败 target={0} backup={1} error={2}",
+    "DataFileHasNoTargetPathSpecified": "{0}：数据文件未指定目标路径。",
+    "DataFileHasNoTargetPathSpecifiedPlain": "数据文件未指定目标路径。",
+    "CustomFileUrlHasNoFileName": "自定义文件的 url 中未包含有效文件名。",
+    "UnsafeCustomFileTargetPathRejected": "自定义文件目标路径不安全，已拒绝写入：{0}。",
+    "BackupFileDoesNotExist": "备份文件不存在：{0}"
+  },
+  "ModpackManifestLoadManager": {
+    "ReadModpackListFailed": "读取整合包列表失败: {0}",
+    "StaleModpackListTaskFailed": "已失效的整合包列表读取任务失败: {0}"
+  },
+  "TransactionalFileReplacement": {
+    "ScanResidualBackupsFailed": "扫描更新残留备份失败 root={0} error={1}",
+    "CleanResidualBackup": "清理更新残留备份 backup={0}",
+    "RollbackResidualBackup": "回滚更新残留备份 backup={0} original={1}",
+    "ProcessResidualBackupFailed": "处理更新残留备份失败 backup={0} error={1}",
+    "ScanResidualBackupSubdirectoryFailed": "扫描更新残留备份子目录失败 dir={0} error={1}",
+    "CleanModUpdateBackupFailed": "清理模组更新备份失败: {0}",
+    "CleanIncompleteModUpdateFileFailed": "清理未完成的模组更新文件失败: {0}",
+    "RestoreModUpdateBackupFailed": "还原模组更新备份失败: {0}",
+    "CleanOverwriteBackupFailed": "清理覆盖前备份失败: {0}",
+    "RestoreOverwriteBackupFailed": "还原覆盖前备份失败: {0}",
+    "StartupRollbackResidualBackupFailed": "启动回滚更新残留备份失败: {0}"
+  },
+  "PlayedTimeTracker": {
+    "ReadModPlayedTimeFailed": "读取模组游玩时间失败: {0}",
+    "SaveModPlayedTimeFailed": "保存模组游玩时间失败: {0}",
+    "PlayedTimeReportingDisabledSkipping": "游玩时间上报已关闭，跳过本次上报",
+    "SecondsFormat": "{0}秒",
+    "MinutesFormat": "{0}分钟",
+    "HoursMinutesFormat": "{0}小时{1}分钟",
+    "HoursFormat": "{0}小时",
+    "LessThanOneMinute": "<1分钟",
+    "PendingReportsEnqueued": "已将 {0} 条游玩时长写入待上报队列",
+    "PendingReportsTrimmed": "待上报队列超限，已丢弃最旧的 {0} 条",
+    "PendingReportsRetryStart": "检测到 {0} 条待补报的游玩时长，开始重试",
+    "PendingReportsOffline": "当前无网络连接，{0} 条游玩时长保留在待上报队列",
+    "PendingReportsKept": "服务端未完整接收本批游玩时长，保留队列等待下次重试",
+    "PendingReportsDequeued": "已从待上报队列移除 {0} 条成功记录",
+    "PendingReportsRemaining": "仍有 {0} 条待上报记录，将在下次启动或产生新记录时重试",
+    "PendingReportsSaveFailed": "保存待上报游玩时长失败: {0}",
+    "PendingReportsLoopFaulted": "游玩时长待上报循环异常: {0}"
+  },
+  "AuthSessionManager": {
+    "CreateLoginRequestFailed": "创建登录请求失败: {0}",
+    "LoginRequestFaulted": "登录请求异常: {0}",
+    "AuthSessionPollFaulted": "认证会话轮询异常: {0}",
+    "LoginFailed": "登录失败: {0}",
+    "ClearedUnreadableCredentials": "{0} 已清除无法读取的社区登录凭据",
+    "CredentialDecryptionFailedClearedOld": "社区登录凭据解密失败，已清除旧凭据",
+    "LoadCredentialsFailed": "加载社区登录凭据失败: {0}",
+    "SaveCredentialsFailed": "保存社区登录凭据失败: {0}",
+    "DeleteCredentialFileFailed": "删除社区登录凭据文件失败: {0}",
+    "TokenInvalidatedClearingLocalState": "检测到 token 失效（401/403），清除本地登录态",
+    "LogOut": "确认登出",
+    "LogOutOfTheCurrentCommunityAccount": "确定要退出当前社区账号吗？",
+    "PleaseEnterAccountAndPassword": "请输入账号和密码",
+    "LogoutFailedToast": "登出请求未完成，服务端登录状态可能仍然有效",
+    "TokenExpiredTitle": "登录已过期",
+    "TokenExpired": "登录状态已失效，请重新登录。",
+    "LoginFailedDefaultMessage": "登录失败"
+  },
+  "DownloadDialog": {
+    "DownloadingLabel": "正在下载",
+    "DownloadComplete": "下载完成。",
+    "DownloadingProgress": "正在下载...",
+    "DownloadFailed": "下载失败：{0}",
+    "Canceled": "已取消"
+  },
+  "DownloadFailureDialog": {
+    "DownloadError": "下载出错",
+    "UnknownError": "未知错误"
+  },
+  "DownloadFlowManager": {
+    "ModpackProcessingFaulted": "整合包处理异常: {0}",
+    "BackgroundTaskFailed": "后台任务失败: {0}, downloadFailed={1}, error={2}",
+    "DownloadQueueRestored": "已恢复下载队列: {0} 项",
+    "OldVersionDisabledPendingRestart": "已禁用旧版本 {0}，新下载的版本将在重启后生效",
+    "SaveDownloadQueueFailed": "保存下载队列失败: {0}",
+    "CleanDownloadTempFileFailed": "清理下载临时文件失败: {0}",
+    "DownloadTaskFaulted": "下载任务异常: {0}",
+    "DownloadFlowPollFaulted": "下载收尾轮询异常: {0}",
+    "BackgroundManifestLoadTaskFaulted": "后台加载整合包清单任务异常: {0}",
+    "BackgroundItemDownloadTaskFaulted": "后台整合包子项下载任务异常: {0}",
+    "ImportCompletedCallbackFaulted": "导入完成回调异常（导入本身已成功）: {0}",
+    "Failed": "失败",
+    "SkippedLocalDuplicates": "，另有 {0} 项因本地已有同名内容而跳过。",
+    "TheModpackManifestIsEmptyOrInvalid": "整合包清单为空或格式无效。",
+    "HasNoDownloadLinkSkipped": "{0} 没有下载链接，已跳过。",
+    "UnknownItemCategory": "未知的子项类别：{0}",
+    "DataFileHostUnavailable": "{0} 无法导入：当前页面无法处理整合包数据文件，请在本地资源管理屏使用整合包下载。",
+    "Imported": "{0} 已导入。",
+    "ImportResource": "导入资源",
+    "Importing": "正在导入...",
+    "DownloadingFormat": "正在下载：{0}",
+    "DownloadPackPartialFailure": "整合包下载部分失败：成功 {0} 项，失败 {1} 项。",
+    "DownloadPackFailure": "整合包下载失败：成功 {0} 项，失败 {1} 项。",
+    "DownloadCanceled": "已取消下载：{0}",
+    "ModpackBusyWait": "正在处理其他整合包，请稍后再试。",
+    "ModpackManifestSaveFailed": "整合包清单保存失败：{0}",
+    "DownloadPaused": "已暂停下载：{0}",
+    "DownloadFailed": "下载失败：{0}",
+    "ImportFailed": "导入失败：{0}",
+    "UnknownError": "未知错误",
+    "Canceled": "已取消",
+    "Yes": "是",
+    "No": "否",
+    "ConfirmDownloadAndEnable": "有 {0} 个子项，是否立即下载并启用？",
+    "ConfirmEnableAllReady": "所有子项已就绪，是否立即启用？",
+    "SubItemsHeader": "子项：",
+    "DownloadComplete": "{0}下载完成",
+    "FailedToLoadModpackManifest": "整合包清单加载失败：{0}",
+    "UnknownResource": "未知资源",
+    "ModpackDownloadFinishedSummary": "整合包下载完成：成功 {0} 项，失败 {1} 项。",
+    "StartDownloading": "开始下载{0}",
+    "DownloadPausedDownloaded": "已暂停下载：{0}（已下载 {1}）",
+    "AddedToDownloadQueue": "已加入下载队列：{0}",
+    "DuplicateDownloadQueued": "已跳过重复下载（队列中已有相同文件）：{0}",
+    "WaitingForOverwriteConfirmation": "等待替换确认",
+    "Completed": "已完成",
+    "Pausing": "暂停中",
+    "Canceling": "取消中",
+    "NoDownloadTaskCanBePausedOrResumed": "没有可暂停或继续的下载任务。",
+    "NoCancelableDownloadTasks": "没有可取消的下载任务。",
+    "NoRetryableDownloadTasks": "没有可重试的下载任务。",
+    "TaskCannotBeCanceled": "任务 {0} 不能取消。",
+    "TaskCannotBePausedOrResumed": "任务 {0} 不能暂停或继续。",
+    "TaskCannotBeRetried": "任务 {0} 不能重试。",
+    "TaskCannotBeCleared": "任务 {0} 不能清理。",
+    "RequeuedDownload": "已重新加入下载队列：{0}",
+    "ClearedDownloadTask": "已清理下载任务：{0}",
+    "ClearedDownloadTasks": "已清理 {0} 个下载任务。",
+    "SwitchedDownloadSource": "已切换下载源：{0}",
+    "Connecting": "正在连接：{0}",
+    "ChooseDownloadSource": "选择下载源",
+    "LocalAlreadyExistsChooseAction": "本地已存在\"{0}\"，请选择操作：",
+    "ModpackFileHasNoDownloadLink": "整合包文件 {0} 没有下载链接。",
+    "Downloading": "正在下载：{0} ({1})",
+    "DownloadingLabel": "下载中",
+    "Paused": "已暂停",
+    "AlreadyExistsReplace": "{0}重名,是否替换?",
+    "CancelingDownload": "正在取消下载：{0}",
+    "PausingDownload": "正在暂停下载：{0}",
+    "Queued": "等待中",
+    "ResumingDownload": "继续下载：{0}",
+    "DownloadSourceSwitchUnavailable": "当前链接无法切换下载源。",
+    "UnfinishedDownloadsBadge": "当前有{0}个下载未完成，点击查看",
+    "BackgroundDownloading": "正在后台下载：{0}",
+    "NetworkError": "网络连接失败，请检查网络后重试。"
+  },
+  "ModUpdateImporter": {
+    "CannotConfirmCurrentPackageName": "无法确认当前模组包名，已取消更新。",
+    "UpdatePackageInvalidOrCorrupted": "下载的更新包无效或已损坏，已取消更新。",
+    "UpdatePackagePackageNameMismatch": "下载的更新包不是当前模组：{0}。"
+  },
+  "CommunityUploadClient": {
+    "FileServerReturnedNoLink": "文件服务器未返回链接: {0}",
+    "FileServerUploadFailed": "文件服务器上传失败: {0}: {1}",
+    "GetUploadCredentialsFailed": "获取上传凭证失败: {0}: {1}",
+    "InvalidUploadUrl": "上传地址不合法: {0}",
+    "RegisterUploadFileFailed": "登记上传文件失败: {0}: {1}",
+    "RegisterUploadFileResponseMalformed": "登记上传文件返回异常: {0}",
+    "UploadCredentialsResponseMalformed": "上传凭证返回异常: {0}"
+  },
+  "ScmodArchiveReader": {
+    "DownloadedArchiveCorrupt": "下载到的 .scmod 不是有效压缩包，可能是下载源返回了错误内容或资源文件本身已损坏。",
+    "EntryNameMustBeInArchiveRoot": "条目名称必须位于归档根目录。",
+    "FileNotScmodArchive": "下载的文件不是有效的 scmod 压缩包。",
+    "ModinfoMissingInPackage": "更新包缺少 modinfo.json。",
+    "UpdatePackageDataIsEmpty": "更新包数据为空。",
+    "UpdatePackageDataUnreadable": "更新包数据不可读取。"
+  },
+  "FiltersDialog": {
+    "SelectFileType": "选择文件类型",
+    "SelectSortOrder": "排序方式和榜单",
+    "SelectVersionRange": "选择版本范围",
+    "SelectSection": "选择板块",
+    "SaveDefault": "保存为默认值",
+    "Saved": "已保存"
+  },
+  "GameUploadFileProvider": {
+    "CleanUploadTempFileFailed": "清理上传临时文件失败: {0}, {1}",
+    "CannotFindLocalResourcePath": "无法找到本地资源文件路径。",
+    "LocalFileDoesNotExistFormat": "本地文件不存在：{0}",
+    "NoLocalResourceSelected": "未选择本地资源。",
+    "UnsupportedUploadResourceTypeFormat": "暂不支持上传该资源类型：{0}"
+  },
+  "ModVersionWidget": {
+    "Files": "文件 {0}",
+    "Details": "详情",
+    "Collapse": "收起"
+  },
+  "ModVersionsDialog": {
+    "Current": "当前使用",
+    "NoVersions": "暂无版本。",
+    "NoDownloadableFiles": "暂无可下载文件。",
+    "DownloadsSize": "文件下载 {0}   大小 {1}",
+    "FullyCompatible": "完全兼容",
+    "PotentialCompatibilityIssues": "可能存在兼容性问题",
+    "Incompatible": "不兼容",
+    "NoCompatibilityVersionSpecified": "未标注适配版本",
+    "GameVersionsPublished": "{0}适配游戏版本：{1}   发布时间：{2}",
+    "Version": "版本",
+    "Published": "发布时间",
+    "UnnamedFile": "未命名文件",
+    "CommunityPost": "社区帖子"
+  },
+  "PlayedTimeClient": {
+    "PlayedTimeReportRejectedEntries": "模组游玩时间上报被服务端拒绝的条目: {0}",
+    "PlayedTimeReportFailed": "模组游玩时间上报失败: {0}"
+  },
+  "PostDetailsContentBuilder": {
+    "DisposePostDetailsTextureFailed": "释放帖子详情纹理失败: {0}",
+    "DisposeLatePostDetailsTextureFailed": "释放迟到帖子详情纹理失败: {0}",
+    "DisposeDuplicatePostDetailsTextureFailed": "释放重复帖子详情纹理失败: {0}",
+    "DecodePostDetailsImageFailed": "解析帖子详情图片失败: {0}, error={1}",
+    "RequestPostDetailsImageFailed": "请求帖子详情图片失败: {0}, error={1}",
+    "Image": "图片"
+  },
+  "PostDetailsDialog": {
+    "TranslatingTo": "正在翻译为 {0}...",
+    "AutomaticallyTranslatedTo": "已自动翻译为 {0}。",
+    "AutomaticTranslationFailed": "自动翻译失败：{0}",
+    "FailedToLoad": "{0}加载失败",
+    "Loading": "{0}加载中...",
+    "AutoTranslateFailed": "社区帖子自动翻译失败: {0}",
+    "NoDetails": "暂无详情内容。",
+    "PostDetails": "帖子详情"
+  },
+  "PostDetailsHeaderBuilder": {
+    "DownloadFile": "下载文件",
+    "UnknownError": "未知错误",
+    "CurrentVersion": "当前版本",
+    "LatestVersion": "最新版本",
+    "UnnamedVersion": "未命名版本",
+    "PublishStats": "发布统计",
+    "FailedToLoadStats": "统计加载失败：{0}",
+    "Last30DaysTotalVersionsFiles": "近30天下载 {0}，累计下载 {1}，版本 {2}，文件 {3}",
+    "NoDownloadsInTheLast30Days": "近30天暂无下载记录。",
+    "RecentDownloads": "最近下载",
+    "DailyDownloadsFormat": "{0}：{1} 次",
+    "VersionDownloads": "版本下载",
+    "VersionLast30DaysTotalFiles": "版本 {0}：近30天 {1}，累计 {2}，文件 {3}"
+  },
+  "PostIconLoader": {
+    "SkipOversizedPostIcon": "跳过过大的帖子图标: {0}, size={1}",
+    "DecodeRemoteIconFailed": "解析远程图标失败: {0}, error={1}",
+    "CreatePostIconTextureFailed": "创建帖子图标纹理失败: {0}, error={1}",
+    "RequestPostIconFailed": "请求帖子图标失败: {0}, error={1}"
+  },
+  "PostTreePresenter": {
+    "GetPostDetailsFailed": "获取帖子详情失败: {0}",
+    "LoadPostFailed": "加载帖子失败: {0}",
+    "Files": "文件 {0}",
+    "UpdateAvailable": "有更新",
+    "NoFiles": "无文件",
+    "PagePosts": "{0}，共 {3} 个帖子",
+    "NoPosts": "{0} · 暂无帖子",
+    "UnknownUser": "未知用户",
+    "PostSummaryFormat": "{0}  由{1}发布于{2}  总下载 {3}  共{4}个版本",
+    "Installed": "已安装",
+    "CurrentlyInstalled": "当前安装",
+    "Downloads": "文件下载 {0}",
+    "VersionFormat": "版本 {0}",
+    "ExpandToLoadFiles": "展开加载文件",
+    "File": "[文件] {0}",
+    "NoData": "无数据",
+    "NoResources": "无资源",
+    "LoadFailed": "{0} · 加载失败",
+    "PageUploads": "{0}，共 {3} 个文件",
+    "NoUploads": "{0} · 暂无文件"
+  },
+  "RestartConfirmDialog": {
+    "RestartRequired": "重启加载",
+    "UpdateComplete": "更新完成",
+    "ImportedRestartPrompt": "{0} 已导入，已标记为待重启加载，重启游戏后生效。是否立即重启？"
+  },
+  "ReviewSubmissionHandler": {
+    "ScoreSubmissionTaskFaulted": "评分提交任务异常: {0}",
+    "PleaseWait": "请稍候",
+    "PleaseLogInBeforeReviewing": "请先登录后再评价。",
+    "ReviewSubmissionFailed": "评价提交失败：{0}",
+    "ReviewSubmitted": "评价已提交",
+    "ReviewSubmittedToast": "本地资源评价已提交到社区。",
+    "Submitting": "正在提交",
+    "SubmittingPreviousReview": "正在提交上一条评价。",
+    "SubmittingReviewToTheCommunity": "评价正在提交到社区。"
+  },
+  "TreeViewWidget": {
+    "RowWidgetsRebuiltCallbackFaulted": "行组件重建回调异常: {0}"
+  },
+  "VersionDetailFormatter": {
+    "UnnamedVersion": "未命名版本"
+  },
+  "CommunitySettingsScreen": {
+    "StatusReady": "设置已就绪。",
+    "LogOut": "登出",
+    "LogIn": "登录",
+    "NotLoggedIn": "未登录",
+    "UnknownAccount": "未知账号"
   }
 }

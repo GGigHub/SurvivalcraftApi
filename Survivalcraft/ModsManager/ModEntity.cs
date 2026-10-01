@@ -16,6 +16,16 @@ namespace Game {
         public bool IsDisabled;
         public ModDisableReason DisableReason = ModDisableReason.Unknown;
         public long Size;
+        // 待重启是“未生效”而非禁用，与 IsDisabled 正交：磁盘有文件、包有效，本进程未加载，重启后生效
+        public bool IsPendingRestart;
+        // 磁盘文件已消失的“运行中尸体”：本体仍在 ModList（运行中可能读包内资源），重启后随 Initialize() 重建自然消失
+        public bool IsFileDeleted;
+        // 构造时记录的文件修改时间（Utc），供 rescan 对账识别“同路径覆盖升级”
+        public DateTime LastWriteTimeUtc;
+        // icon 两段加载的中间产物：后台线程解出的图像数据，GPU 上传延迟到主线程 EnsureIconTexture
+        private byte[] m_iconData;
+        // 构造相态：true = 以待重启实体构造（rescan 路径），查重豁免与日志分支据此区分
+        private bool m_constructAsPending;
         public bool IsDependencyChecked;
         public string LoadAfter;
         public static HashSet<string> InvalidDllNames = ["Survivalcraft.dll", "Engine.dll", "EntitySystem.dll"];
@@ -42,9 +52,12 @@ namespace Game {
             InitResources();
         }
 
-        public ModEntity(string FileName, ZipArchive zipArchive) {
+        // constructAsPending：以待重启实体构造（rescan 对账路径）。启动期构造保持 false。
+        public ModEntity(string FileName, ZipArchive zipArchive, bool constructAsPending = false) {
             ModFilePath = FileName;
             Size = Storage.GetFileSize(FileName);
+            LastWriteTimeUtc = Storage.GetFileLastWriteTime(FileName);
+            m_constructAsPending = constructAsPending;
             ModArchive = zipArchive;
             InitResources();
         }
@@ -52,6 +65,29 @@ namespace Game {
         public virtual void LoadIcon(Stream stream) {
             Icon = Texture2D.Load(stream);
             stream.Close();
+        }
+
+        // icon 两段加载的第一段：后台线程只能解数据（纯 CPU），GPU 上传直走 GL 必须留在主线程。
+        // guard 保证 webp 先到先得，保持原 "webp 优先于 png" 语义。
+        private void ReadIconData(Stream stream) {
+            if (m_iconData != null) {
+                stream.Close();
+                return;
+            }
+            using MemoryStream ms = new();
+            stream.CopyTo(ms);
+            m_iconData = ms.ToArray();
+            stream.Close();
+        }
+
+        /// <summary>
+        ///     主线程调用：icon 图像数据已解出而纹理未建时上传 GPU；无数据则保持 null（UI 有 null 兜底）。
+        /// </summary>
+        public void EnsureIconTexture() {
+            if (Icon == null && m_iconData != null) {
+                using MemoryStream ms = new(m_iconData, writable: false);
+                Icon = Texture2D.Load(ms);
+            }
         }
 
         /// <summary>
@@ -163,8 +199,8 @@ namespace Game {
                     ModFiles.Add(zipArchiveEntry.FilenameInZip, zipArchiveEntry);
                 }
             }
-            if (GetFile("icon.webp", LoadIcon)) {
-                GetFile("icon.png", LoadIcon);
+            if (GetFile("icon.webp", ReadIconData)) {
+                GetFile("icon.png", ReadIconData);
             }
             GetFile("modinfo.json",
                 stream => {
@@ -207,21 +243,37 @@ namespace Game {
                 DisableReason = ModDisableReason.InvalidPackageName;
                 return;
             }
-            ModEntity temp = ModsManager.ModListAll.FirstOrDefault(x => x.modInfo?.PackageName == modInfo.PackageName);
-            if (temp != null) {
-                IsDisabled = true;
-                DisableReason = ModDisableReason.Duplicated;
-                temp.IsDisabled = true;
-                temp.DisableReason = ModDisableReason.Duplicated;
-                return;
-            }
+            // 手动禁用检查必须先于包名查重：被禁用的模组"占名不占位"（不加载、不该连累别人）。
+            // 否则"禁用旧版 + 下载同包名新版"重启后，后构造方查重命中先构造方，
+            // 互标 Duplicated 把手动禁用升级成重复禁用，新版也被冤杀。
             if (ModsManager.DisabledMods.TryGetValue(modInfo.PackageName, out HashSet<string> disabledVersions)
                 && disabledVersions.Contains(modInfo.Version)) {
                 IsDisabled = true;
                 DisableReason = ModDisableReason.Manually;
                 return;
             }
-            LoadingScreen.Info($"[{modInfo.Name}](Version: {modInfo.Version}) Loaded {ModFiles.Count} resource files.");
+            // 查重跳过手动禁用的对手：同包名"禁用旧版 + 正常新版"是合法共存态。
+            // 不排除 Duplicated/依赖错误等已禁用对手——三副本场景靠链式互标保持全禁。
+            ModEntity temp = ModsManager.ModListAll.FirstOrDefault(x => x.modInfo?.PackageName == modInfo.PackageName
+                && !(x.IsDisabled && x.DisableReason == ModDisableReason.Manually));
+            // 相态不同（本实体待重启、对手已加载，或反之）即"覆盖升级待重启"状态，合法豁免；
+            // 仅同相态互标 Duplicated（已加载 vs 已加载、待重启 vs 待重启，后者引导用户删一个）。
+            // 启动期 ModListAll 全重建，不会遇到上轮 rescan 残留的 pending 实体，此分支只为健壮性保留。
+            bool bothSamePhase = temp != null && (m_constructAsPending == temp.IsPendingRestart);
+            if (bothSamePhase) {
+                IsDisabled = true;
+                DisableReason = ModDisableReason.Duplicated;
+                temp.IsDisabled = true;
+                temp.DisableReason = ModDisableReason.Duplicated;
+                return;
+            }
+            if (m_constructAsPending) {
+                // 待重启实体尚未加载内容，不打"已加载"日志避免误导
+                LoadingScreen.Info($"[{modInfo.Name}](Version: {modInfo.Version}) Pending restart.");
+            }
+            else {
+                LoadingScreen.Info($"[{modInfo.Name}](Version: {modInfo.Version}) Loaded {ModFiles.Count} resource files.");
+            }
         }
 
         public virtual void CombineContent() {
@@ -409,7 +461,8 @@ namespace Game {
         ///     检查依赖项
         /// </summary>
         public virtual void CheckDependencies(List<ModEntity> modEntities = null) {
-            if (IsDisabled || modInfo == null) {
+            // 待重启实体未生效：不参与依赖检查，也不被加入 ModList
+            if (IsDisabled || modInfo == null || IsPendingRestart) {
                 return;
             }
             modEntities ??= ModsManager.ModList;
@@ -421,7 +474,9 @@ namespace Game {
             }
             LoadingScreen.Info($"[{modInfo.Name}] Checking dependencies.");
             foreach ((string name, VersionRange range) in modInfo.DependencyRanges) {
+                // 排除待重启实体：其内容本进程未加载，当作依赖提供者会让依赖方带缺失依赖放行
                 ModEntity entity = ModsManager.ModListAll.Find(px => !px.IsDisabled
+                    && !px.IsPendingRestart
                     && px.modInfo != null
                     && px.modInfo.PackageName == name
                     && ((px.modInfo.NuGetVersion != null && range.Satisfies(px.modInfo.NuGetVersion)) || range.Equals(VersionRange.All) || px.modInfo.Version == range.OriginalString)

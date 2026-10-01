@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Xml.Linq;
 using Engine;
@@ -118,6 +119,12 @@ namespace Game {
                         LanguageControl.Get(fName, 7),
                         true,
                         delegate(IExternalContentProvider provider) {
+                            // 列举载体是专用屏的提供者（如中文社区）：跳转而非本屏承载，
+                            // 返回键经屏幕历史栈回到本屏。
+                            if (!string.IsNullOrEmpty(provider.ScreenNameForListing)) {
+                                ScreensManager.SwitchScreen(provider.ScreenNameForListing);
+                                return;
+                            }
                             m_externalContentProvider = provider;
                             m_listDirty = true;
                             SetPath(null);
@@ -258,32 +265,72 @@ namespace Game {
                 busyDialog.Progress,
                 delegate(Stream stream) {
                     busyDialog.LargeMessage = LanguageControl.Get(fName, 12);
-                    ExternalContentManager.ImportExternalContent(
-                        stream,
-                        entry.Type,
-                        Storage.GetFileName(entry.Path),
-                        delegate {
-                            stream.Dispose();
-                            DialogsManager.HideDialog(busyDialog);
-                            if (entry.Type != ExternalContentType.Mod) {
-                                DialogsManager.ShowDialog(
-                                    null,
-                                    new MessageDialog(
-                                        LanguageControl.Success,
-                                        string.Format(LanguageControl.Get("ContentScreen", "4"), Storage.GetFileName(entry.Path)),
-                                        LanguageControl.Ok,
-                                        null,
-                                        null
-                                    )
-                                );
-                            }
-                        },
-                        delegate(Exception error) {
-                            stream.Dispose();
-                            DialogsManager.HideDialog(busyDialog);
-                            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok, null, null));
+                    try {
+                        // 统一走 PrepareExternalContent 冲突检测（Mod 按包名、家具/材质/皮肤按归一名），
+                        // 命中时弹与链接导入一致的覆盖确认框。
+                        ExternalContentPreparation preparation = ExternalContentManager.PrepareExternalContent(
+                            0,
+                            Storage.GetFileName(entry.Path),
+                            entry.Type,
+                            stream);
+                        // 准备结束即可关下载 busy；确认框或导入 busy 由后续分支接管，
+                        // 不关会让原 busy 的全屏 CoverWidget 残留锁死输入。
+                        DialogsManager.HideDialog(busyDialog);
+                        if (preparation.RequiresOverwriteConfirmation) {
+                            DialogsManager.ShowDialog(
+                                null,
+                                new CommunityImportOverwriteDialog(
+                                    preparation.GetOverwriteConfirmationMessage(),
+                                    preparation.CanRenameOnOverwrite,
+                                    delegate(ImportOverwriteAction action) {
+                                        if (action == ImportOverwriteAction.Overwrite) {
+                                            ImportPrepared(preparation, overwriteExisting: true);
+                                        } else if (action == ImportOverwriteAction.Rename) {
+                                            ImportPrepared(preparation, overwriteExisting: false);
+                                        }
+                                    }
+                                )
+                            );
                         }
-                    );
+                        else {
+                            ImportPrepared(preparation, overwriteExisting: true);
+                        }
+                    }
+                    catch (Exception error) {
+                        DialogsManager.HideDialog(busyDialog);
+                        DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok, null, null));
+                    }
+                },
+                delegate(Exception error) {
+                    DialogsManager.HideDialog(busyDialog);
+                    DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok, null, null));
+                }
+            );
+        }
+
+        private static void ImportPrepared(ExternalContentPreparation preparation, bool overwriteExisting) {
+            CancellableBusyDialog busyDialog = new(LanguageControl.Get(fName, 12), false);
+            DialogsManager.ShowDialog(null, busyDialog);
+            ExternalContentManager.ImportPreparedExternalContentAsync(
+                preparation,
+                overwriteExisting,
+                delegate {
+                    DialogsManager.HideDialog(busyDialog);
+                    if (preparation.RequiresRestart) {
+                        RestartConfirmDialog.ShowModImportRestartConfirm(preparation.FileName, "cloud-import");
+                    }
+                    if (preparation.Type != ExternalContentType.Mod) {
+                        DialogsManager.ShowDialog(
+                            null,
+                            new MessageDialog(
+                                LanguageControl.Success,
+                                string.Format(LanguageControl.Get("ContentScreen", "4"), preparation.FileName),
+                                LanguageControl.Ok,
+                                null,
+                                null
+                            )
+                        );
+                    }
                 },
                 delegate(Exception error) {
                     DialogsManager.HideDialog(busyDialog);

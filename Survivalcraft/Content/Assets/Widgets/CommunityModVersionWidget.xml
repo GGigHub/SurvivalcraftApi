@@ -1,0 +1,17 @@
+<FixedSizePanelWidget xmlns="runtime-namespace:Game" HorizontalAlignment="Stretch" Margin="10, 4">
+  <RectangleWidget Name="ModVersionWidget.Background" FillColor="18, 18, 18, 215" OutlineColor="90, 90, 90, 190" OutlineThickness="1" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" Margin="15, 5">
+    <StackPanelWidget Direction="Vertical">
+      <LabelWidget Name="ModVersionWidget.VersionTitle" Margin4="0, 0, 276, 0" Color="255, 255, 255" FontScale="0.9" WordWrap="true" />
+      <LabelWidget Name="ModVersionWidget.FileTitle" Color="255, 255, 255" FontScale="0.7" WordWrap="true" Margin4="0, 5, 286, 5" IsVisible="false" />
+      <LabelWidget Name="ModVersionWidget.Compatibility" Color="150, 150, 150" FontScale="0.7" WordWrap="true" Margin4="0, 0, 286, 5" />
+    </StackPanelWidget>
+    <StackPanelWidget Name="ModVersionWidget.FilesPanel" Direction="Vertical" HorizontalAlignment="Stretch" IsVisible="false" />
+  </StackPanelWidget>
+  <StackPanelWidget Name="ModVersionWidget.ActionsPanel" Direction="Horizontal" HorizontalAlignment="Far" Margin="15, 5">
+    <BevelledButtonWidget Name="ModVersionWidget.DetailsButton" Size="128, 48" FontScale="0.8" HorizontalAlignment="Far" />
+    <CanvasWidget Size="8, 0" />
+    <BevelledButtonWidget Name="ModVersionWidget.DownloadButton" Size="128, 48" FontScale="0.8" HorizontalAlignment="Far" IsVisible="false" />
+    <BevelledButtonWidget Name="ModVersionWidget.FilesButton" Size="128, 48" FontScale="0.8" HorizontalAlignment="Far" IsVisible="false" />
+  </StackPanelWidget>
+</FixedSizePanelWidget>

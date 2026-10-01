@@ -161,6 +161,21 @@ namespace Game {
                     ModsManager.Initialize();
                 }
             );
+            AddLoadAction(delegate {
+                // 中文社区组合根接线：传输反馈的登录态回退延迟求值（仅真正上报时解析），接线前匿名上报。
+                TransferManager.ConfigureFeedbackProviders(
+                    () => AuthSessionManager.Instance.CurrentToken,
+                    () => AuthSessionManager.Instance.ApiBaseUrl);
+                // 按当前服务器激活会话（先于任何设置写入）：ApiBaseUrl 派生自
+                // CommunityServerManager.CurrentChineseInfo，后续切服由 ChangeChineseInfo 直接通知。
+                AuthSessionManager.Instance.OnServerSwitched();
+                TransactionalFileReplacement.RecoverLeftoverBackups(ModsManager.ModsPath, ModsManager.DocPath);
+                // 先于一切业务读取：修复上次进程死于 MoveFile 两步之间时 CommunityStoragePaths.RootDirectory 下的状态丢失。
+                JsonFileStore.RecoverLeftoverTempFiles(CommunityStoragePaths.RootDirectory);
+                // ModPacks 主文件/meta 与 JsonFileStore 同款 .tmp 命名，同因写入：Move 阶段死亡时包文件唯一副本成孤儿 .tmp。
+                JsonFileStore.RecoverLeftoverTempFiles(ModpackRegistry.Shared.DirectoryPath);
+                PendingLocalModActions.Process("startup-early", includeSettingActions: false);
+            });
             AddLoadAction(
                 delegate {
 #if ANDROID
@@ -192,7 +207,8 @@ namespace Game {
                     //根据加载顺序排序后的结果
                     ModsManager.ModList.Clear();
                     foreach (ModEntity item in ModsManager.ModListAll) {
-                        if (item.IsDependencyChecked || item.IsDisabled) {
+                        // 待重启实体未生效，不参与依赖检查也不进 ModList（后续内容加载只遍历 ModList，自然不可达）
+                        if (item.IsDependencyChecked || item.IsDisabled || item.IsPendingRestart) {
                             continue;
                         }
                         item.CheckDependencies(ModsManager.ModList);
@@ -296,7 +312,7 @@ namespace Game {
 #if BROWSER
                             LanguageControl.LanguageTypes.Add(fileName);
 #else
-                            CultureInfo cultureInfo = new(fileName.EndsWith("-old") ? fileName.Substring(0, fileName.Length - 4) : fileName, false);
+                            CultureInfo cultureInfo = new(fileName, false);
                             LanguageControl.LanguageTypes.TryAdd(fileName, cultureInfo); //第二个参数应为CultureInfo
 #endif
                         }
@@ -542,10 +558,21 @@ namespace Game {
                 }
             );
             AddLoadAction(KeyCompatibleGroupsManager.Initialize); //初始化按键兼容组
+            AddLoadAction(delegate {
+                PendingLocalModActions.Process("startup");
+                // 开机补报：重试上次会话遗留的待上报游玩时长（队列见 PlayedTimeTracker）。
+                PlayedTimeTracker.RetryPendingReports();
+                // 全局帧泵：下载收尾/自动更新/认证轮询改由引擎 Window.Frame 驱动，不再依赖 mod 屏 Update。
+                CommunityFramePump.Initialize();
+            });
             AddLoadAction(
                 delegate {
+                    string restartReturnScreen = ScreensManager.ConsumeRestartReturnScreen();
                     if (Program.StartupParameters.TryGetValue("play", out string worldDirectory)) {
                         ScreensManager.SwitchScreen("Play", worldDirectory);
+                    }
+                    else if (restartReturnScreen != null) {
+                        ScreensManager.SwitchScreen(restartReturnScreen);
                     }
                     else {
                         ScreensManager.SwitchScreen("MainMenu");
@@ -577,11 +604,14 @@ namespace Game {
             AddLoadAction(delegate { AddScreen("Game", new GameScreen()); });
             AddLoadAction(delegate { AddScreen("TrialEnded", new TrialEndedScreen()); });
             AddLoadAction(delegate { AddScreen("ExternalContent", new ExternalContentScreen()); });
-            AddLoadAction(delegate { AddScreen("CommunityContent", new CommunityContentScreen()); });
             AddLoadAction(delegate { AddScreen("OriginalCommunityContent", new OriginalCommunityContentScreen()); });
+            AddLoadAction(delegate { AddScreen("CommunityContent", new CommunityScreen()); });
+            AddLoadAction(delegate { AddScreen("CommunitySettings", new CommunitySettingsScreen()); });
+            AddLoadAction(delegate { AddScreen("CommunityMyPublished", new CommunityMyPublishedScreen()); });
             AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
             AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });
             AddLoadAction(delegate { AddScreen("ModsManageContent", new ModsManageContentScreen()); });
+            AddLoadAction(delegate { AddScreen("ModpacksManageContent", new ModpacksManageContentScreen()); });
             AddLoadAction(delegate { AddScreen("Releases", new ReleasesScreen()); });
             /*AddLoadAction(delegate
             {

@@ -1,0 +1,38 @@
+<Screen xmlns="runtime-namespace:Game">
+  <PanoramaWidget />
+  <StackPanelWidget Direction="Horizontal">
+    <CanvasWidget Style="{Widgets/TopBarContents}">
+      <LabelWidget Name="TopBar.Label" Text="[CommunityMyPublished:Title]" />
+    </CanvasWidget>
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0, 8">
+      <StackPanelWidget Name="CommunityMyPublishedScreen.LocalTypeOptionsPanel" Direction="Horizontal" VerticalAlignment="Center">
+        <BevelledButtonWidget Name="CommunityMyPublishedScreen.TypeButton" Text="[CommunityScreen:Type]" Style="{Styles/ButtonStyle_205x60}" Margin="5, 0" />
+        <BevelledButtonWidget Name="CommunityMyPublishedScreen.UnpublishedButton" Text="[CommunityScreen:UnpublishedOnly]" Style="{Styles/ButtonStyle_205x60}" Margin="5, 0" />
+      </StackPanelWidget>
+      <CanvasWidget Size="Infinity, Infinity" Margin="10, 8">
+        <BevelledRectangleWidget Style="{Styles/Area}" />
+        <StackPanelWidget Direction="Vertical">
+          <LabelWidget Name="CommunityMyPublishedScreen.PostsStatusLabel" Text="" FontScale="0.9" Color="255, 255, 255" Margin="10, 4" HorizontalAlignment="Stretch" />
+          <CanvasWidget Size="Infinity, Infinity">
+            <CommunityTreeViewWidget Name="CommunityMyPublishedScreen.PostsTree" Direction="Vertical" ItemSize="58" Margin="3, 3" />
+          </CanvasWidget>
+        </StackPanelWidget>
+      </CanvasWidget>
+      <StackPanelWidget Direction="Horizontal" Margin="5, 0">
+        <StackPanelWidget Name="CommunityMyPublishedScreen.PaginationPanel" Direction="Horizontal" VerticalAlignment="Center">
+          <BevelledButtonWidget Name="CommunityMyPublishedScreen.PrevPageButton" Style="{Styles/ButtonStyle_ArrowLeft}" />
+          <CanvasWidget Size="60, 46" VerticalAlignment="Center" MarginLeft="6">
+            <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
+            <TextBoxWidget Name="CommunityMyPublishedScreen.PageJumpBox" Title="[CommunityScreen:Page]" Description="[CommunityScreen:Page]" Size="60, 46" MaximumLength="4" Margin="8, 0" />
+          </CanvasWidget>
+          <BevelledButtonWidget Name="CommunityMyPublishedScreen.PageJumpButton" Text="[CommunityScreen:Go]" Style="{Styles/ButtonStyle_70x60}" FontScale="0.9" />
+          <BevelledButtonWidget Name="CommunityMyPublishedScreen.NextPageButton" Style="{Styles/ButtonStyle_ArrowRight}" />
+        </StackPanelWidget>
+        <CanvasWidget Size="Infinity, 0" />
+        <BevelledButtonWidget Name="CommunityMyPublishedScreen.ShareLinkButton" Text="[CommunityScreen:ShareLink]" Style="{Styles/ButtonStyle_205x60}" IsVisible="false" VerticalAlignment="Center" />
+        <CanvasWidget Size="10, 0" />
+        <BevelledButtonWidget Name="CommunityMyPublishedScreen.DownloadButton" Text="[CommunityScreen:Download]" Style="{Styles/ButtonStyle_205x60}" VerticalAlignment="Center" />
+      </StackPanelWidget>
+    </StackPanelWidget>
+  </StackPanelWidget>
+</Screen>

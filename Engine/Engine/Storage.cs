@@ -113,6 +113,22 @@ namespace Engine {
 
         public static long GetFileSize(string path) => new FileInfo(ProcessPath(path, false, m_isAndroidPlatform)).Length;
 
+        /// <summary>
+        /// 尝试获取文件大小：路径为空、文件不存在或读取失败时返回 false，不抛异常。
+        /// </summary>
+        public static bool TryGetFileSize(string path, out long size) {
+            try {
+                if (!string.IsNullOrWhiteSpace(path) && FileExists(path)) {
+                    size = GetFileSize(path);
+                    return true;
+                }
+            }
+            catch {
+            }
+            size = 0;
+            return false;
+        }
+
         public static DateTime GetFileLastWriteTime(string path) => File.GetLastWriteTimeUtc(ProcessPath(path, false, m_isAndroidPlatform));
 
         public static Stream OpenFile(string path, OpenFileMode openFileMode) {
@@ -142,6 +158,30 @@ namespace Engine {
 
         public static void DeleteFile(string path) {
             File.Delete(ProcessPath(path, true, m_isAndroidPlatform));
+        }
+
+        /// <summary>
+        /// 删除已存在的文件：路径为空或文件不存在时不做任何事；文件被占用等真实 IO 错误照常抛出。
+        /// </summary>
+        public static void DeleteFileIfExists(string path) {
+            if (string.IsNullOrWhiteSpace(path) || !FileExists(path)) {
+                return;
+            }
+            DeleteFile(path);
+        }
+
+        /// <summary>
+        /// 尽力删除文件：任何失败（含真实 IO 错误）返回 false，不抛异常；
+        /// 返回 true 表示文件已删除或本就不存在。
+        /// </summary>
+        public static bool TryDeleteFile(string path) {
+            try {
+                DeleteFileIfExists(path);
+                return true;
+            }
+            catch {
+                return false;
+            }
         }
 
         public static void CopyFile(string sourcePath, string destinationPath) {
@@ -235,6 +275,30 @@ namespace Engine {
             Directory.Delete(ProcessPath(path, true, m_isAndroidPlatform), recursive);
         }
 
+        /// <summary>
+        /// 删除已存在的目录：路径为空或目录不存在时不做任何事；目录被占用等真实 IO 错误照常抛出。
+        /// </summary>
+        public static void DeleteDirectoryIfExists(string path, bool recursive) {
+            if (string.IsNullOrWhiteSpace(path) || !DirectoryExists(path)) {
+                return;
+            }
+            DeleteDirectory(path, recursive);
+        }
+
+        /// <summary>
+        /// 尽力删除目录：任何失败（含真实 IO 错误）返回 false，不抛异常；
+        /// 返回 true 表示目录已删除或本就不存在。
+        /// </summary>
+        public static bool TryDeleteDirectory(string path, bool recursive) {
+            try {
+                DeleteDirectoryIfExists(path, recursive);
+                return true;
+            }
+            catch {
+                return false;
+            }
+        }
+
         public static IEnumerable<string> ListFileNames(string path) =>
             from s in Directory.EnumerateFiles(ProcessPath(path, false, m_isAndroidPlatform)) select Path.GetFileName(s);
 
@@ -304,6 +368,33 @@ namespace Engine {
             string fileName = GetFileName(path);
             int num = fileName.LastIndexOf('.');
             return num >= 0 ? fileName.Substring(0, num) : fileName;
+        }
+
+        /// <summary>
+        /// .NET BCL 语义的扩展名获取（System.IO.Path.GetExtension 同规则）：
+        /// 点文件（名字本身即 ".xxx"，如 ".gitignore"）判无扩展名返回空串。
+        /// GetExtension 是手写简化实现，会把点文件整体当扩展名，两者不可混用。
+        /// 输入允许完整路径，内部先取文件名末段。
+        /// </summary>
+        public static string GetExtensionBCL(string path) {
+            string fileName = GetFileName(path ?? string.Empty);
+            string extension = GetExtension(fileName);
+            return string.Equals(fileName, extension, StringComparison.Ordinal)
+                ? string.Empty
+                : extension;
+        }
+
+        /// <summary>
+        /// .NET BCL 语义的取文件名去扩展名（System.IO.Path.GetFileNameWithoutExtension
+        /// 同规则）：点文件保留全名。GetFileNameWithoutExtension 的手写简化实现会把
+        /// 点文件名清成空串。与 GetExtensionBCL 配对使用。
+        /// </summary>
+        public static string GetFileNameWithoutExtensionBCL(string path) {
+            string fileName = GetFileName(path ?? string.Empty);
+            string extension = GetExtensionBCL(fileName);
+            return string.IsNullOrEmpty(extension)
+                ? fileName
+                : fileName[..^extension.Length];
         }
 
         public static string GetDirectoryName(string path) {
@@ -502,6 +593,61 @@ namespace Engine {
                 sanitized.Append(InvalidFileNameChars.Contains(c) ? replacement : c);
             }
             return sanitized.ToString();
+        }
+
+        private static readonly string[] s_windowsReservedSegmentNames = [
+            "CON", "PRN", "AUX", "NUL",
+            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+        ];
+
+        private const int MaxFileNameSegmentLength = 200;
+
+        /// <summary>
+        /// 段级文件名清洗：非法字符与引号/分隔符替换为 '_'、剥离结尾的空格与点
+        /// （Win32 会静默剥离，先行处理保证记录名与磁盘名一致）、Windows 保留设备名
+        /// 加 '_' 前缀、超长截断（不产出孤立代理项，截断后重剥尾点空格）。
+        /// 与 <see cref="SanitizeFileName"/> 不同：后者逐字符替换为给定 replacement，
+        /// 不处理保留名与长度。空输入返回 fallback。
+        /// </summary>
+        public static string SanitizeFileNameSegment(string name, string fallback = "resource") {
+            string safeName = string.IsNullOrWhiteSpace(name) ? fallback : name.Trim();
+            foreach (char c in InvalidFileNameChars) {
+                safeName = safeName.Replace(c, '_');
+            }
+            safeName = safeName.Replace('"', '_').Replace('\\', '_').Replace('/', '_');
+            safeName = safeName.TrimEnd(' ', '.');
+            if (string.IsNullOrWhiteSpace(safeName)) {
+                safeName = fallback;
+            }
+            if (IsWindowsReservedFileName(safeName)) {
+                safeName = "_" + safeName;
+            }
+            if (safeName.Length > MaxFileNameSegmentLength) {
+                safeName = safeName[..MaxFileNameSegmentLength];
+                if (safeName.Length > 0 && char.IsHighSurrogate(safeName[^1])) {
+                    safeName = safeName[..^1];
+                }
+                safeName = safeName.TrimEnd(' ', '.');
+                if (string.IsNullOrWhiteSpace(safeName)) {
+                    safeName = fallback;
+                }
+            }
+            return safeName;
+        }
+
+        /// <summary>
+        /// Windows 保留设备名判定（CON/PRN/AUX/NUL/COM1-9/LPT1-9）：
+        /// 按第一个点号前的茎名判断，与 Win32 行为一致。
+        /// </summary>
+        private static bool IsWindowsReservedFileName(string name) {
+            string stem = (name ?? string.Empty).Split('.')[0];
+            foreach (string reserved in s_windowsReservedSegmentNames) {
+                if (string.Equals(stem, reserved, StringComparison.OrdinalIgnoreCase)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /*

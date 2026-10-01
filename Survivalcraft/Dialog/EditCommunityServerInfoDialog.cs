@@ -18,8 +18,11 @@ namespace Game {
 
         public EditCommunityServerInfoDialog(SelectCommunityServerDialog parentDialog, CommunityServerManager.Info info = null) {
             m_parentDialog = parentDialog;
+            bool selectOnly = parentDialog != null && parentDialog.m_selectOnly;
             if (info == null) {
-                m_info = CommunityServerManager.DefaultOriginalInfo.Clone();
+                // 仅选择模式只服务中文社区栈：新增条目克隆中文默认（克隆出的 Original 条目
+                // 在仅选择列表中不可见，会产生"添加了却看不到"的怪象）
+                m_info = (selectOnly ? CommunityServerManager.DefaultChineseInfo : CommunityServerManager.DefaultOriginalInfo).Clone();
                 m_changed = true;
                 m_toAdd = true;
             }
@@ -60,6 +63,10 @@ namespace Game {
             }else {
                 m_originalCheckbox.IsChecked = true;
             }
+            if (selectOnly) {
+                // 仅选择模式锁中文类型：列表只列 Chinese 条目，允许切 Original 会造出不可见条目
+                m_originalCheckbox.IsEnabled = false;
+            }
             m_nameTextBox.Text = m_info.Name;
             m_apiUrlTextBox.Text = m_info.ApiUrl;
             m_websiteUrlTextBox.Text = m_info.WebsiteUrl;
@@ -90,14 +97,16 @@ namespace Game {
             m_removeButton.IsEnabled = !m_changed;
             if (m_okButton.IsClicked) {
                 if (m_changed) {
+                    // 字段回写在新增/编辑两分支统一执行：原先新增分支不回写，AddServer 收到的
+                    // 是构造时的克隆件（默认 URL），用户填的名称/网址被静默丢弃
+                    m_info.Type = m_chineseCheckbox.IsChecked ? CommunityServerManager.Type.Chinese : CommunityServerManager.Type.Original;
+                    m_info.Name = m_nameTextBox.Text;
+                    m_info.ApiUrl = m_apiUrlTextBox.Text;
+                    m_info.WebsiteUrl = m_websiteUrlTextBox.Text;
                     if (m_toAdd) {
                         m_parentDialog.AddServer(m_info);
                     }
                     else {
-                        m_info.Type = m_chineseCheckbox.IsChecked ? CommunityServerManager.Type.Chinese : CommunityServerManager.Type.Original;
-                        m_info.Name = m_nameTextBox.Text;
-                        m_info.ApiUrl = m_apiUrlTextBox.Text;
-                        m_info.WebsiteUrl = m_websiteUrlTextBox.Text;
                         m_parentDialog.UpdateServerList();
                         m_parentDialog.m_listPanel.SelectedItem = m_info;
                     }

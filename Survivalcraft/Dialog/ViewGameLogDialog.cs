@@ -78,7 +78,9 @@ namespace Game {
             else if (m_filter == LogType.Error) {
                 m_filterButton.Text = LanguageControl.Get(fName, "17");
             }
-            if (m_uploadButton.IsClicked) {
+            /*if (m_uploadButton.IsClicked) {
+                // 死路：上传走 /com/files/upload（旧云盘接口，已死）且依赖恒空的 ScpboxAccessToken，
+                // 现在实际只会弹出"请先登录"提示；待新接口日志上传方案后再接。
                 if (string.IsNullOrEmpty(SettingsManager.ScpboxAccessToken)) {
                     MessageDialog messageDialog = new(
                         LanguageControl.Get(fName, 1),
@@ -104,7 +106,7 @@ namespace Game {
                     GameLogSink.m_stream.CopyTo(memoryStream);
                     memoryStream.Seek(0, SeekOrigin.Begin);
                     WebManager.Post(
-                        $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/files/upload",
+                        $"{CommunityServerManager.CurrentApiBaseUrl}/com/files/upload",
                         null,
                         dictionary,
                         memoryStream,
@@ -122,7 +124,7 @@ namespace Game {
                         }
                     );
                 }
-            }
+            }*/
         }
 
         public void PopulateList() {

@@ -134,7 +134,7 @@ namespace Game {
 #endif
             if (CanDownloadMotd) {
                 DownloadMotd();
-                CommunityContentManager.IsAdmin(new CancellableProgress(), delegate(bool isAdmin) { m_isAdmin = isAdmin; }, delegate { });
+                //CommunityContentManager.IsAdmin(new CancellableProgress(), delegate(bool isAdmin) { m_isAdmin = isAdmin; }, delegate { });
                 CanDownloadMotd = false;
             }
             if (MessageOfTheDay == null
@@ -243,6 +243,8 @@ namespace Game {
             }
         }
 
+        // 零调用（原唯一调用者：本文件公告编辑流程，现已注释）；旧管理接口 /com/api/zh/setnotice 已死。
+        [Obsolete]
         public static void SaveBulletin(string dataString, CancellableProgress progress, Action<byte[]> success, Action<Exception> failure) {
             progress = progress ?? new CancellableProgress();
             if (!WebManager.IsInternetConnectionAvailable()) {
@@ -317,7 +319,9 @@ namespace Game {
                     content,
                     time,
                     delegate { SettingsManager.BulletinTime = m_bulletin.Time; },
-                    delegate(LabelWidget titleLabel, LabelWidget contentLabel) {
+                    null,
+                    null
+                    /*delegate(LabelWidget titleLabel, LabelWidget contentLabel) {
                         DialogsManager.ShowDialog(
                             null,
                             new TextBoxDialog(
@@ -414,11 +418,11 @@ namespace Game {
                                 Log.Warning($"SaveBulletin:{e.Message}");
                             }
                         );
-                    }
+                    }*/
                 );
-                CommunityContentManager.IsAdmin(new CancellableProgress(), delegate(bool isAdmin) { m_isAdmin = isAdmin; }, delegate { });
-                bulletinDialog.m_editButton.IsVisible = m_isAdmin;
-                bulletinDialog.m_updateButton.IsVisible = m_isAdmin;
+                //CommunityContentManager.IsAdmin(new CancellableProgress(), delegate(bool isAdmin) { m_isAdmin = isAdmin; }, delegate { });
+                bulletinDialog.m_editButton.IsVisible = false;
+                bulletinDialog.m_updateButton.IsVisible = false;
                 DialogsManager.ShowDialog(null, bulletinDialog);
                 CanShowBulletin = false;
             }

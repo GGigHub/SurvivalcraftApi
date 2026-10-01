@@ -273,9 +273,17 @@ namespace Game {
         public static string MotdUpdateUrl { get; set; }
 
         public static string MotdUpdateCheckUrl { get; set; }
-        public static string ScpboxAccessToken { get; set; }
 
-        public static string ScpboxUserInfo { get; set; }
+        // 已废置：getter 恒空、写值丢弃，仅为旧代码编译保留。社区认证改由
+        // AuthSessionManager + AuthenticationSessionStore（per-URL 加密凭据文件）承载。
+#pragma warning disable CS9266 // 属性 '{1}' 的 '{0}' 访问器应使用 'field'，因为另一个访问器正在使用它。
+        [Obsolete]
+        public static string ScpboxAccessToken { get => string.Empty; set; }
+
+        // 已废置：旧昵称/账号展示缓存（仅剩旧社区屏读取）；新栈用户信息在 AuthSessionManager.CurrentUser。
+        [Obsolete]
+        public static string ScpboxUserInfo { get => string.Empty; set; }
+#pragma warning restore CS9266 // 属性 '{1}' 的 '{0}' 访问器应使用 'field'，因为另一个访问器正在使用它。
 
         public static bool MotdUseBackupUrl { get; set; }
 
@@ -292,6 +300,53 @@ namespace Game {
         public static CommunityContentMode CommunityContentMode { get; set; }
 
         public static CommunityContentMode OriginalCommunityContentMode { get; set; }
+
+        // 每次手动选择下载源；false = 直接使用 CommunityDownloadSourceManager.CurrentDefaultInfo。
+        // 旧 SelectionMode 枚举（Default/ManualSelect/CustomDefault）已删：Default 与 CustomDefault
+        // + 默认线路语义重复，ManualSelect 收编为本布尔；已存枚举整数值载入时类型不符按默认处理
+        public static bool CommunityDownloadSourceManualSelectEnabled { get; set; }
+
+        // 用户自建下载源列表；须先于 CommunityDefaultDownloadSourceName 反序列化（默认源可能指向自建条目）
+        public static string CommunityDownloadSourceUserInfos {
+            get {
+                if (CommunityDownloadSourceManager.UserInfos.Count == 0) {
+                    return string.Empty;
+                }
+                List<string> results = [];
+                foreach (CommunityDownloadSourceManager.Info info in CommunityDownloadSourceManager.UserInfos) {
+                    results.Add(info.ToString());
+                }
+                return string.Join("||", results);
+            }
+            set {
+                if (string.IsNullOrEmpty(value)) {
+                    return;
+                }
+                string[] array1 = value.Split("||", StringSplitOptions.RemoveEmptyEntries);
+                foreach (string str in array1) {
+                    CommunityDownloadSourceManager.Info info = CommunityDownloadSourceManager.Info.FromString(str);
+                    if (info != null) {
+                        CommunityDownloadSourceManager.UserInfos.Add(info);
+                    }
+                }
+                // 默认源名可能先于本列表到达（Settings.xml 键序不保证），到齐后重放解析
+                CommunityDownloadSourceManager.ApplyPendingDefaultName();
+                // 同序依赖：LastSelected* 服务器恢复可能先于此列表，到齐后重放
+                CommunityServerManager.ApplyPendingRestoredInfos();
+            }
+        }
+
+        // 默认下载源按名称存取（身份即名称）；指向尚未载入/已删除条目时由管理器 pending 机制兜底
+        public static string CommunityDefaultDownloadSourceName {
+            get => CommunityDownloadSourceManager.CurrentDefaultInfo.Name;
+            set => CommunityDownloadSourceManager.SetPendingDefaultName(value);
+        }
+
+        public static bool CommunityApplyDownloadSourceToUpdates { get; set; }
+
+        public static bool CommunityPlayedTimeReportingEnabled { get; set; } = true;
+
+        public static bool CommunityPostDetailsAutoTranslateEnabled { get; set; }
 
         public static bool MultithreadedTerrainUpdate { get; set; }
 
@@ -454,13 +509,20 @@ namespace Game {
 
         public static string LastSelectedOriginalCommunityInfo {
             get => CommunityServerManager.CurrentOriginalInfo.ToString();
-            set => CommunityServerManager.Info.FromString(value);
+            // 按值匹配解析回列表内引用身份；指向已删除条目时维持默认（pending 机制见管理器）
+            set => CommunityServerManager.RestoreOriginalInfo(CommunityServerManager.Info.FromString(value));
         }
 
         public static string LastSelectedChineseCommunityInfo {
             get => CommunityServerManager.CurrentChineseInfo.ToString();
-            set => CommunityServerManager.Info.FromString(value);
+            set => CommunityServerManager.RestoreChineseInfo(CommunityServerManager.Info.FromString(value));
         }
+
+        /// <summary>
+        ///     重启直达目标屏名（ScreensManager.RestartGameToScreen 写入，
+        ///     LoadingScreen 完成加载时消费并清空）。瞬态值，正常驻留不超过一次重启。
+        /// </summary>
+        public static string RestartReturnScreen { get; set; } = string.Empty;
 
         static string m_databaseClassSubstitutes;
 
@@ -585,9 +647,9 @@ namespace Game {
                 MinimumDragDistance = 10f;
                 HorizontalCreativeFlight = false;
                 DropboxAccessToken = string.Empty;
-                ScpboxAccessToken = string.Empty;
-                MotdUpdateUrl = $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/motd?v={0}&l={1}";
-                MotdUpdateCheckUrl = $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/motd?v={0}&cmd=version_check&platform={1}&apiv={2}&l={3}";
+                //ScpboxAccessToken = string.Empty;
+                MotdUpdateUrl = $"{CommunityServerManager.CurrentApiBaseUrl}/com/motd?v={0}&l={1}";
+                MotdUpdateCheckUrl = $"{CommunityServerManager.CurrentApiBaseUrl}/com/motd?v={0}&cmd=version_check&platform={1}&apiv={2}&l={3}";
                 MotdUpdatePeriodHours = 12.0;
                 MotdLastUpdateTime = DateTime.MinValue;
                 MotdLastDownloadedData = string.Empty;
@@ -595,6 +657,12 @@ namespace Game {
                 LastLaunchedVersion = string.Empty;
                 CommunityContentMode = CommunityContentMode.Normal;
                 OriginalCommunityContentMode = CommunityContentMode.Normal;
+                CommunityDownloadSourceManualSelectEnabled = false;
+                CommunityDefaultDownloadSourceName = CommunityDownloadSourceManager.DefaultCnInfo.Name;
+                CommunityApplyDownloadSourceToUpdates = false;
+                CommunityPlayedTimeReportingEnabled = true;
+                CommunityPostDetailsAutoTranslateEnabled = false;
+                RestartReturnScreen = string.Empty;
                 MultithreadedTerrainUpdate = true;
                 NewYearCelebrationLastYear = 2025;
                 ScreenLayout1 = ScreenLayout.Single;
@@ -606,7 +674,6 @@ namespace Game {
                     : ScreenLayout.TripleHorizontal;
                 ScreenLayout4 = ScreenLayout.Quadruple;
                 BulletinTime = string.Empty;
-                ScpboxUserInfo = string.Empty;
                 HorizontalCreativeFlight = true;
                 CreativeDragMaxStacking = true;
                 LowFPSToTimeDeceleration = 10;

@@ -69,7 +69,7 @@ namespace Game {
             dictionary.Add("key", keySearch);
             dictionary.Add("SearchType", searchType);
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/list",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/list",
                 null,
                 Header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -133,43 +133,43 @@ namespace Game {
                     null,
                     null,
                     progress,
-                    delegate(byte[] data) {
-                        string hash = CalculateContentHashString(data);
-                        ExternalContentManager.ImportExternalContent(
-                            new MemoryStream(data),
-                            type,
+                delegate(byte[] data) {
+                    string hash = CalculateContentHashString(data);
+                    ExternalContentPreparation preparation;
+                    try {
+                        preparation = ExternalContentManager.PrepareExternalContent(
+                            0,
                             name,
-                            delegate(string downloadedName) {
-                                m_idToAddressMap[MakeContentIdString(type, downloadedName)] = address;
-                                Feedback(
-                                    address,
-                                    "Success",
-                                    null,
-                                    hash,
-                                    data.Length,
-                                    userId,
-                                    progress,
-                                    delegate { },
-                                    delegate { }
-                                );
-                                success();
-                            },
-                            delegate(Exception error) {
-                                Feedback(
-                                    address,
-                                    "ImportFailure",
-                                    null,
-                                    hash,
-                                    data.Length,
-                                    userId,
-                                    null,
-                                    delegate { },
-                                    delegate { }
-                                );
-                                failure(error);
-                            }
+                            type,
+                            // publiclyVisible 让准备器 TryGetBuffer 零拷贝别名 data，免二次整包拷贝。
+                            new MemoryStream(data, 0, data.Length, writable: true, publiclyVisible: true));
+                    }
+                    catch (Exception error) {
+                        Feedback(address, "ImportFailure", null, hash, data.Length, userId, null, delegate { }, delegate { });
+                        failure(error);
+                        return;
+                    }
+                    if (preparation.RequiresOverwriteConfirmation) {
+                        DialogsManager.ShowDialog(
+                            null,
+                            new CommunityImportOverwriteDialog(
+                                preparation.GetOverwriteConfirmationMessage(),
+                                preparation.CanRenameOnOverwrite,
+                                delegate(ImportOverwriteAction action) {
+                                    if (action == ImportOverwriteAction.Overwrite) {
+                                        ImportPrepared(address, hash, data.Length, userId, progress, preparation, overwriteExisting: true, success, failure);
+                                    } else if (action == ImportOverwriteAction.Rename) {
+                                        ImportPrepared(address, hash, data.Length, userId, progress, preparation, overwriteExisting: false, success, failure);
+                                    }
+                                    // 取消：下载成功、导入被用户中止，不计 Success 也不计 ImportFailure。
+                                }
+                            )
                         );
-                    },
+                    }
+                    else {
+                        ImportPrepared(address, hash, data.Length, userId, progress, preparation, overwriteExisting: true, success, failure);
+                    }
+                },
                     delegate(Exception error) {
                         Feedback(
                             address,
@@ -186,6 +186,33 @@ namespace Game {
                     }
                 );
             }
+        }
+
+        private static void ImportPrepared(string address,
+            string hash,
+            long size,
+            string userId,
+            CancellableProgress progress,
+            ExternalContentPreparation preparation,
+            bool overwriteExisting,
+            Action success,
+            Action<Exception> failure) {
+            ExternalContentManager.ImportPreparedExternalContentAsync(
+                preparation,
+                overwriteExisting,
+                delegate(string downloadedName) {
+                    m_idToAddressMap[MakeContentIdString(preparation.Type, downloadedName)] = address;
+                    Feedback(address, "Success", null, hash, size, userId, progress, delegate { }, delegate { });
+                    if (preparation.RequiresRestart) {
+                        RestartConfirmDialog.ShowModImportRestartConfirm(preparation.FileName, "community-download");
+                    }
+                    success();
+                },
+                delegate(Exception error) {
+                    Feedback(address, "ImportFailure", null, hash, size, userId, null, delegate { }, delegate { });
+                    failure(error);
+                }
+            );
         }
 
         public static void Publish(string address,
@@ -211,7 +238,7 @@ namespace Game {
                     delegate(byte[] data) {
                         string value = CalculateContentHashString(data);
                         WebManager.Post(
-                            $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/list",
+                            $"{CommunityServerManager.CurrentApiBaseUrl}/com/list",
                             null,
                             null,
                             WebManager.UrlParametersToStream(
@@ -251,7 +278,7 @@ namespace Game {
                 { "Version", VersionsManager.Version }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/list",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/list",
                 null,
                 null,
                 WebManager.UrlParametersToStream(dictionary),
@@ -373,7 +400,7 @@ namespace Game {
             dictionary.Add("Platform", VersionsManager.PlatformString);
             dictionary.Add("Version", VersionsManager.Version);
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}com/list",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/list",
                 null,
                 null,
                 WebManager.UrlParametersToStream(dictionary),
@@ -418,7 +445,7 @@ namespace Game {
                 { "Filter", filter },
                 { "Order", order.ToString() }
             };
-            WebManager.Post($"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/userList", null, Header, WebManager.UrlParametersToStream(dictionary), progress, delegate (byte[] result)
+            WebManager.Post($"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/userList", null, Header, WebManager.UrlParametersToStream(dictionary), progress, delegate (byte[] result)
             {
                 try
                 {
@@ -484,6 +511,8 @@ namespace Game {
             });
         }
 */
+        // 旧管理接口（/com/api/zh/* 族）已死；管理流程待新接口方案，仅剩 ManageUserScreen 调用（CS0612 同步清理待办）。
+        [Obsolete]
         public static void UpdateLockState(int id,
             int lockState,
             string reason,
@@ -506,7 +535,7 @@ namespace Game {
                 { "Reason", reason }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/userList",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/userList",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -516,6 +545,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口（/com/api/zh/userList）已死；仅剩 ManageUserScreen 调用。
+        [Obsolete]
         public static void ResetPassword(int id, CancellableProgress progress, Action<byte[]> success, Action<Exception> failure) {
             progress ??= new CancellableProgress();
             if (!WebManager.IsInternetConnectionAvailable()) {
@@ -527,7 +558,7 @@ namespace Game {
                 { "Action", "ResetPassword" }, { "Id", id.ToString() }, { "Operater", SettingsManager.ScpboxAccessToken }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/userList",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/userList",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -537,6 +568,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口 /com/api/zh/boutique 已死，仅剩旧社区屏（OldCommunityContentScreen）调用。
+        [Obsolete]
         public static void UpdateBoutique(string type,
             int id,
             int boutique,
@@ -553,7 +586,7 @@ namespace Game {
                 { "Type", type }, { "Id", id.ToString() }, { "Operater", SettingsManager.ScpboxAccessToken }, { "Boutique", boutique.ToString() }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/boutique",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/boutique",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -563,6 +596,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口 /com/api/zh/hide 已死，仅剩旧社区屏（OldCommunityContentScreen）调用。
+        [Obsolete]
         public static void UpdateHidePara(int id, int isShow, CancellableProgress progress, Action<byte[]> success, Action<Exception> failure) {
             progress ??= new CancellableProgress();
             if (!WebManager.IsInternetConnectionAvailable()) {
@@ -574,7 +609,7 @@ namespace Game {
                 { "Id", id.ToString() }, { "Operater", SettingsManager.ScpboxAccessToken }, { "IsShow", isShow.ToString() }
             };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/hide",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/hide",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -584,6 +619,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口 /com/api/zh/deleteFile 已死，仅剩旧社区屏（OldCommunityContentScreen）调用。
+        [Obsolete]
         public static void DeleteFile(int id, CancellableProgress progress, Action<byte[]> success, Action<Exception> failure) {
             progress ??= new CancellableProgress();
             if (!WebManager.IsInternetConnectionAvailable()) {
@@ -593,7 +630,7 @@ namespace Game {
             Dictionary<string, string> header = new() { { "Content-Type", "application/x-www-form-urlencoded" } };
             Dictionary<string, string> dictionary = new() { { "Id", id.ToString() }, { "Operater", SettingsManager.ScpboxAccessToken } };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/deleteFile",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/deleteFile",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),
@@ -603,6 +640,8 @@ namespace Game {
             );
         }
 
+        // 旧管理接口（/com/api/zh/isadmin）已死，方法体已短路为 false；仅剩 ContentScreen/旧社区屏调用。
+        [Obsolete]
         public static void IsAdmin(CancellableProgress progress, Action<bool> success, Action<Exception> failure) {
             success(false);
             /*progress ??= new CancellableProgress();
@@ -613,7 +652,7 @@ namespace Game {
             Dictionary<string, string> header = new() { { "Content-Type", "application/x-www-form-urlencoded" } };
             Dictionary<string, string> dictionary = new() { { "Operater", SettingsManager.ScpboxAccessToken } };
             WebManager.Post(
-                $"{CommunityServerManager.CurrentChineseInfo.ApiUrl}/com/api/zh/isadmin",
+                $"{CommunityServerManager.CurrentApiBaseUrl}/com/api/zh/isadmin",
                 null,
                 header,
                 WebManager.UrlParametersToStream(dictionary),

@@ -1,4 +1,4 @@
-using Engine;
+﻿using Engine;
 using Engine.Graphics;
 
 namespace Game {
@@ -88,6 +88,42 @@ namespace Game {
         }
 
         public static void GoBack(params object[] parameters) => SwitchScreen(TopOfHistoryScreen, parameters);
+
+        /// <summary>
+        ///     重启进程并在重启后直达指定屏。目标屏名持久化于 Settings.xml，
+        ///     LoadingScreen 完成加载时经 ConsumeRestartReturnScreen 消费：目标屏
+        ///     已注册则直达，否则照常进主菜单。screenName 为空或未注册时仅重启。
+        /// </summary>
+        public static void RestartGameToScreen(string screenName) {
+            if (!string.IsNullOrEmpty(screenName) && m_screens.ContainsKey(screenName)) {
+                SettingsManager.RestartReturnScreen = screenName;
+                SettingsManager.SaveSettings();
+            }
+            Window.Restart();
+        }
+
+        /// <summary>
+        ///     RestartGameToScreen 的"回到当前屏"便捷封装（重启确认回调等场景）。
+        /// </summary>
+        public static void RestartGameToCurrentScreen() => RestartGameToScreen(GetScreenName(CurrentScreen));
+
+        /// <summary>
+        ///     取走并清除重启直达目标，返回目标屏名；null 表示无目标或目标未注册
+        ///     （如所属模组被卸载，落回主菜单）。LoadingScreen 完成加载时调用一次。
+        /// </summary>
+        public static string ConsumeRestartReturnScreen() {
+            string screenName = SettingsManager.RestartReturnScreen;
+            if (string.IsNullOrEmpty(screenName)) {
+                return null;
+            }
+            SettingsManager.RestartReturnScreen = string.Empty;
+            SettingsManager.SaveSettings();
+            if (m_screens.ContainsKey(screenName)) {
+                return screenName;
+            }
+            Log.Warning($"Restart return screen \"{screenName}\" is not registered, falling back to main menu.");
+            return null;
+        }
 
         public static void Initialize() {
             RootWidget = new CanvasWidget();
@@ -194,6 +230,7 @@ namespace Game {
                             return false;
                         }
                     );
+                    CommunityToastManager.DetachFromScreen(m_animationData.OldScreen);
                     RootWidget.Children.Remove(m_animationData.OldScreen);
                 }
                 if (m_animationData.NewScreen != null) {

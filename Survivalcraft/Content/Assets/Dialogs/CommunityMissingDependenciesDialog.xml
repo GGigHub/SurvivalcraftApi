@@ -1,0 +1,15 @@
+<CanvasWidget xmlns="runtime-namespace:Game" Size="920, 520" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="0, 10">
+    <LabelWidget Name="MissingDependenciesDialog.TitleLabel" Color="255, 255, 255" HorizontalAlignment="Center" />
+    <LabelWidget Name="MissingDependenciesDialog.ModNameLabel" Color="255, 230, 140" HorizontalAlignment="Center" WordWrap="true" Margin="0, 10" />
+    <ScrollPanelWidget Direction="Vertical" Margin="5, 10">
+      <StackPanelWidget Name="MissingDependenciesDialog.ListPanel" Direction="Vertical" Margin="5, 0" HorizontalAlignment="Stretch" />
+    </ScrollPanelWidget>
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8, 0, 10">
+      <BevelledButtonWidget Name="MissingDependenciesDialog.DownloadAllButton" Text="[MissingDependenciesDialog:DownloadAllDeps]" Style="{Styles/ButtonStyle_310x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="MissingDependenciesDialog.CloseButton" Text="[MissingDependenciesDialog:Close]" Style="{Styles/ButtonStyle_160x60}" />
+    </StackPanelWidget>
+  </StackPanelWidget>
+</CanvasWidget>

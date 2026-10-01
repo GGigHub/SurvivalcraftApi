@@ -1,0 +1,19 @@
+<CanvasWidget xmlns="runtime-namespace:Game" Size="600, 300" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
+    <LabelWidget Name="DownloadDialog.Title" Text="[DownloadDialog:DownloadingLabel]" Color="255, 255, 255" HorizontalAlignment="Center" />
+
+    <CanvasWidget Size="0, 20" />
+    <LabelWidget Name="DownloadDialog.Status" Text="[DownloadDialog:PreparingDownload]" Color="128, 128, 128" HorizontalAlignment="Center" WordWrap="true" />
+    <CanvasWidget Size="0, 20" />
+    <ValueBarWidget Name="DownloadDialog.Progress" LayoutDirection="Horizontal" HorizontalAlignment="Center" BarsCount="20" BarSize="22, 18" Spacing="3" LitBarColor="0, 128, 0" UnlitBarColor="48, 48, 48, 160" BarSubtexture="{Textures/Atlas/ProgressBar}" />
+    <CanvasWidget Size="0, 10" />
+    <LabelWidget Name="DownloadDialog.Percent" Text="0%" Color="128, 128, 128" HorizontalAlignment="Center" />
+    <CanvasWidget Size="0, Infinity" />
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
+      <BevelledButtonWidget Name="DownloadDialog.CancelButton" Text="[DownloadDialog:CancelDownload]" Style="{Styles/ButtonStyle_160x60}" IsVisible="false" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="DownloadDialog.BackgroundButton" Text="[DownloadDialog:Background]" Style="{Styles/ButtonStyle_160x60}" IsVisible="false" />
+    </StackPanelWidget>
+  </StackPanelWidget>
+</CanvasWidget>

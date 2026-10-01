@@ -41,6 +41,16 @@ namespace Game {
 
         public static string CurrentLanguageName { get; set; } = "en-US";
 
+        public static string CurrentLanguageSimpleEnglishName => CurrentLanguageName switch {
+            "zh-CN" => "Chinese",
+            "ro-RO" => "Romanian",
+            "ru-RU" => "Russian",
+            "es-419" => "Spanish",
+            "vi-VN" => "Vietnamese",
+            "pt-BR" => "Portuguese",
+            _ => "English"
+        };
+
         public static void Initialize(string languageType) {
 #if BROWSER
             if (!LanguageTypes.Contains(languageType)) {
@@ -325,6 +335,10 @@ namespace Game {
             return r;
         }
 
+        /// <summary>枚举显示名统一语言键：Enums.{枚举名}.{成员名}。</summary>
+        public static string GetEnumDisplayName<T>(T enumValue, string fallback = null) where T : Enum =>
+            TryGet(out string result, "Enums", typeof(T).Name, enumValue.ToString()) ? result : fallback ?? enumValue.ToString();
+
         public static string GetWithoutFallback(out bool r, params string[] keys) => Get(out r, jsonNode, keys);
 
         public static string GetBlock(string blockName, string prop) {
@@ -374,6 +388,7 @@ namespace Game {
 #endif
             Window.TitlePrefix = title;
 #endif
+            List<KeyValuePair<string, Screen>> oldScreens = [.. ScreensManager.m_screens];
             Dictionary<string, object> objs = [];
             foreach (KeyValuePair<string, Screen> c in ScreensManager.m_screens) {
                 Type type = c.Value.GetType();
@@ -391,6 +406,18 @@ namespace Game {
             ClothingSlot.Initialize();
             SubsystemPalette.m_nameFormat = LanguageControl.Get("SubsystemPalette", "1");
             ScreensManager.SwitchScreen("MainMenu");
+            // 旧屏实例的生命周期终点：整表重建不调 Leave，终局清理（退订 ctor 订阅的
+            // 静态事件等）统一走 Dispose。放在切屏后：旧屏若曾是当前屏，其过渡动画过半
+            // 才触发的迟到 Leave 会晚于此处，但社区屏 Leave 仅释放实例级单槽，迟到即空
+            // 操作。单屏清理故障不阻断重建。屏表常驻，常规切屏不 Dispose。
+            foreach (KeyValuePair<string, Screen> c in oldScreens) {
+                try {
+                    c.Value.Dispose();
+                }
+                catch (Exception ex) {
+                    Log.Warning($"Disposing replaced screen \"{c.Key}\" failed: {ex.Message}");
+                }
+            }
         }
 
         public static Dictionary<string, string> CachedLanguageFullNames = [];
@@ -409,7 +436,6 @@ namespace Game {
                             "es-419" => "español (Latinoamérica)",
                             "vi-VN" => "Tiếng Việt (Việt Nam)",
                             "pt-BR" => "Português (Brasil)",
-                            "zh-CN-old" => "[旧] 中文 (中国）",
                             _ => $"{name}"
                         }
                     );
@@ -421,12 +447,7 @@ namespace Game {
                     foreach ((string name, CultureInfo cultureInfo) in LanguageTypes) {
                         string nativeName = cultureInfo.NativeName;
                         string displayName = cultureInfo.DisplayName;
-                        if (name == "zh-CN-old") {
-                            CachedLanguageFullNames.Add(name, $"[旧] {nativeName} - {displayName}");
-                        }
-                        else {
-                            CachedLanguageFullNames.Add(name, nativeName == displayName ? nativeName : $"{nativeName} - {displayName}");
-                        }
+                        CachedLanguageFullNames.Add(name, nativeName == displayName ? nativeName : $"{nativeName} - {displayName}");
                     }
                 }
                 finally {
@@ -437,7 +458,6 @@ namespace Game {
             IOrderedEnumerable<KeyValuePair<string, string>> sorted = CachedLanguageFullNames.OrderBy(item => item.Key switch {
                     "en-US" => 0,
                     "zh-CN" => 1,
-                    "zh-CN-old" => 1000,
                     _ => 2
                 }
             );

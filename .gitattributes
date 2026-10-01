@@ -4,6 +4,12 @@
 * text=auto
 
 ###############################################################################
+# Lang JSON 双语言文件以 CRLF 入库（前批移植合并即为此状态）。
+# 禁用 text=auto 的入库归一，避免每次编辑产生整文件行尾 churn（纯插入 diff 被淹没）。
+###############################################################################
+Survivalcraft/Content/Assets/Lang/*.json -text
+
+###############################################################################
 # Set default behavior for command prompt diff.
 #
 # This is need for earlier builds of msysgit that does not have it on by

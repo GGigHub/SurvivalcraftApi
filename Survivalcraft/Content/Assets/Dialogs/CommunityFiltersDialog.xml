@@ -1,0 +1,35 @@
+<CanvasWidget xmlns="runtime-namespace:Game" Size="700, 450" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
+    <LabelWidget Text="[FiltersDialog:Title]" Color="255, 255, 255" HorizontalAlignment="Center" Margin="0, 5" />
+    <CanvasWidget Size="0, 10" />
+    <GridPanelWidget ColumnsCount="3" RowsCount="5" HorizontalAlignment="Center">
+      <LabelWidget Text="[FiltersDialog:Filter]" Color="128, 128, 128" HorizontalAlignment="Center" GridPanelWidget.Cell="1, 0" />
+      <LabelWidget Text="[FiltersDialog:IgnoreSearch]" Color="128, 128, 128" HorizontalAlignment="Center" GridPanelWidget.Cell="2, 0" />
+
+      <LabelWidget Text="[FiltersDialog:FileType]" Color="220, 220, 220" HorizontalAlignment="Far" VerticalAlignment="Center" GridPanelWidget.Cell="0, 1" />
+      <BevelledButtonWidget Name="FiltersDialog.FileTypeButton" Style="{Styles/ButtonStyle_250x60}" Margin="20, 0" GridPanelWidget.Cell="1, 1" />
+      <CheckboxWidget Name="FiltersDialog.IgnoreFileType" Text="" Color="255, 255, 255" IsAutoCheckingEnabled="true" CheckboxSize="40, 40" HorizontalAlignment="Center" VerticalAlignment="Center" GridPanelWidget.Cell="2, 1" />
+
+      <LabelWidget Text="[FiltersDialog:SortOrder]" Color="220, 220, 220" HorizontalAlignment="Far" VerticalAlignment="Center" GridPanelWidget.Cell="0, 2" />
+      <BevelledButtonWidget Name="FiltersDialog.OrderButton" Style="{Styles/ButtonStyle_250x60}" Margin="20, 0" GridPanelWidget.Cell="1, 2" />
+      <CheckboxWidget Name="FiltersDialog.IgnoreOrder" Text="" Color="255, 255, 255" IsAutoCheckingEnabled="true" CheckboxSize="40, 40" HorizontalAlignment="Center" VerticalAlignment="Center" GridPanelWidget.Cell="2, 2" />
+
+      <LabelWidget Text="[FiltersDialog:VersionRange]" Color="220, 220, 220" HorizontalAlignment="Far" VerticalAlignment="Center" GridPanelWidget.Cell="0, 3" />
+      <BevelledButtonWidget Name="FiltersDialog.VersionButton" Style="{Styles/ButtonStyle_250x60}" Margin="20, 0" GridPanelWidget.Cell="1, 3" />
+      <CheckboxWidget Name="FiltersDialog.IgnoreVersion" Text="" Color="255, 255, 255" IsAutoCheckingEnabled="true" CheckboxSize="40, 40" HorizontalAlignment="Center" VerticalAlignment="Center" GridPanelWidget.Cell="2, 3" />
+
+      <LabelWidget Text="[FiltersDialog:Section]" Color="220, 220, 220" HorizontalAlignment="Far" VerticalAlignment="Center" GridPanelWidget.Cell="0, 4" />
+      <BevelledButtonWidget Name="FiltersDialog.SectionButton" Style="{Styles/ButtonStyle_250x60}" Margin="20, 0" GridPanelWidget.Cell="1, 4" />
+      <CheckboxWidget Name="FiltersDialog.IgnoreSection" Text="" Color="255, 255, 255" IsAutoCheckingEnabled="true" CheckboxSize="40, 40" HorizontalAlignment="Center" VerticalAlignment="Center" GridPanelWidget.Cell="2, 4" />
+    </GridPanelWidget>
+    <CanvasWidget Size="0, Infinity" />
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="20, 0">
+      <BevelledButtonWidget Name="FiltersDialog.SaveDefaultButton" Style="{Styles/ButtonStyle_205x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="FiltersDialog.ConfirmButton" Style="{Styles/ButtonStyle_160x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="FiltersDialog.CancelButton" Style="{Styles/ButtonStyle_160x60}" />
+    </StackPanelWidget>
+  </StackPanelWidget>
+</CanvasWidget>

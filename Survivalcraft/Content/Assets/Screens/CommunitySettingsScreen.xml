@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Screen xmlns="runtime-namespace:Game">
+  <PanoramaWidget />
+  <StackPanelWidget Direction="Horizontal">
+    <CanvasWidget Style="{Widgets/TopBarContents}">
+      <LabelWidget Name="TopBar.Label" Text="[CommunitySettingsScreen:Title]" />
+    </CanvasWidget>
+    <StackPanelWidget Direction="Vertical" Margin="10, 0">
+      <CanvasWidget Size="0, 20" />
+      <CanvasWidget>
+        <BevelledRectangleWidget Style="{Styles/Area}" />
+        <ScrollPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3, 3">
+          <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <LabelWidget Text="[CommunitySettingsScreen:LoggedAccount]" HorizontalAlignment="Far" Margin="20, 0" VerticalAlignment="Center" Color="255, 255, 255" />
+              <LabelWidget Name="CommunitySettingsScreen.AccountInfo" VerticalAlignment="Center" Margin="20, 0" Text="[CommunitySettingsScreen:NotLoggedIn]" FontScale="0.8" Color="255, 255, 255" MaxLines="1" Ellipsis="true" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
+                <LabelWidget Text="[CommunitySettingsScreen:CommunityAccount]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[CommunitySettingsScreen:CommunityAccountDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+              </StackPanelWidget>
+              <BevelledButtonWidget Name="CommunitySettingsScreen.AuthButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[CommunitySettingsScreen:LogIn]" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
+                <LabelWidget Text="[CommunitySettingsScreen:MyPublished]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[CommunitySettingsScreen:MyPublishedDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+              </StackPanelWidget>
+              <BevelledButtonWidget Name="CommunitySettingsScreen.MyPublishedButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[CommunitySettingsScreen:Open]" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
+                <LabelWidget Text="[CommunitySettingsScreen:LinkImport]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[CommunitySettingsScreen:LinkImportDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+              </StackPanelWidget>
+              <BevelledButtonWidget Name="CommunitySettingsScreen.ImportButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[CommunitySettingsScreen:Import]" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
+                <LabelWidget Text="[CommunitySettingsScreen:DownloadQueue]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[CommunitySettingsScreen:DownloadQueueDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+              </StackPanelWidget>
+              <BevelledButtonWidget Name="CommunitySettingsScreen.DownloadQueueButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" Text="[CommunitySettingsScreen:View]" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <LabelWidget Text="[CommunitySettingsScreen:CurrentServer]" HorizontalAlignment="Far" Margin="20, 0" VerticalAlignment="Center" FontScale="0.95" Color="255, 255, 255" />
+              <BevelledButtonWidget Name="CommunitySettingsScreen.CurrentServerButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
+                <LabelWidget Text="[CommunitySettingsScreen:DownloadSourceSelectionMode]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[CommunitySettingsScreen:DownloadSourceSelectionModeDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+              </StackPanelWidget>
+              <BevelledButtonWidget Name="CommunitySettingsScreen.DownloadSourceSelectionModeButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
+                <LabelWidget Text="[CommunitySettingsScreen:DefaultDownloadSource]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[CommunitySettingsScreen:DefaultDownloadSourceDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+              </StackPanelWidget>
+              <BevelledButtonWidget Name="CommunitySettingsScreen.DefaultDownloadSourceButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
+                <LabelWidget Text="[CommunitySettingsScreen:ApplyDownloadSourceToUpdates]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[CommunitySettingsScreen:ApplyDownloadSourceToUpdatesDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+              </StackPanelWidget>
+              <BevelledButtonWidget Name="CommunitySettingsScreen.ApplyDownloadSourceToUpdatesButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
+                <LabelWidget Text="[CommunitySettingsScreen:PlayedTimeReporting]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[CommunitySettingsScreen:PlayedTimeReportingDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+              </StackPanelWidget>
+              <BevelledButtonWidget Name="CommunitySettingsScreen.PlayedTimeReportingButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+            </UniformSpacingPanelWidget>
+            <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+              <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far" Margin="20, 0">
+                <LabelWidget Text="[CommunitySettingsScreen:PostDetailsAutoTranslate]" HorizontalAlignment="Far" FontScale="0.95" Color="255, 255, 255" />
+                <LabelWidget Text="[CommunitySettingsScreen:PostDetailsAutoTranslateDescription]" HorizontalAlignment="Far" FontScale="0.7" Color="128, 128, 128" WordWrap="true" />
+              </StackPanelWidget>
+              <BevelledButtonWidget Name="CommunitySettingsScreen.PostDetailsAutoTranslateButton" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+            </UniformSpacingPanelWidget>
+          </StackPanelWidget>
+        </ScrollPanelWidget>
+      </CanvasWidget>
+      <CanvasWidget Size="Infinity, 100">
+        <LabelWidget Name="CommunitySettingsScreen.Status" HorizontalAlignment="Center" VerticalAlignment="Center" TextAnchor="HorizontalCenter, VerticalCenter" Color="128, 128, 128" WordWrap="true" />
+      </CanvasWidget>
+    </StackPanelWidget>
+  </StackPanelWidget>
+</Screen>

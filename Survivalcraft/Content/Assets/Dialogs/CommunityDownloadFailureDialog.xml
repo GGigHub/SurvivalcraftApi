@@ -1,0 +1,29 @@
+<CanvasWidget xmlns="runtime-namespace:Game" Size="680, 420" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
+    <LabelWidget Name="DownloadFailureDialog.Title" Color="255, 255, 255" HorizontalAlignment="Center" />
+    <CanvasWidget HorizontalAlignment="Stretch">
+      <LabelWidget Text="[DownloadFailureDialog:CurrentDownloadLink]" Color="255, 255, 255" VerticalAlignment="Center" />
+      <BevelledButtonWidget Name="DownloadFailureDialog.CopyLinkButton" Text="[DownloadFailureDialog:CopyLink]" Style="{Styles/ButtonStyle_115x60}" HorizontalAlignment="Far" />
+    </CanvasWidget>
+    <CanvasWidget Name="DownloadFailureDialog.LinkBox" Size="Infinity, 48">
+      <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
+      <LabelWidget Name="DownloadFailureDialog.LinkLabel" Margin="8, 0" VerticalAlignment="Center" Color="255, 255, 255" Ellipsis="true" />
+    </CanvasWidget>
+    <CanvasWidget Size="0, 16" />
+    <LabelWidget Text="[DownloadFailureDialog:ErrorReason]" Color="255, 255, 255" />
+    <CanvasWidget Size="0, 8" />
+    <CanvasWidget Name="DownloadFailureDialog.ErrorBox">
+      <BevelledRectangleWidget Style="{Styles/TextBoxArea}" />
+      <ScrollPanelWidget Direction="Vertical">
+        <StackPanelWidget Name="DownloadFailureDialog.ErrorContent" Direction="Vertical" HorizontalAlignment="Stretch" Margin="5, 5" />
+      </ScrollPanelWidget>
+    </CanvasWidget>
+    <CanvasWidget Size="0, 16" />
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+      <BevelledButtonWidget Name="DownloadFailureDialog.SwitchSourceButton" Text="[DownloadFailureDialog:UseAnotherSource]" Style="{Styles/ButtonStyle_205x60}" />
+      <CanvasWidget Size="10, 0" />
+      <BevelledButtonWidget Name="DownloadFailureDialog.CloseButton" Text="[DownloadFailureDialog:Close]" Style="{Styles/ButtonStyle_205x60}" />
+    </StackPanelWidget>
+  </StackPanelWidget>
+</CanvasWidget>

@@ -124,42 +124,40 @@ public static class OriginalCommunityContentManager {
             progress,
             delegate(byte[] data) {
                 string hash = CalculateContentHashString(data);
-                ExternalContentManager.ImportExternalContent(
-                    new MemoryStream(data),
-                    type,
-                    name,
-                    delegate(string downloadedName) {
-                        m_idToAddressMap[MakeContentIdString(type, downloadedName)] = address;
-                        Feedback(
-                            address,
-                            "Success",
-                            null,
-                            hash,
-                            data.Length,
-                            userId,
-                            progress,
-                            delegate { },
-                            delegate { }
-                        );
-                        //AnalyticsManager.LogEvent("[OriginalCommunityContentManager] Download Success", new AnalyticsParameter("Name", name));
-                        success();
-                    },
-                    delegate(Exception error) {
-                        Feedback(
-                            address,
-                            "ImportFailure",
-                            null,
-                            hash,
-                            data.Length,
-                            userId,
-                            null,
-                            delegate { },
-                            delegate { }
-                        );
-                        //AnalyticsManager.LogEvent("[OriginalCommunityContentManager] Import Failure", new AnalyticsParameter("Name", name), new AnalyticsParameter("Error", error.Message.ToString()));
-                        failure(error);
-                    }
-                );
+                ExternalContentPreparation preparation;
+                try {
+                    preparation = ExternalContentManager.PrepareExternalContent(
+                        0,
+                        name,
+                        type,
+                        // publiclyVisible 让准备器 TryGetBuffer 零拷贝别名 data，免二次整包拷贝。
+                        new MemoryStream(data, 0, data.Length, writable: true, publiclyVisible: true));
+                }
+                catch (Exception error) {
+                    Feedback(address, "ImportFailure", null, hash, data.Length, userId, null, delegate { }, delegate { });
+                    failure(error);
+                    return;
+                }
+                if (preparation.RequiresOverwriteConfirmation) {
+                    DialogsManager.ShowDialog(
+                        null,
+                        new CommunityImportOverwriteDialog(
+                            preparation.GetOverwriteConfirmationMessage(),
+                            preparation.CanRenameOnOverwrite,
+                            delegate(ImportOverwriteAction action) {
+                                if (action == ImportOverwriteAction.Overwrite) {
+                                    ImportPrepared(address, hash, data.Length, userId, progress, preparation, overwriteExisting: true, success, failure);
+                                } else if (action == ImportOverwriteAction.Rename) {
+                                    ImportPrepared(address, hash, data.Length, userId, progress, preparation, overwriteExisting: false, success, failure);
+                                }
+                                // 取消：下载成功、导入被用户中止，不计 Success 也不计 ImportFailure。
+                            }
+                        )
+                    );
+                }
+                else {
+                    ImportPrepared(address, hash, data.Length, userId, progress, preparation, overwriteExisting: true, success, failure);
+                }
             },
             delegate(Exception error) {
                 Feedback(
@@ -174,6 +172,33 @@ public static class OriginalCommunityContentManager {
                     delegate { }
                 );
                 //AnalyticsManager.LogEvent("[OriginalCommunityContentManager] Download Failure", new AnalyticsParameter("Name", name), new AnalyticsParameter("Error", error.Message.ToString()));
+                failure(error);
+            }
+        );
+    }
+
+    private static void ImportPrepared(string address,
+        string hash,
+        long size,
+        string userId,
+        CancellableProgress progress,
+        ExternalContentPreparation preparation,
+        bool overwriteExisting,
+        Action success,
+        Action<Exception> failure) {
+        ExternalContentManager.ImportPreparedExternalContentAsync(
+            preparation,
+            overwriteExisting,
+            delegate(string downloadedName) {
+                m_idToAddressMap[MakeContentIdString(preparation.Type, downloadedName)] = address;
+                Feedback(address, "Success", null, hash, size, userId, progress, delegate { }, delegate { });
+                if (preparation.RequiresRestart) {
+                    RestartConfirmDialog.ShowModImportRestartConfirm(preparation.FileName, "original-community");
+                }
+                success();
+            },
+            delegate(Exception error) {
+                Feedback(address, "ImportFailure", null, hash, size, userId, null, delegate { }, delegate { });
                 failure(error);
             }
         );

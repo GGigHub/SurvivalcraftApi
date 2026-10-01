@@ -1,0 +1,95 @@
+using System;
+using System.Globalization;
+using System.IO;
+using Engine;
+
+namespace Game
+{
+    /// <summary>
+    /// 安装已校验的模组更新包，并在替换失败时保持原文件可恢复。
+    /// </summary>
+    internal static class ModUpdateImporter
+    {
+        public static string ImportModUpdate(
+            Stream stream,
+            string fileName,
+            string expectedPackageName,
+            string oldModFilePath)
+        {
+            if (string.IsNullOrWhiteSpace(expectedPackageName))
+            {
+                throw new InvalidOperationException(LanguageControl.Get("ModUpdateImporter", "CannotConfirmCurrentPackageName"));
+            }
+
+            if (!TryReadModInfo(stream, out ModInfo updateInfo) || updateInfo == null)
+            {
+                // 损坏包直接拒绝，避免用坏包静默替换用户原 mod。
+                throw new InvalidOperationException(LanguageControl.Get("ModUpdateImporter", "UpdatePackageInvalidOrCorrupted"));
+            }
+            if (!string.Equals(updateInfo.PackageName, expectedPackageName, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, LanguageControl.Get("ModUpdateImporter", "UpdatePackagePackageNameMismatch"), expectedPackageName));
+            }
+
+            string targetPath = Storage.CombinePaths(
+                ModsManager.ModsPath,
+                GetSafeFileName(fileName, $"{expectedPackageName}.scmod"));
+            return ReplaceModFile(stream, targetPath, oldModFilePath, "mod-update");
+        }
+
+        // 原始字节直通：探测走读器（内存解密、复位流位置），落盘 CopyTo 流式写，
+        // 不再整包驻留 byte[]——大包导入期内存峰值从"数组+读器缓冲"两三份降到 80KB 缓冲。
+        private static string ReplaceModFile(Stream data, string targetPath, string existingPath, string tempFilePrefix)
+        {
+            if (!Storage.DirectoryExists(ModsManager.ModsPath))
+            {
+                Storage.CreateDirectory(ModsManager.ModsPath);
+            }
+
+            string tempPath = Storage.CombinePaths(ModsManager.ModsPath, $"{tempFilePrefix}-{Guid.NewGuid():N}.tmp");
+            try
+            {
+                using (Stream fileStream = Storage.OpenFile(tempPath, OpenFileMode.Create))
+                {
+                    data.CopyTo(fileStream);
+                }
+
+                TransactionalFileReplacement.Replace(tempPath, targetPath, existingPath);
+                // 更新替换落地即触发对账：覆盖升级/旧文件删除的磁盘变更只有此刻知道，
+                // 等 UI 进屏兜底会漏掉“导入后停留原屏”窗口。触发点放模组专属导入器而非
+                // TransactionalFileReplacement（通用工具，整合包数据文件也走它，不该触发模组对账）。
+                _ = ModsManager.RescanModsAsync();
+                return Storage.GetFileName(targetPath);
+            }
+            catch
+            {
+                Storage.TryDeleteFile(tempPath);
+                throw;
+            }
+        }
+
+        private static bool TryReadModInfo(Stream stream, out ModInfo modInfo)
+        {
+            try
+            {
+                return ScmodArchiveReader.TryReadModInfo(stream, out modInfo);
+            }
+            catch (InvalidScmodArchiveException)
+            {
+                modInfo = null;
+                return false;
+            }
+        }
+
+        private static string GetSafeFileName(string fileName, string fallbackName)
+        {
+            // 段级清洗统一走 CommunityUploadFileNaming（原手写版不清洗非法字符、
+            // 不处理保留名、不截断长度，脏文件名会在 OpenFile(Create) 时写失败）。
+            // fallback 全名自带 .scmod 后缀，清洗后即通过补扩展名检查原样返回。
+            return CommunityUploadFileNaming.MakeSafeFileName(
+                Storage.GetFileName(fileName ?? string.Empty),
+                ModsManager.ModSuffix,
+                fallbackName);
+        }
+    }
+}

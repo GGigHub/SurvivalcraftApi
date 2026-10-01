@@ -16,6 +16,11 @@
     "7": "Not logged in to Dropbox in this app.",
     "8": "Share information not found."
   },
+  "ChineseCommunityExternalContentProvider": {
+    "LoggedIn": "Logged in",
+    "NotLoggedIn": "Not logged in",
+    "CannotFindLocalFile": "Unable to find the local file."
+  },
   "FurnitureBlock": [
     "Combine furniture into interactive design",
     "Too many different furniture designs"
@@ -47,6 +52,13 @@
   "AndroidSdCardExternalContentProvider": {
     "1": "SD Card"
   },
+  "CommunityMyPublishedScreen": {
+    "LoadMyPublishedFailed": "Failed to load my published posts: {0}",
+    "LoadingFormat": "{0} · Loading...",
+    "MyPublishedFormat": "Published {0}s",
+    "MyUnpublishedFormat": "Unpublished {0}s",
+    "ShareLinkCopiedToClipboard": "Share link copied to clipboard."
+  },
   "ContentScreen": {
     "1": "Mod Management",
     "2": "Content Management",
@@ -65,6 +77,50 @@
       "OriginalCommunity": "Original Community",
       "ChineseCommunity": "Chinese Community"
     }
+  },
+  "ModpacksManageContentScreen": {
+    "1": "Manage Modpacks",
+    "2": "Enable",
+    "3": "Download Missing",
+    "4": "Details",
+    "5": "Disable",
+    "6": "Owned: {0}/{1}  Modpack version: {2}  API version: {3}  Author: {4}  Size: {5}",
+    "AllResourcesReady": "All modpack resources have been downloaded.",
+    "AndMore": " and {0} more",
+    "AnotherModpackActive": "Another modpack is already active. Please close it first.",
+    "CannotDelete": "Cannot Delete",
+    "CloseModpack": "Disable modpack",
+    "CurrentlyActive": "{0} (currently active)",
+    "DisableBeforeDelete": "Please close the active modpack before deleting this modpack record.",
+    "DisabledRestartPrompt": "The modpack has been disabled. A restart is required to restore the previous mod states. Restart now?",
+    "DownloadAndLaunch": "Download and enable",
+    "DownloadingMissingModpackResources": "Downloading missing modpack resources...",
+    "EnabledRestartPrompt": "The modpack has been enabled. A restart is required to load its mod resources. Restart now?",
+    "ExtractFailedNotStarted": "Failed to extract modpack resources; it was not enabled.",
+    "ExtractingResourcesFromTheModpack": "Extracting resources from the modpack...",
+    "FailedToDownloadModpackResources": "Failed to Download Modpack Resources",
+    "IgnoreAndLaunch": "Ignore and enable",
+    "LaunchModpack": "Enable modpack",
+    "MissingInArchiveList": "The following resources were not found inside the archive: {0}. Complete the modpack before enabling.",
+    "MissingModpackFiles": "Missing Modpack Files",
+    "MissingModpackResourcesDownloaded": "Missing modpack resources downloaded.",
+    "MissingResources": "Missing Resources",
+    "MissingResourcesDownloadPrompt": "Modpack \"{0}\" has {1} undownloaded resources. Download them before enabling?",
+    "StartBlockedMissingResources": "The modpack still has undownloaded resources; it was not enabled.",
+    "ThisModpackHasNoManagedModResources": "This modpack has no managed mod resources.",
+    "ThisModpackIsNotCurrentlyActive": "This modpack is not currently active.",
+    "UnavailableResourcesIgnorePrompt": "{0} resources can be fetched neither from the ZIP modpack nor over the network. Ignore them and enable the modpack anyway?",
+    "FailedToSaveSettings": "Failed to Save Settings",
+    "SaveConfigFailed": "Unable to save settings changed while using the modpack: {0}",
+    "FailedToRestoreFiles": "Failed to Restore Files",
+    "RestoreFilesFailed": "Unable to restore files from before the modpack was enabled: {0}",
+    "Modpack": "Modpack",
+    "ModpackBusyWait": "Another modpack is being processed. Please wait.",
+    "LocalResourcesReadingModpacksFormat": "Local {0}s · Reading modpacks...",
+    "DeleteFailed": "Delete failed: {0}",
+    "DeleteConfirmTitle": "Delete Modpack?",
+    "DeleteConfirmMessage": "Are you sure you want to delete modpack \"{0}\"?\nThis action cannot be undone.",
+    "LoadingFileInfo": "Loading File Info..."
   },
   "ModsManageContentScreen": {
     "1": "Manage mod content",
@@ -134,20 +190,53 @@
     "65": "Mod reinforcement will replace the current mod file. After reinforcement, it is usually irreversible, so please back up your files first.\nIf the original project file is lost after reinforcement, you can contact the Chinese Community admins to recover the reinforcement mod file.\nNon-developers may ignore this note.",
     "66": "This mod file is already protected; no need to protect again",
     "67": "Module protection failed due to an unknown error:",
-    "68": "Old plugin version (API {0}) mods may not work",
-    "69": "This mod is for plugin version 1.3 or older and cannot be used in the current version",
-    "70": "This mod is for an old plugin version and does not work in the current version. Deletion is recommended.",
+    "68": "Old API version ({0}) mods may not work",
+    "69": "This mod is for API version 1.3 or older and cannot be used in the current version",
+    "70": "This mod is for an old API version and does not work in the current version. Deletion is recommended.",
     "71": "Directory Access Failed",
     "72": "Sorry, your device cannot access",
     "73": "Unprotect",
     "74": "Failed to load icon for {0}. Reason: {1}",
     "75": "Failed to load mod info from {0}'s modinfo.json. Reason: {1}",
-    "76": "This mod is for plugin version {0} and may not work in the current plugin version",
+    "76": "This mod is for API version {0} and may not work in the current API version",
     "77": "Open Homepage",
     "78": "This mod has no homepage link set.",
     "79": "Module Version: {0}  API Version: {1}  Author: {2}  Size: {3}",
     "80": "Details",
-    "81": "*Requires Restart"
+    "81": "*Requires Restart",
+    "PendingRestartTag": "Pending Restart",
+    "FileDeletedTag": "File Deleted",
+    "LatestVersion": "Latest Version",
+    "CurrentVersion": "Current Version",
+    "VersionDetails": "Version Details",
+    "UpdateFound": "Update Found",
+    "LocalResource": "Local Resource",
+    "LocalMod": "Local Mod",
+    "CommunityPost": "Community Post",
+    "CheckUpdate": "Check Update",
+    "HasUpdate": "Update",
+    "PleaseWait": "Please Wait",
+    "Community": {
+      "BusyMessage": {
+        "LoadingPreviousVersionList": "Loading the previous version list.",
+        "CheckingPreviousModUpdate": "Checking the previous mod update.",
+        "SearchingPreviousDependency": "Searching the previous dependency."
+      },
+      "FailedToLoadVersionList": "Failed to load version list: {0}",
+      "AlreadyUpToDateFormat": "Already up to date.\n{0}: {1}\n{2}: {3}",
+      "DependencySearchFailed": "Dependency search failed: {0}",
+      "ModsCanBeUpdatedTapToView": "{0} mod(s) can be updated",
+      "NoDownloadableDependenciesWereFound": "No downloadable dependencies were found.",
+      "NoUpdateReasonFormat": "{0}\n{1}: {2}\n{3}: {4}",
+      "SearchDependencies": "Search Dependencies",
+      "UpdateCheckFailed": "Update check failed: {0}"
+    },
+    "Review": {
+      "MissingFileNameOrPackageName": "Missing file name or package name",
+      "Buttons": {
+        "NoPost": "No Post"
+      }
+    }
   },
   "ManageContentScreen": {
     "1": "Blocks Texture | {0}x{1}",
@@ -691,7 +780,31 @@
     "105": "Highest Mod Impact Level",
     "106": "VR Controls"
   },
+  "ModpackDetailsDialog": {
+    "1": "Modpack version: ",
+    "2": "API version: ",
+    "3": "Author: ",
+    "4": "Size: ",
+    "5": "Description: ",
+    "6": "Homepage: ",
+    "7": "File name: ",
+    "8": "Package name: ",
+    "9": "Sub-items owned: {0}/{1}",
+    "Active": "Active",
+    "ItemsList": "Sub-items:",
+    "StateBundled": "Bundled",
+    "StateExists": "Owned",
+    "StateNeedDownload": "Need download"
+  },
   "ModDetailsDialog": {
+    "CheckUpdate": "Check Updates",
+    "Versions": "Versions",
+    "Dependencies": "Missing Dependencies",
+    "Review": "Review",
+    "Upload": "Upload",
+    "RestartRequired": "{0} (restart required)",
+    "IncompatibleWithCurrentGame": "{0} (incompatible with current game)",
+    "MissingDependency": "Missing dependency {0}",
     "1": "Disable Reason: ",
     "2": "Mod Ver:",
     "3": "API Ver: ",
@@ -703,11 +816,13 @@
     "9": "Package Name: ",
     "10": "Dependencies: ",
     "11": "Are you sure to delete?",
-    "12": "\"{0}\" will be deleted.",
+    "12": "\"{0}\" will be deleted.\nThis action cannot be undone.",
     "13": "Failed to delete \"{0}\". Reason: {1}",
     "14": "Delete \"{0}\" Successfully.",
     "15": "Not Found / Not Enabled",
-    "16": "Found Version: "
+    "16": "Found Version: ",
+    "17": " (Latest: {0})",
+    "18": "Played for: "
   },
   "BlocksManager": {
     "1": "Block class \"{0}\" is not found in all loaded assemblies.",
@@ -1921,7 +2036,7 @@
     },
     "SpikedPlankBlock:0": {
       "DisplayName": "Spiked Plank",
-      "Description": "Wooden spikes penetrate flesh. The spiked planks can be placed on the floor, on the walls and on the ceiling. Touching them will cause injury. Trap pits are often lined with them. Spikes can be electrically controlled and will extend\/retract on a rising edge of an electric signal.",
+      "Description": "Wooden spikes penetrate flesh. The spiked planks can be placed on the floor, on the walls and on the ceiling. Touching them will cause injury. Trap pits are often lined with them. Spikes can be electrically controlled and will extend/retract on a rising edge of an electric signal.",
       "CRDescription:0": "Make sharp spiked planks from wood and sticks"
     },
     "GrassTrapBlock:0": {
@@ -2513,7 +2628,7 @@
     },
     "ButtonBlock:0": {
       "DisplayName": "Button",
-      "Description": "An electric button. Used to momentarily set the state of an electric circuit to 1.5V. The duration of the pulse generated by a single button click is about 1\/10 of a second, after which time the outputs return to 0V state. A button can be triggered by a projectile striking it. It has outputs on all sides for easy connection and can be placed on any surface.",
+      "Description": "An electric button. Used to momentarily set the state of an electric circuit to 1.5V. The duration of the pulse generated by a single button click is about 1/10 of a second, after which time the outputs return to 0V state. A button can be triggered by a projectile striking it. It has outputs on all sides for easy connection and can be placed on any surface.",
       "CRDescription:0": "Craft electric buttons from copper and planks"
     },
     "PressurePlateBlock:0": {
@@ -2536,27 +2651,27 @@
     },
     "WireThroughPlanksBlock:0": {
       "DisplayName": "Wire Through Planks",
-      "Description": "A planks block with a wire running across a hole drilled through the middle. This block behaves exactly the same as planks, but can conduct electricity when both ends of the embedded wire are a connected to something. This block can be placed with ends pointing north\/south, east\/west or up\/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
+      "Description": "A planks block with a wire running across a hole drilled through the middle. This block behaves exactly the same as planks, but can conduct electricity when both ends of the embedded wire are a connected to something. This block can be placed with ends pointing north/south, east/west or up/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
       "CRDescription:0": "Drill a hole in the planks block and put an electric wire through it"
     },
     "WireThroughStoneBlock:0": {
       "DisplayName": "Wire Through Stone",
-      "Description": "A granite block with a wire running across a hole drilled through the middle. This block behaves exactly the same as granite, but can conduct electricity when both ends of the embedded wire are a connected to something. This block can be placed with ends pointing north\/south, east\/west or up\/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
+      "Description": "A granite block with a wire running across a hole drilled through the middle. This block behaves exactly the same as granite, but can conduct electricity when both ends of the embedded wire are a connected to something. This block can be placed with ends pointing north/south, east/west or up/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
       "CRDescription:0": "Drill a hole in the stone block and put an electric wire through it"
     },
     "WireThroughBricksBlock:0": {
       "DisplayName": "Wire Through Bricks",
-      "Description": "A bricks block with a wire running across a hole drilled through the middle. This block behaves exactly the same as bricks, but can conduct electricity when both ends of the embedded wire are a connected to something. This block can be placed with ends pointing north\/south, east\/west or up\/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
+      "Description": "A bricks block with a wire running across a hole drilled through the middle. This block behaves exactly the same as bricks, but can conduct electricity when both ends of the embedded wire are a connected to something. This block can be placed with ends pointing north/south, east/west or up/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
       "CRDescription:0": "Drill a hole in the bricks block and put an electric wire through it"
     },
     "WireThroughSemiconductorBlock:0": {
       "DisplayName": "Wire Through Semiconductor",
-      "Description": "A semiconductor block with a wire running across a hole drilled through the middle. This block can conduct electricity when both ends of the embedded wire are a connected to something. It can be placed with ends pointing north\/south, east\/west or up\/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
+      "Description": "A semiconductor block with a wire running across a hole drilled through the middle. This block can conduct electricity when both ends of the embedded wire are a connected to something. It can be placed with ends pointing north/south, east/west or up/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
       "CRDescription:0": "Drill a hole in semiconductor block and put an electric wire through it"
     },
     "WireThroughCobblestoneBlock:0": {
       "DisplayName": "Wire Through Cobblestone",
-      "Description": "A cobblestone block with a wire running across a hole drilled through the middle. This block can conduct electricity when both ends of the embedded wire are a connected to something. It can be placed with ends pointing north\/south, east\/west or up\/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
+      "Description": "A cobblestone block with a wire running across a hole drilled through the middle. This block can conduct electricity when both ends of the embedded wire are a connected to something. It can be placed with ends pointing north/south, east/west or up/down. It is very useful when there is a need to run electricity through solid walls, or to insulate the wire from unwanted connections with other wires.",
       "CRDescription:0": "Drill a hole in cobblestone block and put an electric wire through it"
     },
     "LedBlock:0": {
@@ -2991,7 +3106,7 @@
       "Title": "Levels and Experience"
     },
     "17": {
-      "value": "\\n You can ride certain animals, such as horses or camels.\\n Riding an animal lets you move more quickly and view the world from a higher vantage point.\\n \\n\\n\\n To mount an animal, get close to it and wait for it to stop.\\n The sneak button will turn into mount button.\\n Press it to mount\/dismount.\\n You can also mount boats in the same way as animals.\\n \\n\\n\\n To successfully ride an animal, you need a saddle, which can be crafted from leather and wooden sticks.\\n When the animal is saddled, its behavior changes and it becomes more friendly towards you.\\n Do not mount an unsaddled animal, it will not like it, and may even hurt you.\\n \\n\\n\\n A whistle will summon any saddled animals that are nearby.\\n It is a good idea to carry a whistle with you when you are riding.\\n ",
+      "value": "\\n You can ride certain animals, such as horses or camels.\\n Riding an animal lets you move more quickly and view the world from a higher vantage point.\\n \\n\\n\\n To mount an animal, get close to it and wait for it to stop.\\n The sneak button will turn into mount button.\\n Press it to mount/dismount.\\n You can also mount boats in the same way as animals.\\n \\n\\n\\n To successfully ride an animal, you need a saddle, which can be crafted from leather and wooden sticks.\\n When the animal is saddled, its behavior changes and it becomes more friendly towards you.\\n Do not mount an unsaddled animal, it will not like it, and may even hurt you.\\n \\n\\n\\n A whistle will summon any saddled animals that are nearby.\\n It is a good idea to carry a whistle with you when you are riding.\\n ",
       "Name": "Riding",
       "Title": "Riding Animals"
     },
@@ -3061,12 +3176,12 @@
       "Title": "Dyeing and Painting"
     },
     "31": {
-      "value": "\\n Electricity is a powerful mechanism in the game that can be used to control behavior of certain blocks.\\n For example, a lightbulb will produce light when connected to a source of electricity, doors will open or close if activated with an electric signal, and many more.\\n \\n\\n\\n If you know a bit about real-world electronics, you should feel at home in Survivalcraft.\\n All the familiar devices, such as logic gates (AND, OR, NOT etc.) are present and signals are characterized by voltage.\\n You can combine gates to build complex circuits, even computers or video games (check Community Content for some great builds by master electricians).\\n There are also sensors, such as pressure plates, photodiodes etc. that produce varying signals depending on conditions around them.\\n \\n\\n\\n For descriptions of all available electric devices, see RECIPAEDIA.\\n \\n\\n\\n Electric signals in the game are conducted through copper wires and have a voltage that is between 0V and 1.5V, in increments of 0.1V.\\n This gives 16 distinct voltage values.\\n \\n\\n\\n Digital devices, such as buttons, switches or doors work only with digital signals that have two possible values: low (0, false, off, no) and high (1, true, on, yes).\\n In this case, a voltage below 0.8V indicates low, 0.8V and greater indicates high.\\n Most commonly digital signals have voltages of 0V for low and 1.5V for high, but any value below 0.8V will be read as low.\\n \\n\\n\\n Analog devices, such as pressure plates, motion detectors or lightbulbs work with analog signals.\\n They will react to each different value of voltage between 0 and 1.5V, not just low and high states.\\n For example, sound generator volume and pitch inputs are controlled by analog voltages.\\n The volume and pitch will increase smoothly as the voltages get higher.\\n \\n\\n\\n It's good to remember that both analog and digital signals are really the same thing when conducted through the wire, a voltage between 0V and 1.5V.\\n Only the way a device interprets the signals voltage determines whether it is digital or analog.\\n \\n\\n\\n Voltage can also be interpreted as a number, with 0V representing 0 and 1.5V representing 15.\\n Some devices, such as displays, DAC\/ADC converters or counters use this interpretation.\\n \\n\\n\\n All electric devices have connections (inputs and outputs) on their sides, and sometimes also on their back (the face attached to the wall).\\n On complex devices these are indicated by blue and red dots on edges of the elements.\\n Blue means input, red means output.\\n Number of dots means number of the connection.\\n Simple devices, such as buttons, switches or lightbulbs do not have these dots, because they use one input\/output only and can be connected from any side.\\n \\n\\n\\n Electric devices can be placed on the walls and on the floor\/ceiling (with some exceptions).\\n Once placed, they can be rotated so that it's easy to connect appropriate inputs and outputs together with the wires.\\n \\n\\n\\n There is a special type of block in the game, called wire-though-block, which is a normal block with a hole drilled and an electric wire threaded though it.\\n It is very useful when trying to hide wires from sight, run them though the wall, or prevent them from connecting with other wires.\\n It is also the only way to access the \"back\" connection of devices which have it.\\n \\n\\n\\n Electricity in Survivalcraft is processed at a frequency of 100Hz.\\n It means that voltage goes from one element to another in 0.01s, irrespective of the length of the wire.\\n If you need to delay the signal, you may place some neutral elements in its path (for example an OR gate or a pair of NOT gates).\\n Each additional element in the way of the signal will delay it by 0.01s.\\n For longer delays use Adjustable Delay Gate, which can produce delays of up to 2.55s.\\n \\n\\n\\n Electricity is a complex topic and making large working machines requires some learning, but is very satisfying.\\n Simple devices however can be constructed by anyone.\\n For example, try placing a button next to the hinges of a door.\\n You will notice a wire appeared, clicking the button will now operate the door!\\n All this scary talk about voltages, signals, digital and analog, but in reality it's that simple.\\n \\n\\n\\n Another easy thing to build might be a light switch.\\n Place a lightbulb on the ceiling and a switch (not button) on the wall.\\n Then connect them with a wire.\\n The switch now operates the light, like in a real room!\\n \\n\\n\\n Survivalcraft is more about realism than other games of this type, and electricity is no exception.\\n What you learn here, might become invaluable when you get to learn this at school, or have to use it for living.\\n \\n\\n\\n Explore and have fun!\\n ",
+      "value": "\\n Electricity is a powerful mechanism in the game that can be used to control behavior of certain blocks.\\n For example, a lightbulb will produce light when connected to a source of electricity, doors will open or close if activated with an electric signal, and many more.\\n \\n\\n\\n If you know a bit about real-world electronics, you should feel at home in Survivalcraft.\\n All the familiar devices, such as logic gates (AND, OR, NOT etc.) are present and signals are characterized by voltage.\\n You can combine gates to build complex circuits, even computers or video games (check Community Content for some great builds by master electricians).\\n There are also sensors, such as pressure plates, photodiodes etc. that produce varying signals depending on conditions around them.\\n \\n\\n\\n For descriptions of all available electric devices, see RECIPAEDIA.\\n \\n\\n\\n Electric signals in the game are conducted through copper wires and have a voltage that is between 0V and 1.5V, in increments of 0.1V.\\n This gives 16 distinct voltage values.\\n \\n\\n\\n Digital devices, such as buttons, switches or doors work only with digital signals that have two possible values: low (0, false, off, no) and high (1, true, on, yes).\\n In this case, a voltage below 0.8V indicates low, 0.8V and greater indicates high.\\n Most commonly digital signals have voltages of 0V for low and 1.5V for high, but any value below 0.8V will be read as low.\\n \\n\\n\\n Analog devices, such as pressure plates, motion detectors or lightbulbs work with analog signals.\\n They will react to each different value of voltage between 0 and 1.5V, not just low and high states.\\n For example, sound generator volume and pitch inputs are controlled by analog voltages.\\n The volume and pitch will increase smoothly as the voltages get higher.\\n \\n\\n\\n It's good to remember that both analog and digital signals are really the same thing when conducted through the wire, a voltage between 0V and 1.5V.\\n Only the way a device interprets the signals voltage determines whether it is digital or analog.\\n \\n\\n\\n Voltage can also be interpreted as a number, with 0V representing 0 and 1.5V representing 15.\\n Some devices, such as displays, DAC/ADC converters or counters use this interpretation.\\n \\n\\n\\n All electric devices have connections (inputs and outputs) on their sides, and sometimes also on their back (the face attached to the wall).\\n On complex devices these are indicated by blue and red dots on edges of the elements.\\n Blue means input, red means output.\\n Number of dots means number of the connection.\\n Simple devices, such as buttons, switches or lightbulbs do not have these dots, because they use one input/output only and can be connected from any side.\\n \\n\\n\\n Electric devices can be placed on the walls and on the floor/ceiling (with some exceptions).\\n Once placed, they can be rotated so that it's easy to connect appropriate inputs and outputs together with the wires.\\n \\n\\n\\n There is a special type of block in the game, called wire-though-block, which is a normal block with a hole drilled and an electric wire threaded though it.\\n It is very useful when trying to hide wires from sight, run them though the wall, or prevent them from connecting with other wires.\\n It is also the only way to access the \"back\" connection of devices which have it.\\n \\n\\n\\n Electricity in Survivalcraft is processed at a frequency of 100Hz.\\n It means that voltage goes from one element to another in 0.01s, irrespective of the length of the wire.\\n If you need to delay the signal, you may place some neutral elements in its path (for example an OR gate or a pair of NOT gates).\\n Each additional element in the way of the signal will delay it by 0.01s.\\n For longer delays use Adjustable Delay Gate, which can produce delays of up to 2.55s.\\n \\n\\n\\n Electricity is a complex topic and making large working machines requires some learning, but is very satisfying.\\n Simple devices however can be constructed by anyone.\\n For example, try placing a button next to the hinges of a door.\\n You will notice a wire appeared, clicking the button will now operate the door!\\n All this scary talk about voltages, signals, digital and analog, but in reality it's that simple.\\n \\n\\n\\n Another easy thing to build might be a light switch.\\n Place a lightbulb on the ceiling and a switch (not button) on the wall.\\n Then connect them with a wire.\\n The switch now operates the light, like in a real room!\\n \\n\\n\\n Survivalcraft is more about realism than other games of this type, and electricity is no exception.\\n What you learn here, might become invaluable when you get to learn this at school, or have to use it for living.\\n \\n\\n\\n Explore and have fun!\\n ",
       "Name": "Electricity",
       "Title": "Electricity"
     },
     "32": {
-      "value": "\\n In Survivalcraft you can design and use custom furniture blocks.\\n \\n\\n\\n Furniture blocks are sculpted from up to 256x256x256 smaller sub-blocks.\\n Sub-blocks within a single furniture block can be made of different materials and painted to different colors.\\n Through crafting, furniture blocks can be combined, made interactive or made to work with electricity.\\n Furniture designs can be combined into packs, shared between worlds and uploaded to Community Content.\\n \\n\\n\\n To design and create furniture use the hammer tool.\\n You need to build the design from regular blocks in the world and then use the hammer on the resulting structure to shrink it down.\\n Furniture design window will appear where you can tweak the design by moving it, rotating it and changing resolution (between 2x2x2 and 256x256x256).\\n Once you are happy with the design, you can commit it.\\n \\n\\n\\n In creative mode, the design will be turned into a single furniture block, and the source blocks from which the design was created will remain in the world.\\n In survival modes, the design will be turned into several copies of the furniture block (with number depending on resolution) and the source blocks will be consumed.\\n Furniture blocks can be placed in the world in 4 orientations, similar to e.g. a furnace or a ladder.\\n \\n\\n\\n Not every block can be used for furniture design.\\n For example, dirt or grass are ignored by the hammer tool.\\n Allowed materials include: planks, granite, basalt, sand, clay, cobblestone, stone bricks, sandstone, marble, bricks, coal, malachite, diamond, copper, iron, glass, carpet, torches, wicker lamps, water, magma.\\n Source blocks of the design can be painted or dyed to make the design more colorful.\\n Finished furniture can also be painted, this will cover any colors of the source blocks.\\n \\n\\n\\n Certain source blocks have special functions.\\n For example a torch\/lamp block will cause the furniture to have a fire attached to it in the place of the block.\\n The design will also emit light.\\n \\n\\n\\n You have to be careful when constructing furniture to avoid placing the design on a base made of allowed material (for example sand).\\n The hammer tool will not be able to distinguish between the blocks you placed and the base, and will try to incorporate base into the design.\\n This will likely cause \"design too large\" error, because the maximum size of a design in any dimension is 256 blocks.\\n \\n\\n\\n Once the furniture block has been created, you can use workbench to combine it with other blocks in various ways.\\n The following combinations are possible:\\n \\n\\n\\n * Combine multiple pieces of furniture into one to create interactive furniture.\\n Interactive furniture toggles between its constituing designs on click or on electric signal.\\n You can create opening doors, switchable lights, raising platforms etc.\\n Up to 9 pieces of furniture can be combined (max capacity of workbench).\\n \\n\\n\\n * Combine exactly one furniture design with an electric button to create a custom button.\\n The resulting furniture will act as a button.\\n \\n\\n\\n * Combine exactly two furniture designs with an electric switch to create a custom switch.\\n The resulting furniture will act as a switch, with two furniture pieces acting as two states of the switch.\\n \\n\\n\\n * Combine multiple pieces of furniture with an electric wire to create connected interactive furniture.\\n The furniture will work in the same way as interactive furniture, but toggling it will also toggle all neighboring pieces of connected interactive furniture.\\n You can create multi-block toggleable structures, for example large doors.\\n \\n\\n\\n In the furniture panel in creative inventory you can view and organize your furniture designs.\\n Create named furniture sets to categorize the designs.\\n The newly created designs are placed in \"Uncategorized\" set, which has a special function.\\n Any design in this set, which does not otherwise exist in the world (no items or placed blocks) will be automatically recycled.\\n Be careful and move valuable designs to named furniture sets to avoid accidentally losing them.\\n Each named furniture set can be turned into a furniture pack and exported from the world.\\n You can later import it to other worlds or upload to Dropbox\/SDcard and share with others.\\n Furniture packs can also be uploaded to community content.\\n \\n\\n\\n There are certain limitations to the furniture system:\\n \\n\\n\\n * A furniture block can be made from up to 256x256x256 sub-blocks.\\n \\n\\n\\n * The amount of geometry used for a single design cannot exceed 65535 triangles.\\n The game uses an intelligent tesselation algorithm that optimizes the geometry, so 65535 triangles is plenty for even fairly complex designs, unless you really go over the top.\\n To reduce number of triangles, you can reduce number of small details, reduce number of painted blocks and fill up any internal holes in the design.\\n \\n\\n\\n * You can only have up to 8192 unique furniture designs in the world.\\n Every time you paint a furniture or combine it with others, you are creating new designs that count towards the total.\\n Unused designs (that do not exist in the world either as items or blocks, and are in the \"uncategorized\" set in the inventory) are automatically recycled.\\n ",
+      "value": "\\n In Survivalcraft you can design and use custom furniture blocks.\\n \\n\\n\\n Furniture blocks are sculpted from up to 256x256x256 smaller sub-blocks.\\n Sub-blocks within a single furniture block can be made of different materials and painted to different colors.\\n Through crafting, furniture blocks can be combined, made interactive or made to work with electricity.\\n Furniture designs can be combined into packs, shared between worlds and uploaded to Community Content.\\n \\n\\n\\n To design and create furniture use the hammer tool.\\n You need to build the design from regular blocks in the world and then use the hammer on the resulting structure to shrink it down.\\n Furniture design window will appear where you can tweak the design by moving it, rotating it and changing resolution (between 2x2x2 and 256x256x256).\\n Once you are happy with the design, you can commit it.\\n \\n\\n\\n In creative mode, the design will be turned into a single furniture block, and the source blocks from which the design was created will remain in the world.\\n In survival modes, the design will be turned into several copies of the furniture block (with number depending on resolution) and the source blocks will be consumed.\\n Furniture blocks can be placed in the world in 4 orientations, similar to e.g. a furnace or a ladder.\\n \\n\\n\\n Not every block can be used for furniture design.\\n For example, dirt or grass are ignored by the hammer tool.\\n Allowed materials include: planks, granite, basalt, sand, clay, cobblestone, stone bricks, sandstone, marble, bricks, coal, malachite, diamond, copper, iron, glass, carpet, torches, wicker lamps, water, magma.\\n Source blocks of the design can be painted or dyed to make the design more colorful.\\n Finished furniture can also be painted, this will cover any colors of the source blocks.\\n \\n\\n\\n Certain source blocks have special functions.\\n For example a torch/lamp block will cause the furniture to have a fire attached to it in the place of the block.\\n The design will also emit light.\\n \\n\\n\\n You have to be careful when constructing furniture to avoid placing the design on a base made of allowed material (for example sand).\\n The hammer tool will not be able to distinguish between the blocks you placed and the base, and will try to incorporate base into the design.\\n This will likely cause \"design too large\" error, because the maximum size of a design in any dimension is 256 blocks.\\n \\n\\n\\n Once the furniture block has been created, you can use workbench to combine it with other blocks in various ways.\\n The following combinations are possible:\\n \\n\\n\\n * Combine multiple pieces of furniture into one to create interactive furniture.\\n Interactive furniture toggles between its constituing designs on click or on electric signal.\\n You can create opening doors, switchable lights, raising platforms etc.\\n Up to 9 pieces of furniture can be combined (max capacity of workbench).\\n \\n\\n\\n * Combine exactly one furniture design with an electric button to create a custom button.\\n The resulting furniture will act as a button.\\n \\n\\n\\n * Combine exactly two furniture designs with an electric switch to create a custom switch.\\n The resulting furniture will act as a switch, with two furniture pieces acting as two states of the switch.\\n \\n\\n\\n * Combine multiple pieces of furniture with an electric wire to create connected interactive furniture.\\n The furniture will work in the same way as interactive furniture, but toggling it will also toggle all neighboring pieces of connected interactive furniture.\\n You can create multi-block toggleable structures, for example large doors.\\n \\n\\n\\n In the furniture panel in creative inventory you can view and organize your furniture designs.\\n Create named furniture sets to categorize the designs.\\n The newly created designs are placed in \"Uncategorized\" set, which has a special function.\\n Any design in this set, which does not otherwise exist in the world (no items or placed blocks) will be automatically recycled.\\n Be careful and move valuable designs to named furniture sets to avoid accidentally losing them.\\n Each named furniture set can be turned into a furniture pack and exported from the world.\\n You can later import it to other worlds or upload to Dropbox/SDcard and share with others.\\n Furniture packs can also be uploaded to community content.\\n \\n\\n\\n There are certain limitations to the furniture system:\\n \\n\\n\\n * A furniture block can be made from up to 256x256x256 sub-blocks.\\n \\n\\n\\n * The amount of geometry used for a single design cannot exceed 65535 triangles.\\n The game uses an intelligent tesselation algorithm that optimizes the geometry, so 65535 triangles is plenty for even fairly complex designs, unless you really go over the top.\\n To reduce number of triangles, you can reduce number of small details, reduce number of painted blocks and fill up any internal holes in the design.\\n \\n\\n\\n * You can only have up to 8192 unique furniture designs in the world.\\n Every time you paint a furniture or combine it with others, you are creating new designs that count towards the total.\\n Unused designs (that do not exist in the world either as items or blocks, and are in the \"uncategorized\" set in the inventory) are automatically recycled.\\n ",
       "Name": "Furniture",
       "Title": "Furniture"
     },
@@ -3096,12 +3211,12 @@
       "Title": "Force Respawn"
     },
     "38": {
-      "value": "\\n The game uses Dropbox service to allow you to download and upload data to\/from your device.\\n \\n\\n\\n Through Dropbox, you can backup and share worlds with others.\\n You can also download custom blocks textures, character skins, furniture packs.\\n \\n\\n\\n To login to Dropbox, click on the login button on the Dropbox screen.\\n If you don't have a Dropbox account yet, you will be able to setup one during the login.\\n \\n\\n\\n Once you log in, the Dropbox screen will show you the contents of your online Dropbox folders, and allow you to download the files to your device.\\n \\n\\n\\n See https:\/\/dropbox.com website for more details.\\n ",
+      "value": "\\n The game uses Dropbox service to allow you to download and upload data to/from your device.\\n \\n\\n\\n Through Dropbox, you can backup and share worlds with others.\\n You can also download custom blocks textures, character skins, furniture packs.\\n \\n\\n\\n To login to Dropbox, click on the login button on the Dropbox screen.\\n If you don't have a Dropbox account yet, you will be able to setup one during the login.\\n \\n\\n\\n Once you log in, the Dropbox screen will show you the contents of your online Dropbox folders, and allow you to download the files to your device.\\n \\n\\n\\n See https://dropbox.com website for more details.\\n ",
       "Name": "Dropbox",
       "Title": "Dropbox"
     },
     "39": {
-      "value": "\\n The game allows you to import and export worlds to SD Card for sharing and backup purposes.\\n \\n\\n\\n If your device does not have an SD Card, generic external storage folder will be used.\\n The location of the data on the device is normally \/sdcard\/Survivalcraft2.4_API1.9\\n ",
+      "value": "\\n The game allows you to import and export worlds to SD Card for sharing and backup purposes.\\n \\n\\n\\n If your device does not have an SD Card, generic external storage folder will be used.\\n The location of the data on the device is normally /sdcard/Survivalcraft2.4_API1.9\\n ",
       "Name": "SDCard",
       "Title": "SD Card",
       "DisabledPlatforms": "Ios, Windows81, WindowsPhone81, Desktop"
@@ -3165,7 +3280,7 @@
     "BlocksTexture.Description": "Choose blocks texture to use when drawing the world. You can completely change appearance of the world by using a different blocks texture.",
     "Settings.Compatibility.SinglethreadedTerrainUpdate.Description": "Enable this to force the game to use a single thread only when updating the terrain. It will make the game run slower on multicore devices, but might make it slightly faster on single core ones.",
     "Settings.Compatibility.UseAudioTrackCaching.Description": "Enable this if you experience issues with audio and have Android 4.3 or earlier. This setting reduces the number of AudioTrack objects created.",
-    "Settings.Compatibility.UseReducedZRange.Description": "Enable this if you experience issues with graphics like invisible parts of the world near the player or garbled textures. It reduces the clip-space Z range from -1\/1 to 0\/1, as some Android devices have depth buffering and clipping issues with the full range.",
+    "Settings.Compatibility.UseReducedZRange.Description": "Enable this if you experience issues with graphics like invisible parts of the world near the player or garbled textures. It reduces the clip-space Z range from -1/1 to 0/1, as some Android devices have depth buffering and clipping issues with the full range.",
     "ScreenLayout.Single.Name": "Single",
     "ScreenLayout.Single.Description": "Single player full screen",
     "ScreenLayout.DoubleVertical.Name": "Double Vertical",
@@ -3219,13 +3334,16 @@
       "6": "Search",
       "7": "x"
     },
+    "CommunityMyPublished": {
+      "Title": "My Published"
+    },
     "ContentScreen": {
       "1": "Choose Content Type",
       "2": "Access content previously uploaded to one of your public storage spaces",
       "3": "Private",
       "4": "Access content created by other community members and registered for public access",
       "5": "Community",
-      "6": "Download a file directly from a web link, if you know it (it's best to use copy\/paste to enter links)",
+      "6": "Download a file directly from a web link, if you know it (it's best to use copy/paste to enter links)",
       "7": "From Link",
       "8": "Manage downloaded content",
       "9": "Manage Content",
@@ -3234,7 +3352,9 @@
       "12": "Manage downloaded mod",
       "13": "Manage Mod",
       "14": "Import content from the file picker of your system",
-      "15": "Device"
+      "15": "Device",
+      "16": "Manage existing modpack content",
+      "17": "Modpacks"
     },
     "ExternalContentScreen": {
       "1": "",
@@ -3480,7 +3600,7 @@
       "Window Mode:",
       "UI Size:",
       "UI Vertical Flip:",
-      "Hide Move\/Look Pads:",
+      "Hide Move/Look Pads:",
       "Show UI in screenshots:",
       "Show logo in screenshots:",
       "Screenshot resolution:",
@@ -3510,8 +3630,8 @@
       "1": "Change World Options",
       "2": "Terrain Type:",
       "3": "",
-      "4": "Island Size East\/West:",
-      "5": "Island Size North\/South:",
+      "4": "Island Size East/West:",
+      "5": "Island Size North/South:",
       "6": "Flat Terrain Level:",
       "7": "Flat Terrain Shore Roughness:",
       "8": "Flat Terrain Block:",
@@ -3569,7 +3689,7 @@
       "2": "Inventory"
     },
     "ClothingWidget": {
-      "1": "Body\/Food",
+      "1": "Body/Food",
       "2": "Inventory",
       "3": "",
       "4": ""
@@ -3723,13 +3843,9 @@
     },
     "DownloadContentFromLinkDialog": {
       "1": "Enter Link To A File",
-      "2": "The name and type will be autofilled from link if possible, otherwise you must specify them manually.",
-      "3": "Link:",
-      "4": "Name:",
-      "5": "Content Type:",
-      "6": "...",
       "7": "Download",
-      "8": "Cancel"
+      "8": "Cancel",
+      "9": "Supports direct scworld / scfpack / png / scbtex / scskin / scmod / zip / json links"
     },
     "EditAdjustableDelayGateDialog": {
       "1": "Adjust Delay",
@@ -3842,12 +3958,12 @@
       "13": "Y",
       "14": "D-Pad Up",
       "15": "D-Pad Down",
-      "16": "D-Pad Left\/Right",
-      "17": "D-Pad Up\/Down",
-      "18": "Back\/Select\/Pause",
+      "16": "D-Pad Left/Right",
+      "17": "D-Pad Up/Down",
+      "18": "Back/Select/Pause",
       "19": "Left Trigger + A",
       "20": "2xA",
-      "21": "A\/Right Shoulder",
+      "21": "A/Right Shoulder",
       "22": "movement",
       "23": "looking",
       "24": "place block, use, interact",
@@ -3863,17 +3979,17 @@
       "34": "mount creature or vehicle",
       "35": "change camera mode",
       "36": "change active slot",
-      "37": "scroll, prev\/next page",
+      "37": "scroll, prev/next page",
       "38": "show game menu",
       "39": "auto move inventory item",
       "40": "toggle fly mode (creative)",
-      "41": "fly up\/down (creative)",
+      "41": "fly up/down (creative)",
       "42": "OK",
       "43": "Help"
     },
     "KeyboardHelpDialog": {
       "1": "Keyboard Controls",
-      "2": "W\/A\/S\/D",
+      "2": "W/A/S/D",
       "3": "Mouse Move",
       "4": "Space",
       "5": "Shift",
@@ -3888,7 +4004,7 @@
       "14": "L",
       "15": "0 to 9",
       "16": "2xSpace or F",
-      "17": "Space\/Shift",
+      "17": "Space/Shift",
       "18": "Left Mouse Click",
       "19": "Right Mouse Click",
       "20": "Left Mouse Drag",
@@ -3912,7 +4028,7 @@
       "38": "summon lightning (creative)",
       "39": "select inventory slot",
       "40": "toggle fly mode (creative)",
-      "41": "fly up\/down (creative)",
+      "41": "fly up/down (creative)",
       "42": "dig, attack, aim",
       "43": "place block, use, interact",
       "44": "move all items",
@@ -4013,7 +4129,8 @@
       "1": "Select Community Server",
       "2": "Open",
       "3": "Add",
-      "4": "Edit"
+      "4": "Edit",
+      "5": "Set as Current"
     },
     "EditCommunityServerInfoDialog": {
       "1": "Edit Server",
@@ -4030,6 +4147,179 @@
     "SelectClassSubstituteDialog": {
       "1": "Select Which Class to use",
       "2": "Note: Either option may cause the game to malfunction."
+    },
+    "SelectDownloadSourceDialog": {
+      "1": "Select Download Source",
+      "2": "Set as Default",
+      "3": "Add",
+      "4": "Edit"
+    },
+    "EditDownloadSourceInfoDialog": {
+      "1": "Edit Download Source",
+      "2": "Name*: ",
+      "3": "Mirror Host: ",
+      "4": "OK",
+      "5": "Remove",
+      "6": "Cancel"
+    },
+    "ModVersionsDialog": {
+      "AllVersions": "All Versions",
+      "Close": "Close"
+    },
+    "ModReviewDialog": {
+      "Rating": "Rating:",
+      "RestorePrevious": "Restore Previous",
+      "Submit": "Submit",
+      "ReviewContent": "Review Content",
+      "EnterReviewContent": "Enter review content"
+    },
+    "MissingDependenciesDialog": {
+      "DownloadAllDeps": "Download All Deps",
+      "Close": "Close"
+    },
+    "CommunityScreen": {
+      "UnpublishedOnly": "Unpublished Only",
+      "SCChineseCommunity": "Chinese Community",
+      "Community": "Community",
+      "Type": "Type",
+      "Filter": "Filter",
+      "Mod": "Mod",
+      "Sort": "Sort",
+      "RecentlyUpdated": "Recently Updated",
+      "CurrentVersion": "Current Version",
+      "All": "All",
+      "Search": "Search",
+      "World": "World",
+      "Furniture": "Furniture",
+      "Texture": "Texture",
+      "Skin": "Skin",
+      "Modpack": "Modpack",
+      "NoContent": "No Content",
+      "CommunityMods": "Community Mods",
+      "SelectLeftToShowDetails": "Select content on the left to view details here",
+      "WorldName": "World Name:",
+      "WorldSize": "World Size:",
+      "WorldSeed": "World Seed:",
+      "CopySeed": "Copy Seed",
+      "CurrentStatus": "Current Status:",
+      "EasiestMode": "Easiest Mode:",
+      "CurrentMode": "Current Mode:",
+      "ChangeMode": "Change Mode",
+      "Players": "Players:",
+      "Days": "Days:",
+      "CompatibleAPI": "Compatible API:",
+      "PackageName": "Package:",
+      "Dependencies": "Dependencies:",
+      "Deaths": "Deaths:",
+      "Review": "Review",
+      "Versions": "Versions",
+      "CheckUpdate": "Check Update",
+      "Functions": "Functions",
+      "Download": "Download",
+      "Delete": "Delete",
+      "Upload": "Upload",
+      "Save": "Save",
+      "Page": "Page",
+      "Go": "Go",
+      "ShareLink": "Share Link",
+      "Details": "Details",
+      "More": "...",
+      "Disable": "Disable",
+      "PendingRestartResources": "0 resources need to restart to load"
+    },
+    "DownloadDialog": {
+      "DownloadingLabel": "Downloading",
+      "Close": "Close",
+      "PreparingDownload": "Preparing download...",
+      "CancelDownload": "Cancel Download",
+      "Background": "Background"
+    },
+    "DownloadFailureDialog": {
+      "UseAnotherSource": "Use Another Source",
+      "CurrentDownloadLink": "Current Download Link",
+      "ErrorReason": "Error Reason",
+      "CopyLink": "Copy",
+      "Close": "Close"
+    },
+    "DownloadQueueDialog": {
+      "DownloadQueue": "Download Queue",
+      "SelectionHint": "Click a task to select it. Without a selection, buttons auto-match a task.",
+      "PauseResume": "Pause/Resume",
+      "CancelTask": "Cancel Task",
+      "Retry": "Retry",
+      "ClearDone": "Clear Done",
+      "Close": "Close"
+    },
+    "FiltersDialog": {
+      "Title": "Filter",
+      "Filter": "Filter",
+      "IgnoreSearch": "Ignore",
+      "FileType": "File Type",
+      "SortOrder": "Sort Order",
+      "VersionRange": "Version Range",
+      "Section": "Section"
+    },
+    "ImportOverwriteDialog": {
+      "DuplicateResource": "Duplicate Resource",
+      "Overwrite": "Overwrite",
+      "Rename": "Rename"
+    },
+    "LoginDialog": {
+      "LogInToCommunity": "Log In to Community",
+      "AccountLabel": "Email/User:",
+      "PasswordLabel": "Password:",
+      "LogIn": "Log In",
+      "Register": "Register"
+    },
+    "ModpackFileConflictDialog": {
+      "DuplicateFileFound": "Duplicate File Found",
+      "Overwrite": "Overwrite",
+      "Skip": "Skip",
+      "SkipAll": "Skip All",
+      "OverwriteAll": "Overwrite All",
+      "Close": "Close"
+    },
+    "PostDetailsDialog": {
+      "PostDetails": "Post Details",
+      "Close": "Close",
+      "Download": "Download",
+      "ViewInBrowser": "View In Browser"
+    },
+    "RestartConfirmDialog": {
+      "Restart": "Restart",
+      "RestartToCurrentScreen": "Reboot here"
+    },
+    "CommunitySettingsScreen": {
+      "Title": "Chinese Community Settings",
+      "Close": "Close",
+      "LoggedAccount": "Current Account",
+      "NotLoggedIn": "Not Logged In",
+      "CommunityAccount": "Community Account",
+      "CommunityAccountDescription": "Log in to upload resources and manage your published content",
+      "LogIn": "Log In",
+      "LinkImport": "Link Import",
+      "LinkImportDescription": "Import a resource or modpack from a web link",
+      "Import": "Import",
+      "DownloadQueue": "Download Queue",
+      "DownloadQueueDescription": "View downloads that are queued, paused, or failed",
+      "View": "View",
+      "CheckUpdate": "Check Update",
+      "ModSettings": "Mod Settings",
+      "ModSettingsDescription": "Open the game's native mod settings",
+      "Open": "Open",
+      "DownloadSourceSelectionMode": "Choose Download Source Manually",
+      "DownloadSourceSelectionModeDescription": "When enabled, a dialog asks for the download source on every download",
+      "DefaultDownloadSource": "Default Download Source",
+      "DefaultDownloadSourceDescription": "The download source used when \"Use the default download source below\" is selected",
+      "ApplyDownloadSourceToUpdates": "Apply to Resource Updates",
+      "ApplyDownloadSourceToUpdatesDescription": "Use the selected download source when downloading updates for published resources",
+      "PlayedTimeReporting": "Playtime Reporting",
+      "PlayedTimeReportingDescription": "Report playtime to the community for statistics",
+      "CurrentServer": "Current Server",
+      "MyPublished": "My Published",
+      "MyPublishedDescription": "Browse resources you have published to the Chinese community",
+      "PostDetailsAutoTranslate": "Post Details Auto-Translate",
+      "PostDetailsAutoTranslateDescription": "Automatically translate post or version details into the current system language"
     }
   },
   "FireworksBlock": {
@@ -4614,5 +4904,601 @@
       "372": "Name of .NET class used to create component",
       "373": "No effect. Only for replacing a component to this."
     }
+  },
+  "Enums": {
+    "CommunitySection": {
+      "All": "All",
+      "Trending": "Trending",
+      "NewActivity": "New Activity"
+    },
+    "CommunityOrderType": {
+      "Latest": "Latest Releases",
+      "Oldest": "Oldest",
+      "Updated": "Updated",
+      "Hot": "Trending Now"
+    },
+    "ExternalContentType": {
+      "Unknown": "Resource",
+      "World": "World",
+      "FurniturePack": "Furniture Pack",
+      "BlocksTexture": "Texture",
+      "CharacterSkin": "Skin",
+      "Mod": "Mod",
+      "Modpack": "Modpack",
+      "NetMod": "Net Mod",
+      "Image": "Image",
+      "Other": "Other Files"
+    }
+  },
+  "CommunityDownloadSource": {
+    "DefaultCn": "Default Line (Mainland China)",
+    "Source1Global": "Backup Line 1 (Global)",
+    "Source2Cn": "Backup Line 2 (Mainland China)",
+    "Source3Global": "Backup Line 3 (Global)",
+    "Source4Global": "Backup Line 4 (Global)"
+  },
+  "EditDownloadSourceInfoDialog": {
+    "NewDownloadSource": "New Download Source",
+    "DuplicateName": "The name is empty or already in use."
+  },
+  "JsonFileStore": {
+    "ReadJsonFileFailedUsingDefault": "Failed to read the JSON file; falling back to the default: {0}, error={1}",
+    "CleanJsonTempFileFailed": "Failed to clean up the JSON temporary file: {0}, {1}",
+    "ScanJsonTempFilesFailed": "Failed to scan residual JSON temporary files root={0} error={1}",
+    "RestoredJsonTempFile": "Recovered from a residual JSON temporary file: {0} → {1}",
+    "RestoreJsonTempFileFailed": "Failed to recover from a residual JSON temporary file: {0}, {1}"
+  },
+  "LocalMods": {
+    "AutoUpdateScanFailed": "Automatic update scan of local mods failed: {0}",
+    "PublishedCheckTaskFaulted": "Published check task faulted: {0}"
+  },
+  "ModReviewDialog": {
+    "ReviewLocalResource": "Review Local Resource",
+    "ThereIsNoPreviousContentToRestore": "There is no previous content to restore.",
+    "PreviousContentRestored": "Previous content restored.",
+    "PleaseSelectARating": "Please select a rating.",
+    "LocalResource": "Local Resource"
+  },
+  "MissingDependenciesDialog": {
+    "DependenciesFound": "Dependencies Found",
+    "PublishTimePackageVersionFormat": "Published: {0}   Package: {1}   Package Version: {2}",
+    "Collapse": "Collapse",
+    "ResourcePackageNameNotFound": "Resource Package Name Not Found",
+    "MoreModsWithTheSamePackageName": "{0} more mods with the same package name",
+    "MoreDuplicateFiles": "{0} more duplicate files",
+    "Expand": "Expand",
+    "CollapsedPackageGroupLatestInRange": "Hidden {0} mods with the same package name, prioritizing the newest one within range",
+    "CollapsedPackageGroupLatestOnly": "Hidden {0} mods with the same package name; only the latest is shown",
+    "CollapsedFileGroupLatestOnly": "Hidden {0} duplicate files; only the latest is shown",
+    "NoDownloadableFile": "No downloadable files were found in community resources.",
+    "LocalMod": "Local Mod",
+    "UnnamedFile": "Unnamed File"
+  },
+  "LocalModNetworkManager": {
+    "AutoUpdateCheckFailed": "Automatic update check failed for local mod: {0}, error={1}",
+    "NoModVersionForCurrentGame": "The post has no mod version compatible with the current game.",
+    "VersionListIsEmpty": "Version list is empty.",
+    "CannotFindPublishedPostByFileName": "Unable to find a published post by file name: {0}",
+    "NoScmodFileInLatestVersion": "The latest version has no downloadable .scmod file.",
+    "PostDetailsIsEmpty": "Post details are empty."
+  },
+  "LocalModPostResolver": {
+    "FindPostByFileNameFailed": "Failed to find post by file name: {0}: {1}",
+    "FindPostByFileNameMalformed": "Malformed find-post-by-file-name response: {0}"
+  },
+  "CommunityScreen": {
+    "LoadFeaturedFailed": "Failed to load featured resources: {0}",
+    "LoadCommunityPostsFailed": "Failed to load community posts: {0}",
+    "FailedToLoadFeaturedResources": "Failed to load featured resources",
+    "CurrentVersion": "Current Version",
+    "LoadingFormat": "{0} · Loading...",
+    "CommunityFormat": "Community {0}",
+    "Downloading": "Downloading...",
+    "LoadingProgress": "Loading...",
+    "VersionDetails": "Version Details",
+    "MyPublishedFormat": "My {0}s",
+    "AllVersions": "All Versions",
+    "CommunityLoadingFormat": "Community {0}s · Loading...",
+    "FeaturedContentLoading": "Featured Content · Loading...",
+    "Details": "Details",
+    "FailedToLoadPostDetails": "Failed to load post details: {0}"
+  },
+  "HttpDownloader": {
+    "ReadCacheFileSizeFailed": "Failed to read the cached file size: {0}, {1}",
+    "GetCacheFileSizeFailed": "Failed to get the cached file size: {0}, {1}"
+  },
+  "CredentialStore": {
+    "DecryptCredentialFileFailed": "Failed to decrypt the credential file, invalidating it: {0}",
+    "DeleteCredentialFileFailed": "Failed to delete the credential file: {0}, {1}"
+  },
+  "TaskSlot": {
+    "TaskFaultConsumedAsNoResult": "Exception of the [{0}] task consumed as no result: {1}",
+    "StaleTaskFault": "Exception of a stale [{0}] task: {1}",
+    "PostsList": "Posts list",
+    "PostNodeDetails": "Post node details",
+    "UpdateCheck": "Update check",
+    "AutoUpdateScan": "Automatic update scan",
+    "VersionList": "Version list",
+    "DependencyLookup": "Dependency lookup",
+    "ManualUpdateCheck": "Manual update check",
+    "ScoreSubmission": "Score submission",
+    "Featured": "Featured resources",
+    "WorldUpload": "World upload",
+    "PublishedCheck": "Published check",
+    "ModpackFileInfo": "Modpack file info",
+    "PostDetailsDialog": "Post details dialog",
+    "Unspecified": "Background"
+  },
+  "CommunityDownloadGuard": {
+    "DownloadExceedsSizeLimit": "Download content exceeds the size limit ({0} bytes)."
+  },
+  "CommunityManager": {
+    "HighlightDataLoadFailed": "Failed to load highlight data: {0}",
+    "ScoreApiReturnedEmpty": "Score API returned an empty response",
+    "ScoreApiReturnedMalformed": "Score API returned a malformed response",
+    "NoStats": "No stats.",
+    "GetVersionListFailed": "Failed to get version list: {0}: {1}",
+    "VersionListResponseMalformed": "Malformed version list response: {0}",
+    "DownloadTrendsResponseMalformed": "Malformed download trends response: {0}"
+  },
+  "VersionCatalogCache": {
+    "NoApiVersionSkippingApiMatch": "No API version provided; skipping API version matching. game={0}",
+    "NoMatchingApiVersion": "No matching API version found: game={0}, api={1}",
+    "VersionMatchSucceeded": "Version matching succeeded: game={0}, api={1}, matchedId={2}, matchedVersion={3}, matchedName={4}"
+  },
+  "LocalModReviewState": {
+    "ReadReviewsFailed": "Failed to read local resource reviews: {0}",
+    "SaveReviewsFailed": "Failed to save local resource reviews: {0}"
+  },
+  "PendingLocalModActions": {
+    "ProcessedPendingModAction": "Processed pending mod action: reason={0}, action={1}, path={2}",
+    "ProcessPendingModActionFailed": "Failed to process the pending mod action: reason={0}, action={1}, path={2}, error={3}",
+    "ReadPendingModManifestFailed": "Failed to read the pending mod manifest: {0}",
+    "SavePendingModManifestFailed": "Failed to save the pending mod manifest: {0}",
+    "MissingModPackageNameOrVersion": "Mod package name or version is missing; cannot update the disabled state."
+  },
+  "DownloadQueueManager": {
+    "LoadDownloadQueueFailed": "Failed to load download queue: {0}",
+    "RestoreQueueItemFailed": "Failed to restore a download queue item: {0}"
+  },
+  "DownloadQueueDialog": {
+    "SelectedTask": "Selected: task {0} - {1}",
+    "NoDownloadTasks": "No download tasks.",
+    "OnlyPendingDownloadsCanBeStarted": "Only pending downloads can be started.",
+    "OnlyPendingOrRunningCanRequestOverwrite": "Only pending or running downloads can request overwrite confirmation.",
+    "OnlyAwaitingOverwriteCanBeConfirmed": "Only downloads awaiting overwrite confirmation can be confirmed.",
+    "OnlyAwaitingOverwriteCanBeCanceled": "Only downloads awaiting overwrite confirmation can be canceled.",
+    "OnlyPausedDownloadsCanBeResumed": "Only paused downloads can be resumed.",
+    "OnlyFinishedOrPausedCanBeRetried": "Only finished or paused downloads can be retried.",
+    "SelectionHint": "Click a task to select it. Without a selection, buttons auto-match a task."
+  },
+  "DownloadQueuePersistence": {
+    "CleanImportedItemCacheFailed": "Failed to clean the download cache of an imported item: {0}, {1}"
+  },
+  "DownloadFeedbackClient": {
+    "MissingFeedbackIdsSkipped": "Download feedback is missing fileId/postId; skipping recording.",
+    "RecordDownloadFeedbackFailed": "Failed to record download feedback: {0}: {1}",
+    "RecordDownloadFeedbackFaulted": "Download feedback recording faulted: {0}",
+    "FeedbackAuthRefreshFailedReportingAnonymously": "Failed to refresh the login state for the feedback report; reporting anonymously: {0}"
+  },
+  "AuthClient": {
+    "LoginRequestFailed": "Login request failed: {0}",
+    "LoginResponseMalformed": "Login response is malformed: {0}",
+    "LogoutRequestCompleted": "Logout request completed ({0})",
+    "LogoutRequestFailed": "Logout request failed: {0}"
+  },
+  "LoginDialog": {
+    "LoggingIn": "Logging In...",
+    "LoginResponseIsEmpty": "Login response is empty",
+    "LoginNetworkError": "Network error: {0}",
+    "LoginResponseFormatError": "Malformed login response: {0}",
+    "CredentialFileFormatInvalid": "Credential file format is invalid.",
+    "OldCredentialFileFormatInvalid": "Old credential file format is invalid.",
+    "LogIn": "Log In"
+  },
+  "RemoteImportManager": {
+    "ZIPModpackHasBeenSavedLocally": "ZIP modpack {0} has been saved locally.",
+    "ImportModpack": "Import Modpack",
+    "Downloading": "Downloading: {0} ({1}/{2})",
+    "CheckingLocalResources": "Checking local resources...",
+    "LocalAlreadyExistsOverwriteIt": "Local {0} \"{1}\" already exists. Overwrite it?",
+    "DownloadArchiveFormat": "Downloading modpack: {0}",
+    "DownloadManifestFormat": "Downloading modpack manifest: {0}",
+    "DownloadPackCompleteWithSkipped": "Modpack download complete: {0} succeeded, {1} failed, {2} skipped.",
+    "DownloadPackComplete": "Modpack download complete: {0} succeeded, {1} failed.",
+    "DownloadFailedFormat": "Download failed: {0}",
+    "EnterResourceLink": "Please enter a resource link.",
+    "InvalidUrl": "Please enter a valid http or https link.",
+    "CannotRecognizeFileName": "Unable to identify a file name from the link.",
+    "UnsupportedFileExtension": "Cannot recognize the resource type.",
+    "ImportDataIsEmpty": "Import data is empty.",
+    "CannotOverwriteBuiltInTexture": "Cannot overwrite built-in texture: {0}",
+    "CannotOverwriteBuiltInSkin": "Cannot overwrite built-in skin: {0}",
+    "ShowConflictDialogFailed": "Failed to show the conflict dialog: {0}",
+    "RemoteImportPrepareTaskFaulted": "Remote import preparation task faulted: {0}",
+    "RemoteImportTaskFaulted": "Remote import task faulted: {0}",
+    "RemoteImportCompletionFaulted": "Remote import completion handling faulted: {0}",
+    "StartModpackImport": "Starting modpack import url={0} fileName={1}",
+    "ModpackManifestEmptyOrInvalid": "Modpack manifest is empty or invalid url={0}",
+    "ModpackManifestDownloadFailed": "Modpack manifest download failed url={0} error={1}",
+    "ModpackImportFailed": "Modpack import failed error={0}",
+    "SaveModpackManifestFailed": "Failed to save the modpack manifest: {0}",
+    "SaveArchiveFailed": "Failed to save the modpack archive: {0}",
+    "DownloadInterruptedManifestKept": "Resource downloading was stopped; only the JSON modpack manifest was kept.",
+    "ImportOrDownloadBusy": "An import or download is already running. Please wait.",
+    "Manifest": " manifest",
+    "DownloadComplete": "Download Complete",
+    "ImportComplete": "Import Complete",
+    "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
+    "HasNoDownloadLinkSkipped": "{0} has no download link, skipped.",
+    "UnknownItemCategory": "Unknown item category: {0}",
+    "DataFileHostUnavailable": "{0} cannot be imported: this page cannot handle modpack data files. Use the modpack download in Local Resources instead.",
+    "Modpack": "Modpack",
+    "Imported": "{0} imported.",
+    "ImportResource": "Import Resource",
+    "Importing": "Importing...",
+    "DownloadingFormat": "Downloading: {0}",
+    "DownloadingProgress": "Downloading...",
+    "DownloadPackPartialFailure": "Modpack download partially failed: {0} succeeded, {1} failed.",
+    "DownloadPackFailure": "Modpack download failed: {0} succeeded, {1} failed."
+  },
+  "ModpackSourceResolver": {
+    "ModpackItemUrlDownloadFailedFallingBackToFileId": "Modpack item url download failed; falling back to fileId={0}: {1}",
+    "FileIdReturnedNoDownloadLink": "File ID {0} returned no valid download link.",
+    "GetFileInfoByFileIdFailed": "Failed to get file info by file ID: {0}: {1}",
+    "GetFileInfoByFileIdMalformed": "Malformed file info response by file ID: {0}"
+  },
+  "ModpackManifestParser": {
+    "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
+    "PackOnlySupportsZipOrJson": "Modpacks only support .zip and .json files.",
+    "PackinfoJsonNotFoundInZipRoot": "packinfo.json not found in ZIP root.",
+    "ZipEntryExceedsSizeLimit": "ZIP entry exceeds size limit: {0}",
+    "ZipReadFailed": "ZIP read failed: {0}",
+    "ManifestJsonParseFailed": "Manifest JSON parse failed: {0}",
+    "ManifestMissingFieldName": "Modpack manifest is missing required field: name.",
+    "ManifestMissingFieldVersion": "Modpack manifest is missing required field: version.",
+    "ManifestMissingFieldDescription": "Modpack manifest is missing required field: description.",
+    "ManifestMissingFieldPackageName": "Modpack manifest is missing required field: packageName.",
+    "IconOnlySupportsPngOrWebp": "Modpack icon only supports png or webp.",
+    "JsonPackIconMustBeUrl": "The icon of a json modpack must be a web link.",
+    "ManifestHasNoValidItems": "Modpack manifest has no valid items."
+  },
+  "ModpackRegistry": {
+    "ModpackRecordCorrupted": "Modpack record is corrupted: {0}, {1}",
+    "ReadModpackRecordFailed": "Failed to read the modpack record path={0} error={1}",
+    "CompareModpackSourceFailed": "Failed to compare the modpack source: path={0}, error={1}",
+    "ReadModpackRecordMetadataFailed": "Failed to read the modpack record metadata: path={0}, error={1}",
+    "NoValidItemsRead": "no valid items were read.",
+    "DownloadedZipPackIsEmpty": "The downloaded ZIP modpack is empty."
+  },
+  "ModpackFileConflictDialog": {
+    "ConflictAlreadyWaitingForUser": "A modpack file conflict is already waiting for user action.",
+    "IdenticalFileChooseAction": "A file with the exact same name already exists locally: {0}\nChoose how to handle it."
+  },
+  "Modpacks": {
+    "ReadModpackEnabledStateFailed": "Failed to read the modpack enabled state: {0}",
+    "LoadModpackFileInfoFailed": "Failed to load modpack file info: {0}",
+    "GetModpackFileInfoFailed": "Failed to get modpack file info fileId={0}: {1}",
+    "UserIgnoredUnavailableModpackResources": "Ignored modpack resources that could not be fetched and continued startup failed={0}",
+    "SaveModpackEnabledStateFailed": "Failed to save the modpack enabled state: {0}",
+    "ClearModpackEnabledStateFailed": "Failed to clear the modpack enabled state: {0}"
+  },
+  "ModpackRules": {
+    "PackItemIsEmpty": "Modpack item is empty.",
+    "PackItemMissingTargetDirectory": "{0}: targetDirectory not specified.",
+    "PackItemUrlAndFileIdBothEmpty": "{0}: url and fileId cannot both be empty.",
+    "PackItemFileNotFoundInArchive": "{0}: file {1} not found in the archive.",
+    "JsonPackNoLocalRelativePath": "{0}: json modpacks do not support local relative paths.",
+    "PackItemDefaultName": "Modpack item"
+  },
+  "ModpackItemImporter": {
+    "ModinfoMissingSkipped": "{0}: Mod file missing modinfo.json, unable to verify.",
+    "PackageNameMismatchSkipped": "{0}: Mod package name mismatch (expected {1}, actual {2}), skipped.",
+    "VersionMismatchSkipped": "{0}: Mod version mismatch (expected {1}, actual {2}), skipped."
+  },
+  "ModpackDataFiles": {
+    "DeleteModpackBackupFailed": "Failed to delete modpack backup after successful restore (kept for next cleanup): {0}: {1}",
+    "CleanModpackCustomTempFileFailed": "Failed to clean up the modpack custom file temporary file temp={0} error={1}",
+    "SaveModpackCustomConfigFailed": "Failed to save the modpack custom configuration target={0} persisted={1} error={2}",
+    "RestoreModpackCustomFileFailed": "Failed to restore the modpack custom file target={0} backup={1} error={2}",
+    "DataFileHasNoTargetPathSpecified": "{0}: Data file has no target path specified.",
+    "DataFileHasNoTargetPathSpecifiedPlain": "Data file has no target path specified.",
+    "CustomFileUrlHasNoFileName": "The custom file url contains no valid file name.",
+    "UnsafeCustomFileTargetPathRejected": "Unsafe custom file target path rejected: {0}.",
+    "BackupFileDoesNotExist": "Backup file does not exist: {0}"
+  },
+  "ModpackManifestLoadManager": {
+    "ReadModpackListFailed": "Failed to read modpack list: {0}",
+    "StaleModpackListTaskFailed": "Stale modpack list reading task failed: {0}"
+  },
+  "TransactionalFileReplacement": {
+    "ScanResidualBackupsFailed": "Failed to scan residual update backups root={0} error={1}",
+    "CleanResidualBackup": "Cleaning up a residual update backup backup={0}",
+    "RollbackResidualBackup": "Rolling back a residual update backup backup={0} original={1}",
+    "ProcessResidualBackupFailed": "Failed to process a residual update backup backup={0} error={1}",
+    "ScanResidualBackupSubdirectoryFailed": "Failed to scan a residual update backup subdirectory dir={0} error={1}",
+    "CleanModUpdateBackupFailed": "Failed to clean up a mod update backup: {0}",
+    "CleanIncompleteModUpdateFileFailed": "Failed to clean up an incomplete mod update file: {0}",
+    "RestoreModUpdateBackupFailed": "Failed to restore a mod update backup: {0}",
+    "CleanOverwriteBackupFailed": "Failed to clean up the pre-overwrite backup: {0}",
+    "RestoreOverwriteBackupFailed": "Failed to restore the pre-overwrite backup: {0}",
+    "StartupRollbackResidualBackupFailed": "Failed to roll back residual update backups at startup: {0}"
+  },
+  "PlayedTimeTracker": {
+    "ReadModPlayedTimeFailed": "Failed to read mod played time: {0}",
+    "SaveModPlayedTimeFailed": "Failed to save mod played time: {0}",
+    "PlayedTimeReportingDisabledSkipping": "Played time reporting is disabled; skipping this report",
+    "SecondsFormat": "{0}s",
+    "MinutesFormat": "{0}m",
+    "HoursMinutesFormat": "{0}h {1}m",
+    "HoursFormat": "{0}h",
+    "LessThanOneMinute": "<1m",
+    "PendingReportsEnqueued": "Queued {0} playtime records for reporting",
+    "PendingReportsTrimmed": "Pending report queue over limit: dropped {0} oldest records",
+    "PendingReportsRetryStart": "Found {0} pending playtime records, retrying",
+    "PendingReportsOffline": "No internet connection: {0} playtime records kept in the pending queue",
+    "PendingReportsKept": "Server did not fully accept this batch; keeping the pending queue for the next retry",
+    "PendingReportsDequeued": "Removed {0} accepted records from the pending queue",
+    "PendingReportsRemaining": "{0} records remain pending; they will retry at next startup or when new records appear",
+    "PendingReportsSaveFailed": "Failed to save pending playtime records: {0}",
+    "PendingReportsLoopFaulted": "Playtime pending-report loop faulted: {0}"
+  },
+  "AuthSessionManager": {
+    "CreateLoginRequestFailed": "Failed to create the login request: {0}",
+    "LoginRequestFaulted": "Login request faulted: {0}",
+    "AuthSessionPollFaulted": "Auth session poll faulted: {0}",
+    "LoginFailed": "Login failed: {0}",
+    "ClearedUnreadableCredentials": "{0} Cleared unreadable community login credentials",
+    "CredentialDecryptionFailedClearedOld": "Community login credential decryption failed; cleared the old credentials",
+    "LoadCredentialsFailed": "Failed to load community login credentials: {0}",
+    "SaveCredentialsFailed": "Failed to save community login credentials: {0}",
+    "DeleteCredentialFileFailed": "Failed to delete the community login credential file: {0}",
+    "TokenInvalidatedClearingLocalState": "Token invalidation detected (401/403); clearing the local login state",
+    "LogOut": "Log Out",
+    "LogOutOfTheCurrentCommunityAccount": "Log out of the current community account?",
+    "PleaseEnterAccountAndPassword": "Please enter account and password",
+    "LogoutFailedToast": "The logout request did not complete; the server session may still be active",
+    "TokenExpiredTitle": "Session Expired",
+    "TokenExpired": "Your login session has expired. Please log in again.",
+    "LoginFailedDefaultMessage": "Login failed"
+  },
+  "DownloadDialog": {
+    "DownloadingLabel": "Downloading",
+    "DownloadComplete": "Download complete.",
+    "DownloadingProgress": "Downloading...",
+    "DownloadFailed": "Download failed: {0}",
+    "Canceled": "Canceled"
+  },
+  "DownloadFailureDialog": {
+    "DownloadError": "Download Error",
+    "UnknownError": "Unknown error"
+  },
+  "DownloadFlowManager": {
+    "ModpackProcessingFaulted": "Modpack processing faulted: {0}",
+    "BackgroundTaskFailed": "Background task failed: {0}, downloadFailed={1}, error={2}",
+    "DownloadQueueRestored": "Download queue restored: {0} items",
+    "OldVersionDisabledPendingRestart": "Disabled old version {0}; the newly downloaded version takes effect after restart",
+    "SaveDownloadQueueFailed": "Failed to save the download queue: {0}",
+    "CleanDownloadTempFileFailed": "Failed to clean up a download temporary file: {0}",
+    "DownloadTaskFaulted": "Download task faulted: {0}",
+    "DownloadFlowPollFaulted": "Download flow poll faulted: {0}",
+    "BackgroundManifestLoadTaskFaulted": "Background modpack manifest loading task faulted: {0}",
+    "BackgroundItemDownloadTaskFaulted": "Background modpack item download task faulted: {0}",
+    "ImportCompletedCallbackFaulted": "Import completion callback faulted (the import itself succeeded): {0}",
+    "Failed": "Failed",
+    "SkippedLocalDuplicates": ", {0} item(s) skipped because identical local content already exists.",
+    "TheModpackManifestIsEmptyOrInvalid": "The modpack manifest is empty or invalid.",
+    "HasNoDownloadLinkSkipped": "{0} has no download link, skipped.",
+    "UnknownItemCategory": "Unknown item category: {0}",
+    "DataFileHostUnavailable": "{0} cannot be imported: this page cannot handle modpack data files. Use the modpack download in Local Resources instead.",
+    "Imported": "{0} imported.",
+    "ImportResource": "Import Resource",
+    "Importing": "Importing...",
+    "DownloadingFormat": "Downloading: {0}",
+    "DownloadPackPartialFailure": "Modpack download partially failed: {0} succeeded, {1} failed.",
+    "DownloadPackFailure": "Modpack download failed: {0} succeeded, {1} failed.",
+    "DownloadCanceled": "Download canceled: {0}",
+    "ModpackBusyWait": "Another modpack is being processed. Please wait.",
+    "ModpackManifestSaveFailed": "Failed to save the modpack manifest: {0}",
+    "DownloadPaused": "Download paused: {0}",
+    "DownloadFailed": "Download failed: {0}",
+    "ImportFailed": "Import failed: {0}",
+    "UnknownError": "Unknown error",
+    "Canceled": "Canceled",
+    "Yes": "Yes",
+    "No": "No",
+    "ConfirmDownloadAndEnable": "There are {0} sub-items. Download and enable now?",
+    "ConfirmEnableAllReady": "All sub-items are ready. Enable now?",
+    "SubItemsHeader": "Sub-items:",
+    "DownloadComplete": "{0} download complete",
+    "FailedToLoadModpackManifest": "Failed to load modpack manifest: {0}",
+    "UnknownResource": "Unknown Resource",
+    "ModpackDownloadFinishedSummary": "Modpack download complete: {0} succeeded, {1} failed.",
+    "StartDownloading": "Start downloading {0}",
+    "DownloadPausedDownloaded": "Download paused: {0} ({1} downloaded)",
+    "AddedToDownloadQueue": "Added to download queue: {0}",
+    "DuplicateDownloadQueued": "Skipped duplicate download (same file already in queue): {0}",
+    "WaitingForOverwriteConfirmation": "Waiting for overwrite confirmation",
+    "Completed": "Completed",
+    "Pausing": "Pausing",
+    "Canceling": "Canceling",
+    "NoDownloadTaskCanBePausedOrResumed": "No download task can be paused or resumed.",
+    "NoCancelableDownloadTasks": "No cancelable download tasks.",
+    "NoRetryableDownloadTasks": "No retryable download tasks.",
+    "TaskCannotBeCanceled": "Task {0} cannot be canceled.",
+    "TaskCannotBePausedOrResumed": "Task {0} cannot be paused or resumed.",
+    "TaskCannotBeRetried": "Task {0} cannot be retried.",
+    "TaskCannotBeCleared": "Task {0} cannot be cleared.",
+    "RequeuedDownload": "Requeued download: {0}",
+    "ClearedDownloadTask": "Cleared download task: {0}",
+    "ClearedDownloadTasks": "Cleared {0} download tasks.",
+    "SwitchedDownloadSource": "Switched download source: {0}",
+    "Connecting": "Connecting: {0}",
+    "ChooseDownloadSource": "Choose Download Source",
+    "LocalAlreadyExistsChooseAction": "Local file \"{0}\" already exists. Choose an action:",
+    "ModpackFileHasNoDownloadLink": "Modpack file {0} has no download link.",
+    "Downloading": "Downloading: {0} ({1})",
+    "DownloadingLabel": "Downloading",
+    "Paused": "Paused",
+    "AlreadyExistsReplace": "{0} already exists, replace?",
+    "CancelingDownload": "Canceling download: {0}",
+    "PausingDownload": "Pausing download: {0}",
+    "Queued": "Queued",
+    "ResumingDownload": "Resuming download: {0}",
+    "DownloadSourceSwitchUnavailable": "The current link cannot switch download source.",
+    "UnfinishedDownloadsBadge": "There are {0} unfinished downloads. Tap to view.",
+    "BackgroundDownloading": "Background downloading: {0}",
+    "NetworkError": "Network connection failed. Please check your network and try again."
+  },
+  "ModUpdateImporter": {
+    "CannotConfirmCurrentPackageName": "Unable to confirm the current mod package name; update canceled.",
+    "UpdatePackageInvalidOrCorrupted": "The downloaded update package is invalid or corrupted; update canceled.",
+    "UpdatePackagePackageNameMismatch": "The downloaded update package is not the current mod: {0}."
+  },
+  "CommunityUploadClient": {
+    "FileServerReturnedNoLink": "File server returned no link: {0}",
+    "FileServerUploadFailed": "File server upload failed: {0}: {1}",
+    "GetUploadCredentialsFailed": "Failed to get upload credentials: {0}: {1}",
+    "InvalidUploadUrl": "Invalid upload URL: {0}",
+    "RegisterUploadFileFailed": "Failed to register upload file: {0}: {1}",
+    "RegisterUploadFileResponseMalformed": "Malformed register upload file response: {0}",
+    "UploadCredentialsResponseMalformed": "Malformed upload credentials response: {0}"
+  },
+  "ScmodArchiveReader": {
+    "DownloadedArchiveCorrupt": "The downloaded .scmod is not a valid archive. The source may have returned invalid content, or the resource file itself may be corrupted.",
+    "EntryNameMustBeInArchiveRoot": "Entry names must be at the archive root.",
+    "FileNotScmodArchive": "The downloaded file is not a valid scmod archive.",
+    "ModinfoMissingInPackage": "The update package is missing modinfo.json.",
+    "UpdatePackageDataIsEmpty": "Update package data is empty.",
+    "UpdatePackageDataUnreadable": "Update package data is unreadable."
+  },
+  "FiltersDialog": {
+    "SelectFileType": "Select File Type",
+    "SelectSortOrder": "Sort Options & Rankings",
+    "SelectVersionRange": "Select Version Range",
+    "SelectSection": "Select Section",
+    "SaveDefault": "Save Default",
+    "Saved": "Saved"
+  },
+  "GameUploadFileProvider": {
+    "CleanUploadTempFileFailed": "Failed to clean up the upload temporary file: {0}, {1}",
+    "CannotFindLocalResourcePath": "Unable to find the local resource file path.",
+    "LocalFileDoesNotExistFormat": "Local file does not exist: {0}",
+    "NoLocalResourceSelected": "No local resource selected.",
+    "UnsupportedUploadResourceTypeFormat": "Uploading this resource type is not supported: {0}"
+  },
+  "ModVersionWidget": {
+    "Files": "Files {0}",
+    "Details": "Details",
+    "Collapse": "Collapse"
+  },
+  "ModVersionsDialog": {
+    "Current": "Current",
+    "NoVersions": "No versions.",
+    "NoDownloadableFiles": "No downloadable files.",
+    "DownloadsSize": "Downloads {0}   Size {1}",
+    "FullyCompatible": "Fully compatible",
+    "PotentialCompatibilityIssues": "Potential compatibility issues",
+    "Incompatible": "Incompatible",
+    "NoCompatibilityVersionSpecified": "No compatibility version specified",
+    "GameVersionsPublished": "{0}Game versions: {1}   Published: {2}",
+    "Version": "Version",
+    "Published": "Published",
+    "UnnamedFile": "Unnamed File",
+    "CommunityPost": "Community Post"
+  },
+  "PlayedTimeClient": {
+    "PlayedTimeReportRejectedEntries": "Entries rejected by the server during the mod played time report: {0}",
+    "PlayedTimeReportFailed": "Mod played time report failed: {0}"
+  },
+  "PostDetailsContentBuilder": {
+    "DisposePostDetailsTextureFailed": "Failed to dispose a post details texture: {0}",
+    "DisposeLatePostDetailsTextureFailed": "Failed to dispose a late post details texture: {0}",
+    "DisposeDuplicatePostDetailsTextureFailed": "Failed to dispose a duplicate post details texture: {0}",
+    "DecodePostDetailsImageFailed": "Failed to decode a post details image: {0}, error={1}",
+    "RequestPostDetailsImageFailed": "Failed to request a post details image: {0}, error={1}",
+    "Image": "Image"
+  },
+  "PostDetailsDialog": {
+    "TranslatingTo": "Translating to {0}...",
+    "AutomaticallyTranslatedTo": "Automatically translated to {0}.",
+    "AutomaticTranslationFailed": "Automatic translation failed: {0}",
+    "FailedToLoad": "{0} failed to load",
+    "Loading": "{0} loading...",
+    "AutoTranslateFailed": "Community post automatic translation failed: {0}",
+    "NoDetails": "No details.",
+    "PostDetails": "Post Details"
+  },
+  "PostDetailsHeaderBuilder": {
+    "DownloadFile": "Download File",
+    "UnknownError": "Unknown error",
+    "CurrentVersion": "Current Version",
+    "LatestVersion": "Latest Version",
+    "UnnamedVersion": "Unnamed Version",
+    "PublishStats": "Publish Stats",
+    "FailedToLoadStats": "Failed to load stats: {0}",
+    "Last30DaysTotalVersionsFiles": "Last 30 days {0}, total {1}, versions {2}, files {3}",
+    "NoDownloadsInTheLast30Days": "No downloads in the last 30 days.",
+    "RecentDownloads": "Recent Downloads",
+    "DailyDownloadsFormat": "{0}: {1}",
+    "VersionDownloads": "Version Downloads",
+    "VersionLast30DaysTotalFiles": "Version {0}: last 30 days {1}, total {2}, files {3}"
+  },
+  "PostIconLoader": {
+    "SkipOversizedPostIcon": "Skipping an oversized post icon: {0}, size={1}",
+    "DecodeRemoteIconFailed": "Failed to decode a remote icon: {0}, error={1}",
+    "CreatePostIconTextureFailed": "Failed to create the post icon texture: {0}, error={1}",
+    "RequestPostIconFailed": "Failed to request a post icon: {0}, error={1}"
+  },
+  "PostTreePresenter": {
+    "GetPostDetailsFailed": "Failed to get post details: {0}",
+    "LoadPostFailed": "Failed to load the post: {0}",
+    "Files": "Files {0}",
+    "UpdateAvailable": "Update available",
+    "NoFiles": "No Files",
+    "PagePosts": "{0}, {3} Posts",
+    "NoPosts": "{0} · No Posts",
+    "UnknownUser": "Unknown User",
+    "PostSummaryFormat": "{0}  by {1} on {2}  downloads {3}  {4} versions",
+    "Installed": "Installed",
+    "CurrentlyInstalled": "Currently Installed",
+    "Downloads": "Downloads {0}",
+    "VersionFormat": "Version {0}",
+    "ExpandToLoadFiles": "Expand to load files",
+    "File": "[File] {0}",
+    "NoData": "No Data",
+    "NoResources": "No Resources",
+    "LoadFailed": "{0} · Load Failed",
+    "PageUploads": "{0}, {3} Files",
+    "NoUploads": "{0} · No Files"
+  },
+  "RestartConfirmDialog": {
+    "RestartRequired": "Restart Required",
+    "UpdateComplete": "Update Complete",
+    "ImportedRestartPrompt": "{0} has been imported and marked as pending restart. Restart the game now to apply it?"
+  },
+  "ReviewSubmissionHandler": {
+    "ScoreSubmissionTaskFaulted": "Score submission task faulted: {0}",
+    "PleaseWait": "Please Wait",
+    "PleaseLogInBeforeReviewing": "Please log in before reviewing.",
+    "ReviewSubmissionFailed": "Review submission failed: {0}",
+    "ReviewSubmitted": "Review Submitted",
+    "ReviewSubmittedToast": "Local resource review submitted to the community.",
+    "Submitting": "Submitting",
+    "SubmittingPreviousReview": "Submitting the previous review.",
+    "SubmittingReviewToTheCommunity": "Submitting review to the community."
+  },
+  "TreeViewWidget": {
+    "RowWidgetsRebuiltCallbackFaulted": "Row widget rebuild callback faulted: {0}"
+  },
+  "VersionDetailFormatter": {
+    "UnnamedVersion": "Unnamed Version"
+  },
+  "CommunitySettingsScreen": {
+    "StatusReady": "Settings are ready.",
+    "LogOut": "Log Out",
+    "LogIn": "Log In",
+    "NotLoggedIn": "Not Logged In",
+    "UnknownAccount": "Unknown Account"
   }
 }

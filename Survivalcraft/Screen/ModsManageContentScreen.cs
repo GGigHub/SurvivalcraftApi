@@ -2,7 +2,7 @@ using System.Xml.Linq;
 using Engine;
 using Game;
 
-public class ModsManageContentScreen : Screen {
+public partial class ModsManageContentScreen : Screen {
     public static string fName = "ModsManageContentScreen";
 
     public ListPanelWidget m_modsContentList;
@@ -92,6 +92,8 @@ public class ModsManageContentScreen : Screen {
                     DataSizeFormatter.Format(entity.Size)
                 );
             }
+            // 待重启实体的 icon 只解了数据未上传 GPU，列表项展示前在主线程补传
+            entity.EnsureIconTexture();
             if (entity.Icon != null) {
                 result.Icon = entity.Icon;
             }
@@ -102,6 +104,7 @@ public class ModsManageContentScreen : Screen {
             if (item is not ModEntity entity) {
                 return;
             }
+            m_selectedEntity = entity;
             if (ReferenceEquals(entity, m_modsContentList.SelectedItem)) {
                 DialogsManager.ShowDialog(null, new ModDetailsDialog(this, entity));
             }
@@ -128,18 +131,34 @@ public class ModsManageContentScreen : Screen {
     }
 
     public override void Enter(object[] parameters) {
-        m_modsContentList.AddItems(ModsManager.ModListAll);
+        // 进屏触发 rescan 并订阅刷新：rescan 异步落地时列表可能已按旧数据装配，
+        // 订阅 ModListRescanned 重跑装配，新待重启实体与 IsFileDeleted 标记才可见
+        ModsManager.ModListRescanned += RefreshModList;
+        _ = ModsManager.RescanModsAsync();
+        RefreshModList();
+        LaunchAutoUpdateScanIfNeeded();
     }
 
     public override void Leave() {
+        ModsManager.ModListRescanned -= RefreshModList;
         m_modsContentList.ClearItems();
         m_viewDetailButton.IsEnabled = false;
         m_triggerEnableButton.IsEnabled = false;
         m_openHomepageButton.IsEnabled = false;
+        // 社区更新检查链：取消在途网络任务并作废全部 TaskSlot 在途结果（spec §5.5）
+        m_localModNetworkManager.Cancel();
+        m_publishedCheckSlot.Invalidate();
+    }
+
+    private void RefreshModList() {
+        m_modsContentList.ClearItems();
+        m_modsContentList.AddItems(ModsManager.ModListAll);
+        RebuildLocalModItems();
     }
 
     public override void Update() {
         if (m_modsContentList.SelectedItem is ModEntity entity) {
+            m_selectedEntity = entity;
             if (m_viewDetailButton.IsClicked) {
                 DialogsManager.ShowDialog(null, new ModDetailsDialog(this, entity));
             }
@@ -199,6 +218,13 @@ public class ModsManageContentScreen : Screen {
                 ScreensManager.SwitchScreen("Content");
             }
         }
+        // 社区更新检查链六路 TaskSlot 消费（扫描/检查更新/版本列表/依赖/已发布检查/评分）
+        UpdateAutoUpdateScanTask();
+        UpdateUpdateCheckTask();
+        UpdateVersionsLoadTask();
+        UpdateDependencyLookupTask();
+        UpdatePublishedCheckTask();
+        UpdateModScoreTask();
     }
 
     public void TriggerEnable(ModEntity entity) {
@@ -237,6 +263,17 @@ public class ModsManageContentScreen : Screen {
     public static bool GetTriggerAndTitle(ModEntity entity, out string title, out Color titleColor) {
         title = entity.modInfo?.Name ?? Storage.GetFileName(entity.ModFilePath);
         titleColor = Color.White;
+        // 文件已删除的运行中尸体与待重启实体优先于禁用态显示：这两类状态来自 rescan 对账，用户最需要先看到
+        if (entity.IsFileDeleted) {
+            title = $"[{LanguageControl.Get(fName, "FileDeletedTag")}] {title}";
+            titleColor = Color.Yellow;
+            return false;
+        }
+        if (entity.IsPendingRestart) {
+            title = $"[{LanguageControl.Get(fName, "PendingRestartTag")}] {title}";
+            titleColor = Color.LightGreen;
+            return false;
+        }
         if (entity.IsDisabled) {
             if (entity.DisableReason == ModDisableReason.Manually) {
                 if (ModsManager.DisabledMods.TryGetValue(entity.modInfo!.PackageName, out HashSet<string> versions1)
@@ -260,11 +297,45 @@ public class ModsManageContentScreen : Screen {
             titleColor = Color.Yellow;
             return true;
         }
+        // spec §3.2：无任何加载状态标记时才显示更新标记（让位于禁用/待重启/文件已删除）
+        if (TryGetModUpdateTag(entity, out string updateTag)) {
+            title = $"[{updateTag}] {title}";
+            titleColor = new Color(245, 200, 120);
+        }
         return false;
+    }
+
+    // 更新缓存键与 LocalResourceIdentity.MakeModReviewKey 同源：优先包名、退化文件路径，
+    // 仅依赖 ModEntity 自身字段，无需屏实例映射
+    private static bool TryGetModUpdateTag(ModEntity entity, out string tag) {
+        tag = null;
+        string key = !string.IsNullOrWhiteSpace(entity?.modInfo?.PackageName) ? entity.modInfo.PackageName : entity?.ModFilePath;
+        if (string.IsNullOrWhiteSpace(key)) return false;
+        if (LocalModStateStore.LocalModUpdateDetailsCache.TryGetValue(key, out LocalModUpdateCheckResult info)
+            && info?.HasUpdate == true && info.File != null) {
+            tag = LanguageControl.Get("ModsManageContentScreen", "HasUpdate");
+            return true;
+        }
+        return false;
+    }
+
+    // 详情对话框「最新 x.y.z」后缀取数：社区状态缓存（首进屏自动扫描时全量写入），
+    // 键推导与 TryGetModUpdateTag 同源
+    internal static string GetLatestCommunityVersion(ModEntity entity) {
+        string key = !string.IsNullOrWhiteSpace(entity?.modInfo?.PackageName) ? entity.modInfo.PackageName : entity?.ModFilePath;
+        if (string.IsNullOrWhiteSpace(key)) return null;
+        return LocalModStateStore.LocalModCommunityStatusCache.TryGetValue(key, out LocalModCommunityStatusInfo status)
+            && status?.IsPublished == true && !string.IsNullOrWhiteSpace(status.LatestVersion)
+            ? status.LatestVersion
+            : null;
     }
 
     /// <returns>true: mod能被启用，false：mod能被禁用</returns>
     public static bool GetTrigger(ModEntity entity) {
+        // 待重启/文件已删除实体不在本次加载进程内，禁用/启用按钮对它们无意义
+        if (entity.IsPendingRestart || entity.IsFileDeleted) {
+            return false;
+        }
         if (entity.IsDisabled) {
             if (entity.DisableReason == ModDisableReason.Manually) {
                 return ModsManager.DisabledMods.TryGetValue(entity.modInfo!.PackageName, out HashSet<string> versions1)
