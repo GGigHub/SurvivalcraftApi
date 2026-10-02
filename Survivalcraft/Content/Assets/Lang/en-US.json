@@ -802,9 +802,6 @@
     "Dependencies": "Missing Dependencies",
     "Review": "Review",
     "Upload": "Upload",
-    "RestartRequired": "{0} (restart required)",
-    "IncompatibleWithCurrentGame": "{0} (incompatible with current game)",
-    "MissingDependency": "Missing dependency {0}",
     "1": "Disable Reason: ",
     "2": "Mod Ver:",
     "3": "API Ver: ",
@@ -823,6 +820,13 @@
     "16": "Found Version: ",
     "17": " (Latest: {0})",
     "18": "Played for: "
+,
+    "StateMissing": "Missing",
+    "StateDisabled": "Disabled",
+    "StatePendingRestart": "Pending Restart",
+    "StateIncompatible": "Incompatible",
+    "SearchDependency": "Search",
+    "AnyVersion": "Any"
   },
   "BlocksManager": {
     "1": "Block class \"{0}\" is not found in all loaded assemblies.",
@@ -4972,7 +4976,8 @@
     "CollapsedFileGroupLatestOnly": "Hidden {0} duplicate files; only the latest is shown",
     "NoDownloadableFile": "No downloadable files were found in community resources.",
     "LocalMod": "Local Mod",
-    "UnnamedFile": "Unnamed File"
+    "UnnamedFile": "Unnamed File",
+    "OpenDependencyHomepage": "Open Homepage: "
   },
   "LocalModNetworkManager": {
     "AutoUpdateCheckFailed": "Automatic update check failed for local mod: {0}, error={1}",

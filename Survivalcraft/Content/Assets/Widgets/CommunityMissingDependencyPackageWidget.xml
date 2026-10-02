@@ -4,6 +4,7 @@
     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch" Margin="10, 5">
       <LabelWidget Name="MissingDependencyPackageWidget.MessageText" Color="255, 226, 200" FontScale="0.7" WordWrap="true" />
       <LabelWidget Name="MissingDependencyPackageWidget.DetailText" Color="172, 148, 148" FontScale="0.7" WordWrap="true" Margin4="0, 4, 0, 0" />
+      <LinkWidget Name="MissingDependencyPackageWidget.Link" Color="64, 192, 64" FontScale="0.7" WordWrap="true" Margin4="0, 4, 0, 0" IsVisible="false" />
     </StackPanelWidget>
   </FixedSizePanelWidget>
 </StackPanelWidget>

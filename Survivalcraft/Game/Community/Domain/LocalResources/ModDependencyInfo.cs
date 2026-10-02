@@ -2,11 +2,12 @@ using NuGet.Versioning;
 
 namespace Game {
     sealed class ModDependencyInfo {
-        public ModDependencyInfo(string packageName, string version, string displayName = null, VersionRange versionRange = null) {
+        public ModDependencyInfo(string packageName, string version, string displayName = null, VersionRange versionRange = null, string link = null) {
             PackageName = packageName?.Trim();
             VersionRangeString = version?.Trim();
             DisplayName = displayName?.Trim();
             VersionRange = versionRange;
+            Link = link?.Trim();
         }
 
         public string PackageName { get; }
@@ -18,5 +19,8 @@ namespace Game {
         public VersionRange VersionRange { get; }
 
         public string DisplayName { get; }
+
+        // 依赖声明的下载页/主页链接（modinfo.json 富写法才有；世界存档等纯文本来源为 null）
+        public string Link { get; }
     }
 }

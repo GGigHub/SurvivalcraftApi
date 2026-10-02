@@ -285,17 +285,46 @@ public static class ModsManager {
                 }
             }
             else if (dependencies.ValueKind == JsonValueKind.Object) {
+                // 版本范围入库逻辑与旧字符串写法一致；富信息（Name/Link）仅当范围成功入库才记录，
+                // 保证 DependencyDetails 的键集合恒为 DependencyRanges 的子集
+                void AddDependencyRange(string packageName, string version, ModDependencyDetail detail) {
+                    bool added;
+                    if (string.IsNullOrEmpty(version)) {
+                        modInfo.DependencyRanges.Add(packageName, VersionRange.All);
+                        added = true;
+                    }
+                    else {
+                        added = TryParseVersionRange(version, out VersionRange dependencyVersionRange);
+                        if (added) {
+                            modInfo.DependencyRanges.Add(packageName, dependencyVersionRange);
+                        }
+                    }
+                    if (added
+                        && detail != null
+                        && (detail.Name != null || detail.Link != null)) {
+                        modInfo.DependencyDetails.Add(packageName, detail);
+                    }
+                }
                 foreach (JsonProperty dependency in dependencies.EnumerateObject()) {
                     if (dependency.Value.ValueKind == JsonValueKind.String) {
-                        string dependencyPackageName = dependency.Name;
-                        string dependencyVersion = dependency.Value.GetString()?.Trim();
-                        if (string.IsNullOrEmpty(dependencyVersion)) {
-                            modInfo.DependencyRanges.Add(dependencyPackageName, VersionRange.All);
-                            continue;
+                        AddDependencyRange(dependency.Name, dependency.Value.GetString()?.Trim(), null);
+                    }
+                    else if (dependency.Value.ValueKind == JsonValueKind.Object) {
+                        // 富写法：值为对象 { Name, Version, Link }，Version 即版本范围，缺省为任意版本
+                        string detailName = null;
+                        string detailLink = null;
+                        string dependencyVersion = null;
+                        foreach (JsonProperty property in dependency.Value.EnumerateObject()) {
+                            if (property.Value.ValueKind != JsonValueKind.String) {
+                                continue;
+                            }
+                            switch (property.Name) {
+                                case "Name": detailName = property.Value.GetString()?.Trim(); break;
+                                case "Version": dependencyVersion = property.Value.GetString()?.Trim(); break;
+                                case "Link": detailLink = property.Value.GetString()?.Trim(); break;
+                            }
                         }
-                        if (TryParseVersionRange(dependencyVersion, out VersionRange dependencyVersionRange)) {
-                            modInfo.DependencyRanges.Add(dependencyPackageName, dependencyVersionRange);
-                        }
+                        AddDependencyRange(dependency.Name, dependencyVersion, new ModDependencyDetail { Name = detailName, Link = detailLink });
                     }
                 }
             }

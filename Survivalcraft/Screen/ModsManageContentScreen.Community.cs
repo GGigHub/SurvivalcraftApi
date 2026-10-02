@@ -262,6 +262,28 @@ public partial class ModsManageContentScreen {
         );
     }
 
+    /// <summary>单条依赖查找（详情对话框缺失依赖行的「查找」按钮）。</summary>
+    internal void LookupSingleModDependency(ModEntity entity, ModDependencyInfo dependency) {
+        LocalResourceItem resourceItem = GetLocalModItem(entity);
+        if (string.IsNullOrWhiteSpace(dependency?.PackageName)
+            || !TryGuardLocalModNetworkStart(
+                m_localModNetworkManager.IsDependencyLookupRunning,
+                "SearchingPreviousDependency",
+                () => resourceItem?.Type == ExternalContentType.Mod
+            )) {
+            return;
+        }
+        m_localModNetworkManager.StartDependencyLookup(
+            new MissingModDependenciesLookupRequest {
+                ResourceKey = LocalResourceIdentity.MakeModReviewKey(resourceItem),
+                ResourceDisplayName = GetLocalModDisplayName(resourceItem),
+                ApiBaseUrl = AuthSessionManager.Instance.ApiBaseUrl,
+                Token = AuthSessionManager.Instance.CurrentToken,
+                Dependencies = [dependency]
+            }
+        );
+    }
+
     /// <summary>
     /// 「上传」按钮网址：域名取当前中文服务器 WebsiteUrl（自带 #/modList/0 路径，
     /// 截 scheme+authority 后重拼发布页）；WebsiteUrl 缺失/不可解析时退 ApiUrl。
@@ -574,6 +596,7 @@ public partial class ModsManageContentScreen {
                 StartMissingDependencyDownload,
                 StartMissingDependencyDownloads,
                 groupFilesByPackageName: true,
+                missingDependencyLabels: result.MissingDependencyLabels,
                 preferredVersionsByPackage: result.PreferredVersionsByPackage
             )
         );

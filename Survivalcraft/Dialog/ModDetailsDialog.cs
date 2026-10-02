@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Xml.Linq;
 using Engine;
+using NuGet.Versioning;
 
 namespace Game {
     public class ModDetailsDialog : Dialog {
@@ -17,6 +18,9 @@ namespace Game {
         public ButtonWidget m_dependenciesButton;
         public ButtonWidget m_reviewButton;
         public ButtonWidget m_uploadButton;
+
+        // 依赖块控件（缺失→查找、被禁用→查看），随内容构建登记
+        readonly List<ModDependencyInfoWidget> m_dependencyInfoWidgets = [];
 
         public const string fName = "ModDetailsDialog";
 
@@ -127,26 +131,15 @@ namespace Game {
                 }
                 m_contentPanel.Children.Add(new LabelWidget { Text = $"{LanguageControl.Get(fName, "9")}{modInfo.PackageName}", WordWrap = true });
                 if (modInfo.DependencyRanges.Count > 0) {
-                    m_contentPanel.Children.Add(new CanvasWidget { Size = new Vector2(0f, 8f) });
-                    m_contentPanel.Children.Add(new LabelWidget { Text = LanguageControl.Get(fName, "10") });
-                    // 依赖行可用性标注（模组 FormatLocalModDependencyLine 移植）：逐条按本地快照
-                    // 标注 已加载/待重启/不适配/缺失，缺失与不适配标红；取代旧仅禁用态校验
-                    var dependencySnapshot = LocalResourceCollection.CaptureDependencySnapshot(null, () => ModsManager.ModListAll, null);
+                    m_contentPanel.Children.Add(new LabelWidget { Text = LanguageControl.Get(fName, "10"), Margin = new Vector2(0, 4) });
+                    // 依赖逐条标注可用性（快照按实体状态分组：已加载/待重启/不适配/被禁用/缺失）；
+                    // 缺失行给「查找」（单条走社区查找），被禁用行给「查看」（下钻该模组详情）
+                    ModDependencySnapshot dependencySnapshot = LocalResourceCollection.CaptureDependencySnapshot(null, () => ModsManager.ModListAll, null);
                     foreach (ModDependencyInfo dependency in ModDependencyParser.GetDependencies(entity)) {
-                        string displayName = string.IsNullOrWhiteSpace(dependency.VersionRangeString)
-                            ? dependency.PackageName
-                            : $"{dependency.PackageName} ({dependency.VersionRangeString})";
-                        ModDependencyAvailability availability = dependencySnapshot.Evaluate(dependency);
-                        string text = availability switch {
-                            ModDependencyAvailability.Loaded => displayName,
-                            ModDependencyAvailability.PendingRestart => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get(fName, "RestartRequired"), displayName),
-                            ModDependencyAvailability.Incompatible => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get(fName, "IncompatibleWithCurrentGame"), displayName),
-                            _ => string.Format(CultureInfo.InvariantCulture, LanguageControl.Get(fName, "MissingDependency"), displayName)
-                        };
-                        bool available = availability is ModDependencyAvailability.Loaded or ModDependencyAvailability.PendingRestart;
-                        m_contentPanel.Children.Add(
-                            new LabelWidget { Text = $"    - {text}", Color = available ? Color.White : Color.Red, WordWrap = true }
-                        );
+                        ModDependencyInfoWidget widget = new();
+                        widget.Bind(dependency, dependencySnapshot.Evaluate(dependency));
+                        m_dependencyInfoWidgets.Add(widget);
+                        m_contentPanel.Children.Add(widget);
                     }
                 }
             }
@@ -156,6 +149,48 @@ namespace Game {
             m_deleteButton.IsEnabled = entity.modInfo?.PackageName is not "survivalcraft" and not "fastdebug"
                 && !string.IsNullOrEmpty(entity.ModFilePath);
             UpdateTitleAndTriggerEnableButton();
+        }
+
+        // 「查看」目标：同包名被禁用实体可能有多个，先筛满足声明版本范围者（匹配语义同 CheckDependencies），
+        // 多个时取 NuGetVersion 最高（并列取列表第一个）；ModListAll 无版本排序，必须显式比较
+        private static ModEntity FindDisabledDependencyEntity(ModDependencyInfo dependency) {
+            string packageName = dependency?.PackageName?.Trim();
+            if (string.IsNullOrEmpty(packageName)) {
+                return null;
+            }
+            List<ModEntity> candidates = [];
+            foreach (ModEntity entity in ModsManager.ModListAll) {
+                // 快照分组集合按 OrdinalIgnoreCase 归并包名，这里必须一致，否则“被禁用”行点「查看」找不到候选
+                if (entity.IsDisabled
+                    && string.Equals(entity.modInfo?.PackageName, packageName, StringComparison.OrdinalIgnoreCase)) {
+                    candidates.Add(entity);
+                }
+            }
+            if (candidates.Count == 0) {
+                return null;
+            }
+            // 字符串等值分支与 CheckDependencies 同源：用范围原始文本比较，操作符范围（=/^/~ 等）无 OriginalString 时退回规范化文本
+            string rangeText = dependency.VersionRange?.OriginalString ?? dependency.VersionRangeString;
+            List<ModEntity> satisfying = [];
+            foreach (ModEntity entity in candidates) {
+                if (dependency.VersionRange == null
+                    || dependency.VersionRange.Equals(VersionRange.All)
+                    || (entity.modInfo.NuGetVersion != null && dependency.VersionRange.Satisfies(entity.modInfo.NuGetVersion))
+                    || entity.modInfo.Version == rangeText) {
+                    satisfying.Add(entity);
+                }
+            }
+            List<ModEntity> pool = satisfying.Count > 0 ? satisfying : candidates;
+            ModEntity best = pool[0];
+            for (int i = 1; i < pool.Count; i++) {
+                NuGetVersion bestVersion = best.modInfo.NuGetVersion;
+                NuGetVersion candidateVersion = pool[i].modInfo.NuGetVersion;
+                if (candidateVersion != null
+                    && (bestVersion == null || VersionComparer.VersionRelease.Compare(candidateVersion, bestVersion) > 0)) {
+                    best = pool[i];
+                }
+            }
+            return best;
         }
 
         // 版本行文本：版本号（缺省「无」）+ 社区已发布时的「最新 x.y.z」后缀
@@ -251,6 +286,22 @@ namespace Game {
             }
             if (m_dependenciesButton.IsClicked) {
                 m_screen?.LookupModDependencies(m_entity);
+            }
+            foreach (ModDependencyInfoWidget widget in m_dependencyInfoWidgets) {
+                if (!widget.IsActionClicked) {
+                    continue;
+                }
+                if (widget.IsSearchAction) {
+                    m_screen?.LookupSingleModDependency(m_entity, widget.Dependency);
+                }
+                else {
+                    ModEntity targetEntity = FindDisabledDependencyEntity(widget.Dependency);
+                    if (targetEntity != null) {
+                        DialogsManager.HideDialog(this);
+                        DialogsManager.ShowDialog(null, new ModDetailsDialog(m_screen, targetEntity));
+                    }
+                }
+                break;
             }
             if (m_reviewButton.IsClicked) {
                 m_screen?.OpenModReview(m_entity);

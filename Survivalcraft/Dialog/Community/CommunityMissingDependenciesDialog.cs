@@ -8,7 +8,7 @@ namespace Game {
         readonly ButtonWidget m_closeButton;
         readonly StackPanelWidget m_listPanel;
         readonly List<FileGroup> m_fileGroups;
-        readonly List<string> m_missingDependencyLabels;
+        readonly List<MissingDependencyLabelView> m_missingDependencyLabels;
         readonly List<PostFileItem> m_primaryDownloadFiles;
         readonly List<CommunityMissingDependencyFileWidget> m_fileWidgets = [];
         readonly List<CommunityMissingDependencyGroupWidget> m_groupWidgets = [];
@@ -22,7 +22,7 @@ namespace Game {
             Action<IReadOnlyList<PostFileItem>> downloadAll = null,
             string title = null,
             bool groupFilesByPackageName = false,
-            IReadOnlyList<string> missingDependencyLabels = null,
+            IReadOnlyList<MissingDependencyLabelView> missingDependencyLabels = null,
             IReadOnlyDictionary<string, string> preferredVersionsByPackage = null) {
             m_download = download;
             m_downloadAll = downloadAll;
@@ -108,7 +108,7 @@ namespace Game {
             CommunityMissingDependencyPackageHeaderWidget headerWidget = new();
             headerWidget.Bind(LanguageControl.Get("MissingDependenciesDialog", "ResourcePackageNameNotFound"), m_fileGroups.Count > 0);
             m_listPanel.Children.Add(headerWidget);
-            foreach (string label in m_missingDependencyLabels) {
+            foreach (MissingDependencyLabelView label in m_missingDependencyLabels) {
                 CommunityMissingDependencyPackageWidget packageWidget = new();
                 packageWidget.Bind(BuildPackageDisplayData(label));
                 m_listPanel.Children.Add(packageWidget);
@@ -149,9 +149,10 @@ namespace Game {
             };
         }
 
-        static CommunityMissingDependencyPackageDisplayData BuildPackageDisplayData(string label) => new() {
-            Text = CommunityVersionDetailFormatter.FormatEmpty(label),
-            DetailText = LanguageControl.Get("MissingDependenciesDialog", "NoDownloadableFile")
+        static CommunityMissingDependencyPackageDisplayData BuildPackageDisplayData(MissingDependencyLabelView label) => new() {
+            Text = CommunityVersionDetailFormatter.FormatEmpty(label.Label),
+            DetailText = LanguageControl.Get("MissingDependenciesDialog", "NoDownloadableFile"),
+            Link = label.Link
         };
 
         static List<FileGroup> BuildFileGroups(IReadOnlyList<PostFileItem> files,
@@ -272,14 +273,14 @@ namespace Game {
             return result;
         }
 
-        static List<string> BuildMissingDependencyLabels(IReadOnlyList<string> labels) {
-            List<string> result = [];
+        static List<MissingDependencyLabelView> BuildMissingDependencyLabels(IReadOnlyList<MissingDependencyLabelView> labels) {
+            List<MissingDependencyLabelView> result = [];
             HashSet<string> addedLabels = new(StringComparer.OrdinalIgnoreCase);
-            foreach (string label in labels ?? []) {
-                string normalized = label?.Trim();
+            foreach (MissingDependencyLabelView label in labels ?? []) {
+                string normalized = label?.Label?.Trim();
                 if (!string.IsNullOrWhiteSpace(normalized)
                     && addedLabels.Add(normalized)) {
-                    result.Add(normalized);
+                    result.Add(new MissingDependencyLabelView(normalized, label.Link));
                 }
             }
             return result;

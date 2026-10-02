@@ -180,7 +180,8 @@ namespace Game {
             Func<IEnumerable<ModEntity>> loadedModEntities,
             Func<PendingModPackageSets> pendingPackageSetsProvider) {
             PendingModPackageSets packageSets = pendingMods == null ? GetPendingPackageSetsFromEntities() : GetPendingPackageSets(pendingMods);
-            return new ModDependencySnapshot(GetInstalledPackageKeys(loadedModEntities), packageSets);
+            ModInstalledPackageSets installedSets = GetInstalledPackageSets(loadedModEntities);
+            return new ModDependencySnapshot(installedSets.LoadedPackages, packageSets, installedSets.DisabledPackages);
         }
 
         public static void ApplyPendingAction(LocalResourceItem resourceItem,
@@ -199,20 +200,34 @@ namespace Game {
             resourceItem.PendingAction = entry.ActionType;
         }
 
-        static HashSet<string> GetInstalledPackageKeys(Func<IEnumerable<ModEntity>> loadedModEntities) {
-            HashSet<string> packages = new(StringComparer.OrdinalIgnoreCase);
+        static ModInstalledPackageSets GetInstalledPackageSets(Func<IEnumerable<ModEntity>> loadedModEntities) {
+            HashSet<string> loadedPackages = new(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> disabledPackages = new(StringComparer.OrdinalIgnoreCase);
             foreach (ModEntity localEntity in loadedModEntities() ?? []) {
                 if (localEntity?.modInfo == null
                     || string.IsNullOrWhiteSpace(localEntity.modInfo.PackageName)) {
                     continue;
                 }
                 string packageName = localEntity.modInfo.PackageName.Trim();
-                packages.Add(packageName);
+                // 被禁用实体单独成组：依赖它时判“被禁用”而非“已加载”。
+                // 待重启实体同样剔除（由 GetPendingPackageSetsFromEntities 的分组负责），
+                // 否则快照先命中 Loaded，待重启/不兼容状态在实体路径上永不生效。
+                HashSet<string> target;
+                if (localEntity.IsDisabled) {
+                    target = disabledPackages;
+                }
+                else if (localEntity.IsPendingRestart) {
+                    continue;
+                }
+                else {
+                    target = loadedPackages;
+                }
+                target.Add(packageName);
                 if (!string.IsNullOrWhiteSpace(localEntity.modInfo.Version)) {
-                    packages.Add(ModDependencyAvailabilityRules.MakePackageVersionKey(packageName, localEntity.modInfo.Version));
+                    target.Add(ModDependencyAvailabilityRules.MakePackageVersionKey(packageName, localEntity.modInfo.Version));
                 }
             }
-            return packages;
+            return new ModInstalledPackageSets(loadedPackages, disabledPackages);
         }
 
         static PendingModPackageSets GetPendingPackageSets(IEnumerable<LocalResourceItem> pendingMods) {
@@ -240,22 +255,38 @@ namespace Game {
         public HashSet<string> IncompatiblePackages { get; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
+    // 实体扫描产物：非禁用实体的可用包键 + 被禁用实体的包键（依赖可用性判“被禁用”用）
+    sealed class ModInstalledPackageSets {
+        public ModInstalledPackageSets(HashSet<string> loadedPackages, HashSet<string> disabledPackages) {
+            LoadedPackages = loadedPackages;
+            DisabledPackages = disabledPackages;
+        }
+
+        public HashSet<string> LoadedPackages { get; }
+        public HashSet<string> DisabledPackages { get; }
+    }
+
     sealed class ModDependencySnapshot {
         readonly ISet<string> m_loadedPackages;
         readonly ISet<string> m_pendingRestartPackages;
         readonly ISet<string> m_incompatiblePackages;
+        readonly ISet<string> m_disabledPackages;
 
-        public ModDependencySnapshot(ISet<string> loadedPackages, PendingModPackageSets pendingPackageSets) {
+        public ModDependencySnapshot(ISet<string> loadedPackages,
+            PendingModPackageSets pendingPackageSets,
+            ISet<string> disabledPackages = null) {
             m_loadedPackages = loadedPackages ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             m_pendingRestartPackages = pendingPackageSets?.PendingRestartPackages ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             m_incompatiblePackages = pendingPackageSets?.IncompatiblePackages ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            m_disabledPackages = disabledPackages ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         public ModDependencyAvailability Evaluate(ModDependencyInfo dependency) => ModDependencyAvailabilityRules.Evaluate(
             dependency,
             m_loadedPackages,
             m_pendingRestartPackages,
-            m_incompatiblePackages
+            m_incompatiblePackages,
+            m_disabledPackages
         );
 
         public IEnumerable<ModDependencyInfo> GetUnavailableDependencies(IEnumerable<ModDependencyInfo> dependencies) {

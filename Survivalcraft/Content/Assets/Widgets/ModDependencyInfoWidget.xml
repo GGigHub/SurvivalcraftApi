@@ -1,0 +1,8 @@
+<FixedSizePanelWidget xmlns="runtime-namespace:Game" HorizontalAlignment="Stretch">
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch">
+    <LabelWidget Name="ModDependencyInfoWidget.Header" Color="255, 255, 255" WordWrap="true" Margin="0, 4" />
+    <LabelWidget Name="ModDependencyInfoWidget.Version" Color="172, 148, 148" FontScale="0.8" WordWrap="true" Margin="0, 3" />
+    <LinkWidget Name="ModDependencyInfoWidget.Link" Color="64, 192, 64" FontScale="0.8" Ellipsis="true" IsVisible="false" Margin="0, 3" />
+  </StackPanelWidget>
+  <BevelledButtonWidget Name="ModDependencyInfoWidget.ActionButton" Size="96, 48" FontScale="0.8" HorizontalAlignment="Far" Margin="8, 0" IsVisible="false" />
+</FixedSizePanelWidget>

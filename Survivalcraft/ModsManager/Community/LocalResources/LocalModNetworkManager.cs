@@ -396,7 +396,9 @@ namespace Game {
                     ResourceDisplayName = request.ResourceDisplayName,
                     IsWorldUsedModsLookup = request.IsWorldUsedModsLookup,
                     Files = lookup.Files,
-                    MissingDependencyLabels = request.IsWorldUsedModsLookup ? BuildMissingDependencyLabels(lookup.MissingDependencies) : null,
+                    // 两条路径都回填缺失清单：模组详情路径此前传 null，「查找全部」弹窗里
+                    // 完全找不到的包对用户不可见
+                    MissingDependencyLabels = BuildMissingDependencyLabels(lookup.MissingDependencies),
                     PreferredVersionsByPackage = lookup.PreferredVersionsByPackage
                 };
             }
@@ -415,8 +417,8 @@ namespace Game {
             }
         }
 
-        internal static List<string> BuildMissingDependencyLabels(IReadOnlyList<ModDependencyInfo> dependencies) {
-            List<string> labels = [];
+        internal static List<MissingDependencyLabelView> BuildMissingDependencyLabels(IReadOnlyList<ModDependencyInfo> dependencies) {
+            List<MissingDependencyLabelView> labels = [];
             HashSet<string> addedPackages = new(StringComparer.OrdinalIgnoreCase);
             foreach (ModDependencyInfo dependency in dependencies ?? []) {
                 string packageName = dependency?.PackageName?.Trim();
@@ -425,7 +427,8 @@ namespace Game {
                     continue;
                 }
                 string name = string.IsNullOrWhiteSpace(dependency.DisplayName) ? packageName : $"{dependency.DisplayName} / {packageName}";
-                labels.Add(string.IsNullOrWhiteSpace(dependency.VersionRangeString) ? name : $"{name} ({dependency.VersionRangeString})");
+                string label = string.IsNullOrWhiteSpace(dependency.VersionRangeString) ? name : $"{name} ({dependency.VersionRangeString})";
+                labels.Add(new MissingDependencyLabelView(label, dependency.Link));
             }
             return labels;
         }
@@ -608,8 +611,14 @@ namespace Game {
         public string ResourceDisplayName { get; set; }
         public bool IsWorldUsedModsLookup { get; set; }
         public List<PostFileItem> Files { get; set; }
-        public List<string> MissingDependencyLabels { get; set; }
+        public List<MissingDependencyLabelView> MissingDependencyLabels { get; set; }
         public Dictionary<string, string> PreferredVersionsByPackage { get; set; }
         public string Error { get; set; }
+    }
+
+    /// <summary>缺失依赖的展示条目：格式化文本 + 声明中的下载页链接（可空）</summary>
+    public sealed class MissingDependencyLabelView(string label, string link) {
+        public string Label { get; } = label;
+        public string Link { get; } = string.IsNullOrWhiteSpace(link) ? null : link.Trim();
     }
 }

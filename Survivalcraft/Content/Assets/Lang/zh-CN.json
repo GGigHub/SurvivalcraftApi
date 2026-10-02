@@ -802,9 +802,6 @@
     "Dependencies": "缺失依赖",
     "Review": "评分",
     "Upload": "上传",
-    "RestartRequired": "{0}（需要重启加载）",
-    "IncompatibleWithCurrentGame": "{0}（不适配当前游戏）",
-    "MissingDependency": "缺失依赖 {0}",
     "1": "禁用原因：",
     "2": "模组版本：",
     "3": "API 版本：",
@@ -823,6 +820,13 @@
     "16": "已找到的版本：",
     "17": "（最新: {0}）",
     "18": "游玩时长："
+,
+    "StateMissing": "不存在",
+    "StateDisabled": "被禁用",
+    "StatePendingRestart": "待重启",
+    "StateIncompatible": "不适配",
+    "SearchDependency": "查找",
+    "AnyVersion": "任何"
   },
   "BlocksManager": {
     "1": "未能从已加载的 dll 程序集中找到方块类 [{0}]。",
@@ -4982,7 +4986,8 @@
     "CollapsedFileGroupLatestOnly": "已隐藏 {0} 个相同文件，仅显示最新一个",
     "NoDownloadableFile": "社区资源中未找到可下载文件。",
     "LocalMod": "本地模组",
-    "UnnamedFile": "未命名文件"
+    "UnnamedFile": "未命名文件",
+    "OpenDependencyHomepage": "打开主页："
   },
   "LocalModNetworkManager": {
     "AutoUpdateCheckFailed": "本地模组自动检查更新失败: {0}, error={1}",

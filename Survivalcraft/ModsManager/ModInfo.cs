@@ -47,6 +47,12 @@ namespace Game {
         public Dictionary<string, VersionRange> DependencyRanges = [];
 
         /// <summary>
+        ///     依赖的富信息（modinfo.json Dependencies 对象写法的值为对象时填充），键 = 包名。<br/>
+        ///     仅作展示用途（友好名 / 下载页链接）；键集合恒为 <see cref="DependencyRanges"/> 的子集。
+        /// </summary>
+        public Dictionary<string, ModDependencyDetail> DependencyDetails = [];
+
+        /// <summary>
         ///     非持久性模组<br/>
         ///     该项为 true 时，将不会在存档中记录该模组，从而在移除该模组后，进入存档时，不会警告未安装该模组；适用于不在存档中存储数据、添加方块、添加实体的模组
         /// </summary>
@@ -75,5 +81,15 @@ namespace Game {
         // ReSharper restore NonReadonlyMemberInGetHashCode
 
         public override bool Equals(object obj) => obj is ModInfo && obj.GetHashCode() == GetHashCode();
+    }
+
+    /// <summary>
+    ///     依赖声明的富信息：modinfo.json Dependencies 对象写法中值为对象时的展示字段
+    /// </summary>
+    public class ModDependencyDetail {
+        /// <summary>依赖模组的友好名称</summary>
+        public string Name;
+        /// <summary>依赖模组的下载页/主页链接</summary>
+        public string Link;
     }
 }

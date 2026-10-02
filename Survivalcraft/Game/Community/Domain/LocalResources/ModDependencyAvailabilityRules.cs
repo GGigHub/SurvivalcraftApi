@@ -5,22 +5,28 @@ namespace Game {
         Missing,
         Incompatible,
         PendingRestart,
-        Loaded
+        Loaded,
+        Disabled
     }
 
     static class ModDependencyAvailabilityRules {
         public static ModDependencyAvailability Evaluate(ModDependencyInfo dependency,
             ISet<string> loadedPackages,
             ISet<string> pendingPackages,
-            ISet<string> incompatiblePackages) {
+            ISet<string> incompatiblePackages,
+            ISet<string> disabledPackages = null) {
             if (IsInstalledModMatching(dependency, loadedPackages)) {
                 return ModDependencyAvailability.Loaded;
             }
             if (IsInstalledModMatching(dependency, pendingPackages)) {
                 return ModDependencyAvailability.PendingRestart;
             }
-            return IsInstalledModMatching(dependency, incompatiblePackages)
-                ? ModDependencyAvailability.Incompatible
+            if (IsInstalledModMatching(dependency, incompatiblePackages)) {
+                return ModDependencyAvailability.Incompatible;
+            }
+            // 已安装但被禁用：本进程未加载，依赖方无法实际使用，须与“缺失”区分开（可引导用户启用）
+            return IsInstalledModMatching(dependency, disabledPackages)
+                ? ModDependencyAvailability.Disabled
                 : ModDependencyAvailability.Missing;
         }
 

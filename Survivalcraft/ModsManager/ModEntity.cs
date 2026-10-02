@@ -497,8 +497,11 @@ namespace Game {
                 else {
                     IsDisabled = true;
                     DisableReason = ModDisableReason.DependencyError;
+                    // 富写法声明了 Name 时日志附友好名，用户不用只对包名犯愁
+                    ModDependencyDetail detail = modInfo.DependencyDetails?.GetValueOrDefault(name);
+                    string nameStr = string.IsNullOrEmpty(detail?.Name) ? string.Empty : $" ({detail.Name})";
                     string versionStr = string.IsNullOrEmpty(range.OriginalString) ? string.Empty : $", Required version: {range}";
-                    Log.Error($"[{modInfo.Name}] Failed to find dependency: Package Name \"{name}\"{versionStr}");
+                    Log.Error($"[{modInfo.Name}] Failed to find dependency: Package Name \"{name}\"{nameStr}{versionStr}");
                     return;
                 }
             }

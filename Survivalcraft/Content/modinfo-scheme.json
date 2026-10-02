@@ -172,6 +172,27 @@
           }
         },
         {
+          "type": "object",
+          "description": "富写法：值为对象，可为依赖附上友好名称和下载页链接，三种写法可混用。 \nRich form: the value is an object attaching a friendly name and download link to the dependency; all three forms can be mixed.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "Name": {
+                "type": "string",
+                "description": "Friendly name of the dependency mod, shown in the dependency UI instead of the package name. \n依赖模组的友好名称，游戏内依赖界面优先显示它而不是包名。"
+              },
+              "Version": {
+                "$ref": "#/definitions/versionRange"
+              },
+              "Link": {
+                "type": "string",
+                "description": "Download/homepage link of the dependency mod, shown as a clickable link in the dependency UI. \n依赖模组的下载页/主页链接，游戏内依赖界面显示为可点击的链接。"
+              }
+            },
+            "description": "Version is the version range (same syntax as the plain string value; omitted means any version). Name/Link are optional display-only fields. \nVersion 即版本范围（与字符串值写法相同，省略表示接受任何版本）；Name/Link 为选填的展示字段。"
+          }
+        },
+        {
           "type": "array",
           "items": {
             "type": "string",

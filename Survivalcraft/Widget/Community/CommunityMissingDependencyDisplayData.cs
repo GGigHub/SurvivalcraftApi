@@ -21,5 +21,8 @@ namespace Game {
         public string Text { get; init; }
 
         public string DetailText { get; init; }
+
+        // 依赖声明中的下载页链接，空则不显示链接行
+        public string Link { get; init; }
     }
 }
