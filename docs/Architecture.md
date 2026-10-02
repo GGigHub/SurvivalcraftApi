@@ -14,6 +14,8 @@
 | **游戏类型** | 3D 体素沙盒，野外生存，支持最多 4 人同屏 |
 | **模组支持** | 资源覆盖、ModLoader 钩子、HarmonyX 方法注入、运行 Javascript |
 
+> iOS、Browser 图形 API 为 OpenGL ES 3.0，因为 AOT 几乎不支持模组
+
 ## 2. 整体分层架构
 
 项目采用三层架构设计，依赖关系自下而上：
@@ -60,7 +62,7 @@ graph TB
 │   │   ├── Audio/               # 音频资源
 │   │   ├── Dialogs/             # 对话框布局
 │   │   ├── Fonts/               # 字体
-│   │   ├── Langs/               # 语言字符串
+│   │   ├── Lang/                # 语言字符串
 │   │   ├── Models/              # 模型资源
 │   │   ├── Music/               # 音乐资源
 │   │   ├── Screens/             # 全屏界面布局
@@ -73,7 +75,7 @@ graph TB
 │   │   ├── Clothes.xml          # 衣物数据
 │   │   ├── Clothes.xsd          # 衣物数据的架构定义
 │   │   ├── CraftingRecipes.xml  # 合成表
-│   │   ├── CraftingRecipes.xsd  # 衣物数据的架构定义
+│   │   ├── CraftingRecipes.xsd  # 合成表的架构定义
 │   │   ├── Database.xml         # 数据库
 │   │   ├── Database.xsd         # 数据库的架构定义
 │   │   ├── NewWorldNames.txt    # 新世界名称列表
@@ -112,10 +114,9 @@ sequenceDiagram
     participant MS as MainMenuScreen
 
     P->>W: Main() → EntryPoint()
+    P->>P: 注册 Frame/Deactivated 等窗口事件
     W->>W: Window.Run() 创建窗口
-    W->>W: LoadHandler() 初始化引擎
-    W->>P: Created 事件
-    P->>P: 注册 Frame/Deactivated 事件
+    W->>W: LoadHandler() 初始化引擎，触发 Created 事件
     W->>P: Frame 事件 (FrameIndex == 0)
     P->>P: Initialize() 游戏初始化
     P->>L: 显示加载界面
@@ -174,7 +175,7 @@ sequenceDiagram
 1. `Project` 根据存档中的 `Project.xml` 和 `DatabaseManager.GameDatabase` 进行实例化
 2. 反射创建相应 `Subsystem` 列表和 `Entity` 列表
 3. 每个 `Entity` 根据模板创建其 `Component` 列表
-4. 上面具有 `IUpdatable` 接口的 `Subsystem` 和 `Component` 将加入 `SubsystemUpdate.m_updateables`，它们的 `Update` 方法将被每帧调用；具有 `IDrawable` 接口的同理
+4. 上面具有 `IUpdateable` 接口的 `Subsystem` 和 `Component` 将加入 `SubsystemUpdate.m_updateables`，它们的 `Update` 方法将被每帧调用；具有 `IDrawable` 接口的同理
 
 ## 6. 跨平台策略
 
@@ -328,7 +329,7 @@ public class TemplateModLoader : ModLoader {
 
 ## 9. 关键管理器速查
 
-> 位置：[Survivalcraft/Managers](../Survivalcraft/Managers/)
+> 位置：[Survivalcraft/Managers](../Survivalcraft/Managers/)；`ModsManager` 单独位于 [Survivalcraft/ModsManager](../Survivalcraft/ModsManager/)
 
 | 管理器 | 职责 |
 |--------|------|
@@ -346,5 +347,5 @@ public class TemplateModLoader : ModLoader {
 ## 10. 专项技术文档
 
 * [生物模型系统](CreatureModelSystem.md) - 生物 3D 模型的骨骼、网格、动画、渲染
-* [地形系统](TerrariaSystem.md) - 地形的数据结构、更新、生成、渲染、序列化、主动变更
+* [地形系统](TerrainSystem.md) - 地形的数据结构、更新、生成、渲染、序列化、主动变更
 * [UI 界面系统](UiSystem.md) - 游戏 UI 界面的管理器、布局流程、主要容器组件、使用示例
